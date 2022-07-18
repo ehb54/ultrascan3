@@ -8,14 +8,17 @@
 # DEBUGORRELEASE = debug
 DEBUGORRELEASE = release
 
+QMAKE_CFLAGS += -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result
+QMAKE_CXXFLAGS += -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result
+
 # path of US3 source base (required)
-US3PATH       = /ultrascan3
+US3PATH       = $$(ULTRASCAN)
 
 
 # path of QT (not needed mingw64)
 QTPATH        = 
 # path of QWT (not needed mingw64)
-QWTPATH       = /qwt-6.1.5
+QWTPATH       = /qwt-6.1.6
 
 
 # ---- these below might need to be modified in unusual circumstances ----

@@ -517,6 +517,8 @@ void US_Saxs_Util::read_residue_file()
    msroll_radii.clear( );
    msroll_names.clear( );
 
+   SS_init();
+
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
@@ -948,7 +950,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
       return false;
    }
 
-   // qDebug() << "Current Model: " << current_model << endl;
+   // qDebug() << "Current Model: " << current_model << Qt::endl;
  
    // qDebug() << "screen_pdb:: 2";
    QString error_string = "";
@@ -2613,14 +2615,14 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 //       QTextStream ts(&f);
 //       for (unsigned int i=0; i<residue_list.size(); i++)
 //       {
-// 	ts << residue_list[i].comment << endl;
+// 	ts << residue_list[i].comment << Qt::endl;
 //          ts << residue_list[i].name.toUpper()
 //             << "\t" << residue_list[i].type
 //             << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
 //             << "\t" << residue_list[i].asa
 //             << "\t" << residue_list[i].r_atom.size()
 //             << "\t" << residue_list[i].r_bead.size()
-//             << "\t" << residue_list[i].vbar << endl;
+//             << "\t" << residue_list[i].vbar << Qt::endl;
 //          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
 //          {
 //             ts << residue_list[i].r_atom[j].name.toUpper()
@@ -2631,7 +2633,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 //                << "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
 //                << "\t" << residue_list[i].r_atom[j].serial_number 
 //                << "\t" << residue_list[i].r_atom[j].hydration
-//                << endl;
+//                << Qt::endl;
 //          }
 //          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
 //          {
@@ -2639,7 +2641,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 //                << "\t" << residue_list[i].r_bead[j].color
 //                << "\t" << residue_list[i].r_bead[j].placing_method
 //                << "\t" << residue_list[i].r_bead[j].chain
-//                << "\t" << residue_list[i].r_bead[j].volume << endl;
+//                << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
 //          }
 //          str1.sprintf("%d: ", i+1);
 //          str1 += residue_list[i].name.toUpper();
@@ -3457,10 +3459,10 @@ void US_Saxs_Util::calc_vol_for_saxs()
          for ( unsigned int k = 0; k < model_vector[i].molecule[j].atom.size(); k++ )
          {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            double excl_vol;
-            double scaled_excl_vol;
-            unsigned int this_e;
-            unsigned int this_e_noh;
+            double excl_vol = 0e0;
+            // double scaled_excl_vol;
+            // unsigned int this_e;
+            // unsigned int this_e_noh;
             double si = 0e0;
             // if ( !saxs_util->set_excluded_volume( *this_atom, 
             //                                       excl_vol, 
@@ -3793,7 +3795,7 @@ bool US_Saxs_Util::calc_mw_hydro()
 
 
 
-bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
+bool US_Saxs_Util::calc_grid_pdb(bool /* parameters_set_first_model */ )
 {
    //    if ( selected_models_contain( "WAT" ) )
    //    {
@@ -5374,7 +5376,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
       float intersection_volume = 0;
       int max_bead1 = 0;
       int max_bead2 = 0;
-      unsigned iter = 0;
+      // unsigned iter = 0;
       bool overlaps_exist;
 // #if defined(TIMING)
 //       gettimeofday(&start_tv, NULL);
@@ -7643,7 +7645,7 @@ void US_Saxs_Util::write_bead_model( QString fname,
 
       if ( !extra_text.isEmpty() )
       {
-         fprintf(fsomo, extra_text.toLatin1().data() );
+         fprintf(fsomo, "%s", extra_text.toLatin1().data() );
       }
 
       fclose(fsomo);
@@ -8231,7 +8233,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
    QString msg_udp = QString("\\n%1 models selected:").arg(project);
 
    //   for(int i = 0; i < lb_model->count(); i++) {
-   for(int i = 0; i < model_vector.size(); i++) {
+   for(int i = 0; i < (int) model_vector.size(); i++) {
      somo_processed[i] = 0;
      //if (lb_model->item(i)->isSelected()) {
          
@@ -11467,6 +11469,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
             // push back previous chain if it exists
             if ( chain_flag )
             {
+               if ( temp_chain.atom.size() ) {
+                  sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+               }
                temp_model.molecule.push_back(temp_chain);
                clear_temp_chain(&temp_chain);
                chain_flag = true;
@@ -11518,6 +11523,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
          if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
          {
             last_was_ENDMDL = true;
+            if ( temp_chain.atom.size() ) {
+               sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+            }
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             // noticemsg += "Residue sequence from model " +
             // QString("%1").arg( model_vector.size() + 1 ) + ": \n";
@@ -11654,6 +11662,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
                      {
                         if ( temp_chain.atom.size() ) 
                         {
+                           if ( temp_chain.atom.size() ) {
+                              sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+                           }
                            temp_model.molecule.push_back(temp_chain);
                         }
                         clear_temp_chain(&temp_chain);
@@ -11681,7 +11692,13 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
    }
    if(!model_flag)   // there were no model definitions, just a single molecule,
    {                  // we still need to save the results
-      temp_model.molecule.push_back(temp_chain);
+      if ( temp_chain.atom.size() ) {
+         if ( temp_chain.atom.size() ) {
+            sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+         }
+         temp_model.molecule.push_back(temp_chain);
+      }
+      // SS_apply( temp_model, project );
 
       //editor->append("\nResidue sequence from " + project +".pdb:\n");
       us_log->log("\nResidue sequence from " + project +".pdb model " + QString("%1").arg( temp_model.model_id ) + ": \n");

@@ -51,6 +51,8 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+
+   auto_ref_scan = true;
    
    // Ensure data directories are there
    QDir dir;
@@ -579,6 +581,12 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("JasonH_HHP1-comparison-MWL_041020");
    // QString invid    = QString("29");
    // QString aprofileguid = QString("fafe5452-eac9-44c6-b8e6-04b1b8b7e3d7");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/NielsenJ_AmyloidLL37-041822-37C-repeat-run1309");
+   // QString protname = QString("NielsenJ_AmyloidLL37-highconc-37C-v2");
+   // QString invid    = QString("115");
+   // QString aprofileguid = QString("bfcfa916-1c61-4084-8f3a-69ca98468d0b");
+   
    
    // QMap < QString, QString > protocol_details;
    // //protocol_details[ "status" ];
@@ -608,6 +616,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+
+   auto_ref_scan = true;
    
    // Ensure data directories are there
    QDir dir;
@@ -1242,6 +1252,8 @@ void US_ConvertGui::resetAll_auto( void )
 
    reset_auto();
 
+   auto_ref_scan = true;
+   
    le_status->setText( tr( "(no data loaded)" ) );
    subsets.clear();
    reference_start = 0;
@@ -1577,28 +1589,37 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      strncpy( chtype, allData[ 0 ].type, 2 );
      QString dataType = QString( chtype ).left( 2 );
      qDebug() << "Data type -- " << dataType;
+
+     if ( dataType == "IP" )
+       auto_ref_scan = false;
+
+     //TEMPORARY !!!!
      if ( dataType == "RI" )
        {
-	 double low_ref  = 5.87 - 0.005;
-	 double high_ref = 5.87 + 0.005;
-	 process_reference_auto( low_ref, high_ref );
+     	 double low_ref  = 5.87 - 0.005;
+     	 double high_ref = 5.87 + 0.005;
+     	 process_reference_auto( low_ref, high_ref );
 
-	 QMessageBox msgBox;
-	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
-	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
-	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
-	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
-	 	 
-	 msgBox.setIcon(QMessageBox::Question);
-	 msgBox.exec();
+	 auto_ref_scan = true;
+
+	 //record_import_status( auto_ref_scan, runType );
 	 
-	 if (msgBox.clickedButton() == Automatic) {
-	   return;
-	 }
-	 // else if (msgBox.clickedButton() == Manual) {
-	 //   cancel_reference();
-	 // }
+     	 QMessageBox msgBox;
+     	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
+     	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
+     	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+     	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
+     	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+      	 
+     	 msgBox.setIcon(QMessageBox::Question);
+     	 msgBox.exec();
+      
+     	 if (msgBox.clickedButton() == Automatic) {
+     	   return;
+     	 }
+     	 // else if (msgBox.clickedButton() == Manual) {
+     	 //   cancel_reference();
+     	 // }
        }
      //end of auto-processing reference range
 
@@ -1701,11 +1722,17 @@ void US_ConvertGui::process_optics()
      strncpy( chtype, allData[ 0 ].type, 2 );
      QString dataType = QString( chtype ).left( 2 );
      qDebug() << "Data type -- " << dataType;
+
+     if ( dataType == "IP" )
+       auto_ref_scan = false;
+     
      if ( dataType == "RI" )
        {
 	 double low_ref  = 5.87 - 0.005;
 	 double high_ref = 5.87 + 0.005;
 	 process_reference_auto( low_ref, high_ref );
+
+	 auto_ref_scan = true;
 
 	 QMessageBox msgBox;
 	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
@@ -4347,7 +4374,7 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // 	 le_description ->setText( outData[ tripDatax ]->description );
    //   }
    // else
-     le_description ->setText( outData[ tripDatax ]->description );
+   le_description ->setText( outData[ tripDatax ]->description );
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
@@ -4812,13 +4839,15 @@ void US_ConvertGui::process_reference_auto( const double low, const double high 
   reference_end = high;;
 
   data_plot->replot();
-  
+
+    
   // Calculate the averages for all triples
   PseudoCalcAvg();
-  
+
   // Now that we have the averages, let's replot
   Pseudo_reference_triple = tripListx;
-  
+
+ 
   // Default to displaying the first non-reference triple
   for ( int trx = 0; trx < outData.size(); trx++ )
     {
@@ -4835,6 +4864,8 @@ void US_ConvertGui::process_reference_auto( const double low, const double high 
       DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
    }
   lw_triple->setCurrentRow( tripListx );
+
+  
   plot_current();
   DbgLv(1) << "CGui: procref:  plot_current complete";
   QApplication::restoreOverrideCursor();
@@ -5000,8 +5031,14 @@ void US_ConvertGui::PseudoCalcAvg( void )
       }
 
       if ( count > 0 )
-         ExpData.RIProfile << sum / count;
-
+	{
+	  //ExpData.RIProfile << sum / count;
+	  
+	  if ( sum > 0 )
+	    ExpData.RIProfile << sum / count;
+	  else
+	    ExpData.RIProfile << 1.0; 
+	}
       else
          ExpData.RIProfile << 1.0;    // See the log10 function, later
 
@@ -5037,10 +5074,16 @@ void US_ConvertGui::PseudoCalcAvg( void )
    // Now calculate the pseudo-absorbance
    int ndxmax    = ExpData.RIProfile.size() - 1;
 
-   for ( int trx = 0; trx < outData.size(); trx++ )
+   // ATTENTION:
+   // below, goes over data for all triples && applies ExpData.RIProfile calculated for the reference triple only
+   // Ref. triple is (above): US_DataIO::RawData* referenceData = outData[ tripDatax ];
+   // triplDatax -- index of the currently selected triple
+   for ( int trx = 0; trx < outData.size(); trx++ )   
    {
       US_DataIO::RawData* currentData = outData[ trx ];
       int kcpoint   = currentData->pointCount();
+
+      //HERE: calculate ExpData.RIProfile for each triple..
 
       for ( int ss = 0; ss < currentData->scanCount(); ss++ )
       {
@@ -5289,6 +5332,10 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
 
    setTripleInfo();
 
+
+   //ALEXEY: set auto_ref_scan to FALSE
+   auto_ref_scan = false;
+
    pb_reference  ->setEnabled( true );
    pb_cancelref  ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
@@ -5302,6 +5349,7 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
    le_status->setText( tr( "The reference scans have been canceled." ) );
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
+
 }
 
 // Drop selected triples
@@ -5326,7 +5374,30 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
    // Modify triples or cell/channels and wavelengths for specified excludes
    if ( selsiz > 0 )
-   {
+     {
+       //check if there will be any data left
+       if ( (out_triples.size() - selsiz) <= 0 )
+	 {
+	   int stat     = QMessageBox::warning( this,
+						tr( "All Data To Be Dropped" ),
+						tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+						    "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+						    "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+						    "NOTE: The program will be reset; you will no longer be able to process current run "
+						    "with this program<br>"),
+						tr( "&Proceed" ), tr( "&Cancel" ) );
+	   
+	   if ( stat != 0 ) 
+	     return;
+	   
+	   //delete autoflow record & return to Run Manager
+	   delete_autoflow_record();
+	   resetAll_auto();
+	   emit saving_complete_back_to_initAutoflow( );
+	   return;
+	 }
+       //End of preliminary check for remaining data
+     
       for ( int ss = 0; ss < selsiz; ss++ )
       {  // Mark selected triples as excluded
          int trx    = all_triples.indexOf( selected[ ss ] );
@@ -5367,6 +5438,30 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 		  
 		  if ( status != 0 ) return;
 
+		  //Now check for remainig data using "cellchannel"
+		  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
+		    {
+		      int stat     = QMessageBox::warning( this,
+							   tr( "All Data To Be Dropped" ),
+							   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+							       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+							       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+							       "NOTE: The program will be reset; you will no longer be able to process current run "
+							       "with this program<br>"),
+							   tr( "&Proceed" ), tr( "&Cancel" ) );
+		      
+		      if ( stat != 0 ) 
+			return;
+		      
+		      //delete autoflow record & return to Run Manager
+		      //delete_autoflow_record();
+		      resetAll_auto();
+		      emit saving_complete_back_to_initAutoflow( );
+		      return;
+		    }
+		  //End of final check for remaining data
+		  
+
 		  //Mark channel to be dropped - for exclusion of the report
 		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
 		  qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
@@ -5402,6 +5497,14 @@ DbgLv(1) << "DelTrip: bldout  RTN";
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+   
 }
 
 //Check if triple is the reference one for a channel..
@@ -5574,21 +5677,84 @@ bool US_ConvertGui::bool_flag( const QString xmlattr )
    return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
 }
 
+int US_ConvertGui::check_for_data_left( QString chann, QString type )
+{
+  int triples_to_exclude = 0;
+
+  if ( type == "channel" )
+    {
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	{  // Mark matching triples as excluded
+	  QString tchan = QString( all_triples[ trx ] )
+	    .section( "/", 1, 1 ).simplified();
+	  
+	  if ( tchan == chann )
+	    {
+	      ++triples_to_exclude;
+	    }
+	}
+    }
+
+  if ( type == "cellchannel" )
+    {
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	{  // Mark matching triples as excluded
+	  QString tcelchn = QString( all_triples[ trx ] )
+	    .section( "/", 0, 1 ).simplified();
+	  
+	  if ( tcelchn == chann )
+	    {
+	      ++triples_to_exclude;
+	    }
+	}
+    }
+  
+  
+  int triples_left = out_triples.size() - triples_to_exclude;
+
+  qDebug() << "In check_for_left_data(): triples_left: " << out_triples.size() << " - " << triples_to_exclude << " = " << triples_left;
+  
+  return triples_left;
+}
 
 // Drop the triples for the selected channel (all A's or B's) ('Drop All Channel 'A's')
 void US_ConvertGui::drop_channel()
 {
-   QString chann  = lw_triple->currentItem()->text()
+  QString chann  = lw_triple->currentItem()->text()
                     .section( "/", 1, 1 ).simplified();  // "A" or "B"  
-   int status     = QMessageBox::information( this,
-      tr( "Drop Triples with Selected Channel" ),
-      tr( "You have selected a list item that implies you wish to"
-          " drop triples that have channel '%1'\n\n"
-          "If that is what you intend, click \"Proceed\".\n\n"
-          "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
-      tr( "&Proceed" ), tr( "&Cancel" ) );
 
-   if ( status != 0 ) return;
+  //check if there will be any data left
+  if ( check_for_data_left( chann, "channel" ) <= 0 )
+    {
+      int stat     = QMessageBox::warning( this,
+					   tr( "All Data To Be Dropped" ),
+					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "NOTE: The program will be reset; you will no longer be able to process current run "
+					       "with this program<br>"),
+					   tr( "&Proceed" ), tr( "&Cancel" ) );
+      
+      if ( stat != 0 ) 
+	return;
+
+      //delete autoflow record & return to Run Manager
+      delete_autoflow_record();
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow( );
+      return;
+    }
+  //End of checking for remaining triples
+  
+  int status     = QMessageBox::information( this,
+					     tr( "Drop Triples with Selected Channel" ),
+					     tr( "You have selected a list item that implies you wish to"
+						 " drop triples that have channel '%1'\n\n"
+						 "If that is what you intend, click \"Proceed\".\n\n"
+						 "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
+					     tr( "&Proceed" ), tr( "&Cancel" ) );
+  
+  if ( status != 0 ) return;
 
    //identify all dropped channels
    for (int ii = 0; ii < lw_triple->count(); ii++)
@@ -5621,13 +5787,47 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
 }
 
 // Drop the triples for the selected cell/channel ('Drop Selected Data')
 void US_ConvertGui::drop_cellchan()
 {
-   QString celchn = lw_triple->currentItem()->text()
-                    .section( "/", 0, 1 ).simplified();  // "1 / A"
+  QString celchn = lw_triple->currentItem()->text()
+    .section( "/", 0, 1 ).simplified();  // "1 / A"
+  
+  //check if there will be any data left
+  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
+    {
+      int stat     = QMessageBox::warning( this,
+					   tr( "All Data To Be Dropped" ),
+					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "NOTE: The program will be reset; you will no longer be able to process current run "
+					       "with this program<br>"),
+					   tr( "&Proceed" ), tr( "&Cancel" ) );
+      
+      if ( stat != 0 ) 
+	return;
+
+      //delete autoflow record & return to Run Manager
+      delete_autoflow_record();
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow( );
+      return;
+    }
+  //End of checking for remaining triples
+   
+
+   
    int status     = QMessageBox::information( this,
       tr( "Drop Triples of Selected Cell/Channel" ),
       tr( "You have selected a list item that implies you wish to"
@@ -5662,6 +5862,13 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 }
 
 
@@ -6263,12 +6470,12 @@ DbgLv(1) << "Writing to database";
          {
             saveUS3Disk();        // Save AUCs to disk
             writeTimeStateDisk(); // Save TimeState to disk
-DbgLv(1) << "Writing to disk";
+	    DbgLv(1) << "Writing to disk";
          }
       } // End of 'spx' for loop (counts for each speed step)
    } // End of 'else' loop for multispeed case
-
-
+   
+   
    // bool all_processed = true;
    // // *** CHECK if all Optics types processed **** //
    // QMap<QString, int>::iterator os;
@@ -6280,6 +6487,13 @@ DbgLv(1) << "Writing to disk";
    // 	   break;
    // 	 }
    //   }
+
+//Now, make a record on was the Reference Scan defined automatically (for "RI" type) && who did SAVE the data
+   if ( us_convert_auto_mode )
+     {
+       record_import_status( auto_ref_scan, runType );
+     }
+   
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -6391,6 +6605,151 @@ DbgLv(1) << "Writing to disk";
      }
 }
 
+
+//Record RI or IP  status to autoflowStatus
+void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
+{
+  autoflowStatusID = 0;
+  QString importRI_Json;
+  QString importIP_Json;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN US_convert, record RI status: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+
+  //first, check if there is already a record in autoflowStatus with autoflowID == autoflowID_passed;
+  // that is a scenario for combined RI+IP type
+  // if there IS record, update it; otherwise create a new one..
+
+  qry << "get_autoflowStatus_id" << QString::number( autoflowID_passed );
+  autoflowStatusID = db->functionQuery( qry );
+
+  qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+  qDebug() << "runtype -- "          << runtype;
+  
+  qry.clear();
+  
+  if ( runtype == "RI")
+    {
+      QString refScan = auto_ref ? QString("automated") : QString("manual");
+	
+      importRI_Json. clear();
+      importRI_Json += "{ \"Person\": ";
+
+      importRI_Json += "[{";
+      importRI_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      importRI_Json += "\"fname\":\""  + fname                     + "\",";
+      importRI_Json += "\"lname\":\""  + lname                     + "\",";
+      importRI_Json += "\"email\":\""  + email                     + "\",";
+      importRI_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      importRI_Json += "}],";
+
+      importRI_Json += "\"RefScan\": \"" + refScan + "\"";
+      
+      importRI_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusRI_record"
+	      << QString::number( autoflowID_passed )
+	      << importRI_Json;
+
+	  //qDebug() << "new_autoflowStatusRI_record qry -- " << qry;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusRI_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << importRI_Json;
+
+	  db->query( qry );
+	}
+    }
+
+  if ( runtype == "IP" )
+    {
+      QString refScan = auto_ref ? QString("automated") : QString("manual");
+      
+      importIP_Json. clear();
+      importIP_Json += "{ \"Person\": ";
+
+      importIP_Json += "[{";
+      importIP_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      importIP_Json += "\"fname\":\""  + fname                     + "\",";
+      importIP_Json += "\"lname\":\""  + lname                     + "\",";
+      importIP_Json += "\"email\":\""  + email                     + "\",";
+      importIP_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      importIP_Json += "}],";
+
+      importIP_Json += "\"RefScan\": \"" + refScan + "\"";
+      
+      importIP_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusIP_record"
+	      << QString::number( autoflowID_passed )
+	      << importIP_Json;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusIP_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << importIP_Json;
+
+	  db->query( qry );
+	}      
+    }
+
+  if ( !autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (IMPORT {RI,IP}): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+      
+      return;
+    }
+
+  qDebug() << "in record_import_status: importRI_Json,importIP_Json -- " << importRI_Json << "\n" << importIP_Json;
+} 
+
+
 //Update autoflow record upon Editing completion
 void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 {
@@ -6437,17 +6796,30 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 	   return;
 	 }
      }
-
    qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
    details_at_editing[ "intensityID" ] = QString::number( autoflowIntensityID );
+
+
+   //Now check if autoflowStatus record was created:
+   if ( !autoflowStatusID )
+     {
+       QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			     tr( "autoflowStatus (IMPORT {RI,IP}): There was a problem with creating a record in autoflowStatus table \n" ) );
+       
+       return;
+     }
+   qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+   details_at_editing[ "statusID" ] = QString::number( autoflowStatusID );
    
-   //update autoflow record
+   
+   //finally, update autoflow record
    qry.clear();
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
        << filename_toDB
        << OptimaName
-       << QString::number( autoflowIntensityID );
+       << QString::number( autoflowIntensityID )
+       << QString::number( autoflowStatusID );
 
    qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
@@ -8117,8 +8489,21 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
             rr++;
          }
 
-         double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
-         ri_prof           << rip_avg;
+
+	 //ALEXEY: check for non-positive data (sum):
+	 double rip_avg;
+	 //double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
+	 if ( count > 0 )
+	   {
+	     if ( sum > 0 )
+	       rip_avg =  sum / (double)count;
+	     else
+	       rip_avg = 1.0; 
+	   }
+	 else
+	   rip_avg = 1.0;  
+
+	 ri_prof           << rip_avg;
          ExpData.RIProfile << rip_avg;
 
       } // END: scan loop for reference triple
@@ -8522,7 +8907,7 @@ void US_ConvertGui::build_output_data()
         outx++;
     }
     DbgLv(1) << "CGui: BOD: outsz" << outData.size();
-   }
+}
 
 
 // Turn ct_tolerance connection on or off

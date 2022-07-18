@@ -346,10 +346,11 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
 
       for ( int i = 0; i < allCBoxes.count(); i++ )
       {
-         if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
-            allCBoxes[i]->setEnabled(true);
-         else
-            allCBoxes[i]->setEnabled(false);
+	if ( (allCBoxes[i]->currentText()).contains("Speed Profile") ||
+	     ( allCBoxes[i]->currentText()).contains(": Optima") )
+	  allCBoxes[i]->setEnabled(true);
+	else
+	  allCBoxes[i]->setEnabled(false);
       }
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(false);
@@ -531,7 +532,10 @@ void US_ExperGuiGeneral::update_inv( void )
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-   //update_inv();
+  //update_inv();                                                       //ALEXEY: this might be needed!!!
+  // MAYBE check for actual usr_level &&  US_Settings::set_us_inv_level( level ) ONLY!!! (NO inv_id && NO inv name)
+
+  
    // Default flag:  user not enabled to change investigator
    usr_enab       = false;
    int inv_lev    = US_Settings::us_inv_level();
@@ -542,6 +546,7 @@ void US_ExperGuiGeneral::check_user_level()
    {  // All admin users and above are enabled
       usr_enab       = true;
    }
+   /*
    else
    {  // Non-admin users enabled if they have instrument permit
       int inv_id     = US_Settings::us_inv_ID();
@@ -604,7 +609,7 @@ void US_ExperGuiGeneral::check_user_level()
          }
       }
    } // END: Test of non-admin instrument permit
-
+   */
 
    if ( ! usr_enab )
    {  // User not enabled to set investigator

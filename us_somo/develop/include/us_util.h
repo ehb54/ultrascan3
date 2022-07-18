@@ -337,10 +337,10 @@ class US_EXTERN US_Static {
    static QTreeWidgetItem * lv_lastItem( QTreeWidget *lv );
 
 #if QT_VERSION >= 0x040000
-   static double getDouble(const QString & title, const QString & label, double value = 0, double min = -2147483647, double max = 2147483647, int decimals = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
-   static int getInteger(const QString & title, const QString & label, int value = 0, int min = -2147483647, int max = 2147483647, int step = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
-   static QString getItem(const QString & title, const QString & label, const QStringList & list, int current = 0, bool editable = true, bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
-   static QString getText(const QString & title, const QString & label, QLineEdit::EchoMode echo = QLineEdit::Normal, const QString & text = QString(), bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
+   static double getDouble(const QString & title, const QString & label, double value = 0, double min = -2147483647, double max = 2147483647, int decimals = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
+   static int getInteger(const QString & title, const QString & label, int value = 0, int min = -2147483647, int max = 2147483647, int step = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
+   static QString getItem(const QString & title, const QString & label, const QStringList & list, int current = 0, bool editable = true, bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
+   static QString getText(const QString & title, const QString & label, QLineEdit::EchoMode echo = QLineEdit::Normal, const QString & text = QString(), bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
    // static FILE * us_fopen( QString f, const char *mode );
    static int us_message(const QString & title, const QString & text, const QString & buttonText = QString(), QWidget * parent = 0, const char * name = 0);
 #endif

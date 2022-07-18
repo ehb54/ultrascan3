@@ -107,6 +107,7 @@ MASS     _SC	   32.06000
 MASS     _SH1E	   32.06000
 MASS     _S	   32.06000
 MASS     _SOXX	   32.06000
+MASS	 _SXXX     32.06000
 MASS     _SXXXX	   32.06000
 MASS     _PXXXX	   30.97000
 MASS     _FX	   19.00000
@@ -115,6 +116,8 @@ MASS     _BrX	   79.90400
 MASS     _IX	   126.9040
 MASS     _Cu       63.55000 !Cu2+
 MASS     _Zn       65.40000 !Zn2+
+MASS     _Eh       1.0008
+MASS     _CGLIP    48.00000 !Coarse grained Lipid GAS
 END
 !======================================================================
 

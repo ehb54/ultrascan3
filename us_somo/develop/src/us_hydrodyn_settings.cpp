@@ -1298,7 +1298,7 @@ void US_Hydrodyn::write_config(const QString& fname)
    QFile f;
    QString str;
    f.setFileName( fname );
-   QTextStream( stdout ) << fname << endl;
+   QTextStream( stdout ) << fname << Qt::endl;
    if ( f.open( QIODevice::WriteOnly ) ) // first try user's directory for default settings
    {
       QTextStream ts(&f);
@@ -2225,7 +2225,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    saxs_options.dummy_saxs_names.clear( );
    if ( parameters.count( "saxs_options.dummy_saxs_names" ) )
    {
-      QStringList qsl_tmp = (parameters[ "saxs_options.dummy_saxs_names" ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl_tmp = (parameters[ "saxs_options.dummy_saxs_names" ] ).split( "\n" , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
          saxs_options.dummy_saxs_names.push_back( qsl_tmp[ i ] );
@@ -2235,7 +2235,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    batch.file.clear( );
    if ( parameters.count( "batch.file" ) )
    {
-      QStringList qsl_tmp = (parameters[ "batch.file" ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl_tmp = (parameters[ "batch.file" ] ).split( "\n" , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
          batch.file.push_back( qsl_tmp[ i ] );
@@ -2245,7 +2245,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    save_params.field.clear( );
    if ( parameters.count( "save_params.field" ) )
    {
-      QStringList qsl_tmp = (parameters[ "save_params.field" ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl_tmp = (parameters[ "save_params.field" ] ).split( "\n" , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
          save_params.field.push_back( qsl_tmp[ i ] );
@@ -2273,12 +2273,12 @@ bool US_Hydrodyn::load_config_json ( QString &json )
       directory_history      .clear( );
       directory_last_access  .clear( );
       directory_last_filetype.clear( );
-      QStringList qsl_tmp1 = (parameters[ "directory_history"     ] ).split( "\n" , QString::SkipEmptyParts );
-      QStringList qsl_tmp2 = (parameters[ "directory_last_access" ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl_tmp1 = (parameters[ "directory_history"     ] ).split( "\n" , Qt::SkipEmptyParts );
+      QStringList qsl_tmp2 = (parameters[ "directory_last_access" ] ).split( "\n" , Qt::SkipEmptyParts );
       QStringList qsl_tmp3;
       if ( parameters.count( "directory_last_filetype" ) )
       {
-         qsl_tmp3 = (parameters[ "directory_last_filetype" ] ).split( "\n" , QString::SkipEmptyParts );
+         qsl_tmp3 = (parameters[ "directory_last_filetype" ] ).split( "\n" , Qt::SkipEmptyParts );
          if ( qsl_tmp3.size() != qsl_tmp2.size() )
          {
             // us_qdebug( QString( "tmp3 cleared %1 %2" ).arg( qsl_tmp3.size() ).arg( qsl_tmp2.size() ) );
@@ -2451,7 +2451,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    ts << hydro.overlap << "\t\t# overlap value\n";
 
    ts << pdb_vis.visualization << "\t\t# PDB visualization option\n";
-   ts << pdb_vis.filename << endl; // "\t\t# RasMol color filename\n";
+   ts << pdb_vis.filename << Qt::endl; // "\t\t# RasMol color filename\n";
 
    ts << pdb_parse.skip_hydrogen << "\t\t# skip hydrogen atoms?\n";
    ts << pdb_parse.skip_water << "\t\t# skip water molecules?\n";
@@ -2607,24 +2607,24 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    ts << batch.file.size() << "\t\t# batch number of files to follow\n";
    for ( unsigned int i = 0; i < batch.file.size(); i++ )
    {
-      ts << batch.file[i] << endl;
+      ts << batch.file[i] << Qt::endl;
    }
 
    ts << save_params.field.size() << "\t\t# save params number of fields to follow\n";
    for ( unsigned int i = 0; i < save_params.field.size(); i++ )
    {
-      ts << save_params.field[i] << endl;
+      ts << save_params.field[i] << Qt::endl;
    }
 
-   ts << path_load_pdb << endl;
-   ts << path_view_pdb << endl;
-   ts << path_load_bead_model << endl;
-   ts << path_view_asa_res << endl;
-   ts << path_view_bead_model << endl;
-   ts << path_open_hydro_res << endl;
-   ts << saxs_options.path_load_saxs_curve << endl;
-   ts << saxs_options.path_load_gnom << endl;
-   ts << saxs_options.path_load_prr << endl;
+   ts << path_load_pdb << Qt::endl;
+   ts << path_view_pdb << Qt::endl;
+   ts << path_load_bead_model << Qt::endl;
+   ts << path_view_asa_res << Qt::endl;
+   ts << path_view_bead_model << Qt::endl;
+   ts << path_open_hydro_res << Qt::endl;
+   ts << saxs_options.path_load_saxs_curve << Qt::endl;
+   ts << saxs_options.path_load_gnom << Qt::endl;
+   ts << saxs_options.path_load_prr << Qt::endl;
 
    ts << asa.hydrate_probe_radius << "\t\t#asa.hydrate_probe_radius\n";
    ts << asa.hydrate_threshold << "\t\t#asa.hydrate_threshold\n";
@@ -2679,10 +2679,10 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    ts << saxs_options.compute_saxs_coeff_for_bead_models << "\t\t#saxs_options.compute_saxs_coeff_for_bead_models\n";
    ts << saxs_options.compute_sans_coeff_for_bead_models << "\t\t#saxs_options.compute_sans_coeff_for_bead_models\n";
 
-   ts << saxs_options.default_atom_filename << endl;
-   ts << saxs_options.default_hybrid_filename << endl;
-   ts << saxs_options.default_saxs_filename << endl;
-   ts << saxs_options.default_rotamer_filename << endl;
+   ts << saxs_options.default_atom_filename << Qt::endl;
+   ts << saxs_options.default_hybrid_filename << Qt::endl;
+   ts << saxs_options.default_saxs_filename << Qt::endl;
+   ts << saxs_options.default_rotamer_filename << Qt::endl;
 
    ts << saxs_options.steric_clash_distance         << "\t\t#saxs_options.steric_clash_distance        \n";
    ts << saxs_options.steric_clash_recheck_distance << "\t\t#saxs_options.steric_clash_recheck_distance\n";
@@ -2702,7 +2702,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    ts << saxs_options.iqq_ask_target_grid << "\t\t#saxs_options.iqq_ask_target_grid\n";
    ts << saxs_options.iqq_scale_play << "\t\t#saxs_options.iqq_scale_play\n";
    ts << saxs_options.swh_excl_vol << "\t\t#saxs_options.swh_excl_vol\n";
-   ts << saxs_options.iqq_default_scaling_target << endl;
+   ts << saxs_options.iqq_default_scaling_target << Qt::endl;
 
    ts << saxs_options.saxs_iq_hybrid_adaptive << "\t\t#saxs_options.saxs_iq_hybrid_adaptive\n";
    ts << saxs_options.sans_iq_hybrid_adaptive << "\t\t#saxs_options.sans_iq_hybrid_adaptive\n";
@@ -3270,6 +3270,10 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "thresh_SS"                  ]         = "2.5";
    gparams[ "thresh_carb_O"              ]         = "2";
    gparams[ "thresh_carb_N"              ]         = "2";
+
+   gparams[ "vdw_inflate"                ]         = "false";
+   gparams[ "vdw_inflate_mult"           ]         = "1";
+
 }
 
 void US_Hydrodyn::set_default()
@@ -3285,7 +3289,7 @@ void US_Hydrodyn::set_default()
       j=read_config(f);
       if ( j )
       {
-         QTextStream( stdout ) << "read config returned " << j << endl;
+         QTextStream( stdout ) << "read config returned " << j << Qt::endl;
          US_Static::us_message(us_tr("Please note:"),
                               us_tr("The somo.default configuration file was found to be corrupt.\n"
                                  "Resorting to hard-coded defaults."));
@@ -3861,7 +3865,7 @@ QString US_Hydrodyn::default_differences_hydro()
    }
    if ( hydro.grpy_bead_inclusion != default_hydro.grpy_bead_inclusion )
    {
-      str += QString(base + "Inclusion of Buried Beads in vdW GRPY Hydrodynamic Calculations: %1\n")
+      str += QString(base + "Inclusion of Buried Beads in GRPY Hydrodynamic Calculations: %1\n")
          .arg(hydro.grpy_bead_inclusion ? "Include" : "Exclude");
    }
    if ( hydro.rotational != default_hydro.rotational &&

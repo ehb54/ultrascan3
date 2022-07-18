@@ -194,10 +194,17 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    // list models & concs
    
    QString use_color = "black";
+   bool nnls_zero_list =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] == "true" : false;
+
    for ( unsigned int i = 0; i < use_x.size(); i++ )
    {
       if ( rescaled_x[i] == 0 )
       {
+         if ( !nnls_zero_list ) {
+            continue;
+         }
          use_color = "gray";
       } else {
          if ( rescaled_x[i] < .1 )
@@ -688,12 +695,19 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    
    vector < double > rescaled_x = rescale(use_x);
    // list models & concs
-   
+
+   bool nnls_zero_list =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] == "true" : false;
+
    QString use_color = "black";
    for ( unsigned int i = 0; i < use_x.size(); i++ )
    {
       if ( rescaled_x[i] == 0 )
       {
+         if ( !nnls_zero_list ) {
+            continue;
+         }
          use_color = "gray";
       } else {
          if ( rescaled_x[i] < .1 )

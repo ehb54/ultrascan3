@@ -1,0 +1,15 @@
+docker based release package creation
+
+
+ubuntu:
+./buildpkg.pl
+read the notes displayed when running
+
+
+to do -
+
+qwt_version=6.1.6 is hard coded in the local.pri.somo so we need to change this & in the codeql container & workflow/codeql-analysis.yml
+
+build dockerfile for redhat based releases (6?,7,8)
+
+

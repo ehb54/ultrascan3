@@ -1976,7 +1976,8 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
             {
                bsub_error.resize( negative_pos );
             }
-         }            
+         }
+         break;
       case 1 : // use absolute value
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {
@@ -3278,11 +3279,11 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -6585,16 +6586,16 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -7079,7 +7080,8 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
             {
                bsub_error.resize( negative_pos );
             }
-         }            
+         }
+         break;
       case 1 : // use absolute value
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {

@@ -21,12 +21,12 @@ namespace US_WinData
 
     P_GLOBFITEQ,                                // Global Fit Menu
 
-    P_GETDATA,      P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
+    P_GETDATA,      P_GMPRPT,       P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
     P_VIEWCFA,      P_VIEWXPN,      P_VIEWTMST,
-    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC,
+    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS,
 
     P_VIEWMWL,      P_VIEWMSS,      P_MWSPECF,  // MultiWavelength Menu
     P_MWFSIMU,
@@ -164,7 +164,12 @@ namespace US_WinData
       QObject::tr( "Acquisition Experimental Data Routine" ),
       QObject::tr( "Acquisition Experimental Data Program" )
     },
-    
+
+    { P_GMPRPT,    1, 0, "us_reporter_gmp",
+      QObject::tr( "Loading GMP Report Generator" ),
+      QObject::tr( "GMP Report Generator Program" )
+    },
+            
     { P_CONVERT,  1, 0, "us_convert",
       QObject::tr( "Loading Experimental Data Import Routine" ),
       QObject::tr( "Experimental Data Import Program" )
@@ -198,7 +203,8 @@ namespace US_WinData
     { P_RPTGEN,    1, 0, "us_reporter",
       QObject::tr( "Loading Report Generator" ),
       QObject::tr( "Report Generator Program" )
-    },
+    },   
+    
 
     { P_ROTORCAL,  1, 0, "us_rotor_calibration",
       QObject::tr( "Loading Rotor Calibration" ),
@@ -260,14 +266,19 @@ namespace US_WinData
       QObject::tr( "Decompose Wavelength Spectrum into Basis Spectra"  )
     },
 
+    { P_PSEUDO_ABS,  0, 0, "us_pseudo_absorbance",
+      QObject::tr( "Loading Pseudo-Absorbance Program" ),
+      QObject::tr( "Managing Reference Scans Program" )
+    },
+
     { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
       QObject::tr( "Loading View Multiwavelength Data"    ),
       QObject::tr( "View Multiwavelength Data Program"    )
     },
 
     { P_VIEWMSS,   0, 0, "us_mwl_spectra",
-      QObject::tr( "Loading View Multiwavelength S-Spectra"  ),
-      QObject::tr( "View Multiwavelength S-Spectra Program"  )
+      QObject::tr( "Loading View Multiwavelength Spectra"  ),
+      QObject::tr( "View Multiwavelength Spectra Program"  )
     },
 
     { P_MWSPECF,   0, 0, "us_mwl_species_fit",

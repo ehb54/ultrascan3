@@ -18,12 +18,12 @@
 #include <list>
 #include <vector>
 #include <complex>
+#include "us_saxs_util.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_vector.h"
 #include "us_json.h"
 #include "us_timer.h"
 #include "us_sh.h"
-#include "us_saxs_util.h"
 #include "us_hydrodyn_pat.h"
 #include "../shd_mpi/shs_use.h"
 

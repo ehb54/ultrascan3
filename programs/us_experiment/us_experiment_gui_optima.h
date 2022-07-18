@@ -828,7 +828,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
-      void    saveRunProtocol ( void );  // Save the Run Protocol
+      bool    saveRunProtocol ( void );  // Save the Run Protocol
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
       int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report

@@ -1,11 +1,6 @@
 #ifndef US_HYDRODYN_ADDRESIDUE_H
 #define US_HYDRODYN_ADDRESIDUE_H
 
-#include "us_hydrodyn_pdbdefs.h"
-#include "us.h"
-#include "us_extern.h"
-#include "us_util.h"
-
 #include <qgroupbox.h>
 #include <qradiobutton.h>
 #include <qwidget.h>
@@ -24,6 +19,12 @@
 //Added by qt3to4:
 #include <QCloseEvent>
 #include <math.h>
+
+#include "us.h"
+#include "us_hydrodyn_pdbdefs.h"
+#include "us_extern.h"
+#include "us_util.h"
+
 
 class US_AddResidue : public QWidget
 {

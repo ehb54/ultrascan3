@@ -1469,7 +1469,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    HFIT::use_errors = use_errors;
 
-   //    QStringList qsl = (le_fix_curves->text().split( "," , QString::SkipEmptyParts ) );
+   //    QStringList qsl = (le_fix_curves->text().split( "," , Qt::SkipEmptyParts ) );
 
    //    for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
    //    {

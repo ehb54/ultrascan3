@@ -1850,7 +1850,7 @@ inline void Scanner::preCode()
     // optionally replace by your own code
 }
 
-inline void Scanner::postCode(PostEnum__ type) 
+inline void Scanner::postCode(PostEnum__ /* type */ ) 
 {
     // optionally replace by your own code
 }
@@ -6047,7 +6047,7 @@ inline void Parser::print()
     print__();           // displays tokens if --print was specified
 }
 
-inline void Parser::exceptionHandler__(std::exception const &exc)         
+inline void Parser::exceptionHandler__(std::exception const & /* exc */ )         
 {
     throw;              // re-implement to handle exceptions thrown by actions
 }
@@ -7935,7 +7935,7 @@ template <typename DistanceType, typename ComponentType>
 template <class BBOX>
 bool 
 NanoFLANNDatasetAdaptor<DistanceType, ComponentType>::
-  kdtree_get_bbox(BBOX &bb) const {
+kdtree_get_bbox(BBOX & /* bb */ ) const {
 
   return false;
 }

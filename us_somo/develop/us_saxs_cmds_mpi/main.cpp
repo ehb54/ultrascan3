@@ -35,7 +35,7 @@ int main (int argc, char **argv)
                 "pm            \tcontrolfile\n"
                 "              \tperform pm\n"
                 "json          \tjson\n"
-                "              \tprocess commands form json provided as command line argument\n"
+                "              \tprocess commands from json provided as command line argument\n"
                 , argv[0]
                 );
       }

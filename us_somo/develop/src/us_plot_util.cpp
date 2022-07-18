@@ -3,6 +3,82 @@
 #include <QTextStream>
 #include <limits>
 
+#define TSO QTextStream( stdout )
+
+static QRegExp rx_eb = QRegExp( QString( "%1%2" ).arg( "^" ).arg( UPU_EB_PREFIX ) );
+
+void US_Plot_Util::eb_handling(
+                              vector < QString >                   titles,
+                              vector < vector < double > >         x,
+                              vector < vector < double > >         y,
+                              map < QString, vector < double > > & e
+                              ) {
+
+   int curves = (int) titles.size();
+
+   // TSO << "eb_handling\ntitles.size() " << titles.size() << "\n";
+
+   QStringList qsl_titles;
+   map < QString, int > count_by_title;
+   map < QString, int > last_pos_by_title;
+
+   for ( int i = 0; i < curves; i++ ) {
+      qsl_titles << titles[ i ];
+      // TSO << i << " : " << titles[ i ] << " x size " << x[ i ].size() << "\n";
+      count_by_title   [ titles[ i ] ]++;
+      last_pos_by_title[ titles[ i ] ] = i;
+   }
+
+   QStringList eb_titles = qsl_titles.filter( rx_eb );
+
+   // TSO << "eb_titles.size() " << eb_titles.size() << "\n";
+
+   // for ( int i = 0; i < (int) x.size(); ++i ) {
+   //    TSO << i << " : ";
+   //    for ( int j = 0; j < (int) x[i].size(); ++j ) {
+   //       TSO << " " << x[ i ][ j ];
+   //    }
+   //    TSO << "\n";
+   // }
+   
+   // processing
+
+   // step one, build up error x, y vectors for each name into map < QString > e
+   // if x == e
+   map < QString, vector < double > > possible_x;
+   map < QString, vector < double > > possible_e;
+   
+   for ( int i = 0; i < curves; i++ ) {
+      if ( titles[ i ].contains( rx_eb )
+           && x[ i ].size() == 2
+           && y[ i ].size() == 2 ) {
+         QString match_title = titles[ i ];
+         match_title.replace( rx_eb, "" );
+         // TSO << "--> rplc " << titles[ i ] << " -> " << match_title << "\n";
+         possible_x[ match_title ].push_back( x[ i ][ 0 ] );
+         possible_e[ match_title ].push_back( ( y[ i ][ 1 ] - y[ i ][ 0 ] ) * 0.5 );
+      }
+   }
+
+   // store e for good matches
+
+   for ( auto it = possible_x.begin();
+         it != possible_x.end();
+         ++it ) {
+      // qDebug() << "checking " << it->first;
+      // US_Vector::printvector2( it->first, it->second, possible_e[ it->first ] );
+      if ( count_by_title.count( it->first )
+           && count_by_title[ it->first ]         == 1
+           && x[ last_pos_by_title[ it->first ] ] == it->second ) {
+         // qDebug() << "good match found for " << it->first;
+         e[ it->first ] = possible_e[ it->first ];
+      }
+   }
+
+   // qDebug() << "eb_handling return\n";
+   return;
+}
+
 bool US_Plot_Util::printtofile( QString basename,
                                 map < QString, QwtPlot * > plots, 
                                 QString & errors,
@@ -10,6 +86,8 @@ bool US_Plot_Util::printtofile( QString basename,
 {
    errors   = "";
    messages = "";
+
+   // qDebug() << "printtofile called " << basename;
 
    bool any_plotted = false;
 
@@ -20,6 +98,7 @@ bool US_Plot_Util::printtofile( QString basename,
       vector < QString > titles;
       vector < vector < double > > x;
       vector < vector < double > > y;
+      map < QString, vector < double > > e;
 
       int max_rows = 0;
       int curves   = 0;
@@ -61,9 +140,12 @@ bool US_Plot_Util::printtofile( QString basename,
             {
                max_rows = (int) tmp_x.size();
             }
-            curves++;
          }
       }
+
+      eb_handling( titles, x, y, e );
+
+      curves = (int) titles.size();
 
       if ( curves && max_rows )
       {
@@ -72,9 +154,9 @@ bool US_Plot_Util::printtofile( QString basename,
 
          if ( QFileInfo( filename ).exists() )
          {
-            int ext = 1;
+            int ext = 0;
             do {
-               filename = basename + plotname + QString( "-%1" ).arg( ext ) + ".csv";
+               filename = basename + plotname + QString( "-%1" ).arg( ++ext ) + ".csv";
             } while ( QFileInfo( filename ).exists() );
          }
             
@@ -100,7 +182,7 @@ bool US_Plot_Util::printtofile( QString basename,
          }
 
          if ( skipx && (int) skipx_vals.size() != curves - 1 ) {
-            us_qdebug( "fix up" );
+            // us_qdebug( "fix up" );
             vector < vector < double > > new_x;
             vector < vector < double > > new_y;
 
@@ -141,14 +223,19 @@ bool US_Plot_Util::printtofile( QString basename,
 
          for ( int i = 0; i < curves; ++i )
          {
-            if ( skipx ) {
-               if ( i ) {
-                  ts << "\"" + titles[ i ] + "\",";
+            if ( !titles[ i ].contains( rx_eb ) ) {
+               if ( skipx ) {
+                  if ( i ) {
+                     ts << "\"" + titles[ i ] + "\",";
+                  } else {
+                     ts << "\"Frame\",\"" + titles[ i ] + "\",";
+                  }
                } else {
-                  ts << "\"Frame\",\"" + titles[ i ] + "\",";
+                  ts << "\"" + titles[ i ] + ":x\",\"" + titles[ i ] + ":y\",";
+                  if ( e.count( titles[ i ] ) ) {
+                     ts << "\"" + titles[ i ] + ":e\",";
+                  }
                }
-            } else {
-               ts << "\"" + titles[ i ] + ":x\",\"" + titles[ i ] + ":y\",";
             }
          }
          ts << "\n";
@@ -159,17 +246,28 @@ bool US_Plot_Util::printtofile( QString basename,
          {
             for ( int i = 0; i < curves; i++ )
             {
-               if ( skipx && i ) {
-                  if ( j < (int) x[ i ].size() ) {
-                     ts << y[ i ][ j ] << ",";
+               if ( !titles[ i ].contains( rx_eb ) ) {
+                  if ( skipx && i ) {
+                     if ( j < (int) x[ i ].size() ) {
+                        ts << y[ i ][ j ] << ",";
+                     } else {
+                        ts << ",";
+                        if ( e.count( titles[ i ] ) ) {
+                           ts << ",";
+                        }
+                     }
                   } else {
-                     ts << ",";
-                  }
-               } else {
-                  if ( j < (int) x[ i ].size() ) {
-                     ts << x[ i ][ j ] << "," << y[ i ][ j ] << ",";
-                  } else {
-                     ts << ",,";
+                     if ( j < (int) x[ i ].size() ) {
+                        ts << x[ i ][ j ] << "," << y[ i ][ j ] << ",";
+                        if ( e.count( titles[ i ] ) ) {
+                           ts << e[ titles[ i ] ][ j ] << ",";
+                        }
+                     } else {
+                        ts << ",,";
+                        if ( e.count( titles[ i ] ) ) {
+                           ts << ",";
+                        }
+                     }
                   }
                }
             }

@@ -337,6 +337,16 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "replicate_group",       QString::number( replicates[ kk ] )    );
 
      //overlapping wvls:
+     //Debug:
+     QMap< QString, QStringList >::iterator wvl_overlap;
+     for ( wvl_overlap = channdesc_to_overlapping_wvls_main.begin(); wvl_overlap != channdesc_to_overlapping_wvls_main.end(); ++wvl_overlap )
+	{
+	  qDebug() << "In AProfile's toXML:  channdesc_to_overlapping_wvls_main QMap: " << wvl_overlap.key() << ", list of overlapping wvls: " << wvl_overlap.value();
+	}
+     qDebug() << "Current channel_alt name: " << chndescs_alt[ kk ];
+     //end debug
+     
+     
      QStringList repl_wvl_overlap = channdesc_to_overlapping_wvls_main [ chndescs_alt[ kk ] ];
      if ( !repl_wvl_overlap.isEmpty() )
        {
@@ -387,6 +397,9 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    scan_excl_end.  clear();
 
    replicates. clear();
+   replicates_to_channdesc_main. clear();
+   channdesc_to_overlapping_wvls_main. clear();
+   
    
    while( ! xmli.atEnd() )
    {
@@ -467,8 +480,13 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	      replicates << attr.value( "replicate_group" )  .toString().toInt();
 	    else
 	      replicates << 0;
-	      
-	    
+
+	    if (  attr.hasAttribute ("replicate_wvl_overlap") )
+	      {
+		channdesc_to_overlapping_wvls_main[ channel_alt_desc ] = attr.value( "replicate_wvl_overlap" )  .toString().split(",");
+		qDebug() << "In AProfile's fromXML: channel_alt_desc:  " << channel_alt_desc
+			 << ", replicate_wvl_overlap -- " << attr.value( "replicate_wvl_overlap" )  .toString().split(",");
+	      }
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();

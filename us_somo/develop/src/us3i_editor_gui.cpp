@@ -1,7 +1,7 @@
 #include "us3i_editor_gui.h"
 #include "us3i_gui_settings.h"
 
-US3i_EditorGui::US3i_EditorGui() : US3i_widgetsDialog( 0, 0 )
+US3i_EditorGui::US3i_EditorGui() : US3i_widgetsDialog( 0 )
 {
    setWindowTitle( tr( "Analyte Details" ) );
    setPalette( US3i_GuiSettings::frameColor() );

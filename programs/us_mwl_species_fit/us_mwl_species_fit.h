@@ -4,6 +4,7 @@
 #include "us_analysis_base2.h"
 #include "us_editor.h"
 #include "us_math2.h"
+#include "us_mwl_sf_plot3d.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -43,6 +44,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       QStringList   celchns;
       QList< int >  ftndxs;
       QList< int >  ltndxs;
+      QVector< QVector < int > > celchn_wvl;
 
       US_Editor*    te_results;
 
@@ -50,8 +52,14 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       QPushButton*  pb_sfitdata;
       QPushButton*  pb_prev;
       QPushButton*  pb_next;
+      QPushButton*  pb_plot3d;
+
+      QLineEdit* le_fit_error;
+
+      QVector< SFData >  synFitError;
 
       void data_plot ( void );
+      void get_fit_error(void);
 
    private slots:
       void write_report   ( QTextStream& );
@@ -67,6 +75,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       void plot_data1     ( void );
       void prev_plot      ( void );
       void next_plot      ( void );
+      void rmsd_3dplot    ( void );
       void help           ( void )
       { showHelp.show_help( "manual/mwl_species_fit.html" ); };
 };

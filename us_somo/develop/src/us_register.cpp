@@ -168,6 +168,7 @@ bool US_Register::read()
 
 #ifdef OPTERON
 #define PLATFORM "opteron"
+#undef TITLE
 #define TITLE    "Intel/AMD 64-bit"
 #endif
 
@@ -222,11 +223,6 @@ bool US_Register::read()
 #define OS_TITLE " FreeBSD"
 #endif
 
-#ifdef FREEBSD
-#define OS "freebsd"
-#define OS_TITLE " FreeBSD"
-#endif
-
 #ifdef OPENBSD
 #define OS "openbsd"
 #define OS_TITLE "n OpenBSD"
@@ -239,6 +235,7 @@ bool US_Register::read()
 
 #ifdef LINUX
 #define OS "linux"
+#undef OS_TITLE
 #define OS_TITLE " Linux"
 #endif
 

@@ -1940,7 +1940,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          qsl[ i ].at( 22 ) = ' ';
 #endif
       }
-      QStringList qsl_line = (qsl[ i ] ).split( rx_whitespace , QString::SkipEmptyParts );
+      QStringList qsl_line = (qsl[ i ] ).split( rx_whitespace , Qt::SkipEmptyParts );
       if ( qsl_line[ 0 ] == "multiple-rotate:" )
       {
          if ( in_rotamer )

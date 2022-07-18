@@ -1226,7 +1226,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
    f.close();
 
-   QStringList qslq = (qsq ).split( "," , QString::SkipEmptyParts );
+   QStringList qslq = (qsq ).split( "," , Qt::SkipEmptyParts );
    if ( qslq.size() < 3 ||
         qslq[ 0 ] != "\"Name\"" ||
         qslq[ 1 ] != "\"Type; q:\"" 
@@ -1259,7 +1259,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    // first beads, last average
    for ( unsigned int i = 0; i < ( unsigned int ) qslIs.size(); i++ )
    {
-      QStringList qslI = (qslIs[ i ] ).split( "," , QString::SkipEmptyParts );
+      QStringList qslI = (qslIs[ i ] ).split( "," , Qt::SkipEmptyParts );
 
       if ( qslI.size() < 3 || qslI[ 1 ] != "\"I(q)\"" )
       {

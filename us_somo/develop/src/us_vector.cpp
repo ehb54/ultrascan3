@@ -98,6 +98,18 @@ void US_Vector::printvector( QString qs, vector < bool > x )
    cout << endl;
 }
 
+QString US_Vector::qs_mapqsqs( QString qs, map < QString, QString > & x ) 
+{
+   QString result;
+   result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( auto it = x.begin();
+         it != x.end();
+         ++it ) {
+      result += QString( "\t%1 %2\n" ).arg( it->first ).arg( it->second );
+   }
+   return result;
+}
+
 vector < double > US_Vector::intersection( vector < double > &x,  vector < double > &y )
 {
    map < double, bool > map_x;
