@@ -51,7 +51,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
-   gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
+   gen_banner = us_banner( tr( "UltraScan R&D Data Acquisition Program" ) );
    //gen_banner = new QLabel;
    //gen_banner->setText("UltraScan GMP, v. 0.1");
    //gen_banner->setAlignment(Qt::AlignCenter);
