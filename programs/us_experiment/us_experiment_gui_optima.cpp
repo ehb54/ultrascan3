@@ -1220,6 +1220,24 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       QMessageBox::information( this,
          tr( "NOTE:  Rotor Changed" ),
          tr( "Cells and all subsequent tabs will be reset upon initialization."));
+
+
+      //Do actual reset:
+      /* e.g, for solutions:
+       rpSolut             = &(mainw->currProto.rpSolut);
+        {
+       nschan               = 0;
+       nuniqs               = 0;
+       chsols.clear();
+       solus .clear();
+       sids  .clear();
+       }
+      *******************/
+      mainw->currProto.rpSolut.nschan = 0;
+      mainw->currProto.rpSolut.nuniqs = 0;
+      mainw->currProto.rpSolut.chsols.clear();
+      mainw->currProto.rpSolut.solus .clear();
+      mainw->currProto.rpSolut.sids  .clear();
    }
 
    curr_rotor          = ndx;
