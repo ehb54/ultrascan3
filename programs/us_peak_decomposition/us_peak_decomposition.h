@@ -19,13 +19,14 @@ signals:
     void sig_plot1(bool);
 
 private:
-    QPushButton* pb_load_auc;
-    QPushButton* pb_load_txt;
+    QPushButton* pb_load_data;
+    QPushButton* pb_reset_data;
+    QPushButton* pb_reset_plot;
+    QPushButton* pb_help;
+    QPushButton* pb_close;
     QPushButton* pb_save;
-    QPushButton* pb_reset;
 
-    QwtCounter* ct_scans;
-    QLabel* lb_descr;
+
 
     US_Plot* usplot1;
     QwtPlot* plot1;
@@ -35,16 +36,29 @@ private:
 
     int scanid;
     int nscans;
-    QStringList descr;
+    QStringList filenames;
+    QStringList filePaths;
+    QStringList selFilenames;
     QVector<QVector<double>> xvalues;
-    QVector<QVector<double>> yvalues;
+    QVector<QVector<QVector<double>>> yvalues;
+    QVector<QVector<int>> scanRange;                                                                                                                  ;
     QVector<QVector<int>> xlimits;
+
+    QListWidget *lw_inpData;
+    QListWidget *lw_selData;
+    QComboBox *cb_scan;
+
+    QPushButton *pb_rmItem;
+    QPushButton *pb_clsList;
 
 
 private slots:
     void slt_load_auc(void);
     void slt_plot1(bool);
     void slt_scan(double);
+    void slt_addRmItem(QListWidgetItem *);
+    void slt_rmItem(void);
+    void slt_clsList(void);
 };
 
 
