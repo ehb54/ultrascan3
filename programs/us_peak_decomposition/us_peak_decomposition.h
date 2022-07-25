@@ -28,10 +28,10 @@ private:
 
 
 
-    US_Plot* usplot1;
-    QwtPlot* plot1;
-    US_Plot* usplot2;
-    QwtPlot* plot2;
+    US_Plot* usplot;
+    QwtPlot* plot;
+//    US_Plot* usplot2;
+//    QwtPlot* plot2;
     QwtPlotGrid* grid;
 
     int scanid;
@@ -41,8 +41,16 @@ private:
     QStringList selFilenames;
     QVector<QVector<double>> xvalues;
     QVector<QVector<QVector<double>>> yvalues;
+    QVector<QVector<QVector<double>>> integral;
+    QVector<QVector<QVector<double>>> integral_s;
+    QVector<QVector<double>> xvalues_sel;
+    QVector<QVector<double>> midxval_sel;
+    QVector<QVector<QVector<double>>> yvalues_sel;
+    QVector<QVector<QVector<double>>> integral_sel;
+    QVector<QVector<QVector<double>>> integral_s_sel;
     QVector<QVector<int>> scanRange;                                                                                                                  ;
     QVector<QVector<int>> xlimits;
+
 
     QListWidget *lw_inpData;
     QListWidget *lw_selData;
@@ -50,11 +58,18 @@ private:
 
     QPushButton *pb_rmItem;
     QPushButton *pb_clsList;
+    QPushButton *pb_pick_rp;
+    QCheckBox *ckb_rawData;
+    QCheckBox *ckb_integral;
+    QCheckBox *ckb_scale;
+    QCheckBox *ckb_xrange;
 
+    void set_sel_data(void);
+    QVector<QVector<double>> trapz(QVector<double>, QVector<double>);
 
 private slots:
     void slt_load_auc(void);
-    void slt_plot1(bool);
+    void slt_plot(bool);
     void slt_scan(double);
     void slt_addRmItem(QListWidgetItem *);
     void slt_rmItem(void);
