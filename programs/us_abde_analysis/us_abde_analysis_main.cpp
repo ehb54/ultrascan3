@@ -3,7 +3,7 @@
 #include <QApplication>
 #include "us_license_t.h"
 #include "us_license.h"
-#include "us_peak_decomposition.h"
+#include "us_abde_analysis.h"
 
 int main( int argc, char* argv[] )
 {
@@ -24,37 +24,19 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     QPalette p = US_GuiSettings::frameColorDefault();
     setPalette( p );
 
-//    QLabel* lb_load = us_banner("Load Data");
-    pb_load_data = us_pushbutton("Load Data");
-    pb_reset_data = us_pushbutton("Reset Data");
-    pb_reset_plot = us_pushbutton("Reset Plot");
-    pb_save = us_pushbutton("Save", false);
-    pb_help = us_pushbutton("Help");
+    pb_load = us_pushbutton("Load Data");
+    pb_reset = us_pushbutton("Reset Data");
+    pb_save = us_pushbutton("Save");
     pb_close = us_pushbutton("Close");
 
     QGridLayout* load_lyt = new QGridLayout();
-    load_lyt->addWidget(pb_load_data,   0, 0, 1, 1);
-    load_lyt->addWidget(pb_reset_data,  0, 1, 1, 1);
-    load_lyt->addWidget(pb_reset_plot,  1, 0, 1, 1);
+    load_lyt->addWidget(pb_load,   0, 0, 1, 1);
+    load_lyt->addWidget(pb_reset,  0, 1, 1, 1);
+    load_lyt->addWidget(pb_close,       1, 0, 1, 1);
     load_lyt->addWidget(pb_save,        1, 1, 1, 1);
-    load_lyt->addWidget(pb_help,        2, 0, 1, 1);
-    load_lyt->addWidget(pb_close,       2, 1, 1, 1);
-
-//    lb_descr = us_label("", -1);
-//    lb_descr->setWordWrap(true);
-//    lb_descr->setAlignment(Qt::AlignTop);
-//    lb_descr->setMinimumHeight(50);
-//    lb_descr->setStyleSheet(tr("border: 1px solid black;"
-//                               "border-radius: 5px;"
-//                               "padding: 2px;"
-//                               "color: black;"
-//                               "background-color: white;"));
 
     QLabel *lb_inpList = us_banner("List of File(s)");
     lw_inpData = us_listwidget();
-
-//    "QListWidget QScrollBar{"
-//    "background : lightblue;}"
 
     QLabel *lb_selList = us_banner("Selected File(s)");
     lw_selData = us_listwidget();
@@ -65,15 +47,16 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     lb_scan->setAlignment(Qt::AlignRight);
     cb_scan = us_comboBox();
     cb_scan->addItems(cbList);
+    cb_scan->setCurrentIndex(2);
 
     pb_rmItem = us_pushbutton("Remove Item");
-    pb_clsList = us_pushbutton("Clean List");
+    pb_cleanList = us_pushbutton("Clean List");
 
     QHBoxLayout *sel_lyt = new QHBoxLayout();
     sel_lyt->addWidget(lb_scan);
     sel_lyt->addWidget(cb_scan);
     sel_lyt->addWidget(pb_rmItem);
-    sel_lyt->addWidget(pb_clsList);
+    sel_lyt->addWidget(pb_cleanList);
 
     ckb_xrange = new QCheckBox();
     QGridLayout *us_xrange = us_checkbox("Specify a Range",
@@ -82,7 +65,6 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     QHBoxLayout *xrange_lyt = new QHBoxLayout();
     xrange_lyt->addLayout(us_xrange);
     xrange_lyt->addWidget(pb_pick_rp);
-
 
     ckb_rawData = new QCheckBox();
     QGridLayout *rawData_lyt = us_checkbox("Raw Data", ckb_rawData);
@@ -96,13 +78,16 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     QGridLayout *scale_lyt = us_checkbox("Scale to 100%", ckb_scale);
     ckb_scale->setChecked(true);
 
-
+    ckb_legend = new QCheckBox();
+    QGridLayout *legend_lyt = us_checkbox("Legend", ckb_legend);
+    ckb_legend->setChecked(true);
 
     QHBoxLayout *intg_lyt = new QHBoxLayout();
     intg_lyt->addStretch(1);
     intg_lyt->addLayout(rawData_lyt);
     intg_lyt->addLayout(integral_lyt);
     intg_lyt->addLayout(scale_lyt);
+    intg_lyt->addLayout(legend_lyt);
     intg_lyt->addStretch(1);
 
     usplot = new US_Plot( plot, tr( "" ),
@@ -111,8 +96,7 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     plot->setMinimumSize( 700, 400 );
     plot->enableAxis( QwtPlot::xBottom, true );
     plot->enableAxis( QwtPlot::yLeft  , true );
-    plot->setCanvasBackground(QBrush(Qt::black));
-    grid = us_grid(plot);
+    plot->setCanvasBackground(QBrush(Qt::white));
 
     QHBoxLayout* main_lyt = new QHBoxLayout(this);
     QVBoxLayout* left_lyt = new QVBoxLayout();
@@ -146,24 +130,28 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
+    plotData();
 
-    connect(pb_load_data, SIGNAL(clicked()), this, SLOT(slt_load_auc()));
-    connect(this, SIGNAL(sig_plot1(bool)), this, SLOT(slt_plot1(bool)));
+    connect(pb_load, SIGNAL(clicked()), this, SLOT(slt_loadAUC()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
+    connect(pb_reset, SIGNAL(clicked()), this, SLOT(slt_reset()));
     connect(lw_inpData, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
             this, SLOT(slt_addRmItem(QListWidgetItem *)));
     connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
-    connect(pb_clsList, SIGNAL(clicked()), this, SLOT(slt_clsList()));
+    connect(pb_cleanList, SIGNAL(clicked()), this, SLOT(slt_cleanList()));
 
     connect(pb_pick_rp, SIGNAL(clicked()),
-            this, SLOT(slt_pick_point()));
+            this, SLOT(slt_pickPoint()));
     connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
+    connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
+    connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
+    connect(ckb_scale, SIGNAL(stateChanged(int)), this, SLOT(slt_scale(int)));
+    connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
 }
 
 void US_PeakDecomposition::slt_xrange(int state){
     x_min_picked = -1;
     x_max_picked = -1;
-//    le_xrange->setText("");
     QString qs = "QPushButton { background-color: %1 }";
     QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
     if (state == Qt::Checked){
@@ -173,9 +161,7 @@ void US_PeakDecomposition::slt_xrange(int state){
         pb_pick_rp->setDisabled(true);
         pb_pick_rp->setStyleSheet(qs.arg(color.name()));
     }
-    set_sel_data();
-//    emit sig_plot();
-//    emit sig_save_button();
+    selectData();
     return;
 }
 
@@ -192,7 +178,7 @@ void US_PeakDecomposition::slt_addRmItem(QListWidgetItem *item){
         selFilenames.removeAt(id);
         item->setForeground(Qt::black);
     }
-    set_sel_data();
+    selectData();
 }
 
 void US_PeakDecomposition::slt_rmItem(void){
@@ -203,29 +189,20 @@ void US_PeakDecomposition::slt_rmItem(void){
     lw_inpData->item(rowInp)->setForeground(Qt::black);
     selFilenames.removeAt(row);
     lw_selData->takeItem(row);
-    set_sel_data();
+    selectData();
 }
 
-void US_PeakDecomposition::slt_clsList(void){
+void US_PeakDecomposition::slt_cleanList(void){
     for (int i = 0; i < lw_selData->count(); i++){
         int rowInp = filenames.indexOf(lw_selData->item(i)->text());
         lw_inpData->item(rowInp)->setForeground(Qt::black);
-        selFilenames.removeAt(i);
     }
+    selFilenames.clear();
     lw_selData->clear();
-    set_sel_data();
+    selectData();
 }
 
-//void US_PeakDecomposition::slt_selItem(int row){
-//    QListWidgetItem *item = lw_inpData->item(row);
-//    QColor fontC = item->foreground().color();
-//    lw_inpData->setStyleSheet(tr("QListView::item:selected{"
-//                              "border : 1px solid black;"
-//                              "background : gray;"
-//                              "color : %1;}").arg(fontC.name()));
-//}
-
-void US_PeakDecomposition::slt_load_auc(){
+void US_PeakDecomposition::slt_loadAUC(){
 
     QStringList fPath = QFileDialog::getOpenFileNames(this, tr("Open AUC File"),
                                                     US_Settings::importDir(),
@@ -246,38 +223,23 @@ void US_PeakDecomposition::slt_load_auc(){
         }
 
         xvalues << rawData.xvalues;
-        filenames << finfo.fileName();
+        QString fname = finfo.fileName();
+        fname.chop(4);
+        filenames << fname;
         filePaths << fPath.at(i);
-        lw_inpData->addItem(finfo.fileName());
+        lw_inpData->addItem(fname);
         QVector<QVector<double>> yvals;
-//        QVector<QVector<double>> intgs;
-//        QVector<QVector<double>> intgs_s;
         int ns = rawData.scanCount();
         for (int j = 0; j < ns; j++){
             yvals << rawData.scanData.at(j).rvalues;
-//            QVector<QVector<double>> cumsum = trapz(rawData.xvalues,
-//                                                     rawData.scanData.at(j).rvalues);
-//            intgs << cumsum.at(0);
-//            intgs_s << cumsum.at(1);
         }
         yvalues << yvals;
-//        integral << intgs;
-//        integral_s << intgs_s;
-//        QVector<int> scrng;
-//        scrng << ns - 1 << ns << 1 << ns;
-//        scanRange << scrng;
-
     }
     if (badFiles.size() != 0){
         QMessageBox::warning(this, "Error!",
                              "These files could not be loaded!\n" +
                              badFiles.join("\n"));
     }
-
-//    emit sig_plot1(true);
-//    pb_load_data->setEnabled(false);
-    pb_reset_data->setEnabled(true);
-//    pb_reset->setEnabled(true);
 }
 
 QMap<QString, QVector<QVector<double>>> US_PeakDecomposition::trapz(
@@ -313,7 +275,7 @@ QMap<QString, QVector<QVector<double>>> US_PeakDecomposition::trapz(
 
 }
 
-QVector<double> US_PeakDecomposition::get_xlimit(QVector<double> xval_in,
+QVector<double> US_PeakDecomposition::getXlimit(QVector<double> xval_in,
                                                  double xmin, double xmax,
                                                  int *idMin, int *inMax){
     QVector<double> xval_out;
@@ -346,8 +308,7 @@ QVector<double> US_PeakDecomposition::get_xlimit(QVector<double> xval_in,
 
 }
 
-
-void US_PeakDecomposition::set_sel_data(void){
+void US_PeakDecomposition::selectData(void){
     xvalues_sel.clear();
     yvalues_sel.clear();
     integral_sel.clear();
@@ -364,7 +325,7 @@ void US_PeakDecomposition::set_sel_data(void){
         if (x_min_picked != -1 && x_max_picked != -1){
             int idMin = 0;
             int idMax = np - 1;
-            QVector<double> xval= get_xlimit(xvalues.at(id), x_min_picked,
+            QVector<double> xval= getXlimit(xvalues.at(id), x_min_picked,
                               x_max_picked, &idMin, &idMax);
             QVector<QVector<double>> yval;
             for (int j = 0; j < yvalues.at(id).size(); j++){
@@ -392,19 +353,39 @@ void US_PeakDecomposition::set_sel_data(void){
         }
         midxval_sel << midx;
     }
-    slt_plot(true);
+    plotData();
 }
 
-void US_PeakDecomposition::slt_plot(bool state){
+void US_PeakDecomposition::plotData(void){
     plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     plot->enableAxis(QwtPlot::yRight, false);
-    plot->enableAxis(QwtPlot::yLeft, false);
-    if (! state){
-//        plot1->setTitle(tr(""));
-        grid = us_grid(plot);
-        plot->replot();
-        return;
-    }
+    plot->enableAxis(QwtPlot::yLeft, false); 
+    grid = us_grid(plot);
+    QPen pen_mj = grid->majorPen();
+    QPen pen_mn = grid->majorPen();
+    pen_mj.setColor(Qt::black);
+    pen_mn.setColor(Qt::black);
+    grid->setMajorPen(pen_mj);
+    grid->setMinorPen(pen_mn);
+
+    int tpncy = 255;
+    QMap<QString, QColor> color;
+    color["blue"]    = QColor(0  , 0  , 255, tpncy);
+    color["orange"]  = QColor(255, 128, 0  , tpncy);
+    color["green"]   = QColor(0  , 255, 0  , tpncy);
+    color["cyan"]    = QColor(0  , 255, 255, tpncy);
+    color["red"]     = QColor(255, 0  , 0  , tpncy);
+    color["purple"]  = QColor(153, 51 , 255, tpncy);
+    color["pink"]    = QColor(255, 0  , 255, tpncy);
+    color["yellow"]  = QColor(200, 200, 0 , tpncy);
+    color["black"]   = QColor(0  , 0  , 0  , 255);
+    QVector<QColor> color_list;
+    color_list <<  color["blue"] << color["orange"] << color["green"];
+    color_list << color["cyan"] << color["red"] << color["purple"] ;
+    color_list << color["pink"] << color["yellow"] << color["black"];
+    QPen pen = QPen(Qt::SolidPattern, 1, Qt::SolidLine, Qt::RoundCap, Qt::BevelJoin);
+    pen.setWidth(2);
+
     QwtText yTitle = plot->axisTitle(QwtPlot::yLeft);
     QString plt_state;
     if (ckb_rawData->isChecked())
@@ -416,7 +397,9 @@ void US_PeakDecomposition::slt_plot(bool state){
             plt_state.append("U");
     }
 
-    if (plt_state.size() == 0){
+    int nd = selFilenames.size();
+
+    if (plt_state.size() == 0 || nd == 0){
         yTitle.setText("");
         plot->setAxisTitle(QwtPlot::yLeft, yTitle);
         plot->setAxisTitle(QwtPlot::yRight, yTitle);
@@ -424,9 +407,6 @@ void US_PeakDecomposition::slt_plot(bool state){
         return;
     }
 
-    QPen pen(Qt::yellow);
-
-    int nd = selFilenames.size();
     const double *xp, *yp;
 
     if (plt_state.contains("D")){
@@ -437,10 +417,12 @@ void US_PeakDecomposition::slt_plot(bool state){
             int ns = yvalues_sel.at(i).size();
             int np = xvalues_sel.at(i).size();
             xp = xvalues_sel.at(i).data();
+            pen.setColor(color_list.at(i));
+            QString legend = tr("(D)_") + selFilenames.at(i);
             if (cb_scan->currentText() == "All"){
                 for (int j = 0; j < ns; j++){
                     yp = yvalues_sel.at(i).at(j).data();
-                    QwtPlotCurve* curve = us_curve(plot,"");
+                    QwtPlotCurve* curve = us_curve(plot, legend);
                     curve->setPen(pen);
                     curve->setSamples(xp, yp, np);
                 }
@@ -449,7 +431,7 @@ void US_PeakDecomposition::slt_plot(bool state){
                     yp = yvalues_sel.at(i).at(0).data();
                 else //  "Last"
                     yp = yvalues_sel.at(i).at(ns - 1).data();
-                QwtPlotCurve* curve = us_curve(plot,"");
+                QwtPlotCurve* curve = us_curve(plot, legend);
                 curve->setPen(pen);
                 curve->setSamples(xp, yp, np);
             }
@@ -462,13 +444,15 @@ void US_PeakDecomposition::slt_plot(bool state){
             int ns = integral_sel.at(i).size();
             int np = midxval_sel.at(i).size();
             xp = midxval_sel.at(i).data();
+            pen.setColor(color_list.at(i));
+            QString legend = tr("(I)_") + selFilenames.at(i);
             if (cb_scan->currentText() == "All"){
                 for (int j = 0; j < ns; j++){
                     if (plt_state.contains("S"))
                         yp = integral_s_sel.at(i).at(j).data();
                     else // (plt_state.contains("U")
                         yp = integral_sel.at(i).at(j).data();
-                    QwtPlotCurve* curve = us_curve(plot,"");
+                    QwtPlotCurve* curve = us_curve(plot, legend);
                     if (plt_state.size() == 2)
                         curve->setYAxis(QwtPlot::yRight);
                     curve->setPen(pen);
@@ -485,7 +469,7 @@ void US_PeakDecomposition::slt_plot(bool state){
                         yp = integral_s_sel.at(i).at(ns - 1).data();
                     else // (plt_state.contains("U")
                         yp = integral_sel.at(i).at(ns - 1).data();
-                QwtPlotCurve* curve = us_curve(plot,"");
+                QwtPlotCurve* curve = us_curve(plot, legend);
                 if (plt_state.size() == 2)
                     curve->setYAxis(QwtPlot::yRight);
                 curve->setPen(pen);
@@ -507,21 +491,52 @@ void US_PeakDecomposition::slt_plot(bool state){
         }
     }
 
-
-
-//    plot->setAxisScale( QwtPlot::xBottom, min_x - dx, max_x + dx);
-//    plot->setAxisScale( QwtPlot::yLeft  , min_y - dr, max_y + dr);
-//    plot->updateAxes();
-    grid = us_grid(plot);
+    if (ckb_legend->isChecked()) {
+        QwtLegend* legend = new QwtLegend();
+        legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+        plot->insertLegend( legend, QwtPlot::BottomLegend   );
+    } else {
+        plot->insertLegend( NULL, QwtPlot::BottomLegend );
+    }
     plot->replot();
 }
 
-void US_PeakDecomposition::slt_scan(double id){
-    scanid = (int) id;
-    emit sig_plot1(true);
+void US_PeakDecomposition::slt_legend(int state) {
+
+    if (state == Qt::Checked) {
+        QwtLegend* legend = new QwtLegend();
+        legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+        plot->insertLegend( legend, QwtPlot::BottomLegend   );
+    } else {
+        plot->insertLegend( NULL, QwtPlot::BottomLegend );
+    }
+    plot->replot();
 }
 
-void US_PeakDecomposition::slt_pick_point(){
+void US_PeakDecomposition::slt_rawData(int) {
+    plotData();
+}
+
+void US_PeakDecomposition::slt_integral(int state) {
+
+    if (state == Qt::Checked)
+        ckb_scale->setEnabled(true);
+    else
+        ckb_scale->setDisabled(true);
+    plotData();
+}
+
+void US_PeakDecomposition::slt_scale(int) {
+    plotData();
+}
+
+
+void US_PeakDecomposition::slt_scan(double id){
+    scanid = (int) id;
+    plotData();
+}
+
+void US_PeakDecomposition::slt_pickPoint(){
     picker->disconnect();
     x_min_picked = -1;
     x_max_picked = -1;
@@ -530,7 +545,7 @@ void US_PeakDecomposition::slt_pick_point(){
     pb_pick_rp->setStyleSheet("QPushButton { background-color: red }");
     connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
             this,   SLOT(slt_mouse(const QwtDoublePoint&)));
-    set_sel_data();
+    selectData();
     return;
 }
 
@@ -549,15 +564,13 @@ void US_PeakDecomposition::slt_mouse(const QwtDoublePoint& point){
             xx << x_min_picked;
             yy << y0 + i * dyy;
         }
-        qDebug() << xx << yy;
-        QPen pen_plot(Qt::yellow);
-        pen_plot.setWidth(1);
-        pen_plot.setColor(QColor(Qt::yellow));
+        QPen pen(Qt::red);
+        pen.setWidth(3);
         QwtPlotCurve* curve = us_curve( plot,"");
         curve->setStyle(QwtPlotCurve::Dots);
-        curve->setPen(pen_plot);
+        curve->setPen(pen);
         curve->setSamples(xx.data(), yy.data(), np);
-        grid = us_grid(plot);
+//        grid = us_grid(plot);
         plot->replot();
 
     } else {
@@ -569,7 +582,20 @@ void US_PeakDecomposition::slt_mouse(const QwtDoublePoint& point){
         x_max_picked = x;
         picker->disconnect();
         pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
-        set_sel_data();
+        selectData();
     }
     return;
+}
+
+void US_PeakDecomposition::slt_reset(){
+    slt_cleanList();
+    lw_inpData->clear();
+    filenames.clear();
+    filePaths.clear();
+    xvalues.clear();
+    yvalues.clear();
+    x_min_picked = -1;
+    x_max_picked = -1;
+    ckb_xrange->setCheckState(Qt::Unchecked);
+
 }
