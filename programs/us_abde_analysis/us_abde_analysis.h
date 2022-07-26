@@ -32,18 +32,17 @@ private:
     QStringList filePaths;
     QStringList selFilenames;
     QVector<QVector<double>> xvalues;
-    QVector<QVector<QVector<double>>> yvalues;
+    QVector<QVector<double>> yvalues;
     QVector<QVector<double>> xvalues_sel;
     QVector<QVector<double>> midxval_sel;
-    QVector<QVector<QVector<double>>> yvalues_sel;
-    QVector<QVector<QVector<double>>> integral_sel;
-    QVector<QVector<QVector<double>>> integral_s_sel;
+    QVector<QVector<double>> yvalues_sel;
+    QVector<QVector<double>> integral_sel;
+    QVector<QVector<double>> integral_s_sel;
     double x_min_picked = -1;
     double x_max_picked = -1;
 
     QListWidget *lw_inpData;
     QListWidget *lw_selData;
-    QComboBox *cb_scan;
 
     QPushButton *pb_rmItem;
     QPushButton *pb_cleanList;
@@ -54,12 +53,11 @@ private:
     QCheckBox *ckb_legend;
     QCheckBox *ckb_xrange;
     US_PlotPicker *picker;
-//    QwtLegend *legend;
 
     void selectData(void);
     void plotData(void);
-    QMap<QString, QVector<QVector<double>>> trapz(QVector<double>,
-                                                  QVector<QVector<double>>);
+    QMap<QString, QVector<double>> trapz(QVector<double>,
+                                                  QVector<double>);
     QVector<double> getXlimit(QVector<double>, double, double, int *, int *);
 
 private slots:

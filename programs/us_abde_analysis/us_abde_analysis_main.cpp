@@ -41,20 +41,10 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     QLabel *lb_selList = us_banner("Selected File(s)");
     lw_selData = us_listwidget();
 
-    QStringList cbList;
-    cbList << "All" << "First" << "Last" ;
-    QLabel *lb_scan = us_label("Scan(s):");
-    lb_scan->setAlignment(Qt::AlignRight);
-    cb_scan = us_comboBox();
-    cb_scan->addItems(cbList);
-    cb_scan->setCurrentIndex(2);
-
     pb_rmItem = us_pushbutton("Remove Item");
     pb_cleanList = us_pushbutton("Clean List");
 
     QHBoxLayout *sel_lyt = new QHBoxLayout();
-    sel_lyt->addWidget(lb_scan);
-    sel_lyt->addWidget(cb_scan);
     sel_lyt->addWidget(pb_rmItem);
     sel_lyt->addWidget(pb_cleanList);
 
@@ -229,12 +219,7 @@ void US_PeakDecomposition::slt_loadAUC(){
         filenames << fname;
         filePaths << fPath.at(i);
         lw_inpData->addItem(fname);
-        QVector<QVector<double>> yvals;
-        int ns = rawData.scanCount();
-        for (int j = 0; j < ns; j++){
-            yvals << rawData.scanData.at(j).rvalues;
-        }
-        yvalues << yvals;
+        yvalues << rawData.scanData.last().rvalues;;
     }
     if (badFiles.size() != 0){
         QMessageBox::warning(this, "Error!",
@@ -243,33 +228,29 @@ void US_PeakDecomposition::slt_loadAUC(){
     }
 }
 
-QMap<QString, QVector<QVector<double>>> US_PeakDecomposition::trapz(
-                           QVector<double> xval, QVector<QVector<double>> yval){
-    QMap<QString, QVector<QVector<double>>> out;
-    QVector<QVector<double>> integral;
-    QVector<QVector<double>> integral_s;
+QMap<QString, QVector<double>> US_PeakDecomposition::trapz(
+                           QVector<double> xval, QVector<double> yval){
+    QMap<QString, QVector<double>> out;
+    QVector<double> midxval;
+    QVector<double> integral;
+    QVector<double> integral_s;
 
     const double *x = xval.data();
-    const double *y;
+    const double *y = yval.data();
     int np = xval.size();
-    int ns = yval.size();
-    for (int i = 0; i < ns; i++){
-        y = yval.at(i).data();
-        double dx;
-        double sum = 0;
-        QVector<double> intg;
-        for (int j = 1; j < np; j++){
-            dx = x[j] - x[j - 1];
-            sum += dx * ( y[j] + y[j - 1] ) * 0.5;
-            intg << sum;
-        }
-        integral << intg;
-        QVector<double> intg_s;
-        for (int i = 0; i < intg.size(); i++){
-            intg_s << intg.at(i) * 100 / sum;
-        }
-        integral_s << intg_s;
+    double dx;
+    double sum = 0;
+    for (int i = 1; i < np; i++){
+        dx = x[i] - x[i - 1];
+        sum += dx * ( y[i] + y[i - 1] ) * 0.5;
+        integral << sum;
+        midxval << 0.5 * (x[i] + x[i - 1]);
     }
+
+    for (int i = 0; i < integral.size(); i++){
+        integral_s << integral.at(i) * 100 / sum;
+    }
+    out["midxval"] = midxval;
     out["integral"] = integral;
     out["integral_s"] = integral_s;
     return out;
@@ -328,31 +309,18 @@ void US_PeakDecomposition::selectData(void){
             int idMax = np - 1;
             QVector<double> xval= getXlimit(xvalues.at(id), x_min_picked,
                               x_max_picked, &idMin, &idMax);
-            QVector<QVector<double>> yval;
-            for (int j = 0; j < yvalues.at(id).size(); j++){
-                QVector<double> y;
-                const double *yp = yvalues.at(id).at(j).data();
-                for (int k = idMin; k <= idMax; k++)
-                    y << yp[k];
-                yval << y;
-            }
             xvalues_sel << xval;
-            yvalues_sel << yval;
+            yvalues_sel << yvalues.at(id).mid(idMin, xval.size());
         } else {
             xvalues_sel << xvalues.at(id);
             yvalues_sel << yvalues.at(id);
         }
 
-        QMap<QString, QVector<QVector<double>>> trapzOut;
+        QMap<QString, QVector<double>> trapzOut;
         trapzOut = trapz(xvalues_sel.last(), yvalues_sel.last());
+        midxval_sel << trapzOut["midxval"];
         integral_sel << trapzOut["integral"];
         integral_s_sel << trapzOut["integral_s"];
-        QVector<double> midx;
-        const double *xp = xvalues_sel.last().data();
-        for (int j = 1; j < xvalues_sel.last().size(); j++){
-            midx << 0.5 * (xp[j] + xp[j - 1]);
-        }
-        midxval_sel << midx;
     }
     plotData();
 }
@@ -410,70 +378,53 @@ void US_PeakDecomposition::plotData(void){
 
     const double *xp, *yp;
 
+    double minX = 1e99;
+    double maxX = -1e99;
+    bool minmax = false;
+
     if (plt_state.contains("D")){
         yTitle.setText("Absorbance");
         plot->setAxisTitle(QwtPlot::yLeft, yTitle);
         plot->enableAxis(QwtPlot::yLeft, true);
         for (int i = 0; i < nd; i++){
-            int ns = yvalues_sel.at(i).size();
             int np = xvalues_sel.at(i).size();
             xp = xvalues_sel.at(i).data();
             pen.setColor(color_list.at(i));
             QString legend = tr("(D)_") + selFilenames.at(i);
-            if (cb_scan->currentText() == "All"){
-                for (int j = 0; j < ns; j++){
-                    yp = yvalues_sel.at(i).at(j).data();
-                    QwtPlotCurve* curve = us_curve(plot, legend);
-                    curve->setPen(pen);
-                    curve->setSamples(xp, yp, np);
-                }
-            } else {
-                if (cb_scan->currentText() == "First")
-                    yp = yvalues_sel.at(i).at(0).data();
-                else //  "Last"
-                    yp = yvalues_sel.at(i).at(ns - 1).data();
-                QwtPlotCurve* curve = us_curve(plot, legend);
-                curve->setPen(pen);
-                curve->setSamples(xp, yp, np);
+            yp = yvalues_sel.at(i).data();
+            QwtPlotCurve* curve = us_curve(plot, legend);
+            curve->setPen(pen);
+            curve->setSamples(xp, yp, np);
+
+            for (int j = 0; j < np; j++){
+                minX = qMin(minX, xp[j]);
+                maxX = qMax(maxX, xp[j]);
             }
         }
+        minmax = true;
     }
 
     if (plt_state.contains("U") || plt_state.contains("S")){
         for (int i = 0; i < nd; i++){
-            int ns = integral_sel.at(i).size();
             int np = midxval_sel.at(i).size();
             xp = midxval_sel.at(i).data();
             pen.setColor(color_list.at(i));
             QString legend = tr("(I)_") + selFilenames.at(i);
-            if (cb_scan->currentText() == "All"){
-                for (int j = 0; j < ns; j++){
-                    if (plt_state.contains("S"))
-                        yp = integral_s_sel.at(i).at(j).data();
-                    else // (plt_state.contains("U")
-                        yp = integral_sel.at(i).at(j).data();
-                    QwtPlotCurve* curve = us_curve(plot, legend);
-                    if (plt_state.size() == 2)
-                        curve->setYAxis(QwtPlot::yRight);
-                    curve->setPen(pen);
-                    curve->setSamples(xp, yp, np);
+            if (plt_state.contains("S"))
+                yp = integral_s_sel.at(i).data();
+            else // (plt_state.contains("U")
+                yp = integral_sel.at(i).data();
+            QwtPlotCurve* curve = us_curve(plot, legend);
+            if (plt_state.size() == 2)
+                curve->setYAxis(QwtPlot::yRight);
+            curve->setPen(pen);
+            curve->setSamples(xp, yp, np);
+
+            if (! minmax){
+                for (int j = 0; j < np; j++){
+                    minX = qMin(minX, xp[j]);
+                    maxX = qMax(maxX, xp[j]);
                 }
-            } else {
-                if (cb_scan->currentText() == "First"){
-                    if (plt_state.contains("S"))
-                        yp = integral_s_sel.at(i).at(0).data();
-                    else // (plt_state.contains("U")
-                        yp = integral_sel.at(i).at(0).data();
-                } else // "Last"
-                    if (plt_state.contains("S"))
-                        yp = integral_s_sel.at(i).at(ns - 1).data();
-                    else // (plt_state.contains("U")
-                        yp = integral_sel.at(i).at(ns - 1).data();
-                QwtPlotCurve* curve = us_curve(plot, legend);
-                if (plt_state.size() == 2)
-                    curve->setYAxis(QwtPlot::yRight);
-                curve->setPen(pen);
-                curve->setSamples(xp, yp, np);
             }
         }
 
@@ -498,6 +449,9 @@ void US_PeakDecomposition::plotData(void){
     } else {
         plot->insertLegend( NULL, QwtPlot::BottomLegend );
     }
+
+    double dx = (maxX - minX) * 0.05;
+    plot->setAxisScale( QwtPlot::xBottom, minX - dx, maxX + dx);
     plot->replot();
 }
 
@@ -627,32 +581,14 @@ void US_PeakDecomposition::slt_save(){
     if (file.open(QIODevice::WriteOnly)) {
         QTextStream outStream{&file};
         QVector<int> nPoints;
-        QVector<int> nScans;
         for (int i = 0; i < nd; i++){
-            outStream << tr("Filename,X_scan,X_integral,");
             nPoints << xvalues_sel.at(i).size();
-            nScans << yvalues_sel.at(i).size();
-            if (cb_scan->currentText() != "All"){
-                outStream << tr("Scan,Integral,Scaled");
-                if (i != nd - 1)
-                    outStream << tr(",");
-                else
-                    outStream << "\n";
-            } else {
-                int ns = yvalues_sel.at(i).size();
-                for (int j = 0; j < ns; j++){
-                    QString s("Scan_%1,Integral_%2,Scaled_%3");
-                    outStream << s.arg(j + 1).arg(j + 1).arg(j + 1);
-                    if (j != ns - 1)
-                        outStream << tr(",");
-                    else{
-                        if (i != nd - 1)
-                            outStream << tr(",");
-                        else
-                            outStream << "\n";
-                    }
-                }
-            }
+            outStream << tr("Filename,X_scan,Scan,");
+            outStream << tr("X_integral,Integral,Integral(%)");
+            if (i != nd - 1)
+                outStream << tr(",");
+            else
+                outStream << "\n";
         }
 
         bool newLine = true;
@@ -662,7 +598,6 @@ void US_PeakDecomposition::slt_save(){
             for (int i = 0; i < nd; i++){
 //                outStream << tr("Filename,X_scan,X_integral,");
                 int np = nPoints.at(i);
-                int ns = nScans.at(i);
 
                 if (line == 0) {           //Filename
                     outStream << selFilenames.at(i) << ",";
@@ -677,6 +612,13 @@ void US_PeakDecomposition::slt_save(){
                     outStream <<  " ,";
                 }
 
+                if (line < np){        //Scan
+                    outStream << QString::number(yvalues_sel.at(i).at(line), 'f', 6) << ",";
+                    newLine = true;
+                } else {
+                    outStream <<  " ,";
+                }
+
                 if (line < np - 1){    //X_integral
                     outStream << QString::number(midxval_sel.at(i).at(line), 'f', 4) << ",";
                     newLine = true;
@@ -684,48 +626,21 @@ void US_PeakDecomposition::slt_save(){
                     outStream <<  " ,";
                 }
 
-                if (cb_scan->currentText() != "All"){
-                    int scid;
-                    if (cb_scan->currentText() == "First")
-                        scid = 0;
-                    else
-                        scid = ns - 1;
-                    if (line < np){        //Scan
-                        outStream << QString::number(yvalues_sel.at(i).at(scid).at(line), 'f', 6) << ",";
-                        newLine = true;
-                    } else {
-                        outStream <<  " ,";
-                    }
-                    if (line < np - 1){        //Integral
-                        outStream << QString::number(integral_sel.at(i).at(scid).at(line), 'f', 6) << ",";
-                        newLine = true;
-                    } else {
-                        outStream <<  " ,";
-                    }
-                    if (line < np - 1){        //Scaled
-                        outStream << QString::number(integral_s_sel.at(i).at(scid).at(line), 'f', 6);
-                        newLine = true;
-                    }
-
-                    if (i != nd - 1)
-                        outStream << tr(",");
-                    else
-                        outStream << "\n";
+                if (line < np - 1){        //Integral
+                    outStream << QString::number(integral_sel.at(i).at(line), 'f', 6) << ",";
+                    newLine = true;
                 } else {
-//                    int ns = yvalues_sel.at(i).size();
-                    for (int j = 0; j < ns; j++){
-                        QString s("Scan_%1,Integral_%2,Scaled_%3");
-                        outStream << s.arg(j + 1).arg(j + 1).arg(j + 1);
-                        if (j != ns - 1)
-                            outStream << tr(",");
-                        else{
-                            if (i != nd - 1)
-                                outStream << tr(",");
-                            else
-                                outStream << "\n";
-                        }
-                    }
+                    outStream <<  " ,";
                 }
+                if (line < np - 1){        //Scaled
+                    outStream << QString::number(integral_s_sel.at(i).at(line), 'f', 6);
+                    newLine = true;
+                }
+
+                if (i != nd - 1)
+                    outStream << tr(",");
+                else
+                    outStream << "\n";
             }
             line ++;
         }
