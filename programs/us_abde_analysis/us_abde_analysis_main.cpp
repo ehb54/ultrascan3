@@ -135,6 +135,7 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     connect(pb_load, SIGNAL(clicked()), this, SLOT(slt_loadAUC()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
     connect(pb_reset, SIGNAL(clicked()), this, SLOT(slt_reset()));
+    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
     connect(lw_inpData, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
             this, SLOT(slt_addRmItem(QListWidgetItem *)));
     connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
@@ -435,7 +436,6 @@ void US_PeakDecomposition::plotData(void){
                 curve->setPen(pen);
                 curve->setSamples(xp, yp, np);
             }
-
         }
     }
 
@@ -597,5 +597,140 @@ void US_PeakDecomposition::slt_reset(){
     x_min_picked = -1;
     x_max_picked = -1;
     ckb_xrange->setCheckState(Qt::Unchecked);
+
+}
+
+void US_PeakDecomposition::slt_save(){
+    int nd = selFilenames.size();
+    if (nd == 0)
+        return;
+
+    QString fname = QFileDialog::getSaveFileName(this, tr("Save File"),
+                               US_Settings::reportDir(),
+                               tr("(*.csv)"));
+    if (fname.size() == 0)
+        return;
+
+    QFileInfo inFInfo = QFileInfo(fname);
+    QFileInfo outFInfo;
+    if (inFInfo.suffix() == "csv")
+        outFInfo = QFileInfo(inFInfo);
+    else{
+        fname = inFInfo.completeBaseName();
+        fname.append(".csv");
+        outFInfo = QFileInfo(inFInfo.dir(), fname);
+    }
+
+    qDebug() << outFInfo.absoluteFilePath();
+
+    QFile file{outFInfo.absoluteFilePath()};
+    if (file.open(QIODevice::WriteOnly)) {
+        QTextStream outStream{&file};
+        QVector<int> nPoints;
+        QVector<int> nScans;
+        for (int i = 0; i < nd; i++){
+            outStream << tr("Filename,X_scan,X_integral,");
+            nPoints << xvalues_sel.at(i).size();
+            nScans << yvalues_sel.at(i).size();
+            if (cb_scan->currentText() != "All"){
+                outStream << tr("Scan,Integral,Scaled");
+                if (i != nd - 1)
+                    outStream << tr(",");
+                else
+                    outStream << "\n";
+            } else {
+                int ns = yvalues_sel.at(i).size();
+                for (int j = 0; j < ns; j++){
+                    QString s("Scan_%1,Integral_%2,Scaled_%3");
+                    outStream << s.arg(j + 1).arg(j + 1).arg(j + 1);
+                    if (j != ns - 1)
+                        outStream << tr(",");
+                    else{
+                        if (i != nd - 1)
+                            outStream << tr(",");
+                        else
+                            outStream << "\n";
+                    }
+                }
+            }
+        }
+
+        bool newLine = true;
+        int line = 0;
+        while (newLine){
+            newLine = false;
+            for (int i = 0; i < nd; i++){
+//                outStream << tr("Filename,X_scan,X_integral,");
+                int np = nPoints.at(i);
+                int ns = nScans.at(i);
+
+                if (line == 0) {           //Filename
+                    outStream << selFilenames.at(i) << ",";
+                } else {
+                    outStream <<  " ,";
+                }
+
+                if (line < np){        //X_scan
+                    outStream << QString::number(xvalues_sel.at(i).at(line), 'f', 4) << ",";
+                    newLine = true;
+                } else {
+                    outStream <<  " ,";
+                }
+
+                if (line < np - 1){    //X_integral
+                    outStream << QString::number(midxval_sel.at(i).at(line), 'f', 4) << ",";
+                    newLine = true;
+                } else {
+                    outStream <<  " ,";
+                }
+
+                if (cb_scan->currentText() != "All"){
+                    int scid;
+                    if (cb_scan->currentText() == "First")
+                        scid = 0;
+                    else
+                        scid = ns - 1;
+                    if (line < np){        //Scan
+                        outStream << QString::number(yvalues_sel.at(i).at(scid).at(line), 'f', 6) << ",";
+                        newLine = true;
+                    } else {
+                        outStream <<  " ,";
+                    }
+                    if (line < np - 1){        //Integral
+                        outStream << QString::number(integral_sel.at(i).at(scid).at(line), 'f', 6) << ",";
+                        newLine = true;
+                    } else {
+                        outStream <<  " ,";
+                    }
+                    if (line < np - 1){        //Scaled
+                        outStream << QString::number(integral_s_sel.at(i).at(scid).at(line), 'f', 6);
+                        newLine = true;
+                    }
+
+                    if (i != nd - 1)
+                        outStream << tr(",");
+                    else
+                        outStream << "\n";
+                } else {
+//                    int ns = yvalues_sel.at(i).size();
+                    for (int j = 0; j < ns; j++){
+                        QString s("Scan_%1,Integral_%2,Scaled_%3");
+                        outStream << s.arg(j + 1).arg(j + 1).arg(j + 1);
+                        if (j != ns - 1)
+                            outStream << tr(",");
+                        else{
+                            if (i != nd - 1)
+                                outStream << tr(",");
+                            else
+                                outStream << "\n";
+                        }
+                    }
+                }
+            }
+            line ++;
+        }
+    }
+
+    qDebug() << "Done!";
 
 }

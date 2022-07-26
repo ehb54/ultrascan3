@@ -76,6 +76,7 @@ private slots:
     void slt_scale(int);
     void slt_rawData(int);
     void slt_reset(void);
+    void slt_save(void);
 };
 
 
