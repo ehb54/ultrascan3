@@ -142,6 +142,11 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
 
     this->setLayout(main_lyt);
 
+    picker = new US_PlotPicker(plot);
+    picker->setRubberBand  ( QwtPicker::VLineRubberBand );
+    picker->setMousePattern( QwtEventPattern::MouseSelect1,
+                              Qt::LeftButton, Qt::ControlModifier );
+
     connect(pb_load_data, SIGNAL(clicked()), this, SLOT(slt_load_auc()));
     connect(this, SIGNAL(sig_plot1(bool)), this, SLOT(slt_plot1(bool)));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
@@ -149,6 +154,29 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
             this, SLOT(slt_addRmItem(QListWidgetItem *)));
     connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
     connect(pb_clsList, SIGNAL(clicked()), this, SLOT(slt_clsList()));
+
+    connect(pb_pick_rp, SIGNAL(clicked()),
+            this, SLOT(slt_pick_point()));
+    connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
+}
+
+void US_PeakDecomposition::slt_xrange(int state){
+    x_min_picked = -1;
+    x_max_picked = -1;
+//    le_xrange->setText("");
+    QString qs = "QPushButton { background-color: %1 }";
+    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+    if (state == Qt::Checked){
+        pb_pick_rp->setEnabled(true);
+        pb_pick_rp->setStyleSheet(qs.arg("yellow"));
+    }else{
+        pb_pick_rp->setDisabled(true);
+        pb_pick_rp->setStyleSheet(qs.arg(color.name()));
+    }
+    set_sel_data();
+//    emit sig_plot();
+//    emit sig_save_button();
+    return;
 }
 
 void US_PeakDecomposition::slt_addRmItem(QListWidgetItem *item){
@@ -222,22 +250,22 @@ void US_PeakDecomposition::slt_load_auc(){
         filePaths << fPath.at(i);
         lw_inpData->addItem(finfo.fileName());
         QVector<QVector<double>> yvals;
-        QVector<QVector<double>> intgs;
-        QVector<QVector<double>> intgs_s;
+//        QVector<QVector<double>> intgs;
+//        QVector<QVector<double>> intgs_s;
         int ns = rawData.scanCount();
         for (int j = 0; j < ns; j++){
             yvals << rawData.scanData.at(j).rvalues;
-            QVector<QVector<double>> cumsum = trapz(rawData.xvalues,
-                                                     rawData.scanData.at(j).rvalues);
-            intgs << cumsum.at(0);
-            intgs_s << cumsum.at(1);
+//            QVector<QVector<double>> cumsum = trapz(rawData.xvalues,
+//                                                     rawData.scanData.at(j).rvalues);
+//            intgs << cumsum.at(0);
+//            intgs_s << cumsum.at(1);
         }
         yvalues << yvals;
-        integral << intgs;
-        integral_s << intgs_s;
-        QVector<int> scrng;
-        scrng << ns - 1 << ns << 1 << ns;
-        scanRange << scrng;
+//        integral << intgs;
+//        integral_s << intgs_s;
+//        QVector<int> scrng;
+//        scrng << ns - 1 << ns << 1 << ns;
+//        scanRange << scrng;
 
     }
     if (badFiles.size() != 0){
@@ -252,28 +280,69 @@ void US_PeakDecomposition::slt_load_auc(){
 //    pb_reset->setEnabled(true);
 }
 
-QVector<QVector<double>> US_PeakDecomposition::trapz(QVector<double> xval,
-                                                     QVector<double> yval){
-    QVector<QVector<double>> out;
-    QVector<double> intg;
-    QVector<double> intg_s;
+QMap<QString, QVector<QVector<double>>> US_PeakDecomposition::trapz(
+                           QVector<double> xval, QVector<QVector<double>> yval){
+    QMap<QString, QVector<QVector<double>>> out;
+    QVector<QVector<double>> integral;
+    QVector<QVector<double>> integral_s;
 
-    double dx;
-    double sum = 0;
-    double *x = xval.data();
-    double *y = yval.data();
-    for (int i = 1; i < xval.size(); i++){
-        dx = x[i] - x[i - 1];
-        sum += dx * ( y[i] + y[i - 1] ) * 0.5;
-        intg << sum;
+    const double *x = xval.data();
+    const double *y;
+    int np = xval.size();
+    int ns = yval.size();
+    for (int i = 0; i < ns; i++){
+        y = yval.at(i).data();
+        double dx;
+        double sum = 0;
+        QVector<double> intg;
+        for (int j = 1; j < np; j++){
+            dx = x[j] - x[j - 1];
+            sum += dx * ( y[j] + y[j - 1] ) * 0.5;
+            intg << sum;
+        }
+        integral << intg;
+        QVector<double> intg_s;
+        for (int i = 0; i < intg.size(); i++){
+            intg_s << intg.at(i) * 100 / sum;
+        }
+        integral_s << intg_s;
     }
-
-    for (int i = 0; i < intg.size(); i++){
-        intg_s << intg.at(i) * 100 / sum;
-    }
-
-    out << intg << intg_s;
+    out["integral"] = integral;
+    out["integral_s"] = integral_s;
     return out;
+
+}
+
+QVector<double> US_PeakDecomposition::get_xlimit(QVector<double> xval_in,
+                                                 double xmin, double xmax,
+                                                 int *idMin, int *inMax){
+    QVector<double> xval_out;
+    const double *xp = xval_in.data();
+    int id1 = -1;
+    int id2 = -1;
+    int np = xval_in.size();
+    for (int i = 0; i < np; i++){
+        if (id1 == -1){
+            if (xp[i] >= xmin){
+                id1 = i;
+                xval_out << xp[i];
+            }
+        } else {
+            if (xp[i] >= xmax){
+                id2 = i;
+                xval_out << xp[i];
+                break;
+            } else {
+                xval_out << xp[i];
+            }
+        }
+    }
+    if (id2 == -1){
+        id2 = np - 1;
+    }
+    (*idMin) = id1;
+    (*inMax) = id2;
+    return xval_out;
 
 }
 
@@ -290,13 +359,35 @@ void US_PeakDecomposition::set_sel_data(void){
     }
     for (int i = 0; i < inpIds.size(); i++){
         int id = inpIds.at(i);
-        xvalues_sel << xvalues.at(id);
-        yvalues_sel << yvalues.at(id);
-        integral_sel << integral.at(id);
-        integral_s_sel << integral_s.at(id);
+        int np = xvalues.at(id).size();
+
+        if (x_min_picked != -1 && x_max_picked != -1){
+            int idMin = 0;
+            int idMax = np - 1;
+            QVector<double> xval= get_xlimit(xvalues.at(id), x_min_picked,
+                              x_max_picked, &idMin, &idMax);
+            QVector<QVector<double>> yval;
+            for (int j = 0; j < yvalues.at(id).size(); j++){
+                QVector<double> y;
+                const double *yp = yvalues.at(id).at(j).data();
+                for (int k = idMin; k <= idMax; k++)
+                    y << yp[k];
+                yval << y;
+            }
+            xvalues_sel << xval;
+            yvalues_sel << yval;
+        } else {
+            xvalues_sel << xvalues.at(id);
+            yvalues_sel << yvalues.at(id);
+        }
+
+        QMap<QString, QVector<QVector<double>>> trapzOut;
+        trapzOut = trapz(xvalues_sel.last(), yvalues_sel.last());
+        integral_sel << trapzOut["integral"];
+        integral_s_sel << trapzOut["integral_s"];
         QVector<double> midx;
-        const double *xp = xvalues.at(id).data();
-        for (int j = 1; j < xvalues.at(id).size(); j++){
+        const double *xp = xvalues_sel.last().data();
+        for (int j = 1; j < xvalues_sel.last().size(); j++){
             midx << 0.5 * (xp[j] + xp[j - 1]);
         }
         midxval_sel << midx;
@@ -306,6 +397,8 @@ void US_PeakDecomposition::set_sel_data(void){
 
 void US_PeakDecomposition::slt_plot(bool state){
     plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
+    plot->enableAxis(QwtPlot::yRight, false);
+    plot->enableAxis(QwtPlot::yLeft, false);
     if (! state){
 //        plot1->setTitle(tr(""));
         grid = us_grid(plot);
@@ -327,6 +420,7 @@ void US_PeakDecomposition::slt_plot(bool state){
         yTitle.setText("");
         plot->setAxisTitle(QwtPlot::yLeft, yTitle);
         plot->setAxisTitle(QwtPlot::yRight, yTitle);
+        plot->replot();
         return;
     }
 
@@ -338,6 +432,7 @@ void US_PeakDecomposition::slt_plot(bool state){
     if (plt_state.contains("D")){
         yTitle.setText("Absorbance");
         plot->setAxisTitle(QwtPlot::yLeft, yTitle);
+        plot->enableAxis(QwtPlot::yLeft, true);
         for (int i = 0; i < nd; i++){
             int ns = yvalues_sel.at(i).size();
             int np = xvalues_sel.at(i).size();
@@ -402,10 +497,14 @@ void US_PeakDecomposition::slt_plot(bool state){
             yTitle.setText("Integral (%)");
         else
             yTitle.setText("Integral");
-        if (plt_state.size() == 2)
+        if (plt_state.size() == 2){
             plot->setAxisTitle(QwtPlot::yRight, yTitle);
-        else
+            plot->enableAxis(QwtPlot::yRight, true);
+        }
+        else {
             plot->setAxisTitle(QwtPlot::yLeft, yTitle);
+            plot->enableAxis(QwtPlot::yLeft, true);
+        }
     }
 
 
@@ -413,6 +512,7 @@ void US_PeakDecomposition::slt_plot(bool state){
 //    plot->setAxisScale( QwtPlot::xBottom, min_x - dx, max_x + dx);
 //    plot->setAxisScale( QwtPlot::yLeft  , min_y - dr, max_y + dr);
 //    plot->updateAxes();
+    grid = us_grid(plot);
     plot->replot();
 }
 
@@ -421,3 +521,55 @@ void US_PeakDecomposition::slt_scan(double id){
     emit sig_plot1(true);
 }
 
+void US_PeakDecomposition::slt_pick_point(){
+    picker->disconnect();
+    x_min_picked = -1;
+    x_max_picked = -1;
+    if (selFilenames.size() == 0)
+        return;
+    pb_pick_rp->setStyleSheet("QPushButton { background-color: red }");
+    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
+            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
+    set_sel_data();
+    return;
+}
+
+void US_PeakDecomposition::slt_mouse(const QwtDoublePoint& point){
+    double x = point.x();
+    if (x_min_picked == -1){
+        x_min_picked = x;
+        double miny = plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
+        double maxy = plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
+        QVector<double> xx;
+        QVector<double> yy;
+        int np = 50;
+        double dyy = (maxy - miny) / np;
+        double y0 = miny;
+        for (int i = 0; i < np; ++i){
+            xx << x_min_picked;
+            yy << y0 + i * dyy;
+        }
+        qDebug() << xx << yy;
+        QPen pen_plot(Qt::yellow);
+        pen_plot.setWidth(1);
+        pen_plot.setColor(QColor(Qt::yellow));
+        QwtPlotCurve* curve = us_curve( plot,"");
+        curve->setStyle(QwtPlotCurve::Dots);
+        curve->setPen(pen_plot);
+        curve->setSamples(xx.data(), yy.data(), np);
+        grid = us_grid(plot);
+        plot->replot();
+
+    } else {
+        if (x <= x_min_picked){
+            QString mess("Pick a radial point greater than: %1 cm");
+            QMessageBox::warning( this, tr( "Warning" ), mess.arg(x_min_picked));
+            return;
+        }
+        x_max_picked = x;
+        picker->disconnect();
+        pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
+        set_sel_data();
+    }
+    return;
+}

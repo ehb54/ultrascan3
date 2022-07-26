@@ -41,15 +41,17 @@ private:
     QStringList selFilenames;
     QVector<QVector<double>> xvalues;
     QVector<QVector<QVector<double>>> yvalues;
-    QVector<QVector<QVector<double>>> integral;
-    QVector<QVector<QVector<double>>> integral_s;
+//    QVector<QVector<QVector<double>>> integral;
+//    QVector<QVector<QVector<double>>> integral_s;
     QVector<QVector<double>> xvalues_sel;
     QVector<QVector<double>> midxval_sel;
     QVector<QVector<QVector<double>>> yvalues_sel;
     QVector<QVector<QVector<double>>> integral_sel;
     QVector<QVector<QVector<double>>> integral_s_sel;
-    QVector<QVector<int>> scanRange;                                                                                                                  ;
-    QVector<QVector<int>> xlimits;
+//    QVector<QVector<int>> scanRange;                                                                                                                  ;
+//    QVector<QVector<int>> xlimits;
+    double x_min_picked = -1;
+    double x_max_picked = -1;
 
 
     QListWidget *lw_inpData;
@@ -63,9 +65,12 @@ private:
     QCheckBox *ckb_integral;
     QCheckBox *ckb_scale;
     QCheckBox *ckb_xrange;
+    US_PlotPicker *picker;
 
     void set_sel_data(void);
-    QVector<QVector<double>> trapz(QVector<double>, QVector<double>);
+    QMap<QString, QVector<QVector<double>>> trapz(QVector<double>,
+                                                  QVector<QVector<double>>);
+    QVector<double> get_xlimit(QVector<double>, double, double, int *, int *);
 
 private slots:
     void slt_load_auc(void);
@@ -74,6 +79,9 @@ private slots:
     void slt_addRmItem(QListWidgetItem *);
     void slt_rmItem(void);
     void slt_clsList(void);
+    void slt_pick_point(void);
+    void slt_mouse(const QwtDoublePoint& point);
+    void slt_xrange(int);
 };
 
 
