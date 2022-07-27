@@ -1457,18 +1457,31 @@ void US_ConvertScan::trim_absorbance(){
         if (id_max == -1)
             id_max = xvalues.size();
     }
+
+
+    int row = lw_triple->currentRow();
+    int dataId = ccwItemList.index.at(row).at(wavl_id);
+    int scan_l1 = scansRange.at(dataId).at(0);
+    int scan_l2 = scansRange.at(dataId).at(1);
+
     double min_r = 1e20;
+    bool zr = false;
     for (int i = 0; i < absorbance.size(); ++i){
         int np = absorbance.at(i).rvalues.size();
         double *rp = absorbance[i].rvalues.data();
         for (int j = 0; j < np; ++j){
             if (j < id_min || j > id_max)
                 rp[j] = 0;
-            else if (zeroing)
-                min_r = qMin(min_r, rp[j]);
+            else if (zeroing){
+                if (i >= scan_l1 && i < scan_l2){
+                    min_r = qMin(min_r, rp[j]);
+                    zr = true;
+                }
+            }
         }
     }
-    if (zeroing){
+    qDebug() << min_r << scan_l1 << scan_l2;
+    if (zeroing && zr){
         for (int i = 0; i < absorbance.size(); ++i){
             double *rp = absorbance[i].rvalues.data();
             for (int j = id_min; j < id_max; ++j)
