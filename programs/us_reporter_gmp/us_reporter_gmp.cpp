@@ -2475,16 +2475,45 @@ void US_ReporterGMP::generate_report( void )
       
       
       //Inform user of the PDF location
-      QMessageBox::information( this, tr( "Report PDF Ready" ),
-				tr( "Report PDF was saved at \n%1\n\n"
-				    "You can view it by pressing \'View Report\' button below" ).arg( filePath ) );
-    }
+      QMessageBox msgBox_a;
+      msgBox_a.setText(tr("Report PDF Ready!"));
+      msgBox_a.setInformativeText(tr( "Report PDF was saved at \n%1\n\n"
+				    "You can view the report by pressing \'View Report\' below.\n\n"
+				    "When this dialog is closed, the report can be re-opened by pressing \'View Report\' button at the bottom.") .arg( filePath ) );
+				    
+      msgBox_a.setWindowTitle(tr("Report Generation Complete"));
+      QPushButton *Open      = msgBox_a.addButton(tr("View Report"), QMessageBox::YesRole);
+      //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+      msgBox_a.setIcon(QMessageBox::Information);
+      msgBox_a.exec();
+      
+      if (msgBox_a.clickedButton() == Open)
+	{
+	  view_report();
+	}
+      
+     }
   else
     {
       //Inform user of the PDF location
-      QMessageBox::information( this, tr( "Report PDF Ready" ),
-				tr( "Report PDF was saved at \n%1\n\n"
-				    "You can view it by pressing \'View Report\' button on the left" ).arg( filePath ) );
+      QMessageBox msgBox;
+      msgBox.setText(tr("Report PDF Ready!"));
+      msgBox.setInformativeText(tr( "Report PDF was saved at \n%1\n\n"
+				    "You can view the report by pressing \'View Report\' below.\n\n"
+				    "When this dialog is closed, the report can be re-opened by pressing \'View Report\' button on the left.") .arg( filePath ) );
+				    
+      msgBox.setWindowTitle(tr("Report Generation Complete"));
+      QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
+      //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+      msgBox.setIcon(QMessageBox::Information);
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() == Open)
+	{
+	  view_report();
+	}
     }
   
 }
@@ -4755,19 +4784,22 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 
   QMap < QString, QString > analysis_status_map = parse_autoflowStatus_analysis_json( analysisJson );
 
-  html_assembled += tr(
-		       "<table style=\"margin-left:10px\">"
-		       "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
-		       "</table>"
-		       
-		       "<table style=\"margin-left:25px\">"
-		       )
-    ;
-
-  QMap < QString, QString >::iterator mfa;
-  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+  if ( !cAP2.job3auto ) // interactive FITMEN (manual)
+    {
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   )
+	;
+      
+      QMap < QString, QString >::iterator mfa;
+      for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
 	{
-
+	  
 	  QString mfa_value    = mfa.value();
 	  QString pos          = mfa_value.split(", by")[0];
 	  QString performed_by = mfa_value.split(", by")[1];
@@ -4778,14 +4810,20 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 			       "<td> Position: %2 </td>"
 			       "<td> Performed by: %3 </td>"
 			       "</tr>"
-			       )
+						       )
 	    .arg( mfa.key()   )     //1
 	    .arg( pos )             //2
 	    .arg( performed_by )    //3   
 	    ;
 	}
-  html_assembled += tr( "</table>" );
-
+      
+      html_assembled += tr( "</table>" );
+    }
+  else  // FITMEN_AUTO (automatic)
+    {
+      html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
+    }
+  
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";

@@ -82,6 +82,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 // static bool no_rr;
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
+                         QString gui_script_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
@@ -106,6 +107,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       exit(-1);
    }
       
+   gui_script = false;
+
    gparams[ "use_pH" ] == "true";
    
    qDebug() << "rasmol no display WAIT****************";
@@ -117,6 +120,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    delete process;
    exit(0);
 #endif
+
+   if ( !gui_script_file.isEmpty() ) {
+      qDebug() << "script active " << gui_script_file;
+      this->gui_script_file = gui_script_file;
+      gui_script = true;
+   } else {
+      gui_script = false;
+   }
 
 #if defined( PINV_TEST )
    qDebug() << "PINV_TEST";
@@ -740,12 +751,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       us_qdebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
    }
 #endif
+   if ( gui_script ) {
+      emit gui_script_run();
+   }
 }
 
 US_Hydrodyn::~US_Hydrodyn()
 {
 }
-
 
 void US_Hydrodyn::setupGUI()
 {
@@ -1196,7 +1209,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo_o = new QPushButton(us_tr("Build SoMo Overlap Bead Model"), this);
    Q_CHECK_PTR(pb_somo_o);
    pb_somo_o->setMinimumHeight(minHeight1);
-   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    pb_somo_o->setEnabled(false);
    pb_somo_o->setPalette( PALET_PUSHB );
    connect(pb_somo_o, SIGNAL(clicked()), SLOT(calc_somo_o()));
@@ -2268,7 +2281,7 @@ void US_Hydrodyn::write_config()
    case QMessageBox::Yes : 
       break;
    case QMessageBox::No : 
-      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , somo_dir , "*.config" , 0 );
+      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , US_Config::get_home_dir() + "etc" , "*.config" , 0 );
       break;
    default :
       return;
@@ -3011,7 +3024,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    le_bead_model_suffix->setText( bead_model_suffix );
 
 #if defined(START_RASMOL)
-   if ( display_pdb ) {
+   if ( display_pdb && advanced_config.auto_view_pdb ) {
       model_viewer( filename );
    }
 #endif

@@ -1087,7 +1087,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
          new_residue.comment = ts.readLine();
          line_count++;
          {
-            QStringList qsl = ( ts.readLine() ).split( rx_spaces , QString::SkipEmptyParts );
+            QStringList qsl = ( ts.readLine() ).split( rx_spaces , Qt::SkipEmptyParts );
             if ( ( qsl.size() - 7 ) % 2 ) {
             // if ( qsl.size() != 7 && qsl.size() != 9 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
@@ -1160,7 +1160,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
 
          for (j=0; j<numatoms; j++) {
             QString linein = ts.readLine();
-            QStringList qsl = linein.split( rx_spaces , QString::SkipEmptyParts );
+            QStringList qsl = linein.split( rx_spaces , Qt::SkipEmptyParts );
             if ( qsl.size() != 8 && qsl.size() != 16 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
                                     us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
@@ -2315,7 +2315,7 @@ void US_AddResidue::accept_atom()
 #define TSO QTextStream( stdout )
 
 void US_AddResidue::info_residue( const QString & msg ) {
-   TSO << LD << "info_residue() : " << msg << endl << LD;
+   TSO << LD << "info_residue() : " << msg << Qt::endl << LD;
    
    for ( int i = 0; i < (int) new_residue.r_atom.size(); ++i ) {
       TSO <<
@@ -2398,7 +2398,7 @@ bool US_AddResidue::update_pKas( int atomno ) {
             ok = false;
          }
          if ( !new_residue.r_atom_1.count( ionization_index ) ) {
-            TSO << "ERROR new_residue.r_atom_1 missing ionization index " << ionization_index << endl;
+            TSO << "ERROR new_residue.r_atom_1 missing ionization index " << ionization_index << Qt::endl;
             ok = false;
          }
          pKas_need_sort = new_residue.pKas.size() > 1 && new_residue.pKas[ ionization_index - 1 ] != new_atom.pKa;
@@ -2474,7 +2474,7 @@ bool US_AddResidue::update_pKas( int atomno ) {
             TSO << "ERROR new_residue.pKas don't contain expected ionization index\n";
             ok = false;
          } else {
-            TSO << "update_pKas() assigning tmp index " << it->first << endl;
+            TSO << "update_pKas() assigning tmp index " << it->first << Qt::endl;
             it->second.ionization_index = it->first;
             tmp[ new_residue.pKas[ it->first - 1 ] ] = it->second;
          }
@@ -2629,7 +2629,7 @@ void US_AddResidue::write_residue_file()
       for (unsigned int i=0; i<residue_list.size(); i++)
       {
          qDebug() << "write residue file name:" << residue_list[i].name.toUpper();
-         ts << residue_list[i].comment << endl;
+         ts << residue_list[i].comment << Qt::endl;
          ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
             << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
@@ -2644,7 +2644,7 @@ void US_AddResidue::write_residue_file()
                ;
          }
             
-         ts << endl;
+         ts << Qt::endl;
             
          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
          {
@@ -2671,7 +2671,7 @@ void US_AddResidue::write_residue_file()
                      ;
                }
             }
-            ts << endl;               
+            ts << Qt::endl;               
          }
          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
          {
@@ -2679,7 +2679,7 @@ void US_AddResidue::write_residue_file()
                << "\t" << residue_list[i].r_bead[j].color
                << "\t" << residue_list[i].r_bead[j].placing_method
                << "\t" << residue_list[i].r_bead[j].chain
-               << "\t" << residue_list[i].r_bead[j].volume << endl;
+               << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
          }
          str1.sprintf("%d: ", i+1);
 

@@ -857,16 +857,16 @@ void US_Color::selected_item(int item)
       pb_color4->setEnabled(true);
       pb_color5->setEnabled(true);
       pb_color6->setEnabled(true);
-      temp_color1 = temp_colors.cg_frame.foreground().color();
-      temp_color2 = temp_colors.cg_frame.background().color();
+      temp_color1 = temp_colors.cg_frame.windowText().color();
+      temp_color2 = temp_colors.cg_frame.window().color();
       temp_color3 = temp_colors.cg_frame.light().color();
       temp_color4 = temp_colors.cg_frame.dark().color();
       temp_color5 = temp_colors.cg_frame.midlight().color();
       temp_color6 = temp_colors.cg_frame.shadow().color();
       lbl_color1->setText(us_tr(" Text Color:"));
-      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_frame.foreground().color()); color_field1->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_frame.windowText().color()); color_field1->setPalette(palette); }
       lbl_color2->setText(us_tr(" Background Color:"));
-      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_frame.background().color()); color_field2->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_frame.window().color()); color_field2->setPalette(palette); }
       lbl_color3->setText(us_tr(" Highlight Color:"));
       { QPalette palette; palette.setColor(color_field3->backgroundRole(), temp_colors.cg_frame.light().color()); color_field3->setPalette(palette); }
       lbl_color4->setText(us_tr(" Medium Shadow Color:"));
@@ -939,13 +939,13 @@ void US_Color::selected_item(int item)
       pb_color5->setEnabled(false);
       pb_color6->setEnabled(false);
       temp_color1 = temp_colors.cg_plot.text().color();
-      temp_color2 = temp_colors.cg_plot.background().color();
+      temp_color2 = temp_colors.cg_plot.window().color();
       temp_color3 = temp_colors.cg_plot.light().color();
       temp_color4 = temp_colors.cg_plot.dark().color();
       lbl_color1->setText(us_tr(" Text Color:"));
       { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_plot.text().color()); color_field1->setPalette(palette); }
       lbl_color2->setText(us_tr(" Background Color:"));
-      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_plot.background().color()); color_field2->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_plot.window().color()); color_field2->setPalette(palette); }
       lbl_color3->setText(us_tr(" Highlight Color:"));
       { QPalette palette; palette.setColor(color_field3->backgroundRole(), temp_colors.cg_plot.light().color()); color_field3->setPalette(palette); }
       lbl_color4->setText(us_tr(" Shadow Color:"));
@@ -1034,11 +1034,11 @@ void US_Color::selected_item(int item)
       pb_color5->setEnabled(false);
       pb_color6->setEnabled(false);
       temp_color1 = temp_colors.cg_edit.text().color();
-      temp_color2 = temp_colors.cg_edit.background().color();
+      temp_color2 = temp_colors.cg_edit.window().color();
       lbl_color1->setText(us_tr(" Text Color:"));
-      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_edit.foreground().color()); color_field1->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_edit.windowText().color()); color_field1->setPalette(palette); }
       lbl_color2->setText(us_tr(" Background Color:"));
-      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_edit.background().color()); color_field2->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_edit.window().color()); color_field2->setPalette(palette); }
       lbl_color3->setText("");
       { QPalette palette; palette.setColor(color_field3->backgroundRole(), Qt::gray); color_field3->setPalette(palette); }
       lbl_color4->setText("");
@@ -1058,11 +1058,11 @@ void US_Color::selected_item(int item)
       pb_color5->setEnabled(false);
       pb_color6->setEnabled(false);
       temp_color1 = temp_colors.cg_label.text().color();
-      temp_color2 = temp_colors.cg_label.background().color();
+      temp_color2 = temp_colors.cg_label.window().color();
       lbl_color1->setText(us_tr(" Text Color:"));
-      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_label.foreground().color()); color_field1->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_label.windowText().color()); color_field1->setPalette(palette); }
       lbl_color2->setText(us_tr(" Background Color:"));
-      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_label.background().color()); color_field2->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_label.window().color()); color_field2->setPalette(palette); }
       lbl_color3->setText("");
       { QPalette palette; palette.setColor(color_field3->backgroundRole(), Qt::gray); color_field3->setPalette(palette); }
       lbl_color4->setText("");
@@ -1082,7 +1082,7 @@ void US_Color::selected_item(int item)
       pb_color5->setEnabled(true);
       pb_color6->setEnabled(true);
       temp_color1 = temp_colors.cg_normal.text().color();
-      temp_color2 = temp_colors.cg_normal.background().color();
+      temp_color2 = temp_colors.cg_normal.window().color();
       temp_color3 = temp_colors.cg_normal.light().color();
       temp_color4 = temp_colors.cg_normal.dark().color();
       temp_color5 = temp_colors.cg_normal.highlight().color();
@@ -1090,7 +1090,7 @@ void US_Color::selected_item(int item)
       lbl_color1->setText(us_tr(" Text Color:"));
       { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_normal.text().color()); color_field1->setPalette(palette); }
       lbl_color2->setText(us_tr(" Background Color:"));
-      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_normal.background().color()); color_field2->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_normal.window().color()); color_field2->setPalette(palette); }
       lbl_color3->setText(us_tr(" Highlight Color:"));
       { QPalette palette; palette.setColor(color_field3->backgroundRole(), temp_colors.cg_normal.light().color()); color_field3->setPalette(palette); }
       lbl_color4->setText(us_tr(" Shadow Color:"));
@@ -1109,14 +1109,14 @@ void US_Color::selected_item(int item)
       pb_color4->setEnabled(true);
       pb_color5->setEnabled(false);
       pb_color6->setEnabled(false);
-      temp_color1 = temp_colors.cg_lcd.foreground().color();
-      temp_color2 = temp_colors.cg_lcd.background().color();
+      temp_color1 = temp_colors.cg_lcd.windowText().color();
+      temp_color2 = temp_colors.cg_lcd.window().color();
       temp_color3 = temp_colors.cg_lcd.light().color();
       temp_color4 = temp_colors.cg_lcd.dark().color();
       lbl_color1->setText(us_tr(" Text Center Color:"));
-      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_lcd.foreground().color()); color_field1->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field1->backgroundRole(), temp_colors.cg_lcd.windowText().color()); color_field1->setPalette(palette); }
       lbl_color2->setText(us_tr(" Background Color:"));
-      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_lcd.background().color()); color_field2->setPalette(palette); }
+      { QPalette palette; palette.setColor(color_field2->backgroundRole(), temp_colors.cg_lcd.window().color()); color_field2->setPalette(palette); }
       lbl_color3->setText(us_tr(" Highlight Color:"));
       { QPalette palette; palette.setColor(color_field3->backgroundRole(), temp_colors.cg_lcd.light().color()); color_field3->setPalette(palette); }
       lbl_color4->setText(us_tr(" Shadow Color:"));
@@ -1143,7 +1143,7 @@ void US_Color::pick_color1()
   {
     case 0:
     {
-      temp_colors.cg_frame.setColor(QPalette::Foreground, color1);
+      temp_colors.cg_frame.setColor(QPalette::WindowText, color1);
       float v = (int) (0.2125 * color1.red() + 0.0721 * color1.blue() + 0.7154 * color1.green());
       if (v > 128)
       {
@@ -1220,14 +1220,14 @@ void US_Color::pick_color1()
     }
     case 7:
     {
-      temp_colors.cg_edit.setColor(QPalette::Foreground, color1);
+      temp_colors.cg_edit.setColor(QPalette::WindowText, color1);
       lbl_edit->setPalette( PALET_EDIT );
       AUTFBACK( lbl_edit );
       break;
     }
     case 8:
     {
-      temp_colors.cg_label.setColor(QPalette::Foreground, color1);
+      temp_colors.cg_label.setColor(QPalette::WindowText, color1);
       lbl_text->setPalette( PALET_LABEL );
       AUTFBACK( lbl_text );
       break;
@@ -1245,7 +1245,7 @@ void US_Color::pick_color1()
     }
     case 10:
     {
-      temp_colors.cg_lcd.setColor(QPalette::Foreground, color1);
+      temp_colors.cg_lcd.setColor(QPalette::WindowText, color1);
       lcd->setPalette( temp_colors.cg_lcd );
       break;
     }
@@ -1261,7 +1261,7 @@ void US_Color::pick_color2()
   {
     case 0:
     {
-      temp_colors.cg_frame.setColor(QPalette::Background, color2);
+      temp_colors.cg_frame.setColor(QPalette::Window, color2);
       lbl_background->setPalette( PALET_FRAME );
       AUTFBACK( lbl_background );
       lbl_margin->setPalette( PALET_FRAME );
@@ -1291,28 +1291,28 @@ void US_Color::pick_color2()
     }
     case 3:
     {
-      temp_colors.cg_plot.setColor(QPalette::Background, color2);
+      temp_colors.cg_plot.setColor(QPalette::Window, color2);
       plot->setPalette( PALET_NORMAL );
       AUTFBACK( plot );
       break;
     }
     case 7:
     {
-      temp_colors.cg_edit.setColor(QPalette::Background, color2);
+      temp_colors.cg_edit.setColor(QPalette::Window, color2);
       lbl_edit->setPalette( PALET_EDIT );
       AUTFBACK( lbl_edit );
       break;
     }
     case 8:
     {
-      temp_colors.cg_label.setColor(QPalette::Background, color2);
+      temp_colors.cg_label.setColor(QPalette::Window, color2);
       lbl_text->setPalette( PALET_LABEL );
       AUTFBACK( lbl_text );
       break;
     }
     case 9:
     {
-      temp_colors.cg_normal.setColor(QPalette::Background, color2);
+      temp_colors.cg_normal.setColor(QPalette::Window, color2);
       cmbb_margin->setPalette( PALET_NORMAL );
       AUTFBACK( cmbb_margin );
       progress->setPalette( PALET_NORMAL );
@@ -1323,7 +1323,7 @@ void US_Color::pick_color2()
     }
     case 10:
     {
-      temp_colors.cg_lcd.setColor(QPalette::Background, color2);
+      temp_colors.cg_lcd.setColor(QPalette::Window, color2);
       lcd->setPalette( temp_colors.cg_lcd );
       break;
     }

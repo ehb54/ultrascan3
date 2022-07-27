@@ -18,7 +18,6 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 #include <math.h>
 #include <stdlib.h>
 #include <vector>
-   using namespace std;
 
 // needed for getpid() to randomize with
 #ifdef UNIX
@@ -72,7 +71,9 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 #include <drivers.h>
 #endif
 
+
 #include "us_matrix.h"
+   using namespace std;
 
    struct peptide
    {

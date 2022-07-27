@@ -49,11 +49,11 @@ bool       timed_out;
       if ( msg.contains( QRegExp( "^\\d+: (SEND|RECV) " ) ) )
       {
          QFile f( QString( "debug-%1" ).arg( myrank ) );
-         QStringList msgs = (msg ).split( "\n" , QString::SkipEmptyParts );
+         QStringList msgs = (msg ).split( "\n" , Qt::SkipEmptyParts );
          if( f.open( QIODevice::WriteOnly | QIODevice::Append ) )
          {
             QTextStream ts( &f );
-            ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msgs[ 0 ] << endl;
+            ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msgs[ 0 ] << Qt::endl;
             f.close();
          }
       }
@@ -157,10 +157,10 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }         
       errorno--;
 
-      // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts ).arg( char_files ) );
+      // qslt = (QString( "%1" ).split( "\n" , Qt::SkipEmptyParts ).arg( char_files ) );
       {
          QString qs = QString( "%1" ).arg( char_files );
-         qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+         qslt = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
    } else {
       cout << QString("%1: extracting job files\n").arg( myrank ) << flush;
@@ -521,11 +521,11 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       
       for ( unsigned int i = 0; i < (unsigned int) npes; i++ )
       {
-         // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts )
+         // qslt = (QString( "%1" ).split( "\n" , Qt::SkipEmptyParts )
          //                            .arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] ) );
          {
             QString qs =  QString( "%1" ).arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] );
-            qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+            qslt = (qs ).split( "\n" , Qt::SkipEmptyParts );
          }
          for ( unsigned int j = 0; j < qslt.size(); j++ )
          {
@@ -718,10 +718,10 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
       }         
       errorno--;
 
-      // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts ).arg( char_files ) );
+      // qslt = (QString( "%1" ).split( "\n" , Qt::SkipEmptyParts ).arg( char_files ) );
       {
          QString qs = QString( "%1" ).arg( char_files );
-         qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+         qslt = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
    } else {
       // cout << QString("%1: extracting job files\n").arg( myrank ) << flush;

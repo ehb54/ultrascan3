@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO SAXS/SANS Load CSV Module</title>
+	<title>SOMO SAXS/SANS Load, manage, and process SAS data</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -21,111 +21,175 @@
 <hr>
 <center>
 <h2>
-SOMO - SAXS/SANS Load CSV Module</h2></center>
+SOMO - SAXS/SANS Load, manage, and process SAS data Module</h2></center>
 
-<h3><center>Last updated: November 2013 </center></h3><p>
+<h3><center>Last updated: June 2022 </center></h3><p>
 
+Previously computed csv-style <i>I(q)</i> vs. <i>q</i> files, such as those generated using the <a href="somo_batch.html">US-SOMO Batch Mode</a>, can also be uploaded in the SOMO SAXS/SANS graphics window by pressing the <i><b>Load SAXS</i></b> (or <i><b>Load SANS</i></b>) button.<p>
+If one or multiple files were already loaded in the SAS window, a pop-up window will appear asking to select a target curve upon which the new data to be plotted can be rescaled:
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_SAXS_Load_CSV.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader">
+<img SRC="somo-SAXS_SANS_Scaling_curve_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader scaling options">
 </center>
 <p>
-</center>Previously computed csv-style <i>I(q)</i> vs. <i>q</i> files, such as those generated using the <a href="somo_batch.html">US-SOMO Batch Mode</a>, can also be uploaded in the SOMO SAXS/SANS graphics window. In this case, a new window will open listing all the individual curves present in the csv file, plus all other files already uploaded into the graphics window.<br>
-Individual data can be selected/deselected by clicking on them, or they can all be selected/deselected by pressing the <b><i>Select All</i></b> button. Several operations can then be performed before returning to the graphics window. In the example shown below, the first ten datasets were selected and the <i>Create average curve</i>, <i>Create std deviation curves</i>, <i>Only plot stats</i>, and <i>Save to csv</i> checkboxes were ticked. This will create an average curve from the selected dataset, plus +1 SD and -1 SD curves. Only the average and SD curves will be plotted (because the <i>Only plot stats</i> checkbox was selected). Furthermore, the resulting average and SD curves will be saved in another csv file, whose filename can be entered in the field next to the <i>Save to csv</i> checkbox. The original source data can be also saved in the new csv file by ticking the <i>Include source data</i> checkbox.
+Then, a new window "<i>Load, manage, and process SAS data</i>" will open listing all the individual curves present in the csv file, plus all other files already uploaded into the graphics window.<br>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_Load_CSV1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader average selected">
+<img SRC="somo-SAXS_SANS_SAXS_Load_CSV_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader">
 </center>
 <p>
-Pressing the <b><i>Plot</i></b> button will bring up a pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled:
+</center>
+Individual data can be selected/deselected by clicking on them, or they can all be selected/deselected by pressing the <b><i>Select All</i></b> button. Several operations can then be performed before returning to the graphics window. In the example shown below, the first ten datasets were selected and the <i>Create average curve</i>, <i>Create std deviation curves</i>, <i>Only plot stats</i>, and <i>Save to csv</i> checkboxes were ticked. This will create an average curve from the selected dataset, plus +1 SD and -1 SD curves. Only the average and SD curves will be plotted (because the <i>Only plot stats</i> checkbox was selected). Furthermore, the resulting average and SD curves will be saved in another csv file, whose filename can be entered in the field next to the <i>Save to csv</i> checkbox. The original source data can be also saved in the new csv file by ticking the <i>Include source data</i> checkbox.<br>
+Unticking the <i>Clear plot</i> checkbox in the lower right corner will leave previously plotted data in the SAS window.
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_Scaling_curve.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader scaling options">
+<img SRC="somo-SAXS_SANS_Load_CSV1_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader average selected">
 </center>
 <p>
-After the appropriate selection, pressing "OK" will update the graphics window, and at the same time also the progress window in the bottom-left corner of the panel:
+
+After the appropriate selection, if one or multiple files were already loaded in the SAS window, pressing the <b><i>Plot</i></b> button will bring up again the pop-up window  asking to select a target curve upon which the new data to be plotted can be rescaled:
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_Plotted2.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file average SD plotted">
+<img SRC="somo-SAXS_SANS_Scaling_curve_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader scaling options">
 </center>
+<p> 
 
+After selecting the curve and pressing <b>OK</b>, the graphics window will be updated (and at the same time also the progress window in the bottom-left corner of the panel):
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_Plotted2_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file average SD plotted">
+</center>
+<p>
 
-From the  <a href="somo-SAXS_SANS_Iq_panel1.png"><b><i>SAXS/SANS I(q) Plotting Functions:</i></b></a> panel, pressing the  <b><i>Load Plotted</i></b> button will re-open the <i>Load CSV style SAXS results</i> window, listing all data currently shown on the graphics window, on which further operations can be performed: 
+ Here the filenames are also shown (pressing the <i><b>Legend</i></b> button in the <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel), and the width of the curves was also increased (pressing once the <i><b>Width</i></b> button in the <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel).<p>
+ 
+ Since in this case the <i>Clear plot</i> checkbox was unticked, the resulting average curve is scaled against the selected target curve, and a pop-up window with the residuals will appear:
 
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_Load_Plotted.png" ALT="SOMO SAXS I(q) Simulation Load Plotted">
+<img SRC="somo-SAXS_SANS_Scaling_residuals_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file average SD plotted">
+</center>
+<p>
+
+
+From the  <a href="somo-SAXS_SANS_Iq_panel1.png"><b><i>SAXS/SANS I(q) Plotting Functions:</i></b></a> panel, pressing the  <b><i>Load Plotted</i></b> button will re-open the <i>Load, manage, and process SAS data</i> window, listing all data currently shown on the graphics window, on which further operations can be performed: 
+
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_Load_Plotted_new.png" ALT="SOMO SAXS I(q) Simulation Load Plotted">
 </center>
 <p>
 For instance, the selected data, which are stored in rows, can be transposed into columns by pressing the <b><i>Transpose</i></b> button (the number in parentheses in the button label will show how many datasets are going to be transposed). This will bring up a save window where a path and a filename can be chosen. The transposed file will be saved in csv format.<p>
-Alternatively, a <b>Crysol</b>-compatible file can be saved by pressing the <b><i>Save .DAT</i></b> button, bringing up again a save window where a path and a filename can be chosen. Currently (November 2013) only one dataset at the time can be saved in .DAT format (2 or 3 columns, depending on the presence of SD data).<br>
+Alternatively, a <b>Crysol</b>-compatible file can be saved by pressing the <b><i>Save .DAT</i></b> button, bringing up again a save window where a path and a filename can be chosen. Currently (June 2022) only one dataset at the time can be saved in .DAT format (2 or 3 columns, depending on the presence of SD data).<br>
 Pressing the <b><i>Save</i></b> button will instead save the selected dataset(s) into another csv file maintaining the rows storage format.<br>
 Pressing <b><i>Cancel</i></b> will close this window.<p>
 More operations can be performed on multiple <i>I(q)</i> vs. <i>q</i> files within this module.<br>
 A non-negative least squares (NNLS) procedure can be utilized to find the best combination of model curves matching an experimental dataset. This operation is performed by first selecting the experimental dataset by clicking on it, and then pressing the <b><i>Select Target</i></b> button (available only when a single dataset is selected). The chosen dataset name will then appear in the field next to the <b><i>Select Target</i></b> button. If a single (experimental) data file was already loaded into the graphics window, it will be automatically chosen as the target dataset (but it could be changed as described above). Next, the datasets on which the NNLS is to be performed are selected (efficiently by first pressing the <b><i>Select All</i></b> button and then de-selecting the unwanted datasets by single-clicking on their names):
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_NNLS1.png" ALT="SOMO SAXS I(q) Simulation Load Plotted">
+<img SRC="somo-SAXS_SANS_NNLS1_new.png" ALT="SOMO SAXS I(q) Simulation Load Plotted">
 </center>
 <p>
-Pressing the <b><i>Plot</i></b> button will then launch the NNLS operation, at the end of which the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel. This will bring up a pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled:
+Pressing the <b><i>Plot</i></b> button will then launch the NNLS operation, at the end of which the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel. Since the <i>Clear plot</i> buttom was left checked, the pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled will <i>not</i> appear, and the graphics window will be updated: 
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_NNLS_scale.png" ALT="SOMO SAXS I(q) NNLS scaling options">
+<img SRC="somo-SAXS_SANS_NNLS_graph_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS plotted">
 </center>
 <p>
-After the appropriate selection, pressing "OK" will update the graphics window, and at the same time also the progress window in the bottom-left corner of the panel:
+Here, the <i>Err</i> checkbox in the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel has been selected, allowing to show the target curve as points with their associated error bars.<p>
+At the same time, the progress window will report the results of the NNLS fit:
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_NNLS_graph.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS plotted">
+<img SRC="somo-SAXS_SANS_NNLS_progwindow_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS progress window">
+
 </center>
 <p>
+In the example above, two models, #18 & #23, contributed respectively by 65% and 35% to the final curve. The goodness of the fit is also evaluated by checking the residuals window:
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_NNLS_progwind.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS progress window">
-<img SRC="somo-SAXS_SANS_NNLS_progwind1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS progress window">
-</center>
-<p>
-In the example above, two models, #30 & #39, contributed respectively by 79% and 21% to the final curve. The goodness of the fit is also evaluated by checking the residuals window:
-<center>
-<p>
-<img SRC="somo-SAXS_SANS_NNLSresiduals1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS residuals">
+<img SRC="somo-SAXS_SANS_NNLSresiduals1_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS residuals">
 </center>
 <p>
 Here, the two horizontal white lines indicates &plusmn; 2 SD. Alternatively, the residual can be viewed in a % mode by selecting the <i>Plot as a percent</i> checkbox, where the two horizontal lines indicate &plusmn; 5% :<p>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_NNLSresiduals3.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS residuals">
+<img SRC="somo-SAXS_SANS_NNLSresiduals3_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS residuals">
 </center>
 <p>
 <hr><p>
-Likewise, the best mathing curve from an ensemble can be found by selecting the <i>Best fit</i> checkbox, and proceed as described above for the <i>NNLS fit</i>. At the end of the process, the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel, bringing up again a pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled. After the appropriate selection, pressing "OK" will update the graphics window, and at the same time also the progress window in the bottom-left corner of the panel:<p>
+Likewise, the best mathing curve from an ensemble can be found by selecting the <i>Best fit</i> checkbox, and proceed as described above for the <i>NNLS fit</i>. At the end of the process, the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel, and at the same time also the progress window in the bottom-left corner of the panel:<p>
 
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_best_fit.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit graph">
+<img SRC="somo-SAXS_SANS_best_fit_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit graph">
 </center>
 <p>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_best_fit_progwind.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit progress window">
+<img SRC="somo-SAXS_SANS_best_fit_progwind_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit progress window">
 </center>
 <p>
 
-In the example shown above, model #48 was found to have the best fit with the target experimental data. The curve is shown in cyan on the graphics window, and the same color is used in the progress window to indicate it. <br>
+In the example shown above, model #18 was found to have the best fit with the target experimental data. The curve is shown in green on the graphics window, and the same color is used in the progress window to indicate it. <br>
 As for the <i>NNLS fit</i>, the goodness of the fit is also evaluated by checking the residuals window:
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_best_fit_res1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit residuals">
+<img SRC="somo-SAXS_SANS_best_fit_res1_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit residuals">
 </center>
 <p>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_best_fit_res2.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit residuals 2">
+<img SRC="somo-SAXS_SANS_best_fit_res2_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit residuals 2">
 </center>
 <p>
- 
+<hr><p>
+
+Starting with the <span style="color:#CC0000">July 2022 intermediate release</span>, it is now also possible in this module to sequentially process multiple <i>I(q)</i> vs. <i>q</i> datasets with the IFT method (see <a href=saxs_ift.html>here</a>) to produce the corresponding pair-wise distance distribution functions <i>p</i>(<i>r</i>) vs. <i>r</i>.<br>
+In the example below, we use WAXSiS-generated <i>I(q)</i> vs. <i>q</i> datasets from the first five models in the lysozyme NMR structure 1E8L.pdb, loaded from the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel:
+
+<center>
 <p>
+<img SRC="somo-SAXS_SANS_load-1E8L_WAXSiS_models.png" ALT="SOMO SAXS I(q) of WAXSiS-generaled datasets from 1E8L_models">
+</center>
+<p>
+
+Pressing <i><b>Load Plotted</i></b> will bring up the <i>Load, manage, and process SAS data</i> window:
+
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_load_plotted_1E8L_WAXSiS_models.png" ALT="SOMO SAXS load plotted I(q) of WAXSiS-generaled datasets from 1E8L_models">
+</center>
+<p>
+
+The computations are started by first selecting the <i>Compute IFT</i> checkbox, and then pressing the <i><b>Run</i></b> button (note that <span style="color:#CC0000"><b>IF</b></span> the <i>I(q)</i> vs. <i>q</i> datasets <span style="color:#CC0000"><b>do not have</b></span> standard deviations associated to each  <i>I(q)</i> point, the <i><b>Run</i></b> button will <span style="color:#CC0000"><b>NOT</b></span> be available). The <b>IFT</b> module settings window will pop-up:
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_multiple_IFT.png" ALT="SOMO SAXS IFT settings window">
+</center>
+<p>
+where we have changed the "<i>Number of points in p(r)</i>" from the default 50 to 100, and we have not entered a "<i>Maximum diameter [Angstrom]</i>" value, leaving all other fields unchanged. <span style="color:#CC0000"><b>IMPORTANT</b></span>: these parameters will apply to <span style="color:#CC0000"><b>ALL</b></span> the datasets selected!. Pressing the <i><b>Process</i></b> button will start the <b>IFT</b> program, whose progress will be displayed in the text window.<br>
+At the end of the first dataset processing, a pop-up panel will appear, asking for the potential normalization of the resulting <i>p</i>(<i>r</i>) vs. <i>r</i> function:
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_multiple_IFT_pr_norm.png" ALT="SOMO SAXS IFT p(r) normalization pop-up"></center>
+<p>
+and reporting in the <b><i>Remember for all files that contain:</i></b> field the name of the first dataset processed. The normalization is done by entering the molecular weight of the structures from which the <i>I(q)</i> vs. <i>q</i> datasets were generated in the <i><b>Molecular Weight (Daltons)</i></b> field. To be able to apply this molecular weight to all the subsequent datasets, the <b><i>Remember for all files that contain:</i></b> checkbox should be selected, and a minimum common name should be left in its correspondfing field:
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_multiple_IFT_pr_norm1.png" ALT="SOMO SAXS IFT p(r) normalization pop-up filled">
+</center>
+<p>
+Pressing <i><b>Close</b></i> will allow the <b>IFT</b> process to complete and the various <i>p</i>(<i>r</i>) vs. <i>r</i> functions will be displayed in the <i><b>P(r) Distribution Curve</i></b> window:
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_multiple_IFT_pr_display.png" ALT="SOMO SAXS IFT p(r) displayed">
+</center>
+<p>
+and will be saved in both the "<i>.dat</i>" and "<i>.sprr</i>" formats. For multiple <b>IFT</b> processing, the back-calculated <i>I(q)</i> vs. <i>q</i> curves will not be displayed in the <b><i>SAXS Curve</i></b> window. Summary "<i>.txt</i>" files, containg also the computation of the <i>radius of gyration</i>, will also be produced.<p>
 <hr>
 
 
@@ -145,7 +209,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 15, 2013
+Last modified on June 29, 2022
 </font>
 </body>
 </html>

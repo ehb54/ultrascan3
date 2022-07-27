@@ -203,11 +203,11 @@ us_log->log( QString( "point %1 r %2 t %3 p %4\n" )
 #endif
    // cache spherical bessels
    {
-      register double  qp_t_rtp0;
+      double  qp_t_rtp0;
       // it's odd that the * version is a bit slower
-      // register double  *Jp;
+      // double  *Jp;
 #if !defined( ALT_SPHBES )
-      register unsigned int J_ofs;
+      unsigned int J_ofs;
 #endif
       for ( unsigned int i = 0; i < (unsigned int) v_pdata.size(); ++i )
       {

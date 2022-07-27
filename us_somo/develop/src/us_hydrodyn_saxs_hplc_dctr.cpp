@@ -207,19 +207,19 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::save()
 
    if ( !le_uv_conv->text().isEmpty() )
    {
-      ts << "# __detector_uv: " << le_uv_conv->text() << endl;
+      ts << "# __detector_uv: " << le_uv_conv->text() << Qt::endl;
    }
    if ( !le_ri_conv->text().isEmpty() )
    {
-      ts << "# __detector_ri: " << le_ri_conv->text() << endl;
+      ts << "# __detector_ri: " << le_ri_conv->text() << Qt::endl;
    }
    if ( cb_uv->isChecked() )
    {
-      ts << "# __detector_uv_set" << endl;
+      ts << "# __detector_uv_set" << Qt::endl;
    } 
    if ( cb_ri->isChecked() )
    {
-      ts << "# __detector_ri_set" << endl;
+      ts << "# __detector_ri_set" << Qt::endl;
    } 
 
    f.close();

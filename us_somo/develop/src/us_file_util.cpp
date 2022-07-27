@@ -281,11 +281,11 @@ void US_Log::log( const QString & qs )
       (*ts) << qs;
       if ( !qs.contains( QRegExp( "\\n$" ) ) )
       {
-         (*ts) << endl;
+         (*ts) << Qt::endl;
       }
       if ( autoflush )
       {
-         (*ts) << flush;
+         (*ts) << Qt::flush;
       }
    }
 }
@@ -316,11 +316,11 @@ bool US_File_Util::getcontents( QString file, QString & contents, QString & erro
    contents = "";
    QFile f( file );
    if ( !f.exists() ) {
-      error = "File does not exist";
+      error = QString( "File %1 does not exist" ).arg( file );
       return false;
    }
    if ( !f.open( QIODevice::ReadOnly | QIODevice::Text ) )  {
-      error = "File could not be opened";
+      error = QString( "File %1 could not be opened" ).arg( file );
       return false;
    }
    QTextStream ts( &f );

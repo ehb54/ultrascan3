@@ -389,6 +389,7 @@ size_t ScannerBase::Input::get()
     {
         case '\n':
             ++d_lineNr;
+            [[fallthrough]];
         // FALLING THROUGH
 
         default:
@@ -484,7 +485,7 @@ void ScannerBase::switchOstream(std::ostream &out)
 }
 
 // $insert debugFunctions
-void ScannerBase::setDebug(bool onOff)
+void ScannerBase::setDebug(bool /* onOff */)
 {}
 
 bool ScannerBase::debug() const
