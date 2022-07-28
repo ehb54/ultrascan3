@@ -102,7 +102,7 @@ jobs:
           qmake
           make -j4
           cd ..
-          for d in `find programs -type d -name "us*"`
+          for d in `find programs -type d -name "us*" | grep -v 'us_mpi_analysis'`
           do
           echo "*** compiling in $d ***"
           ( cd $d && qmake && make -j4 )
