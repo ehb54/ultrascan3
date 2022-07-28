@@ -4731,7 +4731,7 @@ int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filenam
 void US_ReporterGMP::assemble_user_inputs_html( void )
 {
   html_assembled += "<p class=\"pagebreak \">\n";
-  html_assembled += "<h2 align=left>User Interactions During Data Saving and Editing</h2>";
+  html_assembled += "<h2 align=left>User Interactions During Data Saving, Editing and Analysis</h2>";
 
   //Maps && timestamps from DB
   // IMPORT
