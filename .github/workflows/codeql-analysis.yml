@@ -114,7 +114,7 @@ jobs:
           qmake
           make -j4
           cd ../..
-          cd programs/us_2dsa
+          cd programs/us_abde_analysis
           qmake
           make -j4
           cd ../..
