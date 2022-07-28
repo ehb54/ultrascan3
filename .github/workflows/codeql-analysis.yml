@@ -103,9 +103,10 @@ jobs:
           make -j4
           cd ..
           for d in `find programs -type d -name "us*"`
-          {
-                ( cd $d && qmake && make -j4 )
-          }
+          do
+          echo "*** compiling in $d ***"
+          ( cd $d && qmake && make -j4 )
+          done
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
