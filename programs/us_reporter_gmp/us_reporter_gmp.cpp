@@ -4594,6 +4594,11 @@ void  US_ReporterGMP::assemble_run_details_html( void )
   //2. Iterate over runIds
   for ( int i=0; i<fileNameList.size(); ++i )
     {
+
+      html_assembled += tr( "<h3 align=left>TimeStamp Parameters for Run: %1</h3>" ).
+	arg( fileNameList[ i ] );
+      html_assembled += tr("<br>");
+      
       //3. get expID based on runID && invID
       int experimentID = get_expID_by_runID_invID( dbP, fileNameList[ i ] );
 
@@ -4693,10 +4698,36 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	}
       
       US_TmstPlot* tsdiag = new US_TmstPlot( this, tmst_fnamei );
-      // tsdiag->exec(); // Test
+
+      //7.  access all needed params from the current timestamp
+      QStringList dkeys = tsdiag -> timestamp_data_dkeys();
+      QMap< QString, double > dmins = tsdiag -> timestamp_data_mins();
+      QMap< QString, double > dmaxs = tsdiag -> timestamp_data_maxs();
+      QMap< QString, double > davgs = tsdiag -> timestamp_data_avgs();
 
       
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   );
+      
+      for ( int i=0; i < dkeys.size(); ++i )
+	{
+	  qDebug() << "Assembling Run Details: " << dkeys[ i ] << dmins[ dkeys[ i ] ] << " to " << dmaxs[ dkeys[ i ] ] << "; Avg: " << davgs [ dkeys[ i ] ];
 
+	  html_assembled += tr(
+			       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
+			       )
+	    .arg( dkeys[ i ] )                 //1
+	    .arg( dmins[ dkeys[ i ] ] )        //2
+	    .arg( dmaxs[ dkeys[ i ] ] )        //3
+	    .arg( davgs [ dkeys[ i ] ] )       //4
+	    ;
+	}
+      
+      html_assembled += tr(
+			   "</table>"
+			   );
+      
       //end of the loop over filenames (only one IF not a combined RI+IP run)
     }
   
@@ -4809,7 +4840,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   "</table>"
 			   
 			   "<table style=\"margin-left:25px\">"
-			   "<tr><td>User ID: </td> <td>%1</td>"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
 			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
 			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
 			   "<tr><td>Level: </td><td> %5 </td></tr>"
