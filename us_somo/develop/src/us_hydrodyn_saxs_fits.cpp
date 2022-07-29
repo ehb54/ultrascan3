@@ -190,7 +190,8 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    
    editor->append(QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd));
    
-   vector < double > rescaled_x = rescale(use_x);
+   vector < double > rescaled_x = our_saxs_options->disable_nnls_scaling ? use_x : rescale(use_x);
+
    // list models & concs
    
    QString use_color = "black";
