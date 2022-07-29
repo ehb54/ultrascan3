@@ -320,6 +320,7 @@ struct saxs_options
    double  steric_clash_recheck_distance;
 
    bool    disable_iq_scaling;
+   bool    disable_nnls_scaling;
    bool    autocorrelate;
    bool    hybrid_radius_excl_vol;
    float   scale_excl_vol;

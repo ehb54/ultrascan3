@@ -595,7 +595,7 @@ QString US_Hydrodyn_Saxs_Conc::csv_to_qstring( csv from_csv )
    {
       for ( unsigned int j = 0; j < from_csv.data[i].size(); j++ )
       {
-         qs += QString("%1%2").arg(j ? "," : "").arg(from_csv.data[i][j]);
+         qs += QString("%1%2").arg(j ? "," : "").arg(from_csv.data[i][j].trimmed());
       }
       qs += "\n";
    }

@@ -67,6 +67,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       QCheckBox   *cb_nnls_zero_list;
 
       QCheckBox   *cb_disable_iq_scaling;
+      QCheckBox   *cb_disable_nnls_scaling;
       QCheckBox   *cb_iqq_scale_chi2_fitting;
 
       QLabel      *lbl_swh_excl_vol;
@@ -114,6 +115,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       void set_nnls_zero_list();
 
       void set_disable_iq_scaling();
+      void set_disable_nnls_scaling();
       void set_iqq_scale_chi2_fitting();
       void update_swh_excl_vol(const QString &);
       void update_scale_excl_vol(double);

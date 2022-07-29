@@ -1619,6 +1619,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.steric_clash_distance" ] = QString( "%1" ).arg( saxs_options.steric_clash_distance );
       parameters[ "saxs_options.steric_clash_recheck_distance" ] = QString( "%1" ).arg( saxs_options.steric_clash_recheck_distance );
       parameters[ "saxs_options.disable_iq_scaling" ] = QString( "%1" ).arg( saxs_options.disable_iq_scaling );
+      parameters[ "saxs_options.disable_nnls_scaling" ] = QString( "%1" ).arg( saxs_options.disable_nnls_scaling );
       parameters[ "saxs_options.autocorrelate" ] = QString( "%1" ).arg( saxs_options.autocorrelate );
       parameters[ "saxs_options.hybrid_radius_excl_vol" ] = QString( "%1" ).arg( saxs_options.hybrid_radius_excl_vol );
       parameters[ "saxs_options.scale_excl_vol" ] = QString( "%1" ).arg( saxs_options.scale_excl_vol );
@@ -2111,6 +2112,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.steric_clash_distance" ) ) saxs_options.steric_clash_distance = parameters[ "saxs_options.steric_clash_distance" ].toDouble();
    if ( parameters.count( "saxs_options.steric_clash_recheck_distance" ) ) saxs_options.steric_clash_recheck_distance = parameters[ "saxs_options.steric_clash_recheck_distance" ].toDouble();
    if ( parameters.count( "saxs_options.disable_iq_scaling" ) ) saxs_options.disable_iq_scaling = parameters[ "saxs_options.disable_iq_scaling" ] == "1";
+   if ( parameters.count( "saxs_options.disable_nnls_scaling" ) ) saxs_options.disable_nnls_scaling = parameters[ "saxs_options.disable_nnls_scaling" ] == "1";
    if ( parameters.count( "saxs_options.autocorrelate" ) ) saxs_options.autocorrelate = parameters[ "saxs_options.autocorrelate" ] == "1";
    if ( parameters.count( "saxs_options.hybrid_radius_excl_vol" ) ) saxs_options.hybrid_radius_excl_vol = parameters[ "saxs_options.hybrid_radius_excl_vol" ] == "1";
    if ( parameters.count( "saxs_options.scale_excl_vol" ) ) saxs_options.scale_excl_vol = parameters[ "saxs_options.scale_excl_vol" ].toFloat();
@@ -3114,6 +3116,7 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.steric_clash_recheck_distance = 0.0;
 
    saxs_options.disable_iq_scaling = false;
+   saxs_options.disable_nnls_scaling = false;
    saxs_options.autocorrelate = true;
    saxs_options.hybrid_radius_excl_vol = false;
    saxs_options.scale_excl_vol = 1.0f;

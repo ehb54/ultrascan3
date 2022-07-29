@@ -180,6 +180,15 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    AUTFBACK( cb_disable_iq_scaling );
    connect(cb_disable_iq_scaling, SIGNAL(clicked()), this, SLOT(set_disable_iq_scaling()));
 
+   cb_disable_nnls_scaling = new QCheckBox(this);
+   cb_disable_nnls_scaling->setText(us_tr("Disable NNLS scaling"));
+   cb_disable_nnls_scaling->setEnabled(true);
+   cb_disable_nnls_scaling->setChecked((*saxs_options).disable_nnls_scaling);
+   cb_disable_nnls_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_disable_nnls_scaling->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_disable_nnls_scaling );
+   connect(cb_disable_nnls_scaling, SIGNAL(clicked()), this, SLOT(set_disable_nnls_scaling()));
+
    cb_iqq_scale_chi2_fitting = new QCheckBox(this);
    cb_iqq_scale_chi2_fitting->setText(us_tr("Chi^2 fitting"));
    cb_iqq_scale_chi2_fitting->setEnabled(true);
@@ -393,6 +402,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
 
    QHBoxLayout * hbl_various_1 = new QHBoxLayout; hbl_various_1->setContentsMargins( 0, 0, 0, 0 ); hbl_various_1->setSpacing( 0 );
    hbl_various_1->addWidget(cb_disable_iq_scaling);
+   hbl_various_1->addWidget(cb_disable_nnls_scaling);
    hbl_various_1->addWidget(cb_iqq_scale_chi2_fitting);
    background->addLayout( hbl_various_1 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -625,6 +635,12 @@ void US_Hydrodyn_SasOptionsMisc::set_iqq_expt_data_contains_variances()
 void US_Hydrodyn_SasOptionsMisc::set_disable_iq_scaling()
 {
    (*saxs_options).disable_iq_scaling = cb_disable_iq_scaling->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_disable_nnls_scaling()
+{
+   (*saxs_options).disable_nnls_scaling = cb_disable_nnls_scaling->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
