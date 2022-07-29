@@ -356,7 +356,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                {
                   array_to_save.push_back(*it2);
                }
-               // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
+               // QTextStream(stdout) << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
                array2d_to_save.push_back(array_to_save);
             }
          }
