@@ -62,7 +62,7 @@ static QStringList csv_transpose( const QStringList &qsl ) {
       
 static QStringList csv_pr2iq( const QStringList &qsl ) {
    qDebug() << "csv_pr2iq()";
-   QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
+   // QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
 
    QStringList res;
 
@@ -98,7 +98,7 @@ static QStringList csv_pr2iq( const QStringList &qsl ) {
       res << row.join( "," );
    }
 
-   QTextStream( stdout )  << "result\n" << res.join( "\n" ) << "\n";
+   // QTextStream( stdout )  << "result\n" << res.join( "\n" ) << "\n";
    
    return res;
 }

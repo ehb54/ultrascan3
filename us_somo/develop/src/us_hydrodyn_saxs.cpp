@@ -5731,6 +5731,7 @@ void US_Hydrodyn_Saxs::saxs_buffer()
 
 void US_Hydrodyn_Saxs::saxs_hplc()
 {
+   // qDebug() << "saxs_hplc";
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget )
    {
       if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->isVisible() )
@@ -5753,8 +5754,12 @@ void US_Hydrodyn_Saxs::saxs_hplc()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->show();
    }
 
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->disable_all();
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
+      if ( !( i % 500 ) ) {
+         qDebug() << "saxs_hplc plotting curve " << i;
+      }
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
@@ -5767,6 +5772,7 @@ void US_Hydrodyn_Saxs::saxs_hplc()
                                                                    plotted_I[ i ] );
       }
    }
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();
 }
 
 void US_Hydrodyn_Saxs::reset_buffer_csv()

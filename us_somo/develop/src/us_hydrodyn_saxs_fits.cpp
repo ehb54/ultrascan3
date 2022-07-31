@@ -192,6 +192,10 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    
    vector < double > rescaled_x = our_saxs_options->disable_nnls_scaling ? use_x : rescale(use_x);
 
+   if ( our_saxs_options->disable_nnls_scaling ) {
+      editor_msg( "darkred", "NNLS scaling disabled\n" );
+   }
+
    // list models & concs
    
    QString use_color = "black";
@@ -696,6 +700,9 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    
    vector < double > rescaled_x = our_saxs_options->disable_nnls_scaling ? use_x : rescale(use_x);
    // list models & concs
+   if ( our_saxs_options->disable_nnls_scaling ) {
+      editor_msg( "darkred", "NNLS scaling disabled\n" );
+   }
 
    bool nnls_zero_list =
       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?

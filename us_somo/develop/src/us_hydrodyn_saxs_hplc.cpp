@@ -1494,10 +1494,14 @@ void US_Hydrodyn_Saxs_Hplc::select_all()
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      lb_files->item( i)->setSelected( !all_selected );
-   }
+   
+   !all_selected ? lb_files->selectAll() : lb_files->clearSelection();
+
+   // for ( int i = 0; i < lb_files->count(); i++ )
+   // {
+   //    lb_files->item( i)->setSelected( !all_selected );
+   // }
+
    disable_updates = false;
    plot_files();
    update_enables();

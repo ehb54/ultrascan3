@@ -273,7 +273,8 @@ void US_Hydrodyn_Saxs_Load_Csv::select_all()
    // if there are any, not selected, select all
    // if all are selected, unselect all
    bool select_all = false;
-
+   disconnect(lb_names, SIGNAL(itemSelectionChanged()), 0, 0 );
+   
    // are any unselected ?
    for ( int i = 0; i < lb_names->count(); i++ )
    {
@@ -284,14 +285,18 @@ void US_Hydrodyn_Saxs_Load_Csv::select_all()
       }
    }
 
-   for ( int i = 0; i < lb_names->count(); i++ )
-   {
-      lb_names->item(i)->setSelected( select_all);
-   }
+   select_all ? lb_names->selectAll() : lb_names->clearSelection();
+
+   // for ( int i = 0; i < lb_names->count(); i++ )
+   // {
+   //    lb_names->item(i)->setSelected( select_all);
+   // }
    if ( select_all )
    {
       lb_names->scrollToItem( lb_names->item(lb_names->count() - 1) );
    }
+   connect(lb_names, SIGNAL(itemSelectionChanged()), SLOT(update_selected()));
+   emit update_selected();
 }
 
 void US_Hydrodyn_Saxs_Load_Csv::ok()
