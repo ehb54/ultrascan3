@@ -762,6 +762,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_color_if_ok( QColor bg, QColor set );
       unsigned int pen_width;
 
+      bool load_check_csvs_compatible( QStringList filenames );
+      QString unify_csv_files( QStringList filenames );
+
    private:
 
       map < QString, QwtPlot *>    plot_info;
