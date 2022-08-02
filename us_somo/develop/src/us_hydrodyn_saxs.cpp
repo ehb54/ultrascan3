@@ -3139,7 +3139,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(PR_DEBUG)
       cout << "hist.size() " << hist.size() << endl;
 #endif
-      while( hist.size() && !hist[hist.size()-1] ) 
+      // while( hist.size() && !hist[hist.size()-1] ) 
+      while( hist.size() && hist[hist.size()-1] <= 0 ) 
       {
          hist.pop_back();
       }
