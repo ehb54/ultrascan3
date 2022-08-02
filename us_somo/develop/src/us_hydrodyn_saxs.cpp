@@ -3144,6 +3144,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       {
          hist.pop_back();
       }
+      // set remaining negatives to zero
+      for ( int i = 0; i < (int) hist.size(); ++i ) {
+         if ( hist[i] < 0 ) {
+            hist[i] = 0;
+         }
+      }
       if ( contrib_array.size() ) 
       {
          for ( unsigned int k = 0; k < contrib_array.size(); k++ )
