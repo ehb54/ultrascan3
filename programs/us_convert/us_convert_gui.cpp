@@ -3806,7 +3806,7 @@ DbgLv(1) << "CGui: ldUS3Dk: RTN";
 }
 
 // Function to load an experiment from the DB
-void US_ConvertGui:: loadUS3DB( void )
+void US_ConvertGui::loadUS3DB( void )
 {
 DbgLv(1) << "CGui: ldUS3DB: IN";
    le_status->setText( tr( "Loading data from DB ..." ) );

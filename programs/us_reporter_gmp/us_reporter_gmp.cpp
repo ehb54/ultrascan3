@@ -12,6 +12,7 @@
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
+#include "us_tmst_plot.h"
 
 #define MIN_NTC   25
 
@@ -2344,6 +2345,9 @@ void US_ReporterGMP::generate_report( void )
 
   //here, add info on user interactions at 3.IMPORT && 4.EDIT:
   assemble_user_inputs_html( );
+
+  //here, add Run Details based on timestamp info (OR timestapms of IP+RI?)
+  assemble_run_details_html( ) ;
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -4563,12 +4567,202 @@ if(!usescan) kexcls++;
 
 }
 
-
-//output HTML string for user interactions
-void  US_ReporterGMP::assemble_user_inputs_html( void )
+//output HTML string for run details
+void  US_ReporterGMP::assemble_run_details_html( void )
 {
   html_assembled += "<p class=\"pagebreak \">\n";
-  html_assembled += "<h2 align=left>User Interactions During Data Saving and Editing</h2>";
+  html_assembled += "<h2 align=left>Run Details</h2>";
+
+  //1. get runID OR runIDs
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+
+  
+  US_Passwd pw;
+  US_DB2*   dbP  = new US_DB2( pw.getPasswd() );
+  if ( dbP->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem, run details" ),
+			    tr( "Could not connect to database: \n" ) + dbP->lastError() );
+      return;
+    }
+  
+  //2. Iterate over runIds
+  for ( int i=0; i<fileNameList.size(); ++i )
+    {
+
+      html_assembled += tr( "<h3 align=left>TimeStamp Parameters for Run: %1</h3>" ).
+	arg( fileNameList[ i ] );
+      html_assembled += tr("<br>");
+      
+      //3. get expID based on runID && invID
+      int experimentID = get_expID_by_runID_invID( dbP, fileNameList[ i ] );
+
+      if ( experimentID == 0 )
+	{
+	  QMessageBox::warning( this, tr( "ExpID zero, run details" ),
+			    tr( "Experiment ID zero!!!: \n" ) );
+	  return;
+	}
+
+      //4. get timeSateID from expID
+      int tmstID     = 0;
+      QString tfname = fileNameList[ i ] + ".time_state.tmst";
+      QString xdefs;
+      QString cksumd;
+      QDateTime datedt;
+      US_TimeState::dbExamine( dbP, &tmstID, &experimentID, &tfname,
+			       &xdefs, &cksumd, &datedt );
+
+      qDebug() << "Assembling Run Details: expID tmstID tfname cksumd datedt"
+	       << experimentID << tmstID << tfname << cksumd << datedt;
+
+      if ( tmstID == 0 )
+	{
+	  QMessageBox::warning( this, tr( "TimeStateID zero, run details" ),
+			    tr( "TimeState ID zero!!!: \n" ) );
+	  return;
+	}
+
+
+      //5. Download the .tmst file
+      QDir        readDir( US_Settings::resultDir() );
+      QString     dirname = readDir.absolutePath() + "/" +  fileNameList[ i ];
+      QDir edir( dirname );
+      if (!edir.exists())
+	edir.mkpath( dirname );
+      
+      QString tfpath = dirname + "/" +  tfname;
+      
+      US_TimeState::dbDownload( dbP, tmstID, tfpath );
+      // And write the xdefs sibling file
+      QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
+      qDebug() << "Assembling Run Details:   xfpath" << xfpath;
+      QFile fileo( xfpath );
+      if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+	{
+	  QTextStream tso( &fileo );
+	  tso << xdefs;
+	  tso.flush();
+	  fileo.close();
+	  qDebug() << "Assembling Run Details:    xdefs WRITTEN";
+	}
+
+
+      //6. Get access to Timestamp info, possibly plots also...
+      // Point to any existing time state file
+      QString tmst_fnamei  = QString( "" );
+      QString defs_fnamei  = QString( "" );
+      
+      QDir ddir( dirname );
+      QStringList tmsfs = ddir.entryList( QStringList( "*.time_state.*" ),
+					  QDir::Files, QDir::Name );
+      QString tmst_dname  = dirname;
+      if ( tmst_dname.right( 1 ) != "/" )
+	tmst_dname   += "/";
+      qDebug() << "Assembling Run Details: tmst_dname" << tmst_dname << "tmsfs count" << tmsfs.count();
+
+      if ( tmsfs.count() == 2 )
+	{  // Looks like we have a TMST and corresponding Defs XML
+	  tmst_fnamei   = tmsfs[ 0 ];
+	  defs_fnamei   = tmsfs[ 1 ];
+	  qDebug() << "Assembling Run Details: tmsfs" << tmst_fnamei << defs_fnamei;
+	  
+	  if ( tmst_fnamei.contains( ".tmst" )  &&
+	       defs_fnamei.contains( ".xml" ) )
+	    {  // Have both files, so save full path to TMST
+	      tmst_fnamei   = tmst_dname + tmst_fnamei;
+	    }
+	  
+	  else if ( tmsfs[ 0 ].contains( ".xml" )  &&
+		    tmsfs[ 1 ].contains( ".tmst" ) )
+	    {  // Have both files (in opposite order), so save full path to TMST
+	      tmst_fnamei   = tmst_dname + tmsfs[ 1 ];
+	    }
+	  
+	  else
+	    {  // Do not have both files, so clear TMST file path
+	      tmst_fnamei.clear();
+	    }
+	  
+	  qDebug() << "Assembling Run Details: tmst,defs fnamei" << tmst_fnamei << defs_fnamei;
+	}
+      else  // If file does not exist, clear name
+	{
+	  qDebug() << "Assembling Run Details: TimeStamp NON_EXIST:" << tmst_fnamei;
+	  tmst_fnamei.clear();
+	}
+      
+      US_TmstPlot* tsdiag = new US_TmstPlot( this, tmst_fnamei );
+
+      //7.  access all needed params from the current timestamp
+      QStringList dkeys = tsdiag -> timestamp_data_dkeys();
+      QMap< QString, double > dmins = tsdiag -> timestamp_data_mins();
+      QMap< QString, double > dmaxs = tsdiag -> timestamp_data_maxs();
+      QMap< QString, double > davgs = tsdiag -> timestamp_data_avgs();
+
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   );
+      
+      for ( int i=0; i < dkeys.size(); ++i )
+	{
+	  qDebug() << "Assembling Run Details: " << dkeys[ i ] << dmins[ dkeys[ i ] ] << " to " << dmaxs[ dkeys[ i ] ] << "; Avg: " << davgs [ dkeys[ i ] ];
+
+	  html_assembled += tr(
+			       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
+			       )
+	    .arg( dkeys[ i ] )                 //1
+	    .arg( dmins[ dkeys[ i ] ] )        //2
+	    .arg( dmaxs[ dkeys[ i ] ] )        //3
+	    .arg( davgs [ dkeys[ i ] ] )       //4
+	    ;
+	}
+      
+      html_assembled += tr(
+			   "</table>"
+			   );
+      
+      //end of the loop over filenames (only one IF not a combined RI+IP run)
+    }
+  
+  
+  
+  html_assembled += tr("<hr>");
+  //
+  html_assembled += "</p>\n";
+}
+
+//get expID
+int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filename )
+{
+  QStringList query;
+  int         idExp  = 0;
+  query << "get_experiment_info_by_runID"
+	<< runID_filename
+	<< QString::number(invID);
+  dbP->query( query );
+  
+  if ( dbP->lastErrno() == US_DB2::OK )
+    {
+      dbP->next();
+      idExp              = dbP->value( 1 ).toInt();
+    }
+
+  return idExp;
+}
+
+
+//output HTML string for user interactions
+void US_ReporterGMP::assemble_user_inputs_html( void )
+{
+  html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += "<h2 align=left>User Interactions During Data Saving, Editing and Analysis</h2>";
 
   //Maps && timestamps from DB
   // IMPORT
@@ -4646,7 +4840,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 			   "</table>"
 			   
 			   "<table style=\"margin-left:25px\">"
-			   "<tr><td>User ID: </td> <td>%1</td>"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
 			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
 			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
 			   "<tr><td>Level: </td><td> %5 </td></tr>"

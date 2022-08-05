@@ -147,6 +147,29 @@ DbgLv(1) << "TP:mn:   p1size" << p1size << "p2size" << p2size;
 DbgLv(1) << "TP:mn:   resized" << size() << "lw size" << lw_datinfo->size();
 }
 
+
+//public funcitons to access GMP-related parms
+QStringList US_TmstPlot::timestamp_data_dkeys( )
+{
+  return dkeys;
+}
+
+QMap< QString, double >  US_TmstPlot::timestamp_data_mins ( )
+{
+  return dmins;
+}
+
+QMap< QString, double >  US_TmstPlot::timestamp_data_maxs ( )
+{
+  return dmaxs;
+}
+
+QMap< QString, double >  US_TmstPlot::timestamp_data_avgs ( )
+{
+  return davgs;
+}
+
+
 // Plot the data (both key-specific and combined)
 void US_TmstPlot::plot_data()
 {
