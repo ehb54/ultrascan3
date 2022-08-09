@@ -84,7 +84,8 @@ private:
     QComboBox* cb_plot_id;
     QComboBox* cb_buffer;
 
-    US_PlotPicker *picker;
+    US_PlotPicker *picker_abs;
+    US_PlotPicker *picker_insty;
     US_Plot* usplot_insty;
     US_Plot* usplot_abs;
     QwtPlot* qwtplot_insty;

@@ -112,7 +112,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QGridLayout *us_zeroing = us_checkbox("Shift to Zero",
                                                 ckb_zeroing);
     ckb_xrange = new QCheckBox();
-    QGridLayout *us_xrange = us_checkbox("Specify a Range",
+    QGridLayout *us_xrange = us_checkbox("Limit Radius",
                                                 ckb_xrange);
     pb_pick_rp = us_pushbutton("Pick Two Radial Points", false);
     QHBoxLayout *ckb_lyt = new QHBoxLayout();
@@ -237,10 +237,11 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     main_lyt->setMargin(1);
     setLayout(main_lyt);
 
-    picker = new US_PlotPicker(qwtplot_abs);
-    picker->setRubberBand  ( QwtPicker::VLineRubberBand );
-    picker->setMousePattern( QwtEventPattern::MouseSelect1,
+    picker_abs = new US_PlotPicker(qwtplot_abs);
+    picker_abs->setRubberBand  ( QwtPicker::VLineRubberBand );
+    picker_abs->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
+    picker_insty = new US_PlotPicker(qwtplot_insty);
 
     slt_reset();
 
@@ -279,7 +280,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 }
 
 void US_ConvertScan::slt_reset(){
-    picker->disconnect();
+    picker_abs->disconnect();
     hasData = false;
     xvalues.clear();
     intensity.clear();
@@ -617,7 +618,7 @@ void US_ConvertScan::slt_xrange(int state){
 }
 
 void US_ConvertScan::slt_pick_point(){
-    picker->disconnect();
+    picker_abs->disconnect();
     x_min_picked = -1;
     x_max_picked = -1;
     le_xrange->setText("");
@@ -626,7 +627,7 @@ void US_ConvertScan::slt_pick_point(){
     pb_pick_rp->setStyleSheet("QPushButton { background-color: red }");
     emit sig_plot();
     emit sig_save_button();
-    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
+    connect(picker_abs, SIGNAL(cMouseUp(const QwtDoublePoint&)),
             this,   SLOT(slt_mouse(const QwtDoublePoint&)));
     return;
 }
@@ -650,7 +651,7 @@ void US_ConvertScan::slt_mouse(const QwtDoublePoint& point){
                 return;
             }
             x_max_picked = x;
-            picker->disconnect();
+            picker_abs->disconnect();
             str = tr("%1 - %2 cm");
             le_xrange->setText(str.arg(x_min_picked, 0, 'f', 3).
                                arg(x_max_picked, 0, 'f', 3));
@@ -1252,7 +1253,7 @@ void US_ConvertScan::plot_absorbance(void){
         if (error == 0)
             pen_plot.setColor(colorList[ i % nc ]);
         curve->setPen( pen_plot );
-        curve->setSamples(xp, rp, refData.nPoints);
+        curve->setSamples(xp, rp, np);
     }
     grid = us_grid(qwtplot_abs);
     double dr = (max_r - min_r) * 0.05;
