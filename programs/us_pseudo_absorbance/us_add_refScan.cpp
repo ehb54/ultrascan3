@@ -69,6 +69,24 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     cls_aln_lyt->addLayout(ckb_cls_lyt);
     cls_aln_lyt->addLayout(ckb_aln_lyt);
 
+    // Chromatic Aberration Correction
+    QLabel* lb_CA = us_banner(tr("Chromatic Aberration Correction"));
+    ckb_CA_state = new QCheckBox();
+    QGridLayout* ckb_CA_state_lyt = us_checkbox("Do Not Correct", ckb_CA_state);
+    ckb_CA_state->setCheckState(Qt::Unchecked);
+    ckb_CA_local = new QCheckBox();
+    QGridLayout* ckb_CA_source_lyt = us_checkbox("Local Disk", ckb_CA_local);
+    ckb_CA_local->setCheckState(Qt::Unchecked);
+    pb_loadCA = us_pushbutton("Load", true, 0 );
+//    pb_loadCA->setStyleSheet("QPushButton { background-color: yellow};");
+    ckb_CA_state->setDisabled(true);
+    ckb_CA_local->setDisabled(true);
+    pb_loadCA->setDisabled(true);
+    QHBoxLayout *CA_lyt = new QHBoxLayout();
+    CA_lyt->addLayout(ckb_CA_state_lyt);
+    CA_lyt->addLayout(ckb_CA_source_lyt);
+    CA_lyt->addWidget(pb_loadCA);
+
     // save refScan control
     QLabel* lb_save = us_banner(tr("Saving Control"));
     dkdb_ctrl = new US_Disk_DB_Controls();
@@ -127,6 +145,8 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     left_lyt->addWidget(lb_cluster);
     left_lyt->addLayout(cls_aln_lyt);
     left_lyt->addWidget(pb_clscltr);
+    left_lyt->addWidget(lb_CA);
+    left_lyt->addLayout(CA_lyt);
     left_lyt->addWidget(lb_save);
     left_lyt->addLayout(dkdb_ctrl);
     left_lyt->addLayout(dir_lyt);
@@ -303,7 +323,9 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     connect(pb_next_id, SIGNAL(clicked()), this, SLOT(slt_next_id()));
     connect(pb_clscltr, SIGNAL(clicked()), this, SLOT(slt_cls_ctrl()));
     connect(pb_save,    SIGNAL(clicked()), this, SLOT(slt_save()));
-    connect(dkdb_ctrl,  SIGNAL(changed(bool)),  this, SLOT(slt_db_local_switch(bool)));
+    connect(pb_loadCA,    SIGNAL(clicked()), this, SLOT(slt_load_CA()));
+    connect(ckb_CA_state, SIGNAL(stateChanged(int)), this, SLOT(slt_CA_state(int)));
+    connect(dkdb_ctrl,  SIGNAL(changed(bool)),  this, SLOT(slt_db_local(bool)));
     connect(this,  SIGNAL(sig_plot_l(bool)),    this, SLOT(slt_plot_l(bool)));
     connect(this,  SIGNAL(sig_plot_r(bool)),    this, SLOT(slt_plot_r(bool)));
     connect(this,  SIGNAL(sig_plot_dist(bool)), this, SLOT(slt_plot_dist(bool)));
@@ -436,6 +458,9 @@ void US_AddRefScan::slt_import(){
     set_wavl_ctrl();
     hasData = true;
     pb_reset->setEnabled(true);
+    ckb_CA_state->setEnabled(true);
+    ckb_CA_local->setEnabled(true);
+    emit ckb_CA_state->stateChanged(ckb_CA_state->checkState());
     this->setCursor(QCursor(Qt::ArrowCursor));
     return;
 }
@@ -483,6 +508,7 @@ void US_AddRefScan::slt_reset(){
     le_lambstop->clear();
     cb_plot_id->clear();
     referenceScans.clear();
+    CAValues.clear();
     pb_clscltr->setDisabled(true);
     pb_prev_id->setDisabled(true);
     pb_next_id->setDisabled(true);
@@ -495,6 +521,9 @@ void US_AddRefScan::slt_reset(){
     ckb_bws_all->setCheckState(Qt::Unchecked);
     pb_reset->setDisabled(true);
     pb_import->setEnabled(true);
+    ckb_CA_local->setCheckState(Qt::Unchecked);
+    ckb_CA_state->setDisabled(true);
+    ckb_CA_local->setDisabled(true);
     return;
 }
 
@@ -634,27 +663,42 @@ void US_AddRefScan::slt_find_merge(void){
 }
 
 void US_AddRefScan::slt_save(void){
-    if (referenceScans.nWavelength != n_wavls){
-        this->setCursor(QCursor(Qt::BusyCursor));
-        referenceScans.clear();
-        char ct[2] = {'R', 'I'};
-        qstrncpy(referenceScans.type, ct, 3);
-        referenceScans.nWavelength = n_wavls;
-        referenceScans.nPoints = n_points;
-        referenceScans.xValues << xvalues;
-        QString status = "Preparing: %1 %2";
-        QString percent;
-        for (int i = 0; i < n_wavls; ++i){
-            get_current(i);
-            referenceScans.wavelength << wavelength.at(i) / 10.0;
-            referenceScans.rValues << current.ref_S;
-            referenceScans.std << get_std(current.dev_S_aln);
-            percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
-            le_status->setText(status.arg(percent).arg(QChar(37)));
-            qApp->processEvents();
-        }
-        this->setCursor(QCursor(Qt::ArrowCursor));
+    referenceScans.clear();
+    if (! ckb_CA_state->isChecked() && CAValues.size() == 0){
+        QMessageBox::warning(this, tr("Error!"), tr("Chromatic aberration data "
+                                                    "not found!"));
+        return;
     }
+
+
+    if (ckb_CA_state->isChecked()){
+        referenceScans.CAState = false;
+        referenceScans.CAValues.fill(0, n_wavls);
+    } else {
+        referenceScans.CAState = true;
+        referenceScans.CAValues << CAValues;
+    }
+
+    this->setCursor(QCursor(Qt::BusyCursor));
+
+    char ct[2] = {'R', 'I'};
+    qstrncpy(referenceScans.type, ct, 3);
+    referenceScans.nWavelength = n_wavls;
+    referenceScans.nPoints = n_points;
+    referenceScans.xValues << xvalues;
+
+    QString status = "Preparing: %1 %2";
+    QString percent;
+    for (int i = 0; i < n_wavls; ++i){
+        get_current(i);
+        referenceScans.wavelength << wavelength.at(i) / 10.0;
+        referenceScans.rValues << current.ref_S;
+        referenceScans.std << get_std(current.dev_S_aln);
+        percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
+        le_status->setText(status.arg(percent).arg(QChar(37)));
+        qApp->processEvents();
+    }
+    this->setCursor(QCursor(Qt::ArrowCursor));
 
     if (dkdb_ctrl->db())
         save_db(referenceScans);
@@ -1125,6 +1169,86 @@ void US_AddRefScan::slt_plot_ovlp(bool state){
     tab1_plotLD->replot();
     tab1_plotRD->replot();
     return;
+}
+
+void US_AddRefScan::slt_CA_state(int state){
+    CAValues.clear();
+    QString qs = "QPushButton { background-color: %1 }";
+    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+    if (state == Qt::Checked){
+        pb_loadCA->setStyleSheet(qs.arg(color.name()));
+        pb_loadCA->setEnabled(false);
+    } else {
+        pb_loadCA->setStyleSheet(qs.arg("yellow"));
+        pb_loadCA->setEnabled(true);
+    }
+}
+
+void US_AddRefScan::slt_load_CA(){
+    QString qs = "QPushButton { background-color: %1 }";
+    pb_loadCA->setStyleSheet(qs.arg("yellow"));
+    CAValues.clear();
+    if (ckb_CA_local->isChecked()){
+        QString filename = QFileDialog::getOpenFileName(this, tr("Open File"),
+                                                        US_Settings::workBaseDir(),
+                                                        tr("Text File (*.dat *.txt)"));
+        if (filename.isEmpty())
+            return;
+
+        QFile file{filename};
+
+        if (!file.open(QIODevice::ReadOnly)) {
+          QMessageBox::warning(this, "Error!",
+                               tr("Cannot open file for reading.\n%1").arg(filename));
+          return ;
+        }
+        QVector<int> CA_lambda;
+        QVector<double> CA_values;
+        QTextStream inStream{&file};
+        while (!inStream.atEnd()) {
+
+          QString line = inStream.readLine();
+          QStringList lsp = line.split(QRegExp("[\r\n\t,; ]+"), Qt::SkipEmptyParts);
+          if (lsp.size() == 0) continue;
+          if (lsp.size() != 2){
+              QMessageBox::warning(this, "Error!",
+                                   tr("Cannot parse the file! "
+                                      "Each line must contain two values separated by "
+                                      "one the following characters.\n"
+                                      "space , tab , ',' , ';'\n"
+                                      "\n%1").arg(filename));
+              return ;
+          }
+          bool st1, st2;
+          int x = qRound(lsp.at(0).trimmed().toDouble(&st1) * 10);
+          double y = lsp.at(1).trimmed().toDouble(&st2);
+          if (st1 && st2){
+              CA_lambda << x;
+              CA_values << y;
+          }
+        }
+        QStringList badWavls;
+        for (int i = 0; i < n_wavls; ++i){
+            int wavl = wavelength.at(i);
+            int id = CA_lambda.indexOf(wavl);
+            if (id == -1)
+                badWavls << QString::number(wavl / 10.0);
+            else
+                CAValues << CA_values.at(id);
+        }
+        if (badWavls.size() > 0){
+            CAValues.clear();
+            QMessageBox::warning(this, "Error!",
+                                 tr("Data for correcting chromatic aberration not found "
+                                    "for these wavelengths:\n") +
+                                 badWavls.join(','));
+            return ;
+        }
+        pb_loadCA->setStyleSheet(qs.arg("green"));
+    } else {
+        return;
+    }
+
 }
 
 

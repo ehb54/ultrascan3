@@ -55,6 +55,7 @@ private slots:
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
     void slt_edit_le(QString);
+    void slt_cac(int);
 
 private:
 
@@ -99,6 +100,7 @@ private:
     QListWidget* lw_triple;
     QCheckBox *ckb_zeroing;
     QCheckBox *ckb_xrange;
+    QCheckBox *ckb_CAC;
     US_Disk_DB_Controls* diskDB_ctrl;
 
     CCW ccwList;
@@ -116,6 +118,7 @@ private:
     QVector<int> intDataId;
     QVector<double> wavelength;
     QVector<double> xvalues;
+    QVector<QVector<double>> xvaluesRefCAC;
     QVector<US_DataIO::Scan> intensity;
     QVector<US_DataIO::Scan> absorbance;
     QVector<US_DataIO::Scan> absorbanceBuffer;
@@ -140,6 +143,7 @@ private:
     void trim_absorbance(void);
     QVector<double> get_smooth(QVector<double>, int, bool);
     void load_from_DB(void);
+    void uncheck_CA_silently(void);
 };
 
 class LoadDBWidget : public US_WidgetsDialog{
