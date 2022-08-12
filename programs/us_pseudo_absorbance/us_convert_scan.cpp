@@ -78,6 +78,8 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     diskDB_ctrl = new US_Disk_DB_Controls();
     pb_import_refScans = us_pushbutton(tr("Import Reference Data"), true, -1);
     pb_reset_refData = us_pushbutton(tr("Reset Reference Data"), false, -1);
+    ckb_CAC = new QCheckBox();
+    QGridLayout *us_cac = us_checkbox("Chromatic Aberration Correction", ckb_CAC);
     QHBoxLayout* rfs_lyt = new QHBoxLayout();
     rfs_lyt->addWidget(pb_import_refScans);
     rfs_lyt->addWidget(pb_reset_refData);
@@ -112,7 +114,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QGridLayout *us_zeroing = us_checkbox("Shift to Zero",
                                                 ckb_zeroing);
     ckb_xrange = new QCheckBox();
-    QGridLayout *us_xrange = us_checkbox("Specify a Range",
+    QGridLayout *us_xrange = us_checkbox("Limit Radius",
                                                 ckb_xrange);
     pb_pick_rp = us_pushbutton("Pick Two Radial Points", false);
     QHBoxLayout *ckb_lyt = new QHBoxLayout();
@@ -159,6 +161,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     left_lyt->addWidget(lb_runInfoAbs);
     left_lyt->addLayout(diskDB_ctrl);
     left_lyt->addLayout(rfs_lyt);
+    left_lyt->addLayout(us_cac);
     left_lyt->addLayout(ref_range_lyt);
     left_lyt->addLayout(buffer_lyt);
     left_lyt->addLayout(ckb_lyt);
@@ -237,10 +240,11 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     main_lyt->setMargin(1);
     setLayout(main_lyt);
 
-    picker = new US_PlotPicker(qwtplot_abs);
-    picker->setRubberBand  ( QwtPicker::VLineRubberBand );
-    picker->setMousePattern( QwtEventPattern::MouseSelect1,
+    picker_abs = new US_PlotPicker(qwtplot_abs);
+    picker_abs->setRubberBand  ( QwtPicker::VLineRubberBand );
+    picker_abs->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
+    picker_insty = new US_PlotPicker(qwtplot_insty);
 
     slt_reset();
 
@@ -279,7 +283,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 }
 
 void US_ConvertScan::slt_reset(){
-    picker->disconnect();
+    picker_abs->disconnect();
     hasData = false;
     xvalues.clear();
     intensity.clear();
@@ -295,6 +299,7 @@ void US_ConvertScan::slt_reset(){
     le_cursor_pos = -1;
     wavelength.clear();
     refData.clear();
+    xvaluesRefCAC.clear();
     x_min_picked = -1;
     x_max_picked = -1;
     runIdAbs.clear();
@@ -314,6 +319,7 @@ void US_ConvertScan::slt_reset(){
     pb_reset_refData->setDisabled(true);
     pb_save->setDisabled(true);
     ckb_zeroing->setCheckState(Qt::Unchecked);
+    uncheck_CA_silently();
     return;
 }
 
@@ -617,7 +623,7 @@ void US_ConvertScan::slt_xrange(int state){
 }
 
 void US_ConvertScan::slt_pick_point(){
-    picker->disconnect();
+    picker_abs->disconnect();
     x_min_picked = -1;
     x_max_picked = -1;
     le_xrange->setText("");
@@ -626,7 +632,7 @@ void US_ConvertScan::slt_pick_point(){
     pb_pick_rp->setStyleSheet("QPushButton { background-color: red }");
     emit sig_plot();
     emit sig_save_button();
-    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
+    connect(picker_abs, SIGNAL(cMouseUp(const QwtDoublePoint&)),
             this,   SLOT(slt_mouse(const QwtDoublePoint&)));
     return;
 }
@@ -650,7 +656,7 @@ void US_ConvertScan::slt_mouse(const QwtDoublePoint& point){
                 return;
             }
             x_max_picked = x;
-            picker->disconnect();
+            picker_abs->disconnect();
             str = tr("%1 - %2 cm");
             le_xrange->setText(str.arg(x_min_picked, 0, 'f', 3).
                                arg(x_max_picked, 0, 'f', 3));
@@ -765,6 +771,7 @@ void US_ConvertScan::slt_reset_refData(){
     pb_import_refScans->setEnabled(true);
     pb_reset_refData->setDisabled(true);
     pb_save->setDisabled(true);
+    uncheck_CA_silently();
     emit sig_plot();
     return;
 }
@@ -781,15 +788,24 @@ void US_ConvertScan::slt_load_refScans(void){
         if (fname.isEmpty()) return;
         qDebug() << fname;
         refData.clear();
+        xvaluesRefCAC.clear();
         int error = US_RefScanDataIO::readRefData(fname, refData);
         if (error != US_RefScanDataIO::OK){
             refData.clear();
             QString mess = US_RefScanDataIO::errorString(error);
             le_status->setText(mess);
-        }
-        else{
+            uncheck_CA_silently();
+        } else{
             pb_import_refScans->setDisabled(true);
             pb_reset_refData->setEnabled(true);
+            bool state;
+            xvaluesRefCAC = refData.get_CA_corrected(state);
+            if (! state){
+                xvaluesRefCAC.clear();
+                uncheck_CA_silently();
+                le_status->setText("Error in chromatic aberration correction!");
+            } else
+                ckb_CAC->setEnabled(true);
             emit sig_save_button();
         }
         QString text("%1 - %2 nm");
@@ -930,6 +946,10 @@ void US_ConvertScan::slt_edit_le(QString text){
     return;
 }
 
+void US_ConvertScan::slt_cac(int){
+    slt_plot();
+}
+
 void US_ConvertScan::set_listWidget(){
     lw_triple->disconnect();
     lw_triple->clear();
@@ -998,6 +1018,13 @@ void US_ConvertScan::load_from_DB(){
         return;
     }else
         le_status->clear();
+    xvaluesRefCAC.clear();
+    bool state;
+    xvaluesRefCAC = refData.get_CA_corrected(state);
+    if (! state){
+        xvaluesRefCAC.clear();
+        le_status->setText("Error in chromatic aberration correction!");
+    }
     pb_import_refScans->setDisabled(true);
     pb_reset_refData->setEnabled(true);
     emit sig_save_button();
@@ -1171,7 +1198,12 @@ void US_ConvertScan::plot_refscan(void){
         return;
     }
     le_status->clear();
-    const double *xp = refData.xValues.data();
+    const double *xp;
+    if (ckb_CAC->isChecked() && refData.CAState){
+        xp = xvaluesRefCAC.at(refId).data();
+    } else {
+        xp = refData.xValues.data();
+    }
     const double *rp = refData.rValues.at(refId).data();
 
     for (int i = 0; i < refData.nPoints; ++i){
@@ -1252,7 +1284,7 @@ void US_ConvertScan::plot_absorbance(void){
         if (error == 0)
             pen_plot.setColor(colorList[ i % nc ]);
         curve->setPen( pen_plot );
-        curve->setSamples(xp, rp, refData.nPoints);
+        curve->setSamples(xp, rp, np);
     }
     grid = us_grid(qwtplot_abs);
     double dr = (max_r - min_r) * 0.05;
@@ -1336,7 +1368,12 @@ void US_ConvertScan::get_absorbance(int id_ref, int id_data, bool buffer){
         absorbanceBuffer.clear();
     else
         absorbance.clear();
-    const double *xp_ref = refData.xValues.data();
+    const double *xp_ref;
+    if (ckb_CAC->isChecked() && refData.CAState){
+        xp_ref = xvaluesRefCAC.at(id_ref).data();
+    } else {
+        xp_ref = refData.xValues.data();
+    }
     const double *rp_ref = refData.rValues.at(id_ref).data();
     const double *xp_dta = allIntData.at(id_data).xvalues.data();
     const double *rp_dta;
@@ -1522,6 +1559,13 @@ QVector<double> US_ConvertScan::get_smooth(QVector<double> array, int winlen, bo
     }
     US_Math2::gaussian_smoothing(array, winlen);
     return array;
+}
+
+void US_ConvertScan::uncheck_CA_silently(){
+    ckb_CAC->disconnect();
+    ckb_CAC->setCheckState(Qt::Unchecked);
+    connect(ckb_CAC, SIGNAL(stateChanged(int)), this, SLOT(slt_cac(int)));
+    ckb_CAC->setDisabled(true);
 }
 
 ////
@@ -1745,3 +1789,4 @@ void LoadDBWidget::slt_apply(){
     }
     this->accept();
 }
+

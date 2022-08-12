@@ -14,11 +14,14 @@ public:
              char    type[ 2 ];         //!< Data type: "RA"|"IP"|"RI"|"FI"|"WA"|"WI"
              int     nWavelength;
              int     nPoints;
+             bool    CAState;          // chromatic aberration correction
              QVector< double > wavelength;
+             QVector< double > CAValues;
              QVector< double > xValues;
              QVector< QVector< double > > rValues;
              QVector< QVector< double > > std;
              void clear();
+             QVector< QVector< double > > get_CA_corrected(bool&);
           };
     static int     writeRefData( const QString&, RefData& );
     static int     readRefData ( const QString&, RefData& );
