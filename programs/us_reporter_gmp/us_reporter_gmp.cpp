@@ -4570,7 +4570,7 @@ if(!usescan) kexcls++;
 //output HTML string for run details
 void  US_ReporterGMP::assemble_run_details_html( void )
 {
-  html_assembled += "<p class=\"pagebreak \">\n";
+   html_assembled += "<p class=\"pagebreak \">\n";
   html_assembled += "<h2 align=left>Run Details</h2>";
  
   //1. get runID OR runIDs 
