@@ -1837,7 +1837,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      tripleReportMasksList << "Total Concentration"
 				    << "RMSD Limit"
 				    << "Minimum Intensity"
-				    << "Experiment Duration"
+		//<< "Experiment Duration"
 				    << "Integration Results"
 				    << "Plots"
 				    << "Pseudo3d Distributions";
@@ -1846,7 +1846,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      tripleReportMasksList_vals << reportGMP. tot_conc_mask
 	      				 << reportGMP. rmsd_limit_mask
 	      				 << reportGMP. av_intensity_mask
-	      				 << reportGMP. experiment_duration_mask
+		//<< reportGMP. experiment_duration_mask
 	      				 << reportGMP. integration_results_mask
 					 << reportGMP. plots_mask
 					 << reportGMP. pseudo3d_mask;
@@ -4570,7 +4570,7 @@ if(!usescan) kexcls++;
 //output HTML string for run details
 void  US_ReporterGMP::assemble_run_details_html( void )
 {
-   html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += "<p class=\"pagebreak \">\n";
   html_assembled += "<h2 align=left>Run Details</h2>";
  
   //1. get runID OR runIDs 
@@ -4595,9 +4595,13 @@ void  US_ReporterGMP::assemble_run_details_html( void )
   for ( int i=0; i<fileNameList.size(); ++i )
     {
 
-      html_assembled += tr( "<h3 align=left>TimeStamp Parameters for Run: %1</h3>" ).
-	arg( fileNameList[ i ] );
-      html_assembled += tr("<br>");
+      if ( fileNameList[ i ].contains("IP") )
+	continue;
+      
+      // html_assembled += tr( "<h3 align=left>TimeStamp Parameters for Run: %1</h3>" ).
+      // 	arg( fileNameList[ i ] );
+      html_assembled += tr( "<h3 align=left>TimeStamp Parameters:</h3>" );
+      //html_assembled += tr("<br>");
       
       //3. get expID based on runID && invID
       int experimentID = get_expID_by_runID_invID( dbP, fileNameList[ i ] );
@@ -4704,7 +4708,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       QMap< QString, double > dmins = tsdiag -> timestamp_data_mins();
       QMap< QString, double > dmaxs = tsdiag -> timestamp_data_maxs();
       QMap< QString, double > davgs = tsdiag -> timestamp_data_avgs();
-
+      QMap< QString, double > davgs_first_scan = tsdiag -> timestamp_data_avgs_first_scan();
+      
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
@@ -4712,65 +4717,84 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
       html_assembled += table_row( tr( "Parameter: " ),
 				   tr( "Target Value:" ),
-				   tr( "Tolerance, %:"),
+				   tr( "Tolerance:"),
 				   tr( "Measured Value:" ),
 				   tr( "PASSED ?" ));
-      
-      //add experiment time first:
-      double exp_dur_r = currProto. rpSpeed. ssteps[0].duration;
-      //transform exp_duration_report into hh mm format
-      int  hours_r     = (int)qFloor( exp_dur_r / 3600.0 );
-      int  mins_r      = (int)qRound( ( exp_dur_r - hours_r * 3600.0 ) / 60.0 );
-      QString hh_r     = ( hours_r == 1 ) ? tr( "hr" ) : tr( "hrs" );
-      hh_r    = "h";
-      QString exp_dur_r_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
-      double  exp_dur_tol_r = 10;
 
-      QString wks = "Channel/Triple specific ? ";
       
-      //QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
-      QString exp_dur_passed  = "YES/NO?";
-      
-      html_assembled += table_row( tr( "Experiment Duration" ),
-				   exp_dur_r_hh_mm,
-				   QString::number(exp_dur_tol_r) + "%",
-				   wks,
-				   exp_dur_passed ) ;
-
-      //Now, Time Stamp params...
+      //Iterate over Time Stamp params...
       for ( int i=0; i < dkeys.size(); ++i )
 	{
-	  qDebug() << "Assembling Run Details: " << dkeys[ i ] << dmins[ dkeys[ i ] ] << " to " << dmaxs[ dkeys[ i ] ] << "; Avg: " << davgs [ dkeys[ i ] ];
+	  qDebug() << "Assembling Run Details: " << dkeys[ i ] << dmins[ dkeys[ i ] ] << " to " << dmaxs[ dkeys[ i ] ]
+		   << "; Avg: " << davgs [ dkeys[ i ] ]
+		   << "; Avg_1st_scan: " << davgs_first_scan [ dkeys[ i ] ];
 
 	  double val_tol      = 0;
 	  double val_target   = 0;
+	  double val_measured = 0;
+	  QString val_passed  = "";
 
-	  if ( dkeys[ i ] .contains("emperatur") )
+	  //Exp. Duration
+	  if ( dkeys[ i ] == "Time" )
 	    {
-	      val_tol    = 10;
-	      val_target = currProto.temperature; 
-	      double val_measured = davgs [ dkeys[ i ] ];
-	      QString val_passed  = ( val_measured  >= ( val_target * (1 - val_tol/100.0)  ) && val_measured  <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
-	  
-	  
-	      html_assembled += table_row( dkeys[ i ],
-					   QString::number( val_target ),
+	      val_target       = currProto. rpSpeed. ssteps[0].duration +  (double) ( currProto. rpSpeed. ssteps[0].speed / currProto. rpSpeed. ssteps[0].accel );
+	      qDebug() << "Assembling Run Details: exp. duration, speed, accel -- "
+		       << currProto. rpSpeed. ssteps[0].duration
+		       << currProto. rpSpeed. ssteps[0].speed
+		       << currProto. rpSpeed. ssteps[0].accel;
+	      int  hours_r     = (int)qFloor( val_target / 3600.0 );
+	      int  mins_r      = (int)qRound( ( val_target - hours_r * 3600.0 ) / 60.0 );
+	      QString hh_r     = "h";
+	      QString val_target_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
+
+	      //tol: based on 1st AProfile->ReportGMP
+	      QString channel_desc_alt = chndescs_alt[ 0 ];
+	      QString channel_desc     = chndescs[ 0 ];
+	      QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
+	      US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
+	      val_tol = reportGMP. experiment_duration_tol;
+	      
+	      val_measured = dmaxs[ dkeys[ i ] ] - dmins[ dkeys[ i ] ]; //in mins
+	      double val_measured_sec = val_measured * 60.0;
+	      hours_r     = (int)qFloor( val_measured_sec / 3600.0 );
+	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
+	      QString val_measured_hh_mm   = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
+
+	      val_passed  = ( val_measured_sec >= ( val_target * (1 - val_tol/100.0)  ) && val_measured_sec <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
+	      
+	      html_assembled += table_row( tr( "Experiment Duration" ),
+					   val_target_hh_mm,
 					   QString::number( val_tol ) + "%",
+					   val_measured_hh_mm,
+					   val_passed ) ;
+	    }
+
+	  //Temperature
+	  if ( dkeys[ i ] .contains("Temperature") )
+	    {
+	      val_tol    = 0.5;   //plus-minus 0.5 C
+	      val_target = currProto.temperature; 
+	      val_measured = davgs_first_scan [ dkeys[ i ] ];
+	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO";
+	  
+	      html_assembled += table_row( dkeys[ i ] + " (&#8451;)",
+					   QString::number( val_target ),
+					   "&#177;" + QString::number( val_tol ),
 					   QString::number( val_measured ),
 					   val_passed );
 	    }
-	  
-	  if ( dkeys[ i ] .contains("awSpee") )
+
+	  //RawSpeed
+	  if ( dkeys[ i ] .contains("RawSpeed") )
 	    {
-	      val_tol    = 5;
+	      val_tol    = 4; //plus-minus 4 RPM
 	      val_target = currProto. rpSpeed. ssteps[0].speed; 
-	      double val_measured = davgs [ dkeys[ i ] ];
-	      QString val_passed  = ( val_measured  >= ( val_target * (1 - val_tol/100.0)  ) && val_measured  <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
-	  
-	  
-	      html_assembled += table_row( dkeys[ i ],
+	      val_measured = davgs_first_scan [ dkeys[ i ] ];
+	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO"; 
+	  	  
+	      html_assembled += table_row( dkeys[ i ] + " (RPM)",
 					   QString::number( val_target ),
-					   QString::number( val_tol ) + "%",
+					   "&#177;" + QString::number( val_tol ),
 					   QString::number( val_measured ),
 					   val_passed );
 	    }
