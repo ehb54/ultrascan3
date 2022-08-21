@@ -1838,6 +1838,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 				    << "RMSD Limit"
 				    << "Minimum Intensity"
 		//<< "Experiment Duration"
+				    << "Loading Volume"
 				    << "Integration Results"
 				    << "Plots"
 				    << "Pseudo3d Distributions";
@@ -1847,6 +1848,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      				 << reportGMP. rmsd_limit_mask
 	      				 << reportGMP. av_intensity_mask
 		//<< reportGMP. experiment_duration_mask
+					 << true
 	      				 << reportGMP. integration_results_mask
 					 << reportGMP. plots_mask
 					 << reportGMP. pseudo3d_mask;
@@ -6023,14 +6025,16 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    //Now add Basic Report params comparison to actual Run Details
    QString t_name = model_used.description.split(".")[1];
    QString wvl    = t_name.mid(2,3);
-   qDebug() << "In DISTRIB: triple, wvl -- " << t_name << wvl;
+   QString cellID = t_name.mid(0,1);
+   qDebug() << "In DISTRIB: triple, cellID, wvl -- " << t_name << cellID << wvl;
 
    qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
    QString model_name = mdla.split("_")[1];
    if ( model_name.contains("PCSA") )
      model_name = "PCSA";
    
-   double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
+   double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
+   double loading_volume_r, loading_volume_tol_r ;
 
    //length of run (based on rdata - for current triple )
    double last_f  = rdata ->scanData.last().seconds;
@@ -6071,6 +6075,10 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   av_int_r       = reportGMP-> av_intensity ;
 	   exp_dur_r      = reportGMP-> experiment_duration ;
 	   exp_dur_tol_r  = reportGMP-> experiment_duration_tol ;
+
+	   tot_conc_r_factor    = currAProf. lc_ratios [ i ] ;
+	   loading_volume_r     = currAProf. l_volumes [ i ] ;
+	   loading_volume_tol_r = currAProf. lv_tolers [ i ] ;
 	   
 	   break;
 	 }
@@ -6105,11 +6113,18 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
      }
    //
 
+   //Caclulate loading volume based on centerpiece geomentry && fitted meniscus
+   //double loading_volume_measured = 451;
+   double loading_volume_measured = get_loading_volume( cellID.toInt() );
+
    //passes
+   tot_conc_r *= tot_conc_r_factor;
    QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
    QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
    QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
    QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
+   QString loading_volume_passed  = ( loading_volume_measured >= ( loading_volume_r * (1 - loading_volume_tol_r/100.0)  )
+				      && loading_volume_measured <= ( loading_volume_r * (1 + loading_volume_tol_r/100.0) ) ) ? "YES" : "NO";
    //end passes
 
    //check what to show on the report
@@ -6122,6 +6137,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    bool show_exp_dur  = false;
    bool show_min_int  = false;
    bool show_integration = false;
+   bool show_loading_vol = false;
 
    QMap< QString, QString >::iterator sh;
    for ( sh = Model_parms_to_compare.begin(); sh != Model_parms_to_compare.end(); ++sh )
@@ -6137,13 +6153,16 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
        if ( sh.key().contains( "Intensity" ) && sh.value().toInt() )
 	 show_min_int = true;
-
+       
+       if ( sh.key().contains( "Loading" ) && sh.value().toInt() )
+	 show_loading_vol = true;
+       
        if ( sh.key().contains( "Integration" ) && sh.value().toInt() )
 	 show_integration = true;
      }
 
    bool show_comparison_section = false;
-   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int )
+   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int || show_loading_vol )
      show_comparison_section = true;
    //////////////////////////////////////
    
@@ -6161,7 +6180,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        if ( show_tot_conc ) 
 	 {
 	   mstr += table_row( tr( "Total Concentration" ),
-			      QString::number( tot_conc_r ),
+			      QString::number( tot_conc_r ) + " (factor " + QString::number( tot_conc_r_factor ) + ")",
 			      QString::number(tot_conc_tol_r) + "%",
 			      QString().sprintf( "%6.4e", sum_c ),
 			      tot_conc_passed) ;
@@ -6193,6 +6212,16 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 			      QString::number( av_int_exp ) ,
 			      av_int_passed );
 	 }
+
+       if ( show_loading_vol ) 
+	 {
+	   mstr += table_row( tr( "Loading Volume" ),
+			      QString::number( loading_volume_r ),
+			      QString::number( loading_volume_tol_r) + "%",
+			      QString::number( loading_volume_measured ) ,
+			      loading_volume_passed );
+	 }
+
        mstr += indent( 2 ) + "</table>\n";
      }
 
@@ -6558,6 +6587,96 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    */
 
    return mstr;
+}
+
+double  US_ReporterGMP::get_loading_volume( int cellID )
+{
+  double vol = 0;
+  
+  double speed   =  currProto. rpSpeed. ssteps[0].speed ;
+  double stretch = simparams.rotorcoeffs[ 0 ] * speed + simparams.rotorcoeffs[ 1 ] * sq( speed ) ;
+
+  qDebug() << "Centerpeice: stretch: " << stretch;
+
+  
+  //get centerpiece info
+  QString centerpiece_name = "";
+  for ( int i=0; i < currProto. rpCells. used. size(); ++i )
+    {
+      if ( currProto. rpCells. used [ i ]. cell == cellID )
+	{
+	  centerpiece_name = currProto. rpCells. used [ i ]. centerpiece; 
+	  qDebug() << "In get_loading_volume(): cell, cenerpiece -- "
+		   <<  currProto. rpCells. used [ i ]. cell
+		   <<  currProto. rpCells. used [ i ]. centerpiece ;
+
+	  break;
+	}
+    }
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return vol;
+    }
+  
+  //Find centerpieceID on DB based on centerpiece name:
+  QString centerpieceID_read;
+  QStringList query;
+  query.clear();
+  query << "get_abstractCenterpiece_names";
+  db.query( query );
+  
+  while ( db.next() )
+    {
+      QString id   =  db.value( 0 ).toString();
+      QString name =  db.value( 1 ).toString();
+      
+      if ( centerpiece_name == name )
+	{
+	  centerpieceID_read = id;
+	  break;
+	}
+    }
+
+  if ( centerpieceID_read.isEmpty() )
+    {
+      qDebug() << "In get_loading_volume(): Couldn't read centerpiece name ! ";
+
+      return vol;
+    }
+  
+  //Now, get centerpiece info
+  query.clear();
+  query << "get_abstractCenterpiece_info" << centerpieceID_read;
+  db.query( query );
+  db.next();
+  
+  QString c_name       = db.value( 1 ).toString();
+  double  c_bottom     = db.value( 3 ).toString().toDouble();
+  double  c_pathlength = db.value( 6 ).toString().toDouble();
+  double  c_angle      = db.value( 7 ).toString().toDouble();
+
+  qDebug() << "In get_loading_volume(): c_name, c_bottom, c_pathlength, c_angle -- "
+	   << c_name << c_bottom << c_pathlength << c_angle;
+
+  //add stretching
+  c_bottom += stretch;
+
+  //meniscus position
+  double meniscus = model_used. meniscus;
+  qDebug() << "In get_loading_volume(): meniscus -- " << meniscus;
+  
+  //calulate loading volume
+  vol = ( c_bottom*c_bottom - meniscus*meniscus ) * ( 1000*c_pathlength*c_angle*M_PI ) / 360.0;
+  
+  return vol;
 }
 
 

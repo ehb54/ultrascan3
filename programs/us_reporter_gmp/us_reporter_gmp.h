@@ -261,6 +261,7 @@ class US_ReporterGMP : public US_Widgets
 	 void  assemble_user_inputs_html( void );
          void  assemble_run_details_html( void );
          int   get_expID_by_runID_invID( US_DB2*, QString );
+         double get_loading_volume( int );
   
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
