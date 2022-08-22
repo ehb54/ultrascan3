@@ -1550,7 +1550,10 @@ void US_ReporterGMP::build_miscTree ( void )
   int wiubase = (int)QTreeWidgetItem::UserType;
 
   miscTopLevelItems. clear();
-  miscTopLevelItems << "User Input" << "Run Details" << "Replicate Groups Averaging";
+  miscTopLevelItems << "User Input" << "Run Details";
+  
+  if ( !channdesc_to_overlapping_wvls.isEmpty() ) 
+    miscTopLevelItems << "Replicate Groups Averaging";
 
   for ( int i=0; i<miscTopLevelItems.size(); ++i )
     {
@@ -2342,6 +2345,15 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   topItemCombPlots .clear();
   ItemCombPlots    .clear();
+
+  //cleaning misc tree & it's objects
+  miscTree ->clear();
+  miscTree ->disconnect();
+  qDebug() << "Size Hint for misc Tree -- " << miscTree->sizeHint();
+  qApp->processEvents();
+
+  miscItem             .clear();
+  miscTopLevelItems    .clear();
 
   //Clear loaded JsonMasks for gen/perChan trees
   JsonMask_gen_loaded     .clear();
