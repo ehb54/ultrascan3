@@ -23,6 +23,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   setPalette( US_GuiSettings::frameColor() );
 
   first_time_gen_tree_build = true;
+  first_time_misc_tree_build = true;
   first_time_perChan_tree_build = true;
   auto_mode  = false;
   GMP_report = true;
@@ -33,6 +34,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QVBoxLayout* rghtLayout     = new QVBoxLayout();
   QGridLayout* buttonsLayout  = new QGridLayout();
   QGridLayout* genTreeLayout  = new QGridLayout();
+  QGridLayout* miscTreeLayout  = new QGridLayout();
   QGridLayout* perChanTreeLayout  = new QGridLayout();
   QGridLayout* combPlotsLayout  = new QGridLayout();
   mainLayout->setSpacing        ( 2 );
@@ -45,6 +47,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   buttonsLayout->setContentsMargins( 0, 0, 0, 0 );
   genTreeLayout->setSpacing        ( 1 );
   genTreeLayout->setContentsMargins( 0, 0, 0, 0 );
+  miscTreeLayout->setSpacing        ( 1 );
+  miscTreeLayout->setContentsMargins( 0, 0, 0, 0 );
   perChanTreeLayout->setSpacing        ( 1 );
   perChanTreeLayout->setContentsMargins( 0, 0, 0, 0 );
   combPlotsLayout->setSpacing        ( 1 );
@@ -122,6 +126,20 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   
   genTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
 
+  //rightLayout: miscTree
+  QLabel*      lb_misctree  = us_banner(      tr( "Miscellaneous Report Profile Settings:" ), 1 );
+  miscTree = new QTreeWidget();
+  QStringList misc_theads;
+  misc_theads << "Selected" << "Protocol Settings";
+  miscTree->setHeaderLabels( misc_theads );
+  miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
+			      US_GuiSettings::fontSize() + 1 ) );
+  miscTree->installEventFilter   ( this );
+  miscTreeLayout->addWidget( lb_misctree );
+  miscTreeLayout->addWidget( miscTree );
+  
+  miscTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+
   //rightLayout: perChannel tree
   QLabel*      lb_chantree  = us_banner(      tr( "Per-Triple Report Profile Settings:" ), 1 );
   perChanTree = new QTreeWidget();
@@ -152,7 +170,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   rghtLayout->addLayout( genTreeLayout );
   rghtLayout->addLayout( perChanTreeLayout );
   rghtLayout->addLayout( combPlotsLayout );
-
+  rghtLayout->addLayout( miscTreeLayout );
+  
   mainLayout->addLayout( leftLayout );
   mainLayout->addLayout( rghtLayout );
   mainLayout->setStretchFactor( leftLayout, 6 );
@@ -172,6 +191,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   setPalette( US_GuiSettings::frameColor() );
 
   first_time_gen_tree_build = true;
+  first_time_misc_tree_build = true;
   first_time_perChan_tree_build = true;
   auto_mode  = true;
   GMP_report = true;
@@ -204,6 +224,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
 
   QGridLayout* buttonsLayout  = new QGridLayout();
   QGridLayout* genTreeLayout  = new QGridLayout();
+  QGridLayout* miscTreeLayout  = new QGridLayout();
   QGridLayout* perChanTreeLayout  = new QGridLayout();
   QGridLayout* combPlotsLayout  = new QGridLayout();
   mainLayout->setSpacing        ( 2 );
@@ -216,6 +237,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   buttonsLayout->setContentsMargins( 0, 0, 0, 0 );
   genTreeLayout->setSpacing        ( 1 );
   genTreeLayout->setContentsMargins( 0, 0, 0, 0 );
+  miscTreeLayout->setSpacing        ( 1 );
+  miscTreeLayout->setContentsMargins( 0, 0, 0, 0 );
   perChanTreeLayout->setSpacing        ( 1 );
   perChanTreeLayout->setContentsMargins( 0, 0, 0, 0 );
   combPlotsLayout->setSpacing        ( 1 );
@@ -294,6 +317,21 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   
   genTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
 
+  //rightLayout: miscTree
+  QLabel*      lb_misctree  = us_banner(      tr( "Miscellaneous Report Profile Settings:" ), 1 );
+  miscTree = new QTreeWidget();
+  QStringList misc_theads;
+  misc_theads << "Selected" << "Protocol Settings";
+  miscTree->setHeaderLabels( misc_theads );
+  miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
+			      US_GuiSettings::fontSize() + 1 ) );
+  miscTree->installEventFilter   ( this );
+  miscTreeLayout->addWidget( lb_misctree );
+  miscTreeLayout->addWidget( miscTree );
+  
+  miscTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+
+
   //rightLayout: perChannel tree
   QLabel*      lb_chantree  = us_banner(      tr( "Per-Triple Report Profile Settings:" ), 1 );
   perChanTree = new QTreeWidget();
@@ -325,6 +363,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   rghtLayout->addLayout( genTreeLayout );
   rghtLayout->addLayout( perChanTreeLayout );
   rghtLayout->addLayout( combPlotsLayout );
+  rghtLayout->addLayout( miscTreeLayout );
   
   // mainLayout->addLayout( leftLayout );
   // mainLayout->addLayout( rghtLayout );
@@ -373,7 +412,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 11, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 12, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -423,12 +462,16 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   progress_msg->setValue( 9 );
   qApp->processEvents();
 
-  build_perChanTree();
-  progress_msg->setValue( 10 );
+   build_perChanTree();
+  progress_msg->setValue( 10);
   qApp->processEvents();
 
   build_combPlotsTree();
   progress_msg->setValue( 11 );
+  qApp->processEvents();
+
+  build_miscTree();  
+  progress_msg->setValue( 12 );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -932,7 +975,7 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 10, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 11, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -1023,13 +1066,17 @@ void US_ReporterGMP::load_gmp_run ( void )
   qApp->processEvents();
 
   build_perChanTree();
-  progress_msg->setValue( 9 );
+  progress_msg->setValue( 0 );
   qApp->processEvents();
   
   build_combPlotsTree();
   progress_msg->setValue( 10 );
   qApp->processEvents();
 
+  build_miscTree();  
+  progress_msg->setValue( 11 );
+  qApp->processEvents();
+  
   //debug
   qDebug() << "Built gen Tree: height -- "     << genTree->height();
   qDebug() << "Built perChan Tree: height -- " << perChanTree->height();
@@ -1495,6 +1542,43 @@ void US_ReporterGMP::parse_gen_mask_json ( const QString reportMask  )
 
 }
 
+//build miscellaneous report mask  tree
+void US_ReporterGMP::build_miscTree ( void )
+{
+  QString indent( "  " );
+  QStringList topItemNameList;
+  int wiubase = (int)QTreeWidgetItem::UserType;
+
+  miscTopLevelItems. clear();
+  miscTopLevelItems << "User Input" << "Run Details" << "Replicate Groups Averaging";
+
+  for ( int i=0; i<miscTopLevelItems.size(); ++i )
+    {
+      QString topItemName = miscTopLevelItems[i];
+      topItemNameList.clear();
+      topItemNameList << "" << indent + topItemName;
+      miscItem [ topItemName ] = new QTreeWidgetItem( miscTree, topItemNameList, wiubase );
+
+      miscItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
+    }
+
+  miscTree->expandAll();    
+  miscTree->resizeColumnToContents( 0 );
+  miscTree->resizeColumnToContents( 1 );
+
+  // qDebug() << "misc Tree first time build ? " << first_time_misc_tree_build;
+  // if ( first_time_misc_tree_build )
+  //   {
+  //     qDebug() << "Resizing misc Tree: ";
+  //     miscTree->setMinimumHeight( (miscTree->height())*0.6 );
+  //     first_time_misc_tree_build = false;
+  //   }
+  
+  connect( miscTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
+  	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
+
+}
+
 //build general report mask tree
 void US_ReporterGMP::build_genTree ( void )
 {
@@ -1659,7 +1743,7 @@ void US_ReporterGMP::build_genTree ( void )
   if ( first_time_gen_tree_build )
     {
       qDebug() << "Resizing gen Tree: ";
-      genTree->setMinimumHeight( (genTree->height())*1.3 );
+      genTree->setMinimumHeight( (genTree->height())*1.9 );
       first_time_gen_tree_build = false;
     }
   
@@ -2038,7 +2122,7 @@ void US_ReporterGMP::build_perChanTree ( void )
   if ( first_time_perChan_tree_build )
     {
       qDebug() << "Resizing perChan Tree: ";
-      perChanTree->setMinimumHeight( (perChanTree->height())*1.5 );
+      perChanTree->setMinimumHeight( (perChanTree->height())*2.0 );
       first_time_perChan_tree_build = false;
     }
   
@@ -2131,7 +2215,15 @@ void US_ReporterGMP::select_all ( void )
     {
       combPlotsTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
       combPlotsTree_rootItem->child(i)->setCheckState( 0, Qt::Checked );
-    } 
+    }
+  
+  QTreeWidgetItem* miscTree_rootItem     = miscTree     -> invisibleRootItem();
+  for( int i = 0; i < miscTree_rootItem->childCount(); ++i )
+    {
+      miscTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
+      miscTree_rootItem->child(i)->setCheckState( 0, Qt::Checked );
+    }
+  
 }
 
 
@@ -2155,6 +2247,12 @@ void US_ReporterGMP::unselect_all ( void )
     {
       combPlotsTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
     }
+
+  QTreeWidgetItem* miscTree_rootItem     = miscTree     -> invisibleRootItem();
+  for( int i = 0; i < miscTree_rootItem->childCount(); ++i )
+    {
+      miscTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
+    }
 }
 
 //expand all items in trees
@@ -2163,6 +2261,7 @@ void US_ReporterGMP::expand_all ( void )
   genTree       ->expandAll();
   perChanTree   ->expandAll();
   combPlotsTree ->expandAll();
+  miscTree      ->expandAll();
 }
 
 //collapse all items in trees
@@ -2171,6 +2270,7 @@ void US_ReporterGMP::collapse_all ( void )
   genTree       ->collapseAll();
   perChanTree   ->collapseAll();
   combPlotsTree ->collapseAll();
+  miscTree      ->collapseAll();
 }
 
 //view report
@@ -2346,10 +2446,12 @@ void US_ReporterGMP::generate_report( void )
   qApp->processEvents();
 
   //here, add info on user interactions at 3.IMPORT && 4.EDIT:
-  assemble_user_inputs_html( );
+  if ( miscMask_edited. ShowMiscParts[ "User Input" ] ) 
+    assemble_user_inputs_html( );
 
   //here, add Run Details based on timestamp info (OR timestapms of IP+RI?)
-  assemble_run_details_html( ) ;
+  if ( miscMask_edited. ShowMiscParts[ "Run Details" ] ) 
+    assemble_run_details_html( ) ;
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -2430,7 +2532,8 @@ void US_ReporterGMP::generate_report( void )
 	}
 
       //Replicas' averages
-      assemble_replicate_av_integration_html();
+      if ( miscMask_edited. ShowMiscParts[ "Replicate Groups Averaging" ] ) 
+	assemble_replicate_av_integration_html();
       
     }
   //End of Part 2
@@ -8457,6 +8560,11 @@ void US_ReporterGMP::gui_to_parms( void )
   //tree-to-json: combPlotsTree
   QString editedMask_combPlots = tree_to_json ( topItemCombPlots );
   parse_edited_combPlots_mask_json( editedMask_combPlots, combPlotsMask_edited );
+
+  //tree-to-json: miscTree
+  QString editedMask_misc = tree_to_json ( miscItem );
+  parse_edited_misc_mask_json( editedMask_misc, miscMask_edited );
+
   
   //For GMP Reporter only: Compare Json mask states to originally loaded:
   if ( auto_mode )
@@ -8468,6 +8576,29 @@ void US_ReporterGMP::gui_to_parms( void )
     }
   //DEBUG
   //exit(1);
+}
+
+//Parse Miscellaneous JSON
+void US_ReporterGMP::parse_edited_misc_mask_json( const QString maskJson, MiscReportMaskStructure & MaskStr )
+{
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
+  QJsonObject json = jsonDoc.object();
+
+  MaskStr.ShowMiscParts . clear();
+
+  foreach(const QString& key, json.keys())
+    {
+      QJsonValue value = json.value(key);
+      qDebug() << "Key = " << key << ", Value = " << value;//.toString();
+
+      if ( value.isString() )
+	{
+	  if ( value.toString().toInt() )
+	      MaskStr.ShowMiscParts[ key ] = true;
+	  else
+	    MaskStr.ShowMiscParts[ key ] = false;
+	}
+    }
 }
 
 //Pasre reportMask JSON
@@ -8816,6 +8947,7 @@ QString US_ReporterGMP::tree_to_json( QMap < QString, QTreeWidgetItem * > topLev
   mask_edited.replace( mask_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
 
   mask_edited += "}";
+  mask_edited.replace( ",}", "}" );
 
   qDebug() << "Edited Mask: " << mask_edited;
 
