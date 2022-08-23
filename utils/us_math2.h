@@ -21,7 +21,7 @@
    #define swap_double(a,b) {double t = a; a=b; b=t;}
 #endif
 
-//! \brief A collecion of methematical routines.  All functions are static.
+//! \brief A collection of mathematical routines.  All functions are static.
 class US_UTIL_EXTERN US_Math2
 {
    public:
