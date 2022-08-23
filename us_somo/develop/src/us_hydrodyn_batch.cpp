@@ -69,6 +69,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    this->batch_widget = batch_widget;
    this->batch = batch;
    this->us_hydrodyn = us_hydrodyn;
+   overwrite_all = false;
 
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
    overwriteForcedOn = false;
@@ -133,10 +134,10 @@ void US_Hydrodyn_Batch::setupGUI()
 
    QPalette qcg_cb_disabled = USglobal->global_colors.cg_normal;
 
-   // qcg_cb_disabled.setColor( QPalette::Background, Qt::yellow );
-   qcg_cb_disabled.setColor( QPalette::Foreground, Qt::darkRed );
-   // qcg_cb_disabled.setColor( QPalette::Base      , Qt::cyan );
-   qcg_cb_disabled.setColor( QPalette::Text      , Qt::darkRed );
+   // qcg_cb_disabled.setColor( QPalette::Window,     Qt::yellow );
+   qcg_cb_disabled.setColor( QPalette::WindowText,    Qt::darkRed );
+   // qcg_cb_disabled.setColor( QPalette::Base        Qt::cyan );
+   qcg_cb_disabled.setColor( QPalette::Text      ,    Qt::darkRed );
    // qcg_cb_disabled.setColor( QPalette::Button    , Qt::red );
    // qcg_cb_disabled.setColor( QPalette::ButtonText, Qt::magenta );
 
@@ -2263,7 +2264,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
 
 void US_Hydrodyn_Batch::start( bool quiet )
 {
-   if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar )
+   if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar && !overwrite_all )
    {
       switch ( QMessageBox::warning(this, 
                                     windowTitle() + us_tr( ": Warning" ),
@@ -3097,7 +3098,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
       if ( !batch->hullrad ) {
          QString fname = batch->avg_hydro_name + ".hydro_res";
 
-         if ( QFile::exists(fname) )
+         if ( QFile::exists(fname) && !overwrite_all )
          {
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
@@ -3135,7 +3136,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
       {
          // us_qdebug( "save batch 5" );
          QString fname = batch->avg_hydro_name + ".csv";
-         if ( QFile::exists(fname) )
+         if ( QFile::exists(fname) && !overwrite_all )
          {
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
@@ -3700,7 +3701,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
       batch->csv_saxs_name + "_iqq" + iqq_suffix() + ".csv";
-   if ( QFile::exists(fname) && !quiet )
+   if ( QFile::exists(fname) && !quiet && !overwrite_all )
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
@@ -3898,7 +3899,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
       batch->csv_saxs_name + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
       
-   if ( QFile::exists(fname) ) 
+   if ( QFile::exists(fname) && !overwrite_all )
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );

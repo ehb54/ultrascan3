@@ -337,6 +337,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_hplc_svd.cpp \
         src/us_hydrodyn_saxs_1d.cpp \
         src/us_hydrodyn_saxs_2d.cpp \
+        src/us_hydrodyn_script.cpp \
         src/us_hydrodyn_settings.cpp \
         src/us_hydrodyn_supc.cpp \
         src/us_hydrodyn_util.cpp \
@@ -405,6 +406,7 @@ SOURCES *= \
         src/us_saxs_util_dmd.cpp \
         src/us_saxs_util_extern.cpp \
         src/us_saxs_util_guinier.cpp \
+        src/us_saxs_util_gui_only.cpp \
         src/us_saxs_util_hydrate.cpp \
         src/us_saxs_util_hydrate_align.cpp \
         src/us_saxs_util_ift.cpp \
@@ -421,6 +423,7 @@ SOURCES *= \
         src/us_saxs_util_pm.cpp \
         src/us_saxs_util_sgp.cpp \
         src/us_saxs_util_sgp_phys.cpp \
+        src/us_saxs_util_ssbond.cpp \
         src/us_saxs_util_static.cpp \
 #  us_select_channel.cpp \
 #  us_selectmodel.cpp \

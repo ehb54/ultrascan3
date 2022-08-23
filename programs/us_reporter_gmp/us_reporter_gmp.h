@@ -25,6 +25,9 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QTreeWidget     * genTree;
 	 QTreeWidget     * perChanTree;
+	 QTreeWidget     * combPlotsTree;
+	 bool            first_time_gen_tree_build;
+	 bool            first_time_perChan_tree_build;
 
 	 bool auto_mode;
 	 QLabel* lb_hdr1 ;
@@ -45,6 +48,11 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports_internal;
 	 QMap< QString, QList< double > > ch_wvls;
+
+	 QList< int > replicates;
+	 QMap < int, QStringList > replicates_to_channdesc;
+	 QMap< QString, QStringList > channdesc_to_overlapping_wvls;
+	 
 	 // QString      reportMask;
 
 	 //for model simulations:
@@ -58,6 +66,7 @@ class US_ReporterGMP : public US_Widgets
 	 US_Noise*                   rg_ri_noise();
 	 QPointer< US_ResidsBitmap > rg_resbmap();
 	 QString                     rg_tripleInfo();
+
 
 	 struct GenReportMaskStructure
 	 {
@@ -91,6 +100,18 @@ class US_ReporterGMP : public US_Widgets
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
+
+	 struct CombPlotsReportMaskStructure
+	 {
+	   QMap <QString, int >    ShowCombPlotsTypes;
+
+	   //     type (s,D,..)   model    yes/no
+	   QMap < QString, QMap < QString, QString> >  ShowCombPlotParts;
+
+	   int has_combo_plots;
+	 };
+	 
+	 CombPlotsReportMaskStructure combPlotsMask_edited;
 
 	 QString JsonMask_gen_loaded;
 	 QString JsonMask_perChan_loaded;
@@ -138,11 +159,16 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
-	 	 
+
+	 //CombPlots masks
+	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
+	 QMap<QString, QTreeWidgetItem *> ItemCombPlots;
+	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
 
 	 QString html_assembled;
+	 QString html_failed;
 	 QString html_general;
 	 QString html_lab_rotor;
 	 QString html_operator;
@@ -175,10 +201,13 @@ class US_ReporterGMP : public US_Widgets
 	 QString    AutoflowID_auto;
 	 int        invID;
 	 QString    runID;
+	 QString    runName;
 	 QString    filePath;
 	 QString    FileName;
 	 QString    intensityID;
-
+	 QString    analysisIDs;
+	 QString    autoflowStatusID;
+	 
 	 QString    current_date;
 	 
 	 QString    duration_str;
@@ -200,9 +229,14 @@ class US_ReporterGMP : public US_Widgets
 	 bool       has_fluorescense;
 	 
 	 QVector< QString >  Array_of_triples;
+	 QVector< QString >  Array_of_tripleNames;
 	 QMap< QString, QStringList > Triple_to_Models;
 	 QMap< QString, QStringList > Triple_to_ModelsMissing;
+	 QMap< QString, QString >     Triple_to_FailedStage;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
+	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDescGuid;
+	 
+
 	 
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
@@ -210,32 +244,45 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QString > intensityRIMap;
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
-	 
+	 QMap< QString, QStringList > CombPlots_Type_to_Models;
+
+         QMap< QString, QStringList >     CombPlotsParmsMap;
+         QMap< QString, QList< QColor > > CombPlotsParmsMap_Colors;
+  
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
-	 void  assemble_pdf( void );
+	 void  assemble_pdf( QProgressDialog * );
 	 void  add_solution_details( const QString, const QString, QString& );
 	 void  assemble_parts( QString& );
 	 int   list_all_autoflow_records( QList< QStringList >&  );
 	 QMap < QString, QString > read_autoflow_record( int );
 	 void  write_pdf_report( void );
 
+	 void  assemble_user_inputs_html( void );
+         void  assemble_run_details_html( void );
+         int   get_expID_by_runID_invID( US_DB2*, QString );
+  
+         void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
+	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
+         QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
+	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );
 	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
-	 QMap< QString, QString > parse_models_desc_json( const QString ); 
+	 QMap< QString, QString > parse_models_desc_json( const QString, const QString ); 
 	 
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;
+	 void build_combPlotsTree ( void ) ; 
 	 void gui_to_parms ( void ) ;
 	 
 	 void get_children_to_json( QString &, QTreeWidgetItem* );
 	 QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
 	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
 	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
-
+	 void parse_edited_combPlots_mask_json( const QString, CombPlotsReportMaskStructure &  );
 
 
 	 bool model_exists;
@@ -395,8 +442,11 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QString text_model(     US_Model, int );
 	 QString html_header   ( QString, QString, US_DataIO::EditedData* );
-	 QString distrib_info( void );
-	 //QString integration_info( void );
+	 QString distrib_info( QMap < QString, QString > & );
+	 QString calc_replicates_averages( void );
+	 QString get_replicate_group_number( QString );
+	 QMap<QString, double>  get_replicate_group_results( US_ReportGMP::ReportItem, QString, QStringList );
+	 void    assemble_replicate_av_integration_html( void );
 	 
 	 QString get_filename( QString );
 	 
@@ -408,8 +458,12 @@ class US_ReporterGMP : public US_Widgets
 	
       private slots:
 	void loadRun_auto( QMap < QString, QString > & );
+	void check_failed_triples( void );
+	QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
+	QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
 	void check_models ( int );
 	void check_for_missing_models ( void );
+	QString  compose_html_failed_stage_missing_models( void );
 	QString  missing_models_msg( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
@@ -423,12 +477,13 @@ class US_ReporterGMP : public US_Widgets
 
 	void show_results   ( QMap < QString, QString > & );
 	void calc_residuals( void );
-	void assemble_distrib_html( void );
+	void assemble_distrib_html(  QMap < QString, QString > &  );
 	//void assemble_integration_results_html( void );
-	void assemble_plots_html( QStringList );
+        void assemble_plots_html( QStringList,  QString = QString(""));
 	double  interp_sval( double, double*, double*,  int );
 	void plotres( QMap < QString, QString > &   );
 	void plot_pseudo3D( QString, QString );
+	bool modelGuidExistsForStage( QString, QString );
 	void process_combined_plots ( QString );
 	
 	QString indent    (     int  )  const;
@@ -447,6 +502,15 @@ class US_ReporterGMP : public US_Widgets
 	QString table_row( const QString&, const QString&,
 			   const QString&, const QString&,
 			   const QString&, const QString& ) const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString& ) const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString& ) const;
 	
 	void    write_plot    ( const QString&, const QwtPlot* );
 	bool    mkdir         ( const QString&, const QString& );

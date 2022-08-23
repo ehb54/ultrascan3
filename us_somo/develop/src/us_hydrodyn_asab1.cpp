@@ -355,8 +355,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel, asapep, asatot, perc, voltot;
    char azoto[2];
    char carbonio0[3];
-   char carbonio1[2];
-   char carbonio2[3];
+   char carbonio1[3];
+   char carbonio2[4];
    //    char pippo[10];
    // char pluto[1];
    // int topolino;
@@ -1579,6 +1579,7 @@ cordis(int s)
 
 // void ragir();
 
+// compute radius of gyration
 static void
 ragir()
 {
@@ -3372,10 +3373,10 @@ assigntab(int xx)
          default:
             dd->m = 14;   /*C? */
          }
+         break;
       case ('A'):      /* MAN */
          dd->tab = arr1[k + 23];
          dd->vol = (float) 165.0;
-
          break;
       }
       break;
@@ -3597,7 +3598,7 @@ static void
 ordcol()
 {
    char key[200];
-   char sp[3], fine[3];
+   char sp[4], fine[4];
    int i;
 
    fine[0] = 'S';

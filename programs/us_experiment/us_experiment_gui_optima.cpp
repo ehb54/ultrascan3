@@ -358,6 +358,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    ct_tedelay->setValue     ( 10 );
    ct_tedelay->adjustSize   ();
 
+   //IMPORTANT: set your own credentials (as in DB)
+   update_inv();
+   
    // Set up an approprate investigator text
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -1217,6 +1220,24 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       QMessageBox::information( this,
          tr( "NOTE:  Rotor Changed" ),
          tr( "Cells and all subsequent tabs will be reset upon initialization."));
+
+
+      //Do actual reset:
+      /* e.g, for solutions:
+       rpSolut             = &(mainw->currProto.rpSolut);
+        {
+       nschan               = 0;
+       nuniqs               = 0;
+       chsols.clear();
+       solus .clear();
+       sids  .clear();
+       }
+      *******************/
+      mainw->currProto.rpSolut.nschan = 0;
+      mainw->currProto.rpSolut.nuniqs = 0;
+      mainw->currProto.rpSolut.chsols.clear();
+      mainw->currProto.rpSolut.solus .clear();
+      mainw->currProto.rpSolut.sids  .clear();
    }
 
    curr_rotor          = ndx;
@@ -5304,9 +5325,11 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
 }
 
 // Slot to save the current Run Protocol
-void US_ExperGuiUpload::saveRunProtocol()
+bool US_ExperGuiUpload::saveRunProtocol()
 {
 
+  bool save_aborted = false;
+  
   if ( mainw->ScanCount_global > 1501 )
     {
       QMessageBox::critical( this,
@@ -5316,7 +5339,7 @@ void US_ExperGuiUpload::saveRunProtocol()
                                  "It must not exceed 1501. \n\n"
                                  "Please revise experiment parameters accordingly." )
                                 .arg( mainw->ScanCount_global ) );
-      return;
+      return save_aborted;
     }
 
   if ( mainw->ScanCount_global_int > 1501 )
@@ -5328,7 +5351,7 @@ void US_ExperGuiUpload::saveRunProtocol()
                                  "It must not exceed 1501. \n\n"
                                  "Please revise experiment parameters accordingly." )
 			     .arg( mainw->ScanCount_global_int ) );
-      return;
+      return save_aborted;
     }
 
   
@@ -5378,7 +5401,10 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
             tr( "Save Run Protocol Aborted" ),
             tr( "The save of a new Run Protocol record<br/>"
                 "has been aborted." ) );
-         return;
+
+	 save_aborted = true;
+	 
+         return save_aborted;
       }
    }
 
@@ -5445,7 +5471,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
          tr( "*ERROR* in Protocol Write" ),
          tr( "An error occurred in the attempt to save"
              " new protocol\n  %1\n  %2 ." ).arg( protoname ).arg( errmsg ) );
-      return;
+
+      return save_aborted;
    }
 
    // Update the full list of existing protocols
@@ -5458,11 +5485,14 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    QString pguid       = currProto->protoGUID;
    prentry << protoname << pdate << protid << pguid;
 
+   qDebug() << "Updated proto list: " << prentry;
+   
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
 
-
+   qDebug() << "constructor parms: mainw->automode, have_run -- " << mainw->automode  << have_run;
+   
    if ( mainw->automode && !have_run)
      {
        QString mtitle_done    = tr( "Success" );
@@ -5475,6 +5505,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
        QString message_done   = tr( "Protocol has been successfully saved." );
        QMessageBox::information( this, mtitle_done, message_done );
      }
+
+   return save_aborted;
 }
 
 // Slot to read all Optima machines <------------------------------- // 
@@ -5703,7 +5735,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	  msg_sys_text_info += QString( tr("Please check that your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
 					   "Submission of the experimental protocol is suspended until this condition is resolved." ));
 	}
-
+      
       msg_sys_text_info += QString( tr ("\n\nYou may choose to save the protocol into LIMS database.") );
       
       msgBox_sys_data.setText( msg_sys_text );
@@ -5717,7 +5749,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       
       if (msgBox_sys_data.clickedButton() == Accept_sys) {
 	qDebug() << "Saving protocol...";
-
+	
 	if ( mainw->automode && rps_differ )
 	  {
 	    //Disconnect link
@@ -5740,7 +5772,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	    QMessageBox::warning( this,
 				  tr( "No Changes in the Protocol" ),
 				  tr( "The protocol was not saved because there were no changes made to it.") );
-
+	    
 	    //Disconnect link
 	    link->disconnectFromServer();
 	    
@@ -5766,49 +5798,51 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
 	  
 	}
-
+      
       //Disconnect link
       link->disconnectFromServer();
     }
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
- 
+  
+  if ( mainw->automode && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+  else if ( !mainw->automode && have_run && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
 
-   if ( mainw->automode && rps_differ )
-     saveRunProtocol();
-   else if ( !mainw->automode && have_run && rps_differ )
-     {
-       //saveAnalysisProfile();
-       saveRunProtocol();
-     }
-
-   QMessageBox msgBox;
-   QString message_protocol = tr( "");
-   if ( rps_differ )
-      message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
-
-   QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
-
-   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
-   msgBox.setText( message_submission );
-   msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
-                              .arg(alias)
-                              .arg(dbhost)
-                              .arg(dbport));
-   msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
-   QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
-   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-
-   msgBox.setIcon(QMessageBox::Question);
-   msgBox.exec();
-
-   if (msgBox.clickedButton() == Accept) {
-     qDebug() << "Submitting...";
-     submitExperiment();
-   }
-   else if (msgBox.clickedButton() == Cancel){
-     return;
-   }
-   
+  QMessageBox msgBox;
+  QString message_protocol = tr( "");
+  if ( rps_differ )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
+  
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
+  msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
+			     .arg(alias)
+			     .arg(dbhost)
+			     .arg(dbport));
+  msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept) {
+    qDebug() << "Submitting...";
+    submitExperiment();
+  }
+  else if (msgBox.clickedButton() == Cancel){
+    return;
+  }
+  
 }
 
 // Slot to submit the experiment to the Optima DB
@@ -6821,6 +6855,7 @@ void US_ExperGuiUpload::submitExperiment()
 	   }
 
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
+	 protocol_details[ "operatorID" ]   = QString::number( rpRotor->operID );
          //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
       }
       else
@@ -6883,6 +6918,18 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    if ( db != NULL )
    {
       QStringList qry;
+      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+      //greater of:
+      //- max(ID) autoflowHistory
+      //- current AUTO_INCREMENT
+      QString current_db = US_Settings::defaultDB().at(2);
+      qry << "set_autoflow_auto_increment" << current_db;
+      int auto_incr = db->statusQuery( qry );
+      qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+      
+      
+      //Now add autoflow record
+      qry.clear();
       qry << "add_autoflow_record"
           << protocol_details[ "protocolName" ]
           << protocol_details[ "CellChNumber" ]
@@ -6894,7 +6941,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
           << protocol_details[ "invID_passed" ]
           << protocol_details[ "label" ]
           << protocol_details[ "gmpRun" ]
-          << protocol_details[ "aprofileguid" ] ;
+          << protocol_details[ "aprofileguid" ]
+	  << protocol_details[ "operatorID" ];
 
       db->statusQuery( qry );
       //db->query( qry );

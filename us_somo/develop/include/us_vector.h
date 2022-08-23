@@ -40,6 +40,8 @@ class US_Vector
    static QString qs_vector4( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, int digits = 8 );
    static QString qs_vector_vector( QString qs, vector < vector < double > > m, int digits = 8 );
 
+   static QString qs_mapqsqs( QString qs, map < QString, QString > & x );
+
    static vector < double > intersection( vector < double > &x, vector < double > &y );
    static vector < double > intersection( vector < vector < double > > &x );
    static vector < double > vunion( vector < double > &x, vector < double > &y );

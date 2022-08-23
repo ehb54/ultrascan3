@@ -227,6 +227,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
   
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
+  addMenu(  P_GMPRPT   , tr( "&GMP Report Generator"             ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
 #if 0    // temporarily disable Create Experiment until truly ready
@@ -236,7 +237,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
   utilities->addMenu(spectrum);
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
-  addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
+  addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );  
   addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
   addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), utilities );
@@ -247,9 +248,11 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
   addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
   addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
+  addMenu(  P_PSEUDO_ABS  , tr( "Pseudo-Absorbance"              ), utilities );
+  addMenu(  P_ABDE_ANALYSE, tr( "ABDE Analysis"                  ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
-  addMenu(  P_VIEWMSS ,  tr( "View MWL &S-Spectra"               ), multiwave );
+  addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
   addMenu(  P_MWSPECF ,  tr( "MWL Species Fit"                   ), multiwave );
   addMenu(  P_MWFSIMU ,  tr( "Optima MWL Fit Simulation"         ), multiwave );
 
@@ -676,7 +679,7 @@ void US_Win::help( int index )
             " * Minji Kim\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
-            " * Konrad Löhr\n"
+            " * Konrad LÃ¶hr\n"
             " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"

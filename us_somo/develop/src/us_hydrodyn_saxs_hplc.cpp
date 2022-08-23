@@ -240,7 +240,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    plot3d_flag     = false;
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    lbl_mode_title = (QLabel *) 0;
 
@@ -1543,6 +1543,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
                          "int|"
                          "txt|"
                          "csv|"
+                         "sprr|"
                          // "out|"
                          "ssaxs)$" );
 
@@ -1592,7 +1593,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
-   if ( ext == "dat" )
+   if ( ext == "dat" ||
+        ext == "sprr" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
@@ -1700,11 +1702,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          return false;
       }
       QRegExp rx_spaces = QRegExp( "\\s+" ); 
-      QStringList headers = (qv[ 0 ] ).split( rx_spaces , QString::SkipEmptyParts );
+      QStringList headers = (qv[ 0 ] ).split( rx_spaces , Qt::SkipEmptyParts );
       int hsize = (int) headers.size();
       map < QString, vector < double > > uvs;
       for ( int i = 1; i < (int) qv.size(); ++i ) {
-         QStringList line = (qv[ i ] ).split( rx_spaces , QString::SkipEmptyParts );
+         QStringList line = (qv[ i ] ).split( rx_spaces , Qt::SkipEmptyParts );
          if ( (int) line.size() != hsize ) {
             errormsg = QString( us_tr( "Error: loading %1 line %2 tokens in line %3 != tokens in header %4" ) ).arg( filename ).arg( i + 1 ).arg( line.size() ).arg( headers.size() );
             return false;
@@ -1868,7 +1870,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       // first column is time
       qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" ).replace( ":", "_" ).replace( QRegExp( "\\_+" ), "_" ) ;
 
-      QStringList headers = (qv[ 0 ] ).split( "," , QString::SkipEmptyParts );
+      QStringList headers = (qv[ 0 ] ).split( "," , Qt::SkipEmptyParts );
       
       if ( !headers.size() ||
            !headers[ 0 ].toLower().contains( "time" ) )
@@ -1882,7 +1884,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       vector < QString > q_string;
       for ( int i = 1; i < (int) qv.size(); i++ )
       {
-         QStringList data = (qv[ i ] ).split( "," , QString::SkipEmptyParts );
+         QStringList data = (qv[ i ] ).split( "," , Qt::SkipEmptyParts );
          vector < double > this_csv_data;
          if ( data.size() )
          {
@@ -2115,11 +2117,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             
             gaussians.clear( );
 
-            // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+            // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
             QStringList tokens;
             {
                QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
 
             if ( tokens.size() != 2 )
@@ -2147,10 +2149,10 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             {
                if ( rx_end.indexIn( qv[ i ] ) == -1 )
                {
-                  // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+                  // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
                   {
                      QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -2191,11 +2193,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             {
                if ( rx_end.indexIn( qv[ i ] ) == -1 )
                {
-                  // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+                  // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
                   QStringList tokens;
                   {
                      QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -2270,11 +2272,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
       gaussians.clear( );
       int i = 1;
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( tokens.size() != 2 )
@@ -2349,10 +2351,10 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
             if ( !this_gaussian.isEmpty() )
             {
-               // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+               // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
                {
                   QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                  tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+                  tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
                }
          
                if ( (int) tokens.size() != gaussian_type_size )
@@ -2393,13 +2395,15 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          {
             editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
          }
+         // create_unified_ggaussian_target(false); // core dumps!
+         // ggaussian_rmsd();
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
          {
-            // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+            // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
             {
                QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
          
             if ( (int) tokens.size() != gaussian_type_size )
@@ -2459,11 +2463,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       
       // cout << "line: <" << qv[ i ] << ">" << endl;
 
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > I_offset )
@@ -2994,7 +2998,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
          }
             
       }
-      ts << endl;
+      ts << Qt::endl;
 
       // lines
 
@@ -3019,7 +3023,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
                }
             }               
          }
-         ts << endl;
+         ts << Qt::endl;
       }
    } else {
       QStringList qline;
@@ -3493,6 +3497,17 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, b
    double start_pos = le_gauss_fit_start->text().toDouble();
    double end_pos   = le_gauss_fit_end  ->text().toDouble();
    
+   if ( le_gauss_fit_start->text().isEmpty() ||
+        le_gauss_fit_start->text().toDouble() < f_qs[ file ][ 0 ] )
+   {
+      start_pos = f_qs[ file ][ 0 ];
+   }
+   if ( le_gauss_fit_end->text().isEmpty() ||
+        le_gauss_fit_end->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      end_pos = f_qs[ file ].back();
+   }
+
    if ( full ) {
       start_pos = f_qs[ file ][ 0 ];
       end_pos   = f_qs[ file ].back();
@@ -5555,16 +5570,16 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -8116,6 +8131,19 @@ map < QString, bool > US_Hydrodyn_Saxs_Hplc::all_files_map()
    return files;
 }
 
+int US_Hydrodyn_Saxs_Hplc::ggaussian_sel_no_gaussian_count() {
+   int sel_no_gaussian_count = 0;
+
+   QStringList files = all_selected_files();
+   
+   for ( int i = 0; i < (int) files.size(); ++i ) {
+      if ( !f_gaussians.count( files[i] ) ) {
+         ++sel_no_gaussian_count;
+      }
+   }
+   return sel_no_gaussian_count;
+}
+
 bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( bool check_against_global )
 {
    QStringList files = all_selected_files();
@@ -8612,22 +8640,22 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
 
    if ( detector_uv_conv != 0e0 )
    {
-      ts << "# __detector_uv: " << QString( "%1" ).arg( detector_uv_conv, 0, 'g', 8 ) << endl;
+      ts << "# __detector_uv: " << QString( "%1" ).arg( detector_uv_conv, 0, 'g', 8 ) << Qt::endl;
    }
    if ( detector_ri_conv != 0e0 )
    {
-      ts << "# __detector_ri: " << QString( "%1" ).arg( detector_ri_conv, 0, 'g', 8 ) << endl;
+      ts << "# __detector_ri: " << QString( "%1" ).arg( detector_ri_conv, 0, 'g', 8 ) << Qt::endl;
    }
    if ( detector_uv )
    {
-      ts << "# __detector_uv_set" << endl;
+      ts << "# __detector_uv_set" << Qt::endl;
    } 
    if ( detector_ri )
    {
-      ts << "# __detector_ri_set" << endl;
+      ts << "# __detector_ri_set" << Qt::endl;
    } 
 
-   ts << "# __gaussian_type: " << gaussian_type_tag << endl;
+   ts << "# __gaussian_type: " << gaussian_type_tag << Qt::endl;
 
    if ( stack_data.size() )
    {
@@ -8641,7 +8669,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          {
             if ( !it->second.isEmpty() )
             {
-               ts << it->second << endl;
+               ts << it->second << Qt::endl;
             }
          }
 
@@ -8656,7 +8684,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
                it != stack_data[ j ].conc_files.end();
                it++ )
          {
-            ts << *it << endl;
+            ts << *it << Qt::endl;
          }
 
          ts << "# __end\n";
@@ -8686,7 +8714,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          {
             if ( it->second.size() )
             {
-               ts << "# __f_gaussians: " << it->first << endl;
+               ts << "# __f_gaussians: " << it->first << Qt::endl;
                for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += gaussian_type_size )
                {
                   for ( int k = 0; k < gaussian_type_size; ++k )
@@ -8710,7 +8738,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
    {
       if ( !it->second.isEmpty() )
       {
-         ts << it->second << endl;
+         ts << it->second << Qt::endl;
       }
    }
 
@@ -8722,7 +8750,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          it != conc_files.end();
          it++ )
    {
-      ts << *it << endl;
+      ts << *it << Qt::endl;
    }
 
    ts << "# __end\n";
@@ -8750,7 +8778,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          it != f_gaussians.end();
          it++ )
    {
-      ts << "# __f_gaussians: " << it->first << endl;
+      ts << "# __f_gaussians: " << it->first << Qt::endl;
       for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += gaussian_type_size )
       {
          for ( int k = 0; k < gaussian_type_size; ++k )
@@ -8762,13 +8790,13 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
       ts << "# __end\n";
    }      
 
-   ts << "# __dir: " << le_dir->text() << endl;
+   ts << "# __dir: " << le_dir->text() << Qt::endl;
    if ( cb_lock_dir->isChecked() )
    {
       ts << "# __lock_dir\n";
    }
 
-   ts << "# __created_dir: " << le_created_dir->text() << endl;
+   ts << "# __created_dir: " << le_created_dir->text() << Qt::endl;
 
    f.close();
    editor_msg( "blue", QString( us_tr( "State saved in file %1" ) ).arg( fn ) );

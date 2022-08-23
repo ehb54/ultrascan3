@@ -1177,6 +1177,9 @@ void US_FitMeniscus::plot_2d( void )
    // Display selected meniscus/bottom
    le_men_sel->setText( QString::number( fit_xvl, 'f', 5 ) );
 
+   //Save Best (Fitted) Meniscus Value for later comparison:
+   Meniscus_fitted_2d_val = le_men_sel->text().toDouble();
+
    // Find the "best-index", index where X closest to fit
    ix_best           = 0;
    double diff_min   = 1.0e+99;
@@ -1538,10 +1541,11 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
      else //GMP framework: stop ANALYSIS for current triple, send signal
        {
 	 bad_men_vals = true;
-	 QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
-	 triple_information[ "failed" ] = reason_for_failure;
-	 emit bad_meniscus_values( triple_information );
-	 close();
+	 // QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
+	 // triple_information[ "failed" ] = reason_for_failure;
+	 // emit bad_meniscus_values( triple_information );
+	 // close();
+	 
 
 	 return;
        }
@@ -1598,12 +1602,12 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 	  else // GMP
 	    {
 	      bad_men_vals = true;
-	      QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
-		.arg( mennew )
-		.arg( lefval );
-	      triple_information[ "failed" ] = reason_for_failure;
-	      emit bad_meniscus_values( triple_information );
-	      close();
+	      // QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+	      // 	.arg( mennew )
+	      // 	.arg( lefval );
+	      // triple_information[ "failed" ] = reason_for_failure;
+	      // emit bad_meniscus_values( triple_information );
+	      // close();
 
 	      return;
 	    }
@@ -1821,12 +1825,12 @@ DbgLv(1) << " eupd:       edtext len" << edtext.length();
 	     else //GMP
 	       {
 		 bad_men_vals = true;
-		 QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
-		   .arg( mennew )
-		   .arg( lefval );
-		 triple_information[ "failed" ] = reason_for_failure;
-		 emit bad_meniscus_values( triple_information );
-		 close();
+		 // QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+		 //   .arg( mennew )
+		 //   .arg( lefval );
+		 // triple_information[ "failed" ] = reason_for_failure;
+		 // emit bad_meniscus_values( triple_information );
+		 // close();
 		 		 
 		 return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
 		 //continue;
@@ -1987,7 +1991,28 @@ DbgLv(1) << " call Remove Models";
 	   progress_msg->setValue( progress_msg->maximum() );
 	   progress_msg->close();
 	 }
+
        
+       //Identify if Meniscus || Bottom || (Meniscus && Bottom) have been changed
+       if ( have3val )
+	 {  // Fit is meniscus + bottom
+	  
+	 }
+       else if ( !bott_fit )
+	 {  // Fit is meniscus only
+	   if ( mennew != Meniscus_fitted_2d_val )
+	     triple_information[ "FMB_changed" ] = QString("YES");
+	   else
+	     triple_information[ "FMB_changed" ] = QString("NO");
+	 }
+       else
+	 {  // Fit is bottom only
+	   if ( botnew != Meniscus_fitted_2d_val )
+	     triple_information[ "FMB_changed" ] = QString("YES");
+	   else
+	     triple_information[ "FMB_changed" ] = QString("NO");
+	 }
+
        emit editProfiles_updated( triple_information );
        close();
      }

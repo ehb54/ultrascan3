@@ -1319,13 +1319,8 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    if ( !plot_dist_zoomer )
    {
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-#if QT_VERSION < 0x040000
-      plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-      plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
       plot_dist_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
       plot_dist_zoomer->setTrackerPen   ( QPen( Qt::red ) );
-#endif
    }
 
    plot_dist->replot();
@@ -1894,7 +1889,7 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(plot_csv.header[i]);
    }
 
-   t << qs << endl;
+   t << qs << Qt::endl;
 
    for ( unsigned int i = 0; i < plot_csv.data.size(); i++ )
    {
@@ -1903,7 +1898,7 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(plot_csv.data[i][j]);
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
    editor_msg("black", QString("File %1 written\n").arg( filename ) );
@@ -2160,7 +2155,7 @@ QStringList US_Hydrodyn_Saxs_Screen::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;

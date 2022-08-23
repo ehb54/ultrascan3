@@ -2325,9 +2325,9 @@ namespace zeno {
       static const char* F861[] = {
          "('  Invalid launch radius specified.')"
       };
-      static const char* F902[] = {
-         "('Launch radius = ',g15.7)"
-      };
+      // static const char* F902[] = {
+      //    "('Launch radius = ',g15.7)"
+      // };
       static const char* F842[] = {
          "('XYZ(low)  = ',3g15.7)"
       };
@@ -2817,7 +2817,7 @@ namespace zeno {
       CLOSE(Tfilenumbers->nzno,0);
       // Stop(NULL);
       
-      //return 0;
+      return 0;
    }
 #undef MAXELTS
 #undef MAXWORDS

@@ -23,6 +23,10 @@ US_ReportGMP::US_ReportGMP()
   initItem.total_percent    = 95;
   initItem.combined_plot    = 1;
 
+  initItem.integration_val_sim   = -1;
+  initItem.total_percent_sim     = -1;
+  initItem.passed                = QString("N/A");
+  
   reportItems.push_back( initItem );
 
   //Channel name
@@ -66,6 +70,9 @@ US_ReportGMP::US_ReportGMP()
   pseudo3d_pcsa_s_d         = true;
   pseudo3d_pcsa_mw_ff0      = true;
   pseudo3d_pcsa_mw_d        = true;
+
+  //integration results
+  
 
 }
  

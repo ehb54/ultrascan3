@@ -293,8 +293,8 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel = 10, asapep, asatot, perc, voltot;
    char azoto[2];
    char carbonio0[3];
-   char carbonio1[2];
-   char carbonio2[3];
+   char carbonio1[3];
+   char carbonio2[4];
 
    struct dati1 *dd1, *dd2;
 

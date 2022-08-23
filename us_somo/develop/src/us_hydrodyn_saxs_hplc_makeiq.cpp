@@ -2069,13 +2069,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( bool do_init )
+bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( bool do_init, bool only_init_unset )
 {
    QStringList files = all_selected_files();
-   return create_unified_ggaussian_target( files, do_init );
+   return create_unified_ggaussian_target( files, do_init, only_init_unset );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files, bool do_init )
+bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files, bool do_init, bool only_init_unset )
 {
    unified_ggaussian_ok = false;
 
@@ -2098,7 +2098,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    if ( do_init )
    {
       unified_ggaussian_errors_skip = false;
-      if ( !initial_ggaussian_fit( files ) )
+      if ( !initial_ggaussian_fit( files, only_init_unset ) )
       {
          progress->reset();
          return false;
@@ -2614,8 +2614,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
-{
+bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool only_init_unset ) {
    wheel_file = files[ 0 ];
 
    // us_qdebug( "creating fit window" );
@@ -2630,15 +2629,15 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
 
    hplc_fit_window->update_hplc = false;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
       progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
       qApp->processEvents();
       us_qdebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
       
-      if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) )
-      {
-         return false;
+      if ( !only_init_unset || !f_gaussians.count( files[ i ] ) ) {
+         if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) ) {
+            return false;
+         }
       }
    }
 

@@ -1213,7 +1213,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
             long Iqeb = plot_dist->insertCurve( file );
             plot_dist->setCurveStyle( Iqeb, QwtCurve::Lines );
 #else
-            QwtPlotCurve *curveeb = new QwtPlotCurve( file );
+            QwtPlotCurve *curveeb = new QwtPlotCurve( UPU_EB_PREFIX + file );
             curveeb->setStyle( QwtPlotCurve::Lines );
 #endif
             x[ 0 ] = f_qs[ file ][ i ];

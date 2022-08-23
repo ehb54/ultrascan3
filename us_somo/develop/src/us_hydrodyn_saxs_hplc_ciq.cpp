@@ -38,10 +38,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 {
 
    QPalette qcg_normal_redtext = USglobal->global_colors.cg_normal;
-   qcg_normal_redtext.setColor( QPalette::Foreground, Qt::red );
+   qcg_normal_redtext.setColor( QPalette::WindowText, Qt::red );
 
-   // qcg_normal_redtext.setColor( QPalette::Background, Qt::yellow );
-   //   qcg_normal_redtext.setColor( QPalette::Foreground, Qt::dRed );
+   // qcg_normal_redtext.setColor( QPalette::Window, Qt::yellow );
+   //   qcg_normal_redtext.setColor( QPalette::WindowText, Qt::dRed );
    // qcg_normal_redtext.setColor( QPalette::Base      , Qt::cyan );
    qcg_normal_redtext.setColor( QPalette::Text      , Qt::red );
    // qcg_normal_redtext.setColor( QPalette::Button    , Qt::red );

@@ -735,7 +735,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  for( int rgj = 0; rgj < reference_ch_wvls.size(); ++rgj )
 	    {
 	      US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ reference_ch_wvls[ rgj ] ];
-	      //Now, go over the reports for other channels in a group (per-triple babsis)
+	      //Now, go over the reports for other channels in a group (per-triple basis)
 	      for( int i = 1; i < group_channels.size(); ++i )
 		{
 		  QList < QString > other_group_ch_wvls = internal_reports[ group_channels[i] ].keys();
@@ -745,7 +745,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 		      //If other channel's wvl is the same to the reference channel's wvl, copy Report's params
 		      if ( other_group_ch_wvls[ j ] == reference_ch_wvls[ rgj ] )
 			{
-			  //QMap of the overpalling replicate group wavelengths (all overlapping triples):
+			  //QMap of the overlapping replicate group wavelengths (all overlapping triples):
 			  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
 			  QString other_triple = group_channels[ i ].split(":")[0] + "." + other_group_ch_wvls[ j ];
 			  
@@ -805,8 +805,10 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	}
       //repeat duplicates removal for upper-level currPof->channdesc_to_overlapping_wvls_main:
       for ( wvl_overlap = currProf->channdesc_to_overlapping_wvls_main.begin(); wvl_overlap != currProf->channdesc_to_overlapping_wvls_main.end(); ++wvl_overlap )
-	wvl_overlap.value().removeDuplicates();
-    
+	{
+	  wvl_overlap.value().removeDuplicates();
+	   qDebug() << "Reference Channel MAIN: " << wvl_overlap.key() << ", list of overlapping wvls: " << wvl_overlap.value();
+	}
       // END of copying reference RpeortGMP per replicate group   //////////////////////////////////////////////////////////
 
       

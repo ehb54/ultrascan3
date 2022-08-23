@@ -4044,7 +4044,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             t << it->second;
          }
          f.close();
-         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
          editor_msg("black", QString("File %1 written\n").arg( filename ) );
       }
    }
@@ -4088,16 +4088,16 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
          for ( unsigned int i = 0; i < detail_csv.header.size(); i++ ) {
             qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( detail_csv.header[ i ] );
          }
-         t << qs << endl;
+         t << qs << Qt::endl;
          for ( unsigned int i = 0; i < detail_csv.data.size(); ++i ) {
             qs = "";
             for ( unsigned int j = 0; j < detail_csv.data[i].size(); ++j ) {
                qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( detail_csv.data[ i ][ j ] );
             }
-            t << qs << endl;
+            t << qs << Qt::endl;
          }
          f.close();
-         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
          editor_msg("black", QString("File %1 written\n").arg( filename ) );
       }
    }
@@ -5167,31 +5167,31 @@ bool US_Hydrodyn_Pdb_Tool::csv_write( csv & header_csv, csv & detail_csv ) {
    for ( unsigned int i = 0; i < header_csv.header.size(); i++ ) {
       qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( header_csv.header[ i ] );
    }
-   t << qs << endl;
+   t << qs << Qt::endl;
    for ( unsigned int i = 0; i < header_csv.data.size(); ++i ) {
       qs = "";
       for ( unsigned int j = 0; j < header_csv.data[i].size(); ++j ) {
          qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( header_csv.data[ i ][ j ] );
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
 
-   t << endl;
+   t << Qt::endl;
 
    qs = "";
    for ( unsigned int i = 0; i < detail_csv.header.size(); i++ ) {
       qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( detail_csv.header[ i ] );
    }
-   t << qs << endl;
+   t << qs << Qt::endl;
    for ( unsigned int i = 0; i < detail_csv.data.size(); ++i ) {
       qs = "";
       for ( unsigned int j = 0; j < detail_csv.data[i].size(); ++j ) {
          qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( detail_csv.data[ i ][ j ] );
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
    editor_msg("black", QString("File %1 written\n").arg( filename ) );
    return true;
 }
@@ -5214,15 +5214,15 @@ bool US_Hydrodyn_Pdb_Tool::csv_write( csv & detail_csv ) {
    for ( unsigned int i = 0; i < detail_csv.header.size(); i++ ) {
       qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( detail_csv.header[ i ] );
    }
-   t << qs << endl;
+   t << qs << Qt::endl;
    for ( unsigned int i = 0; i < detail_csv.data.size(); ++i ) {
       qs = "";
       for ( unsigned int j = 0; j < detail_csv.data[i].size(); ++j ) {
          qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( detail_csv.data[ i ][ j ] );
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
    editor_msg("black", QString("File %1 written\n").arg( filename ) );
    return true;
 }
@@ -5681,11 +5681,11 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
          {
             found_model = true;
             model_count++;
-            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , QString::SkipEmptyParts ) );
+            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
             QStringList qsl;
             {
                QString qs2 = qs.left( 20 );
-               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
             QString model_name;
             if ( qsl.size() == 1 )
@@ -6174,7 +6174,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
 
       for ( unsigned int i = 0; i < (unsigned int)it->second.size(); i++ )
       {
-         QStringList lines = (it->second[ i ] ).split( "\n" , QString::SkipEmptyParts );
+         QStringList lines = (it->second[ i ] ).split( "\n" , Qt::SkipEmptyParts );
          vector < QString > names;
          vector < point   > p;
          for ( unsigned int j = 0; j < (unsigned int)lines.size(); j++ )
@@ -6620,7 +6620,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
          {
             if ( in_model )
             {
-               ts_out << qs << endl;
+               ts_out << qs << Qt::endl;
             } else {
                remarks += qs + "\n";
             }
@@ -6967,7 +6967,7 @@ ATOM   2005  CA  GLY     5      29.121 -25.194   8.602  133 ARG
             // line = line.replace( 61, 4, residue_name );
          }
       }
-      tso << line << endl;
+      tso << line << Qt::endl;
    }
 
    f   .close();
@@ -8361,7 +8361,7 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QTreeWidget *lv )
 
    QTextStream ts( &f );
    ts << QString( "%1 %2\n" ).arg( out.size() ).arg( psv, 0, 'f', 3 );
-   ts << out.join("\n") << endl;
+   ts << out.join("\n") << Qt::endl;
    f.close();
    {
 

@@ -66,7 +66,7 @@ bool US_Saxs_Util::compute_1d()
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
       qs.trimmed();
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = qsl[ i ].toUInt();
@@ -707,7 +707,7 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {

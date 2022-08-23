@@ -12,12 +12,6 @@
 #include "../include/us_math.h"
 #include <qregexp.h>
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 // #define OLD_WAY_CHECK
 // #define  PI M_PI
 // below are moved to variable values
@@ -119,12 +113,12 @@ static FILE *ris;
  static FILE *interout;
 #endif
 
-static char molecola[SMAX];
-static char ragcol[SMAX];
-static char risultati[SMAX];
-static char molecola_nb[SMAX];
-static char fil001[SMAX];
-// static char corresp[SMAX];
+static char molecola[SMAX+1];
+static char ragcol[SMAX+1];
+static char risultati[SMAX+1];
+static char molecola_nb[SMAX+1];
+static char fil001[SMAX+1];
+// static char corresp[SMAX+1];
 // static char data_stp;
 
 static int numero_sfere;
@@ -1232,7 +1226,12 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       /* Check for file existence and selects whole or part of the models for sequential files only   */
       if (cdmolix == 1) // never true in our case, cdmolix == 2
       {
-         sprintf(molecola, "%s%d", fil001, num001);
+         {
+            char newf[SMAX - 12];
+            strncpy( newf, fil001, SMAX-13 );
+            newf[SMAX-13] = 0;
+            snprintf(molecola, SMAX, "%s%d", newf, num001);
+         }
          num001 = num001 + 1;
          mol = us_fopen(molecola, "r");
          while (mol == NULL)

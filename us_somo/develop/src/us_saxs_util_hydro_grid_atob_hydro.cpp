@@ -1,11 +1,5 @@
 #include "../include/us_hydrodyn_grid_atob_hydro.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 #include <stdlib.h>
 #ifdef OSX
 #  include <sys/malloc.h>
@@ -716,10 +710,10 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 
    // printf("bead model size %d\n", (int)bead_model->size()); fflush(stdout);
    float max_radius = VW_average_radius;
-   double pre_mw = 0e0;
-   double post_mw = 0e0;
-   int pre_mw_c = 0;
-   int post_mw_c = 0;
+   // double pre_mw = 0e0;
+   // double post_mw = 0e0;
+   // int pre_mw_c = 0;
+   // int post_mw_c = 0;
    for (unsigned int i = 0; i < bead_model->size(); i++)
    {
       if ((*bead_model)[i].active)
@@ -1283,7 +1277,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 
 //    f.close();
 
-//    QStringList qslq = (qsq ).split( "," , QString::SkipEmptyParts );
+//    QStringList qslq = (qsq ).split( "," , Qt::SkipEmptyParts );
 //    if ( qslq.size() < 3 ||
 //         qslq[ 0 ] != "\"Name\"" ||
 //         qslq[ 1 ] != "\"Type; q:\"" 
@@ -1316,7 +1310,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 //    // first beads, last average
 //    for ( unsigned int i = 0; i < ( unsigned int ) qslIs.size(); i++ )
 //    {
-//       QStringList qslI = (qslIs[ i ] ).split( "," , QString::SkipEmptyParts );
+//       QStringList qslI = (qslIs[ i ] ).split( "," , Qt::SkipEmptyParts );
 
 //       if ( qslI.size() < 3 || qslI[ 1 ] != "\"I(q)\"" )
 //       {

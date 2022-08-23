@@ -15,6 +15,8 @@
 
 // #define UHSH_VAL_DEC 8
 
+// #define ALLOW_GUOS_CARUANAS
+
 void US_Hydrodyn_Saxs_Hplc::setupGUI()
 {
    int minHeight1 = 22;
@@ -24,7 +26,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cg_magenta.setBrush( QPalette::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
 
    /*
-     cg_magenta.setBrush( QPalette::Foreground, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QPalette::WindowText, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Button, QBrush( QColor( "blue" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Light, QBrush( QColor( "darkcyan" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Midlight, QBrush( QColor( "darkblue" ), Qt::SolidPattern ) );
@@ -774,6 +776,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_dist_zoomer->setTrackerPen(QPen(Qt::red));
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
 //   plot_ref = new QwtPlot( qs_plots );
@@ -883,6 +886,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
    plot_errors_zoomer->symmetric_rescale = true;
    connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
@@ -1334,6 +1338,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_local_guos->setPalette( PALET_PUSHB );
    pb_gauss_local_guos->setToolTip( us_tr( "Gaussian peak fit by Guos method" ) );
    connect(pb_gauss_local_guos, SIGNAL(clicked()), SLOT(gauss_local_guos()));
+
+#if !defined( ALLOW_GUOS_CARUANAS )
+   le_gauss_local_pts     ->hide();
+   pb_gauss_local_caruanas->hide();
+   pb_gauss_local_guos    ->hide();
+#endif
 
    pb_ggauss_start = new QPushButton(us_tr("Global Gaussians"), this);
    pb_ggauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3938,9 +3948,11 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( le_gauss_fit_end );
    gaussian_widgets.push_back( pb_gauss_save );
 
+#if defined( ALLOW_GUOS_CARUANAS )   
    gaussian_widgets.push_back( le_gauss_local_pts );
    gaussian_widgets.push_back( pb_gauss_local_caruanas );
    gaussian_widgets.push_back( pb_gauss_local_guos );
+#endif
    
    gaussian_widgets.push_back( pb_gauss_as_curves );
    gaussian_widgets.push_back( lbl_blank1 );
@@ -5156,7 +5168,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
    for ( int i = 0; i < (int) files.size(); ++i )
    {
       int bead_count;
-      QStringList qsl0 = (models[ files[ i ] ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl0 = (models[ files[ i ] ] ).split( "\n" , Qt::SkipEmptyParts );
 
       if ( qsl0.size() < 1 )
       {
@@ -5165,7 +5177,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       }
          
       {
-         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          if ( qsl.size() < 1 )
          {
             editor_msg( "red", QString( us_tr( "Error: insufficient model info for file %1 [b]" ) ).arg( files[ i ] ) );
@@ -5190,7 +5202,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       {
          bms += "Pb ";
 
-         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
          if ( qsl.size() < 4 )
          {

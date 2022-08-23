@@ -98,6 +98,7 @@ class US_Edit : public US_Widgets
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
       QMap< QString, QStringList> editProfile_scans_excl;
+      QMap< QString, bool> automatic_meniscus;
 
       QStringList        centparms_info;
       QMap< int, QStringList>  centerpieceParameters;
@@ -313,6 +314,7 @@ class US_Edit : public US_Widgets
       QString idInv_auto;
       QString ProtocolName_auto;
       int     autoflowID_passed;
+      int     autoflowStatusID;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
@@ -381,6 +383,8 @@ class US_Edit : public US_Widgets
       QString compose_json( bool );
 
       void delete_autoflow_record ( void );
+
+      void record_edit_status( QMap< QString, bool>, QString );
       
       bool isSet_to_analyse( QString, QString  );
       bool isSet_to_analyse_triple( QString, QString  );

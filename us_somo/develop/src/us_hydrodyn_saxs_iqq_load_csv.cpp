@@ -28,6 +28,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
                                                      bool *save_original_data,
                                                      bool *run_nnls,
                                                      bool *run_best_fit,
+                                                     bool *run_ift,
                                                      QString *nnls_target,
                                                      bool *clear_plot_first,
                                                      bool expert_mode,
@@ -49,6 +50,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
    this->save_original_data = save_original_data;
    this->run_nnls = run_nnls;
    this->run_best_fit = run_best_fit;
+   this->run_ift = run_ift;
    this->nnls_target = nnls_target;
    this->clear_plot_first = clear_plot_first;
    this->expert_mode = expert_mode;
@@ -56,7 +58,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle("Load CSV style SAXS results");
+   setWindowTitle("Load, manage and process SAS data");
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;
@@ -173,6 +175,20 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       cb_run_best_fit->setPalette( PALET_NORMAL );
       AUTFBACK( cb_run_best_fit );
       connect(cb_run_best_fit, SIGNAL(clicked()), this, SLOT(set_run_best_fit()));
+
+      cb_run_ift = new QCheckBox(this);
+      cb_run_ift->setText(us_tr("Compute IFT"));
+      cb_run_ift->setEnabled(true);
+      cb_run_ift->setChecked(*run_ift);
+      cb_run_ift->setMinimumHeight(minHeight1);
+      cb_run_ift->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_run_ift->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_run_ift );
+      connect(cb_run_ift, SIGNAL(clicked()), this, SLOT(set_run_ift()));
+      // ift only when plotted curves
+      if ( !msg.contains( "Plotted I(q) curves" ) ) {
+         cb_run_ift->hide();
+      }
       
       pb_select_target = new QPushButton(us_tr("Select Target"), this);
       pb_select_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -273,6 +289,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       QHBoxLayout * hbl_nnls_best_fit = new QHBoxLayout; hbl_nnls_best_fit->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls_best_fit->setSpacing( 0 );
       hbl_nnls_best_fit->addWidget(cb_run_nnls);
       hbl_nnls_best_fit->addWidget(cb_run_best_fit);
+      hbl_nnls_best_fit->addWidget(cb_run_ift);
 
       QHBoxLayout * hbl_nnls = new QHBoxLayout; hbl_nnls->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls->setSpacing( 0 );
       hbl_nnls->addLayout(hbl_nnls_best_fit);
@@ -531,11 +548,15 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_save_original_data()
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_nnls()
 {
    *run_nnls = cb_run_nnls->isChecked();
+   if ( *run_nnls ) {
+      cb_run_ift        ->setChecked( false );
+      *run_ift          = false;
+   }
    if ( nnls_target->isEmpty() && *run_nnls )
    {
       select_target();
    } else {
-      if ( !*run_nnls && !*run_best_fit )
+      if ( !*run_nnls && !*run_best_fit && !*run_ift )
       {
          *nnls_target = "";
          lbl_nnls_target->setText("");
@@ -544,14 +565,42 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_nnls()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_ift()
+{
+   *run_ift = cb_run_ift->isChecked();
+   if ( *run_ift ) {
+      cb_clear_plot_first->setChecked( false );
+      cb_run_nnls        ->setChecked( false );
+      cb_run_best_fit    ->setChecked( false );
+      *clear_plot_first = false;
+      *run_nnls         = false;
+      *run_best_fit     = false;
+   }
+   if ( nnls_target->isEmpty() && *run_ift )
+   {
+      // select_target();
+   } else {
+      if ( !*run_nnls && !*run_best_fit && !*run_ift )
+      {
+         // *nnls_target = "";
+         // lbl_nnls_target->setText("");
+      }
+   }         
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_best_fit()
 {
    *run_best_fit = cb_run_best_fit->isChecked();
+   if ( *run_best_fit ) {
+      cb_run_ift        ->setChecked( false );
+      *run_ift          = false;
+   }
    if ( nnls_target->isEmpty() && *run_best_fit )
    {
       select_target();
    } else {
-      if ( !*run_nnls && !*run_best_fit )
+      if ( !*run_nnls && !*run_best_fit && !*run_ift )
       {
          *nnls_target = "";
          lbl_nnls_target->setText("");
@@ -582,6 +631,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::select_target()
 
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
 {
+   pb_ok->setText( us_tr( cb_run_ift->isChecked() ? "Run" : "Plot" ) );
+   
    cb_create_avg->setEnabled(qsl_sel_names->size() > 1);
    cb_create_std_dev->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 2);
    cb_only_plot_stats->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
@@ -617,7 +668,9 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
    pb_save_as_dat->setEnabled(qsl_sel_names->size() == 1);
    pb_save_selected->setEnabled(qsl_sel_names->size());
    pb_ok->setEnabled( qsl_sel_names->size() );
-   cb_clear_plot_first->setEnabled( qsl_sel_names->size() );
+   cb_clear_plot_first->setEnabled( qsl_sel_names->size() && !cb_run_ift->isChecked() );
+   cb_run_nnls->setEnabled( !cb_run_ift->isChecked() );
+   cb_run_best_fit->setEnabled( !cb_run_ift->isChecked() );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()

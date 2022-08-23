@@ -64,6 +64,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       QCheckBox   *cb_iqq_expt_data_contains_variances;
       QCheckBox   *cb_iqq_kratky_fit;
       QCheckBox   *cb_ignore_errors;
+      QCheckBox   *cb_nnls_zero_list;
 
       QCheckBox   *cb_disable_iq_scaling;
       QCheckBox   *cb_iqq_scale_chi2_fitting;
@@ -110,6 +111,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       void set_iqq_expt_data_contains_variances();
       void set_iqq_kratky_fit();
       void set_ignore_errors();
+      void set_nnls_zero_list();
 
       void set_disable_iq_scaling();
       void set_iqq_scale_chi2_fitting();

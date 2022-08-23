@@ -30,7 +30,7 @@ void US_Timer::clear_timer( QString qs )
 
 void US_Timer::init_timer( QString qs )
 {
-   timers[ qs ] = QTime();
+   timers[ qs ] = QElapsedTimer();
    counts[ qs ] = 0;
    times [ qs ] = 0l;
 }
@@ -133,7 +133,7 @@ QString US_Timer::list_times( QString prepend )
 {
 
    QString qs;
-   for ( map < QString, QTime >::iterator it = timers.begin();
+   for ( map < QString, QElapsedTimer >::iterator it = timers.begin();
          it != timers.end();
          it++ )
    {
@@ -144,7 +144,7 @@ QString US_Timer::list_times( QString prepend )
 
 void US_Timer::end_all()
 {
-   for ( map < QString, QTime >::iterator it = timers.begin();
+   for ( map < QString, QElapsedTimer >::iterator it = timers.begin();
          it != timers.end();
          it++ )
    {
@@ -154,7 +154,7 @@ void US_Timer::end_all()
 
 void US_Timer::stop_all()
 {
-   for ( map < QString, QTime >::iterator it = timers.begin();
+   for ( map < QString, QElapsedTimer >::iterator it = timers.begin();
          it != timers.end();
          it++ )
    {
@@ -164,7 +164,7 @@ void US_Timer::stop_all()
 
 void US_Timer::start_all()
 {
-   for ( map < QString, QTime >::iterator it = timers.begin();
+   for ( map < QString, QElapsedTimer >::iterator it = timers.begin();
          it != timers.end();
          it++ )
    {

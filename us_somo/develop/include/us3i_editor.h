@@ -28,7 +28,7 @@ class US_EXTERN US3i_Editor : public QMainWindow
           \param flags Standard main window flags.
       */
       US3i_Editor( int, bool = false, const QString& = "Data Files (*.dat)", 
-            QWidget* = 0, Qt::WindowFlags = 0 );
+            QWidget* = 0 );
 
       enum { LOAD, DEFAULT };
 
