@@ -42,7 +42,7 @@ const QVector<double> US_Math_BF::bj0_data{
       0.0000000000000000074,
 };
 const US_Math_BF::cheb_series US_Math_BF::bj0_cs = {
-      &US_Math_BF::bj0_data,
+      US_Math_BF::bj0_data,
       12,
       -1, 1,
       9
@@ -74,7 +74,7 @@ const QVector<double> US_Math_BF::bj1_data {
       -0.000000000000000044,
 };
 const US_Math_BF::cheb_series US_Math_BF::bj1_cs = {
-      &US_Math_BF::bj1_data,
+      US_Math_BF::bj1_data,
       11,
       -1, 1,
       8
@@ -107,7 +107,7 @@ const QVector<double> US_Math_BF::by0_data {
       -0.000000000000000011
 };
 const US_Math_BF::cheb_series US_Math_BF::by0_cs = {
-      &US_Math_BF::by0_data,
+      US_Math_BF::by0_data,
       12,
       -1, 1,
       8
@@ -141,7 +141,7 @@ const QVector<double> US_Math_BF::by1_data {
       -0.00000000000000000186
 };
 const US_Math_BF::cheb_series US_Math_BF::by1_cs = {
-      &US_Math_BF::by1_data,
+      US_Math_BF::by1_data,
       13,
       -1, 1,
       10
@@ -178,7 +178,7 @@ const QVector<double> US_Math_BF::bm0_data {
       0.00000000000000004
 };
 const US_Math_BF::cheb_series US_Math_BF::_gsl_sf_bessel_amp_phase_bm0_cs = {
-      &US_Math_BF::bm0_data,
+      US_Math_BF::bm0_data,
       20,
       -1, 1,
       10
@@ -211,7 +211,7 @@ const QVector<double> US_Math_BF::bth0_data {
       0.000000000000000036
 };
 const US_Math_BF::cheb_series US_Math_BF::_gsl_sf_bessel_amp_phase_bth0_cs = {
-      &US_Math_BF::bth0_data,
+      US_Math_BF::bth0_data,
       23,
       -1, 1,
       12
@@ -242,7 +242,7 @@ const QVector<double> US_Math_BF::bm1_data {
       -0.00000000000000005,
 };
 const US_Math_BF::cheb_series US_Math_BF::_gsl_sf_bessel_amp_phase_bm1_cs = {
-      &US_Math_BF::bm1_data,
+      US_Math_BF::bm1_data,
       20,
       -1, 1,
       10
@@ -275,7 +275,7 @@ const QVector<double> US_Math_BF::bth1_data {
       -0.000000000000000040,
 };
 const US_Math_BF::cheb_series US_Math_BF::_gsl_sf_bessel_amp_phase_bth1_cs = {
-      &US_Math_BF::bth1_data,
+      US_Math_BF::bth1_data,
       23,
       -1, 1,
       12

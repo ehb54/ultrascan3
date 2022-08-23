@@ -23,8 +23,8 @@ class US_UTIL_EXTERN US_Math_BF
 {
    public:
       //! A structure used for chebyshev series
-      static struct cheb_series_struct {
-         QVector<double>*    c;
+      struct cheb_series_struct {
+         const QVector<double>    c;
          int order;    /* order of expansion          */
          double a;     /* lower interval point        */
          double b;     /* upper interval point        */
