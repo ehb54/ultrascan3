@@ -598,8 +598,11 @@ bool US_Extinction::loadScan(const QString &fileName)
 	  if ( Wvs_to_descr_map. keys(). size() == 1 )
 	    wls.description = description_str;
 	  else
-	    wls.description = mm.key() + " of " +  description_str;
-	  
+	    {
+	      wls.fileName   += ", " + mm.key();
+	      wls.description = mm.key() + " of " +  description_str;
+	    }
+	      
 	  if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
 	    {//we need to reverse the order of entries
 	      WavelengthScan wls2;
@@ -627,7 +630,15 @@ bool US_Extinction::loadScan(const QString &fileName)
 	  
 	  v_wavelength.push_back(wls);
 	  str1.sprintf("Scan %d: ", v_wavelength.size());
-	  str1 += wls.fileName + ", ";
+	  QString tmp_filename1 = wls.fileName;
+	  QString tmp_filename;
+	  if ( Wvs_to_descr_map. keys(). size() == 1  )
+	    tmp_filename = tmp_filename1;
+	  else
+	    tmp_filename = tmp_filename1.split(",")[0].simplified();
+	  	    
+	  //str1 += wls.fileName + ", ";
+	  str1 += tmp_filename + ", ";
 	  str1 += wls.description;
 	  
 	  lw_file_names->insertItem(row, str1);
@@ -835,9 +846,12 @@ void US_Extinction::update_data(void)
 
 void US_Extinction::listToCurve(void)
 {
-  qDebug() << "listToCurve() CALLED -- ";
+   
    
    QString selectedName = lw_file_names->currentItem()->text();
+
+   qDebug() << "listToCurve() CALLED; size of v_curve -- "  << v_curve.size();
+   
    QwtPlotCurve* c_select;
    c_select = NULL;
    QwtSymbol *s_old = new QwtSymbol;
@@ -853,8 +867,9 @@ void US_Extinction::listToCurve(void)
 
    foreach(QwtPlotCurve* c, v_curve)
    {
-      if(selectedName.contains(c->title().text()))
+     if(selectedName.contains(c->title().text()))
       {
+	qDebug() << "selectedName, c->title().text() -- " <<  selectedName << ", " << c->title().text();
          c_select = c;
       }
    }
