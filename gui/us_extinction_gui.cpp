@@ -502,18 +502,24 @@ bool US_Extinction::loadScan(const QString &fileName)
    QString str1;
    QStringList strl;
    float temp_x, temp_y;
-   WavelengthScan wls;
+   //WavelengthScan wls;
+   QMap < QString, WavelengthScan >  Wvs_to_descr_map;
+      
    QFile f(fileName);
-   wls.v_readings.clear();
+   //wls.v_readings.clear();
    QFileInfo fi(fileName);
-   wls.filePath = fi.filePath();
-   wls.fileName = fi.fileName();
+   //wls.filePath = fi.filePath();
+   //wls.fileName = fi.fileName();
+
    //reads in files until the end of the file
    if(f.open(QIODevice::ReadOnly | QIODevice::Text))
    {
       int row = 0;
       QTextStream ts(&f);
-      wls.description = ts.readLine();
+      //wls.description = ts.readLine();
+      QString description_str = ts.readLine();
+      //wls.description = description_str;
+            
       while(!ts.atEnd())
       {
          bool flag1 = true;
@@ -531,71 +537,116 @@ bool US_Extinction::loadScan(const QString &fileName)
          str1 = str1.replace("\"", " ");
          str1 = str1.replace(",", " ");
          strl = str1.split(" ");
-         temp_x = strl.at(0).toFloat();
-         temp_y = strl.at(1).toFloat();
+
+	 temp_x = strl.at(0).toFloat();
+	 int strl_size = strl.size();
+
+	 //temp_y = strl.at(1).toFloat();  //ALEXEY: here, reads only first column
+
+	 /*
+	   go for all columns; 
+	   check if it's a number (regex ?); 
+	   store y-coor into a temporary array QVector< float > << push( temp_y )
+	   store wavelength scans into array   
+	 */
 	 
-	 
-         if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
-         {
-	   qDebug() << temp_x << ", " << temp_y;
-            Reading r = {temp_x, temp_y};
-            wls.v_readings.push_back(r);
-            lambda_max = max(temp_x, lambda_max);  
-            lambda_min = min (temp_x, lambda_min);
-         }
+	 for ( int i=1; i < strl_size; ++i )    //Start from i=1 (all Y's)
+	   {
+	     temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
+
+	     if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
+	       {
+		 qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
+		 Reading r = {temp_x, temp_y};
+
+		 //wls.v_readings.push_back(r);
+
+		 QString Wls_desc_curr;
+
+		 if ( strl_size > 1 ) 
+		   Wls_desc_curr = "Column " + QString::number( i );
+		 else
+		   Wls_desc_curr = description_str;
+		   
+
+		 Wvs_to_descr_map [ Wls_desc_curr ]. v_readings.push_back(r);
+		 
+		 lambda_max = max(temp_x, lambda_max);  
+		 lambda_min = min (temp_x, lambda_min);
+	       }
+	   }
       }
       f.close();
-      qDebug() << "Inside LAOD 1";
+      qDebug() << "Inside LOAD 1";
+      
+      // if(wls.v_readings.size() < 10)
+      // 	{
+      // 	  //QMessageBox msg1 = US_LongMessageBox("Ultrascan Error", "This wavelength doesn't have\n enough usable points - scan not loaded", this);
+      // 	}
+      // qDebug() << "Inside LAOD 11, wls.v_readings.at(0).lambda: " << wls.v_readings.at(0).lambda;
 
-      if(wls.v_readings.size() < 10)
-      {
-         //QMessageBox msg1 = US_LongMessageBox("Ultrascan Error", "This wavelength doesn't have\n enough usable points - scan not loaded", this);
-      }
-      qDebug() << "Inside LAOD 11, wls.v_readings.at(0).lambda: " << wls.v_readings.at(0).lambda;
-      if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
-      {//we need to reverse the order of entries
-         WavelengthScan wls2;
-         wls2.v_readings.clear();
-	 qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
-         for(int i=(wls.v_readings.size() - (unsigned int) 1); i >=0; i--)
-         {
-	   qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
-            Reading temp = {wls.v_readings.at(i).lambda, wls.v_readings.at(i).od};
-            wls2.v_readings.push_back(temp);
-         }
-	 qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
-         wls.v_readings.clear();
-	 
-         for(unsigned int i = 0; i < (unsigned int)wls2.v_readings.size(); i++)
-         {
-	   qDebug() << "i: " << i;
-            Reading temp2 = {wls2.v_readings.at(i).lambda, wls2.v_readings.at(i).od};
-            wls.v_readings.push_back(temp2);
-         }
-	 qDebug() << "Inside LAOD 1cc";
-      }
 
-      qDebug() << "Inside LAOD 2";
-
-      v_wavelength.push_back(wls);
-      str1.sprintf("Scan %d: ", v_wavelength.size());
-      str1 += wls.fileName + ", ";
-      str1 += wls.description;
-      lw_file_names->insertItem(row, str1);
-      row++;
-      str1 = "";
+      //Now, iterate over Wvs_to_descr_map:
+      qDebug() << "Size of the Wvs_to_descr_map: " << Wvs_to_descr_map. keys() << Wvs_to_descr_map. keys(). size();
+      
+      QMap < QString, WavelengthScan >::iterator mm;
+      for ( mm =  Wvs_to_descr_map.begin(); mm !=  Wvs_to_descr_map.end(); ++mm )
+	{
+	  WavelengthScan wls = Wvs_to_descr_map[ mm.key() ];
+	  wls.filePath    = fi.filePath();
+	  wls.fileName    = fi.fileName();
+	  if ( Wvs_to_descr_map. keys(). size() == 1 )
+	    wls.description = description_str;
+	  else
+	    wls.description = mm.key() + " of " +  description_str;
+	  
+	  if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
+	    {//we need to reverse the order of entries
+	      WavelengthScan wls2;
+	      wls2.v_readings.clear();
+	      qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
+	      for(int i=(wls.v_readings.size() - (unsigned int) 1); i >=0; i--)
+		{
+		  qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
+		  Reading temp = {wls.v_readings.at(i).lambda, wls.v_readings.at(i).od};
+		  wls2.v_readings.push_back(temp);
+		}
+	      qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
+	      wls.v_readings.clear();
+	      
+	      for(unsigned int i = 0; i < (unsigned int)wls2.v_readings.size(); i++)
+		{
+		  qDebug() << "i: " << i;
+		  Reading temp2 = {wls2.v_readings.at(i).lambda, wls2.v_readings.at(i).od};
+		  wls.v_readings.push_back(temp2);
+		}
+	      qDebug() << "Inside LAOD 1cc";
+	    }
+	  
+	  qDebug() << "Inside LAOD 2";
+	  
+	  v_wavelength.push_back(wls);
+	  str1.sprintf("Scan %d: ", v_wavelength.size());
+	  str1 += wls.fileName + ", ";
+	  str1 += wls.description;
+	  
+	  lw_file_names->insertItem(row, str1);
+	  row++;
+	  str1 = "";
+	}
    }
    else
-   {
-      //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
-   }
-
+     {
+       //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
+     }
+   
    v_wavelength_original = v_wavelength;
    qDebug() << "Size of Wvl in LOAD_SCAN: " << v_wavelength.size();
-
+   
    return(true);
    
 }
+
 void US_Extinction::plot()
 {
    QVector<QVector<double> > x_plot, y_plot;
@@ -784,6 +835,8 @@ void US_Extinction::update_data(void)
 
 void US_Extinction::listToCurve(void)
 {
+  qDebug() << "listToCurve() CALLED -- ";
+   
    QString selectedName = lw_file_names->currentItem()->text();
    QwtPlotCurve* c_select;
    c_select = NULL;
