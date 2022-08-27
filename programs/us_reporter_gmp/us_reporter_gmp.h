@@ -24,9 +24,11 @@ class US_ReporterGMP : public US_Widgets
 	 US_ReporterGMP( QString );
 	 
 	 QTreeWidget     * genTree;
+         QTreeWidget     * miscTree;
 	 QTreeWidget     * perChanTree;
 	 QTreeWidget     * combPlotsTree;
 	 bool            first_time_gen_tree_build;
+         bool            first_time_misc_tree_build;
 	 bool            first_time_perChan_tree_build;
 
 	 bool auto_mode;
@@ -113,6 +115,14 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 CombPlotsReportMaskStructure combPlotsMask_edited;
 
+         struct MiscReportMaskStructure
+	 {
+	   QMap < QString, bool >  ShowMiscParts;
+	 };
+  
+         MiscReportMaskStructure miscMask_edited;
+  
+
 	 QString JsonMask_gen_loaded;
 	 QString JsonMask_perChan_loaded;
 
@@ -151,6 +161,11 @@ class US_ReporterGMP : public US_Widgets
 	 QStringList analysisPCSAItems;
 	 QStringList analysisPCSAItems_vals;
 	 //End of general report mask
+
+         //miscTree masks
+         QMap<QString, QTreeWidgetItem *> miscItem;
+         QStringList miscTopLevelItems;
+         //End of miscellaneous report masks
 
 	 //perChan Report masks
 	 QMap<QString, QTreeWidgetItem *> chanItem;
@@ -261,6 +276,7 @@ class US_ReporterGMP : public US_Widgets
 	 void  assemble_user_inputs_html( void );
          void  assemble_run_details_html( void );
          int   get_expID_by_runID_invID( US_DB2*, QString );
+         double get_loading_volume( int );
   
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
@@ -274,6 +290,7 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
+         void build_miscTree ( void );
 	 void build_perChanTree ( void ) ;
 	 void build_combPlotsTree ( void ) ; 
 	 void gui_to_parms ( void ) ;
@@ -283,6 +300,7 @@ class US_ReporterGMP : public US_Widgets
 	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
 	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
 	 void parse_edited_combPlots_mask_json( const QString, CombPlotsReportMaskStructure &  );
+         void parse_edited_misc_mask_json( const QString, MiscReportMaskStructure &  );
 
 
 	 bool model_exists;

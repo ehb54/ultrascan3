@@ -169,6 +169,54 @@ QMap< QString, double >  US_TmstPlot::timestamp_data_avgs ( )
   return davgs;
 }
 
+QMap< QString, double >  US_TmstPlot::timestamp_data_avgs_first_scan ( )
+{
+  QMap < QString, double > davgs_first_scan;
+
+  s_start = true;  // X axis starts at scan 1
+  
+  for ( int i=0; i < dkeys.size(); ++i )
+    {
+      QString pkey = dkeys[ i ];
+      int ky       = dkeys.indexOf( pkey );       // Y data index
+
+      // Accumulate X,Y points
+      nplpts       = point_indexes();
+      
+      double y_avg_val = 0;
+      double yy_first  = 0;
+      double yy_last   = 0;
+      
+      for ( int jj = 0; jj < nplpts; jj++ )
+	{
+	  int jt       = pntxs[ jj ];
+	  //xx[ jj ]     = dvals[ kx ][ jt ];
+	  //yy[ jj ]     = dvals[ ky ][ jt ];
+
+	  if ( jj == 0 )
+	    yy_first = dvals[ ky ][ jt ];
+	  if ( jj ==  nplpts - 1 )
+	    yy_last = dvals[ ky ][ jt ];
+	  
+	  y_avg_val   +=  dvals[ ky ][ jt ];
+	}
+   
+      double scalea_cut  = 1.0 / (double)nplpts;             // Averaging scale
+      y_avg_val         *= scalea_cut;
+
+      qDebug() << "[auto] Plot for: " << pkey  << "; First value of Y: " << yy_first;
+      qDebug() << "[auto] Plot for: " << pkey  << "; Last value of Y: "  << yy_last;
+      qDebug() << "[auto] Plot for: " << pkey  << "; # of points: "      << nplpts;
+      qDebug() << "[auto] Plot for: " << pkey  << "; First data index: " << pntxs[ 0 ];
+      qDebug() << "[auto] Plot for: " << pkey  << "; Average: "          << y_avg_val;
+      
+      davgs_first_scan[ pkey ] = y_avg_val;
+    }
+  
+  
+  return davgs_first_scan;
+}
+
 
 // Plot the data (both key-specific and combined)
 void US_TmstPlot::plot_data()
@@ -237,7 +285,8 @@ void US_TmstPlot::plot_kdata()
    // Accumulate X,Y points
    nplpts       = point_indexes();
 
-
+   //double y_avg_val = 0;
+   
    for ( int jj = 0; jj < nplpts; jj++ )
    {
       int jt       = pntxs[ jj ];
@@ -247,8 +296,18 @@ void US_TmstPlot::plot_kdata()
       smax         = qMax( smax, xx[ jj ] );
       ymin         = qMin( ymin, yy[ jj ] );
       ymax         = qMax( ymax, yy[ jj ] );
+
+      //y_avg_val   += yy[ jj ];
    }
 
+   //double scalea_cut  = 1.0 / (double)nplpts;             // Averaging scale
+   //y_avg_val         *= scalea_cut;
+      
+   // qDebug() << "Plot for: " << pkey  << "; First value of Y: " << yy[ 0 ];
+   // qDebug() << "Plot for: " << pkey  << "; Last value of Y: "  << yy[ nplpts - 1 ];
+   // qDebug() << "Plot for: " << pkey  << "; # of points: "      << nplpts;
+   // qDebug() << "Plot for: " << pkey  << "; Average: "          << y_avg_val;
+   
 DbgLv(1) << "TP:plkd   smin smax" << smin << smax << "xkey" << xkey << "kx ks" << kx << ks;
    data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax );
 
