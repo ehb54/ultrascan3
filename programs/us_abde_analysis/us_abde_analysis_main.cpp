@@ -1,4 +1,4 @@
-//! \file us_peak_decomposition_main.cpp
+//! \file us_abde_analysis_main.cpp
 //
 #include <QApplication>
 #include "us_license_t.h"
@@ -13,14 +13,14 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_PeakDecomposition w;
+   US_ABDE_Analysis w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
-US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
+US_ABDE_Analysis::US_ABDE_Analysis(): US_Widgets()
 {
-    setWindowTitle("Peak Decomposition & Analysis");
+    setWindowTitle("ABDE Analysis");
     QPalette p = US_GuiSettings::frameColorDefault();
     setPalette( p );
 
@@ -49,7 +49,7 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     sel_lyt->addWidget(pb_cleanList);
 
     ckb_xrange = new QCheckBox();
-    QGridLayout *us_xrange = us_checkbox("Specify a Range",
+    QGridLayout *us_xrange = us_checkbox("Limit Radius",
                                                 ckb_xrange);
     pb_pick_rp = us_pushbutton("Pick Two Points", false);
     QHBoxLayout *xrange_lyt = new QHBoxLayout();
@@ -64,9 +64,9 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     QGridLayout *integral_lyt = us_checkbox("Integral", ckb_integral);
     ckb_integral->setChecked(true);
 
-    ckb_scale = new QCheckBox();
-    QGridLayout *scale_lyt = us_checkbox("Scale to 100%", ckb_scale);
-    ckb_scale->setChecked(true);
+    ckb_norm = new QCheckBox();
+    QGridLayout *norm_lyt = us_checkbox("Normalize", ckb_norm);
+    ckb_norm->setChecked(true);
 
     ckb_legend = new QCheckBox();
     QGridLayout *legend_lyt = us_checkbox("Legend", ckb_legend);
@@ -76,7 +76,7 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     intg_lyt->addStretch(1);
     intg_lyt->addLayout(rawData_lyt);
     intg_lyt->addLayout(integral_lyt);
-    intg_lyt->addLayout(scale_lyt);
+    intg_lyt->addLayout(norm_lyt);
     intg_lyt->addLayout(legend_lyt);
     intg_lyt->addStretch(1);
 
@@ -136,11 +136,11 @@ US_PeakDecomposition::US_PeakDecomposition(): US_Widgets()
     connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
     connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
     connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
-    connect(ckb_scale, SIGNAL(stateChanged(int)), this, SLOT(slt_scale(int)));
+    connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
     connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
 }
 
-void US_PeakDecomposition::slt_xrange(int state){
+void US_ABDE_Analysis::slt_xrange(int state){
     x_min_picked = -1;
     x_max_picked = -1;
     QString qs = "QPushButton { background-color: %1 }";
@@ -151,12 +151,13 @@ void US_PeakDecomposition::slt_xrange(int state){
     }else{
         pb_pick_rp->setDisabled(true);
         pb_pick_rp->setStyleSheet(qs.arg(color.name()));
+        enableWidgets(true);
     }
     selectData();
     return;
 }
 
-void US_PeakDecomposition::slt_addRmItem(QListWidgetItem *item){
+void US_ABDE_Analysis::slt_addRmItem(QListWidgetItem *item){
     QString text = item->text();
     int id = selFilenames.indexOf(text);
     if (id == -1){
@@ -172,7 +173,7 @@ void US_PeakDecomposition::slt_addRmItem(QListWidgetItem *item){
     selectData();
 }
 
-void US_PeakDecomposition::slt_rmItem(void){
+void US_ABDE_Analysis::slt_rmItem(void){
     int row = lw_selData->currentRow();
     if (row < 0)
         return;
@@ -183,7 +184,7 @@ void US_PeakDecomposition::slt_rmItem(void){
     selectData();
 }
 
-void US_PeakDecomposition::slt_cleanList(void){
+void US_ABDE_Analysis::slt_cleanList(void){
     for (int i = 0; i < lw_selData->count(); i++){
         int rowInp = filenames.indexOf(lw_selData->item(i)->text());
         lw_inpData->item(rowInp)->setForeground(Qt::black);
@@ -193,7 +194,7 @@ void US_PeakDecomposition::slt_cleanList(void){
     selectData();
 }
 
-void US_PeakDecomposition::slt_loadAUC(){
+void US_ABDE_Analysis::slt_loadAUC(){
 
     QStringList fPath = QFileDialog::getOpenFileNames(this, tr("Open AUC File"),
                                                     US_Settings::importDir(),
@@ -228,36 +229,42 @@ void US_PeakDecomposition::slt_loadAUC(){
     }
 }
 
-QMap<QString, QVector<double>> US_PeakDecomposition::trapz(
+QMap<QString, QVector<double>> US_ABDE_Analysis::trapz(
                            QVector<double> xval, QVector<double> yval){
     QMap<QString, QVector<double>> out;
+    QVector<double> yvalN;
     QVector<double> midxval;
     QVector<double> integral;
-    QVector<double> integral_s;
+    QVector<double> integralN;
 
     const double *x = xval.data();
     const double *y = yval.data();
     int np = xval.size();
     double dx;
     double sum = 0;
+    double maxY = -1e99;
     for (int i = 1; i < np; i++){
         dx = x[i] - x[i - 1];
         sum += dx * ( y[i] + y[i - 1] ) * 0.5;
         integral << sum;
         midxval << 0.5 * (x[i] + x[i - 1]);
+        maxY = qMax(maxY, y[i]);
     }
 
     for (int i = 0; i < integral.size(); i++){
-        integral_s << integral.at(i) * 100 / sum;
+        integralN << integral.at(i) * 100 / sum;
+        yvalN << yval.at(i) / maxY;
     }
+    yvalN << yval.last() / maxY;
     out["midxval"] = midxval;
+    out["yvaluesN"] = yvalN;
     out["integral"] = integral;
-    out["integral_s"] = integral_s;
+    out["integralN"] = integralN;
     return out;
 
 }
 
-QVector<double> US_PeakDecomposition::getXlimit(QVector<double> xval_in,
+QVector<double> US_ABDE_Analysis::getXlimit(QVector<double> xval_in,
                                                  double xmin, double xmax,
                                                  int *idMin, int *inMax){
     QVector<double> xval_out;
@@ -290,11 +297,12 @@ QVector<double> US_PeakDecomposition::getXlimit(QVector<double> xval_in,
 
 }
 
-void US_PeakDecomposition::selectData(void){
+void US_ABDE_Analysis::selectData(void){
     xvalues_sel.clear();
     yvalues_sel.clear();
+    yvaluesN_sel.clear();
     integral_sel.clear();
-    integral_s_sel.clear();
+    integralN_sel.clear();
     midxval_sel.clear();
     QVector<int> inpIds;
     for (int i = 0; i < lw_selData->count(); i++){
@@ -319,13 +327,14 @@ void US_PeakDecomposition::selectData(void){
         QMap<QString, QVector<double>> trapzOut;
         trapzOut = trapz(xvalues_sel.last(), yvalues_sel.last());
         midxval_sel << trapzOut["midxval"];
+        yvaluesN_sel << trapzOut["yvaluesN"];
         integral_sel << trapzOut["integral"];
-        integral_s_sel << trapzOut["integral_s"];
+        integralN_sel << trapzOut["integralN"];
     }
     plotData();
 }
 
-void US_PeakDecomposition::plotData(void){
+void US_ABDE_Analysis::plotData(void){
     plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     plot->enableAxis(QwtPlot::yRight, false);
     plot->enableAxis(QwtPlot::yLeft, false); 
@@ -352,23 +361,16 @@ void US_PeakDecomposition::plotData(void){
     color_list <<  color["blue"] << color["orange"] << color["green"];
     color_list << color["cyan"] << color["red"] << color["purple"] ;
     color_list << color["pink"] << color["yellow"] << color["black"];
+    int sz_clist = color_list.size();
     QPen pen = QPen(Qt::SolidPattern, 1, Qt::SolidLine, Qt::RoundCap, Qt::BevelJoin);
     pen.setWidth(2);
 
     QwtText yTitle = plot->axisTitle(QwtPlot::yLeft);
-    QString plt_state;
-    if (ckb_rawData->isChecked())
-        plt_state.append("D");
-    if (ckb_integral->isChecked()){
-        if (ckb_scale->isChecked())
-            plt_state.append("S");
-        else
-            plt_state.append("U");
-    }
 
     int nd = selFilenames.size();
+    bool plt_state = ckb_rawData->isChecked() || ckb_integral->isChecked();
 
-    if (plt_state.size() == 0 || nd == 0){
+    if (! plt_state || nd == 0){
         yTitle.setText("");
         plot->setAxisTitle(QwtPlot::yLeft, yTitle);
         plot->setAxisTitle(QwtPlot::yRight, yTitle);
@@ -382,16 +384,23 @@ void US_PeakDecomposition::plotData(void){
     double maxX = -1e99;
     bool minmax = false;
 
-    if (plt_state.contains("D")){
-        yTitle.setText("Absorbance");
+    if (ckb_rawData->isChecked()){
+        bool norm = ckb_norm->isChecked();
+        if (norm)
+            yTitle.setText("Absorbance (normalized)");
+        else
+            yTitle.setText("Absorbance");
         plot->setAxisTitle(QwtPlot::yLeft, yTitle);
         plot->enableAxis(QwtPlot::yLeft, true);
         for (int i = 0; i < nd; i++){
             int np = xvalues_sel.at(i).size();
             xp = xvalues_sel.at(i).data();
-            pen.setColor(color_list.at(i));
+            pen.setColor(color_list.at(i % sz_clist));
             QString legend = tr("(D)_") + selFilenames.at(i);
-            yp = yvalues_sel.at(i).data();
+            if (norm)
+                yp = yvaluesN_sel.at(i).data();
+            else
+                yp = yvalues_sel.at(i).data();
             QwtPlotCurve* curve = us_curve(plot, legend);
             curve->setPen(pen);
             curve->setSamples(xp, yp, np);
@@ -404,18 +413,34 @@ void US_PeakDecomposition::plotData(void){
         minmax = true;
     }
 
-    if (plt_state.contains("U") || plt_state.contains("S")){
+    if (ckb_integral->isChecked()){
+
+        bool norm = ckb_norm->isChecked();
+        if (norm)
+            yTitle.setText("Integral (%)");
+        else
+            yTitle.setText("Integral");
+
+        if (ckb_rawData->isChecked()){
+            plot->setAxisTitle(QwtPlot::yRight, yTitle);
+            plot->enableAxis(QwtPlot::yRight, true);
+        }
+        else {
+            plot->setAxisTitle(QwtPlot::yLeft, yTitle);
+            plot->enableAxis(QwtPlot::yLeft, true);
+        }
+
         for (int i = 0; i < nd; i++){
             int np = midxval_sel.at(i).size();
             xp = midxval_sel.at(i).data();
-            pen.setColor(color_list.at(i));
+            pen.setColor(color_list.at(i % sz_clist));
             QString legend = tr("(I)_") + selFilenames.at(i);
-            if (plt_state.contains("S"))
-                yp = integral_s_sel.at(i).data();
-            else // (plt_state.contains("U")
+            if (ckb_norm->isChecked())
+                yp = integralN_sel.at(i).data();
+            else
                 yp = integral_sel.at(i).data();
             QwtPlotCurve* curve = us_curve(plot, legend);
-            if (plt_state.size() == 2)
+            if (ckb_rawData->isChecked())
                 curve->setYAxis(QwtPlot::yRight);
             curve->setPen(pen);
             curve->setSamples(xp, yp, np);
@@ -428,18 +453,7 @@ void US_PeakDecomposition::plotData(void){
             }
         }
 
-        if (plt_state.contains("S"))
-            yTitle.setText("Integral (%)");
-        else
-            yTitle.setText("Integral");
-        if (plt_state.size() == 2){
-            plot->setAxisTitle(QwtPlot::yRight, yTitle);
-            plot->enableAxis(QwtPlot::yRight, true);
-        }
-        else {
-            plot->setAxisTitle(QwtPlot::yLeft, yTitle);
-            plot->enableAxis(QwtPlot::yLeft, true);
-        }
+
     }
 
     if (ckb_legend->isChecked()) {
@@ -455,7 +469,7 @@ void US_PeakDecomposition::plotData(void){
     plot->replot();
 }
 
-void US_PeakDecomposition::slt_legend(int state) {
+void US_ABDE_Analysis::slt_legend(int state) {
 
     if (state == Qt::Checked) {
         QwtLegend* legend = new QwtLegend();
@@ -467,30 +481,19 @@ void US_PeakDecomposition::slt_legend(int state) {
     plot->replot();
 }
 
-void US_PeakDecomposition::slt_rawData(int) {
+void US_ABDE_Analysis::slt_rawData(int) {
     plotData();
 }
 
-void US_PeakDecomposition::slt_integral(int state) {
-
-    if (state == Qt::Checked)
-        ckb_scale->setEnabled(true);
-    else
-        ckb_scale->setDisabled(true);
+void US_ABDE_Analysis::slt_integral(int) {
     plotData();
 }
 
-void US_PeakDecomposition::slt_scale(int) {
+void US_ABDE_Analysis::slt_norm(int) {
     plotData();
 }
 
-
-void US_PeakDecomposition::slt_scan(double id){
-    scanid = (int) id;
-    plotData();
-}
-
-void US_PeakDecomposition::slt_pickPoint(){
+void US_ABDE_Analysis::slt_pickPoint(){
     picker->disconnect();
     x_min_picked = -1;
     x_max_picked = -1;
@@ -500,10 +503,12 @@ void US_PeakDecomposition::slt_pickPoint(){
     connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
             this,   SLOT(slt_mouse(const QwtDoublePoint&)));
     selectData();
+    enableWidgets(false);
+
     return;
 }
 
-void US_PeakDecomposition::slt_mouse(const QwtDoublePoint& point){
+void US_ABDE_Analysis::slt_mouse(const QwtDoublePoint& point){
     double x = point.x();
     if (x_min_picked == -1){
         x_min_picked = x;
@@ -537,11 +542,12 @@ void US_PeakDecomposition::slt_mouse(const QwtDoublePoint& point){
         picker->disconnect();
         pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
         selectData();
+        enableWidgets(true);
     }
     return;
 }
 
-void US_PeakDecomposition::slt_reset(){
+void US_ABDE_Analysis::slt_reset(){
     slt_cleanList();
     lw_inpData->clear();
     filenames.clear();
@@ -554,7 +560,21 @@ void US_PeakDecomposition::slt_reset(){
 
 }
 
-void US_PeakDecomposition::slt_save(){
+void US_ABDE_Analysis::enableWidgets(bool state){
+    pb_load->setEnabled(state);
+    pb_reset->setEnabled(state);
+    pb_save->setEnabled(state);
+    pb_rmItem->setEnabled(state);
+    pb_cleanList->setEnabled(state);
+    lw_inpData->setEnabled(state);
+    lw_selData->setEnabled(state);
+    ckb_rawData->setEnabled(state);
+    ckb_integral->setEnabled(state);
+    ckb_legend->setEnabled(state);
+    ckb_norm->setEnabled(state);
+}
+
+void US_ABDE_Analysis::slt_save(){
     int nd = selFilenames.size();
     if (nd == 0)
         return;
@@ -583,8 +603,8 @@ void US_PeakDecomposition::slt_save(){
         QVector<int> nPoints;
         for (int i = 0; i < nd; i++){
             nPoints << xvalues_sel.at(i).size();
-            outStream << tr("Filename,X_scan,Scan,");
-            outStream << tr("X_integral,Integral,Integral(%)");
+            outStream << tr("Filename,X_scan,Scan,Scan_norm,");
+            outStream << tr("X_integral,Integral,Integral_norm");
             if (i != nd - 1)
                 outStream << tr(",");
             else
@@ -619,6 +639,13 @@ void US_PeakDecomposition::slt_save(){
                     outStream <<  " ,";
                 }
 
+                if (line < np){        //Scan_norm
+                    outStream << QString::number(yvaluesN_sel.at(i).at(line), 'f', 6) << ",";
+                    newLine = true;
+                } else {
+                    outStream <<  " ,";
+                }
+
                 if (line < np - 1){    //X_integral
                     outStream << QString::number(midxval_sel.at(i).at(line), 'f', 4) << ",";
                     newLine = true;
@@ -632,8 +659,8 @@ void US_PeakDecomposition::slt_save(){
                 } else {
                     outStream <<  " ,";
                 }
-                if (line < np - 1){        //Scaled
-                    outStream << QString::number(integral_s_sel.at(i).at(line), 'f', 6);
+                if (line < np - 1){        //Integral_norm
+                    outStream << QString::number(integralN_sel.at(i).at(line), 'f', 6);
                     newLine = true;
                 }
 
