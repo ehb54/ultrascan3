@@ -11,11 +11,10 @@
 #include "us_minimize.h"
 #include "qwt_legend.h"
 
-
-class US_ABDE_Analysis : public US_Widgets{
+class US_PeakDecomposition : public US_Widgets{
     Q_OBJECT
 public:
-    explicit US_ABDE_Analysis();
+    explicit US_PeakDecomposition();
 
 private:
     QPushButton* pb_load;
@@ -37,9 +36,8 @@ private:
     QVector<QVector<double>> xvalues_sel;
     QVector<QVector<double>> midxval_sel;
     QVector<QVector<double>> yvalues_sel;
-    QVector<QVector<double>> yvaluesN_sel;
     QVector<QVector<double>> integral_sel;
-    QVector<QVector<double>> integralN_sel;
+    QVector<QVector<double>> integral_s_sel;
     double x_min_picked = -1;
     double x_max_picked = -1;
 
@@ -51,7 +49,7 @@ private:
     QPushButton *pb_pick_rp;
     QCheckBox *ckb_rawData;
     QCheckBox *ckb_integral;
-    QCheckBox *ckb_norm;
+    QCheckBox *ckb_scale;
     QCheckBox *ckb_legend;
     QCheckBox *ckb_xrange;
     US_PlotPicker *picker;
@@ -61,10 +59,10 @@ private:
     QMap<QString, QVector<double>> trapz(QVector<double>,
                                                   QVector<double>);
     QVector<double> getXlimit(QVector<double>, double, double, int *, int *);
-    void enableWidgets(bool);
 
 private slots:
     void slt_loadAUC(void);
+    void slt_scan(double);
     void slt_addRmItem(QListWidgetItem *);
     void slt_rmItem(void);
     void slt_cleanList(void);
@@ -73,7 +71,7 @@ private slots:
     void slt_xrange(int);
     void slt_legend(int);
     void slt_integral(int);
-    void slt_norm(int);
+    void slt_scale(int);
     void slt_rawData(int);
     void slt_reset(void);
     void slt_save(void);
