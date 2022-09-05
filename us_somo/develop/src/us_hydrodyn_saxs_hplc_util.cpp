@@ -2334,6 +2334,8 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
    parameters[ "hplc_guinier_qrgmax"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"           ];
    parameters[ "hplc_cb_guinier_qrgmax"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"        ];
+   parameters[ "hplc_gg_smooth"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth"                ];
+   parameters[ "hplc_cb_gg_smooth"          ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth"             ];
    parameters[ "hplc_dist_max"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"                 ];
    parameters[ "guinier_mwt_k"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"                 ];
    parameters[ "guinier_mwt_c"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"                 ];
@@ -2353,6 +2355,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_cb_makeiq_avg_peaks"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks"      ];
    parameters[ "hplc_makeiq_avg_peaks"      ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks"         ];
 
+   
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
       (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
@@ -2394,6 +2397,8 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"        ] = parameters[ "hplc_guinier_qrgmax"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"     ] = parameters[ "hplc_cb_guinier_qrgmax"        ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth"             ] = parameters[ "hplc_gg_smooth"                ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth"          ] = parameters[ "hplc_cb_gg_smooth"             ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"              ] = parameters[ "hplc_dist_max"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"              ] = parameters[ "guinier_mwt_k"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"              ] = parameters[ "guinier_mwt_c"                 ];

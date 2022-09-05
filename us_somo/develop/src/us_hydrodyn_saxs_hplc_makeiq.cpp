@@ -2098,6 +2098,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    if ( do_init )
    {
       unified_ggaussian_errors_skip = false;
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
+         editor_msg( "darkred", QString( "Experimental smoothing points %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
+      }
+
       if ( !initial_ggaussian_fit( files, only_init_unset ) )
       {
          progress->reset();
@@ -2520,6 +2527,37 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       // US_Vector::printvector( QString( "cfg as %1 q" ).arg( file ), f_qs[ file ] );
       // US_Vector::printvector( QString( "cfg as %1 I" ).arg( file ), f_Is[ file ] );
       // US_Vector::printvector( QString( "cfg as %1 e" ).arg( file ), f_errors[ file ] );
+   }
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
+      if ( !saved ) {
+         saved = true;
+
+         save_q = f_qs[ file ];
+         save_I = f_Is[ file ];
+         save_e = f_errors[ file ];
+      }
+
+      vector < double > smoothed_I;
+      US_Saxs_Util usu;
+      if ( usu.smooth( f_Is[ file ], smoothed_I, ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) ) {
+         f_Is[ file ] = smoothed_I;
+#if defined( DEBUG_GG_SMOOTH )         
+         add_plot(
+                  QString( "%1-sm%2" ).arg( file ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() )
+                  ,f_qs[ file ]
+                  ,f_Is[ file ]
+                  ,f_errors[ file ]
+                  ,true
+                  ,false
+                  );
+#endif
+      } else {
+         editor_msg( "red", QString( "Error smoothing %1 : %2" ).arg( file ).arg( usu.errormsg ) );
+      }
    }
 
    double peak;
