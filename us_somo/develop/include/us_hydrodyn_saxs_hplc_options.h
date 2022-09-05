@@ -120,6 +120,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QCheckBox *                             cb_guinier_qrgmax;
       QLineEdit *                             le_guinier_qrgmax;
 
+      QCheckBox *                             cb_gg_smooth;
+      QLineEdit *                             le_gg_smooth;
+
       QLabel     *                            lbl_mwt_k;
       QLineEdit  *                            le_mwt_k;
 
