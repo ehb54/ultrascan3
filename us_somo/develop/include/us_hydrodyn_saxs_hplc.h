@@ -923,6 +923,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       // the cormap p values from pairwise comparisons
 
+      bool                                pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ); // compute pvalue comparing 2 curves
+      bool                                pvalue( const QString & file, double &P, QString &errormsg ); // compute pvalue comparing I with Gaussians
+      
       map < QString, bool >               all_files_map();
 
       void                                update_plot_errors( vector < double > &grid, 
@@ -1259,6 +1262,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         baseline_test_pos( int pos );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
+      bool                         compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget );
 
       bool                         ggauss_recompute();
 

@@ -799,3 +799,86 @@ void US_Hydrodyn_Saxs_Hplc::gauss_local_guos() {
    le_gauss_pos_width ->setText( QString( "%1" ).arg( sigma ) );
    le_gauss_pos_height->setText( QString( "%1" ).arg( amp   ) );
 }
+
+bool US_Hydrodyn_Saxs_Hplc::pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ) {
+   errormsg = "";
+
+   vector < vector < double > > Icm( 2 );
+   vector < vector < double > > rkl;
+   int                          N;
+   int                          S;
+   int                          C;
+
+   Icm[ 0 ] = I;
+   Icm[ 1 ] = G;
+
+   if ( !usu->cormap( q, Icm, rkl, N, S, C, P ) ) {
+      errormsg = usu->errormsg;
+      return false;
+   }
+
+   return true;
+}
+     
+bool US_Hydrodyn_Saxs_Hplc::pvalue( const QString & file, double &P, QString &errormsg ) {
+   errormsg = "";
+   
+   if ( !f_Is.count( file ) ||
+        !f_qs.count( file ) ) {
+      errormsg = QString( "Internal error: pvalue() %1 is missing from data" ).arg( file );
+      return false;
+   }
+
+   if ( !f_gaussians.count( file ) ) {
+      errormsg = QString( "Internal error: pvalue() %1 is missing gaussians" ).arg( file );
+      return false;
+   }
+
+   // trim to fit
+
+   vector < double > q;
+   vector < double > I;
+
+   double q_start = le_gauss_fit_start->text().toDouble();
+   double q_end   = le_gauss_fit_end  ->text().toDouble();
+
+   int qsize = (int) f_qs[ file ].size();
+   int Isize = (int) f_Is[ file ].size();
+
+   if ( qsize != Isize ) {
+      errormsg = QString( "Internal error: pvalue() %1 differing I & q sizes" ).arg( file );
+      return false;
+   }
+      
+   vector < vector < double > > Icm( 2 );
+
+   for ( int i = 0; i < qsize; ++i ) {
+      if ( f_qs[ file ][ i ] >= q_start 
+           && f_qs[ file ][ i ] <= q_end ) {
+         q.push_back( f_qs[ file ][ i ] );
+         Icm[0].push_back( f_Is[ file ][ i ] );
+      }
+   }
+         
+   if ( !q.size() ) {
+      errormsg = QString( "Error: pvalue() %1 empty q vector after range trim" ).arg( file );
+      return false;
+   }
+
+   // compute cormap p value
+   {
+      vector < vector < double > > rkl;
+      int                          N;
+      int                          S;
+      int                          C;
+
+      Icm[ 1 ] = compute_gaussian_sum( q, f_gaussians[ file ] );
+
+      if ( !usu->cormap( q, Icm, rkl, N, S, C, P ) ) {
+         errormsg = usu->errormsg;
+         return false;
+      }
+   }
+
+   return true;
+}

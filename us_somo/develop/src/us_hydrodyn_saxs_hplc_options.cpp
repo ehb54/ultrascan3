@@ -411,7 +411,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
    cb_gg_smooth = new QCheckBox(this);
-   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Smoothing points: "));
+   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Maximum smoothing points: "));
    cb_gg_smooth->setEnabled( true );
    cb_gg_smooth->setChecked( (*parameters)[ "hplc_cb_gg_smooth" ] == "true" );
    cb_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
