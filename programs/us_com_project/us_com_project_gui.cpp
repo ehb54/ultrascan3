@@ -1620,7 +1620,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString aprofileguid = protocol_details[ "aprofileguid" ];
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
-  
+  QString failedID     = protocol_details[ "failedID" ];
+    
   QDir directory( currDir );
   
   qDebug() << "CURR DIRECTORY : "   << currDir;
@@ -1632,57 +1633,127 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
-    
-    
-  if ( stage == "LIVE_UPDATE" )
-    {
-      //do something
-      //switch_to_live_update( protocol_details );
+  qDebug() << "failedID: str, INT --  "
+	   << protocol_details[ "failedID" ]
+	   << protocol_details[ "failedID" ].toInt();  
 
-      emit switch_to_live_update_init( protocol_details );
+
+  //Re-attachment to FAILED GMP run
+  if ( failedID. toInt() != 0 )
+    {
+      // jump to 2. LIVE_UPDATE for now, i.e. re-initialize from scratch
+      qDebug() << "Re-initializing FAILED GMP rinID -- " << autoflowID;
       
-      return;
-    }
-  
-  if ( stage == "EDITING" )
-    {
-      //do something
-      //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-
-      if ( currDir.isEmpty() || !directory.exists() )
+      //read autoflowFailed record
+      QMap< QString, QString > failed_details = read_autoflow_failed_record( failedID );
+      
+      QMessageBox msgBox_f;
+      msgBox_f.setText(tr( "The selected GMP run FAILED:<br><br>" )
+		       + tr("<b>Run Name:&emsp;</b>") + ProtName
+		       + tr("<br>")
+		       + tr("<b>Failing stage:&emsp;</b> ") + failed_details[ "failedStage" ]
+		       + tr("<br>")
+		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
+		      		       
+      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procced, all existing data for this run will be deleted from DB, ")
+				   + tr("and the processing flow will attempt to reinitialize. ")
+				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+      
+      msgBox_f.setWindowTitle(tr("Reinitialization of Failed Run"));
+      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole);
+      
+      msgBox_f.setIcon(QMessageBox::Question);
+      msgBox_f.exec();
+      
+      if (msgBox_f.clickedButton() == Cancel)
 	{
+	  initAutoflowPanel();
+	  return;
+	}
+      else if (msgBox_f.clickedButton() == Confirm)
+	{
+	  qDebug() << "Chosing REINITIALIZATION!!!";
+
+	  //Delete and reset everything related to the run:
+	  /*
+	    1. revert 'liveUpdate, import, editing' fields in autolfowStages to DEFAULT 
+	    2. delete autoflowIntensity && autoflowStatus records
+	    3. ?? do we also delete immediately autoflowFailed record ??
+	    4. DELETE all exp. | rawData (maybe models, editedData etc.)
+	    5. delete autoflowHistory record (if was already created - ONLY case if REPORT was proceeded ?)
+	    6. Reset all autoflow record fields updated starting from LIVE_UPDATE
+	                 - dataPath
+			 - filename
+			 - intensityID
+			 - statusID
+			 - failedID (IF record in autoflowFailed deleted )
+			 - analysisIDs
+
+	  */
+	  
+
+	  //Switch to 2. LIVE_UPDATE:
+	  //emit switch_to_live_update_init( protocol_details );
+	  
+	  return;
+	}
+    }
+  // Normal re-attachement
+  else
+    {
+      //pdiag_autoflow -> close();
+      
+      if ( stage == "LIVE_UPDATE" )
+	{
+	  //do something
 	  //switch_to_live_update( protocol_details );
+	  
 	  emit switch_to_live_update_init( protocol_details );
+	  
+	  return;
 	}
-      else
+      
+      if ( stage == "EDITING" )
 	{
-	  //switch_to_post_processing( protocol_details );
-	  emit switch_to_post_processing_init( protocol_details );
+	  //do something
+	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
+	  
+	  if ( currDir.isEmpty() || !directory.exists() )
+	    {
+	      //switch_to_live_update( protocol_details );
+	      emit switch_to_live_update_init( protocol_details );
+	    }
+	  else
+	    {
+	      //switch_to_post_processing( protocol_details );
+	      emit switch_to_post_processing_init( protocol_details );
+	    }
+	  
+	  
+	  return;
+	}
+      if ( stage == "EDIT_DATA" )
+	{
+	  emit switch_to_editing_init( protocol_details );
 	}
       
-     
-      return;
-    }
-  if ( stage == "EDIT_DATA" )
-    {
-      emit switch_to_editing_init( protocol_details );
-    }
-
-  if ( stage == "ANALYSIS" )
-    {
-      qDebug() << "To ANALYSIS SWITCH ";
-      emit switch_to_analysis_init( protocol_details );
+      if ( stage == "ANALYSIS" )
+	{
+	  qDebug() << "To ANALYSIS SWITCH ";
+	  emit switch_to_analysis_init( protocol_details );
+	  
+	}
       
-    }
+      if ( stage == "REPORT" )
+	{
+	  qDebug() << "To REPORT SWITCH ";
+	  emit switch_to_report_init( protocol_details );
+	  
+	}
 
-  if ( stage == "REPORT" )
-    {
-      qDebug() << "To REPORT SWITCH ";
-      emit switch_to_report_init( protocol_details );
-      
-    }  
-  
-  //and so on...
+      //and so on...
+    }
    
 }
 
@@ -2001,6 +2072,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
+	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	 }
      }
    else
@@ -2016,6 +2088,51 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
    return protocol_details;
 }
 
+
+// Query autoflow for # records
+QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString failedID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> failed_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return failed_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_failed_record"
+       << failedID ;
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   failed_details[ "failedStage" ]    = db->value( 0 ).toString();
+	   failed_details[ "failedMsg" ]      = db->value( 1 ).toString();
+	   failed_details[ "failedTs" ]       = db->value( 2 ).toString();
+	 }
+     }
+   else
+     {
+       QMessageBox::warning( this, tr( "No autoflowFailed Record Exists" ),
+			     tr( "Selected record does not exists in the DB!  \n\n" )
+			     + db->lastError()
+			     + tr("\n\nThis means that the run either completed OR "
+				  "has been manually deleted.\n\n"
+				  "The Run List will be updated...") );
+     }
+
+   return failed_details;
+}
 
 
 

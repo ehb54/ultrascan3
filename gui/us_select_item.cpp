@@ -440,8 +440,18 @@ void US_SelectItem::accepted()
 
    }
 
+   
    accept();        // Signal that selection was accepted
+
    close();
+      
+   // if ( !autoflow_button ) 
+   //   close();
+   // else
+   //   {
+   //     qDebug() << "Do not close for now...";
+   //     this->show();
+   //   }
 }
 
 

@@ -117,6 +117,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     
     int  get_autoflow_records( void );
     QMap < QString, QString > read_autoflow_record( int );
+    QMap < QString, QString > read_autoflow_failed_record( QString );
     static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
     
     void read_optima_machines( US_DB2* = 0 ); 
