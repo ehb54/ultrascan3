@@ -2951,7 +2951,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
       
       QString msg_sys_text = QString( tr( "ATTENTION!\n\nNo -FM models for triple %1 have been found. \n\n"
 					  "This means one of the following: \n"
-					  "1. No -FM models have been generated;"
+					  "1. No -FM models have been generated; \n"
 					  "2. The data have been analyzed outside of the GMP framework.\n\n"
 					  "All scheduled jobs will be canceled for this triple." ) )
 				      .arg( triple_name );

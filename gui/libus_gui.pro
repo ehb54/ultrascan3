@@ -40,6 +40,7 @@ HEADERS      = \
                us_editor_gui.h          \
                us_extinction_gui.h      \
                us_extinctfitter_gui.h   \
+               us_failed_gmp_run_gui.h  \
                us_gui_settings.h        \
                us_gui_util.h            \
                us_help.h                \
@@ -95,6 +96,7 @@ SOURCES      = \
                us_editor_gui.cpp          \
                us_extinction_gui.cpp      \
                us_extinctfitter_gui.cpp   \
+               us_failed_gmp_run_gui.cpp  \
                us_gui_settings.cpp        \ 
                us_gui_util.cpp            \ 
                us_help.cpp                \
