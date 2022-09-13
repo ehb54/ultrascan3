@@ -143,6 +143,9 @@ void US_FailedRunGui::save_new( void )
 
   //close
   close();
+
+  //
+  emit failed_status_set();
 }
 
 

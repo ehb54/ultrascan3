@@ -1501,7 +1501,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        << "Created"
        << "Optima Run Status"
        << "Stage"
-       << "GMP";
+       << "GMP"
+       << "Failed";
   
   QString autoflow_btn;
 
@@ -1918,6 +1919,8 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
 
 }
 
+
+
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
 void US_InitDialogueGui::update_autoflow_data( void )
 {
@@ -2104,8 +2107,10 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = dbP->value( 14 ).toString();
       QString operatorID         = dbP->value( 16 ).toString();
+      QString failedID           = dbP->value( 17 ).toString();
 
       qDebug() << "OperatorID -- " << operatorID;
+      qDebug() << "failedID -- "   << failedID;
       
       QDateTime local(QDateTime::currentDateTime());
 
@@ -2126,6 +2131,11 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
+
+      if ( failedID.toInt() )
+	autoflowentry << "YES";
+      else
+	autoflowentry << "NO";
     
 
       //Check user level && GUID; if <3, check if the user is operator || investigator

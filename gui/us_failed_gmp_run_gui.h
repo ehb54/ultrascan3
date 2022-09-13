@@ -33,6 +33,6 @@ class US_GUI_EXTERN  US_FailedRunGui: public US_Widgets
      void cancel       ( void ); 
 
    signals:
-
+     void failed_status_set();
 };
 #endif  

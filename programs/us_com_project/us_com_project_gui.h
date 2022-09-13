@@ -131,7 +131,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
       
   private slots:
      void update_autoflow_data( void );
-     
+          
   signals:
      void define_new_experiment_init ( QStringList & );
      void switch_to_live_update_init(  QMap < QString, QString > & protocol_details );

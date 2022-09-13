@@ -360,7 +360,7 @@ void US_SelectItem::list_data()
       //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       
       //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
-      if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
+      if ( autoflow_da && items[ ii ][ ncols - 2 ] == "YES" ) 
 	{
 	  //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
 	  tw_data->item( kk, 0)->setFlags(Qt::NoItemFlags);
@@ -381,11 +381,17 @@ void US_SelectItem::list_data()
 
 
 	 //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
-	 if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
+	 if ( autoflow_da && items[ ii ][ ncols - 2 ] == "YES" ) 
 	   {
 	     tw_data->item( kk, jj)->setFlags(Qt::NoItemFlags);
 	     // //tw_data->item( kk, 0)->setForeground(QBrush(QColor(250,0,0)));
 	     tw_data->item( kk, jj)->setForeground(QBrush(Qt::gray));
+	   }
+
+	 //For GMP's "Failed" field:
+	 if ( !autoflow_da && autoflow_button && items[ ii ][ ncols - 1 ] == "YES" )
+	   {
+	     tw_data->item( kk, jj)->setForeground(QBrush(Qt::red));
 	   }
       }
 
@@ -730,14 +736,16 @@ void US_SelectItem::set_unset_failed_autoflow()
    // Return the index to the selected item
    QTableWidgetItem* twi  = selitems.at( 0 );
    int irow          = twi->row();
+   failed_run_row    = irow;
    twi               = tw_data->item( irow, 0 );
    
    AutoflowRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
    
    AutoflowID = items[ AutoflowRow ][ 0 ];
 
-   //Attempt autoflow record deletion:
-   qDebug() << "Autoflow ID to set/uset as FAILED: ID, name, run status: " << AutoflowID << ", " << items[ AutoflowRow ][ 1 ] << ", " << items[ AutoflowRow ][ 4 ];
+   //
+   qDebug() << "Autoflow ID to set/uset as FAILED: AutoflowRow, ID, name, run status: "
+	    << AutoflowRow << ", " << AutoflowID << ", " << items[ AutoflowRow ][ 1 ] << ", " << items[ AutoflowRow ][ 4 ];
 
    //Check current status:
    US_Passwd pw;
@@ -824,6 +832,7 @@ void US_SelectItem::set_unset_failed_autoflow()
 	 {
 	   //Setting as FAILED: additional info (reason, stage) can be specified:
 	   US_FailedRunGui * fdiag = new US_FailedRunGui( protocol_details );
+	   connect( fdiag, SIGNAL( failed_status_set() ), this, SLOT( show_autoflow_run_as_failed() ));
 	   fdiag -> show();
 	 }
        else
@@ -834,6 +843,35 @@ void US_SelectItem::set_unset_failed_autoflow()
 	     << AutoflowID
 	     << failedID;
 	   db->query( q );
+
+
+	   //set Run Manager's record back to black, last item to "NO"
+	   int last_col = ncols - 1;
+	   qDebug() << "Resetting Failed to NOT Failed: irow, ncols-1 -- "
+		    << irow
+		    << last_col;
+	   tw_data->item( irow, last_col )->setText(QString("NO"));
+
+	   for ( int jj = 1; jj < ncols; jj++ )
+	     {
+	       tw_data->item( irow, jj)->setForeground(QBrush(Qt::black));
+	     }
 	 }
+       
      }
+}
+
+//Slot to depict records in GMP's Run Manager as failed (in red, and "YES")
+void US_SelectItem::show_autoflow_run_as_failed( void )
+{
+  int last_col = ncols - 1;
+  qDebug() << "Setting as Failed: failed_run_row, ncols-1 -- "
+	   << failed_run_row
+	   << last_col;
+  tw_data->item( failed_run_row, last_col )->setText(QString("YES"));
+  
+  for ( int jj = 1; jj < ncols; jj++ )
+    {
+      tw_data->item( failed_run_row, jj)->setForeground(QBrush(Qt::red));
+    }
 }

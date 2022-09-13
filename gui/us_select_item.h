@@ -73,6 +73,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       int            sort_col;    //!< Default sort column
       int            nitems;      //!< Number of items (rows)
       int            ncols;       //!< Number of columns (hdrs.count())
+      int            failed_run_row;
 
    private slots:
       void build_layout   ( const QString );
@@ -84,11 +85,12 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       bool check_protocol_for_autoflow( QString, QString );
       void deleted_autoflow ( void );
       void set_unset_failed_autoflow ( void );
+      void show_autoflow_run_as_failed( void );
       void help           ( void )
       { showHelp.show_help( "select_item.html" ); };
 
    signals:
       void accept_deletion( void );
-      void accept_autoflow_deletion( void ); 
+      void accept_autoflow_deletion( void );
 };
 #endif
