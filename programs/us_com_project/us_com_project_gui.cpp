@@ -1816,6 +1816,19 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
       
       db->query( qry );
     }
+
+  //delete autoflowAnalysisHistory records for given autoflowID : 
+  qry.clear();
+  qry << "delete_autoflow_analysis_history_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //delete autoflowModelsLink records for given autoflowID :
+  qry.clear();
+  qry << "delete_autoflow_model_links_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
   
   //deleting autoflowHistory Record (if exists)
   qry. clear();
