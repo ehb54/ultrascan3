@@ -230,8 +230,8 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lbl_peakName, s_row, 0, 1, 2 );
 
    cb_peaks = us_comboBox();
-   connect( cb_peaks, SIGNAL( currentIndexChanged( int ) ),
-	              SLOT  ( new_peak           ( int ) ) );
+   // connect( cb_peaks, SIGNAL( currentIndexChanged( int ) ),
+   // 	              SLOT  ( new_peak           ( int ) ) );
    specs->addWidget( cb_peaks, s_row++, 2, 1, 2 );
 
    le_peakName = us_lineedit( tmp_dpoint.name );
@@ -260,12 +260,17 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
 
    pb_save = us_pushbutton( tr( "Save Datapoint" ), false );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
-   specs->addWidget( pb_save, s_row, 0, 1, 2 );
+   //specs->addWidget( pb_save, s_row, 0, 1, 2 );
 
    pb_write = us_pushbutton( tr( "Write Report" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
-   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
+   //specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
+   //view all auto-generated peak reports
+   pb_view_reports = us_pushbutton( tr( "View Reports" ), false );
+   connect( pb_view_reports, SIGNAL( clicked() ), SLOT( write_auto() ) );
+   specs->addWidget( pb_view_reports, s_row++, 0, 1, 4 );
+   
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
@@ -286,6 +291,9 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
        rb_datapoint  ->hide();
 
        le_peakName   ->hide();
+
+       pb_save       ->hide();
+       pb_write      ->hide();
      }
    
 
@@ -578,7 +586,14 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
 // Select a new peak
 void US_Buoyancy::new_peak( int index )
 {
+  QString triple_n = cb_triple->itemText( current_triple );
+  QString peak_n   = cb_peaks ->itemText( index );
+
+  QStringList curr_peak_parms = triple_name_to_peak_to_parms_map[ triple_n ][ peak_n ];
   
+  le_peakDensity->setText( curr_peak_parms[0] );
+  le_peakVbar->setText( curr_peak_parms[1] );
+  le_peakPosition->setText( curr_peak_parms[2] );
 }
 
 // Select a new triple
@@ -589,6 +604,7 @@ void US_Buoyancy::new_triple( int index )
    le_info->setText( runID + ": " + allData[index].description );
    tmp_dpoint.description = allData[index].description;
    tmp_dpoint.dataset = runID;
+
    plot_scan( current_scan );
 }
 
@@ -620,7 +636,14 @@ void US_Buoyancy::update_fields( void )
    le_bottom_calc->setText( str );
    str.setNum( tmp_dpoint.temperature );
    le_temperature->setText( str );
-   calc_points();
+
+   if ( !us_buoyancy_auto_mode )
+     calc_points();
+   else
+     {
+       QString triple_n = cb_triple->itemText( current_triple );
+       calc_points_auto( triple_n );
+     }
 }
 
 // Load an AUC data set
@@ -656,7 +679,74 @@ void US_Buoyancy::calc_points( void )
    }
 }
 
-// Load an AUC data set
+// cacl. poitns based on provided vector of peak positions
+void US_Buoyancy::calc_points_auto( QString triple_n )
+{
+  QVector< double > peak_poss = triple_name_to_peaks_map[ triple_n ];
+
+  QStringList peak_names;
+  //iterate over peaks for the current triple
+  for ( int i=0; i< peak_poss.size(); i++ )
+    {
+      QString str;
+      if ( peak_poss[ i ] != 0.0)
+	{
+	  QString peak_name = "Peak #" + QString::number( i+1 );
+	  peak_names << peak_name;
+	  
+	  double omega_s, C, C0, r2, k1, k2, k3, k4;
+	  omega_s = pow( current_rpm * M_PI/30.0, 2.0 );
+	  C0 = tmp_dpoint.gradientC0 - tmp_dpoint.bufferDensity; //subtract buffer density from nycodenz density
+	  r2 = pow( tmp_dpoint.bottom, 2.0 ) - pow( tmp_dpoint.meniscus, 2.0);
+	  k1 = tmp_dpoint.gradientMW * omega_s/( 2.0 * R_GC * (tmp_dpoint.temperature + 273.15) );
+	  k4 = 1.0 - tmp_dpoint.gradientVbar * tmp_dpoint.bufferDensity;
+	  k2 = exp( k1 * ( k4 ) * (pow( peak_poss[ i ], 2.0 ) - pow( tmp_dpoint.meniscus, 2.0 ) ) );
+	  k3 = exp( k1 * ( k4 ) * r2);
+	  C  = k1 * k4 * C0 *r2 * k2/( k3 - 1.0 ) + tmp_dpoint.bufferDensity;
+
+	  QStringList curr_peak_parms;
+	  str.setNum( C );
+	  curr_peak_parms << str;
+	  //le_peakDensity->setText( str );
+	  
+	  str.setNum( 1.0/C );
+	  curr_peak_parms << str;
+	  //le_peakVbar->setText( str );
+	  
+	  str.setNum( peak_poss[ i ] );
+	  curr_peak_parms << str;
+	  //le_peakPosition->setText( str );
+
+	  triple_name_to_peak_to_parms_map[ triple_n ][ peak_name ] = curr_peak_parms;
+	  
+	  pb_save->setEnabled( true );
+	}
+      else
+	{
+	  // le_peakDensity->setText( "0" );
+	  // le_peakVbar->setText( "0" );
+	  // le_peakPosition->setText( "0" );
+	  // pb_save->setEnabled( false );
+	  
+	  qDebug() << "Peak position #" << i << " for triple " << triple_n << " is ZERO!";
+	}
+    }
+
+  if ( !peak_names.isEmpty() )
+    {
+      cb_peaks->disconnect();
+      cb_peaks->clear();
+      
+      cb_peaks->addItems( peak_names );
+      connect( cb_peaks, SIGNAL( currentIndexChanged( int ) ),
+	       SLOT  ( new_peak           ( int ) ) );
+      
+      //cb_peaks->setCurrentIndex(0);
+      new_peak( 0 );
+    }
+}
+
+// load AUC data
 void US_Buoyancy::load( void )
 {
    bool isLocal = ! disk_controls->db();
@@ -704,8 +794,12 @@ void US_Buoyancy::load( void )
      //ALEXEY: if auto_mode, read meniscus positions from editProfiles
       if ( us_buoyancy_auto_mode )
 	{
-	  meniscus[ ii ] = 6.04519984; //HARD coded for now
+	  if ( ii == 0 )
+	    meniscus[ ii ] = 6.04519984; //HARD coded for now
+	  else
+	    meniscus[ ii ] = 6.01; //HARD coded for now
 	  
+	  triple_report_saved_map[ triples[ii] ] = false;
 	}
       else
 	meniscus[ii] = 0.0;
@@ -716,7 +810,7 @@ void US_Buoyancy::load( void )
       for ( int ii = 0; ii < triples.size(); ii++ )
       {  // Generate file names
          QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
-         QString file   = runID + "." + dataType + "." + triple + ".auc";
+	 QString file   = runID + "." + dataType + "." + triple + ".auc";
          files << file;
          simparams[ii].initFromData( NULL, allData[ii], true, runID, dataType);
       }
@@ -728,7 +822,7 @@ void US_Buoyancy::load( void )
       for ( int ii = 0; ii < triples.size(); ii++ )
       {  // Generate file names
          QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
-         QString file   = runID + "." + dataType + "." + triple + ".auc";
+	 QString file   = runID + "." + dataType + "." + triple + ".auc";
          files << file;
          simparams[ii].initFromData( &db, allData[ii], true, runID, dataType);
       }
@@ -790,7 +884,9 @@ void US_Buoyancy::load( void )
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
               SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+
       plot_scan( current_scan );
+            
       connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
               SLOT  ( new_rpmval         ( int ) ) );
    }
@@ -852,6 +948,21 @@ void US_Buoyancy::load( void )
    QString str;
    str.setNum(simparams[current_triple].bottom_position);
    le_bottom->setText( str );
+
+   //if [auto] analysis, iterate over triple indecies
+   if ( us_buoyancy_auto_mode )
+     {
+       for ( int i=0; i< cb_triple->count(); i++ )
+	 {
+	   //new_triple( i );
+	   cb_triple->setCurrentIndex( i );
+	 }
+
+       //set back to the first triple
+       cb_triple->setCurrentIndex( 0 );
+     }
+   
+
 }
 
 // Handle a mouse click according to the current pick step
@@ -974,6 +1085,13 @@ void US_Buoyancy::reset( void )
    triples        .clear();
    cb_rpms       ->disconnect();
    cb_rpms       ->clear();
+
+   triple_name_to_peaks_map . clear();
+   triple_name_to_peak_to_parms_map . clear();
+   triple_report_saved_map  . clear();
+
+   if ( us_buoyancy_auto_mode ) 
+     pb_view_reports  ->setEnabled( false );
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -988,7 +1106,7 @@ void US_Buoyancy::update_disk_db( bool isDB )
 // Plot a single scan curve
 void US_Buoyancy::plot_scan( double scan_number )
 {
-        // current scan is global
+  // current scan is global
    current_scan = (int) scan_number;
    int    rsize = data.pointCount();
    int    ssize = data.scanCount();
@@ -1065,8 +1183,32 @@ void US_Buoyancy::plot_scan( double scan_number )
    ct_selectScan->setMaximum( maxscan );
 
    data_plot->replot();
+
+   if ( us_buoyancy_auto_mode )
+     {
+       //do fit of the current scan, identify peak positions
+       QString triple_n = cb_triple->itemText( current_triple );
+       QVector <double> peak_poss;
+
+       if ( current_triple == 0 )
+	 peak_poss = { 6.5, 6.63, 6.72 };
+       else
+	 peak_poss = { 6.51, 6.622, 6.722, 6.8 };
+           
+       triple_name_to_peaks_map[ triple_n ] = peak_poss;
+     }
+     
    update_fields();
+
+   //Save & all peak reports (for current triple)
+   if (  us_buoyancy_auto_mode && !triple_report_saved_map[ cb_triple->itemText( current_triple ) ]  )
+     {
+       save_auto( cb_triple->itemText( current_triple ) );
+       pb_view_reports  ->setEnabled( true );
+     }
 }
+
+
 
 // Draw a vertical pick line
 void US_Buoyancy::draw_vline( double radius )
@@ -1119,7 +1261,79 @@ void US_Buoyancy::save( void )
    dpoint.append( tmp_dpoint );
 }
 
+void US_Buoyancy::save_auto( QString triple_n )
+{
+  QMap <QString, QStringList> peak_parms  = triple_name_to_peak_to_parms_map[ triple_n ];
+
+  QMap < QString, QStringList >::iterator pp;
+  for ( pp = peak_parms.begin(); pp != peak_parms.end(); ++pp )
+    {
+      QString  curr_peak_name          = pp.key();
+      QStringList curr_peak_parms_list = pp.value() ;
+
+      //these come from the QMap - per peak position
+      tmp_dpoint.name         = curr_peak_name;
+      tmp_dpoint.peakPosition = curr_peak_parms_list[2 ].toDouble();
+      tmp_dpoint.peakDensity  = curr_peak_parms_list[0 ].toDouble();
+      tmp_dpoint.peakVbar     = curr_peak_parms_list[1 ].toDouble();
+
+      qDebug() << "Saving_auto: current_triple index -- " << current_triple;
+     
+      //rest is the same for all peaks withtin a triple ?
+      tmp_dpoint.triple = triple_n;
+      tmp_dpoint.stretch = current_stretch;
+      tmp_dpoint.centerpiece = simparams[ current_triple ].bottom_position;
+      tmp_dpoint.bufferDensity = le_buffer_density->text().toDouble();
+      tmp_dpoint.meniscus = le_meniscus->text().toDouble();
+      tmp_dpoint.bottom = le_bottom_calc->text().toDouble();
+      tmp_dpoint.speed = cb_rpms->currentText().toDouble();
+      tmp_dpoint.gradientMW = le_MW->text().toDouble();
+      tmp_dpoint.gradientVbar = le_vbar->text().toDouble();
+      tmp_dpoint.gradientC0 = le_dens_0->text().toDouble();
+
+      
+      dpoint.append( tmp_dpoint );
+    }
+  
+  triple_report_saved_map[ triple_n ] = true;
+}
+
 void US_Buoyancy::write( void )
+{
+   QString str, str2;
+   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );
+   te->e->setFontFamily("Arial");
+   te->e->setFontPointSize( 13 );
+   te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");
+   te->e->setFontPointSize( 11 );
+   for (int i=0; i<dpoint.size(); i++)
+   {
+      te->e->append("Peak " + str.setNum( i+1 ) + " (" + dpoint[i].name +
+      " from experiment \"" + dpoint[i].dataset + "\"):" );
+      te->e->append( "Sample location:\t" + dpoint[i].triple );
+      te->e->append( "Sample description:\t" + dpoint[i].description );
+      te->e->append( "Rotor speed:\t" + str.setNum( dpoint[i].speed ) + " rpm, (Rotor stretch: "
+      + str2.setNum( dpoint[i].stretch) + " cm)" );
+      te->e->append( "Peak position:\t" + str.setNum( dpoint[i].peakPosition ) + " cm");
+      te->e->append( "Peak density:\t" + str.setNum( dpoint[i].peakDensity ) + " g/ml");
+      te->e->append( "Peak vbar:\t\t" + str.setNum( dpoint[i].peakVbar ) + " ml/g");
+      te->e->append( "Buffer density:\t" + str.setNum( dpoint[i].bufferDensity ) + " g/ml");
+      te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
+      te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
+      " cm (Centerpiece bottom at rest: " + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
+      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " °C");
+      te->e->append( "Gradient-forming\nmaterial details:");
+      te->e->append( "Molecular weight:\t" + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
+      te->e->append( "Loading density:\t" + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
+      te->e->append( "vbar:\t\t" + str.setNum( dpoint[i].gradientVbar ) + " ml/g" );
+      te->e->append("\n");
+   }
+   te->setMinimumHeight( 400 );
+   te->setMinimumWidth( 600 );
+   te->show();
+}
+
+void US_Buoyancy::write_auto( void )
 {
    QString str, str2;
    te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );

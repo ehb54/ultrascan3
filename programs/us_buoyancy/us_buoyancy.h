@@ -37,6 +37,10 @@ class US_Buoyancy : public US_Widgets
       QVector < US_DataIO::RawData >   allData;
       QVector < double >               meniscus;
       QVector < DataPoint >            dpoint;
+
+      QMap< QString, QVector<double> > triple_name_to_peaks_map;
+      QMap< QString, QMap < QString, QStringList > >  triple_name_to_peak_to_parms_map;
+      QMap< QString, bool > triple_report_saved_map;
       
 
       QRadioButton*      rb_meniscus;
@@ -123,6 +127,7 @@ class US_Buoyancy : public US_Widgets
 
       QPushButton*       pb_write;
       QPushButton*       pb_save;
+      QPushButton*       pb_view_reports;
 
       QwtCounter*        ct_selectScan;
 
@@ -138,9 +143,13 @@ private slots:
         void new_peak             ( int );
 	void plot_scan            ( double );
 	void write                ( void );
+        void write_auto           ( void );
         void save                 ( void );
+        void save_auto            ( QString );
 	void reset                ( void );
         void calc_points          ( void );
+        void calc_points_auto     ( QString );
+  
 	void new_rpmval           ( int  );
 	void update_fields        ( void );
         void update_speedData     ( void );
