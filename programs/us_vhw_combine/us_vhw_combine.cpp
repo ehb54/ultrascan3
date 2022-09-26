@@ -87,8 +87,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QLayout* lo_distrib  = us_checkbox( tr( "Integral" ), ck_distrib,  true  );
    QLayout* lo_envelope = us_checkbox( tr( "Envelope" ), ck_envelope, false );
-   QLayout* lo_intconc  = us_checkbox( tr( "Use Integ.Concentrations" ),
-                                       ck_intconc,  true );
+   QLayout* lo_intconc  = us_checkbox( tr( "Use Concentration" ),
+                                       ck_intconc,  false );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
