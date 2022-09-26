@@ -24,7 +24,10 @@ class US_Buoyancy : public US_Widgets
 	Q_OBJECT
 
 	public:
-      US_Buoyancy();
+           US_Buoyancy();
+           US_Buoyancy(QString auto_mode);
+
+           bool us_buoyancy_auto_mode;
 
 	private:
 
@@ -116,6 +119,8 @@ class US_Buoyancy : public US_Widgets
       QComboBox*         cb_triple;
       QComboBox*         cb_rpms;
 
+      QComboBox*         cb_peaks;
+
       QPushButton*       pb_write;
       QPushButton*       pb_save;
 
@@ -130,6 +135,7 @@ private slots:
 	void load                 ( void );
 	void details              ( void );
 	void new_triple           ( int  );
+        void new_peak             ( int );
 	void plot_scan            ( double );
 	void write                ( void );
         void save                 ( void );

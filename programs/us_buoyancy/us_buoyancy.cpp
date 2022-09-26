@@ -4,8 +4,7 @@
 #include <QDomDocument>
 
 #include "us_buoyancy.h"
-#include "us_license_t.h"
-#include "us_license.h"
+
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
@@ -29,25 +28,301 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//! \brief Main program for US_Buoyancy. Loads translators and starts
-//         the class US_FitMeniscus.
 
-int main( int argc, char* argv[] )
+// Alternative Constructor (for autoflow )
+US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
 {
-   QApplication application( argc, argv );
 
-   #include "main1.inc"
+   us_buoyancy_auto_mode = true;
+   // initialize gradient forming material to 65% Nycodenz (weight/vol):
 
-   // License is OK.  Start up.
+   bottom = 0.0;
+   bottom_calc = 0.0;
 
-   US_Buoyancy w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+   total_speeds = 0;
+   v_line       = NULL;
+   dbg_level    = US_Settings::us_debug();
+   current_scan = 1;
+   current_rpm  = 0.0;
+   tmp_dpoint.name = "";
+   tmp_dpoint.description = "";
+   tmp_dpoint.dataset = "";
+   tmp_dpoint.peakPosition = 0.0;
+   tmp_dpoint.peakDensity = 0.0;
+   tmp_dpoint.peakVbar = 0.0;
+   tmp_dpoint.temperature = 0.0;
+   tmp_dpoint.bufferDensity = 0.998234;
+   tmp_dpoint.meniscus = 0.0;
+   tmp_dpoint.bottom = 0.0;
+   tmp_dpoint.speed = 0.0;
+   tmp_dpoint.gradientMW = 821.0;
+   tmp_dpoint.gradientVbar = 0.4831;
+   tmp_dpoint.gradientC0 = 1.2294;
+
+   setWindowTitle( tr( "Buoyancy Equilibrium Data Analysis" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QVBoxLayout* top = new QVBoxLayout( this );
+   top->setSpacing         ( 2 );
+   top->setContentsMargins ( 2, 2, 2, 2 );
+
+   // Put the Run Info across the entire window
+   QHBoxLayout* runInfo = new QHBoxLayout();
+   QLabel* lb_info = us_label( tr( "Dataset Info:" ), -1 );
+   runInfo->addWidget( lb_info );
+
+   le_info = us_lineedit( "", 1, true );
+   runInfo->addWidget( le_info );
+
+   top->addLayout( runInfo );
+
+   QHBoxLayout* main = new QHBoxLayout();
+   QVBoxLayout* left = new QVBoxLayout;
+
+   // Start of Grid Layout
+   QGridLayout* specs = new QGridLayout;
+   int s_row = 0;
+
+   // Row 1
+   // Investigator
+
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   specs->addWidget( pb_investigator, s_row, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
+
+   int id = US_Settings::us_inv_ID();
+   QString number  = ( id > 0 ) ?
+      QString::number( US_Settings::us_inv_ID() ) + ": "
+      : "";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
+   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+
+   // Row 1A
+   disk_controls = new US_Disk_DB_Controls;
+   specs->addLayout( disk_controls, s_row++, 0, 1, 4 );
+
+   // Row 2
+   QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
+   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   specs->addWidget( pb_load, s_row, 0, 1, 2 );
+
+   pb_details = us_pushbutton( tr( "Run Details" ), false );
+   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+   specs->addWidget( pb_details, s_row++, 2, 1, 2 );
+
+   // Row 3
+   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength:" ), -1 );
+   specs->addWidget( lb_triple, s_row, 0, 1, 2 );
+
+   cb_triple = us_comboBox();
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
+                       SLOT  ( new_triple         ( int ) ) );
+   specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
+
+   lbl_rpms   = us_label( tr( "Speed Step (RPM) of triple:" ), -1 );
+   cb_rpms   = us_comboBox();
+   specs->addWidget( lbl_rpms,   s_row,   0, 1, 2 );
+   specs->addWidget( cb_rpms,   s_row++, 2, 1, 2 );
+
+   // Scans
+   QLabel* lbl_scan = us_label( tr( "Scan Focus:" ), -1 );
+   lbl_scan->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lbl_scan, s_row, 0, 1, 2 );
+
+   ct_selectScan = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_selectScan->setSingleStep( 1 );
+   ct_selectScan->setValue   ( current_scan );
+   specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
+   connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
+            SLOT  ( plot_scan( double ) ) );
+
+   //Exp. Params banner
+   QLabel* lb_parms_bn = us_banner( tr( "Experiment Parameters" ) );
+   specs->addWidget( lb_parms_bn,  s_row++, 0, 1, 4 );
+   
+   QButtonGroup* bg_points = new QButtonGroup( this );
+
+   QGridLayout* box1 = us_radiobutton( tr( "Select meniscus" ), rb_meniscus );
+   QGridLayout* box2 = us_radiobutton( tr( "Select peak position" ), rb_datapoint );
+
+   rb_meniscus->setChecked( true );
+   rb_datapoint->setChecked( false );
+   rb_meniscus->setEnabled( false );
+   rb_datapoint->setEnabled( false );
+   bg_points->addButton( rb_meniscus );
+   bg_points->addButton( rb_datapoint );
+   // specs->addLayout( box1, s_row, 0, 1, 2 );
+   // specs->addLayout( box2, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_meniscus = us_label( tr( "Meniscus Position (cm):" ), -1 );
+   specs->addWidget( lbl_meniscus, s_row, 0, 1, 2 );
+   le_meniscus = us_lineedit(  "0.0"  );
+   specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
+   connect (le_meniscus, SIGNAL( editingFinished (void)), this,
+            SLOT (update_meniscus(void)));
+
+   QLabel* lbl_stretch = us_label( tr( "Rotor Stretch (cm):" ), -1 );
+   specs->addWidget( lbl_stretch, s_row, 0, 1, 2 );
+   le_stretch = us_lineedit( "0.0" );
+   specs->addWidget( le_stretch, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_bottom = us_label( tr( "Centerpiece Bottom (cm):" ), -1 );
+   specs->addWidget( lbl_bottom, s_row, 0, 1, 2 );
+   le_bottom = us_lineedit( QString::number(bottom) );
+   specs->addWidget( le_bottom, s_row++, 2, 1, 2 );
+   connect (le_bottom, SIGNAL( editingFinished (void)), this,
+            SLOT (update_bottom(void)));
+
+   QLabel* lbl_bottom_calc = us_label( tr( "Speed-corrected Bottom (cm):" ), -1 );
+   specs->addWidget( lbl_bottom_calc, s_row, 0, 1, 2 );
+   le_bottom_calc = us_lineedit( QString::number( bottom_calc ) );
+   specs->addWidget( le_bottom_calc, s_row++, 2, 1, 2 );
+   connect (le_bottom_calc, SIGNAL( editingFinished (void)), this,
+            SLOT (update_bottom_calc(void)));
+
+    // Solution info:
+   QLabel* lbl_dens_0 = us_label( tr( "Loading Density (g/ml):" ), -1 );
+   specs->addWidget( lbl_dens_0, s_row, 0, 1, 2 );
+   le_dens_0 = us_lineedit( QString::number(tmp_dpoint.gradientC0) );
+   specs->addWidget( le_dens_0, s_row++, 2, 1, 2 );
+   connect (le_dens_0, SIGNAL( editingFinished (void)), this,
+            SLOT (update_dens_0(void)));
+
+   QLabel* lbl_buffer_density = us_label( tr( "Buffer Density (g/ml):" ), -1 );
+   specs->addWidget( lbl_buffer_density, s_row, 0, 1, 2 );
+   le_buffer_density = us_lineedit( QString::number(tmp_dpoint.bufferDensity) );
+   specs->addWidget( le_buffer_density, s_row++, 2, 1, 2 );
+   connect (le_buffer_density, SIGNAL( editingFinished (void)), this,
+            SLOT ( update_bufferDensity( void ) ));
+
+   QLabel* lbl_vbar = us_label( tr( "Gradient Mat. vbar (ml/g):" ), -1 );
+   specs->addWidget( lbl_vbar, s_row, 0, 1, 2 );
+   le_vbar = us_lineedit( QString::number( tmp_dpoint.gradientVbar ) );
+   specs->addWidget( le_vbar, s_row++, 2, 1, 2 );
+   connect (le_vbar, SIGNAL( editingFinished (void)), this,
+            SLOT (update_vbar(void)));
+
+   QLabel* lbl_MW = us_label( tr( "Gradient Mat. MW (g/mol):" ), -1 );
+   specs->addWidget( lbl_MW, s_row, 0, 1, 2 );
+   le_MW = us_lineedit( QString::number( tmp_dpoint.gradientMW ) );
+   specs->addWidget( le_MW, s_row++, 2, 1, 2 );
+   connect (le_MW, SIGNAL( editingFinished (void)), this,
+            SLOT (update_MW(void)));
+
+   QLabel* lbl_temperature = us_label( tr( "Temperature (°C):" ), -1 );
+   specs->addWidget( lbl_temperature, s_row, 0, 1, 2 );
+   le_temperature = us_lineedit( QString::number( tmp_dpoint.temperature ) );
+   specs->addWidget( le_temperature, s_row++, 2, 1, 2 );
+
+
+   //Peak. Params banner
+   QLabel* lb_peak_parms_bn = us_banner( tr( "Peak Parameters" ) );
+   specs->addWidget( lb_peak_parms_bn,  s_row++, 0, 1, 4 );
+   
+   //Information on peaks: Listbox of to-be-determined (from automated fit) size
+   
+
+   
+   QLabel* lbl_peakName = us_label( tr( "Peak name/label:" ), -1 );
+   specs->addWidget( lbl_peakName, s_row, 0, 1, 2 );
+
+   cb_peaks = us_comboBox();
+   connect( cb_peaks, SIGNAL( currentIndexChanged( int ) ),
+	              SLOT  ( new_peak           ( int ) ) );
+   specs->addWidget( cb_peaks, s_row++, 2, 1, 2 );
+
+   le_peakName = us_lineedit( tmp_dpoint.name );
+   specs->addWidget( le_peakName, s_row++, 2, 1, 2 );
+   connect (le_peakName, SIGNAL( editingFinished (void)), this,
+            SLOT (update_peakName(void)));
+   
+
+   QLabel* lbl_peakPosition = us_label( tr( "Peak Position (cm):" ), -1 );
+   specs->addWidget( lbl_peakPosition, s_row, 0, 1, 2 );
+   le_peakPosition = us_lineedit( QString::number( tmp_dpoint.peakPosition ) );
+   specs->addWidget( le_peakPosition, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_peakDensity = us_label( tr( "Peak Density (g/ml):" ), -1 );
+   specs->addWidget( lbl_peakDensity, s_row, 0, 1, 2 );
+   le_peakDensity = us_lineedit( QString::number( tmp_dpoint.peakDensity ) );
+   specs->addWidget( le_peakDensity, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_peakVbar = us_label( tr( "Peak vbar (ml/g):" ), -1 );
+   specs->addWidget( lbl_peakVbar, s_row, 0, 1, 2 );
+   le_peakVbar = us_lineedit( QString::number( tmp_dpoint.peakVbar ) );
+   specs->addWidget( le_peakVbar, s_row++, 2, 1, 2 );
+
+   // Button rows
+   QBoxLayout* buttons = new QHBoxLayout;
+
+   pb_save = us_pushbutton( tr( "Save Datapoint" ), false );
+   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   specs->addWidget( pb_save, s_row, 0, 1, 2 );
+
+   pb_write = us_pushbutton( tr( "Write Report" ), false );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
+
+   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   buttons->addWidget( pb_reset );
+
+   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
+   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   buttons->addWidget( pb_help );
+
+   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   buttons->addWidget( pb_accept );
+
+
+   //In case we need to hide something as opposed to default GUI
+   if ( auto_mode.toStdString() == "AUTO")
+     {
+       rb_meniscus   ->hide();
+       rb_datapoint  ->hide();
+
+       le_peakName   ->hide();
+     }
+   
+
+   
+   // Plot layout on right side of window
+   plot = new US_Plot( data_plot,
+         tr( "Absorbance Data" ),
+         tr( "Radius (in cm)" ), tr( "Absorbance" ) );
+
+   data_plot->setMinimumSize( 600, 400 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   pick = new US_PlotPicker( data_plot );
+   // Set rubber band to display for Control+Left Mouse Button
+   pick->setRubberBand  ( QwtPicker::VLineRubberBand );
+   pick->setMousePattern( QwtEventPattern::MouseSelect1,
+                          Qt::LeftButton, Qt::ControlModifier );
+
+   left->addLayout( specs );
+   left->addStretch();
+   left->addLayout( buttons );
+
+   main->addLayout( left );
+   main->addLayout( plot );
+   main->setStretchFactor( plot, 3 );
+   top ->addLayout( main );
+
+   reset();
 }
 
-// Constructor
+// Default Constructor
 US_Buoyancy::US_Buoyancy() : US_Widgets()
 {
+
+   us_buoyancy_auto_mode = false;
    // initialize gradient forming material to 65% Nycodenz (weight/vol):
 
    bottom = 0.0;
@@ -300,6 +575,12 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    reset();
 }
 
+// Select a new peak
+void US_Buoyancy::new_peak( int index )
+{
+  
+}
+
 // Select a new triple
 void US_Buoyancy::new_triple( int index )
 {
@@ -420,7 +701,15 @@ void US_Buoyancy::load( void )
 
    for (int ii=0; ii<triples.size(); ii++)
    {
-      meniscus[ii] = 0.0;
+     //ALEXEY: if auto_mode, read meniscus positions from editProfiles
+      if ( us_buoyancy_auto_mode )
+	{
+	  meniscus[ ii ] = 6.04519984; //HARD coded for now
+	  
+	}
+      else
+	meniscus[ii] = 0.0;
+      
    }
    if (isLocal)
    {
