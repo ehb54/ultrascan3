@@ -1501,7 +1501,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        << "Created"
        << "Optima Run Status"
        << "Stage"
-       << "GMP";
+       << "GMP"
+       << "Failed";
   
   QString autoflow_btn;
 
@@ -1620,7 +1621,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString aprofileguid = protocol_details[ "aprofileguid" ];
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
-  
+  QString failedID     = protocol_details[ "failedID" ];
+    
   QDir directory( currDir );
   
   qDebug() << "CURR DIRECTORY : "   << currDir;
@@ -1632,59 +1634,304 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
-    
-    
-  if ( stage == "LIVE_UPDATE" )
-    {
-      //do something
-      //switch_to_live_update( protocol_details );
+  qDebug() << "failedID: str, INT --  "
+	   << protocol_details[ "failedID" ]
+	   << protocol_details[ "failedID" ].toInt();  
 
-      emit switch_to_live_update_init( protocol_details );
+
+  //Re-attachment to FAILED GMP run
+  if ( failedID. toInt() != 0 )
+    {
+      // jump to 2. LIVE_UPDATE for now, i.e. re-initialize from scratch
+      qDebug() << "Re-initializing FAILED GMP rinID -- " << autoflowID;
       
-      return;
-    }
-  
-  if ( stage == "EDITING" )
-    {
-      //do something
-      //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-
-      if ( currDir.isEmpty() || !directory.exists() )
+      //read autoflowFailed record
+      QMap< QString, QString > failed_details = read_autoflow_failed_record( failedID );
+      
+      QMessageBox msgBox_f;
+      msgBox_f.setText(tr( "The selected GMP run is marked as FAILED:<br><br>" )
+		       + tr("<b>Run Name:&emsp;</b>") + ProtName
+		       + tr("<br>")
+		       + tr("<b>Failing stage:&emsp;</b> ") + failed_details[ "failedStage" ]
+		       + tr("<br>")
+		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
+		      		       
+      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, all existing data for this run will be deleted from DB, ")
+				   + tr("and the processing flow will reinitialize. ")
+				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+      
+      msgBox_f.setWindowTitle(tr("Reinitialization of Failed Run"));
+      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole);
+      
+      msgBox_f.setIcon(QMessageBox::Question);
+      msgBox_f.exec();
+      
+      if (msgBox_f.clickedButton() == Cancel)
 	{
-	  //switch_to_live_update( protocol_details );
+	  initAutoflowPanel();
+	  return;
+	}
+      else if (msgBox_f.clickedButton() == Confirm)
+	{
+	  qDebug() << "Choosing REINITIALIZATION!!!";
+
+	  //Delete and reset everything related to the run:
+	  /*
+	    1. revert 'liveUpdate, import, editing' fields in autolfowStages to DEFAULT 
+	    2. delete autoflowIntensity && autoflowStatus records
+	    3. ?? do we also delete immediately autoflowFailed record ??
+	    4. DELETE all exp. | rawData (maybe models, editedData etc.)
+	    5. delete autoflowHistory record (if was already created - ONLY case if REPORT was proceeded ?)
+	    6. Reset all autoflow record fields updated starting from LIVE_UPDATE
+	                 - dataPath
+			 - filename
+			 - intensityID
+			 - statusID
+			 - failedID (IF record in autoflowFailed deleted )
+			 - analysisIDs
+
+	  */
+	  do_run_tables_cleanup( protocol_details );
+
+	  do_run_data_cleanup( protocol_details );
+	  
+	  //Switch to 2. LIVE_UPDATE:
 	  emit switch_to_live_update_init( protocol_details );
+	  
+	  return;
 	}
-      else
+    }
+  // Normal re-attachement
+  else
+    {
+      //pdiag_autoflow -> close();
+      
+      if ( stage == "LIVE_UPDATE" )
 	{
-	  //switch_to_post_processing( protocol_details );
-	  emit switch_to_post_processing_init( protocol_details );
+	  //do something
+	  //switch_to_live_update( protocol_details );
+	  
+	  emit switch_to_live_update_init( protocol_details );
+	  
+	  return;
 	}
       
-     
-      return;
-    }
-  if ( stage == "EDIT_DATA" )
-    {
-      emit switch_to_editing_init( protocol_details );
-    }
-
-  if ( stage == "ANALYSIS" )
-    {
-      qDebug() << "To ANALYSIS SWITCH ";
-      emit switch_to_analysis_init( protocol_details );
+      if ( stage == "EDITING" )
+	{
+	  //do something
+	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
+	  
+	  if ( currDir.isEmpty() || !directory.exists() )
+	    {
+	      //switch_to_live_update( protocol_details );
+	      emit switch_to_live_update_init( protocol_details );
+	    }
+	  else
+	    {
+	      //switch_to_post_processing( protocol_details );
+	      emit switch_to_post_processing_init( protocol_details );
+	    }
+	  
+	  
+	  return;
+	}
+      if ( stage == "EDIT_DATA" )
+	{
+	  emit switch_to_editing_init( protocol_details );
+	}
       
-    }
-
-  if ( stage == "REPORT" )
-    {
-      qDebug() << "To REPORT SWITCH ";
-      emit switch_to_report_init( protocol_details );
+      if ( stage == "ANALYSIS" )
+	{
+	  qDebug() << "To ANALYSIS SWITCH ";
+	  emit switch_to_analysis_init( protocol_details );
+	  
+	}
       
-    }  
-  
-  //and so on...
+      if ( stage == "REPORT" )
+	{
+	  qDebug() << "To REPORT SWITCH ";
+	  emit switch_to_report_init( protocol_details );
+	  
+	}
+
+      //and so on...
+    }
    
 }
+
+//Cleanup failed run for further re-initializaiton:
+void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  //reverting autoflowSatges
+  qry << "autoflow_stages_revert"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
+  //deleting autoflowIntensity Record
+  qry. clear();
+  qry << "delete_autoflow_intensity_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "intensityID" ];
+  db->query( qry );
+
+  //deleting autoflowStatus Record
+  qry. clear();
+  qry << "delete_autoflow_status_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "statusID" ];
+  db->query( qry );
+
+  //deleting autoflowFailed Record
+  qry. clear();
+  qry << "delete_autoflow_failed_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "failedID" ];
+  db->query( qry );
+
+  //set autoflowAnalysis records for deletion (status = 'CANCELED')
+  QStringList analysisIDs_list = run_details[ "analysisIDs" ].split(",");
+  for( int i=0; i < analysisIDs_list.size(); ++i )
+    {
+      QString requestID = analysisIDs_list[i];
+      
+      qry.clear();
+      qry << "update_autoflow_analysis_record_at_deletion"
+	  << QString("Canceled for Failed run, top-level")
+	  << requestID;
+      
+      db->query( qry );
+    }
+
+  //delete autoflowAnalysisHistory records for given autoflowID : 
+  qry.clear();
+  qry << "delete_autoflow_analysis_history_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //delete autoflowModelsLink records for given autoflowID :
+  qry.clear();
+  qry << "delete_autoflow_model_links_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
+  
+  //deleting autoflowHistory Record (if exists)
+  qry. clear();
+  qry << "delete_autoflow_history_record"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //Clean certain field in autoflow record for re-initializing from 2. LIVE_UPDATE
+  qry. clear();
+  qry << "update_autoflow_at_reset_live_update"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+}
+
+
+//Cleanup failed run's data for further re-initializaiton:
+void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+  
+  //get experimentID from 'experiment' table:
+  qry << "get_experiment_info_by_runID"
+      << run_details[ "filename" ]
+      << run_details[ "invID_passed" ];
+
+  db->query( qry );
+  db->next();
+  QString expID  = db->value( 1 ).toString();
+
+  
+  // Let's make sure it's not a calibration experiment in use
+  qry. clear();
+  qry << "count_calibration_experiments" << expID;
+  int count = db->functionQuery( qry );
+  qDebug() << "Cleaning Failed Run: calexp count" << count;
+  
+  if ( count < 0 )
+    {
+      qDebug() << "count_calibration_experiments( "
+               << expID
+               << " ) returned a negative count";
+      return;
+    }
+  
+  else if ( count > 0 )
+    {
+      QMessageBox::information( this,
+				tr( "Error" ),
+				tr( "Cannot delete an experiment that is associated "
+				    "with a rotor calibration\n" ) );
+      return;
+    }
+
+  int status;
+  
+  // Delete links between experiment and solutions
+  qry. clear();
+  qry << "delete_experiment_solutions"
+      << expID;
+  status = db -> statusQuery( qry );
+  qDebug() << "Cleaning Failed Run: del sols status" << status;
+  
+  // Same with cell table
+  qry. clear();
+  qry  << "delete_cell_experiments"
+       << expID;
+  status = db -> statusQuery( qry );
+  qDebug() << "Cleaning Failed Run: del cells status" << status;
+
+  // Let's delete any pcsa_modelrecs records to avoid
+  //  constraints problems
+  US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
+
+  // Now delete the experiment and all existing rawData, 
+  qry. clear();
+  qry << "delete_experiment"
+      << expID;
+  status = db -> statusQuery( qry );
+  qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+  
+  if ( status != US_DB2::OK )
+    {
+      QMessageBox::information( this,
+				tr( "Error / Warning" ),
+				db -> lastError() + tr( " (error=%1, expID=%2)" )
+				.arg( status ).arg( expID ) );
+    }
+
+}
+
 
 
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
@@ -1873,8 +2120,10 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = dbP->value( 14 ).toString();
       QString operatorID         = dbP->value( 16 ).toString();
+      QString failedID           = dbP->value( 17 ).toString();
 
       qDebug() << "OperatorID -- " << operatorID;
+      qDebug() << "failedID -- "   << failedID;
       
       QDateTime local(QDateTime::currentDateTime());
 
@@ -1895,6 +2144,11 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
+
+      if ( failedID.toInt() )
+	autoflowentry << "YES";
+      else
+	autoflowentry << "NO";
     
 
       //Check user level && GUID; if <3, check if the user is operator || investigator
@@ -2001,6 +2255,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
+	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	 }
      }
    else
@@ -2016,6 +2271,51 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
    return protocol_details;
 }
 
+
+// Query autoflow for # records
+QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString failedID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> failed_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return failed_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_failed_record"
+       << failedID ;
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   failed_details[ "failedStage" ]    = db->value( 0 ).toString();
+	   failed_details[ "failedMsg" ]      = db->value( 1 ).toString();
+	   failed_details[ "failedTs" ]       = db->value( 2 ).toString();
+	 }
+     }
+   else
+     {
+       QMessageBox::warning( this, tr( "No autoflowFailed Record Exists" ),
+			     tr( "Selected record does not exists in the DB!  \n\n" )
+			     + db->lastError()
+			     + tr("\n\nThis means that the run either completed OR "
+				  "has been manually deleted.\n\n"
+				  "The Run List will be updated...") );
+     }
+
+   return failed_details;
+}
 
 
 

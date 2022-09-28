@@ -53,6 +53,9 @@ private slots:
     void slt_save(void);
     void slt_db_local(bool);
     void slt_reset(void);
+    void slt_CA_state(int);
+    void slt_load_CA(void);
+
 
 private:
     class currentValues{
@@ -121,6 +124,7 @@ private:
     QPushButton* pb_reset_bws;
     QPushButton* pb_find_merge;
     QPushButton* pb_save;
+    QPushButton* pb_loadCA;
 
     QLineEdit* le_lambstrt;
     QLineEdit* le_lambstop;
@@ -139,6 +143,8 @@ private:
     QCheckBox* ckb_cluster;
     QCheckBox* ckb_align;
     QCheckBox* ckb_bws_all;
+    QCheckBox* ckb_CA_state;
+    QCheckBox* ckb_CA_local;
 
     QwtCounter* ct_bws;
     QwtCounter* ct_winlen;
@@ -179,6 +185,7 @@ private:
     QVector<double> scanRmsd;
     QVector<double> wavlBw;
     QVector<double> wavlBwS;
+    QVector<double> CAValues;
     QVector<QVector<QVector<double>>> clusterIDs;
     QVector<QVector<QVector<double>>> clusterRng;
     US_RefScanDataIO::RefData referenceScans;

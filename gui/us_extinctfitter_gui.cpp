@@ -507,6 +507,7 @@ void US_ExtinctFitter::plot_overlays()
   // data_plot->updatePlot();      //no updatePlot() in new version
    pb_print->setEnabled(true);
 
+   qDebug() << "EMITTING get_yfit SIGNAL!!";
    emit get_yfit( v_all_xplot, v_all_yplot_fit );   // Send fitting data
 }
 

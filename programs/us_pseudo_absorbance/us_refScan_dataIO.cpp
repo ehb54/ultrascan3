@@ -30,12 +30,30 @@ int US_RefScanDataIO::writeRefData( const QString& file, RefData& data )
     qToLittleEndian(u16a.ui, u16b.c);
     write( ds, u16b.c, 2, crc );
 
+    // state of chromatic aberration correction
+    char ca_state[1];
+    if(data.CAState)
+        ca_state[0] = 'T';
+    else
+        ca_state[0] = 'F';
+    write( ds, ca_state, 1, crc );
+
     // Write wavelength
     const double *wp = data.wavelength.data();
     for (int i = 0; i < data.wavelength.size(); ++i){
         u16a.ui = (quint16) wp[i] * 10;
         qToLittleEndian(u16a.ui, u16b.c);
         write( ds, u16b.c, 2, crc );
+    }
+
+    // values for correcting chromatic aberration
+    if (data.CAState){
+        const double *cp = data.CAValues.data();
+        for (int i = 0; i < data.CAValues.size(); ++i){
+            u32a.n = (float) cp[i];
+            qToLittleEndian(u32a.ui, u32b.c);
+            write( ds, u32b.c, 4, crc );
+        }
     }
 
     // Write xvalues
@@ -121,6 +139,17 @@ int US_RefScanDataIO::readRefData( const QString& file, RefData& data )
         u16b.ui = qFromLittleEndian( u16a.ui );
         data.nPoints = (int) u16b.ui;
 
+        // state of chromatic aberration correction
+        char ca_state[2];
+        read( ds, ca_state, 1, crc );
+        ca_state[ 1 ] = '\0';
+        if (QString(ca_state) == QString("T"))
+            data.CAState = true;
+        else if (QString(ca_state) == QString("F"))
+            data.CAState = false;
+        else
+            throw NOT_RSDATA;
+
         // Read wavelength
         QVector<double> wavelength;
         for (int i = 0; i < data.nWavelength; ++i){
@@ -129,6 +158,21 @@ int US_RefScanDataIO::readRefData( const QString& file, RefData& data )
             wavelength << u16b.ui / 10.0;
         }
         data.wavelength << wavelength;
+
+        // Read values for correcting chromatic aberration
+        QVector<double> caval;
+        if (data.CAState){
+            for (int i = 0; i < data.nWavelength; ++i){
+                read( ds, u32a.c, 4, crc );
+                u32b.ui = qFromLittleEndian( u32a.ui );
+                caval << (double) u32b.n;
+            }
+        } else {
+            caval.fill(0, data.nWavelength);
+        }
+        data.CAValues << caval;
+        caval.clear();
+
         // Read xvalues
         double min_x, dx;
         read( ds, u32a.c, 4, crc );
@@ -217,15 +261,42 @@ QString US_RefScanDataIO::errorString( int code )
    return QObject::tr( "Unknown error code" );
 }
 
-
 void US_RefScanDataIO::RefData::clear(){
     type[0] = ' ';
     type[1] = ' ';
     nWavelength = 0;
     nPoints = 0;
+    CAState = false;
+    CAValues.clear();
     wavelength.clear();
     xValues.clear();
     rValues.clear();
     std.clear();
     return;
+}
+
+QVector< QVector< double > > US_RefScanDataIO::RefData::get_CA_corrected(bool& state){
+    QVector< QVector< double > > xValsCAC;
+    bool badData = CAValues.size() == 0;
+    badData = badData || wavelength.size() == 0;
+    badData = badData || CAValues.size() != wavelength.size();
+    badData = badData || rValues.size() != nWavelength;
+    badData = badData || xValues.size() != nPoints;
+    if (badData){
+        state = false;
+        return xValsCAC;
+    }
+
+    for (int i = 0; i < nWavelength; i++){
+        QVector< double > xVals;
+        double offset = CAValues.at(i);
+        for (int j = 0; j < nPoints; j++){
+            double x = xValues.at(j) - offset;
+            x = qRound( x * 1e5 ) / 1e5;
+            xVals << x;
+        }
+        xValsCAC << xVals;
+    }
+    state = true;
+    return xValsCAC;
 }

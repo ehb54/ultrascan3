@@ -8,7 +8,8 @@
 #include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_editor.h"
-
+#include "us_minimize.h"
+#include "us_extinctfitter_gui.h"
 #include "qwt_plot_marker.h"
 
 struct DataPoint
@@ -21,20 +22,33 @@ struct DataPoint
 
 class US_Buoyancy : public US_Widgets
 {
-	Q_OBJECT
+  Q_OBJECT
 
-	public:
+  public:
       US_Buoyancy();
+      US_Buoyancy(QString auto_mode);
+  
+      bool us_buoyancy_auto_mode;
 
-	private:
+  private:
 
+      QVector <WavelengthScan> v_wavelength;
+      US_ExtinctFitter *fitter;
+      QVector<double> xfit_data;
+      QVector<double> yfit_data;
+  
 
       US_DataIO::RawData               data;
       QList   < US_DataIO::SpeedData > sData;
       QVector < US_DataIO::RawData >   allData;
       QVector < double >               meniscus;
       QVector < DataPoint >            dpoint;
-      
+
+      QMap< QString, QVector<double> > triple_name_to_peaks_map;
+      QMap< QString, QMap < QString, QStringList > >  triple_name_to_peak_to_parms_map;
+      QMap< QString, bool > triple_report_saved_map;
+      QMap< QString, bool > triple_fitted_map;
+      QMap< QString, double > meniscus_to_triple_name_map;
 
       QRadioButton*      rb_meniscus;
       QRadioButton*      rb_datapoint;
@@ -116,8 +130,11 @@ class US_Buoyancy : public US_Widgets
       QComboBox*         cb_triple;
       QComboBox*         cb_rpms;
 
+      QComboBox*         cb_peaks;
+
       QPushButton*       pb_write;
       QPushButton*       pb_save;
+      QPushButton*       pb_view_reports;
 
       QwtCounter*        ct_selectScan;
 
@@ -130,11 +147,17 @@ private slots:
 	void load                 ( void );
 	void details              ( void );
 	void new_triple           ( int  );
+        void new_peak             ( int );
 	void plot_scan            ( double );
 	void write                ( void );
+        void write_auto           ( void );
         void save                 ( void );
+        void save_auto            ( QString );
 	void reset                ( void );
         void calc_points          ( void );
+        void calc_points_auto     ( QString );
+        void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
+  
 	void new_rpmval           ( int  );
 	void update_fields        ( void );
         void update_speedData     ( void );

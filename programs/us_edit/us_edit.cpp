@@ -685,6 +685,13 @@ pb_plateau->setVisible(false);
    // details[ "invID_passed" ] = QString("2");
    // details[ "filename" ]     = QString("MW-AUC-IF_test_031622-run1270-IP,MW-AUC-IF_test_031622-run1270-RI");
    // details[ "protocolName" ] = QString("MW-AUC-IF_test_031622");
+
+   // // //Run: lazeB_AUC3_PRS4-3_Day7_082522-run1372 (missinf EDIT PROFILES)
+   // details[ "invID_passed" ] = QString("154");
+   // details[ "filename" ]     = QString("BlazeB_AUC3_PRS4-3_Day7_082522-run1372");
+   // details[ "protocolName" ] = QString("BlazeB_AUC3_PRS4-3_Day7_082522");
+   // details[ "statusID" ]     = QString("46");
+   // details[ "autoflowID" ]   = QString("671");
    
    // load_auto( details );
    
@@ -8265,64 +8272,64 @@ void US_Edit::write_auto( void )
     }
   //-----------------------------------------------------------------//
   
-  if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
-    {
-      if ( runType_combined_IP_RI )
-	{
-	  if ( !all_processed )
-	    {
-	      QMessageBox::information( this,
-					tr( "Edit Profiles for Current Optical System Already Saved" ),
-					tr( "It appears that edit profiles for the current optical system are already saved!\n\n"
-					    "The program will switch to processing data for the next optical system... " ));
+   if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
+     {
+       if ( runType_combined_IP_RI )
+   	{
+   	  if ( !all_processed )
+   	    {
+   	      QMessageBox::information( this,
+   					tr( "Edit Profiles for Current Optical System Already Saved" ),
+   					tr( "It appears that edit profiles for the current optical system are already saved!\n\n"
+   					    "The program will switch to processing data for the next optical system... " ));
 
-	      cb_triple->disconnect();
+   	      cb_triple->disconnect();
 
-	      /***/
-	      //set autoflowStages record to "unknown" again !!
-	      revert_autoflow_stages_record( autoflowID_passed );
-	      /****/
-	      
-	      reset();
-	      emit process_next_optics( );
-	      return;
-	    }
-	  else
-	    {
-	      QMessageBox::information( this,
-					tr( "The Program State Updated / Being Updated" ),
-					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happened because you or different user "
-					    "has already saved edit profiles into DB using different program "
-					    "session and the program is proceeding to the next stage. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "
-					    "Please allow some time for the status to be updated.") );
-	      
-	      
-	      reset();
-	      emit back_to_initAutoflow( );
-	      return;
-	    }
-	}
-      else
-	{
-	  QMessageBox::information( this,
-				    tr( "The Program State Updated / Being Updated" ),
-				    tr( "The program advanced or is advancing to the next stage!\n\n"
-					"This happend because you or different user "
-					"has already saved edit profiles into DB using different program "
-					"session and the program is proceeding to the next stage. \n\n"
-					"The program will return to the autoflow runs dialog where "
-					"you can re-attach to the actual current stage of the run. "
-					"Please allow some time for the status to be updated.") );
-	  
-	  
-	  reset();
-	  emit back_to_initAutoflow( );
-	  return;
-	}
-    }
+   	      /***/
+   	      //set autoflowStages record to "unknown" again !!
+   	      revert_autoflow_stages_record( autoflowID_passed );
+   	      /****/
+   	      
+   	      reset();
+   	      emit process_next_optics( );
+   	      return;
+   	    }
+   	  else
+   	    {
+   	      QMessageBox::information( this,
+   					tr( "The Program State Updated / Being Updated" ),
+   					tr( "The program advanced or is advancing to the next stage!\n\n"
+   					    "This happened because you or different user "
+   					    "has already saved edit profiles into DB using different program "
+   					    "session and the program is proceeding to the next stage. \n\n"
+   					    "The program will return to the autoflow runs dialog where "
+   					    "you can re-attach to the actual current stage of the run. "
+   					    "Please allow some time for the status to be updated.") );
+   	      
+   	      
+   	      reset();
+   	      emit back_to_initAutoflow( );
+   	      return;
+   	    }
+   	}
+       else
+   	{
+   	  QMessageBox::information( this,
+   				    tr( "The Program State Updated / Being Updated" ),
+   				    tr( "The program advanced or is advancing to the next stage!\n\n"
+   					"This happend because you or different user "
+   					"has already saved edit profiles into DB using different program "
+   					"session and the program is proceeding to the next stage. \n\n"
+   					"The program will return to the autoflow runs dialog where "
+   					"you can re-attach to the actual current stage of the run. "
+   					"Please allow some time for the status to be updated.") );
+   	  
+   	  
+   	  reset();
+   	  emit back_to_initAutoflow( );
+   	  return;
+   	}
+     }
   
   
   /*******************************************************/

@@ -27,6 +27,7 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       QMap< QString, double > timestamp_data_mins ( );
       QMap< QString, double > timestamp_data_maxs ( );
       QMap< QString, double > timestamp_data_avgs ( );
+      QMap< QString, double > timestamp_data_avgs_first_scan ( );
 
    private:
       QwtPlot*      data_plot1;             //!< Upper plot (specific key)
