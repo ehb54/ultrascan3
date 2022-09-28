@@ -1177,7 +1177,11 @@ void US_Buoyancy::plot_scan( double scan_number )
 	 temp_y = s->rvalues[ jj ];
 	 Reading r = {temp_x, temp_y};
 
-	 //if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] ) 
+	 //if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] )
+	 // if ( jj == 0 && temp_y == 0 ) 
+	 //   wls. v_readings.push_back(r);
+	 // else
+	 //   wls. v_readings.push_back(r);
 	 wls. v_readings.push_back(r);
       }
       
@@ -1211,21 +1215,21 @@ void US_Buoyancy::plot_scan( double scan_number )
    ct_selectScan->setMaximum( maxscan );
 
    //add fitted plot if triple has been fitted
-   if ( triple_fitted_map[ triple_n ] )
+   if ( us_buoyancy_auto_mode && triple_fitted_map[ triple_n ] )
      {
        QwtPlotCurve* fitdata;
        fitdata = us_curve(data_plot, title_fit + "-fit");
        fitdata->setPen(QPen(Qt::cyan));
-       double* xx_ffit = (double*)xfit_data.data();    // <- the only data set in xfit_data
-       double* yy_ffit = (double*)yfit_data.data();
-       fitdata->setSamples( xx_ffit, yy_ffit, xfit_data.size() );
+       double* xx_ffit = (double*)xfit_data[ triple_n ].data();    // <- the only data set in xfit_data
+       double* yy_ffit = (double*)yfit_data[ triple_n ] .data();
+       fitdata->setSamples( xx_ffit, yy_ffit, xfit_data[ triple_n ].size() );
 
        double maxV_fit  = -1.0e99;
        double minV_fit  =  1.0e99;
        for ( int i=0; i< yfit_data.size(); i++ )
 	 {
-	   maxV_fit = max( maxV_fit, yfit_data[ i ] );
-	   minV_fit = min( minV_fit, yfit_data[ i ] );
+	   maxV_fit = max( maxV_fit, yfit_data[ triple_n ][ i ] );
+	   minV_fit = min( minV_fit, yfit_data[ triple_n ][ i ] );
 	 }
 
        double minV_final = min( minV_fit, minV);
@@ -1247,44 +1251,57 @@ void US_Buoyancy::plot_scan( double scan_number )
 
        //DEBUG
        for( int i=0; i< v_wavelength .size(); i++)
-	 {
-	   WavelengthScan w_t = v_wavelength[ i ];
-	   for ( int j=0; j < w_t.v_readings.size(); j++ )
-	     {
-	       qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
-			<< w_t. v_readings[ j ]. lambda
-			<< w_t. v_readings[ j ]. od;
-		 }
-	 }
+       	 {
+       	   WavelengthScan w_t = v_wavelength[ i ];
+       	   for ( int j=0; j < w_t.v_readings.size(); j++ )
+       	     {
+       	       qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
+       			<< w_t. v_readings[ j ]. lambda
+       			<< w_t. v_readings[ j ]. od;
+       		 }
+       	 }
        /////////////////////////////////////////
 
-       bool fitting_widget = false;
-       unsigned int  order = 25;
-       unsigned int  parameters = order * 3 + v_wavelength.size();
-       double * fitparameters = new double [parameters];
-       for (int i=0; i<v_wavelength.size(); i++)
-	 {
-	   fitparameters[i] = 0.3;                                                  // Amplitude
-	 }
-       float R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
-       QString projectName = QString("");
+       // for ( int order_i = 15; order_i < 30; ++order_i )
+       // 	 {
+	   bool fitting_widget = false;
 
-       qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
-       for (unsigned int i=0; i<order; i++)
-	 {
-	   fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
-	   // spread out the peaks
-	   fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * i;     // Position
-	   fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;                 // Sigma
-	 }
-       
-       //call US_Extinctfitter
-       fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-				     projectName, &fitting_widget);
-       
-       connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
-       
-       fitter->Fit();
+	   unsigned int  order = 24;                    // ALEXEY: makes huge difference, needs experimenting
+	   //minR = 6;
+	   //maxR = 7.1;
+	   
+	   unsigned int  parameters = order * 3 + v_wavelength.size();
+	   double * fitparameters = new double [parameters];
+	   for (int i=0; i<v_wavelength.size(); i++)
+	     {
+	       fitparameters[i] = 0.3;                                                  // Amplitude
+	     }
+	   float R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
+	   QString projectName = QString("");
+	   
+	   qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
+	   
+	   // //TEST: LAMBDAs: min, max, step:  6 ,  7.1 ,  0.06875 OR 0.0423077
+	   // minR   = 6;
+	   // R_step = 0.0423077;
+	   
+	   
+	   for (unsigned int i=0; i<order; i++)
+	     {
+	       fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
+	       // spread out the peaks
+	       fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * i;     // Position
+	       fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;                 // Sigma: comes based on single Gauss fit of representative data (AVV) peak
+	     }
+	   
+	   //call US_Extinctfitter
+	   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+					 projectName, &fitting_widget);
+	   
+	   connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+	   
+	   fitter->Fit();
+	   //}
 
        //DEBUG
        // for( int i=0; i< xfit_data.size(); i++)
@@ -1320,15 +1337,17 @@ void US_Buoyancy::plot_scan( double scan_number )
 
 void US_Buoyancy::process_yfit(QVector <QVector<double> > &x, QVector <QVector<double> > &y)
 {
-  xfit_data.clear();
-  yfit_data.clear();
+  QString triple_n = cb_triple->itemText( current_triple );
   
-  xfit_data = x.last();
-  yfit_data = y.last();
+  xfit_data[ triple_n ].clear();
+  yfit_data[ triple_n ].clear();
+  
+  xfit_data[ triple_n ] = x.last();
+  yfit_data[ triple_n ] = y.last();
 
   qDebug() << "Size x, y passed: " << x.size() << ", " << y.size();
   qDebug() << "Size xfit_data, yfit_data for triple: "
-	   << cb_triple->itemText( current_triple )  << xfit_data.size() << ", " << yfit_data.size();
+	   << triple_n  << xfit_data.size() << ", " << yfit_data.size();
   
 }
 

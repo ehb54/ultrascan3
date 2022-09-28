@@ -259,9 +259,9 @@ US_Extinction::US_Extinction() : US_Widgets()
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
-   // lambdaLimitLeft = 5.0;
-   // lambdaLimitRight = 1500.0;
-   
+   //lambdaLimitLeft = 5.0;
+   //lambdaLimitRight = 1500.0;
+    
    lambda_min = 1000;
    lambda_max = -1000;
    odCutoff = 3.0;
@@ -1118,6 +1118,18 @@ void US_Extinction::perform_global(void)
    //DEBUG
    qDebug() << "order, parameters, projectName, fitting_widget "
 	    << order << parameters << projectName << fitting_widget;
+
+   //DEBUG
+   for( int i=0; i< v_wavelength .size(); i++)
+     {
+       WavelengthScan w_t = v_wavelength[ i ];
+       for ( int j=0; j < w_t.v_readings.size(); j++ )
+	 {
+	   qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
+		    << w_t. v_readings[ j ]. lambda
+		    << w_t. v_readings[ j ]. od;
+	 }
+     }
    //END DEBUG
    
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
@@ -1128,10 +1140,10 @@ void US_Extinction::perform_global(void)
    fitter->setParent(this, Qt::Window);
 
    /*  TEMPORARY For run in background **/
-   fitter->show();
-   // fitter->Fit();
-   // fitted = true;
-   // plot();
+    fitter->show();
+    // fitter->Fit();
+    // fitted = true;
+    // plot();
    /*************************************/
    
    fitted = true;

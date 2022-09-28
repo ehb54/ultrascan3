@@ -34,8 +34,8 @@ class US_Buoyancy : public US_Widgets
 
       QVector <WavelengthScan> v_wavelength;
       US_ExtinctFitter *fitter;
-      QVector<double> xfit_data;
-      QVector<double> yfit_data;
+      QMap< QString, QVector<double>  >xfit_data;
+      QMap< QString, QVector<double> > yfit_data;
   
 
       US_DataIO::RawData               data;
