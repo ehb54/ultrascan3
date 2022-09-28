@@ -59,7 +59,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    tmp_dpoint.gradientVbar = 0.4831;
    tmp_dpoint.gradientC0 = 1.2294;
 
-   setWindowTitle( tr( "Buoyancy Equilibrium Data Analysis" ) );
+   setWindowTitle( tr( "[AUTO] Buoyancy Equilibrium Data Analysis" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QVBoxLayout* top = new QVBoxLayout( this );
@@ -798,8 +798,10 @@ void US_Buoyancy::load( void )
 	    meniscus[ ii ] = 6.04519984; //HARD coded for now
 	  else
 	    meniscus[ ii ] = 6.01; //HARD coded for now
-	  
-	  triple_report_saved_map[ triples[ii] ] = false;
+
+	  meniscus_to_triple_name_map[ triples[ii] ] = meniscus[ ii ];
+	  triple_report_saved_map    [ triples[ii] ] = false;
+	  triple_fitted_map          [ triples[ii] ] = false;  
 	}
       else
 	meniscus[ii] = 0.0;
@@ -1089,6 +1091,8 @@ void US_Buoyancy::reset( void )
    triple_name_to_peaks_map . clear();
    triple_name_to_peak_to_parms_map . clear();
    triple_report_saved_map  . clear();
+   triple_fitted_map        . clear();
+   meniscus_to_triple_name_map. clear();
 
    if ( us_buoyancy_auto_mode ) 
      pb_view_reports  ->setEnabled( false );
@@ -1106,6 +1110,10 @@ void US_Buoyancy::update_disk_db( bool isDB )
 // Plot a single scan curve
 void US_Buoyancy::plot_scan( double scan_number )
 {
+   float temp_x, temp_y;
+   QString triple_n = cb_triple->itemText( current_triple );
+   QString title_fit;
+   
   // current scan is global
    current_scan = (int) scan_number;
    int    rsize = data.pointCount();
@@ -1131,6 +1139,10 @@ void US_Buoyancy::plot_scan( double scan_number )
    //
    for ( int ii = 0; ii < ssize; ii++ )
    {
+     // clear WaveLengthScan array every time --
+     // ensure last scan is written in the end to v_wavelength
+     v_wavelength. clear();
+     
       US_DataIO::Scan* s = &data.scanData[ ii ];
 
       QString arpm        = QString::number( s->rpm );
@@ -1146,6 +1158,8 @@ void US_Buoyancy::plot_scan( double scan_number )
       }
       count = 0;
 
+      WavelengthScan wls;
+	
       for ( int jj = 0; jj < rsize; jj++ )
       {
          r[ count ] = data.xvalues[ jj ];
@@ -1157,11 +1171,25 @@ void US_Buoyancy::plot_scan( double scan_number )
          minV = min( minV, v[ count ] );
 
          count++;
+
+	 //here, populate QVector <WavelengthScan> v_wavelength;
+	 temp_x = data.xvalues[ jj ];
+	 temp_y = s->rvalues[ jj ];
+	 Reading r = {temp_x, temp_y};
+
+	 //if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] ) 
+	 wls. v_readings.push_back(r);
       }
+      
+      //push a WavelengthScan to array
+      wls. description = "Scan for triple " + triple_n;
+      v_wavelength.push_back( wls );
 
       QString title = tr( "Raw Data at " )
          + QString::number( s->seconds ) + tr( " seconds" )
          + " #" + QString::number( ii );
+
+      title_fit = title;
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setSamples( r, v, count );
@@ -1182,12 +1210,92 @@ void US_Buoyancy::plot_scan( double scan_number )
    ct_selectScan->setMinimum( 1 );
    ct_selectScan->setMaximum( maxscan );
 
+   //add fitted plot if triple has been fitted
+   if ( triple_fitted_map[ triple_n ] )
+     {
+       QwtPlotCurve* fitdata;
+       fitdata = us_curve(data_plot, title_fit + "-fit");
+       fitdata->setPen(QPen(Qt::cyan));
+       double* xx_ffit = (double*)xfit_data.data();    // <- the only data set in xfit_data
+       double* yy_ffit = (double*)yfit_data.data();
+       fitdata->setSamples( xx_ffit, yy_ffit, xfit_data.size() );
+
+       double maxV_fit  = -1.0e99;
+       double minV_fit  =  1.0e99;
+       for ( int i=0; i< yfit_data.size(); i++ )
+	 {
+	   maxV_fit = max( maxV_fit, yfit_data[ i ] );
+	   minV_fit = min( minV_fit, yfit_data[ i ] );
+	 }
+
+       double minV_final = min( minV_fit, minV);
+       double maxV_final = max( maxV_fit, maxV);
+
+       double padR = ( maxR - minR ) / 30.0;
+       double padV = ( maxV_final - minV_final ) / 30.0;
+       
+       data_plot->setAxisScale( QwtPlot::yLeft  , minV_final - padV, maxV_final + padV );
+       data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+     }
+
    data_plot->replot();
 
-   if ( us_buoyancy_auto_mode )
+   if ( us_buoyancy_auto_mode && !triple_fitted_map[ triple_n ] )
      {
-       //do fit of the current scan, identify peak positions
-       QString triple_n = cb_triple->itemText( current_triple );
+       //do fit of the current scan, identify peak positions ///////////////////////////////////////////////////////////////////////
+       qDebug() << "Size of v_wavelength array for triple : " << v_wavelength. last() . description  <<  v_wavelength. size();
+
+       //DEBUG
+       for( int i=0; i< v_wavelength .size(); i++)
+	 {
+	   WavelengthScan w_t = v_wavelength[ i ];
+	   for ( int j=0; j < w_t.v_readings.size(); j++ )
+	     {
+	       qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
+			<< w_t. v_readings[ j ]. lambda
+			<< w_t. v_readings[ j ]. od;
+		 }
+	 }
+       /////////////////////////////////////////
+
+       bool fitting_widget = false;
+       unsigned int  order = 25;
+       unsigned int  parameters = order * 3 + v_wavelength.size();
+       double * fitparameters = new double [parameters];
+       for (int i=0; i<v_wavelength.size(); i++)
+	 {
+	   fitparameters[i] = 0.3;                                                  // Amplitude
+	 }
+       float R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
+       QString projectName = QString("");
+
+       qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
+       for (unsigned int i=0; i<order; i++)
+	 {
+	   fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
+	   // spread out the peaks
+	   fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * i;     // Position
+	   fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;                 // Sigma
+	 }
+       
+       //call US_Extinctfitter
+       fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+				     projectName, &fitting_widget);
+       
+       connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+       
+       fitter->Fit();
+
+       //DEBUG
+       // for( int i=0; i< xfit_data.size(); i++)
+       // 	 {
+       // 	   qDebug() << "Fit Data: X, Y -- " << xfit_data[ i ] << yfit_data[ i ];
+       // 	 }
+       ///////
+       
+       triple_fitted_map[ triple_n ] = true;
+       // END of Fit ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       
        QVector <double> peak_poss;
 
        if ( current_triple == 0 )
@@ -1196,18 +1304,33 @@ void US_Buoyancy::plot_scan( double scan_number )
 	 peak_poss = { 6.51, 6.622, 6.722, 6.8 };
            
        triple_name_to_peaks_map[ triple_n ] = peak_poss;
+
      }
-     
+   
    update_fields();
 
    //Save & all peak reports (for current triple)
-   if (  us_buoyancy_auto_mode && !triple_report_saved_map[ cb_triple->itemText( current_triple ) ]  )
+   if (  us_buoyancy_auto_mode && !triple_report_saved_map[ triple_n  ]  )
      {
-       save_auto( cb_triple->itemText( current_triple ) );
+       save_auto( triple_n );
        pb_view_reports  ->setEnabled( true );
      }
 }
 
+
+void US_Buoyancy::process_yfit(QVector <QVector<double> > &x, QVector <QVector<double> > &y)
+{
+  xfit_data.clear();
+  yfit_data.clear();
+  
+  xfit_data = x.last();
+  yfit_data = y.last();
+
+  qDebug() << "Size x, y passed: " << x.size() << ", " << y.size();
+  qDebug() << "Size xfit_data, yfit_data for triple: "
+	   << cb_triple->itemText( current_triple )  << xfit_data.size() << ", " << yfit_data.size();
+  
+}
 
 
 // Draw a vertical pick line
