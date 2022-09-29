@@ -259,6 +259,9 @@ US_Extinction::US_Extinction() : US_Widgets()
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
+   //lambdaLimitLeft = 5.0;
+   //lambdaLimitRight = 1500.0;
+    
    lambda_min = 1000;
    lambda_max = -1000;
    odCutoff = 3.0;
@@ -1092,11 +1095,12 @@ void US_Extinction::perform_global(void)
   //     return;
   //  }
    fitting_widget = false;
+   //order = 100;
    parameters = order * 3 + v_wavelength.size();
    fitparameters = new double [parameters];
    for (int i=0; i<v_wavelength.size(); i++)
    {
-      fitparameters[i] = 0.3;
+      fitparameters[i] = 0.3;  
    }
    float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
 
@@ -1107,9 +1111,26 @@ void US_Extinction::perform_global(void)
       // spread out the peaks
       fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
       fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+      //fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;           // Sigma
    }
    //opens the fitting GUI
 
+   //DEBUG
+   qDebug() << "order, parameters, projectName, fitting_widget "
+	    << order << parameters << projectName << fitting_widget;
+
+   //DEBUG
+   for( int i=0; i< v_wavelength .size(); i++)
+     {
+       WavelengthScan w_t = v_wavelength[ i ];
+       for ( int j=0; j < w_t.v_readings.size(); j++ )
+	 {
+	   qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
+		    << w_t. v_readings[ j ]. lambda
+		    << w_t. v_readings[ j ]. od;
+	 }
+     }
+   //END DEBUG
    
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
                                   projectName, &fitting_widget);
@@ -1117,8 +1138,14 @@ void US_Extinction::perform_global(void)
    connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
 
    fitter->setParent(this, Qt::Window);
-   fitter->show();
- 
+
+   /*  TEMPORARY For run in background **/
+    fitter->show();
+    // fitter->Fit();
+    // fitted = true;
+    // plot();
+   /*************************************/
+   
    fitted = true;
    //causes the fitted line to plot after the fitting widget is closed
    connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));

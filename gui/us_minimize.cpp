@@ -1242,6 +1242,8 @@ float US_Minimize::linesearch(float **search, float f0)
       if (f2 < 0) return(0.0);
    }
 }
+
+
 float US_Minimize::calc_testParameter(float **search, float step)
 {
    float res;
