@@ -1278,7 +1278,7 @@ void US_Buoyancy::plot_scan( double scan_number )
        int order_init  = 20;
        int order_counter = 0;
        pgb_progress->reset();
-       pgb_progress->setMaximum( totalOrders );
+       pgb_progress->setMaximum( 100 );
        
        for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
 	 {
@@ -1289,7 +1289,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   progress /= totalOrders;
 	   progress *= 100;
 	   pgb_progress->setValue( progress );
-	   pgb_progress->setFormat( triple_n + ", Trying Gaussian orders:    " + QString::number( progress )+"%");
+	   pgb_progress->setFormat( triple_n + ", Gaussian orders:    " + QString::number( progress )+"%");
 
 	   bool fitting_widget = false;
 	   
