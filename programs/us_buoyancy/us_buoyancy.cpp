@@ -212,7 +212,9 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    connect (le_MW, SIGNAL( editingFinished (void)), this,
             SLOT (update_MW(void)));
 
-   QLabel* lbl_temperature = us_label( tr( "Temperature (°C):" ), -1 );
+   //QString DEGC   = QString( QChar( 176 ) ) + "C"; //!< Degree-symbol + "C"
+   //QLabel* lbl_temperature = us_label( tr( "Temperature " ) + DEGC + tr( ":")), -1 );
+  QLabel* lbl_temperature = us_label( tr( "Temperature " ) + DEGC +  ":", -1 );
    specs->addWidget( lbl_temperature, s_row, 0, 1, 2 );
    le_temperature = us_lineedit( QString::number( tmp_dpoint.temperature ) );
    specs->addWidget( le_temperature, s_row++, 2, 1, 2 );
@@ -516,7 +518,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    connect (le_MW, SIGNAL( editingFinished (void)), this,
             SLOT (update_MW(void)));
 
-   QLabel* lbl_temperature = us_label( tr( "Temperature (°C):" ), -1 );
+   //QString DEGC   = QString( QChar( 176 ) ) + "C"; //!< Degree-symbol + "C"
+   QLabel* lbl_temperature = us_label( tr( "Temperature " ) + DEGC +  ":", -1 );
    specs->addWidget( lbl_temperature, s_row, 0, 1, 2 );
    le_temperature = us_lineedit( QString::number( tmp_dpoint.temperature ) );
    specs->addWidget( le_temperature, s_row++, 2, 1, 2 );
@@ -1279,7 +1282,8 @@ void US_Buoyancy::plot_scan( double scan_number )
        int order_counter = 0;
        pgb_progress->reset();
        pgb_progress->setMaximum( 100 );
-       
+
+
        for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
 	 {
 	   current_order = order_i;
@@ -1305,7 +1309,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	     {
 	       fitparameters[i] = 0.3;                                                  // Amplitude
 	     }
-	   float R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
+	   double R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
 	   QString projectName = QString("");
 	   
 	   qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
@@ -1319,7 +1323,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	     {
 	       fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
 	       // spread out the peaks
-	       fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * i;     // Position
+	       fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * long( i ) ;    // Position
 	       fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;                 // Sigma: comes based on single Gauss fit of representative data (AVV) peak
 	     }
 	   
@@ -1345,7 +1349,6 @@ void US_Buoyancy::plot_scan( double scan_number )
        QMap < int, double > curr_triple_order_vars = variance_triple_order_map[ triple_n ];
        QMap < int, double >::iterator mm;
        
-       int     order_with_smallest_variance = 0;
        double  minVariance = 1.0e99;
        for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
 	 {
