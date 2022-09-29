@@ -58,6 +58,7 @@ class US_GUI_EXTERN US_ExtinctFitter : public US_Minimize
 
       void dataSaved(const QString &, const int);   //needed to save a list of used scans
       void get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > &);
+      void get_variance( double );
 };
 
 #endif

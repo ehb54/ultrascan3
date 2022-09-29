@@ -266,6 +266,17 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    //specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
+   
+   //Also add Fitting progress
+   QLabel* lb_fit_progress_bn = us_banner( tr( "Fitting" ) );
+   specs->addWidget( lb_fit_progress_bn,  s_row++, 0, 1, 4 );
+   QLabel* lbl_pgb_progress = us_label( tr( "Fitting Progress:" ), -1 );
+   specs->addWidget( lbl_pgb_progress, s_row, 0, 1, 2 );
+   pgb_progress = new QProgressBar(this);
+   specs->addWidget( pgb_progress, s_row++, 2, 1, 2 );
+   
+   
+      
    //view all auto-generated peak reports
    pb_view_reports = us_pushbutton( tr( "View Reports" ), false );
    connect( pb_view_reports, SIGNAL( clicked() ), SLOT( write_auto() ) );
@@ -1093,7 +1104,8 @@ void US_Buoyancy::reset( void )
    triple_report_saved_map  . clear();
    triple_fitted_map        . clear();
    meniscus_to_triple_name_map. clear();
-
+   variance_triple_order_map  . clear();
+   
    if ( us_buoyancy_auto_mode ) 
      pb_view_reports  ->setEnabled( false );
 }
@@ -1250,23 +1262,40 @@ void US_Buoyancy::plot_scan( double scan_number )
        qDebug() << "Size of v_wavelength array for triple : " << v_wavelength. last() . description  <<  v_wavelength. size();
 
        //DEBUG
-       for( int i=0; i< v_wavelength .size(); i++)
-       	 {
-       	   WavelengthScan w_t = v_wavelength[ i ];
-       	   for ( int j=0; j < w_t.v_readings.size(); j++ )
-       	     {
-       	       qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
-       			<< w_t. v_readings[ j ]. lambda
-       			<< w_t. v_readings[ j ]. od;
-       		 }
-       	 }
+       // for( int i=0; i< v_wavelength .size(); i++)
+       // 	 {
+       // 	   WavelengthScan w_t = v_wavelength[ i ];
+       // 	   for ( int j=0; j < w_t.v_readings.size(); j++ )
+       // 	     {
+       // 	       qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
+       // 			<< w_t. v_readings[ j ]. lambda
+       // 			<< w_t. v_readings[ j ]. od;
+       // 		 }
+       // 	 }
        /////////////////////////////////////////
 
-       // for ( int order_i = 15; order_i < 30; ++order_i )
-       // 	 {
-	   bool fitting_widget = false;
+       int totalOrders = 10;
+       int order_init  = 20;
+       int order_counter = 0;
+       pgb_progress->reset();
+       pgb_progress->setMaximum( totalOrders );
+       
+       for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
+	 {
+	   current_order = order_i;
 
-	   unsigned int  order = 24;                    // ALEXEY: makes huge difference, needs experimenting
+	   ++order_counter;
+	   double progress = order_counter;
+	   progress /= totalOrders;
+	   progress *= 100;
+	   pgb_progress->setValue( progress );
+	   pgb_progress->setFormat( triple_n + ", Trying Gaussian orders:    " + QString::number( progress )+"%");
+
+	   bool fitting_widget = false;
+	   
+	   //unsigned int  order = 24;                    // ALEXEY: makes huge difference, needs experimenting
+	   unsigned int  order = current_order;
+
 	   //minR = 6;
 	   //maxR = 7.1;
 	   
@@ -1299,20 +1328,48 @@ void US_Buoyancy::plot_scan( double scan_number )
 					 projectName, &fitting_widget);
 	   
 	   connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+	   connect( fitter, SIGNAL( get_variance( double )), this, SLOT( process_variance( double ) ) );
 	   
 	   fitter->Fit();
-	   //}
-
-       //DEBUG
-       // for( int i=0; i< xfit_data.size(); i++)
-       // 	 {
-       // 	   qDebug() << "Fit Data: X, Y -- " << xfit_data[ i ] << yfit_data[ i ];
-       // 	 }
-       ///////
-       
-       triple_fitted_map[ triple_n ] = true;
+	 }
        // END of Fit ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        
+       triple_fitted_map[ triple_n ] = true;
+     }
+   
+
+
+   if ( us_buoyancy_auto_mode )
+     {
+       //DEBUG : variances for current triple && orders used in fit
+       QMap < int, double > curr_triple_order_vars = variance_triple_order_map[ triple_n ];
+       QMap < int, double >::iterator mm;
+       
+       int     order_with_smallest_variance = 0;
+       double  minVariance = 1.0e99;
+       for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
+	 {
+	   qDebug() << "Triple " << triple_n << ": order, variance -- " << mm.key() << mm.value();
+	   
+	   minVariance = min( minVariance, mm.value() );
+	 }
+       
+       int gauss_order_minVariance = 0;
+       for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
+	 {
+	   if ( mm.value() == minVariance )
+	     {
+	       gauss_order_minVariance = mm.key();
+	       break;
+	     }
+	 }
+       qDebug() << "Smallest variance " << minVariance << " for triple " << triple_n << " for Gauss order -- " << gauss_order_minVariance;
+
+       //finally, select the FIT data for the smallest variance to be plotted alongside raw data:
+       xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ gauss_order_minVariance ];
+       yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ gauss_order_minVariance ];
+
+       // Now that we have best fir curves, Identify peak positions: [ HARD coded for now... ]
        QVector <double> peak_poss;
 
        if ( current_triple == 0 )
@@ -1338,19 +1395,31 @@ void US_Buoyancy::plot_scan( double scan_number )
 void US_Buoyancy::process_yfit(QVector <QVector<double> > &x, QVector <QVector<double> > &y)
 {
   QString triple_n = cb_triple->itemText( current_triple );
-  
-  xfit_data[ triple_n ].clear();
-  yfit_data[ triple_n ].clear();
-  
-  xfit_data[ triple_n ] = x.last();
-  yfit_data[ triple_n ] = y.last();
 
-  qDebug() << "Size x, y passed: " << x.size() << ", " << y.size();
-  qDebug() << "Size xfit_data, yfit_data for triple: "
-	   << triple_n  << xfit_data.size() << ", " << yfit_data.size();
+  xfit_data_all_orders[ triple_n ][ current_order ] = x.last();
+  yfit_data_all_orders[ triple_n ][ current_order ] = y.last();
+  
+  // xfit_data[ triple_n ].clear();
+  // yfit_data[ triple_n ].clear();
+
+  // xfit_data[ triple_n ] = x.last();
+  // yfit_data[ triple_n ] = y.last();
+
+  // qDebug() << "Size x, y passed: " << x.size() << ", " << y.size();
+  // qDebug() << "Size xfit_data, yfit_data for triple: "
+  // 	   << triple_n  << xfit_data.size() << ", " << yfit_data.size();
+  
+ }
+	   
+void US_Buoyancy::process_variance( double variance )
+{
+  QString triple_n = cb_triple->itemText( current_triple );
+  
+  variance_triple_order_map[ triple_n ][ current_order ] = variance;
+
+  qDebug() << "For triple: " << triple_n << ", order " << current_order << ": variance: " << variance; 
   
 }
-
 
 // Draw a vertical pick line
 void US_Buoyancy::draw_vline( double radius )

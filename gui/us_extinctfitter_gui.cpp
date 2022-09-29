@@ -509,6 +509,7 @@ void US_ExtinctFitter::plot_overlays()
 
    qDebug() << "EMITTING get_yfit SIGNAL!!";
    emit get_yfit( v_all_xplot, v_all_yplot_fit );   // Send fitting data
+   emit get_variance ( le_variance->text().toDouble()  );
 }
 
 void US_ExtinctFitter::plot_residuals()
