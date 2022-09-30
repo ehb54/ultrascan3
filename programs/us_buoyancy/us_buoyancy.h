@@ -147,6 +147,7 @@ class US_Buoyancy : public US_Widgets
 private slots:
 	double calc_stretch       ( void );
 	void draw_vline           ( double );
+        void draw_vline_auto           ( double );
 	void mouse                ( const QwtDoublePoint& );
 	void sel_investigator     ( void );
 	void update_disk_db       ( bool );
@@ -162,6 +163,9 @@ private slots:
 	void reset                ( void );
         void calc_points          ( void );
         void calc_points_auto     ( QString );
+        QVector< double > identify_peaks ( QString, double );
+        int index_of_data( QVector<double>, double );
+  bool isMaximum_y( QVector<double>, int, int, int );
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
 	void new_rpmval           ( int  );

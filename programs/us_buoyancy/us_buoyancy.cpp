@@ -1128,6 +1128,7 @@ void US_Buoyancy::plot_scan( double scan_number )
    float temp_x, temp_y;
    QString triple_n = cb_triple->itemText( current_triple );
    QString title_fit;
+   double sigma = 0.015;
    
   // current scan is global
    current_scan = (int) scan_number;
@@ -1160,7 +1161,7 @@ void US_Buoyancy::plot_scan( double scan_number )
      
       US_DataIO::Scan* s = &data.scanData[ ii ];
 
-      QString arpm        = QString::number( s->rpm );
+      QString arpm       = QString::number( s->rpm );
 
       //how many scans are included in the current set of speeds? Increment maxscan...
       if ( arpm == srpm ) 
@@ -1235,7 +1236,7 @@ void US_Buoyancy::plot_scan( double scan_number )
        QwtPlotCurve* fitdata;
        fitdata = us_curve(data_plot, title_fit + "-fit");
        fitdata->setPen(QPen(Qt::cyan));
-       double* xx_ffit = (double*)xfit_data[ triple_n ].data();    // <- the only data set in xfit_data
+       double* xx_ffit = (double*)xfit_data[ triple_n ] .data();    // <- the only data set in xfit_data
        double* yy_ffit = (double*)yfit_data[ triple_n ] .data();
        fitdata->setSamples( xx_ffit, yy_ffit, xfit_data[ triple_n ].size() );
 
@@ -1255,10 +1256,19 @@ void US_Buoyancy::plot_scan( double scan_number )
        
        data_plot->setAxisScale( QwtPlot::yLeft  , minV_final - padV, maxV_final + padV );
        data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
+       //peak pesitions, vertical lines (if any)
+       for (int ii=0; ii < triple_name_to_peaks_map[ triple_n ].size(); ++ii )
+	 {
+	   double rad = triple_name_to_peaks_map[ triple_n ][ ii ];
+	   draw_vline_auto( rad );
+	 }
+       
      }
 
    data_plot->replot();
 
+   
    if ( us_buoyancy_auto_mode && !triple_fitted_map[ triple_n ] )
      {
        //do fit of the current scan, identify peak positions ///////////////////////////////////////////////////////////////////////
@@ -1282,6 +1292,8 @@ void US_Buoyancy::plot_scan( double scan_number )
        int order_counter = 0;
        pgb_progress->reset();
        pgb_progress->setMaximum( 100 );
+
+       //double sigma = 0.015;
 
 
        for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
@@ -1324,7 +1336,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	       fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
 	       // spread out the peaks
 	       fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * long( i ) ;    // Position
-	       fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;                 // Sigma: comes based on single Gauss fit of representative data (AVV) peak
+	       fitparameters[v_wavelength.size() + (i * 3) + 2] = sigma;                 // Sigma: comes based on single Gauss fit of representative data (AVV) peak
 	     }
 	   
 	   //call US_Extinctfitter
@@ -1372,16 +1384,21 @@ void US_Buoyancy::plot_scan( double scan_number )
        xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ gauss_order_minVariance ];
        yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ gauss_order_minVariance ];
 
-       // Now that we have best fir curves, Identify peak positions: [ HARD coded for now... ]
-       QVector <double> peak_poss;
+       // Now that we have best fit curves, Identify peak positions: 
+       
+       QVector <double> peak_poss_auto = identify_peaks( triple_n, sigma );
 
+       qDebug() << "[AUTO] peaks for triple: " << triple_n << " are -- " << peak_poss_auto;
+
+       //test [ HARD coded for now... ]
+       QVector <double> peak_poss;
        if ( current_triple == 0 )
 	 peak_poss = { 6.5, 6.63, 6.72 };
        else
 	 peak_poss = { 6.51, 6.622, 6.722, 6.8 };
-           
-       triple_name_to_peaks_map[ triple_n ] = peak_poss;
+       //triple_name_to_peaks_map[ triple_n ] = peak_poss;
 
+       triple_name_to_peaks_map[ triple_n ] = peak_poss_auto;
      }
    
    update_fields();
@@ -1395,6 +1412,80 @@ void US_Buoyancy::plot_scan( double scan_number )
 }
 
 
+QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p )
+{
+  QVector< double > peaks;
+  double stretch_f = 1.25;
+  double sigma = sigma_p * stretch_f;
+
+  int last_index = xfit_data[ triple_n ].size() - 1;
+  
+  for (int i=0; i < xfit_data[ triple_n ].size(); i++ )
+    {
+      double curr_y = yfit_data[ triple_n ][i];
+      double curr_x = xfit_data[ triple_n ][i];
+      
+      //maye skip sigma regions on both ends of the data?
+      if( (curr_x - sigma) < xfit_data[ triple_n ][0]  ||
+       	  (curr_x + sigma) > xfit_data[ triple_n ][ last_index ] )
+       	continue;
+      
+      double left_x = ( curr_x - sigma ) > xfit_data[ triple_n ][0] ?
+	( curr_x - sigma ) : xfit_data[ triple_n ][0]; 
+      int left_i = index_of_data( xfit_data[ triple_n ], left_x );
+
+      double right_x = ( curr_x + sigma ) <  xfit_data[ triple_n ][ last_index ] ?
+	( curr_x + sigma ) : xfit_data[ triple_n ][ last_index ]; 
+      int right_i = index_of_data( xfit_data[ triple_n ], right_x );
+
+      qDebug() << "Proceeding with point x, y: " << curr_x << curr_y << "; pm sigma -- " << left_x << right_x ;
+      
+      if ( isMaximum_y( yfit_data[ triple_n ], i, left_i, right_i ) )
+	peaks .push_back( curr_x );
+    }
+  
+  return peaks;
+}
+
+bool US_Buoyancy:: isMaximum_y( QVector<double> ydata, int curr_i, int left_i, int right_i )
+{
+  bool isPeak = true;
+
+  double curr_y = ydata[ curr_i ];
+  
+  for (int i = left_i; i < right_i; i++ )
+    {
+      if ( i == curr_i )
+	continue;
+      
+      if ( curr_y < ydata[ i ] )
+	{
+	  isPeak = false;
+	  break;
+	}
+    }
+  
+  return isPeak;
+}
+
+
+int US_Buoyancy::index_of_data( QVector<double> xdata, double val )
+{
+  double diff_val = 10000;
+  int index_x = 0;
+  
+  for (int i=0; i< xdata.size(); i++ )
+    {
+      if ( qAbs( val - xdata[ i ] ) < diff_val )
+	{
+	  diff_val = qAbs( val - xdata[ i ] ) ;
+	  index_x = i;
+	}
+    }
+
+  return index_x;
+}
+  
 void US_Buoyancy::process_yfit(QVector <QVector<double> > &x, QVector <QVector<double> > &y)
 {
   QString triple_n = cb_triple->itemText( current_triple );
@@ -1422,6 +1513,35 @@ void US_Buoyancy::process_variance( double variance )
 
   qDebug() << "For triple: " << triple_n << ", order " << current_order << ": variance: " << variance; 
   
+}
+
+// Draw a vertical pick line
+void US_Buoyancy::draw_vline_auto( double radius )
+{
+   double r[ 2 ];
+
+   r[ 0 ] = radius;
+   r[ 1 ] = radius;
+
+#if QT_VERSION < 0x050000
+   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
+#endif
+
+   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+
+   double v[ 2 ];
+   v [ 0 ] = y_axis->upperBound() - padding;
+   v [ 1 ] = y_axis->lowerBound() + padding;
+
+   v_line = us_curve( data_plot, "V-Line" );
+   v_line->setSamples( r, v, 2 );
+
+   QPen pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
+   v_line->setPen( pen );
+
+   data_plot->replot();
 }
 
 // Draw a vertical pick line
