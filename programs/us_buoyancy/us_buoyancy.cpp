@@ -1257,10 +1257,14 @@ void US_Buoyancy::plot_scan( double scan_number )
        data_plot->setAxisScale( QwtPlot::yLeft  , minV_final - padV, maxV_final + padV );
        data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
 
+       data_plot->replot();
+       
        //peak pesitions, vertical lines (if any)
        for (int ii=0; ii < triple_name_to_peaks_map[ triple_n ].size(); ++ii )
 	 {
 	   double rad = triple_name_to_peaks_map[ triple_n ][ ii ];
+
+	   qDebug() << "Drawing line for triple, peak -- " << triple_n << rad;
 	   draw_vline_auto( rad );
 	 }
        
@@ -1287,14 +1291,13 @@ void US_Buoyancy::plot_scan( double scan_number )
        // 	 }
        /////////////////////////////////////////
 
-       int totalOrders = 10;
-       int order_init  = 20;
+       int totalOrders = 26;
+       int order_init  = 5;
        int order_counter = 0;
        pgb_progress->reset();
        pgb_progress->setMaximum( 100 );
 
        //double sigma = 0.015;
-
 
        for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
 	 {
@@ -1305,11 +1308,10 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   progress /= totalOrders;
 	   progress *= 100;
 	   pgb_progress->setValue( progress );
-	   pgb_progress->setFormat( triple_n + ", Gaussian orders:    " + QString::number( progress )+"%");
+	   pgb_progress->setFormat( triple_n + ", Gaussian orders:    " + QString::number( int( progress ) )+"%");
 
 	   bool fitting_widget = false;
 	   
-	   //unsigned int  order = 24;                    // ALEXEY: makes huge difference, needs experimenting
 	   unsigned int  order = current_order;
 
 	   //minR = 6;
@@ -1341,7 +1343,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   
 	   //call US_Extinctfitter
 	   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-					 projectName, &fitting_widget);
+					 projectName, &fitting_widget, true );
 	   
 	   connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
 	   connect( fitter, SIGNAL( get_variance( double )), this, SLOT( process_variance( double ) ) );
@@ -1390,13 +1392,13 @@ void US_Buoyancy::plot_scan( double scan_number )
 
        qDebug() << "[AUTO] peaks for triple: " << triple_n << " are -- " << peak_poss_auto;
 
-       //test [ HARD coded for now... ]
-       QVector <double> peak_poss;
-       if ( current_triple == 0 )
-	 peak_poss = { 6.5, 6.63, 6.72 };
-       else
-	 peak_poss = { 6.51, 6.622, 6.722, 6.8 };
-       //triple_name_to_peaks_map[ triple_n ] = peak_poss;
+       // //test [ HARD coded for now... ]
+       // QVector <double> peak_poss;
+       // if ( current_triple == 0 )
+       // 	 peak_poss = { 6.5, 6.63, 6.72 };
+       // else
+       // 	 peak_poss = { 6.51, 6.622, 6.722, 6.8 };
+       // //triple_name_to_peaks_map[ triple_n ] = peak_poss;
 
        triple_name_to_peaks_map[ triple_n ] = peak_poss_auto;
      }
@@ -1415,7 +1417,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p )
 {
   QVector< double > peaks;
-  double stretch_f = 1.25;
+  double stretch_f = 1.5;
   double sigma = sigma_p * stretch_f;
 
   int last_index = xfit_data[ triple_n ].size() - 1;
@@ -1426,8 +1428,8 @@ QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p 
       double curr_x = xfit_data[ triple_n ][i];
       
       //maye skip sigma regions on both ends of the data?
-      if( (curr_x - sigma) < xfit_data[ triple_n ][0]  ||
-       	  (curr_x + sigma) > xfit_data[ triple_n ][ last_index ] )
+      if( (curr_x - 3.0 * sigma) < xfit_data[ triple_n ][0]  ||
+       	  (curr_x + 3.0 * sigma) > xfit_data[ triple_n ][ last_index ] )
        	continue;
       
       double left_x = ( curr_x - sigma ) > xfit_data[ triple_n ][0] ?
@@ -1438,7 +1440,7 @@ QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p 
 	( curr_x + sigma ) : xfit_data[ triple_n ][ last_index ]; 
       int right_i = index_of_data( xfit_data[ triple_n ], right_x );
 
-      qDebug() << "Proceeding with point x, y: " << curr_x << curr_y << "; pm sigma -- " << left_x << right_x ;
+      //qDebug() << "Proceeding with point x, y: " << curr_x << curr_y << "; pm sigma -- " << left_x << right_x ;
       
       if ( isMaximum_y( yfit_data[ triple_n ], i, left_i, right_i ) )
 	peaks .push_back( curr_x );
@@ -1450,7 +1452,6 @@ QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p 
 bool US_Buoyancy:: isMaximum_y( QVector<double> ydata, int curr_i, int left_i, int right_i )
 {
   bool isPeak = true;
-
   double curr_y = ydata[ curr_i ];
   
   for (int i = left_i; i < right_i; i++ )
@@ -1462,7 +1463,26 @@ bool US_Buoyancy:: isMaximum_y( QVector<double> ydata, int curr_i, int left_i, i
 	{
 	  isPeak = false;
 	  break;
+
+	  return isPeak;
 	}
+    }
+
+  //maybe check for height estimate vs. OD threshold limit (to be considered as peak)?
+  if ( isPeak )
+    {
+      double mean         = 0;
+      double minimum      = 10000;
+      double od_threshold = 0.01;    // maybe should be calculated from Gauss's height at [ x /pm sigma ]?
+      for (int i = left_i; i < right_i; i++ )
+  	{
+  	  mean += ydata[ i ];
+
+  	  minimum = min( minimum,  ydata[ i ]);
+  	}
+
+      if ( ( curr_y - minimum ) < od_threshold )
+  	isPeak = false;
     }
   
   return isPeak;
@@ -1478,7 +1498,7 @@ int US_Buoyancy::index_of_data( QVector<double> xdata, double val )
     {
       if ( qAbs( val - xdata[ i ] ) < diff_val )
 	{
-	  diff_val = qAbs( val - xdata[ i ] ) ;
+	  diff_val = qAbs( val - xdata[ i ] );
 	  index_x = i;
 	}
     }
@@ -1518,6 +1538,8 @@ void US_Buoyancy::process_variance( double variance )
 // Draw a vertical pick line
 void US_Buoyancy::draw_vline_auto( double radius )
 {
+   QwtPlotCurve* v_line_peak;
+      
    double r[ 2 ];
 
    r[ 0 ] = radius;
@@ -1531,17 +1553,20 @@ void US_Buoyancy::draw_vline_auto( double radius )
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
+   qDebug() << "Drawing vert. line: upperY, lowerY, padding -- "
+	    << y_axis->upperBound() << y_axis->lowerBound() << padding;
+   
    double v[ 2 ];
    v [ 0 ] = y_axis->upperBound() - padding;
    v [ 1 ] = y_axis->lowerBound() + padding;
 
-   v_line = us_curve( data_plot, "V-Line" );
-   v_line->setSamples( r, v, 2 );
+   v_line_peak = us_curve( data_plot, "V-Line" );
+   v_line_peak ->setSamples( r, v, 2 );
 
    QPen pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
-   v_line->setPen( pen );
+   v_line_peak->setPen( pen );
 
-   data_plot->replot();
+   //data_plot->replot();
 }
 
 // Draw a vertical pick line

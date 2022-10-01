@@ -147,7 +147,7 @@ class US_Buoyancy : public US_Widgets
 private slots:
 	double calc_stretch       ( void );
 	void draw_vline           ( double );
-        void draw_vline_auto           ( double );
+        void draw_vline_auto      ( double );
 	void mouse                ( const QwtDoublePoint& );
 	void sel_investigator     ( void );
 	void update_disk_db       ( bool );

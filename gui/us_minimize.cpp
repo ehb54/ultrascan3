@@ -755,17 +755,18 @@ int US_Minimize::Fit()
                if (nlsMethod == 0)
                {
 		 qDebug() << "Cholesky: "  ;
-                  if (showGuiFit)
+                  if (showGuiFit && !us_auto_mode )
                   {
                      QMessageBox message;
 							message.setWindowTitle(tr("Attention:"));
 							message.setText( tr("The Cholesky Decomposition of the\nInformation matrix failed due to a\nsingularity in the matrix.\n\nYou may achieve convergence by\nre-fitting the current data with\nnew initial parameter estimates."));
+
 							message.exec();
                   }
                }
                else
                {
-                  if (showGuiFit)
+                  if (showGuiFit && !us_auto_mode )
                   {
                      QMessageBox message;
 							message.setWindowTitle(tr("Attention:"));
