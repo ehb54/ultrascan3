@@ -803,6 +803,16 @@ void US_Buoyancy::load( void )
    dataType = QString( QChar( data.type[ 0 ] ) )
             + QString( QChar( data.type[ 1 ] ) );
 
+   // //DEBUG: rawGUID
+   // for ( int ii=0; ii<triples.size(); ii++ )
+   //   {
+   //     QString rawGUID_test  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
+   //     qDebug() << " DataSet: " << ii << ", RawData GUID -- " << rawGUID_test;
+   //     qDebug() << " DataSet: " << ii << ", Description --" << allData[ ii ].description;
+   //   }
+   // return;
+   // //
+   
    simparams.resize(triples.size());
    meniscus.resize(triples.size());
 
@@ -811,10 +821,17 @@ void US_Buoyancy::load( void )
      //ALEXEY: if auto_mode, read meniscus positions from editProfiles
       if ( us_buoyancy_auto_mode )
 	{
-	  if ( ii == 0 )
-	    meniscus[ ii ] = 6.04519984; //HARD coded for now
-	  else
-	    meniscus[ ii ] = 6.01; //HARD coded for now
+	  QString rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
+
+	  meniscus[ ii ] = get_meniscus_from_edit_profile ( rawGUID_t );
+
+	  if ( meniscus[ ii ] == 0 )  // if no edit profile found, then HARD code something
+	    meniscus[ ii ] = 6.04519984;
+	    
+	  // if ( ii == 0 )
+	  //   meniscus[ ii ] = 6.04519984; //HARD coded for now
+	  // else
+	  //   meniscus[ ii ] = 6.01; //HARD coded for now
 
 	  meniscus_to_triple_name_map[ triples[ii] ] = meniscus[ ii ];
 	  triple_report_saved_map    [ triples[ii] ] = false;
@@ -822,8 +839,10 @@ void US_Buoyancy::load( void )
 	}
       else
 	meniscus[ii] = 0.0;
-      
    }
+
+   //return;
+   
    if (isLocal)
    {
       for ( int ii = 0; ii < triples.size(); ii++ )
@@ -901,8 +920,10 @@ void US_Buoyancy::load( void )
       US_DB2  db( pw.getPasswd() );
       update_speedData();
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-              SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+
+      if ( !us_buoyancy_auto_mode ) 
+	connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+		 SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 
       plot_scan( current_scan );
             
@@ -982,6 +1003,90 @@ void US_Buoyancy::load( void )
      }
    
 
+}
+
+//get meniscus position from edited Data
+double US_Buoyancy::get_meniscus_from_edit_profile ( QString rawGUID_t )
+{
+  double meniscus_p = 0;
+
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return meniscus_p;
+    }
+
+  QStringList qry;
+  qry.clear();
+  qry << "get_rawDataID_from_GUID" << rawGUID_t;
+  db.query( qry );
+
+  db.next();
+  QString rawDataID_t = db.value( 0 ).toString();
+
+  //now, get editDataID(s) for given rawDataID_t
+  qry.clear();
+  qry << "get_editedDataIDs" << rawDataID_t;
+  db.query( qry );
+
+  QStringList editDataIDs;
+  QStringList filenames;
+  
+  while ( db.next() )
+    {
+      editDataIDs << db.value( 0 ).toString();
+      filenames   << db.value( 2 ).toString();
+    }
+  
+  if ( editDataIDs.size() == 0 )
+    {
+      QMessageBox::warning( this,
+			    tr( "Edit data is not in DB" ),
+			    tr( "Cannot find any edit records in the database.\n" ) );
+      
+      return meniscus_p;
+    }
+
+  //download editedData by eID
+  //last eprofile
+  int eID = editDataIDs.last().toInt();
+  QString filename = workingDir + "/" + filenames.last();
+  db.readBlobFromDB( filename, "download_editData", eID );
+
+  //read XML section && extract meniscus value
+  QFile pfile( filename );
+  // Skip if there is a file-open problem
+  if ( pfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+    {
+      // Capture the XML as a string and start XML reader
+      QTextStream tsi( &pfile );
+      QString xmlstr      = tsi.readAll();
+      pfile.close();
+      QXmlStreamReader xmli( xmlstr );
+      
+      while( ! xmli.atEnd() )
+	{  
+	  xmli.readNext();
+	  QString ename       = xmli.name().toString();
+	  if ( xmli.isStartElement()  &&  ename == "meniscus" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      meniscus_p                = attr.value( "radius" ).toDouble();
+	      break;
+	    }
+	}
+    }
+
+  qDebug() << "For rawDataID, eID: " << rawDataID_t << eID
+	   << ", Meniscus is -- " << meniscus_p;
+  
+  return meniscus_p;
 }
 
 // Handle a mouse click according to the current pick step
@@ -1067,7 +1172,7 @@ void US_Buoyancy::sel_investigator( void )
 void US_Buoyancy::reset( void )
 {
    le_info     ->setText( "" );
-
+   
    ct_selectScan->disconnect();
    ct_selectScan->setMinimum( 0 );
    ct_selectScan->setMaximum( 0 );
@@ -1111,9 +1216,35 @@ void US_Buoyancy::reset( void )
    triple_fitted_map        . clear();
    meniscus_to_triple_name_map. clear();
    variance_triple_order_map  . clear();
+
    
-   if ( us_buoyancy_auto_mode ) 
-     pb_view_reports  ->setEnabled( false );
+   
+   
+   if ( us_buoyancy_auto_mode )
+     {
+       cb_triple->clear();
+       
+       // le_stretch          ->setText( "" ); 
+       // le_dens_0           ->setText( "" );
+       // le_bottom	   ->setText( "" );
+       // le_bottom_calc	   ->setText( "" );
+       // le_vbar             ->setText( "" );
+       // le_MW		   ->setText( "" );
+       // le_meniscus	   ->setText( "" );
+       // le_temperature      ->setText( "" );
+       // le_buffer_density   ->setText( "" );
+       
+       cb_peaks->disconnect();
+       cb_peaks->clear();
+       
+       le_peakPosition ->setText( "0.0" );
+       le_peakDensity  ->setText( "0.0" );
+       le_peakVbar     ->setText( "0.0" );
+
+       pgb_progress    ->reset();
+       
+       pb_view_reports  ->setEnabled( false );
+     }
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -1223,11 +1354,20 @@ void US_Buoyancy::plot_scan( double scan_number )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setSamples( r, v, count );
-      if (ii == current_scan - 1 )
-      { // set the temperature to the currently highlighted scan:
-         tmp_dpoint.temperature = s->temperature;
-         c->setPen( QPen( Qt::red ) );
-      }
+
+      if ( !us_buoyancy_auto_mode )
+	{
+	  if (ii == current_scan - 1 )
+	    { // set the temperature to the currently highlighted scan:
+	      tmp_dpoint.temperature = s->temperature;
+	      c->setPen( QPen( Qt::red ) );
+	    }
+	}
+      else
+	{
+	  tmp_dpoint.temperature = s->temperature;
+	  c->setPen( QPen( Qt::red ) );
+	}
 
       // Reset the scan curves within the new limits
       double padR = ( maxR - minR ) / 30.0;

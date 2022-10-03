@@ -165,7 +165,8 @@ private slots:
         void calc_points_auto     ( QString );
         QVector< double > identify_peaks ( QString, double );
         int index_of_data( QVector<double>, double );
-  bool isMaximum_y( QVector<double>, int, int, int );
+        bool isMaximum_y( QVector<double>, int, int, int );
+       double get_meniscus_from_edit_profile ( QString );
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
 	void new_rpmval           ( int  );
