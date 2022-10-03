@@ -300,6 +300,9 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    //In case we need to hide something as opposed to default GUI
    if ( auto_mode.toStdString() == "AUTO")
      {
+       //lbl_scan      ->hide();
+       //ct_selectScan ->hide();
+
        rb_meniscus   ->hide();
        rb_datapoint  ->hide();
 
@@ -1128,7 +1131,9 @@ void US_Buoyancy::plot_scan( double scan_number )
    float temp_x, temp_y;
    QString triple_n = cb_triple->itemText( current_triple );
    QString title_fit;
-   double sigma = 0.015;
+   //double sigma = 0.015;
+   double sigma = 0.0213;
+   //double sigma = 0.02;
    
   // current scan is global
    current_scan = (int) scan_number;
@@ -1155,6 +1160,9 @@ void US_Buoyancy::plot_scan( double scan_number )
    //
    for ( int ii = 0; ii < ssize; ii++ )
    {
+     if( us_buoyancy_auto_mode && ii != ssize - 1 )
+       continue;
+     
      // clear WaveLengthScan array every time --
      // ensure last scan is written in the end to v_wavelength
      v_wavelength. clear();
@@ -1198,6 +1206,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 	 //   wls. v_readings.push_back(r);
 	 // else
 	 //   wls. v_readings.push_back(r);
+
+	 //if ( temp_x > 6.2 && temp_x < 6.9 )
 	 wls. v_readings.push_back(r);
       }
       
@@ -1278,7 +1288,7 @@ void US_Buoyancy::plot_scan( double scan_number )
        //do fit of the current scan, identify peak positions ///////////////////////////////////////////////////////////////////////
        qDebug() << "Size of v_wavelength array for triple : " << v_wavelength. last() . description  <<  v_wavelength. size();
 
-       //DEBUG
+       // //DEBUG
        // for( int i=0; i< v_wavelength .size(); i++)
        // 	 {
        // 	   WavelengthScan w_t = v_wavelength[ i ];
@@ -1289,9 +1299,10 @@ void US_Buoyancy::plot_scan( double scan_number )
        // 			<< w_t. v_readings[ j ]. od;
        // 		 }
        // 	 }
+       // exit(1);
        /////////////////////////////////////////
 
-       int totalOrders = 26;
+       int totalOrders = 35;
        int order_init  = 5;
        int order_counter = 0;
        pgb_progress->reset();
@@ -1327,12 +1338,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   QString projectName = QString("");
 	   
 	   qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
-	   
-	   // //TEST: LAMBDAs: min, max, step:  6 ,  7.1 ,  0.06875 OR 0.0423077
-	   // minR   = 6;
-	   // R_step = 0.0423077;
-	   
-	   
+	   	   
 	   for (unsigned int i=0; i<order; i++)
 	     {
 	       fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
@@ -1473,7 +1479,7 @@ bool US_Buoyancy:: isMaximum_y( QVector<double> ydata, int curr_i, int left_i, i
     {
       double mean         = 0;
       double minimum      = 10000;
-      double od_threshold = 0.01;    // maybe should be calculated from Gauss's height at [ x /pm sigma ]?
+      double od_threshold = 0.005;    // maybe should be calculated from Gauss's height at [ x /pm sigma ]?
       for (int i = left_i; i < right_i; i++ )
   	{
   	  mean += ydata[ i ];
