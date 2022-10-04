@@ -1290,8 +1290,8 @@ void US_Buoyancy::plot_scan( double scan_number )
    QString triple_n = cb_triple->itemText( current_triple );
    QString title_fit;
    //double sigma = 0.015;
-   double sigma = 0.0213;
-   //double sigma = 0.02;
+   //double sigma = 0.0213;
+   double sigma = 0.015;
    
   // current scan is global
    current_scan = (int) scan_number;
@@ -1469,59 +1469,95 @@ void US_Buoyancy::plot_scan( double scan_number )
        // exit(1);
        /////////////////////////////////////////
 
-       int totalOrders = 28;
+       int totalOrders = 25;
        int order_init  = 8;
        int order_counter = 0;
        pgb_progress->reset();
        pgb_progress->setMaximum( 100 );
 
-       //double sigma = 0.015;
+       //fill array of sigmas
+       //double sigma_step = double (sigma / 10.0 );
+       double sigma_step = 0.002;
+       int total_steps   = 6;
+       while ( (sigma - sigma_step* (int)(total_steps / 2.0 )) < 0.01 )
+       	 --total_steps;
 
-       for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
+       double sigma_min = sigma - sigma_step* (double)(total_steps / 2.0 );
+       double sigma_max = sigma + sigma_step* (double)(total_steps / 2.0 ) * 1.5;
+       
+       QVector< double > sigma_vector; //= { 0.012, 0.015, 0.017, 0.02 };
+       double sigma_value = sigma_min;
+       while ( sigma_value <=  sigma_max )
 	 {
-	   current_order = order_i;
+	   sigma_vector. push_back( sigma_value );
+	   sigma_value += sigma_step;
+	 }
+       
+       int totalSigmas = sigma_vector.size();
+       // //DEBUG
+       // for ( int sigma_i = 0; sigma_i < totalSigmas; ++sigma_i )
+       // 	 qDebug() << "Sigma vector -- " << sigma_vector[ sigma_i ];
 
-	   ++order_counter;
-	   double progress = order_counter;
-	   progress /= totalOrders;
-	   progress *= 100;
-	   pgb_progress->setValue( progress );
-	   pgb_progress->setFormat( triple_n + ", Gaussian orders:    " + QString::number( int( progress ) )+"%");
-
-	   bool fitting_widget = false;
+       // return;
+       // ////
+       
+       int sigma_counter = 0;
+       int general_counter = 0;
+       
+       //do fit
+       for ( int sigma_i = 0; sigma_i < totalSigmas; ++sigma_i )
+	 {
+	   current_sigma = sigma_vector[ sigma_i ];
+	   ++sigma_counter;
 	   
-	   unsigned int  order = current_order;
-
-	   //minR = 6;
-	   //maxR = 7.1;
-	   
-	   unsigned int  parameters = order * 3 + v_wavelength.size();
-	   double * fitparameters = new double [parameters];
-	   for (int i=0; i<v_wavelength.size(); i++)
+	   for ( int order_i = order_init; order_i < ( totalOrders + order_init ); ++order_i )
 	     {
-	       fitparameters[i] = 0.3;                                                  // Amplitude
+	       current_order = order_i;
+	       
+	       ++order_counter;
+	       ++general_counter;
+
+	       double progress = general_counter;
+	       progress /= (totalOrders * totalSigmas);
+	       progress *= 100;
+	       pgb_progress->setValue( progress );
+	       pgb_progress->setFormat( triple_n + ", orders | sigmas:    " + QString::number( int( progress ) )+"%");
+	       
+	       bool fitting_widget = false;
+	       
+	       unsigned int  order = current_order;
+	       
+	       //minR = 6;
+	       //maxR = 7.1;
+	       
+	       unsigned int  parameters = order * 3 + v_wavelength.size();
+	       double * fitparameters = new double [parameters];
+	       for (int i=0; i<v_wavelength.size(); i++)
+		 {
+		   fitparameters[i] = 0.3;                                                  // Amplitude
+		 }
+	       double R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
+	       QString projectName = QString("");
+	       
+	       qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
+	       
+	       for (unsigned int i=0; i<order; i++)
+		 {
+		   fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
+		   // spread out the peaks
+		   fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * long( i ) ;    // Position
+		   fitparameters[v_wavelength.size() + (i * 3) + 2] = current_sigma;                 // Sigma: comes based on single Gauss fit of representative data (AVV) peak
+		 }
+	       
+	       //call US_Extinctfitter
+	       fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+					     projectName, &fitting_widget, true );
+	       
+	       connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+	       connect( fitter, SIGNAL( get_variance( double )), this, SLOT( process_variance( double ) ) );
+	       
+	       fitter->Fit();
 	     }
-	   double R_step = (maxR - minR)/(order+1); // create "order" peaks evenly distributed over the range
-	   QString projectName = QString("");
-	   
-	   qDebug() << "Positions: min, max, step: " << minR << ", " << maxR << ", " << R_step;
-	   	   
-	   for (unsigned int i=0; i<order; i++)
-	     {
-	       fitparameters[v_wavelength.size() + (i * 3) ] = 1;                        // Addition to the amplitude
-	       // spread out the peaks
-	       fitparameters[v_wavelength.size() + (i * 3) + 1] = minR + R_step * long( i ) ;    // Position
-	       fitparameters[v_wavelength.size() + (i * 3) + 2] = sigma;                 // Sigma: comes based on single Gauss fit of representative data (AVV) peak
-	     }
-	   
-	   //call US_Extinctfitter
-	   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-					 projectName, &fitting_widget, true );
-	   
-	   connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
-	   connect( fitter, SIGNAL( get_variance( double )), this, SLOT( process_variance( double ) ) );
-	   
-	   fitter->Fit();
 	 }
        // END of Fit ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        
@@ -1532,32 +1568,47 @@ void US_Buoyancy::plot_scan( double scan_number )
 
    if ( us_buoyancy_auto_mode )
      {
-       //DEBUG : variances for current triple && orders used in fit
-       QMap < int, double > curr_triple_order_vars = variance_triple_order_map[ triple_n ];
-       QMap < int, double >::iterator mm;
-       
+       //variances for current triple && sigma && order used in fit
        double  minVariance = 1.0e99;
-       for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
-	 {
-	   qDebug() << "Triple " << triple_n << ": order, variance -- " << mm.key() << mm.value();
-	   
-	   minVariance = min( minVariance, mm.value() );
-	 }
        
-       int gauss_order_minVariance = 0;
-       for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
+       QMap < double, QMap < int, double > > curr_triple_sigma_order_vars = variance_triple_order_map[ triple_n ];
+       QMap < double, QMap < int, double > >::iterator ss;
+       for ( ss =  curr_triple_sigma_order_vars.begin(); ss !=  curr_triple_sigma_order_vars.end(); ++ss )
 	 {
-	   if ( mm.value() == minVariance )
+	   QMap < int, double > curr_triple_order_vars = ss.value();
+	   QMap < int, double >::iterator mm;
+	   
+	   for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
 	     {
-	       gauss_order_minVariance = mm.key();
-	       break;
+	       qDebug() << "Triple " << triple_n << ": sigma, order, variance -- " << ss.key() << mm.key() << mm.value();
+	       
+	       minVariance = min( minVariance, mm.value() );
 	     }
 	 }
-       qDebug() << "Smallest variance " << minVariance << " for triple " << triple_n << " for Gauss order -- " << gauss_order_minVariance;
+       
+       int    gauss_order_minVariance = 0;
+       double sigma_val_minVariance   = 0;
+       for ( ss =  curr_triple_sigma_order_vars.begin(); ss !=  curr_triple_sigma_order_vars.end(); ++ss )
+	 {
+	   QMap < int, double > curr_triple_order_vars = ss.value();
+	   QMap < int, double >::iterator mm;
+	   for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
+	     {
+	       if ( mm.value() == minVariance )
+		 {
+		   sigma_val_minVariance   = ss.key();
+		   gauss_order_minVariance = mm.key();
+		   break;
+		 }
+	     }
+	 }
+       qDebug() << "Smallest variance " << minVariance << " for triple " << triple_n
+		<< ", for Sigma val -- " <<  sigma_val_minVariance
+		<< ", for Gauss order -- " << gauss_order_minVariance;
 
        //finally, select the FIT data for the smallest variance to be plotted alongside raw data:
-       xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ gauss_order_minVariance ];
-       yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ gauss_order_minVariance ];
+       xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ sigma_val_minVariance ][ gauss_order_minVariance ];
+       yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ sigma_val_minVariance ][ gauss_order_minVariance ];
 
        // Now that we have best fit curves, Identify peak positions: 
        
@@ -1622,7 +1673,7 @@ QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p 
   return peaks;
 }
 
-bool US_Buoyancy:: isMaximum_y( QVector<double> ydata, int curr_i, int left_i, int right_i )
+bool US_Buoyancy::isMaximum_y( QVector<double> ydata, int curr_i, int left_i, int right_i )
 {
   bool isPeak = true;
   double curr_y = ydata[ curr_i ];
@@ -1683,28 +1734,23 @@ void US_Buoyancy::process_yfit(QVector <QVector<double> > &x, QVector <QVector<d
 {
   QString triple_n = cb_triple->itemText( current_triple );
 
-  xfit_data_all_orders[ triple_n ][ current_order ] = x.last();
-  yfit_data_all_orders[ triple_n ][ current_order ] = y.last();
+  // xfit_data_all_orders[ triple_n ][ current_order ] = x.last();
+  // yfit_data_all_orders[ triple_n ][ current_order ] = y.last();
   
-  // xfit_data[ triple_n ].clear();
-  // yfit_data[ triple_n ].clear();
+  xfit_data_all_orders[ triple_n ][ current_sigma ][ current_order ] = x.last();
+  yfit_data_all_orders[ triple_n ][ current_sigma ][ current_order ] = y.last();
 
-  // xfit_data[ triple_n ] = x.last();
-  // yfit_data[ triple_n ] = y.last();
-
-  // qDebug() << "Size x, y passed: " << x.size() << ", " << y.size();
-  // qDebug() << "Size xfit_data, yfit_data for triple: "
-  // 	   << triple_n  << xfit_data.size() << ", " << yfit_data.size();
-  
- }
+}
 	   
 void US_Buoyancy::process_variance( double variance )
 {
   QString triple_n = cb_triple->itemText( current_triple );
   
-  variance_triple_order_map[ triple_n ][ current_order ] = variance;
+  //variance_triple_order_map[ triple_n ][ current_order ] = variance;
 
-  qDebug() << "For triple: " << triple_n << ", order " << current_order << ": variance: " << variance; 
+  variance_triple_order_map[ triple_n ][ current_sigma ][ current_order ] = variance;
+  
+  qDebug() << "For triple: " << triple_n << ", sigma " << current_sigma << ", order " << current_order << ": variance: " << variance; 
   
 }
 

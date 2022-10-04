@@ -34,13 +34,19 @@ class US_Buoyancy : public US_Widgets
 
       QVector <WavelengthScan> v_wavelength;
       US_ExtinctFitter *fitter;
-      QMap< QString, QMap< int, QVector<double> > > xfit_data_all_orders;
-      QMap< QString, QMap< int, QVector<double> > > yfit_data_all_orders;
+      
       QMap< QString, QVector<double>  >xfit_data;
       QMap< QString, QVector<double> > yfit_data;
-      QMap< QString, QMap < int, double >> variance_triple_order_map;
-      int current_order;
+
+      QMap < QString, QMap < double, QMap < int, QVector< double > > > > xfit_data_all_orders;
+      QMap < QString, QMap < double, QMap < int, QVector< double > > > > yfit_data_all_orders;
+      QMap < QString, QMap < double, QMap < int, double > > > variance_triple_order_map;
   
+      // QMap< QString, QMap< int, QVector<double> > > xfit_data_all_orders;
+      // QMap< QString, QMap< int, QVector<double> > > yfit_data_all_orders;
+      // QMap< QString, QMap< int, double >> variance_triple_order_map;
+      int current_order;
+      double current_sigma;
 
       US_DataIO::RawData               data;
       QList   < US_DataIO::SpeedData > sData;
