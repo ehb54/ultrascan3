@@ -259,8 +259,8 @@ US_Extinction::US_Extinction() : US_Widgets()
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
-   //lambdaLimitLeft = 5.0;
-   //lambdaLimitRight = 1500.0;
+   // lambdaLimitLeft = 5.0;
+   // lambdaLimitRight = 1500.0;
     
    lambda_min = 1000;
    lambda_max = -1000;

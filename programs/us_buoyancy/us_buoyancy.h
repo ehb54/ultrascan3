@@ -169,6 +169,8 @@ private slots:
        double get_meniscus_from_edit_profile ( QString );
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
+
+  void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
 	void update_fields        ( void );
         void update_speedData     ( void );

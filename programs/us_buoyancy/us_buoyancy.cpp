@@ -835,20 +835,25 @@ void US_Buoyancy::load( void )
 
 	  meniscus_to_triple_name_map[ triples[ii] ] = meniscus[ ii ];
 	  triple_report_saved_map    [ triples[ii] ] = false;
-	  triple_fitted_map          [ triples[ii] ] = false;  
+	  triple_fitted_map          [ triples[ii] ] = false;
+
+
+	  // DEBUG: and output xy for last scan of each triple: DEBUG
+	  //print_xy( allData[ ii ], ii );
 	}
       else
 	meniscus[ii] = 0.0;
    }
 
-   //return;
+   
+   //return; // DEBUG
    
    if (isLocal)
    {
       for ( int ii = 0; ii < triples.size(); ii++ )
       {  // Generate file names
          QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
-	 QString file   = runID + "." + dataType + "." + triple + ".auc";
+   	 QString file   = runID + "." + dataType + "." + triple + ".auc";
          files << file;
          simparams[ii].initFromData( NULL, allData[ii], true, runID, dataType);
       }
@@ -860,7 +865,7 @@ void US_Buoyancy::load( void )
       for ( int ii = 0; ii < triples.size(); ii++ )
       {  // Generate file names
          QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
-	 QString file   = runID + "." + dataType + "." + triple + ".auc";
+   	 QString file   = runID + "." + dataType + "." + triple + ".auc";
          files << file;
          simparams[ii].initFromData( &db, allData[ii], true, runID, dataType);
       }
@@ -1003,6 +1008,28 @@ void US_Buoyancy::load( void )
      }
    
 
+}
+
+//for debug
+void US_Buoyancy::print_xy( US_DataIO::RawData curr_set, int set_num )
+{
+   int    rsize = curr_set.pointCount();
+   int    ssize = curr_set.scanCount();
+   int    count = 0;
+   
+   for ( int ii = 0; ii < ssize; ii++ )
+   {
+     if( ii != ssize - 1 )
+       continue;
+     
+     US_DataIO::Scan* s = &data.scanData[ ii ];
+     
+     for ( int jj = 0; jj < rsize; jj++ )
+      {
+	qDebug() << "SET [" << set_num << "] -- "
+		 << curr_set.xvalues[ jj ] << s->rvalues[ jj ];
+      }
+   }
 }
 
 //get meniscus position from edited Data
@@ -1338,8 +1365,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 	 // else
 	 //   wls. v_readings.push_back(r);
 
-	 //if ( temp_x > 6.2 && temp_x < 6.9 )
-	 wls. v_readings.push_back(r);
+	 if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] )
+	   wls. v_readings.push_back(r);
       }
       
       //push a WavelengthScan to array
@@ -1442,8 +1469,8 @@ void US_Buoyancy::plot_scan( double scan_number )
        // exit(1);
        /////////////////////////////////////////
 
-       int totalOrders = 35;
-       int order_init  = 5;
+       int totalOrders = 28;
+       int order_init  = 8;
        int order_counter = 0;
        pgb_progress->reset();
        pgb_progress->setMaximum( 100 );
