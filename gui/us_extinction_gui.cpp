@@ -1111,7 +1111,7 @@ void US_Extinction::perform_global(void)
       // spread out the peaks
       fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
       fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
-      //fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;           // Sigma
+      //fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.022;           // Sigma
    }
    //opens the fitting GUI
 

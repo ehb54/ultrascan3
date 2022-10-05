@@ -789,6 +789,14 @@ void US_Buoyancy::load( void )
       return;
    }
 
+   // //DEBUG: TEMPORARY!
+   // QStringList triples_temp = triples;
+   // triples.clear();
+
+   // triples << triples_temp[0] << triples_temp[ triples_temp.size() - 1 ];
+   
+   // ////////////////////
+   
    cb_triple->addItems( triples );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
                        SLOT  ( new_triple         ( int ) ) );
@@ -1250,6 +1258,7 @@ void US_Buoyancy::reset( void )
    if ( us_buoyancy_auto_mode )
      {
        cb_triple->clear();
+       pick->setEnabled( false );
        
        // le_stretch          ->setText( "" ); 
        // le_dens_0           ->setText( "" );
@@ -1365,7 +1374,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	 // else
 	 //   wls. v_readings.push_back(r);
 
-	 if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] )
+	 if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] && temp_x < 7.1 )
 	   wls. v_readings.push_back(r);
       }
       
@@ -1479,11 +1488,11 @@ void US_Buoyancy::plot_scan( double scan_number )
        //double sigma_step = double (sigma / 10.0 );
        double sigma_step = 0.002;
        int total_steps   = 6;
-       while ( (sigma - sigma_step* (int)(total_steps / 2.0 )) < 0.01 )
+       while ( (sigma - sigma_step* (int)(total_steps / 2.0 )) < 0.01 )           //set cap on minimum value
        	 --total_steps;
 
        double sigma_min = sigma - sigma_step* (double)(total_steps / 2.0 );
-       double sigma_max = sigma + sigma_step* (double)(total_steps / 2.0 ) * 1.5;
+       double sigma_max = sigma + sigma_step* (double)(total_steps / 2.0 ) * 1.5; //max value can go a bit higher 
        
        QVector< double > sigma_vector; //= { 0.012, 0.015, 0.017, 0.02 };
        double sigma_value = sigma_min;
@@ -1521,14 +1530,11 @@ void US_Buoyancy::plot_scan( double scan_number )
 	       progress /= (totalOrders * totalSigmas);
 	       progress *= 100;
 	       pgb_progress->setValue( progress );
-	       pgb_progress->setFormat( triple_n + ", orders | sigmas:    " + QString::number( int( progress ) )+"%");
+	       pgb_progress->setFormat( triple_n + ", Orders | Sigmas:    " + QString::number( int( progress ) )+"%");
 	       
 	       bool fitting_widget = false;
 	       
 	       unsigned int  order = current_order;
-	       
-	       //minR = 6;
-	       //maxR = 7.1;
 	       
 	       unsigned int  parameters = order * 3 + v_wavelength.size();
 	       double * fitparameters = new double [parameters];
@@ -1580,6 +1586,9 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   
 	   for ( mm =  curr_triple_order_vars.begin(); mm !=  curr_triple_order_vars.end(); ++mm )
 	     {
+	       if ( mm.value() == 0 )
+		 continue;
+	       
 	       qDebug() << "Triple " << triple_n << ": sigma, order, variance -- " << ss.key() << mm.key() << mm.value();
 	       
 	       minVariance = min( minVariance, mm.value() );
@@ -1612,7 +1621,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 
        // Now that we have best fit curves, Identify peak positions: 
        
-       QVector <double> peak_poss_auto = identify_peaks( triple_n, sigma );
+       QVector <double> peak_poss_auto = identify_peaks( triple_n, sigma_val_minVariance );
 
        qDebug() << "[AUTO] peaks for triple: " << triple_n << " are -- " << peak_poss_auto;
 
