@@ -162,7 +162,8 @@ private slots:
 	void draw_vline           ( double );
         void draw_vline_auto      ( double );
 	void mouse                ( const QwtDoublePoint& );
-	void sel_investigator     ( void );
+  void mouse_peak                ( const QwtDoublePoint& );
+  void sel_investigator     ( void );
 	void update_disk_db       ( bool );
 	void load                 ( void );
 	void details              ( void );

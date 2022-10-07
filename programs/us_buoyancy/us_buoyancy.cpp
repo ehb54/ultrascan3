@@ -1186,6 +1186,8 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   return data_conf;
 }
 
+
+
 // Handle a mouse click according to the current pick step
 void US_Buoyancy::mouse( const QwtDoublePoint& p )
 {
@@ -1848,6 +1850,7 @@ void US_Buoyancy::delete_peak( void )
        {
 	 qDebug() << "Removing dpoint entry for triple, peak -- " << dpoint[ i ].triple << dpoint[ i ].name;
 	 dpoint. remove( i );
+	 break;
        }
    }
   
@@ -1856,8 +1859,34 @@ void US_Buoyancy::delete_peak( void )
 //add new peak manually
 void US_Buoyancy::add_peak( void )
 {
-  
+  QMessageBox::information( this,
+			    tr( "Manual Peak Selection" ),
+			    tr( "To manually select additional peak\n"
+				"please use CNTR+mouse to mark peak position." ) );
+
+  pick -> setEnabled( true ); 
+  connect( pick, SIGNAL( cMouseUp     ( const QwtDoublePoint& ) ),
+		 SLOT  ( mouse_peak   ( const QwtDoublePoint& ) ) );
+
 }
+
+// Add additional peak with the mouse click
+void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
+{
+  QString triple_n = cb_triple->itemText( current_triple );
+  triple_name_to_peaks_map[ triple_n ]. push_back ( p.x() );
+
+  std::sort(triple_name_to_peaks_map[ triple_n ].begin(), triple_name_to_peaks_map[ triple_n ].end());
+
+  new_triple( current_triple );
+
+  //re-save all reports
+  dpoint. clear();
+  for ( int i=0; i< cb_triple->count(); i++ )
+    {
+      save_auto ( cb_triple->itemText( i ) ); 
+    }
+}  
 
 // Draw a vertical pick line
 void US_Buoyancy::draw_vline_auto( double radius )
