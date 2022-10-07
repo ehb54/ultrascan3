@@ -225,9 +225,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lb_peak_parms_bn,  s_row++, 0, 1, 4 );
    
    //Information on peaks: Listbox of to-be-determined (from automated fit) size
-   
-
-   
+      
    QLabel* lbl_peakName = us_label( tr( "Peak name/label:" ), -1 );
    specs->addWidget( lbl_peakName, s_row, 0, 1, 2 );
 
@@ -257,6 +255,18 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    le_peakVbar = us_lineedit( QString::number( tmp_dpoint.peakVbar ) );
    specs->addWidget( le_peakVbar, s_row++, 2, 1, 2 );
 
+   //Peak Editor
+   QLabel* lb_peak_editor_bn = us_banner( tr( "Peak Editor" ) );
+   specs->addWidget( lb_peak_editor_bn,  s_row++, 0, 1, 4 );
+
+   pb_delete_peak = us_pushbutton( tr( "Delete Current Peak" ), false );
+   connect( pb_delete_peak, SIGNAL( clicked() ), SLOT( delete_peak() ) );
+   specs->addWidget( pb_delete_peak, s_row, 0, 1, 2 );
+
+   pb_add_peak = us_pushbutton( tr( "Add Peak Manually" ), false );
+   connect( pb_add_peak, SIGNAL( clicked() ), SLOT( add_peak() ) );
+   specs->addWidget( pb_add_peak, s_row++, 2, 1, 2 );
+   
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
 
@@ -875,6 +885,7 @@ void US_Buoyancy::load( void )
 	  data_right_to_triple_name_map [ triples[ii] ] = data_conf[ "data_right" ];
 	  triple_report_saved_map       [ triples[ii] ] = false;
 	  triple_fitted_map             [ triples[ii] ] = false;
+	  triple_peaks_defined_map      [ triples[ii] ] = false;
 
 
 	  // DEBUG: and output xy for last scan of each triple: DEBUG
@@ -1044,6 +1055,10 @@ void US_Buoyancy::load( void )
 
        //set back to the first triple
        cb_triple->setCurrentIndex( 0 );
+       
+       pb_view_reports  ->setEnabled( true );
+       pb_delete_peak   ->setEnabled( true );
+       pb_add_peak      ->setEnabled( true );
      }
    
 
@@ -1297,6 +1312,7 @@ void US_Buoyancy::reset( void )
    triple_name_to_peak_to_parms_map . clear();
    triple_report_saved_map  . clear();
    triple_fitted_map        . clear();
+   triple_peaks_defined_map . clear();
    meniscus_to_triple_name_map. clear();
    data_left_to_triple_name_map . clear();
    data_right_to_triple_name_map . clear();
@@ -1328,6 +1344,8 @@ void US_Buoyancy::reset( void )
        pgb_progress    ->reset();
        
        pb_view_reports  ->setEnabled( false );
+       pb_delete_peak   ->setEnabled( false );
+       pb_add_peak      ->setEnabled( false );
      }
 }
 
@@ -1346,7 +1364,6 @@ void US_Buoyancy::plot_scan( double scan_number )
    float temp_x, temp_y;
    QString triple_n = cb_triple->itemText( current_triple );
    QString title_fit;
-   //double sigma = 0.015;
    //double sigma = 0.0213;
    double sigma = 0.015;
    
@@ -1616,7 +1633,7 @@ void US_Buoyancy::plot_scan( double scan_number )
    
 
 
-   if ( us_buoyancy_auto_mode )
+   if ( us_buoyancy_auto_mode && !triple_peaks_defined_map[ triple_n ] )
      {
        //variances for current triple && sigma && order used in fit
        double  minVariance = 1.0e99;
@@ -1677,6 +1694,8 @@ void US_Buoyancy::plot_scan( double scan_number )
        // //triple_name_to_peaks_map[ triple_n ] = peak_poss;
 
        triple_name_to_peaks_map[ triple_n ] = peak_poss_auto;
+
+       triple_peaks_defined_map[ triple_n ] = true;
      }
    
    update_fields();
@@ -1685,7 +1704,9 @@ void US_Buoyancy::plot_scan( double scan_number )
    if (  us_buoyancy_auto_mode && !triple_report_saved_map[ triple_n  ]  )
      {
        save_auto( triple_n );
-       pb_view_reports  ->setEnabled( true );
+       // pb_view_reports  ->setEnabled( true );
+       // pb_delete_peak   ->setEnabled( true );
+       // pb_add_peak      ->setEnabled( true );
      }
 }
 
@@ -1803,6 +1824,38 @@ void US_Buoyancy::process_variance( double variance )
   variance_triple_order_map[ triple_n ][ current_sigma ][ current_order ] = variance;
   
   qDebug() << "For triple: " << triple_n << ", sigma " << current_sigma << ", order " << current_order << ": variance: " << variance; 
+  
+}
+
+//delete peak
+void US_Buoyancy::delete_peak( void )
+{
+  int peak_index   = cb_peaks -> currentIndex();
+  QString triple_n = cb_triple->itemText( current_triple );
+  QString peak_n   = cb_peaks ->itemText( peak_index );
+
+  qDebug() << "Current peak index -- " << peak_index;
+  
+  triple_name_to_peaks_map[ triple_n ].remove( peak_index );
+
+  new_triple( current_triple );
+  
+  //now clean dpoint structure for the current triple
+  for (int i=0; i<dpoint.size(); i++)
+   {
+     if ( dpoint[ i ].triple == triple_n &&
+	  dpoint[ i ].name == peak_n )
+       {
+	 qDebug() << "Removing dpoint entry for triple, peak -- " << dpoint[ i ].triple << dpoint[ i ].name;
+	 dpoint. remove( i );
+       }
+   }
+  
+}
+
+//add new peak manually
+void US_Buoyancy::add_peak( void )
+{
   
 }
 

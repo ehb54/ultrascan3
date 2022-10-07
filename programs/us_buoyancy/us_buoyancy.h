@@ -59,6 +59,7 @@ class US_Buoyancy : public US_Widgets
       QMap< QString, QMap < QString, QStringList > >  triple_name_to_peak_to_parms_map;
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
+  QMap< QString, bool > triple_peaks_defined_map;
       QMap< QString, double > meniscus_to_triple_name_map;
       QMap< QString, double > data_left_to_triple_name_map;
       QMap< QString, double > data_right_to_triple_name_map;
@@ -147,6 +148,9 @@ class US_Buoyancy : public US_Widgets
 
       QPushButton*       pb_write;
       QPushButton*       pb_save;
+
+      QPushButton*       pb_delete_peak;
+      QPushButton*       pb_add_peak;
   
       QProgressBar*      pgb_progress;
       QPushButton*       pb_view_reports;
@@ -178,6 +182,8 @@ private slots:
         QMap< QString, double > get_data_conf_from_edit_profile ( QString );
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
+  void delete_peak( void );
+  void add_peak( void );
 
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
