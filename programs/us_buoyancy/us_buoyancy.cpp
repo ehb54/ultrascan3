@@ -611,6 +611,30 @@ void US_Buoyancy::new_peak( int index )
   le_peakDensity->setText( curr_peak_parms[0] );
   le_peakVbar->setText( curr_peak_parms[1] );
   le_peakPosition->setText( curr_peak_parms[2] );
+
+  //highligth peak line
+  if( triple_name_to_peak_curves_map. contains( triple_n ) )
+    {
+      QPen pen = QPen( QBrush( Qt::green ), 3.0, Qt::DotLine );
+      QVector< QwtPlotCurve* > v_line_vector = triple_name_to_peak_curves_map[ triple_n ];
+      qDebug() << "v_line_vector size(), index -- " <<  v_line_vector.size() << index;
+
+      if( index < v_line_vector.size() )
+	v_line_vector[ index ]->setPen( pen );
+
+      //the rest of line are show with default pen (yellow)
+      for ( int i=0; i < v_line_vector.size(); ++i )
+	{
+	  if ( i == index )
+	    continue;
+
+	  pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
+	  v_line_vector[ i ]->setPen( pen );
+	}
+
+      //and replot...
+      data_plot->replot();
+    }
 }
 
 // Select a new triple
@@ -635,9 +659,14 @@ void US_Buoyancy::update_fields( void )
 
    if ( meniscus[current_triple] != 0 )
    {
-      tmp_dpoint.meniscus = meniscus[current_triple] + current_stretch;
-      str.setNum( tmp_dpoint.meniscus );
-      le_meniscus->setText( str );
+     QString triple_n = cb_triple->itemText( current_triple );
+     if ( !us_buoyancy_auto_mode )  
+       tmp_dpoint.meniscus = meniscus[current_triple] + current_stretch;
+     else
+       tmp_dpoint.meniscus = meniscus_to_triple_name_map[ triple_n ];
+
+     str.setNum( tmp_dpoint.meniscus );
+     le_meniscus->setText( str );
    }
    else
    {
@@ -714,10 +743,10 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 	  double omega_s, C, C0, r2, k1, k2, k3, k4;
 	  omega_s = pow( current_rpm * M_PI/30.0, 2.0 );
 	  C0 = tmp_dpoint.gradientC0 - tmp_dpoint.bufferDensity; //subtract buffer density from nycodenz density
-	  r2 = pow( tmp_dpoint.bottom, 2.0 ) - pow( tmp_dpoint.meniscus, 2.0);
+	  r2 = pow( tmp_dpoint.bottom, 2.0 ) - pow( meniscus_to_triple_name_map[ triple_n ], 2.0);
 	  k1 = tmp_dpoint.gradientMW * omega_s/( 2.0 * R_GC * (tmp_dpoint.temperature + 273.15) );
 	  k4 = 1.0 - tmp_dpoint.gradientVbar * tmp_dpoint.bufferDensity;
-	  k2 = exp( k1 * ( k4 ) * (pow( peak_poss[ i ], 2.0 ) - pow( tmp_dpoint.meniscus, 2.0 ) ) );
+	  k2 = exp( k1 * ( k4 ) * (pow( peak_poss[ i ], 2.0 ) - pow( meniscus_to_triple_name_map[ triple_n ], 2.0 ) ) );
 	  k3 = exp( k1 * ( k4 ) * r2);
 	  C  = k1 * k4 * C0 *r2 * k2/( k3 - 1.0 ) + tmp_dpoint.bufferDensity;
 
@@ -792,7 +821,6 @@ void US_Buoyancy::load( void )
    // //DEBUG: TEMPORARY!
    // QStringList triples_temp = triples;
    // triples.clear();
-
    // triples << triples_temp[0] << triples_temp[ triples_temp.size() - 1 ];
    
    // ////////////////////
@@ -831,8 +859,9 @@ void US_Buoyancy::load( void )
 	{
 	  QString rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
 
-	  meniscus[ ii ] = get_meniscus_from_edit_profile ( rawGUID_t );
-
+	  QMap <QString, double > data_conf = get_data_conf_from_edit_profile ( rawGUID_t );
+	  meniscus[ ii ] = data_conf[ "meniscus" ];
+	  
 	  if ( meniscus[ ii ] == 0 )  // if no edit profile found, then HARD code something
 	    meniscus[ ii ] = 6.04519984;
 	    
@@ -841,9 +870,11 @@ void US_Buoyancy::load( void )
 	  // else
 	  //   meniscus[ ii ] = 6.01; //HARD coded for now
 
-	  meniscus_to_triple_name_map[ triples[ii] ] = meniscus[ ii ];
-	  triple_report_saved_map    [ triples[ii] ] = false;
-	  triple_fitted_map          [ triples[ii] ] = false;
+	  meniscus_to_triple_name_map   [ triples[ii] ] = meniscus[ ii ];
+	  data_left_to_triple_name_map  [ triples[ii] ] = data_conf[ "data_left" ];
+	  data_right_to_triple_name_map [ triples[ii] ] = data_conf[ "data_right" ];
+	  triple_report_saved_map       [ triples[ii] ] = false;
+	  triple_fitted_map             [ triples[ii] ] = false;
 
 
 	  // DEBUG: and output xy for last scan of each triple: DEBUG
@@ -1041,10 +1072,13 @@ void US_Buoyancy::print_xy( US_DataIO::RawData curr_set, int set_num )
 }
 
 //get meniscus position from edited Data
-double US_Buoyancy::get_meniscus_from_edit_profile ( QString rawGUID_t )
+QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString rawGUID_t )
 {
+  QMap< QString, double > data_conf; 
   double meniscus_p = 0;
-
+  double data_left  = 0;
+  double data_right = 0;
+  
   // Check DB connection
   US_Passwd pw;
   QString masterPW = pw.getPasswd();
@@ -1054,7 +1088,7 @@ double US_Buoyancy::get_meniscus_from_edit_profile ( QString rawGUID_t )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return meniscus_p;
+      return data_conf;
     }
 
   QStringList qry;
@@ -1085,7 +1119,7 @@ double US_Buoyancy::get_meniscus_from_edit_profile ( QString rawGUID_t )
 			    tr( "Edit data is not in DB" ),
 			    tr( "Cannot find any edit records in the database.\n" ) );
       
-      return meniscus_p;
+      return data_conf;
     }
 
   //download editedData by eID
@@ -1109,19 +1143,32 @@ double US_Buoyancy::get_meniscus_from_edit_profile ( QString rawGUID_t )
 	{  
 	  xmli.readNext();
 	  QString ename       = xmli.name().toString();
+	  
 	  if ( xmli.isStartElement()  &&  ename == "meniscus" )
 	    {
 	      QXmlStreamAttributes attr = xmli.attributes();
 	      meniscus_p                = attr.value( "radius" ).toDouble();
-	      break;
 	    }
+	  else if ( xmli.isStartElement()  &&  ename == "data_range" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      data_left                 = attr.value( "left" ).toDouble();
+	      data_right                = attr.value( "right" ).toDouble();
+	    }
+	  
 	}
     }
 
+  data_conf[ "meniscus" ]   = meniscus_p;
+  data_conf[ "data_left" ]  = data_left;
+  data_conf[ "data_right" ] = data_right;
+
   qDebug() << "For rawDataID, eID: " << rawDataID_t << eID
-	   << ", Meniscus is -- " << meniscus_p;
+	   << ", Meniscus is -- "    << data_conf[ "meniscus" ]
+	   << ", Data Left is -- "   << data_conf[ "data_left" ]
+	   << ", Data Right is -- "  << data_conf[ "data_right" ];
   
-  return meniscus_p;
+  return data_conf;
 }
 
 // Handle a mouse click according to the current pick step
@@ -1246,15 +1293,16 @@ void US_Buoyancy::reset( void )
    cb_rpms       ->clear();
 
    triple_name_to_peaks_map . clear();
+   triple_name_to_peak_curves_map . clear();
    triple_name_to_peak_to_parms_map . clear();
    triple_report_saved_map  . clear();
    triple_fitted_map        . clear();
    meniscus_to_triple_name_map. clear();
+   data_left_to_triple_name_map . clear();
+   data_right_to_triple_name_map . clear();
    variance_triple_order_map  . clear();
 
-   
-   
-   
+     
    if ( us_buoyancy_auto_mode )
      {
        cb_triple->clear();
@@ -1368,13 +1416,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 	 temp_y = s->rvalues[ jj ];
 	 Reading r = {temp_x, temp_y};
 
-	 //if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] )
-	 // if ( jj == 0 && temp_y == 0 ) 
-	 //   wls. v_readings.push_back(r);
-	 // else
-	 //   wls. v_readings.push_back(r);
-
-	 if ( temp_x >=  meniscus_to_triple_name_map [ triple_n ] && temp_x < 7.1 )
+	 if ( temp_x >= data_left_to_triple_name_map[ triple_n ]
+	      && temp_x <= data_right_to_triple_name_map[ triple_n ] )
 	   wls. v_readings.push_back(r);
       }
       
@@ -1446,6 +1489,7 @@ void US_Buoyancy::plot_scan( double scan_number )
        data_plot->replot();
        
        //peak pesitions, vertical lines (if any)
+       triple_name_to_peak_curves_map[ triple_n ]. clear();
        for (int ii=0; ii < triple_name_to_peaks_map[ triple_n ].size(); ++ii )
 	 {
 	   double rad = triple_name_to_peaks_map[ triple_n ][ ii ];
@@ -1478,8 +1522,8 @@ void US_Buoyancy::plot_scan( double scan_number )
        // exit(1);
        /////////////////////////////////////////
 
-       int totalOrders = 25;
-       int order_init  = 8;
+       int totalOrders = 15;
+       int order_init  = 10;
        int order_counter = 0;
        pgb_progress->reset();
        pgb_progress->setMaximum( 100 );
@@ -1487,7 +1531,7 @@ void US_Buoyancy::plot_scan( double scan_number )
        //fill array of sigmas
        //double sigma_step = double (sigma / 10.0 );
        double sigma_step = 0.002;
-       int total_steps   = 6;
+       int total_steps   = 0;
        while ( (sigma - sigma_step* (int)(total_steps / 2.0 )) < 0.01 )           //set cap on minimum value
        	 --total_steps;
 
@@ -1620,7 +1664,6 @@ void US_Buoyancy::plot_scan( double scan_number )
        yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ sigma_val_minVariance ][ gauss_order_minVariance ];
 
        // Now that we have best fit curves, Identify peak positions: 
-       
        QVector <double> peak_poss_auto = identify_peaks( triple_n, sigma_val_minVariance );
 
        qDebug() << "[AUTO] peaks for triple: " << triple_n << " are -- " << peak_poss_auto;
@@ -1650,7 +1693,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p )
 {
   QVector< double > peaks;
-  double stretch_f = 1.5;
+  double stretch_f = 2.5;
   double sigma = sigma_p * stretch_f;
 
   int last_index = xfit_data[ triple_n ].size() - 1;
@@ -1661,8 +1704,8 @@ QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p 
       double curr_x = xfit_data[ triple_n ][i];
       
       //maye skip sigma regions on both ends of the data?
-      if( (curr_x - 3.0 * sigma) < xfit_data[ triple_n ][0]  ||
-       	  (curr_x + 3.0 * sigma) > xfit_data[ triple_n ][ last_index ] )
+      if( (curr_x - sigma) < xfit_data[ triple_n ][0]  ||
+       	  (curr_x + sigma) > xfit_data[ triple_n ][ last_index ] )
        	continue;
       
       double left_x = ( curr_x - sigma ) > xfit_data[ triple_n ][0] ?
@@ -1794,7 +1837,8 @@ void US_Buoyancy::draw_vline_auto( double radius )
    QPen pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
    v_line_peak->setPen( pen );
 
-   //data_plot->replot();
+   QString triple_n = cb_triple->itemText( current_triple );
+   triple_name_to_peak_curves_map[ triple_n ].push_back( v_line_peak ) ; 
 }
 
 // Draw a vertical pick line
@@ -1966,8 +2010,15 @@ void US_Buoyancy::new_rpmval( int index )
    le_stretch->setText( str );
    if ( meniscus[current_triple] != 0 )
    {
-      str.setNum( meniscus[current_triple] + current_stretch );
-      le_meniscus->setText( str );
+     if ( !us_buoyancy_auto_mode )
+       str.setNum( meniscus[current_triple] + current_stretch );
+     else
+       {
+	 QString triple_n = cb_triple->itemText( current_triple );
+	 str.setNum( meniscus_to_triple_name_map[ triple_n ]);
+       }
+     
+     le_meniscus->setText( str );
    }
    plot_scan( current_scan );
 }

@@ -55,10 +55,13 @@ class US_Buoyancy : public US_Widgets
       QVector < DataPoint >            dpoint;
 
       QMap< QString, QVector<double> > triple_name_to_peaks_map;
+      QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_curves_map;
       QMap< QString, QMap < QString, QStringList > >  triple_name_to_peak_to_parms_map;
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
       QMap< QString, double > meniscus_to_triple_name_map;
+      QMap< QString, double > data_left_to_triple_name_map;
+      QMap< QString, double > data_right_to_triple_name_map;
 
       QRadioButton*      rb_meniscus;
       QRadioButton*      rb_datapoint;
@@ -172,7 +175,7 @@ private slots:
         QVector< double > identify_peaks ( QString, double );
         int index_of_data( QVector<double>, double );
         bool isMaximum_y( QVector<double>, int, int, int );
-       double get_meniscus_from_edit_profile ( QString );
+        QMap< QString, double > get_data_conf_from_edit_profile ( QString );
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
 
