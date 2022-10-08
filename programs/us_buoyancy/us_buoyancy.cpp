@@ -739,6 +739,7 @@ void US_Buoyancy::calc_points( void )
 void US_Buoyancy::calc_points_auto( QString triple_n )
 {
   QVector< double > peak_poss = triple_name_to_peaks_map[ triple_n ];
+  triple_name_to_peak_to_parms_map[ triple_n ] . clear();
 
   QStringList peak_names;
   //iterate over peaks for the current triple
@@ -828,12 +829,11 @@ void US_Buoyancy::load( void )
       return;
    }
 
-   // //DEBUG: TEMPORARY!
+   // //DEBUG: TEMPORARY! /////////////////////////////////////////////////////////////////
    // QStringList triples_temp = triples;
    // triples.clear();
    // triples << triples_temp[0] << triples_temp[ triples_temp.size() - 1 ];
-   
-   // ////////////////////
+   // //////////////////////////////////////////////////////////////////////////////////////
    
    cb_triple->addItems( triples );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
@@ -869,6 +869,14 @@ void US_Buoyancy::load( void )
 	{
 	  QString rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
 
+	  // //DEBUG /////////////////////////////////////////////////////////////////////////////////////////////////
+	  // QString rawGUID_t;
+	  // if ( ii == 0 )
+	  //   rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
+	  // else
+	  //   rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ triples_temp.size() - 1 ].rawGUID );
+	  // /////////////////////////////////////////////////////////////////////////////////////////////////////////
+	  
 	  QMap <QString, double > data_conf = get_data_conf_from_edit_profile ( rawGUID_t );
 	  meniscus[ ii ] = data_conf[ "meniscus" ];
 	  
@@ -1841,18 +1849,25 @@ void US_Buoyancy::delete_peak( void )
   triple_name_to_peaks_map[ triple_n ].remove( peak_index );
 
   new_triple( current_triple );
+
+  qDebug() << "Delete peak: triple_name_to_peaks_map[ triple ].size() -- " << triple_name_to_peaks_map[ triple_n ].size();
   
-  //now clean dpoint structure for the current triple
-  for (int i=0; i<dpoint.size(); i++)
-   {
-     if ( dpoint[ i ].triple == triple_n &&
-	  dpoint[ i ].name == peak_n )
-       {
-	 qDebug() << "Removing dpoint entry for triple, peak -- " << dpoint[ i ].triple << dpoint[ i ].name;
-	 dpoint. remove( i );
-	 break;
-       }
-   }
+  //re-save all reports
+  dpoint. clear();
+  for ( int i=0; i< cb_triple->count(); i++ )
+    {
+      save_auto ( cb_triple->itemText( i ) ); 
+    }
+  // for (int i=0; i<dpoint.size(); i++)
+  //  {
+  //    if ( dpoint[ i ].triple == triple_n &&
+  // 	  dpoint[ i ].name == peak_n )
+  //      {
+  // 	 qDebug() << "Removing dpoint entry for triple, peak -- " << dpoint[ i ].triple << dpoint[ i ].name;
+  // 	 dpoint. remove( i );
+  // 	 break;
+  //      }
+  //  }
   
 }
 
@@ -1876,6 +1891,8 @@ void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
   QString triple_n = cb_triple->itemText( current_triple );
   triple_name_to_peaks_map[ triple_n ]. push_back ( p.x() );
 
+  qDebug() << "Adding new peak, new size() -- " << triple_name_to_peaks_map[ triple_n ].size();
+
   std::sort(triple_name_to_peaks_map[ triple_n ].begin(), triple_name_to_peaks_map[ triple_n ].end());
 
   new_triple( current_triple );
@@ -1886,6 +1903,10 @@ void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
     {
       save_auto ( cb_triple->itemText( i ) ); 
     }
+
+  //disable pick again:
+  pick -> disconnect();
+  pick -> setEnabled( false ); 
 }  
 
 // Draw a vertical pick line
