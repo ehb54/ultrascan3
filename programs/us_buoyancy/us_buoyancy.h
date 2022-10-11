@@ -14,9 +14,9 @@
 
 struct DataPoint
 {
-   QString name, description, dataset, triple;
-   double peakPosition, peakDensity, peakVbar, temperature, bufferDensity, centerpiece;
-   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch;
+  QString name, description, dataset, triple;
+  double peakPosition, peakDensity, peakVbar, peakGaussArea, temperature, bufferDensity, centerpiece;
+  double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch;
 };
 
 
@@ -143,6 +143,8 @@ class US_Buoyancy : public US_Widgets
       QLineEdit*         le_peakPosition;
       QLineEdit*         le_peakDensity;
       QLineEdit*         le_peakName;
+      QLineEdit*         le_peakGaussArea;
+  
       QLineEdit*         le_buffer_density;
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
@@ -194,6 +196,7 @@ private slots:
         double compute_rmsd( QString ); 
         void delete_peak( void );
         void add_peak( void );
+  double calc_gauss_area( QString, double, double, double );
 
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );

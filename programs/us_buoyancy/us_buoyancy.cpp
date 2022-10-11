@@ -50,6 +50,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    tmp_dpoint.peakPosition = 0.0;
    tmp_dpoint.peakDensity = 0.0;
    tmp_dpoint.peakVbar = 0.0;
+   tmp_dpoint.peakGaussArea = 0.0;
    tmp_dpoint.temperature = 0.0;
    tmp_dpoint.bufferDensity = 0.998234;
    tmp_dpoint.meniscus = 0.0;
@@ -254,6 +255,11 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lbl_peakVbar, s_row, 0, 1, 2 );
    le_peakVbar = us_lineedit( QString::number( tmp_dpoint.peakVbar ) );
    specs->addWidget( le_peakVbar, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_peakGaussArea = us_label( tr( "Gauss Area (cm^2):" ), -1 );
+   specs->addWidget( lbl_peakGaussArea, s_row, 0, 1, 2 );
+   le_peakGaussArea = us_lineedit( QString::number( tmp_dpoint.peakGaussArea ) );
+   specs->addWidget( le_peakGaussArea, s_row++, 2, 1, 2 );   
 
    //Peak Editor
    QLabel* lb_peak_editor_bn = us_banner( tr( "Peak Editor" ) );
@@ -618,9 +624,10 @@ void US_Buoyancy::new_peak( int index )
 
   QStringList curr_peak_parms = triple_name_to_peak_to_parms_map[ triple_n ][ peak_n ];
   
-  le_peakDensity->setText( curr_peak_parms[0] );
-  le_peakVbar->setText( curr_peak_parms[1] );
-  le_peakPosition->setText( curr_peak_parms[2] );
+  le_peakDensity   -> setText( curr_peak_parms[0] );
+  le_peakVbar      -> setText( curr_peak_parms[1] );
+  le_peakPosition  -> setText( curr_peak_parms[2] );
+  le_peakGaussArea -> setText( curr_peak_parms[5] );
 
   //highligth peak line
   if( triple_name_to_peak_curves_map. contains( triple_n ) &&
@@ -784,6 +791,10 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 	  QMap< QString, double > peak_sigma_height = find_closest_sigma_height( triple_n, peak_poss[ i ] );
 	  curr_peak_parms << QString::number( peak_sigma_height[ "sigma" ] )
 			  << QString::number( peak_sigma_height[ "height" ] );
+
+	  //add area under peak
+	  double gauss_area = calc_gauss_area( triple_n, peak_poss[ i ], peak_sigma_height[ "sigma" ], peak_sigma_height[ "height" ] );
+	  curr_peak_parms << QString::number( gauss_area );
 	  
 	  triple_name_to_peak_to_parms_map[ triple_n ][ peak_name ] = curr_peak_parms;
 	  
@@ -812,6 +823,21 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
       //cb_peaks->setCurrentIndex(0);
       new_peak( 0 );
     }
+}
+
+
+//calculate area under Gauss function given by pos, sigma, height
+double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigma_p, double height_p )
+{
+  double gauss_area = 0;
+      
+  for ( int ii=0; ii < xfit_data[ triple_n ].size(); ++ii )
+    {
+      double x_val = xfit_data[ triple_n ][ ii ];
+      gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) );
+    }
+
+  return gauss_area;
 }
 
 //for each triple's peak, find closest sigma (fitted) && height
@@ -1398,9 +1424,10 @@ void US_Buoyancy::reset( void )
        cb_peaks->disconnect();
        cb_peaks->clear();
        
-       le_peakPosition ->setText( "0.0" );
-       le_peakDensity  ->setText( "0.0" );
-       le_peakVbar     ->setText( "0.0" );
+       le_peakPosition   ->setText( "0.0" );
+       le_peakDensity    ->setText( "0.0" );
+       le_peakVbar       ->setText( "0.0" );
+       le_peakGaussArea  ->setText( "0.0" );
 
        pgb_progress    ->reset();
        
@@ -2168,24 +2195,25 @@ void US_Buoyancy::save_auto( QString triple_n )
       QStringList curr_peak_parms_list = pp.value() ;
 
       //these come from the QMap - per peak position
-      tmp_dpoint.name         = curr_peak_name;
-      tmp_dpoint.peakPosition = curr_peak_parms_list[2 ].toDouble();
-      tmp_dpoint.peakDensity  = curr_peak_parms_list[0 ].toDouble();
-      tmp_dpoint.peakVbar     = curr_peak_parms_list[1 ].toDouble();
+      tmp_dpoint.name          = curr_peak_name;
+      tmp_dpoint.peakPosition  = curr_peak_parms_list[2 ].toDouble();
+      tmp_dpoint.peakDensity   = curr_peak_parms_list[0 ].toDouble();
+      tmp_dpoint.peakVbar      = curr_peak_parms_list[1 ].toDouble();
+      tmp_dpoint.peakGaussArea = curr_peak_parms_list[5 ].toDouble();
 
       qDebug() << "Saving_auto: current_triple index -- " << current_triple;
      
       //rest is the same for all peaks withtin a triple ?
-      tmp_dpoint.triple = triple_n;
-      tmp_dpoint.stretch = current_stretch;
-      tmp_dpoint.centerpiece = simparams[ current_triple ].bottom_position;
+      tmp_dpoint.triple        = triple_n;
+      tmp_dpoint.stretch       = current_stretch;
+      tmp_dpoint.centerpiece   = simparams[ current_triple ].bottom_position;
       tmp_dpoint.bufferDensity = le_buffer_density->text().toDouble();
-      tmp_dpoint.meniscus = le_meniscus->text().toDouble();
-      tmp_dpoint.bottom = le_bottom_calc->text().toDouble();
-      tmp_dpoint.speed = cb_rpms->currentText().toDouble();
-      tmp_dpoint.gradientMW = le_MW->text().toDouble();
-      tmp_dpoint.gradientVbar = le_vbar->text().toDouble();
-      tmp_dpoint.gradientC0 = le_dens_0->text().toDouble();
+      tmp_dpoint.meniscus      = le_meniscus->text().toDouble();
+      tmp_dpoint.bottom        = le_bottom_calc->text().toDouble();
+      tmp_dpoint.speed         = cb_rpms->currentText().toDouble();
+      tmp_dpoint.gradientMW    = le_MW->text().toDouble();
+      tmp_dpoint.gradientVbar  = le_vbar->text().toDouble();
+      tmp_dpoint.gradientC0    = le_dens_0->text().toDouble();
 
       
       dpoint.append( tmp_dpoint );
@@ -2245,9 +2273,12 @@ void US_Buoyancy::write_auto( void )
       te->e->append( "Sample description:\t" + dpoint[i].description );
       te->e->append( "Rotor speed:\t" + str.setNum( dpoint[i].speed ) + " rpm, (Rotor stretch: "
       + str2.setNum( dpoint[i].stretch) + " cm)" );
-      te->e->append( "Peak position:\t" + str.setNum( dpoint[i].peakPosition ) + " cm");
-      te->e->append( "Peak density:\t" + str.setNum( dpoint[i].peakDensity ) + " g/ml");
-      te->e->append( "Peak vbar:\t\t" + str.setNum( dpoint[i].peakVbar ) + " ml/g");
+
+      te->e->append( "Peak position:\t"     + str.setNum( dpoint[i].peakPosition )  + " cm");
+      te->e->append( "Peak density:\t"      + str.setNum( dpoint[i].peakDensity )   + " g/ml");
+      te->e->append( "Peak vbar:\t\t"       + str.setNum( dpoint[i].peakVbar )      + " ml/g");
+      te->e->append( "Peak Gauss area:\t" + str.setNum( dpoint[i].peakGaussArea ) + " cm^2");
+
       te->e->append( "Buffer density:\t" + str.setNum( dpoint[i].bufferDensity ) + " g/ml");
       te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
       te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
