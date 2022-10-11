@@ -34,7 +34,8 @@ class US_Buoyancy : public US_Widgets
 
       QVector <WavelengthScan> v_wavelength;
       US_ExtinctFitter *fitter;
-      
+      double * fitparameters;
+            
       QMap< QString, QVector<double>  >xfit_data;
       QMap< QString, QVector<double> > yfit_data;
 
@@ -55,15 +56,20 @@ class US_Buoyancy : public US_Widgets
       QVector < DataPoint >            dpoint;
 
       QMap< QString, QVector<double> > triple_name_to_peaks_map;
+  QMap< QString, double > triple_name_to_rmsd;
+  QMap< QString, double* > triple_name_to_fit_parameters;
       QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_curves_map;
+  QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_gauss_envelopes_map;
       QMap< QString, QMap < QString, QStringList > >  triple_name_to_peak_to_parms_map;
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
-  QMap< QString, bool > triple_peaks_defined_map;
+      QMap< QString, bool > triple_peaks_defined_map;
       QMap< QString, double > meniscus_to_triple_name_map;
       QMap< QString, double > data_left_to_triple_name_map;
       QMap< QString, double > data_right_to_triple_name_map;
-
+  QMap< QString, int >    gauss_order_minVariance;
+  QMap< QString, double > sigma_val_minVariance;
+  
       QRadioButton*      rb_meniscus;
       QRadioButton*      rb_datapoint;
       DataPoint          tmp_dpoint;
@@ -161,6 +167,7 @@ private slots:
 	double calc_stretch       ( void );
 	void draw_vline           ( double );
         void draw_vline_auto      ( double );
+  void draw_gauss_envelope  (  QMap < QString, QStringList > ); 
 	void mouse                ( const QwtDoublePoint& );
   void mouse_peak                ( const QwtDoublePoint& );
   void sel_investigator     ( void );
@@ -177,14 +184,16 @@ private slots:
 	void reset                ( void );
         void calc_points          ( void );
         void calc_points_auto     ( QString );
-        QVector< double > identify_peaks ( QString, double );
+  QMap< QString, double > find_closest_sigma_height( QString, double );
+  QVector< double > identify_peaks ( QString, double );
         int index_of_data( QVector<double>, double );
-        bool isMaximum_y( QVector<double>, int, int, int );
+       bool isMaximum_y( QVector<double>, int, int, int, QString );
         QMap< QString, double > get_data_conf_from_edit_profile ( QString );
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
-  void delete_peak( void );
-  void add_peak( void );
+        double compute_rmsd( QString ); 
+        void delete_peak( void );
+        void add_peak( void );
 
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );

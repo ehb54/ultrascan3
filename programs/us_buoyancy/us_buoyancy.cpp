@@ -623,15 +623,20 @@ void US_Buoyancy::new_peak( int index )
   le_peakPosition->setText( curr_peak_parms[2] );
 
   //highligth peak line
-  if( triple_name_to_peak_curves_map. contains( triple_n ) )
+  if( triple_name_to_peak_curves_map. contains( triple_n ) &&
+      triple_name_to_peak_gauss_envelopes_map. contains ( triple_n ) )
     {
       QPen pen = QPen( QBrush( Qt::green ), 3.0, Qt::DotLine );
       QVector< QwtPlotCurve* > v_line_vector = triple_name_to_peak_curves_map[ triple_n ];
+      QVector< QwtPlotCurve* > gauss_vector  = triple_name_to_peak_gauss_envelopes_map[ triple_n ];
       qDebug() << "v_line_vector size(), index -- " <<  v_line_vector.size() << index;
 
       if( index < v_line_vector.size() )
-	v_line_vector[ index ]->setPen( pen );
-
+	{
+	  v_line_vector[ index ]->setPen( pen );
+	  gauss_vector [ index ]->setPen( pen );
+	}
+      
       //the rest of line are show with default pen (yellow)
       for ( int i=0; i < v_line_vector.size(); ++i )
 	{
@@ -640,6 +645,7 @@ void US_Buoyancy::new_peak( int index )
 
 	  pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
 	  v_line_vector[ i ]->setPen( pen );
+	  gauss_vector[ i ] ->setPen( pen );
 	}
 
       //and replot...
@@ -740,7 +746,7 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 {
   QVector< double > peak_poss = triple_name_to_peaks_map[ triple_n ];
   triple_name_to_peak_to_parms_map[ triple_n ] . clear();
-
+  
   QStringList peak_names;
   //iterate over peaks for the current triple
   for ( int i=0; i< peak_poss.size(); i++ )
@@ -774,6 +780,11 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 	  curr_peak_parms << str;
 	  //le_peakPosition->setText( str );
 
+	  //identify closest (position-wise) fitted Gaussian && its sigma, as well as peak amplitude 
+	  QMap< QString, double > peak_sigma_height = find_closest_sigma_height( triple_n, peak_poss[ i ] );
+	  curr_peak_parms << QString::number( peak_sigma_height[ "sigma" ] )
+			  << QString::number( peak_sigma_height[ "height" ] );
+	  
 	  triple_name_to_peak_to_parms_map[ triple_n ][ peak_name ] = curr_peak_parms;
 	  
 	  pb_save->setEnabled( true );
@@ -803,6 +814,41 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
     }
 }
 
+//for each triple's peak, find closest sigma (fitted) && height
+QMap< QString, double > US_Buoyancy::find_closest_sigma_height( QString triple_n, double peak_p )
+{
+  QMap< QString, double > parms;
+  
+  //sigma
+  double* fit_p = triple_name_to_fit_parameters[ triple_n ];
+  double fitted_sigma = 0;
+  double min_separation = 10000;
+  for (unsigned int i=0; i < gauss_order_minVariance[ triple_n ]; i++)
+    {
+      //qDebug() << tr("Peak position: ")      << fit_p[v_wavelength.size() + (i * 3) + 1]  << " nm\n";
+      //qDebug() << tr("Amplitude of peak: ")  << exp(fit_p[v_wavelength.size() + (i * 3)]) << tr(" extinction\n");
+      //qDebug() << tr("Peak width: ")         << fit_p[v_wavelength.size() + (i * 3) + 2]  << " nm\n";
+
+      double fitted_peak_p = fit_p[v_wavelength.size() + (i * 3) + 1];
+      if ( qAbs( fitted_peak_p - peak_p ) < min_separation )
+	{
+	  min_separation = qAbs( fitted_peak_p - peak_p );
+	  fitted_sigma   = fit_p[v_wavelength.size() + (i * 3) + 2];
+	}
+    }
+
+  //peak's height
+  double fitted_height = 0;
+  int peak_index = index_of_data( xfit_data[ triple_n ], peak_p );
+  fitted_height  = yfit_data[ triple_n ][ peak_index ];
+
+  parms[ "sigma"  ] = fitted_sigma;
+  parms[ "height" ] = fitted_height;
+  
+  return parms;
+}
+
+
 // load AUC data
 void US_Buoyancy::load( void )
 {
@@ -829,11 +875,11 @@ void US_Buoyancy::load( void )
       return;
    }
 
-   // //DEBUG: TEMPORARY! /////////////////////////////////////////////////////////////////
-   // QStringList triples_temp = triples;
-   // triples.clear();
-   // triples << triples_temp[0] << triples_temp[ triples_temp.size() - 1 ];
-   // //////////////////////////////////////////////////////////////////////////////////////
+   //DEBUG: TEMPORARY! /////////////////////////////////////////////////////////////////
+   QStringList triples_temp = triples;
+   triples.clear();
+   triples << triples_temp[0] << triples_temp[ triples_temp.size() - 1 ];
+   //////////////////////////////////////////////////////////////////////////////////////
    
    cb_triple->addItems( triples );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
@@ -867,15 +913,15 @@ void US_Buoyancy::load( void )
      //ALEXEY: if auto_mode, read meniscus positions from editProfiles
       if ( us_buoyancy_auto_mode )
 	{
-	  QString rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
+	  //QString rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
 
-	  // //DEBUG /////////////////////////////////////////////////////////////////////////////////////////////////
-	  // QString rawGUID_t;
-	  // if ( ii == 0 )
-	  //   rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
-	  // else
-	  //   rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ triples_temp.size() - 1 ].rawGUID );
-	  // /////////////////////////////////////////////////////////////////////////////////////////////////////////
+	  //DEBUG /////////////////////////////////////////////////////////////////////////////////////////////////
+	  QString rawGUID_t;
+	  if ( ii == 0 )
+	    rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ ii ].rawGUID );
+	  else
+	    rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ triples_temp.size() - 1 ].rawGUID );
+	  /////////////////////////////////////////////////////////////////////////////////////////////////////////
 	  
 	  QMap <QString, double > data_conf = get_data_conf_from_edit_profile ( rawGUID_t );
 	  meniscus[ ii ] = data_conf[ "meniscus" ];
@@ -1327,6 +1373,11 @@ void US_Buoyancy::reset( void )
    data_left_to_triple_name_map . clear();
    data_right_to_triple_name_map . clear();
    variance_triple_order_map  . clear();
+   triple_name_to_rmsd        . clear();
+   triple_name_to_fit_parameters . clear();
+   gauss_order_minVariance    .clear();
+   sigma_val_minVariance      .clear();
+   triple_name_to_peak_gauss_envelopes_map. clear();
 
      
    if ( us_buoyancy_auto_mode )
@@ -1515,7 +1566,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 
        data_plot->replot();
        
-       //peak pesitions, vertical lines (if any)
+       //peak positions, vertical lines (if any) && Gaussians envelopes
        triple_name_to_peak_curves_map[ triple_n ]. clear();
        for (int ii=0; ii < triple_name_to_peaks_map[ triple_n ].size(); ++ii )
 	 {
@@ -1524,7 +1575,22 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   qDebug() << "Drawing line for triple, peak -- " << triple_n << rad;
 	   draw_vline_auto( rad );
 	 }
+
+       //plot gauss envelops
+       triple_name_to_peak_gauss_envelopes_map[ triple_n ]. clear();
+       draw_gauss_envelope( triple_name_to_peak_to_parms_map[ triple_n ] );
        
+       // //DEBUG: print out fitted parameters
+       // double *fit_params  = triple_name_to_fit_parameters[ triple_n ];
+       // for (unsigned int i=0; i < gauss_order_minVariance[ triple_n ]; i++)
+       // 	 {
+       // 	   qDebug() << "\n" << (i+1) << tr(". Gaussian:\n");
+       // 	   qDebug() << tr("Peak position: ")      << fit_params[v_wavelength.size() + (i * 3) + 1]  << " nm\n";
+       // 	   qDebug() << tr("Amplitude of peak: ")  << exp(fit_params[v_wavelength.size() + (i * 3)]) << tr(" extinction\n");
+       // 	   qDebug() << tr("Peak width: ")         << fit_params[v_wavelength.size() + (i * 3) + 2]  << " nm\n";
+       // 	 }
+       // ////////////////////////////////////////
+
      }
 
    data_plot->replot();
@@ -1608,7 +1674,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 	       unsigned int  order = current_order;
 	       
 	       unsigned int  parameters = order * 3 + v_wavelength.size();
-	       double * fitparameters = new double [parameters];
+	       //double * fitparameters = new double [parameters];
+	       fitparameters = new double [parameters];       
 	       for (int i=0; i<v_wavelength.size(); i++)
 		 {
 		   fitparameters[i] = 0.3;                                                  // Amplitude
@@ -1637,6 +1704,9 @@ void US_Buoyancy::plot_scan( double scan_number )
 	     }
 	 }
        // END of Fit ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+       //save fit parameters
+       triple_name_to_fit_parameters[ triple_n ] = fitparameters;
        
        triple_fitted_map[ triple_n ] = true;
      }
@@ -1666,8 +1736,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 	     }
 	 }
        
-       int    gauss_order_minVariance = 0;
-       double sigma_val_minVariance   = 0;
+       gauss_order_minVariance[ triple_n ]   = 0;
+       sigma_val_minVariance  [ triple_n ]   = 0;
        for ( ss =  curr_triple_sigma_order_vars.begin(); ss !=  curr_triple_sigma_order_vars.end(); ++ss )
 	 {
 	   QMap < int, double > curr_triple_order_vars = ss.value();
@@ -1676,22 +1746,26 @@ void US_Buoyancy::plot_scan( double scan_number )
 	     {
 	       if ( mm.value() == minVariance )
 		 {
-		   sigma_val_minVariance   = ss.key();
-		   gauss_order_minVariance = mm.key();
+		   sigma_val_minVariance  [ triple_n ] = ss.key();
+		   gauss_order_minVariance[ triple_n ] = mm.key();
 		   break;
 		 }
 	     }
 	 }
        qDebug() << "Smallest variance " << minVariance << " for triple " << triple_n
-		<< ", for Sigma val -- " <<  sigma_val_minVariance
-		<< ", for Gauss order -- " << gauss_order_minVariance;
+		<< ", for Sigma val -- " <<  sigma_val_minVariance[ triple_n ]
+		<< ", for Gauss order -- " << gauss_order_minVariance [ triple_n ];
+
+       int g_order    = gauss_order_minVariance [ triple_n ];
+       double g_sigma = sigma_val_minVariance[ triple_n ]; 
 
        //finally, select the FIT data for the smallest variance to be plotted alongside raw data:
-       xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ sigma_val_minVariance ][ gauss_order_minVariance ];
-       yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ sigma_val_minVariance ][ gauss_order_minVariance ];
+       xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ g_sigma ][ g_order ];
+       yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ g_sigma ][ g_order ];
 
-       // Now that we have best fit curves, Identify peak positions: 
-       QVector <double> peak_poss_auto = identify_peaks( triple_n, sigma_val_minVariance );
+       // Now that we have best fit curves, Identify peak positions:
+       triple_name_to_rmsd[ triple_n ] = compute_rmsd ( triple_n );
+       QVector <double> peak_poss_auto = identify_peaks( triple_n, g_sigma );
 
        qDebug() << "[AUTO] peaks for triple: " << triple_n << " are -- " << peak_poss_auto;
 
@@ -1721,8 +1795,27 @@ void US_Buoyancy::plot_scan( double scan_number )
 }
 
 
+
+double US_Buoyancy::compute_rmsd ( QString triple_n )
+{
+  double rmsd = 0;
+  double mean = 0;
+
+  for (int i=0; i < xfit_data[ triple_n ].size(); i++ )
+    {
+      mean += pow( ( v_wavelength[ 0 ].v_readings[ i ].od - yfit_data[ triple_n ][ i ] ), 2);
+    }
+
+  mean /= (double) xfit_data[ triple_n ].size();
+
+  rmsd = sqrt( mean );
+
+  return rmsd;
+}
+
 QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p )
 {
+  //double* fit_parms = triple_name_to_fit_parameters[ triple_n ];
   QVector< double > peaks;
   double stretch_f = 2.5;
   double sigma = sigma_p * stretch_f;
@@ -1749,14 +1842,14 @@ QVector< double > US_Buoyancy::identify_peaks( QString triple_n, double sigma_p 
 
       //qDebug() << "Proceeding with point x, y: " << curr_x << curr_y << "; pm sigma -- " << left_x << right_x ;
       
-      if ( isMaximum_y( yfit_data[ triple_n ], i, left_i, right_i ) )
+      if ( isMaximum_y( yfit_data[ triple_n ], i, left_i, right_i, triple_n ) )
 	peaks .push_back( curr_x );
     }
   
   return peaks;
 }
 
-bool US_Buoyancy::isMaximum_y( QVector<double> ydata, int curr_i, int left_i, int right_i )
+bool US_Buoyancy::isMaximum_y( QVector<double> ydata, int curr_i, int left_i, int right_i, QString triple_n )
 {
   bool isPeak = true;
   double curr_y = ydata[ curr_i ];
@@ -1775,12 +1868,16 @@ bool US_Buoyancy::isMaximum_y( QVector<double> ydata, int curr_i, int left_i, in
 	}
     }
 
-  //maybe check for height estimate vs. OD threshold limit (to be considered as peak)?
+  //maybe check for height estimate vs. OD threshold limit (to be considered a peak)?
   if ( isPeak )
     {
       double mean         = 0;
       double minimum      = 10000;
-      double od_threshold = 0.005;    // maybe should be calculated from Gauss's height at [ x /pm sigma ]?
+      //double od_threshold = 0.005;    // maybe should be calculated from Gauss's height at [ x /pm sigma ]?
+      double od_threshold = 3.5 * triple_name_to_rmsd[ triple_n ];
+
+      qDebug() << "RMSD for triple: " << triple_n << ", " <<  triple_name_to_rmsd[ triple_n ]; 
+      
       for (int i = left_i; i < right_i; i++ )
   	{
   	  mean += ydata[ i ];
@@ -1846,8 +1943,9 @@ void US_Buoyancy::delete_peak( void )
 
   qDebug() << "Current peak index -- " << peak_index;
   
-  triple_name_to_peaks_map[ triple_n ].remove( peak_index );
-
+  triple_name_to_peaks_map[ triple_n ]         .remove( peak_index );
+  triple_name_to_peak_to_parms_map[ triple_n ] .remove( peak_n ); 
+  
   new_triple( current_triple );
 
   qDebug() << "Delete peak: triple_name_to_peaks_map[ triple ].size() -- " << triple_name_to_peaks_map[ triple_n ].size();
@@ -1894,6 +1992,7 @@ void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
   qDebug() << "Adding new peak, new size() -- " << triple_name_to_peaks_map[ triple_n ].size();
 
   std::sort(triple_name_to_peaks_map[ triple_n ].begin(), triple_name_to_peaks_map[ triple_n ].end());
+  calc_points_auto( triple_n );
 
   new_triple( current_triple );
 
@@ -1908,6 +2007,69 @@ void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
   pick -> disconnect();
   pick -> setEnabled( false ); 
 }  
+
+//Draw Gaussian envelope
+void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
+{
+  QString triple_n = cb_triple->itemText( current_triple );
+  
+  
+#if QT_VERSION < 0x050000
+  QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+  QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
+#endif
+  
+  double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+
+  qDebug() << "Gauss envelope build for triple: " << triple_n;
+  
+  //peak Gauss params
+  QMap < QString, QStringList >::iterator ss;
+  // //DEBUG
+  // for ( ss =  peak_p.begin(); ss !=  peak_p.end(); ++ss )
+  //   {
+  //     qDebug() << "Peaks, values --  " << ss.key() << ss.value(); 
+  //   }
+  // //////////////
+  
+  for ( ss =  peak_p.begin(); ss !=  peak_p.end(); ++ss )
+    {
+      QStringList pp = ss.value();
+
+      double pos_x  = pp[ 2 ].toDouble();
+      double sigma  = pp[ 3 ].toDouble();         //<---- Alternatively, sigma is determined differently
+      double height = pp[ 4 ].toDouble();
+
+      qDebug() << "Peak: " << ss.key() << ", pos_x, sigma, height -- "
+	       << pos_x << sigma << height;
+
+      QVector <double> gaussian_y;
+      
+      for ( int ii=0; ii < xfit_data[ triple_n ].size(); ++ii )
+	{
+	  double x_val = xfit_data[ triple_n ][ ii ];
+	  double y_val = height * exp( - ( pow(( x_val - pos_x), 2 )) / ( 2 * pow( sigma, 2)) );
+	  
+	  gaussian_y. push_back ( y_val ); 
+	}
+
+      qDebug() << "Envelope built for peak: " << ss.key();
+      
+      QwtPlotCurve* peak_envelope;
+      peak_envelope = us_curve(data_plot, "Gauss Envelope");
+      
+      double* yy = (double*)gaussian_y.data();
+      double* xx = (double*)xfit_data[ triple_n ].data();
+      peak_envelope ->setSamples( xx, yy, xfit_data[ triple_n ].size() );
+      
+      QPen pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
+      peak_envelope->setPen( pen );
+      
+      triple_name_to_peak_gauss_envelopes_map[ triple_n ].push_back( peak_envelope ) ;
+      
+    }
+}
 
 // Draw a vertical pick line
 void US_Buoyancy::draw_vline_auto( double radius )
@@ -1927,8 +2089,8 @@ void US_Buoyancy::draw_vline_auto( double radius )
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
-   qDebug() << "Drawing vert. line: upperY, lowerY, padding -- "
-	    << y_axis->upperBound() << y_axis->lowerBound() << padding;
+   // qDebug() << "Drawing vert. line: upperY, lowerY, padding -- "
+   // 	    << y_axis->upperBound() << y_axis->lowerBound() << padding;
    
    double v[ 2 ];
    v [ 0 ] = y_axis->upperBound() - padding;
@@ -2090,7 +2252,7 @@ void US_Buoyancy::write_auto( void )
       te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
       te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
       " cm (Centerpiece bottom at rest: " + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
-      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " °C");
+      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) +  DEGC );
       te->e->append( "Gradient-forming\nmaterial details:");
       te->e->append( "Molecular weight:\t" + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
       te->e->append( "Loading density:\t" + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
