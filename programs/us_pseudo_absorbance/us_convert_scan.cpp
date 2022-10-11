@@ -228,7 +228,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     right_lyt->addWidget(plot_title);
     right_lyt->addLayout(usplot_insty);
     right_lyt->addLayout(usplot_abs);
-    right_lyt->addStretch(1);
+//    right_lyt->addStretch(1);
     right_lyt->addLayout(scan_ctrl_lyt);
 
     QHBoxLayout* main_lyt = new QHBoxLayout(this);
