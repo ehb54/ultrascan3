@@ -633,7 +633,7 @@ void US_Buoyancy::new_peak( int index )
   if( triple_name_to_peak_curves_map. contains( triple_n ) &&
       triple_name_to_peak_gauss_envelopes_map. contains ( triple_n ) )
     {
-      QPen pen = QPen( QBrush( Qt::green ), 3.0, Qt::DotLine );
+      QPen pen = QPen( QBrush( Qt::magenta ), 2.0, Qt::DotLine );
       QVector< QwtPlotCurve* > v_line_vector = triple_name_to_peak_curves_map[ triple_n ];
       QVector< QwtPlotCurve* > gauss_vector  = triple_name_to_peak_gauss_envelopes_map[ triple_n ];
       qDebug() << "v_line_vector size(), index -- " <<  v_line_vector.size() << index;
@@ -650,7 +650,7 @@ void US_Buoyancy::new_peak( int index )
 	  if ( i == index )
 	    continue;
 
-	  pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
+	  pen = QPen( QBrush( Qt::yellow ), 1.0, Qt::DotLine );
 	  v_line_vector[ i ]->setPen( pen );
 	  gauss_vector[ i ] ->setPen( pen );
 	}
@@ -868,7 +868,8 @@ QMap< QString, double > US_Buoyancy::find_closest_sigma_height( QString triple_n
   int peak_index = index_of_data( xfit_data[ triple_n ], peak_p );
   fitted_height  = yfit_data[ triple_n ][ peak_index ];
 
-  parms[ "sigma"  ] = fitted_sigma;
+  //parms[ "sigma"  ] = fitted_sigma;
+  parms[ "sigma"  ] = 0.015;
   parms[ "height" ] = fitted_height;
   
   return parms;
@@ -2071,14 +2072,19 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
       qDebug() << "Peak: " << ss.key() << ", pos_x, sigma, height -- "
 	       << pos_x << sigma << height;
 
+      QVector <double> gaussian_x;
       QVector <double> gaussian_y;
       
       for ( int ii=0; ii < xfit_data[ triple_n ].size(); ++ii )
 	{
 	  double x_val = xfit_data[ triple_n ][ ii ];
 	  double y_val = height * exp( - ( pow(( x_val - pos_x), 2 )) / ( 2 * pow( sigma, 2)) );
-	  
-	  gaussian_y. push_back ( y_val ); 
+
+	  if ( y_val >= triple_name_to_rmsd [ triple_n ] )
+	    {
+	      gaussian_x. push_back ( x_val ); 
+	      gaussian_y. push_back ( y_val ); 
+	    }
 	}
 
       qDebug() << "Envelope built for peak: " << ss.key();
@@ -2087,10 +2093,10 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
       peak_envelope = us_curve(data_plot, "Gauss Envelope");
       
       double* yy = (double*)gaussian_y.data();
-      double* xx = (double*)xfit_data[ triple_n ].data();
-      peak_envelope ->setSamples( xx, yy, xfit_data[ triple_n ].size() );
+      double* xx = (double*)gaussian_x.data();
+      peak_envelope ->setSamples( xx, yy, gaussian_x.size() );
       
-      QPen pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
+      QPen pen = QPen( QBrush( Qt::yellow ), 1 );//, 1.0, Qt::DotLine );
       peak_envelope->setPen( pen );
       
       triple_name_to_peak_gauss_envelopes_map[ triple_n ].push_back( peak_envelope ) ;
@@ -2126,7 +2132,7 @@ void US_Buoyancy::draw_vline_auto( double radius )
    v_line_peak = us_curve( data_plot, "V-Line" );
    v_line_peak ->setSamples( r, v, 2 );
 
-   QPen pen = QPen( QBrush( Qt::yellow ), 2.0, Qt::DotLine );
+   QPen pen = QPen( QBrush( Qt::yellow ), 1.0, Qt::DotLine );
    v_line_peak->setPen( pen );
 
    QString triple_n = cb_triple->itemText( current_triple );
