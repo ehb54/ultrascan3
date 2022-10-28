@@ -18,6 +18,135 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #include <QTextStream>
 #endif
 
+#define TSO QTextStream(stdout)
+
+static QStringList pr_csv_pad_holes( const QStringList &qsl ) {
+   TSO << "pr_csv_pad_holes()\n";
+
+   // find r vector
+
+   QStringList qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
+   if ( !qsl_headers.size() ) {
+      TSO << "pr_csv_pad_holes() -- no proper header\n";
+      return qsl;
+   }
+
+   QStringList qsl_r = (qsl_headers[0]).split( "," );
+
+   if ( qsl_r.size() < 6 )
+   {
+      TSO << "pr_csv_pad_holes() does not appear to contain any r values in the header rows.\n";
+      return qsl;
+   }
+
+   vector < double > r;
+
+   r.push_back(qsl_r[4].toDouble());
+   {
+      QStringList::iterator it = qsl_r.begin();
+      it += 5;
+      for ( ; it != qsl_r.end(); it++ )
+      {
+         if ( (*it).toDouble() > r[r.size() - 1] )
+         {
+            r.push_back((*it).toDouble());
+         } else {
+            break;
+         }
+      }
+   }
+   
+   if ( r.size() < 3 ) {
+      TSO << "pr_csv_pad_holes() r.size() too small to consider.\n";
+      return qsl;
+   }      
+
+   // assume first two entries are spacing
+   double delta = r[1] - r[0];
+
+   TSO << QString( "pr_csv_pad_holes() r.size() %1\n" ).arg( delta );
+
+   // check if ok as-is
+
+   bool ok      = true;
+   bool fixable = true;
+   map < int, int > pad_here;
+
+   for ( int i = 1; i < (int) r.size(); ++i ) {
+      double this_delta =  r[i] - r[i-1];
+      if ( this_delta != delta ) {
+         ok = false;
+         double inserts = this_delta / delta - 1;
+         if ( inserts != (int)inserts ) {
+            fixable = false;
+            break;
+         }
+         // i+4 for offset into original
+         pad_here[ i + 4 ] = (int)inserts;
+      }
+   }
+         
+   TSO << QString( "pr_csv_pad_holes() r is %1\n" ).arg( ok ? "OK" : "not OK" );
+   if ( ok ) {
+      return qsl;
+   }
+
+   US_Vector::printvector( "pr_csv_pad_holes() r", r );
+
+   TSO << QString( "pr_csv_pad_holes() r is %1\n" ).arg( fixable ? "fixable" : "not Fixable" );
+
+   if ( !fixable ) {
+      return qsl;
+   }
+
+   // ok, fix !
+   
+
+   QStringList qsl_header_new = qsl_headers[0].split( "," );
+
+   QStringList qsl_data = qsl.filter(",\"P(r)");
+   vector < QStringList > qsl_data_new;
+   for ( int i = 0; i < (int) qsl_data.size(); ++i ) {
+      qsl_data_new.push_back( qsl_data[i].split( "," ) );
+      qsl_data_new.back().removeLast();
+      while ( qsl_data_new.back().size() < qsl_header_new.size() - 2 ) {
+         qsl_data_new.back() << "0";
+      }
+   }
+
+   for ( auto it = pad_here.begin();
+         it != pad_here.end();
+         ++it ) {
+      TSO << QString( "pr_csv_pad_holes() pad_here[%1] = %2\n" ).arg( it->first ).arg( it->second );
+      for ( int i = 0; i < it->second; ++i ) {
+         // fix header
+         qsl_header_new.insert( it->first + i, QString( "%1" ).arg( qsl_header_new[it->first - 1].toDouble() + ( delta * ( i + 1 ) ) ) );
+         // fix datalines
+         for ( int j = 0; j < (int) qsl_data_new.size(); ++j ) {
+            qsl_data_new[j].insert( it->first + i, "0" );
+         }
+      }
+      
+   }
+
+   // TSO << "pr_csv_pad_holes() fixed header\n" << qsl_header_new.join( "\n" ) << "\n";
+   // TSO << "pr_csv_pad_holes() fixed lines\n";
+   // for ( int i = 0; i < (int) qsl_data_new.size(); ++i ) {
+   //    TSO << qsl_data_new[i].join( "\n" ) << "\n";
+   // }
+   
+   // reassemble
+   QStringList qsl_new;
+   qsl_new << qsl_header_new.join(",");
+   for ( int i = 0; i < (int) qsl_data_new.size(); ++i ) {
+      qsl_new << qsl_data_new[i].join(",");
+   }
+
+   // TSO << "pr_csv_pad_holes() fixed qsl\n" << qsl_new.join("\n") << "\n";
+
+   return qsl_new;
+}
+
 static QStringList csv_transpose( const QStringList &qsl ) {
    // qDebug() << "csv_transpose()";
    // QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
@@ -2266,6 +2395,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             qsl = new_qsl;
          }
 
+         qsl = pr_csv_pad_holes( qsl );
+
          qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
          if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
          {
@@ -2424,6 +2555,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   // cout << "new csv:\n" << new_qsl.join("\n") << endl;
                   qsl2 = new_qsl;
                }
+
+               qsl2 = pr_csv_pad_holes( qsl2 );
+
                qsl2_headers = qsl2.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
                if ( qsl2_headers.size() == 0 )
                {
