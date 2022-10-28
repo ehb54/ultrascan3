@@ -3261,12 +3261,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
-                  if ( hist[i] ) {
-                     fprintf(fpr, "%.6e\t%.6e\t%.6e\n", r[i], pr[i], pr_n[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
-                  }
+                  // allow zeros in output ... esp important for intermediates...
+                  // if ( hist[i] ) {
+                  fprintf(fpr, "%.6e\t%.6e\t%.6e\n", r[i], pr[i], pr_n[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
+                  // }
                }
                fclose(fpr);
             }
@@ -3322,11 +3323,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      );
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
-            if ( hist[i] ) {
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
-            }
+            // allow zeros in output ... esp important for intermediates...
+            // if ( hist[i] ) {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
+            // }
          }
       }
    } // models
