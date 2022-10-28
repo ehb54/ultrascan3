@@ -948,13 +948,13 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          added_interpolate_msg = true;
       }
       QString line = QString("\"%1\",\"I(q)\",%2\n")
-         .arg(qsl_plotted_iq_names[i])
+         .arg(qsl_plotted_iq_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
          .arg(vector_double_to_csv(nic));
       qsl << line;
       if ( is_nonzero_vector( nic_errors ) )
       {
          QString line = QString("\"%1\",\"I(q) sd\",%2\n")
-            .arg(qsl_plotted_iq_names[i])
+            .arg(qsl_plotted_iq_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
             .arg(vector_double_to_csv(nic_errors));
          qsl << line;
       }
@@ -2759,7 +2759,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                added_interpolate_msg = true;
             }
             QString line = QString("\"%1\",%2,%3,\"P(r)\",%4\n")
-               .arg(qsl_plotted_pr_names[i])
+               .arg(qsl_plotted_pr_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
                .arg(plotted_pr_mw[i])
                .arg(compute_pr_area(npr, r))
                .arg(vector_double_to_csv(npr));
