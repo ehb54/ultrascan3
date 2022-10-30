@@ -230,7 +230,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
             SLOT (update_for_MW(void)));
 
 
-   QLabel* lbl_sigma = us_label( tr( "Peak Sigma Value:" ), -1 );
+   QLabel* lbl_sigma = us_label( tr( "Peak Sigma Value (cm):" ), -1 );
    specs->addWidget( lbl_sigma, s_row, 0, 1, 2 );
    le_sigma = us_lineedit( QString::number( tmp_dpoint.sigma ), -1,  true );
    specs->addWidget( le_sigma, s_row++, 2, 1, 2 );
@@ -273,7 +273,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    le_peakVbar = us_lineedit( QString::number( tmp_dpoint.peakVbar ), -1, true );
    specs->addWidget( le_peakVbar, s_row++, 1, 1, 3 );
 
-   QLabel* lbl_peakGaussArea = us_label( tr( "Gauss Area (OD*cm):" ), -1 );
+   QLabel* lbl_peakGaussArea = us_label( tr( "Gauss Area (% of total):" ), -1 );
    specs->addWidget( lbl_peakGaussArea, s_row, 0, 1, 1 );
    le_peakGaussArea = us_lineedit( QString::number( tmp_dpoint.peakGaussArea ), -1, true );
    specs->addWidget( le_peakGaussArea, s_row++, 1, 1, 3 );   
@@ -646,8 +646,10 @@ void US_Buoyancy::new_peak( int index )
   le_peakDensity   -> setText( curr_peak_parms[0] );
   le_peakVbar      -> setText( curr_peak_parms[1] );
   le_peakPosition  -> setText( curr_peak_parms[2] );
-  le_peakGaussArea -> setText( curr_peak_parms[5] + "   (" + QString::number(percent_of_total, 'f', 2) + "% of total)" );
+  le_peakGaussArea -> setText( QString::number(percent_of_total, 'f', 2) );
+  //le_peakGaussArea -> setText( curr_peak_parms[5] + "   (" + QString::number(percent_of_total, 'f', 2) + "% of total)" );
 
+  
   //highligth peak line
   if( triple_name_to_peak_curves_map. contains( triple_n ) &&
       triple_name_to_peak_gauss_envelopes_map. contains ( triple_n ) )
@@ -2441,8 +2443,7 @@ void US_Buoyancy::write_auto( void )
       te->e->append( "Peak position:\t"      + str.setNum( dpoint[i].peakPosition )  + " cm");
       te->e->append( "Peak density:\t"       + str.setNum( dpoint[i].peakDensity )   + " g/ml");
       te->e->append( "Peak vbar:\t\t"        + str.setNum( dpoint[i].peakVbar )      + " ml/g");
-      te->e->append( "Peak Gauss area:\t"    + str.setNum( dpoint[i].peakGaussArea ) + " OD*cm"
-		     + "   (" + QString::number(dpoint[i].percentTotal, 'f', 2) + "% of total)" );
+      te->e->append( "Peak Gauss area (% of total):\t" +  QString::number(dpoint[i].percentTotal, 'f', 2) );
       te->e->append( "Peak sigma value:\t\t" + str.setNum( dpoint[i].sigma )      + " cm");
 
       te->e->append( "Buffer density:\t"     + str.setNum( dpoint[i].bufferDensity ) + " g/ml");
