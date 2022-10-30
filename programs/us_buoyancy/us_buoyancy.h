@@ -15,8 +15,8 @@
 struct DataPoint
 {
   QString name, description, dataset, triple;
-  double peakPosition, peakDensity, peakVbar, peakGaussArea, temperature, bufferDensity, centerpiece;
-  double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch;
+  double peakPosition, peakDensity, peakVbar, peakGaussArea, percentTotal, temperature, bufferDensity, centerpiece;
+  double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch, sigma;
 };
 
 
@@ -56,6 +56,7 @@ class US_Buoyancy : public US_Widgets
       QVector < DataPoint >            dpoint;
 
       QMap< QString, QVector<double> > triple_name_to_peaks_map;
+  QMap< QString, double > triple_name_to_total_area;
   QMap< QString, double > triple_name_to_rmsd;
   QMap< QString, double* > triple_name_to_fit_parameters;
       QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_curves_map;
@@ -64,9 +65,16 @@ class US_Buoyancy : public US_Widgets
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
       QMap< QString, bool > triple_peaks_defined_map;
-      QMap< QString, double > meniscus_to_triple_name_map;
-      QMap< QString, double > data_left_to_triple_name_map;
-      QMap< QString, double > data_right_to_triple_name_map;
+
+  QMap< QString, double > data_left_to_triple_name_map;
+  QMap< QString, double > data_right_to_triple_name_map;
+  QMap< QString, double > meniscus_to_triple_name_map;
+  QMap< QString, double > buffDensity_to_triple_name_map;
+  QMap< QString, double > sigma_to_triple_name_map;
+  QMap< QString, double > gradMW_to_triple_name_map;
+  QMap< QString, double > gradVbar_to_triple_name_map;
+  QMap< QString, double > gradC0_to_triple_name_map;
+
   QMap< QString, int >    gauss_order_minVariance;
   QMap< QString, double > sigma_val_minVariance;
   
@@ -138,6 +146,7 @@ class US_Buoyancy : public US_Widgets
       QLineEdit*         le_vbar;
       QLineEdit*         le_MW;
       QLineEdit*         le_meniscus;
+      QLineEdit*         le_sigma;
       QLineEdit*         le_temperature;
       QLineEdit*         le_peakVbar;
       QLineEdit*         le_peakPosition;
@@ -179,7 +188,13 @@ private slots:
 	void new_triple           ( int  );
         void new_peak             ( int );
 	void plot_scan            ( double );
-	void write                ( void );
+  
+  void update_for_sigma  (void);
+  void update_for_MW     (void);
+  void update_for_vbar   (void);
+  void update_for_dens_0 (void);
+
+  void write                ( void );
         void write_auto           ( void );
         void save                 ( void );
         void save_auto            ( QString );
@@ -191,12 +206,14 @@ private slots:
         int index_of_data( QVector<double>, double );
        bool isMaximum_y( QVector<double>, int, int, int, QString );
         QMap< QString, double > get_data_conf_from_edit_profile ( QString );
+       
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
         double compute_rmsd( QString ); 
         void delete_peak( void );
         void add_peak( void );
   double calc_gauss_area( QString, double, double, double );
+  double calc_total_area( QString );
 
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
