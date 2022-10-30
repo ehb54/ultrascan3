@@ -32,7 +32,6 @@
 // Alternative Constructor (for autoflow )
 US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
 {
-
    us_buoyancy_auto_mode = true;
    // initialize gradient forming material to 65% Nycodenz (weight/vol):
 
@@ -57,9 +56,16 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    tmp_dpoint.meniscus = 0.0;
    tmp_dpoint.bottom = 0.0;
    tmp_dpoint.speed = 0.0;
-   tmp_dpoint.gradientMW = 821.0;
-   tmp_dpoint.gradientVbar = 0.4831;
-   tmp_dpoint.gradientC0 = 1.2294;
+
+   // tmp_dpoint.gradientMW   = 821.0;
+   // tmp_dpoint.gradientVbar = 0.4831;
+   // tmp_dpoint.gradientC0   = 1.2294;
+
+   tmp_dpoint.gradientMW   = 168.36;
+   tmp_dpoint.gradientVbar = 0.2661;
+   tmp_dpoint.gradientC0   = 1.4200;
+
+
    tmp_dpoint.sigma = 0.015;
 
    setWindowTitle( tr( "[AUTO] Buoyancy Equilibrium Data Analysis" ) );
@@ -224,7 +230,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
             SLOT (update_for_MW(void)));
 
 
-   QLabel* lbl_sigma = us_label( tr( "Sigma Value:" ), -1 );
+   QLabel* lbl_sigma = us_label( tr( "Peak Sigma Value:" ), -1 );
    specs->addWidget( lbl_sigma, s_row, 0, 1, 2 );
    le_sigma = us_lineedit( QString::number( tmp_dpoint.sigma ), -1,  true );
    specs->addWidget( le_sigma, s_row++, 2, 1, 2 );
@@ -267,7 +273,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    le_peakVbar = us_lineedit( QString::number( tmp_dpoint.peakVbar ), -1, true );
    specs->addWidget( le_peakVbar, s_row++, 1, 1, 3 );
 
-   QLabel* lbl_peakGaussArea = us_label( tr( "Gauss Area (OD^2):" ), -1 );
+   QLabel* lbl_peakGaussArea = us_label( tr( "Gauss Area (OD*cm):" ), -1 );
    specs->addWidget( lbl_peakGaussArea, s_row, 0, 1, 1 );
    le_peakGaussArea = us_lineedit( QString::number( tmp_dpoint.peakGaussArea ), -1, true );
    specs->addWidget( le_peakGaussArea, s_row++, 1, 1, 3 );   
@@ -858,9 +864,28 @@ double US_Buoyancy::calc_total_area( QString triple_n )
 {
   double total_area = 0;
 
-  for ( int ii=0; ii < xfit_data[ triple_n ].size(); ++ii )
-    total_area  += yfit_data[ triple_n ][ ii ];
-  
+  // //DEBUG
+  // qDebug() << "In total area: #points -- " << xfit_data[ triple_n ].size();
+  // for ( int ii=0; ii < xfit_data[ triple_n ].size() - 1; ++ii )
+  //   {
+  //     double point1 = xfit_data[ triple_n ][ ii ];
+  //     double point2 = xfit_data[ triple_n ][ ii + 1];
+  //     double jac    = point2 - point1;
+  //     qDebug() << "Jacobian for points  " << ii << ii+1 << ": " << jac;
+
+  //   }
+  ///////////////////////////////
+
+  for ( int ii=0; ii < xfit_data[ triple_n ].size() - 1; ++ii )
+    {
+      double point1 = xfit_data[ triple_n ][ ii ];
+      double point2 = xfit_data[ triple_n ][ ii + 1];
+      double jac    = point2 - point1;                   //dx
+      total_area  += yfit_data[ triple_n ][ ii ] * jac;
+      //total_area  += yfit_data[ triple_n ][ ii ] ;
+    }
+
+  qDebug() << "Total Area, Triple -- " << triple_n << total_area;
   return total_area;
 }
 
@@ -869,10 +894,15 @@ double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigm
 {
   double gauss_area = 0;
       
-  for ( int ii=0; ii < xfit_data[ triple_n ].size(); ++ii )
+  for ( int ii=0; ii < xfit_data[ triple_n ].size() - 1; ++ii )
     {
+      double point1 = xfit_data[ triple_n ][ ii ];
+      double point2 = xfit_data[ triple_n ][ ii + 1];
+      double jac    = point2 - point1;                       //dx
+
       double x_val = xfit_data[ triple_n ][ ii ];
-      gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) );
+      gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac;
+      //gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) );
     }
 
   return gauss_area;
@@ -2344,6 +2374,7 @@ void US_Buoyancy::save_auto( QString triple_n )
       // tmp_dpoint.gradientC0    = le_dens_0->text().toDouble();
 
       tmp_dpoint.bufferDensity = buffDensity_to_triple_name_map[ triple_n ];
+      tmp_dpoint.sigma         = sigma_to_triple_name_map      [ triple_n ];
       tmp_dpoint.meniscus      = meniscus_to_triple_name_map   [ triple_n ];
       tmp_dpoint.gradientMW    = gradMW_to_triple_name_map     [ triple_n ];
       tmp_dpoint.gradientVbar  = gradVbar_to_triple_name_map   [ triple_n ];
@@ -2407,21 +2438,22 @@ void US_Buoyancy::write_auto( void )
       te->e->append( "Rotor speed:\t" + str.setNum( dpoint[i].speed ) + " rpm, (Rotor stretch: "
       + str2.setNum( dpoint[i].stretch) + " cm)" );
 
-      te->e->append( "Peak position:\t"     + str.setNum( dpoint[i].peakPosition )  + " cm");
-      te->e->append( "Peak density:\t"      + str.setNum( dpoint[i].peakDensity )   + " g/ml");
-      te->e->append( "Peak vbar:\t\t"       + str.setNum( dpoint[i].peakVbar )      + " ml/g");
-      te->e->append( "Peak Gauss area:\t" + str.setNum( dpoint[i].peakGaussArea ) + " OD^2"
+      te->e->append( "Peak position:\t"      + str.setNum( dpoint[i].peakPosition )  + " cm");
+      te->e->append( "Peak density:\t"       + str.setNum( dpoint[i].peakDensity )   + " g/ml");
+      te->e->append( "Peak vbar:\t\t"        + str.setNum( dpoint[i].peakVbar )      + " ml/g");
+      te->e->append( "Peak Gauss area:\t"    + str.setNum( dpoint[i].peakGaussArea ) + " OD*cm"
 		     + "   (" + QString::number(dpoint[i].percentTotal, 'f', 2) + "% of total)" );
+      te->e->append( "Peak sigma value:\t\t" + str.setNum( dpoint[i].sigma )      + " cm");
 
-      te->e->append( "Buffer density:\t" + str.setNum( dpoint[i].bufferDensity ) + " g/ml");
-      te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
-      te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
-      " cm (Centerpiece bottom at rest: " + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
-      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) +  DEGC );
+      te->e->append( "Buffer density:\t"     + str.setNum( dpoint[i].bufferDensity ) + " g/ml");
+      te->e->append( "Meniscus position:\t"  + str.setNum( dpoint[i].meniscus ) + " cm");
+      te->e->append( "Bottom of cell:\t"     + str.setNum( dpoint[i].bottom ) +
+      " cm (Centerpiece bottom at rest: "    + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
+      te->e->append( "Temperature:\t"        + str.setNum( dpoint[i].temperature ) +  DEGC );
       te->e->append( "Gradient-forming\nmaterial details:");
-      te->e->append( "Molecular weight:\t" + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
-      te->e->append( "Loading density:\t" + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
-      te->e->append( "vbar:\t\t" + str.setNum( dpoint[i].gradientVbar ) + " ml/g" );
+      te->e->append( "Molecular weight:\t"   + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
+      te->e->append( "Loading density:\t"    + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
+      te->e->append( "vbar:\t\t"             + str.setNum( dpoint[i].gradientVbar ) + " ml/g" );
       te->e->append("\n");
    }
    te->setMinimumHeight( 400 );
