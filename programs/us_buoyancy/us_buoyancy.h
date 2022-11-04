@@ -19,6 +19,13 @@ struct DataPoint
   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch, sigma;
 };
 
+struct cellInfo
+{
+  QString     cellName;
+  QString     channelName;
+  int         centerpieceID;
+};
+
 
 class US_Buoyancy : public US_Widgets
 {
@@ -36,8 +43,9 @@ class US_Buoyancy : public US_Widgets
       US_ExtinctFitter *fitter;
       double * fitparameters;
             
-      QMap< QString, QVector<double>  >xfit_data;
-      QMap< QString, QVector<double> > yfit_data;
+  QMap< QString, QVector<double> > xfit_data;
+  QMap< QString, QVector<double> > yfit_data;
+  QMap< QString, QVector<double> > yfit_data_corrected;
 
       QMap < QString, QMap < double, QMap < int, QVector< double > > > > xfit_data_all_orders;
       QMap < QString, QMap < double, QMap < int, QVector< double > > > > yfit_data_all_orders;
@@ -55,6 +63,7 @@ class US_Buoyancy : public US_Widgets
       QVector < double >               meniscus;
       QVector < DataPoint >            dpoint;
 
+  
       QMap< QString, QVector<double> > triple_name_to_peaks_map;
   QMap< QString, double > triple_name_to_total_area;
   QMap< QString, double > triple_name_to_rmsd;
@@ -66,6 +75,7 @@ class US_Buoyancy : public US_Widgets
       QMap< QString, bool > triple_fitted_map;
       QMap< QString, bool > triple_peaks_defined_map;
 
+  QMap< QString, double > alpha_centerpiece;
   QMap< QString, double > data_left_to_triple_name_map;
   QMap< QString, double > data_right_to_triple_name_map;
   QMap< QString, double > meniscus_to_triple_name_map;
@@ -205,7 +215,7 @@ private slots:
   QVector< double > identify_peaks ( QString, double );
         int index_of_data( QVector<double>, double );
        bool isMaximum_y( QVector<double>, int, int, int, QString );
-        QMap< QString, double > get_data_conf_from_edit_profile ( QString );
+  QMap< QString, double > get_data_conf_from_edit_profile ( QString, QString );
        
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
         void process_variance( double );
@@ -214,6 +224,7 @@ private slots:
         void add_peak( void );
   double calc_gauss_area( QString, double, double, double );
   double calc_total_area( QString );
+  QVector<double> correct_fit_for_ceterpiece_geometry( QString );
 
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );

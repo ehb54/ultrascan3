@@ -864,7 +864,8 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 //calc total area under the fit curve
 double US_Buoyancy::calc_total_area( QString triple_n )
 {
-  double total_area = 0;
+  double total_area_corrected = 0;
+  double total_area           = 0;
 
   // //DEBUG
   // qDebug() << "In total area: #points -- " << xfit_data[ triple_n ].size();
@@ -882,12 +883,14 @@ double US_Buoyancy::calc_total_area( QString triple_n )
     {
       double point1 = xfit_data[ triple_n ][ ii ];
       double point2 = xfit_data[ triple_n ][ ii + 1];
-      double jac    = point2 - point1;                   //dx
-      total_area  += yfit_data[ triple_n ][ ii ] * jac;
+      double jac    = qAbs( point2 - point1 );                   //dx
+      total_area_corrected  += yfit_data_corrected[ triple_n ][ ii ] * jac;
+      total_area            += yfit_data[ triple_n ][ ii ] * jac;
       //total_area  += yfit_data[ triple_n ][ ii ] ;
     }
 
-  qDebug() << "Total Area, Triple -- " << triple_n << total_area;
+  qDebug() << "Total Area, Triple -- "              << triple_n << total_area;
+  qDebug() << "Total Area [CORRECTED] , Triple -- " << triple_n << total_area_corrected;
   return total_area;
 }
 
@@ -900,7 +903,7 @@ double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigm
     {
       double point1 = xfit_data[ triple_n ][ ii ];
       double point2 = xfit_data[ triple_n ][ ii + 1];
-      double jac    = point2 - point1;                       //dx
+      double jac    = qAbs( point2 - point1 );                       //dx
 
       double x_val = xfit_data[ triple_n ][ ii ];
       gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac;
@@ -935,12 +938,17 @@ QMap< QString, double > US_Buoyancy::find_closest_sigma_height( QString triple_n
 
   //peak's height
   double fitted_height = 0;
-  int peak_index = index_of_data( xfit_data[ triple_n ], peak_p );
-  fitted_height  = yfit_data[ triple_n ][ peak_index ];
-
+  double fitted_height_corrected = 0;
+  int peak_index           = index_of_data( xfit_data[ triple_n ], peak_p );
+  fitted_height            = yfit_data[ triple_n ][ peak_index ];
+  fitted_height_corrected  = yfit_data_corrected[ triple_n ][ peak_index ];
+  
   parms[ "sigma"  ] = fitted_sigma;
   //parms[ "sigma"  ] = 0.015;          // TEST <--- HARD CODED
   parms[ "height" ] = fitted_height;
+
+  qDebug() << "Peak hight, corrected -- " << fitted_height_corrected ;
+  qDebug() << "Peak hight, UNcorrected -- " << fitted_height ;
   
   return parms;
 }
@@ -1020,7 +1028,7 @@ void US_Buoyancy::load( void )
 	  //   rawGUID_t  = US_Util::uuid_unparse( (unsigned char*)allData[ triples_temp.size() - 1 ].rawGUID );
 	  // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 	  
-	  QMap <QString, double > data_conf = get_data_conf_from_edit_profile ( rawGUID_t );
+	  QMap <QString, double > data_conf = get_data_conf_from_edit_profile ( rawGUID_t, triples[ii] );
 	  meniscus[ ii ] = data_conf[ "meniscus" ];
 	  
 	  if ( meniscus[ ii ] == 0 )  // if no edit profile found, then HARD code something
@@ -1035,6 +1043,7 @@ void US_Buoyancy::load( void )
 	  data_left_to_triple_name_map  [ triples[ii] ] = data_conf[ "data_left" ];
 	  data_right_to_triple_name_map [ triples[ii] ] = data_conf[ "data_right" ];
 	  buffDensity_to_triple_name_map[ triples[ii] ] = data_conf[ "buffer_density" ];
+	  alpha_centerpiece             [ triples[ii] ] = data_conf[ "alpha_centerpiece" ];
 
 	  sigma_to_triple_name_map      [ triples[ii] ] = tmp_dpoint.sigma;
 	  gradMW_to_triple_name_map     [ triples[ii] ] = tmp_dpoint.gradientMW;
@@ -1250,13 +1259,14 @@ void US_Buoyancy::print_xy( US_DataIO::RawData curr_set, int set_num )
 
 
 //get meniscus position from edited Data
-QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString rawGUID_t )
+QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString rawGUID_t, QString triple_n )
 {
   QMap< QString, double > data_conf; 
   double meniscus_p = 0;
   double data_left  = 0;
   double data_right = 0;
   double buffer_density = 0;
+  double centerpiece_angle = 0;
   
   // Check DB connection
   US_Passwd pw;
@@ -1280,6 +1290,54 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   QString expID       = db.value( 1 ).toString();
   QString soluID      = db.value( 2 ).toString();
 
+  //Get cell information from expID, and the centerpiece geometry
+  QList<cellInfo> cells; 
+  qry.clear();
+  qry << "all_cell_experiments" << expID;
+  db.query( qry );
+  while ( db.next() )
+    {
+      struct cellInfo cell;
+      QString letters("SABCDEFGH");
+      cell.cellName      = db. value( 2 ).toString();
+      cell.channelName   = QString( letters[ qMax( 0, db. value( 3 ).toInt() ) ] );
+      cell.centerpieceID = db. value( 4 ).toInt();
+      cells << cell;
+    }
+  //now match cell's & channel name to those of triple && prescribe centerpiece
+  int centerpieceID = 0;
+  QStringList tripleName = triple_n.split("/");
+  
+  foreach ( struct cellInfo cell, cells )
+    {
+      //DEBUG
+      qDebug() << "Cell, Channel from tripleName -- "
+	       << tripleName[ 0 ].simplified()
+	       << tripleName[ 1 ].simplified();
+      qDebug() << "Cell, Channel from Cell -- "
+	       << cell.cellName
+	       << cell.channelName;
+ 
+      if ( tripleName[ 0 ].simplified() == cell.cellName &&
+	   tripleName[ 1 ].simplified() == cell.channelName )
+	{
+	  centerpieceID = cell.centerpieceID;
+	  break;
+	}
+    }
+  //finally, get get_abstractCenterpiece_info
+  qry.clear();
+  qry << "get_abstractCenterpiece_info" << QString::number( centerpieceID );
+  db.query( qry );
+  QString centerpiece_name;
+  while ( db.next() )
+    {
+      centerpiece_name  = db.value( 1 ).toString();
+      centerpiece_angle = db.value( 7 ).toDouble();
+    }
+  qDebug() << "Centerpiece name, angle -- " << centerpiece_name << centerpiece_angle;
+  
+  
   //now, get editDataID(s) for given rawDataID_t
   qry.clear();
   qry << "get_editedDataIDs" << rawDataID_t;
@@ -1403,16 +1461,18 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
     }
   /////////////////////////////////////////////////////////////////////////////
 
-  data_conf[ "meniscus" ]       = meniscus_p;
-  data_conf[ "data_left" ]      = data_left;
-  data_conf[ "data_right" ]     = data_right;
-  data_conf[ "buffer_density" ] = buffer_density;
+  data_conf[ "meniscus" ]          = meniscus_p;
+  data_conf[ "data_left" ]         = data_left;
+  data_conf[ "data_right" ]        = data_right;
+  data_conf[ "buffer_density" ]    = buffer_density;
+  data_conf[ "alpha_centerpiece" ] = centerpiece_angle;
 
-  qDebug() << "For rawDataID, eID: " << rawDataID_t << eID
-	   << ", Meniscus is -- "    << data_conf[ "meniscus" ]
-	   << ", Data Left is -- "   << data_conf[ "data_left" ]
-	   << ", Data Right is -- "  << data_conf[ "data_right" ]
-	   << ", Buffer Density is -- "  << data_conf[ "buffer_density" ];
+  qDebug() << "For rawDataID, eID: "        << rawDataID_t << eID
+	   << ", Meniscus is -- "           << data_conf[ "meniscus" ]
+	   << ", Data Left is -- "          << data_conf[ "data_left" ]
+	   << ", Data Right is -- "         << data_conf[ "data_right" ]
+	   << ", Buffer Density is -- "     << data_conf[ "buffer_density" ]
+	   << ", Alpha Centerpiece is -- "  << data_conf[ "alpha_centerpiece" ];
   
   return data_conf;
 }
@@ -1563,7 +1623,11 @@ void US_Buoyancy::reset( void )
    sigma_val_minVariance      .clear();
    triple_name_to_peak_gauss_envelopes_map. clear();
    triple_name_to_total_area. clear();
+   alpha_centerpiece        . clear();
 
+   xfit_data . clear();
+   yfit_data . clear();
+   yfit_data_corrected . clear();
      
    if ( us_buoyancy_auto_mode )
      {
@@ -1572,11 +1636,11 @@ void US_Buoyancy::reset( void )
        
        // le_stretch          ->setText( "" ); 
        // le_dens_0           ->setText( "" );
-       // le_bottom	   ->setText( "" );
-       // le_bottom_calc	   ->setText( "" );
+       // le_bottom	      ->setText( "" );
+       // le_bottom_calc      ->setText( "" );
        // le_vbar             ->setText( "" );
-       // le_MW		   ->setText( "" );
-       // le_meniscus	   ->setText( "" );
+       // le_MW		      ->setText( "" );
+       // le_meniscus	      ->setText( "" );
        // le_temperature      ->setText( "" );
        // le_buffer_density   ->setText( "" );
        
@@ -1941,6 +2005,9 @@ void US_Buoyancy::plot_scan( double scan_number )
        xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ g_sigma ][ g_order ];
        yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ g_sigma ][ g_order ];
 
+       //Correct Fit data for centerpiece geometry
+       yfit_data_corrected[ triple_n ] = correct_fit_for_ceterpiece_geometry( triple_n );       //UNDER DEVEOPMENT
+
        // Now that we have best fit curves, Identify peak positions:
        triple_name_to_rmsd[ triple_n ] = compute_rmsd ( triple_n );
        QVector <double> peak_poss_auto = identify_peaks( triple_n, g_sigma );
@@ -1975,6 +2042,25 @@ void US_Buoyancy::plot_scan( double scan_number )
 }
 
 
+QVector<double> US_Buoyancy::correct_fit_for_ceterpiece_geometry( QString triple_n )
+{
+  QVector<double> y_fit_corrected( xfit_data[ triple_n ].size() );
+
+  double r_init = xfit_data[ triple_n ][ 0 ];
+
+  for (int i=0; i < xfit_data[ triple_n ].size()-1; i++ )
+    {
+      double r1 = xfit_data[ triple_n ][ i ]    - r_init;
+      double r2 = xfit_data[ triple_n ][ i + 1] - r_init;
+      
+      y_fit_corrected[ i ] = yfit_data[ triple_n ][ i ] *
+	( 1 + M_PI*(pow( r2, 2) - pow( r1, 2)) * alpha_centerpiece[ triple_n ] / 360.0 ); 
+    }
+
+  y_fit_corrected[ yfit_data_corrected[ triple_n ].size() ] = y_fit_corrected[ yfit_data_corrected[ triple_n ].size() - 1 ]; 
+    
+  return y_fit_corrected;
+}
 
 double US_Buoyancy::compute_rmsd ( QString triple_n )
 {
