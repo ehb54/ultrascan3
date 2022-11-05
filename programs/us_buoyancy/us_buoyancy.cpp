@@ -864,33 +864,26 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 //calc total area under the fit curve
 double US_Buoyancy::calc_total_area( QString triple_n )
 {
-  double total_area_corrected = 0;
-  double total_area           = 0;
+  double total_area  = 0;
+  double alpha       = alpha_centerpiece[ triple_n ];
+  bool sectoral;
 
-  // //DEBUG
-  // qDebug() << "In total area: #points -- " << xfit_data[ triple_n ].size();
-  // for ( int ii=0; ii < xfit_data[ triple_n ].size() - 1; ++ii )
-  //   {
-  //     double point1 = xfit_data[ triple_n ][ ii ];
-  //     double point2 = xfit_data[ triple_n ][ ii + 1];
-  //     double jac    = point2 - point1;
-  //     qDebug() << "Jacobian for points  " << ii << ii+1 << ": " << jac;
-
-  //   }
-  ///////////////////////////////
-
+  ( alpha != 0 ) ? sectoral = true : sectoral = false; 
+  
   for ( int ii=0; ii < xfit_data[ triple_n ].size() - 1; ++ii )
     {
       double point1 = xfit_data[ triple_n ][ ii ];
       double point2 = xfit_data[ triple_n ][ ii + 1];
       double jac    = qAbs( point2 - point1 );                   //dx
-      total_area_corrected  += yfit_data_corrected[ triple_n ][ ii ] * jac;
-      total_area            += yfit_data[ triple_n ][ ii ] * jac;
-      //total_area  += yfit_data[ triple_n ][ ii ] ;
+      
+      if ( sectoral )
+	total_area  += yfit_data[ triple_n ][ ii ] * jac
+	  * alpha/360.0 * M_PI * ( pow(point2, 2) - pow(point1, 2) );
+      else
+	total_area  += yfit_data[ triple_n ][ ii ] * jac;
     }
 
-  qDebug() << "Total Area, Triple -- "              << triple_n << total_area;
-  qDebug() << "Total Area [CORRECTED] , Triple -- " << triple_n << total_area_corrected;
+  qDebug() << "Total Area, Triple -- "  << triple_n << total_area;
   return total_area;
 }
 
@@ -898,6 +891,10 @@ double US_Buoyancy::calc_total_area( QString triple_n )
 double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigma_p, double height_p )
 {
   double gauss_area = 0;
+  double alpha       = alpha_centerpiece[ triple_n ];
+  bool sectoral;
+
+  ( alpha != 0 ) ? sectoral = true : sectoral = false; 
       
   for ( int ii=0; ii < xfit_data[ triple_n ].size() - 1; ++ii )
     {
@@ -906,8 +903,12 @@ double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigm
       double jac    = qAbs( point2 - point1 );                       //dx
 
       double x_val = xfit_data[ triple_n ][ ii ];
-      gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac;
-      //gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) );
+
+      if ( sectoral )
+	gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac
+	  * alpha/360.0 * M_PI * ( pow(point2, 2) - pow(point1, 2) );
+      else
+	gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac;
     }
 
   return gauss_area;
@@ -938,18 +939,13 @@ QMap< QString, double > US_Buoyancy::find_closest_sigma_height( QString triple_n
 
   //peak's height
   double fitted_height = 0;
-  double fitted_height_corrected = 0;
   int peak_index           = index_of_data( xfit_data[ triple_n ], peak_p );
   fitted_height            = yfit_data[ triple_n ][ peak_index ];
-  fitted_height_corrected  = yfit_data_corrected[ triple_n ][ peak_index ];
-  
+    
   parms[ "sigma"  ] = fitted_sigma;
   //parms[ "sigma"  ] = 0.015;          // TEST <--- HARD CODED
   parms[ "height" ] = fitted_height;
 
-  qDebug() << "Peak hight, corrected -- " << fitted_height_corrected ;
-  qDebug() << "Peak hight, UNcorrected -- " << fitted_height ;
-  
   return parms;
 }
 
@@ -1627,8 +1623,7 @@ void US_Buoyancy::reset( void )
 
    xfit_data . clear();
    yfit_data . clear();
-   yfit_data_corrected . clear();
-     
+       
    if ( us_buoyancy_auto_mode )
      {
        cb_triple->clear();
@@ -2005,9 +2000,6 @@ void US_Buoyancy::plot_scan( double scan_number )
        xfit_data[ triple_n ] = xfit_data_all_orders[ triple_n ][ g_sigma ][ g_order ];
        yfit_data[ triple_n ] = yfit_data_all_orders[ triple_n ][ g_sigma ][ g_order ];
 
-       //Correct Fit data for centerpiece geometry
-       yfit_data_corrected[ triple_n ] = correct_fit_for_ceterpiece_geometry( triple_n );       //UNDER DEVEOPMENT
-
        // Now that we have best fit curves, Identify peak positions:
        triple_name_to_rmsd[ triple_n ] = compute_rmsd ( triple_n );
        QVector <double> peak_poss_auto = identify_peaks( triple_n, g_sigma );
@@ -2041,26 +2033,6 @@ void US_Buoyancy::plot_scan( double scan_number )
      }
 }
 
-
-QVector<double> US_Buoyancy::correct_fit_for_ceterpiece_geometry( QString triple_n )
-{
-  QVector<double> y_fit_corrected( xfit_data[ triple_n ].size() );
-
-  double r_init = xfit_data[ triple_n ][ 0 ];
-
-  for (int i=0; i < xfit_data[ triple_n ].size()-1; i++ )
-    {
-      double r1 = xfit_data[ triple_n ][ i ]    - r_init;
-      double r2 = xfit_data[ triple_n ][ i + 1] - r_init;
-      
-      y_fit_corrected[ i ] = yfit_data[ triple_n ][ i ] *
-	( 1 + M_PI*(pow( r2, 2) - pow( r1, 2)) * alpha_centerpiece[ triple_n ] / 360.0 ); 
-    }
-
-  y_fit_corrected[ yfit_data_corrected[ triple_n ].size() ] = y_fit_corrected[ yfit_data_corrected[ triple_n ].size() - 1 ]; 
-    
-  return y_fit_corrected;
-}
 
 double US_Buoyancy::compute_rmsd ( QString triple_n )
 {

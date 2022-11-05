@@ -45,8 +45,7 @@ class US_Buoyancy : public US_Widgets
             
   QMap< QString, QVector<double> > xfit_data;
   QMap< QString, QVector<double> > yfit_data;
-  QMap< QString, QVector<double> > yfit_data_corrected;
-
+  
       QMap < QString, QMap < double, QMap < int, QVector< double > > > > xfit_data_all_orders;
       QMap < QString, QMap < double, QMap < int, QVector< double > > > > yfit_data_all_orders;
       QMap < QString, QMap < double, QMap < int, double > > > variance_triple_order_map;
@@ -224,8 +223,7 @@ private slots:
         void add_peak( void );
   double calc_gauss_area( QString, double, double, double );
   double calc_total_area( QString );
-  QVector<double> correct_fit_for_ceterpiece_geometry( QString );
-
+  
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
 	void update_fields        ( void );
