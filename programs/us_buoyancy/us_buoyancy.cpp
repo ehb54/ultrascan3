@@ -956,8 +956,14 @@ void US_Buoyancy::load( void )
    bool isLocal = ! disk_controls->db();
    reset();
 
-   US_LoadAUC* dialog =
-      new US_LoadAUC( isLocal, allData, triples, workingDir );
+   // US_LoadAUC* dialog =
+   //    new US_LoadAUC( isLocal, allData, triples, workingDir );
+
+   US_LoadAUC* dialog;
+   if ( us_buoyancy_auto_mode )
+     dialog = new US_LoadAUC( isLocal, "AUTO", allData, triples, workingDir );
+   else
+     dialog = new US_LoadAUC( isLocal, allData, triples, workingDir );
 
    connect( dialog, SIGNAL( changed       ( bool ) ),
             this,     SLOT( update_disk_db( bool ) ) );
