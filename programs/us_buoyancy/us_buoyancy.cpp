@@ -786,6 +786,8 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
   double gradMW    = gradMW_to_triple_name_map [ triple_n ];
   double gradVbar  = gradVbar_to_triple_name_map [ triple_n ];
   double gradC0    = gradC0_to_triple_name_map [ triple_n ];
+
+  double tot_area_uncorrected  = triple_name_to_total_area_uncorrected[ triple_n ];
   
   QStringList peak_names;
   //iterate over peaks for the current triple
@@ -828,9 +830,15 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 			  << QString::number( peak_sigma_height[ "height" ] );                                    //4
 
 	  //add area under peak
-	  double gauss_area = calc_gauss_area( triple_n, peak_poss[ i ], peak_sigma_height[ "sigma" ], peak_sigma_height[ "height" ] );
+	  QMap< QString, double > gauss_areas = calc_gauss_area( triple_n, peak_poss[ i ], peak_sigma_height[ "sigma" ], peak_sigma_height[ "height" ] );
+	  double gauss_area             = gauss_areas[ "corrected" ];
+	  double gauss_area_uncorrected = gauss_areas[ "uncorrected" ];
+	  
 	  curr_peak_parms << QString::number( gauss_area );                  //5
 	  curr_peak_parms << QString::number( tot_area );                    //6
+
+	  curr_peak_parms << QString::number( gauss_area_uncorrected );      //7
+	  curr_peak_parms << QString::number( tot_area_uncorrected );        //8
 	  
 	  triple_name_to_peak_to_parms_map[ triple_n ][ peak_name ] = curr_peak_parms;
 	  
@@ -862,9 +870,10 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
 }
 
 //calc total area under the fit curve
-double US_Buoyancy::calc_total_area( QString triple_n )
+QMap<QString, double> US_Buoyancy::calc_total_area( QString triple_n )
 {
   double total_area  = 0;
+  double total_area_uncorrected  = 0;
   double alpha       = alpha_centerpiece[ triple_n ];
   bool sectoral;
 
@@ -881,16 +890,24 @@ double US_Buoyancy::calc_total_area( QString triple_n )
 	  * alpha/360.0 * M_PI * ( pow(point2, 2) - pow(point1, 2) );
       else
 	total_area  += yfit_data[ triple_n ][ ii ] * jac;
+
+      total_area_uncorrected  += yfit_data[ triple_n ][ ii ] * jac; 
     }
 
   qDebug() << "Total Area, Triple -- "  << triple_n << total_area;
-  return total_area;
+
+  QMap< QString, double > tot_areas;
+  tot_areas[ "corrected" ]   = total_area;
+  tot_areas[ "uncorrected" ] = total_area_uncorrected;
+  
+  return tot_areas;
 }
 
 //calculate area under Gauss function given by pos, sigma, height
-double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigma_p, double height_p )
+QMap<QString, double> US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigma_p, double height_p )
 {
   double gauss_area = 0;
+  double gauss_area_uncorrected = 0;
   double alpha       = alpha_centerpiece[ triple_n ];
   bool sectoral;
 
@@ -909,9 +926,15 @@ double US_Buoyancy::calc_gauss_area( QString triple_n, double pos_p, double sigm
 	  * alpha/360.0 * M_PI * ( pow(point2, 2) - pow(point1, 2) );
       else
 	gauss_area  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac;
+
+      gauss_area_uncorrected  += height_p * exp( - ( pow(( x_val - pos_p), 2 )) / ( 2 * pow( sigma_p, 2)) ) * jac;
     }
 
-  return gauss_area;
+  QMap< QString, double > gauss_areas;
+  gauss_areas[ "corrected" ]   = gauss_area;
+  gauss_areas[ "uncorrected" ] = gauss_area_uncorrected;
+
+  return gauss_areas;
 }
 
 //for each triple's peak, find closest sigma (fitted) && height
@@ -1627,6 +1650,8 @@ void US_Buoyancy::reset( void )
    triple_name_to_total_area. clear();
    alpha_centerpiece        . clear();
 
+   triple_name_to_total_area_uncorrected. clear();  
+
    xfit_data . clear();
    yfit_data . clear();
        
@@ -2022,7 +2047,10 @@ void US_Buoyancy::plot_scan( double scan_number )
 
        triple_name_to_peaks_map[ triple_n ] = peak_poss_auto;
        triple_peaks_defined_map[ triple_n ] = true;
-       triple_name_to_total_area[ triple_n ] = calc_total_area( triple_n );
+
+       QMap< QString, double > tot_areas = calc_total_area( triple_n );
+       triple_name_to_total_area            [ triple_n ] = tot_areas[ "corrected" ];
+       triple_name_to_total_area_uncorrected[ triple_n ] = tot_areas[ "uncorrected" ];
 
        qDebug() << "Total area for triple " << triple_n << " is: " << triple_name_to_total_area[ triple_n ];
      }
@@ -2424,6 +2452,9 @@ void US_Buoyancy::save_auto( QString triple_n )
       tmp_dpoint.peakGaussArea = curr_peak_parms_list[5 ].toDouble();
       tmp_dpoint.percentTotal  = 100.0*( curr_peak_parms_list[5 ].toDouble() / curr_peak_parms_list[6 ].toDouble());
 
+      //TEMPORARY - for comparison; will be removed later
+      tmp_dpoint.percentTotal_uncorrected  = 100.0*( curr_peak_parms_list[7 ].toDouble() / curr_peak_parms_list[8 ].toDouble());
+
       qDebug() << "Saving_auto: current_triple index -- " << current_triple;
      
       //rest is the same for all peaks withtin a triple ?
@@ -2507,7 +2538,8 @@ void US_Buoyancy::write_auto( void )
       te->e->append( "Peak position:\t"      + str.setNum( dpoint[i].peakPosition )  + " cm");
       te->e->append( "Peak density:\t"       + str.setNum( dpoint[i].peakDensity )   + " g/ml");
       te->e->append( "Peak vbar:\t\t"        + str.setNum( dpoint[i].peakVbar )      + " ml/g");
-      te->e->append( "Peak Gauss area (% of total):\t" +  QString::number(dpoint[i].percentTotal, 'f', 2) );
+      te->e->append( "Peak Gauss area (% of total):\t\t" +  QString::number(dpoint[i].percentTotal, 'f', 2) );
+      te->e->append( "Peak Gauss area UNCORRECTED (% of total):\t" +  QString::number(dpoint[i].percentTotal_uncorrected, 'f', 2) );
       te->e->append( "Peak sigma value:\t\t" + str.setNum( dpoint[i].sigma )      + " cm");
 
       te->e->append( "Buffer density:\t"     + str.setNum( dpoint[i].bufferDensity ) + " g/ml");

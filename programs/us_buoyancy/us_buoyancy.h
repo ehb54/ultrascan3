@@ -15,7 +15,7 @@
 struct DataPoint
 {
   QString name, description, dataset, triple;
-  double peakPosition, peakDensity, peakVbar, peakGaussArea, percentTotal, temperature, bufferDensity, centerpiece;
+  double peakPosition, peakDensity, peakVbar, peakGaussArea, percentTotal, percentTotal_uncorrected, temperature, bufferDensity, centerpiece;
   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch, sigma;
 };
 
@@ -65,6 +65,7 @@ class US_Buoyancy : public US_Widgets
   
       QMap< QString, QVector<double> > triple_name_to_peaks_map;
   QMap< QString, double > triple_name_to_total_area;
+  QMap< QString, double > triple_name_to_total_area_uncorrected;
   QMap< QString, double > triple_name_to_rmsd;
   QMap< QString, double* > triple_name_to_fit_parameters;
       QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_curves_map;
@@ -221,8 +222,8 @@ private slots:
         double compute_rmsd( QString ); 
         void delete_peak( void );
         void add_peak( void );
-  double calc_gauss_area( QString, double, double, double );
-  double calc_total_area( QString );
+  QMap<QString, double> calc_gauss_area( QString, double, double, double );
+  QMap<QString, double> calc_total_area( QString );
   
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
