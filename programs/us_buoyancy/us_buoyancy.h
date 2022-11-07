@@ -14,9 +14,16 @@
 
 struct DataPoint
 {
-   QString name, description, dataset, triple;
-   double peakPosition, peakDensity, peakVbar, temperature, bufferDensity, centerpiece;
-   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch;
+  QString name, description, dataset, triple;
+  double peakPosition, peakDensity, peakVbar, peakGaussArea, percentTotal, percentTotal_uncorrected, temperature, bufferDensity, centerpiece;
+  double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch, sigma;
+};
+
+struct cellInfo
+{
+  QString     cellName;
+  QString     channelName;
+  int         centerpieceID;
 };
 
 
@@ -34,9 +41,20 @@ class US_Buoyancy : public US_Widgets
 
       QVector <WavelengthScan> v_wavelength;
       US_ExtinctFitter *fitter;
-      QVector<double> xfit_data;
-      QVector<double> yfit_data;
+      double * fitparameters;
+            
+  QMap< QString, QVector<double> > xfit_data;
+  QMap< QString, QVector<double> > yfit_data;
   
+      QMap < QString, QMap < double, QMap < int, QVector< double > > > > xfit_data_all_orders;
+      QMap < QString, QMap < double, QMap < int, QVector< double > > > > yfit_data_all_orders;
+      QMap < QString, QMap < double, QMap < int, double > > > variance_triple_order_map;
+  
+      // QMap< QString, QMap< int, QVector<double> > > xfit_data_all_orders;
+      // QMap< QString, QMap< int, QVector<double> > > yfit_data_all_orders;
+      // QMap< QString, QMap< int, double >> variance_triple_order_map;
+      int current_order;
+      double current_sigma;
 
       US_DataIO::RawData               data;
       QList   < US_DataIO::SpeedData > sData;
@@ -44,12 +62,32 @@ class US_Buoyancy : public US_Widgets
       QVector < double >               meniscus;
       QVector < DataPoint >            dpoint;
 
+  
       QMap< QString, QVector<double> > triple_name_to_peaks_map;
+  QMap< QString, double > triple_name_to_total_area;
+  QMap< QString, double > triple_name_to_total_area_uncorrected;
+  QMap< QString, double > triple_name_to_rmsd;
+  QMap< QString, double* > triple_name_to_fit_parameters;
+      QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_curves_map;
+  QMap< QString, QVector< QwtPlotCurve* > > triple_name_to_peak_gauss_envelopes_map;
       QMap< QString, QMap < QString, QStringList > >  triple_name_to_peak_to_parms_map;
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
-      QMap< QString, double > meniscus_to_triple_name_map;
+      QMap< QString, bool > triple_peaks_defined_map;
 
+  QMap< QString, double > alpha_centerpiece;
+  QMap< QString, double > data_left_to_triple_name_map;
+  QMap< QString, double > data_right_to_triple_name_map;
+  QMap< QString, double > meniscus_to_triple_name_map;
+  QMap< QString, double > buffDensity_to_triple_name_map;
+  QMap< QString, double > sigma_to_triple_name_map;
+  QMap< QString, double > gradMW_to_triple_name_map;
+  QMap< QString, double > gradVbar_to_triple_name_map;
+  QMap< QString, double > gradC0_to_triple_name_map;
+
+  QMap< QString, int >    gauss_order_minVariance;
+  QMap< QString, double > sigma_val_minVariance;
+  
       QRadioButton*      rb_meniscus;
       QRadioButton*      rb_datapoint;
       DataPoint          tmp_dpoint;
@@ -118,11 +156,14 @@ class US_Buoyancy : public US_Widgets
       QLineEdit*         le_vbar;
       QLineEdit*         le_MW;
       QLineEdit*         le_meniscus;
+      QLineEdit*         le_sigma;
       QLineEdit*         le_temperature;
       QLineEdit*         le_peakVbar;
       QLineEdit*         le_peakPosition;
       QLineEdit*         le_peakDensity;
       QLineEdit*         le_peakName;
+      QLineEdit*         le_peakGaussArea;
+  
       QLineEdit*         le_buffer_density;
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
@@ -134,6 +175,11 @@ class US_Buoyancy : public US_Widgets
 
       QPushButton*       pb_write;
       QPushButton*       pb_save;
+
+      QPushButton*       pb_delete_peak;
+      QPushButton*       pb_add_peak;
+  
+      QProgressBar*      pgb_progress;
       QPushButton*       pb_view_reports;
 
       QwtCounter*        ct_selectScan;
@@ -141,23 +187,45 @@ class US_Buoyancy : public US_Widgets
 private slots:
 	double calc_stretch       ( void );
 	void draw_vline           ( double );
+        void draw_vline_auto      ( double );
+  void draw_gauss_envelope  (  QMap < QString, QStringList > ); 
 	void mouse                ( const QwtDoublePoint& );
-	void sel_investigator     ( void );
+  void mouse_peak                ( const QwtDoublePoint& );
+  void sel_investigator     ( void );
 	void update_disk_db       ( bool );
 	void load                 ( void );
 	void details              ( void );
 	void new_triple           ( int  );
         void new_peak             ( int );
 	void plot_scan            ( double );
-	void write                ( void );
+  
+  void update_for_sigma  (void);
+  void update_for_MW     (void);
+  void update_for_vbar   (void);
+  void update_for_dens_0 (void);
+
+  void write                ( void );
         void write_auto           ( void );
         void save                 ( void );
         void save_auto            ( QString );
 	void reset                ( void );
         void calc_points          ( void );
         void calc_points_auto     ( QString );
+  QMap< QString, double > find_closest_sigma_height( QString, double );
+  QVector< double > identify_peaks ( QString, double );
+        int index_of_data( QVector<double>, double );
+       bool isMaximum_y( QVector<double>, int, int, int, QString );
+  QMap< QString, double > get_data_conf_from_edit_profile ( QString, QString );
+       
         void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
+        void process_variance( double );
+        double compute_rmsd( QString ); 
+        void delete_peak( void );
+        void add_peak( void );
+  QMap<QString, double> calc_gauss_area( QString, double, double, double );
+  QMap<QString, double> calc_total_area( QString );
   
+  void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
 	void update_fields        ( void );
         void update_speedData     ( void );

@@ -24,6 +24,8 @@ class US_GUI_EXTERN US_Minimize : public US_Widgets
       int nlsMethod, return_value;
       unsigned int plotGroup;
 
+      bool us_auto_mode;
+
 		bool *fitting_widget, plotResiduals, showGuiFit, GUI, constrained;
       bool autoconverge;
       bool suspend_flag, aborted, converged, completed, first_plot, init_simulation;

@@ -2166,9 +2166,9 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    QString fn        = runID + fileid;
    int lenfn         = fn.length();
 
-   if ( lenfn > 99 )
+   if ( lenfn > 96 )
    { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri         = runID.length() + 99 - lenfn;
+      int lenri         = runID.length() + 96 - lenfn;
       fn                = runID.left( lenri ) + fileid;
    }
 
@@ -2624,9 +2624,9 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    QString fn        = runID + fileid;
    int lenfn         = fn.length();
 
-   if ( lenfn > 99 )
+   if ( lenfn > 96 )
    { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri         = runID.length() + 99 - lenfn;
+      int lenri         = runID.length() + 96 - lenfn;
       fn                = runID.left( lenri ) + fileid;
    }
 
