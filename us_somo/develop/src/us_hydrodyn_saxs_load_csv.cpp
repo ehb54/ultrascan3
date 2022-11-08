@@ -432,20 +432,46 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
          map_sel_names[*it] = true;
       }
       
+      // create normed versions on-the-fly if MW is non-zero
+
+      QStringList qsl_pr_normed;
+
       // find max length & build a 2d array of values
       for ( QStringList::iterator it = qsl->begin();
-               it != qsl->end();
-               it++ )
-      {
+            it != qsl->end();
+            it++ ) {
          QStringList qsl_tmp = (*it).split( "," );
-         if ( qsl_tmp.size() ) 
-         {
-            if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
-            {
+         if ( qsl_tmp.size() > 4 ) {
+            if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) {
                fprintf(of, "%s\n", (*it).toLatin1().data());
+            }
+            double this_mw   = qsl_tmp[1].toDouble();
+            double this_area = qsl_tmp[2].toDouble();
+            // QTextStream(stdout) << QString( "save pr this mw %1 area %2\n" ).arg( this_mw ).arg( this_area );
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r)\"" ) {
+               // QTextStream(stdout) << "ok to make P(r) normed\n";
+               QStringList this_pr_normed;
+               this_pr_normed
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_normed << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_normed.join(",");
             }
          }
       }
+
+      if ( qsl_pr_normed.size() ) {
+         // QTextStream(stdout) << "adding pr_normed lines\n";
+         fprintf(of, "\n%s\n", qsl_pr_normed.join("\n").toLatin1().data());
+      }
+
       fclose(of);
       QMessageBox::information( this, "UltraScan",
                                 QString(us_tr("Created the output file:\n") + "%1").arg(fname));
