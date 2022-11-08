@@ -74,6 +74,7 @@ class US_Buoyancy : public US_Widgets
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
       QMap< QString, bool > triple_peaks_defined_map;
+  QMap< QString, bool > do_fit_for_triple;
 
   QMap< QString, double > alpha_centerpiece;
   QMap< QString, double > data_left_to_triple_name_map;
@@ -123,6 +124,7 @@ class US_Buoyancy : public US_Widgets
       QStringList        trip_rpms;
 
       QPushButton*       pb_details;
+      QPushButton*       pb_load;
 
       QwtPlot*           data_plot;
       QwtPlotCurve*      v_line;
