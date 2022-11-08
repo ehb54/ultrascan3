@@ -197,6 +197,19 @@ static QStringList csv_pr2iq( const QStringList &qsl ) {
 
    int rows = (int) qsl.size();
 
+   bool insert0 = true;
+
+   // do we need to insert a zero?
+   if ( rows ) {
+      QStringList row = qsl[0].split( "," );
+      if ( row.size() > 4 &&
+           row[4] == "0" ) {
+         insert0 = false;
+      }
+   }
+
+   // QTextStream(stdout) << "insert0s: " << ( insert0 ? "true" : "false" ) << "\n";
+
    for ( int i = 0; i < rows; ++i ) {
       QStringList row = qsl[i].split( "," );
       if ( row.size() < 4 ) {
@@ -221,7 +234,9 @@ static QStringList csv_pr2iq( const QStringList &qsl ) {
 
       // QTextStream( stdout ) << "row[1] [" << row[1] << "]\n";
 
-      row.insert(2, "0" );
+      if ( insert0 ) {
+         row.insert(2, "0" );
+      }
 
       // QTextStream( stdout ) << row.join( "," ) << "\n";
       res << row.join( "," );
