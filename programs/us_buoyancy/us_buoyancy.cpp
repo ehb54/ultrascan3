@@ -305,6 +305,15 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    //Also add Fitting progress
    QLabel* lb_fit_progress_bn = us_banner( tr( "Fitting" ) );
    specs->addWidget( lb_fit_progress_bn,  s_row++, 0, 1, 4 );
+
+   us_checkbox( tr( "AUTO Fit All Triples" ), ck_auto_fit, true );
+   connect( ck_auto_fit, SIGNAL( toggled     ( bool ) ),
+	    this,        SLOT  ( enblFitBtn  ( bool ) ) );
+   specs->addWidget( ck_auto_fit,  s_row, 0, 1, 2 );
+   pb_fit_current_triple = us_pushbutton( tr( "Fit Current Triple" ), false );
+   connect( pb_fit_current_triple, SIGNAL( clicked() ), SLOT( fit_current_triple() ) );
+   specs->addWidget( pb_fit_current_triple, s_row++, 2, 1, 2 );
+   
    QLabel* lbl_pgb_progress = us_label( tr( "Fitting Progress:" ), -1 );
    specs->addWidget( lbl_pgb_progress, s_row, 0, 1, 1 );
    pgb_progress = new QProgressBar(this);
@@ -349,7 +358,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    
    // Plot layout on right side of window
    plot = new US_Plot( data_plot,
-         tr( "Absorbance Data" ),
+         tr( "Buoyant Density Equilibrium" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ) );
 
    data_plot->setMinimumSize( 600, 400 );
@@ -680,6 +689,22 @@ void US_Buoyancy::new_peak( int index )
       data_plot->replot();
     }
 }
+
+//Enable / Disable Fit btn
+void US_Buoyancy::enblFitBtn( bool checked )
+{
+  if ( checked )
+    pb_fit_current_triple -> setEnabled( false );
+  else
+    pb_fit_current_triple -> setEnabled( true );
+}
+
+//Fit current triple
+void US_Buoyancy::fit_current_triple ( void )
+{
+
+}
+
 
 // Select a new triple
 void US_Buoyancy::new_triple( int index )
@@ -1208,7 +1233,9 @@ void US_Buoyancy::load( void )
       str1 = "Interference Data";
       str2 = "Fringes";
    }
-   data_plot->setTitle( str1 );
+   //data_plot->setTitle( str1 );
+
+   data_plot->setTitle( "Buoyant Density Equilibrium" );
    data_plot->setAxisTitle( QwtPlot::yLeft, str2 );
 
    // Temperature check
@@ -1705,6 +1732,16 @@ void US_Buoyancy::plot_scan( double scan_number )
 {
    float temp_x, temp_y;
    QString triple_n = cb_triple->itemText( current_triple );
+
+   QStringList triple_n_list = triple_n.split("/");
+   QString wvl_n = triple_n_list[2].simplified();
+   
+   bool change_y_axis_title; 
+   (wvl_n.length() == 3) ? change_y_axis_title = true : change_y_axis_title = false;
+   QString y_axis_title = QString("Absorbance, ") + wvl_n + "nm";
+
+   qDebug() << "Y-axis title -- " << y_axis_title;
+   
    QString title_fit;
    double sigma = 0.015;
    
@@ -1860,7 +1897,11 @@ void US_Buoyancy::plot_scan( double scan_number )
        triple_name_to_peak_gauss_envelopes_map[ triple_n ]. clear();
        draw_gauss_envelope( triple_name_to_peak_to_parms_map[ triple_n ] );
      }
+
    
+   if ( change_y_axis_title )
+     data_plot->setAxisTitle( QwtPlot::yLeft,  y_axis_title );
+        
    data_plot->replot();
 
    

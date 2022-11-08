@@ -284,7 +284,7 @@ void US_LoadAUC::load( void )
    //  then we fill out the data map for the selected run and load all AUCS.
    if ( ! sel_run )
    {
-      QTreeWidgetItem* item  = items[ 0 ];
+     QTreeWidgetItem* item  = items[ 0 ];
 
       while ( item->parent() != NULL )
          item          = item->parent();
@@ -300,6 +300,10 @@ qDebug() << "Ed:Ld: runID_sel" << runID_sel;
       qApp->processEvents();
       qApp->processEvents();
 
+
+      
+      ////////////////////////////////////////////////////////////////////////////
+
       if ( dkdb_cntrls->db() )
       {  // Scan database for AUC then load all of them
          scan_db();
@@ -309,6 +313,60 @@ qDebug() << "Ed:Ld: runID_sel" << runID_sel;
          qApp->processEvents();
          qApp->processEvents();
 
+	 //ALEXEY: DEBUG /////////////////////////////////////////////////////////////
+	 if ( us_auto_mode )
+	   {
+	     //check if edit profile(s) exist for selected run:
+	     QStringList editDataIDs;
+	     QStringList filenames;
+	     
+	     qDebug() << "DataMap Keys -- " <<  datamap.keys();
+	     for ( int i=0; i< datamap.keys().size(); ++i )
+	       {
+		 qDebug() << datamap.keys()[ i ] << ", rawDataGUID, rawDataID -- "
+			  << datamap[ datamap.keys()[ i ] ].rawGUID
+			  << datamap[ datamap.keys()[ i ] ].DB_id;
+
+		 //read editedData IDs for all triples in the selected RUN
+		 US_Passwd pw;
+		 QString masterPW = pw.getPasswd();
+		 US_DB2 db( masterPW );
+		 
+		 if ( db.lastErrno() != US_DB2::OK )
+		   {
+		     QMessageBox::warning( this, tr( "Connection Problem" ),
+					   tr( "Assessing EditedData IDs: Could not connect to database \n" ) + db.lastError() );
+		     return;
+		   }
+
+		 QStringList qry;
+		 qry.clear();
+		 qry << "get_editedDataIDs" << QString::number( datamap[ datamap.keys()[ i ] ].DB_id );
+		 db.query( qry );
+		 		 
+		 while ( db.next() )
+		   {
+		     editDataIDs << db.value( 0 ).toString();
+		     filenames   << db.value( 2 ).toString();
+		   }
+	       }
+	     
+	     if ( editDataIDs.size() == 0 )
+	       {
+		 QMessageBox::warning( this,
+				       tr( "No Edits Available" ),
+				       tr( "No Edit children exist for selected run"
+					   " '%1'. The run will be hidden." ).arg( runID_sel ) );
+		 
+		 item->setHidden( true );
+		 sel_run = false;
+
+		 QApplication::restoreOverrideCursor();
+		 QApplication::restoreOverrideCursor();
+		 return;
+	       }
+	   }
+	 
          load_db( sdescs );
       }
 
