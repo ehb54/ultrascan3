@@ -1,7 +1,7 @@
 //! \file us_math_bf.cpp
 // Created by Lukas on 18.08.2022.
 //
-#include <math.h>
+#include <cmath>
 
 #include "us_math_bf.h"
 #include "us_constants.h"
@@ -540,3 +540,12 @@ double US_Math_BF::bessel_Y1(double x)
       return result;
    }
 }
+
+double US_Math_BF::transcendental_equation(double x, double a, double b) {
+    double xa = x * a;
+    double xb = x * b;
+    double y1 = bessel_J1(xa) * bessel_Y1(xb);
+    double y2 = bessel_J1(xb) * bessel_Y1(xa);
+    return y1 * y2;
+}
+

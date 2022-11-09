@@ -22,16 +22,39 @@
 class US_UTIL_EXTERN US_Math_BF
 {
    public:
-      //! A structure used for chebyshev series
-      struct cheb_series_struct {
-         const QVector<double>    c;
-         int order;    /* order of expansion          */
-         double a;     /* lower interval point        */
-         double b;     /* upper interval point        */
-         int order_sp; /* effective single precision order */
+    //! A structure used for chebyshev series
+    struct cheb_series_struct {
+        const QVector<double>    c;
+        int order;    /* order of expansion          */
+        double a;     /* lower interval point        */
+        double b;     /* upper interval point        */
+        int order_sp; /* effective single precision order */
+    };
+
+
+    typedef struct cheb_series_struct cheb_series;
+
+    typedef double (*solver_function)(double x, double a, double b);
+
+      class Bisection_Solver{
+        public:
+          Bisection_Solver();
+
+          solver_function foo;
+          double i_min;
+          double i_max;
+          double a;
+          double b;
+          double grid_res;
+          double epsilon;
+          QVector<double> solutions;
+
+          static bool bisection_solve(QVector<double>* solutions);
+
+          static bool bisection_solver(void);
       };
 
-      typedef struct cheb_series_struct cheb_series;
+
 
       //! \brief Given a chebyshev series and a value, return the value of the chebyshev series
       //! \param cheb_series The pointer to the chebyshev series
@@ -53,6 +76,8 @@ class US_UTIL_EXTERN US_Math_BF
       static double bessel_Y0(double);
 
       static double bessel_Y1(double);
+
+      static double transcendental_equation(double x, double a, double b);
 
       static const cheb_series _gsl_sf_bessel_amp_phase_bth1_cs;
       static const QVector<double> bj0_data;
