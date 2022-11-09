@@ -1952,7 +1952,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             Icolumn = 1;
          }
       }
-      if ( ext == "dat" || ext == "txt" ) 
+      if ( ext == "dat" || ext == "txt" || ext == "sprr" ) 
       {
          // foxs?
          // do_crop = true;

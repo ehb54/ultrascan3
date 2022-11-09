@@ -6021,6 +6021,7 @@ void US_Hydrodyn_Saxs::load_gnom()
       QRegExp rxinputfile("Input file.s. : (\\S+)\\s*$");
       QString tmp;
       vector < QString > datafiles;
+      bool sprr_saved = false;
       while ( !ts.atEnd() )
       {
          tmp = ts.readLine();
@@ -6080,14 +6081,16 @@ void US_Hydrodyn_Saxs::load_gnom()
          {
             vector < double > r;
             vector < double > pr;
+            vector < double > pre;
             // cout << "start of prr\n";
             ts.readLine(); // blank line
             while ( !ts.atEnd() ) {
                tmp = ts.readLine();
                if ( rx3.indexIn(tmp) != -1 )
                {
-                  r.push_back(rx3.cap(1).toDouble() / units);
-                  pr.push_back(rx3.cap(2).toDouble());
+                  r  .push_back(rx3.cap(1).toDouble() / units);
+                  pr .push_back(rx3.cap(2).toDouble());
+                  pre.push_back(rx3.cap(3).toDouble());
                   // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
                } else {
                   // end of prr?
@@ -6122,11 +6125,44 @@ void US_Hydrodyn_Saxs::load_gnom()
                   }
                   if ( cb_normalize->isChecked() )
                   {
-                     normalize_pr(r, &pr, get_mw(filename, false));
+                     normalize_pr(r, &pr, &pre, get_mw(filename, false));
                   }
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
-                  r.clear( );
-                  pr.clear( );
+                  // save sprr
+                  if ( !sprr_saved ) {
+                     sprr_saved = true;
+                     QString rxstr = "\\..*$";
+                     QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
+                     if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+                        dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+                     }
+
+                     double mw = get_mw(filename, false);
+                     QStringList sprrcontents;
+                     
+                     sprrcontents << 
+                        QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
+                        .arg(
+                             mw == -1e0
+                             ? QString( "" )
+                             : QString( " mw %1 Daltons" ).arg( mw )
+                             )
+                        ;
+
+                     for ( int i = 0; i < (int)r.size(); ++i ) {
+                        sprrcontents << QString( "%1 %2 %3\n" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+                     }
+                     QString error;
+                     QString putcontents = sprrcontents.join("");
+                     if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
+                        editor_msg( "red", error );
+                     } else {
+                        editor_msg( "blue", QString( "created %1" ).arg( dest ) );
+                     }            
+                  }
+                  r  .clear();
+                  pr .clear();
+                  pre.clear();
                   if ( plotted )
                   {
                      editor_msg( "black", "P(r) plot done\n" );
@@ -6139,11 +6175,44 @@ void US_Hydrodyn_Saxs::load_gnom()
                gnom_mw = get_mw(filename,false);
                if ( cb_normalize->isChecked() )
                {
-                  normalize_pr(r, &pr, get_mw(filename, false));
+                  normalize_pr(r, &pr, &pre, get_mw(filename, false));
                }
                plot_one_pr(r, pr, QFileInfo(filename).fileName());
-               r.clear( );
-               pr.clear( );
+               // save sprr
+               if ( !sprr_saved ) {
+                  QString rxstr = "\\..*$";
+                  QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
+                  if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+                     dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+                  }
+
+                  double mw = get_mw(filename, false);
+                  QStringList sprrcontents;
+                     
+                  sprrcontents << 
+                     QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
+                     .arg(
+                          mw == -1e0
+                          ? QString( "" )
+                          : QString( " mw %1 Daltons" ).arg( mw )
+                          )
+                     ;
+
+                  for ( int i = 0; i < (int)r.size(); ++i ) {
+                     sprrcontents << QString( "%1 %2 %3\n" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+                  }
+                  QString error;
+                  QString putcontents = sprrcontents.join("");
+                  if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
+                     editor_msg( "red", error );
+                  } else {
+                     editor_msg( "blue", QString( "created %1" ).arg( dest ) );
+                  }            
+               }
+
+               r  .clear();
+               pr .clear();
+               pre.clear();
                if ( plotted )
                {
                   editor_msg( "black", "P(r) plot done\n" );
