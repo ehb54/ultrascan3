@@ -372,8 +372,8 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          bool ok;
          grid_target = US_Static::getItem(
                                                 us_tr("Set I(q) Grid"),
-                                                us_tr("Select the target plotted data set for the loaded data grid:\n"
-                                                   "or Cancel if you wish to interpolate the plotted to the loaded data")
+                                                us_tr("Select the target plotted data set for the data being loaded grid:\n"
+                                                   "or Cancel if you wish to interpolate the plotted to the data being loaded")
                                                 , 
                                                 qsl_plotted_iq_names, 
                                                 0, 
@@ -415,8 +415,9 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       }
 
       // now, reinterpolate the q 
-      if ( !grid_target.isEmpty() )
-      {
+      if ( !grid_target.isEmpty() ) {
+         // QTextStream(stdout) << "reinterpolate non empty grid target\n";
+
          if ( !plotted_iq_names_to_pos.count( grid_target ) )
          {
             editor_msg( "red", QString( us_tr("Internal error: could not find %1 in plotted data" ) ).arg( grid_target ) );
@@ -501,6 +502,9 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                {
                   original_i.push_back( qsl_d[j].toDouble() );
                }
+               if ( original_i.size() < original_q.size() ) {
+                  original_i.resize( original_q.size(), 0 );
+               }
                if ( sd_map.count( qsl_d[ 0 ] ) )
                {
                   QStringList qsl_s = (sd_map[ qsl_d[ 0 ] ]).split( "," );
@@ -508,10 +512,14 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   {
                      original_i_error.push_back( qsl_s[j].toDouble() );
                   }
+                  if ( original_i_error.size() < original_q.size() ) {
+                     original_i_error.resize( original_q.size(), 0 );
+                  }
                }
                // now interpolate
                vector < double > ni;
                vector < double > ni_error;
+               // QTextStream(stdout) << US_Vector::qs_vector3( "before usu interpolate original_q, original_i, original_i_error", original_q, original_i, original_i_error ) << "\n";
                if ( !usu.interpolate_iqq_by_case( original_q, original_i, original_i_error, q, ni, ni_error ) )
                {
                   editor_msg("red", usu.errormsg );
@@ -528,6 +536,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         );
                   return;
                }
+               // QTextStream(stdout) << US_Vector::qs_vector3( "after usu interpolate q, ni, ni_error", q, ni, ni_error ) << "\n";
 
                new_qsl << QString( "%1,\"I(q)\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
                if ( sd_map.count( qsl_d[ 0 ] ) )
@@ -543,6 +552,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          }
       }
    } else {
+      // QTextStream(stdout) << "reinterpolate empty grid target\n";
       q = plotted_q[0];
       header_tag = "Plotted I(q) curves";
       QString header = 
@@ -644,6 +654,8 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             QStringList qsl_iq_errors = (*it).split( "," );
             name_to_errors_map[ qsl_iq_errors[ 0 ] ] = *it;
          }
+
+         // QTextStream(stdout) << US_Vector::qs_mapqsqs( "name_to_errors_map", name_to_errors_map ) << "\n";
          
          // get the q values
          QStringList qsl_q;
@@ -832,6 +844,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
 
    if ( found_cropping )
    {
+      // is this right? should't we be comparing across all curves?
       if ( crop_min > q[ 0 ] ||
            crop_max < q[ q.size() - 1 ] )
       {
@@ -920,7 +933,6 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       }
    }         
 
-
    // append all currently plotted I(q)s to qsl
    bool added_interpolate_msg = false;
    QString bin_msg = "";
@@ -932,6 +944,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       vector < double > nic;
       vector < double > nic_errors;
 
+      QTextStream(stdout)
+         << "append all currently plotted I(q)s to qsl\n"
+         << US_Vector::qs_vector3( "plotted q, I, I_error", plotted_q[i], plotted_I[i], plotted_I_error[i] )
+         ;
       if ( !usu.interpolate_iqq_by_case( plotted_q[i], plotted_I[i], plotted_I_error[i], q, nic, nic_errors ) )
       {
          editor_msg("red", usu.errormsg );
@@ -1184,7 +1200,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       QStringList qsl_tmp = (*it).split( "," );
       if ( map_sel_names.count(qsl_tmp[0]) )
       {
-         // cout << "loading: " << qsl_tmp[0] << endl;
+         // QTextStream(stdout) << "loading: " << qsl_tmp[0] << "\n" << "-----data: " << (*it) << "\n";
          
          I.clear( );
          I_errors.clear( );
