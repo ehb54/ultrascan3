@@ -4305,7 +4305,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
             }
          } else {
             dammix_remember_mw[QFileInfo(filename).fileName()] =
-               model_vector[selected_models[0]].mw;
+               model_vector[selected_models[0]].mw + model_vector[selected_models[0]].ionized_mw_delta;
             dammix_remember_mw_source[QFileInfo(filename).fileName()] =
                "computed from pdb";
          }
