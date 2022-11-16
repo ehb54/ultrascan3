@@ -259,8 +259,8 @@ US_Extinction::US_Extinction() : US_Widgets()
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
-   // lambdaLimitLeft = 5.0;
-   // lambdaLimitRight = 1500.0;
+   //lambdaLimitLeft = 5.0;
+   //lambdaLimitRight = 1500.0;
     
    lambda_min = 1000;
    lambda_max = -1000;
@@ -1111,7 +1111,7 @@ void US_Extinction::perform_global(void)
       // spread out the peaks
       fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
       fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
-      //fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.022;           // Sigma
+      //fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;           // Sigma
    }
    //opens the fitting GUI
 

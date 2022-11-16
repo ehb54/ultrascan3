@@ -24,6 +24,11 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       US_LoadAUC( bool, QVector< US_DataIO::RawData >&, QStringList&,
                   QString& );
 
+      US_LoadAUC( bool, QString, QVector< US_DataIO::RawData >&, QStringList&,
+                  QString& );
+
+      bool us_auto_mode; 
+
    signals:
       //! \brief A signal to tell the parent when the disk/db selection
       //!        has changed.

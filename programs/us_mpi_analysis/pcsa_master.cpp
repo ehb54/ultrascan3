@@ -1519,9 +1519,9 @@ DbgLv(1) << "wraux: mdesc" << mdesc;
    QString fn          = runID + fileid;
    int lenfn           = fn.length();
 
-   if ( lenfn > 99 )
+   if ( lenfn > 96 )
    {
-      int lenri           = runID.length() + 99 - lenfn;
+      int lenri           = runID.length() + 96 - lenfn;
       fn                  = QString( runID ).left( lenri ) + fileid;
    }
 
