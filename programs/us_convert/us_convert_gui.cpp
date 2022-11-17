@@ -2658,22 +2658,35 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 void US_ConvertGui::runIDChanged( void )
 {
    // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   QString new_runID = le_runID2->text();
-
-   if ( rx.indexIn( new_runID ) >= 0 )
-   {
-      runID = new_runID;
-      if ( runID.length() > 50 )
-      {
-         QMessageBox::warning( this,
-               tr( "RunID Name Too Long" ),
-               tr( "The runID name may be at most\n"
-                   "50 characters in length." ) );
-         runID = runID.left( 50 );
-      }
-      plot_titles();
+   if (runID.size() == 0){
+       le_runID2->clear();
+       return;
    }
+   int txtlim = 60;
+   int reIdx;
+   QString new_text = le_runID2->text();
+   int crtpos = le_runID2->cursorPosition();
+   if (new_text.size() < runID.size()){
+       runID = new_text;
+   }else{
+       QRegExp re( "[^a-zA-Z0-9\+_-]" );
+       reIdx = new_text.indexOf(re, 0);
+       if (reIdx >= 0){
+           le_runID2->setText(runID);
+           le_runID2->setCursorPosition(reIdx);
+       }else{
+           if (new_text.size() > txtlim){
+               QMessageBox::warning( this,
+                                     tr( "Warning!" ),
+                                     tr( "Length of the run ID cannot exceed %1 characters!" ).arg(txtlim));
+               le_runID2->setText(runID);
+               le_runID2->setCursorPosition(crtpos - 1);
+           }else{
+               runID = new_text;
+           }
+       }
+   }
+   plot_titles();
 
    // If the runID has changed, a number of other things need to change too,
    // for instance GUID's.
@@ -2682,7 +2695,7 @@ void US_ConvertGui::runIDChanged( void )
    ExpData.clear();
    foreach( US_Convert::TripleInfo tripinfo, all_tripinfo )
       tripinfo.clear();
-   le_runID2->setText( runID );
+//   le_runID2->setText( runID );
    le_runID ->setText( runID );
 
    saveStatus = NOT_SAVED;
@@ -4299,6 +4312,11 @@ void US_ConvertGui::runDetails( void )
 
 void US_ConvertGui::changeDescription( void )
 {
+   if (runID.size() == 0){
+       le_description->clear();
+       return;
+   }
+
    if ( le_description->text().size() < 1 )
       le_description->setText( outData[ tripDatax ]->description );
 
@@ -9196,4 +9214,3 @@ DbgLv(1) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
    reset_lambdas();      // Make sure internal MWL lambdas are right
 
 }
-
