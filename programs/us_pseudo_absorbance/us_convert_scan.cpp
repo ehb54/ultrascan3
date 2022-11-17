@@ -932,16 +932,28 @@ void US_ConvertScan::slt_update_smooth(double){
 }
 
 void US_ConvertScan::slt_edit_le(QString text){
+    int txtlim = 60;
+    int reIdx;
+    int crtpos = le_runIdAbs->cursorPosition();
     if (text.size() < runIdAbs.size()){
         runIdAbs = text;
     }else{
-        QRegExp re( "[^a-zA-Z0-9_-]" );
-        int reIdx = text.indexOf(re, 0);
+        QRegExp re( "[^a-zA-Z0-9\+_-]" );
+        reIdx = text.indexOf(re, 0);
         if (reIdx >= 0){
             le_runIdAbs->setText(runIdAbs);
             le_runIdAbs->setCursorPosition(reIdx);
-        }else
-            runIdAbs = text;
+        }else{
+            if (text.size() > txtlim){
+                QMessageBox::warning( this,
+                      tr( "Warning!" ),
+                      tr( "Length of the run ID cannot exceed %1 characters!" ).arg(txtlim));
+                le_runIdAbs->setText(runIdAbs);
+                le_runIdAbs->setCursorPosition(crtpos - 1);
+            } else{
+                runIdAbs = text;
+            }
+        }
     }
     return;
 }

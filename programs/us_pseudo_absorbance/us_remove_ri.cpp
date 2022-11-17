@@ -630,16 +630,28 @@ void US_RemoveRI::slt_save(void){
 }
 
 void US_RemoveRI::slt_edit_le(QString text){
+    int txtlim = 60;
+    int reIdx;
+    int crtpos = le_runIdOut->cursorPosition();
     if (text.size() < runIdOut.size()){
         runIdOut = text;
     }else{
-        QRegExp re( "[^a-zA-Z0-9_-]" );
-        int reIdx = text.indexOf(re, 0);
+        QRegExp re( "[^a-zA-Z0-9\+_-]" );
+        reIdx = text.indexOf(re, 0);
         if (reIdx >= 0){
             le_runIdOut->setText(runIdOut);
             le_runIdOut->setCursorPosition(reIdx);
-        }else
-            runIdOut = text;
+        }else{
+            if (text.size() > txtlim){
+                QMessageBox::warning( this,
+                      tr( "Warning!" ),
+                      tr( "Length of the run ID cannot exceed %1 characters!" ).arg(txtlim));
+                le_runIdOut->setText(runIdOut);
+                le_runIdOut->setCursorPosition(crtpos - 1);
+            } else{
+                runIdOut = text;
+            }
+        }
     }
     return;
 }
