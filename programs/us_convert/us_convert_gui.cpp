@@ -2662,7 +2662,7 @@ void US_ConvertGui::runIDChanged( void )
        le_runID2->clear();
        return;
    }
-   int txtlim = 60;
+   int txtlim = 50;
    int reIdx;
    QString new_text = le_runID2->text();
    int crtpos = le_runID2->cursorPosition();
