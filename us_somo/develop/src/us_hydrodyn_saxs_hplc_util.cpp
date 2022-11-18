@@ -1679,18 +1679,43 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
       // source_I = each t_Is
       // target_I = avg_Is;
 
+      // add_plot(  "avg_Is", avg_qs, avg_Is, true, false );
+
       for ( int i = 0; i < (int)selected_count; ++i ) {
          QString this_file = files[ i ];
          vector < double > org_error = t_errors[ this_file ];
          double k;
          double chi2;
 
+         // vector < double > nnIs =  t_Is[ this_file ];
+         // double min_nz = 1e-10;
+         // for ( int i = 0; i < (int) nnIs.size(); ++i ) {
+         //    if ( nnIs[i] > 0 && nnIs[i] < min_nz) {
+         //       min_nz = nnIs[i];
+         //    }
+         // }
+         // for ( int i = 0; i < (int) nnIs.size(); ++i ) {
+
+         //    if ( nnIs[i] < 0 ) {
+         //       nnIs[i] = min_nz;
+         //    }
+         // }
          usu->scaling_fit( 
                           t_Is[ this_file ],
                           avg_Is,
+                          t_errors[ this_file ],
                           k,
                           chi2 );
          
+         // QTextStream(stdout) << QString( "%1 scaling factor %2 chi2 %3\n" ).arg( this_file ).arg( k ).arg( chi2 );
+         // {
+         //    vector <double> tmp_plot = t_Is[ this_file];
+         //    for ( int j = 0; j < (int)tmp_plot.size(); ++j ) {
+         //       tmp_plot[ j ] *= k;
+         //    }
+         //    add_plot(  QString( "%1_scaled" ).arg( this_file ), avg_qs, tmp_plot, true, false );
+         // }
+
          for ( int j = 0; j < (int)avg_qs.size(); ++j ) {
             t_errors[ this_file ][ j ] *= k;
          }
