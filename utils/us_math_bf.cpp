@@ -555,38 +555,42 @@ double US_Math_BF::transcendental_equation(const double& x, const double& a, con
 bool US_Math_BF::Secant_Solver::solve(double &x0, double &x1) {
     qDebug() << "called solve, x0="<< x0 << "x1=" << x1 <<"\n";
     int n = 0;
-    double xm, x2, c, f2, f3;
+    double x2, f2;
     do {
         double f0 = func(x0);
         double f1 = func(x1);
 
         if(f0 == f1)
         {
+           qDebug() << "Found nothing";
             return false;
         }
 
-        double x2 = x1 - (x1 - x0) * f1/(f1-f0);
+        x2 = x1 - (x1 - x0) * f1/(f1-f0);
         f2 = func(x2);
-
+        qDebug() << "n=" << n << "\nf(x0)=f(" << x0 << ")=" << f0 << "\n" << " f(x1)=f(" << x1 << ")=" << f1 << "\n" << " f(x2)=f(" << x2 << ")=" << f2 << "\n";
         x0 = x1;
         f0 = f1;
         x1 = x2;
         f1 = f2;
 
         n = n + 1;
+
     } while ((fabs(f2) >= epsilon) && n < iter_max); // repeat the loop until the convergence or
     // hitting iter_max
 
     // check if loop end was convergence
-    if ((x0 == 0 || fabs(f2) <= epsilon) && !solutions.contains(x2) ){
-        // append solution to solutions vector
-        qDebug() << "found solution " << x2 << " n=" << n <<"\n";
-        solutions << x2;
+    if (fabs(f2) <= epsilon) {
+       // append solution to solutions vector
+        if (!solutions.contains(x2)){
+           solutions << x2;
+        }
+        qDebug() << "found solution x2=" << x2 << " f2=" << f2 << " n=" << n <<"\n";
         return true;
     }
     // loop end was iter_max
     else
-        qDebug() << "found no solution " << "x0=" << x0 << " xm="<< xm << " check=" << (fabs(xm - x0) >= epsilon)
+        qDebug() << "found no solution " << "x0=" << x0 << " xm="<< x2 << " check=" << (fabs(x2 - x0) >= epsilon)
         << " n=" << n <<"\n";
         return false;
 }
@@ -594,17 +598,17 @@ bool US_Math_BF::Secant_Solver::solve(double &x0, double &x1) {
 bool US_Math_BF::Secant_Solver::solve_wrapper() {
     // init iter variables
     qDebug() << "called solve wrapper\n";
-    double x1 = i_min;
-    double x2 = i_min + grid_res;
+    double x0 = i_min;
+    double x1 = i_min + grid_res;
     int n = 0;
     do {
         // check if func(x1) and func(x2) have different signs
-        if (func(x1) * func(x2) < 0 || fabs(func(x1)-func(x2)) <= epsilon){
-            solve(x1,x2);
+        if (func(x0) * func(x1) < 0){
+            solve(x0,x1);
         }
-        n = fmax(n + 1, int(floor(x2-i_min / grid_res) + 1));
-        x1 = i_min + n * grid_res;
-        x2 = i_min + (n+1) * grid_res;
+        n = fmax(n + 1, int(floor(x1-i_min / grid_res) + 1));
+        x0 = i_min + n * grid_res;
+        x1 = i_min + (n+1) * grid_res;
     } while (x1 < i_max);
     qDebug() << "found Solutions " << solutions.length() << "\n";
     if (solutions.isEmpty()){
