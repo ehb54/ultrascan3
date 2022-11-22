@@ -217,7 +217,6 @@ const US_Math_BF::cheb_series US_Math_BF::_gsl_sf_bessel_amp_phase_bth0_cs = {
       12
 };
 
-
 const QVector<double> US_Math_BF::bm1_data {
       0.1047362510931285,
       0.00442443893702345,
@@ -282,7 +281,7 @@ const US_Math_BF::cheb_series US_Math_BF::_gsl_sf_bessel_amp_phase_bth1_cs = {
 };
 
 
-double US_Math_BF::cheb_eval(const US_Math_BF::cheb_series *cs, double x)
+double US_Math_BF::cheb_eval(const US_Math_BF::cheb_series *cs, const double& x)
 {
    int j;
    double d  = 0.0;
@@ -305,7 +304,7 @@ double US_Math_BF::cheb_eval(const US_Math_BF::cheb_series *cs, double x)
    return d;
 }
 
-double US_Math_BF::bessel_asymp_Mnu(double nu, double x)
+double US_Math_BF::bessel_asymp_Mnu(const double& nu, const double& x)
 {
    double result;
    const double r  = 2.0*nu/x;
@@ -318,8 +317,7 @@ double US_Math_BF::bessel_asymp_Mnu(double nu, double x)
    return result;
 }
 
-
-double US_Math_BF::bessel_asymp_thetanu_corr(double nu, double x)
+double US_Math_BF::bessel_asymp_thetanu_corr(const double& nu, const double& x)
 {
    double result;
    const double r  = 2.0*nu/x;
@@ -331,7 +329,7 @@ double US_Math_BF::bessel_asymp_thetanu_corr(double nu, double x)
    return result;
 }
 
-double US_Math_BF::bessel_cos_pi4(double y, double eps)
+double US_Math_BF::bessel_cos_pi4(const double& y, const double& eps)
 {
    double result;
    const double sy = sin(y);
@@ -353,7 +351,7 @@ double US_Math_BF::bessel_cos_pi4(double y, double eps)
    return result;
 }
 
-double US_Math_BF::bessel_sin_pi4(double y, double eps)
+double US_Math_BF::bessel_sin_pi4(const double& y, const double& eps)
 {
    double result;
    const double sy = sin(y);
@@ -377,7 +375,7 @@ double US_Math_BF::bessel_sin_pi4(double y, double eps)
    return result;
 }
 
-double US_Math_BF::bessel_J0(double x)
+double US_Math_BF::bessel_J0(const double& x)
 {
    double result;
    double y = fabs(x);
@@ -403,7 +401,7 @@ double US_Math_BF::bessel_J0(double x)
    }
 }
 
-double US_Math_BF::bessel_J1(double x)
+double US_Math_BF::bessel_J1(const double& x)
 {
    double result;
    double y = fabs(x);
@@ -444,7 +442,7 @@ double US_Math_BF::bessel_J1(double x)
    }
 }
 
-double US_Math_BF::bessel_Y0(double x)
+double US_Math_BF::bessel_Y0(const double& x)
 {
    double result;
    const double two_over_pi = 2.0/M_PI;
@@ -486,7 +484,7 @@ double US_Math_BF::bessel_Y0(double x)
    }
 }
 
-double US_Math_BF::bessel_Y1(double x)
+double US_Math_BF::bessel_Y1(const double& x)
 {
    double result;
    const double two_over_pi = 2.0 / M_PI; // = 0.6366198
@@ -541,11 +539,76 @@ double US_Math_BF::bessel_Y1(double x)
    }
 }
 
-double US_Math_BF::transcendental_equation(double x, double a, double b) {
+double US_Math_BF::transcendental_equation(const double& x, const double& a, const double& b) {
     double xa = x * a;
     double xb = x * b;
     double y1 = bessel_J1(xa) * bessel_Y1(xb);
     double y2 = bessel_J1(xb) * bessel_Y1(xa);
-    return y1 * y2;
+    return y1 - y2;
 }
 
+
+
+
+
+
+bool US_Math_BF::Secant_Solver::solve(double &x0, double &x1) {
+    qDebug() << "called solve, x0="<< x0 << "x1=" << x1 <<"\n";
+    int n = 0;
+    double xm, x2, c, f2, f3;
+    do {
+        double f0 = func(x0);
+        double f1 = func(x1);
+
+        if(f0 == f1)
+        {
+            return false;
+        }
+
+        double x2 = x1 - (x1 - x0) * f1/(f1-f0);
+        f2 = func(x2);
+
+        x0 = x1;
+        f0 = f1;
+        x1 = x2;
+        f1 = f2;
+
+        n = n + 1;
+    } while ((fabs(f2) >= epsilon) && n < iter_max); // repeat the loop until the convergence or
+    // hitting iter_max
+
+    // check if loop end was convergence
+    if ((x0 == 0 || fabs(f2) <= epsilon) && !solutions.contains(x2) ){
+        // append solution to solutions vector
+        qDebug() << "found solution " << x2 << " n=" << n <<"\n";
+        solutions << x2;
+        return true;
+    }
+    // loop end was iter_max
+    else
+        qDebug() << "found no solution " << "x0=" << x0 << " xm="<< xm << " check=" << (fabs(xm - x0) >= epsilon)
+        << " n=" << n <<"\n";
+        return false;
+}
+
+bool US_Math_BF::Secant_Solver::solve_wrapper() {
+    // init iter variables
+    qDebug() << "called solve wrapper\n";
+    double x1 = i_min;
+    double x2 = i_min + grid_res;
+    int n = 0;
+    do {
+        // check if func(x1) and func(x2) have different signs
+        if (func(x1) * func(x2) < 0 || fabs(func(x1)-func(x2)) <= epsilon){
+            solve(x1,x2);
+        }
+        n = fmax(n + 1, int(floor(x2-i_min / grid_res) + 1));
+        x1 = i_min + n * grid_res;
+        x2 = i_min + (n+1) * grid_res;
+    } while (x1 < i_max);
+    qDebug() << "found Solutions " << solutions.length() << "\n";
+    if (solutions.isEmpty()){
+        return false;
+    }
+    return true;
+}
