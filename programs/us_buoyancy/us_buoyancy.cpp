@@ -114,7 +114,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addLayout( disk_controls, s_row++, 0, 1, 4 );
 
    // Row 2
-   QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
+   pb_load = us_pushbutton( tr( "Load Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
@@ -305,6 +305,15 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    //Also add Fitting progress
    QLabel* lb_fit_progress_bn = us_banner( tr( "Fitting" ) );
    specs->addWidget( lb_fit_progress_bn,  s_row++, 0, 1, 4 );
+
+   us_checkbox( tr( "[AUTO] Fit All Triples" ), ck_auto_fit, true );
+   connect( ck_auto_fit, SIGNAL( toggled     ( bool ) ),
+	    this,        SLOT  ( enblFitBtn  ( bool ) ) );
+   specs->addWidget( ck_auto_fit,  s_row, 0, 1, 2 );
+   pb_fit_current_triple = us_pushbutton( tr( "Fit Current Triple" ), false );
+   connect( pb_fit_current_triple, SIGNAL( clicked() ), SLOT( fit_current_triple() ) );
+   specs->addWidget( pb_fit_current_triple, s_row++, 2, 1, 2 );
+   
    QLabel* lbl_pgb_progress = us_label( tr( "Fitting Progress:" ), -1 );
    specs->addWidget( lbl_pgb_progress, s_row, 0, 1, 1 );
    pgb_progress = new QProgressBar(this);
@@ -349,7 +358,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    
    // Plot layout on right side of window
    plot = new US_Plot( data_plot,
-         tr( "Absorbance Data" ),
+         tr( "Buoyant Density Equilibrium" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ) );
 
    data_plot->setMinimumSize( 600, 400 );
@@ -451,7 +460,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addLayout( disk_controls, s_row++, 0, 1, 4 );
 
    // Row 2
-   QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
+   pb_load = us_pushbutton( tr( "Load Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
@@ -681,16 +690,90 @@ void US_Buoyancy::new_peak( int index )
     }
 }
 
+//Enable / Disable Fit btn
+void US_Buoyancy::enblFitBtn( bool checked )
+{
+  if ( checked )
+    pb_fit_current_triple -> setEnabled( false );
+  else
+    pb_fit_current_triple -> setEnabled( true );
+}
+
+//Fit current triple
+void US_Buoyancy::fit_current_triple ( void )
+{
+
+  if ( cb_triple->count() == 0 )
+    return;
+  
+  QString triple_n = cb_triple->itemText( current_triple );
+  do_fit_for_triple[ triple_n ] = true;
+
+  plot_scan ( cb_triple->currentIndex() );   //compute
+  plot_scan ( cb_triple->currentIndex() );   //plot
+
+  //re-save all reports
+  dpoint. clear();
+  for ( int i=0; i< cb_triple->count(); i++ )
+    {
+      save_auto ( cb_triple->itemText( i ) ); 
+    }
+
+  //disable Fit btn for current triple
+  pb_fit_current_triple -> setEnabled( false );
+
+  //enable other relevant fields
+  us_setReadOnly ( le_dens_0, false );
+  us_setReadOnly ( le_vbar,   false );
+  us_setReadOnly ( le_MW,     false );
+  us_setReadOnly ( le_sigma,  false );
+  
+  pb_view_reports  ->setEnabled( true );
+  pb_delete_peak   ->setEnabled( true );
+  pb_add_peak      ->setEnabled( true );
+  
+}
+
+
 // Select a new triple
 void US_Buoyancy::new_triple( int index )
 {
-   current_triple = index;
-   data = allData[ index ];
-   le_info->setText( runID + ": " + allData[index].description );
-   tmp_dpoint.description = allData[index].description;
-   tmp_dpoint.dataset = runID;
 
-   plot_scan( current_scan );
+  QString triple_n = cb_triple->itemText( index );
+  if ( do_fit_for_triple[ triple_n ] )
+    {
+      pb_fit_current_triple -> setEnabled( false );
+
+      us_setReadOnly ( le_dens_0, false );
+      us_setReadOnly ( le_vbar,   false );
+      us_setReadOnly ( le_MW,     false );
+      us_setReadOnly ( le_sigma,  false );
+      
+      //pb_view_reports  ->setEnabled( true );
+      pb_delete_peak   ->setEnabled( true );
+      pb_add_peak      ->setEnabled( true );
+    }
+  else
+    {
+      pb_fit_current_triple -> setEnabled( true );
+
+      us_setReadOnly ( le_dens_0, true );
+      us_setReadOnly ( le_vbar,   true );
+      us_setReadOnly ( le_MW,     true );
+      us_setReadOnly ( le_sigma,  true );
+
+      //pb_view_reports  ->setEnabled( false );
+      pb_delete_peak   ->setEnabled( false );
+      pb_add_peak      ->setEnabled( false );      
+    }
+      
+  current_triple = index;
+  data = allData[ index ];
+  le_info->setText( runID + ": " + allData[index].description );
+  tmp_dpoint.description = allData[index].description;
+  tmp_dpoint.dataset = runID;
+
+  plot_scan( current_scan );
 }
 
 void US_Buoyancy::update_fields( void )
@@ -993,6 +1076,8 @@ void US_Buoyancy::load( void )
 
    if ( dialog->exec() == QDialog::Rejected )  return;
 
+
+       
    runID = workingDir.section( "/", -1, -1 );
    cb_triple->clear();
    delete dialog;
@@ -1010,6 +1095,25 @@ void US_Buoyancy::load( void )
    // triples.clear();
    // triples << triples_temp[0] << triples_temp[ triples_temp.size() - 1 ];
    // //////////////////////////////////////////////////////////////////////////////////////
+   
+   //check if [AUTO for fit all triples]
+   if ( us_buoyancy_auto_mode )
+     {
+       if ( ck_auto_fit -> isChecked() )
+	 {
+	   for (int ii=0; ii<triples.size(); ii++)
+	     do_fit_for_triple[ triples[ ii ] ] = true;
+	 }
+       else
+	 {
+	   for (int ii=0; ii<triples.size(); ii++)
+	     do_fit_for_triple[ triples[ ii ] ] = false;
+	 }
+	 
+       ck_auto_fit      ->setEnabled( false );
+       pb_load          ->setEnabled( false );
+     }
+   
    
    cb_triple->addItems( triples );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
@@ -1208,7 +1312,9 @@ void US_Buoyancy::load( void )
       str1 = "Interference Data";
       str2 = "Fringes";
    }
-   data_plot->setTitle( str1 );
+   //data_plot->setTitle( str1 );
+
+   data_plot->setTitle( "Buoyant Density Equilibrium" );
    data_plot->setAxisTitle( QwtPlot::yLeft, str2 );
 
    // Temperature check
@@ -1239,25 +1345,33 @@ void US_Buoyancy::load( void )
    //if [auto] analysis, iterate over triple indecies
    if ( us_buoyancy_auto_mode )
      {
-       for ( int i=0; i< cb_triple->count(); i++ )
+       if ( ck_auto_fit->isChecked() )
 	 {
-	   //new_triple( i );
-	   cb_triple->setCurrentIndex( i );
+	   for ( int i=0; i< cb_triple->count(); i++ )
+	     {
+	       //new_triple( i );
+	       cb_triple->setCurrentIndex( i );
+	     }
+	   
+	   //set back to the first triple
+	   cb_triple->setCurrentIndex( 0 );
+	   
+	   //enable needed fields | buttons
+	   us_setReadOnly ( le_dens_0, false );
+	   us_setReadOnly ( le_vbar,   false );
+	   us_setReadOnly ( le_MW,     false );
+	   us_setReadOnly ( le_sigma,  false );
+	   
+	   pb_view_reports  ->setEnabled( true );
+	   pb_delete_peak   ->setEnabled( true );
+	   pb_add_peak      ->setEnabled( true );
 	 }
-
-       //set back to the first triple
-       cb_triple->setCurrentIndex( 0 );
-
-       //enable needed fields | buttons
-       us_setReadOnly ( le_dens_0, false );
-       us_setReadOnly ( le_vbar,   false );
-       us_setReadOnly ( le_MW,     false );
-       us_setReadOnly ( le_sigma,  false );
-              
-       pb_view_reports  ->setEnabled( true );
-       pb_delete_peak   ->setEnabled( true );
-       pb_add_peak      ->setEnabled( true );
+       else  //fit each triple individually upon pressing 'Fit Current Triple': disable checkbox
+	 {
+	   
+	 }
      }
+       
 }
 
 //for debug
@@ -1586,6 +1700,8 @@ void US_Buoyancy::sel_investigator( void )
 // Reset parameters to their defaults
 void US_Buoyancy::reset( void )
 {
+ 
+   pb_load      ->setEnabled( true );
    le_info     ->setText( "" );
    
    ct_selectScan->disconnect();
@@ -1650,6 +1766,8 @@ void US_Buoyancy::reset( void )
    triple_name_to_total_area. clear();
    alpha_centerpiece        . clear();
 
+   do_fit_for_triple        . clear();
+
    triple_name_to_total_area_uncorrected. clear();  
 
    xfit_data . clear();
@@ -1660,15 +1778,16 @@ void US_Buoyancy::reset( void )
        cb_triple->clear();
        pick->setEnabled( false );
        
-       // le_stretch          ->setText( "" ); 
-       // le_dens_0           ->setText( "" );
-       // le_bottom	      ->setText( "" );
-       // le_bottom_calc      ->setText( "" );
+       le_stretch          ->setText( "" ); 
+       le_bottom	   ->setText( "" );
+       le_bottom_calc      ->setText( "" );
+       le_meniscus	   ->setText( "" );
+       le_temperature      ->setText( "" );
+       le_buffer_density   ->setText( "" );
+
        // le_vbar             ->setText( "" );
+       // le_dens_0           ->setText( "" );
        // le_MW		      ->setText( "" );
-       // le_meniscus	      ->setText( "" );
-       // le_temperature      ->setText( "" );
-       // le_buffer_density   ->setText( "" );
        
        cb_peaks->disconnect();
        cb_peaks->clear();
@@ -1688,6 +1807,8 @@ void US_Buoyancy::reset( void )
        pb_view_reports  ->setEnabled( false );
        pb_delete_peak   ->setEnabled( false );
        pb_add_peak      ->setEnabled( false );
+
+       ck_auto_fit      ->setEnabled( true );
      }
 }
 
@@ -1705,6 +1826,16 @@ void US_Buoyancy::plot_scan( double scan_number )
 {
    float temp_x, temp_y;
    QString triple_n = cb_triple->itemText( current_triple );
+
+   QStringList triple_n_list = triple_n.split("/");
+   QString wvl_n = triple_n_list[2].simplified();
+   
+   bool change_y_axis_title; 
+   (wvl_n.length() == 3) ? change_y_axis_title = true : change_y_axis_title = false;
+   QString y_axis_title = QString("Absorbance, ") + wvl_n + "nm";
+
+   qDebug() << "Y-axis title -- " << y_axis_title;
+   
    QString title_fit;
    double sigma = 0.015;
    
@@ -1860,11 +1991,15 @@ void US_Buoyancy::plot_scan( double scan_number )
        triple_name_to_peak_gauss_envelopes_map[ triple_n ]. clear();
        draw_gauss_envelope( triple_name_to_peak_to_parms_map[ triple_n ] );
      }
+
    
+   if ( change_y_axis_title )
+     data_plot->setAxisTitle( QwtPlot::yLeft,  y_axis_title );
+        
    data_plot->replot();
 
    
-   if ( us_buoyancy_auto_mode && !triple_fitted_map[ triple_n ] )
+   if ( us_buoyancy_auto_mode && !triple_fitted_map[ triple_n ] && do_fit_for_triple [ triple_n ] )
      {
        //do fit of the current scan, identify peak positions ///////////////////////////////////////////////////////////////////////
        qDebug() << "Size of v_wavelength array for triple : " << v_wavelength. last() . description  <<  v_wavelength. size();
@@ -1981,7 +2116,7 @@ void US_Buoyancy::plot_scan( double scan_number )
    
 
 
-   if ( us_buoyancy_auto_mode && !triple_peaks_defined_map[ triple_n ] )
+   if ( us_buoyancy_auto_mode && !triple_peaks_defined_map[ triple_n ] && do_fit_for_triple [ triple_n ] )
      {
        //variances for current triple && sigma && order used in fit
        double  minVariance = 1.0e99;
@@ -2058,12 +2193,9 @@ void US_Buoyancy::plot_scan( double scan_number )
    update_fields();
 
    //Save & all peak reports (for current triple)
-   if (  us_buoyancy_auto_mode && !triple_report_saved_map[ triple_n  ]  )
+   if (  us_buoyancy_auto_mode && !triple_report_saved_map[ triple_n  ] && do_fit_for_triple [ triple_n ] )
      {
        save_auto( triple_n );
-       // pb_view_reports  ->setEnabled( true );
-       // pb_delete_peak   ->setEnabled( true );
-       // pb_add_peak      ->setEnabled( true );
      }
 }
 

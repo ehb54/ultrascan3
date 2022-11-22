@@ -74,6 +74,7 @@ class US_Buoyancy : public US_Widgets
       QMap< QString, bool > triple_report_saved_map;
       QMap< QString, bool > triple_fitted_map;
       QMap< QString, bool > triple_peaks_defined_map;
+  QMap< QString, bool > do_fit_for_triple;
 
   QMap< QString, double > alpha_centerpiece;
   QMap< QString, double > data_left_to_triple_name_map;
@@ -123,6 +124,7 @@ class US_Buoyancy : public US_Widgets
       QStringList        trip_rpms;
 
       QPushButton*       pb_details;
+      QPushButton*       pb_load;
 
       QwtPlot*           data_plot;
       QwtPlotCurve*      v_line;
@@ -178,6 +180,9 @@ class US_Buoyancy : public US_Widgets
 
       QPushButton*       pb_delete_peak;
       QPushButton*       pb_add_peak;
+
+  QPushButton*       pb_fit_current_triple;
+  QCheckBox*         ck_auto_fit;
   
       QProgressBar*      pgb_progress;
       QPushButton*       pb_view_reports;
@@ -224,6 +229,10 @@ private slots:
         void add_peak( void );
   QMap<QString, double> calc_gauss_area( QString, double, double, double );
   QMap<QString, double> calc_total_area( QString );
+
+  void enblFitBtn( bool );
+  void fit_current_triple( void );
+  
   
   void print_xy( US_DataIO::RawData, int  );
 	void new_rpmval           ( int  );
