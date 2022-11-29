@@ -6513,8 +6513,10 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	     }
 	   
 	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-	   QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-				       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+	   // QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+	   // 			       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+
+	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
 	   
 	   if ( mdla.contains ( method ) )
 	     {
