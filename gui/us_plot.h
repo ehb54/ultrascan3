@@ -135,6 +135,9 @@ class US_PlotConfig : public US_WidgetsDialog
       //! \param current_plot - The plot to be configured
       US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
 
+      QColor global_canvas_color;
+  //QPalette global_canvas_palette;
+
    //signals:
       //! \brief A signal to tell the parent that the window is closed
       //void plotConfigClosed( void );
@@ -195,6 +198,7 @@ class US_PlotCurveConfig : public US_WidgetsDialog
       //void curveConfigClosed( void );
 
    private:
+      US_PlotConfig* plotConfigW;
       QwtPlot*      plot;
                    
       QStringList   selectedItems;

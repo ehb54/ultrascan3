@@ -559,6 +559,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // set bg color
    QColor   c = plot->canvasBackground();
+   global_canvas_color = c; //ALEXEY
    QPalette palette = US_GuiSettings::plotColor();
    palette.setColor( QPalette::Active  , QPalette::Window, c );
    palette.setColor( QPalette::Inactive, QPalette::Window, c );
@@ -758,11 +759,17 @@ void US_PlotConfig::selectCanvasColor( void )
    QPalette pal     = lb_showCanvasColor->palette();
    QColor   current = pal.color( QPalette::Active, QPalette::Window );
    QColor   col     = QColorDialog::getColor( current, this, tr( "Select canvas color" ) );
+
+   qDebug() << "Canvas Color Selected: " << col;
    
    if ( col.isValid() )
    {
       pal.setColor( QPalette::Window, col );
       lb_showCanvasColor->setPalette( pal );
+      
+      //global_canvas_palette = pal;
+      global_canvas_color = col;   //ALEXEY
+      
 #if QT_VERSION > 0x050000
       plot->setCanvasBackground( QBrush( col ) );
 #else
@@ -770,6 +777,9 @@ void US_PlotConfig::selectCanvasColor( void )
 #endif
       plot->replot();
    }
+
+   
+   qDebug() << "Canvas Color Selected in Plot(): " << plot->canvasBackground();
 }
 
 /*!  \brief Change the frame color */
@@ -911,6 +921,8 @@ void US_PlotConfig::updateAxis( int axis )
 */
 void US_PlotConfig::updateCurve( void )
 {
+  qDebug() << "1. In Update Selected Curve: plot's canvas backgound color -- " << plot->canvasBackground();
+  
    if ( lw_curves->selectedItems().count() == 0 )
    {
       QMessageBox::information( this,
@@ -932,8 +944,11 @@ void US_PlotConfig::updateCurve( void )
       selected << items[i]->text();
 
    qDebug() << "SELECTED Curves -- " << selected;
+   qDebug() << "2. In Update Selected Curve: plot's canvas backgound color -- " << plot->canvasBackground();
 
-   curveWidget = new US_PlotCurveConfig( plot, selected );
+   //curveWidget = new US_PlotCurveConfig( plot, selected );
+   curveWidget = new US_PlotCurveConfig( plot, selected, this  ); //ALEXEY - call curves' Config widget with explicitly defining parent (::US_PlotConfig)
+
    //curveWidget->setAttribute( Qt::WA_DeleteOnClose );
    //connect( curveWidget, SIGNAL( curveConfigClosed( void ) ),
    //                      SLOT  ( curveConfigFinish( void ) ) );
@@ -1011,14 +1026,30 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
       const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
       : US_WidgetsDialog( parent, f ) //( false, parent, f )
 {
+  plotConfigW = (US_PlotConfig*)parent;         //ALEXEY: access to parent's US_PlotConfig
+  qDebug() << "In parent US_PlotConfig widget, plot canvas Color is: " << plotConfigW -> global_canvas_color;
+   
+   qDebug() << "0. In US_PlotCurveConfig() Constructor: (current)plot's canvas Color -- " << currentPlot->canvasBackground();
+  
    plot          = currentPlot;
+   //ALEXEY: for some reason, plot's canvas background color is lost here: needs to reset to what has been selected in US_PlotConfig::
+#if QT_VERSION > 0x050000
+   plot->setCanvasBackground( QBrush( plotConfigW -> global_canvas_color ) );
+#else
+   plot->setCanvasBackground(  plotConfigW -> global_canvas_color );
+#endif
+   
    selectedItems = selected;
 
+   qDebug() << "1. In US_PlotCurveConfig() Constructor: plot's canvas Color -- " << plot->canvasBackground();
+   
    // Keep out of the way
    //move( pos() + QPoint( plot->rect().width(), 0 ) );
 
    setWindowTitle( tr( "Curve Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
+
+   qDebug() << "2. In US_PlotCurveConfig() Constructor: plot's canvas Color -- " << plot->canvasBackground();
 
    // Find the first curve selected
    QwtPlotItemList list = plot->itemList();
