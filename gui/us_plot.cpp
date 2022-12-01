@@ -931,6 +931,8 @@ void US_PlotConfig::updateCurve( void )
    for ( int i = 0; i < items.count(); i++ )
       selected << items[i]->text();
 
+   qDebug() << "SELECTED Curves -- " << selected;
+
    curveWidget = new US_PlotCurveConfig( plot, selected );
    //curveWidget->setAttribute( Qt::WA_DeleteOnClose );
    //connect( curveWidget, SIGNAL( curveConfigClosed( void ) ),
@@ -1293,6 +1295,8 @@ void US_PlotCurveConfig::curveStyleChanged( int index )
 void US_PlotCurveConfig::symbolStyleChanged( int index )
 {
    int style  = cmbb_symbolStyle->itemData( index ).toInt();
+
+   qDebug() << "Curve's SymbolStyle (int): " << style; 
    symbolStyle = static_cast< QwtSymbol::Style > ( style );
    lb_sample2->update(); 
 }
@@ -1349,6 +1353,7 @@ void US_PlotCurveConfig::apply( void )
 #else
    QwtSymbol *oldSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
 #endif
+
    oldSymbol             = ( oldSymbol != NULL ) ? oldSymbol : new QwtSymbol;
    QPen      symbolPen   = oldSymbol->pen();
    QBrush    symbolBrush = oldSymbol->brush();
@@ -1361,8 +1366,8 @@ void US_PlotCurveConfig::apply( void )
 
    QSize symbolSize( sb_symbolWidth->value(), sb_symbolHeight->value() );
    
-   QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,
-                                         symbolPen,   symbolSize );
+   // QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,           //ALEXEY:: new Symbol object will be initialized inside the cycle !!!
+   //                                       symbolPen,   symbolSize );
 
    palette = lb_showCurveColor->palette();
    QPen      curvePen( palette.color( QPalette::Window ) );
@@ -1371,8 +1376,9 @@ void US_PlotCurveConfig::apply( void )
    
    QwtPlotItemList list = plot->itemList(); // All items
 
-   int j = 0;
+   //int j = 0;                                               //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
 
+   qDebug() << "Plot Curve Config: just before list() / selectedlist iteration:  ";
    // Iterate through the selected curves
    for ( int i = 0; i < selectedItems.size(); i++ )
    {
@@ -1380,11 +1386,14 @@ void US_PlotCurveConfig::apply( void )
       QString title = selectedItems[ i ];
       title.replace( QRegExp( "^\\(\\d+\\) " ), "" );
 
-      // There is no need to reiterate over the full list
+      qDebug() << "Plot Curve Config: for selectItem -- " << title;
+
+      // There is no need to reiterate over the full list     //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
       // This assumes the selected list and the full list
       // are in the same order
 
-      for ( /* no intitalizer */; j < list.size(); j++ )
+      //for ( /* no intitalizer */; j < list.size(); j++ )    //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
+      for ( int j = 0; j < list.size(); j++ )
       {
          if ( list[ j ]->rtti() != QwtPlotItem::Rtti_PlotCurve ) continue;
          if ( list[ j ]->title() == title )
@@ -1392,15 +1401,47 @@ void US_PlotCurveConfig::apply( void )
             QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* > ( list[ j ] );
             if ( selectedItems.size() == 1 ) 
                curve->setTitle( le_curveTitle->text() );
- 
-            curve->setSymbol( newSymbol );
-            curve->setPen   ( curvePen );
-            curve->setStyle ( curveStyle );
+
+	    qDebug() << "Plot Curve Config: for allItems -- " << (list[ j ]->title()).text();
+	    if ( curve->symbol() !=  NULL ) 
+	      qDebug() << "Current Symbol -- " << curve->symbol()->style();
+
+	    QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,             //ALEXEY: defining a new symbol must be witnin !!! caused crash before
+						  symbolPen,   symbolSize );
+	    
+	    if ( !symbolStyle || symbolStyle ==  QwtSymbol::NoSymbol )
+	      {
+		qDebug() << "No symbolStyle selected in the first place, setting to ::NoSymbol -- ";
+		newSymbol = NULL;
+	      }
+	    
+	    if ( newSymbol != NULL )
+	      qDebug() << "newSymbol: pen, brush, size, style -- "
+		       << newSymbol->pen()
+		       << newSymbol->brush()
+		       << newSymbol->size()
+		       << newSymbol->style();
+	    
+	    curve->setSymbol( newSymbol );  //ALEXEY: this caused crash when plot->detachItems() from all apps (when ::NoSymbol style OR ...)
+	    // Also, crashed when multiple curves selected && pressing "Apply" more than one time (even while changing the symbol type...)
+	    // ATTN: crashed only when applied to the 2nd curve in a selected list! When only 1 curve selected, all good -- was wrong (heap) memory allocation!!
+	    qDebug() << "Plot Curve Config: for allItems parms SET Symbol-- " << (list[ j ]->title()).text();
+	    
+	    curve->setPen   ( curvePen );
+	    qDebug() << "Plot Curve Config: for allItems parms SET Pen-- " << (list[ j ]->title()).text();
+
+	    curve->setStyle ( curveStyle );
+	    qDebug() << "Plot Curve Config: for allItems parms SET Style-- " << (list[ j ]->title()).text();
+
+	    qDebug() << "Plot Curve Config: for allItems parms SET ALL -- " << (list[ j ]->title()).text();
             break;
          }
       }
 
    }
+
+   
+   qDebug() << "Plot Curve Config: just before replot() ";
    plot->replot();
 }
 

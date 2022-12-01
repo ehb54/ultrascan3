@@ -1849,8 +1849,15 @@ void US_Buoyancy::plot_scan( double scan_number )
    double* r    = rvec.data();
    double* v    = vvec.data();
 
+   qDebug() << "New triple, Before detachItems in plot() ";
+
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   //data_plot->detachItems( QwtPlotItem::Rtti_PlotItem, true);
+   //data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve, true );
+   
+   qDebug() << "New triple, After detachItems in plot() 1";
    v_line = NULL;
+   qDebug() << "New triple, After detachItems in plot() 2";
 
    double maxR  = -1.0e99;
    double minR  =  1.0e99;
@@ -1984,7 +1991,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	   double rad = triple_name_to_peaks_map[ triple_n ][ ii ];
 
 	   qDebug() << "Drawing line for triple, peak -- " << triple_n << rad;
-	   draw_vline_auto( rad );
+	   draw_vline_auto( rad, QString::number(ii + 1) );
 	 }
 
        //plot gauss envelops
@@ -2436,7 +2443,8 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
   //     qDebug() << "Peaks, values --  " << ss.key() << ss.value(); 
   //   }
   // //////////////
-  
+
+  int peak_count = 0;
   for ( ss =  peak_p.begin(); ss !=  peak_p.end(); ++ss )
     {
       QStringList pp = ss.value();
@@ -2464,9 +2472,12 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
 	}
 
       qDebug() << "Envelope built for peak: " << ss.key();
+
+      ++peak_count;
+      QString gauss_line_name = "Gauss Envelope" + QString::number( peak_count );
       
       QwtPlotCurve* peak_envelope;
-      peak_envelope = us_curve(data_plot, "Gauss Envelope");
+      peak_envelope = us_curve(data_plot, gauss_line_name );
       
       double* yy = (double*)gaussian_y.data();
       double* xx = (double*)gaussian_x.data();
@@ -2481,7 +2492,7 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
 }
 
 // Draw a vertical pick line
-void US_Buoyancy::draw_vline_auto( double radius )
+void US_Buoyancy::draw_vline_auto( double radius, QString vline_number )
 {
    QwtPlotCurve* v_line_peak;
       
@@ -2504,8 +2515,10 @@ void US_Buoyancy::draw_vline_auto( double radius )
    double v[ 2 ];
    v [ 0 ] = y_axis->upperBound() - padding;
    v [ 1 ] = y_axis->lowerBound() + padding;
-
-   v_line_peak = us_curve( data_plot, "V-Line" );
+   
+   QString vline_name = "V-Line-" + vline_number; 
+   
+   v_line_peak = us_curve( data_plot, vline_name );
    v_line_peak ->setSamples( r, v, 2 );
 
    QPen pen = QPen( QBrush( Qt::yellow ), 1.0, Qt::DotLine );

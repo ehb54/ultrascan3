@@ -191,8 +191,8 @@ class US_Buoyancy : public US_Widgets
 
 private slots:
 	double calc_stretch       ( void );
-	void draw_vline           ( double );
-        void draw_vline_auto      ( double );
+  void draw_vline           ( double );
+  void draw_vline_auto      ( double, QString );
   void draw_gauss_envelope  (  QMap < QString, QStringList > ); 
 	void mouse                ( const QwtDoublePoint& );
   void mouse_peak                ( const QwtDoublePoint& );
