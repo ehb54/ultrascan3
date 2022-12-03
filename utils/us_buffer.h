@@ -45,31 +45,34 @@ class US_UTIL_EXTERN US_BufferComponent
 class US_UTIL_EXTERN US_CosedComponent
 {
 public:
-    QString componentID;       //!< The Cosedimenting ComponentID field in the DB.
-    QString name;              //!< The cosed component's description.
-    QString unit;              //!< The cosed component value's unit.
-    double  dens_coeff[ 6 ];   //!< The density coefficients.
-    double  visc_coeff[ 6 ];   //!< The viscosity coefficients.
-    QString range;             //!< The cosed component's range.
-
-    //! Get all component data from the DB
-    //! \param masterPW The user's master password.
-    //! \param componentList A reference to where the data should be placed.
-    static void getAllFromDB ( const QString&, QMap< QString, US_CosedComponent >& );
-
-    //! Get all component data from the etc/cosed_comp.xml file
-    //! \param componentList A reference to where the data should be placed.
-    static void getAllFromHD ( QMap< QString, US_CosedComponent >& );
-
-    //! Write all component data from the etc/cosed_comp.xml file
-    //! \param componentList A reference to where the data is found.
-    static void putAllToHD ( const QMap< QString, US_CosedComponent >& );
+    int id;
+    QString GUID;
+    QString componentID;                   //!< The Cosedimenting ComponentID field in the DB.
+    QString name;                          //!< The cosed component's name.
+    double  dens_coeff[ 6 ];               //!< The density coefficients.
+    double  visc_coeff[ 6 ];               //!< The viscosity coefficients.
+    QMap< QVector<int> , double> s_coeffs; //!< The cosed component's s coefficients for a set of other components
+    QMap< QVector<int> , double> d_coeffs; //!< The cosed component's D coefficients for a set of other components
+    double conc;                           //!< The cosed component's concentration
+    bool overlaying;
 
     //! Get the info for an individual component from the DB.
     //! \param db A \ref US_DB2 structure to an opened connection to the DB.
     void getInfoFromDB( US_DB2* = 0 );
 
-private:
+    //! \brief Read a cosed component from the DB
+    //! \param db  An open database connection
+    //! \param cosed_componentID  ID number in string format of the cosed component to be read.
+    //! \return A boolean success or failure
+    bool readFromDB ( US_DB2* db, const QString&  cosed_componentID);
+
+
+    //! \brief Write a new buffer to the DB.  
+    //! \param db An open database connection
+    //! \param buffer_ID The buffer_id the cosedimenting component belongs too
+    //! \return The cosed_componentID of the new cosed component
+    int saveToDB( US_DB2* = 0, const int = 0);
+
     static void component( QXmlStreamReader&, QMap< QString, US_CosedComponent >& );
 };
 
@@ -103,11 +106,8 @@ class US_UTIL_EXTERN US_Buffer
       //! The list of ingredients
       QList< US_BufferComponent > component;  //!< A list of components that
                                       //!< make up the buffer.
-      QList< US_CosedComponent >  cosed_component; //!< A list of cosedimenting components that make up the buffer.
+      QMap< QString, US_CosedComponent >  cosed_component; //!< A list of cosedimenting components that make up the buffer.
       QList< double > concentration;  //!< Concentrations for each component.
-      QList< QList < double >> cosed_attributes; //!< Attributes for each cosed component
-                                                               //!< (conc,s,D).
-      QList< bool > overlaying; //!< Overlaying attribute for each cosed component.
       QStringList     componentIDs;   //!< An aux list for disk input of buffer components.
       QStringList     cosed_componentIDs; //!< An aux list for disk input of cosed components.
 
@@ -140,7 +140,7 @@ class US_UTIL_EXTERN US_Buffer
       //! \param private_buffer An indication to mark the buffer 
       //!        public "0" or private "1";
       //! \return The bufferID of the new buffer
-      int saveToDB( US_DB2* = 0, const QString = "1" );
+      int saveToDB( US_DB2* = 0, const QString& = "1" );
 
       //! \brief Read a buffer from the DB
       //! \param db  An open database connection

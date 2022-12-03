@@ -185,7 +185,7 @@ void US_BufferComponent::putAllToHD(
       xml.writeStartElement( "densityCoefficients" );
       for ( int j = 0; j < 6; j++ )
       {
-         factor.sprintf( "c%i", j );
+         factor.asprintf( "c%i", j );
          value = QString::number( componentList[ key ].dens_coeff[ j ], 'f', 5 );
          xml.writeAttribute( factor, value );
       }
@@ -195,7 +195,7 @@ void US_BufferComponent::putAllToHD(
       xml.writeStartElement( "viscosityCoefficients" );
       for ( int j = 0; j < 6; j++ )
       {
-         factor.sprintf( "c%i", j );
+         factor.asprintf( "c%i", j );
          value = QString::number( componentList[ key ].visc_coeff[ j ], 'f', 5 );
          xml.writeAttribute( factor, value );
       }
@@ -210,50 +210,26 @@ void US_BufferComponent::putAllToHD(
    file.close();
 }
 
-void US_CosedComponent::getAllFromDB( const QString& masterPW,
-                                       QMap< QString, US_CosedComponent >& componentList )
-{
-    US_DB2 db( masterPW );
-
-    if ( db.lastErrno() != US_DB2::OK )
-    {
-        qDebug() << "Database Error"
-                 << "US_CosedComponent ::connectDB: Could not open DB\n"
-                 << db.lastError();
-        return;
-    }
-
-    QStringList q( "get_cosed_component_desc" );
-    db.query( q );
-    QStringList cids;
-
-    while ( db.next() )
-    {
-        cids << db.value( 0 ).toString();
-    }
-
-    for ( int ii = 0; ii < cids.size(); ii++ )
-    {
-        US_CosedComponent c;
-        c.componentID = cids.at( ii );
-        c.getInfoFromDB( &db );
-        componentList[ c.componentID ] = c;
-    }
-}
-
-void US_CosedComponent::getInfoFromDB( US_DB2* db )
-{
+bool US_CosedComponent::readFromDB(US_DB2* db, const QString& cosed_compID) {
     QStringList q( "get_cosed_component_info" );
-    q << componentID;
+    q << cosed_compID;   // cosed_componentID from list widget entry
+
 
     db->query( q );
     db->next();
+    id                = cosed_compID.toInt();
+    GUID              = db->value( 6 ).toString();
+    componentID       = cosed_compID;
+    name              = db->value( 0 ).toString();
+    conc              = db->value( 1 ).toDouble();
+    overlaying        = US_Util::bool_flag( db->value( 6 ).toString() );
 
-    unit              = db->value( 0 ).toString();
-    name              = db->value( 1 ).toString();
-    QString viscosity = db->value( 2 ).toString();
-    QString density   = db->value( 3 ).toString();
-    range             = db->value( 4 ).toString();
+    QString s_coefficient = db->value( 2 ).toString();
+    QString d_coefficient = db->value( 3 ).toString();
+    QString density   = db->value( 4 ).toString();
+    QString viscosity = db->value( 5 ).toString();
+
+
 
     QStringList sl    = viscosity.split( " " );
 
@@ -266,38 +242,96 @@ void US_CosedComponent::getInfoFromDB( US_DB2* db )
         dens_coeff[ i ]   = sl[ i ].toDouble();
 
     sl                = sl.mid( 6 );  // Remove coefficients
-    range             = range.isEmpty() ? sl.join( " " ) : range;
+    QStringList key_value;
+    QStringList key;
+    double value;
+    QVector<int> coeffs_key;
+
+    sl = s_coefficient.split("|");
+    for (int i = 0; i < sl.size(); i++)
+    {
+        coeffs_key.clear();
+        key_value = sl[ i ].split(":");
+        key = key_value[ 0 ].split(" ");
+        for (int j = 0; j < key.size(); j++)
+            coeffs_key << key[ j ].toInt();
+        value = key_value[ 1 ].toDouble();
+        s_coeffs[ coeffs_key ] = value;
+    }
+
+    sl = d_coefficient.split("|");
+    for (int i = 0; i < sl.size(); i++)
+    {
+        coeffs_key.clear();
+        key_value = sl[ i ].split(":");
+        key = key_value[ 0 ].split(" ");
+        for (int j = 0; j < key.size(); j++)
+            coeffs_key << key[ j ].toInt();
+        value = key_value[ 1 ].toDouble();
+        s_coeffs[ coeffs_key ] = value;
+    }
+    return true;
 }
 
-void US_CosedComponent::getAllFromHD(
-        QMap< QString, US_CosedComponent >& componentList )
+void US_CosedComponent::getInfoFromDB( US_DB2* db )
 {
-    componentList.clear();
+    QStringList q( "get_cosed_component_info" );
+    q << componentID;
 
-    QString fname  = US_Settings::appBaseDir() + "/etc/cosedComponents.xml";
-    QFile   file( fname );
+    db->query( q );
+    db->next();
+    id                = componentID.toInt();
+    name              = db->value( 0 ).toString();
+    conc              = db->value( 1 ).toDouble();
+    overlaying        = US_Util::bool_flag( db->value( 6 ).toString() );
 
-    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
+    QString s_coefficient = db->value( 2 ).toString();
+    QString d_coefficient = db->value( 3 ).toString();
+    QString density   = db->value( 4 ).toString();
+    QString viscosity = db->value( 5 ).toString();
+
+
+
+    QStringList sl    = viscosity.split( " " );
+
+    for ( int i = 0; i < 6 ; i++ )
+        visc_coeff[ i ]   = sl[ i ].toDouble();
+
+    sl = density.split( " " );
+
+    for ( int i = 0; i < 6 ; i++ )
+        dens_coeff[ i ]   = sl[ i ].toDouble();
+
+    sl                = sl.mid( 6 );  // Remove coefficients
+    QStringList key_value;
+    QStringList key;
+    double value;
+    QVector<int> coeffs_key;
+
+    sl = s_coefficient.split("|");
+    for (int i = 0; i < sl.size(); i++)
     {
-        // Fail quietly
-        qDebug() << "Cannot open file " << fname;
-        return;
+        coeffs_key.clear();
+        key_value = sl[ i ].split(":");
+        key = key_value[ 0 ].split(" ");
+        for (int j = 0; j < key.size(); j++)
+            coeffs_key << key[ j ].toInt();
+        value = key_value[ 1 ].toDouble();
+        s_coeffs[ coeffs_key ] = value;
     }
 
-    QXmlStreamReader xml( &file );
-
-    while ( ! xml.atEnd() )
+    sl = d_coefficient.split("|");
+    for (int i = 0; i < sl.size(); i++)
     {
-        xml.readNext();
-
-        if ( xml.isStartElement() )
-        {
-            if ( xml.name() == "component" )
-                component( xml, componentList );
-        }
+        coeffs_key.clear();
+        key_value = sl[ i ].split(":");
+        key = key_value[ 0 ].split(" ");
+        for (int j = 0; j < key.size(); j++)
+            coeffs_key << key[ j ].toInt();
+        value = key_value[ 1 ].toDouble();
+        d_coeffs[ coeffs_key ] = value;
     }
 
-    file.close();
 }
 
 void US_CosedComponent::component(
@@ -307,16 +341,14 @@ void US_CosedComponent::component(
     US_CosedComponent bc;
 
     QXmlStreamAttributes a = xml.attributes();
+    bc.id          = a.value( "id"    ).toInt();
     bc.componentID = a.value( "id"    ).toString();
     bc.name        = a.value( "name"  ).toString();
-    bc.unit        = a.value( "unit"  ).toString();
-    bc.range       = a.value( "range" ).toString();
-
 
     while ( ! xml.atEnd() )
     {
 
-        if ( xml.isEndElement()  &&  xml.name() == "component" )
+        if ( xml.isEndElement()  &&  xml.name() == "cosed_component" )
         {
             componentList[ bc.componentID ] = bc;
             return;
@@ -344,69 +376,188 @@ void US_CosedComponent::component(
             bc.visc_coeff[ 5 ] = a.value( "c5" ).toString().toDouble();
         }
 
+        if (xml.isStartElement() && xml.name() == "sedimentationCoefficient" )
+        {
+            QXmlStreamAttributes a = xml.attributes();
+            QVector<int> tmp;
+            QStringList keys = a.value( "key" ).toString().split(" ");
+            for (int i = 0; i < keys.size(); i++){
+                tmp << keys[ i ].toInt();
+            }
+            std::sort(tmp.begin(),tmp.end());
+            bc.s_coeffs[tmp] = a.value("s" ).toDouble();
+        }
+
+        if (xml.isStartElement() && xml.name() == "diffusionCoefficient" )
+        {
+            QXmlStreamAttributes a = xml.attributes();
+            QVector<int> tmp;
+            QStringList keys = a.value( "key" ).toString().split(" ");
+            for (int i = 0; i < keys.size(); i++){
+                tmp << keys[ i ].toInt();
+            }
+            std::sort(tmp.begin(),tmp.end());
+            bc.d_coeffs[tmp] = a.value("D" ).toDouble();
+        }
+
         xml.readNext();
     }
 }
 
-void US_CosedComponent::putAllToHD(
-        const QMap< QString, US_CosedComponent >& componentList )
-{
-    QFile   file( US_Settings::appBaseDir() + "/etc/cosedComponents.xml" );
+int US_CosedComponent::saveToDB( US_DB2* db, const int buffer_ID ) {
+    int idCosedComponent = 0;
+    QStringList q;
+    q << "get_cosed_componentID"
+      << GUID;
+    db->query( q );
 
-    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
+    int     status      = db->lastErrno();
+
+    if ( status != US_DB2::OK  &&  status != US_DB2::NOROWS )
     {
-        qDebug() << "Cannot open file " << US_Settings::appBaseDir() + "/etc/cosedComponents.xml";
-        return;
+        qDebug() << "get_cosed_componentID error=" << status;
+        return -9;
     }
 
-    QXmlStreamWriter xml( &file );
-    xml.setAutoFormatting( true );
-
-    xml.writeStartDocument();
-    xml.writeDTD         ( "<!DOCTYPE US_CosedComponents>" );
-    xml.writeStartElement( "CosedComponents" );
-    xml.writeAttribute   ( "version", "1.0" );
-
-    QStringList keys = componentList.keys();
-
-    for ( int i = 0; i < keys.size(); i++ )
-    {
-        QString key = keys[ i ];
-        xml.writeStartElement( "component" );
-        xml.writeAttribute( "id"   , componentList[ key ].componentID );
-        xml.writeAttribute( "name" , componentList[ key ].name );
-        xml.writeAttribute( "unit" , componentList[ key ].unit );
-        xml.writeAttribute( "range", componentList[ key ].range );
-
-        QString factor;
-        QString value;
-
-        xml.writeStartElement( "densityCoefficients" );
-        for ( int j = 0; j < 6; j++ )
+    else if ( status == US_DB2::NOROWS )
+    {  // There is no cosed_component with the given GUID, so create a new one
+        // construct density and viscosity
+        QString density;
+        for (int i = 0; i < 6; i++)
         {
-            factor.sprintf( "c%i", j );
-            value = QString::number( componentList[ key ].dens_coeff[ j ], 'f', 5 );
-            xml.writeAttribute( factor, value );
+            density += QString(i>0?"":" ") + QString::number( dens_coeff[ i ] , 'f', 5 );
+        }
+        QString viscosity;
+        for (int i = 0; i < 6; i++)
+        {
+            viscosity += QString(i>0?"":" ") + QString::number( visc_coeff[ i ] , 'f', 5 );
+        }
+        // construct s_coeff and d_coeff
+        QStringList s_coeff;
+        QStringList d_coeff;
+
+        for (QVector<int> s_key : s_coeffs.keys())
+        {
+            QString tmp;
+            for (int j = 0; j < s_key.size(); j++)
+            {
+                tmp += QString(j>0?" ":"") + QString(s_key[ j ]);
+            }
+            tmp += QString(":") + QString::number(s_coeffs[ s_key ], 'f', 5 );
+            s_coeff << tmp;
         }
 
-        xml.writeEndElement(); // densityCoefficients
-
-        xml.writeStartElement( "viscosityCoefficients" );
-        for ( int j = 0; j < 6; j++ )
+        for (QVector<int> d_key : d_coeffs.keys())
         {
-            factor.sprintf( "c%i", j );
-            value = QString::number( componentList[ key ].visc_coeff[ j ], 'f', 5 );
-            xml.writeAttribute( factor, value );
+            QString tmp;
+            for (int j = 0; j < d_key.size(); j++)
+            {
+                tmp += QString(j>0?" ":"") + QString(d_key[ j ]);
+            }
+            tmp += QString(":") + QString::number(d_coeffs[ d_key ], 'f', 5 );
+            s_coeff << tmp;
         }
 
-        xml.writeEndElement(); // viscosityCoefficients
-        xml.writeEndElement(); // component
+        q.clear();
+        q << "add_cosed_component"
+          << GUID
+          << QString::number( buffer_ID )
+          << name
+          << QString::number( conc           , 'f', 5 )
+          << s_coeff.join("|")
+          << d_coeff.join("|")
+          << US_Util::bool_string( overlaying )
+          << density
+          << viscosity;
+
+        db->statusQuery( q );
+        //qDebug() << "add_cosed_component-stat" << db->lastErrno();
+
+        if ( db->lastErrno() != US_DB2::OK )
+        {
+            qDebug() << "add_cosed_component error=" << db->lastErrno();
+            return -1;
+        }
+
+        idCosedComponent    = db->lastInsertID();
+        //qDebug() << "new_buffer-idBuffer" << idBuffer;
+
+        qDebug() << "cosed_component_ID for new cosed component: " << idCosedComponent;
+        componentID = QString::number(idCosedComponent);
+        id = idCosedComponent;
     }
+    else {
+        // The cosed_component exists, so update it
+        db->next();            // Get the ID of the existing cosed_component record
+        QString cosed_compID   = db->value( 0 ).toString();
+        id        = cosed_compID.toInt();
+        componentID       = cosed_compID;
+        qDebug() << "BufferID in saveToDB(): " << cosed_compID;
+        QString density;
+        for (int i = 0; i < 6; i++)
+        {
+            density += QString(i>0?"":" ") + QString::number( dens_coeff[ i ] , 'f', 5 );
+        }
+        QString viscosity;
+        for (int i = 0; i < 6; i++)
+        {
+            viscosity += QString(i>0?"":" ") + QString::number( visc_coeff[ i ] , 'f', 5 );
+        }
+        // construct s_coeff and d_coeff
+        QStringList s_coeff;
+        QStringList d_coeff;
 
-    xml.writeEndElement(); // US_CosedComponents
-    xml.writeEndDocument();
+        for (QVector<int> s_key : s_coeffs.keys())
+        {
+            QString tmp;
+            for (int j = 0; j < s_key.size(); j++)
+            {
+                tmp += QString(j>0?" ":"") + QString(s_key[ j ]);
+            }
+            tmp += QString(":") + QString::number(s_coeffs[ s_key ], 'f', 5 );
+            s_coeff << tmp;
+        }
 
-    file.close();
+        for (QVector<int> d_key : d_coeffs.keys())
+        {
+            QString tmp;
+            for (int j = 0; j < d_key.size(); j++)
+            {
+                tmp += QString(j>0?" ":"") + QString(d_key[ j ]);
+            }
+            tmp += QString(":") + QString::number(d_coeffs[ d_key ], 'f', 5 );
+            s_coeff << tmp;
+        }
+
+        q.clear();
+        q << "update_cosed_component"
+          << QString::number( buffer_ID )
+          << componentID
+          << name
+          << QString::number( conc           , 'f', 5 )
+          << s_coeff.join("|")
+          << d_coeff.join("|")
+          << US_Util::bool_string( overlaying )
+          << density
+          << viscosity;
+
+        db->statusQuery( q );
+        //qDebug() << "add_cosed_component-stat" << db->lastErrno();
+
+        if ( db->lastErrno() != US_DB2::OK )
+        {
+            qDebug() << "update_cosed_component error=" << db->lastErrno();
+            return -1;
+        }
+
+        idCosedComponent    = db->lastInsertID();
+        //qDebug() << "new_buffer-idBuffer" << idBuffer;
+
+        qDebug() << "update for cosed component: " << idCosedComponent;
+        componentID = QString::number(idCosedComponent);
+        id = idCosedComponent;
+    }
+    return id;
 }
 
 
@@ -435,8 +586,6 @@ US_Buffer::US_Buffer()
    componentIDs       .clear();
    cosed_componentIDs .clear();
    concentration      .clear();
-   cosed_attributes   .clear();
-   overlaying         .clear();
 }
 
 void US_Buffer::getSpectrum( US_DB2* db, const QString& type ) 
@@ -477,9 +626,8 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
      
       QList< double > keys = extinction.keys();
 
-      for ( int i = 0; i < keys.size(); i++ )
+      for (double wavelength : keys)
       {
-         double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
          qDebug() << "Buffer->extinction details: " << wavelength << " " << extinction[ wavelength ];
@@ -491,9 +639,8 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
    {
       QList< double > keys = refraction.keys();
 
-      for ( int i = 0; i < keys.size(); i++ )
+      for (double wavelength : keys)
       {
-         double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( refraction[ wavelength ], 'e', 4 );
          db->statusQuery( q );
@@ -504,9 +651,8 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
    {
       QList< double > keys = fluorescence.keys();
 
-      for ( int i = 0; i < keys.size(); i++ )
+      for (double wavelength : keys)
       {
-         double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( fluorescence[ wavelength ], 'e', 4 );
          db->statusQuery( q );
@@ -551,16 +697,67 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
       xml.writeEndElement(); // component
    }
 
-    for ( int i = 0; i < cosed_component.size(); i++ )
+    for ( const QString& i : cosed_component.keys() )
     {
+        US_CosedComponent bc = cosed_component[ i ];
         xml.writeStartElement( "cosed_component" );
-        xml.writeAttribute( "id"           , cosed_componentIDs[ i ] );
+        xml.writeAttribute( "id"           , bc.componentID.isNull()?QString( i ):bc.componentID );
+        xml.writeAttribute( "name", bc.name);
         xml.writeAttribute( "concentration",
-                            QString::number( cosed_attributes[ i ][ 0 ], 'f', 5 ) );
-        xml.writeAttribute( "s", QString::number(cosed_attributes[ i ][ 1 ], 'f', 5 ) );
-        xml.writeAttribute( "D", QString::number(cosed_attributes[ i ][ 2 ], 'f', 5) );
-        xml.writeAttribute( "overlaying", US_Util::bool_string( overlaying[ i ] ));
-        xml.writeEndElement(); // component
+                            QString::number( bc.conc, 'f', 5 ) );
+        xml.writeAttribute( "overlaying", US_Util::bool_string( bc.overlaying ));
+
+        QString factor;
+        QString value;
+
+        xml.writeStartElement( "densityCoefficients" );
+        for ( int j = 0; j < 6; j++ )
+        {
+            factor.asprintf( "c%i", j );
+            value = QString::number( bc.dens_coeff[ j ], 'f', 5 );
+            xml.writeAttribute( factor, value );
+        }
+
+        xml.writeEndElement(); // densityCoefficients
+
+        xml.writeStartElement( "viscosityCoefficients" );
+        for ( int j = 0; j < 6; j++ )
+        {
+            factor.asprintf( "c%i", j );
+            value = QString::number( bc.visc_coeff[ j ], 'f', 5 );
+            xml.writeAttribute( factor, value );
+        }
+
+        xml.writeEndElement(); // viscosityCoefficients
+
+
+        for (const QVector<int>& s_key : bc.s_coeffs.keys())
+        {
+            xml.writeStartElement( "sedimentationCoefficient");
+            QString key;
+            for (int j : s_key)
+            {
+                key += QString(" ") + QString(j);
+            }
+            xml.writeAttribute( "key", key);
+            xml.writeAttribute( "s", QString::number(bc.s_coeffs[ s_key ], 'f', 5 ));
+            xml.writeEndElement();
+        }
+
+        for (const QVector<int>& d_key : bc.d_coeffs.keys())
+        {
+            xml.writeStartElement( "diffusionCoefficient");
+            QString key;
+            for (int j : d_key)
+            {
+                key += QString(" ") + QString(j);
+            }
+            xml.writeAttribute( "key", key);
+            xml.writeAttribute( "D", QString::number(bc.d_coeffs[ d_key ], 'f', 5 ));
+            xml.writeEndElement();
+        }
+
+        xml.writeEndElement(); // cosed_component
     }
 
    xml.writeStartElement( "spectrum" );
@@ -639,8 +836,6 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    componentIDs       .clear();
    cosed_componentIDs .clear();
    concentration      .clear();
-   cosed_attributes   .clear();
-   overlaying         .clear();
    q                  .clear();
 
    q << "get_buffer_components" <<  bufferID;
@@ -681,21 +876,10 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
 
     while ( db->next() )
     {
-        cosed_componentIDs  << db->value( 0 ).toString();
-        QList <double> cosed_comp_attr;
-        cosed_comp_attr      << db->value( 4 ).toString().toDouble();
-        cosed_comp_attr      << db->value( 5 ).toString().toDouble();
-        cosed_comp_attr      << db->value( 6 ).toString().toDouble();
-        cosed_attributes     << cosed_comp_attr;
-        overlaying      << US_Util::bool_flag(db->value( 7 ).toString() );
-    }
-
-    for ( int i = 0; i < cosed_componentIDs.size(); i++ )
-    {
         US_CosedComponent bc;
-        bc.componentID = cosed_componentIDs[ i ];
+        bc.componentID = db->value(0).toString();
         bc.getInfoFromDB( db );
-        cosed_component << bc;
+        cosed_component[ bc.componentID ] = bc;
     }
 
    QString compType("Buffer");
@@ -709,7 +893,7 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    return true;
 }
 
-int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
+int US_Buffer::saveToDB( US_DB2* db, const QString& private_buffer )
 {
    int idBuffer = 0;
    QStringList q;
@@ -827,22 +1011,14 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
 
     qDebug() << "bufferID before adding cosed components called: " << idBuffer;
 
-    for ( int i = 0; i < ncomp_cosed; i++ )
+    for ( US_CosedComponent& cc : cosed_component )
     {
-        q.clear();
-        q << "add_cosed_component"
-          << QString::number( idBuffer )
-          << cosed_component[ i ].componentID
-          << QString::number( cosed_attributes[ i ][ 0 ], 'f', 5 )
-          << QString::number( cosed_attributes[ i ][ 1 ], 'f', 5 )
-          << QString::number( cosed_attributes[ i ][ 2 ], 'f', 5)
-          << US_Util::bool_string( overlaying[ i ] );
-        db->statusQuery( q );
+        int IDcosed = cc.saveToDB(db, idBuffer);
 //qDebug() << "add_buffer_components-status=" << db->lastErrno();
 
         if ( db->lastErrno() != US_DB2::OK )
         {
-            qDebug() << "add_cosed_component i,error=" << i << db->lastErrno();
+            qDebug() << "add_cosed_component id,error=" << cc.componentID << db->lastErrno();
             return -4;
         }
     }
@@ -861,16 +1037,16 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
 	 qDebug() << "Creating Spectrum!!!";
          US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
       }
-      else
+     else
       {
          qDebug() << "Updating Spectrum!!!";
 
          QMap<double, double> new_extinction = extinction;
          int profileID = US_ExtProfile::fetch_eprofile(  db, bufferID.toInt(), compType, valType, extinction);
          
-         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
+         qDebug() << "Old Extinction keys: " << extinction.count() << ", ProfileID: " << profileID;
          US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, new_extinction);
-         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
+         qDebug() << "New Extinction keys: " << new_extinction.count() << ", ProfileID: " << profileID;
          
          replace_spectrum = false;
       }
@@ -946,8 +1122,9 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
    concentration     .clear();
    componentIDs      .clear();
    cosed_componentIDs.clear();
-   cosed_attributes  .clear();
-   overlaying        .clear();
+   component         .clear();
+   cosed_component   .clear();
+
 
    while ( ! xml.atEnd() )
    {
@@ -962,13 +1139,9 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
       if ( xml.isStartElement()  &&  xml.name() == "cosed_component" )
       {
          QXmlStreamAttributes a = xml.attributes();
-         QList <double> cosed_comp_attr;
-         cosed_comp_attr      << a.value( "concentration" ).toString().toDouble();
-         cosed_componentIDs   << a.value( "id"            ).toString();
-         cosed_comp_attr      << a.value( "s"             ).toString().toDouble();
-         cosed_comp_attr      << a.value( "D"             ).toString().toDouble();
-         cosed_attributes     << cosed_comp_attr;
-         overlaying      << US_Util::bool_flag(a.value( "overlaying" ).toString());
+         US_CosedComponent bc;
+         bc.component(xml, cosed_component);
+         cosed_componentIDs << bc.componentID;
       }
       if ( xml.isStartElement()  &&  xml.name() == "spectrum" )
         readSpectrum( xml );
@@ -1074,7 +1247,7 @@ void US_Buffer::compositeCoeffs( double* d_coeff, double* v_coeff )
    d_coeff[ 5 ] *= ( 1.0e-6 / sumc4 );
 }
 
-void US_Buffer::dumpBuffer( void ) const
+void US_Buffer::dumpBuffer( ) const
 {
    qDebug() << "person           " << person;
    qDebug() << "bufferID         " << bufferID;
@@ -1094,9 +1267,8 @@ void US_Buffer::dumpBuffer( void ) const
       qDebug() << component[ i ].name << concentration[ i ] << componentIDs[ i ];
    }
    qDebug() << "Cosed Components " << cosed_component.size();
-   for ( int i = 0; i < cosed_component.size(); i++ )
+   for ( const US_CosedComponent& cc : cosed_component)
    {
-      qDebug() << cosed_component[ i ].name << cosed_attributes[ i ][ 0 ] << cosed_attributes[ i ][ 1 ]
-      << cosed_attributes[ i ][ 2 ] << overlaying[ i ] << cosed_componentIDs[ i ];
+      qDebug() << cc.name << cc.conc << cc.overlaying << cc.componentID;
    }
-};
+}
