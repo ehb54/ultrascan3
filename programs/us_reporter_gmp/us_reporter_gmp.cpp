@@ -6017,6 +6017,102 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
                          QString::number( mink ) );
    mstr += indent( 2 ) + "</table>\n";
 
+
+   //Distribution Info - to separate file //////////////////////////////////////////////////
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
+   mstr += indent( 2 ) + "<table>\n";
+
+   QString subDirName  = runName + "-run" + runID;
+   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+   mkdir( US_Settings::reportDir(), subDirName );
+
+   QString model_desc_edited = model.description;
+   model_desc_edited. replace(".", "_");
+   
+   QString fileName_str = dirName + "/" + model_desc_edited + "_csv.txt";
+   QFile file_model_info(fileName_str);
+   file_model_info.open(QIODevice::WriteOnly | QIODevice::Text);
+   QTextStream out_model_info(&file_model_info);
+   
+   QString model_dist_info;
+   
+   if ( cnstvb )
+     {  // Normal constant-vbar distribution
+      model_dist_info = "Molec. Wt., S Apparent, S 20 (W), D Apparent, D 20 (W), f/f0, Concentration";
+
+      out_model_info << model_dist_info << endl;
+      
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_used.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         model_dist_info  =
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
+	   QString().sprintf( "%10.4e", model     .components[ ii ].s  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].s  ) + ", " + 
+	   QString().sprintf( "%10.4e", model     .components[ ii ].D  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].D  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].f_f0 ) + ", " + 
+	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
+
+	 out_model_info << model_dist_info << endl;
+      }
+   }
+
+   else if ( cnstff )
+   {  // Constant-f/f0, varying vbar
+     model_dist_info = "Molec. Wt., S Apparent, S 20 (W), D Apparent, D 20 (W), Vbar20, Concentration";
+
+     out_model_info << model_dist_info << endl;
+
+     for ( int ii = 0; ii < ncomp; ii++ )
+       {
+         double conc = model_used.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+	 model_dist_info  =
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
+	   QString().sprintf( "%10.4e", model     .components[ ii ].s  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].s  ) + ", " + 
+	   QString().sprintf( "%10.4e", model     .components[ ii ].D  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].D  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
+	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
+
+	 out_model_info << model_dist_info << endl;
+       }
+   }
+
+   else
+   {  // Neither vbar nor f/f0 are constant
+
+      model_dist_info = "Molec. Wt., S Apparent, S 20 (W), D 20 (W), f/f0, Vbar20, Concentration";
+      
+      out_model_info << model_dist_info << endl;
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_used.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+	 model_dist_info  =
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
+	   QString().sprintf( "%10.4e", model     .components[ ii ].s  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].s  ) + ", " + 
+	   QString().sprintf( "%10.4e", model     .components[ ii ].D  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].f_f0  ) + ", " + 
+	   QString().sprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
+	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
+	 
+	 out_model_info << model_dist_info << endl;
+      }
+   }
+   
+   file_model_info.close();
+   
+   QString file_path = "";
+
+   mstr += "<a href=\"file:///" + fileName_str + "\">View Model Distributions</a>";
+   
+   /*
    mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
    mstr += indent( 2 ) + "<table>\n";
 
@@ -6103,7 +6199,10 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
                QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
       }
    }
-
+   */
+   // END OF Distribution Info //////////////////////////////////////////////////////////////////////
+   
+   
    // Show associations information if present
    if ( model_used.associations.size() > 0 )
    {
@@ -6414,8 +6513,10 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	     }
 	   
 	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-	   QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-				       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+	   // QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+	   // 			       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+
+	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
 	   
 	   if ( mdla.contains ( method ) )
 	     {
@@ -8548,9 +8649,14 @@ void US_ReporterGMP::write_pdf_report( void )
   printer.setOutputFormat(QPrinter::PdfFormat);
   printer.setPaperSize(QPrinter::Letter);
 
-  //QString fileName  = currProto. protoname + "-run" + runID + ".pdf";
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+    
   QString fileName  = runName + ".pdf";
-  filePath  = US_Settings::tmpDir() + "/" + fileName;
+  //filePath  = US_Settings::tmpDir() + "/" + fileName;
+  filePath  = dirName + "/" + fileName;
+  
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);

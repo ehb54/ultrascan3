@@ -1688,6 +1688,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
          usu->scaling_fit( 
                           t_Is[ this_file ],
                           avg_Is,
+                          t_errors[ this_file ],
                           k,
                           chi2 );
          
