@@ -768,6 +768,39 @@ void US_Hydrodyn_Saxs_Hplc::errors()
                                 ( use_errors_1 ? f_errors[ files[ 1 ] ] : errors )
                                 );
 
+            if ( use_errors_0 ) {
+               double  chi2;
+               double  nchi;
+               QString errors;
+               if ( US_Saxs_Util::calc_chisq(
+                                             f_Is[ files[ 0 ] ]
+                                             ,f_Is[ files[ 1 ] ]
+                                             ,f_errors[ files[ 0 ] ]
+                                             ,chi2
+                                             ,nchi
+                                             ,errors ) ) {
+                  editor_msg( "black", QString( "fit to %1 nchi %2\n" ).arg( files[ 0 ] ).arg( nchi ) );
+               } else {
+                  editor_msg( "red", QString( "fit to %1 %2\n" ).arg( files[ 0 ] ).arg( errors ) );
+               }
+            }
+            if ( use_errors_1 ) {
+               double  chi2;
+               double  nchi;
+               QString errors;
+               if ( US_Saxs_Util::calc_chisq(
+                                             f_Is[ files[ 0 ] ]
+                                             ,f_Is[ files[ 1 ] ]
+                                             ,f_errors[ files[ 1 ] ]
+                                             ,chi2
+                                             ,nchi
+                                             ,errors ) ) {
+                  editor_msg( "black", QString( "fit to %1 nchi %2\n" ).arg( files[ 1 ] ).arg( nchi ) );
+               } else {
+                  editor_msg( "red", QString( "fit to %1 %2\n" ).arg( files[ 1 ] ).arg( errors ) );
+               }
+            }
+            
             hide_widgets( plot_errors_widgets, false );
             cb_plot_errors_group->hide();
             if ( !use_errors_0 && !use_errors_0 )
