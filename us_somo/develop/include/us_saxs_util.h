@@ -480,6 +480,7 @@ class US_EXTERN US_Saxs_Util
                              const vector < double > & x,
                              const vector < double > & y,
                              const vector < double > & sds,
+                             int                     parameters,
                              double                  & chisq,
                              double                  & nchi,
                              QString                 & errors

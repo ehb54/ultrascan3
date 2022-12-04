@@ -11467,6 +11467,7 @@ bool US_Saxs_Util::calc_chisq(
                               const vector < double > & x,
                               const vector < double > & y,
                               const vector < double > & sds,
+                              int                     parameters,
                               double                  & chisq,
                               double                  & nchi,
                               QString                 & errors
@@ -11486,10 +11487,10 @@ bool US_Saxs_Util::calc_chisq(
    }
       
    int size = (int) x.size();
-   int df   = size - 1;
+   int df   = size - parameters;
 
    if ( df < 1 ) {
-      errors = QString( "Compute Chi2: Vector must have at least length 2, can not compute" );
+      errors = QString( "Compute Chi2: Vector must have at least length %1, can not compute" ).arg( parameters + 1 );
       return false;
    }
 

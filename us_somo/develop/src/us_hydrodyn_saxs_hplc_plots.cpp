@@ -776,6 +776,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
                                              f_Is[ files[ 0 ] ]
                                              ,f_Is[ files[ 1 ] ]
                                              ,f_errors[ files[ 0 ] ]
+                                             ,0
                                              ,chi2
                                              ,nchi
                                              ,errors ) ) {
@@ -792,6 +793,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
                                              f_Is[ files[ 0 ] ]
                                              ,f_Is[ files[ 1 ] ]
                                              ,f_errors[ files[ 1 ] ]
+                                             ,0
                                              ,chi2
                                              ,nchi
                                              ,errors ) ) {
