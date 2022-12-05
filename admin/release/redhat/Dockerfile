@@ -12,7 +12,7 @@ ARG ultrascan_branch=master
 
 ## qt defaults
 ARG qt_major_version=5.15
-ARG qt_version=5.15.5
+ARG qt_version=5.15.7
 ARG qwt_version=6.1.6
 ### N.B. qwt_version is hard coded in the local.pri.somo so we need to change this & in the codeql container & workflow/codeql-analysis.yml
 
@@ -29,7 +29,7 @@ ENV QWTDIR=/qwt-$qwt_version
 
 # basic install stuff
 
-RUN dnf update
+RUN dnf update -y
 RUN dnf install -y yum-utils
 RUN dnf install -y dnf-plugins-core
 RUN dnf config-manager --set-enabled powertools
@@ -108,12 +108,24 @@ RUN cd /ultrascan3/programs/us && env ULTRASCAN=/ultrascan3 ./revision.sh
 # somo version setup
 RUN cd /ultrascan3/us_somo/develop && env ULTRASCAN=/ultrascan3 ./revision.sh && env us3=/ultrascan3 ./version.sh
 
+# install dependencies for building manual
+RUN dnf install -y doxygen texlive-*
+RUN dnf install -y perl-CPAN && cpan Template
+
 # make ultrascan
 RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && ./makeall.sh -j$parallel_compile
+
+# make sure manual exists
+RUN cd $ULTRASCAN && ls -l bin/manual*
+
+# make somo
 RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && nohup ./makesomo.sh -j$parallel_compile 2>&1 > makesomo.out
 
 # copy demo data (should really be in makesomo.sh)
 RUN cp -rp $ULTRASCAN/us_somo/somo/demo/* $ULTRASCAN/somo/demo/
+
+# copy manual data (should really be in makesomo.sh)
+RUN cp -rp $ULTRASCAN/us_somo/somo/doc $ULTRASCAN/somo/
 
 # get centos rasmol
 ADD https://api.github.com/repos/ehb54/rasmol-centos/git/refs/heads/main ras_version.json
