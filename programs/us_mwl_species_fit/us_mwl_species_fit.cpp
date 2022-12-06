@@ -538,8 +538,11 @@ void US_MwlSpeciesFit::load( void )
                                          : US_Disk_DB_Controls::Disk;
    QString description;
 
+   // US_DataLoader* dialog = new US_DataLoader(
+   //       edlast, dbdisk, rawList, dataList, triples, description, etype_filt );
+
    US_DataLoader* dialog = new US_DataLoader(
-         edlast, dbdisk, rawList, dataList, triples, description, etype_filt );
+	 edlast, dbdisk, rawList, dataList, triples, description, "none" );
 
    connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
    connect( dialog, SIGNAL( progress    ( const QString ) ), 
