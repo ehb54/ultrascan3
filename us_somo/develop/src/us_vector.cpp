@@ -47,10 +47,17 @@ void US_Vector::printvector( QString qs, vector < double > x, int digits )
    cout << endl;
 }
 
-void US_Vector::printvector2( QString qs, vector < double > x, vector < double > y, int digits )
+void US_Vector::printvector2( QString qs, vector < double > x, vector < double > y, int digits, unsigned int limit )
 {
-   cout << QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   cout << QString( "%1: size %2 %3" ).arg( qs ).arg( x.size() ).arg( y.size() );
    unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+
+   if ( limit && max_size > limit ) {
+      max_size = limit;
+      cout << QString( "; output limited to first %1 elements" ).arg( limit );
+   }
+   cout << ":\n";
+   
    for ( unsigned int i = 0; i < max_size; i++ )
    {
       cout << QString( "\t%1 %2\n" )
@@ -60,11 +67,18 @@ void US_Vector::printvector2( QString qs, vector < double > x, vector < double >
    }
 }
 
-void US_Vector::printvector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits )
+void US_Vector::printvector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits, unsigned int limit )
 {
-   cout << QString( "%1: size %2 %3 %4:\n" ).arg( qs ).arg( x.size() ).arg( y.size() ).arg( z.size() );
+   cout << QString( "%1: size %2 %3 %4" ).arg( qs ).arg( x.size() ).arg( y.size() ).arg( z.size() );
    unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
    max_size = max_size > z.size() ? max_size : z.size();
+
+   if ( limit && max_size > limit ) {
+      max_size = limit;
+      cout << QString( "; output limited to first %1 elements" ).arg( limit );
+   }
+   cout << ":\n";
+   
    for ( unsigned int i = 0; i < max_size; i++ )
    {
       cout << QString( "\t%1 %2 %3\n" )

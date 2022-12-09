@@ -2136,7 +2136,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
                new_I = log10(new_I);
             }
             I.push_back(new_I);
-            q.push_back(new_q * units);
+            q.push_back(QString( "%1" ).arg(new_q * units).toDouble());
             if ( I_errorcolumn && (unsigned int) tokens.size() > I_errorcolumn )
             {
                I_error.push_back(new_I_error);
