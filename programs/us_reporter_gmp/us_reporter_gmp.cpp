@@ -9058,11 +9058,13 @@ QString US_ReporterGMP::tree_to_json( QMap < QString, QTreeWidgetItem * > topLev
 	}
     }
 
+  
   //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
   mask_edited.replace(",}],","}],"); 
   QString to_replace = "}],";
   QString new_substr = "}]";
-  mask_edited.replace( mask_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
+  if ( ! mask_edited.mid( mask_edited.lastIndexOf( to_replace ) +  to_replace.size(), mask_edited.length() ) .contains( "\"" ) )
+    mask_edited.replace( mask_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
 
   mask_edited += "}";
   mask_edited.replace( ",}", "}" );

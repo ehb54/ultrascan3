@@ -589,8 +589,16 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    }
    else
    {
-      kk            = style.mid( kk ).toInt();
-      kk            = qMax( 0, ( kk / 2 - 1 ) );
+     QString padding_v = style.mid( kk ).split(": ")[1];
+     padding_v. simplified();
+     padding_v.indexOf( "px" ); 
+     // qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
+     // qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+     
+     kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+             
+     // kk            = style.mid( kk ).toInt();
+     kk            = qMax( 0, ( kk / 2 - 1 ) );
    }
    cmbb_margin->setCurrentIndex( kk );
    connect( cmbb_margin, SIGNAL( activated   ( int ) ), 
@@ -718,6 +726,25 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    
    main->addWidget( pb_curve, row++, 0, 1, 3 );
 
+   //Row 12a
+   QLabel* lb_plot_profile = us_banner( tr( "----- Plot Profile -----" ) );
+   lb_plot_profile->setFixedHeight( 40 );
+   
+   main->addWidget( lb_plot_profile, row++, 0, 1, 3 );
+
+   //Row 12b
+   QPushButton* pb_loadProfile = us_pushbutton( tr( "Load Plot Profile" ) );
+   connect( pb_loadProfile, SIGNAL( clicked() ), SLOT( loadPlotProfile() ) );
+
+   QPushButton* pb_saveProfile = us_pushbutton( tr( "Save Plot Profile" ) );
+   connect( pb_saveProfile, SIGNAL( clicked() ), SLOT( savePlotProfile() ) );
+
+   QBoxLayout* profile_settings = new QHBoxLayout();
+   profile_settings->addWidget( pb_loadProfile );
+   profile_settings->addWidget( pb_saveProfile );
+
+   main->addLayout( profile_settings, row++, 0, 1, 3 );
+   
    // Row 13
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
@@ -806,6 +833,9 @@ void US_PlotConfig::selectMargin( int index )
    //plot->setMargin( ( index + 1 ) * 2 );
    plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
          .arg( ( index + 1 ) * 2 ) );
+
+   QString style = plot->styleSheet();
+   qDebug() << "In ::selectMargin() Plot's style -- " << style;
 }
 
 /*!  \brief Change the plot legend position
@@ -914,6 +944,115 @@ void US_PlotConfig::updateAxis( int axis )
    delete axisWidget;
    axisWidget = NULL;
 
+}
+
+/* Load/Save Plot's profile 
+ */
+void US_PlotConfig::loadPlotProfile( void )
+{
+  qDebug() << "Loading Plot's profile -- ";
+  
+}
+
+void US_PlotConfig::savePlotProfile( void )
+{
+  qDebug() << "Saving Plot's current profile -- ";
+  QString profile_edited;
+  profile_edited += "{";
+
+  /* Sections ******************************************************/
+  //title
+  QString p_title = plot->title().text();
+  profile_edited += "\"Title Text\" : \"" + p_title + "\",";  
+
+  //title font
+  QFont p_title_font = plot->title().font();
+  QString p_title_font_family = p_title_font.family();
+  QString p_title_font_size   = QString::number( p_title_font.pointSize() );
+  profile_edited += "\"Title Font\" : ";
+  profile_edited += "[{";
+  profile_edited += "\"Family\" : \"" + p_title_font_family  + "\",";
+  profile_edited += "\"Size\" : \""   + p_title_font_size    + "\"";
+  profile_edited += "}],";
+
+  //frame color
+  QPalette p = plot->palette();
+  QString  p_col_name = p.color( QPalette::Active, QPalette::Window ).name(QColor::HexRgb);
+  qDebug() << "Plot's Frame Color Name: "      << p_col_name;
+  //QColor col;
+  //col.setNamedColor( p_col_name );
+  //qDebug() << "Plot's Color from Name: " << col.name();
+  profile_edited += "\"Frame Color\" : \"" + p_col_name + "\",";
+
+  //Canvas Color
+  QColor  p_canvas_col = plot->canvasBackground();
+  QString p_canvas_col_name = p_canvas_col.name(QColor::HexRgb);
+  qDebug() << "Plot's Canvas Color Name: "      << p_canvas_col_name;
+  profile_edited += "\"Canvas Color\" : \"" + p_canvas_col_name + "\",";
+
+  //Border Margin
+  QString style = plot->styleSheet();
+  qDebug() << "Plot's style -- " << style;
+  int     kk    = style.indexOf( "padding:" );
+  if ( kk < 0 )
+    {
+      kk            = 0;
+    }
+  else
+    {
+      QString padding_v = style.mid( kk ).split(": ")[1];
+      padding_v. simplified();
+      padding_v.indexOf( "px" ); 
+      qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
+      qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+      
+      kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+    }
+  profile_edited += "\"Border Margin\" : \"" + QString::number( kk ) + "\",";
+
+  
+  
+  /* End of Sections ******************************************************/
+  
+  //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
+  profile_edited.replace(",}],","}],"); 
+  QString to_replace = "}],";
+  QString new_substr = "}]";
+  qDebug() << "get position of the char after last occurence of }], -- " << profile_edited.lastIndexOf( to_replace ) +  to_replace.size();
+  qDebug() << "Text after last occurence of }], -- " << profile_edited.mid(profile_edited.lastIndexOf( to_replace ) +  to_replace.size(), profile_edited.length() );
+
+  if ( ! profile_edited.mid(profile_edited.lastIndexOf( to_replace ) +  to_replace.size(), profile_edited.length() ) .contains( "\"" ) )
+    profile_edited.replace( profile_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
+
+  profile_edited += "}";
+  QString to_replace1 = ",}";
+  QString new_substr1 = "}";
+  profile_edited.replace( profile_edited.lastIndexOf( to_replace1 ), to_replace1.size(), new_substr1 );
+
+  qDebug() << "Edited Plot's Profile: " << profile_edited;
+
+  //save to local file
+  QString dirPath    = US_Settings::etcDir();
+  QString p_filename = QFileDialog::getSaveFileName( this,
+						     tr("Save Plot's Profile"),
+						     dirPath,
+						     tr("Profile Files (*.json)") );
+  p_filename.contains( ".json") ? p_filename += "" : p_filename += ".json";
+  QFile json_plot_profile( p_filename );
+  if (json_plot_profile.open(QFile::WriteOnly | QFile::Truncate))
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( profile_edited.toUtf8() );
+      if (!jsonDoc.isObject())
+	{
+	  qDebug() << "Saving Plot's Profile to .JSON file: String Doc: NOT a JSON Doc !!";
+	}
+	  
+      json_plot_profile.write(jsonDoc.toJson());
+
+      // QTextStream out(&json_plot_profile);
+      // out << profile_edited;
+    }
+  
 }
 
 /*!  \brief Open US_PlotConfig dialog for changing the 
