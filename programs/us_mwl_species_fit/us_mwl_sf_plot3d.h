@@ -35,6 +35,7 @@ public:
     QVector< int > includedScans;
     QVector< double > xValues;
     //scan < radial < lambda  < spiecies > > > >
+    // spiecies: raw_data, spiecies1, spiecies2, ..., sum_spiecies
     QVector< QVector< QVector < QVector < double > > > > allData;
     QVector< double > scansMSE;
     void clear(void);
@@ -62,10 +63,14 @@ private:
     QVector<int> lambda4ct;
     QVector<double> xvalsScaled;
     QVector<int> xvals4ct;
-    QVector< QVector< QVector < double > > > allSqErrScaled;
-    QVector< QVector< QVector < double > > > allErr;
+   // scan < radial < lambda  < raw, fit, scaled SE > > > >
     QVector< QVector< QVector < QVector < double > > > > allData;
+    double minSSE;
+    double maxSSE;
     double padding;
+    double meanSE;
+    double minSE;
+    double maxSE;
     int idRP_l;
     int idRP_h;
     int idWL_l;
@@ -73,27 +78,48 @@ private:
     int xAngle;
     int yAngle;
     int zAngle;
+    bool renderLoopState;
+    bool renderRunState;
 
     Q3DSurface *graph;
+    QWidget *surfaceWgt;
+    QTabWidget *tabs;
     QSurfaceDataProxy *dataProxy;
     QSurface3DSeries *dataSeries;
 
-    QwtPlot* dataPlot;
-    QwtPlot* errorPlot;
-    QwtPlotGrid* grid;
+    QRadioButton *rb_surface;
+    QRadioButton *rb_surface_wire;
+    QRadioButton *rb_nosel;
+    QRadioButton *rb_point;
+    QRadioButton *rb_radial;
+    QRadioButton *rb_lambda;
 
-    QPushButton* pb_next;
-    QPushButton* pb_prev;
+    QwtPlot *dataPlot;
+    QwtPlot *errorPlot;
+    QwtPlotGrid *grid;
+
+    QPushButton *pb_next;
+    QPushButton *pb_prev;
+    QPushButton *pb_render;
+    QPushButton *pb_G2R;
+    QPushButton *pb_B2Y;
+    QPushButton *pb_DFLT;
+    QPushButton *pb_camera;
+    QPushButton *pb_help;
+    QPushButton *pb_close;
 
     QSlider *sli_xAngle;
     QSlider *sli_yAngle;
     QSlider *sli_zAngle;
     QSlider *sli_radial;
 
-    QLineEdit* le_rpval;
-    QLineEdit* le_rpid;
+    QLineEdit *le_rpval;
+    QLineEdit *le_rpid;
+    QLineEdit *le_meanSE;
+    QLineEdit *le_minSE;
+    QLineEdit *le_maxSE;
 
-    QComboBox*   cb_scan;
+    QComboBox *cb_scan;
     QComboBox *cb_theme;
 
     QwtCounter *ct_min_rp;
@@ -103,8 +129,13 @@ private:
     QwtCounter *ct_quality;
     QwtCounter *ct_scale;
 
+    QCheckBox *ckb_rendall;
+
+protected:
+    virtual void closeEvent(QCloseEvent *);
+
 private slots:
-    void setTheme(int);
+    void setTheme(const QString);
     void newScan(int);
     void nextScan(void);
     void prevScan(void);
@@ -122,7 +153,7 @@ private slots:
     void togglePoint(bool);
     void toggleRadial(bool);
     void toggleLambda(bool);
-    void saveImage(void);
+    void renderImage(void);
     void new_xAngle(int);
     void new_yAngle(int);
     void new_zAngle(int);
@@ -135,21 +166,23 @@ private slots:
     void set_ct_rp(bool);
     void set_ct_wl(bool);
     void new_rpid();
-
+    void get_minMaxMean(void);
+    void render_option(int);
+    void enable_wgt(bool);
 };
 
 class CustomFormatter : public QValue3DAxisFormatter
 {
     Q_OBJECT
-    //Q_DECLARE_METATYPE(QValue3DAxisFormatter *)
+//    Q_DECLARE_METATYPE(QValue3DAxisFormatter *)
 
 public:
     explicit CustomFormatter(qreal i_minval = 0, qreal i_maxval = 1);
     virtual ~CustomFormatter();
-
+protected:
     virtual QValue3DAxisFormatter *createNewInstance() const;
     virtual void populateCopy(QValue3DAxisFormatter &copy) const;
-//    virtual void recalculate();
+    virtual void recalculate();
     virtual QString stringForValue(qreal value, const QString &format) const;
 
 private:
