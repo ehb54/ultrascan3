@@ -173,6 +173,8 @@ class US_PlotConfig : public US_WidgetsDialog
       void updateAxis       ( int  );
       void updateCurve      ( void );
       void updateGrid       ( void );
+      void loadPlotProfile  ( void );
+      void savePlotProfile  ( void );
       //void axisConfigFinish ( void );
       //void gridConfigFinish ( void );
       //void curveConfigFinish( void );
