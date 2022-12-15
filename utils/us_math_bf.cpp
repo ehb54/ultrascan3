@@ -4,10 +4,284 @@
 #include <cmath>
 
 #include "us_math_bf.h"
+#include "us_settings.h"
 #include "us_constants.h"
+#include "us_math2.h"
 
 
 #define ROOT_EIGHT (2.0*M_SQRT2)
+
+US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const double b, const double band_loading,
+                                                         QList<US_CosedComponent> &comps, const double pathlen,
+                                                         const double angle):
+                                                         meniscus(m), bottom(b), overlay_volume(band_loading),
+                                                         cp_pathlen(pathlen), cp_angle(angle), cosed_component(comps){
+   eigenvalues.clear();
+   base_comps.clear();
+   upper_comps.clear();
+   lower_comps.clear();
+   base_density = 0.0;
+   base_viscosity = 0.0;
+   double base = sq( meniscus ) + overlay_volume * 360.0 / ( cp_angle * cp_pathlen * M_PI );
+   overlay_thickness = sqrt( base ) - meniscus;
+
+   QMap<QString, US_CosedComponent> upper_cosed;
+   QMap<QString, US_CosedComponent> lower_cosed;
+   foreach (US_CosedComponent i, comps) {
+      if (!i.overlaying && upper_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = upper_cosed[i.name];
+         if (j.conc > i.conc) {
+            // the concentration is higher in upper part, move it completely to the upper part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            upper_cosed[j.name] = j;
+            continue;
+         } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            upper_cosed.remove(j.name);
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            lower_cosed[j.name] = j;
+            upper_cosed.remove(j.name);
+            continue;
+         }
+      }
+      if (i.overlaying && lower_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = lower_cosed[i.name];
+         if (j.conc > i.conc) {
+            // the concentration is higher in lower part, move it completely to the lower part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            lower_cosed[j.name] = j;
+            continue;
+         } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            lower_cosed.remove(j.name);
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            upper_cosed[j.name] = j;
+            lower_cosed.remove(j.name);
+            continue;
+         }
+      }
+      if (i.overlaying)
+         upper_cosed[i.name] = i;
+      else
+         lower_cosed[i.name] = i;
+
+   }
+   // Determine the base of the buffer
+   foreach (US_CosedComponent cosed_comp, comps)
+   {
+      if (cosed_comp.overlaying){ continue;} // overlaying components can't be part of the base of the buffer
+      if (lower_cosed.contains(cosed_comp.name) &&
+          (fabs(lower_cosed[cosed_comp.name].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON)){
+         // the concentration matches the original one entered. -> part of the buffer base
+         base_comps << cosed_comp;
+         base_density += cosed_comp.dens_coeff[0];
+         base_viscosity += cosed_comp.visc_coeff[0];
+
+      }
+   }
+   // normalize base density and viscosity
+   qDebug() << "Constructor BFG finished bd bv" << base_density << base_viscosity;
+   base_density = base_density / base_comps.count();
+   base_viscosity = base_viscosity / base_comps.count();
+   // init upper_comps and lower_comps
+   foreach (US_CosedComponent i, upper_cosed){ upper_comps << i;}
+   foreach (US_CosedComponent i, lower_cosed){ lower_comps << i;}
+   qDebug() << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
+   qDebug() << "Constructor BFG finished bd bv" << base_density << base_viscosity;
+}
+
+bool US_Math_BF::Band_Forming_Gradient::get_eigenvalues(void) {
+   qDebug() << "BFG::get_eigenvalues started";
+   double men = meniscus;
+   double bot = bottom;
+   std::function<double(const double &)> func = [&men,&bot](const double& a){
+      return US_Math_BF::transcendental_equation(a,men,bot);};
+   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 500, func,
+                                                                           0.0001, GSL_SQRT_DBL_EPSILON,
+                                                                           20);
+   bool return_value = secantSolver.solve_wrapper();
+   eigenvalues = secantSolver.solutions;
+   qDebug() << "BFG::get_eigenvalues finished with "<< secantSolver.solutions.count();
+   return return_value;
+}
+
+double US_Math_BF::Band_Forming_Gradient::norm(const double &beta) {
+   return (sq(M_PI)/2*sq(beta)*sq(bessel_J1(beta*meniscus))/
+   (sq(bessel_J1(beta*meniscus))-sq(bessel_J1(beta*bottom))));
+}
+
+double US_Math_BF::Band_Forming_Gradient::eigenfunction(const double &beta, const double &x) {
+   return (bessel_J0(beta*x)* bessel_Y1(beta*bottom)- bessel_Y0(beta*x)* bessel_J1(beta*bottom));
+}
+
+double US_Math_BF::Band_Forming_Gradient::calc_eq_comp_conc(US_CosedComponent &cosed_comp) {
+   double init_volume;
+   double total_volume;
+   // calculate the total cell volume
+   total_volume = M_PI * cp_pathlen * cp_angle / 360 * (sq(bottom)-sq(meniscus));
+   if (cosed_comp.overlaying){
+      init_volume = overlay_volume;
+   }
+   else{
+      // calculate the volume of the lower section
+      init_volume = M_PI * cp_pathlen * cp_angle / 360 * (sq(bottom)-sq(meniscus+overlay_thickness));
+   }
+   return init_volume * cosed_comp.conc / total_volume;
+}
+
+double
+US_Math_BF::Band_Forming_Gradient::calc_comp_conc(const double &x, const double &t, const double & temp,  US_CosedComponent &cosed_comp) {
+   double eq_conc = calc_eq_comp_conc(cosed_comp);
+   double decay = 0;
+   for (double beta : eigenvalues){
+      double integral = cosed_comp.conc / beta * ((-meniscus * bessel_J1(meniscus*beta)+(meniscus+overlay_thickness) *
+              bessel_J1(beta*(meniscus+overlay_thickness)))* bessel_Y1(bottom*beta)+ bessel_J1(bottom*beta)*
+                      (meniscus*bessel_Y1(meniscus*beta)-(meniscus+overlay_thickness)*
+                      bessel_Y1(beta*(meniscus+overlay_thickness))));
+      decay += norm(beta)* eigenfunction(beta,x)  * exp(-cosed_comp.d_coeff*temp/293.15*sq(beta)*t)* integral;
+   }
+
+   return eq_conc + decay;
+}
+
+bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double &t,
+                                                  double& s, double& d, double& T, double& vbar) {
+   // check if eigenvalues exist already
+   if (eigenvalues.isEmpty()){
+      return false;
+   }
+   double density = base_density;
+   double viscosity = base_viscosity;
+
+   // loop over all cosedimenting stuff and determine the current concentration
+   // -> for now iterate only over upper_cosed
+   for (US_CosedComponent& cosed_comp : upper_comps){
+      double c1 = calc_comp_conc(x, t, T, cosed_comp);
+      if (c1 < 0.002){ continue;}
+      double c2 = c1 * c1;      // c1^2
+      double c3 = c2 * c1;      // c1^3
+      double c4 = c3 * c1;      // c1^4
+      density += (cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(c1)) +
+                  cosed_comp.dens_coeff[2] * 1.0e-2 * c1 + cosed_comp.dens_coeff[3] * 1.0e-3 * c2 +
+                  cosed_comp.dens_coeff[4] * 1.0e-4 * c3 + cosed_comp.dens_coeff[5] * 1.0e-6 * c4);
+      viscosity += (cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(c1)) +
+                    cosed_comp.visc_coeff[2] * 1.0e-2 * c1 + cosed_comp.visc_coeff[3] * 1.0e-3 * c2 +
+                    cosed_comp.visc_coeff[4] * 1.0e-4 * c3 + cosed_comp.visc_coeff[5] * 1.0e-6 * c4);
+   }
+   s     = s * VISC_20W * ( 1 - vbar * density ) / ( 1.0 - vbar * DENS_20W ) / viscosity;
+   d     = d * VISC_20W / viscosity * T / 293.15 ;
+   return true;
+}
+
+
+US_Math_BF::Secant_Solver::Secant_Solver(const double& i_min_, const double& i_max_,
+                                         std::function<double(const double &)> foo_ = [](const double& a)
+                                         {return US_Math_BF::transcendental_equation(a, 1, 2);},
+                                         const double& grid_res_ = 0.01, const double& epsilon_ = 0.000001,
+                                         const int& iter_max_ = 20):
+        func(foo_), i_min(i_min_), i_max(i_max_), iter_max(iter_max_),
+        grid_res(grid_res_), epsilon(epsilon_) {
+    solutions.clear();
+    dbg_level       = US_Settings::us_debug();
+}
+
+
+US_Math_BF::Secant_Solver:: ~Secant_Solver(){
+    solutions.clear();
+    DbgLv(3) << "destroyed Secant Solver";
+}
+
+
+bool US_Math_BF::Secant_Solver::solve(double &x0, double &x1) {
+    DbgLv(4) << "called solve, x0="<< x0 << "x1=" << x1 <<"\n";
+    int n = 0;
+    double x2, f2;
+    do {
+        double f0 = func(x0);
+        double f1 = func(x1);
+
+        if(f0 == f1)
+        {
+            DbgLv(3) << "Found nothing";
+            return false;
+        }
+
+        x2 = x1 - (x1 - x0) * f1/(f1-f0);
+        f2 = func(x2);
+        DbgLv(5) << "n=" << n << "\nf(x0)=f(" << x0 << ")=" << f0 << "\n" << " f(x1)=f(" << x1 << ")=" << f1 << "\n" << " f(x2)=f(" << x2 << ")=" << f2 << "\n";
+        x0 = x1;
+        f0 = f1;
+        x1 = x2;
+        f1 = f2;
+
+        n = n + 1;
+
+    } while ((fabs(f2) >= epsilon) && n < iter_max); // repeat the loop until the convergence or
+    // hitting iter_max
+
+    // check if loop end was convergence
+    if (fabs(f2) <= epsilon) {
+        // append solution to solutions vector
+        if (!solutions.contains(x2)){
+            solutions << x2;
+        }
+        DbgLv(3) << "found solution x2=" << x2 << " f2=" << f2 << " n=" << n;
+        return true;
+    }
+        // loop end was iter_max
+    else
+        DbgLv(3) << "found no solution " << "x0=" << x0 << " xm="<< x2 << " check=" << (fabs(x2 - x0) >= epsilon)
+                 << " n=" << n <<"\n";
+    return false;
+}
+
+bool US_Math_BF::Secant_Solver::solve_wrapper() {
+    // init iter variables
+    double x0 = i_min;
+    double x1 = i_min + grid_res;
+    int n = 0;
+    do {
+        double f0,f1;
+        f0 = func(x0);
+        f1 = func(x1);
+        // check if func(x1) and func(x2) have different signs
+        if ((f0 * f1) < 0){
+            solve(x0,x1);
+        }
+        if (((f0 * f1) > 0) && (fabs(f0) < epsilon)){
+            // append solution to solutions vector
+            if (!solutions.contains(x0)){
+                solutions << x0;
+            }
+            DbgLv(3) << "found grid solution x0=" << x0 << " f0=" << f0;
+        }
+        if ((((f0 * f1) > 0) && (fabs(f1) < epsilon))){
+            // append solution to solutions vector
+            if (!solutions.contains(x1)){
+                solutions << x1;
+            }
+            DbgLv(3) << "found grid solution x1=" << x1 << " f1=" << f1;
+        }
+        n = fmax(n + 1, int(floor(x1-i_min / grid_res) + 1));
+        x0 = i_min + n * grid_res;
+        x1 = i_min + (n+1) * grid_res;
+    } while (x1 < i_max);
+    DbgLv(3) << "found Solutions " << solutions.length() << "\n";
+    if (solutions.isEmpty()){
+        return false;
+    }
+    return true;
+}
 
 
 /*-*-*-*-*-*-*-*-*-*-*-* Private Section *-*-*-*-*-*-*-*-*-*-*-*/
@@ -552,67 +826,3 @@ double US_Math_BF::transcendental_equation(const double& x, const double& a, con
 
 
 
-bool US_Math_BF::Secant_Solver::solve(double &x0, double &x1) {
-    qDebug() << "called solve, x0="<< x0 << "x1=" << x1 <<"\n";
-    int n = 0;
-    double x2, f2;
-    do {
-        double f0 = func(x0);
-        double f1 = func(x1);
-
-        if(f0 == f1)
-        {
-           qDebug() << "Found nothing";
-            return false;
-        }
-
-        x2 = x1 - (x1 - x0) * f1/(f1-f0);
-        f2 = func(x2);
-        qDebug() << "n=" << n << "\nf(x0)=f(" << x0 << ")=" << f0 << "\n" << " f(x1)=f(" << x1 << ")=" << f1 << "\n" << " f(x2)=f(" << x2 << ")=" << f2 << "\n";
-        x0 = x1;
-        f0 = f1;
-        x1 = x2;
-        f1 = f2;
-
-        n = n + 1;
-
-    } while ((fabs(f2) >= epsilon) && n < iter_max); // repeat the loop until the convergence or
-    // hitting iter_max
-
-    // check if loop end was convergence
-    if (fabs(f2) <= epsilon) {
-       // append solution to solutions vector
-        if (!solutions.contains(x2)){
-           solutions << x2;
-        }
-        qDebug() << "found solution x2=" << x2 << " f2=" << f2 << " n=" << n <<"\n";
-        return true;
-    }
-    // loop end was iter_max
-    else
-        qDebug() << "found no solution " << "x0=" << x0 << " xm="<< x2 << " check=" << (fabs(x2 - x0) >= epsilon)
-        << " n=" << n <<"\n";
-        return false;
-}
-
-bool US_Math_BF::Secant_Solver::solve_wrapper() {
-    // init iter variables
-    qDebug() << "called solve wrapper\n";
-    double x0 = i_min;
-    double x1 = i_min + grid_res;
-    int n = 0;
-    do {
-        // check if func(x1) and func(x2) have different signs
-        if (func(x0) * func(x1) < 0){
-            solve(x0,x1);
-        }
-        n = fmax(n + 1, int(floor(x1-i_min / grid_res) + 1));
-        x0 = i_min + n * grid_res;
-        x1 = i_min + (n+1) * grid_res;
-    } while (x1 < i_max);
-    qDebug() << "found Solutions " << solutions.length() << "\n";
-    if (solutions.isEmpty()){
-        return false;
-    }
-    return true;
-}
