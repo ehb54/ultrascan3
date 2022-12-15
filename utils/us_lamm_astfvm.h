@@ -10,6 +10,7 @@
 #include "us_dataIO.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
+#include "us_math_bf.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -205,10 +206,14 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
                                // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
       double  density;         // buffer density
+      double  viscosity;       // buffer viscosity
       double  compressib;      // factor for compressibility
       double  vbar_salt;       // vbar of the salt
+      QList<US_CosedComponent> cosed_components;
 
       SaltData* saltdata;      // data handle for cosedimenting
+
+      US_Math_BF::Band_Forming_Gradient* bandFormingGradient;
 
       double  MeshSpeedFactor; // = 1: mesh following sedimentation
                                // = 0: fixed mesh in each time step
@@ -251,6 +256,9 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param mropt   Reference to mesh refine option flag to set
       //! \param err_tol Reference to error tolerance factor to set
       void SetNonIdealCase_3( int&, double& );
+
+      //! \brief Set up non-ideal case type 4 (co-diffusing)
+      void SetNonIdealCase_4( void   );
 
       // Lamm equation step for sedimentation difference - predict
       void LammStepSedDiff_P( double, double, int, double*, double*, double* );

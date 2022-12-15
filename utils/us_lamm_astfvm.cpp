@@ -584,7 +584,7 @@ DbgLv(2) << "SaltD:  salt ampl limit changes" << nchg;
    }
 DbgLv(2) << "SaltD:  Nx" << Nx << "xs sme" << xs[0] << xs[1] << xs[2]
  << xs[Nx/2-1] << xs[Nx/2] << xs[Nx-2+1] << xs[Nx-3] << xs[Nx-2] << xs[Nx-1];
-};
+}
 
 US_LammAstfvm::SaltData::~SaltData()
 {
@@ -594,7 +594,7 @@ US_LammAstfvm::SaltData::~SaltData()
    xsVec .clear();
    Cs0Vec.clear();
    Cs1Vec.clear();
-};
+}
 
 void US_LammAstfvm::SaltData::initSalt()
 {
@@ -741,7 +741,7 @@ int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
    auc_data = &sim_data;
 
    // use given data to create form for internal data; zero initial concs.
-   load_mfem_data( sim_data, af_data, true );
+   load_mfem_data( sim_data, af_data );
 
    // set up to report progress to any listener (e.g., us_astfem_sim)
    int nsteps = af_data.scan.size() * model.components.size();
@@ -750,7 +750,6 @@ int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
    {  // for co-sedimenting, reduce total steps by one scan
       nsteps    -= af_data.scan.size();
    }
-
 #ifndef NO_DB
    emit calc_start( nsteps );
    qApp->processEvents();
@@ -885,7 +884,10 @@ DbgLv(2) << "LAsc:   sigma delta" << model.components[comp_x].sigma
    {
       SetNonIdealCase_3( mropt, err_tol );
    }
-
+   else if ( NonIdealCaseNo == 4)
+   {
+      SetNonIdealCase_4( );                     // co-diffusing
+   }
    else
    {
       NonIdealCaseNo = 0;
@@ -922,7 +924,18 @@ timer.start();
 
       x0[ jj ]   = msh->x[ jj ];              // r value
       x1[ jj ]   = x0[ jj ];
-      u0[ kk ]   = msh->x[ jj ] * sig_conc;   // C*r value
+      if (simparams.band_forming){
+         // Calculate the width of the lamella
+         double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
+         double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
+         double base = sq( simparams.meniscus )+ simparams.band_volume * 360.0 / ( angl * plen * M_PI );
+         double lamella_width = sqrt( base ) - simparams.meniscus;
+         base = ( msh->x[ jj ] - simparams.meniscus ) / lamella_width;
+         u0[ kk ]   = msh->x[ jj ] * sig_conc * exp( -pow( base, 4.0 ) );   // C*r value
+      }
+      else {
+         u0[kk] = msh->x[jj] * sig_conc;   // C*r value
+      }
       u1[ kk ]   = u0[ kk ];
    }
 
@@ -1048,17 +1061,26 @@ ktime5+=timer.restart();
       {  // interpolate concentrations quadratically in x; linearly in time
          double f0 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc0
          double f1 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc1
-
+//         if (dbg_level > 0){
+//
+//         }
 DbgLv(2) << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
          // do quadratic interpolation to fill out concentrations at time t0
          quadInterpolate( x0, u0, N0, rads, conc0 );
+//         if (dbg_level > 0){
+//
+//         }
 
          // do quadratic interpolation to fill out concentrations at time t1
          quadInterpolate( x1, u1, N1, rads, conc1 );
+//         if (dbg_level > 0){
+//
+//         }
+DbgLv(2) << "LAsc:  N0 N1 N0u N1u ncs" << N0 << N1 << N0u << N1u << ncs;
 DbgLv(2) << "LAsc:  x0[0] x0[H] x0[N]" << x0[0] << x0[N0/2] << x0[N0-1];
 DbgLv(2) << "LAsc:  x1[0] x1[H] x1[N]" << x1[0] << x1[N1/2] << x1[N1-1];
 DbgLv(2) << "LAsc:   r[0]  r[H]  r[N]" << rads[0] << rads[ncs/2] << rads[ncs-1];
-DbgLv(2) << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N1u-1];
+DbgLv(2) << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N0u-1];
 DbgLv(2) << "LAsc:  u1[0] u1[H] u1[N]" << u1[0] << u1[N1u/2] << u1[N1u-1];
 DbgLv(2) << "LAsc:  c0[0] c0[H] c0[N]"
  << conc0[0] << conc0[ncs/2] << conc0[ncs-1];
@@ -1183,7 +1205,8 @@ DbgLv(2) << "compx" << comp_x << "times 1-6"
 
 void US_LammAstfvm::set_buffer( US_Buffer buffer )
 {
-   density     = buffer.density;             // for compressibility
+   density     = buffer.density; // for compressibility
+   viscosity   = buffer.viscosity;
    compressib  = buffer.compressibility;
 
    buffer.compositeCoeffs( d_coeff, v_coeff );
@@ -1191,6 +1214,18 @@ DbgLv(2) << "buff d_coeff" << d_coeff[0] << d_coeff[1] << d_coeff[2]
    << d_coeff[3] << d_coeff[4] << d_coeff[5];
 DbgLv(2) << "buff v_coeff" << v_coeff[0] << v_coeff[1] << v_coeff[2]
    << v_coeff[3] << v_coeff[4] << v_coeff[5];
+
+   if (!buffer.cosed_component.isEmpty()){
+      cosed_components = buffer.cosed_component;
+      DbgLv(2) << "NonIdeal4: create bandforming gradient";
+      bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
+                                                                    simparams.band_volume,
+                                                                    cosed_components, simparams.cp_pathlen,
+                                                                    simparams.cp_angle);
+      bandFormingGradient->get_eigenvalues();
+      DbgLv(2) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
+   }
+   DbgLv(2) << "buff cosed" << cosed_components.count();
 }
 
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
@@ -1216,6 +1251,21 @@ void US_LammAstfvm::SetNonIdealCase_3( int& mropt, double& err_tol )
 {
    mropt           = 0;
    err_tol         = 1.0e-5;
+}
+
+void US_LammAstfvm::SetNonIdealCase_4( )
+{
+   DbgLv(2) << "NonIdeal4: called";
+   if ( bandFormingGradient == 0 )
+   {
+      DbgLv(2) << "NonIdeal4: create bandforming gradient";
+      bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
+                                                                    simparams.band_volume,
+                                                                    cosed_components, simparams.cp_pathlen,
+                                                                    simparams.cp_angle);
+      bandFormingGradient->get_eigenvalues();
+
+   }
 }
 
 void US_LammAstfvm::SetMeshSpeedFactor( double speed )
@@ -1307,7 +1357,10 @@ timer.start();
       ug1[ j     ] = ( 3. * u1p[ j ] + 6. * u1p[ j + 1 ] - u1p[ j + 2 ] ) / 8.;
       ug1[ j + 1 ] = ( 3. * u1p[ j + 2 ] + 6. * u1p[ j + 1 ] - u1p[ j ] ) / 8.;
    }
-
+   DbgLv(2) << "preadjust  xg1 0 1 M Nm N" << xg1[0] << xg1[1] << xg1[Ng/2]
+            << xg1[Ng-2] << xg1[Ng-1];
+   DbgLv(2) << "preadjust  Sv 0 1 M Nm N" << Sv[0] << Sv[1] << Sv[Ng/2]
+            << Sv[Ng-2] << Sv[Ng-1];
    AdjustSD( t + dt, Ng, xg1, ug1, Sv, Dv );
 ktim1+=timer.restart();
 DbgLv(2) << "  xg1 0 1 M Nm N" << xg1[0] << xg1[1] << xg1[Ng/2]
@@ -1589,6 +1642,11 @@ static int kst2=0;
 
          for ( jj = 0; jj < Nv; jj++ ) 
          {
+            double adj_s = s_adj[jj];
+            double adj_d = D_adj[jj];
+            DbgLv(3) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
+            DbgLv(3) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
+            DbgLv(3) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
             s_adj[ jj ] = param_s ;
             D_adj[ jj ] = param_D ;
          }
@@ -1709,6 +1767,38 @@ DbgLv(3) << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
 DbgLv(3) << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
          }
          break;
+      case 4: // co-diffusing
+      {
+//         for ( jj = 0; jj < Nv; jj++ )
+//         {
+//            double adj_s = s_adj[jj];
+//            double adj_d = D_adj[jj];
+//            DbgLv(3) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
+//            DbgLv(3) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
+//            DbgLv(3) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
+//            s_adj[ jj ] = param_s ;
+//            D_adj[ jj ] = param_D ;
+//         }
+         timer.start();
+         DbgLv(2) << "NonIdeal4:  ";
+         kst1+=timer.restart();
+         for ( jj = 0; jj < Nv; jj++ )
+         {
+            double adj_s = param_s;
+            double adj_d = param_D;
+            DbgLv(3) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
+            DbgLv(3) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
+            DbgLv(3) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
+            bandFormingGradient->adjust_sd(x[jj],t,adj_s,adj_d,simparams.temperature,vbar);
+            s_adj[jj] = adj_s;
+            D_adj[jj] = adj_d;
+            DbgLv(3) << "AdjSD:   CoSed s_adj"<<QString::number(adj_s*1E+13, 'f', 4);
+            DbgLv(3) << "AdjSD:   CoSed D_adj"<<QString::number(adj_d*1E+6, 'f', 4);
+         }
+      }
+         kst2+=timer.restart();
+         DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
+      break;
 
       default:
          qDebug( "invalid case number for non-ideal sedimentation" );
@@ -1912,7 +2002,7 @@ void US_LammAstfvm::LsSolver53( int m, double **A, double *b, double *x )
 
 }
 
-// determine the non-ideal case number: 0/1/2/3
+// determine the non-ideal case number: 0/1/2/3/4
 int US_LammAstfvm::nonIdealCaseNo()
 {
    int rc = 0;
@@ -1944,6 +2034,16 @@ int US_LammAstfvm::nonIdealCaseNo()
 
       NonIdealCaseNo = 3;
    }
+
+   if (!cosed_components.isEmpty())
+   {
+      // co-diffusing case
+      if ( NonIdealCaseNo != 0 )
+         rc          = 4;
+
+      NonIdealCaseNo = 4;
+   }
+   DbgLv(1) << "LammAstfvm: set nonidealcaseno:" << NonIdealCaseNo;
    return rc;
 }
 
