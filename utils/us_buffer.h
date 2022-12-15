@@ -49,12 +49,13 @@ public:
     QString GUID;
     QString componentID;                   //!< The Cosedimenting ComponentID field in the DB.
     QString name;                          //!< The cosed component's name.
-    double  dens_coeff[ 6 ];               //!< The density coefficients.
-    double  visc_coeff[ 6 ];               //!< The viscosity coefficients.
-    QMap< QVector<int> , double> s_coeffs; //!< The cosed component's s coefficients for a set of other components
-    QMap< QVector<int> , double> d_coeffs; //!< The cosed component's D coefficients for a set of other components
-    double conc;                           //!< The cosed component's concentration
+    double  dens_coeff[ 6 ] = {0.0};               //!< The density coefficients.
+    double  visc_coeff[ 6 ] = {0.0};               //!< The viscosity coefficients.
+    double s_coeff; //!< The cosed component's s coefficient in 1/s
+    double d_coeff; //!< The cosed component's D coefficient in cm^2/s
+    double conc;                           //!< The cosed component's concentration in M
     bool overlaying;
+
 
     //! Get the info for an individual component from the DB.
     //! \param db A \ref US_DB2 structure to an opened connection to the DB.
@@ -73,7 +74,12 @@ public:
     //! \return The cosed_componentID of the new cosed component
     int saveToDB( US_DB2* = 0, const int = 0);
 
+    // Is this function really needed? Can't tell with my c++ skills
+    US_CosedComponent clone( void );
+
     static void component( QXmlStreamReader&, QMap< QString, US_CosedComponent >& );
+
+    static void component( QXmlStreamReader&, QList< US_CosedComponent >&, QList< QString >& );
 };
 
 //! The internal structure of a buffer.
@@ -106,7 +112,7 @@ class US_UTIL_EXTERN US_Buffer
       //! The list of ingredients
       QList< US_BufferComponent > component;  //!< A list of components that
                                       //!< make up the buffer.
-      QMap< QString, US_CosedComponent >  cosed_component; //!< A list of cosedimenting components that make up the buffer.
+      QList< US_CosedComponent >  cosed_component; //!< A list of cosedimenting components that make up the buffer.
       QList< double > concentration;  //!< Concentrations for each component.
       QStringList     componentIDs;   //!< An aux list for disk input of buffer components.
       QStringList     cosed_componentIDs; //!< An aux list for disk input of cosed components.
@@ -164,6 +170,15 @@ class US_UTIL_EXTERN US_Buffer
       //! \param d_coeff Output array of composite density coefficients
       //! \param v_coeff Output array of composite viscosity coefficients
       void compositeCoeffs( double*, double* );
+
+      //! \brief Compute composite density,viscosity coefficients
+      //! \param c_coeff QMap of cosedComponentID and cosedComponent concentration
+      //! \param dens_base Const double representing the density of the base buffer
+      //! \param visc_base Const double representing the density of the visc buffer
+      //! \param d_coeff Output array of composite density coefficients
+      //! \param v_coeff Output array of composite viscosity coefficients
+      void compositeCoeffs(QMap<QString,double>& c_coeff, const double& dens_base, const double& visc_base,
+                           double* d_coeff, double* v_coeff);
 
       //! \brief A debug function to write buffer contents to stderr
       void dumpBuffer( void ) const;
