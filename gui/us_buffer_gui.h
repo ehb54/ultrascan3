@@ -80,6 +80,7 @@ class US_BufferGuiSelect: public US_Widgets
 
       US_Help       showHelp;
 
+      QLabel* bn_bcomps;
       // For list widget
       class BufferInfo
       {
@@ -113,7 +114,7 @@ class US_BufferGuiSelect: public US_Widgets
       void read_from_db    ( const QString&   );
       void search          ( const QString& = QString() );
       void show_component  ( const QString&, double );
-      void show_cosed_component  ( const QString&, double, double, double, bool );
+      void show_cosed_component( const QString&, double, bool );
       void reject          ( void );
       void accept          ( void );
       void read_buffer     ( void );
@@ -161,33 +162,34 @@ class US_BufferGuiNew : public US_Widgets
       int           dbg_level;
       US_Buffer*    buffer;
       bool          cosed;
+      QGridLayout*  main;
+
       QPushButton*  pb_accept;
       QPushButton*  pb_spectrum;
 
       QLabel*       lb_bselect;
+      QLabel*       lb_bselect_name;
 
       QLineEdit*    le_descrip;
       QLineEdit*    le_concen;
+      QLineEdit*    le_cosed_name;
       QLineEdit*    le_density;
       QLineEdit*    le_viscos;
       QLineEdit*    le_ph;   
       QLineEdit*    le_compress;
-      QLineEdit*    le_sedcoeff;
-      QLineEdit*    le_diffcoeff;
-      QCheckBox*    ck_overlaying;
       QCheckBox*    ck_manual;
-
+      QCheckBox*    ck_cosed;
       QListWidget*  lw_allcomps;
       QListWidget*  lw_bufcomps;
-      QListWidget*  lw_allcosed;
-      QListWidget*  lw_cosedcomps;
+      QListWidget*  lw_upper_cosedcomps;
+      QListWidget*  lw_lower_cosedcomps;
 
       //! A BufferComponent map structure for all components in 
       //!   template list (stored in us_home/etc/bufferComponents.xml).
       QMap< QString, US_BufferComponent > component_list;
       //! A CosedComponent map structure for all cosedimenting components in
       //!   template list (stored in us_home/etc/cosedComponents.xml).
-      QMap< QString, US_CosedComponent > cosed_component_list;
+      QMap< QString,  US_CosedComponent> cosed_component_list;
 
       US_Help       showHelp;
 
@@ -195,9 +197,13 @@ class US_BufferGuiNew : public US_Widgets
 
       void new_description     ();
       void add_component       ();
-      void add_cosed_component ();
+      void add_cosed_component (bool overlaying);
+      void add_upper_cosed_component ();
+      void add_lower_cosed_component ();
       void select_bcomp        ();
-      void select_cosedcomp    ();
+      void select_upper_cosedcomp();
+      void select_lower_cosedcomp();
+      void edit_cosedcomp      ();
       void remove_bcomp        ( QListWidgetItem* );
       void remove_cosedcomp    ( QListWidgetItem* );
       void recalc_density      ( void );
@@ -207,12 +213,14 @@ class US_BufferGuiNew : public US_Widgets
       void density             ( void );
       void viscosity           ( void );
       void manual_flag         ( bool );
+      void cosed_flag          ( bool );
       //void spectrum        ( void );
       void spectrum_class      ( void );
       void newAccepted         ( void );
       void newCanceled         ( void );
       void write_db            ( void );
       void write_disk          ( void );
+      bool can_accept          ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
    public slots:
@@ -222,6 +230,7 @@ class US_BufferGuiNew : public US_Widgets
 
 //! \class US_BufferGuiEdit
 //!      This class provides a tabbed entry for non-hydrodynamic buffer mods
+// TODO add support for buffers with cosedimenting components
 class US_BufferGuiEdit : public US_Widgets
 {
    Q_OBJECT
