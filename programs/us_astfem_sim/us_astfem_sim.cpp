@@ -908,7 +908,7 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
    else
    {
       astfvm = new US_LammAstfvm( system, simparams );
-
+      astfvm->set_buffer(buffer);
       connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
                        SLOT( update_movie_plot( QVector< double >*, double* ) ) );
       connect( astfvm, SIGNAL( current_component( int ) ),
@@ -1413,7 +1413,7 @@ void US_Astfem_Sim::plot( int step )
 
    // Set plot scale
    if ( simparams.band_forming )
-      scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc );
+      scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc*2.0 );
 
    else if ( system.coSedSolute >= 0 )
    {
