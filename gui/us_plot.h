@@ -135,6 +135,9 @@ class US_PlotConfig : public US_WidgetsDialog
       //! \param current_plot - The plot to be configured
       US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
 
+      QColor global_canvas_color;
+  //QPalette global_canvas_palette;
+
    //signals:
       //! \brief A signal to tell the parent that the window is closed
       //void plotConfigClosed( void );
@@ -149,6 +152,8 @@ class US_PlotConfig : public US_WidgetsDialog
       QLabel*      lb_showFrameColor;
       QLabel*      lb_showCanvasColor;
 
+  
+      QComboBox*   cmbb_margin;
       QComboBox*   cmbb_legendPos;
 
       QListWidget* lw_curves;
@@ -170,6 +175,8 @@ class US_PlotConfig : public US_WidgetsDialog
       void updateAxis       ( int  );
       void updateCurve      ( void );
       void updateGrid       ( void );
+      void loadPlotProfile  ( void );
+      void savePlotProfile  ( void );
       //void axisConfigFinish ( void );
       //void gridConfigFinish ( void );
       //void curveConfigFinish( void );
@@ -195,6 +202,7 @@ class US_PlotCurveConfig : public US_WidgetsDialog
       //void curveConfigClosed( void );
 
    private:
+      US_PlotConfig* plotConfigW;
       QwtPlot*      plot;
                    
       QStringList   selectedItems;

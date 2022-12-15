@@ -836,10 +836,15 @@ qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
 
    if ( rfilter )
-      query << "get_raw_desc_by_runID" << invID << runID_sel;
+     {
+       query << "get_raw_desc_by_runID" << invID << runID_sel;
+       qDebug() << "Run Fitering true";
+     }
    else
-      query << "get_rawData_desc" << invID;
-
+     {
+       query << "get_rawData_desc" << invID;
+       qDebug() << "Run Fitering false";
+     }
    db.query( query );
 qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
@@ -859,10 +864,13 @@ qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
 
    if ( rfilter )
-      query << "get_edit_desc_by_runID" << invID << runID_sel;
+     {
+       query << "get_edit_desc_by_runID" << invID << runID_sel;
+     }
    else
-      query << "all_editedDataIDs" << invID;
+     query << "all_editedDataIDs" << invID;
 
+   qDebug() << "Query for getting edits: " << query;
    db.query( query );
 qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
@@ -873,7 +881,9 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
    {  // Accumulate edit record parameters from DB
       QString etype    = db.value( 8 ).toString().toLower();
 
-      if ( tfilter  &&  etype != etype_filt )
+      qDebug() << "etype -- " << etype;
+
+      if ( tfilter  &&  etype != etype_filt )                        //ALEXEY < --- HERE, etype != etype_filt (etype_filt == "velocity")
          continue;
 
       QString recID    = db.value( 0 ).toString();

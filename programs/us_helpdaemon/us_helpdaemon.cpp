@@ -10,11 +10,14 @@
 
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
-#ifdef Q_OS_WIN
-  QString location = US_Settings::appBaseDir() + "/bin/manual.qch";
-#else
+
+  // special Q_OS_WIN code apparently does not work anymore 
+  // #ifdef Q_OS_WIN
+  // QString location = US_Settings::appBaseDir() + "/bin/manual.qch";
+  // #else
   QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
-#endif
+  // #endif
+
   QString url      = "qthelp://ultrascaniii/";
   if ( !page.contains( "manual/" ) )
      url.append( "manual/" );

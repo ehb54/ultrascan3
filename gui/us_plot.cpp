@@ -559,6 +559,8 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // set bg color
    QColor   c = plot->canvasBackground();
+   qDebug() << "Plot Config INIT: canvas color -- " << c.name(QColor::HexRgb);
+   global_canvas_color = c; //ALEXEY
    QPalette palette = US_GuiSettings::plotColor();
    palette.setColor( QPalette::Active  , QPalette::Window, c );
    palette.setColor( QPalette::Inactive, QPalette::Window, c );
@@ -573,7 +575,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // Row 5
    QLabel* lb_margin      = us_label( tr( "Border Margin:" ) );
-   QComboBox* cmbb_margin = us_comboBox();
+   cmbb_margin = us_comboBox();
    
    for ( int i = 2; i <= 30; i += 2 )  
    {  
@@ -588,8 +590,16 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    }
    else
    {
-      kk            = style.mid( kk ).toInt();
-      kk            = qMax( 0, ( kk / 2 - 1 ) );
+     QString padding_v = style.mid( kk ).split(": ")[1];
+     padding_v. simplified();
+     padding_v.indexOf( "px" ); 
+     // qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
+     // qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+     
+     kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+             
+     // kk            = style.mid( kk ).toInt();
+     kk            = qMax( 0, ( kk / 2 - 1 ) );
    }
    cmbb_margin->setCurrentIndex( kk );
    connect( cmbb_margin, SIGNAL( activated   ( int ) ), 
@@ -717,6 +727,25 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    
    main->addWidget( pb_curve, row++, 0, 1, 3 );
 
+   //Row 12a
+   QLabel* lb_plot_profile = us_banner( tr( "----- Plot Profile -----" ) );
+   lb_plot_profile->setFixedHeight( 40 );
+   
+   main->addWidget( lb_plot_profile, row++, 0, 1, 3 );
+
+   //Row 12b
+   QPushButton* pb_loadProfile = us_pushbutton( tr( "Load Plot Profile" ) );
+   connect( pb_loadProfile, SIGNAL( clicked() ), SLOT( loadPlotProfile() ) );
+
+   QPushButton* pb_saveProfile = us_pushbutton( tr( "Save Plot Profile" ) );
+   connect( pb_saveProfile, SIGNAL( clicked() ), SLOT( savePlotProfile() ) );
+
+   QBoxLayout* profile_settings = new QHBoxLayout();
+   profile_settings->addWidget( pb_loadProfile );
+   profile_settings->addWidget( pb_saveProfile );
+
+   main->addLayout( profile_settings, row++, 0, 1, 3 );
+   
    // Row 13
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
@@ -758,11 +787,17 @@ void US_PlotConfig::selectCanvasColor( void )
    QPalette pal     = lb_showCanvasColor->palette();
    QColor   current = pal.color( QPalette::Active, QPalette::Window );
    QColor   col     = QColorDialog::getColor( current, this, tr( "Select canvas color" ) );
+
+   qDebug() << "Canvas Color Selected: " << col;
    
    if ( col.isValid() )
    {
       pal.setColor( QPalette::Window, col );
       lb_showCanvasColor->setPalette( pal );
+      
+      //global_canvas_palette = pal;
+      global_canvas_color = col;   //ALEXEY
+      
 #if QT_VERSION > 0x050000
       plot->setCanvasBackground( QBrush( col ) );
 #else
@@ -770,6 +805,9 @@ void US_PlotConfig::selectCanvasColor( void )
 #endif
       plot->replot();
    }
+
+   
+   qDebug() << "Canvas Color Selected in Plot(): " << plot->canvasBackground();
 }
 
 /*!  \brief Change the frame color */
@@ -796,6 +834,9 @@ void US_PlotConfig::selectMargin( int index )
    //plot->setMargin( ( index + 1 ) * 2 );
    plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
          .arg( ( index + 1 ) * 2 ) );
+
+   QString style = plot->styleSheet();
+   qDebug() << "In ::selectMargin() Plot's style -- " << style;
 }
 
 /*!  \brief Change the plot legend position
@@ -906,11 +947,247 @@ void US_PlotConfig::updateAxis( int axis )
 
 }
 
+/* Load/Save Plot's profile 
+ */
+void US_PlotConfig::loadPlotProfile( void )
+{
+  qDebug() << "Loading Plot's profile -- ";
+
+  QString p_title, canvas_color, frame_color, border_margin;
+  QString p_title_font_size,  p_title_font_family;
+  
+  //open local file
+  QString dirPath    = US_Settings::etcDir();
+  QString p_filename = QFileDialog::getOpenFileName( this,
+						     tr("Open Plot's Profile"),
+						     dirPath,
+						     tr("Profile Files (*.json)") );
+
+  QFile json_plot_profile( p_filename );
+  if (json_plot_profile.open(QIODevice::ReadOnly))
+    {
+      QByteArray bytes = json_plot_profile.readAll();
+      json_plot_profile.close();
+      
+      QJsonParseError jsonError;
+      QJsonDocument document = QJsonDocument::fromJson( bytes, &jsonError );
+      if( jsonError.error != QJsonParseError::NoError )
+	{
+       	  qDebug() << "Reading JSON Plot profile failed: " << jsonError.errorString();//.toStdString();
+	  qDebug() << "Bytes: " << bytes;
+       	  return;
+	}
+      if( document.isObject() )
+	{
+	  QJsonObject json_obj = document.object();
+
+	  foreach(const QString& key, json_obj.keys())
+	    {
+	      QJsonValue value = json_obj.value(key);
+
+	      if ( key. contains( "Title Text" )  ) 
+		{
+		  p_title = value.toString();
+		}
+	      if ( key. contains( "Canvas Color" ) )
+		{
+		  canvas_color = value.toString();
+		}
+	      if ( key. contains( "Frame Color" ) )
+		{
+		  frame_color = value.toString();
+		}
+	      if ( key. contains( "Border Margin" ) )
+		{
+		  border_margin = value.toString();
+		}
+	      if ( key. contains( "Title Font" ) )
+		{
+		  QJsonArray json_array = value.toArray();
+		  
+		  p_title_font_family = json_array[0].toObject().value( "Family" ).toString();
+		  p_title_font_size   = json_array[0].toObject().value( "Size" )  .toString();
+		      
+		}
+	    }
+	}
+    }
+
+  qDebug() << "Loaded Plot Profile -- "
+	   << "Title: "           << p_title
+	   << ", Canvas Color: "  << canvas_color
+	   << ", Frame Color: "   << frame_color
+	   << ", Border Margin: " << border_margin
+	   << ", Title Font (Family, Size): (" << p_title_font_family << ", " << p_title_font_size << ")";
+
+  
+  //set plot's parameters
+  //1. Title
+  plot->setTitle( p_title );
+  plot->updateLayout();
+
+  //2. Title's Font & Size
+  QFont newFont;
+  newFont.setFamily   ( p_title_font_family );
+  newFont.setPointSize( p_title_font_size.toInt() );
+  
+  QwtText curr_title = plot->title();
+  curr_title.setFont( newFont );
+  plot->setTitle( curr_title );
+  
+  le_titleFont->setText( newFont.family() + ", " 
+			 + QString::number( newFont.pointSize() ) + tr( " points" ) );
+
+  
+  //3. Border Margin
+  plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+		       .arg( border_margin ) );
+
+  int kk = border_margin.toInt();;
+  kk  = qMax( 0, ( kk / 2 - 1 ) );
+  cmbb_margin->setCurrentIndex( kk );
+
+  //4. Frame Color
+  QColor col_frame   = QColor( frame_color );
+  QPalette pal_frame;
+  
+  if ( col_frame.isValid() )
+    {
+      pal_frame.setColor( QPalette::Active  , QPalette::Window, col_frame );
+      pal_frame.setColor( QPalette::Inactive, QPalette::Window, col_frame );
+      lb_showFrameColor->setPalette( pal_frame );
+      plot->setPalette( pal_frame );
+    }
+  
+  //5. Canvas Color
+  QColor col_canvas     = QColor( canvas_color );
+  QPalette pal_canvas;
+  
+  if ( col_canvas.isValid() )
+    {
+      pal_canvas.setColor( QPalette::Window, col_canvas );
+      lb_showCanvasColor->setPalette( pal_canvas );
+      
+      global_canvas_color = col_canvas;   //ALEXEY
+      
+#if QT_VERSION > 0x050000
+      plot->setCanvasBackground( QBrush( col_canvas ) );
+#else
+      plot->setCanvasBackground( col_canvas );
+#endif
+      plot->replot();
+    }
+
+}
+
+void US_PlotConfig::savePlotProfile( void )
+{
+  qDebug() << "Saving Plot's current profile -- ";
+  QString profile_edited;
+  profile_edited += "{";
+
+  /* Sections ******************************************************/
+  //title
+  QString p_title = plot->title().text();
+  profile_edited += "\"Title Text\" : \"" + p_title + "\",";  
+
+  //title font
+  QFont p_title_font = plot->title().font();
+  QString p_title_font_family = p_title_font.family();
+  QString p_title_font_size   = QString::number( p_title_font.pointSize() );
+  profile_edited += "\"Title Font\" : ";
+  profile_edited += "[{";
+  profile_edited += "\"Family\" : \"" + p_title_font_family  + "\",";
+  profile_edited += "\"Size\" : \""   + p_title_font_size    + "\"";
+  profile_edited += "}],";
+
+  //frame color
+  QPalette p = plot->palette();
+  QString  p_col_name = p.color( QPalette::Active, QPalette::Window ).name(QColor::HexRgb);
+  qDebug() << "Plot's Frame Color Name: "      << p_col_name;
+  //QColor col;
+  //col.setNamedColor( p_col_name );
+  //qDebug() << "Plot's Color from Name: " << col.name();
+  profile_edited += "\"Frame Color\" : \"" + p_col_name + "\",";
+
+  //Canvas Color
+  QColor  p_canvas_col = plot->canvasBackground();
+  QString p_canvas_col_name = p_canvas_col.name(QColor::HexRgb);
+  qDebug() << "Plot's Canvas Color Name: "      << p_canvas_col_name;
+  profile_edited += "\"Canvas Color\" : \"" + p_canvas_col_name + "\",";
+
+  //Border Margin
+  QString style = plot->styleSheet();
+  qDebug() << "Plot's style -- " << style;
+  int     kk    = style.indexOf( "padding:" );
+  if ( kk < 0 )
+    {
+      kk            = 0;
+    }
+  else
+    {
+      QString padding_v = style.mid( kk ).split(": ")[1];
+      padding_v. simplified();
+      padding_v.indexOf( "px" ); 
+      qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
+      qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+      
+      kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+    }
+  profile_edited += "\"Border Margin\" : \"" + QString::number( kk ) + "\",";
+
+  
+  
+  /* End of Sections ******************************************************/
+  
+  //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
+  profile_edited.replace(",}],","}],"); 
+  QString to_replace = "}],";
+  QString new_substr = "}]";
+  qDebug() << "get position of the char after last occurence of }], -- " << profile_edited.lastIndexOf( to_replace ) +  to_replace.size();
+  qDebug() << "Text after last occurence of }], -- " << profile_edited.mid(profile_edited.lastIndexOf( to_replace ) +  to_replace.size(), profile_edited.length() );
+
+  if ( ! profile_edited.mid(profile_edited.lastIndexOf( to_replace ) +  to_replace.size(), profile_edited.length() ) .contains( "\"" ) )
+    profile_edited.replace( profile_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
+
+  profile_edited += "}";
+  QString to_replace1 = ",}";
+  QString new_substr1 = "}";
+  profile_edited.replace( profile_edited.lastIndexOf( to_replace1 ), to_replace1.size(), new_substr1 );
+
+  qDebug() << "Edited Plot's Profile: " << profile_edited;
+
+  //save to local file
+  QString dirPath    = US_Settings::etcDir();
+  QString p_filename = QFileDialog::getSaveFileName( this,
+						     tr("Save Plot's Profile"),
+						     dirPath,
+						     tr("Profile Files (*.json)") );
+  p_filename.contains( ".json") ? p_filename += "" : p_filename += ".json";
+  QFile json_plot_profile( p_filename );
+  if (json_plot_profile.open(QFile::WriteOnly | QFile::Truncate))
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( profile_edited.toUtf8() );
+      if (!jsonDoc.isObject())
+	{
+	  qDebug() << "Saving Plot's Profile to .JSON file: String Doc: NOT a JSON Doc !!";
+	}
+	  
+      json_plot_profile.write(jsonDoc.toJson());
+
+      // QTextStream out(&json_plot_profile);
+      // out << profile_edited;
+    }
+  
+}
+
 /*!  \brief Open US_PlotConfig dialog for changing the 
             selected curves elements
 */
 void US_PlotConfig::updateCurve( void )
 {
+  qDebug() << "1. In Update Selected Curve: plot's canvas backgound color -- " << plot->canvasBackground();
+  
    if ( lw_curves->selectedItems().count() == 0 )
    {
       QMessageBox::information( this,
@@ -931,7 +1208,12 @@ void US_PlotConfig::updateCurve( void )
    for ( int i = 0; i < items.count(); i++ )
       selected << items[i]->text();
 
-   curveWidget = new US_PlotCurveConfig( plot, selected );
+   qDebug() << "SELECTED Curves -- " << selected;
+   qDebug() << "2. In Update Selected Curve: plot's canvas backgound color -- " << plot->canvasBackground();
+
+   //curveWidget = new US_PlotCurveConfig( plot, selected );
+   curveWidget = new US_PlotCurveConfig( plot, selected, this  ); //ALEXEY - call curves' Config widget with explicitly defining parent (::US_PlotConfig)
+
    //curveWidget->setAttribute( Qt::WA_DeleteOnClose );
    //connect( curveWidget, SIGNAL( curveConfigClosed( void ) ),
    //                      SLOT  ( curveConfigFinish( void ) ) );
@@ -1009,14 +1291,30 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
       const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
       : US_WidgetsDialog( parent, f ) //( false, parent, f )
 {
+  plotConfigW = (US_PlotConfig*)parent;         //ALEXEY: access to parent's US_PlotConfig
+  qDebug() << "In parent US_PlotConfig widget, plot canvas Color is: " << plotConfigW -> global_canvas_color;
+   
+   qDebug() << "0. In US_PlotCurveConfig() Constructor: (current)plot's canvas Color -- " << currentPlot->canvasBackground();
+  
    plot          = currentPlot;
+   //ALEXEY: for some reason, plot's canvas background color is lost here: needs to reset to what has been selected in US_PlotConfig::
+#if QT_VERSION > 0x050000
+   plot->setCanvasBackground( QBrush( plotConfigW -> global_canvas_color ) );
+#else
+   plot->setCanvasBackground(  plotConfigW -> global_canvas_color );
+#endif
+   
    selectedItems = selected;
 
+   qDebug() << "1. In US_PlotCurveConfig() Constructor: plot's canvas Color -- " << plot->canvasBackground();
+   
    // Keep out of the way
    //move( pos() + QPoint( plot->rect().width(), 0 ) );
 
    setWindowTitle( tr( "Curve Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
+
+   qDebug() << "2. In US_PlotCurveConfig() Constructor: plot's canvas Color -- " << plot->canvasBackground();
 
    // Find the first curve selected
    QwtPlotItemList list = plot->itemList();
@@ -1293,6 +1591,8 @@ void US_PlotCurveConfig::curveStyleChanged( int index )
 void US_PlotCurveConfig::symbolStyleChanged( int index )
 {
    int style  = cmbb_symbolStyle->itemData( index ).toInt();
+
+   qDebug() << "Curve's SymbolStyle (int): " << style; 
    symbolStyle = static_cast< QwtSymbol::Style > ( style );
    lb_sample2->update(); 
 }
@@ -1349,6 +1649,7 @@ void US_PlotCurveConfig::apply( void )
 #else
    QwtSymbol *oldSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
 #endif
+
    oldSymbol             = ( oldSymbol != NULL ) ? oldSymbol : new QwtSymbol;
    QPen      symbolPen   = oldSymbol->pen();
    QBrush    symbolBrush = oldSymbol->brush();
@@ -1361,8 +1662,8 @@ void US_PlotCurveConfig::apply( void )
 
    QSize symbolSize( sb_symbolWidth->value(), sb_symbolHeight->value() );
    
-   QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,
-                                         symbolPen,   symbolSize );
+   // QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,           //ALEXEY:: new Symbol object will be initialized inside the cycle !!!
+   //                                       symbolPen,   symbolSize );
 
    palette = lb_showCurveColor->palette();
    QPen      curvePen( palette.color( QPalette::Window ) );
@@ -1371,8 +1672,9 @@ void US_PlotCurveConfig::apply( void )
    
    QwtPlotItemList list = plot->itemList(); // All items
 
-   int j = 0;
+   //int j = 0;                                               //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
 
+   qDebug() << "Plot Curve Config: just before list() / selectedlist iteration:  ";
    // Iterate through the selected curves
    for ( int i = 0; i < selectedItems.size(); i++ )
    {
@@ -1380,11 +1682,14 @@ void US_PlotCurveConfig::apply( void )
       QString title = selectedItems[ i ];
       title.replace( QRegExp( "^\\(\\d+\\) " ), "" );
 
-      // There is no need to reiterate over the full list
+      qDebug() << "Plot Curve Config: for selectItem -- " << title;
+
+      // There is no need to reiterate over the full list     //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
       // This assumes the selected list and the full list
       // are in the same order
 
-      for ( /* no intitalizer */; j < list.size(); j++ )
+      //for ( /* no intitalizer */; j < list.size(); j++ )    //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
+      for ( int j = 0; j < list.size(); j++ )
       {
          if ( list[ j ]->rtti() != QwtPlotItem::Rtti_PlotCurve ) continue;
          if ( list[ j ]->title() == title )
@@ -1392,15 +1697,47 @@ void US_PlotCurveConfig::apply( void )
             QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* > ( list[ j ] );
             if ( selectedItems.size() == 1 ) 
                curve->setTitle( le_curveTitle->text() );
- 
-            curve->setSymbol( newSymbol );
-            curve->setPen   ( curvePen );
-            curve->setStyle ( curveStyle );
+
+	    qDebug() << "Plot Curve Config: for allItems -- " << (list[ j ]->title()).text();
+	    if ( curve->symbol() !=  NULL ) 
+	      qDebug() << "Current Symbol -- " << curve->symbol()->style();
+
+	    QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,             //ALEXEY: defining a new symbol must be witnin !!! caused crash before
+						  symbolPen,   symbolSize );
+	    
+	    if ( !symbolStyle || symbolStyle ==  QwtSymbol::NoSymbol )
+	      {
+		qDebug() << "No symbolStyle selected in the first place, setting to ::NoSymbol -- ";
+		newSymbol = NULL;
+	      }
+	    
+	    if ( newSymbol != NULL )
+	      qDebug() << "newSymbol: pen, brush, size, style -- "
+		       << newSymbol->pen()
+		       << newSymbol->brush()
+		       << newSymbol->size()
+		       << newSymbol->style();
+	    
+	    curve->setSymbol( newSymbol );  //ALEXEY: this caused crash when plot->detachItems() from all apps (when ::NoSymbol style OR ...)
+	    // Also, crashed when multiple curves selected && pressing "Apply" more than one time (even while changing the symbol type...)
+	    // ATTN: crashed only when applied to the 2nd curve in a selected list! When only 1 curve selected, all good -- was wrong (heap) memory allocation!!
+	    qDebug() << "Plot Curve Config: for allItems parms SET Symbol-- " << (list[ j ]->title()).text();
+	    
+	    curve->setPen   ( curvePen );
+	    qDebug() << "Plot Curve Config: for allItems parms SET Pen-- " << (list[ j ]->title()).text();
+
+	    curve->setStyle ( curveStyle );
+	    qDebug() << "Plot Curve Config: for allItems parms SET Style-- " << (list[ j ]->title()).text();
+
+	    qDebug() << "Plot Curve Config: for allItems parms SET ALL -- " << (list[ j ]->title()).text();
             break;
          }
       }
 
    }
+
+   
+   qDebug() << "Plot Curve Config: just before replot() ";
    plot->replot();
 }
 
