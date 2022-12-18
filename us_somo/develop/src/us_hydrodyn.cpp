@@ -83,6 +83,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QString gui_script_file,
+                         bool    init_configs_silently,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
@@ -120,6 +121,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    delete process;
    exit(0);
 #endif
+
+   this->init_configs_silently = init_configs_silently;
 
    if ( !gui_script_file.isEmpty() ) {
       qDebug() << "script active " << gui_script_file;

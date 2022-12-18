@@ -142,6 +142,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       US_Hydrodyn(vector < QString >,
                   QString gui_script_file = "",
+                  bool init_configs_silently = false,
                   QWidget *p = 0, 
                   const char *name = 0);
 
@@ -274,6 +275,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString  gui_script_file;
       void     gui_script_msg  ( int line, QString arg, QString msg );
       void     gui_script_error( int line, QString arg, QString msg, bool doexit = true );
+
+      bool     init_configs_silently;
       
       map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );
       map < QString, struct atom * > first_residue_atom_map( struct PDB_chain & chain );

@@ -755,6 +755,55 @@ bool US_Hydrodyn::install_new_version()
 
    msg += us_tr("\nDo you wish to proceed?");
 
+   if ( init_configs_silently ) {
+      qDebug() << "init_configs_silently\n";
+      QDir qd;
+      US_File_Util ufu;
+      for ( unsigned int i = 0; i < names.size(); i++ )
+      {
+         if ( backup[i] )
+         {
+            printf("backing up %u (<%s> to <%s>\n", i, fcur[i].toLatin1().data(), fprev[i].toLatin1().data());
+            if (!qd.rename(fcur[i], fprev[i]) )
+            {
+               qDebug() << "a file write error occured";
+               exit(-1);
+            }
+         }
+         if ( install[i] )
+         {
+            printf("installing %u (<%s> to <%s>\n", i, fnew[i].toLatin1().data(), fcur[i].toLatin1().data());
+            if (!ufu.copy( fnew[i], fcur[i]) )
+            {
+               qDebug() << "a file write error occured";
+               exit(-1);
+            }
+            if ( names[ i ] == "config" && backup[ i ] ) {
+               read_config( fprev[ i ] );
+               QStringList                save_directory_history       = directory_history;
+               map < QString, QDateTime > save_directory_last_access   = directory_last_access;
+               map < QString, QString >   save_directory_last_filetype = directory_last_filetype;
+               read_config( fcur[ i ] );
+               directory_history       = save_directory_history;
+               directory_last_access   = save_directory_last_access;
+               directory_last_filetype = save_directory_last_filetype;
+               write_config( fcur[ i ] );
+            }
+         }
+      }
+      {
+         QString contents = REVISION;
+         QString error;
+         if ( !US_File_Util::putcontents( somorevision, contents, error ) ) {
+            qDebug() << "putcontents file:" << somorevision << " contents:'" << contents << "' error:" << error;
+         } else {
+            qDebug() << "Configs successfully created";
+         }
+      }
+
+      return false;
+   }
+
    switch( QMessageBox::warning( 
                                 0, 
                                 us_tr("New version detected"),
