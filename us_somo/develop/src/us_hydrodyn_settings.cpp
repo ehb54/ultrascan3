@@ -3287,15 +3287,22 @@ void US_Hydrodyn::set_default()
    // only keep one copy of defaults in system root dir
    f.setFileName( US_Config::get_home_dir() + "etc/somo.defaults");
    bool config_read = false;
+
    if (f.open(QIODevice::ReadOnly)) // read system directory
    {
       j=read_config(f);
       if ( j )
       {
          QTextStream( stdout ) << "read config returned " << j << Qt::endl;
-         US_Static::us_message(us_tr("Please note:"),
-                              us_tr("The somo.default configuration file was found to be corrupt.\n"
-                                 "Resorting to hard-coded defaults."));
+         if ( init_configs_silently ) {
+            qDebug() <<
+               QString( "The somo.default configuration file %1 was found to be corrupt, resorting to hard-coded defaults" )
+               .arg( f.fileName() );
+         } else {
+            US_Static::us_message(us_tr("Please note:"),
+                                  us_tr("The somo.default configuration file was found to be corrupt.\n"
+                                        "Resorting to hard-coded defaults."));
+         }
       }
       else
       {
@@ -3304,9 +3311,15 @@ void US_Hydrodyn::set_default()
    }
    else
    {
-      US_Static::us_message(us_tr("Notice:"),
-                           us_tr("Configuration defaults file ") +
-                           f.fileName() + us_tr(" not found\nUsing hard-coded defaults."));
+      if ( init_configs_silently ) {
+         qDebug() <<
+            QString( "The somo.default configuration file %1 was not found, resorting to hard-coded defaults" )
+            .arg( f.fileName() );
+      } else {
+         US_Static::us_message(us_tr("Notice:"),
+                               us_tr("Configuration defaults file ") +
+                               f.fileName() + us_tr(" not found\nUsing hard-coded defaults."));
+      }
    }
 
    if ( !config_read )
