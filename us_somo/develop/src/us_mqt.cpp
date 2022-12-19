@@ -5,6 +5,46 @@
 #include <QLabel>
 #include <QFocusEvent>
 
+static QTextStream& qStdOut()
+{
+   static QTextStream ts( stdout );
+   return ts;
+}
+
+mQProgressBar::mQProgressBar( QWidget *parent ) : QProgressBar( parent ) {
+   cli_progress = (bool *)0;
+   cli_prefix   = "unknown";
+   // qStdOut()    << "tso mQProgressBar constructor\n" << Qt::flush;
+}
+
+mQProgressBar::~mQProgressBar() {
+}
+
+void mQProgressBar::setValue( int val ) {
+   // qDebug() << "mQProgressBar setValue\n";
+   if ( cli_progress && *cli_progress ) {
+      static QString lastprogress;
+      double progress = (double) val / (double) maximum();
+      if ( progress > 1 ) {
+         progress = 1;
+      }
+      QString newprogress = QString::number( progress, 'f', 2 );
+      if ( lastprogress != newprogress ) {
+         lastprogress = newprogress;
+         qStdOut() << QString( "~pgrs %1 : %2\n" ).arg( cli_prefix ).arg( newprogress ) << Qt::flush;
+      }
+   }
+   emit QProgressBar::setValue( val );
+}
+
+void mQProgressBar::set_cli_progress( bool & cli_progress ) {
+   this->cli_progress = & cli_progress;
+}
+
+void mQProgressBar::set_cli_prefix( QString cli_prefix ) {
+   this->cli_prefix = cli_prefix;
+}
+
 mQwtPlot::mQwtPlot( QWidget *parent ) : QwtPlot( parent ) {}
 mQwtPlot::~mQwtPlot() {}
 

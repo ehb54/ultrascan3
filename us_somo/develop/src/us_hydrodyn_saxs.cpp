@@ -1767,16 +1767,18 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    hide_widgets( manual_guinier_widgets );
 
-   progress_saxs = new QProgressBar( this );
+   progress_saxs = new mQProgressBar( this );
    progress_saxs->setMinimumHeight(minHeight1);
    progress_saxs->setPalette( PALET_NORMAL );
+   progress_saxs->set_cli_progress( ( ( US_Hydrodyn * ) us_hydrodyn )->cli_progress );
    AUTFBACK( progress_saxs );
    progress_saxs->reset();
    iq_widgets.push_back( progress_saxs );
 
-   progress_pr = new QProgressBar( this );
+   progress_pr = new mQProgressBar( this );
    progress_pr->setMinimumHeight(minHeight1);
    progress_pr->setPalette( PALET_NORMAL );
+   progress_pr->set_cli_progress( ( ( US_Hydrodyn * ) us_hydrodyn )->cli_progress );
    AUTFBACK( progress_pr );
    progress_pr->reset();
    pr_widgets.push_back( progress_pr );
@@ -2212,7 +2214,7 @@ void saxs_pr_thr_t::saxs_pr_thr_setup(
                                       vector < float > *hist,
                                       double delta,
                                       unsigned int threads,
-                                      QProgressBar *progress,
+                                      mQProgressBar *progress,
                                       QLabel *lbl_core_progress,
                                       bool *stopFlag,
                                       float b_bar_inv2
@@ -3455,7 +3457,7 @@ void saxs_Iq_thr_t::saxs_Iq_thr_setup(
                                       vector < double > *Ic,
                                       vector < double > *q,
                                       unsigned int threads,
-                                      QProgressBar *progress,
+                                      mQProgressBar *progress,
                                       QLabel *lbl_core_progress,
                                       bool *stopFlag
                                       )

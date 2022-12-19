@@ -1051,8 +1051,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void gui_script_run();
       
    public:
-      QProgressBar *progress;
-      QProgressBar *mprogress;
+      bool          cli_progress;
+      mQProgressBar *progress;
+      mQProgressBar *mprogress;
 
       void set_expert( bool );
 

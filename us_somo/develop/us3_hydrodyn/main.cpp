@@ -23,6 +23,7 @@ int main (int argc, char **argv)
    bool residue_file          = false;
    bool script                = false;
    bool init_configs_silently = false;
+   bool cli_progress          = false;
 
    QString residue_filename;
    QString script_filename;
@@ -88,6 +89,16 @@ int main (int argc, char **argv)
          init_configs_silently = true;
          continue;
       }
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-p")) )
+      {
+         if ( debug )
+         {
+            puts("cli progress");
+         }
+         argcbase++;
+         cli_progress = true;
+         continue;
+      }
       if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-g")) )
       {
          if ( debug )
@@ -126,6 +137,7 @@ int main (int argc, char **argv)
       hydrodyn->advanced_config.expert_mode   = true;
    }
    hydrodyn->set_expert( expert );
+   hydrodyn->cli_progress = cli_progress;
 
    if ( debug )
    {

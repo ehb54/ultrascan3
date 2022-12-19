@@ -347,8 +347,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QwtWheel    * qwtw_wheel;
       QPushButton * pb_manual_guinier_process;
 
-      QProgressBar *progress_pr;
-      QProgressBar *progress_saxs;
+      mQProgressBar *progress_pr;
+      mQProgressBar *progress_saxs;
 
       struct atom current_atom;
       struct hybridization current_hybrid;
@@ -453,7 +453,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool stopFlag;
       bool create_native_saxs;
 
-      QProgressBar *progress;
+      mQProgressBar *progress;
 
       void set_current_method_buttons();
       void update_iqq_suffix();
@@ -1011,7 +1011,7 @@ class saxs_Iq_thr_t : public QThread
                          vector < double > *Ic,
                          vector < double > *q,
                          unsigned int threads,
-                         QProgressBar *progress,
+                         mQProgressBar *progress,
                          QLabel *lbl_core_progress,
                          bool *stopFlag
                          );
@@ -1032,7 +1032,7 @@ class saxs_Iq_thr_t : public QThread
   vector < double > *q;
 
   unsigned int threads;
-  QProgressBar *progress;
+  mQProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
 
@@ -1055,7 +1055,7 @@ class saxs_pr_thr_t : public QThread
                          vector < float > *hist,
                          double delta,
                          unsigned int threads,
-                         QProgressBar *progress,
+                         mQProgressBar *progress,
                          QLabel *lbl_core_progress,
                          bool *stopFlag,
                          float b_bar_inv2
@@ -1073,7 +1073,7 @@ class saxs_pr_thr_t : public QThread
 
   double delta;
   unsigned int threads;
-  QProgressBar *progress;
+  mQProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
   float b_bar_inv2;

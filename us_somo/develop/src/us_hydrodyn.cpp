@@ -1524,13 +1524,15 @@ void US_Hydrodyn::setupGUI()
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   progress = new QProgressBar( this );
+   progress = new mQProgressBar( this );
    progress->setPalette( PALET_NORMAL );
+   progress->set_cli_progress( cli_progress );
    AUTFBACK( progress );
    progress->reset();
 
-   mprogress = new QProgressBar( this );
+   mprogress = new mQProgressBar( this );
    mprogress->setPalette( PALET_NORMAL );
+   progress->set_cli_progress( cli_progress );
    AUTFBACK( mprogress );
    mprogress->reset();
    mprogress->hide();

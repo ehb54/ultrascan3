@@ -15,6 +15,28 @@
 #include <qcolor.h>
 #include <math.h>
 #include <qwt_plot.h>
+#include <qprogressbar.h>
+
+class mQProgressBar : public QProgressBar
+{
+   Q_OBJECT
+
+   public:
+
+     mQProgressBar ( QWidget *parent = 0 );
+     ~mQProgressBar();
+
+     void set_cli_progress( bool & );
+     void set_cli_prefix  ( QString prefix );
+
+   public slots:
+      
+     void setValue        ( int value );
+
+   private:
+     bool *        cli_progress;
+     QString       cli_prefix;
+};
 
 class mQwtPlot : public QwtPlot
 {

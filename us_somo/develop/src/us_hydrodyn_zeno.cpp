@@ -3,7 +3,7 @@
 #include <QTextStream>
 
 US_Hydrodyn  * zeno_us_hydrodyn;
-static QProgressBar * zeno_progress;
+static mQProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 static US_Udp_Msg  * zeno_us_udp_msg;
 
@@ -13429,7 +13429,7 @@ zeno_main(
 US_Hydrodyn_Zeno::US_Hydrodyn_Zeno( 
                                    hydro_options *         options,
                                    hydro_results *         results,
-                                   QProgressBar *          use_progress,
+                                   mQProgressBar *         use_progress,
                                    US_Hydrodyn *           us_hydrodyn
                                    )
 {
@@ -13469,7 +13469,7 @@ bool US_Hydrodyn_Zeno::run(
                            vector < PDB_atom > *   bead_model,
                            double              &   sum_mass,
                            double              &   sum_volume,
-                           QProgressBar        *   use_progress,
+                           mQProgressBar       *   use_progress,
                            bool                    keep_files,
                            bool                    zeno_cxx,
                            int                     threads
