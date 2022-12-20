@@ -13720,6 +13720,7 @@ bool US_Hydrodyn_Zeno::run(
 bool US_Hydrodyn::calc_zeno()
 {
    // cout << "calc zeno\n";
+   progress->set_cli_prefix( "ch" );
 
    if ( !hydro.zeno_zeno &&
         !hydro.zeno_interior &&

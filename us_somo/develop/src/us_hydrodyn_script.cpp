@@ -193,6 +193,12 @@ void US_Hydrodyn::gui_script_run() {
             }
             batch_window->cb_zeno->setChecked( true );
             batch_window->set_zeno();
+         } else if ( opt1 == "grpy" ) {
+            if ( !batch_window->cb_grpy->isEnabled() ) {
+               gui_script_error( i, cmd, opt1 + ": not enabled" );
+            }
+            batch_window->cb_grpy->setChecked( true );
+            batch_window->set_grpy();
          } else if ( opt1 == "combineh" ) {
             if ( !batch_window->cb_avg_hydro->isEnabled() ) {
                gui_script_error( i, cmd, opt1 + ": not enabled" );
