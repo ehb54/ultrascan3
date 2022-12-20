@@ -21,7 +21,7 @@ mQProgressBar::~mQProgressBar() {
 }
 
 void mQProgressBar::setValue( int val ) {
-   // qDebug() << "mQProgressBar setValue\n";
+   // qDebug() << QString("mQProgressBar setValue %1").arg(val);
    if ( cli_progress && *cli_progress ) {
       static QString lastprogress;
       double progress = (double) val / (double) maximum();

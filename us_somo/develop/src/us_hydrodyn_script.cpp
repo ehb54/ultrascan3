@@ -69,6 +69,13 @@ void US_Hydrodyn::gui_script_run() {
          advanced_config.expert_mode = true;
       } else if ( cmd == "norasmol" ) {
          advanced_config.auto_view_pdb = false;
+      } else if ( cmd == "progress" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         cli_progress = true;
+         progress->set_cli_prefix( opt1 );
       } else if ( cmd == "config" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
