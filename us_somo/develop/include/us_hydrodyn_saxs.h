@@ -303,7 +303,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QFont ft;
 
-      QTextEdit *editor;
+      mQTextEdit *editor;
 
       QMenuBar *m;
 

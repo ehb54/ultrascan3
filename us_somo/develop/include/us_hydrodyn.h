@@ -170,7 +170,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_core_progress;
       void set_disabled( bool clear_bead_model_file = true );
       void set_enabled();
-      QTextEdit *editor;
+      mQTextEdit *editor;
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
       bool bead_model_from_file;

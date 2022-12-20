@@ -420,7 +420,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    guiFlag = true;
    bead_model_selected_filter = "";
    residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
-   editor = (QTextEdit *)0;
+   editor = (mQTextEdit *)0;
 
 #if QT_VERSION >= 0x040000
    gparams[ "zeno_cxx" ] = "true";
@@ -1532,13 +1532,15 @@ void US_Hydrodyn::setupGUI()
 
    mprogress = new mQProgressBar( this );
    mprogress->setPalette( PALET_NORMAL );
-   progress->set_cli_progress( cli_progress );
+   mprogress->set_cli_progress( cli_progress );
    AUTFBACK( mprogress );
    mprogress->reset();
    mprogress->hide();
 
-   editor = new QTextEdit(this);
+   editor = new mQTextEdit(this);
    editor->setPalette( PALET_NORMAL );
+   editor->set_cli_progress( cli_progress );
+   editor->set_cli_prefix  ( "somo" );
    editor->setReadOnly(true);
    editor->setMinimumWidth(600);
 

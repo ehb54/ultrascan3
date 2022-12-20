@@ -11,6 +11,31 @@ static QTextStream& qStdOut()
    return ts;
 }
 
+mQTextEdit::mQTextEdit( QWidget *parent ) : QTextEdit( parent ) {
+   cli_progress = (bool *)0;
+   cli_prefix   = "unknown";
+   // qStdOut()    << "tso mQTextEdit constructor\n" << Qt::flush;
+}
+
+mQTextEdit::~mQTextEdit() {
+}
+
+void mQTextEdit::append( const QString & text ) {
+   // qDebug() << QString("mQTextEdit append %1").arg( text );
+   if ( cli_progress && *cli_progress ) {
+      qStdOut() << QString( "~texts %1 :\n%2\n~texte\n" ).arg( cli_prefix ).arg( text ) << Qt::flush;
+   }
+   emit QTextEdit::append( text );
+}
+
+void mQTextEdit::set_cli_progress( bool & cli_progress ) {
+   this->cli_progress = & cli_progress;
+}
+
+void mQTextEdit::set_cli_prefix( QString cli_prefix ) {
+   this->cli_prefix = cli_prefix;
+}
+
 mQProgressBar::mQProgressBar( QWidget *parent ) : QProgressBar( parent ) {
    cli_progress = (bool *)0;
    cli_prefix   = "unknown";

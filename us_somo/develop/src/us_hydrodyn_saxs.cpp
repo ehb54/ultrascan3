@@ -1783,8 +1783,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    progress_pr->reset();
    pr_widgets.push_back( progress_pr );
 
-   editor = new QTextEdit(this);
+   editor = new mQTextEdit(this);
    editor->setPalette( PALET_NORMAL );
+   editor->set_cli_progress( ( ( US_Hydrodyn * ) us_hydrodyn )->cli_progress );
+   editor->set_cli_prefix( "saxs" );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setMinimumWidth(300);
