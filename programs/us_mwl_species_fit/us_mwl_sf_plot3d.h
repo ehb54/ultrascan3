@@ -82,6 +82,7 @@ private:
     bool renderRunState;
 
     Q3DSurface *graph;
+    Q3DCamera *camera;
     QWidget *surfaceWgt;
     QTabWidget *tabs;
     QSurfaceDataProxy *dataProxy;
@@ -104,7 +105,6 @@ private:
     QPushButton *pb_G2R;
     QPushButton *pb_B2Y;
     QPushButton *pb_DFLT;
-    QPushButton *pb_camera;
     QPushButton *pb_help;
     QPushButton *pb_close;
 
@@ -121,6 +121,7 @@ private:
 
     QComboBox *cb_scan;
     QComboBox *cb_theme;
+    QComboBox *cb_camera;
 
     QwtCounter *ct_min_rp;
     QwtCounter *ct_max_rp;
@@ -139,7 +140,7 @@ private slots:
     void newScan(int);
     void nextScan(void);
     void prevScan(void);
-    void resetCamera(void);
+    void resetCamera(int);
     void setSurfaceWire(void);
     void setSurface(void);
     void set_B2Y(void);
@@ -169,6 +170,7 @@ private slots:
     void get_minMaxMean(void);
     void render_option(int);
     void enable_wgt(bool);
+    void cameraChanged(float);
 };
 
 class CustomFormatter : public QValue3DAxisFormatter

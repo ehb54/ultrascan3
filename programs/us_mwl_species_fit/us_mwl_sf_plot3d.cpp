@@ -140,9 +140,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     graph->axisZ()->setLabelAutoRotation(zAngle);
 //    surface->axisZ()->setReversed(true);
 
-    graph->scene()->activeCamera()->setWrapXRotation(true);
-    graph->scene()->activeCamera()->setWrapYRotation(false);
-    graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
+    camera = graph->scene()->activeCamera();
+    camera->setWrapXRotation(true);
+    camera->setWrapYRotation(false);
+    camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
 
     surfaceWgt = QWidget::createWindowContainer(graph);
     QSize screenSize = graph->screen()->size();
@@ -274,11 +275,24 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     cb_theme->addItem(QStringLiteral("Retro"));
     cb_theme->addItem(QStringLiteral("Isabelle"));
 
-    pb_camera = us_pushbutton("Reset Camera");
+//    pb_camera = us_pushbutton("Reset Camera");
+    cb_camera = us_comboBox();
+    QStringList camera_list = {"Custom"};
+    camera_list << "IsometricRight" << "IsometricRightHigh";
+    camera_list << "IsometricLeft" << "IsometricLeftHigh";
+    camera_list << "FrontLow" << "Front" << "FrontHigh";
+    camera_list << "BehindLow" << "Behind" << "BehindHigh";
+    camera_list << "LeftLow" << "Left" << "LeftHigh";
+    camera_list << "RightLow" << "Right" << "RightHigh";
+    camera_list << "FrontBelow";
+    camera_list << "LeftBelow" << "RightBelow" << "BehindBelow" << "DirectlyBelow";
+    camera_list << "DirectlyAbove" << "DirectlyAboveCW45" << "DirectlyAboveCCW45";
+    cb_camera->addItems(camera_list);
+    cb_camera->setCurrentIndex(1);
 
     QHBoxLayout *theme_lyt = new QHBoxLayout();
     theme_lyt->addWidget(cb_theme);
-    theme_lyt->addWidget(pb_camera);
+    theme_lyt->addWidget(cb_camera);
 
     QLabel* lb_color = us_label("Color Map");
     lb_color->setAlignment(Qt::AlignCenter);
@@ -511,7 +525,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(cb_scan, SIGNAL(currentIndexChanged(int)), this, SLOT(newScan(int)));
     connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
     connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
-    connect(pb_camera, SIGNAL(clicked()), this, SLOT(resetCamera()));
+    connect(cb_camera, SIGNAL(currentIndexChanged(int)), this, SLOT(resetCamera(int)));
     connect(cb_theme, SIGNAL(currentTextChanged(QString)), this, SLOT(setTheme(QString)));
     connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
     connect(rb_surface_wire, SIGNAL(clicked()), this, SLOT(setSurfaceWire()));
@@ -537,6 +551,8 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(sli_radial, SIGNAL(valueChanged(int)), this, SLOT(new_rpoint(int)));
     connect(le_rpid, SIGNAL(returnPressed()), this, SLOT(new_rpid()));
     connect(ckb_rendall, SIGNAL(stateChanged(int)), this, SLOT(render_option(int)));
+    connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
+    connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
 
     get_minMaxMean();
 //    cb_scan->setCurrentIndex(scanId);
@@ -750,8 +766,59 @@ void US_MWL_SF_PLOT3D::prevScan(){
     cb_scan->setCurrentIndex(scanId - 1);
 }
 
-void US_MWL_SF_PLOT3D::resetCamera(){
-    graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
+void US_MWL_SF_PLOT3D::resetCamera(int){
+    camera->disconnect();
+    QString state = cb_camera->currentText();
+    if (state == "FrontLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFrontLow);
+    else if (state == "Front")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFront);
+    else if (state == "FrontHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFrontHigh);
+    else if (state == "LeftLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeftLow);
+    else if (state == "Left")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeft);
+    else if (state == "LeftHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeftHigh);
+    else if (state == "RightLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRightLow);
+    else if (state == "Right")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRight);
+    else if (state == "RightHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRightHigh);
+    else if (state == "BehindLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehindLow);
+    else if (state == "Behind")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehind);
+    else if (state == "BehindHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehindHigh);
+    else if (state == "IsometricLeft")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricLeft);
+    else if (state == "IsometricLeftHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricLeftHigh);
+    else if (state == "IsometricRight")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRight);
+    else if (state == "IsometricRightHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
+    else if (state == "DirectlyAbove")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyAbove);
+    else if (state == "DirectlyAboveCW45")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyAboveCW45);
+    else if (state == "DirectlyAboveCCW45")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyAboveCCW45);
+    else if (state == "FrontBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFrontBelow);
+    else if (state == "LeftBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeftBelow);
+    else if (state == "RightBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRightBelow);
+    else if (state == "BehindBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehindBelow);
+    else if (state == "DirectlyBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyBelow);
+    connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
+    connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
 }
 
 void US_MWL_SF_PLOT3D::setSurface(){
@@ -1065,7 +1132,6 @@ void US_MWL_SF_PLOT3D::enable_wgt(bool state){
     pb_B2Y->setEnabled(state);
     pb_DFLT->setEnabled(state);
     pb_help->setEnabled(state);
-    pb_camera->setEnabled(state);
     sli_xAngle->setEnabled(state);
     sli_yAngle->setEnabled(state);
     sli_zAngle->setEnabled(state);
@@ -1085,6 +1151,10 @@ void US_MWL_SF_PLOT3D::enable_wgt(bool state){
 void US_MWL_SF_PLOT3D::closeEvent(QCloseEvent *event){
     renderLoopState = false;
     event->accept();
+}
+
+void US_MWL_SF_PLOT3D::cameraChanged(float){
+    cb_camera->setCurrentIndex(0);
 }
 /////
 /////
@@ -1131,13 +1201,10 @@ void CustomFormatter::recalculate() {
     qreal labelValue;
     QVector<qreal> values(segmentCount + 1);
 
-//    qreal delta = (maxVal - minVal) / segmentCount;
-    qreal delta = 1 / segmentCount;
+    qreal delta = 1.0 / segmentCount;
     for (int i = 0; i < segmentCount; i++) {
-//        values[i] = minVal + i * delta;
-        values[i] = i * delta;
+        values[i] = delta * i;
     }
-    values[segmentCount] = maxVal;
     values[segmentCount] = 1.0;
 
     for (int i = 0; i < segmentCount; i++) {
