@@ -3151,7 +3151,6 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
 
    sdiag->show();
    
-
 }
 
 void US_ReportStageGui::resizeEvent(QResizeEvent *event)

@@ -947,6 +947,7 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
+  bool    us_prot_dev_mode;
       bool    global_reset;
       
       void    auto_mode_passed( void );
@@ -995,6 +996,7 @@ class US_ExperimentMain : public US_Widgets
       //void auto_mode_passed( void ); 
       void reset     ( void );
       void    exclude_used_instruments( QStringList &);
+      void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
 
       US_AnaProfile* get_aprofile( void );
 
