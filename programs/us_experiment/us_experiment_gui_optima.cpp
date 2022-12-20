@@ -48,6 +48,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connection_status = false;
    automode = false;
    usmode = false;
+
+   us_prot_dev_mode = false;
+   
    global_reset = false;
    instruments_in_use.clear();
    ScanCount_global       = 0;
@@ -259,6 +262,99 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
   //msg_expsetup->close();
   emit close_expsetup_msg();
 }
+
+//Accepting protocol details from PROTOCOL DEV program:
+void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString > & protocol_details )
+{
+  reset();
+  
+  qDebug() << "PROTOCOL DEV MODE !!!: ";
+  us_prot_dev_mode = true;
+
+  QString pname     = protocol_details[ "protocolName" ];
+  int invID_passed  = protocol_details[ "invID_passed" ].toInt();
+
+  qDebug() << "In US_Exp: Protocol Name: "     << protocol_details[ "protocolName" ];
+  qDebug() << "In US_Exp: InvID: "             << protocol_details[ "invID_passed" ];
+  
+  //Now, load passed protocol with enabling ONLY 8. AProfile && 9. Submit tab
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  //Important: set investigator in US_Settings!!!
+  QStringList query;
+  query << "get_person_info" << protocol_details[ "invID_passed" ];
+  db.query( query );
+  db.next();
+  
+  //invID        = invID.toInt();
+  QString firstName    = db.value( 0 ).toString();
+  QString lastName     = db.value( 1 ).toString();
+  // address      = db.value( 2 ).toString();
+  // city         = db.value( 3 ).toString();
+  // state        = db.value( 4 ).toString();
+  // zip          = db.value( 5 ).toString();
+  // phone        = db.value( 6 ).toString();
+  // organization = db.value( 7 ).toString();
+  // email        = db.value( 8 ).toString();
+  // invGuid      = db.value( 9 ).toString();
+
+  QString s = lastName + ", " + firstName;
+  US_Settings::set_us_inv_name( s );
+  US_Settings::set_us_inv_ID( invID_passed );
+
+  QString inv_text = invID_passed + ": " +  US_Settings::us_inv_name();
+  currProto.investigator  = inv_text;
+  solutions_change = true;
+  ////////////////////////////////////////////////////////////////////
+  
+  QString xmlstr( "" );
+  int protoID = US_ProtocolUtil::read_record_auto( pname, invID_passed,  &xmlstr, NULL, &db );
+      
+  //le_protocol->setText( pname );
+  currProto.protoID = protoID;
+  loadProto.protoID = protoID;
+  
+  // Now that we have a protocol XML, convert it to internal controls
+  QXmlStreamReader xmli( xmlstr );
+  loadProto.fromXml( xmli );
+  loadProto.protoID = protoID;
+  
+  // Initialize the current protocol from the loaded one; set temperature
+  currProto = loadProto;
+  //ct_tempera->setValue( currProto.temperature );
+  //ct_tedelay->setValue( currProto.temeq_delay );
+  //le_project->setText ( currProto.project );
+  
+  // QString rname     = le_runid->text();
+  // if ( !rname.isEmpty() )
+  //   currProto.runname = rname;
+  
+  epanGeneral -> loaded_proto = 1;
+  
+  // If there is a linked AnalysisProfile, add it
+  
+  // Initialize all other panels using the new protocol
+  
+  qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto.investigator;
+  
+  initPanels();
+  
+  qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto.investigator;
+  
+  //check_runname();
+  
+  emit close_expsetup_msg();
+}
+
 
 void US_ExperimentMain::us_mode_passed( void )
 {

@@ -23,6 +23,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    autoflow_button     = false;
    autoflow_gmp_report = false;
    set_unset_failed_button_autoflow = false;
+   autoflow_dev        = false;
    autoflow_da         = false;
    selxP               = aselxP;
    selxsP              = NULL;
@@ -50,6 +51,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    autoflow_da       = false;
    autoflow_gmp_report = false;
    set_unset_failed_button_autoflow = false;
+   autoflow_dev     = false;
    
    
    if ( !add_label.isEmpty() )
@@ -62,6 +64,14 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	   deleted_button_autoflow  = true;
 	   set_unset_failed_button_autoflow = true;
 	 }
+       if ( add_label == "AUTOFLOW_DEV" )
+	 {
+	   autoflow_button = true;
+	   //deleted_button_autoflow  = true;
+	   set_unset_failed_button_autoflow = true;
+	   autoflow_dev = true;
+	 }
+       
        if ( add_label == "AUTOFLOW_DA" )
 	 {
 	   autoflow_button = true;
@@ -135,12 +145,18 @@ void US_SelectItem::build_layout( const QString titl )
        p.setColor(QPalette::Base, Qt::lightGray);
        p.setColor(QPalette::Text, Qt::darkRed);
        le_info->setPalette(p);
-       
-       le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
-			    "<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
-			    "<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
-			    "<ul><li>Finally, records can be deleted (\"Delete Record\"). Use with caution</ul></li>" ));
 
+       if ( autoflow_dev )
+	 {
+	   
+	 }
+       else
+	 {
+	   le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
+				"<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
+				"<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
+				"<ul><li>Finally, records can be deleted (\"Delete Record\"). Use with caution</ul></li>" ));
+	 }
        
        le_info->setFont(le_info_font);
        main->addWidget( le_info );
@@ -195,8 +211,12 @@ void US_SelectItem::build_layout( const QString titl )
 
    QString cancel_pb_label( tr("Cancel") );
    if ( autoflow_button )
-     cancel_pb_label = tr("Define Another Experiment");
-          
+     {
+       if ( autoflow_dev )
+	 cancel_pb_label = tr("Chose Completed Run for Development");
+       else
+	 cancel_pb_label = tr("Define Another Experiment");
+     }  
    //QPushButton* pb_cancel = us_pushbutton( cancel_pb_label  );
 
    pb_cancel = us_pushbutton( cancel_pb_label  );

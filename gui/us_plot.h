@@ -152,6 +152,8 @@ class US_PlotConfig : public US_WidgetsDialog
       QLabel*      lb_showFrameColor;
       QLabel*      lb_showCanvasColor;
 
+  
+      QComboBox*   cmbb_margin;
       QComboBox*   cmbb_legendPos;
 
       QListWidget* lw_curves;

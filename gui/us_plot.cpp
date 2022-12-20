@@ -559,6 +559,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // set bg color
    QColor   c = plot->canvasBackground();
+   qDebug() << "Plot Config INIT: canvas color -- " << c.name(QColor::HexRgb);
    global_canvas_color = c; //ALEXEY
    QPalette palette = US_GuiSettings::plotColor();
    palette.setColor( QPalette::Active  , QPalette::Window, c );
@@ -574,7 +575,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // Row 5
    QLabel* lb_margin      = us_label( tr( "Border Margin:" ) );
-   QComboBox* cmbb_margin = us_comboBox();
+   cmbb_margin = us_comboBox();
    
    for ( int i = 2; i <= 30; i += 2 )  
    {  
@@ -951,7 +952,132 @@ void US_PlotConfig::updateAxis( int axis )
 void US_PlotConfig::loadPlotProfile( void )
 {
   qDebug() << "Loading Plot's profile -- ";
+
+  QString p_title, canvas_color, frame_color, border_margin;
+  QString p_title_font_size,  p_title_font_family;
   
+  //open local file
+  QString dirPath    = US_Settings::etcDir();
+  QString p_filename = QFileDialog::getOpenFileName( this,
+						     tr("Open Plot's Profile"),
+						     dirPath,
+						     tr("Profile Files (*.json)") );
+
+  QFile json_plot_profile( p_filename );
+  if (json_plot_profile.open(QIODevice::ReadOnly))
+    {
+      QByteArray bytes = json_plot_profile.readAll();
+      json_plot_profile.close();
+      
+      QJsonParseError jsonError;
+      QJsonDocument document = QJsonDocument::fromJson( bytes, &jsonError );
+      if( jsonError.error != QJsonParseError::NoError )
+	{
+       	  qDebug() << "Reading JSON Plot profile failed: " << jsonError.errorString();//.toStdString();
+	  qDebug() << "Bytes: " << bytes;
+       	  return;
+	}
+      if( document.isObject() )
+	{
+	  QJsonObject json_obj = document.object();
+
+	  foreach(const QString& key, json_obj.keys())
+	    {
+	      QJsonValue value = json_obj.value(key);
+
+	      if ( key. contains( "Title Text" )  ) 
+		{
+		  p_title = value.toString();
+		}
+	      if ( key. contains( "Canvas Color" ) )
+		{
+		  canvas_color = value.toString();
+		}
+	      if ( key. contains( "Frame Color" ) )
+		{
+		  frame_color = value.toString();
+		}
+	      if ( key. contains( "Border Margin" ) )
+		{
+		  border_margin = value.toString();
+		}
+	      if ( key. contains( "Title Font" ) )
+		{
+		  QJsonArray json_array = value.toArray();
+		  
+		  p_title_font_family = json_array[0].toObject().value( "Family" ).toString();
+		  p_title_font_size   = json_array[0].toObject().value( "Size" )  .toString();
+		      
+		}
+	    }
+	}
+    }
+
+  qDebug() << "Loaded Plot Profile -- "
+	   << "Title: "           << p_title
+	   << ", Canvas Color: "  << canvas_color
+	   << ", Frame Color: "   << frame_color
+	   << ", Border Margin: " << border_margin
+	   << ", Title Font (Family, Size): (" << p_title_font_family << ", " << p_title_font_size << ")";
+
+  
+  //set plot's parameters
+  //1. Title
+  plot->setTitle( p_title );
+  plot->updateLayout();
+
+  //2. Title's Font & Size
+  QFont newFont;
+  newFont.setFamily   ( p_title_font_family );
+  newFont.setPointSize( p_title_font_size.toInt() );
+  
+  QwtText curr_title = plot->title();
+  curr_title.setFont( newFont );
+  plot->setTitle( curr_title );
+  
+  le_titleFont->setText( newFont.family() + ", " 
+			 + QString::number( newFont.pointSize() ) + tr( " points" ) );
+
+  
+  //3. Border Margin
+  plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+		       .arg( border_margin ) );
+
+  int kk = border_margin.toInt();;
+  kk  = qMax( 0, ( kk / 2 - 1 ) );
+  cmbb_margin->setCurrentIndex( kk );
+
+  //4. Frame Color
+  QColor col_frame   = QColor( frame_color );
+  QPalette pal_frame;
+  
+  if ( col_frame.isValid() )
+    {
+      pal_frame.setColor( QPalette::Active  , QPalette::Window, col_frame );
+      pal_frame.setColor( QPalette::Inactive, QPalette::Window, col_frame );
+      lb_showFrameColor->setPalette( pal_frame );
+      plot->setPalette( pal_frame );
+    }
+  
+  //5. Canvas Color
+  QColor col_canvas     = QColor( canvas_color );
+  QPalette pal_canvas;
+  
+  if ( col_canvas.isValid() )
+    {
+      pal_canvas.setColor( QPalette::Window, col_canvas );
+      lb_showCanvasColor->setPalette( pal_canvas );
+      
+      global_canvas_color = col_canvas;   //ALEXEY
+      
+#if QT_VERSION > 0x050000
+      plot->setCanvasBackground( QBrush( col_canvas ) );
+#else
+      plot->setCanvasBackground( col_canvas );
+#endif
+      plot->replot();
+    }
+
 }
 
 void US_PlotConfig::savePlotProfile( void )
