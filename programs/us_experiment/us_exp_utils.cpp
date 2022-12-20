@@ -364,6 +364,78 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
 
 }
 
+//Set all tabs their all Widgets (but 8. AProfile section) READ-ONLY for US_ProtocolDev
+void US_ExperimentMain::set_tabs_buttons_readonly( void )
+{
+  pb_next   ->setEnabled(true);
+  pb_prev   ->setEnabled(true);
+
+  for (int ii=0; ii<tabWidget->count(); ii++)
+    {
+      tabWidget ->setTabEnabled( ii, true );
+      QPalette pal = tabWidget ->tabBar()->palette();
+      //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
+      tabWidget ->tabBar()->setTabTextColor( ii, pal.color(QPalette::WindowText) ); // Qt::black
+
+      
+      
+      if ( ii == 7 ) //8. AProfile
+	continue;
+      
+      QWidget* pWidget= tabWidget->widget(ii);
+
+      //Find all children of each Tab in QTabWidget [children of all types...]
+      QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
+      QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
+      QList<QSpinBox *>    allSBoxes   = pWidget->findChildren<QSpinBox *>();
+      QList<QwtCounter *>  allCounters = pWidget->findChildren<QwtCounter *>();
+      QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
+
+      // and so on ..
+
+      if ( ii == 0 ) //1. General
+	{
+	  for (int i=0; i < allPButtons.count(); i++)
+	    allPButtons[i]->setEnabled(false);
+	  for ( int i = 0; i < allCounters.count(); i++ )
+	    allCounters[i]->setEnabled(false);
+	      
+	  continue;
+	}
+      
+      for (int i=0; i < allPButtons.count(); i++)
+      {
+         if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
+              (allPButtons[i]->text()).contains("View Ranges" ) ||
+              (allPButtons[i]->text()).contains("View Experiment Details" ) ||
+              (allPButtons[i]->text()).contains("Test Connection" ) )
+            allPButtons[i]->setEnabled(true);
+         else
+            allPButtons[i]->setEnabled(false);
+      }
+
+      for ( int i = 0; i < allCBoxes.count(); i++ )
+      {
+	// if ( (allCBoxes[i]->currentText()).contains("Speed Profile") ||
+	//      ( allCBoxes[i]->currentText()).contains(": Optima") )
+	//   {
+	//     allCBoxes[i]->setEnabled(true);
+	//   }
+	// else
+	allCBoxes[i]->setEnabled(false);
+      }
+      for ( int i = 0; i < allSBoxes.count(); i++ )
+         allSBoxes[i]->setEnabled(false);
+      for ( int i = 0; i < allCounters.count(); i++ )
+         allCounters[i]->setEnabled(false);
+      for ( int i = 0; i < allChBoxes.count(); i++ )
+         allChBoxes[i]->setEnabled(false);
+      // and so on ..
+
+    }
+
+}
+
 
 // Use main interface to call general utility functions
 bool US_ExperimentMain::centpInfo( const QString par1,
@@ -373,6 +445,11 @@ bool US_ExperimentMain::centpInfo( const QString par1,
 int  US_ExperimentMain::getProtos( QStringList& par1,
                                    QList< QStringList >& par2 )
 { return epanGeneral->getProtos( par1, par2 ); }
+
+void  US_ExperimentMain::setProtos( QStringList par1 )
+{
+  epanGeneral->setProtos( par1 );
+}
 
 bool US_ExperimentMain::updateProtos( const QStringList par1 )
 { return epanGeneral->updateProtos( par1 ); }
@@ -2723,12 +2800,19 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  cb_scancount_int->addItem( scancount_stage_int );   
 	}
       
-      
-         
    }
-   
    // End of ScanCount listbox
 
+   //If for US_ProtocolDev mode, set all widgets in read-only mode:
+   if ( mainw->us_prot_dev_mode )
+     {
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   cc_wavls[ ii ]->setEnabled( false );
+	   cc_lrads[ ii ]->setEnabled( false );
+	   cc_hrads[ ii ]->setEnabled( false );
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel

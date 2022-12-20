@@ -62,6 +62,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       int         getProtos   ( QStringList&, QList< QStringList >& );
       // Append to the names,summary-data protocol lists
       bool        updateProtos( const QStringList );
+      void        setProtos   ( QStringList );
+  
 
       void check_user_level( void );
       void update_inv( void );
@@ -925,6 +927,8 @@ class US_ExperimentMain : public US_Widgets
       // \brief Update the list of protocols with a newly named entry
       bool        updateProtos( const QStringList );
 
+      void        setProtos   ( QStringList );
+
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
       US_AnaProfile   currAProf;   // Current AnaProfile controls
@@ -988,6 +992,7 @@ class US_ExperimentMain : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+      void set_tabs_buttons_readonly( void );			     
       
     public slots:
       void close_program( void );

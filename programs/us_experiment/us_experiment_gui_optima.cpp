@@ -295,17 +295,8 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   db.query( query );
   db.next();
   
-  //invID        = invID.toInt();
   QString firstName    = db.value( 0 ).toString();
   QString lastName     = db.value( 1 ).toString();
-  // address      = db.value( 2 ).toString();
-  // city         = db.value( 3 ).toString();
-  // state        = db.value( 4 ).toString();
-  // zip          = db.value( 5 ).toString();
-  // phone        = db.value( 6 ).toString();
-  // organization = db.value( 7 ).toString();
-  // email        = db.value( 8 ).toString();
-  // invGuid      = db.value( 9 ).toString();
 
   QString s = lastName + ", " + firstName;
   US_Settings::set_us_inv_name( s );
@@ -314,6 +305,16 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   QString inv_text = invID_passed + ": " +  US_Settings::us_inv_name();
   currProto.investigator  = inv_text;
   solutions_change = true;
+
+  //re-read protocol list for current investigator
+  QList< QStringList >  protocolsdata;
+  QStringList new_protlist;
+  US_ProtocolUtil::list_all( protocolsdata, &db );
+  
+  for ( int ii = 0; ii < protocolsdata.count(); ii++ )
+    new_protlist << protocolsdata[ ii ][ 0 ];
+
+  setProtos( new_protlist );
   ////////////////////////////////////////////////////////////////////
   
   QString xmlstr( "" );
@@ -330,27 +331,16 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   
   // Initialize the current protocol from the loaded one; set temperature
   currProto = loadProto;
-  //ct_tempera->setValue( currProto.temperature );
-  //ct_tedelay->setValue( currProto.temeq_delay );
-  //le_project->setText ( currProto.project );
-  
-  // QString rname     = le_runid->text();
-  // if ( !rname.isEmpty() )
-  //   currProto.runname = rname;
-  
   epanGeneral -> loaded_proto = 1;
   
-  // If there is a linked AnalysisProfile, add it
-  
-  // Initialize all other panels using the new protocol
-  
-  qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto.investigator;
+  qDebug() << "In load_protocol: currProto.investigator 1 --  " <<  currProto.investigator;
   
   initPanels();
   
-  qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto.investigator;
+  qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
   
-  //check_runname();
+  //Making Read-only
+  set_tabs_buttons_readonly();
   
   emit close_expsetup_msg();
 }
@@ -614,6 +604,14 @@ DbgLv(1) << "EGGe:  gP: prnames count" << prnames.count()
  << "prdat count" << protdata.count();
    return prnames.count();       // Return the current list count
 }
+
+// Sets a new protocol names list and data entries list
+void US_ExperGuiGeneral::setProtos( QStringList new_prnames )
+{
+  pr_names.clear();
+  pr_names = new_prnames; 
+}
+
 
 // Update protocol name list and data list from an entry
 bool US_ExperGuiGeneral::updateProtos( const QStringList prentry )
