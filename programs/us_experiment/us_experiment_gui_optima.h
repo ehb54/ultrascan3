@@ -827,9 +827,11 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
+      void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
+      void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       bool    saveRunProtocol ( void );  // Save the Run Protocol
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
@@ -953,6 +955,8 @@ class US_ExperimentMain : public US_Widgets
       bool    usmode;
   bool    us_prot_dev_mode;
       bool    global_reset;
+
+  QMap <QString, QString> protocol_details_passed; 
       
       void    auto_mode_passed( void );
       void    us_mode_passed( void );

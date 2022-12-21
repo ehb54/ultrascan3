@@ -341,6 +341,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   
   //Making Read-only
   set_tabs_buttons_readonly();
+
+  //copy protocol details params
+  protocol_details_passed.clear();
+  protocol_details_passed = protocol_details;
   
   emit close_expsetup_msg();
 }
@@ -4551,8 +4555,10 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
             this,         SLOT  ( testConnection()   ) );
    connect( pb_saverp,    SIGNAL( clicked()          ),
             this,         SLOT  ( saveRunProtocol()  ) );
+
    connect( pb_submit,    SIGNAL( clicked()          ),
-            this,         SLOT  ( submitExperiment_confirm() ) );
+	    this,         SLOT  ( submitExperiment_confirm() ) );
+
    // connect( pb_submit,    SIGNAL( clicked()          ),
    //          this,         SLOT  ( submitExperiment() ) );
 
@@ -5666,6 +5672,8 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 }
 
 
+
+
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
@@ -5937,6 +5945,97 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     return;
   }
   
+}
+
+
+//Confirm submission for EDIT & ANALYIS: US_ProtDev
+void US_ExperGuiUpload::submitExperiment_confirm_protDev()
+{
+  qDebug() << "IN submitExperiment_confirm_protDev() -- "
+	   << "mainw->automode, have_run, rps_differ "
+	   << mainw->automode <<  have_run <<  rps_differ;
+    
+  /*   // FOR NOW!!!! 
+  if ( mainw->automode && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+  else if ( !mainw->automode && have_run && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+  */
+
+  //Now actually submit: make record in 'autoflow' table with 'DEV' flag
+  submitExperiment_protDev();
+}
+
+
+// Slot to submit for EDIT & ANALYSIS when US_ProtDev
+void US_ExperGuiUpload::submitExperiment_protDev()
+{
+  QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+
+  qDebug() << "PROT DETAILS COMPARISON: -- ";
+  qDebug() << "Old, New protocolName: "   << protocol_details[ "protocolName" ]   << ", " << currProto->protoname; 	  
+  qDebug() << "Old, New experimentName: " << protocol_details[ "experimentName" ] << ", " << currProto->runname;
+  qDebug() << "Old, New label: "          << protocol_details[ "label" ]          << ", " << currProto->exp_label;
+  qDebug() << "Old, New aprofileguid: "   << protocol_details[ "aprofileguid" ]   << ", " << currProto->protoGUID;
+  
+  protocol_details[ "protocolName" ]   = currProto->protoname;
+  protocol_details[ "experimentName" ] = currProto->runname;
+  protocol_details[ "label" ]          = currProto->exp_label;
+  protocol_details[ "gmpRun" ]         = QString("NO");              //ALEXEY: state explicitly?
+  protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
+
+  qDebug() << "PROTCOL DETAILS at submission: -- "
+	   << protocol_details[ "protocolName" ]   
+	   << protocol_details[ "CellChNumber" ]   
+	   << protocol_details[ "TripleNumber" ]   
+	   << protocol_details[ "duration" ]       
+	   << protocol_details[ "experimentName" ] 
+	   << protocol_details[ "experimentId" ]   
+	   << protocol_details[ "runID" ]          
+	   << protocol_details[ "status" ]         
+	   << protocol_details[ "dataPath" ]        
+	   << protocol_details[ "OptimaName" ]     
+	   << protocol_details[ "runStarted" ]     
+	   << protocol_details[ "invID_passed" ]   
+	   << protocol_details[ "correctRadii" ]   
+	   << protocol_details[ "expAborted" ]     
+	   << protocol_details[ "label" ]          
+	   << protocol_details[ "gmpRun" ]         
+    	   << protocol_details[ "filename" ]       
+	   << protocol_details[ "aprofileguid" ]   
+	   << protocol_details[ "analysisIDs" ]   
+	   << protocol_details[ "intensityID" ]   
+	   << protocol_details[ "statusID" ]      
+	   << protocol_details[ "failedID" ]                 //Attn: do NOT specify failed status: should be DEFAULT (NULL)   
+	   << protocol_details[ "operatorID" ] ;   
+
+  
+  // protocol_details[ "experimentId" ]   = QString::number(ExpDefId);        
+  // protocol_details[ "experimentName" ] = runname;
+  // protocol_details[ "protocolName" ]   = currProto->protoname;             
+  
+  // protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 ));
+	   
+  // protocol_details[ "duration" ]       = QString::number(Total_duration);
+  // protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
+  // protocol_details[ "correctRadii" ]   = QString("YES");
+  // protocol_details[ "expAborted" ]     = QString("NO");
+  
+  // protocol_details[ "label" ]          = currProto->exp_label;
+  // protocol_details[ "gmpRun" ]         = gmpRun_str;
+  
+  // protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
+  // protocol_details[ "TripleNumber" ]   = QString::number(1 * int(ncells_interference/2 ));
+  
+  // protocol_details[ "OptimaName" ]     = rpRotor->instrname;
+  // protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
+
 }
 
 // Slot to submit the experiment to the Optima DB

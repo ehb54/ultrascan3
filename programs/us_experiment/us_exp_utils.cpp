@@ -3117,22 +3117,34 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    pb_saverp  ->setEnabled( have_cells && have_solus && have_range && rps_differ );      // ALEXEY: add check here is rps_differ == true (protocols differ)
 
    // Show/hide Submit and Save buttons based on RunId given
-   if ( US_Settings::us_inv_level() > 2 )
-   {  // Can show/hide buttons as admin
-DbgLv(1) << "EGUp:inP: have_run" << have_run;
-      if ( have_run )
-      {  // RunId given, so show submit
-DbgLv(1) << "EGUp:inP: have_run";
-         pb_submit->show();
-         pb_saverp->hide();
-      }
-      else
-      {  // RunID not given, so show save
-DbgLv(1) << "EGUp:inP: NOT have_run";
-         pb_submit->hide();
-         pb_saverp->show();
-      }
-   }
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       if ( US_Settings::us_inv_level() > 2 )
+	 {  // Can show/hide buttons as admin
+	   DbgLv(1) << "EGUp:inP: have_run" << have_run;
+	   if ( have_run )
+	     {  // RunId given, so show submit
+	       DbgLv(1) << "EGUp:inP: have_run";
+	       pb_submit->show();
+	       pb_saverp->hide();
+	     }
+	   else
+	     {  // RunID not given, so show save
+	       DbgLv(1) << "EGUp:inP: NOT have_run";
+	       pb_submit->hide();
+	       pb_saverp->show();
+	     }
+	 }
+     }
+   else
+     {
+       pb_submit -> disconnect();
+       connect( pb_submit,    SIGNAL( clicked()          ),
+		this,         SLOT  ( submitExperiment_confirm_protDev() ) );
+       
+       pb_submit->show();
+       pb_saverp->hide();
+     }
 }
 
 // Save panel controls when about to leave the panel
