@@ -43,7 +43,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   main->setSpacing         ( 2 );
   main->setContentsMargins ( 2, 2, 2, 2 );
   
-  gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
+  gen_banner = us_banner( tr( "UltraScan Protocol Development Module, v. 0.1" ) );
   
   //set font
   QFont font_gen = gen_banner->font();
@@ -727,14 +727,20 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-
+  
   QString autoflow_id_selected("");
   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
     {
       autoflow_id_selected  = autoflowdataHistory[ prx ][ 0 ];
     }
+  //else if ( pdiag_autoflowHistory->exec() == QDialog::Rejected )
   else
-    return;
+    {
+      //rebuild list of runs & open Run Manager 
+      initAutoflowPanel();
+      qApp->processEvents();
+      return;
+    }
 
   // Get detailed info on the autoflow record
   QMap < QString, QString > protocol_details;

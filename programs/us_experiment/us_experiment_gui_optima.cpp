@@ -7228,6 +7228,11 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 
       //set returned statusID to autoflow record
       /*************************************************************************************************/
+
+
+      /* ALSO - CLEAN ALL DATA (Edit profiles, Models, Noises etc - look what's done when marking as "Failed".. )
+	 MAYBE performed at the beginnig of 2. EDIT.. 
+       */
    }
 
    qDebug() << "ProtDev:: Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
