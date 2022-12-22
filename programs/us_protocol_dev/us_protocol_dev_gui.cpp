@@ -190,6 +190,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
   
   connect( this, SIGNAL( pass_used_instruments( QMap < QString, QString > & ) ), epanExp, SLOT( pass_used_instruments( QMap < QString, QString > & )  ) );
+  connect( epanExp, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
   
   //connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
   //connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
@@ -203,7 +204,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   //connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
   
   //connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
-  //connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
+  connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
   //connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
   //connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
@@ -894,7 +895,10 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString autoflow_id_selected("");
   
   if ( pdiag_autoflow->exec() == QDialog::Accepted )
-    autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+    {
+      autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+      qDebug() << "Accepted autoflowID: -- " << autoflow_id_selected;
+    }
   else
     {
       //ALEXEY: define what to do if some Optima(s) are occupied
@@ -1281,6 +1285,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
   if( type == "HISTORY" )
     qry << "get_autoflow_history_desc";
 
+  qDebug() << "In list_all_autoflow_records() query -- " << qry;
+    
   dbP->query( qry );
 
   if ( dbP->lastErrno() != US_DB2::OK )
@@ -1403,11 +1409,13 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
    QStringList qry;
 
    if ( type == "DEV" ) 
-     qry << "read_autoflow_dev_record";
+     qry << "read_autoflow_record";
    if ( type == "HISTORY" )
      qry << "read_autoflow_history_record";
    
    qry << QString::number( autoflowID );
+
+   qDebug() << "In read_autoflow_record() Query -- " << qry;
    
    db->query( qry );
 
@@ -1550,6 +1558,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( this, SIGNAL( define_used_instruments( QMap < QString, QString > & ) ), sdiag, SLOT( accept_passed_protocol_details( QMap < QString, QString > & ) ) );
 
    connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
+
+   connect( sdiag, SIGNAL( to_editing_data( QMap < QString, QString > & ) ),
+	    this,  SLOT( to_editing (  QMap < QString, QString > &) ) );
    
    // connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
    // 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
@@ -1602,6 +1613,11 @@ void US_ExperGui::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
+
+void US_ExperGui::to_editing( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_editing( protocol_details );
+}
 
 void US_ExperGui::pass_used_instruments( QMap < QString, QString > & protocol_details )
 {

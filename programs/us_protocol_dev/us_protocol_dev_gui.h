@@ -177,6 +177,7 @@ class US_ExperGui : public US_WidgetsDialog
       void exp_cleared( void );
       void pass_used_instruments( QMap < QString, QString > & );
       void expsetup_msg_closed( void );
+  void to_editing( QMap < QString, QString > & );
       
       
    signals:
@@ -185,6 +186,7 @@ class US_ExperGui : public US_WidgetsDialog
       void reset_experiment( QString & protocolName);
       void to_autoflow_records( void );
       void define_used_instruments( QMap < QString, QString > &  );
+  void switch_to_editing( QMap < QString, QString > &);
       //void close_expsetup_msg( void );
 };
 

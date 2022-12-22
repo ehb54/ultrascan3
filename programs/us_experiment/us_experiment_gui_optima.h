@@ -842,9 +842,11 @@ class US_ExperGuiUpload : public US_WidgetsDialog
 
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
-      
+      void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+  
    signals:
-      void expdef_submitted( QMap < QString, QString > &protocol_details );
+      void expdef_submitted    ( QMap < QString, QString > &protocol_details );
+      void expdef_submitted_dev( QMap < QString, QString > &protocol_details );
 };
 
 //! \brief Experiment AnalysisProfile panel
@@ -1001,6 +1003,8 @@ class US_ExperimentMain : public US_Widgets
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
+      void submitted_protDev( QMap < QString, QString > & );
+
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
@@ -1014,6 +1018,7 @@ class US_ExperimentMain : public US_Widgets
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
+      void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
       void close_expsetup_msg( void ); 
       
