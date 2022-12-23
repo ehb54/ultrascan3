@@ -84,6 +84,16 @@ void US_Hydrodyn::gui_script_run() {
          if ( read_config( opt1 ) ) {
             gui_script_error( i, cmd, QString( "config file '%1' failed" ).arg( opt1 ) );
          }            
+      } else if ( cmd == "saveparams" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         if ( opt1 == "init" ) {
+            save_params.field.clear();
+         } else {
+            save_params.field.push_back( opt1 );
+         }
       } else if ( cmd == "global" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
