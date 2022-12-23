@@ -7210,25 +7210,136 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	
       db->statusQuery( qry );
       //db->query( qry );
-      protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+      int new_autoflowID = db->lastInsertID();
+      protocol_details[ "autoflowID" ] = QString::number( new_autoflowID );
 
       /************ autoflowIntensity *****************************************************************/
       //read autoflowIntensity record by ID: protocol_details[ "intensityID" ]
+      qry. clear();
+      qry << "read_autoflow_intensity_record" << protocol_details[ "intensityID" ];
+      db->query( qry );
+      qDebug() << "readIntensity: qry -- " << qry;
+      QString intensityJsonRI;
 
+      if ( db->lastErrno() == US_DB2::OK )      // Intensity record exists
+	{
+	  while ( db->next() )
+	    {
+	      intensityJsonRI = db->value( 0 ).toString();
+	    }
+	}
+      
       //create new autoflowIntensity record & set what's read above && newly generated autoflowID!
-
-      //set returned intensityID to autoflow record
+      int autoflowIntensityID = 0;
+      if ( ! intensityJsonRI.isEmpty() )
+	{
+	  qry.clear();
+	  qry << "new_autoflow_intensity_record"
+	      << QString::number( new_autoflowID )
+	      << intensityJsonRI;
+	  
+	  autoflowIntensityID = db->functionQuery( qry );
+	  
+	  if ( !autoflowIntensityID )
+	    {
+	      QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
+				    tr( "ProtDev, autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
+	      
+	      return;
+	    }
+	}
+      qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
       /*************************************************************************************************/
       
 
       /************* autoflowStatus *********************************************************************/
       //read autoflowStatus record by ID: protocol_details[ "statusID" ]
-      
+      qry. clear();
+      qry << "read_autoflow_status_record" <<  protocol_details[ "statusID" ];
+      db->query( qry );
+      qDebug() << "readStatus: qry -- " << qry;
+      QString importRIJson, importRIts, importIPJson, importIPts;
+
+      if ( db->lastErrno() == US_DB2::OK )    
+	{
+	  while ( db->next() )
+	    {
+	      importRIJson  = db->value( 0 ).toString();
+	      importRIts    = db->value( 1 ).toString();
+	      importIPJson  = db->value( 2 ).toString();
+	      importIPts    = db->value( 3 ).toString();
+
+	    }
+	}
+      qDebug() << "importRIJson, importRIts, importIPJson, importIPts -- "
+	       << importRIJson << importRIts <<  importIPJson << importIPts;
+
+
       //create new autoflowStatus & set what's read above [import part!] && newly generated autoflowID!
+      int autoflowStatusID = 0;
+      qry. clear();
 
-      //set returned statusID to autoflow record
+      if ( !importRIJson.isEmpty() && !importIPJson.isEmpty() )
+	{
+	  qry << "new_autoflowStatusRI_IP_dev_record"
+	      << QString::number( new_autoflowID )
+	      << importRIJson
+	      << importRIts
+	      << importIPJson
+	      << importIPts;
+	}
+      else if ( !importRIJson.isEmpty() && importIPJson.isEmpty() )
+	{
+	  qry << "new_autoflowStatusRI_dev_record"
+	      << QString::number( new_autoflowID )
+	      << importRIJson
+	      << importRIts;
+	}
+      else if ( importRIJson.isEmpty() && !importIPJson.isEmpty() )
+	{
+	  qry << "new_autoflowStatusIP_dev_record"
+	      << QString::number( new_autoflowID )
+	      << importIPJson
+	      << importIPts;
+	}
+
+      qDebug() << "ProtDev: New autoflowStatus record, qry -- " << qry;
+      
+      autoflowStatusID = db->functionQuery( qry );
+      
+      if ( !autoflowStatusID || autoflowStatusID < 0 )
+	{
+	  QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				tr( "ProtDev, autoflowStatus (IMPORT {RI,IP}): There was a problem creating a record in autoflowStatus table \n" ) + db->lastError() );
+	  
+	  return;
+	}
+      qDebug() << "autoflowStatusID -- " << autoflowStatusID;
       /*************************************************************************************************/
+      
+      //set BOTH returned autoflowIntensity & statusID to the new autoflow record
+      //Emulate updating at 3. IMPORT stage of GMP!!!
+      qry.clear();
+      qry << "update_autoflow_at_lims_import"
+	  << protocol_details[ "runID" ]
+	  << protocol_details[ "filename" ]
+	  << protocol_details[ "OptimaName" ]
+	  << QString::number( autoflowIntensityID )
+	  << QString::number( autoflowStatusID );
+      
+      qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
 
+      int status = db->statusQuery( qry );
+      if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+	{
+	  QMessageBox::warning( this,
+				tr( "Autoflow Record Not Updated" ),
+				tr( "ProtDdev: No autoflow record\n"
+				    "associated with this experiment." ) );
+	  return;
+	}
+      /*************************************************************************************************/
+            
 
       /* ALSO - CLEAN ALL DATA (Edit profiles, Models, Noises etc - look what's done when marking as "Failed".. )
 	 MAYBE performed at the beginnig of 2. EDIT.. 
