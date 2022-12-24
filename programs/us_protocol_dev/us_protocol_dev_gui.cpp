@@ -736,6 +736,7 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   //else if ( pdiag_autoflowHistory->exec() == QDialog::Rejected )
   else
     {
+      qDebug() << "Closing main pdiag_autoflow dialog && rebuilding: initAutoflowPanel() -> initRecordsDialog() -> load_autoflowHistory_dialog()";
       //rebuild list of runs & open Run Manager 
       initAutoflowPanel();
       qApp->processEvents();
@@ -833,6 +834,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        	  msg_norec->close();
 
 	  //CALL list of autoflowHistory records:
+	  //DEBUG
+	  qDebug() << "Re-opening HISTORY RECORDS Dialog!!!"; 
 	  load_autoflowHistory_dialog();
 	  
 	  //emit define_new_experiment_init( occupied_instruments );
@@ -917,8 +920,12 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	{
 	  qDebug() << "No occuied instruments (No LIVE_UPDATE status)";
 
+	  //HERE; check if there are still autoflow_records & it's not a spurious reinitialization of autoflowHistoryDalog!!
+	  int actual_autoflow_records = get_autoflow_records();
+	  qDebug() << "Actual Autoflow_Reconds #: " << actual_autoflow_records;
 	  //CALL dialog for autolfowHistory records
-	  load_autoflowHistory_dialog();
+	  if ( actual_autoflow_records > 0  )
+	    load_autoflowHistory_dialog();
 	  
 	  //emit define_new_experiment_init( occupied_instruments );
 	  return;
@@ -1135,7 +1142,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
       initMsgNorecDelOpen = true;
 
       //pdiag_autoflow->reject();
-      pdiag_autoflow->close();
+      pdiag_autoflow->close();        // HERE - it triggers ::initAutolfowPanel() -> ::load_autoflowHistrory_dialog()!!!
+      qDebug() << "DELETION of LAST autoflow record: CLOSING pdiag_autoflow dialog && trigering ::initAutolfowPanel() -> ::load_autoflowHistrory_dialog()!!!";
       qApp->processEvents();
       
       qDebug() << "Was pdiag closed ?? ";
@@ -1163,6 +1171,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
 	  msg_norec_del->close();
 
 	  //CALL dialog for autoflowHistory records
+	  qDebug() << "AFTER DELETION of LAST autoflow record: Calling load_autoflowHistory_dialog() -- ";
 	  load_autoflowHistory_dialog();
 	  
 	  //emit define_new_experiment_init( occupied_instruments );
