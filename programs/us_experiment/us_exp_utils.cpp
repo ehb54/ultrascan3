@@ -1261,6 +1261,8 @@ void US_ExperGuiSpeeds::savePanel()
 
  qDebug() << " DURATION SAVED IN  PROTOTCOL: speed " << ii <<  ", duration: " << rpSpeed->ssteps[ ii ].duration;
    }
+
+   
 }
 
 // Get a specific panel value
@@ -3041,7 +3043,7 @@ void US_ExperGuiUpload::initPanel()
 {
    currProto       = &mainw->currProto;
    loadProto       = &mainw->loadProto;
-   rps_differ      = ( mainw->currProto !=  mainw->loadProto );
+   //rps_differ      = ( mainw->currProto !=  mainw->loadProto );
    rpRotor         = &currProto->rpRotor;
    rpSpeed         = &currProto->rpSpeed;
    rpCells         = &currProto->rpCells;
@@ -3051,28 +3053,44 @@ void US_ExperGuiUpload::initPanel()
    rpAprof         = &currProto->rpAprof;
    rpSubmt         = &currProto->rpSubmt;
 
+   //Also, compare US_AnaProfile internals for current & loaded AProfiles
+   US_AnaProfile aprof_curr   = *(mainw->get_aprofile());
+   US_AnaProfile aprof_loaded = *(mainw->get_aprofile_loaded());
+   
+   rps_differ = false;
+   if ( mainw->currProto !=  mainw->loadProto )
+     rps_differ = true;
+
+   if ( aprof_curr       !=  aprof_loaded )
+     rps_differ = true;
+       
 
    qDebug() << "rpSPEED: duration: " << rpSpeed->ssteps[0].duration;
+   
+   if(rps_differ)
+     {
+       US_RunProtocol* cRP = currProto;
+       US_RunProtocol* lRP = loadProto;
+       US_AnaProfile aprof_c   = *(mainw->get_aprofile());
+       US_AnaProfile aprof_l   = *(mainw->get_aprofile_loaded());
+       DbgLv(1) << "EGUp:inP: RPs DIFFER";
 
-if(rps_differ)
-{
-US_RunProtocol* cRP = currProto;
-US_RunProtocol* lRP = loadProto;
-DbgLv(1) << "EGUp:inP: RPs DIFFER";
-DbgLv(1) << "EGUp:inP:  cPname" << cRP->protoname << "lPname" << lRP->protoname;
-DbgLv(1) << "EGUp:inP:  cInves" << cRP->investigator << "lInves" << lRP->investigator;
-DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protoGUID << "lPguid" << lRP->protoGUID;
-DbgLv(1) << "EGUp:inP:  cOhost" << cRP->optimahost << "lOhost" << lRP->optimahost;
-DbgLv(1) << "EGUp:inP:  cTempe" << cRP->temperature << "lTempe" << lRP->temperature;
-DbgLv(1) << "EGUp:inP:   rpRotor diff" << (cRP->rpRotor!=lRP->rpRotor);
-DbgLv(1) << "EGUp:inP:   rpSpeed diff" << (cRP->rpSpeed!=lRP->rpSpeed);
-DbgLv(1) << "EGUp:inP:   rpCells diff" << (cRP->rpCells!=lRP->rpCells);
-DbgLv(1) << "EGUp:inP:   rpSolut diff" << (cRP->rpSolut!=lRP->rpSolut);
-DbgLv(1) << "EGUp:inP:   rpOptic diff" << (cRP->rpOptic!=lRP->rpOptic);
-DbgLv(1) << "EGUp:inP:   rpRange diff" << (cRP->rpRange!=lRP->rpRange);
-DbgLv(1) << "EGUp:inP:   rpAprof diff" << (cRP->rpAprof!=lRP->rpAprof);
-DbgLv(1) << "EGUp:inP:   rpSubmt diff" << (cRP->rpSubmt!=lRP->rpSubmt);
-}
+       DbgLv(1) << "EGUp:inP:   AProfile diff" << ( aprof_c != aprof_l );
+       
+       DbgLv(1) << "EGUp:inP:  cPname" << cRP->protoname << "lPname" << lRP->protoname;
+       DbgLv(1) << "EGUp:inP:  cInves" << cRP->investigator << "lInves" << lRP->investigator;
+       DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protoGUID << "lPguid" << lRP->protoGUID;
+       DbgLv(1) << "EGUp:inP:  cOhost" << cRP->optimahost << "lOhost" << lRP->optimahost;
+       DbgLv(1) << "EGUp:inP:  cTempe" << cRP->temperature << "lTempe" << lRP->temperature;
+       DbgLv(1) << "EGUp:inP:   rpRotor diff" << (cRP->rpRotor!=lRP->rpRotor);
+       DbgLv(1) << "EGUp:inP:   rpSpeed diff" << (cRP->rpSpeed!=lRP->rpSpeed);
+       DbgLv(1) << "EGUp:inP:   rpCells diff" << (cRP->rpCells!=lRP->rpCells);
+       DbgLv(1) << "EGUp:inP:   rpSolut diff" << (cRP->rpSolut!=lRP->rpSolut);
+       DbgLv(1) << "EGUp:inP:   rpOptic diff" << (cRP->rpOptic!=lRP->rpOptic);
+       DbgLv(1) << "EGUp:inP:   rpRange diff" << (cRP->rpRange!=lRP->rpRange);
+       DbgLv(1) << "EGUp:inP:   rpAprof diff" << (cRP->rpAprof!=lRP->rpAprof);
+       DbgLv(1) << "EGUp:inP:   rpSubmt diff" << (cRP->rpSubmt!=lRP->rpSubmt);
+     }
 
    have_run          = ! sibSValue( "general",   "runID"    ).isEmpty();
    have_proj         = ! sibSValue( "general",   "project"  ).isEmpty();
@@ -3144,6 +3162,9 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        
        pb_submit->show();
        pb_saverp->hide();
+
+       pb_submit  ->setEnabled( false );
+       pb_submit  ->setEnabled( have_run && rps_differ );
      }
 }
 

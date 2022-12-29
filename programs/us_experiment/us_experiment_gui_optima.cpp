@@ -235,6 +235,17 @@ US_AnaProfile* US_ExperimentMain::get_aprofile( )
   return &(epanAProfile->sdiag->currProf);
 }
 
+US_AnaProfile* US_ExperimentMain::get_aprofile_loaded( )
+{
+  return &(epanAProfile->sdiag->loadProf);
+}
+
+void US_ExperimentMain::set_loadAProf ( US_AnaProfile aprof_curr_read )
+{
+  epanAProfile->sdiag->loadProf = aprof_curr_read;
+}
+
+
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
 
@@ -341,6 +352,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   initPanels();
   
   qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
+
+  //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
+  US_AnaProfile aprof_curr_read   = *(get_aprofile());
+  set_loadAProf ( aprof_curr_read );
   
   //Making Read-only
   set_tabs_buttons_readonly();
@@ -881,13 +896,15 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
       mainw->currProto.runname = rname;
    loaded_proto = 1;
 
-   // If there is a linked AnalysisProfile, add it
-
    // Initialize all other panels using the new protocol
 
    qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
       
    mainw->initPanels();
+   // If there is a linked AnalysisProfile, copy to loadAProto!!!
+   //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
+   US_AnaProfile aprof_curr_read   = *(mainw->get_aprofile());
+   mainw->set_loadAProf ( aprof_curr_read );
 
    qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto->investigator;
    
@@ -4395,7 +4412,10 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    sdiag->currProf.protoID
                        = mainw->currProto.protoID;
    mainw->currAProf    = sdiag->currProf;
+   mainw->loadAProf    = sdiag->currProf;
 
+   sdiag->loadProf = sdiag->currProf;
+   
    qDebug() << "EXP_APROFILE_GUI -- FIRST intitialization: sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
    sdiag->show();
 }
@@ -5965,21 +5985,13 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 	   << "mainw->automode, have_run, rps_differ "
 	   << mainw->automode <<  have_run <<  rps_differ;
     
-  /*   // FOR NOW!!!! MUST BE UNCOMMENTED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if ( mainw->automode && rps_differ )
+  if ( have_run && rps_differ )
     {
       if ( saveRunProtocol() )
-	return;
-    }
-  else if ( !mainw->automode && have_run && rps_differ )
-    {
-      if ( saveRunProtocol() )
-	return;
-    }
-  */
-
-  //Now actually submit: make record in 'autoflow' table with 'DEV' flag
-  submitExperiment_protDev();
+      	return;
+      //Now actually submit: make record in 'autoflow' table with 'DEV' flag
+      submitExperiment_protDev();
+    }  
 }
 
 

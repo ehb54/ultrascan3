@@ -183,15 +183,17 @@ US_AnaProfile::US_AnaProfile()
 // AnaProfile Equality operator
 bool US_AnaProfile::operator== ( const US_AnaProfile& ap ) const
 {
-   if ( aprofname    != ap.aprofname    )  return false;
-   if ( aprofGUID    != ap.aprofGUID    )  return false;
-   if ( protoname    != ap.protoname    )  return false;
-   if ( protoGUID    != ap.protoGUID    )  return false;
-
-   if ( ap2DSA       != ap.ap2DSA  )  return false;
-   if ( apPCSA       != ap.apPCSA  )  return false;
-
-   return true;
+  qDebug() << "RP:AnaProfile COMPARISON!! ";
+  
+  if ( aprofname    != ap.aprofname    )  return false;
+  if ( aprofGUID    != ap.aprofGUID    )  return false;
+  if ( protoname    != ap.protoname    )  return false;
+  if ( protoGUID    != ap.protoGUID    )  return false;
+  
+  if ( ap2DSA       != ap.ap2DSA  )  return false;
+  if ( apPCSA       != ap.apPCSA  )  return false;
+  
+  return true;
 }
 
 // Write all current controls to an XML stream
@@ -536,7 +538,24 @@ bool US_AnaProfile::AnaProf2DSA::operator==
                   ( const AnaProf2DSA& ap ) const
 {
    if ( nchan  != ap.nchan  ) return false;
+   //ALEXEY: add the rest of Job flow params to compare!
+   if ( fitrng    != ap.fitrng  )   return false;
+   if ( grpoints  != ap.grpoints  ) return false;
+   if ( j2rfiters != ap.j2rfiters ) return false;   
+   if ( rfiters   != ap.rfiters )   return false;  
+   if ( mciters   != ap.mciters  )  return false;   
+   if ( fmb       != ap.fmb  )      return false;
 
+   if ( job1run      != ap.job1run  ) return false;
+   if ( job2run      != ap.job2run  ) return false;
+   if ( job3run      != ap.job3run  ) return false;
+   if ( job4run      != ap.job4run  ) return false;
+   if ( job5run      != ap.job5run  ) return false;
+   if ( job3auto     != ap.job3auto  ) return false;
+
+   //& array of 2DSA controls per channel..
+   if ( parms     != ap.parms )     return false;
+   
    return true;
 }
 
@@ -824,10 +843,25 @@ US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
 bool US_AnaProfile::AnaProf2DSA::Parm2DSA::operator==
                  ( const Parm2DSA& p ) const
 {
-   bool same      = true;
-   same           = ( channel != p.channel ) ? false : same;
+  //bool same      = true;
+  //same           = ( channel != p.channel ) ? false : same;
+  
+  //return same;
 
-   return same;
+  if ( s_min    != p.s_min    ) return false;
+  if ( s_max    != p.s_max    ) return false;
+  if ( k_min    != p.k_min    ) return false;
+  if ( k_max    != p.k_max    ) return false;
+  if ( ff0_const  != p.ff0_const    ) return false;
+  if ( s_grpts    != p.s_grpts    ) return false;
+  if ( k_grpts    != p.k_grpts    ) return false;
+  if ( gridreps   != p.gridreps   ) return false;
+
+  if ( varyvbar  != p.varyvbar )  return false;
+  
+  if ( channel  != p.channel    ) return false;
+    
+  return true;
 }
 
 // AnaProfPCSA subclass constructor
@@ -842,9 +876,16 @@ US_AnaProfile::AnaProfPCSA::AnaProfPCSA()
 bool US_AnaProfile::AnaProfPCSA::operator== 
                   ( const AnaProfPCSA& ap ) const
 {
-   if ( nchan  != ap.nchan ) return false;
-
-   return true;
+  qDebug() << "RP:AnaProfPCSA: nchan, ap.nchan -- "     << nchan << ", " << ap.nchan;
+  qDebug() << "RP:AnaProfPCSA: job_run, ap.job_run -- " << job_run << ", " << ap.job_run;
+  
+  if ( nchan   != ap.nchan ) return false;
+  if ( job_run != ap.job_run ) return false;
+  
+  //& PCSA controls per channel
+  if ( parms  != ap.parms ) return false;
+  
+  return true;
 }
 
 // Read all current Cells controls from an XML stream
@@ -1070,10 +1111,33 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
 bool US_AnaProfile::AnaProfPCSA::ParmPCSA::operator==
                  ( const ParmPCSA& p ) const
 {
-   bool same      = true;
-   same           = ( channel != p.channel ) ? false : same;
+  // bool same      = true;
+  // same           = ( channel != p.channel ) ? false : same;
+  
+  // return same;
 
-   return same;
+  if ( x_min   != p.x_min    ) return false;
+  if ( x_max   != p.x_max    ) return false;
+  if ( y_min   != p.y_min    ) return false;
+  if ( y_max   != p.y_max    ) return false;
+  if ( z_value   != p.z_value    ) return false;
+  if ( tr_alpha   != p.tr_alpha   ) return false;
+  if ( varcount   != p.varcount  ) return false;
+  if ( grf_iters   != p.grf_iters ) return false;
+  if ( creso_pts   != p.creso_pts ) return false;
+  if ( noise_flag   != p.noise_flag ) return false;
+  if ( treg_flag   != p.treg_flag ) return false;
+  if ( mc_iters   != p.mc_iters ) return false;
+  
+  if ( channel   != p.channel    ) return false;
+  if ( curv_type   != p.curv_type    ) return false;
+  if ( x_type   != p.x_type    ) return false;
+  if ( y_type   != p.y_type    ) return false;
+  if ( z_type   != p.z_type    ) return false;
+  if ( noise_type   != p.noise_type   ) return false;
+  if ( treg_type   != p.treg_type   ) return false;
+  
+  return true;
 }
 
 

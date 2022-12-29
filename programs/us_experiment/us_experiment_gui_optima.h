@@ -113,6 +113,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void centerpieceInfo ( void );        // Function for all centerpieces
       void check_empty_runname(const QString &);
       void update_protdata( void );
+      
  signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
@@ -936,7 +937,8 @@ class US_ExperimentMain : public US_Widgets
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
       US_AnaProfile   currAProf;   // Current AnaProfile controls
-
+      US_AnaProfile   loadAProf;   // Current AnaProfile controls
+  
       QPushButton* pb_next;
       QPushButton* pb_prev;
       QPushButton* pb_close;
@@ -1012,7 +1014,9 @@ class US_ExperimentMain : public US_Widgets
       void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
 
       US_AnaProfile* get_aprofile( void );
-
+      US_AnaProfile* get_aprofile_loaded( void );
+      void set_loadAProf ( US_AnaProfile );
+  
       void back_to_pcsa( void );
 	
     signals:
