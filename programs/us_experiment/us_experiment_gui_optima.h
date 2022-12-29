@@ -840,6 +840,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       int     writeReportItemToDB( US_DB2*, QString, int, US_ReportGMP::ReportItem ); 
 
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
+  
+      bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
 
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );

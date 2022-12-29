@@ -3063,7 +3063,12 @@ void US_ExperGuiUpload::initPanel()
 
    if ( aprof_curr       !=  aprof_loaded )
      rps_differ = true;
-       
+
+   //finally, check for differences in currAProf's & loadAProf's nested  QMap< QString, QMap < QString, US_ReportGMP > > ch_reports
+   // {it's easier to perform this check separately}
+   if ( areReportMapsDifferent( aprof_curr, aprof_loaded ) )
+     rps_differ = true;
+   
 
    qDebug() << "rpSPEED: duration: " << rpSpeed->ssteps[0].duration;
    
@@ -3166,6 +3171,138 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( false );
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
+}
+
+bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )
+{
+  bool maps_different = false;
+
+  QMap< QString, QMap < QString, US_ReportGMP > > aprof_curr_ch_reports = aprof_curr.ch_reports;
+  QMap< QString, QMap < QString, US_ReportGMP > > aprof_load_ch_reports = aprof_load.ch_reports;
+  
+  //check number & content of keys:
+  QStringList aprof_curr_keys   = aprof_curr_ch_reports.  keys();
+  QStringList aprof_load_keys   = aprof_load_ch_reports.  keys();
+
+  qDebug() << "Top-level Report Maps Keys: curr, loaded -- "
+	   << aprof_curr_keys
+	   << aprof_load_keys ;
+    
+  if ( aprof_curr_keys.size() != aprof_load_keys.size() )
+    return true;
+    
+  if ( aprof_curr_keys != aprof_load_keys ) 
+    return true;
+  
+  //Now iterate over channels
+  for ( int i=0; i<aprof_curr_keys.size(); i++ )
+    {	
+      QMap < QString, US_ReportGMP > triple_reports_curr = aprof_curr_ch_reports[ aprof_curr_keys[i] ];
+      QMap < QString, US_ReportGMP > triple_reports_load = aprof_load_ch_reports[ aprof_curr_keys[i] ];
+
+      //check number & content of keys:
+      QStringList triple_reports_curr_keys   = triple_reports_curr.  keys();
+      QStringList triple_reports_load_keys   = triple_reports_load.  keys();
+      
+      qDebug() << "Triple's Report Maps Keys: curr, loaded -- "
+	       << triple_reports_curr_keys
+	       << triple_reports_load_keys ;
+      
+      if ( triple_reports_curr_keys.size() != triple_reports_load_keys.size() )
+	{
+	  maps_different = true;
+	  break;
+	}
+      if ( triple_reports_curr_keys != triple_reports_load_keys ) 
+	{
+	  maps_different = true;
+	  break;
+	}
+      
+      //now, iterate over triple's report & reportItems
+      for ( int j=0; j < triple_reports_curr_keys.size(); j++ )
+	{
+	  US_ReportGMP report_curr = triple_reports_curr[ triple_reports_curr_keys[j] ];
+	  US_ReportGMP report_load = triple_reports_load[ triple_reports_curr_keys[j] ];
+
+	  //compare general report parameters
+	  if ( report_curr.tot_conc                != report_load.tot_conc     ||
+	       report_curr.tot_conc_tol            != report_load.tot_conc_tol ||
+	       report_curr.rmsd_limit              != report_load.rmsd_limit   ||
+	       report_curr.av_intensity            != report_load.av_intensity ||
+	       report_curr.experiment_duration     != report_load.experiment_duration ||
+	       report_curr.experiment_duration_tol != report_load.experiment_duration_tol
+	       )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  //compare report masks
+	  if ( report_curr.tot_conc_mask            != report_load.tot_conc_mask     ||
+	       report_curr.rmsd_limit_mask          != report_load.rmsd_limit_mask   ||
+	       report_curr.av_intensity_mask        != report_load.av_intensity_mask ||
+	       report_curr.experiment_duration_mask != report_load.experiment_duration_mask ||
+	       report_curr.integration_results_mask != report_load.integration_results_mask ||
+	       report_curr.plots_mask               != report_load.plots_mask 
+	       )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  //compare Pseudo3D masks
+	  if ( report_curr.pseudo3d_mask           !=   report_load.pseudo3d_mask           ||    
+	       report_curr.pseudo3d_2dsait_s_ff0   !=	report_load.pseudo3d_2dsait_s_ff0   ||
+	       report_curr.pseudo3d_2dsait_s_d     !=   report_load.pseudo3d_2dsait_s_d     ||
+	       report_curr.pseudo3d_2dsait_mw_ff0  != 	report_load.pseudo3d_2dsait_mw_ff0  ||
+	       report_curr.pseudo3d_2dsait_mw_d	   != 	report_load.pseudo3d_2dsait_mw_d    ||	  
+	       report_curr.pseudo3d_2dsamc_s_ff0   != 	report_load.pseudo3d_2dsamc_s_ff0   ||
+	       report_curr.pseudo3d_2dsamc_s_d	   !=   report_load.pseudo3d_2dsamc_s_d	    ||
+	       report_curr.pseudo3d_2dsamc_mw_ff0  != 	report_load.pseudo3d_2dsamc_mw_ff0  ||
+	       report_curr.pseudo3d_2dsamc_mw_d    != 	report_load.pseudo3d_2dsamc_mw_d    ||
+	       report_curr.pseudo3d_pcsa_s_ff0	   != 	report_load.pseudo3d_pcsa_s_ff0	    ||
+	       report_curr.pseudo3d_pcsa_s_d	   != 	report_load.pseudo3d_pcsa_s_d	    ||
+	       report_curr.pseudo3d_pcsa_mw_ff0	   != 	report_load.pseudo3d_pcsa_mw_ff0    ||	  
+	       report_curr.pseudo3d_pcsa_mw_d      !=   report_load.pseudo3d_pcsa_mw_d      
+	       )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  //compare reportItems: first, check # of reportItems in curr, load
+	  int reportItems_curr_size = report_curr.reportItems.size();
+	  int reportItems_load_size = report_load.reportItems.size();
+	  if ( reportItems_curr_size != reportItems_load_size )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  for ( int k = 0; k < report_curr.reportItems.size(); k++ )
+	    {
+	      US_ReportGMP::ReportItem curr_reportItem = report_curr.reportItems[ k ];
+	      US_ReportGMP::ReportItem load_reportItem = report_load.reportItems[ k ];
+
+	      if ( curr_reportItem.type             != load_reportItem.type             ||
+		   curr_reportItem.method           != load_reportItem.method           ||
+		   curr_reportItem.range_low        != load_reportItem.range_low        ||
+		   curr_reportItem.range_high       != load_reportItem.range_high       ||
+		   curr_reportItem.integration_val  != load_reportItem.integration_val  ||
+		   curr_reportItem.tolerance        != load_reportItem.tolerance        ||
+		   curr_reportItem.total_percent    != load_reportItem.total_percent    ||
+		   curr_reportItem.combined_plot    != load_reportItem.combined_plot
+		   )
+		{
+		  maps_different = true;
+		  break;
+		}
+	    }
+	}
+    }
+  
+  return maps_different;
 }
 
 // Save panel controls when about to leave the panel

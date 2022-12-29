@@ -184,13 +184,35 @@ US_AnaProfile::US_AnaProfile()
 bool US_AnaProfile::operator== ( const US_AnaProfile& ap ) const
 {
   qDebug() << "RP:AnaProfile COMPARISON!! ";
-  
+
+  //General
   if ( aprofname    != ap.aprofname    )  return false;
   if ( aprofGUID    != ap.aprofGUID    )  return false;
   if ( protoname    != ap.protoname    )  return false;
   if ( protoGUID    != ap.protoGUID    )  return false;
+  if ( nchan        != ap.nchan        )  return false;
   
+  if ( lc_ratios    != ap.lc_ratios    )  return false;
+  if ( lc_tolers    != ap.lc_tolers    )  return false;
+  if ( l_volumes    != ap.l_volumes    )  return false;
+  if ( lv_tolers    != ap.lv_tolers    )  return false;
+  if ( data_ends    != ap.data_ends    )  return false;
+
+  if ( scan_excl_begin  != ap.scan_excl_begin  )  return false;
+  if ( scan_excl_end    != ap.scan_excl_end    )  return false;
+  
+  if ( analysis_run    != ap.analysis_run  )  return false;
+  if ( report_run      != ap.report_run    )  return false;
+  if ( wvl_edit        != ap.wvl_edit      )  return false;
+  if ( replicates      != ap.replicates    )  return false;
+  if ( wvl_not_run     != ap.wvl_not_run   )  return false;
+  
+  if ( report_mask     != ap.report_mask   )  return false;
+  if ( combPlots_parms != ap.combPlots_parms ) return false;
+  
+  //2DSA controls
   if ( ap2DSA       != ap.ap2DSA  )  return false;
+  //PCSA controls
   if ( apPCSA       != ap.apPCSA  )  return false;
   
   return true;
