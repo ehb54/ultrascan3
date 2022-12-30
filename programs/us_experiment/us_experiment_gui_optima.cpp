@@ -5984,14 +5984,116 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
   qDebug() << "IN submitExperiment_confirm_protDev() -- "
 	   << "mainw->automode, have_run, rps_differ "
 	   << mainw->automode <<  have_run <<  rps_differ;
-    
-  if ( have_run && rps_differ )
+
+  QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+
+  //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
+  QMessageBox msgBox_f;
+  msgBox_f.setText(tr( "You are about to reinitialize current run:<br><br>" )
+		   + tr("<b>Run Name:&emsp;</b>") + protocol_details[ "protocolName" ]
+		   + tr("<br>")
+		   + tr("<br>") );
+		     
+  msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+   			       + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
+  			       + tr("and the processing flow will reinitialize from the EDIT stage. ")
+   			       + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+  
+  msgBox_f.setWindowTitle(tr("Run Reinitialization"));
+  QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole); 
+  
+  msgBox_f.setIcon(QMessageBox::Question);
+  msgBox_f.exec();
+  
+  if (msgBox_f.clickedButton() == Cancel)
     {
-      if ( saveRunProtocol() )
-      	return;
-      //Now actually submit: make record in 'autoflow' table with 'DEV' flag
-      submitExperiment_protDev();
-    }  
+      return;
+    }
+  else if (msgBox_f.clickedButton() == Confirm)
+    {
+      //Clear data 
+      clearData_protDev();
+      //qApp->processEvents();
+      
+      //Now procceed
+      if ( have_run && rps_differ )
+	{
+	  if ( saveRunProtocol() )
+	    return;
+	  //Now actually submit: make record in 'autoflow' table with 'DEV' flag
+	  submitExperiment_protDev();
+	}
+    }
+}
+
+// clear edit profiles, models noises
+void US_ExperGuiUpload::clearData_protDev()
+{
+  QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  int status;
+  QStringList qry;
+  
+  //get experimentID from 'experiment' table:
+  qry << "get_experiment_info_by_runID"
+      << protocol_details[ "filename" ]
+      << protocol_details[ "invID_passed" ];
+
+  db->query( qry );
+  db->next();
+  QString expID  = db->value( 1 ).toString();
+
+  // Let's make sure it's not a calibration experiment in use
+  qry. clear();
+  qry << "count_calibration_experiments" << expID;
+  int count = db->functionQuery( qry );
+  qDebug() << "Cleaning Failed Run: calexp count" << count;
+  
+  if ( count < 0 )
+    {
+      qDebug() << "count_calibration_experiments( "
+               << expID
+               << " ) returned a negative count";
+      return;
+    }
+  
+  else if ( count > 0 )
+    {
+      QMessageBox::information( this,
+				tr( "Error" ),
+				tr( "Cannot delete an experiment that is associated "
+				    "with a rotor calibration\n" ) );
+      return;
+    }
+
+  // Now delete editedData, models, noises, reports, 
+  qry. clear();
+  qry << "clear_data_for_experiment"
+      << expID;
+  status = db -> statusQuery( qry );
+  qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+  
+  if ( status != US_DB2::OK )
+    {
+      QMessageBox::information( this,
+				tr( "Error / Warning" ),
+				db -> lastError() + tr( " (error=%1, expID=%2)" )
+				.arg( status ).arg( expID ) );
+    }
+
 }
 
 

@@ -829,6 +829,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
+      void    clearData_protDev( void );
 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
