@@ -63,14 +63,18 @@ private:
     QVector<int> lambda4ct;
     QVector<double> xvalsScaled;
     QVector<int> xvals4ct;
-   // scan < radial < lambda  < raw, fit, scaled SE > > > >
+   // scan < radial < lambda  < raw, fit, Err, sErr, absErr, sAbsErr > > > >
     QVector< QVector< QVector < QVector < double > > > > allData;
-    double minSSE;
-    double maxSSE;
+    double min_sAbsErr;
+    double max_sAbsErr;
+    double min_AbsErr;
+    double max_AbsErr;
+    double min_Err;
+    double max_Err;
+    double min_sErr;
+    double max_sErr;
+    double RMSE;
     double padding;
-    double meanSE;
-    double minSE;
-    double maxSE;
     int idRP_l;
     int idRP_h;
     int idWL_l;
@@ -115,9 +119,9 @@ private:
 
     QLineEdit *le_rpval;
     QLineEdit *le_rpid;
-    QLineEdit *le_meanSE;
-    QLineEdit *le_minSE;
-    QLineEdit *le_maxSE;
+    QLineEdit *le_RMSE;
+    QLineEdit *le_minErr;
+    QLineEdit *le_maxErr;
 
     QComboBox *cb_scan;
     QComboBox *cb_theme;
@@ -131,6 +135,7 @@ private:
     QwtCounter *ct_scale;
 
     QCheckBox *ckb_rendall;
+    QCheckBox *ckb_plotAbs;
 
 protected:
     virtual void closeEvent(QCloseEvent *);

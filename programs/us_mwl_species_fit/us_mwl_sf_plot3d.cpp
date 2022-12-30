@@ -50,38 +50,48 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     idRP_h = nPoints - 1;
 
     allData.clear();
-    double offset;
-    double scale;
-    double minValue = 1e99;
-    double maxValue = -1e99;
-    // scan < radial < lambda  < raw, fit, scaled SE > > > >
+    double minErr = 1e99;
+    double maxErr = -1e99;
+    double minAbsErr = 1e99;
+    double maxAbsErr = -1e99;
+    // scan < radial < lambda  < raw, fit, Err, sErr, absErr, sAbsErr > > > >
     for (int i = 0; i < nScans; i++){
         QVector< QVector < QVector < double > > > data_scan;
         for (int j = 0; j < nPoints; j++){
             QVector < QVector < double > > data_rp;
             for (int k = 0; k < nWavelengths; k++){
-                QVector<double> data(3, 0);
+                QVector<double> data(6, 0);
                 data[0] = spFitData.allData.at(i).at(j).at(k).first();
                 data[1] = spFitData.allData.at(i).at(j).at(k).last();
-                double sqe = qPow(data[0] - data[1], 2);
-                data[2] = sqe;
-                minValue = qMin(minValue, sqe);
-                maxValue = qMax(maxValue, sqe);
+                double err = data[0] - data[1];
+                double absErr = qAbs(err);
+                minErr = qMin(minErr, err);
+                maxErr = qMax(maxErr, err);
+                minAbsErr = qMin(minAbsErr, absErr);
+                maxAbsErr = qMax(maxAbsErr, absErr);
+                data[2] = err;
+                data[4] = absErr;
                 data_rp << data;
             }
             data_scan << data_rp;
         }
         allData << data_scan;
     }
-    offset = minValue;
-    scale = (maxValue - minValue);
+    double offset = minErr;
+    double scale = maxErr - minErr;
+    double offset2 = minAbsErr;
+    double scale2 = maxAbsErr - minAbsErr;
     for (int i = 0; i < nScans; i++){
         for (int j = 0; j < nPoints; j++){
             for (int k = 0; k < nWavelengths; k++){
-                double sqe = allData.at(i).at(j).at(k).last();
-                sqe = (sqe - offset) / scale;
-                sqe *= coeffER;
-                allData[i][j][k][2] = sqe;
+                double err = allData.at(i).at(j).at(k).at(2);
+                err = (err - offset) / scale;
+                err *= coeffER;
+                allData[i][j][k][3] = err;
+                double absErr = allData.at(i).at(j).at(k).at(4);
+                absErr = (absErr - offset2) / scale2;
+                absErr *= coeffER;
+                allData[i][j][k][5] = absErr;
             }
         }
     }
@@ -129,7 +139,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     graph->axisX()->setLabelFormat("%.3f");
     graph->axisX()->setLabelAutoRotation(xAngle);
 
-    graph->axisY()->setTitle("Squared Error");
+    graph->axisY()->setTitle("Absolute OD Error");
     graph->axisY()->setTitleVisible(true);
     graph->axisY()->setLabelFormat("%.1e");
     graph->axisY()->setLabelAutoRotation(yAngle);
@@ -173,23 +183,26 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 
     QGridLayout* mse_lyt = new QGridLayout();
 //    QLabel* lb_se = us_banner("Squared Error Data");
-    QLabel* lb_mse = us_label("Mean Squared Error:");
+    QLabel* lb_mse = us_label("Root Mean Squared Error:");
     lb_mse->setAlignment(Qt::AlignRight);
-    QLabel* lb_minse = us_label("Min of Squared Error:");
+    QLabel* lb_minse = us_label("Minimum Error:");
     lb_minse->setAlignment(Qt::AlignRight);
-    QLabel* lb_maxse = us_label("Max of Squared Error:");
+    QLabel* lb_maxse = us_label("Maximum Error:");
     lb_maxse->setAlignment(Qt::AlignRight);
-    le_meanSE = us_lineedit(0, 0, true);
-    le_minSE = us_lineedit(0, 0, true);
-    le_maxSE = us_lineedit(0, 0, true);
+    le_RMSE = us_lineedit(0, 0, true);
+    le_minErr = us_lineedit(0, 0, true);
+    le_maxErr = us_lineedit(0, 0, true);
     mse_lyt->addWidget(lb_mse,    0, 0, 1, 1);
-    mse_lyt->addWidget(le_meanSE, 0, 1, 1, 1);
+    mse_lyt->addWidget(le_RMSE, 0, 1, 1, 1);
     mse_lyt->addWidget(lb_minse,  1, 0, 1, 1);
-    mse_lyt->addWidget(le_minSE,  1, 1, 1, 1);
+    mse_lyt->addWidget(le_minErr,  1, 1, 1, 1);
     mse_lyt->addWidget(lb_maxse,  2, 0, 1, 1);
-    mse_lyt->addWidget(le_maxSE,  2, 1, 1, 1);
+    mse_lyt->addWidget(le_maxErr,  2, 1, 1, 1);
 
     QLabel* lb_plot_ctrl = us_banner("3D Plot Control");
+    ckb_plotAbs = new QCheckBox();
+    QGridLayout *plotAbs_gl = us_checkbox("Plot Absolute Errors", ckb_plotAbs, false);
+
     QLabel* lb_selmode = us_label("Selection Mode");
     lb_selmode->setAlignment(Qt::AlignCenter);
 
@@ -487,6 +500,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     left_lyt->addLayout(mse_lyt);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_plot_ctrl);
+    left_lyt->addLayout(plotAbs_gl);
     left_lyt->addWidget(lb_selmode);
     left_lyt->addLayout(select_lyt);
     left_lyt->addWidget(lb_wavl_rng);
@@ -550,6 +564,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(pb_zAngle, SIGNAL(clicked()), this, SLOT(reset_zAngle()));
     connect(sli_radial, SIGNAL(valueChanged(int)), this, SLOT(new_rpoint(int)));
     connect(le_rpid, SIGNAL(returnPressed()), this, SLOT(new_rpid()));
+    connect(ckb_plotAbs, SIGNAL(stateChanged(int)), this, SLOT(plot3d()));
     connect(ckb_rendall, SIGNAL(stateChanged(int)), this, SLOT(render_option(int)));
     connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
     connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
@@ -712,8 +727,12 @@ void US_MWL_SF_PLOT3D::plot3d(){
         double wl = lambdaScaled.at(j);
         for (int i = idRP_l; i <= idRP_h; i++) {
             double rp = xvalsScaled.at(i);
-            double sse = allData.at(scanId).at(i).at(j).last();
-            (*newRow)[index++].setPosition(QVector3D((float)rp, (float)sse, (float)wl));
+            double data;
+            if (ckb_plotAbs->isChecked())
+                data = allData.at(scanId).at(i).at(j).at(5);
+            else
+                data = allData.at(scanId).at(i).at(j).at(3);
+            (*newRow)[index++].setPosition(QVector3D((float)rp, (float)data, (float)wl));
         }
         *dataArray << newRow;
     }
@@ -724,9 +743,8 @@ void US_MWL_SF_PLOT3D::plot3d(){
     double min_rp = xvalsScaled.at(idRP_l);
     double max_rp = xvalsScaled.at(idRP_h);
 
-    graph->axisX()->setRange(min_rp -padding, max_rp + padding);
-    graph->axisY()->setRange(minSSE -padding, maxSSE + padding);
-    graph->axisZ()->setRange(min_wl -padding, max_wl + padding);
+    graph->axisX()->setRange(min_rp - padding, max_rp + padding);
+    graph->axisZ()->setRange(min_wl - padding, max_wl + padding);
 
     min_wl = ct_min_wl->value();
     max_wl = ct_max_wl->value();
@@ -735,10 +753,19 @@ void US_MWL_SF_PLOT3D::plot3d(){
 
     CustomFormatter *formatX = new CustomFormatter(min_rp, max_rp);
     graph->axisX()->setFormatter(formatX);
-    CustomFormatter *formatY = new CustomFormatter(minSE, maxSE);
-    graph->axisY()->setFormatter(formatY);
     CustomFormatter *formatZ = new CustomFormatter(min_wl, max_wl);
     graph->axisZ()->setFormatter(formatZ);
+    CustomFormatter *formatY;
+    if (ckb_plotAbs->isChecked()){
+        graph->axisY()->setTitle("Absolute OD Error");
+        graph->axisY()->setRange(min_sAbsErr - padding, max_sAbsErr + padding);
+        formatY = new CustomFormatter(min_AbsErr, max_AbsErr);
+    } else {
+        graph->axisY()->setTitle("OD Error");
+        graph->axisY()->setRange(min_sErr - padding, max_sErr + padding);
+        formatY = new CustomFormatter(min_Err, max_Err);
+    }
+    graph->axisY()->setFormatter(formatY);
 
     int theme = cb_theme->currentIndex();
     graph->activeTheme()->setType(Q3DTheme::Theme(theme));
@@ -1018,9 +1045,9 @@ void US_MWL_SF_PLOT3D::plot2d(){
     double xvalue = (double) xvals4ct.at(rpId) / 1000.0;
     le_rpval->setText(QString::number(xvalue, 'f', 3));
     for (int i = 0; i < nWavelengths; ++i){
-        double raw = allData.at(scanId).at(rpId).at(i).at(0);
-        double fit = allData.at(scanId).at(rpId).at(i).at(1);
-        double error = fit - raw;
+//        double raw = allData.at(scanId).at(rpId).at(i).at(0);
+//        double fit = allData.at(scanId).at(rpId).at(i).at(1);
+        double error = allData.at(scanId).at(rpId).at(i).at(2);
         minDev = qMin(minDev, error);
         maxDev = qMax(maxDev, error);
         xp[i] = (double) lambda4ct.at(i) / 10.0;
@@ -1079,32 +1106,42 @@ void US_MWL_SF_PLOT3D::plot2d(){
 }
 
 void US_MWL_SF_PLOT3D::get_minMaxMean(void){
-    meanSE = 0;
-    minSE  =  1e99;
-    minSSE =  1e99;
-    maxSE  = -1e99;
-    maxSSE = -1e99;
+
+    min_Err   =  1e99;
+    max_Err   = -1e99;
+    min_sErr  =  1e99;
+    max_sErr  = -1e99;
+    min_AbsErr  =  1e99;
+    max_AbsErr  = -1e99;
+    min_sAbsErr =  1e99;
+    max_sAbsErr = -1e99;
+    RMSE = 0;
     int n = 0;
     for (int i = 0; i < nScans; i++){
         for (int j = idRP_l; j <= idRP_h ; j++){
             for (int k = idWL_l; k <= idWL_h; k++) {
-                double d1 = allData.at(i).at(j).at(k).at(0);
-                double d2 = allData.at(i).at(j).at(k).at(1);
-                double se = qPow(d1 - d2, 2);
-                double sse = allData.at(i).at(j).at(k).at(2);
-                meanSE += se;
-                maxSE = qMax(maxSE, se);
-                minSE = qMin(minSE, se);
-                maxSSE = qMax(maxSSE, sse);
-                minSSE = qMin(minSSE, sse);
+                double err = allData.at(i).at(j).at(k).at(2);
+                double sErr = allData.at(i).at(j).at(k).at(3);
+                double absErr = allData.at(i).at(j).at(k).at(4);
+                double sAbsErr = allData.at(i).at(j).at(k).at(5);
+                RMSE += qPow(err, 2);
+                min_Err   = qMin(min_Err,   err);
+                min_sErr  = qMin(min_sErr,  sErr);
+                min_AbsErr  = qMin(min_AbsErr,  absErr);
+                min_sAbsErr = qMin(min_sAbsErr, sAbsErr);
+
+                max_Err   = qMax(max_Err,   err);
+                max_sErr  = qMax(max_sErr,  sErr);
+                max_AbsErr  = qMax(max_AbsErr,  absErr);
+                max_sAbsErr = qMax(max_sAbsErr, sAbsErr);
                 n++;
             }
         }
     }
-    meanSE /= n;
-    le_meanSE->setText(QString::number(meanSE));
-    le_minSE->setText(QString::number(minSE));
-    le_maxSE->setText(QString::number(maxSE));
+    RMSE = qSqrt(RMSE / n);
+    le_RMSE->setText(QString::number(RMSE));
+    le_minErr->setText(QString::number(min_Err));
+    le_maxErr->setText(QString::number(max_Err));
 }
 
 
@@ -1156,6 +1193,7 @@ void US_MWL_SF_PLOT3D::closeEvent(QCloseEvent *event){
 void US_MWL_SF_PLOT3D::cameraChanged(float){
     cb_camera->setCurrentIndex(0);
 }
+
 /////
 /////
 
