@@ -8,6 +8,7 @@
 #undef max
 #endif
 
+#include <cmath>
 #include <QtDataVisualization/Q3DSurface>
 #include <QtDataVisualization/QSurfaceDataProxy>
 #include <QtDataVisualization/QHeightMapSurfaceDataProxy>
@@ -22,6 +23,30 @@
 #include "us_settings.h"
 #include "us_plot.h"
 #include "qwt_legend.h"
+
+#include <qwt_plot.h>
+#include <qwt_plot_spectrogram.h>
+#include <qapplication.h>
+#include <qmainwindow.h>
+#include <qtoolbar.h>
+#include <qtoolbutton.h>
+#include <qcombobox.h>
+#include <qslider.h>
+#include <qlabel.h>
+#include <qcheckbox.h>
+#include "qwt_color_map.h"
+
+#include <qprinter.h>
+#include <qprintdialog.h>
+#include <qnumeric.h>
+#include <qwt_color_map.h>
+#include <qwt_plot_spectrogram.h>
+#include <qwt_scale_widget.h>
+#include <qwt_scale_draw.h>
+#include <qwt_plot_zoomer.h>
+#include <qwt_plot_panner.h>
+#include <qwt_plot_layout.h>
+#include <qwt_plot_renderer.h>
 
 
 using namespace QtDataVisualization;
@@ -65,6 +90,7 @@ private:
     QVector<int> xvals4ct;
    // scan < radial < lambda  < raw, fit, Err, sErr, absErr, sAbsErr > > > >
     QVector< QVector< QVector < QVector < double > > > > allData;
+    QMap<int, QMap<int, QVector<int>>> lookupTable;
     double min_sAbsErr;
     double max_sAbsErr;
     double min_AbsErr;
@@ -111,11 +137,26 @@ private:
     QPushButton *pb_DFLT;
     QPushButton *pb_help;
     QPushButton *pb_close;
+    QPushButton *pb_plotPixMap;
 
     QSlider *sli_xAngle;
     QSlider *sli_yAngle;
     QSlider *sli_zAngle;
     QSlider *sli_radial;
+
+    QLineEdit *le_rt_mean;
+    QLineEdit *le_rt_median;
+    QLineEdit *le_rt_min;
+    QLineEdit *le_rt_max;
+    QLineEdit *le_rt_nruns;
+    QLineEdit *le_rt_nneg;
+    QLineEdit *le_rt_npos;
+    QLineEdit *le_rt_zstat;
+    QLineEdit *le_rt_pval;
+    QLineEdit *le_rt_zcrit;
+    QLineEdit *le_rt_lower;
+    QLineEdit *le_rt_upper;
+    QLabel *lb_rt_rstate;
 
     QLineEdit *le_rpval;
     QLineEdit *le_rpid;
@@ -137,6 +178,9 @@ private:
     QCheckBox *ckb_rendall;
     QCheckBox *ckb_plotAbs;
 
+    void fill_table(void);
+    QMap<int, QVector<int>> new_table_row(QString);
+    bool get_runs_test(QVector<double>, bool);
 protected:
     virtual void closeEvent(QCloseEvent *);
 
@@ -176,6 +220,8 @@ private slots:
     void render_option(int);
     void enable_wgt(bool);
     void cameraChanged(float);
+    void set_radial_slider(void);
+    void plotPixMap(void);
 };
 
 class CustomFormatter : public QValue3DAxisFormatter
@@ -197,6 +243,40 @@ private:
 
     qreal minVal;
     qreal maxVal;
+
+};
+
+class SpectrogramData: public QwtRasterData
+{
+public:
+    SpectrogramData(QVector<double> rp, QVector<double> sc,
+                    QVector<QVector<double>> st);
+
+    virtual double value( double x, double y ) const;
+
+private:
+    QVector<QVector<double>> zvals;
+    QVector<double> xrange;
+    QVector<double> yrange;
+};
+
+class RunsTestWidget: public QDialog
+{
+    Q_OBJECT
+public:
+    RunsTestWidget(QVector<double>, QVector<double>, QVector<QVector<double>>, QWidget * = NULL);
+
+private:
+    QwtPlot *d_plot;
+    QwtPlotSpectrogram *d_spectrogram;
+    QComboBox *cb_color_r;
+    QComboBox *cb_color_nr;
+
+private Q_SLOTS:
+    void setColorMap(void);
+    void showContour(bool);
+    void printPlot(void);
+    QColor getColor(QString);
 
 };
 
