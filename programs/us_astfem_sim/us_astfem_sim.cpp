@@ -911,7 +911,7 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
       astfvm->set_buffer(buffer);
       connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
                        SLOT( update_movie_plot( QVector< double >*, double* ) ) );
-      connect( astfvm, SIGNAL( current_component( int ) ),
+      connect( astfvm, SIGNAL( comp_progress( int ) ),
                        SLOT  ( update_progress  ( int ) ) );
       connect( astfvm, SIGNAL( new_time   ( double ) ),
                        SLOT  ( update_time( double ) ) );
