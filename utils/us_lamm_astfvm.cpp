@@ -435,7 +435,7 @@ void US_LammAstfvm::Mesh::InitMesh( double s, double D, double w2 )
 }
 
 // create salt data set by solving ideal astfem equations
-US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
+US_LammAstfvm::CosedData::CosedData( US_Model                amodel,
                                    US_SimulationParameters asparms,
                                    US_DataIO::RawData*     asim_data )
 {
@@ -586,7 +586,7 @@ DbgLv(2) << "SaltD:  Nx" << Nx << "xs sme" << xs[0] << xs[1] << xs[2]
  << xs[Nx/2-1] << xs[Nx/2] << xs[Nx-2+1] << xs[Nx-3] << xs[Nx-2] << xs[Nx-1];
 }
 
-US_LammAstfvm::SaltData::~SaltData()
+US_LammAstfvm::CosedData::~CosedData()
 {
    //delete [] xs;
    //delete [] Cs0;
@@ -596,7 +596,7 @@ US_LammAstfvm::SaltData::~SaltData()
    Cs1Vec.clear();
 }
 
-void US_LammAstfvm::SaltData::initSalt()
+void US_LammAstfvm::CosedData::initCosed()
 {
    t0         = sa_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
    t1         = sa_data.scanData[ 1 ].seconds;
@@ -616,7 +616,7 @@ DbgLv(2) << "initSalt:  xs Cs0 Cs1 j" << xs[k] << Cs0[k] << Cs1[k] << k;
 DbgLv(2) << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
 }
 
-void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
+void US_LammAstfvm::CosedData::InterpolateCCosed( int N, double *x, double t,
    double *Csalt )
 {
    double* tmp;
@@ -762,6 +762,7 @@ int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
 
       if ( rc != 0 )
          return rc;
+
    }
 
 #ifndef NO_DB
@@ -843,7 +844,7 @@ DbgLv(2) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_w2;
          if ( comp_x == 0 )
          {
 DbgLv(2) << "NonIdeal2: new saltdata  comp_x" << comp_x;
-            saltdata  = new SaltData( model, simparams, auc_data );
+            saltdata  = new CosedData( model, simparams, auc_data );
             vbar_salt = model.components[ 0 ].vbar20;
          }
 
@@ -931,12 +932,20 @@ timer.start();
          double base = sq( simparams.meniscus )+ simparams.band_volume * 360.0 / ( angl * plen * M_PI );
          double lamella_width = sqrt( base ) - simparams.meniscus;
          base = ( msh->x[ jj ] - simparams.meniscus ) / lamella_width;
-         u0[ kk ]   = msh->x[ jj ] * sig_conc * exp( -pow( base, 4.0 ) );   // C*r value
+         if (u0[ kk ]  != 0){
+         u0[ kk ]   += msh->x[ jj ] * sig_conc * exp( -pow( base, 4.0 ) );   // C*r value
+         }
+         else
+            u0[ kk ] = msh->x[ jj ] * sig_conc * exp( -pow( base, 4.0 ));   // C*r value
       }
       else {
          u0[kk] = msh->x[jj] * sig_conc;   // C*r value
       }
-      u1[ kk ]   = u0[ kk ];
+      if (u1[ kk ]  != 0){
+         u1[ kk ]   += u0[ kk ];
+      }
+      else
+         u1[ kk ] = u0[ kk ];
    }
 
    for ( int kk = 1; kk < N0u - 1; kk+=2 )
@@ -1130,10 +1139,11 @@ DbgLv(2) << "LAsc: istep" << istep;
          qApp->processEvents();
       }
 #endif
-
+         emit new_time( t0 );
+         emit current_speed(af_data.scan[ kt ].rpm);
+         qApp->processEvents();
          kt++;    // bump output time(scan) index
 
-         qApp->processEvents();
          if ( stopFlag )  break;
       }
 
@@ -1214,18 +1224,16 @@ DbgLv(2) << "buff d_coeff" << d_coeff[0] << d_coeff[1] << d_coeff[2]
    << d_coeff[3] << d_coeff[4] << d_coeff[5];
 DbgLv(2) << "buff v_coeff" << v_coeff[0] << v_coeff[1] << v_coeff[2]
    << v_coeff[3] << v_coeff[4] << v_coeff[5];
-
    if (!buffer.cosed_component.isEmpty()){
       cosed_components = buffer.cosed_component;
-      DbgLv(2) << "NonIdeal4: create bandforming gradient";
+      DbgLv(0) << "NonIdeal4: create bandforming gradient";
       bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
                                                                     simparams.band_volume,
                                                                     cosed_components, simparams.cp_pathlen,
                                                                     simparams.cp_angle);
       bandFormingGradient->get_eigenvalues();
-      DbgLv(2) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
+      DbgLv(0) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
    }
-   DbgLv(2) << "buff cosed" << cosed_components.count();
 }
 
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
@@ -1239,12 +1247,12 @@ void US_LammAstfvm::SetNonIdealCase_2( )
    if ( comp_x == 0 )
    {
 DbgLv(2) << "NonIdeal2: create saltdata";
-      saltdata  = new SaltData( model, simparams, auc_data );
+      saltdata  = new CosedData( model, simparams, auc_data );
       vbar_salt = model.components[ 0 ].vbar20;
    }
 
 DbgLv(2) << "NonIdeal2: initSalt  comp_x" << comp_x;
-   saltdata->initSalt();
+   saltdata->initCosed();
 }
 
 void US_LammAstfvm::SetNonIdealCase_3( int& mropt, double& err_tol )
@@ -1644,9 +1652,6 @@ static int kst2=0;
          {
             double adj_s = s_adj[jj];
             double adj_d = D_adj[jj];
-            DbgLv(3) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
-            DbgLv(3) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
-            DbgLv(3) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
             s_adj[ jj ] = param_s ;
             D_adj[ jj ] = param_D ;
          }
@@ -1668,7 +1673,7 @@ timer.start();
          Csalt   = CsaltVec.data();
   
 DbgLv(2) << "NonIdeal2: ntrp Salt";
-         saltdata->InterpolateCSalt( Nv, x, t, Csalt );    // Csalt at (x, t)
+         saltdata->InterpolateCCosed( Nv, x, t, Csalt );    // Csalt at (x, t)
 kst1+=timer.restart();
          {
 double rho0=0.0;
@@ -1769,31 +1774,21 @@ DbgLv(3) << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
          break;
       case 4: // co-diffusing
       {
-//         for ( jj = 0; jj < Nv; jj++ )
-//         {
-//            double adj_s = s_adj[jj];
-//            double adj_d = D_adj[jj];
-//            DbgLv(3) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
-//            DbgLv(3) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
-//            DbgLv(3) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
-//            s_adj[ jj ] = param_s ;
-//            D_adj[ jj ] = param_D ;
-//         }
          timer.start();
-         DbgLv(2) << "NonIdeal4:  ";
+         DbgLv(2) << "NonIdeal4";
          kst1+=timer.restart();
          for ( jj = 0; jj < Nv; jj++ )
          {
             double adj_s = param_s;
             double adj_d = param_D;
-            DbgLv(3) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
-            DbgLv(3) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
-            DbgLv(3) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
+            DbgLv(2) << "AdjSD:   Cosed t x tmp vbar" << t << x[jj] << simparams.temperature << vbar;
+            DbgLv(2) << "AdjSD:   CoSed s"<<QString::number(adj_s*1E+13, 'f', 4);
+            DbgLv(2) << "AdjSD:   CoSed D"<<QString::number(adj_d*1E+6, 'f', 4);
             bandFormingGradient->adjust_sd(x[jj],t,adj_s,adj_d,simparams.temperature,vbar);
             s_adj[jj] = adj_s;
             D_adj[jj] = adj_d;
-            DbgLv(3) << "AdjSD:   CoSed s_adj"<<QString::number(adj_s*1E+13, 'f', 4);
-            DbgLv(3) << "AdjSD:   CoSed D_adj"<<QString::number(adj_d*1E+6, 'f', 4);
+            DbgLv(2) << "AdjSD:   CoSed s_adj"<<QString::number(adj_s*1E+13, 'f', 4);
+            DbgLv(2) << "AdjSD:   CoSed D_adj"<<QString::number(adj_d*1E+6, 'f', 4);
          }
       }
          kst2+=timer.restart();
@@ -2107,12 +2102,16 @@ void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata,
                                     bool zeroout ) 
 {
    int  nscan  = edata.scanData.size();  // scan count
+
 //   int  nconc  = edata.x.size();         // concentrations count
    int  nconc  = edata.xvalues.size();   // concentrations count
+   qDebug() << "Lamm:ldMFEM: nscan edata.scanCount() nconc edata.pointCount()" << nscan << edata.scanCount()
+   << nconc << edata.pointCount();
    fdata.id    = edata.description;
    fdata.cell  = edata.cell;
    fdata.scan  .resize( nscan );         // mirror number of scans
    fdata.radius.resize( nconc );         // mirror number of radius values
+   qDebug() << "RSA:f  r0 rn" << fdata.radius[0] << fdata.radius[nconc-1];
 
    for ( int ii = 0; ii < nscan; ii++ )
    {  // copy over all scans
@@ -2151,11 +2150,14 @@ void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata,
       else                        // Otherwise, copy concentrations
          fscan->conc        = edata.scanData[ ii ].rvalues;
    }
-   fdata.radius       = edata.xvalues;
-int nn=fdata.radius.size() - 1;
-int mm=nn/2;
-DbgLv(2) << "LdDa:  n r0 rm rn" << nn << fdata.radius[0] << fdata.radius[mm] << fdata.radius[nn];
+
 #endif
+   fdata.radius       = edata.xvalues;
+   int nn=fdata.radius.size() - 1;
+   int mm=nn/2;
+   qDebug() << "LdDa:  n r0 rm rn" << nn << fdata.radius[0] << fdata.radius[mm] << fdata.radius[nn];
+   qDebug() << "RSA:f sc0 temp" << fdata.scan[0].temperature;
+   qDebug() << "RSA:e sc0 temp" << edata.scanData[0].temperature;
 }
 
 // store MfemData object used internally into caller's RawData object
@@ -2164,11 +2166,16 @@ void US_LammAstfvm::store_mfem_data( US_DataIO::RawData&      edata,
 {
    int  nscan  = fdata.scan.size();     // scan count
    int  nconc  = fdata.radius.size();   // concentrations count
+   int  escan  = edata.scanCount();
+   int  econc  = edata.pointCount();
+   DbgLv(2) << "Lamm:st_md: nscan nconc" << nscan << nconc;
+   DbgLv(2) << "Lamm:st_md: escan econc" << escan << econc;
 
    edata.description = fdata.id;
    edata.cell        = fdata.cell;
    edata.xvalues     = fdata.radius;
-   edata.scanData.resize( nscan );      // mirror number of scans
+   if ( escan != nscan )
+      edata.scanData.resize( nscan );      // mirror number of scans
 
    for ( int ii = 0; ii < nscan; ii++ )
    {  // copy over each scan
@@ -2182,6 +2189,8 @@ void US_LammAstfvm::store_mfem_data( US_DataIO::RawData&      edata,
       escan->plateau     = fdata.radius[ nconc - 1 ];
       escan->rvalues     = fscan->conc;
    }
+   DbgLv(2) << "Lamm:o-f sc0 temp" << fdata.scan[0].temperature;
+   DbgLv(2) << "Lamm:o-e sc0 temp" << edata.scanData[0].temperature;
 }
 
 void US_LammAstfvm::setStopFlag( bool flag )

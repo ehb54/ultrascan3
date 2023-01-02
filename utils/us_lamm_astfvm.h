@@ -74,37 +74,37 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             void Refine(    double );
       };
 
-      //! \brief Salt data for co-sedimenting
-      class SaltData
+      //! \brief data for co-sedimenting
+      class CosedData
       {
          public:
 
-            //! \brief Create salt data
+            //! \brief Create cosed data
             //! \param amodel    Model with all components to simulate
             //! \param asparms   Simulation parameters for all components
             //! \param asim_data Simulation AUC data for all components
-            SaltData( US_Model, US_SimulationParameters,
+            CosedData( US_Model, US_SimulationParameters,
                       US_DataIO::RawData* );
 
             //! \brief Destroy salt data
-            ~SaltData();
+            ~CosedData();
 
             //! \brief Initialize time & concentration arrays for a component
-            void initSalt();
+            void initCosed();
 
-            //! \brief Interpolate concentrations of salt
+            //! \brief Interpolate concentrations of cosed
             //! \param N     Number of elements in arrays
             //! \param x     X (radius) array
             //! \param t     Current time value
-            //! \param Csalt Concentration of salt for current time
-            void InterpolateCSalt( int, double*, double, double* );
+            //! \param Ccosed Concentration of salt for current time
+            void InterpolateCCosed( int, double*, double, double* );
 
-            US_DataIO::RawData      sa_data;   //!< salt data 1-component
+            US_DataIO::RawData      sa_data;   //!< cosed data 1-component
                                                //!<  simulation for co-sed
          private:
 
-            US_Model                model;     // salt data co-sed model
-            US_SimulationParameters simparms;  // salt simulation parameters
+            US_Model                model;     // cosed data co-sed model
+            US_SimulationParameters simparms;  // cosed simulation parameters
 
             int     Nx;       // number of points in radial direction
             int     Nt;       // number of points in time direction
@@ -183,6 +183,11 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \brief Signal component progress, giving running component number
       //! The connected slot receives the scan time value from calc. functions.a
       void new_time     ( double );
+
+      //! \brief Signal that a calculate_ni()/calculate_ra2() step is complete.
+      //! The connected slot receives the integer step count from loops in
+      //! functions calculate_ni() and calculate_ra2().
+      void current_speed    ( int    );
 
    private:
 
