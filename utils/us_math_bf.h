@@ -142,6 +142,10 @@ public:
       //! \return boolean flag for the success of the adjustment
       bool adjust_sd(const double &x, const double &t, double& s, double& d, double& T, double& vbar);
 
+      bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T);
+
+   private:
+      QMap<QString, QList<double>> value_cache;
    };
 
 
