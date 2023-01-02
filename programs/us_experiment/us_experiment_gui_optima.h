@@ -62,6 +62,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       int         getProtos   ( QStringList&, QList< QStringList >& );
       // Append to the names,summary-data protocol lists
       bool        updateProtos( const QStringList );
+      void        setProtos   ( QStringList );
+  
 
       void check_user_level( void );
       void update_inv( void );
@@ -111,6 +113,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void centerpieceInfo ( void );        // Function for all centerpieces
       void check_empty_runname(const QString &);
       void update_protdata( void );
+      
  signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
@@ -825,9 +828,12 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
+      void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
+      void    clearData_protDev( void );
 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
+      void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       bool    saveRunProtocol ( void );  // Save the Run Protocol
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
@@ -835,12 +841,16 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       int     writeReportItemToDB( US_DB2*, QString, int, US_ReportGMP::ReportItem ); 
 
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
+  
+      bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
 
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
-      
+      void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+  
    signals:
-      void expdef_submitted( QMap < QString, QString > &protocol_details );
+      void expdef_submitted    ( QMap < QString, QString > &protocol_details );
+      void expdef_submitted_dev( QMap < QString, QString > &protocol_details );
 };
 
 //! \brief Experiment AnalysisProfile panel
@@ -925,10 +935,13 @@ class US_ExperimentMain : public US_Widgets
       // \brief Update the list of protocols with a newly named entry
       bool        updateProtos( const QStringList );
 
+      void        setProtos   ( QStringList );
+
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
       US_AnaProfile   currAProf;   // Current AnaProfile controls
-
+      US_AnaProfile   loadAProf;   // Current AnaProfile controls
+  
       QPushButton* pb_next;
       QPushButton* pb_prev;
       QPushButton* pb_close;
@@ -947,7 +960,10 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
+  bool    us_prot_dev_mode;
       bool    global_reset;
+
+  QMap <QString, QString> protocol_details_passed; 
       
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
@@ -987,22 +1003,29 @@ class US_ExperimentMain : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+      void set_tabs_buttons_readonly( void );			     
       
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
+      void submitted_protDev( QMap < QString, QString > & );
+
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
       void    exclude_used_instruments( QStringList &);
+      void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
 
       US_AnaProfile* get_aprofile( void );
-
+      US_AnaProfile* get_aprofile_loaded( void );
+      void set_loadAProf ( US_AnaProfile );
+  
       void back_to_pcsa( void );
 	
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
+      void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
       void close_expsetup_msg( void ); 
       

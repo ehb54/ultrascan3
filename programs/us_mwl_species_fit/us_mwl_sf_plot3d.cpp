@@ -17,22 +17,18 @@ void SFData::computeMSE(){
     int nwvl = wavelenghts.size();
     for (int i = 0; i < nscans; i++){
         int npoints = allData.at(i).size();
-        double mse_rp = 0;
+        double mse = 0;
+        int n = 0;
         for (int j = 0; j < npoints; j++){
-            double mse_wl = 0;
             for (int k = 0; k < nwvl; k++){
                 QVector<double> orgSp = allData.at(i).at(j).at(k);
-                double sp_sum = 0;
-                for (int l = 1; l < orgSp.size(); l++)
-                    sp_sum += orgSp.at(l);
-                double sqe = qPow(sp_sum - orgSp.at(0), 2);
-                mse_wl += sqe;
+                double se = qPow(orgSp.last() - orgSp.first(), 2);
+                mse += se;
+                n++;
             }
-            mse_wl /= nwvl;
-            mse_rp += mse_wl;
         }
-        mse_rp /= npoints;
-        scansMSE[i] = mse_rp;
+        mse /= n;
+        scansMSE[i] = mse;
     }
 }
 
@@ -53,51 +49,41 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     idRP_l = 0;
     idRP_h = nPoints - 1;
 
-    allSqErrScaled.clear();
-    allErr.clear();
     allData.clear();
     double offset;
     double scale;
-
+    double minValue = 1e99;
+    double maxValue = -1e99;
+    // scan < radial < lambda  < raw, fit, scaled SE > > > >
     for (int i = 0; i < nScans; i++){
-        double minValue = 1e20;
-        double maxValue = -1e20;
-        QVector< QVector < double > > err_rpwl;
-        QVector< QVector < double > > sqe_rpwl;
-        QVector< QVector < QVector < double > > > data_rpwl;
+        QVector< QVector < QVector < double > > > data_scan;
         for (int j = 0; j < nPoints; j++){
-            QVector < double > err_wl;
-            QVector < double > sqe_wl;
-            QVector < QVector < double > > data_wl;
+            QVector < QVector < double > > data_rp;
             for (int k = 0; k < nWavelengths; k++){
-                QVector<double> orgSp = spFitData.allData.at(i).at(j).at(k);
-                data_wl << orgSp;
-                double sp_sum = orgSp.at(orgSp.size() - 1);
-                double err = sp_sum - orgSp.at(0);
-                double sqe = qPow(err, 2);
+                QVector<double> data(3, 0);
+                data[0] = spFitData.allData.at(i).at(j).at(k).first();
+                data[1] = spFitData.allData.at(i).at(j).at(k).last();
+                double sqe = qPow(data[0] - data[1], 2);
+                data[2] = sqe;
                 minValue = qMin(minValue, sqe);
                 maxValue = qMax(maxValue, sqe);
-                err_wl << err;
-                sqe_wl << sqe;
+                data_rp << data;
             }
-            data_rpwl << data_wl;
-            err_rpwl << err_wl;
-            sqe_rpwl << sqe_wl;
+            data_scan << data_rp;
         }
-        allData << data_rpwl;
-        allErr << err_rpwl;
-        offset = minValue;
-        scale = (maxValue - minValue);
+        allData << data_scan;
+    }
+    offset = minValue;
+    scale = (maxValue - minValue);
+    for (int i = 0; i < nScans; i++){
         for (int j = 0; j < nPoints; j++){
-            int size = sqe_rpwl.at(j).size();
-            for (int k = 0; k < size; k++){
-                double sqe = sqe_rpwl.at(j).at(k);
+            for (int k = 0; k < nWavelengths; k++){
+                double sqe = allData.at(i).at(j).at(k).last();
                 sqe = (sqe - offset) / scale;
                 sqe *= coeffER;
-                sqe_rpwl[j][k] = sqe;
+                allData[i][j][k][2] = sqe;
             }
         }
-        allSqErrScaled << sqe_rpwl;
     }
 
     offset = spFitData.xValues.at(0);
@@ -158,18 +144,18 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     graph->scene()->activeCamera()->setWrapYRotation(false);
     graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
 
-    QWidget *w_surface = QWidget::createWindowContainer(graph);
+    surfaceWgt = QWidget::createWindowContainer(graph);
     QSize screenSize = graph->screen()->size();
-    w_surface->setMinimumSize(QSize(screenSize.width() / 2, screenSize.height() / 1.6));
-    w_surface->setMaximumSize(screenSize);
-    w_surface->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    w_surface->setFocusPolicy(Qt::StrongFocus);
+    surfaceWgt->setMinimumSize(QSize(screenSize.width() / 2, screenSize.height() / 1.6));
+    surfaceWgt->setMaximumSize(screenSize);
+    surfaceWgt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    surfaceWgt->setFocusPolicy(Qt::StrongFocus);
 
     QLabel* lb_scan_ctrl = us_banner("Scan Control");
     QLabel* lb_scan = us_label("Scan:");
     cb_scan = us_comboBox();
     for (int i = 0; i < nScans; ++i){
-        cb_scan->addItem(QString::number(spFitData.includedScans.at(i)));
+        cb_scan->addItem(QString::number(spFitData.includedScans.at(i) + 1));
     }
     cb_scan->setCurrentIndex(scanId);
 
@@ -184,21 +170,45 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     scan_lyt2->addWidget(pb_prev);
     scan_lyt2->addWidget(pb_next);
 
+    QGridLayout* mse_lyt = new QGridLayout();
+//    QLabel* lb_se = us_banner("Squared Error Data");
+    QLabel* lb_mse = us_label("Mean Squared Error:");
+    lb_mse->setAlignment(Qt::AlignRight);
+    QLabel* lb_minse = us_label("Min of Squared Error:");
+    lb_minse->setAlignment(Qt::AlignRight);
+    QLabel* lb_maxse = us_label("Max of Squared Error:");
+    lb_maxse->setAlignment(Qt::AlignRight);
+    le_meanSE = us_lineedit(0, 0, true);
+    le_minSE = us_lineedit(0, 0, true);
+    le_maxSE = us_lineedit(0, 0, true);
+    mse_lyt->addWidget(lb_mse,    0, 0, 1, 1);
+    mse_lyt->addWidget(le_meanSE, 0, 1, 1, 1);
+    mse_lyt->addWidget(lb_minse,  1, 0, 1, 1);
+    mse_lyt->addWidget(le_minSE,  1, 1, 1, 1);
+    mse_lyt->addWidget(lb_maxse,  2, 0, 1, 1);
+    mse_lyt->addWidget(le_maxSE,  2, 1, 1, 1);
+
     QLabel* lb_plot_ctrl = us_banner("3D Plot Control");
     QLabel* lb_selmode = us_label("Selection Mode");
     lb_selmode->setAlignment(Qt::AlignCenter);
 
-    QRadioButton* rb_nosel = new QRadioButton();
+    rb_nosel = new QRadioButton();
     QGridLayout *nosel_gl = us_radiobutton("No Selection", rb_nosel, true);
 
-    QRadioButton* rb_point = new QRadioButton();
+    rb_point = new QRadioButton();
     QGridLayout *point_gl = us_radiobutton("Point", rb_point, false);
 
-    QRadioButton* rb_radial = new QRadioButton();
+    rb_radial = new QRadioButton();
     QGridLayout *radial_gl = us_radiobutton("Radial Slice", rb_radial, false);
 
-    QRadioButton* rb_lambda = new QRadioButton();
+    rb_lambda = new QRadioButton();
     QGridLayout *wavlth_gl = us_radiobutton("Lambda Slice", rb_lambda, false);
+
+    QGridLayout *select_lyt = new QGridLayout();
+    select_lyt->addLayout(nosel_gl,  0, 0, 1, 1);
+    select_lyt->addLayout(point_gl,  1, 0, 1, 1);
+    select_lyt->addLayout(radial_gl, 2, 0, 1, 1);
+    select_lyt->addLayout(wavlth_gl, 3, 0, 1, 1);
 
     QButtonGroup *select_btng = new QButtonGroup();
     select_btng->addButton(rb_nosel);
@@ -258,15 +268,13 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 //    cb_theme = new QComboBox();
     cb_theme = us_comboBox();
     cb_theme->addItem(QStringLiteral("Qt"));
-    cb_theme->addItem(QStringLiteral("Primary Colors"));
     cb_theme->addItem(QStringLiteral("Digia"));
     cb_theme->addItem(QStringLiteral("Stone Moss"));
     cb_theme->addItem(QStringLiteral("Army Blue"));
     cb_theme->addItem(QStringLiteral("Retro"));
-    cb_theme->addItem(QStringLiteral("Ebony"));
     cb_theme->addItem(QStringLiteral("Isabelle"));
 
-    QPushButton* pb_camera = us_pushbutton("Reset Camera");
+    pb_camera = us_pushbutton("Reset Camera");
 
     QHBoxLayout *theme_lyt = new QHBoxLayout();
     theme_lyt->addWidget(cb_theme);
@@ -275,7 +283,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     QLabel* lb_color = us_label("Color Map");
     lb_color->setAlignment(Qt::AlignCenter);
 
-    QPushButton* pb_DFLT = us_pushbutton("Default");
+    pb_DFLT = us_pushbutton("Default");
 
     QLinearGradient lg_B2Y(0, 0, 75, 1);
     lg_B2Y.setColorAt(0.0, Qt::black);
@@ -287,7 +295,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     pmp.setBrush(QBrush(lg_B2Y));
     pmp.setPen(Qt::NoPen);
     pmp.drawRect(0, 0, 75, 15);
-    QPushButton* pb_B2Y = new QPushButton();
+    pb_B2Y = new QPushButton();
     pb_B2Y->setIcon(QIcon(pm));
     pb_B2Y->setIconSize(QSize(75, 15));
 
@@ -298,7 +306,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     lg_G2R.setColorAt(1.0, Qt::darkRed);
     pmp.setBrush(QBrush(lg_G2R));
     pmp.drawRect(0, 0, 75, 15);
-    QPushButton* pb_G2R = new QPushButton();
+    pb_G2R = new QPushButton();
     pb_G2R->setIcon(QIcon(pm));
     pb_G2R->setIconSize(QSize(75, 15));
 
@@ -308,9 +316,9 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     color_lyt->addWidget(pb_DFLT);
 
     QLabel* lb_draw_mode = us_label("Draw Mode:");
-    QRadioButton *rb_surface = new QRadioButton();
+    rb_surface = new QRadioButton();
     QGridLayout *surface_gl = us_radiobutton("Surface", rb_surface, true);
-    QRadioButton *rb_surface_wire = new QRadioButton();
+    rb_surface_wire = new QRadioButton();
     QGridLayout *surface_wire_gl = us_radiobutton("Surface-Wire", rb_surface_wire, false);
     QHBoxLayout* draw_mode_lyt = new QHBoxLayout();
     draw_mode_lyt->addWidget(lb_draw_mode);
@@ -360,27 +368,34 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     angle_lyt->addWidget(sli_zAngle, 2, 1, 1, 1);
     angle_lyt->addWidget(pb_zAngle,  2, 2, 1, 1);
 
-    QLabel *lb_save = us_label("Save Image");
+    QLabel *lb_save = us_banner("Render Image");
     lb_save->setAlignment(Qt::AlignCenter);
     QLabel *lb_quality = us_label("Quality:");
     lb_quality->setAlignment(Qt::AlignRight);
     ct_quality = us_counter(2, 0, 100, 80);
     ct_quality->setSingleStep(1);
-    QLabel *lb_scale = us_label("Resolution:");
+    QLabel *lb_scale = us_label("Magnify:");
     lb_scale->setAlignment(Qt::AlignRight);
     ct_scale = us_counter(1, 1, 10, 5);
     ct_scale->setSingleStep(1);
-    QPushButton* pb_save = us_pushbutton("Render");
+    ckb_rendall = new QCheckBox();
+    QGridLayout *rendall_gl = us_checkbox("All Scans", ckb_rendall, false);
+    pb_render = us_pushbutton("Save");
 
-    QGridLayout* save_lyt = new QGridLayout();
-    save_lyt->addWidget(lb_quality, 0, 0, 1, 1);
-    save_lyt->addWidget(ct_quality, 0, 1, 1, 3);
-    save_lyt->addWidget(lb_scale,   1, 0, 1, 1);
-    save_lyt->addWidget(ct_scale,   1, 1, 1, 1);
-    save_lyt->addWidget(pb_save,    1, 2, 1, 2);
+    QHBoxLayout* qual_lyt = new QHBoxLayout();
+    qual_lyt->addWidget(lb_quality);
+    qual_lyt->addWidget(ct_quality);
+    qual_lyt->addWidget(lb_scale);
+    qual_lyt->addWidget(ct_scale);
+    QHBoxLayout* rend_lyt = new QHBoxLayout();
+    rend_lyt->addLayout(rendall_gl);
+    rend_lyt->addWidget(pb_render);
+    QVBoxLayout* save_lyt = new QVBoxLayout();
+    save_lyt->addLayout(qual_lyt);
+    save_lyt->addLayout(rend_lyt);
 
-    QPushButton* pb_help = us_pushbutton("Help");
-    QPushButton* pb_close = us_pushbutton("Close");
+    pb_help = us_pushbutton("Help");
+    pb_close = us_pushbutton("Close");
     QHBoxLayout* close_lyt = new QHBoxLayout();
     close_lyt->addWidget(pb_help);
     close_lyt->addWidget(pb_close);
@@ -439,9 +454,9 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     tab1_lyt->addLayout(radial_lyt);
     tab1_lyt->addStretch(1);
 
-    QTabWidget *tabs = new QTabWidget();
+    tabs = new QTabWidget();
 //    tabs->setAutoFillBackground(true);
-    tabs->addTab(w_surface, tr("3D Plot"));
+    tabs->addTab(surfaceWgt, tr("3D Plot"));
     tabs->addTab(tab1, tr("Inspect Deviation"));
     tabs->tabBar()->setMinimumWidth(300);
     QStringList styleSheet;
@@ -450,19 +465,16 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     styleSheet << "QTabBar::tab:!selected {font-size: 9pt; font-weight: normal; color: black;}";
     tabs->setStyleSheet(styleSheet.join(" "));
 
-
     QVBoxLayout* left_lyt = new QVBoxLayout();
     int space = 1;
     left_lyt->addWidget(lb_scan_ctrl);
     left_lyt->addLayout(scan_lyt1);
     left_lyt->addLayout(scan_lyt2);
+    left_lyt->addLayout(mse_lyt);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_plot_ctrl);
-    left_lyt->addWidget(lb_selmode);    
-    left_lyt->addLayout(nosel_gl);
-    left_lyt->addLayout(point_gl);
-    left_lyt->addLayout(radial_gl);
-    left_lyt->addLayout(wavlth_gl);
+    left_lyt->addWidget(lb_selmode);
+    left_lyt->addLayout(select_lyt);
     left_lyt->addWidget(lb_wavl_rng);
     left_lyt->addLayout(wavl_lyt);
     left_lyt->addWidget(lb_radl_rng);
@@ -492,7 +504,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     this->setLayout(main_lyt);
 
     if (!graph->hasContext()) {
-        QMessageBox::warning(this, "Error!", "Couldn't initialize the OpenGL context.");
+        QMessageBox::warning(this, "Error!", "Couldn't initialize tnew_rpidhe OpenGL context.");
         this->close();
     }
 
@@ -500,11 +512,11 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
     connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
     connect(pb_camera, SIGNAL(clicked()), this, SLOT(resetCamera()));
-    connect(cb_theme, SIGNAL(currentIndexChanged(int)), this, SLOT(setTheme(int)));
+    connect(cb_theme, SIGNAL(currentTextChanged(QString)), this, SLOT(setTheme(QString)));
     connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
     connect(rb_surface_wire, SIGNAL(clicked()), this, SLOT(setSurfaceWire()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(pb_save, SIGNAL(clicked()), this, SLOT(saveImage()));
+    connect(pb_render, SIGNAL(clicked()), this, SLOT(renderImage()));
     connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
     connect(pb_G2R, SIGNAL(clicked()), this, SLOT(set_G2R()));
     connect(pb_DFLT, SIGNAL(clicked()), this, SLOT(set_DFLT()));
@@ -524,9 +536,14 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(pb_zAngle, SIGNAL(clicked()), this, SLOT(reset_zAngle()));
     connect(sli_radial, SIGNAL(valueChanged(int)), this, SLOT(new_rpoint(int)));
     connect(le_rpid, SIGNAL(returnPressed()), this, SLOT(new_rpid()));
+    connect(ckb_rendall, SIGNAL(stateChanged(int)), this, SLOT(render_option(int)));
 
+    get_minMaxMean();
 //    cb_scan->setCurrentIndex(scanId);
     newScan(scanId);
+    pb_render->setText(tr("Save Scan %1").arg(scanId + 1));
+    renderLoopState = true;
+    renderRunState = false;
 }
 
 US_MWL_SF_PLOT3D::~US_MWL_SF_PLOT3D()
@@ -535,30 +552,136 @@ US_MWL_SF_PLOT3D::~US_MWL_SF_PLOT3D()
 }
 
 
-void US_MWL_SF_PLOT3D::setTheme(int theme)
+void US_MWL_SF_PLOT3D::setTheme(const QString theme)
 {
-    graph->activeTheme()->setType(Q3DTheme::Theme(theme));
+    if (theme == "Qt")
+        graph->activeTheme()->setType(Q3DTheme::ThemeQt);
+    else if (theme == "Digia")
+        graph->activeTheme()->setType(Q3DTheme::ThemeDigia);
+    else if (theme == "Stone Moss")
+        graph->activeTheme()->setType(Q3DTheme::ThemeStoneMoss);
+    else if (theme == "Army Blue")
+        graph->activeTheme()->setType(Q3DTheme::ThemeArmyBlue);
+    else if (theme == "Retro")
+        graph->activeTheme()->setType(Q3DTheme::ThemeRetro);
+    else if (theme == "Isabelle")
+        graph->activeTheme()->setType(Q3DTheme::ThemeIsabelle);
+
     if (colorId == B2Y)
         set_B2Y();
     else if(colorId == G2R)
         set_G2R();
 }
 
-void US_MWL_SF_PLOT3D::saveImage(){
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image (*.png *.xpm *.jpg)"),
-                               US_Settings::resultDir(),
-                               tr("Images (*.bmp *.jpg *.jpeg *.png *.ppm *.xbm *.xpm)"));
-    if (fileName.size() == 0)
+void US_MWL_SF_PLOT3D::renderImage(){
+    if (renderRunState){
+        renderLoopState = false;
         return;
-    QImage image = graph->renderToImage(0, graph->size() * ct_scale->value());
-    int quality = qRound(ct_quality->value());
-    bool state = image.save(fileName, nullptr, quality);
-    if(! state)
-        QMessageBox::warning(this, tr("Error!"),
-                             tr("File storage error!\n"
-                                "Image file format not supported.\n"
-                                "Currently supported file formats:\n"
-                                "(bmp, jpg, jpeg, png, ppm, xbm, xpm)"));
+    }
+    if (ckb_rendall->isChecked()){
+        QString dir = QFileDialog::getExistingDirectory(this, tr("Choose a Directory"),
+                                                        US_Settings::resultDir(),
+                                                        QFileDialog::ShowDirsOnly
+                                                        | QFileDialog::DontResolveSymlinks);
+        if (dir.isEmpty())
+            return;
+        QDialog *bnameDialog = new QDialog();
+        bnameDialog->setWindowTitle("Define the Image Files' Basenames");
+        QLabel *lb_outDir = us_label(tr("Output Directory:"));
+        lb_outDir->setAlignment(Qt::AlignRight);
+        QLineEdit *le_outDir = us_lineedit(dir, 0, true);
+        QLabel *lb_bname = us_label(tr("Basename:"));
+        lb_bname->setAlignment(Qt::AlignRight);
+        QLineEdit *le_bname = us_lineedit("", 0, false);
+        QLabel *lb_format = us_label(tr("Format:"));
+        lb_format->setAlignment(Qt::AlignRight);
+        QComboBox *cb_format = us_comboBox();
+        QStringList formats = { "png", "jpg", "jpeg", "bmp", "ppm", "xbm", "xpm"};
+        cb_format->addItems(formats);
+        QPushButton *pb_apply = us_pushbutton("Apply");
+        QPushButton *pb_close = us_pushbutton("Close");
+        QGridLayout *lyt = new QGridLayout(bnameDialog);
+        lyt->addWidget(lb_outDir, 0, 0, 1, 1);
+        lyt->addWidget(le_outDir, 0, 1, 1, 3);
+        lyt->addWidget(lb_bname,  1, 0, 1, 1);
+        lyt->addWidget(le_bname,  1, 1, 1, 1);
+        lyt->addWidget(lb_format, 1, 2, 1, 1);
+        lyt->addWidget(cb_format, 1, 3, 1, 1);
+        lyt->addWidget(pb_close,  2, 2, 1, 1);
+        lyt->addWidget(pb_apply,  2, 3, 1, 1);
+        bnameDialog->setLayout(lyt);
+        connect(pb_apply, SIGNAL(clicked()), bnameDialog, SLOT(accept()));
+        connect(pb_close, SIGNAL(clicked()), bnameDialog, SLOT(reject()));
+        int state = bnameDialog->exec();
+        QString format = cb_format->currentText();
+        QString bname = le_bname->text();
+        QRegExp rx( "[A-Za-z0-9_-]" );
+        QString baseName;
+        int pos = 0;
+        int idx = rx.indexIn(bname, pos);
+        while (idx != -1) {
+            baseName = baseName.append(bname.at(idx));
+            pos = idx + 1;
+            idx = rx.indexIn(bname, pos);
+        }
+        if (bname != baseName)
+            QMessageBox::warning(this, tr("Warning!"),
+                                 tr("The new basename is\n%1").arg(baseName));
+        if (state == QDialog::Rejected){
+            return;
+        } else if (state == QDialog::Accepted){
+            if (le_bname->text().isEmpty()){
+                QMessageBox::warning(this, tr("Error!"),
+                                     tr("Empty Basename Error!"));
+                return;
+            }
+            enable_wgt(false);
+            QString style = tr("background-color: %1;");
+            QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+            pb_render->setText("Stop!");
+            pb_render->setStyleSheet(style.arg("red"));
+            renderRunState = true;
+            QCoreApplication::processEvents();
+            QString fn("%1-%2.%3");
+            for (int i = 0; i < nScans; i++){
+                cb_scan->setCurrentIndex(i);
+                QString fnum = QString::number(i + 1).rightJustified(3, '0');
+                QString fname = fn.arg(baseName, fnum, format);
+                QFileInfo finfo = QFileInfo(dir, fname);
+                qDebug() << finfo.absoluteFilePath();
+                QImage image = graph->renderToImage(0, graph->size() * ct_scale->value());
+                int quality = qRound(ct_quality->value());
+                image.save(finfo.absoluteFilePath(), nullptr, quality);
+                QCoreApplication::processEvents();
+                if (! renderLoopState)
+                    break;
+            }
+            renderRunState = false;
+            renderLoopState = true;
+            enable_wgt(true);
+            pb_render->setStyleSheet(style.arg(color.name()));
+            render_option(0);
+            scanId = nScans / 2;
+            cb_scan->setCurrentIndex(scanId);
+            QCoreApplication::processEvents();
+        }
+    } else {
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image (*.png *.xpm *.jpg)"),
+                                   US_Settings::resultDir(),
+                                   tr("Images (*.bmp *.jpg *.jpeg *.png *.ppm *.xbm *.xpm)"));
+        if (fileName.size() == 0)
+            return;
+        QImage image = graph->renderToImage(0, graph->size() * ct_scale->value());
+        int quality = qRound(ct_quality->value());
+        bool state = image.save(fileName, nullptr, quality);
+        if(! state)
+            QMessageBox::warning(this, tr("Error!"),
+                                 tr("File storage error!\n"
+                                    "Image file format not supported.\n"
+                                    "Currently supported file formats:\n"
+                                    "(bmp, jpg, jpeg, png, ppm, xbm, xpm)"));
+    }
+
 }
 
 void US_MWL_SF_PLOT3D::plot3d(){
@@ -566,10 +689,6 @@ void US_MWL_SF_PLOT3D::plot3d(){
     int np = idRP_h - idRP_l + 1;
     int nw = idWL_h - idWL_l + 1;
     dataArray->reserve(nw);
-    double min_dv =  1e20;
-    double max_dv = -1e20;
-    double min_dvns =  1e20;
-    double max_dvns = -1e20;
 
     for (int j = idWL_l ; j <= idWL_h ; j++) {
         QSurfaceDataRow *newRow = new QSurfaceDataRow(np);
@@ -577,13 +696,8 @@ void US_MWL_SF_PLOT3D::plot3d(){
         double wl = lambdaScaled.at(j);
         for (int i = idRP_l; i <= idRP_h; i++) {
             double rp = xvalsScaled.at(i);
-            double sdev = allSqErrScaled.at(scanId).at(i).at(j);
-            double sdev_ns = qPow(allErr.at(scanId).at(i).at(j), 2);
-            min_dv = qMin(min_dv, sdev);
-            max_dv = qMax(max_dv, sdev);
-            min_dvns = qMin(min_dvns, sdev_ns);
-            max_dvns = qMax(max_dvns, sdev_ns);
-            (*newRow)[index++].setPosition(QVector3D((float)rp, (float)sdev, (float)wl));
+            double sse = allData.at(scanId).at(i).at(j).last();
+            (*newRow)[index++].setPosition(QVector3D((float)rp, (float)sse, (float)wl));
         }
         *dataArray << newRow;
     }
@@ -595,7 +709,7 @@ void US_MWL_SF_PLOT3D::plot3d(){
     double max_rp = xvalsScaled.at(idRP_h);
 
     graph->axisX()->setRange(min_rp -padding, max_rp + padding);
-    graph->axisY()->setRange(min_dv -padding, max_dv + padding);
+    graph->axisY()->setRange(minSSE -padding, maxSSE + padding);
     graph->axisZ()->setRange(min_wl -padding, max_wl + padding);
 
     min_wl = ct_min_wl->value();
@@ -605,7 +719,7 @@ void US_MWL_SF_PLOT3D::plot3d(){
 
     CustomFormatter *formatX = new CustomFormatter(min_rp, max_rp);
     graph->axisX()->setFormatter(formatX);
-    CustomFormatter *formatY = new CustomFormatter(min_dvns, max_dvns);
+    CustomFormatter *formatY = new CustomFormatter(minSE, maxSE);
     graph->axisY()->setFormatter(formatY);
     CustomFormatter *formatZ = new CustomFormatter(min_wl, max_wl);
     graph->axisZ()->setFormatter(formatZ);
@@ -624,6 +738,8 @@ void US_MWL_SF_PLOT3D::newScan(int id){
     plot3d();
     pb_prev->setDisabled(scanId <= 0);
     pb_next->setDisabled(scanId >= (nScans - 1));
+    if (! renderRunState)
+        render_option(0);
 }
 
 void US_MWL_SF_PLOT3D::nextScan(){
@@ -704,6 +820,7 @@ void US_MWL_SF_PLOT3D::set_ct_rp(bool ascent){
     idRP_h = id_max;
     max = (double) xvals4ct.at(idRP_h) / 1000.0;
     ct_max_rp->setValue(max);
+    get_minMaxMean();
     plot3d();
     connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
     connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
@@ -748,6 +865,7 @@ void US_MWL_SF_PLOT3D::set_ct_wl(bool ascent){
     idWL_h = id_max;
     max = (double) lambda4ct.at(idWL_h) / 10.0;
     ct_max_wl->setValue(max);
+    get_minMaxMean();
     plot3d();
     connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
     connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
@@ -833,11 +951,13 @@ void US_MWL_SF_PLOT3D::plot2d(){
     double xvalue = (double) xvals4ct.at(rpId) / 1000.0;
     le_rpval->setText(QString::number(xvalue, 'f', 3));
     for (int i = 0; i < nWavelengths; ++i){
-        double val = allErr.at(scanId).at(rpId).at(i);
-        minDev = qMin(minDev, val);
-        maxDev = qMax(maxDev, val);
+        double raw = allData.at(scanId).at(rpId).at(i).at(0);
+        double fit = allData.at(scanId).at(rpId).at(i).at(1);
+        double error = fit - raw;
+        minDev = qMin(minDev, error);
+        maxDev = qMax(maxDev, error);
         xp[i] = (double) lambda4ct.at(i) / 10.0;
-        yp[i] = val;
+        yp[i] = error;
     }
     double minWl = xp[0] - 0.1;
     double maxWl = xp[nWavelengths - 1] + 0.1;
@@ -853,28 +973,26 @@ void US_MWL_SF_PLOT3D::plot2d(){
     grid = us_grid(errorPlot);
     errorPlot->replot();
 
-
-    int nf = allData.at(scanId).at(rpId).at(0).size() - 1;
-    QVector<double> od_org(nWavelengths, 0);
+    QVector<double> od_raw(nWavelengths, 0);
     QVector<double> od_fit(nWavelengths, 0);
-    double *op = od_org.data();
+    double *rp = od_raw.data();
     double *fp = od_fit.data();
     double minVal =  1e20;
     double maxVal = -1e20;
     for (int i = 0; i < nWavelengths; i++){
-        double org = allData.at(scanId).at(rpId).at(i).at(0);
-        op[i] = org;
-        double fit = allData.at(scanId).at(rpId).at(i).at(nf);
+        double raw = allData.at(scanId).at(rpId).at(i).at(0);
+        rp[i] = raw;
+        double fit = allData.at(scanId).at(rpId).at(i).at(1);
         fp[i] = fit;
-        double minV = qMin(org, fit);
-        double maxV = qMax(org, fit);
+        double minV = qMin(raw, fit);
+        double maxV = qMax(raw, fit);
         minVal = qMin(minVal, minV);
         maxVal = qMax(maxVal, maxV);
     }
     QwtPlotCurve* curve_org = us_curve( dataPlot,"Raw Data");
     pen_plot.setColor(Qt::green);
     curve_org->setPen( pen_plot );
-    curve_org->setSamples(xp, op, nWavelengths);
+    curve_org->setSamples(xp, rp, nWavelengths);
 
     QPen nopen = QPen(Qt::red, 0, Qt::NoPen);
     QwtSymbol *symbol = new QwtSymbol(
@@ -891,10 +1009,83 @@ void US_MWL_SF_PLOT3D::plot2d(){
     dataPlot->updateAxes();
     grid = us_grid(dataPlot);
     dataPlot->replot();
+}
 
+void US_MWL_SF_PLOT3D::get_minMaxMean(void){
+    meanSE = 0;
+    minSE  =  1e99;
+    minSSE =  1e99;
+    maxSE  = -1e99;
+    maxSSE = -1e99;
+    int n = 0;
+    for (int i = 0; i < nScans; i++){
+        for (int j = idRP_l; j <= idRP_h ; j++){
+            for (int k = idWL_l; k <= idWL_h; k++) {
+                double d1 = allData.at(i).at(j).at(k).at(0);
+                double d2 = allData.at(i).at(j).at(k).at(1);
+                double se = qPow(d1 - d2, 2);
+                double sse = allData.at(i).at(j).at(k).at(2);
+                meanSE += se;
+                maxSE = qMax(maxSE, se);
+                minSE = qMin(minSE, se);
+                maxSSE = qMax(maxSSE, sse);
+                minSSE = qMin(minSSE, sse);
+                n++;
+            }
+        }
+    }
+    meanSE /= n;
+    le_meanSE->setText(QString::number(meanSE));
+    le_minSE->setText(QString::number(minSE));
+    le_maxSE->setText(QString::number(maxSE));
+}
+
+
+void US_MWL_SF_PLOT3D::render_option(int){
+    int state = ckb_rendall->checkState();
+    if (state == Qt::Checked){
+        pb_render->setText("Render All Scans");
+    } else {
+        pb_render->setText(tr("Render Scan %1").arg(scanId + 1));
+    }
+}
+
+void US_MWL_SF_PLOT3D::enable_wgt(bool state){
+//    surfaceWgt->setEnabled(state);
+    tabs->setEnabled(state);
+    rb_surface->setEnabled(state);
+    rb_surface_wire->setEnabled(state);
+    rb_nosel->setEnabled(state);
+    rb_point->setEnabled(state);
+    rb_radial->setEnabled(state);
+    rb_lambda->setEnabled(state);
+    pb_next->setEnabled(state);
+    pb_prev->setEnabled(state);
+    pb_G2R->setEnabled(state);
+    pb_B2Y->setEnabled(state);
+    pb_DFLT->setEnabled(state);
+    pb_help->setEnabled(state);
+    pb_camera->setEnabled(state);
+    sli_xAngle->setEnabled(state);
+    sli_yAngle->setEnabled(state);
+    sli_zAngle->setEnabled(state);
+    sli_radial->setEnabled(state);
+    cb_scan->setEnabled(state);
+    cb_theme->setEnabled(state);
+    ct_min_rp->setEnabled(state);
+    ct_max_rp->setEnabled(state);
+    ct_min_wl->setEnabled(state);
+    ct_max_wl->setEnabled(state);
+    ct_quality->setEnabled(state);
+    ct_scale->setEnabled(state);
+    ckb_rendall->setEnabled(state);
 
 }
 
+void US_MWL_SF_PLOT3D::closeEvent(QCloseEvent *event){
+    renderLoopState = false;
+    event->accept();
+}
 /////
 /////
 
@@ -920,49 +1111,51 @@ void CustomFormatter::populateCopy(QValue3DAxisFormatter &copy) const {
     customFormatter->maxVal = maxVal;
 }
 
-//void CustomFormatter::recalculate() {
-//    int segmentCount = axis()->segmentCount();
-//    int subGridCount = axis()->subSegmentCount() - 1;
-//    QString labelFormat =  axis()->labelFormat();
+void CustomFormatter::recalculate() {
+    int segmentCount = axis()->segmentCount();
+    int subGridCount = axis()->subSegmentCount() - 1;
+    QString labelFormat =  axis()->labelFormat();
 
-//    gridPositions().resize(segmentCount + 1);
-//    subGridPositions().resize(segmentCount * subGridCount);
+    gridPositions().resize(segmentCount + 1);
+    subGridPositions().resize(segmentCount * subGridCount);
 
-//    labelPositions().resize(segmentCount + 1);
-//    labelStrings().clear();
-//    labelStrings().reserve(segmentCount + 1);
+    labelPositions().resize(segmentCount + 1);
+    labelStrings().clear();
+    labelStrings().reserve(segmentCount + 1);
 
-//    qreal segmentStep = 1.0 / qreal(segmentCount);
-//    qreal subSegmentStep = 0;
-//    if (subGridCount > 0)
-//        subSegmentStep = segmentStep / qreal(subGridCount + 1);
+    qreal segmentStep = 1.0 / qreal(segmentCount);
+    qreal subSegmentStep = 0;
+    if (subGridCount > 0)
+        subSegmentStep = segmentStep / qreal(subGridCount + 1);
 
-//    qreal labelValue;
-//    QVector<qreal> values(segmentCount + 1);
+    qreal labelValue;
+    QVector<qreal> values(segmentCount + 1);
 
 //    qreal delta = (maxVal - minVal) / segmentCount;
-//    for (int i = 0; i < segmentCount; i++) {
+    qreal delta = 1 / segmentCount;
+    for (int i = 0; i < segmentCount; i++) {
 //        values[i] = minVal + i * delta;
-//    }
-//    values[segmentCount] = maxVal;
+        values[i] = i * delta;
+    }
+    values[segmentCount] = maxVal;
+    values[segmentCount] = 1.0;
 
-//    for (int i = 0; i < segmentCount; i++) {
-//        qreal gridValue = segmentStep * qreal(i);
-//        gridPositions()[i] = float(gridValue);
-//        labelPositions()[i] = float(gridValue);
-//        labelValue = values.at(i);
-//        labelStrings() << stringForValue(labelValue, labelFormat);
-//        if (subGridPositions().size()) {
-//            for (int j = 0; j < subGridCount; j++)
-//                subGridPositions()[i * subGridCount + j] = gridValue + subSegmentStep * (j + 1);
-//        }
-//    }
-//    gridPositions()[segmentCount] = 1.0f;
-//    labelPositions()[segmentCount] = 1.0f;
-//    labelValue = values.at(segmentCount);
-//    labelStrings() << stringForValue(labelValue, labelFormat);
-
-//}
+    for (int i = 0; i < segmentCount; i++) {
+        qreal gridValue = segmentStep * qreal(i);
+        gridPositions()[i] = float(gridValue);
+        labelPositions()[i] = float(gridValue);
+        labelValue = values.at(i);
+        labelStrings() << stringForValue(labelValue, labelFormat);
+        if (subGridPositions().size()) {
+            for (int j = 0; j < subGridCount; j++)
+                subGridPositions()[i * subGridCount + j] = gridValue + subSegmentStep * (j + 1);
+        }
+    }
+    gridPositions()[segmentCount] = 1.0f;
+    labelPositions()[segmentCount] = 1.0f;
+    labelValue = values.at(segmentCount);
+    labelStrings() << stringForValue(labelValue, labelFormat);
+}
 
 QString CustomFormatter::stringForValue(qreal value, const QString &format) const {
 //    Q_UNUSED(format)

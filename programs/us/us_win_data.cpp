@@ -21,7 +21,7 @@ namespace US_WinData
 
     P_GLOBFITEQ,                                // Global Fit Menu
 
-    P_GETDATA,      P_GMPRPT,       P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
+    P_ABDE_FIT,     P_GETDATA,      P_GMPRPT,       P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
@@ -160,6 +160,12 @@ namespace US_WinData
       QObject::tr( "Global Equilibrium Fit Program" )
     },
 
+    { P_ABDE_FIT,  1, 0, "us_abde",
+      QObject::tr( "Loading ABDE Fitter" ),
+      QObject::tr( "Managing ABDE Fitter" )
+    },
+
+    
     { P_GETDATA,  1, 0, "us_comproject_academic",
       QObject::tr( "Acquisition Experimental Data Routine" ),
       QObject::tr( "Acquisition Experimental Data Program" )
@@ -276,6 +282,7 @@ namespace US_WinData
       QObject::tr( "Managing ABDE Analysis Program" )
     },
 
+ 
     { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
       QObject::tr( "Loading View Multiwavelength Data"    ),
       QObject::tr( "View Multiwavelength Data Program"    )

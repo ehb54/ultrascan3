@@ -2256,6 +2256,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
+	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
 	 }
      }
    else
@@ -3151,7 +3152,6 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
 
    sdiag->show();
    
-
 }
 
 void US_ReportStageGui::resizeEvent(QResizeEvent *event)

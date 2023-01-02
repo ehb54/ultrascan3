@@ -68,6 +68,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       bool           autoflow_da;  // If called by non-GMP us_comproject (DA)
       bool           autoflow_gmp_report;
       bool           set_unset_failed_button_autoflow;
+      bool           autoflow_dev;
       
       Qt::SortOrder  sort_ord;    //!< Default sort order flag
       int            sort_col;    //!< Default sort column

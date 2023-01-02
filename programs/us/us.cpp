@@ -226,7 +226,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
   addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
-  
+
+  addMenu(  P_ABDE_FIT , tr( "ABDE Fitter"                       ), utilities );
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
   addMenu(  P_GMPRPT   , tr( "&GMP Report Generator"             ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
