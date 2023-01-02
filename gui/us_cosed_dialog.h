@@ -20,8 +20,7 @@ public:
 private:
    double* density;
    double* viscosity;
-   QVBoxLayout *mainLayout;
-   QHBoxLayout *btnsLayout;
+   QGridLayout *main;
    QMap<QString, US_CosedComponent> base_comps;
 
    QLabel *lb_description;
@@ -48,13 +47,14 @@ public:
                               US_CosedComponent* comp_);
 
 private:
-   QVBoxLayout *mainLayout;
-   QHBoxLayout *btnsLayout;
+   QGridLayout* main;
    QMap<QString, US_CosedComponent> base_comps;
    QList<US_CosedComponent> excess_comps;
    US_CosedComponent* comp;
 
    QLabel *lb_description;
+   QLabel *lb_dens;
+   QLabel *lb_visc;
    QLabel *lb_density1;
    QLabel *lb_viscosity1;
    QLineEdit *le_density1;

@@ -16,10 +16,9 @@ US_BaseBufferRequester::US_BaseBufferRequester(QMap<QString, US_CosedComponent> 
    setWindowTitle(tr("Cosedimenting Buffer Loader Dialog"));
    setPalette(US_GuiSettings::frameColor());
 
-   mainLayout = new QVBoxLayout(this);
-   btnsLayout = new QHBoxLayout();
-   mainLayout->setSpacing(2);
-   mainLayout->setContentsMargins(2, 2, 2, 2);
+   main = new QGridLayout(this);
+   main->setSpacing(2);
+   main->setContentsMargins(2, 2, 2, 2);
    // construct the base buffer description
    QString buffer_list;
    for (int i = 0; i < base_comps.count() - 1; i++) {
@@ -41,18 +40,18 @@ US_BaseBufferRequester::US_BaseBufferRequester(QMap<QString, US_CosedComponent> 
    lb_viscosity = us_label(tr("Viscosity (20") + DEGC + tr(", cP):"));
    le_density = us_lineedit("");
    le_viscosity = us_lineedit("");
-   mainLayout->addWidget(lb_description);
-   mainLayout->addWidget(lb_density);
-   mainLayout->addWidget(le_density);
-   mainLayout->addWidget(lb_viscosity);
-   mainLayout->addWidget(le_viscosity);
+   int row = 0;
+   main->addWidget(lb_description, row++, 0, 1, 4);
+   main->addWidget(lb_density, row, 0, 1, 2);
+   main->addWidget(le_density,row++, 2, 1, 2);
+   main->addWidget(lb_viscosity,row, 0, 1, 2);
+   main->addWidget(le_viscosity,row++, 2, 1, 2);
 
 
    QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
    pb_accept = us_pushbutton(tr("Accept"));
-   btnsLayout->addWidget(pb_cancel);
-   btnsLayout->addWidget(pb_accept);
-   mainLayout->addLayout(btnsLayout);
+   main->addWidget(pb_cancel, row, 0, 1,2);
+   main->addWidget(pb_accept, row, 2, 1, 2);
    pb_accept->setEnabled(false);
    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancelled()));
    connect(pb_accept, SIGNAL(clicked()), this, SLOT(accept()));
@@ -92,10 +91,9 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    setWindowTitle(tr("Cosedimenting Component Loader Dialog"));
    setPalette(US_GuiSettings::frameColor());
 
-   mainLayout = new QVBoxLayout(this);
-   btnsLayout = new QHBoxLayout();
-   mainLayout->setSpacing(2);
-   mainLayout->setContentsMargins(2, 2, 2, 2);
+   main = new QGridLayout(this);
+   main->setSpacing(2);
+   main->setContentsMargins(2, 2, 2, 2);
    // construct the base buffer description
    QString buffer_list;
    for (int i = 0; i < base_comps.count() - 1; i++) {
@@ -136,6 +134,8 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    lb_description->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
    lb_sedimentation = us_label(tr("Sedimentation coefficient (20") + DEGC + tr(", S):"));
    lb_diffusion = us_label(tr("Diffusion Coefficient (20") + DEGC + tr(", cm<sup>2</sup>/s):"));
+   lb_visc = us_banner("Viscosity Coefficients");
+   lb_dens = us_banner("Density Coefficients");
    le_sedimentation = us_lineedit("");
    le_diffusion = us_lineedit("");
    le_density1 = us_lineedit("");
@@ -160,39 +160,40 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    lb_viscosity4 = us_label(tr("Viscosity coefficient 4"));
    lb_viscosity5 = us_label(tr("Viscosity coefficient 5"));
 
-
-   mainLayout->addWidget(lb_description);
-   mainLayout->addWidget(lb_sedimentation);
-   mainLayout->addWidget(le_sedimentation);
-   mainLayout->addWidget(lb_diffusion);
-   mainLayout->addWidget(le_diffusion);
-   mainLayout->addWidget(lb_density1);
-   mainLayout->addWidget(le_density1);
-   mainLayout->addWidget(lb_density2);
-   mainLayout->addWidget(le_density2);
-   mainLayout->addWidget(lb_density3);
-   mainLayout->addWidget(le_density3);
-   mainLayout->addWidget(lb_density4);
-   mainLayout->addWidget(le_density4);
-   mainLayout->addWidget(lb_density5);
-   mainLayout->addWidget(le_density5);
-   mainLayout->addWidget(lb_viscosity1);
-   mainLayout->addWidget(le_viscosity1);
-   mainLayout->addWidget(lb_viscosity2);
-   mainLayout->addWidget(le_viscosity2);
-   mainLayout->addWidget(lb_viscosity3);
-   mainLayout->addWidget(le_viscosity3);
-   mainLayout->addWidget(lb_viscosity4);
-   mainLayout->addWidget(le_viscosity4);
-   mainLayout->addWidget(lb_viscosity5);
-   mainLayout->addWidget(le_viscosity5);
+   int row = 0;
+   main->addWidget(lb_description, row++, 0, 1, 4);
+   main->addWidget(lb_sedimentation, row, 0, 1, 2);
+   main->addWidget(le_sedimentation, row++, 2, 1, 2);
+   main->addWidget(lb_diffusion, row, 0, 1, 2);
+   main->addWidget(le_diffusion, row++, 2, 1, 2);
+   main->addWidget(lb_dens, row++, 0, 1, 4);
+   main->addWidget(lb_density1, row, 0, 1, 2);
+   main->addWidget(le_density1, row++, 2, 1, 2);
+   main->addWidget(lb_density2, row, 0, 1, 2);
+   main->addWidget(le_density2, row++, 2, 1, 2);
+   main->addWidget(lb_density3, row, 0, 1, 2);
+   main->addWidget(le_density3, row++, 2, 1, 2);
+   main->addWidget(lb_density4, row, 0, 1, 2);
+   main->addWidget(le_density4, row++, 2, 1, 2);
+   main->addWidget(lb_density5, row, 0, 1, 2);
+   main->addWidget(le_density5, row++, 2, 1, 2);
+   main->addWidget(lb_visc, row++, 0, 1, 4);
+   main->addWidget(lb_viscosity1, row, 0, 1, 2);
+   main->addWidget(le_viscosity1, row++, 2, 1, 2);
+   main->addWidget(lb_viscosity2, row, 0, 1, 2);
+   main->addWidget(le_viscosity2, row++, 2, 1, 2);
+   main->addWidget(lb_viscosity3, row, 0, 1, 2);
+   main->addWidget(le_viscosity3, row++, 2, 1, 2);
+   main->addWidget(lb_viscosity4, row, 0, 1, 2);
+   main->addWidget(le_viscosity4, row++, 2, 1, 2);
+   main->addWidget(lb_viscosity5, row, 0, 1, 2);
+   main->addWidget(le_viscosity5, row++, 2, 1, 2);
 
 
    QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
    pb_accept = us_pushbutton(tr("Accept"));
-   btnsLayout->addWidget(pb_cancel);
-   btnsLayout->addWidget(pb_accept);
-   mainLayout->addLayout(btnsLayout);
+   main->addWidget(pb_cancel, row, 0, 1, 2);
+   main->addWidget(pb_accept, row, 2, 1, 2);
    pb_accept->setEnabled(false);
    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancelled()));
    connect(pb_accept, SIGNAL(clicked()), this, SLOT(accept()));
