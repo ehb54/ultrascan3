@@ -2212,7 +2212,12 @@ void US_AnaprofPanGen::update_gen_report_settings( QString& mask_updated )
 void US_AnaprofPanGen::set_combplot_parms( ) 
 {
   qDebug() << "currProf->combPlots_parms --  " << currProf->combPlots_parms;
+  qDebug() << "loadProf->combPlots_parms --  " << mainw->loadProf.combPlots_parms;
 
+  if ( currProf->combPlots_parms == mainw->loadProf.combPlots_parms )
+    qDebug() << "They are EQUAL!";
+  
+  
   //collect all 'type-method' combinations across all triples:
   QStringList type_method_list;
   //int nchna   = currProf->pchans.count();

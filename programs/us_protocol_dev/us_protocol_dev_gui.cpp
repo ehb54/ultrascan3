@@ -43,7 +43,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   main->setSpacing         ( 2 );
   main->setContentsMargins ( 2, 2, 2, 2 );
   
-  gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
+  gen_banner = us_banner( tr( "UltraScan Protocol Development Module, v. 0.1" ) );
   
   //set font
   QFont font_gen = gen_banner->font();
@@ -190,6 +190,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
   
   connect( this, SIGNAL( pass_used_instruments( QMap < QString, QString > & ) ), epanExp, SLOT( pass_used_instruments( QMap < QString, QString > & )  ) );
+  connect( epanExp, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
   
   //connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
   //connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
@@ -203,7 +204,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   //connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
   
   //connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
-  //connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
+  connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
   //connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
   //connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
@@ -726,14 +727,21 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-
+  
   QString autoflow_id_selected("");
   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
     {
       autoflow_id_selected  = autoflowdataHistory[ prx ][ 0 ];
     }
+  //else if ( pdiag_autoflowHistory->exec() == QDialog::Rejected )
   else
-    return;
+    {
+      qDebug() << "Closing main pdiag_autoflow dialog && rebuilding: initAutoflowPanel() -> initRecordsDialog() -> load_autoflowHistory_dialog()";
+      //rebuild list of runs & open Run Manager 
+      initAutoflowPanel();
+      qApp->processEvents();
+      return;
+    }
 
   // Get detailed info on the autoflow record
   QMap < QString, QString > protocol_details;
@@ -826,6 +834,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        	  msg_norec->close();
 
 	  //CALL list of autoflowHistory records:
+	  //DEBUG
+	  qDebug() << "Re-opening HISTORY RECORDS Dialog!!!"; 
 	  load_autoflowHistory_dialog();
 	  
 	  //emit define_new_experiment_init( occupied_instruments );
@@ -894,7 +904,10 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString autoflow_id_selected("");
   
   if ( pdiag_autoflow->exec() == QDialog::Accepted )
-    autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+    {
+      autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+      qDebug() << "Accepted autoflowID: -- " << autoflow_id_selected;
+    }
   else
     {
       //ALEXEY: define what to do if some Optima(s) are occupied
@@ -907,8 +920,12 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	{
 	  qDebug() << "No occuied instruments (No LIVE_UPDATE status)";
 
+	  //HERE; check if there are still autoflow_records & it's not a spurious reinitialization of autoflowHistoryDalog!!
+	  int actual_autoflow_records = get_autoflow_records();
+	  qDebug() << "Actual Autoflow_Reconds #: " << actual_autoflow_records;
 	  //CALL dialog for autolfowHistory records
-	  load_autoflowHistory_dialog();
+	  if ( actual_autoflow_records > 0  )
+	    load_autoflowHistory_dialog();
 	  
 	  //emit define_new_experiment_init( occupied_instruments );
 	  return;
@@ -1125,7 +1142,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
       initMsgNorecDelOpen = true;
 
       //pdiag_autoflow->reject();
-      pdiag_autoflow->close();
+      pdiag_autoflow->close();        // HERE - it triggers ::initAutolfowPanel() -> ::load_autoflowHistrory_dialog()!!!
+      qDebug() << "DELETION of LAST autoflow record: CLOSING pdiag_autoflow dialog && trigering ::initAutolfowPanel() -> ::load_autoflowHistrory_dialog()!!!";
       qApp->processEvents();
       
       qDebug() << "Was pdiag closed ?? ";
@@ -1153,6 +1171,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
 	  msg_norec_del->close();
 
 	  //CALL dialog for autoflowHistory records
+	  qDebug() << "AFTER DELETION of LAST autoflow record: Calling load_autoflowHistory_dialog() -- ";
 	  load_autoflowHistory_dialog();
 	  
 	  //emit define_new_experiment_init( occupied_instruments );
@@ -1281,6 +1300,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
   if( type == "HISTORY" )
     qry << "get_autoflow_history_desc";
 
+  qDebug() << "In list_all_autoflow_records() query -- " << qry;
+    
   dbP->query( qry );
 
   if ( dbP->lastErrno() != US_DB2::OK )
@@ -1403,11 +1424,13 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
    QStringList qry;
 
    if ( type == "DEV" ) 
-     qry << "read_autoflow_dev_record";
+     qry << "read_autoflow_record";
    if ( type == "HISTORY" )
      qry << "read_autoflow_history_record";
    
    qry << QString::number( autoflowID );
+
+   qDebug() << "In read_autoflow_record() Query -- " << qry;
    
    db->query( qry );
 
@@ -1440,6 +1463,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
+	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
 	 }
      }
    else
@@ -1549,6 +1573,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( this, SIGNAL( define_used_instruments( QMap < QString, QString > & ) ), sdiag, SLOT( accept_passed_protocol_details( QMap < QString, QString > & ) ) );
 
    connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
+
+   connect( sdiag, SIGNAL( to_editing_data( QMap < QString, QString > & ) ),
+	    this,  SLOT( to_editing (  QMap < QString, QString > &) ) );
    
    // connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
    // 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
@@ -1601,6 +1628,11 @@ void US_ExperGui::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
+
+void US_ExperGui::to_editing( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_editing( protocol_details );
+}
 
 void US_ExperGui::pass_used_instruments( QMap < QString, QString > & protocol_details )
 {

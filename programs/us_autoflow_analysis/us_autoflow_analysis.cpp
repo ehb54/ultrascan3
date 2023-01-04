@@ -56,7 +56,11 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   treeWidget->headerItem()->setText(1, "Analysis Stages");
 
   panel->addWidget(treeWidget);
-
+  //QScroller *scroller = QScroller::scroller(treeWidget);
+  //QScroller *scroller = QScroller::scroller(treeWidget->viewport());
+  //scroller->grabGesture(treeWidget, QScroller::MiddleMouseButtonGesture);
+  treeWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  
   setMinimumSize( 950, 450 );
   adjustSize();
 
@@ -64,7 +68,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // // // ---- Testing ----
+  // // // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
 
 
@@ -87,7 +91,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   
   // initPanel( protocol_details );
 
-  // -----------------
+  // // -----------------
 
 }
 

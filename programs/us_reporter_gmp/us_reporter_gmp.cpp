@@ -5390,10 +5390,25 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
     {
       QString filename = PlotsFilenames[ i ];
       QString label = "";
-      
-      html_assembled   += "    <div><img src=\"" + filename 
-	+ "\" alt=\"" + label + "\"/></div>\n\n";
 
+      /* for Combined Plots 
+
+	 <img style='height: 100%; width: 100%; object-fit: contain'/>
+	 <img style='height: 100%; width: 100%; object-fit: cover'/>
+	 <img style='max-height: 50%; max-width: 100%;'/>
+       */
+      
+      // html_assembled   += "    <div><img style=\"height: 50px; width: 100px\" src=\"" + filename 
+      // 	+ "\" alt=\"" + label + "\"/></div>\n\n";
+
+      html_assembled   += "    <div><img src=\"" + filename 
+       	+ "\" alt=\"" + label;
+
+      if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
+	html_assembled  += "\"height=\"500\" width=\"500";
+
+      html_assembled   += "\"/></div>\n\n";
+      
       html_assembled   += "<br>";
 
       //add custom legen for combined plots
