@@ -2848,18 +2848,18 @@ void US_Hydrodyn::hard_coded_defaults()
    grid.enable_asa = true;   // true: enable asa
    grid.equalize_radii_constant_volume = false;
 
-   misc.hydrovol = 24.041;
-   misc.compute_vbar = true;
-   misc.vbar = 0.72;
+   misc.hydrovol         = 24.041;
+   misc.compute_vbar     = true;
+   misc.vbar             = 0.72;
    misc.vbar_temperature = 20.0;
-   misc.pb_rule_on = true;
-   misc.avg_radius = 1.68;
-   misc.avg_mass = 16.0;
-   misc.avg_num_elect   = 7.717;
-   misc.avg_protons     = 7.717;
-   misc.avg_volume = 15.3;
-   misc.avg_vbar = 0.72;
-   overlap_tolerance = 0.001;
+   misc.pb_rule_on       = true;
+   misc.avg_radius       = 1.683;
+   misc.avg_mass         = 14.515;
+   misc.avg_num_elect    = 7.717;
+   misc.avg_protons      = 7.717;
+   misc.avg_volume       = 15.3;
+   misc.avg_vbar         = 0.72;
+   overlap_tolerance     = 0.001;
 
    hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
 
