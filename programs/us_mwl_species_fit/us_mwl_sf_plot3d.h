@@ -118,8 +118,6 @@ private:
     QSurfaceDataProxy *dataProxy;
     QSurface3DSeries *dataSeries;
 
-    QRadioButton *rb_surface;
-    QRadioButton *rb_surface_wire;
     QRadioButton *rb_nosel;
     QRadioButton *rb_point;
     QRadioButton *rb_radial;
@@ -146,17 +144,16 @@ private:
 
     QLineEdit *le_rt_mean;
     QLineEdit *le_rt_median;
-    QLineEdit *le_rt_min;
-    QLineEdit *le_rt_max;
+    QLineEdit *le_rt_np;
     QLineEdit *le_rt_nruns;
     QLineEdit *le_rt_nneg;
     QLineEdit *le_rt_npos;
     QLineEdit *le_rt_zstat;
     QLineEdit *le_rt_pval;
     QLineEdit *le_rt_zcrit;
-    QLineEdit *le_rt_lower;
-    QLineEdit *le_rt_upper;
+    QLineEdit *le_rt_region;
     QLabel *lb_rt_rstate;
+    QLabel *lb_runs_test;
 
     QLineEdit *le_rpval;
     QLineEdit *le_rpid;
@@ -190,8 +187,6 @@ private slots:
     void nextScan(void);
     void prevScan(void);
     void resetCamera(int);
-    void setSurfaceWire(void);
-    void setSurface(void);
     void set_B2Y(void);
     void set_G2R(void);
     void set_DFLT(void);

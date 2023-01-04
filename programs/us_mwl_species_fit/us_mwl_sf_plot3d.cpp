@@ -34,7 +34,7 @@ void SFData::computeMSE(){
 
 US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_WidgetsDialog(w)
 {
-    setWindowTitle("Species Fit Deviation Plot");
+    setWindowTitle("Spectral Decomposition Residual Plot");
     setPalette( US_GuiSettings::frameColorDefault() );
     nScans = spFitData.includedScans.size();
     scanId = nScans / 2;
@@ -123,6 +123,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     dataProxy = new QSurfaceDataProxy();
     dataSeries = new QSurface3DSeries(dataProxy);
     dataSeries->setFlatShadingEnabled(true);
+    dataSeries->setDrawMode(QSurface3DSeries::DrawSurface);
     colorId = G2R;
 
     xAngle = 30;
@@ -134,12 +135,12 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     graph->setAxisY(new QValue3DAxis);
     graph->setAxisZ(new QValue3DAxis);
     graph->addSeries(dataSeries);
-    graph->axisX()->setTitle("Radial Points (cm)");
+    graph->axisX()->setTitle("Radius (cm)");
     graph->axisX()->setTitleVisible(true);
     graph->axisX()->setLabelFormat("%.3f");
     graph->axisX()->setLabelAutoRotation(xAngle);
 
-    graph->axisY()->setTitle("Absolute OD Error");
+    graph->axisY()->setTitle("Residual (OD)");
     graph->axisY()->setTitleVisible(true);
     graph->axisY()->setLabelFormat("%.1e");
     graph->axisY()->setLabelAutoRotation(yAngle);
@@ -183,11 +184,11 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 
     QGridLayout* mse_lyt = new QGridLayout();
 //    QLabel* lb_se = us_banner("Squared Error Data");
-    QLabel* lb_mse = us_label("Root Mean Squared Error:");
+    QLabel* lb_mse = us_label("Root-Mean-Square Deviation:");
     lb_mse->setAlignment(Qt::AlignRight);
-    QLabel* lb_minse = us_label("Minimum Error:");
+    QLabel* lb_minse = us_label("The Largest Negative Residual:");
     lb_minse->setAlignment(Qt::AlignRight);
-    QLabel* lb_maxse = us_label("Maximum Error:");
+    QLabel* lb_maxse = us_label("The Largest Positive Residual:");
     lb_maxse->setAlignment(Qt::AlignRight);
     le_RMSE = us_lineedit(0, 0, true);
     le_minErr = us_lineedit(0, 0, true);
@@ -201,7 +202,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 
     QLabel* lb_plot_ctrl = us_banner("3D Plot Control");
     ckb_plotAbs = new QCheckBox();
-    QGridLayout *plotAbs_gl = us_checkbox("Plot Absolute Errors", ckb_plotAbs, false);
+    QGridLayout *plotAbs_gl = us_checkbox("Plot Magnitude of Residuals", ckb_plotAbs, false);
 
     QLabel* lb_selmode = us_label("Selection Mode");
     lb_selmode->setAlignment(Qt::AlignCenter);
@@ -213,7 +214,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     QGridLayout *point_gl = us_radiobutton("Point", rb_point, false);
 
     rb_radial = new QRadioButton();
-    QGridLayout *radial_gl = us_radiobutton("Radial Slice", rb_radial, false);
+    QGridLayout *radial_gl = us_radiobutton("Radius Slice", rb_radial, false);
 
     rb_lambda = new QRadioButton();
     QGridLayout *wavlth_gl = us_radiobutton("Lambda Slice", rb_lambda, false);
@@ -253,7 +254,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     wavl_lyt->addWidget(lb_wavl_to, 1, 0, 1, 1);
     wavl_lyt->addWidget(ct_max_wl,  1, 1, 1, 1);
 
-    QLabel* lb_radl_rng = us_label("Radial Range (cm)");
+    QLabel* lb_radl_rng = us_label("Radius Range (cm)");
     lb_radl_rng->setAlignment(Qt::AlignCenter);
     QLabel* lb_radl_fr = us_label("From:");
     lb_radl_fr->setAlignment(Qt::AlignRight);
@@ -342,25 +343,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     color_lyt->addWidget(pb_G2R);
     color_lyt->addWidget(pb_DFLT);
 
-    QLabel* lb_draw_mode = us_label("Draw Mode:");
-    rb_surface = new QRadioButton();
-    QGridLayout *surface_gl = us_radiobutton("Surface", rb_surface, true);
-    rb_surface_wire = new QRadioButton();
-    QGridLayout *surface_wire_gl = us_radiobutton("Surface-Wire", rb_surface_wire, false);
-    QHBoxLayout* draw_mode_lyt = new QHBoxLayout();
-    draw_mode_lyt->addWidget(lb_draw_mode);
-    draw_mode_lyt->addLayout(surface_gl);
-    draw_mode_lyt->addLayout(surface_wire_gl);
-    setSurface();
-
-    QButtonGroup *draw_btng = new QButtonGroup();
-    draw_btng->addButton(rb_surface);
-    draw_btng->addButton(rb_surface_wire);
-
     QLabel* lb_angle = us_label("Rotate Axis Labels");
     lb_angle->setAlignment(Qt::AlignCenter);
 
-    QLabel* lb_xAngle = us_label("Radial:");
+    QLabel* lb_xAngle = us_label("Radius:");
     lb_xAngle->setAlignment(Qt::AlignRight);
     sli_xAngle = new QSlider(Qt::Horizontal);
     sli_xAngle->setMinimum(0);
@@ -368,7 +354,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     sli_xAngle->setValue(xAngle);
     QPushButton* pb_xAngle = us_pushbutton("reset", true, -1);
 
-    QLabel* lb_yAngle = us_label("Deviation:");
+    QLabel* lb_yAngle = us_label("Residual:");
     lb_yAngle->setAlignment(Qt::AlignRight);
     sli_yAngle = new QSlider(Qt::Horizontal);
     sli_yAngle->setMinimum(0);
@@ -439,7 +425,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     dataPlot->insertLegend( legend , QwtPlot::TopLegend);
 
     US_Plot* us_devPlot = new US_Plot(errorPlot, tr(""),
-                                      tr( "Wavelength (nm)" ), tr( "Deviation" ));
+                                      tr( "Wavelength (nm)" ), tr( "Residual" ));
 //    tab0_plotRD->setMinimumSize( 600, 400 );
     errorPlot->setMaximumHeight(250);
     errorPlot->enableAxis( QwtPlot::xBottom, true );
@@ -447,7 +433,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     errorPlot->setCanvasBackground(QBrush(Qt::black));
     grid = us_grid(errorPlot);
 
-    QLabel* lb_radial = us_label("Radial Position (cm):");
+    QLabel* lb_radial = us_label("Radius (cm):");
     lb_radial->setAlignment(Qt::AlignRight);
     le_rpval = us_lineedit("", 0, true);
     le_rpval->setMaximumWidth(50);
@@ -468,43 +454,46 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     radial_lyt->addWidget(le_rpid);
     radial_lyt->addStretch(1);
 
-    QLabel *lb_runs_test = us_banner("Wald-Wolfowitz Runs Test Statistics");
-    QLabel *lb_rt_mean = us_label("Mean:");
-    QLabel *lb_rt_median = us_label("Median:");
-    QLabel *lb_rt_min = us_label("Minimum:");
-    QLabel *lb_rt_max = us_label("Maximum:");
+    lb_runs_test = us_banner("Runs Test Statistics for the Radius");
+    QLabel *lb_rt_mean = us_label("Average Value of Residuals:");
+//    lb_rt_mean->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_median = us_label("Median Value of Residuals:");
+//    lb_rt_median->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_np = us_label("Number of Residuals:");
+//    lb_rt_np->setAlignment(Qt::AlignRight);
     QLabel *lb_rt_nruns = us_label("No. Runs:");
+//    lb_rt_nruns->setAlignment(Qt::AlignRight);
     QLabel *lb_rt_nneg = us_label("No. Negatives:");
+//    lb_rt_nneg->setAlignment(Qt::AlignRight);
     QLabel *lb_rt_npos = us_label("No. Positives:");
-    QLabel *lb_rt_zstat = us_label("Test Statistic:");
+//    lb_rt_npos->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_zstat = us_label("Test Statistics:");
+//    lb_rt_zstat->setAlignment(Qt::AlignRight);
     QLabel *lb_rt_pval = us_label("Test p-value:");
+//    lb_rt_pval->setAlignment(Qt::AlignRight);
     QLabel *lb_rt_zcrit = us_label("Critical Value:");
-    QLabel *lb_rt_lower = us_label("Lower-Tail Critical Value:");
-    QLabel *lb_rt_upper = us_label("Upper-Tail Critical Value:");
+//    lb_rt_zcrit->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_region = us_label("Random Region of the No. Runs:");
+//    lb_rt_region->setAlignment(Qt::AlignRight);
     le_rt_mean   = us_lineedit("", 0, true);
     le_rt_median = us_lineedit("", 0, true);
-    le_rt_min = us_lineedit("", 0, true);
-    le_rt_max = us_lineedit("", 0, true);
+    le_rt_np = us_lineedit("", 0, true);
     le_rt_nruns  = us_lineedit("", 0, true);
     le_rt_nneg   = us_lineedit("", 0, true);
     le_rt_npos   = us_lineedit("", 0, true);
     le_rt_zstat  = us_lineedit("", 0, true);
     le_rt_pval   = us_lineedit("", 0, true);
     le_rt_zcrit  = us_lineedit("", 0, true);
-    le_rt_lower  = us_lineedit("", 0, true);
-    le_rt_upper  = us_lineedit("", 0, true);
-
-    pb_plotPixMap = us_pushbutton("Plot PixMap (All Scans)");
+    le_rt_region  = us_lineedit("", 0, true);
+    pb_plotPixMap = us_pushbutton("Plot PixelMap (All Scans)");
 
     QGridLayout *lyt_zstat = new QGridLayout();
-    lyt_zstat->addWidget(lb_rt_mean,   0, 0,  1, 3);
-    lyt_zstat->addWidget(le_rt_mean,   0, 3,  1, 3);
-    lyt_zstat->addWidget(lb_rt_median, 0, 6,  1, 3);
-    lyt_zstat->addWidget(le_rt_median, 0, 9,  1, 3);
-    lyt_zstat->addWidget(lb_rt_min,    0, 12, 1, 3);
-    lyt_zstat->addWidget(le_rt_min,    0, 15, 1, 3);
-    lyt_zstat->addWidget(lb_rt_max,    0, 18, 1, 3);
-    lyt_zstat->addWidget(le_rt_max,    0, 21, 1, 3);
+    lyt_zstat->addWidget(lb_rt_mean,   0, 0,  1, 4);
+    lyt_zstat->addWidget(le_rt_mean,   0, 4,  1, 4);
+    lyt_zstat->addWidget(lb_rt_median, 0, 8,  1, 4);
+    lyt_zstat->addWidget(le_rt_median, 0, 12, 1, 4);
+    lyt_zstat->addWidget(lb_rt_np,     0, 16, 1, 4);
+    lyt_zstat->addWidget(le_rt_np,     0, 20, 1, 4);
 
     lyt_zstat->addWidget(lb_rt_nruns , 1, 0,  1, 4);
     lyt_zstat->addWidget(le_rt_nruns , 1, 4,  1, 4);
@@ -520,11 +509,9 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     lyt_zstat->addWidget(lb_rt_zcrit, 2, 16, 1, 4);
     lyt_zstat->addWidget(le_rt_zcrit, 2, 20, 1, 4);
 
-    lyt_zstat->addWidget(lb_rt_lower,  3, 0,  1, 4);
-    lyt_zstat->addWidget(le_rt_lower,  3, 4,  1, 4);
-    lyt_zstat->addWidget(lb_rt_upper,  3, 8,  1, 4);
-    lyt_zstat->addWidget(le_rt_upper,  3, 12, 1, 4);
-    lyt_zstat->addWidget(pb_plotPixMap,  3, 16, 1, 8);
+    lyt_zstat->addWidget(lb_rt_region,  3, 0,  1, 8);
+    lyt_zstat->addWidget(le_rt_region,  3, 8,  1, 8);
+    lyt_zstat->addWidget(pb_plotPixMap, 3, 16, 1, 8);
 
     lb_rt_rstate = us_label("Randomness State", 2);
     lb_rt_rstate->setMinimumWidth(250);
@@ -550,7 +537,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     tabs = new QTabWidget();
 //    tabs->setAutoFillBackground(true);
     tabs->addTab(surfaceWgt, tr("3D Plot"));
-    tabs->addTab(tab1, tr("Inspect Error"));
+    tabs->addTab(tab1, tr("Inspect Residual"));
     tabs->tabBar()->setMinimumWidth(300);
     QStringList styleSheet;
     styleSheet << "QTabWidget::pane {border-top: 2px solid #C2C7CB;}";
@@ -577,7 +564,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     left_lyt->addLayout(theme_lyt);
     left_lyt->addWidget(lb_color);
     left_lyt->addLayout(color_lyt);
-    left_lyt->addLayout(draw_mode_lyt);
     left_lyt->addWidget(lb_angle);
     left_lyt->addLayout(angle_lyt);
     left_lyt->addWidget(lb_save);
@@ -607,8 +593,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
     connect(cb_camera, SIGNAL(currentIndexChanged(int)), this, SLOT(resetCamera(int)));
     connect(cb_theme, SIGNAL(currentTextChanged(QString)), this, SLOT(setTheme(QString)));
-    connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
-    connect(rb_surface_wire, SIGNAL(clicked()), this, SLOT(setSurfaceWire()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
     connect(pb_render, SIGNAL(clicked()), this, SLOT(renderImage()));
     connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
@@ -824,11 +808,11 @@ void US_MWL_SF_PLOT3D::plot3d(){
     graph->axisZ()->setFormatter(formatZ);
     CustomFormatter *formatY;
     if (ckb_plotAbs->isChecked()){
-        graph->axisY()->setTitle("Absolute OD Error");
+        graph->axisY()->setTitle("|| Residual (OD) ||");
         graph->axisY()->setRange(min_sAbsErr - padding, max_sAbsErr + padding);
         formatY = new CustomFormatter(min_AbsErr, max_AbsErr);
     } else {
-        graph->axisY()->setTitle("OD Error");
+        graph->axisY()->setTitle("Residual (OD)");
         graph->axisY()->setRange(min_sErr - padding, max_sErr + padding);
         formatY = new CustomFormatter(min_Err, max_Err);
     }
@@ -913,14 +897,6 @@ void US_MWL_SF_PLOT3D::resetCamera(int){
         camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyBelow);
     connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
     connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
-}
-
-void US_MWL_SF_PLOT3D::setSurface(){
-    dataSeries->setDrawMode(QSurface3DSeries::DrawSurface);
-}
-
-void US_MWL_SF_PLOT3D::setSurfaceWire(){
-    dataSeries->setDrawMode(QSurface3DSeries::DrawSurfaceAndWireframe);
 }
 
 void US_MWL_SF_PLOT3D::set_B2Y(){
@@ -1117,7 +1093,9 @@ void US_MWL_SF_PLOT3D::plot2d(){
     int rpId_org = rpId + idRP_l;
     le_rpid->setText(QString::number(rpId + 1));
     double xvalue = (double) xvals4ct.at(rpId_org) / 1000.0;
-    le_rpval->setText(QString::number(xvalue, 'f', 3));
+    QString rpval = QString::number(xvalue, 'f', 3);
+    le_rpval->setText(rpval);
+    lb_runs_test->setText(tr("Runs Test Statistics for the Radius %1 (cm)").arg(rpval));
     for (int i = 0; i < nwl; ++i){
         int id_wl = i + idWL_l;
         double error = allData.at(scanId).at(rpId_org).at(id_wl).at(2);
@@ -1139,6 +1117,7 @@ void US_MWL_SF_PLOT3D::plot2d(){
     errorPlot->updateAxes();
     grid = us_grid(errorPlot);
     errorPlot->replot();
+
 
     get_runs_test(dev, true);
 
@@ -1233,8 +1212,6 @@ void US_MWL_SF_PLOT3D::render_option(int){
 void US_MWL_SF_PLOT3D::enable_wgt(bool state){
 //    surfaceWgt->setEnabled(state);
     tabs->setEnabled(state);
-    rb_surface->setEnabled(state);
-    rb_surface_wire->setEnabled(state);
     rb_nosel->setEnabled(state);
     rb_point->setEnabled(state);
     rb_radial->setEnabled(state);
@@ -1286,7 +1263,7 @@ bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
     sample_sort << sample;
     std::sort(sample_sort.begin(), sample_sort.end());
 
-    double median, mean, min, max, rhat, s2r, zstat, pval;
+    double median, mean, rhat, s2r, zstat, pval;
     int nneg, npos, nruns, lower, upper;
     bool randstate, lookup;
     int size = sample.size();
@@ -1298,8 +1275,6 @@ bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
     nneg = 0;
     npos = 0;
     nruns = 0;
-    min = 1e99;
-    max = -1e99;
     double *sp = sample.data();
     for (int i = 0; i < size; i++){
         double val = sp[i];
@@ -1314,9 +1289,6 @@ bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
             npos++;
         else
             nneg++;
-        min = qMin(min, val);
-        max = qMax(max, val);
-
     }
     nruns++;
     mean /= size;
@@ -1371,14 +1343,13 @@ bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
     if (display){
         le_rt_mean->setText(QString::number(mean));
         le_rt_median->setText(QString::number(median));
-        le_rt_min->setText(QString::number(min));
-        le_rt_max->setText(QString::number(max));
+        le_rt_np->setText(QString::number(sample.size()));
         le_rt_nruns->setText(QString::number(nruns));
         le_rt_nneg->setText(QString::number(nneg));
         le_rt_npos->setText(QString::number(npos));
+        QString l2u = tr("%1 to %2").arg(lower).arg(upper);
         if (lookup){
-            le_rt_lower->setText(QString::number(lower));
-            le_rt_upper->setText(QString::number(upper));
+            le_rt_region->setText(l2u);
             if (n1 > 10){
                 le_rt_zstat->setText(QString::number(zstat));
                 le_rt_pval->setText(QString::number(pval));
@@ -1392,8 +1363,7 @@ bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
             le_rt_zstat->setText(QString::number(zstat));
             le_rt_pval->setText(QString::number(pval));
             le_rt_zcrit->setText(QString::number(1.96));
-            le_rt_lower->clear();
-            le_rt_upper->clear();
+            le_rt_region->setText(l2u);
         }
 
         if (randstate){
@@ -1634,25 +1604,12 @@ double SpectrogramData::value( double x, double y ) const{
     return z;
 }
 
-
-class LinearColorMapRGB: public QwtLinearColorMap
-{
-public:
-    LinearColorMapRGB():
-        QwtLinearColorMap( Qt::darkCyan, Qt::red, QwtColorMap::RGB )
-    {
-        addColorStop( 0.1, Qt::cyan );
-        addColorStop( 0.6, Qt::green );
-        addColorStop( 0.95, Qt::yellow );
-    }
-};
-
 RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
                                QVector<QVector<double>> states,  QWidget *parent ):
     QDialog( parent )
 {
 
-    this->setWindowTitle("Runs Test Pixel Map");
+    this->setWindowTitle("Runs Test PixelMap");
     Qt::WindowFlags flags;
     flags = flags | Qt::CustomizeWindowHint | Qt::WindowSystemMenuHint
             | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint;
@@ -1681,7 +1638,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
                  "darkGreen"<< "blue"<< "darkBlue"<< "cyan"<<
                  "darkCyan"<< "magenta"<< "darkMagenta"<< "yellow"<<
                  "darkYellow"<< "gray"<< "darkGray"<< "lightGray";
-    toolBar->addWidget( new QLabel("Rondom Points:" ) );
+    toolBar->addWidget( new QLabel("Random Points:" ) );
     cb_color_r = new QComboBox( toolBar );
     cb_color_r->addItems( colorList );
     cb_color_r->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
@@ -1694,7 +1651,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     cb_color_nr = new QComboBox( toolBar );
     cb_color_nr->addItems( colorList );
     cb_color_nr->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
-    cb_color_nr->setCurrentText("red");
+    cb_color_nr->setCurrentText("darkBlue");
     toolBar->addWidget( cb_color_nr );
     connect( cb_color_nr, SIGNAL( currentIndexChanged( int ) ),
              this, SLOT( setColorMap(  ) ) );
