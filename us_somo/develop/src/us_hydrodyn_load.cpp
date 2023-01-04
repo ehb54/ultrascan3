@@ -670,6 +670,8 @@ void US_Hydrodyn::read_residue_file() {
 }
 
 // #define DEBUG_VBAR
+// #define DEBUG_VBAR2
+
 double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
    int chains   = (int) model.molecule.size();
    int residues = (int) model.residue .size();
@@ -762,6 +764,16 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
       // struct residue
       double this_mw = model.residue[ j ].mw + model.residue[ j ].ionized_mw_delta;
       double this_mv = model.residue[ j ].vbar_at_pH * this_mw;
+#if defined( DEBUG_VBAR2 )
+      QTextStream( stdout )
+         << "--------------------------------------------------------------------------------\n"
+         << "residue     : " << j << "\n"
+         << ".mw         : " << this_mw << "\n"
+         << ".vbar_at_pH : " << model.residue[ j ].vbar_at_pH << "\n"
+         << ".mv         : " << this_mv << "\n"
+         ;
+#endif
+      
       mw += this_mw;
       mv += this_mv;
    }
@@ -2259,6 +2271,16 @@ void US_Hydrodyn::calc_mw()
                      total_cm_mw                                  += atom_mw_w_delta;
                      model_vector[i].molecule[j].mw               += this_atom->mw;
                      model_vector[i].molecule[j].ionized_mw_delta += this_atom->ionized_mw_delta;
+#if defined( DEBUG_ABB_ELECT_PROT )
+                     qDebug() <<
+                        QString(
+                                "resName %1\nprotons %2\nelectrons %3\n"
+                                )
+                        .arg( this_atom->resName )
+                        .arg( this_atom->p_atom->hybrid.protons )
+                        .arg( this_atom->p_atom->hybrid.num_elect )
+                        ;
+#endif
                      protons   += this_atom->p_atom->hybrid.protons;
                      electrons += this_atom->p_atom->hybrid.num_elect;
                   }
@@ -2399,6 +2421,7 @@ void US_Hydrodyn::calc_mw()
       {
          dammix_remember_mw_source[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = "computed from pdb";
          dammix_remember_mw[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = model_vector[i].mw + model_vector[ i ].ionized_mw_delta;
+         // QTextStream(stdout) << QString("dammix remember mw set to %1\n").arg( model_vector[i].mw + model_vector[ i ].ionized_mw_delta );
          // QString qs = 
          //    QString( us_tr( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" ) )
          //    .arg(model_vector[i].model_id)

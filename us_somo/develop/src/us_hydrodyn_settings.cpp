@@ -1392,6 +1392,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "misc.pb_rule_on" ] = QString( "%1" ).arg( misc.pb_rule_on );
       parameters[ "misc.avg_radius" ] = QString( "%1" ).arg( misc.avg_radius );
       parameters[ "misc.avg_mass" ] = QString( "%1" ).arg( misc.avg_mass );
+      parameters[ "misc.avg_num_elect" ] = QString( "%1" ).arg( misc.avg_num_elect );
+      parameters[ "misc.avg_protons" ] = QString( "%1" ).arg( misc.avg_protons );
       parameters[ "misc.avg_hydration" ] = QString( "%1" ).arg( misc.avg_hydration );
       parameters[ "misc.avg_volume" ] = QString( "%1" ).arg( misc.avg_volume );
       parameters[ "misc.avg_vbar" ] = QString( "%1" ).arg( misc.avg_vbar );
@@ -1885,6 +1887,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "misc.pb_rule_on" ) ) misc.pb_rule_on = parameters[ "misc.pb_rule_on" ] == "1";
    if ( parameters.count( "misc.avg_radius" ) ) misc.avg_radius = parameters[ "misc.avg_radius" ].toDouble();
    if ( parameters.count( "misc.avg_mass" ) ) misc.avg_mass = parameters[ "misc.avg_mass" ].toDouble();
+   if ( parameters.count( "misc.avg_num_elect" ) ) misc.avg_num_elect = parameters[ "misc.avg_num_elect" ].toDouble();
+   if ( parameters.count( "misc.avg_protons" ) ) misc.avg_protons = parameters[ "misc.avg_protons" ].toDouble();
    if ( parameters.count( "misc.avg_hydration" ) ) misc.avg_hydration = parameters[ "misc.avg_hydration" ].toDouble();
    if ( parameters.count( "misc.avg_volume" ) ) misc.avg_volume = parameters[ "misc.avg_volume" ].toDouble();
    if ( parameters.count( "misc.avg_vbar" ) ) misc.avg_vbar = parameters[ "misc.avg_vbar" ].toDouble();
@@ -2851,7 +2855,8 @@ void US_Hydrodyn::hard_coded_defaults()
    misc.pb_rule_on = true;
    misc.avg_radius = 1.68;
    misc.avg_mass = 16.0;
-   misc.avg_hydration = 0.4;
+   misc.avg_num_elect   = 7.717;
+   misc.avg_protons     = 7.717;
    misc.avg_volume = 15.3;
    misc.avg_vbar = 0.72;
    overlap_tolerance = 0.001;
@@ -3975,6 +3980,14 @@ QString US_Hydrodyn::default_differences_misc()
    if ( misc.avg_mass != default_misc.avg_mass )
    {
       str += QString(base + sub + "atomic mass (Da): %1\n").arg(misc.avg_mass);
+   }
+   if ( misc.avg_num_elect != default_misc.avg_num_elect )
+   {
+      str += QString(base + sub + "atomic number of electrons: %1\n").arg(misc.avg_num_elect);
+   }
+   if ( misc.avg_protons != default_misc.avg_protons )
+   {
+      str += QString(base + sub + "atomic number of protons: %1\n").arg(misc.avg_protons);
    }
    if ( misc.avg_hydration != default_misc.avg_hydration )
    {

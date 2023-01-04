@@ -2562,6 +2562,10 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       vector < double > bestg         = f_gaussians[ file ];
       vector < double > bestsmoothedI; // = f_Is[ file ];
 
+      // vector < vector < double > > bestgs_debug;
+
+      // bestgs_debug.push_back( bestg );
+
       // get initial fit p value
       {
          double P;
@@ -2605,6 +2609,8 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
             return false;
          }         
 
+         // bestgs_debug.push_back( f_gaussians[ file ] );
+
          // get p value
          {
             double P;
@@ -2643,6 +2649,14 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
                   ,true
                   ,false
                   );
+         // add_plot_gaussian( file, QString( "sm%1-g" ).arg( best_smoothing ) );
+         // to debug them all
+         // vector < double > save_g = f_gaussians[ file ];
+         // for ( int i = 0; i < (int) bestgs_debug.size(); ++i ) {
+         //    f_gaussians[file] = bestgs_debug[i];
+         //    add_plot_gaussian( file, QString( "g_s%1" ).arg( i ) );
+         // }
+         // f_gaussians[ file ] = save_g;
       }
 
       f_qs[ file ]     = save_q;
@@ -2693,6 +2707,16 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool onl
 
    delete hplc_fit_window;
    return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::add_plot_gaussian( const QString &file, const QString &tag ) {
+   add_plot(
+            QString( "%1-%2" ).arg( file ).arg( tag )
+            ,f_qs[ file ]
+            ,compute_gaussian_sum( f_qs[ file ], f_gaussians[ file ] )
+            ,true
+            ,false
+            );
 }
 
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget ) {
