@@ -796,7 +796,7 @@ int US_LammAstfvm::solve_component( int compx )
    double  total_t = ( param_b - param_m ) * 2.0
                    / ( param_s * param_w2 * param_m );
    double  dt      = log( param_b / param_m )
-                   / ( param_w2 * param_s * 100.0 );
+                   / ( param_w2 * param_s * simparams.simpoints );
 
    int ntcc  = (int)( total_t / dt ) + 1;      // nbr. times in calculations
    int jt    = 0; 
@@ -825,6 +825,20 @@ int US_LammAstfvm::solve_component( int compx )
    {  // if multiple cases, abort
       return 1;
    }
+   if ( NonIdealCaseNo < 3){
+      // make sure the selected model is adjusted for the selected temperature
+      // and buffer conditions:
+      US_Math2::SolutionData sol_data;
+      sol_data.density   = density;
+      sol_data.viscosity = viscosity;
+      sol_data.vbar20    = 0.72; //The assumption here is that vbar does not change with
+      sol_data.vbar      = 0.72; //temp, so vbar correction will cancel in s correction
+      sol_data.manual    = manual;
+      US_Math2::data_correction( simparams.temperature, sol_data );
+      param_s = param_s / sol_data.s20w_correction;
+      param_D = param_D / sol_data.D20w_correction;
+   }
+
 
    if ( NonIdealCaseNo == 3 )
    {  // compressibility:  8-fold smaller delta-t and greater time points
@@ -941,11 +955,7 @@ timer.start();
       else {
          u0[kk] = msh->x[jj] * sig_conc;   // C*r value
       }
-      if (u1[ kk ]  != 0){
-         u1[ kk ]   += u0[ kk ];
-      }
-      else
-         u1[ kk ] = u0[ kk ];
+      u1[ kk ] = u0[ kk ];
    }
 
    for ( int kk = 1; kk < N0u - 1; kk+=2 )
@@ -1008,6 +1018,18 @@ timer.restart();
       t0    = dt * (double)jt;
       t1    = t0 + dt;
       ts    = af_data.scan[ kt ].time;           // time at output scan
+      while (ts < t0){
+         int kt_old = kt;
+         double ts_old = ts;
+         double tmp   = af_data.scan[ kt + 1].time;
+         DbgLv(0) << "LAsc: kt increase kt_old=" << kt_old << "ts_old=" << ts_old << "tmp=" << tmp << "t1=" << t1;
+         if(tmp > t1){
+            DbgLv(0) << "LAsc: new ts would exceed t1, escape";
+            break;
+         }
+         kt++;
+         ts = tmp;
+      }
       N0u   = N0 + N0 - 1;
       if ( dbg_level > 0  &&  ( ( jt / 10 ) * 10 ) == jt )
       {
@@ -1135,16 +1157,19 @@ DbgLv(2) << "LAsc: istep" << istep;
       if ( movieFlag )
       {
          emit new_scan( &af_data.radius, af_data.scan[ kt ].conc.data() );
-         emit new_time( t0 );
+         emit new_time( af_data.scan[kt].time );
          qApp->processEvents();
       }
 #endif
-         emit new_time( t0 );
+         emit new_time( af_data.scan[kt].time );
          emit current_speed(af_data.scan[ kt ].rpm);
          qApp->processEvents();
          kt++;    // bump output time(scan) index
 
          if ( stopFlag )  break;
+      }
+      else{
+         DbgLv(0) << "kt not updated";
       }
 
       delete [] u1p0;
@@ -1163,7 +1188,7 @@ DbgLv(2) << "LAsc: istep" << istep;
       dtmp  = u0;
       u0    = u1;
       u1    = dtmp;
-   }
+   } // end main time loop
 
    if ( dbg_level > 0 )
       ftto.close();
