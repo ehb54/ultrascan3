@@ -6052,6 +6052,8 @@ void US_ExperGuiUpload::clearData_protDev()
       << protocol_details[ "filename" ]
       << protocol_details[ "invID_passed" ];
 
+  qDebug() << "clearData_protDev(), qry -- " << qry;
+  
   db->query( qry );
   db->next();
   QString expID  = db->value( 1 ).toString();
@@ -6079,12 +6081,21 @@ void US_ExperGuiUpload::clearData_protDev()
       return;
     }
 
+  // Let's delete any pcsa_modelrecs records to avoid
+  //  constraints problems
+  qry. clear();
+  qry << "delete_run_pcsa_recs"
+      << protocol_details[ "filename" ];
+  status = db -> statusQuery( qry );
+  qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+  //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
+  
   // Now delete editedData, models, noises, reports, 
   qry. clear();
   qry << "clear_data_for_experiment"
       << expID;
   status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+  qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
   
   if ( status != US_DB2::OK )
     {

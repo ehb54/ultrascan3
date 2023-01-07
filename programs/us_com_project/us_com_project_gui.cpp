@@ -1913,8 +1913,13 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
 
   // Let's delete any pcsa_modelrecs records to avoid
   //  constraints problems
-  US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
-
+  //US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
+  qry. clear();
+  qry << "delete_run_pcsa_recs"
+      << run_details[ "filename" ];
+  status = db -> statusQuery( qry );
+  qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+  
   // Now delete the experiment and all existing rawData, 
   qry. clear();
   qry << "delete_experiment"
