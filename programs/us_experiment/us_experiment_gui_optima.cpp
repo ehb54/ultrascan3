@@ -6155,6 +6155,10 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   //Now add new autoflow record with the above params && flag 'DEV'!
   add_autoflow_record_protDev( protocol_details );
 
+  qDebug() << "statusID, intensityID from protocol QMAp -- "
+	   << protocol_details[ "statusID" ]
+	   << protocol_details[ "intensityID" ] ;
+  
   emit expdef_submitted_dev( protocol_details );
 }
 
@@ -7463,8 +7467,13 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 				    "associated with this experiment." ) );
 	  return;
 	}
+
+      /**** Now, update protocol_details[ "statusID" ] && [ "intensityID" ] fields with the new ones ***/
+      protocol_details[ "statusID" ]    = QString::number( autoflowStatusID );
+      protocol_details[ "intensityID" ] = QString::number( autoflowIntensityID );
+      
       /*************************************************************************************************/
-            
+      
 
       /* ALSO - CLEAN ALL DATA (Edit profiles, Models, Noises etc - look what's done when marking as "Failed".. )
 	 MAYBE performed at the beginnig of 2. EDIT.. 
