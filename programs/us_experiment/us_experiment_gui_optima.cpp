@@ -6046,65 +6046,78 @@ void US_ExperGuiUpload::clearData_protDev()
   
   int status;
   QStringList qry;
-  
-  //get experimentID from 'experiment' table:
-  qry << "get_experiment_info_by_runID"
-      << protocol_details[ "filename" ]
-      << protocol_details[ "invID_passed" ];
 
-  qDebug() << "clearData_protDev(), qry -- " << qry;
-  
-  db->query( qry );
-  db->next();
-  QString expID  = db->value( 1 ).toString();
+  //Get proper filename
+  QString FileName = protocol_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
 
-  // Let's make sure it's not a calibration experiment in use
-  qry. clear();
-  qry << "count_calibration_experiments" << expID;
-  int count = db->functionQuery( qry );
-  qDebug() << "Cleaning Failed Run: calexp count" << count;
-  
-  if ( count < 0 )
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
     {
-      qDebug() << "count_calibration_experiments( "
-               << expID
-               << " ) returned a negative count";
-      return;
-    }
-  
-  else if ( count > 0 )
-    {
-      QMessageBox::information( this,
-				tr( "Error" ),
-				tr( "Cannot delete an experiment that is associated "
-				    "with a rotor calibration\n" ) );
-      return;
-    }
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << protocol_details[ "invID_passed" ];
 
-  // Let's delete any pcsa_modelrecs records to avoid
-  //  constraints problems
-  qry. clear();
-  qry << "delete_run_pcsa_recs"
-      << protocol_details[ "filename" ];
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
-  //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
-  
-  // Now delete editedData, models, noises, reports, 
-  qry. clear();
-  qry << "clear_data_for_experiment"
-      << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
-  
-  if ( status != US_DB2::OK )
-    {
-      QMessageBox::information( this,
-				tr( "Error / Warning" ),
-				db -> lastError() + tr( " (error=%1, expID=%2)" )
-				.arg( status ).arg( expID ) );
+      qDebug() << "clearData_protDev(), qry -- " << qry;
+      
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+      
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+	  return;
+	}
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
+      //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
+      
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
+      
+      if ( status != US_DB2::OK )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error / Warning" ),
+				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+				    .arg( status ).arg( expID ) );
+	}
     }
-
+  /** End Iterate over fileNameList ****************************************************************/
 }
 
 
