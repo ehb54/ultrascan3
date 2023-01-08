@@ -6087,7 +6087,7 @@ void US_ExperGuiUpload::clearData_protDev()
   qry << "delete_run_pcsa_recs"
       << protocol_details[ "filename" ];
   status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+  qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
   //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
   
   // Now delete editedData, models, noises, reports, 
@@ -6095,7 +6095,7 @@ void US_ExperGuiUpload::clearData_protDev()
   qry << "clear_data_for_experiment"
       << expID;
   status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+  qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
   
   if ( status != US_DB2::OK )
     {
