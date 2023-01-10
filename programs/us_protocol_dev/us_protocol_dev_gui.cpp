@@ -1324,12 +1324,27 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QString operatorID         = dbP->value( 16 ).toString();
       QString failedID           = dbP->value( 17 ).toString();
 
+      QString full_runname       = dbP->value( 15 ).toString();
+
       qDebug() << "OperatorID -- " << operatorID;
       qDebug() << "failedID -- "   << failedID;
       
       QDateTime local(QDateTime::currentDateTime());
 
-      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      if ( type == "HISTORY" )
+	{
+	  //process runname: if combined, correct for nicer appearance
+	  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+	    {
+	      QString full_runname_edited  = full_runname.split(",")[0];
+	      full_runname_edited.chop(3);
+	      
+	      full_runname = full_runname_edited + " (combined RI+IP) ";
+	    }
+	  autoflowentry << id << full_runname << optimaname  << time_created.toString(); 
+	}
+      if ( type == "DEV" )
+	autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
