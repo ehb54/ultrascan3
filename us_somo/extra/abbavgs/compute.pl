@@ -10,6 +10,7 @@ $somoatom    = "$etc/somo.atom.new";
 $somohybrid  = "$etc/somo.hybrid.new";
 $somoresidue = "$etc/somo.residue.new";
 $onlyatoms   = "^(C|N|O|S|P)\\d+";
+#$onlyatoms   = "^.*\$";
 
 ## end user config
 
@@ -68,10 +69,10 @@ $tot{protons}   /= $tot{count};
 
 print sprintf( 
     "atoms from $somoatom considered: %d\n"   
-    . "average mw:                    %.3f\n"
-    . "average radius:                %.3f\n"
-    . "average electrons:             %.3f\n"
-    . "average protons:               %.3f\n"
+    . "average mw:                    %.1f\n"
+    . "average radius:                %.2f\n"
+    . "average electrons:             %.1f\n"
+    . "average protons:               %.1f\n"
     ,$tot{count}
     ,$tot{mw}
     ,$tot{radius}

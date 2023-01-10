@@ -2853,10 +2853,10 @@ void US_Hydrodyn::hard_coded_defaults()
    misc.vbar             = 0.72;
    misc.vbar_temperature = 20.0;
    misc.pb_rule_on       = true;
-   misc.avg_radius       = 1.683;
-   misc.avg_mass         = 14.515;
-   misc.avg_num_elect    = 7.717;
-   misc.avg_protons      = 7.717;
+   misc.avg_radius       = 1.68;
+   misc.avg_mass         = 14.5;
+   misc.avg_num_elect    = 7.7;
+   misc.avg_protons      = 7.7;
    misc.avg_volume       = 15.3;
    misc.avg_vbar         = 0.72;
    overlap_tolerance     = 0.001;
