@@ -6059,6 +6059,7 @@ void US_ExperGuiUpload::clearData_protDev()
   /*** Iterate over fileNameList *********************************************/
   for ( int i=0; i<fileNameList.size(); ++i )
     {
+      qry.clear();
       //get experimentID from 'experiment' table:
       qry << "get_experiment_info_by_runID"
 	  << fileNameList[ i ]
@@ -7349,7 +7350,8 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	// << protocol_details[ "failedID" ]     //Attn: do NOT specify failed status: should be DEFAULT (NULL)
 	// << protocol_details[ "devRecord" ]   //Attn: MUST be "YES", will be set explicitly     
 	;   
-	
+
+      qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;
       db->statusQuery( qry );
       //db->query( qry );
       int new_autoflowID = db->lastInsertID();

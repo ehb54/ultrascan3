@@ -1874,6 +1874,7 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
   /*** Iterate over fileNameList *********************************************/
   for ( int i=0; i<fileNameList.size(); ++i )
     {
+      qry.clear();
       //get experimentID from 'experiment' table:
       qry << "get_experiment_info_by_runID"
 	  << fileNameList[ i ]
