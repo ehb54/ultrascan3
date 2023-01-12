@@ -41,6 +41,7 @@ while ( my $l = <IN> ) {
     print "name $name protons $protons electrons $num_elect\n";
     $hybrid_to_electrons{$name} = $num_elect;
     $hybrid_to_protons  {$name} = $protons;
+    $hybrid_to_scat_len {$name} = $scat_len;
 }
 close IN;
 
@@ -55,6 +56,7 @@ while ( my $l = <IN> ) {
     ++$tot{count};
     $tot{mw}         += $hybridmw;
     $tot{radius}     += $hybridradius;
+    $tot{scat_len}   += $hybrid_to_scat_len{$hybridname};
     $tot{electrons}  += $hybrid_to_electrons{$hybridname};
     $tot{protons}    += $hybrid_to_protons{$hybridname};
 }
@@ -64,6 +66,7 @@ die "no usable lines found in $somoatom!\n" if !$tot{count};
 
 $tot{mw}        /= $tot{count};
 $tot{radius}    /= $tot{count};
+$tot{scat_len}  /= $tot{count};
 $tot{electrons} /= $tot{count};
 $tot{protons}   /= $tot{count};
 
@@ -71,11 +74,13 @@ print sprintf(
     "atoms from $somoatom considered: %d\n"   
     . "average mw:                    %.1f\n"
     . "average radius:                %.2f\n"
+    . "average scat_len:              %.4f\n"
     . "average electrons:             %.1f\n"
     . "average protons:               %.1f\n"
     ,$tot{count}
     ,$tot{mw}
     ,$tot{radius}
+    ,$tot{scat_len}
     ,$tot{electrons}
     ,$tot{protons}
     );

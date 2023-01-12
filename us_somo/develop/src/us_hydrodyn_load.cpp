@@ -69,6 +69,21 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
                             QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
       exit(-1);
    }
+   // add ABB defaults
+   {
+      hybridization abb_hybrid;
+      abb_hybrid.saxs_name        = "ABB";
+      abb_hybrid.name             = "ABB";
+      abb_hybrid.mw               = misc.avg_mass;
+      abb_hybrid.ionized_mw_delta = 0;
+      abb_hybrid.radius           = misc.avg_radius;
+      abb_hybrid.scat_len         = 0;
+      abb_hybrid.num_elect        = misc.avg_num_elect;
+      abb_hybrid.protons          = misc.avg_protons;
+      hybrid_to_electrons[ abb_hybrid.name ] = abb_hybrid.num_elect;
+      hybrid_to_protons  [ abb_hybrid.name ] = abb_hybrid.protons;
+   }
+
 }
 
 void US_Hydrodyn::read_residue_file() {

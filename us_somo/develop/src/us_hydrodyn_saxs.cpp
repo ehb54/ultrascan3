@@ -157,6 +157,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_hplc_csv();
    setupGUI();
 
+   // QTextStream(stdout) << US_Vector::qs_mapqsqs( "saxs residue_atom_hybrid_map\n", residue_atom_hybrid_map );
+
    fix_sas_options();
 
    editor->append("\n\n");
@@ -2748,14 +2750,18 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                  it != hybrid_map.end();
                  it++)
             {
-               // cout << " computing b for " << it->first 
-               // << " hydrogens " << it->second.hydrogens 
-               // << " exch_prot " << it->second.exch_prot
-               // << " num elect " << it->second.num_elect
-               // << " saxs_name " << it->second.saxs_name
-               // << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
-               // // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
-               // << endl;
+// #define DEBUG_PR_COEFF
+#if defined(DEBUG_PR_COEFF)               
+               QTextStream(stdout)  << " computing b for " << it->first 
+                                    << " hydrogens " << it->second.hydrogens 
+                                    << " exch_prot " << it->second.exch_prot
+                                    << " num elect " << it->second.num_elect
+                                    << " saxs_name " << it->second.saxs_name
+                                    << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
+                  // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
+                                    << endl
+                  ;
+#endif
                b[it->first] = 
                   it->second.num_elect;
             }
@@ -2784,10 +2790,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      mapkey = "OXT|OXT";
                   }
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
-                  if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
+                  QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+                  if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
-                     US_Static::us_message( us_tr("Missing Atom:"), 
-                                           QString( us_tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
+                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                        US_Static::us_message( us_tr("Missing Atom:"), 
+                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     }
                      progress_pr->reset();
                      lbl_core_progress->setText("");
                      pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2795,14 +2805,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      pb_plot_pr->setEnabled(true);
                      return;
                   }
-                  new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+                  new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
-#if defined(BUG_DEBUG)
+#if defined(BUG_DEBUG) || defined(DEBUG_PR_COEFF)
                   printf("atom %d %d hybrid name %s, atom name %s b %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.toLatin1().data(),
-                         this_atom->name.toLatin1().data(),
+                         this_atom_name.toLatin1().data(),
                          new_atom.b,
                          mapkey.toLatin1().data(),
                          hybrid_name.toLatin1().data()
@@ -2819,6 +2829,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   {
                      mapkey = "OXT|OXT";
                   }
+#if defined(DEBUG_PR_COEFF)
+                  QTextStream(stdout)
+                     << "mapkey " << mapkey
+                     << Qt::endl
+                     ;
+#endif
+
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
                   // double radius = 0e0;
                   if ( rb_curve_saxs->isChecked() )
@@ -2839,10 +2856,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                         // radius = hybrid_map[hybrid_name].radius;
                      }
                   }
-                  if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
+                  QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+                  if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
-                     US_Static::us_message( us_tr("Missing Atom:"), 
-                                           QString( us_tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
+                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                        US_Static::us_message( us_tr("Missing Atom:"), 
+                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     }
                      progress_pr->reset();
                      lbl_core_progress->setText("");
                      pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2852,18 +2873,26 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   }
                   // cout << "atom " << this_atom->name 
                   // << " hybrid " << this_atom->hybrid_name
-                  // << " excl_vol " <<  atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol 
+                  // << " excl_vol " <<  atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol 
                   // << " radius cubed " << radius * radius * radius 
                   // << " pi radius cubed " << M_PI * radius * radius * radius 
                   // << endl;
-                  new_atom.b = b[hybrid_name] - (double) our_saxs_options->water_e_density * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+#if defined(DEBUG_PR_COEFF)
+                  QTextStream(stdout)
+                     << "atom " << this_atom_name
+                     << " hybrid " << hybrid_name
+                     << " electrons " << hybrid_map[hybrid_name].num_elect
+                     << Qt::endl
+                     ;
+#endif
+                  new_atom.b = b[hybrid_name] - (double) our_saxs_options->water_e_density * atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
 #if defined(BUG_DEBUG)
                   printf("atom %d %d hybrid name %s, atom name %s b %e correction %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.toLatin1().data(),
-                         this_atom->name.toLatin1().data(),
+                         this_atom_name.toLatin1().data(),
                          new_atom.b,
                          our_saxs_options->water_e_density * radius * radius * radius,
                          mapkey.toLatin1().data(),
@@ -3900,12 +3929,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs 1) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red",
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
@@ -3929,7 +3959,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                continue;
             }
 
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
 
@@ -5020,6 +5050,23 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
       }
       f.close();
    }
+   // add generic ABB
+   {
+      atom abb_atom;
+      abb_atom.name                    = "ABB";
+      abb_atom.hybrid.name             = "ABB";
+      abb_atom.hybrid.mw               = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_mass;
+      abb_atom.hybrid.ionized_mw_delta = 0;
+      abb_atom.hybrid.radius           = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_radius;
+      abb_atom.hybrid.scat_len         = 0;
+      abb_atom.hybrid.saxs_name        = "ABB";
+      abb_atom.hybrid.num_elect        = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_num_elect;
+      abb_atom.hybrid.protons          = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_protons;
+      abb_atom.saxs_excl_vol           = (4/3)*M_PI*pow(((US_Hydrodyn *)us_hydrodyn)->misc.avg_radius, 3 );
+
+      atom_list.push_back(abb_atom);
+      atom_map[abb_atom.name + "~" + abb_atom.hybrid.name] = abb_atom;
+   }   
 }
 
 void US_Hydrodyn_Saxs::select_hybrid_file()
@@ -5073,6 +5120,20 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          }
       }
       f.close();
+   }
+   // add ABB defaults
+   {
+      hybridization abb_hybrid;
+      abb_hybrid.saxs_name        = "ABB";
+      abb_hybrid.name             = "ABB";
+      abb_hybrid.mw               = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_mass;
+      abb_hybrid.ionized_mw_delta = 0;
+      abb_hybrid.radius           = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_radius;
+      abb_hybrid.scat_len         = 0;
+      abb_hybrid.num_elect        = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_num_elect;
+      abb_hybrid.protons          = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_protons;
+      hybrid_list.push_back( abb_hybrid );
+      hybrid_map[ abb_hybrid.name ] = abb_hybrid;
    }
 }
 
@@ -6113,9 +6174,11 @@ void US_Hydrodyn_Saxs::load_gnom()
                      }
                      if ( mwline.size() > 1 )
                      {
-                        US_Static::us_message(us_tr("Please note:"), 
-                                             QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
-                                                        "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+                        if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                           US_Static::us_message(us_tr("Please note:"), 
+                                                 QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
+                                                               "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+                        }
                      }
                      if ( gnom_mw > 0e0 )
                      {
@@ -7993,8 +8056,10 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
          our_saxs_options->delta_angle = save_delta_angle;
          unsigned int grid_points = 
             (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
-         US_Static::us_message(us_tr("SOMO: Grid restored"), 
-                              QString(us_tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
+         if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+            US_Static::us_message(us_tr("SOMO: Grid restored"), 
+                                  QString(us_tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
+         }
          ok = true;
       }
    } while ( !ok );

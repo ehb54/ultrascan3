@@ -1486,7 +1486,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_bead.chain = 1;          // side chain
                         new_bead.volume = misc.avg_volume * atom_counts[count_idx];
                         new_bead.mw = misc.avg_mass * atom_counts[count_idx];
-#define DEBUG_ABB_VBAR
+// #define DEBUG_ABB_VBAR
 #if defined( DEBUG_ABB_VBAR )
                         QTextStream( stdout )
                            << "--------------------------------------------------------------------------------\n"
@@ -1606,6 +1606,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      new_atom.hybrid.mw               = misc.avg_mass;
                      new_atom.hybrid.ionized_mw_delta = 0;
                      new_atom.hybrid.radius           = misc.avg_radius;
+                     new_atom.hybrid.scat_len         = 0;
+                     new_atom.hybrid.saxs_name        = "ABB";
                      new_atom.hybrid.num_elect        = misc.avg_num_elect;
                      new_atom.hybrid.protons          = misc.avg_protons;
                      
@@ -1634,8 +1636,25 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         }
                         if ( !residue_atom_hybrid_map.count( mapkey ) &&
                              residue_atom_abb_hybrid_map.count( atom_to_add.name ) ) {
-                           residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
+                           // should use ABB atoms hybridization
+                           // residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
                            // us_qdebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( residue_atom_abb_hybrid_map[atom_to_add.name ] ) );
+                           residue_atom_hybrid_map[ mapkey ] = "ABB";
+                           {
+                              QString mapkey_no_nc = QString("%1|%2").arg(this_atom->resName).arg(atom_to_add.name);
+                              residue_atom_hybrid_map[ mapkey_no_nc ] = "ABB";
+                           }
+                           residue_atom_hybrid_map[ mapkey ] = "ABB";
+                           if ( !saxs_util->hybrid_map.count( "ABB" ) ) {
+                              saxs_util->hybrid_map[ "ABB" ] = new_atom.hybrid;
+                           }
+                           {
+                              QString atom_map_key = new_atom.name + "~ABB";
+                              if ( !saxs_util->atom_map.count( atom_map_key ) ) {
+                                 saxs_util->atom_map[ atom_map_key ] = new_atom;
+                              }
+                           }
+                           us_qdebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( "ABB" ) );
                         }
                      }
                   }
