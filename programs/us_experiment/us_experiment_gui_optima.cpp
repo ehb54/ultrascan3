@@ -545,6 +545,8 @@ for (int jj=0;jj<gxentrs.count();jj++)
             this,            SLOT(   check_empty_runname(const QString &) ) );
    connect( le_runid,        SIGNAL( editingFinished()  ),
             this,            SLOT(   run_name_entered() ) );
+   connect( le_label,        SIGNAL( editingFinished()  ),
+            this,            SLOT(   label_name_entered() ) );
    connect( pb_project,      SIGNAL( clicked()          ),
             this,            SLOT(   sel_project()      ) );
    connect( pb_investigator, SIGNAL( clicked()          ),
@@ -652,6 +654,50 @@ bool US_ExperGuiGeneral::updateProtos( const QStringList prentry )
    protdata << prentry;          // Append to the data entries list
 
    return true;
+}
+
+// Verify valid label name (possible modify for valid-only characters)
+void US_ExperGuiGeneral::label_name_entered( void )
+{
+  QString lname     = le_label->text();
+  QString old_lname = lname;
+  bool changed      = false;
+  
+  /*** ALEXEY: RegExp COMMENTED OUT for now ****************************************/
+  /*
+  QRegExp rx( "[^A-Za-z0-9_-]" );
+  lname.replace( rx,  "_" );   //ALEXEY - we may use alpha-numeric only, but not nessessarily..
+  
+  if ( lname != old_lname )
+    {  // Report on invalid characters replaced
+      QMessageBox::warning( this,
+			    tr( "Label Changed" ),
+			    tr( "The label name has been changed. It may consist only\n"
+				"of alphanumeric characters or underscore or hyphen.\n"
+				"New label:\n  " )
+			    + lname );
+      changed           = true;
+    }
+  */
+  /***********************************************************************************/
+  
+  // Limit label's length to 60 characters
+  if ( lname.length() > 60 )
+    {
+      QMessageBox::warning( this,
+			    tr( "Label Name Too Long" ),
+			    tr( "The label name may be at most\n"
+				"60 characters in length." ) );
+      lname             = lname.left( 60 );
+      changed           = true;
+    }
+  qDebug() << "Exp:Gen:Label: changed" << changed;
+  
+  if ( changed )
+    {  // Replace runID in line edit box
+      le_label->setText( lname );
+      currProto->exp_label = lname;
+    }
 }
 
 // Verify valid run name (possible modify for valid-only characters)
@@ -7248,40 +7294,52 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    
    if ( db != NULL )
    {
-      QStringList qry;
-      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
-      //greater of:
-      //- max(ID) autoflowHistory
-      //- current AUTO_INCREMENT
-      QString current_db = US_Settings::defaultDB().at(2);
-      qry << "set_autoflow_auto_increment" << current_db;
-      int auto_incr = db->statusQuery( qry );
-      qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
-      
-      
-      //Now add autoflow record
-      qry.clear();
-      qry << "add_autoflow_record"
-          << protocol_details[ "protocolName" ]
-          << protocol_details[ "CellChNumber" ]
-          << protocol_details[ "TripleNumber" ]
-          << protocol_details[ "duration" ]
-          << protocol_details[ "experimentName" ]
-          << protocol_details[ "experimentId" ]
-          << protocol_details[ "OptimaName" ]
-          << protocol_details[ "invID_passed" ]
-          << protocol_details[ "label" ]
-          << protocol_details[ "gmpRun" ]
-          << protocol_details[ "aprofileguid" ]
-	  << protocol_details[ "operatorID" ];
-
-      db->statusQuery( qry );
-      //db->query( qry );
-      protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     int autoflowID_returned = 0;
+     QStringList qry;
+     //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+     //greater of:
+     //- max(ID) autoflowHistory
+     //- current AUTO_INCREMENT
+     QString current_db = US_Settings::defaultDB().at(2);
+     qry << "set_autoflow_auto_increment" << current_db;
+     int auto_incr = db->statusQuery( qry );
+     qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+     
+     
+     //Now add autoflow record
+     qry.clear();
+     qry << "add_autoflow_record"
+	 << protocol_details[ "protocolName" ]
+	 << protocol_details[ "CellChNumber" ]
+	 << protocol_details[ "TripleNumber" ]
+	 << protocol_details[ "duration" ]
+	 << protocol_details[ "experimentName" ]
+	 << protocol_details[ "experimentId" ]
+	 << protocol_details[ "OptimaName" ]
+	 << protocol_details[ "invID_passed" ]
+	 << protocol_details[ "label" ]
+	 << protocol_details[ "gmpRun" ]
+	 << protocol_details[ "aprofileguid" ]
+	 << protocol_details[ "operatorID" ];
+     
+     db->statusQuery( qry );
+     //db->query( qry );
+     
+     autoflowID_returned = db->lastInsertID();
+     //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
+   
+     
+     qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+     
+     if ( autoflowID_returned == 0 )
+       {
+	 QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+			       tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+	 return;
+       }
    }
-
-   qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
-
+   
    /***/
    //Also, create record in autoflowStages table:
    QStringList qry_stages;
@@ -7310,6 +7368,7 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    
    if ( db != NULL )
    {
+     int new_autoflowID = 0;
       QStringList qry;
       //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
       //greater of:
@@ -7354,8 +7413,15 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
       qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;
       db->statusQuery( qry );
       //db->query( qry );
-      int new_autoflowID = db->lastInsertID();
+      new_autoflowID = db->lastInsertID();
       protocol_details[ "autoflowID" ] = QString::number( new_autoflowID );
+
+      if ( new_autoflowID == 0 )
+	{
+	  QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+				tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+	  return;
+	}
 
       /************ autoflowIntensity *****************************************************************/
       //read autoflowIntensity record by ID: protocol_details[ "intensityID" ]

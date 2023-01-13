@@ -108,6 +108,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void project_info    ( US_Project& ); // Slot for project diag results
       void sel_investigator( void );        // Slot for investigator changed
       void run_name_entered( void );        // Slot for run name entered
+      void label_name_entered( void );      // Slot for label name entered
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
