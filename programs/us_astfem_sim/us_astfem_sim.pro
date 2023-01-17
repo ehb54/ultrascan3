@@ -1,7 +1,9 @@
 include( ../../gui.pri )
 
+QT           += xml
+
 TARGET        = us_astfem_sim
-QT+=xml
+
 HEADERS       = us_astfem_sim.h             \
                 us_clipdata.h
 
