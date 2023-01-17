@@ -867,6 +867,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, double >             f_extc;
       map < QString, double >             f_time;
 
+      // for displaying last smoothing in gg scroll mode
+      map < QString, vector < double > >  f_qs_smoothed;
+      map < QString, vector < double > >  f_Is_smoothed;
+      map < QString, vector < double > >  f_errors_smoothed;
+      map < QString, int >                f_best_smoothed_smoothing;
+      void                                clear_smoothed(); // resets the smoothing data
+      void                                list_smoothed();  // reports on smoothing
+      void                                add_smoothed(
+                                                       const QString            & name
+                                                       ,const vector < double > & q
+                                                       ,const vector < double > & I
+                                                       ,const vector < double > & errors
+                                                       ,int                       best_smoothing
+                                                       );
+
       map < QString, bool >               created_files_not_saved;
 
       map < QString, double >             current_concs( bool quiet = false );

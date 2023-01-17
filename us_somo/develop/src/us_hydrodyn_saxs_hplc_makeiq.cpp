@@ -2649,6 +2649,14 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
                   ,true
                   ,false
                   );
+         add_smoothed(
+                      file
+                      ,f_qs[ file ]
+                      ,bestsmoothedI
+                      ,f_errors[ file ]
+                      ,best_smoothing
+                      );
+                        
          // add_plot_gaussian( file, QString( "sm%1-g" ).arg( best_smoothing ) );
          // to debug them all
          // vector < double > save_g = f_gaussians[ file ];
@@ -2693,6 +2701,8 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool onl
 
    hplc_fit_window->update_hplc = false;
 
+   clear_smoothed();
+
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
       progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
       qApp->processEvents();
@@ -2706,6 +2716,9 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool onl
    }
 
    delete hplc_fit_window;
+
+   list_smoothed();
+   
    return true;
 }
 
@@ -2801,3 +2814,39 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
 
    return true;
 }
+
+void US_Hydrodyn_Saxs_Hplc::clear_smoothed() {
+   f_qs_smoothed.clear();
+   f_Is_smoothed.clear();
+   f_errors_smoothed.clear();
+   f_best_smoothed_smoothing.clear();
+}
+   
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn_Saxs_Hplc::list_smoothed() {
+   TSO << "list_smoothed():\n";
+   for ( auto it = f_qs_smoothed.begin();
+         it != f_qs_smoothed.end();
+         ++it ) {
+      TSO << QString( "%1 smoothing %2 data points %3\n" )
+         .arg( it->first )
+         .arg( f_best_smoothed_smoothing[ it->first ] )
+         .arg( it->second.size() )
+         ;
+   }
+}
+            
+void US_Hydrodyn_Saxs_Hplc::add_smoothed(
+                                         const QString            & name
+                                         ,const vector < double > & q
+                                         ,const vector < double > & I
+                                         ,const vector < double > & errors
+                                         ,int                       best_smoothing
+                                         ) {
+   f_qs_smoothed[ name ]             = q;
+   f_Is_smoothed[ name ]             = I;
+   f_errors_smoothed[ name ]         = errors;
+   f_best_smoothed_smoothing[ name ] = best_smoothing;
+}
+

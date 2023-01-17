@@ -6614,6 +6614,23 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
    disable_updates = false;
    suppress_replot = true;
    plot_files();
+   // if smoothed version present add curve
+   
+   if ( f_best_smoothed_smoothing.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ) ) {
+      QTextStream( stdout ) << QString( "found smoothed curved for %1\n" ).arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] );
+
+      QPen use_pen = QPen( QColor( "#ffb29b" ), use_line_width + 1, Qt::DashDotDotLine );
+      QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian_smoothed" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setSamples(
+                        (double *)&(f_qs_smoothed[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        (double *)&(f_Is_smoothed[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        f_qs_smoothed[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ].size()
+                        );
+      curve->setPen( use_pen );
+      curve->attach( plot_dist );
+   }      
+
    // add gaussian curve ...
 
    {
