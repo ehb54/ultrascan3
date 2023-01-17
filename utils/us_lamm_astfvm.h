@@ -84,7 +84,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             //! \param asparms   Simulation parameters for all components
             //! \param asim_data Simulation AUC data for all components
             CosedData( US_Model, US_SimulationParameters,
-                      US_DataIO::RawData* );
+                      US_DataIO::RawData*, US_LammAstfvm*, double&, double& );
 
             //! \brief Destroy salt data
             ~CosedData();
@@ -96,16 +96,21 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             //! \param N     Number of elements in arrays
             //! \param x     X (radius) array
             //! \param t     Current time value
-            //! \param Ccosed Concentration of salt for current time
-            void InterpolateCCosed( int, double*, double, double* );
+            //! \param Denscosed Density of cosed buffer for current time
+            //! \param Visccosed Viscosity of cosed buffer for current time
+            void InterpolateCCosed( int, double*, double, double*, double*, double*, bool );
 
             US_DataIO::RawData      sa_data;   //!< cosed data 1-component
                                                //!<  simulation for co-sed
-         private:
-
+            QMap<QString, US_DataIO::RawData> cosed_comp_data;
+            US_LammAstfvm* lammAstfvm;
             US_Model                model;     // cosed data co-sed model
             US_SimulationParameters simparms;  // cosed simulation parameters
+         private:
 
+
+
+            int count;
             int     Nx;       // number of points in radial direction
             int     Nt;       // number of points in time direction
             int     scn;      // index to next available salt data scan
@@ -115,6 +120,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             double* Cs0;      // salt concentration for the 1st time interval
             double* Cs1;      // salt concentration for the 2nd time interval
             int     dbg_level;          // debug level
+            double dens;
+            double visc;
             QVector< double > xsVec;    // Vector for xs
             QVector< double > Cs0Vec;   // Vector for Cs0
             QVector< double > Cs1Vec;   // Vector for Cs1
@@ -159,6 +166,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param flag    Flag for whether or not to operate in show-movie mode.
       void setMovieFlag( bool );
 
+      void save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1 );
    signals:
       //! \brief Signal calculation start and give maximum steps
       //! \param nsteps Number of expected total calculation progress steps
@@ -189,12 +197,14 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! functions calculate_ni() and calculate_ra2().
       void current_speed    ( int    );
 
+
+
    private:
 
       US_Model&                 model;       // input model
       US_SimulationParameters&  simparams;   // input simulation parameters
       US_DataIO::RawData*       auc_data;    // input/output AUC data
-
+      QMap<QString, US_DataIO::RawData> cosed_comp_data;
       US_AstfemMath::MfemData   af_data;     // internal data
 
       Mesh*   msh;             // radial grid
@@ -213,10 +223,13 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       double  density;         // buffer density
       double  viscosity;       // buffer viscosity
       double  compressib;      // factor for compressibility
+      bool    manual;          // buffer manual
+      bool    cosed_needed;
+      bool    codiff_needed;
       double  vbar_salt;       // vbar of the salt
       QList<US_CosedComponent> cosed_components;
 
-      SaltData* saltdata;      // data handle for cosedimenting
+      CosedData* saltdata;      // data handle for cosedimenting
 
       US_Math_BF::Band_Forming_Gradient* bandFormingGradient;
 
@@ -285,7 +298,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       void   LocateStar( int, double*, int, double*, int*, double* );
 
       // Adjust s and D arrays
-      void   AdjustSD(   double, int, double*, double*, double*, double* );
+      void   AdjustSD(   double, int, double*, double*, double*, double*, bool );
 
       void   fun_phi(    double, double* );
 
