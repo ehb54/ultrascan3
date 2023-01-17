@@ -124,7 +124,7 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    QString description_text =
            tr("The cosedimenting component ") + comp->name + tr(" is cosedimenting in a solution out of ") +
            excess_list + ".\n\n" +
-           tr("Please enter the sedimentation and diffusion coefficient for the component in this solution at 20") +
+           tr("Please enter the sedimentation and diffusion coefficient as well as the vbar for the component in this solution at 20") +
            DEGC + ".\n" +
            tr("Additionally the density and viscosity coefficients for this component as a mixture with ") +
            buffer_list + tr(" should be entered.\n\n") +
@@ -133,11 +133,22 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    lb_description = us_banner(description_text);
    lb_description->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
    lb_sedimentation = us_label(tr("Sedimentation coefficient (20") + DEGC + tr(", S):"));
+   lb_vbar = us_label(tr("Vbar (20") + DEGC + tr(", cm<sup>3</sup>/g):"));
    lb_diffusion = us_label(tr("Diffusion Coefficient (20") + DEGC + tr(", cm<sup>2</sup>/s):"));
    lb_visc = us_banner("Viscosity Coefficients");
    lb_dens = us_banner("Density Coefficients");
-   le_sedimentation = us_lineedit("");
-   le_diffusion = us_lineedit("");
+   if (!std::isnan(comp->s_coeff)&&comp->s_coeff != 0.0){
+      le_sedimentation = us_lineedit(QString::number(comp->s_coeff*1E13, 'f', 6));
+   }
+   else le_sedimentation = us_lineedit("");
+   if (!std::isnan(comp->vbar)&&comp->vbar != 0.0){
+      le_vbar = us_lineedit(QString::number(comp->vbar, 'f', 6));
+   }
+   else le_vbar = us_lineedit("");
+   if (!std::isnan(comp->d_coeff)&&comp->d_coeff != 0.0){
+      le_diffusion = us_lineedit(QString::number(comp->d_coeff*1E13, 'f', 6));
+   }
+   else le_diffusion = us_lineedit("");
    le_density1 = us_lineedit("");
    le_density2 = us_lineedit("");
    le_density3 = us_lineedit("");
@@ -166,6 +177,8 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    main->addWidget(le_sedimentation, row++, 2, 1, 2);
    main->addWidget(lb_diffusion, row, 0, 1, 2);
    main->addWidget(le_diffusion, row++, 2, 1, 2);
+   main->addWidget(lb_vbar, row, 0, 1, 2);
+   main->addWidget(le_vbar, row++, 2, 1, 2);
    main->addWidget(lb_dens, row++, 0, 1, 4);
    main->addWidget(lb_density1, row, 0, 1, 2);
    main->addWidget(le_density1, row++, 2, 1, 2);
@@ -198,6 +211,7 @@ US_CosedComponentRequester::US_CosedComponentRequester(QMap<QString, US_CosedCom
    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancelled()));
    connect(pb_accept, SIGNAL(clicked()), this, SLOT(accept()));
    connect(le_sedimentation, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_vbar, SIGNAL(editingFinished()), this, SLOT(edit()));
    connect(le_diffusion, SIGNAL(editingFinished()), this, SLOT(edit()));
    connect(le_density1, SIGNAL(editingFinished()), this, SLOT(edit()));
    connect(le_density2, SIGNAL(editingFinished()), this, SLOT(edit()));
@@ -218,8 +232,9 @@ void US_CosedComponentRequester::cancelled(void) {
 void US_CosedComponentRequester::accept(void) {
    comp->s_coeff = le_sedimentation->text().toDouble() / 10E+13;
    comp->d_coeff = le_diffusion->text().toDouble();
-   qDebug() << "Set cosed component properties: s " << QString::number(comp->s_coeff, 'f', 5)
-            << ", D: " << QString::number(comp->d_coeff, 'f', 5);
+   comp->vbar = le_vbar->text().toDouble();
+   qDebug() << "Set cosed component properties: s" << QString::number(comp->s_coeff, 'f', 5)
+            << ", D:" << QString::number(comp->d_coeff, 'f', 5) << ", vbar:" << QString::number(comp->vbar, 'f', 5) ;
    comp->dens_coeff[1] = le_density1->text().toDouble();
    comp->dens_coeff[2] = le_density2->text().toDouble();
    comp->dens_coeff[3] = le_density3->text().toDouble();
@@ -238,7 +253,94 @@ void US_CosedComponentRequester::edit(void) {
        le_density2->text().isEmpty() || le_density3->text().isEmpty() || le_density4->text().isEmpty() ||
        le_density5->text().isEmpty() || le_viscosity1->text().isEmpty() ||
        le_viscosity2->text().isEmpty() || le_viscosity3->text().isEmpty() || le_viscosity4->text().isEmpty() ||
-       le_viscosity5->text().isEmpty()) {
+       le_viscosity5->text().isEmpty() || le_vbar->text().isEmpty()) {
+      pb_accept->setEnabled(false);
+      return;
+   }
+   pb_accept->setEnabled(true);
+}
+
+US_LowerCosedComponentRequester::US_LowerCosedComponentRequester(QList<US_CosedComponent> &excess_comps_,
+                                                       US_CosedComponent* comp_) : US_WidgetsDialog(nullptr, nullptr),
+                                                                                   excess_comps(excess_comps_),
+                                                                                   comp(comp_) {
+   if (base_comps.count() == 0 || excess_comps.count() == 0) {
+      this->close();
+   }
+   setWindowTitle(tr("Cosedimenting Component Loader Dialog"));
+   setPalette(US_GuiSettings::frameColor());
+
+   main = new QGridLayout(this);
+   main->setSpacing(2);
+   main->setContentsMargins(2, 2, 2, 2);
+
+
+   // construct the excess buffer description
+   QString excess_list;
+   for (int i = 0; i < excess_comps.count() - 1; i++) {
+      US_CosedComponent cosed = excess_comps.value(i);
+      if (i != 0) { excess_list += ", "; }
+      excess_list += cosed.name + " (" + QString::number(cosed.conc * 1000, 'f', 3) + " mM)";
+   }
+   {
+      US_CosedComponent cosed = excess_comps.last();
+      if (excess_comps.count() > 1) { excess_list += " and "; }
+      excess_list += cosed.name + " (" + QString::number(cosed.conc * 1000, 'f', 3) + " mM)";
+   }
+
+   QString description_text =
+           tr("The cosedimenting component ") + comp->name + tr(" is cosedimenting in a solution out of ") +
+           excess_list + ".\n\n" +
+           tr("Please enter the sedimentation and diffusion coefficient as well as the vbar for the component in this solution at 20") +
+           DEGC + ". In case this component is neither diffusing nor sedimentating, just press \"Finish\"\n" +
+           tr("Click the \"Finish\" button to load the entered values.\n") +
+           tr("Click the \"Cancel\" button to exit this dialog.");
+   lb_description = us_banner(description_text);
+   lb_description->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+   lb_sedimentation = us_label(tr("Sedimentation coefficient (20") + DEGC + tr(", S):"));
+   lb_vbar = us_label(tr("Vbar (20") + DEGC + tr(", cm<sup>3</sup>/g):"));
+   lb_diffusion = us_label(tr("Diffusion Coefficient (20") + DEGC + tr(", cm<sup>2</sup>/s):"));
+   le_vbar = us_lineedit("0.0");
+   le_sedimentation = us_lineedit("0.0");
+   le_diffusion = us_lineedit("0.0");
+
+   int row = 0;
+   main->addWidget(lb_description, row++, 0, 1, 4);
+   main->addWidget(lb_sedimentation, row, 0, 1, 2);
+   main->addWidget(le_sedimentation, row++, 2, 1, 2);
+   main->addWidget(lb_diffusion, row, 0, 1, 2);
+   main->addWidget(le_diffusion, row++, 2, 1, 2);
+   main->addWidget(lb_vbar, row, 0, 1, 2);
+   main->addWidget(le_vbar, row++, 2, 1, 2);
+
+
+   QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
+   pb_accept = us_pushbutton(tr("Finish"));
+   main->addWidget(pb_cancel, row, 0, 1, 2);
+   main->addWidget(pb_accept, row, 2, 1, 2);
+   pb_accept->setEnabled(true);
+   connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancelled()));
+   connect(pb_accept, SIGNAL(clicked()), this, SLOT(accept()));
+   connect(le_sedimentation, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_vbar, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_diffusion, SIGNAL(editingFinished()), this, SLOT(edit()));
+}
+
+void US_LowerCosedComponentRequester::cancelled(void) {
+   this->close();
+}
+
+void US_LowerCosedComponentRequester::accept(void) {
+   comp->s_coeff = le_sedimentation->text().toDouble() / 10E+13;
+   comp->d_coeff = le_diffusion->text().toDouble();
+   comp->vbar = le_vbar->text().toDouble();
+   qDebug() << "Set cosed component properties: s" << QString::number(comp->s_coeff, 'f', 5)
+            << ", D:" << QString::number(comp->d_coeff, 'f', 5) << ", vbar:" << QString::number(comp->vbar, 'f', 5) ;
+   this->close();
+}
+
+void US_LowerCosedComponentRequester::edit(void) {
+   if (le_diffusion->text().isEmpty() || le_sedimentation->text().isEmpty() || le_vbar->text().isEmpty()) {
       pb_accept->setEnabled(false);
       return;
    }
