@@ -230,6 +230,7 @@ void US_CosedComponent::getInfoFromDB(US_DB2 *db) {
 
    s_coeff = db->value(2).toString().toDouble();
    d_coeff = db->value(3).toString().toDouble();
+   vbar = db->value(8).toString().toDouble();
    QString density = db->value(4).toString();
    QString viscosity = db->value(5).toString();
 
@@ -255,6 +256,7 @@ void US_CosedComponent::component(QXmlStreamReader &xml, QMap<QString, US_CosedC
    bc.name = a.value("name").toString();
    bc.overlaying = US_Util::bool_flag(a.value("overlaying").toString());
    bc.conc = a.value("concentration").toString().toDouble();
+   bc.vbar = a.value("vbar").toString().toDouble();
    bc.s_coeff = a.value("sedimentationCoefficient").toString().toDouble()*1E-13;
    bc.d_coeff = a.value("diffusionCoefficient").toString().toDouble()*1E-6;
 
@@ -302,6 +304,7 @@ void US_CosedComponent::component(QXmlStreamReader &xml, QList<US_CosedComponent
    bc.conc = a.value("concentration").toString().toDouble();
    bc.s_coeff = a.value("sedimentationCoefficient").toString().toDouble()*1E-13;
    bc.d_coeff = a.value("diffusionCoefficient").toString().toDouble()*1E-6;
+   bc.vbar = a.value("vbar").toString().toDouble();
 
    while (!xml.atEnd()) {
 
@@ -360,7 +363,7 @@ int US_CosedComponent::saveToDB(US_DB2 *db, const int buffer_ID) {
       q.clear();
       q << "add_cosed_component" << GUID << QString::number(buffer_ID) << name << QString::number(conc, 'f', 5)
         << QString::number(s_coeff, 'f', 5) << QString::number(d_coeff, 'f', 5)
-        << US_Util::bool_string(overlaying) << density << viscosity;
+        << US_Util::bool_string(overlaying) << density << viscosity << QString::number(vbar, 'f', 4);
 
       db->statusQuery(q);
       //qDebug() << "add_cosed_component-stat" << db->lastErrno();
@@ -396,7 +399,7 @@ int US_CosedComponent::saveToDB(US_DB2 *db, const int buffer_ID) {
       q << "update_cosed_component" << QString::number(buffer_ID) << componentID << name
         << QString::number(conc, 'f', 5) << QString::number(s_coeff, 'f', 5)
         << QString::number(d_coeff, 'f', 5) << US_Util::bool_string(overlaying)
-        << density << viscosity;
+        << density << viscosity << QString::number(vbar, 'f', 4);
 
       db->statusQuery(q);
       //qDebug() << "add_cosed_component-stat" << db->lastErrno();
@@ -424,6 +427,7 @@ US_CosedComponent US_CosedComponent::clone(void) {
    cloned.name = name;
    cloned.conc = conc;
    cloned.overlaying = overlaying;
+   cloned.vbar = vbar;
    for (int i = 0; i < 6; i++) {
       cloned.dens_coeff[i] = dens_coeff[i];
    }
@@ -561,6 +565,7 @@ bool US_Buffer::writeToDisk(const QString &filename) const {
       xml.writeAttribute("sedimentationCoefficient", QString::number(bc.s_coeff*1E+13, 'f', 5));
       xml.writeAttribute("diffusionCoefficient", QString::number(bc.d_coeff*1E+6, 'f', 5));
       xml.writeAttribute("overlaying", US_Util::bool_string(bc.overlaying));
+      xml.writeAttribute("vbar", QString::number(bc.vbar, 'f', 4));
 
       QString factor;
       QString value;

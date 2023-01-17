@@ -53,6 +53,7 @@ public:
     double  visc_coeff[ 6 ] = {0.0};               //!< The viscosity coefficients.
     double s_coeff; //!< The cosed component's s coefficient in 1/s
     double d_coeff; //!< The cosed component's D coefficient in cm^2/s
+    double vbar; //!< The cosed component's vbar
     double conc;                           //!< The cosed component's concentration in M
     bool overlaying;
 
