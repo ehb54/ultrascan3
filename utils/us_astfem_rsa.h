@@ -31,6 +31,13 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //!                  to be created and populated by simulation.
       int  calculate           ( US_DataIO::RawData& );
 
+      //! \brief Do the bulk of simulation calculations.
+      //! \param exp_data  Reference to the artificial experimental object
+      //!                  to be created and populated by simulation.
+      //! \param cosed_comps  Reference to the artificial experimental object
+      //!                  to be created and populated by simulation.
+      int  calculate           ( US_DataIO::RawData&, QList<US_CosedComponent>& );
+
       //! \brief Set a flag for whether to perform time correction.
       //! \param flag  Flag for whether or not to perform correction.
       void setTimeCorrection   ( bool flag ){ time_correction = flag; };
@@ -171,6 +178,14 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //                                                   false: if reacting case
       //!< Output: 2. Initial concentration vector (  MfemInitial )
       void   initialize_conc( int, US_AstfemMath::MfemInitial&, bool );
+
+   //!< Initializes concentration vector
+   //!< Input : 1. Component no. of the model ( int )
+   //         : 2. Initial concentration vector ( MfemInitial )
+   //         : 3. Flag for reacting syastem ( bool ) : true : if non-reacting case
+   //                                                   false: if reacting case
+   //!< Output: 2. Initial concentration vector (  MfemInitial )
+   void   initialize_conc( int, US_AstfemMath::MfemInitial&, bool, bool );
 
       //!< Does finite element calculation for  non-interacting case
       //!< Input : 1. Current rotorspeed ( double )
