@@ -6862,6 +6862,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
 {
    if ( !f_best_smoothed_smoothing.size() ) {
       cb_ggauss_scroll_smoothed->hide();
+      cb_ggauss_scroll_smoothed->setChecked( false );
    } else {
       cb_ggauss_scroll_smoothed->show();
    }
