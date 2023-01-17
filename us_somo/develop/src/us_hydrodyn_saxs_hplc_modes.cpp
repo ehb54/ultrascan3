@@ -6300,6 +6300,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       cb_ggauss_scroll_p_green ->setEnabled( true );
       cb_ggauss_scroll_p_yellow->setEnabled( true );
       cb_ggauss_scroll_p_red   ->setEnabled( true );
+      cb_ggauss_scroll_smoothed->setEnabled( true );
+         
       disable_updates = true;
       gauss_delete_markers();
       lb_files->clearSelection();
@@ -6318,6 +6320,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       cb_ggauss_scroll_p_green ->setEnabled( false );
       cb_ggauss_scroll_p_yellow->setEnabled( false );
       cb_ggauss_scroll_p_red   ->setEnabled( false );
+      cb_ggauss_scroll_smoothed->setEnabled( false );
       // restore to ggaussian plot mode
       disable_updates = true;
       gauss_delete_markers();
@@ -6362,6 +6365,12 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_p_red()
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_p_yellow() 
 {
    us_qdebug( "ggauss_scroll_p_yellow()" );
+   ggauss_scroll_set_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_smoothed() 
+{
+   us_qdebug( "ggauss_scroll_smoothed()" );
    ggauss_scroll_set_selected();
 }
 
@@ -6411,6 +6420,11 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
    int fcount = (int) unified_ggaussian_files.size();
 
    for ( int i = 0; i < fcount; ++i ) {
+      if ( cb_ggauss_scroll_smoothed->isChecked() ) {
+         if ( !f_best_smoothed_smoothing.count( unified_ggaussian_files[ i ] ) ) {
+            continue;
+         }
+      }
       if ( ggaussian_last_pfit_P[ i ] >= 0.05 ) {
          if ( cb_ggauss_scroll_p_green->isChecked() ) {
             ggauss_scroll_set.push_back( i );
@@ -6597,11 +6611,14 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
    lbl_wheel_Pcolor->setPixmap( pm );
 
    lbl_wheel_pos_below->setText( 
-                                QString( "%1 %2 %3 P %4" )
+                                QString( "%1 %2 %3 P %4%5" )
                                 .arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] )
                                 .arg( unified_ggaussian_use_errors && cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" )
                                 .arg( ggaussian_last_chi2[ ggauss_scroll_set [ pos ] ], 0, 'g', 4 )
                                 .arg( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ], 0, 'f', 4 )
+                                .arg( f_best_smoothed_smoothing.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] )
+                                      ? QString( "\nSmoothing points %1" ).arg( f_best_smoothed_smoothing[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ] )
+                                      : QString( "" ) )
                                  );
 
    disable_updates = true;
@@ -6843,6 +6860,12 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
 
 void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
 {
+   if ( !f_best_smoothed_smoothing.size() ) {
+      cb_ggauss_scroll_smoothed->hide();
+   } else {
+      cb_ggauss_scroll_smoothed->show();
+   }
+
    if ( cb_ggauss_scroll->isChecked() ) {
       disable_all();
       wheel_enables       ( ggauss_scroll_set.size() );

@@ -479,6 +479,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox     *cb_ggauss_scroll_p_green;
       QCheckBox     *cb_ggauss_scroll_p_yellow;
       QCheckBox     *cb_ggauss_scroll_p_red;
+      QCheckBox     *cb_ggauss_scroll_smoothed;
 
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
@@ -1588,6 +1589,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_scroll_p_green       ();
       void ggauss_scroll_p_yellow      ();
       void ggauss_scroll_p_red         ();
+      void ggauss_scroll_smoothed      ();
 
       bool gg_fit_replot               ();
 

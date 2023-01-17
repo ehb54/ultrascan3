@@ -3416,7 +3416,18 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          (*remember_mw_source)[QFileInfo(filename).fileName()] = "loaded from sprr file";
       }
       
-      editor->append(firstLine);
+      if ( QRegExp( "^\\s*(\\d|.|e|E|+|-)+\\s*(\\d|.|e|E|+|-)+" ).indexIn( firstLine ) ) {
+         QTextStream(stdout) << "found numeric 1st line in P(r)\n";
+         startline = 0;
+         QStringList qsl = firstLine.trimmed().split( QRegExp( "\\s+" ) );
+         if ( qsl.size() >= 2 ) {
+            r.push_back( qsl[0].toDouble() );
+            pr.push_back( qsl[1].toDouble() );
+         }
+      } else {
+         editor->append(firstLine);
+      }
+
       while ( startline > 0 )
       {
          ts.readLine();
