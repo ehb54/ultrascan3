@@ -1947,11 +1947,13 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(US_BufferComponent* c
    le_lrange = us_lineedit("");
    le_urange = us_lineedit("");
    le_unit = us_lineedit("");
+   le_density0 = us_lineedit("");
    le_density1 = us_lineedit("");
    le_density2 = us_lineedit("");
    le_density3 = us_lineedit("");
    le_density4 = us_lineedit("");
    le_density5 = us_lineedit("");
+   le_viscosity0 = us_lineedit("");
    le_viscosity1 = us_lineedit("");
    le_viscosity2 = us_lineedit("");
    le_viscosity3 = us_lineedit("");
