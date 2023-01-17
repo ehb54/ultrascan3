@@ -133,19 +133,22 @@ public:
       double calc_comp_conc(const double &x, const double &t,const double &temp, US_CosedComponent &cosed_comp);
 
       //! \brief Calculate the density of the band forming gradient at a given radius x and a given point in time t
-      //! \param x The double value representing the radial position
+      //! \param N The number of elements in the arrays
+      //! \param x The pointer to start of radial position array
       //! \param t The double value representing the point of time
-      //! \param s The double value representing the unadjusted sedimentation coefficient
-      //! \param d The double value representing the unadjusted sedimentation coefficient
       //! \param T The double value representing the experimental temperature
-      //! \param vbar The double value representing the vbar of the specie coefficient
+      //! \param Dens The pointer to the start of the Density array
+      //! \param Visc The pointer to the start of the Viscosity array
+      //! \param Conc The pointer to the start of the Concentration array
       //! \return boolean flag for the success of the adjustment
+      bool calc_dens_visc(int N, double* x, const double &t, double& T, double* Dens, double* Visc);
+
       bool adjust_sd(const double &x, const double &t, double& s, double& d, double& T, double& vbar);
 
       bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T);
 
    private:
-      QMap<QString, QList<double>> value_cache;
+      QMap<QString, std::array<double,2>> value_cache;
    };
 
 

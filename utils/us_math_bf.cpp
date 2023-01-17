@@ -29,73 +29,75 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
 
    QMap<QString, US_CosedComponent> upper_cosed;
    QMap<QString, US_CosedComponent> lower_cosed;
-           foreach (US_CosedComponent i, comps) {
-         if (!i.overlaying && upper_cosed.contains(i.name)) {
-            // the current component is in the lower part, but there is another component with the same name in the
-            // overlaying section of the band forming gradient
-            US_CosedComponent j = upper_cosed[i.name];
-            if (j.conc > i.conc) {
-               // the concentration is higher in upper part, move it completely to the upper part and set the
-               // concentration to the excess concentration
-               j.conc = j.conc - i.conc;
-               upper_cosed[j.name] = j;
-               continue;
-            } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
-               // the concentration of both components is roughly equal, remove the component from the upper and lower part
-               upper_cosed.remove(j.name);
-               continue;
-            } else {
-               j.conc = i.conc - j.conc;
-               lower_cosed[j.name] = j;
-               upper_cosed.remove(j.name);
-               continue;
-            }
+   foreach (US_CosedComponent i, comps) {
+      if (i.s_coeff != 0.0)continue;
+      if (!i.overlaying && upper_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = upper_cosed[i.name];
+         if (j.conc > i.conc) {
+            // the concentration is higher in upper part, move it completely to the upper part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            upper_cosed[j.name] = j;
+            continue;
+         } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            upper_cosed.remove(j.name);
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            lower_cosed[j.name] = j;
+            upper_cosed.remove(j.name);
+            continue;
          }
-         if (i.overlaying && lower_cosed.contains(i.name)) {
-            // the current component is in the lower part, but there is another component with the same name in the
-            // overlaying section of the band forming gradient
-            US_CosedComponent j = lower_cosed[i.name];
-            if (j.conc > i.conc) {
-               // the concentration is higher in lower part, move it completely to the lower part and set the
-               // concentration to the excess concentration
-               j.conc = j.conc - i.conc;
-               lower_cosed[j.name] = j;
-               continue;
-            } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
-               // the concentration of both components is roughly equal, remove the component from the upper and lower part
-               lower_cosed.remove(j.name);
-               continue;
-            } else {
-               j.conc = i.conc - j.conc;
-               upper_cosed[j.name] = j;
-               lower_cosed.remove(j.name);
-               continue;
-            }
+      }
+      if (i.overlaying && lower_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = lower_cosed[i.name];
+         if (j.conc > i.conc) {
+            // the concentration is higher in lower part, move it completely to the lower part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            lower_cosed[j.name] = j;
+            continue;
+         } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            lower_cosed.remove(j.name);
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            upper_cosed[j.name] = j;
+            lower_cosed.remove(j.name);
+            continue;
          }
-         if (i.overlaying)
-            upper_cosed[i.name] = i;
-         else
-            lower_cosed[i.name] = i;
+      }
+      if (i.overlaying)
+         upper_cosed[i.name] = i;
+      else
+         lower_cosed[i.name] = i;
 
       }
    // Determine the base of the buffer
-           foreach (US_CosedComponent cosed_comp, comps) {
-         if (cosed_comp.overlaying) { continue; } // overlaying components can't be part of the base of the buffer
-         if (lower_cosed.contains(cosed_comp.name) &&
-             (fabs(lower_cosed[cosed_comp.name].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON)) {
-            // the concentration matches the original one entered. -> part of the buffer base
-            base_comps << cosed_comp;
-            base_density += cosed_comp.dens_coeff[0];
-            base_viscosity += cosed_comp.visc_coeff[0];
+   foreach (US_CosedComponent cosed_comp, comps) {
+      if (cosed_comp.s_coeff != 0.0)continue;
+      if (cosed_comp.overlaying) { continue; } // overlaying components can't be part of the base of the buffer
+      if (lower_cosed.contains(cosed_comp.name) &&
+          (fabs(lower_cosed[cosed_comp.name].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON)) {
+         // the concentration matches the original one entered. -> part of the buffer base
+         base_comps << cosed_comp;
+         base_density += cosed_comp.dens_coeff[0];
+         base_viscosity += cosed_comp.visc_coeff[0];
 
-         }
       }
+   }
    // normalize base density and viscosity
    base_density = base_density / base_comps.count();
    base_viscosity = base_viscosity / base_comps.count();
    // init upper_comps and lower_comps
-           foreach (US_CosedComponent i, upper_cosed) { upper_comps << i; }
-           foreach (US_CosedComponent i, lower_cosed) { lower_comps << i; }
+   foreach (US_CosedComponent i, upper_cosed) { upper_comps << i; }
+   foreach (US_CosedComponent i, lower_cosed) { lower_comps << i; }
    qDebug() << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
    qDebug() << "Constructor BFG finished bd bv" << base_density << base_viscosity;
 }
@@ -106,7 +108,7 @@ bool US_Math_BF::Band_Forming_Gradient::get_eigenvalues(void) {
    std::function<double(const double &)> func = [&men, &bot](const double &a) {
       return US_Math_BF::transcendental_equation(a, men, bot);
    };
-   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 5000, func,
+   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 20000, func,
                                                                            0.01,
                                                                            GSL_DBL_EPSILON, 20);
    bool return_value = secantSolver.solve_wrapper();
@@ -156,6 +158,50 @@ double US_Math_BF::Band_Forming_Gradient::calc_comp_conc(const double &x, const 
    return eq_conc + decay;
 }
 
+bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const int N, double* x, const double &t, double &T, double* Dens, double* Visc) {
+   // check if eigenvalues exist already
+   int cached = 0;
+   int calculated = 0;
+   if ( eigenvalues.isEmpty()) {
+      return false;
+   }
+   for ( int i = 0; i < N; i++ ) {
+      double x_c = x[i];
+      QString key = QString::number(x_c, 'f', 4) + QString::number(t, 'f', 0);
+      if ( value_cache.contains(key)) {
+         std::array<double,2> tmp = value_cache.value(key);
+         Dens[i] += tmp[ 0 ];
+         Visc[i] += tmp[ 1 ];
+         cached ++;
+      } else {
+         // loop over all cosedimenting stuff and determine the current concentration
+         // -> for now iterate only over upper_cosed
+         double tmp_d = 0.0;
+         double tmp_v = 0.0;
+         for ( US_CosedComponent &cosed_comp: upper_comps ) {
+            double c1 = calc_comp_conc(x_c, t, T, cosed_comp);
+            if ( c1 < 0.002 ) { continue; }
+            double c2 = c1 * c1;      // c1^2
+            double c3 = c2 * c1;      // c1^3
+            double c4 = c3 * c1;      // c1^4
+            tmp_d += (cosed_comp.dens_coeff[ 1 ] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.dens_coeff[ 2 ] * 1.0e-2 * c1 +
+                        cosed_comp.dens_coeff[ 3 ] * 1.0e-3 * c2 + cosed_comp.dens_coeff[ 4 ] * 1.0e-4 * c3 +
+                        cosed_comp.dens_coeff[ 5 ] * 1.0e-6 * c4);
+            tmp_v += (cosed_comp.visc_coeff[ 1 ] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.visc_coeff[ 2 ] * 1.0e-2 * c1 +
+                          cosed_comp.visc_coeff[ 3 ] * 1.0e-3 * c2 + cosed_comp.visc_coeff[ 4 ] * 1.0e-4 * c3 +
+                          cosed_comp.visc_coeff[ 5 ] * 1.0e-6 * c4);
+
+         }
+         // cache the value
+         std::array<double,2> tmp{tmp_d,tmp_v};
+         value_cache[ key ] = tmp;
+         calculated ++;
+      }
+   }
+   qDebug() << "calc_dens_visc with" << cached << "cached &" << calculated << "calculated values";
+   return true;
+}
+
 bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double &t, double &s, double &d, double &T,
                                                   double &vbar) {
    // check if eigenvalues exist already
@@ -164,9 +210,9 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
    }
    double density = base_density;
    double viscosity = base_viscosity;
-   if (value_cache.contains(QString::number(x, 'f', 5)+ QString::number(t, 'f', 3)))
+   if (value_cache.contains(QString::number(x, 'f', 3)+ QString::number(t, 'f', 0)))
    {
-      QList<double> tmp = value_cache.value(QString::number(x, 'f', 5)+QString::number(t, 'f', 3));
+      std::array<double,2> tmp = value_cache.value(QString::number(x, 'f', 3)+QString::number(t, 'f', 0));
       density = tmp[0];
       viscosity = tmp[1];
    }
@@ -188,7 +234,8 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
                        cosed_comp.visc_coeff[5] * 1.0e-6 * c4);
       }
       // cache the value
-      value_cache[QString::number(x, 'f', 5)+ QString::number(t, 'f', 3)] << density << viscosity;
+      std::array<double,2> tmp{density,viscosity};
+      value_cache[QString::number(x, 'f', 3)+ QString::number(t, 'f', 0)] = tmp;
    }
    s = s * VISC_20W * (1 - vbar * density) / (1.0 - vbar * DENS_20W) / viscosity;
    d = d * VISC_20W / viscosity * (T + 273.15) / 293.15;
@@ -202,9 +249,9 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
    }
    double density = base_density;
    double viscosity = base_viscosity;
-   if (value_cache.contains(QString::number(x, 'f', 5)+ QString::number(t, 'f', 3)))
+   if (value_cache.contains(QString::number(x, 'f', 3)+ QString::number(t, 'f', 0)))
    {
-      QList<double> tmp = value_cache.value(QString::number(x, 'f', 5)+QString::number(t, 'f', 3));
+      std::array<double,2> tmp = value_cache.value(QString::number(x, 'f', 3)+QString::number(t, 'f', 0));
       density = tmp[0];
       viscosity = tmp[1];
    }
@@ -226,7 +273,8 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
                        cosed_comp.visc_coeff[5] * 1.0e-6 * c4);
       }
       // cache the value
-      value_cache[QString::number(x, 'f', 5)+ QString::number(t, 'f', 3)] << density << viscosity;
+      std::array<double,2> tmp{density,viscosity};
+      value_cache[QString::number(x, 'f', 3)+ QString::number(t, 'f', 0)] = tmp;
    }
    dens = density;
    visc = viscosity;
