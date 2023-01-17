@@ -51,6 +51,7 @@ class US_Astfem_Sim : public US_Widgets
       int            curve_count;
       int            image_count;
       int            dbg_level;
+      int            total_scans;
       QString        imagedir;
       QString        imageName;
 
@@ -77,6 +78,7 @@ class US_Astfem_Sim : public US_Widgets
 
       QLCDNumber*    lcd_time;
       QLCDNumber*    lcd_speed;
+      QLCDNumber*    lcd_scan;
       QLCDNumber*    lcd_component;
       QProgressBar*  progress;
 
