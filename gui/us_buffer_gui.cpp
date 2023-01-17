@@ -1205,8 +1205,8 @@ bool US_BufferGuiNew::can_accept(){
    qDebug() << cosed;
    if (cosed){
       return (!le_descrip->text().isEmpty()
-      && (lw_upper_cosedcomps->count() > 0)
-      && (lw_lower_cosedcomps->count() > 0));
+      && ((lw_upper_cosedcomps->count() > 0)
+      || (lw_lower_cosedcomps->count() > 0)));
    }
    else{
       return (!le_descrip->text().isEmpty() && !le_density->text().isEmpty() && !le_viscos->text().isEmpty());
@@ -1825,15 +1825,44 @@ void US_BufferGuiNew::newAccepted() {
             lower_cosed[i.name] = i.clone();
 
       }
+      foreach (QString key, lower_cosed.keys()){
+         US_CosedComponent cosed_comp = lower_cosed.value(key);
+         // construct excess buffer
+         QList<US_CosedComponent> excess_buffer;
+         for (US_CosedComponent& excess_comp : buffer->cosed_component){
+            // append all cosed comps which are not overlaying and not the component itself
+            if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
+               excess_buffer << excess_comp;
+            }
+         }
+         DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+         US_LowerCosedComponentRequester* coseddiag = new US_LowerCosedComponentRequester(excess_buffer,&cosed_comp);
+         coseddiag -> exec();
+         qApp->processEvents();
+         lower_cosed[key] = cosed_comp;
+         DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+      }
       // Determine the base of the buffer
       QMap<QString, US_CosedComponent> base;
       for (US_CosedComponent cosed_comp: buffer->cosed_component) {
          if (cosed_comp.overlaying) { continue; } // overlaying components can't be part of the base of the buffer
          if (lower_cosed.contains(cosed_comp.name) &&
-             (fabs(lower_cosed[cosed_comp.name].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON)) {
+             (fabs(lower_cosed[cosed_comp.name].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON)
+             && lower_cosed.value(cosed_comp.name).s_coeff == 0.0
+             && lower_cosed.value(cosed_comp.name).d_coeff == 0.0) {
             // the concentration matches the original one entered. -> part of the buffer base
             base[cosed_comp.name] = cosed_comp;
          }
+      }
+      if (base.size() == 0){
+         // base is empty, throw error
+         QMessageBox::critical( this,
+                                tr("Incompatible base buffer"),
+                                tr( "The buffer base would be empty, please ensure that at least one "
+                                    "component in the lower part is not diffusing or sedimenting." ));
+         return;
       }
       double base_dens;
       double base_visc;
@@ -1863,6 +1892,27 @@ void US_BufferGuiNew::newAccepted() {
          DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
                   << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
       }
+      foreach (QString key, lower_cosed.keys()){
+         US_CosedComponent cosed_comp = lower_cosed.value(key);
+         // construct excess buffer
+         QList<US_CosedComponent> excess_buffer;
+         for (US_CosedComponent& excess_comp : buffer->cosed_component){
+            // append all cosed comps which are not overlaying and not the component itself
+            if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
+               excess_buffer << excess_comp;
+            }
+         }
+         DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+         US_CosedComponentRequester* coseddiag = new US_CosedComponentRequester(base, excess_buffer,&cosed_comp);
+         coseddiag -> exec();
+         qApp->processEvents();
+         lower_cosed[key] = cosed_comp;
+         DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+      }
+
+
 
       // Set density and viscosity to the base buffer to break no other existing code
       buffer->manual = true;
