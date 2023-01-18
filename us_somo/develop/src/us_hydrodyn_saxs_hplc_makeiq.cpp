@@ -2478,9 +2478,21 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    return true;
 }
 
+// #define GG_DEBUG
+#define TSO QTextStream(stdout)
+
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
 {
-   editor_msg( "darkRed", us_tr( "Experimental: Global Gaussian Gaussian cyclic fit - active\n" ) );
+
+#if defined(GG_DEBUG)
+   TSO << "================================================================================\n";
+   TSO << QString( "compute_f_gaussians %1\n" ).arg( file );
+   TSO << "--------------------------------------------------------------------------------\n";
+#endif
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true" ) {
+      editor_msg( "darkRed", us_tr( "Experimental: Global Gaussian Gaussian cyclic fit - active\n" ) );
+   }
    // us_qdebug( QString( "compute_f_gaussians %1" ).arg( file ) );
    // take current gaussians & compute for this curve
    // find peak of curve
@@ -2552,6 +2564,10 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       double best_pvalue;
 
       // get initial fit
+
+#if defined(GG_DEBUG)
+      TSO << QString( "******** get initial fit %1\n" ).arg( file );
+#endif
       if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
          editor_msg( "red", QString( "Error computing gaussians %1 [a]" ).arg( file ) );
          f_qs[ file ]     = save_q;
@@ -2601,6 +2617,10 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
             editor_msg( "red", QString( "Error smoothing %1 : %2" ).arg( file ).arg( usu->errormsg ) );
             return false;
          }
+
+#if defined(GG_DEBUG)
+         TSO << QString( "******** get smoothing fit %1 %2\n" ).arg( s ).arg( file );
+#endif
 
          if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
             f_qs[ file ]     = save_q;
@@ -2675,6 +2695,10 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       return true;
    }
 
+#if defined(GG_DEBUG)
+   TSO << QString( "******* get final fit %1\n" ).arg( file );
+#endif
+
    if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
       if ( saved ) {
          f_qs[ file ]     = save_q;
@@ -2707,7 +2731,9 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool onl
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
       progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
       qApp->processEvents();
+#if defined(GG_DEBUG)
       us_qdebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
+#endif
       
       if ( !only_init_unset || !f_gaussians.count( files[ i ] ) ) {
          if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) ) {
@@ -2735,7 +2761,11 @@ void US_Hydrodyn_Saxs_Hplc::add_plot_gaussian( const QString &file, const QStrin
 
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget ) {
    // printvector( "cfg: org_gauss", org_gaussians );
-   
+#if defined(GG_DEBUG)
+   TSO << "--------------------------------------------------------------------------------\n";
+   TSO << QString( "compute_f_gaussians_trial %1\n" ).arg( file );
+   TSO << "--------------------------------------------------------------------------------\n";
+#endif
    double peak;
    if ( !get_peak( file, peak ) ) {
       return false;
@@ -2781,7 +2811,6 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
    fit->redo_settings();
    fit->gaussians_undo.clear( );
    fit->gaussians_undo.push_back( gaussians );
-   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
 
    fit->cb_fix_center    ->setChecked( true );
    fit->cb_fix_width     ->setChecked( true );
@@ -2790,22 +2819,33 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
    fit->cb_fix_dist2     ->setChecked( true );
 
    // QTextStream(stdout) << QString( "compute_f_gaussians_trial number of gaussians %1\n" ).arg( fit->cb_fix_curves.size() );
+#if defined(GG_DEBUG)
+   QTextStream(stdout) << QString( "epsilon is %1\n" ).arg( fit->le_epsilon->text() );
+#endif
 
    if ( ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true" ) {
       // QTextStream(stdout) << QString( "Experimental: Global Gaussian Gaussian cyclic fit - active - %1\n" ).arg( file );
       for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
          for ( int j = 0; j < (int) fit->cb_fix_curves.size(); ++j ) {
-            fit->cb_fix_curves[i]->setChecked( i != j );
+            fit->cb_fix_curves[j]->setChecked( i != j );
          }
+#if defined(GG_DEBUG)
+         TSO << QString( "******** fit %1 fix %2\n" ).arg( file ).arg( i + 1 );
+#endif
          fit->lm();
       }
       for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
          fit->cb_fix_curves[i]->setChecked( false );
       }
    }
+
+   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
       
    // fit initial amplitudes
    // us_qdebug( "call first lm fit in compute_f_gaussians" );
+#if defined(GG_DEBUG)
+   TSO << QString( "fit %1 fit all centers mobile\n" ).arg( file );
+#endif
    fit->lm();
    // us_qdebug( "return from first lm fit in compute_f_gaussians" );
    // US_Vector::printvector2( "compute_f_gaussians: gaussians before, after", tmp_gs, gaussians );
@@ -2817,6 +2857,9 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
         ( dist1_active && !cb_fix_dist1->isChecked() ) ||
         ( dist2_active && !cb_fix_dist2->isChecked() ) )
    {
+#if defined(GG_DEBUG)
+      TSO << QString( "fit %1 fit 'open'?\n" ).arg( file );
+#endif
       // us_qdebug( "call second lm fit in compute_f_gaussians" );
       fit->cb_fix_width     ->setChecked( cb_fix_width->isChecked() );
       fit->cb_fix_dist1     ->setChecked( cb_fix_dist1->isChecked() );
@@ -2839,8 +2882,6 @@ void US_Hydrodyn_Saxs_Hplc::clear_smoothed() {
    f_best_smoothed_smoothing.clear();
 }
    
-#define TSO QTextStream(stdout)
-
 void US_Hydrodyn_Saxs_Hplc::list_smoothed() {
    TSO << "list_smoothed():\n";
    for ( auto it = f_qs_smoothed.begin();
