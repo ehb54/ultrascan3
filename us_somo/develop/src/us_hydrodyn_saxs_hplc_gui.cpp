@@ -3988,6 +3988,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( cb_ggauss_scroll_p_yellow );
    ggaussian_widgets.push_back( cb_ggauss_scroll_p_red );
    ggaussian_widgets.push_back( cb_ggauss_scroll_smoothed );
+   ggaussian_widgets.push_back( cb_ggauss_scroll_oldstyle );
    ggaussian_widgets.push_back( pb_ggqfit );
    ggaussian_widgets.push_back( ggqfit_plot );
    ggaussian_widgets.push_back( cb_ggq_plot_chi2 );

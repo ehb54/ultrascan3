@@ -2563,20 +2563,22 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
          // process "oldstyle" fit and save
 
-         vector < double > save_gaussians = gaussians;
+         vector < double > save_gaussians   = gaussians;
+         vector < double > save_f_gaussians = f_gaussians[ file ];
 
          if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
             editor_msg( "red", QString( us_tr( "Error: computing Gaussians for %1" ) ).arg( file ) );
             return false;
          }
 
-         vector < double > gsum = compute_gaussian_sum( f_qs[file], gaussians );
+         vector < double > gsum = compute_gaussian_sum( f_qs[file], f_gaussians[ file ] );
 
          add_oldstyle( file
                        ,f_qs[ file ]
                        ,gsum );
                        
-         gaussians = save_gaussians;
+         gaussians           = save_gaussians;
+         f_gaussians[ file ] = save_f_gaussians;
       
          if ( cyclic_on ) {
             ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] = "true";
