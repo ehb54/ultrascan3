@@ -2065,7 +2065,15 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          }
       }
       editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
-      editor->append(qv[0]);
+
+      int startline;
+      if ( QRegExp( "^\\s*(\\d|.|e|E|+|-)+\\s*(\\d|.|e|E|+|-)+" ).indexIn( qv[0] ) ) {
+         startline = 0;
+      } else {
+         startline = 1;
+         editor->append(qv[0]);
+      }
+
       double units = 1.0;
       if ( our_saxs_options->iq_scale_ask )
       {
@@ -2094,8 +2102,9 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
 
       QRegExp rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
       rx_ok_line.setMinimal( true );
-      for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
+      for ( unsigned int i = startline; i < (unsigned int) qv.size(); i++ )
       {
+         // QTextStream(stdout) << QString( "load line %1 : %2\n" ).arg( i ).arg( qv[i] );
          if ( qv[i].contains(QRegExp("^#")) ||
               rx_ok_line.indexIn( qv[i] ) == -1 )
          {
