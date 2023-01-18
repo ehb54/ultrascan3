@@ -2362,6 +2362,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_gg_smooth"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth"                ];
    parameters[ "hplc_cb_gg_smooth"          ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth"             ];
    parameters[ "hplc_cb_gg_cyclic"          ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_cyclic"             ];
+   parameters[ "hplc_cb_gg_oldstyle"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_oldstyle"           ];
    parameters[ "hplc_dist_max"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"                 ];
    parameters[ "guinier_mwt_k"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"                 ];
    parameters[ "guinier_mwt_c"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"                 ];
@@ -2426,6 +2427,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth"             ] = parameters[ "hplc_gg_smooth"                ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth"          ] = parameters[ "hplc_cb_gg_smooth"             ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_cyclic"          ] = parameters[ "hplc_cb_gg_cyclic"             ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_oldstyle"        ] = parameters[ "hplc_cb_gg_oldstyle"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"              ] = parameters[ "hplc_dist_max"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"              ] = parameters[ "guinier_mwt_k"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"              ] = parameters[ "guinier_mwt_c"                 ];

@@ -509,6 +509,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
    cb_plot_errors_group->setChecked( true );
 
    clear_smoothed(); // for now always on cancel or save
+   clear_oldstyle(); // for now always on cancel or save
    
    disable_all();
    switch ( current_mode )
@@ -811,6 +812,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 void US_Hydrodyn_Saxs_Hplc::wheel_save()
 {
    clear_smoothed(); // for now always on cancel or save
+   clear_oldstyle(); // for now always on cancel or save
 
    switch ( current_mode )
    {

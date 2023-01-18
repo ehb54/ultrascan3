@@ -441,6 +441,15 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    AUTFBACK( cb_gg_cyclic );
    connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
+   cb_gg_oldstyle = new QCheckBox(this);
+   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable old style Gaussian fit display"));
+   cb_gg_oldstyle->setEnabled( true );
+   cb_gg_oldstyle->setChecked( (*parameters)[ "hplc_cb_gg_oldstyle" ] == "true" );
+   cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_oldstyle->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_oldstyle );
+   connect( cb_gg_oldstyle, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    lbl_mwt_k = new QLabel(us_tr(" MW[RT] k : "), this);
    lbl_mwt_k -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_mwt_k -> setPalette( PALET_LABEL );
@@ -746,8 +755,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       gl_other->addWidget         ( cb_gg_smooth , ++row, 0 );
       gl_other->addWidget         ( le_gg_smooth , row, 1 );
 
-      ++row;
-      gl_other->addWidget         ( cb_gg_cyclic , row, 0, 1, 2 );
+      ++row;  gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
+
+      ++row;  gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
 
       gl_other->addWidget         ( lbl_mwt_k , ++row, 0 );
       gl_other->addWidget         ( le_mwt_k  , row, 1 );
@@ -858,6 +868,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_cb_gg_smooth"            ] = cb_gg_smooth  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_gg_smooth"               ] = le_gg_smooth  ->text();
    (*parameters)[ "hplc_cb_gg_cyclic"            ] = cb_gg_cyclic  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_cb_gg_oldstyle"          ] = cb_gg_oldstyle  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_dist_max"                ] = le_dist_max            ->text();
    (*parameters)[ "guinier_mwt_k"                ] = le_mwt_k               ->text();
    (*parameters)[ "guinier_mwt_c"                ] = le_mwt_c               ->text();

@@ -6301,6 +6301,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       cb_ggauss_scroll_p_yellow->setEnabled( true );
       cb_ggauss_scroll_p_red   ->setEnabled( true );
       cb_ggauss_scroll_smoothed->setEnabled( true );
+      cb_ggauss_scroll_oldstyle->setEnabled( true );
          
       disable_updates = true;
       gauss_delete_markers();
@@ -6321,6 +6322,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       cb_ggauss_scroll_p_yellow->setEnabled( false );
       cb_ggauss_scroll_p_red   ->setEnabled( false );
       cb_ggauss_scroll_smoothed->setEnabled( false );
+      cb_ggauss_scroll_oldstyle->setEnabled( false );
       // restore to ggaussian plot mode
       disable_updates = true;
       gauss_delete_markers();
@@ -6374,6 +6376,12 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_smoothed()
    ggauss_scroll_set_selected();
 }
 
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_oldstyle() 
+{
+   us_qdebug( "ggauss_scroll_oldstyle()" );
+   ggauss_scroll_set_selected();
+}
+
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
 {
    us_qdebug( "ggauss_scroll_set_selected()" );
@@ -6399,20 +6407,20 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
          lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
          pb_ggauss_rmsd->setEnabled( false );
       } else {
-         editor_msg( "red", us_tr( "Internal error (ggausm_scroll_set_selected): building global Gaussians" ) );
+         editor_msg( "red", us_tr( "Internal error (ggauss_scroll_set_selected): building global Gaussians" ) );
          ggaussian_enables();
          return;
       }
    }
    
    if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_P.size() ) {
-      editor_msg( "red", us_tr( "Internal error (ggausm_scroll_set_selected): P set does not match Gaussian size" ) );
+      editor_msg( "red", us_tr( "Internal error (ggauss_scroll_set_selected): P set does not match Gaussian size" ) );
       ggaussian_enables();
       return;
    }
 
    if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ) {
-      editor_msg( "red", us_tr( "Internal error (ggausm_scroll_set_selected): chi2 set does not match Gaussian size" ) );
+      editor_msg( "red", us_tr( "Internal error (ggauss_scroll_set_selected): chi2 set does not match Gaussian size" ) );
       ggaussian_enables();
       return;
    }
@@ -6422,6 +6430,11 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
    for ( int i = 0; i < fcount; ++i ) {
       if ( cb_ggauss_scroll_smoothed->isChecked() ) {
          if ( !f_best_smoothed_smoothing.count( unified_ggaussian_files[ i ] ) ) {
+            continue;
+         }
+      }
+      if ( cb_ggauss_scroll_oldstyle->isChecked() ) {
+         if ( !f_qs_oldstyle.count( unified_ggaussian_files[ i ] ) ) {
             continue;
          }
       }
@@ -6648,6 +6661,23 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
       curve->attach( plot_dist );
    }      
 
+   // if oldstyle version present and checkbox set, add curve
+   if ( cb_ggauss_scroll_oldstyle->isChecked() &&
+        f_qs_oldstyle.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ) ) {
+      QTextStream( stdout ) << QString( "found oldstyle curved for %1\n" ).arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] );
+
+      QPen use_pen = QPen( QColor( "#ffffff" ), use_line_width + 1, Qt::DashLine );
+      QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian_oldstyle" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setSamples(
+                        (double *)&(f_qs_oldstyle[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        (double *)&(f_Is_oldstyle[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        f_qs_oldstyle[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ].size()
+                        );
+      curve->setPen( use_pen );
+      curve->attach( plot_dist );
+   }      
+
    // add gaussian curve ...
 
    {
@@ -6867,6 +6897,13 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
       cb_ggauss_scroll_smoothed->show();
    }
 
+   if ( !f_qs_oldstyle.size() ) {
+      cb_ggauss_scroll_oldstyle->hide();
+      cb_ggauss_scroll_oldstyle->setChecked( false );
+   } else {
+      cb_ggauss_scroll_oldstyle->show();
+   }
+   
    if ( cb_ggauss_scroll->isChecked() ) {
       disable_all();
       wheel_enables       ( ggauss_scroll_set.size() );

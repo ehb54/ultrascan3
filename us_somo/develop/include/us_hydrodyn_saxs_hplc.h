@@ -480,6 +480,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox     *cb_ggauss_scroll_p_yellow;
       QCheckBox     *cb_ggauss_scroll_p_red;
       QCheckBox     *cb_ggauss_scroll_smoothed;
+      QCheckBox     *cb_ggauss_scroll_oldstyle;
 
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
@@ -871,7 +872,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // for displaying last smoothing in gg scroll mode
       map < QString, vector < double > >  f_qs_smoothed;
       map < QString, vector < double > >  f_Is_smoothed;
-      map < QString, vector < double > >  f_errors_smoothed;
       map < QString, int >                f_best_smoothed_smoothing;
       void                                clear_smoothed(); // resets the smoothing data
       void                                list_smoothed();  // reports on smoothing
@@ -879,8 +879,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                                        const QString            & name
                                                        ,const vector < double > & q
                                                        ,const vector < double > & I
-                                                       ,const vector < double > & errors
                                                        ,int                       best_smoothing
+                                                       );
+
+      // for displaying oldstyle in gg scroll mode
+      map < QString, vector < double > >  f_qs_oldstyle;
+      map < QString, vector < double > >  f_Is_oldstyle;
+      void                                clear_oldstyle(); // resets the oldstyle data
+      void                                list_oldstyle();  // reports on oldstyle
+      void                                add_oldstyle(
+                                                       const QString            & name
+                                                       ,const vector < double > & q
+                                                       ,const vector < double > & I
                                                        );
 
       map < QString, bool >               created_files_not_saved;
@@ -1590,6 +1600,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_scroll_p_yellow      ();
       void ggauss_scroll_p_red         ();
       void ggauss_scroll_smoothed      ();
+      void ggauss_scroll_oldstyle      ();
 
       bool gg_fit_replot               ();
 

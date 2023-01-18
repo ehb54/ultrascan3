@@ -1790,6 +1790,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       cb_ggauss_scroll_smoothed->setPalette( PALET_NORMAL );
       AUTFBACK( cb_ggauss_scroll_smoothed );
       connect( cb_ggauss_scroll_smoothed, SIGNAL( clicked() ), SLOT( ggauss_scroll_smoothed() ) );
+
+      cb_ggauss_scroll_oldstyle = new QCheckBox(this);
+      cb_ggauss_scroll_oldstyle->setText( us_tr( "Oldstyle" ) );
+      cb_ggauss_scroll_oldstyle->setEnabled( false );
+      cb_ggauss_scroll_oldstyle->setChecked( false );
+      cb_ggauss_scroll_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      cb_ggauss_scroll_oldstyle->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_ggauss_scroll_oldstyle );
+      connect( cb_ggauss_scroll_oldstyle, SIGNAL( clicked() ), SLOT( ggauss_scroll_oldstyle() ) );
    }
    // scale mode
 
@@ -3728,6 +3737,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_yellow );
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_red );
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_smoothed );
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_oldstyle );
       hbl_ggauss_scroll->addWidget( pb_ggauss_results );
       hbl_ggauss_scroll->addWidget( pb_ggauss_as_curves );
    }
