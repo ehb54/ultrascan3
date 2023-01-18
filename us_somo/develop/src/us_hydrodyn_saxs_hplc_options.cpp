@@ -432,6 +432,14 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_gg_smooth, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_gg_smooth->setMinimumWidth( 60 );
 
+   cb_gg_cyclic = new QCheckBox(this);
+   cb_gg_cyclic->setText(us_tr( "Experimental: Global Gaussian Gaussian cyclic fit"));
+   cb_gg_cyclic->setEnabled( true );
+   cb_gg_cyclic->setChecked( (*parameters)[ "hplc_cb_gg_cyclic" ] == "true" );
+   cb_gg_cyclic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_cyclic->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_cyclic );
+   connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    lbl_mwt_k = new QLabel(us_tr(" MW[RT] k : "), this);
    lbl_mwt_k -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -738,6 +746,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       gl_other->addWidget         ( cb_gg_smooth , ++row, 0 );
       gl_other->addWidget         ( le_gg_smooth , row, 1 );
 
+      ++row;
+      gl_other->addWidget         ( cb_gg_cyclic , row, 0, 1, 2 );
+
       gl_other->addWidget         ( lbl_mwt_k , ++row, 0 );
       gl_other->addWidget         ( le_mwt_k  , row, 1 );
 
@@ -846,6 +857,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_guinier_qrgmax"          ] = le_guinier_qrgmax      ->text();
    (*parameters)[ "hplc_cb_gg_smooth"            ] = cb_gg_smooth  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_gg_smooth"               ] = le_gg_smooth  ->text();
+   (*parameters)[ "hplc_cb_gg_cyclic"            ] = cb_gg_cyclic  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_dist_max"                ] = le_dist_max            ->text();
    (*parameters)[ "guinier_mwt_k"                ] = le_mwt_k               ->text();
    (*parameters)[ "guinier_mwt_c"                ] = le_mwt_c               ->text();

@@ -2480,6 +2480,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
 
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
 {
+   editor_msg( "darkRed", us_tr( "Experimental: Global Gaussian Gaussian cyclic fit - active\n" ) );
    // us_qdebug( QString( "compute_f_gaussians %1" ).arg( file ) );
    // take current gaussians & compute for this curve
    // find peak of curve
@@ -2787,6 +2788,22 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
    fit->cb_fix_amplitude ->setChecked( false );
    fit->cb_fix_dist1     ->setChecked( true );
    fit->cb_fix_dist2     ->setChecked( true );
+
+   // QTextStream(stdout) << QString( "compute_f_gaussians_trial number of gaussians %1\n" ).arg( fit->cb_fix_curves.size() );
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true" ) {
+      // QTextStream(stdout) << QString( "Experimental: Global Gaussian Gaussian cyclic fit - active - %1\n" ).arg( file );
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         for ( int j = 0; j < (int) fit->cb_fix_curves.size(); ++j ) {
+            fit->cb_fix_curves[i]->setChecked( i != j );
+         }
+         fit->lm();
+      }
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         fit->cb_fix_curves[i]->setChecked( false );
+      }
+   }
+      
    // fit initial amplitudes
    // us_qdebug( "call first lm fit in compute_f_gaussians" );
    fit->lm();
