@@ -1452,7 +1452,20 @@ void US_Hydrodyn_Saxs_Hplc::to_saxs()
 QStringList US_Hydrodyn_Saxs_Hplc::get_frames( QStringList files, QString head, QString tail )
 {
    QStringList result;
-   result = files.replaceInStrings( QRegExp( "^" + head ), "" ).replaceInStrings( QRegExp( tail + "$" ), "" );
+#if defined( DEBUG_FRAME_NAMES )
+   QTextStream(stdout) <<
+      QString(
+              "get_frames():\n"
+              "--> files: %1\n"
+              "--> head : %2\n"
+              "--> tail : %3\n"
+              )
+      .arg( files.join( "\n" ) )
+      .arg( head )
+      .arg( tail )
+      ;
+#endif
+   result = files.replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" ).replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" );
    // us_qdebug( QString( "get frames head %1 tail %2 result %3\n" )
    //         .arg( head )
    //         .arg( tail )
@@ -1464,6 +1477,10 @@ QStringList US_Hydrodyn_Saxs_Hplc::get_frames( QStringList files, QString head, 
 void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
 {
    // create average of selected
+
+#if defined( DEBUG_FRAME_NAMES )
+   QTextStream(stdout) << QString( "avg() of:\n--------\n%1\n--------\n" ).arg( files.join( "\n" ) );
+#endif
 
    vector < QString > avg_qs_string;
    vector < double >  avg_qs;
@@ -1760,6 +1777,25 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    }
 
    QString avg_name = head + suffix + framename + "avg" + tail;
+
+#if defined( DEBUG_FRAME_NAMES )
+   QTextStream(stdout) <<
+      QString(
+              "--------\n"
+              "head      : '%1'\n"
+              "suffix    : '%2'\n"
+              "framename : '%3'\n"
+              "tail      : '%4'\n"
+              "avg_name  : '%5'\n"
+              "--------\n"
+              )
+      .arg( head )
+      .arg( suffix )
+      .arg( framename )
+      .arg( tail )
+      .arg( avg_name )
+      ;
+#endif
 
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
