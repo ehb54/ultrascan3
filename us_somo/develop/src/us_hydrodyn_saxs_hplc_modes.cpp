@@ -6376,10 +6376,12 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_smoothed()
    ggauss_scroll_set_selected();
 }
 
+static int ggauss_scroll_highlight_last_pos;
+
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_oldstyle() 
 {
    us_qdebug( "ggauss_scroll_oldstyle()" );
-   ggauss_scroll_set_selected();
+   ggauss_scroll_highlight( ggauss_scroll_highlight_last_pos );
 }
 
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
@@ -6543,7 +6545,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
 
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
 {
-   // us_qdebug( QString( "ggauss_scroll_highlight %1 " ).arg( pos ) );
+   us_qdebug( QString( "ggauss_scroll_highlight %1 " ).arg( pos ) );
+   ggauss_scroll_highlight_last_pos = pos;
    lbl_wheel_pos->setText( "" );
    if ( pos >= (int) ggauss_scroll_set.size()  || pos < 0 ) {
       editor_msg( "red", us_tr( "Internal error ggauss_scroll_highlight: pos >= size or < 0" ) );
