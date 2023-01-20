@@ -1813,6 +1813,7 @@ void US_Hydrodyn_Batch::stop_processing() {
    enable_after_stop();
    disable_updates = false;
    save_batch_active = false;
+   
    ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
    if ( overwriteForcedOn )
    {
@@ -2272,6 +2273,17 @@ void US_Hydrodyn_Batch::enable_after_stop()
    pb_start->setEnabled(true);
    pb_stop->setEnabled(false);
    update_enables();
+
+   // clean up split_dir
+   if ( split_dir ) {
+      delete split_dir;
+   }
+   split_dir = new QTemporaryDir( ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + "/batch_XXXXXX" );
+   if ( !split_dir->isValid() ) {
+      TSO << "split_if_mm .. could not create temporary directory!\n";
+      split_dir = (QTemporaryDir *)0;
+   }
+
    qApp->processEvents();
 }
 
@@ -2385,6 +2397,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
    set_issue_info();
 
+   ((US_Hydrodyn*)us_hydrodyn)->dammix_remember_mw.clear();
+
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       progress->setValue( i * 2 );
@@ -2396,9 +2410,19 @@ void US_Hydrodyn_Batch::start( bool quiet )
          vector < int > models = split_if_mm( i );
 
          // TSO << QString( "--> models for file %1 size %2\n" ).arg( get_file_name( i ) ).arg( models.size() );
+         progress2->reset();
+         if ( (int) models.size() ) {
+            progress2->show();
+            progress2->setMaximum( models.size() );
+
+         }
 
          for ( int mindex = 0; mindex < (int) models.size(); ++mindex ) {
+            if ( (int) models.size() ) {
+               progress2->setValue( mindex + 0.5 );
+            }
             int m = models[mindex];
+            // ((US_Hydrodyn*)us_hydrodyn)->dammix_remember_mw.erase( QFileInfo(get_file_name( i, m ) ).fileName() );
             // TSO << QString( "--> processing index %1 model %2 file %3\n" ).arg( mindex ).arg( m ).arg( get_file_name( i, m ) );
             
             job_timer.init_timer ( QString( "%1 process" ).arg( get_file_name( i, m ) ) );
@@ -3082,6 +3106,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             job_timer.end_timer( QString( "%1 process" ).arg( get_file_name( i, m ) ) );
          }
          this->isVisible() ? this->raise() : this->show();
+         progress2->hide();
          qApp->processEvents();
       }
    }
