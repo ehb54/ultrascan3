@@ -1792,7 +1792,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       connect( cb_ggauss_scroll_smoothed, SIGNAL( clicked() ), SLOT( ggauss_scroll_smoothed() ) );
 
       cb_ggauss_scroll_oldstyle = new QCheckBox(this);
-      cb_ggauss_scroll_oldstyle->setText( us_tr( "Raw" ) );
+      cb_ggauss_scroll_oldstyle->setText( us_tr( "Raw fit" ) );
       cb_ggauss_scroll_oldstyle->setEnabled( false );
       cb_ggauss_scroll_oldstyle->setChecked( false );
       cb_ggauss_scroll_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
