@@ -1039,6 +1039,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool dmd_failed_validation;
       map < QString, map < QString, QStringList > > dmd_all_pdb_prepare_reports;
 
+      void clear_temp_dirs();
+      
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();

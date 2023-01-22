@@ -117,6 +117,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
          closeAttnt(rasmol, "RASMOL");
       }
    }
+   clear_temp_dirs();
    e->accept();
    qApp->quit();
 }

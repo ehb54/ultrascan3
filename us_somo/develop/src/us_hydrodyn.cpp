@@ -754,6 +754,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       us_qdebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
    }
 #endif
+   clear_temp_dirs();
+
    if ( gui_script ) {
       emit gui_script_run();
    }

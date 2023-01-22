@@ -499,3 +499,92 @@ map < QString, struct atom * > US_Hydrodyn::last_residue_atom_map( struct PDB_ch
    }
    return result;
 }
+
+static quint64 dir_size(const QString & str) {
+   quint64 sizex = 0;
+   QFileInfo str_info(str);
+   if (str_info.isDir()) {
+      QDir dir(str);
+      QFileInfoList list = dir.entryInfoList(QDir::Files | QDir::Dirs |  QDir::Hidden | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+      for (int i = 0; i < list.size(); ++i) {
+         QFileInfo fileInfo = list.at(i);
+         if(fileInfo.isDir()){
+               sizex += dir_size(fileInfo.absoluteFilePath());
+         } else {
+               sizex += fileInfo.size();
+         }
+      }
+   }
+   return sizex;
+}
+   
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn::clear_temp_dirs() {
+   // somo_tmp_dir globally defined
+#define THRESHOLD_MB 50
+
+   QString somo_saxs_tmp_dir = somo_dir + QDir::separator() + "saxs" + QDir::separator() + "tmp";
+
+   quint64 somo_tmp_size = dir_size( somo_tmp_dir ) / (1024 * 1024);
+   quint64 saxs_tmp_size = dir_size( somo_saxs_tmp_dir ) / (1024 * 1024);
+   quint64 total_size    = somo_tmp_size + saxs_tmp_size;
+
+   TSO <<
+      QString(
+
+              "clear_temp_dirs()\n"
+              "%1 : %2 M\n"
+              "%3 : %4 M\n"
+              )
+      .arg( somo_tmp_dir )
+      .arg( somo_tmp_size )
+      .arg( somo_saxs_tmp_dir )
+      .arg( saxs_tmp_size )
+      ;
+
+   if ( total_size >= THRESHOLD_MB ) {
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    windowTitle() + us_tr(": Clear Temporary Directories"),
+                                    QString(
+                                            us_tr(
+                                                  "Clear temporary directories using approximately %1 MB of disk space?\n"
+                                                  "Do not do this if you have other SOMOs currently processing" 
+                                                  ) ).arg( total_size ),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Cancel :
+         return;
+         break;
+      case QMessageBox::Yes : 
+         break;
+      case QMessageBox::No : 
+         return;
+         break;
+      default :
+         return;
+         break;
+      }
+   } else {
+      return;
+   }
+
+   QDir qd_somo_tmp_dir( somo_tmp_dir );
+   QDir qd_saxs_tmp_dir( somo_saxs_tmp_dir );
+
+   TSO << "will clear directories\n";
+   TSO << QString( "somo tmp dir name %1\n" ).arg( qd_somo_tmp_dir.path() );
+   TSO << QString( "saxs tmp dir name %1\n" ).arg( qd_saxs_tmp_dir.path() );
+
+   qd_somo_tmp_dir.removeRecursively();
+   qd_saxs_tmp_dir.removeRecursively();
+   TSO << QString( "somo tmp dir name %1\n" ).arg( qd_somo_tmp_dir.path() );
+   TSO << QString( "saxs tmp dir name %1\n" ).arg( qd_saxs_tmp_dir.path() );
+   qd_somo_tmp_dir.mkdir( qd_somo_tmp_dir.path() );
+   qd_saxs_tmp_dir.mkdir( qd_saxs_tmp_dir.path() );
+}
