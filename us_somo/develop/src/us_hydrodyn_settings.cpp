@@ -1731,6 +1731,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.cryson_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.cryson_hydration_shell_contrast ); //    = 0.03f;
       parameters[ "saxs_options.cryson_manual_hs" ] = QString( "%1" ).arg( saxs_options.cryson_manual_hs ); //    = 0.03f;
 
+      parameters[ "advanced_config.temp_dir_threshold_mb" ] = QString( "%1" ).arg( advanced_config.temp_dir_threshold_mb );
+
       // vectors to write:
       {
          QStringList qsl_tmp;
@@ -2225,6 +2227,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.cryson_sh_fibonacci_grid_order" ) ) saxs_options.cryson_sh_fibonacci_grid_order = parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ].toUInt();
    if ( parameters.count( "saxs_options.cryson_hydration_shell_contrast" ) ) saxs_options.cryson_hydration_shell_contrast = parameters[ "saxs_options.cryson_hydration_shell_contrast" ].toFloat();
    if ( parameters.count( "saxs_options.cryson_manual_hs" ) ) saxs_options.cryson_manual_hs = parameters[ "saxs_options.cryson_manual_hs" ] == "1";
+
+   if ( parameters.count( "advanced_config.temp_dir_threshold_mb" ) ) advanced_config.temp_dir_threshold_mb = parameters[ "advanced_config.temp_dir_threshold_mb" ].toInt();
 
    // vectors to read:
 
@@ -3242,6 +3246,8 @@ void US_Hydrodyn::hard_coded_defaults()
       saxs_options.d2o_conc * saxs_options.d2o_scat_len_dens +
       ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
    saxs_options.cryson_manual_hs                   = false;
+
+   advanced_config.temp_dir_threshold_mb           = 50;
 
    gparams                                         .clear( );
    gparams[ "guinier_auto_fit" ]                   = "1";

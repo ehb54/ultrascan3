@@ -522,7 +522,9 @@ static quint64 dir_size(const QString & str) {
 
 void US_Hydrodyn::clear_temp_dirs() {
    // somo_tmp_dir globally defined
-#define THRESHOLD_MB 50
+   if ( gui_script ) {
+      return;
+   }
 
    QString somo_saxs_tmp_dir = somo_dir + QDir::separator() + "saxs" + QDir::separator() + "tmp";
 
@@ -543,7 +545,7 @@ void US_Hydrodyn::clear_temp_dirs() {
       .arg( saxs_tmp_size )
       ;
 
-   if ( total_size >= THRESHOLD_MB ) {
+   if ( total_size >= (quint64) advanced_config.temp_dir_threshold_mb ) {
       switch (
               QMessageBox::question(
                                     this,
