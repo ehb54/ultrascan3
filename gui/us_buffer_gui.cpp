@@ -2051,17 +2051,17 @@ void US_BufferComponentRequerster::accept(void) {
    comp->unit = le_unit->text();
    comp->range = QString::number(le_lrange->text().toDouble(),'f',3)+'-'+QString::number(le_urange->text().toDouble(),'f',3)+' M';
    comp->dens_coeff[0] = le_density0->text().toDouble();
-   comp->dens_coeff[1] = le_density1->text().toDouble()*1e-3;
-   comp->dens_coeff[2] = le_density2->text().toDouble()*1e-2;
-   comp->dens_coeff[3] = le_density3->text().toDouble()*1e-3;
-   comp->dens_coeff[4] = le_density4->text().toDouble()*1e-4;
-   comp->dens_coeff[5] = le_density5->text().toDouble()*1e-6;
+   comp->dens_coeff[1] = le_density1->text().toDouble();
+   comp->dens_coeff[2] = le_density2->text().toDouble();
+   comp->dens_coeff[3] = le_density3->text().toDouble();
+   comp->dens_coeff[4] = le_density4->text().toDouble();
+   comp->dens_coeff[5] = le_density5->text().toDouble();
    comp->visc_coeff[0] = le_viscosity0->text().toDouble();
-   comp->visc_coeff[1] = le_viscosity1->text().toDouble()*1e-3;
-   comp->visc_coeff[2] = le_viscosity2->text().toDouble()*1e-2;
-   comp->visc_coeff[3] = le_viscosity3->text().toDouble()*1e-3;
-   comp->visc_coeff[4] = le_viscosity4->text().toDouble()*1e-4;
-   comp->visc_coeff[5] = le_viscosity5->text().toDouble()*1e-6;
+   comp->visc_coeff[1] = le_viscosity1->text().toDouble();
+   comp->visc_coeff[2] = le_viscosity2->text().toDouble();
+   comp->visc_coeff[3] = le_viscosity3->text().toDouble();
+   comp->visc_coeff[4] = le_viscosity4->text().toDouble();
+   comp->visc_coeff[5] = le_viscosity5->text().toDouble();
    comp->grad_form = ck_gf->isChecked();
    // check if it exists already
    QList<QString> problems;
