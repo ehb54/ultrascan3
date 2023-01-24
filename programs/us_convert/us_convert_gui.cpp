@@ -1415,10 +1415,14 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
   
 
-  gmpRun_bool = false;
+  gmpRun_bool  = false;
+  protDev_bool = false;
   
   if ( details_at_live_update[ "gmpRun" ] == "YES" )
     gmpRun_bool = true;
+
+  if ( details_at_live_update[ "devRecord" ] == "YES" )
+    protDev_bool = true;
  
   
   impType     = getImports_auto( details_at_live_update[ "dataPath" ] );
@@ -6564,18 +6568,35 @@ DbgLv(1) << "Writing to database";
 		 }
 	       else
 		 {
-		   QMessageBox::information( this,
-					     tr( "Save is Complete" ),
-					     tr( "The save of all data and reports is complete." ) );
 
-		   //ALEXY: need to delete autoflow record here
-		   delete_autoflow_record();
-		   resetAll_auto();
-		   //emit saving_complete_back_to_exp( ProtocolName_auto );
-		   emit saving_complete_back_to_initAutoflow();
-		   return;
+		   if ( !protDev_bool ) // no GMP && no ProtDev()!!!!!!!!!!!!!
+		     {
+		       QMessageBox::information( this,
+						 tr( "Save is Complete" ),
+						 tr( "The save of all data and reports is complete." ) );
+		       
+		       //ALEXY: need to delete autoflow record here
+		       delete_autoflow_record();
+		       resetAll_auto();
+		       //emit saving_complete_back_to_exp( ProtocolName_auto );
+		       emit saving_complete_back_to_initAutoflow();
+		       return;
+		     }
+		   else    // no GMP BUT  ProtDev(), so proceed!!!!!!!!!!!!!
+		     {
+		       update_autoflow_record_atLimsImport();
+		       
+		       QMessageBox::information( this,
+						 tr( "Save is Complete" ),
+						 tr( "The save of all data and reports is complete.\n\n"
+						     "The program will switch to Editing stage." ) );
+		       
+		       resetAll_auto();
+		       emit saving_complete_auto( details_at_editing  );   
+		     }
 		 }
 	     }
+
 	   else                   // us_comproject BUT the run IS GMP, so proceed                    
 	     {
 	       if ( !dataSavedOtherwise )

@@ -78,8 +78,8 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   
   epanInit            = new US_InitDialogueGui ( this );
   epanExp             = new US_ExperGui   ( this );
-  // epanObserv          = new US_ObservGui  ( this );
-  // epanPostProd        = new US_PostProdGui( this );
+  epanObserv          = new US_ObservGui  ( this );
+  epanPostProd        = new US_PostProdGui( this );
   epanEditing         = new US_EditingGui ( this );
   epanAnalysis        = new US_AnalysisGui( this );
   epanReport          = new US_ReportStageGui  ( this );
@@ -89,11 +89,11 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   // Add panels to the tab widget
   tabWidget->addTab( epanInit,      tr( "Manage Optima Runs"   ) );
   tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
-  // tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
-  // tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
-  tabWidget->addTab( epanEditing,   tr( "2: Editing"  ) );
-  tabWidget->addTab( epanAnalysis,  tr( "3: Analysis"  ) );
-  tabWidget->addTab( epanReport,    tr( "4: Report"  ) );
+  tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
+  tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
+  tabWidget->addTab( epanEditing,   tr( "4: Editing"  ) );
+  tabWidget->addTab( epanAnalysis,  tr( "5: Analysis"  ) );
+  tabWidget->addTab( epanReport,    tr( "6: Report"  ) );
   //tabWidget->addTab( epanExit,      tr( "Close Program"  ) );
   
     
@@ -101,11 +101,11 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   tabWidget->tabBar()->setFixedHeight(500);
      
   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::SETUP_COM  ) );
-  // tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
-  // tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
-  tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::EDITING_COM ) );
-  tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
-  tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::REPORT_COM ) );
+  tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
+  tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
+  tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::EDITING_COM ) );
+  tabWidget->setTabIcon( 5, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
+  tabWidget->setTabIcon( 6, US_Images::getIcon( US_Images::REPORT_COM ) );
   
   
   tabWidget->tabBar()->setIconSize(QSize(50,50));
@@ -182,33 +182,33 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   
   
   connect( epanInit, SIGNAL( define_new_experiment_init( QMap < QString, QString > & ) ), this, SLOT( define_new_experiment( QMap < QString, QString > & )  ) );
-  //connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
-  //connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
+  connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+  connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
   connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
   connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
   connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
   
   connect( this, SIGNAL( pass_used_instruments( QMap < QString, QString > & ) ), epanExp, SLOT( pass_used_instruments( QMap < QString, QString > & )  ) );
-  connect( epanExp, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
+  //connect( epanExp, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
   
-  //connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
-  //connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+  connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+  connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
   connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
   
-  //connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
-  //connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
-  //connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
-  //connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
-  //connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
-  //connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
+  connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
+  connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+  connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
+  connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
+  connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
+  connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
   
-  //connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
+  connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
   connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
-  //connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
-  //connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
-
+  connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
+  connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
   connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
+
   connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
   connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
   connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
@@ -281,16 +281,46 @@ void US_ProtocolDevMain::initPanels( int  panx )
 	  qDebug() << "Jumping from EXPERIMENT.";
 	}
 
- 
+       if ( curr_panx == 2 )
+	{
+	  // 2 cases:
+	  /* 
+	        1. Avaiting for run to be launched ("Back to Managing Optima Runs") -- SET
+		2. More complex: Back to Managing runs from active LIVE_UPDATE stage -- stop all timers and other processes...
+	  */
+
+	  qDebug() << "Jumping from LIVE UPDATE.";
+
+	  //2. Stop all timers/threads, reset GUI - when stopping fully working LIVE UPDATE
+	  if ( !xpn_viewer_closed_soft )
+	    {
+	      show_liveupdate_finishing_msg();
+	      
+	      epanObserv->sdiag->reset_liveupdate_panel_public();
+	      qApp->processEvents();
+
+	      xpn_viewer_closed_soft = false;
+	      //epanInit  ->initAutoflowPanel();
+
+	      return;
+	    }
+	}
+
+            if ( curr_panx == 3 )
+	{
+	  qDebug() << "Jumping from LIMS IMPORT.";
+	  //Send signal to reset LIMS IMPORT tab... Fully SET
+	  emit reset_lims_import();
+	}
       
-      if ( curr_panx == 2 )
+      if ( curr_panx == 4 )
 	{
 	  qDebug() << "Jumping from EDITING.";
 	  emit reset_data_editing();
 	}
 
             
-      if ( curr_panx == 3 )
+      if ( curr_panx == 5 )
 	{
 	  qDebug() << "Jumping from ANALYSIS.";
 	  show_analysis_update_finishing_msg();
@@ -300,20 +330,52 @@ void US_ProtocolDevMain::initPanels( int  panx )
 
 	  return;
 	}
-
-      if ( curr_panx == 4 )
+      
+      if ( curr_panx == 6 )
 	{
 	  qDebug() << "Jumping from Report.";
 	  
 	  emit reset_reporting();
 	}      
-
+      
+      xpn_viewer_closed_soft = false;
+      
       epanInit  ->initAutoflowPanel();
     }
 
   
   //curr_panx = panx;         // Set new current panel
 }
+
+
+// Slot to define new exp. (from initial dialog)
+void US_ProtocolDevMain::show_liveupdate_finishing_msg( void )
+{
+
+   msg_liveupdate_finishing = new QMessageBox(this);
+   msg_liveupdate_finishing->setIcon(QMessageBox::Information);
+  
+   msg_liveupdate_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+   msg_liveupdate_finishing->setStandardButtons(0);
+   msg_liveupdate_finishing->setWindowTitle(tr("Updating..."));
+   msg_liveupdate_finishing->setText(tr( "Finishing LIVE UPDATE processes... Please wait...") );
+   msg_liveupdate_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+  
+  
+   int tab_width = this->tabWidget->tabBar()->width();
+   int upper_height = this->gen_banner->height() + //this->welcome->height()
+     + this->logWidget->height() + this->test_footer->height();
+
+   int pos_x = this->width()/2 - tab_width;
+   int pos_y = this->height()/2 - upper_height;     
+   msg_liveupdate_finishing->move(pos_x, pos_y);
+  
+   msg_liveupdate_finishing->show();
+  
+   qApp->processEvents();
+
+}
+
 
 // 
 void US_ProtocolDevMain::show_analysis_update_finishing_msg( void )
@@ -341,6 +403,15 @@ void US_ProtocolDevMain::show_analysis_update_finishing_msg( void )
   
    qApp->processEvents();
 
+}
+
+
+void US_ProtocolDevMain::liveupdate_stopped( void  )
+{
+  //Close message on finishing LIVE_UPDATE processes...
+  msg_liveupdate_finishing->accept();
+  
+  epanInit  ->initAutoflowPanel();
 }
 
 void US_ProtocolDevMain::analysis_update_stopped( void  )
@@ -456,11 +527,56 @@ void US_ProtocolDevMain::close_all( void )
   
 }
 
+// Slot to pass submitted to Optima run info to the Live Update tab
+void US_ProtocolDevMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
+{
+  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()->setEnabled(false) ?? 
+  curr_panx = 2;
+
+ 
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 2 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+
+  emit pass_to_live_update( protocol_details );
+}
+
+
+// Slot to switch from the Live Update to Editing tab
+void US_ProtocolDevMain::switch_to_post_processing( QMap < QString, QString > & protocol_details )
+{
+  tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 3;
+
+  // Trigger resize to update size of the PostProcs
+  int curr_h = this->height() + 1;
+  int curr_w = this->width() + 1;
+
+  this->resize( QSize(curr_w, curr_h) );
+  
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 3 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+  
+  // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
+  
+  emit pass_to_post_processing( protocol_details );
+}
+   
+
 // Slot to switch to Editing tab
 void US_ProtocolDevMain::switch_to_editing( QMap < QString, QString > & protocol_details )
 {
-   tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-   curr_panx = 2;
+   tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+   curr_panx = 4;
 
    // Trigger resize to update size of the Edit_data
   int curr_h = this->height() - 1;
@@ -470,7 +586,7 @@ void US_ProtocolDevMain::switch_to_editing( QMap < QString, QString > & protocol
    
    for (int i = 1; i < tabWidget->count(); ++i )
      {
-       if ( i == 2 )
+       if ( i == 4 )
 	 tabWidget->tabBar()->setTabEnabled(i, true);
       else
 	tabWidget->tabBar()->setTabEnabled(i, false);
@@ -514,14 +630,14 @@ void US_ProtocolDevMain::switch_to_analysis( QMap < QString, QString > & protoco
   protocol_details[ "sim_msg_pos_x" ] = QString::number( pos_x );
   protocol_details[ "sim_msg_pos_y" ] = QString::number( pos_y );
   
-  tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-  curr_panx = 3;
+  tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 5;
 
    // ALEXEY: Temporariy NOT lock here... Will need later
    
    for (int i = 1; i < tabWidget->count(); ++i )
      {
-       if ( i == 3 )
+       if ( i == 5 )
 	 tabWidget->tabBar()->setTabEnabled(i, true);
       else
 	tabWidget->tabBar()->setTabEnabled(i, false);
@@ -533,14 +649,14 @@ void US_ProtocolDevMain::switch_to_analysis( QMap < QString, QString > & protoco
 // Slot to switch to Report tab
 void US_ProtocolDevMain::switch_to_report( QMap < QString, QString > & protocol_details )
 {
-   tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-   curr_panx = 4;
+   tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+   curr_panx = 5;
 
    // ALEXEY: Temporariy NOT lock here... Will need later
    
    for (int i = 1; i < tabWidget->count(); ++i )
      {
-       if ( i == 4 )
+       if ( i == 5 )
 	 tabWidget->tabBar()->setTabEnabled(i, true);
       else
 	tabWidget->tabBar()->setTabEnabled(i, false);
@@ -1070,35 +1186,35 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     {
       //pdiag_autoflow -> close();
       
-      // if ( stage == "LIVE_UPDATE" )
-      // 	{
-      // 	  //do something
-      // 	  //switch_to_live_update( protocol_details );
+      if ( stage == "LIVE_UPDATE" )
+       	{
+       	  //do something
+       	  //switch_to_live_update( protocol_details );
 	  
-      // 	  emit switch_to_live_update_init( protocol_details );
+       	  emit switch_to_live_update_init( protocol_details );
 	  
-      // 	  return;
-      // 	}
+       	  return;
+       	}
       
-      // if ( stage == "EDITING" )
-      // 	{
-      // 	  //do something
-      // 	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
+      if ( stage == "EDITING" )
+       	{
+       	  //do something
+       	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
 	  
-      // 	  if ( currDir.isEmpty() || !directory.exists() )
-      // 	    {
-      // 	      //switch_to_live_update( protocol_details );
-      // 	      emit switch_to_live_update_init( protocol_details );
-      // 	    }
-      // 	  else
-      // 	    {
-      // 	      //switch_to_post_processing( protocol_details );
-      // 	      emit switch_to_post_processing_init( protocol_details );
-      // 	    }
+       	  if ( currDir.isEmpty() || !directory.exists() )
+       	    {
+       	      //switch_to_live_update( protocol_details );
+       	      emit switch_to_live_update_init( protocol_details );
+       	    }
+       	  else
+       	    {
+       	      //switch_to_post_processing( protocol_details );
+       	      emit switch_to_post_processing_init( protocol_details );
+       	    }
 	  
 	  
-      // 	  return;
-      // 	}
+       	  return;
+       	}
       
       if ( stage == "EDIT_DATA" )
 	{
@@ -1328,20 +1444,23 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 
       qDebug() << "OperatorID -- " << operatorID;
       qDebug() << "failedID -- "   << failedID;
-      
+
+           
       QDateTime local(QDateTime::currentDateTime());
 
       if ( type == "HISTORY" )
 	{
+	  QString history_runname = runname;
 	  //process runname: if combined, correct for nicer appearance
 	  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
 	    {
 	      QString full_runname_edited  = full_runname.split(",")[0];
 	      full_runname_edited.chop(3);
 	      
-	      full_runname = full_runname_edited + " (combined RI+IP) ";
+	      //full_runname = full_runname_edited + " (combined RI+IP) ";
+	      history_runname += " (combined RI+IP) ";
 	    }
-	  autoflowentry << id << full_runname << optimaname  << time_created.toString(); 
+	  autoflowentry << id << history_runname << optimaname  << time_created.toString(); 
 	}
       if ( type == "DEV" )
 	autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
@@ -1479,6 +1598,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
 	 }
      }
    else
@@ -1541,7 +1661,6 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString
 }
 
 
-
 //////////////////////////////////////////////////////////////////////////////////
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
@@ -1589,11 +1708,11 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
 
-   connect( sdiag, SIGNAL( to_editing_data( QMap < QString, QString > & ) ),
-	    this,  SLOT( to_editing (  QMap < QString, QString > &) ) );
+   // connect( sdiag, SIGNAL( to_editing_data( QMap < QString, QString > & ) ),
+   // 	    this,  SLOT( to_editing (  QMap < QString, QString > &) ) );
    
-   // connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
-   // 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
+   connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
+   	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
@@ -1644,15 +1763,21 @@ void US_ExperGui::resizeEvent(QResizeEvent *event)
 }
 
 
-void US_ExperGui::to_editing( QMap < QString, QString > & protocol_details )
-{
-  emit switch_to_editing( protocol_details );
-}
+// void US_ExperGui::to_editing( QMap < QString, QString > & protocol_details )
+// {
+//   emit switch_to_editing( protocol_details );
+// }
 
 void US_ExperGui::pass_used_instruments( QMap < QString, QString > & protocol_details )
 {
   qDebug() << "In US_ExperGui::pass_used_instruments( QMap < QString, QString > & protocol_details )";
   emit define_used_instruments( protocol_details );
+}
+
+//When run is submitted to Optima & protocol details are passed .. 
+void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
+{
+  emit switch_to_live_update( protocol_details );
 }
 
 //When US_Experiment is closed
@@ -1675,7 +1800,6 @@ void US_ExperGui::expsetup_msg_closed( void )
   mainw->msg_expsetup->accept();
   //mainw->diag_expsetup->close();
 }
-
 
 // On click to open US_Experiment  <-- NOT USED, us_experimnet is loaded immediately
 void US_ExperGui::manageExperiment()
@@ -1727,7 +1851,258 @@ void US_ExperGui::manageExperiment()
 }
 
 
-// US_Editing
+// US_Observe /////////////////////////////////////////////////////////////////////////////////
+US_ObservGui::US_ObservGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ProtocolDevMain*)topw;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+   
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+   // Open US_Xpn_Viewer ...  
+   sdiag = new US_XpnDataViewer("AUTO");
+   sdiag->setParent(this, Qt::Widget);
+
+   connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
+
+   //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
+   connect( sdiag, SIGNAL( experiment_complete_auto( QMap < QString, QString > & ) ), this, SLOT( to_post_processing ( QMap < QString, QString > & ) ) );
+
+   //ALEXEY: to reset timers/threads and GUI when returning back to InitDialog
+   connect( this, SIGNAL( reset_live_update_passed( ) ), sdiag, SLOT( reset_liveupdate_panel ( )  ) );
+   
+   //ALEXEY: close program, emitted from sdiag
+   connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
+
+   connect( sdiag, SIGNAL( liveupdate_processes_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+
+   //ALEXEY: premature abortion with no data
+   connect( sdiag, SIGNAL( aborted_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow_xpnviewer ( ) ) );
+   
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+
+}
+
+
+void US_ObservGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+void US_ObservGui::to_initAutoflow_xpnviewer ( void )
+{
+  emit stop_nodata();
+}
+
+void US_ObservGui::processes_stopped_passed( void )
+{
+  emit processes_stopped(); 
+}
+
+void US_ObservGui::reset_live_update( void )
+{
+  emit reset_live_update_passed(); 
+}
+
+// Live Update's get and use submitted run's protocol details
+void US_ObservGui::process_protocol_details( QMap < QString, QString > & protocol_details )
+{
+  // Use protocol details to retrieve data from Optima's DB
+  // Query ExperimentRun table for runname/ExpDefId
+  // If null (i.e. run is not launched yet), Information box - "Run was submitted, but not launched yet.. Awaiting for data to emerge."
+
+  // QString mtitle    = tr( "Reading Protocol" );
+  // QString message   = tr( "Protocol details passed. <br> Name: %1 <br> ID: %2" ).arg(protocol_details["experimentName"]).arg(protocol_details["experimentId"]);
+  // QMessageBox::information( this, mtitle, message );
+
+  emit to_xpn_viewer( protocol_details );
+}
+
+// void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed,  QString & correctRadii )
+// {
+//   emit switch_to_post_processing( currDir, protocolName, invID_passed, correctRadii );
+// }
+
+void US_ObservGui::to_post_processing( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_post_processing( protocol_details );
+}
+
+
+void US_ObservGui::to_close_program( void )
+{
+  //sdiag->close();
+  emit close_everything();
+}
+
+
+
+
+// US_PostProd /////////////////////////////////////////////////////////////////////////////////////////////////
+US_PostProdGui::US_PostProdGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ProtocolDevMain*)topw;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+
+   // Open US_Convert ...  
+   sdiag = new US_ConvertGui("AUTO");
+   sdiag->setParent(this, Qt::Widget);
+
+   connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
+
+   //emit signal after data loaded
+   connect( sdiag, SIGNAL( data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
+   
+   //ALEXEY: switch to Editing
+   connect( sdiag, SIGNAL( saving_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_editing (  QMap < QString, QString > &) ) );
+   //ALEXEY: for academic ver. switch back to experiment
+   connect( sdiag, SIGNAL( saving_complete_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   // if ( mainw->us_mode_bool )
+   //   sdiag->us_mode_passed();
+
+   sdiag->show();
+
+}
+
+void US_PostProdGui::resize_main( void )
+{
+  // Trigger resize to update size of the Edit_Data
+  int curr_h = mainw->height() + 1;
+  int curr_w = mainw->width() + 1;
+
+  mainw->resize( QSize(curr_w, curr_h) );
+}
+
+void US_PostProdGui::reset_lims_import( void )
+{
+  emit reset_lims_import_passed();
+}
+
+void US_PostProdGui::import_data_us_convert(  QMap < QString, QString > & protocol_details )
+{
+  emit to_post_prod( protocol_details );
+}
+
+void US_PostProdGui::to_editing( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_editing( protocol_details );
+}
+
+// void US_PostProdGui::to_experiment( QString & protocolName )
+// {
+//   emit switch_to_exp( protocolName  );
+// }
+
+void US_PostProdGui::to_initAutoflow( void )
+{
+  emit switch_to_initAutoflow();
+}
+
+void US_PostProdGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+
+
+
+// US_Editing /////////////////////////////////////////////////////////////////////////////
 US_EditingGui::US_EditingGui( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {

@@ -1932,21 +1932,37 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
 	  << fileNameList[ i ];
       status = db -> statusQuery( qry );
       qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
-      
-      // Now delete the experiment and all existing rawData, 
+
+
+      // Now delete editedData, models, noises, reports, 
       qry. clear();
-      qry << "delete_experiment"
-	  << expID;
+      qry << "clear_data_for_experiment"
+       	  << expID;
       status = db -> statusQuery( qry );
-      qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      qDebug() << "Cleaning Data (del data) for FAILED run: del_exp stat" << status;
       
       if ( status != US_DB2::OK )
-	{
-	  QMessageBox::information( this,
-				    tr( "Error / Warning" ),
-				    db -> lastError() + tr( " (error=%1, expID=%2)" )
-				    .arg( status ).arg( expID ) );
-	}
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
     }
   /** End Iterate over fileNameList ****************************************************************/
 }
@@ -2276,6 +2292,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
 	 }
      }
    else
