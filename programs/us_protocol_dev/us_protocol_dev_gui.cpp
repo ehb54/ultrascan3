@@ -649,14 +649,14 @@ void US_ProtocolDevMain::switch_to_analysis( QMap < QString, QString > & protoco
 // Slot to switch to Report tab
 void US_ProtocolDevMain::switch_to_report( QMap < QString, QString > & protocol_details )
 {
-   tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-   curr_panx = 5;
+   tabWidget->setCurrentIndex( 6 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+   curr_panx = 6;
 
    // ALEXEY: Temporariy NOT lock here... Will need later
    
    for (int i = 1; i < tabWidget->count(); ++i )
      {
-       if ( i == 5 )
+       if ( i == 6 )
 	 tabWidget->tabBar()->setTabEnabled(i, true);
       else
 	tabWidget->tabBar()->setTabEnabled(i, false);
