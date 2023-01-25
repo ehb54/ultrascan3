@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO - Batch Operations Module:</h2>
-<h3><center>Last updated: October 2020 </center></h3><p>
+<h3><center>Last updated: January 2023 </center></h3><p>
 <p>
 <img SRC="somo-batch.png" ALT="SOMO Batch Operations Module">
 </center>
@@ -46,8 +46,7 @@ supported by <b><i>US-SOMO</i></b>, PDB structures or bead models. If unwanted f
 </center>
 <p>
 In order to allow for the unattended operations, the files must be checked for compliance with the <b><i>US-SOMO</i></b> requirements.
-In particular, their residues must be defined in the <i>somo.residue</i> lookup table and must contain all atoms. However, starting from the May 2015 release,
-the parsing options have been set by default so to cope with incompleted/not coded residues, by the use of approximate methods (a detailed description of these options can be found <a href=somo_pdb_parsing.html>here</a>). Users can revert to the more stringent <i>List them and stop operation</i> or to the non-recommended <i>List them, skip (entire) residue and proceed</i> options.<br> 
+In particular, their residues must be defined in the <i>somo.residue</i> lookup table and must contain all atoms. However, starting from the May 2015 release, the parsing options have been set by default so to cope with incompleted/not coded residues, by the use of approximate methods (a detailed description of these options can be found <a href=somo_pdb_parsing.html>here</a>). Users can revert to the more stringent <i>List them and stop operation</i> or to the non-recommended <i>List them, skip (entire) residue and proceed</i> options.<br> 
 For bead models, they must match the overlap tolerance as set in the  <a href=somo_hydro.html>Hydrodynamic Computations Options</a> module if the <i>Calculate RB Hydrodynamics SMI</i> checkbox is selected (see below).<br>
 The uploaded files are therefore screened for compliance with the settings shown in the <b>Screen selected files:</b> panel, by pressing the <b><i>Screen Selected</i></b> button. The progress window on the right side reports the progress of the operations, and list the problems that might be found with the files, prompting for corrective action to be taken.<p>
 
@@ -60,6 +59,8 @@ The uploaded files are therefore screened for compliance with the settings shown
 
 The sequence of batch operation is then set in the <b>Process selected files:</b> panel:<p>
 The alternative <i>Process Only First Model in PDBs with Multiple Models</i> and the <i>Process All Models in PDBs with Multiple Models</i> clickboxes control if just the first or all models should be processed in PDB files containing multiple models, like those derived from NMR studies. These options are active only if at least a PDB file is among the selected files.<br>
+In new releases produced after <span style="color:#CC0000">January 2023</span>, a temporary directory is automatically created in "...ultrascan/somo/tmp/" (check full path under different operating systems), where the multiple models contained in a NMR-style PDB file will be individually extracted before processing, saving a great deal of computer memory. The advancement of this process in reported in the <i>Progress window</i> on the right side. This temporary directory is then cleared and removed upon batch mode operations completion or halting.<p> 
+
 The <i>Run DMD</i> checkbox will enable <b><i>Discrete Molecular Dynamics (DMD)</b></i> runs to be carried on the selected files according to the DMD settings (see <a href="somo_cluster_dmd.html">here</a>).<p>
 The alternative <i>Build SoMo Bead Model</i>, <i>Build SoMo Overlap Bead Model</i> <i>Build AtoB (Grid) Bead Model</i>, and <i>Build vdW Overlap Bead Model</i> dictate which bead modeling procedure will be used to generate the models. These options are active only if at least a PDB file is among the selected files.<p>
 
@@ -106,7 +107,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on October 1, 2020.
+Last modified on January 25, 2023.
 </font>
 </body>
 </html>
