@@ -262,6 +262,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       vector < int >     split_if_mm( int i );
       vector < QString > split_mm_files;
       QTemporaryDir    * split_dir;
+      bool               create_split_dir();
+      void               remove_split_dir();
 
    public :
       void add_file( QString filename );

@@ -103,12 +103,6 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->results_dir = false;
    batch->results_dir_name = "run_results";
    
-   split_dir = new QTemporaryDir( ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + "/batch_XXXXXX" );
-   if ( !split_dir->isValid() ) {
-      TSO << "split_if_mm .. could not create temporary directory!\n";
-      split_dir = (QTemporaryDir *)0;
-   }
-
    // if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq && !batch->dmd )
    // {
    // batch->somo = true;
@@ -1019,10 +1013,8 @@ void US_Hydrodyn_Batch::closeEvent(QCloseEvent *e)
       qApp->processEvents();
    }
 
-   if ( split_dir ) {
-      delete split_dir;
-   }
-
+   remove_split_dir();
+   
    *batch_widget = false;
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -2274,15 +2266,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    pb_stop->setEnabled(false);
    update_enables();
 
-   // clean up split_dir
-   if ( split_dir ) {
-      delete split_dir;
-   }
-   split_dir = new QTemporaryDir( ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + "/batch_XXXXXX" );
-   if ( !split_dir->isValid() ) {
-      TSO << "split_if_mm .. could not create temporary directory!\n";
-      split_dir = (QTemporaryDir *)0;
-   }
+   remove_split_dir();
 
    qApp->processEvents();
 }
@@ -3105,6 +3089,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             editor->setTextColor(save_color);
             job_timer.end_timer( QString( "%1 process" ).arg( get_file_name( i, m ) ) );
          }
+         remove_split_dir();
          this->isVisible() ? this->raise() : this->show();
          progress2->hide();
          qApp->processEvents();
@@ -3406,10 +3391,14 @@ vector < int > US_Hydrodyn_Batch::split_if_mm( int i ) {
    if (
        !batch->mm_all
        || !file.contains( QRegularExpression( "\\.pdb$", QRegularExpression::CaseInsensitiveOption ) )
-       || !split_dir
-       || !split_dir->isValid()
         ) {
-      // TSO << QString( "split_if_mm .. not mm_all, no split_dir or not a pdb file: %1\n" ).arg( file );
+      // TSO << QString( "split_if_mm .. not mm_all or not a pdb file: %1\n" ).arg( file );
+      models.push_back(-1);
+      return models;
+   }
+
+   remove_split_dir();
+   if ( !create_split_dir() ) {
       models.push_back(-1);
       return models;
    }
@@ -4548,3 +4537,23 @@ void US_Hydrodyn_Batch::cluster()
    hc->exec();
    delete hc;
 }
+
+bool US_Hydrodyn_Batch::create_split_dir() {
+   split_dir = new QTemporaryDir( ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + "/batch_XXXXXX" );
+   if ( !split_dir->isValid() ) {
+      split_dir = (QTemporaryDir *)0;
+   }
+   return split_dir ? true : false;
+}
+
+void US_Hydrodyn_Batch::remove_split_dir() {
+   if ( split_dir ) {
+      if ( split_dir->isValid() ) {
+         split_dir->remove();
+      }
+      delete split_dir;
+   }
+   split_dir = (QTemporaryDir *)0;
+}
+
+ 
