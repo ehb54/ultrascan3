@@ -1068,16 +1068,17 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    
    // ask for the names to load if more than one present (cb list? )
    QStringList qsl_sel_names;
-   bool create_avg = false;
-   bool create_std_dev = false;
-   bool only_plot_stats = true;
-   save_to_csv = false;
-   csv_filename = "summary";
+   bool create_avg         = false;
+   bool create_std_dev     = false;
+   bool only_plot_stats    = true;
+   save_to_csv             = false;
+   csv_filename            = "summary";
    bool save_original_data = false;
-   bool run_nnls = false;
-   bool run_best_fit = false;
-   bool run_ift      = false;
-   QString nnls_target = "";
+   bool run_nnls           = false;
+   bool run_best_fit       = false;
+   bool run_ift            = false;
+   bool nnls_csv           = false;
+   QString nnls_target     = "";
    if ( !grid_target.isEmpty() )
    {
       nnls_target = "\"" + grid_target + "\"";
@@ -1099,6 +1100,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &csv_filename,
                                         &save_original_data,
                                         &run_nnls,
+                                        &nnls_csv,
                                         &run_best_fit,
                                         &run_ift,
                                         &nnls_target,
@@ -1165,12 +1167,35 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       return;
    }
 
+   QString nnls_csv_filename;
+   nnls_csv_data.clear();
+   nnls_csv_footer.clear();
+      
    // setup for nnls
    if ( run_nnls || run_best_fit )
    {
       if ( run_nnls )
       {
          editor->append("NNLS target: " + nnls_target + "\n");
+         nnls_csv_footer << "\"NNLS target:\"," + nnls_target;
+         
+         if ( nnls_csv ) {
+            QString use_dir = USglobal->config_list.root_dir + "/" + "somo" + "/" + "saxs";
+
+            // ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+            nnls_csv_filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the NNLS fit") , use_dir + "/NNLS_results.csv" , "*.csv" );
+
+            if ( nnls_csv_filename.isEmpty() ) {
+               editor_msg( "red", us_tr( "Canceling NNLS CSV save" ) );
+               nnls_csv = false;
+            }
+            if ( !nnls_csv_filename.contains(QRegExp(".csv", Qt::CaseInsensitive )) )
+            {
+               nnls_csv_filename += ".csv";
+            }
+
+         }
       }
       if ( run_best_fit )
       {
@@ -1543,9 +1568,34 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                               QString( us_tr( "Note: the NNLS fit will be performed over a cropped range q(%1:%2)" ) )
                               .arg( our_saxs_options->iqq_scale_minq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_minq ) : "" )
                               .arg( our_saxs_options->iqq_scale_maxq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_maxq ) : "" ) );
+                  nnls_csv_footer <<
+                     QString( us_tr( "\"Note: the NNLS fit will be performed over a cropped range q(%1:%2)\"" ) )
+                     .arg( our_saxs_options->iqq_scale_minq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_minq ) : "" )
+                     .arg( our_saxs_options->iqq_scale_maxq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_maxq ) : "" );
+                     
                }
 
                calc_iqq_nnls_fit( nnls_target, use_csv_filename );
+
+               if ( nnls_csv ) {
+                  if ( QFile::exists(nnls_csv_filename) )
+                  {
+                     nnls_csv_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( nnls_csv_filename, 0, this );
+                  }
+
+                  QFile f( nnls_csv_filename );
+                  if ( f.open(QIODevice::WriteOnly ) ) {
+                     QTextStream tso(&f);
+                     tso << "\"File\",\"Contribution weight\"\n";
+                     tso << nnls_csv_data.join("\n") << "\n";
+                     tso << "\n\"Messages:\"\n";
+                     tso << nnls_csv_footer.join("\n") << "\n";
+                     f.close();
+                     editor_msg( "darkblue", QString( us_tr( "Created file: %1\n" ) ).arg( nnls_csv_filename ) );
+                  } else {
+                     editor_msg( "red", QString( us_tr( "Error attempting to create file: %1\n" ) ).arg( nnls_csv_filename ) );
+                  }
+               }
             }
             if ( run_best_fit )
             {

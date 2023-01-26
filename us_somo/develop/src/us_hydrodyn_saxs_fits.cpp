@@ -43,6 +43,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       if ( it->second.size() != max_iqq_len ) 
       {
          editor_msg("red", QString(us_tr("NNLS failed, length mismatch %1 %2\n")).arg( it->second.size()).arg(max_iqq_len));
+         nnls_csv_footer << QString(us_tr("\"NNLS failed, length mismatch %1 %2\"")).arg( it->second.size()).arg(max_iqq_len);
          return;
       }
    }
@@ -68,6 +69,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    if ( org_size != max_iqq_len )
    {
       editor_msg("red", QString(us_tr("NNLS failed, target length mismatch %1 %2\n")).arg(org_size).arg(max_iqq_len));
+      nnls_csv_footer << QString(us_tr("\"NNLS failed, target length mismatch %1 %2\"")).arg(org_size).arg(max_iqq_len);
       return;
    }
 
@@ -80,6 +82,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    if ( use_errors &&  org_errors_size != max_iqq_len )
    {
       editor_msg("red", QString(us_tr("NNLS failed, target length mismatch %1 %2\n")).arg(org_errors_size).arg(max_iqq_len));
+      nnls_csv_footer << QString(us_tr("\"NNLS failed, target length mismatch %1 %2\"")).arg(org_errors_size).arg(max_iqq_len);
       return;
    }
 
@@ -88,6 +91,12 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
               us_tr( "using standard deviations to compute NNLS\n" ) :
               us_tr( "NOT using standard deviations to compute NNLS\n" ) );
 
+   nnls_csv_footer <<
+      ( use_errors ? 
+        us_tr( "\"using standard deviations to compute NNLS\"" ) :
+        us_tr( "\"NOT using standard deviations to compute NNLS\"" ) )
+      ;
+   
    vector < double > use_B = nnls_B;
    vector < double > use_q = nnls_q;
    vector < double > use_x(nnls_A.size());
@@ -100,6 +109,8 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       // first check for non-zero
       editor_msg( "blue",
                   "Notice: Kratky fit (q^2*I)\n" );
+      nnls_csv_footer <<
+         "\"Notice: Kratky fit (q^2*I)\"";
       for ( unsigned int i = 0; i < use_A.size(); i++ )
       {
          double q2 = use_q[ i % use_B.size() ] * use_q[ i % use_B.size() ];
@@ -153,10 +164,14 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       {
          editor_msg( "red",
                      "Warning: Log fitting requested but some of the values are less than or equal to zero, so log fitting disabled\n" );
+         nnls_csv_footer <<
+            "\"Warning: Log fitting requested but some of the values are less than or equal to zero, so log fitting disabled\"";
       } else {
          // compute log10 on A & B
          editor_msg( "blue",
                      "Notice: Log fitting\n" );
+         nnls_csv_footer <<
+            "\"Notice: Log fitting\"";
          for ( unsigned int i = 0; i < use_B.size(); i++ )
          {
             use_B[ i ] = log10( use_B[ i ] );
@@ -182,18 +197,25 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
            (double *)&nnls_wp[0],
            (double *)&nnls_zzp[0],
            (int *)&nnls_indexp[0]);
-   
+
    if ( result != 0 )
    {
       editor->append("NNLS error!\n");
+      nnls_csv_footer <<
+         "\"NNLS error!\"";
    }
    
    editor->append(QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd));
-   
+
+   nnls_csv_footer <<
+      QString("\"Residual Euclidian norm of NNLS fit %1\"").arg(nnls_rmsd);
+
    vector < double > rescaled_x = our_saxs_options->disable_nnls_scaling ? use_x : rescale(use_x);
 
    if ( our_saxs_options->disable_nnls_scaling ) {
       editor_msg( "darkred", "NNLS scaling disabled\n" );
+      nnls_csv_footer <<
+         "\"NNLS scaling disabled\"";
    }
 
    // list models & concs
@@ -205,6 +227,12 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
 
    for ( unsigned int i = 0; i < use_x.size(); i++ )
    {
+      {
+         QString model_name = model_names[i];
+         nnls_csv_data <<
+            QString("\"%1\",%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+      }      
+
       if ( rescaled_x[i] == 0 )
       {
          if ( !nnls_zero_list ) {
@@ -262,7 +290,6 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    }
    
    // save as csv
-   
    if ( !csv_filename.isEmpty() )
    {
       // cout << "save_to_csv\n";

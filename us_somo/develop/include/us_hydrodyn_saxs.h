@@ -435,6 +435,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < double >                  nnls_r;
       vector < double >                  nnls_q;
       double                             nnls_rmsd;
+      QStringList                        nnls_csv_data;
+      QStringList                        nnls_csv_footer;
 
       QString nnls_B_name;
       QString nnls_header_tag;
