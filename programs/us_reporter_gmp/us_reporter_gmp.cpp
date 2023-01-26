@@ -1182,9 +1182,10 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	  full_runname_edited.chop(3);
 
 	  full_runname = full_runname_edited + " (combined RI+IP) ";
+	  runname += " (combined RI+IP) ";
 	}
       
-      autoflowentry << id << full_runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
@@ -4339,12 +4340,17 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   qDebug() << "ComboPlots generation: modelDescModified -- "     << modelDescModified;
   qDebug() << "ComboPlots generation: modelDescModifiedGuid -- " << modelDescModifiedGuid;
 
-  mkdir( US_Settings::reportDir(), filename_passed );
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), filename_passed );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
+  QString basename = dirName + "/" + filename_passed + ".";
+  //QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
 
+  
   //estimate # of combined plots
   int combpl_number = 3*3;
   // Show msg while data downloaded and simulated
@@ -4509,12 +4515,17 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 
   QString filename_returned = get_filename( triple_name );
   qDebug() << "In plot_pseudo3D, filename_returned -- " << filename_returned;
-  
-  mkdir( US_Settings::reportDir(), filename_returned );
+
+
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), filename_returned );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + filename_returned + "/" + filename_returned + ".";
+  QString basename  = dirName + "/" + filename_returned + ".";
+  //QString basename  = US_Settings::reportDir() + "/" + filename_returned + "/" + filename_returned + ".";
   
   QString imgPseudo3d01File;
   QStringList Pseudo3dPlotsFileNames;
@@ -7033,12 +7044,16 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   
   
   QStringList PlotsFileNames;
-  mkdir( US_Settings::reportDir(), edata->runID );
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), edata->runID );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
   QString tripnode  = QString( currentTripleName ).replace( ".", "" );
-  QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
+  QString basename  = dirName + "/" + text_model( model, 0 ) + "." + tripnode + "."; 
+  //QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
 
   QString img01File = basename + "velocity_nc" + svgext;
   QString img02File = basename + "residuals"   + pngext;

@@ -1861,75 +1861,110 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
     }
 
   QStringList qry;
-  
-  //get experimentID from 'experiment' table:
-  qry << "get_experiment_info_by_runID"
-      << run_details[ "filename" ]
-      << run_details[ "invID_passed" ];
 
-  db->query( qry );
-  db->next();
-  QString expID  = db->value( 1 ).toString();
+  //Get proper filename
+  QString FileName = run_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
 
-  
-  // Let's make sure it's not a calibration experiment in use
-  qry. clear();
-  qry << "count_calibration_experiments" << expID;
-  int count = db->functionQuery( qry );
-  qDebug() << "Cleaning Failed Run: calexp count" << count;
-  
-  if ( count < 0 )
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
     {
-      qDebug() << "count_calibration_experiments( "
-               << expID
-               << " ) returned a negative count";
-      return;
+      qry.clear();
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << run_details[ "invID_passed" ];
+
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+      
+      
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+	  return;
+	}
+
+      int status;
+      
+      // Delete links between experiment and solutions
+      qry. clear();
+      qry << "delete_experiment_solutions"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del sols status" << status;
+      
+      // Same with cell table
+      qry. clear();
+      qry  << "delete_cell_experiments"
+	   << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del cells status" << status;
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      //US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+
+
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+       	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for FAILED run: del_exp stat" << status;
+      
+      if ( status != US_DB2::OK )
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
     }
-  
-  else if ( count > 0 )
-    {
-      QMessageBox::information( this,
-				tr( "Error" ),
-				tr( "Cannot delete an experiment that is associated "
-				    "with a rotor calibration\n" ) );
-      return;
-    }
-
-  int status;
-  
-  // Delete links between experiment and solutions
-  qry. clear();
-  qry << "delete_experiment_solutions"
-      << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del sols status" << status;
-  
-  // Same with cell table
-  qry. clear();
-  qry  << "delete_cell_experiments"
-       << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del cells status" << status;
-
-  // Let's delete any pcsa_modelrecs records to avoid
-  //  constraints problems
-  US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
-
-  // Now delete the experiment and all existing rawData, 
-  qry. clear();
-  qry << "delete_experiment"
-      << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del_exp stat" << status;
-  
-  if ( status != US_DB2::OK )
-    {
-      QMessageBox::information( this,
-				tr( "Error / Warning" ),
-				db -> lastError() + tr( " (error=%1, expID=%2)" )
-				.arg( status ).arg( expID ) );
-    }
-
+  /** End Iterate over fileNameList ****************************************************************/
 }
 
 
@@ -2257,6 +2292,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
 	 }
      }
    else

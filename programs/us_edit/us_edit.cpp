@@ -2081,7 +2081,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
     
   ///////////////////////////////////////////////////////////////////////
   
-  qDebug() << "autoflowID, autoflowStatusID : " << autoflowID_passed << autoflowStatusID;
+  qDebug() << "autoflowID, intensityID, autoflowStatusID : " << autoflowID_passed << details_at_editing[ "intensityID" ] << autoflowStatusID;
   qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_passed << ", " << idInv_auto;
 
   process_optics_auto();

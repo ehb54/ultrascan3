@@ -294,6 +294,7 @@ class US_ConvertGui : public US_Widgets
       QString AProfileGUID;
       QString Exp_label;
       bool    gmpRun_bool;
+      bool    protDev_bool;
       bool dataSavedOtherwise;
       
       void getExpInfo_auto ( void );

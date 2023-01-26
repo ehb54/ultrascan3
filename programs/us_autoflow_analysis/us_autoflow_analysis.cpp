@@ -72,11 +72,11 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // QMap < QString, QString > protocol_details;
 
 
-  // protocol_details[ "invID_passed" ] = QString("2");
-  // protocol_details[ "protocolName" ] = QString("pPOL1-20812-EcoR1-062422-GMP");
-  // protocol_details[ "aprofileguid" ] = QString("012b3860-c1b1-4962-8cc7-9d343aea694b");
-  // protocol_details[ "filename" ]     = QString("pPOL1-20812-EcoR1-062422-run1347");
-  // protocol_details[ "analysisIDs"  ] = QString( "2621,2622,2623,2624");
+  // protocol_details[ "invID_passed" ] = QString("165");
+  // protocol_details[ "protocolName" ] = QString("SBird-DNA-EcoRI-101322-PD5");
+  // protocol_details[ "aprofileguid" ] = QString("a350f5ea-305e-4e72-8500-ccf198c98b62");
+  // protocol_details[ "filename" ]     = QString("SBird-DNA-EcoRI-101322-run1843");
+  // protocol_details[ "analysisIDs"  ] = QString( "3109,3110,3111,3112");
 
   // // //What's needed ////////////////////////////////////////////////////////
   // AProfileGUID       = protocol_details[ "aprofileguid" ];
