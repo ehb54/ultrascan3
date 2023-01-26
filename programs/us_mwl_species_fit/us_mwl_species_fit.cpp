@@ -115,7 +115,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
       }
    }
 
-   QLabel* lb_fit_error = us_label("Root-Mean-Squared Error:");
+   QLabel* lb_fit_error = us_label("Root-Mean-Square Deviation:");
    le_fit_error = us_lineedit("", -1, true);
    pb_plot3d = us_pushbutton("Plot3D", false);
    row       = controlsLayout->rowCount() + 1;
@@ -275,6 +275,7 @@ DbgLv(1) << "MSF: dc: ii" << ii << "NON_EXCLUDED";
          else
             curv->setPen( QPen( Qt::cyan ) );
         
+         curv->setPen( QPen( mcolors[ ii % nmcols ] ) );
          curv->setSamples( rr, vv, count );
       }
    }

@@ -1675,7 +1675,29 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     d_spectrogram->attach(d_plot);
     d_plot->setAxisTitle(QwtPlot::xBottom, "Radial Points (cm)");
     d_plot->setAxisTitle(QwtPlot::yLeft, "Scan Number");
-
+    QFont font;
+    QwtText qwtText;
+    qwtText = d_plot->axisTitle(QwtPlot::xBottom);
+    qwtText.setText("Radial Point (cm)");
+    font = qwtText.font();
+    font.setPointSize(20);
+    font.setBold(true);
+    qwtText.setFont(font);
+    d_plot->setAxisTitle(QwtPlot::xBottom, qwtText);
+    font.setPointSize(18);
+    font.setBold(true);
+    d_plot->setAxisFont(QwtPlot::xBottom, font);
+    
+    qwtText = d_plot->axisTitle(QwtPlot::xBottom);
+    qwtText.setText("Scan Number");
+    font.setPointSize(20);
+    font.setBold(true);
+    qwtText.setFont(font);
+    d_plot->setAxisTitle(QwtPlot::yLeft, qwtText);
+    font = d_plot->axisFont(QwtPlot::yLeft);
+    font.setPointSize(18);
+    font.setBold(true);
+    d_plot->setAxisFont(QwtPlot::yLeft, font);
 //    const QwtInterval zInterval = d_spectrogram->data()->interval( Qt::ZAxis );
 //    // A color bar on the right axis
 //    QwtScaleWidget *rightAxis = d_plot->axisWidget( QwtPlot::yRight );
