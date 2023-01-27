@@ -35,7 +35,7 @@ static QStringList pr_csv_pad_holes( const QStringList &qsl ) {
 
    if ( qsl_r.size() < 6 )
    {
-      TSO << "pr_csv_pad_holes() does not appear to contain any r values in the header rows.\n";
+      TSO << "pr_csv_pad_holes() does not appear to  ontain any r values in the header rows.\n";
       return qsl;
    }
 
@@ -434,6 +434,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                           .arg( original_q[ 0 ] )
                           .arg( original_q.back() ) 
                           );
+                          
+               nnls_csv_footer <<
+                  QString( "\nNotice: the target curve is cropped to q(%1:%2) to prevent extrapolation\n" )
+                  .arg( original_q[ 0 ] )
+                  .arg( original_q.back() ) 
+                  ;
                           
                unsigned int pos = plotted_iq_names_to_pos[ grid_target ];
 
@@ -3728,6 +3734,13 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                   .arg( use_q.back() )
                   .arg( use_q.size() ) );
 
+      nnls_csv_footer <<
+         QString( us_tr( "\"fitting range: %1 to %2 with %3 points\"" ) )
+         .arg( use_q[ 0 ] )
+         .arg( use_q.back() )
+         .arg( use_q.size() )
+         ;
+
       if ( do_chi2_fitting )
       {
          usu.scaling_fit( 
@@ -3811,11 +3824,13 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       // 0.5 * chi2,
       // chi2_prob );
       fit_msg = 
-         QString("chi^2=%1 df=%2 nchi=%3")
+         QString("chi^2=%1 df=%2 nchi=%3 nchi^2=%4")
          .arg(chi2, 6)
          .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
          .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+         .arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
          ;
+
       if ( avg_std_dev_frac )
       {
          fit_msg += QString( " r_sigma=%1 nchi*r_sigma=%2 " )
@@ -3830,6 +3845,13 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       QString("factor: %1 %2\n")
       .arg( k )
       .arg( fit_msg );
+
+   nnls_csv_footer <<
+      QString("\"Scaling factor: %1 %2\"")
+      .arg( k )
+      .arg( fit_msg )
+      ;
+
    editor->append(results);
 
          
