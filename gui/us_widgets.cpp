@@ -986,3 +986,91 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
   return layout;
 }
 
+us_lineedit_re::us_lineedit_re(const QString& txt, int fontAdjust, bool readonly): QLineEdit(){
+    defMaxChars = 50;
+    text = txt;
+    trimState = true;
+    this->setFont(QFont(US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() + fontAdjust));
+    this->insert(text);
+    this->setAutoFillBackground( true );
+    QPalette vlgray = US_GuiSettings::editColor();
+    vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+    if (readonly){
+        this->setPalette ( vlgray );
+        this->setReadOnly( true );
+    } else {
+        this->setPalette ( US_GuiSettings::normalColor() );
+        this->setReadOnly( false );
+    }
+    setDefault();
+    connect(this, SIGNAL(textEdited(QString)), this, SLOT(textChanged(QString)));
+    connect(this, SIGNAL(textChanged(QString)), this, SLOT(textTrim(QString)));
+
+}
+
+void us_lineedit_re::setDefault(){
+    setMaxChars(defMaxChars);
+    re.setPattern("[^a-zA-Z0-9\+_-]" );
+}
+
+void us_lineedit_re::setMaxChars(int n){
+    maxChars = n;
+}
+
+void us_lineedit_re::textTrim(QString inText){
+    if (! trimState)
+        return;
+    this->disconnect(SIGNAL(textChanged(QString)));
+    QString outText = inText;
+    int reIdx = outText.indexOf(re, 0);
+    while (reIdx >= 0) {
+        outText.remove(reIdx, 1);
+        reIdx = outText.indexOf(re, 0);
+    }
+    if (outText.size() > maxChars){
+        outText = outText.left(maxChars);
+    }
+    if (outText != inText){
+        QMessageBox::warning( this,
+              tr( "Warning!" ),
+              tr( "Special characters are removed from the input string and the "
+                  "length of the string is limited to the first %1 characters.\n"
+                  "input: %2\noutput: %3" ).arg(maxChars).arg(inText, outText));
+        this->setText(outText);
+    }
+    connect(this, SIGNAL(textChanged(QString)), this, SLOT(textTrim(QString)));
+}
+
+void us_lineedit_re::textChanged(QString newText){
+    int reIdx;
+    int crtpos = this->cursorPosition();
+    if (newText.size() < text.size()){
+        reIdx = newText.indexOf(re, 0);
+        if (reIdx >= 0){
+            this->setText(text);
+            this->setCursorPosition(reIdx);
+        }else{
+            text = newText;
+            emit textUpdated();
+        }
+    }else{
+        reIdx = newText.indexOf(re, 0);
+        if (reIdx >= 0){
+            this->setText(text);
+            this->setCursorPosition(reIdx);
+        }else{
+            if (newText.size() > maxChars){
+                QMessageBox::warning( this,
+                      tr( "Warning!" ),
+                      tr( "The length of the text cannot exceed %1 characters!" ).arg(maxChars));
+                this->setText(text);
+                this->setCursorPosition(crtpos - 1);
+            } else{
+                text = newText;
+                emit textUpdated();
+            }
+        }
+    }
+    trimState = false;
+    return;
+}
