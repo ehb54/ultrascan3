@@ -692,10 +692,15 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("BlazeB_AUC3_PRS4-3_Day7_082522");
    // details[ "statusID" ]     = QString("46");
    // details[ "autoflowID" ]   = QString("671");
+
+   // details[ "invID_passed" ] = QString("166");
+   // details[ "filename" ]     = QString("HuberS_bCAll-DNSA_012623-run1879");
+   // details[ "protocolName" ] = QString("HuberS_bCAll-DNSA_012623");
+   // details[ "statusID" ]     = QString("116");
+   // details[ "autoflowID" ]   = QString("814");
    
    // load_auto( details );
-   
-
+  
 }
 
 
@@ -2747,6 +2752,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	 {
 	   qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
 	   qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ trx ].size();
+
+	   mwl_data.lambdas( expi_wvlns, trx );
+	   
 	   //Debug
 	   for ( int g=0; g < expi_wvlns.size(); ++g )
 	     qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
@@ -2805,6 +2813,17 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	     }
 	   
 	   data_index   = mwl_data.data_index( iwavl_edit_ref[ trx ], trx );
+
+	   //Debug
+	   for (int kk=0; kk<iwavl_edit_ref.size(); ++kk )
+	     qDebug() << "isMWL: Ref wvl -- "  << iwavl_edit_ref[ kk ];
+
+	   QVector< int > wvs_temp;
+	   int num_wvls =  mwl_data.lambdas( wvs_temp, trx );
+	   qDebug() << "#Wvls for " << triple_name << trx << ": " << num_wvls;
+	   for (int rr=0; rr<wvs_temp.size(); ++rr )
+	     qDebug() << "wvls ARE -- "  << wvs_temp[ rr ];
+	   
 	 }
        else
 	 index_data_auto( trx );
@@ -6335,10 +6354,23 @@ DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwavelo << recndx;
 DbgLv(1) << "PlMwl:    outData size" << outData.size();
 DbgLv(1) << "PlMwl:    expc_wvlns size" << expc_wvlns.size();
       data                = *outData[ data_index ];
+
+      qDebug() << "IN_edit_1";
+      
       recvalu             = expi_wvlns.at( recndx );
+
+      qDebug() << "IN_edit_2";
       svalu               = expc_wvlns.at( recndx );
+
+      qDebug() << "IN_edit_3";
 QString dcell=QString::number(data.cell);
+
+ qDebug() << "IN_edit_4";
+ 
 QString dchan=QString(QChar(data.channel));
+
+ qDebug() << "IN_edit_5";
+ 
 QString dwavl=QString::number(data.scanData[0].wavelength);
 DbgLv(1) << "PlMwl:     c triple" << scell << schan << svalu
  << "d triple" << dcell << dchan << dwavl;
@@ -7207,6 +7239,10 @@ void US_Edit::new_triple_auto( int index )
   
   qDebug() << "NEW_TRIPLE_AUTO: triple_index: " << triple_index;
 
+  QString triple_name = cb_triple->itemText( triple_index );
+  //qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
+  //qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ triple_index ].size();
+  
 
   // Remove Spike: Icon/Enable
   if ( editProfile[ cb_triple->currentText() ].count() > 6 )
