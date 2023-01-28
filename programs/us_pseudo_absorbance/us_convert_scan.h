@@ -16,6 +16,7 @@
 //#include "us_extern.h"
 //#include "us_help.h"
 
+
 class US_ConvertScan : public US_Widgets
 {
     Q_OBJECT
@@ -54,7 +55,6 @@ private slots:
     void slt_update_smooth(double);
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
-    void slt_edit_le(QString);
     void slt_cac(int);
 
 private:
