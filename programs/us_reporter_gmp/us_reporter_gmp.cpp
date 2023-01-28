@@ -710,13 +710,20 @@ QString US_ReporterGMP::missing_models_msg( void )
 {
   QString models_str;
 
-  QMap < QString, QString >::iterator mm;
-  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+  // QMap < QString, QString >::iterator mm;
+  // for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+  //   {
+  //     if ( !mm.value().isEmpty() )
+  // 	{
+  // 	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
+  // 	}
+  //   }
+  
+  QMap < QString, QStringList >::iterator mmm;
+  for ( mmm = Triple_to_ModelsMissing.begin(); mmm != Triple_to_ModelsMissing.end(); ++mmm )
     {
-      if ( !mm.value().isEmpty() )
-	{
-	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
-	}
+      if ( !mmm.value().isEmpty() ) 
+	models_str += mmm.key() + ", missing models: " + mmm.value().join(", ") + "<br>";
     }
   
   if ( !models_str.isEmpty() )
@@ -733,19 +740,32 @@ QString US_ReporterGMP::compose_html_failed_stage_missing_models( void )
   
   failed_str += "<table>";
   
-  QMap < QString, QString >::iterator mm;
-  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
-    {
-      if ( !mm.value().isEmpty() )
-	{
-	  areFailed = true;
+  // QMap < QString, QString >::iterator mm;
+  // for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+  //   {
+  //     if ( !mm.value().isEmpty() )
+  // 	{
+  // 	  areFailed = true;
 	  
-	  failed_str += "<tr><td style=\"color:red;\">" + mm.key() + ",</td><td> analysis failed/canceled at stage: </td><td style=\"color:red;\">"
-	                + mm.value() + ";</td>" + 
-	                + "<td>Models missing: </td><td style=\"color:red;\">" +  Triple_to_ModelsMissing[ mm.key() ].join(", ") + "</td></tr>";
-	}
-    }
-
+  // 	  failed_str += "<tr><td style=\"color:red;\">" + mm.key() + ",</td><td> analysis failed/canceled at stage: </td><td style=\"color:red;\">"
+  // 	                + mm.value() + ";</td>" + 
+  // 	                + "<td>Models missing: </td><td style=\"color:red;\">" +  Triple_to_ModelsMissing[ mm.key() ].join(", ") + "</td></tr>";
+  // 	}
+  //   }
+  
+   QMap < QString, QStringList >::iterator mmm;
+   for ( mmm = Triple_to_ModelsMissing.begin(); mmm != Triple_to_ModelsMissing.end(); ++mmm )
+     {
+       if ( !mmm.value().isEmpty() )
+	 {
+   	  areFailed = true;
+  	  
+   	  failed_str += "<tr><td style=\"color:red;\">" + mmm.key() + ":</td>" + 
+	    + "<td>Models missing: </td><td style=\"color:red;\">" +  mmm.value().join(", ") + "</td></tr>";
+   	}
+     }
+  
+  
   failed_str += "</table>";
 
   if( !areFailed )
@@ -808,6 +828,7 @@ void US_ReporterGMP::check_models ( int autoflowID )
       //get requestID in autoflowAnalysis based on tripleName & autoflowID
       QStringList query;
       query << "get_modelAnalysisInfo" << Array_of_tripleNames[ i ] << QString::number( autoflowID );
+      qDebug() << "check_models qry -- " << query;
       db->query( query );
 
       QString modelDescJson;
@@ -870,6 +891,10 @@ void US_ReporterGMP::check_models ( int autoflowID )
       //populate QMap connecting triple name to it's existing models
       Triple_to_Models[ Array_of_tripleNames[ i ] ] = model_list;
     }
+
+  //DEBUG
+  
+  
 }
 
 //Create QMap for shorter desctiption of triple's models (2DSA-IT, ...) to modelIDs, OR to modelGUIDs
@@ -1312,6 +1337,8 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   sdiag->inherit_protocol( &currProto );
   progress_msg->setValue( 4 );
   qApp->processEvents();
+
+  qDebug() << "After Inheriting Protocol -- ";
   
   currAProf              = sdiag->currProf;
   currAProf.protoGUID    = currProto.protoGUID;
@@ -1329,31 +1356,48 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   ch_reports             = currAProf.ch_reports;
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
-
   //Replicates
   replicates                   = currAProf. replicates;
   //replicates_to_channdesc
   replicates_to_channdesc      = currAProf. replicates_to_channdesc_main; //Empty ? (not needed?)
   //channdesc_to_overlapping_wvls
   channdesc_to_overlapping_wvls = currAProf. channdesc_to_overlapping_wvls_main;
-
+  
   //Debug: AProfile
+  qDebug() << "chndescs_alt QStringList -- " <<  chndescs_alt;
+  qDebug() << "ch_reports.keys() -- " <<  ch_reports.keys();
+  
   QString channel_desc_alt = chndescs_alt[ 0 ];
   QString channel_desc     = chndescs[ 0 ];
   QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
+
+  qDebug() << "Wavelengths ch_wvls[ channel_desc_alt ] " << ch_wvls[ channel_desc_alt ] << " for channel: " << channel_desc_alt;
   US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
-    
-  qDebug() << "AProfile's && ReportGMP's details: -- "
-	   << currAProf.aprofname
-	   << currAProf.protoname
-	   << currAProf.chndescs
-	   << currAProf.chndescs_alt
-	   << currAProf.lc_ratios
-	   << cAP2.parms[ 0 ].channel
-	   << cAPp.parms[ 0 ].channel
-	   << reportGMP.rmsd_limit
-	   << reportGMP.wavelength
-	   << reportGMP.reportItems[ 0 ].type;
+
+  if ( reportGMP.reportItems.size() > 0  )
+    qDebug() << "AProfile's && ReportGMP's details: -- "
+	     << currAProf.aprofname
+	     << currAProf.protoname
+	     << currAProf.chndescs
+	     << currAProf.chndescs_alt
+	     << currAProf.lc_ratios
+	     << cAP2.parms[ 0 ].channel
+	     << cAPp.parms[ 0 ].channel
+	     << reportGMP.rmsd_limit
+	     << reportGMP.wavelength
+	     << reportGMP.reportItems[ 0 ].type;
+  else
+    qDebug() << "AProfile's && ReportGMP's details: -- "
+	     << currAProf.aprofname
+	     << currAProf.protoname
+	     << currAProf.chndescs
+	     << currAProf.chndescs_alt
+	     << currAProf.lc_ratios
+	     << cAP2.parms[ 0 ].channel
+	     << cAPp.parms[ 0 ].channel
+	     << reportGMP.rmsd_limit
+	     << reportGMP.wavelength
+	     << "No GMP_Report_Items!!!";
 
   qDebug() << "Number of wvls in channel: " << chndescs_alt[ 0 ] << ": " <<  ch_wvls[ channel_desc_alt ].size();
   qDebug() << "Wvls in channel: " << chndescs_alt[ 0 ] << ": " << ch_wvls[ channel_desc_alt ];
@@ -7724,7 +7768,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   if ( !str_failed_stage_missing_models.isEmpty() )
     {
       html_failed  = tr(
-			"<h3 style=\"color:red;\" align=left> ATTENTION: Analyses for Some Triples Failed or Have Been Canceled!</h3>"
+			"<h3 style=\"color:red;\" align=left> ATTENTION: Analyses for Some Triples Failed, or Models are Missing!</h3>"
 			"%1"
 			"<hr>"
 			)
@@ -8692,6 +8736,12 @@ void US_ReporterGMP::write_pdf_report( void )
   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
     
   document.print(&printer);
+
+  qApp->processEvents();
+
+  //Now delete all .png && .svgz && tar entire directory
+    
+
 }
 
 //save trees' selections into internal structures
