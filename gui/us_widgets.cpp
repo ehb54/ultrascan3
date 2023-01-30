@@ -1038,6 +1038,7 @@ void us_lineedit_re::textTrim(QString inText){
                   "input: %2\noutput: %3" ).arg(maxChars).arg(inText, outText));
         this->setText(outText);
     }
+    emit textSet();
     connect(this, SIGNAL(textChanged(QString)), this, SLOT(textTrim(QString)));
 }
 

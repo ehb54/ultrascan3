@@ -315,6 +315,7 @@ public:
 
 signals:
     void textUpdated(void);
+    void textSet(void);
 
 private slots:
     void textChanged(QString);
