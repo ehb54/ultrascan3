@@ -5675,8 +5675,8 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		      channels_report[ channel_name ] = attr.value( "report_id" ).toString() ;
 			
 		    //Read what triple selected for editing:
-			if ( attr.hasAttribute("wvl_edit") )
-			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+		    if ( attr.hasAttribute("wvl_edit") )
+		      triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
 		  }
 		  
 	      }
