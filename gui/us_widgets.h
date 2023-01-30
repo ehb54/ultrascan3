@@ -315,17 +315,19 @@ public:
 
 signals:
     void textUpdated(void);
-    void textSet(void);
+
+public slots:
+    void setText(const QString &);
 
 private slots:
-    void textChanged(QString);
-    void textTrim(QString);
+    void newEdit(const QString &);
 
 private:
-    int maxChars;
-    int defMaxChars;
-    bool trimState;
-    QString text;
+    int _maxchrs;
+    int _dfltchrs;
+    QString _mytext;
+    bool _editstate;
+    void _set_etext(const QString &);
 };
 
 #endif
