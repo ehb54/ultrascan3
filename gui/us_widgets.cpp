@@ -1016,12 +1016,9 @@ void us_lineedit_re::setMaxChars(int n){
 }
 
 void us_lineedit_re::setText(const QString & inText) {
-//    this->setText(inText);
     QLineEdit::setText(inText);
     qDebug() << "OK";
-//    _editstate = false;
     if (! _editstate){
-        qDebug() << "OK2";
         QString outText = inText;
         int reIdx = outText.indexOf(re, 0);
         while (reIdx >= 0) {
