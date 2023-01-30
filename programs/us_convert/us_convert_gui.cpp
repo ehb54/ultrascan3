@@ -174,7 +174,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = us_lineedit( "", 1, true );
+   le_runID2           = new us_lineedit_re( "", 1, true );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -739,7 +739,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = us_lineedit( "", 1 );
+   le_runID2           = new us_lineedit_re( "", 1 );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -1947,6 +1947,7 @@ DbgLv(1) << "CGui:iM:  runID runType" << runID << runType;
    // if runType has changed, let's clear out xml data too
 //   if ( oldRunType != runType ) ExpData.clear();
    le_runID2->setText( runID );
+   runID = le_runID2->text();
    le_runID ->setText( runID );
    le_dir   ->setText( currentDir );
    ExpData.runID = runID;
@@ -2152,6 +2153,7 @@ DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " <<
 
        
    le_runID2->setText( runID );
+   runID = le_runID2->text();
    le_runID ->setText( runID );
    scanTolerance = 5.0;
 
@@ -2340,7 +2342,7 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
      if ( !us_convert_auto_mode ) //ALEXEY: do not enable edit runID && attach to slot 
        {
 	 us_setReadOnly( le_runID2, false );
-	 connect( le_runID2, SIGNAL( textEdited( QString ) ),
+     connect( le_runID2, SIGNAL( textUpdated( ) ),
 		  SLOT  ( runIDChanged(  )      ) );
        }
      else
@@ -2666,30 +2668,8 @@ void US_ConvertGui::runIDChanged( void )
        le_runID2->clear();
        return;
    }
-   int txtlim = 50;
-   int reIdx;
-   QString new_text = le_runID2->text();
-   int crtpos = le_runID2->cursorPosition();
-   if (new_text.size() < runID.size()){
-       runID = new_text;
-   }else{
-       QRegExp re( "[^a-zA-Z0-9\+_-]" );
-       reIdx = new_text.indexOf(re, 0);
-       if (reIdx >= 0){
-           le_runID2->setText(runID);
-           le_runID2->setCursorPosition(reIdx);
-       }else{
-           if (new_text.size() > txtlim){
-               QMessageBox::warning( this,
-                                     tr( "Warning!" ),
-                                     tr( "Length of the run ID cannot exceed %1 characters!" ).arg(txtlim));
-               le_runID2->setText(runID);
-               le_runID2->setCursorPosition(crtpos - 1);
-           }else{
-               runID = new_text;
-           }
-       }
-   }
+
+   runID = le_runID2->text();
    plot_titles();
 
    // If the runID has changed, a number of other things need to change too,
