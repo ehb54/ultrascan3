@@ -836,6 +836,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment( void );  // Submit the experiment
       void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       bool    saveRunProtocol ( void );  // Save the Run Protocol
+      bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
       int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report

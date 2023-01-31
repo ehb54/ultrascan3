@@ -5820,7 +5820,6 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	    saveRunProtocol();
 	    return;
 	  }
-	    
 	else if ( !mainw->automode && have_run && rps_differ )
 	  {
 	    saveRunProtocol();
@@ -6000,6 +5999,55 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	return;
     }
 
+  // Address separately the case when un-changed protocol is not re-saved before submission to OptimaX:
+  // Ensure all (existing) autoflowReport records for this protocol have 'tripleDropped' SET to 'none'!!!!!
+  if ( !rps_differ )
+    {
+      US_AnaProfile* aprof_t = mainw->get_aprofile();
+      
+      QMap <QString, QString> channels_report_t;
+      QString aprofile_xml_t;
+
+      QStringList qry;
+      qry << "get_aprofile_info" << aprof_t->aprofGUID;
+      qDebug() << "Accessing AProfile, qry -- " << qry;
+      dbP->query( qry );
+      
+      while ( dbP->next() )
+	{
+	  aprofile_xml_t  = dbP->value( 2 ).toString();
+	}
+      
+      if ( !aprofile_xml_t.isEmpty() )
+	{
+	  QXmlStreamReader xmli( aprofile_xml_t );
+	  readAProfileBasicParms( xmli, channels_report_t );
+	}
+      
+      QMap<QString, QString>::iterator chan_rep;
+      for ( chan_rep = channels_report_t.begin(); chan_rep != channels_report_t.end(); ++chan_rep )
+	{
+	  QString chan_key  = chan_rep.key();
+	  QString reportIDs = chan_rep.value();
+	  qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+	  
+	  QStringList reportIDs_list = reportIDs.split(",");
+	  for (int i=0; i<reportIDs_list.size(); ++i)
+	    {
+	      qry. clear();
+	      QString rID = reportIDs_list[i];
+	      
+	      qry << "update_autoflow_report_at_import"
+		  << rID
+		  << QString("none");
+	      
+	      qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	      dbP->query( qry );
+	    }
+	}
+    }
+  // End of dealing with unchanged protocol /////////////////////////////////////////////////////////////
+
   QMessageBox msgBox;
   QString message_protocol = tr( "");
   if ( rps_differ )
@@ -6028,6 +6076,43 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     return;
   }
   
+}
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_ExperGuiUpload::readAProfileBasicParms( QXmlStreamReader& xmli, QMap<QString, QString>& channels_report )
+{
+  channels_report. clear();
+  
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
 
