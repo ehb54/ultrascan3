@@ -208,7 +208,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    editor->append(QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd));
 
    nnls_csv_footer <<
-      QString("\"Residual Euclidian norm of NNLS fit %1\"").arg(nnls_rmsd);
+      QString("\"Residual Euclidian norm of NNLS fit\",%1").arg(nnls_rmsd);
 
    vector < double > rescaled_x = our_saxs_options->disable_nnls_scaling ? use_x : rescale(use_x);
 
@@ -225,14 +225,57 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?
       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] == "true" : false;
 
-   for ( unsigned int i = 0; i < use_x.size(); i++ )
-   {
-      {
-         QString model_name = model_names[i];
-         nnls_csv_data <<
-            QString("\"%1\",%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
-      }      
 
+   // sort names
+   class sortable_model {
+   public:
+      QString      name;
+      unsigned int number;
+
+      bool operator < (const sortable_model & objIn) const {
+         static QRegularExpression rx( "^(.*) Model: (\\d+)" );
+
+         // does the objIn contain a model
+         QRegularExpressionMatch matchIn = rx.match( objIn.name );
+         if ( !matchIn.hasMatch() ) {
+            return name < objIn.name;
+         }
+
+         // does the name contain a model
+         QRegularExpressionMatch match = rx.match( name );
+         if ( !match.hasMatch() ) {
+            return name < objIn.name;
+         }
+         
+         if ( match.captured(1) == matchIn.captured(1) ) {
+            return match.captured(2).toUInt() < matchIn.captured(2).toUInt();
+         }
+         return name < objIn.name;
+      }
+   };
+   
+   list < sortable_model > sort_models;
+   for ( unsigned int i = 0; i < use_x.size(); i++ ) {
+      sortable_model m;
+      m.name = model_names[i];
+      m.number = i;
+      sort_models.push_back( m );
+   }
+
+   sort_models.sort();
+   
+   // for ( auto it = sort_models.begin();
+   //       it != sort_models.end();
+   //       ++it ) {
+   //    QTextStream(stdout) << QString( "model name %1 number %2\n" ).arg( it->name ).arg( it->number );
+   // }
+
+   // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
+
+   for ( auto it = sort_models.begin();
+         it != sort_models.end();
+         ++it ) {
+      unsigned int i = it->number;
       if ( rescaled_x[i] == 0 )
       {
          if ( !nnls_zero_list ) {
@@ -252,8 +295,18 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
             }
          }
       }
+      {
+         QString model_name = model_names[i];
+         nnls_csv_data <<
+            QString("\"%1\",%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+      }      
+
       editor_msg( use_color, QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i] ) );
    }
+
+   nnls_csv_footer
+      << QString( "\"Number of curves in the fit\",%1" ).arg( use_x.size() )
+      ;
    
    // build model & residuals
    vector < double > model(use_B.size());
@@ -1151,3 +1204,22 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    }
 }
 
+bool US_Hydrodyn_Saxs::pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ) {
+   errormsg = "";
+
+   vector < vector < double > > Icm( 2 );
+   vector < vector < double > > rkl;
+   int                          N;
+   int                          S;
+   int                          C;
+
+   Icm[ 0 ] = I;
+   Icm[ 1 ] = G;
+
+   if ( !((US_Hydrodyn *)us_hydrodyn)->saxs_util->cormap( q, Icm, rkl, N, S, C, P ) ) {
+      errormsg = ((US_Hydrodyn *)us_hydrodyn)->saxs_util->errormsg;
+      return false;
+   }
+
+   return true;
+}

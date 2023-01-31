@@ -169,7 +169,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
 
       cb_nnls_csv = new QCheckBox(this);
-      cb_nnls_csv->setText(us_tr("NNLS CSV"));
+      cb_nnls_csv->setText(us_tr("Save NNLS CSV"));
       cb_nnls_csv->setEnabled(true);
       cb_nnls_csv->setChecked(*nnls_csv);
       cb_nnls_csv->setMinimumHeight(minHeight1);

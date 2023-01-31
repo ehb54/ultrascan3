@@ -767,6 +767,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool load_check_csvs_compatible( QStringList filenames );
       QString unify_csv_files( QStringList filenames );
 
+      // the cormap p values from pairwise comparisons
+
+      bool  pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ); // compute pvalue comparing 2 curves
+
    private:
 
       map < QString, QwtPlot *>    plot_info;

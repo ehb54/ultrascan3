@@ -436,11 +436,11 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                           );
                           
                nnls_csv_footer <<
-                  QString( "\nNotice: the target curve is cropped to q(%1:%2) to prevent extrapolation\n" )
+                  QString( "\nNotice: the target curve is cropped to prevent extrapolation q range\",%1,%2\n" )
                   .arg( original_q[ 0 ] )
                   .arg( original_q.back() ) 
                   ;
-                          
+
                unsigned int pos = plotted_iq_names_to_pos[ grid_target ];
 
                vector < double > new_q;
@@ -1190,7 +1190,15 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
 
             // ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-            nnls_csv_filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the NNLS fit") , use_dir + "/NNLS_results.csv" , "*.csv" );
+            nnls_csv_filename =
+               QFileDialog::getSaveFileName(
+                                            this
+                                            ,us_tr("Choose a filename to save the NNLS fit")
+                                            ,use_dir
+                                            + "/"
+                                            + QFileInfo( QString( "%1" ).arg( nnls_target ).replace( "\"", "" ) ).baseName()
+                                            + "_NNLS_results.csv"
+                                            ,"*.csv" );
 
             if ( nnls_csv_filename.isEmpty() ) {
                editor_msg( "red", us_tr( "Canceling NNLS CSV save" ) );
@@ -1575,7 +1583,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                               .arg( our_saxs_options->iqq_scale_minq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_minq ) : "" )
                               .arg( our_saxs_options->iqq_scale_maxq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_maxq ) : "" ) );
                   nnls_csv_footer <<
-                     QString( us_tr( "\"Note: the NNLS fit will be performed over a cropped range q(%1:%2)\"" ) )
+                     QString( us_tr( "\"Note: the NNLS fit will be performed over a cropped range q\",%1,%2" ) )
                      .arg( our_saxs_options->iqq_scale_minq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_minq ) : "" )
                      .arg( our_saxs_options->iqq_scale_maxq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_maxq ) : "" );
                      
@@ -3689,13 +3697,13 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       }
    }
 
-   for ( unsigned int i = 0; i < use_source_I.size(); i++ )
-   {
-      cout << QString( "q %1 use_source_I %2 use_I %3\n" )
-         .arg( q[ i ] )
-         .arg( use_source_I[ i ] )
-         .arg( use_I[ i ] );
-   }
+   // for ( unsigned int i = 0; i < use_source_I.size(); i++ )
+   // {
+   //    cout << QString( "q %1 use_source_I %2 use_I %3\n" )
+   //       .arg( q[ i ] )
+   //       .arg( use_source_I[ i ] )
+   //       .arg( use_I[ i ] );
+   // }
 
    if ( our_saxs_options->iqq_scale_nnls )
    {
@@ -3735,7 +3743,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                   .arg( use_q.size() ) );
 
       nnls_csv_footer <<
-         QString( us_tr( "\"fitting range: %1 to %2 with %3 points\"" ) )
+         QString( us_tr( "\"fitting range start, end, points:\",%1,%2,%3" ) )
          .arg( use_q[ 0 ] )
          .arg( use_q.back() )
          .arg( use_q.size() )
@@ -3831,25 +3839,56 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
          .arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
          ;
 
+      nnls_csv_footer
+         << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
+         << QString( "\"df\",%1" )    .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
+         << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+         << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
+         ;
+      
+
       if ( avg_std_dev_frac )
       {
          fit_msg += QString( " r_sigma=%1 nchi*r_sigma=%2 " )
             .arg( avg_std_dev_frac ) 
             .arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 );
+
+         nnls_csv_footer
+            << QString( "\"r_sigma\",%1" )     .arg( avg_std_dev_frac ) 
+            << QString( "\"nchi*r_sigma\",%1" ).arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+            ;
       }
    } else {
       fit_msg = QString("RMSD=%1").arg(chi2, 5);
+      nnls_csv_footer
+         << QString( "\"RMSD\",%1" ).arg(chi2, 5)
+         ;
    }
 
+   // compute p value
+   {
+      vector < double > I1 = use_source_I;
+      vector < double > I2 = use_I;
+      double p;
+      QString emsg;
+
+      if ( pvalue( q, I1, I2, p, emsg ) ) {
+         fit_msg += QString( " pvalue=%1" ).arg( p );
+         nnls_csv_footer
+            << QString( "\"P value\",%1" ).arg(chi2, 5)
+            ;
+      } else {
+         qDebug() << emsg;
+      }
+   }
+      
    results += 
       QString("factor: %1 %2\n")
       .arg( k )
       .arg( fit_msg );
 
-   nnls_csv_footer <<
-      QString("\"Scaling factor: %1 %2\"")
-      .arg( k )
-      .arg( fit_msg )
+   nnls_csv_footer
+      << QString("\"Scaling factor\",%1" ).arg( k )
       ;
 
    editor->append(results);
