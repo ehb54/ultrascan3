@@ -272,6 +272,8 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
 
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
+   QRegularExpression rx( "^(.*) Model: (\\d+)" );
+
    for ( auto it = sort_models.begin();
          it != sort_models.end();
          ++it ) {
@@ -297,8 +299,17 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       }
       {
          QString model_name = model_names[i];
-         nnls_csv_data <<
-            QString("\"%1\",%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+         model_name.replace( "\"", "" );
+
+         QRegularExpressionMatch match = rx.match( model_name );
+         
+         if ( match.hasMatch() ) {
+            nnls_csv_data <<
+               QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
+         } else {
+            nnls_csv_data <<
+               QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+         }
       }      
 
       editor_msg( use_color, QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i] ) );

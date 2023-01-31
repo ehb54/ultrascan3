@@ -1600,7 +1600,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   QFile f( nnls_csv_filename );
                   if ( f.open(QIODevice::WriteOnly ) ) {
                      QTextStream tso(&f);
-                     tso << "\"File\",\"Contribution weight\"\n";
+                     tso << "\"File\",\"Model\",\"Contribution weight\"\n";
                      tso << nnls_csv_data.join("\n") << "\n";
                      tso << "\n\"Messages:\"\n";
                      tso << nnls_csv_footer.join("\n") << "\n";
@@ -3842,10 +3842,9 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       nnls_csv_footer
          << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
          << QString( "\"df\",%1" )    .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
-         << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
          << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
+         << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
          ;
-      
 
       if ( avg_std_dev_frac )
       {
@@ -3873,9 +3872,16 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       QString emsg;
 
       if ( pvalue( q, I1, I2, p, emsg ) ) {
-         fit_msg += QString( " pvalue=%1" ).arg( p );
+         QString p_status = "bad";
+         if ( p >= 0.05 ) {
+            p_status = "good";
+         } else if ( p >= 0.01 ) {
+            p_status = "fair";
+         }
+         
+         fit_msg += QString( " P-value=%1 (%2)" ).arg( p ).arg( p_status );
          nnls_csv_footer
-            << QString( "\"P value\",%1" ).arg(chi2, 5)
+            << QString( "\"P value\",%1,\"%2\"" ).arg( p ).arg( p_status );
             ;
       } else {
          qDebug() << emsg;
