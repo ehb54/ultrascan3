@@ -18,16 +18,16 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
    QString msg = QString(us_tr(" Enter values for total molecular weight: "));
    QString source = "";
    bool found = false;
-   QTextStream(stdout) << QString( "saxs::get_mw() remember_mw:\n" );
-   for ( auto it = remember_mw->begin();
-         it != remember_mw->end();
-         ++it ) {
-      QTextStream(stdout) << it->first << " " << it->second << " source:";
-      if ( (*remember_mw_source).count(it->first) ) {
-         QTextStream(stdout) << (*remember_mw_source)[it->first];
-      }
-      QTextStream(stdout) << "\n";
-   }
+   // QTextStream(stdout) << QString( "saxs::get_mw() remember_mw:\n" );
+   // for ( auto it = remember_mw->begin();
+   //       it != remember_mw->end();
+   //       ++it ) {
+   //    QTextStream(stdout) << it->first << " " << it->second << " source:";
+   //    if ( (*remember_mw_source).count(it->first) ) {
+   //       QTextStream(stdout) << (*remember_mw_source)[it->first];
+   //    }
+   //    QTextStream(stdout) << "\n";
+   // }
    
    if ( (*remember_mw).count(filename) )
    {

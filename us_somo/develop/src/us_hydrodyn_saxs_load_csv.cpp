@@ -21,6 +21,7 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QString *csv_filename,
                                                      bool *save_original_data,
                                                      bool *run_nnls,
+                                                     bool *nnls_csv,
                                                      bool *run_best_fit,
                                                      QString *nnls_target,
                                                      bool *clear_plot_first,
@@ -42,6 +43,7 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
    this->csv_filename = csv_filename;
    this->save_original_data = save_original_data;
    this->run_nnls = run_nnls;
+   this->nnls_csv = nnls_csv;
    this->run_best_fit = run_best_fit;
    this->nnls_target = nnls_target;
    this->clear_plot_first = clear_plot_first;
@@ -158,6 +160,16 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
       AUTFBACK( cb_run_nnls );
       connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
       
+      cb_nnls_csv = new QCheckBox(this);
+      cb_nnls_csv->setText(us_tr("Save NNLS CSV"));
+      cb_nnls_csv->setEnabled(true);
+      cb_nnls_csv->setChecked(*nnls_csv);
+      cb_nnls_csv->setMinimumHeight(minHeight1);
+      cb_nnls_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_nnls_csv->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_nnls_csv );
+      connect(cb_nnls_csv, SIGNAL(clicked()), this, SLOT(set_nnls_csv()));
+      
       cb_run_best_fit = new QCheckBox(this);
       cb_run_best_fit->setText(us_tr("Best fit"));
       cb_run_best_fit->setEnabled(true);
@@ -255,6 +267,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    {
       QHBoxLayout * hbl_nnls_best_fit = new QHBoxLayout; hbl_nnls_best_fit->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls_best_fit->setSpacing( 0 );
       hbl_nnls_best_fit->addWidget(cb_run_nnls);
+      hbl_nnls_best_fit->addWidget(cb_nnls_csv);
       hbl_nnls_best_fit->addWidget(cb_run_best_fit);
 
       QHBoxLayout * hbl_nnls = new QHBoxLayout; hbl_nnls->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls->setSpacing( 0 );
@@ -559,6 +572,12 @@ void US_Hydrodyn_Saxs_Load_Csv::set_run_nnls()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Load_Csv::set_nnls_csv()
+{
+   *nnls_csv = cb_nnls_csv->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Load_Csv::set_run_best_fit()
 {
    *run_best_fit = cb_run_best_fit->isChecked();
@@ -632,5 +651,10 @@ void US_Hydrodyn_Saxs_Load_Csv::update_enables()
    pb_save_selected->setEnabled(qsl_sel_names->size());
    pb_ok->setEnabled( qsl_sel_names->size() );
    cb_clear_plot_first->setEnabled( qsl_sel_names->size() );
+   cb_nnls_csv->setEnabled( cb_run_nnls->isChecked() );
+   if ( !cb_run_nnls->isChecked() ) {
+      cb_nnls_csv->setChecked( false );
+      *nnls_csv = false;
+   }
 }
 
