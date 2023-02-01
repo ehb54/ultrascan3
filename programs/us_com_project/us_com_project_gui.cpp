@@ -1842,6 +1842,85 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
       << run_details[ "autoflowID" ];
   db->query( qry );
 
+  //Restore autoflowReports' records 'tripleDropped' to DEFAULT ('none')
+  // 1. Create reportIDs list from protocol's AProfile;
+  // 2. Go over reports in the autoflowReport table & SET 'tripleDropped' to 'none'  
+
+  channels_report. clear();
+  QString aprofile_xml;
+  
+  qry. clear();
+  qry << "get_aprofile_info" << run_details[ "aprofileguid" ];
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      aprofile_xml         = db->value( 2 ).toString();
+    }
+  
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readAProfileBasicParms_auto( xmli );
+    }
+
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  qry. clear();
+	  QString rID = reportIDs_list[i];
+	  
+	  qry << "update_autoflow_report_at_import"
+	      << rID
+	      << QString("none");
+	  
+	  qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	  db->query( qry );
+	}
+    }
+  
+}
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
 
