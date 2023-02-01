@@ -174,7 +174,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = new us_lineedit_re( "", 1, true );
+   le_runID2           = new US_LineEdit_RE( "", 1, true );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -739,7 +739,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = new us_lineedit_re( "", 1 );
+   le_runID2           = new US_LineEdit_RE( "", 1 );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory

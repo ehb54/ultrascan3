@@ -163,7 +163,7 @@ class US_ConvertGui : public US_Widgets
       QLineEdit*    le_investigator;
       QLineEdit*    le_status;
       QLineEdit*    le_runID;
-      us_lineedit_re*    le_runID2;
+      US_LineEdit_RE*    le_runID2;
       QLineEdit*    le_dir;
       QLineEdit*    le_description;
       QLineEdit*    le_solutionDesc;
