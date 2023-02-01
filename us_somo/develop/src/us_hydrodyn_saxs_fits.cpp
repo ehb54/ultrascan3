@@ -926,40 +926,43 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    }
    
    // compute p value
-
+   
+   // doesn't make sense for p(r)
    // US_Vector::printvector2( "iqq fit model, target", model, nnls_B );
-   {
-      vector < double > I1 = model;
-      vector < double > I2 = nnls_B;
-      vector < double > q  = nnls_r;
-      q.resize( nnls_B.size() );
-      double p;
-      QString emsg;
+   // {
+   //    vector < double > I1 = model;
+   //    vector < double > I2 = nnls_B;
+   //    vector < double > q  = nnls_r;
+   //    q.resize( nnls_B.size() );
+   //    double p;
+   //    QString emsg;
 
-      if ( pvalue( q, I1, I2, p, emsg ) ) {
-         QString p_status = "bad";
-         if ( p >= 0.05 ) {
-            p_status = "good";
-         } else if ( p >= 0.01 ) {
-            p_status = "fair";
-         }
+   //    if ( pvalue( q, I1, I2, p, emsg ) ) {
+   //       QString p_status = "bad";
+   //       if ( p >= 0.05 ) {
+   //          p_status = "good";
+   //       } else if ( p >= 0.01 ) {
+   //          p_status = "fair";
+   //       }
          
-         editor_msg( "black", QString( " P-value=%1 (%2)\n" ).arg( p ).arg( p_status ) );
-         nnls_csv_footer
-            << QString( "\"P value\",%1,\"%2\"" ).arg( p ).arg( p_status );
-            ;
-      } else {
-         qDebug() << emsg;
-      }
-   }
+   //       editor_msg( "black", QString( " P-value=%1 (%2)\n" ).arg( p ).arg( p_status ) );
+   //       nnls_csv_footer
+   //          << QString( "\"P value\",%1,\"%2\"" ).arg( p ).arg( p_status );
+   //          ;
+   //    } else {
+   //       qDebug() << emsg;
+   //    }
+   // }
 
    // plot 
    
    plot_one_pr(nnls_r, model, csv_filename + " Model");
-   
+   compute_rg_to_progress( nnls_r, model, csv_filename + " Model");
+
    // plot_one_pr(nnls_r, residual, csv_filename + " Residual");
    
    plot_one_pr(nnls_r, nnls_B, csv_filename + " Target");
+   compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Target");
    
    if ( plotted )
    {
@@ -1216,8 +1219,10 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    (*remember_mw_source)[csv_filename + " Model " + model_names[lowest_rmsd_pos]] = "weight of best fit model";
    
    plot_one_pr(nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos]);
+   compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos] );
    
-   plot_one_pr(nnls_r, best_fit_target, csv_filename + " Target");
+   plot_one_pr(nnls_r, best_fit_target, csv_filename + " Target" );
+   compute_rg_to_progress( nnls_r, best_fit_target, csv_filename + " Target" );
 
    if ( plotted )
    {
@@ -1336,4 +1341,29 @@ bool US_Hydrodyn_Saxs::pvalue( const vector < double > &q, vector < double > &I,
    }
 
    return true;
+}
+
+bool US_Hydrodyn_Saxs::compute_rg_to_progress(
+                                              const vector < double >  & r
+                                              ,const vector < double > & pr
+                                              ,const QString &           filename
+                                              ) {
+   double Rg;
+   if ( US_Saxs_Util::compute_rg_from_pr( r, pr, Rg, errormsg ) ) {
+      editor_msg(
+                 "black"
+                 ,QString( us_tr( "Rg computed from p(r) for %1 = %2\n" ) )
+                 .arg( filename )
+                 .arg( Rg, 0, 'f', 2 )
+                 );
+      return true;
+   } else {
+      editor_msg(
+                 "red"
+                 ,QString( us_tr( "Error computing Rg from p(r) for %1 = %2\n" ) )
+                 .arg( filename )
+                 .arg( errormsg )
+                 );
+      return false;
+   }
 }

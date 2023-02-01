@@ -1140,6 +1140,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
 
          plot_one_pr( r, pr, te_filename2->text() );
+         compute_rg_to_progress( r, pr, te_filename2->text() );
          
       } // compute_pr
 

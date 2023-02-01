@@ -3198,6 +3198,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   (*remember_mw)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = tmp_mw;
                   (*remember_mw_source)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = "loaded from csv";
                   plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " " + qsl_tmp[0], skip_mw );
+                  compute_rg_to_progress( this_r, pr, QFileInfo(filename).fileName() + " " + qsl_tmp[0] );
                }
             }
          }
@@ -3251,6 +3252,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             double pr_avg_area = compute_pr_area(pr_avg, r);
 
             plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " Average", skip_mw );
+            compute_rg_to_progress( this_r, pr, QFileInfo(filename).fileName() + " Average" );
 
             vector < double > pr_std_dev;
             vector < double > pr_avg_minus_std_dev;
@@ -3581,6 +3583,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       }         
       check_pr_grid( r, pr );
       plot_one_pr(r, pr, use_filename, skip_mw );
+      compute_rg_to_progress(  r, pr, use_filename );
    }
 }
 

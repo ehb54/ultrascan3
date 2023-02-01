@@ -767,12 +767,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool load_check_csvs_compatible( QStringList filenames );
       QString unify_csv_files( QStringList filenames );
 
-      // the cormap p values from pairwise comparisons
-
-      bool  pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ); // compute pvalue comparing 2 curves
-
    private:
-
+      
       map < QString, QwtPlot *>    plot_info;
 
       bool mw_from_I0 ( QString name, double I0_exp, double &MW, double &internal_contrast );
@@ -815,6 +811,22 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool                         wheel_is_pressed;
       void           fix_xBottom();
+
+      // the cormap p values from pairwise comparisons
+
+      bool            pvalue(
+                             const vector < double > &q
+                             ,vector < double > &I
+                             ,vector < double > &G
+                             ,double &P
+                             ,QString &errormsg
+                             ); // compute pvalue comparing 2 curves
+      
+      bool            compute_rg_to_progress(
+                                             const vector < double >  & r
+                                             ,const vector < double > & pr
+                                             ,const QString &           filename
+                                             );
 
    private slots:
 

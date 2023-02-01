@@ -11502,3 +11502,50 @@ bool US_Saxs_Util::calc_chisq(
 
    return true;
 }
+
+bool US_Saxs_Util::compute_rg_from_pr(
+                                      const vector < double >  & r
+                                      ,const vector < double > & pr
+                                      ,double                  & Rg
+                                      ,QString                 & errormsg
+                                      ) {
+   if ( r.size() != pr.size() ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : vector lengths differ r[%1]!=pr[%2]" ) )
+         .arg( r.size() )
+         .arg( pr.size() )
+         ;
+      return false;
+   }
+   
+   if ( r.size() < 2 ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : provided vectors too small [%1]" ) )
+         .arg( r.size() )
+         ;
+      return false;
+   }
+   
+   int pts = (int) r.size();
+
+   double intgrl_r2_pr = 0;
+   double intgrl_pr    = 0;
+   
+   double dr           = r[1] - r[0];
+
+   for ( int i = 0; i < pts; ++i ) {
+      intgrl_r2_pr += r[i]*r[i]*pr[i]*dr;
+      intgrl_pr    += pr[i]*dr;
+   }
+
+   if ( intgrl_pr <= 0 ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : integral of p(r) [%1] is zero or negative" ) )
+         .arg( intgrl_pr )
+         ;
+      return false;
+   }
+
+   Rg = sqrt( intgrl_r2_pr / ( 2.0 * intgrl_pr ) );
+   return true;
+}

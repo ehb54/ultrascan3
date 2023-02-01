@@ -1262,6 +1262,13 @@ class US_EXTERN US_Saxs_Util
 
       bool c2check( QString a, QString b );
 
+      static bool compute_rg_from_pr(
+                                     const vector < double >  & r
+                                     ,const vector < double > & pr
+                                     ,double                  & Rg
+                                     ,QString                 & errormsg
+                                     );
+
    private:
       // exponential gsm:
       vector < double > compute_gsm_exponentials_mtto4pi2;

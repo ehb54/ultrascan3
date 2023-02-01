@@ -3434,6 +3434,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    plot_pr->replot();
 
+   compute_rg_to_progress( r, pr, use_name );
+
    progress_pr->setMaximum(1);
    progress_pr->setValue(1);
    pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -6196,6 +6198,8 @@ void US_Hydrodyn_Saxs::load_gnom()
                      normalize_pr(r, &pr, &pre, get_mw(filename, false));
                   }
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
+                  compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
+
                   // save sprr
                   if ( !sprr_saved ) {
                      sprr_saved = true;
@@ -6348,6 +6352,8 @@ void US_Hydrodyn_Saxs::load_gnom()
                   normalize_pr(r, &pr, &pre, get_mw(filename, false));
                }
                plot_one_pr(r, pr, QFileInfo(filename).fileName());
+               compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
+
                // save sprr
                if ( !sprr_saved ) {
                   QString rxstr = "\\..*$";
