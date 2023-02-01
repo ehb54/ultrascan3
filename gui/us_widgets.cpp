@@ -1017,7 +1017,7 @@ void US_LineEdit_RE::setMaxChars(int n){
 
 void US_LineEdit_RE::setText(const QString & inText) {
     QLineEdit::setText(inText);
-    qDebug() << "OK";
+    _mytext = inText;
     if (! _editstate){
         QString outText = inText;
         int reIdx = outText.indexOf(re, 0);
