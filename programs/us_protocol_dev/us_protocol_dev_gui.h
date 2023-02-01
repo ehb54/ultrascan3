@@ -112,6 +112,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     int offset;
 
     int autoflow_records;
+    QMap < QString, QString > channels_report;
 
     void initRecords( void );
     //void initRecordsDialogue( void );
@@ -126,8 +127,9 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
     void load_autoflowHistory_dialog( void );
 
-    /* void do_run_tables_cleanup( QMap< QString, QString > ); */
-    /* void do_run_data_cleanup( QMap< QString, QString > ); */
+    void do_run_tables_cleanup( QMap< QString, QString > ); 
+    void do_run_data_cleanup( QMap< QString, QString > );
+    bool readAProfileBasicParms_auto ( QXmlStreamReader& );
       
  protected:
     void resizeEvent(QResizeEvent *event) override;

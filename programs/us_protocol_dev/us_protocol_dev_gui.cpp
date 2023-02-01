@@ -1121,65 +1121,65 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   //Re-attachment to FAILED GMP run
   if ( failedID. toInt() != 0 )
     {
-      // // jump to 2. LIVE_UPDATE for now, i.e. re-initialize from scratch
-      // qDebug() << "Re-initializing FAILED GMP rinID -- " << autoflowID;
+      // jump to 2. LIVE_UPDATE for now, i.e. re-initialize from scratch
+      qDebug() << "Re-initializing FAILED GMP rinID -- " << autoflowID;
       
-      // //read autoflowFailed record
-      // QMap< QString, QString > failed_details = read_autoflow_failed_record( failedID );
+      //read autoflowFailed record
+      QMap< QString, QString > failed_details = read_autoflow_failed_record( failedID );
       
-      // QMessageBox msgBox_f;
-      // msgBox_f.setText(tr( "The selected GMP run is marked as FAILED:<br><br>" )
-      // 		       + tr("<b>Run Name:&emsp;</b>") + ProtName
-      // 		       + tr("<br>")
-      // 		       + tr("<b>Failing stage:&emsp;</b> ") + failed_details[ "failedStage" ]
-      // 		       + tr("<br>")
-      // 		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
-		      		       
-      // msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, all existing data for this run will be deleted from DB, ")
-      // 				   + tr("and the processing flow will reinitialize. ")
-      // 				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+      QMessageBox msgBox_f;
+      msgBox_f.setText(tr( "The selected GMP run is marked as FAILED:<br><br>" )
+       		       + tr("<b>Run Name:&emsp;</b>") + ProtName
+       		       + tr("<br>")
+       		       + tr("<b>Failing stage:&emsp;</b> ") + failed_details[ "failedStage" ]
+       		       + tr("<br>")
+       		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
       
-      // msgBox_f.setWindowTitle(tr("Reinitialization of Failed Run"));
-      // QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
-      // QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole);
+      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, all existing data for this run will be deleted from DB, ")
+				   + tr("and the processing flow will reinitialize. ")
+				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
       
-      // msgBox_f.setIcon(QMessageBox::Question);
-      // msgBox_f.exec();
+      msgBox_f.setWindowTitle(tr("Reinitialization of Failed Run"));
+      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole);
       
-      // if (msgBox_f.clickedButton() == Cancel)
-      // 	{
-      // 	  initAutoflowPanel();
-      // 	  return;
-      // 	}
-      // else if (msgBox_f.clickedButton() == Confirm)
-      // 	{
-      // 	  qDebug() << "Choosing REINITIALIZATION!!!";
-
-      // 	  //Delete and reset everything related to the run:
-      // 	  /*
-      // 	    1. revert 'liveUpdate, import, editing' fields in autolfowStages to DEFAULT 
-      // 	    2. delete autoflowIntensity && autoflowStatus records
-      // 	    3. ?? do we also delete immediately autoflowFailed record ??
-      // 	    4. DELETE all exp. | rawData (maybe models, editedData etc.)
-      // 	    5. delete autoflowHistory record (if was already created - ONLY case if REPORT was proceeded ?)
-      // 	    6. Reset all autoflow record fields updated starting from LIVE_UPDATE
-      // 	                 - dataPath
-      // 			 - filename
-      // 			 - intensityID
-      // 			 - statusID
-      // 			 - failedID (IF record in autoflowFailed deleted )
-      // 			 - analysisIDs
-
-      // 	  */
-      // 	  do_run_tables_cleanup( protocol_details );
-
-      // 	  do_run_data_cleanup( protocol_details );
+      msgBox_f.setIcon(QMessageBox::Question);
+      msgBox_f.exec();
+      
+      if (msgBox_f.clickedButton() == Cancel)
+	{
+	  initAutoflowPanel();
+	  return;
+	}
+      else if (msgBox_f.clickedButton() == Confirm)
+	{
+	  qDebug() << "Choosing REINITIALIZATION!!!";
 	  
-      // 	  //Switch to 2. LIVE_UPDATE:
-      // 	  emit switch_to_live_update_init( protocol_details );
-	  
-      // 	  return;
-      // 	}
+	  //Delete and reset everything related to the run:
+	  /*
+	    1. revert 'liveUpdate, import, editing' fields in autolfowStages to DEFAULT 
+	    2. delete autoflowIntensity && autoflowStatus records
+	    3. ?? do we also delete immediately autoflowFailed record ??
+	    4. DELETE all exp. | rawData (maybe models, editedData etc.)
+	    5. delete autoflowHistory record (if was already created - ONLY case if REPORT was proceeded ?)
+       	    6. Reset all autoflow record fields updated starting from LIVE_UPDATE
+	                 - dataPath
+			 - filename
+			 - intensityID
+       			 - statusID
+       			 - failedID (IF record in autoflowFailed deleted )
+       			 - analysisIDs
+
+       	  */
+       	  do_run_tables_cleanup( protocol_details );
+
+       	  do_run_data_cleanup( protocol_details );
+        
+       	  //Switch to 2. LIVE_UPDATE:
+       	  emit switch_to_live_update_init( protocol_details );
+        
+       	  return;
+       	}
     }
   // Normal re-attachement
   else
@@ -1239,6 +1239,294 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     }
    
 }
+
+
+//Cleanup failed run for further re-initializaiton:
+void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  //reverting autoflowSatges
+  qry << "autoflow_stages_revert"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
+  //deleting autoflowIntensity Record
+  qry. clear();
+  qry << "delete_autoflow_intensity_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "intensityID" ];
+  db->query( qry );
+
+  //deleting autoflowStatus Record
+  qry. clear();
+  qry << "delete_autoflow_status_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "statusID" ];
+  db->query( qry );
+
+  //deleting autoflowFailed Record
+  qry. clear();
+  qry << "delete_autoflow_failed_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "failedID" ];
+  db->query( qry );
+
+  //set autoflowAnalysis records for deletion (status = 'CANCELED')
+  QStringList analysisIDs_list = run_details[ "analysisIDs" ].split(",");
+  for( int i=0; i < analysisIDs_list.size(); ++i )
+    {
+      QString requestID = analysisIDs_list[i];
+      
+      qry.clear();
+      qry << "update_autoflow_analysis_record_at_deletion"
+	  << QString("Canceled for Failed run, top-level")
+	  << requestID;
+      
+      db->query( qry );
+    }
+
+  //delete autoflowAnalysisHistory records for given autoflowID : 
+  qry.clear();
+  qry << "delete_autoflow_analysis_history_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //delete autoflowModelsLink records for given autoflowID :
+  qry.clear();
+  qry << "delete_autoflow_model_links_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
+  
+  //deleting autoflowHistory Record (if exists)
+  qry. clear();
+  qry << "delete_autoflow_history_record"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //Clean certain field in autoflow record for re-initializing from 2. LIVE_UPDATE
+  qry. clear();
+  qry << "update_autoflow_at_reset_live_update"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //Restore autoflowReports' records 'tripleDropped' to DEFAULT ('none')
+  // 1. Create reportIDs list from protocol's AProfile;
+  // 2. Go over reports in the autoflowReport table & SET 'tripleDropped' to 'none'  
+
+  channels_report. clear();
+  QString aprofile_xml;
+  
+  qry. clear();
+  qry << "get_aprofile_info" << run_details[ "aprofileguid" ];
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      aprofile_xml         = db->value( 2 ).toString();
+    }
+  
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readAProfileBasicParms_auto( xmli );
+    }
+
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  qry. clear();
+	  QString rID = reportIDs_list[i];
+	  
+	  qry << "update_autoflow_report_at_import"
+	      << rID
+	      << QString("none");
+	  
+	  qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	  db->query( qry );
+	}
+    }
+  
+}
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+
+//Cleanup failed run's data for further re-initializaiton:
+void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  //Get proper filename
+  QString FileName = run_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
+    {
+      qry.clear();
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << run_details[ "invID_passed" ];
+
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+      
+      
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+	  return;
+	}
+
+      int status;
+      
+      // Delete links between experiment and solutions
+      qry. clear();
+      qry << "delete_experiment_solutions"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del sols status" << status;
+      
+      // Same with cell table
+      qry. clear();
+      qry  << "delete_cell_experiments"
+	   << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del cells status" << status;
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      //US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+
+
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+       	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for FAILED run: del_exp stat" << status;
+      
+      if ( status != US_DB2::OK )
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
+    }
+  /** End Iterate over fileNameList ****************************************************************/
+}
+
 
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
 void US_InitDialogueGui::update_autoflow_data( void )
