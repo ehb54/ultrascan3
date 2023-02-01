@@ -73,7 +73,7 @@ private:
     QLineEdit* le_lambstrt;
     QLineEdit* le_lambstop;
     QLineEdit* le_runIdInt;
-    QLineEdit* le_runIdAbs;
+    US_LineEdit_RE* le_runIdAbs;
     QLineEdit* le_dir;
     QLineEdit* le_desc;
     QLineEdit* le_status;

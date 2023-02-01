@@ -99,7 +99,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 
     QLabel* lb_runIdAbs  = us_label(      tr( "Run ID:" ) );
 //    le_runIdAbs          = us_lineedit(   "", 0, false );
-    le_runIdAbs = new us_lineedit_re("", 0, false );
+    le_runIdAbs = new US_LineEdit_RE("", 0, false );
 
     QGridLayout* abs_info_lyt = new QGridLayout();
     abs_info_lyt->addWidget(lb_runIdAbs, 0, 0, 1, 1);

@@ -120,7 +120,7 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
 
     QLabel* lb_save = us_banner("Save Control");
     QLabel* lb_runIdOut  = us_label(tr("Output Run ID:"));
-    le_runIdOut = us_lineedit("", 0, false);
+    le_runIdOut = new US_LineEdit_RE("", 0, false);
     QHBoxLayout* runIdOut_lyt = new QHBoxLayout();
     runIdOut_lyt->addWidget(lb_runIdOut);
     runIdOut_lyt->addWidget(le_runIdOut);
@@ -227,7 +227,6 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     connect(ct_max_order, SIGNAL(valueChanged(double)), this, SLOT(slt_rm_fit(double)));
     connect(ct_order, SIGNAL(valueChanged(double)), this, SLOT(slt_rm_fit(double)));
     connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
-    connect(le_runIdOut, SIGNAL(textEdited(QString)), this, SLOT(slt_edit_le(QString)));
 }
 
 
@@ -396,7 +395,6 @@ void US_RemoveRI::slt_import(void){
     le_dir->setCursorPosition(0);
     runIdOut = runId.prepend("RI_");
     le_runIdOut->setText(runIdOut);
-    le_runIdOut->setCursorPosition(0);
     set_cb_triples();
     slt_new_ccw(0);
     pb_save_avail();
@@ -626,33 +624,6 @@ void US_RemoveRI::slt_save(void){
     }
     le_status->setText("written on the local disk !");
 
-    return;
-}
-
-void US_RemoveRI::slt_edit_le(QString text){
-    int txtlim = 60;
-    int reIdx;
-    int crtpos = le_runIdOut->cursorPosition();
-    if (text.size() < runIdOut.size()){
-        runIdOut = text;
-    }else{
-        QRegExp re( "[^a-zA-Z0-9\+_-]" );
-        reIdx = text.indexOf(re, 0);
-        if (reIdx >= 0){
-            le_runIdOut->setText(runIdOut);
-            le_runIdOut->setCursorPosition(reIdx);
-        }else{
-            if (text.size() > txtlim){
-                QMessageBox::warning( this,
-                      tr( "Warning!" ),
-                      tr( "Length of the run ID cannot exceed %1 characters!" ).arg(txtlim));
-                le_runIdOut->setText(runIdOut);
-                le_runIdOut->setCursorPosition(crtpos - 1);
-            } else{
-                runIdOut = text;
-            }
-        }
-    }
     return;
 }
 

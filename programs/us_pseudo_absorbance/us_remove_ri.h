@@ -45,7 +45,6 @@ private slots:
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
     void slt_polyfit(void);
-    void slt_edit_le(QString);
 
 private:
     enum states {INTG_S, FIT_S, INTG_FIT_S, RDATA_S, CDATA_S};
@@ -62,7 +61,7 @@ private:
     QLineEdit* le_lambstrt;
     QLineEdit* le_lambstop;
     QLineEdit* le_runIdIn;
-    QLineEdit* le_runIdOut;
+    US_LineEdit_RE* le_runIdOut;
     QLineEdit* le_dir;
     QLineEdit* le_desc;
     QLineEdit* le_status;
