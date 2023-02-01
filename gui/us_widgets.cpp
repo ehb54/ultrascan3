@@ -986,7 +986,7 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
   return layout;
 }
 
-us_lineedit_re::us_lineedit_re(const QString& txt, int fontAdjust, bool readonly): QLineEdit(){
+US_LineEdit_RE::US_LineEdit_RE(const QString& txt, int fontAdjust, bool readonly): QLineEdit(){
     _dfltchrs = 50;
     _mytext = txt;
     _editstate = false;
@@ -1006,16 +1006,16 @@ us_lineedit_re::us_lineedit_re(const QString& txt, int fontAdjust, bool readonly
     connect(this, SIGNAL(textEdited(const QString &)), this, SLOT(newEdit(const QString &)));
 }
 
-void us_lineedit_re::setDefault(){
+void US_LineEdit_RE::setDefault(){
     setMaxChars(_dfltchrs);
     re.setPattern("[^a-zA-Z0-9\+_-]" );
 }
 
-void us_lineedit_re::setMaxChars(int n){
+void US_LineEdit_RE::setMaxChars(int n){
     _maxchrs = n;
 }
 
-void us_lineedit_re::setText(const QString & inText) {
+void US_LineEdit_RE::setText(const QString & inText) {
     QLineEdit::setText(inText);
     qDebug() << "OK";
     if (! _editstate){
@@ -1040,12 +1040,12 @@ void us_lineedit_re::setText(const QString & inText) {
     _editstate = false;
 }
 
-void us_lineedit_re::_set_etext(const QString & txt){
+void US_LineEdit_RE::_set_etext(const QString & txt){
     _editstate = true;
     this->setText(txt);
 }
 
-void us_lineedit_re::newEdit(const QString & newText){
+void US_LineEdit_RE::newEdit(const QString & newText){
     int reIdx;
     int crtpos = this->cursorPosition();
     if (newText.size() < _mytext.size()){
