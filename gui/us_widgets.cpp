@@ -1035,6 +1035,7 @@ void US_LineEdit_RE::setText(const QString & inText) {
                       "length of the string is limited to the first %1 characters.\n"
                       "input: %2\noutput: %3" ).arg(_maxchrs).arg(inText, outText));
             QLineEdit::setText(outText);
+            _mytext = outText;
         }
     }
     _editstate = false;
