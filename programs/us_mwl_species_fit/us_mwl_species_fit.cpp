@@ -115,7 +115,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
       }
    }
 
-   QLabel* lb_fit_error = us_label("Mean Squared Error:");
+   QLabel* lb_fit_error = us_label("Root-Mean-Square Deviation:");
    le_fit_error = us_lineedit("", -1, true);
    pb_plot3d = us_pushbutton("Plot3D", false);
    row       = controlsLayout->rowCount() + 1;
@@ -275,6 +275,7 @@ DbgLv(1) << "MSF: dc: ii" << ii << "NON_EXCLUDED";
          else
             curv->setPen( QPen( Qt::cyan ) );
         
+         curv->setPen( QPen( mcolors[ ii % nmcols ] ) );
          curv->setSamples( rr, vv, count );
       }
    }
@@ -1350,11 +1351,11 @@ void US_MwlSpeciesFit::get_fit_error(){
         return;
     }
     pb_plot3d->setEnabled(true);
-    double meanError = 0;
+    double RMSD = 0;
     for (int i = 0; i < fit_dev.scansMSE.size(); ++i)
-        meanError += fit_dev.scansMSE.at(i);
-    meanError /= fit_dev.scansMSE.size();
-    le_fit_error->setText(QString::number(meanError, 'f', 6));
+        RMSD += fit_dev.scansMSE.at(i);
+    RMSD /= fit_dev.scansMSE.size();
+    le_fit_error->setText(QString::number(qSqrt(RMSD), 'f', 6));
 }
 
 void US_MwlSpeciesFit::rmsd_3dplot(){

@@ -34,7 +34,7 @@ void SFData::computeMSE(){
 
 US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_WidgetsDialog(w)
 {
-    setWindowTitle("Species Fit Deviation Plot");
+    setWindowTitle("Spectral Decomposition Residual Plot");
     setPalette( US_GuiSettings::frameColorDefault() );
     nScans = spFitData.includedScans.size();
     scanId = nScans / 2;
@@ -50,38 +50,48 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     idRP_h = nPoints - 1;
 
     allData.clear();
-    double offset;
-    double scale;
-    double minValue = 1e99;
-    double maxValue = -1e99;
-    // scan < radial < lambda  < raw, fit, scaled SE > > > >
+    double minErr = 1e99;
+    double maxErr = -1e99;
+    double minAbsErr = 1e99;
+    double maxAbsErr = -1e99;
+    // scan < radial < lambda  < raw, fit, Err, sErr, absErr, sAbsErr > > > >
     for (int i = 0; i < nScans; i++){
         QVector< QVector < QVector < double > > > data_scan;
         for (int j = 0; j < nPoints; j++){
             QVector < QVector < double > > data_rp;
             for (int k = 0; k < nWavelengths; k++){
-                QVector<double> data(3, 0);
+                QVector<double> data(6, 0);
                 data[0] = spFitData.allData.at(i).at(j).at(k).first();
                 data[1] = spFitData.allData.at(i).at(j).at(k).last();
-                double sqe = qPow(data[0] - data[1], 2);
-                data[2] = sqe;
-                minValue = qMin(minValue, sqe);
-                maxValue = qMax(maxValue, sqe);
+                double err = data[0] - data[1];
+                double absErr = qAbs(err);
+                minErr = qMin(minErr, err);
+                maxErr = qMax(maxErr, err);
+                minAbsErr = qMin(minAbsErr, absErr);
+                maxAbsErr = qMax(maxAbsErr, absErr);
+                data[2] = err;
+                data[4] = absErr;
                 data_rp << data;
             }
             data_scan << data_rp;
         }
         allData << data_scan;
     }
-    offset = minValue;
-    scale = (maxValue - minValue);
+    double offset = minErr;
+    double scale = maxErr - minErr;
+    double offset2 = minAbsErr;
+    double scale2 = maxAbsErr - minAbsErr;
     for (int i = 0; i < nScans; i++){
         for (int j = 0; j < nPoints; j++){
             for (int k = 0; k < nWavelengths; k++){
-                double sqe = allData.at(i).at(j).at(k).last();
-                sqe = (sqe - offset) / scale;
-                sqe *= coeffER;
-                allData[i][j][k][2] = sqe;
+                double err = allData.at(i).at(j).at(k).at(2);
+                err = (err - offset) / scale;
+                err *= coeffER;
+                allData[i][j][k][3] = err;
+                double absErr = allData.at(i).at(j).at(k).at(4);
+                absErr = (absErr - offset2) / scale2;
+                absErr *= coeffER;
+                allData[i][j][k][5] = absErr;
             }
         }
     }
@@ -113,6 +123,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     dataProxy = new QSurfaceDataProxy();
     dataSeries = new QSurface3DSeries(dataProxy);
     dataSeries->setFlatShadingEnabled(true);
+    dataSeries->setDrawMode(QSurface3DSeries::DrawSurface);
     colorId = G2R;
 
     xAngle = 30;
@@ -124,12 +135,12 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     graph->setAxisY(new QValue3DAxis);
     graph->setAxisZ(new QValue3DAxis);
     graph->addSeries(dataSeries);
-    graph->axisX()->setTitle("Radial Points (cm)");
+    graph->axisX()->setTitle("Radius (cm)");
     graph->axisX()->setTitleVisible(true);
     graph->axisX()->setLabelFormat("%.3f");
     graph->axisX()->setLabelAutoRotation(xAngle);
 
-    graph->axisY()->setTitle("Squared Error");
+    graph->axisY()->setTitle("Residual (OD)");
     graph->axisY()->setTitleVisible(true);
     graph->axisY()->setLabelFormat("%.1e");
     graph->axisY()->setLabelAutoRotation(yAngle);
@@ -140,9 +151,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     graph->axisZ()->setLabelAutoRotation(zAngle);
 //    surface->axisZ()->setReversed(true);
 
-    graph->scene()->activeCamera()->setWrapXRotation(true);
-    graph->scene()->activeCamera()->setWrapYRotation(false);
-    graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
+    camera = graph->scene()->activeCamera();
+    camera->setWrapXRotation(true);
+    camera->setWrapYRotation(false);
+    camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
 
     surfaceWgt = QWidget::createWindowContainer(graph);
     QSize screenSize = graph->screen()->size();
@@ -172,23 +184,26 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 
     QGridLayout* mse_lyt = new QGridLayout();
 //    QLabel* lb_se = us_banner("Squared Error Data");
-    QLabel* lb_mse = us_label("Mean Squared Error:");
+    QLabel* lb_mse = us_label("Root-Mean-Square Deviation:");
     lb_mse->setAlignment(Qt::AlignRight);
-    QLabel* lb_minse = us_label("Min of Squared Error:");
+    QLabel* lb_minse = us_label("The Largest Negative Residual:");
     lb_minse->setAlignment(Qt::AlignRight);
-    QLabel* lb_maxse = us_label("Max of Squared Error:");
+    QLabel* lb_maxse = us_label("The Largest Positive Residual:");
     lb_maxse->setAlignment(Qt::AlignRight);
-    le_meanSE = us_lineedit(0, 0, true);
-    le_minSE = us_lineedit(0, 0, true);
-    le_maxSE = us_lineedit(0, 0, true);
+    le_RMSE = us_lineedit(0, 0, true);
+    le_minErr = us_lineedit(0, 0, true);
+    le_maxErr = us_lineedit(0, 0, true);
     mse_lyt->addWidget(lb_mse,    0, 0, 1, 1);
-    mse_lyt->addWidget(le_meanSE, 0, 1, 1, 1);
+    mse_lyt->addWidget(le_RMSE, 0, 1, 1, 1);
     mse_lyt->addWidget(lb_minse,  1, 0, 1, 1);
-    mse_lyt->addWidget(le_minSE,  1, 1, 1, 1);
+    mse_lyt->addWidget(le_minErr,  1, 1, 1, 1);
     mse_lyt->addWidget(lb_maxse,  2, 0, 1, 1);
-    mse_lyt->addWidget(le_maxSE,  2, 1, 1, 1);
+    mse_lyt->addWidget(le_maxErr,  2, 1, 1, 1);
 
     QLabel* lb_plot_ctrl = us_banner("3D Plot Control");
+    ckb_plotAbs = new QCheckBox();
+    QGridLayout *plotAbs_gl = us_checkbox("Plot Magnitude of Residuals", ckb_plotAbs, false);
+
     QLabel* lb_selmode = us_label("Selection Mode");
     lb_selmode->setAlignment(Qt::AlignCenter);
 
@@ -199,7 +214,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     QGridLayout *point_gl = us_radiobutton("Point", rb_point, false);
 
     rb_radial = new QRadioButton();
-    QGridLayout *radial_gl = us_radiobutton("Radial Slice", rb_radial, false);
+    QGridLayout *radial_gl = us_radiobutton("Radius Slice", rb_radial, false);
 
     rb_lambda = new QRadioButton();
     QGridLayout *wavlth_gl = us_radiobutton("Lambda Slice", rb_lambda, false);
@@ -239,7 +254,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     wavl_lyt->addWidget(lb_wavl_to, 1, 0, 1, 1);
     wavl_lyt->addWidget(ct_max_wl,  1, 1, 1, 1);
 
-    QLabel* lb_radl_rng = us_label("Radial Range (cm)");
+    QLabel* lb_radl_rng = us_label("Radius Range (cm)");
     lb_radl_rng->setAlignment(Qt::AlignCenter);
     QLabel* lb_radl_fr = us_label("From:");
     lb_radl_fr->setAlignment(Qt::AlignRight);
@@ -274,11 +289,24 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     cb_theme->addItem(QStringLiteral("Retro"));
     cb_theme->addItem(QStringLiteral("Isabelle"));
 
-    pb_camera = us_pushbutton("Reset Camera");
+//    pb_camera = us_pushbutton("Reset Camera");
+    cb_camera = us_comboBox();
+    QStringList camera_list = {"Custom"};
+    camera_list << "IsometricRight" << "IsometricRightHigh";
+    camera_list << "IsometricLeft" << "IsometricLeftHigh";
+    camera_list << "FrontLow" << "Front" << "FrontHigh";
+    camera_list << "BehindLow" << "Behind" << "BehindHigh";
+    camera_list << "LeftLow" << "Left" << "LeftHigh";
+    camera_list << "RightLow" << "Right" << "RightHigh";
+    camera_list << "FrontBelow";
+    camera_list << "LeftBelow" << "RightBelow" << "BehindBelow" << "DirectlyBelow";
+    camera_list << "DirectlyAbove" << "DirectlyAboveCW45" << "DirectlyAboveCCW45";
+    cb_camera->addItems(camera_list);
+    cb_camera->setCurrentIndex(1);
 
     QHBoxLayout *theme_lyt = new QHBoxLayout();
     theme_lyt->addWidget(cb_theme);
-    theme_lyt->addWidget(pb_camera);
+    theme_lyt->addWidget(cb_camera);
 
     QLabel* lb_color = us_label("Color Map");
     lb_color->setAlignment(Qt::AlignCenter);
@@ -315,25 +343,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     color_lyt->addWidget(pb_G2R);
     color_lyt->addWidget(pb_DFLT);
 
-    QLabel* lb_draw_mode = us_label("Draw Mode:");
-    rb_surface = new QRadioButton();
-    QGridLayout *surface_gl = us_radiobutton("Surface", rb_surface, true);
-    rb_surface_wire = new QRadioButton();
-    QGridLayout *surface_wire_gl = us_radiobutton("Surface-Wire", rb_surface_wire, false);
-    QHBoxLayout* draw_mode_lyt = new QHBoxLayout();
-    draw_mode_lyt->addWidget(lb_draw_mode);
-    draw_mode_lyt->addLayout(surface_gl);
-    draw_mode_lyt->addLayout(surface_wire_gl);
-    setSurface();
-
-    QButtonGroup *draw_btng = new QButtonGroup();
-    draw_btng->addButton(rb_surface);
-    draw_btng->addButton(rb_surface_wire);
-
     QLabel* lb_angle = us_label("Rotate Axis Labels");
     lb_angle->setAlignment(Qt::AlignCenter);
 
-    QLabel* lb_xAngle = us_label("Radial:");
+    QLabel* lb_xAngle = us_label("Radius:");
     lb_xAngle->setAlignment(Qt::AlignRight);
     sli_xAngle = new QSlider(Qt::Horizontal);
     sli_xAngle->setMinimum(0);
@@ -341,7 +354,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     sli_xAngle->setValue(xAngle);
     QPushButton* pb_xAngle = us_pushbutton("reset", true, -1);
 
-    QLabel* lb_yAngle = us_label("Deviation:");
+    QLabel* lb_yAngle = us_label("Residual:");
     lb_yAngle->setAlignment(Qt::AlignRight);
     sli_yAngle = new QSlider(Qt::Horizontal);
     sli_yAngle->setMinimum(0);
@@ -412,7 +425,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     dataPlot->insertLegend( legend , QwtPlot::TopLegend);
 
     US_Plot* us_devPlot = new US_Plot(errorPlot, tr(""),
-                                      tr( "Wavelength (nm)" ), tr( "Deviation" ));
+                                      tr( "Wavelength (nm)" ), tr( "Residual" ));
 //    tab0_plotRD->setMinimumSize( 600, 400 );
     errorPlot->setMaximumHeight(250);
     errorPlot->enableAxis( QwtPlot::xBottom, true );
@@ -420,15 +433,12 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     errorPlot->setCanvasBackground(QBrush(Qt::black));
     grid = us_grid(errorPlot);
 
-    QLabel* lb_radial = us_label("Radial Position (cm):");
+    QLabel* lb_radial = us_label("Radius (cm):");
     lb_radial->setAlignment(Qt::AlignRight);
     le_rpval = us_lineedit("", 0, true);
     le_rpval->setMaximumWidth(50);
     lb_radial->setAlignment(Qt::AlignLeft);
     sli_radial = new QSlider(Qt::Horizontal);
-    sli_radial->setMinimum(0);
-    sli_radial->setMaximum(nPoints - 1);
-    sli_radial->setValue(nPoints / 2);
     sli_radial->setStyleSheet("background-color: white");
     sli_radial->setMinimumWidth(500);
     sli_radial->setTickPosition(QSlider::TicksBelow);
@@ -444,6 +454,73 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     radial_lyt->addWidget(le_rpid);
     radial_lyt->addStretch(1);
 
+    lb_runs_test = us_banner("Runs Test Statistics for the Radius");
+    QLabel *lb_rt_mean = us_label("Average Value of Residuals:");
+//    lb_rt_mean->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_median = us_label("Median Value of Residuals:");
+//    lb_rt_median->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_np = us_label("Number of Residuals:");
+//    lb_rt_np->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_nruns = us_label("No. Runs:");
+//    lb_rt_nruns->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_nneg = us_label("No. Negatives:");
+//    lb_rt_nneg->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_npos = us_label("No. Positives:");
+//    lb_rt_npos->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_zstat = us_label("Test Statistics:");
+//    lb_rt_zstat->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_pval = us_label("Test p-value:");
+//    lb_rt_pval->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_zcrit = us_label("Critical Value:");
+//    lb_rt_zcrit->setAlignment(Qt::AlignRight);
+    QLabel *lb_rt_region = us_label("Random Region of the No. Runs:");
+//    lb_rt_region->setAlignment(Qt::AlignRight);
+    le_rt_mean   = us_lineedit("", 0, true);
+    le_rt_median = us_lineedit("", 0, true);
+    le_rt_np = us_lineedit("", 0, true);
+    le_rt_nruns  = us_lineedit("", 0, true);
+    le_rt_nneg   = us_lineedit("", 0, true);
+    le_rt_npos   = us_lineedit("", 0, true);
+    le_rt_zstat  = us_lineedit("", 0, true);
+    le_rt_pval   = us_lineedit("", 0, true);
+    le_rt_zcrit  = us_lineedit("", 0, true);
+    le_rt_region  = us_lineedit("", 0, true);
+    pb_plotPixMap = us_pushbutton("Plot PixelMap (All Scans)");
+
+    QGridLayout *lyt_zstat = new QGridLayout();
+    lyt_zstat->addWidget(lb_rt_mean,   0, 0,  1, 4);
+    lyt_zstat->addWidget(le_rt_mean,   0, 4,  1, 4);
+    lyt_zstat->addWidget(lb_rt_median, 0, 8,  1, 4);
+    lyt_zstat->addWidget(le_rt_median, 0, 12, 1, 4);
+    lyt_zstat->addWidget(lb_rt_np,     0, 16, 1, 4);
+    lyt_zstat->addWidget(le_rt_np,     0, 20, 1, 4);
+
+    lyt_zstat->addWidget(lb_rt_nruns , 1, 0,  1, 4);
+    lyt_zstat->addWidget(le_rt_nruns , 1, 4,  1, 4);
+    lyt_zstat->addWidget(lb_rt_nneg  , 1, 8,  1, 4);
+    lyt_zstat->addWidget(le_rt_nneg  , 1, 12, 1, 4);
+    lyt_zstat->addWidget(lb_rt_npos  , 1, 16, 1, 4);
+    lyt_zstat->addWidget(le_rt_npos  , 1, 20, 1, 4);
+
+    lyt_zstat->addWidget(lb_rt_zstat, 2, 0,  1, 4);
+    lyt_zstat->addWidget(le_rt_zstat, 2, 4,  1, 4);
+    lyt_zstat->addWidget(lb_rt_pval , 2, 8,  1, 4);
+    lyt_zstat->addWidget(le_rt_pval , 2, 12, 1, 4);
+    lyt_zstat->addWidget(lb_rt_zcrit, 2, 16, 1, 4);
+    lyt_zstat->addWidget(le_rt_zcrit, 2, 20, 1, 4);
+
+    lyt_zstat->addWidget(lb_rt_region,  3, 0,  1, 8);
+    lyt_zstat->addWidget(le_rt_region,  3, 8,  1, 8);
+    lyt_zstat->addWidget(pb_plotPixMap, 3, 16, 1, 8);
+
+    lb_rt_rstate = us_label("Randomness State", 2);
+    lb_rt_rstate->setMinimumWidth(250);
+    lb_rt_rstate->setAlignment(Qt::AlignCenter);
+    QHBoxLayout *lyt_rstate = new QHBoxLayout();
+    lyt_rstate->addStretch(1);
+    lyt_rstate->addWidget(lb_rt_rstate);
+    lyt_rstate->addStretch(1);
+
     QWidget* tab1 = new QWidget();
     QVBoxLayout* tab1_lyt = new QVBoxLayout(tab1);
     tab1_lyt->setMargin(0);
@@ -452,12 +529,15 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     tab1_lyt->addLayout(us_devPlot);
     tab1_lyt->addSpacing(10);
     tab1_lyt->addLayout(radial_lyt);
+    tab1_lyt->addWidget(lb_runs_test);
+    tab1_lyt->addLayout(lyt_zstat);
+    tab1_lyt->addLayout(lyt_rstate);
     tab1_lyt->addStretch(1);
 
     tabs = new QTabWidget();
 //    tabs->setAutoFillBackground(true);
     tabs->addTab(surfaceWgt, tr("3D Plot"));
-    tabs->addTab(tab1, tr("Inspect Deviation"));
+    tabs->addTab(tab1, tr("Inspect Residual"));
     tabs->tabBar()->setMinimumWidth(300);
     QStringList styleSheet;
     styleSheet << "QTabWidget::pane {border-top: 2px solid #C2C7CB;}";
@@ -473,6 +553,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     left_lyt->addLayout(mse_lyt);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_plot_ctrl);
+    left_lyt->addLayout(plotAbs_gl);
     left_lyt->addWidget(lb_selmode);
     left_lyt->addLayout(select_lyt);
     left_lyt->addWidget(lb_wavl_rng);
@@ -483,7 +564,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     left_lyt->addLayout(theme_lyt);
     left_lyt->addWidget(lb_color);
     left_lyt->addLayout(color_lyt);
-    left_lyt->addLayout(draw_mode_lyt);
     left_lyt->addWidget(lb_angle);
     left_lyt->addLayout(angle_lyt);
     left_lyt->addWidget(lb_save);
@@ -511,10 +591,8 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(cb_scan, SIGNAL(currentIndexChanged(int)), this, SLOT(newScan(int)));
     connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
     connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
-    connect(pb_camera, SIGNAL(clicked()), this, SLOT(resetCamera()));
+    connect(cb_camera, SIGNAL(currentIndexChanged(int)), this, SLOT(resetCamera(int)));
     connect(cb_theme, SIGNAL(currentTextChanged(QString)), this, SLOT(setTheme(QString)));
-    connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
-    connect(rb_surface_wire, SIGNAL(clicked()), this, SLOT(setSurfaceWire()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
     connect(pb_render, SIGNAL(clicked()), this, SLOT(renderImage()));
     connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
@@ -534,11 +612,15 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(pb_xAngle, SIGNAL(clicked()), this, SLOT(reset_xAngle()));
     connect(pb_yAngle, SIGNAL(clicked()), this, SLOT(reset_yAngle()));
     connect(pb_zAngle, SIGNAL(clicked()), this, SLOT(reset_zAngle()));
-    connect(sli_radial, SIGNAL(valueChanged(int)), this, SLOT(new_rpoint(int)));
-    connect(le_rpid, SIGNAL(returnPressed()), this, SLOT(new_rpid()));
+    connect(ckb_plotAbs, SIGNAL(stateChanged(int)), this, SLOT(plot3d()));
     connect(ckb_rendall, SIGNAL(stateChanged(int)), this, SLOT(render_option(int)));
+    connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
+    connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
+    connect(pb_plotPixMap,   SIGNAL(clicked()), this, SLOT(plotPixMap()));
 
+    fill_table();
     get_minMaxMean();
+    set_radial_slider();
 //    cb_scan->setCurrentIndex(scanId);
     newScan(scanId);
     pb_render->setText(tr("Save Scan %1").arg(scanId + 1));
@@ -696,8 +778,12 @@ void US_MWL_SF_PLOT3D::plot3d(){
         double wl = lambdaScaled.at(j);
         for (int i = idRP_l; i <= idRP_h; i++) {
             double rp = xvalsScaled.at(i);
-            double sse = allData.at(scanId).at(i).at(j).last();
-            (*newRow)[index++].setPosition(QVector3D((float)rp, (float)sse, (float)wl));
+            double data;
+            if (ckb_plotAbs->isChecked())
+                data = allData.at(scanId).at(i).at(j).at(5);
+            else
+                data = allData.at(scanId).at(i).at(j).at(3);
+            (*newRow)[index++].setPosition(QVector3D((float)rp, (float)data, (float)wl));
         }
         *dataArray << newRow;
     }
@@ -708,9 +794,8 @@ void US_MWL_SF_PLOT3D::plot3d(){
     double min_rp = xvalsScaled.at(idRP_l);
     double max_rp = xvalsScaled.at(idRP_h);
 
-    graph->axisX()->setRange(min_rp -padding, max_rp + padding);
-    graph->axisY()->setRange(minSSE -padding, maxSSE + padding);
-    graph->axisZ()->setRange(min_wl -padding, max_wl + padding);
+    graph->axisX()->setRange(min_rp - padding, max_rp + padding);
+    graph->axisZ()->setRange(min_wl - padding, max_wl + padding);
 
     min_wl = ct_min_wl->value();
     max_wl = ct_max_wl->value();
@@ -719,10 +804,19 @@ void US_MWL_SF_PLOT3D::plot3d(){
 
     CustomFormatter *formatX = new CustomFormatter(min_rp, max_rp);
     graph->axisX()->setFormatter(formatX);
-    CustomFormatter *formatY = new CustomFormatter(minSE, maxSE);
-    graph->axisY()->setFormatter(formatY);
     CustomFormatter *formatZ = new CustomFormatter(min_wl, max_wl);
     graph->axisZ()->setFormatter(formatZ);
+    CustomFormatter *formatY;
+    if (ckb_plotAbs->isChecked()){
+        graph->axisY()->setTitle("|| Residual (OD) ||");
+        graph->axisY()->setRange(min_sAbsErr - padding, max_sAbsErr + padding);
+        formatY = new CustomFormatter(min_AbsErr, max_AbsErr);
+    } else {
+        graph->axisY()->setTitle("Residual (OD)");
+        graph->axisY()->setRange(min_sErr - padding, max_sErr + padding);
+        formatY = new CustomFormatter(min_Err, max_Err);
+    }
+    graph->axisY()->setFormatter(formatY);
 
     int theme = cb_theme->currentIndex();
     graph->activeTheme()->setType(Q3DTheme::Theme(theme));
@@ -750,16 +844,59 @@ void US_MWL_SF_PLOT3D::prevScan(){
     cb_scan->setCurrentIndex(scanId - 1);
 }
 
-void US_MWL_SF_PLOT3D::resetCamera(){
-    graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
-}
-
-void US_MWL_SF_PLOT3D::setSurface(){
-    dataSeries->setDrawMode(QSurface3DSeries::DrawSurface);
-}
-
-void US_MWL_SF_PLOT3D::setSurfaceWire(){
-    dataSeries->setDrawMode(QSurface3DSeries::DrawSurfaceAndWireframe);
+void US_MWL_SF_PLOT3D::resetCamera(int){
+    camera->disconnect();
+    QString state = cb_camera->currentText();
+    if (state == "FrontLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFrontLow);
+    else if (state == "Front")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFront);
+    else if (state == "FrontHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFrontHigh);
+    else if (state == "LeftLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeftLow);
+    else if (state == "Left")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeft);
+    else if (state == "LeftHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeftHigh);
+    else if (state == "RightLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRightLow);
+    else if (state == "Right")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRight);
+    else if (state == "RightHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRightHigh);
+    else if (state == "BehindLow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehindLow);
+    else if (state == "Behind")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehind);
+    else if (state == "BehindHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehindHigh);
+    else if (state == "IsometricLeft")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricLeft);
+    else if (state == "IsometricLeftHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricLeftHigh);
+    else if (state == "IsometricRight")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRight);
+    else if (state == "IsometricRightHigh")
+        camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
+    else if (state == "DirectlyAbove")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyAbove);
+    else if (state == "DirectlyAboveCW45")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyAboveCW45);
+    else if (state == "DirectlyAboveCCW45")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyAboveCCW45);
+    else if (state == "FrontBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetFrontBelow);
+    else if (state == "LeftBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetLeftBelow);
+    else if (state == "RightBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetRightBelow);
+    else if (state == "BehindBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetBehindBelow);
+    else if (state == "DirectlyBelow")
+        camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyBelow);
+    connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
+    connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
 }
 
 void US_MWL_SF_PLOT3D::set_B2Y(){
@@ -821,6 +958,8 @@ void US_MWL_SF_PLOT3D::set_ct_rp(bool ascent){
     max = (double) xvals4ct.at(idRP_h) / 1000.0;
     ct_max_rp->setValue(max);
     get_minMaxMean();
+    set_radial_slider();
+    plot2d();
     plot3d();
     connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
     connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
@@ -866,6 +1005,8 @@ void US_MWL_SF_PLOT3D::set_ct_wl(bool ascent){
     max = (double) lambda4ct.at(idWL_h) / 10.0;
     ct_max_wl->setValue(max);
     get_minMaxMean();
+    set_radial_slider();
+    plot2d();
     plot3d();
     connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
     connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
@@ -924,11 +1065,12 @@ void US_MWL_SF_PLOT3D::new_rpoint(int){
 
 void US_MWL_SF_PLOT3D::new_rpid(){
     bool state;
+    int npts = idRP_h - idRP_l;
     int rpId = le_rpid->text().toInt(&state);
     if (! state || rpId <= 0)
         rpId = 0;
-    else if (rpId > nPoints)
-        rpId = nPoints - 1;
+    else if (rpId > npts + 1)
+        rpId = npts - 1;
     else
         rpId--;
     le_rpid->setText(QString::number(rpId + 1));
@@ -940,32 +1082,35 @@ void US_MWL_SF_PLOT3D::plot2d(){
     errorPlot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     dataPlot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
 
-    QVector<double> dev(nWavelengths, 0);
-    QVector<double> lambdas(nWavelengths, 0);
+    int nwl = idWL_h - idWL_l + 1;
+    QVector<double> dev(nwl, 0);
+    QVector<double> lambdas(nwl, 0);
     double *yp = dev.data();
     double *xp = lambdas.data();
     double minDev =  1e20;
     double maxDev = -1e20;
     int rpId = sli_radial->value();
+    int rpId_org = rpId + idRP_l;
     le_rpid->setText(QString::number(rpId + 1));
-    double xvalue = (double) xvals4ct.at(rpId) / 1000.0;
-    le_rpval->setText(QString::number(xvalue, 'f', 3));
-    for (int i = 0; i < nWavelengths; ++i){
-        double raw = allData.at(scanId).at(rpId).at(i).at(0);
-        double fit = allData.at(scanId).at(rpId).at(i).at(1);
-        double error = fit - raw;
+    double xvalue = (double) xvals4ct.at(rpId_org) / 1000.0;
+    QString rpval = QString::number(xvalue, 'f', 3);
+    le_rpval->setText(rpval);
+    lb_runs_test->setText(tr("Runs Test Statistics for the Radius %1 (cm)").arg(rpval));
+    for (int i = 0; i < nwl; ++i){
+        int id_wl = i + idWL_l;
+        double error = allData.at(scanId).at(rpId_org).at(id_wl).at(2);
         minDev = qMin(minDev, error);
         maxDev = qMax(maxDev, error);
-        xp[i] = (double) lambda4ct.at(i) / 10.0;
+        xp[i] = (double) lambda4ct.at(id_wl) / 10.0;
         yp[i] = error;
     }
     double minWl = xp[0] - 0.1;
-    double maxWl = xp[nWavelengths - 1] + 0.1;
-    QwtPlotCurve* curve = us_curve( errorPlot,"");
+    double maxWl = xp[nwl - 1] + 0.1;
+    QwtPlotCurve* curve = us_curve( errorPlot, "");
     QPen pen_plot(Qt::yellow);
     pen_plot.setWidth(2);
     curve->setPen( pen_plot );
-    curve->setSamples(xp, yp, nWavelengths);
+    curve->setSamples(xp, yp, nwl);
     double dy = (maxDev - minDev) * 0.01;
     errorPlot->setAxisScale( QwtPlot::xBottom, minWl, maxWl);
     errorPlot->setAxisScale( QwtPlot::yLeft  , minDev - dy, maxDev + dy);
@@ -973,33 +1118,37 @@ void US_MWL_SF_PLOT3D::plot2d(){
     grid = us_grid(errorPlot);
     errorPlot->replot();
 
-    QVector<double> od_raw(nWavelengths, 0);
-    QVector<double> od_fit(nWavelengths, 0);
+
+    get_runs_test(dev, true);
+
+    QVector<double> od_raw(nwl, 0);
+    QVector<double> od_fit(nwl, 0);
     double *rp = od_raw.data();
     double *fp = od_fit.data();
     double minVal =  1e20;
     double maxVal = -1e20;
-    for (int i = 0; i < nWavelengths; i++){
-        double raw = allData.at(scanId).at(rpId).at(i).at(0);
+    for (int i = 0; i < nwl; i++){
+        int id_wl = i + idWL_l;
+        double raw = allData.at(scanId).at(rpId_org).at(id_wl).at(0);
         rp[i] = raw;
-        double fit = allData.at(scanId).at(rpId).at(i).at(1);
+        double fit = allData.at(scanId).at(rpId_org).at(id_wl).at(1);
         fp[i] = fit;
         double minV = qMin(raw, fit);
         double maxV = qMax(raw, fit);
         minVal = qMin(minVal, minV);
         maxVal = qMax(maxVal, maxV);
     }
-    QwtPlotCurve* curve_org = us_curve( dataPlot,"Raw Data");
+    QwtPlotCurve* curve_org = us_curve( dataPlot, "Raw Data");
     pen_plot.setColor(Qt::green);
     curve_org->setPen( pen_plot );
-    curve_org->setSamples(xp, rp, nWavelengths);
+    curve_org->setSamples(xp, rp, nwl);
 
     QPen nopen = QPen(Qt::red, 0, Qt::NoPen);
     QwtSymbol *symbol = new QwtSymbol(
                 QwtSymbol::Ellipse, QBrush(Qt::red),
                 QPen(Qt::red, 3), QSize( 5, 5 ));
-    QwtPlotCurve* curve_fit = us_curve( dataPlot,"Fitted Data");
-    curve_fit->setSamples(xp, fp, nWavelengths);
+    QwtPlotCurve* curve_fit = us_curve( dataPlot, "Fitted Data");
+    curve_fit->setSamples(xp, fp, nwl);
     curve_fit->setPen(nopen);
     curve_fit->setSymbol(symbol);
 
@@ -1012,32 +1161,42 @@ void US_MWL_SF_PLOT3D::plot2d(){
 }
 
 void US_MWL_SF_PLOT3D::get_minMaxMean(void){
-    meanSE = 0;
-    minSE  =  1e99;
-    minSSE =  1e99;
-    maxSE  = -1e99;
-    maxSSE = -1e99;
+
+    min_Err   =  1e99;
+    max_Err   = -1e99;
+    min_sErr  =  1e99;
+    max_sErr  = -1e99;
+    min_AbsErr  =  1e99;
+    max_AbsErr  = -1e99;
+    min_sAbsErr =  1e99;
+    max_sAbsErr = -1e99;
+    RMSE = 0;
     int n = 0;
     for (int i = 0; i < nScans; i++){
         for (int j = idRP_l; j <= idRP_h ; j++){
             for (int k = idWL_l; k <= idWL_h; k++) {
-                double d1 = allData.at(i).at(j).at(k).at(0);
-                double d2 = allData.at(i).at(j).at(k).at(1);
-                double se = qPow(d1 - d2, 2);
-                double sse = allData.at(i).at(j).at(k).at(2);
-                meanSE += se;
-                maxSE = qMax(maxSE, se);
-                minSE = qMin(minSE, se);
-                maxSSE = qMax(maxSSE, sse);
-                minSSE = qMin(minSSE, sse);
+                double err = allData.at(i).at(j).at(k).at(2);
+                double sErr = allData.at(i).at(j).at(k).at(3);
+                double absErr = allData.at(i).at(j).at(k).at(4);
+                double sAbsErr = allData.at(i).at(j).at(k).at(5);
+                RMSE += qPow(err, 2);
+                min_Err   = qMin(min_Err,   err);
+                min_sErr  = qMin(min_sErr,  sErr);
+                min_AbsErr  = qMin(min_AbsErr,  absErr);
+                min_sAbsErr = qMin(min_sAbsErr, sAbsErr);
+
+                max_Err   = qMax(max_Err,   err);
+                max_sErr  = qMax(max_sErr,  sErr);
+                max_AbsErr  = qMax(max_AbsErr,  absErr);
+                max_sAbsErr = qMax(max_sAbsErr, sAbsErr);
                 n++;
             }
         }
     }
-    meanSE /= n;
-    le_meanSE->setText(QString::number(meanSE));
-    le_minSE->setText(QString::number(minSE));
-    le_maxSE->setText(QString::number(maxSE));
+    RMSE = qSqrt(RMSE / n);
+    le_RMSE->setText(QString::number(RMSE));
+    le_minErr->setText(QString::number(min_Err));
+    le_maxErr->setText(QString::number(max_Err));
 }
 
 
@@ -1053,8 +1212,6 @@ void US_MWL_SF_PLOT3D::render_option(int){
 void US_MWL_SF_PLOT3D::enable_wgt(bool state){
 //    surfaceWgt->setEnabled(state);
     tabs->setEnabled(state);
-    rb_surface->setEnabled(state);
-    rb_surface_wire->setEnabled(state);
     rb_nosel->setEnabled(state);
     rb_point->setEnabled(state);
     rb_radial->setEnabled(state);
@@ -1065,7 +1222,6 @@ void US_MWL_SF_PLOT3D::enable_wgt(bool state){
     pb_B2Y->setEnabled(state);
     pb_DFLT->setEnabled(state);
     pb_help->setEnabled(state);
-    pb_camera->setEnabled(state);
     sli_xAngle->setEnabled(state);
     sli_yAngle->setEnabled(state);
     sli_zAngle->setEnabled(state);
@@ -1086,6 +1242,216 @@ void US_MWL_SF_PLOT3D::closeEvent(QCloseEvent *event){
     renderLoopState = false;
     event->accept();
 }
+
+void US_MWL_SF_PLOT3D::cameraChanged(float){
+    cb_camera->setCurrentIndex(0);
+}
+
+void US_MWL_SF_PLOT3D::set_radial_slider(void){
+    sli_radial->disconnect();
+    le_rpid->disconnect();
+    int npts = idRP_h - idRP_l;
+    sli_radial->setMinimum(0);
+    sli_radial->setMaximum(npts);
+    sli_radial->setValue(npts / 2);
+    connect(sli_radial, SIGNAL(valueChanged(int)), this, SLOT(new_rpoint(int)));
+    connect(le_rpid, SIGNAL(returnPressed()), this, SLOT(new_rpid()));
+}
+
+bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
+    QVector<double> sample_sort;
+    sample_sort << sample;
+    std::sort(sample_sort.begin(), sample_sort.end());
+
+    double median, mean, rhat, s2r, zstat, pval;
+    int nneg, npos, nruns, lower, upper;
+    bool randstate, lookup;
+    int size = sample.size();
+    if (size % 2 != 0)
+        median = sample_sort[size / 2];
+    else
+        median = (sample_sort[(size - 1) / 2] + sample_sort[size / 2]) / 2.0;
+    mean = 0;
+    nneg = 0;
+    npos = 0;
+    nruns = 0;
+    double *sp = sample.data();
+    for (int i = 0; i < size; i++){
+        double val = sp[i];
+        mean += val;
+        if (i > 0){
+            double valp = sp[i - 1];
+            if ((val >= median && valp <  median) ||
+                (val <  median && valp >= median))
+                nruns++;
+        }
+        if (val >= median)
+            npos++;
+        else
+            nneg++;
+    }
+    nruns++;
+    mean /= size;
+    double npn = nneg + npos;
+    double ntn = 2 * nneg * npos;
+    rhat = ntn / npn + 1.0;
+    s2r = (ntn * (ntn - npn)) / (npn * npn * (npn + 1.0));
+    zstat = qAbs(((double) nruns - rhat) / qSqrt(s2r));
+    double cdf = std::erfc(-1 * zstat / std::sqrt(2.0)) / 2.0;
+    pval = 2 * (1 - cdf);
+    int n1, n2;
+    if (npos >= nneg){
+        n1 = npos;
+        n2 = nneg;
+    } else {
+        n1 = nneg;
+        n2 = npos;
+    }
+
+    if (n1 > 20){
+        lookup = false;
+        lower = -1;
+        upper = -1;
+        if (qAbs(zstat) >= 1.96)
+            randstate = false;
+        else
+            randstate = true;
+    } else {
+        lookup = true;
+        if (lookupTable.contains(n1)){
+            QMap<int, QVector<int>> row;
+            row = lookupTable.value(n1);
+            if (row.contains(n2)){
+                lower = row.value(n2).at(0);
+                upper = row.value(n2).at(1);
+                if (nruns >= lower && nruns  <= upper)
+                    randstate = true;
+                else
+                    randstate = false;
+            } else {
+                lower = -1;
+                upper = -1;
+                randstate = false;
+            }
+        } else {
+            lower = -1;
+            upper = -1;
+            randstate = false;
+        }
+    }
+
+    if (display){
+        le_rt_mean->setText(QString::number(mean));
+        le_rt_median->setText(QString::number(median));
+        le_rt_np->setText(QString::number(sample.size()));
+        le_rt_nruns->setText(QString::number(nruns));
+        le_rt_nneg->setText(QString::number(nneg));
+        le_rt_npos->setText(QString::number(npos));
+        QString l2u = tr("%1 to %2").arg(lower).arg(upper);
+        if (lookup){
+            le_rt_region->setText(l2u);
+            if (n1 > 10){
+                le_rt_zstat->setText(QString::number(zstat));
+                le_rt_pval->setText(QString::number(pval));
+                le_rt_zcrit->setText(QString::number(1.96));
+            } else {
+                le_rt_zstat->clear();
+                le_rt_pval->clear();
+                le_rt_zcrit->clear();
+            }
+        } else {
+            le_rt_zstat->setText(QString::number(zstat));
+            le_rt_pval->setText(QString::number(pval));
+            le_rt_zcrit->setText(QString::number(1.96));
+            le_rt_region->setText(l2u);
+        }
+
+        if (randstate){
+            QColor color = QColor(144, 238, 144);
+            lb_rt_rstate->setText("Random");
+            lb_rt_rstate->setStyleSheet(tr("QLabel { background-color : %1; color : black; }").arg(color.name()));
+        } else {
+            QColor color = QColor(255, 87, 51);
+            lb_rt_rstate->setText("Non-random");
+            lb_rt_rstate->setStyleSheet(tr("QLabel { background-color : %1; color : black; }").arg(color.name()));
+        }
+    }
+    return randstate;
+}
+
+void US_MWL_SF_PLOT3D::fill_table(){
+    lookupTable.clear();
+    QStringList tableRows;
+    tableRows << "20,15,27,19,14,26,18,14,26,17,14,25,16,13,24,15,13,24,14,12,23,13,11,22,12,11,21,11,10,20,10,10,19,9,9,19,8,8,16,7,7,-1,6,7,-1,5,6,-1,4,5,-1,3,4,-1,2,3,-1";
+    tableRows << "19,14,26,18,14,25,17,13,25,16,13,24,15,12,23,14,12,22,13,11,21,12,11,21,11,10,20,10,9,19,9,9,19,8,8,16,7,7,-1,6,7,-1,5,6,-1,4,5,-1,3,4,-1,2,3,-1";
+    tableRows << "18,13,25,17,13,24,16,12,24,15,12,23,14,11,22,13,11,21,12,10,21,11,10,19,10,9,18,9,9,19,8,8,16,7,7,-1,6,6,-1,5,6,-1,4,5,-1,3,4,-1,2,3,-1";
+    tableRows << "17,12,24,16,12,23,15,12,22,14,11,22,13,11,21,12,10,20,11,10,19,10,9,18,9,8,19,8,8,16,7,7,-1,6,6,-1,5,5,-1,4,5,-1,3,4,-1,2,3,-1";
+    tableRows << "16,12,22,15,11,22,14,11,21,13,10,21,12,10,21,11,9,19,10,9,18,9,8,19,8,7,16,7,7,-1,6,6,-1,5,5,-1,4,5,-1,3,4,-1,2,3,-1";
+    tableRows << "15,11,21,14,10,21,13,10,20,12,9,19,11,9,18,10,8,17,9,8,19,8,7,15,7,7,14,6,6,-1,5,5,-1,4,4,-1,3,4,-1,2,3,-1";
+    tableRows << "14,10,20,13,10,19,12,9,19,11,9,18,10,8,17,9,8,16,8,7,15,7,6,14,6,6,-1,5,5,-1,4,4,-1,3,3,-1,2,3,-1";
+    tableRows << "13,9,19,12,8,19,11,8,18,10,8,17,9,7,16,8,7,15,7,6,14,6,6,-1,5,5,-1,4,4,-1,3,3,-1,2,3,-1";
+    tableRows << "12,8,18,11,8,17,10,8,16,9,7,15,8,7,15,7,6,13,6,5,12,5,5,-1,4,4,-1,3,3,-1,2,3,-1";
+    tableRows << "11,8,16,10,7,16,9,7,15,8,6,14,7,6,13,6,5,12,5,5,-1,4,4,-1,3,3,-1,2,-1,-1";
+    tableRows << "10,7,15,9,6,15,8,6,14,7,6,13,6,5,12,5,4,-1,4,4,-1,3,3,-1,2,-1,-1";
+    tableRows << "9,6,14,8,6,13,7,5,13,6,5,12,5,4,-1,4,4,-1,3,3,-1,2,-1,-1";
+    tableRows << "8,5,13,7,5,12,6,4,11,5,4,10,4,4,-1,3,3,-1,2,-1,-1";
+    tableRows << "7,4,12,6,4,11,5,4,10,4,3,-1,3,3,-1,2,-1,-1";
+    tableRows << "6,4,10,5,4,9,4,3,8,3,3,-1,2,-1,-1";
+    tableRows << "5,3,9,4,3,8,3,-1,-1,2,-1,-1";
+    int key = 20;
+    for (int i = 0; i < tableRows.size(); i++){
+        QMap<int, QVector<int>> row;
+        row = new_table_row(tableRows.at(i));
+        lookupTable.insert(key, row);
+        key--;
+    }
+}
+
+QMap<int, QVector<int>> US_MWL_SF_PLOT3D::new_table_row(QString rowStr){
+    QMap<int, QVector<int>> rowMap;
+    QStringList rlist = rowStr.split(u',');
+    for (int i = 0; i < rlist.size() / 3; i++){
+        int n2 = rlist.at(3 * i).toInt();
+        int l = rlist.at(3 * i + 1).toInt();
+        int u = rlist.at(3 * i + 2).toInt();
+        QVector<int> lu;
+        lu << l << u;
+        rowMap.insert(n2, lu);
+    }
+    return rowMap;
+}
+
+void US_MWL_SF_PLOT3D::plotPixMap(){
+    QVector<QVector<double>> allStates;
+
+    QVector<double> scans;
+    for (int i = 0; i < nScans; i++)
+        scans << i + 1;
+    QVector<double> rpoints;
+    for (int i = idRP_l; i <= idRP_h; i++)
+        rpoints << (double) xvals4ct.at(i) / 1000.0;
+
+    for (int i = 0; i < nScans; i++){
+        QVector<double> rnd_sc;
+        for (int j = idRP_l; j <= idRP_h; j++){
+            QVector<double> err;
+            for (int k = idWL_l; k <= idWL_h; k++){
+                err << allData.at(i).at(j).at(k).at(2);
+            }
+            bool state = get_runs_test(err, false);
+            if (state)
+                rnd_sc << 1.0;
+            else
+                rnd_sc << -1.0;
+        }
+        allStates << rnd_sc;
+    }
+
+    RunsTestWidget wd(rpoints, scans, allStates);
+//    wd.resize( 600, 400 );
+    wd.exec();
+}
+
 /////
 /////
 
@@ -1131,13 +1497,10 @@ void CustomFormatter::recalculate() {
     qreal labelValue;
     QVector<qreal> values(segmentCount + 1);
 
-//    qreal delta = (maxVal - minVal) / segmentCount;
-    qreal delta = 1 / segmentCount;
+    qreal delta = 1.0 / segmentCount;
     for (int i = 0; i < segmentCount; i++) {
-//        values[i] = minVal + i * delta;
-        values[i] = i * delta;
+        values[i] = delta * i;
     }
-    values[segmentCount] = maxVal;
     values[segmentCount] = 1.0;
 
     for (int i = 0; i < segmentCount; i++) {
@@ -1161,4 +1524,299 @@ QString CustomFormatter::stringForValue(qreal value, const QString &format) cons
 //    Q_UNUSED(format)
     qreal newValue = (maxVal - minVal) * value + minVal;
     return QValue3DAxisFormatter::stringForValue(newValue, format);
+}
+
+//////
+
+class MyZoomer: public QwtPlotZoomer
+{
+public:
+    MyZoomer( QWidget *canvas ):
+        QwtPlotZoomer( canvas )
+    {
+        setTrackerMode( AlwaysOn );
+    }
+
+    virtual QwtText trackerTextF( const QPointF &pos ) const
+    {
+        QColor bg( Qt::white );
+        bg.setAlpha( 200 );
+
+        QwtText text = QwtPlotZoomer::trackerTextF( pos );
+        text.setBackgroundBrush( QBrush( bg ) );
+        return text;
+    }
+};
+
+SpectrogramData::SpectrogramData(QVector<double> points, QVector<double> scans,
+                                 QVector<QVector<double>> states):QwtRasterData(){
+    xrange.clear();
+    for (int i = 0; i < points.size() - 1; i++){
+        double mid = 0.5 * (points.at(i) + points.at(i + 1));
+        if (i == 0)
+            xrange << points.first() - (mid - points.first());
+        xrange << mid;
+    }
+    xrange << points.last() + (points.last() - xrange.last());
+
+    yrange.clear();
+    for (int i = 0; i < scans.size() - 1; i++){
+        double mid = 0.5 * (scans.at(i) + scans.at(i + 1));
+        if (i == 0)
+            yrange << scans.first() - (mid - scans.first());
+        yrange << mid;
+    }
+    yrange << scans.last() + (scans.last() - yrange.last());
+
+    setInterval( Qt::XAxis, QwtInterval( xrange.first(), xrange.last() ) );
+    setInterval( Qt::YAxis, QwtInterval( yrange.first(), yrange.last() ) );
+    setInterval( Qt::ZAxis, QwtInterval( 0, 1 ) );
+
+    zvals << states;
+}
+
+double SpectrogramData::value( double x, double y ) const{
+    int idx = -1;
+    for (int i = 0; i < xrange.size() - 1; i++){
+        double x1 = xrange.at(i);
+        double x2 = xrange.at(i + 1);
+        if (x >= x1 && x < x2){
+            idx = i;
+            break;
+        }
+    }
+    if (idx == -1)
+        idx = xrange.size() - 2;
+
+
+    int idy = -1;
+    for (int i = 0; i < yrange.size() - 1; i++){
+        double y1 = yrange.at(i);
+        double y2 = yrange.at(i + 1);
+        if (y >= y1 && y < y2){
+            idy = i;
+            break;
+        }
+    }
+    if (idy == -1)
+        idy = yrange.size() - 2;
+    double z = zvals.at(idy).at(idx);
+    return z;
+}
+
+RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
+                               QVector<QVector<double>> states,  QWidget *parent ):
+    QDialog( parent )
+{
+
+    this->setWindowTitle("Runs Test PixelMap");
+    Qt::WindowFlags flags;
+    flags = flags | Qt::CustomizeWindowHint | Qt::WindowSystemMenuHint
+            | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint;
+    this->setWindowFlags(flags);
+    this->setMinimumSize(1000, 800);
+
+    QToolBar *toolBar = new QToolBar( this );
+    QToolButton *pb_print = new QToolButton( toolBar );
+    pb_print->setText( "Print" );
+    pb_print->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+    toolBar->addWidget( pb_print );
+    connect( pb_print, SIGNAL( clicked() ),
+        this, SLOT( printPlot() ) );
+
+    QToolButton *pb_image = new QToolButton( toolBar );
+    pb_image->setText( "Save" );
+    pb_image->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+    toolBar->addWidget( pb_image );
+//    connect( btnPrint, SIGNAL( clicked() ),
+//        d_plot, SLOT( printPlot() ) );
+
+    toolBar->addSeparator();
+
+    QStringList colorList;
+    colorList << "white"<< "black"<< "red"<< "darkRed"<< "green"<<
+                 "darkGreen"<< "blue"<< "darkBlue"<< "cyan"<<
+                 "darkCyan"<< "magenta"<< "darkMagenta"<< "yellow"<<
+                 "darkYellow"<< "gray"<< "darkGray"<< "lightGray";
+    toolBar->addWidget( new QLabel("Random Points:" ) );
+    cb_color_r = new QComboBox( toolBar );
+    cb_color_r->addItems( colorList );
+    cb_color_r->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
+    cb_color_r->setCurrentText("green");
+    toolBar->addWidget( cb_color_r );
+    connect( cb_color_r, SIGNAL( currentIndexChanged( int ) ),
+             this, SLOT( setColorMap(  ) ) );
+
+    toolBar->addWidget( new QLabel("Non-random Points:" ) );
+    cb_color_nr = new QComboBox( toolBar );
+    cb_color_nr->addItems( colorList );
+    cb_color_nr->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
+    cb_color_nr->setCurrentText("darkBlue");
+    toolBar->addWidget( cb_color_nr );
+    connect( cb_color_nr, SIGNAL( currentIndexChanged( int ) ),
+             this, SLOT( setColorMap(  ) ) );
+
+    toolBar->addSeparator();
+
+//    QCheckBox *ckb_cont = new QCheckBox( "Contour", toolBar );
+//    toolBar->addWidget( ckb_cont );
+//    ckb_cont->setChecked( false );
+//    connect( ckb_cont, SIGNAL( toggled( bool ) ),
+//        this, SLOT( showContour( bool ) ) );
+
+    d_plot = new QwtPlot();
+
+    d_spectrogram = new QwtPlotSpectrogram();
+    d_spectrogram->setRenderThreadCount( 0 ); // use system specific thread count
+    d_spectrogram->setCachePolicy( QwtPlotRasterItem::PaintCache );
+//    QList<double> contourLevels{-1, 1};
+//    d_spectrogram->setContourLevels( contourLevels );
+    d_spectrogram->setData( new SpectrogramData(points, scans, states) );
+    d_spectrogram->attach(d_plot);
+    d_plot->setAxisTitle(QwtPlot::xBottom, "Radial Points (cm)");
+    d_plot->setAxisTitle(QwtPlot::yLeft, "Scan Number");
+    QFont font;
+    QwtText qwtText;
+    qwtText = d_plot->axisTitle(QwtPlot::xBottom);
+    qwtText.setText("Radial Point (cm)");
+    font = qwtText.font();
+    font.setPointSize(20);
+    font.setBold(true);
+    qwtText.setFont(font);
+    d_plot->setAxisTitle(QwtPlot::xBottom, qwtText);
+    font.setPointSize(18);
+    font.setBold(true);
+    d_plot->setAxisFont(QwtPlot::xBottom, font);
+    
+    qwtText = d_plot->axisTitle(QwtPlot::xBottom);
+    qwtText.setText("Scan Number");
+    font.setPointSize(20);
+    font.setBold(true);
+    qwtText.setFont(font);
+    d_plot->setAxisTitle(QwtPlot::yLeft, qwtText);
+    font = d_plot->axisFont(QwtPlot::yLeft);
+    font.setPointSize(18);
+    font.setBold(true);
+    d_plot->setAxisFont(QwtPlot::yLeft, font);
+//    const QwtInterval zInterval = d_spectrogram->data()->interval( Qt::ZAxis );
+//    // A color bar on the right axis
+//    QwtScaleWidget *rightAxis = d_plot->axisWidget( QwtPlot::yRight );
+//    rightAxis->setTitle( "Randomness" );
+//    rightAxis->setColorBarEnabled( true );
+//    d_plot->setAxisScale( QwtPlot::yRight, zInterval.minValue(), zInterval.maxValue() );
+//    d_plot->enableAxis( QwtPlot::yRight );
+
+    d_plot->plotLayout()->setAlignCanvasToScales( true );
+
+    setColorMap();
+
+    QwtPlotZoomer* zoomer = new MyZoomer( d_plot->canvas() );
+    zoomer->setMousePattern( QwtEventPattern::MouseSelect2,
+        Qt::RightButton, Qt::ControlModifier );
+    zoomer->setMousePattern( QwtEventPattern::MouseSelect3,
+        Qt::RightButton );
+
+    QwtPlotPanner *panner = new QwtPlotPanner( d_plot->canvas() );
+    panner->setAxisEnabled( QwtPlot::yRight, false );
+    panner->setMouseButton( Qt::MidButton );
+
+    // LeftButton for the zooming
+    // MidButton for the panning
+    // RightButton: zoom out by 1
+    // Ctrl+RighButton: zoom out to full size
+
+//    const QFontMetrics fm( d_plot->axisWidget( QwtPlot::yLeft )->font() );
+//    QwtScaleDraw *sd = d_plot->axisScaleDraw( QwtPlot::yLeft );
+//    sd->setMinimumExtent( fm.width( "100.00" ) );
+
+    const QColor c( Qt::darkBlue );
+    zoomer->setRubberBandPen( c );
+    zoomer->setTrackerPen( c );
+
+    QVBoxLayout *main_lyt = new QVBoxLayout();
+    main_lyt->addWidget(toolBar);
+//    main_lyt->addStretch(1);
+    main_lyt->addWidget(d_plot);
+    this->setLayout(main_lyt);
+
+}
+
+QColor RunsTestWidget::getColor(QString cname){
+    QColor color;
+    if (cname == "white")
+        color = QColor(Qt::white);
+    else if (cname == "black")
+        color = QColor(Qt::black);
+    else if (cname == "red")
+        color = QColor(Qt::red);
+    else if (cname == "darkRed")
+        color = QColor(Qt::darkRed);
+    else if (cname == "green")
+        color = QColor(Qt::green);
+    else if (cname == "darkGreen")
+        color = QColor(Qt::darkGreen);
+    else if (cname == "blue")
+        color = QColor(Qt::blue);
+    else if (cname == "darkBlue")
+        color = QColor(Qt::darkBlue);
+    else if (cname == "cyan")
+        color = QColor(Qt::cyan);
+    else if (cname == "darkCyan")
+        color = QColor(Qt::darkCyan);
+    else if (cname == "magenta")
+        color = QColor(Qt::magenta);
+    else if (cname == "darkMagenta")
+        color = QColor(Qt::darkMagenta);
+    else if (cname == "yellow")
+        color = QColor(Qt::yellow);
+    else if (cname == "darkYellow")
+        color = QColor(Qt::darkYellow);
+    else if (cname == "gray")
+        color = QColor(Qt::gray);
+    else if (cname == "darkGray")
+        color = QColor(Qt::darkGray);
+    else if (cname == "lightGray")
+        color = QColor(Qt::lightGray);
+    return color;
+}
+
+void RunsTestWidget::setColorMap(){
+    QColor color_r = getColor(cb_color_r->currentText());
+    QColor color_nr = getColor(cb_color_nr->currentText());
+//    QwtScaleWidget *axis = d_plot->axisWidget( QwtPlot::yRight );
+//    const QwtInterval zInterval = d_spectrogram->data()->interval( Qt::ZAxis );
+    d_spectrogram->setColorMap( new QwtLinearColorMap( color_nr, color_r, QwtColorMap::RGB ) );
+//    axis->setColorMap( zInterval, new QwtLinearColorMap( color_1, color_2, QwtColorMap::RGB ) );
+    int alpha = 250;
+    d_spectrogram->setAlpha( alpha );
+    d_plot->replot();
+}
+
+void RunsTestWidget::showContour( bool on )
+{
+    d_spectrogram->setDisplayMode( QwtPlotSpectrogram::ContourMode, on );
+    d_plot->replot();
+}
+
+void RunsTestWidget::printPlot()
+{
+    QPrinter printer( QPrinter::HighResolution );
+    printer.setOrientation( QPrinter::Landscape );
+    printer.setOutputFileName( "spectrogram.pdf" );
+
+    QPrintDialog dialog( &printer );
+    if ( dialog.exec() )
+    {
+        QwtPlotRenderer renderer;
+
+        if ( printer.colorMode() == QPrinter::GrayScale )
+        {
+            renderer.setDiscardFlag( QwtPlotRenderer::DiscardBackground );
+            renderer.setDiscardFlag( QwtPlotRenderer::DiscardCanvasBackground );
+            renderer.setDiscardFlag( QwtPlotRenderer::DiscardCanvasFrame );
+            renderer.setLayoutFlag( QwtPlotRenderer::FrameWithScales );
+        }
+
+        renderer.renderTo( d_plot, printer );
+    }
 }
