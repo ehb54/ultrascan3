@@ -69,6 +69,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	   autoflow_button = true;
 	   deleted_button_autoflow  = true;
 	   //set_unset_failed_button_autoflow = true;
+	   set_unset_failed_button_autoflow = true;
 	   autoflow_dev = true;
 	 }
        
