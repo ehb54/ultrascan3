@@ -703,6 +703,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    {
       if ( it->second.size() > max_pr_len ) 
       {
+         // US_Vector::printvector2( QString( "curve length increase %1 %2\n" ).arg( it->first ).arg( it->second.size() ), nnls_r, it->second );
          max_pr_len = it->second.size();
       }
    }
@@ -718,12 +719,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
         it != nnls_A.end();
         it++ )
    {
-      unsigned int org_size = it->second.size();
-      it->second.resize(max_pr_len);
-      for ( unsigned int i = org_size; i < max_pr_len; i++ )
-      {
-         it->second[i] = 0e0;
-      }
+      it->second.resize(max_pr_len, 0);
       model_names.push_back(it->first);
       for ( unsigned int i = 0; i < max_pr_len; i++ )
       {
@@ -734,12 +730,8 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       }
    }
 
-   unsigned int org_size = nnls_B.size();
-   nnls_B.resize(max_pr_len);
-   for ( unsigned int i = org_size; i < max_pr_len; i++ )
-   {
-      nnls_B[i] = 0e0;
-   }
+   nnls_B.resize(max_pr_len, 0);
+
    vector < double > use_B = nnls_B;
    vector < double > use_x(nnls_A.size());
    vector < double > nnls_wp(nnls_A.size());
@@ -768,6 +760,27 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    }
    cout << endl;
 #endif
+   
+   {
+      // patch up nnls_r in case of truncated vector
+      double nnls_delta = nnls_r[1] - nnls_r[0];
+      while ( nnls_r.size() > 2 && nnls_r.size() < max_pr_len ) {
+         nnls_r.push_back( nnls_r.back() + nnls_delta );
+      }
+   }                           
+
+   // QTextStream( stdout )
+   //    << QString(
+   //               "nnls_r length %1\n"
+   //               "max_pr_len    %2\n"
+   //               "nnls_B length %3\n" 
+   //               "use_B  length %4\n"
+   //               )
+   //    .arg( nnls_r.size() )
+   //    .arg( max_pr_len )
+   //    .arg( nnls_B.size() )
+   //    .arg( use_B.size() )
+   //    ;
    
    int result =
       nnls(
@@ -955,7 +968,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    // }
 
    // plot 
-   
+
    plot_one_pr(nnls_r, model, csv_filename + " Model");
    compute_rg_to_progress( nnls_r, model, csv_filename + " Model");
 
@@ -1348,8 +1361,18 @@ bool US_Hydrodyn_Saxs::compute_rg_to_progress(
                                               ,const vector < double > & pr
                                               ,const QString &           filename
                                               ) {
+   // QTextStream(stdout)
+   //    << QString( "compute_rg_to_progress() r length %1 pr length %2 for file %3\n" ).arg( r.size() ).arg( pr.size() ).arg( filename )
+   //    ;
+
+   vector < double > use_r = r;
+   if ( pr.size() < r.size() ) {
+      use_r.resize( pr.size() );
+      qDebug() << QString( "resized vectors! compute_rg_to_progress() r length %1 pr length %2 for file %3\n" ).arg( r.size() ).arg( pr.size() ).arg( filename );
+   }
+
    double Rg;
-   if ( US_Saxs_Util::compute_rg_from_pr( r, pr, Rg, errormsg ) ) {
+   if ( US_Saxs_Util::compute_rg_from_pr( use_r, pr, Rg, errormsg ) ) {
       editor_msg(
                  "black"
                  ,QString( us_tr( "Rg computed from p(r) for %1 = %2\n" ) )
@@ -1364,6 +1387,7 @@ bool US_Hydrodyn_Saxs::compute_rg_to_progress(
                  .arg( filename )
                  .arg( errormsg )
                  );
+      US_Vector::printvector2( "error'd r pr", r, pr );
       return false;
    }
 }
