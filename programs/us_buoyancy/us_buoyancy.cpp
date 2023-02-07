@@ -773,6 +773,8 @@ void US_Buoyancy::new_triple( int index )
   tmp_dpoint.description = allData[index].description;
   tmp_dpoint.dataset = runID;
 
+  qDebug() << "In new_triple() 1";
+    
   plot_scan( current_scan );
 }
 
@@ -858,6 +860,7 @@ void US_Buoyancy::calc_points( void )
    }
 }
 
+/* 
 // cacl. poitns based on provided vector of peak positions
 void US_Buoyancy::calc_points_auto( QString triple_n )
 {
@@ -871,6 +874,143 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
   double gradC0    = gradC0_to_triple_name_map [ triple_n ];
 
   double tot_area_uncorrected  = triple_name_to_total_area_uncorrected[ triple_n ];
+  
+  QStringList peak_names;
+
+  for (int rr=0; rr < xfit_data[ triple_n ].size(); rr++ )
+    {
+      double curr_x = xfit_data[ triple_n ][rr];
+      bool isPeak = false;
+      int peak_number = 0;
+      
+      double omega_s, C, C0, r2, k1, k2, k3, k4;
+      omega_s = pow( current_rpm * M_PI/30.0, 2.0 );
+      C0 = gradC0 - buffDensity_to_triple_name_map[ triple_n ]; //subtract buffer density from nycodenz density
+      r2 = pow( tmp_dpoint.bottom, 2.0 ) - pow( meniscus_to_triple_name_map[ triple_n ], 2.0);
+      k1 = gradMW * omega_s/( 2.0 * R_GC * (tmp_dpoint.temperature + 273.15) );
+      k4 = 1.0 - gradVbar * buffDensity_to_triple_name_map[ triple_n ];
+      k2 = exp( k1 * ( k4 ) * (pow( curr_x, 2.0 ) - pow( meniscus_to_triple_name_map[ triple_n ], 2.0 ) ) );
+      k3 = exp( k1 * ( k4 ) * r2);
+      C  = k1 * k4 * C0 *r2 * k2/( k3 - 1.0 ) + buffDensity_to_triple_name_map[ triple_n ];
+
+      
+
+      //iterate over peaks for the current triple
+      for ( int i=0; i< peak_poss.size(); i++ )
+	{
+	  if ( curr_x == peak_poss[i] )
+	    {
+	      isPeak = true;
+	      peak_number = i+1;
+	      break;
+	    }
+	}
+
+      if ( isPeak )
+	{
+	  QString str;
+	  if ( curr_x != 0.0 )
+	    {
+	      QString peak_name = "Peak #" + QString::number( peak_number );
+	      peak_names << peak_name;
+	      
+	      QStringList curr_peak_parms;
+	      str.setNum( C );
+	      curr_peak_parms << str;                     //0
+	      //le_peakDensity->setText( str );
+	      
+	      str.setNum( 1.0/C );
+	      curr_peak_parms << str;                     //1
+	      //le_peakVbar->setText( str );
+	      
+	      str.setNum( curr_x );
+	      curr_peak_parms << str;                     //2   
+	      //le_peakPosition->setText( str );
+	      
+	      //identify closest (position-wise) fitted Gaussian && its sigma, as well as peak amplitude 
+	      QMap< QString, double > peak_sigma_height = find_closest_sigma_height( triple_n, curr_x );
+	      peak_sigma_height[ "sigma" ] = sigma_gui;  // re-write sigma as fittted parm-sigma does not work...
+	      
+	      curr_peak_parms << QString::number( peak_sigma_height[ "sigma" ] )                 //3
+			      << QString::number( peak_sigma_height[ "height" ] );               //4
+	      
+	      //add area under peak
+	      QMap< QString, double > gauss_areas = calc_gauss_area( triple_n, curr_x, peak_sigma_height[ "sigma" ], peak_sigma_height[ "height" ] );
+	      double gauss_area             = gauss_areas[ "corrected" ];
+	      double gauss_area_uncorrected = gauss_areas[ "uncorrected" ];
+	      
+	      curr_peak_parms << QString::number( gauss_area );                  //5
+	      curr_peak_parms << QString::number( tot_area );                    //6
+	      
+	      curr_peak_parms << QString::number( gauss_area_uncorrected );      //7
+	      curr_peak_parms << QString::number( tot_area_uncorrected );        //8
+	      
+	      triple_name_to_peak_to_parms_map[ triple_n ][ peak_name ] = curr_peak_parms;
+	      
+	      pb_save->setEnabled( true );
+	    }
+	  else
+	    {
+	      // le_peakDensity->setText( "0" );
+	      // le_peakVbar->setText( "0" );
+	      // le_peakPosition->setText( "0" );
+	      // pb_save->setEnabled( false );
+	      
+	      qDebug() << "Peak position #" <<  peak_number << " for triple " << triple_n << " is ZERO!";
+	    }
+	}
+    }
+  
+  if ( !peak_names.isEmpty() )
+    {
+      cb_peaks->disconnect();
+      cb_peaks->clear();
+      
+      cb_peaks->addItems( peak_names );
+      connect( cb_peaks, SIGNAL( currentIndexChanged( int ) ),
+	       SLOT  ( new_peak           ( int ) ) );
+      
+      //cb_peaks->setCurrentIndex(0);
+      new_peak( 0 );
+    }
+}
+*/
+
+// cacl. poitns based on provided vector of peak positions
+void US_Buoyancy::calc_points_auto( QString triple_n )
+{
+  QVector< double > peak_poss = triple_name_to_peaks_map[ triple_n ];
+  triple_name_to_peak_to_parms_map[ triple_n ] . clear();
+  triple_name_to_Cdata[ triple_n ]. clear();
+
+  double tot_area  = triple_name_to_total_area[ triple_n ];
+  double sigma_gui = sigma_to_triple_name_map [ triple_n ];
+  double gradMW    = gradMW_to_triple_name_map [ triple_n ];
+  double gradVbar  = gradVbar_to_triple_name_map [ triple_n ];
+  double gradC0    = gradC0_to_triple_name_map [ triple_n ];
+  double tot_area_uncorrected  = triple_name_to_total_area_uncorrected[ triple_n ];
+
+  //Cacl. separately C for all xdata_fit range:
+  for (int rr=0; rr < xfit_data[ triple_n ].size(); rr++ )
+    {
+      double curr_x = xfit_data[ triple_n ][rr];
+
+      double omega_s1, C1, C01, r21, k11, k21, k31, k41;
+      omega_s1 = pow( current_rpm * M_PI/30.0, 2.0 );
+      C01 = gradC0 - buffDensity_to_triple_name_map[ triple_n ]; //subtract buffer density from nycodenz density
+      r21 = pow( tmp_dpoint.bottom, 2.0 ) - pow( meniscus_to_triple_name_map[ triple_n ], 2.0);
+      k11 = gradMW * omega_s1/( 2.0 * R_GC * (tmp_dpoint.temperature + 273.15) );
+      k41 = 1.0 - gradVbar * buffDensity_to_triple_name_map[ triple_n ];
+      k21 = exp( k11 * ( k41 ) * (pow( curr_x, 2.0 ) - pow( meniscus_to_triple_name_map[ triple_n ], 2.0 ) ) );
+      k31 = exp( k11 * ( k41 ) * r21);
+      C1  = k11 * k41 * C01 *r21 * k21/( k31 - 1.0 ) + buffDensity_to_triple_name_map[ triple_n ];
+
+      triple_name_to_Cdata[ triple_n ]. push_back( C1 );
+    }
+
+  // //DEBUG
+  // for ( int i=0; i<triple_name_to_Cdata[ triple_n ].size(); i++ )
+  //   qDebug() << "C data for triple - " << triple_n << ": " << triple_name_to_Cdata[ triple_n ][i];
   
   QStringList peak_names;
   //iterate over peaks for the current triple
@@ -951,6 +1091,8 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
       new_peak( 0 );
     }
 }
+
+
 
 //calc total area under the fit curve
 QMap<QString, double> US_Buoyancy::calc_total_area( QString triple_n )
@@ -1772,6 +1914,7 @@ void US_Buoyancy::reset( void )
 
    xfit_data . clear();
    yfit_data . clear();
+   triple_name_to_Cdata . clear();
        
    if ( us_buoyancy_auto_mode )
      {
@@ -1982,6 +2125,29 @@ void US_Buoyancy::plot_scan( double scan_number )
        data_plot->setAxisScale( QwtPlot::yLeft  , minV_final - padV, maxV_final + padV );
        data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
 
+       data_plot->replot();
+
+       //plot Cdata
+       
+       QwtPlotCurve* Cdata;
+       Cdata = us_curve(data_plot, "C-data for " + triple_n );
+       Cdata->setPen(QPen(Qt::green));
+       double* xx_C = (double*)xfit_data[ triple_n ] .data();    // <- the only data set in xfit_data
+       double* yy_C = (double*)triple_name_to_Cdata[ triple_n ] .data();
+       Cdata->setSamples( xx_C, yy_C, triple_name_to_Cdata[ triple_n ].size() );
+
+       double maxV_C;
+       double minV_C;
+       for ( int i=0; i< triple_name_to_Cdata[triple_n].size(); i++ )
+	 {
+	   //qDebug() << "In plot_Scan, Cdata for - " << triple_n << ", " << triple_name_to_Cdata[ triple_n ][ i ];
+	   maxV_C = max( maxV_final, triple_name_to_Cdata[ triple_n ][ i ] );
+	   minV_C = min( minV_final, triple_name_to_Cdata[ triple_n ][ i ] );
+	 }
+
+       data_plot->setAxisScale( QwtPlot::yLeft  , minV_C - padV, maxV_C + padV );
+       data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+       
        data_plot->replot();
        
        //peak positions, vertical lines (if any) && Gaussians envelopes
@@ -2405,8 +2571,12 @@ void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
   std::sort(triple_name_to_peaks_map[ triple_n ].begin(), triple_name_to_peaks_map[ triple_n ].end());
   calc_points_auto( triple_n );
 
+  qDebug() << "add peak 1";
+
   new_triple( current_triple );
 
+  qDebug() << "add peak 2";
+  
   //re-save all reports
   dpoint. clear();
   for ( int i=0; i< cb_triple->count(); i++ )
