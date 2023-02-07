@@ -303,7 +303,7 @@ class US_GUI_EXTERN US_Disk_DB_Controls : public QHBoxLayout
       void rb_changed( bool );
 };
 
-class US_LineEdit_RE: public QLineEdit
+class US_GUI_EXTERN US_LineEdit_RE: public QLineEdit
 {
     Q_OBJECT
 
