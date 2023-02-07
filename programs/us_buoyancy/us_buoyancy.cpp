@@ -365,6 +365,8 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
+   data_plot->enableAxis( QwtPlot::yRight , true );
+
 
    pick = new US_PlotPicker( data_plot );
    // Set rubber band to display for Control+Left Mouse Button
@@ -2128,26 +2130,26 @@ void US_Buoyancy::plot_scan( double scan_number )
        data_plot->replot();
 
        //plot Cdata
-       
        QwtPlotCurve* Cdata;
        Cdata = us_curve(data_plot, "C-data for " + triple_n );
+       Cdata->setYAxis ( QwtPlot::yRight );
        Cdata->setPen(QPen(Qt::green));
        double* xx_C = (double*)xfit_data[ triple_n ] .data();    // <- the only data set in xfit_data
        double* yy_C = (double*)triple_name_to_Cdata[ triple_n ] .data();
        Cdata->setSamples( xx_C, yy_C, triple_name_to_Cdata[ triple_n ].size() );
 
-       double maxV_C;
-       double minV_C;
+       double maxV_C = -1.0e99;
+       double minV_C =  1.0e99;
        for ( int i=0; i< triple_name_to_Cdata[triple_n].size(); i++ )
 	 {
-	   //qDebug() << "In plot_Scan, Cdata for - " << triple_n << ", " << triple_name_to_Cdata[ triple_n ][ i ];
-	   maxV_C = max( maxV_final, triple_name_to_Cdata[ triple_n ][ i ] );
-	   minV_C = min( minV_final, triple_name_to_Cdata[ triple_n ][ i ] );
+	   maxV_C = max( maxV_C, triple_name_to_Cdata[ triple_n ][ i ] );
+	   minV_C = min( minV_C, triple_name_to_Cdata[ triple_n ][ i ] );
 	 }
 
-       data_plot->setAxisScale( QwtPlot::yLeft  , minV_C - padV, maxV_C + padV );
+       data_plot->setAxisScale( QwtPlot::yRight , minV_C - padV, maxV_C + padV );
        data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
-       
+       data_plot->setAxisTitle( QwtPlot::yRight, "Density Gradient" );
+
        data_plot->replot();
        
        //peak positions, vertical lines (if any) && Gaussians envelopes
