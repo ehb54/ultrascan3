@@ -1477,6 +1477,8 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    {
       symbolStyle = selSymbol->style();
 
+      qDebug() << "Curves props constr.: symbolStyle -- " << symbolStyle;
+	
       for ( int i = 0; i < symbolStyles.size(); i++ )
       {
          if ( symbolStyles [ i ] == symbolStyle )
@@ -1488,8 +1490,9 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    }
    else
    {
-      cmbb_symbolStyle->setCurrentIndex( 0 );
-      selSymbol             = new QwtSymbol;
+     qDebug() << "Curves props constr.: NULL ";
+     cmbb_symbolStyle->setCurrentIndex( 0 );
+     selSymbol             = new QwtSymbol;
    }
 
    connect( cmbb_symbolStyle, SIGNAL( currentIndexChanged( int ) ), 
@@ -1592,7 +1595,8 @@ void US_PlotCurveConfig::symbolStyleChanged( int index )
 {
    int style  = cmbb_symbolStyle->itemData( index ).toInt();
 
-   qDebug() << "Curve's SymbolStyle (int): " << style; 
+   qDebug() << "Curve's SymbolStyle " << cmbb_symbolStyle->itemData( index ) << ", Type: " << cmbb_symbolStyle->itemData( index ).typeName();
+   qDebug() << "Curve's SymbolStyle (int): index, style -- " << index << ", " << style; 
    symbolStyle = static_cast< QwtSymbol::Style > ( style );
    lb_sample2->update(); 
 }
@@ -1705,7 +1709,8 @@ void US_PlotCurveConfig::apply( void )
 	    QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,             //ALEXEY: defining a new symbol must be witnin !!! caused crash before
 						  symbolPen,   symbolSize );
 	    
-	    if ( !symbolStyle || symbolStyle ==  QwtSymbol::NoSymbol )
+	    //if ( !symbolStyle || symbolStyle ==  QwtSymbol::NoSymbol )
+	    if ( symbolStyle ==  QwtSymbol::NoSymbol )
 	      {
 		qDebug() << "No symbolStyle selected in the first place, setting to ::NoSymbol -- ";
 		newSymbol = NULL;
