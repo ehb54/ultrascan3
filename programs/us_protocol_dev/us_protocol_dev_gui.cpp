@@ -1725,19 +1725,24 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = dbP->value( 14 ).toString();
+      QString full_runname       = dbP->value( 15 ).toString();
       QString operatorID         = dbP->value( 16 ).toString();
       QString failedID           = dbP->value( 17 ).toString();
 
-      QString full_runname       = dbP->value( 15 ).toString();
+      QString devRecord          = dbP->value( 18 ).toString();
+      
 
       qDebug() << "OperatorID -- " << operatorID;
       qDebug() << "failedID -- "   << failedID;
-
+      qDebug() << "DevRecod -- "   << devRecord;
            
       QDateTime local(QDateTime::currentDateTime());
 
       if ( type == "HISTORY" )
 	{
+	  if ( devRecord == "Processed" )
+	    continue;
+	    
 	  QString history_runname = runname;
 	  //process runname: if combined, correct for nicer appearance
 	  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )

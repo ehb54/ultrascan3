@@ -1197,9 +1197,14 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = db->value( 14 ).toString();
       QString full_runname       = db->value( 15 ).toString();
-      
+
+      QString devRecord          = db->value( 18 ).toString();
+
       QDateTime local(QDateTime::currentDateTime());
 
+      if ( devRecord == "Processed" )
+	continue;
+      
       //process runname: if combined, correct for nicer appearance
       if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
 	{

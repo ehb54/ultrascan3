@@ -6438,9 +6438,10 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   qDebug() << "statusID, intensityID from protocol QMAp -- "
 	   << protocol_details[ "statusID" ]
 	   << protocol_details[ "intensityID" ] ;
-  
+
   emit expdef_submitted_dev( protocol_details );
 }
+
 
 // Slot to submit the experiment to the Optima DB
 void US_ExperGuiUpload::submitExperiment()
@@ -7574,6 +7575,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & protocol_details )
 {
   
+   QString autoflowHistoryID = protocol_details[ "autoflowID" ];
+  
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
@@ -7589,7 +7592,7 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    
    if ( db != NULL )
    {
-     int new_autoflowID = 0;
+      int new_autoflowID = 0;
       QStringList qry;
       //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
       //greater of:
@@ -7652,6 +7655,11 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
    db->statusQuery( qry_stages );
    /**/
+
+   // Also, mark parent autoflowHistroy record as devRecord:Processed
+   QStringList qry_processed;
+   qry_processed << "mark_autoflowHistoryDevRun_Processed" << autoflowHistoryID;
+   db->query( qry_processed );
    
 }
 
