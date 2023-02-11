@@ -6264,7 +6264,30 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 // clear edit profiles, models noises
 void US_ExperGuiUpload::clearData_protDev()
 {
+
+  //Get proper filename
   QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+  QString FileName = protocol_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+  
+  //show progress dialog
+  int progress_total = fileNameList.size()*6 + 1;
+  QProgressDialog* progress_msg = new QProgressDialog ("Cleaning Data for Current Run...", QString(), 0, progress_total, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Cleaning Data..."));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
   
   // Check DB connection
   US_Passwd pw;
@@ -6281,14 +6304,7 @@ void US_ExperGuiUpload::clearData_protDev()
   int status;
   QStringList qry;
 
-  //Get proper filename
-  QString FileName = protocol_details[ "filename" ];
-  QStringList fileNameList;
-  fileNameList. clear();
-  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
-    fileNameList  = FileName.split(",");
-  else
-    fileNameList << FileName;
+  int progress = progress_msg->value();
 
   /*** Iterate over fileNameList *********************************************/
   for ( int i=0; i<fileNameList.size(); ++i )
@@ -6304,18 +6320,25 @@ void US_ExperGuiUpload::clearData_protDev()
       db->query( qry );
       db->next();
       QString expID  = db->value( 1 ).toString();
-      
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+            
       // Let's make sure it's not a calibration experiment in use
       qry. clear();
       qry << "count_calibration_experiments" << expID;
       int count = db->functionQuery( qry );
       qDebug() << "Cleaning Failed Run: calexp count" << count;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
       
       if ( count < 0 )
 	{
 	  qDebug() << "count_calibration_experiments( "
 		   << expID
 		   << " ) returned a negative count";
+	  progress_msg->close();
 	  return;
 	}
       
@@ -6325,6 +6348,8 @@ void US_ExperGuiUpload::clearData_protDev()
 				    tr( "Error" ),
 				    tr( "Cannot delete an experiment that is associated "
 					"with a rotor calibration\n" ) );
+
+	  progress_msg->close();
 	  return;
 	}
       
@@ -6335,6 +6360,9 @@ void US_ExperGuiUpload::clearData_protDev()
 	  << expID;
       status = db -> statusQuery( qry );
       qDebug() << "Cleaning Failed Run: del sols status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
       
       // Same with cell table
       qry. clear();
@@ -6342,6 +6370,9 @@ void US_ExperGuiUpload::clearData_protDev()
 	   << expID;
       status = db -> statusQuery( qry );
       qDebug() << "Cleaning Failed Run: del cells status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
       
       
       // Let's delete any pcsa_modelrecs records to avoid
@@ -6353,6 +6384,8 @@ void US_ExperGuiUpload::clearData_protDev()
       qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
       //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
 
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
       
       // // Now delete the experiment and all existing rawData, 
       // qry. clear();
@@ -6375,6 +6408,9 @@ void US_ExperGuiUpload::clearData_protDev()
        	  << expID;
       status = db -> statusQuery( qry );
       qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
       
       if ( status != US_DB2::OK )
        	{
@@ -6384,6 +6420,10 @@ void US_ExperGuiUpload::clearData_protDev()
        				    .arg( status ).arg( expID ) );
        	}
     }
+
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
   /** End Iterate over fileNameList ****************************************************************/
 }
 
