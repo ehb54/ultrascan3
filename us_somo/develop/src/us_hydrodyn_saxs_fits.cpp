@@ -730,13 +730,51 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       }
    }
 
+   bool use_errors = is_nonzero_vector( nnls_errors );
+#warning should this be iqq_scale_chi2_fitting ?
+   if ( our_saxs_options->ignore_errors ) {
+      use_errors = false;
+   }
+   unsigned int org_errors_size = nnls_errors.size();
+
    nnls_B.resize(max_pr_len, 0);
+#warning propagating last error value, is this right?
+   if ( use_errors && org_errors_size < max_pr_len )
+   {
+      editor_msg("darkred", QString(us_tr("NNLS propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\n")).arg(org_errors_size).arg(max_pr_len));
+      nnls_csv_footer << QString(us_tr("\"NNLS propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\"")).arg(org_errors_size).arg(max_pr_len);
+   }
+
+   if ( use_errors ) {
+      nnls_errors.resize( max_pr_len, nnls_errors.back() );
+   }
+
+   editor_msg("dark blue", 
+              use_errors ? 
+              us_tr( "using standard deviations to compute NNLS\n" ) :
+              us_tr( "NOT using standard deviations to compute NNLS\n" ) );
+
+   nnls_csv_footer <<
+      ( use_errors ? 
+        us_tr( "\"using standard deviations to compute NNLS\"" ) :
+        us_tr( "\"NOT using standard deviations to compute NNLS\"" ) )
+      ;
 
    vector < double > use_B = nnls_B;
    vector < double > use_x(nnls_A.size());
    vector < double > nnls_wp(nnls_A.size());
    vector < double > nnls_zzp(use_B.size());
    vector < int > nnls_indexp(nnls_A.size());
+
+   if ( use_errors ) {
+      qDebug() << "pr nnls using errors";
+      for ( unsigned int i = 0; i < nnls_errors.size(); i++ ) {
+         use_B[ i ] /= nnls_errors[ i ];
+      }
+      for ( unsigned int i = 0; i < use_A.size(); i++ ) {
+         use_A[ i ] /= nnls_errors[ i % max_pr_len ];
+      }
+   }         
 
    //   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
    editor->append("Running NNLS\n");
@@ -910,7 +948,6 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    nnls_csv_footer
       << QString( "\"Number of curves in the fit\",%1" ).arg( use_x.size() )
       ;
-   
 
    // build model & residuals
    double model_mw = 0e0;
@@ -938,6 +975,77 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       difference[i] = nnls_B[i] - model[i];
    }
    
+   editor_msg( "dark blue",
+               QString( us_tr( "fitting range: %1 to %2 with %3 points\n" ) )
+               .arg( nnls_r[ 0 ] )
+               .arg( nnls_r.back() )
+               .arg( nnls_r.size() ) );
+
+   nnls_csv_footer <<
+      QString( us_tr( "\"fitting range start, end, points:\",%1,%2,%3" ) )
+      .arg( nnls_r[ 0 ] )
+      .arg( nnls_r.back() )
+      .arg( nnls_r.size() )
+      ;
+
+   // compute chi^2
+   QString fit_msg = "";
+
+   {
+      vector < double > use_source_I = model;
+      vector < double > use_I        = nnls_B;
+      vector < double > use_I_error  = nnls_errors;
+
+      double k;
+      double chi2;
+
+      US_Saxs_Util usu;
+
+      if ( use_errors ) {
+         usu.scaling_fit( 
+                         use_source_I, 
+                         use_I, 
+                         use_I_error,
+                         k, 
+                         chi2
+                         );
+      } else {
+         usu.scaling_fit( 
+                         use_source_I, 
+                         use_I, 
+                         k, 
+                         chi2
+                         );
+      }
+
+      fit_msg = 
+         QString("chi^2=%1 df=%2 nchi=%3 nchi^2=%4")
+         .arg(chi2, 6)
+         .arg(use_I.size() - 1 )
+         .arg(sqrt( chi2 / ( use_I.size() - 1 ) ), 5 )
+         .arg(chi2 / ( use_I.size() - 1 ), 5 )
+         ;
+
+      nnls_csv_footer
+         << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
+         << QString( "\"df\",%1" )    .arg(use_I.size() - 1 )
+         << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - 1 ), 5 )
+         << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - 1 ) ), 5 )
+         ;
+
+      // if ( avg_std_dev_frac )
+      // {
+      //    fit_msg += QString( " r_sigma=%1 nchi*r_sigma=%2 " )
+      //       .arg( avg_std_dev_frac ) 
+      //       .arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 );
+
+      //    nnls_csv_footer
+      //       << QString( "\"r_sigma\",%1" )     .arg( avg_std_dev_frac ) 
+      //       << QString( "\"nchi*r_sigma\",%1" ).arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+      //       ;
+      // }
+   }
+
    // compute p value
    
    // doesn't make sense for p(r)
@@ -967,14 +1075,20 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    //    }
    // }
 
+   editor_msg( "black", fit_msg + "\n" );
+
    // plot 
 
-   plot_one_pr(nnls_r, model, csv_filename + " Model");
+   {
+      vector < double > no_errors;
+      plot_one_pr(nnls_r, model, no_errors, csv_filename + " Model");
+   }
+
    compute_rg_to_progress( nnls_r, model, csv_filename + " Model");
 
    // plot_one_pr(nnls_r, residual, csv_filename + " Residual");
    
-   plot_one_pr(nnls_r, nnls_B, csv_filename + " Target");
+   plot_one_pr(nnls_r, nnls_B, nnls_errors, csv_filename + " Target");
    compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Target");
    
    if ( plotted )
@@ -1078,8 +1192,9 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    //    give each model a chi^2
    //    sort by chi^2
 
-   map < QString, vector < double > > best_fit_models = nnls_A;
-   vector < double >                  best_fit_target = nnls_B;
+   map < QString, vector < double > > best_fit_models        = nnls_A;
+   vector < double >                  best_fit_target        = nnls_B;
+   vector < double >                  best_fit_target_errors = nnls_errors;
 
    // editor->append("setting up best fit run\n");
    // unify dimension of best_fit_models vectors
@@ -1104,6 +1219,12 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       }
    }
 
+   bool use_errors = is_nonzero_vector( nnls_errors );
+#warning should this be iqq_scale_chi2_fitting ?
+   if ( our_saxs_options->ignore_errors ) {
+      use_errors = false;
+   }
+
    vector < QString > model_names;
 
    for ( map < QString, vector < double > >::iterator it = best_fit_models.begin();
@@ -1121,11 +1242,17 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       model_names.push_back(it->first);
    }
 
-   unsigned int org_size = best_fit_target.size();
-   best_fit_target.resize(max_pr_len);
-   for ( unsigned int i = org_size; i < max_pr_len; i++ )
+   best_fit_target.resize(max_pr_len, 0);
+
+   unsigned int org_errors_size = nnls_errors.size();
+#warning propagating last error value, is this right?
+   if ( use_errors && org_errors_size < max_pr_len )
    {
-      best_fit_target[i] = 0e0;
+      editor_msg("darkred", QString(us_tr("Best propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\n")).arg(org_errors_size).arg(max_pr_len));
+      nnls_csv_footer << QString(us_tr("\"Best fit propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\"")).arg(org_errors_size).arg(max_pr_len);
+   }
+   if ( use_errors ) {
+      best_fit_target_errors.resize( max_pr_len, best_fit_target_errors.back() );
    }
 
    vector < double > a(best_fit_models.size());
@@ -1144,16 +1271,37 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    //   editor->append(QString("running best fit %1 %2\n").arg(best_fit_models.size()).arg(best_fit_target.size()));
    editor->append("Running best fit\n");
 
+   if ( use_errors ) {
+      editor_msg( "black", "Using target curve errors for best fit\n" );
+   } else {
+      editor_msg( "black", "Not using target curve errors for best fit\n" );
+   }
+
    US_Saxs_Util usu;
 
    double lowest_chi2     = 9e99;
    // int    lowest_chi2_pos = 0;
 
+   vector < double > use_target = best_fit_target;
+   if ( use_errors ) {
+      for ( int i = 0; i < (int) use_target.size(); ++i ) {
+         use_target[i] /= best_fit_target_errors[i];
+      }
+   }
+
    for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
    {
+      vector < double > use_model  = best_fit_models[model_names[i]];
+      
+      if ( use_errors ) {
+         for ( int j = 0; j < (int) use_model.size(); ++j ) {
+            use_model[j] /= best_fit_target_errors[j];
+         }
+      }
+      
       usu.linear_fit(
-                     best_fit_models[model_names[i]],
-                     best_fit_target, 
+                     use_model,
+                     use_target,
                      a[i],
                      b[i],
                      siga[i],

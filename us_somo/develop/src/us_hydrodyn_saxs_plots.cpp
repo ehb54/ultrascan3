@@ -11,8 +11,20 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name, bool skip_mw )
-{
+void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name, bool skip_mw ) {
+   qDebug() << "plot_one_pr() old style pr call, DEPRECATE!";
+   vector < double > pr_error;
+   return plot_one_pr( r, pr, pr_error, name, skip_mw );
+}
+
+void US_Hydrodyn_Saxs::plot_one_pr(
+                                   vector < double > r
+                                   ,vector < double > pr
+                                   ,vector < double > pr_error
+                                   ,QString name
+                                   ,bool skip_mw
+                                   ,bool do_replot
+                                   ) {
    if ( r.size() < pr.size() )
    {
       pr.resize(r.size());
@@ -22,9 +34,18 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
       r.resize(pr.size());
    }
 
-   plotted_r.push_back(r);
+   if ( pr_error.size() ) {
+      if ( pr_error.size() < pr.size() ) {
+         pr_error.clear();
+      } else {
+         pr_error.resize( pr.size() );
+      }
+   }
 
-   plotted_pr_not_normalized.push_back(pr);
+   plotted_r                      .push_back(r);
+   plotted_pr_not_normalized      .push_back(pr);
+   plotted_pr_not_normalized_error.push_back(pr_error);
+
    plotted_pr_mw.push_back( skip_mw ? -1e0 : get_mw( name, false, true ) );
 
    if ( plotted_pr_mw.back() == -1 ) {
@@ -34,10 +55,12 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(r, &pr, get_mw(name));
+      normalize_pr(r, &pr, &pr_error, get_mw(name, do_replot));
    }
 
-   plotted_pr.push_back(pr);
+   plotted_pr                     .push_back(pr);
+   plotted_pr_error               .push_back(pr_error);
+
    QString plot_name = name;
    int extension = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
@@ -48,16 +71,55 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
                   
-   QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-   curve->setStyle( QwtPlotCurve::Lines );
 
-   curve->setSamples(
-                  (double *)&( r[ 0 ] ), 
-                  (double *)&( pr[ 0 ] ),
-                  (int)r.size()
-                  );
-   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
-   curve->attach( plot_pr );
+   if ( cb_pr_eb->isChecked() && pr_error.size() && pr_error.size() == r.size() ) {
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+         curve->setStyle( QwtPlotCurve::NoCurve );
+         curve->setSamples(
+                           (double *)&( r[ 0 ] ), 
+                           (double *)&( pr[ 0 ] ),
+                           (int)r.size()
+                           );
+         curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 6 + pen_width * 1, Qt::SolidLine ) );
+         QwtSymbol sym;
+         sym.setStyle(QwtSymbol::Diamond);
+         sym.setSize( pen_width );
+         sym.setPen(QPen(plot_colors[p % plot_colors.size()]));
+         sym.setBrush(Qt::white);
+         curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
+         curve->attach( plot_pr );
+      }
+
+      for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+         QwtPlotCurve *curve = new QwtPlotCurve( UPU_EB_PREFIX + name );
+         vector < double > eb_x(2, r[i]);
+         vector < double > eb_y(2);
+         eb_y[0] = pr[i] - pr_error[i];
+         eb_y[1] = pr[i] + pr_error[i];
+         
+         curve->setStyle( QwtPlotCurve::Lines );
+
+         curve->setSamples(
+                           (double *)&( eb_x[ 0 ] ), 
+                           (double *)&( eb_y[ 0 ] ),
+                           2
+                           );
+         curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+         curve->attach( plot_pr );
+      }
+   } else {
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+      curve->setStyle( QwtPlotCurve::Lines );
+
+      curve->setSamples(
+                        (double *)&( r[ 0 ] ), 
+                        (double *)&( pr[ 0 ] ),
+                        (int)r.size()
+                        );
+      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      curve->attach( plot_pr );
+   }      
 
    if ( plot_pr_zoomer )
    {
@@ -75,15 +137,21 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plot_pr_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
    plot_pr_zoomer->setTrackerPen( QPen( Qt::red ) );
 
-   plot_pr->replot();
+   if ( do_replot ) {
+      plot_pr->replot();
+   }
                   
    if ( !plotted )
    {
       plotted = true;
-      editor->append("P(r) plot legend:\n");
+      if ( do_replot ) {
+         editor->append("P(r) plot legend:\n");
+      }
    }
 
-   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
+   if ( do_replot ) {
+      editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
+   }
 
    // to save to csv, write just contributing models?, target, model & residual
    // don't forget to make target part of it even if it isn't selected.
@@ -1659,6 +1727,11 @@ void US_Hydrodyn_Saxs::set_eb()
    set_guinier();
 }
 
+void US_Hydrodyn_Saxs::set_pr_eb() 
+{
+   pr_replot();
+}
+
 void US_Hydrodyn_Saxs::set_width() 
 {
    pen_width++;
@@ -1746,4 +1819,35 @@ void US_Hydrodyn_Saxs::resid_resized() {
    // qDebug() << "resid_resized";
    plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
    plot_resid->replot();
+}
+
+void US_Hydrodyn_Saxs::pr_replot() {
+
+   // save plot info
+   
+   vector < vector < double > > save_plotted_pr                      = plotted_pr;
+   vector < vector < double > > save_plotted_pr_error                = plotted_pr_error;
+   vector < vector < double > > save_plotted_pr_not_normalized       = plotted_pr_not_normalized;
+   vector < vector < double > > save_plotted_pr_not_normalized_error = plotted_pr_not_normalized_error;
+   vector < vector < double > > save_plotted_r                       = plotted_r;
+   vector < float >             save_plotted_pr_mw                   = plotted_pr_mw;
+   QStringList                  save_qsl_plotted_pr_names            = qsl_plotted_pr_names;
+
+   // clear plots
+   clear_plot_pr();
+   
+   // replot with plot_one_pr ...
+
+   for ( int i = 0; i < (int) save_plotted_r.size(); ++i ) {
+      plot_one_pr(
+                  save_plotted_r[i]
+                  ,save_plotted_pr[i]
+                  ,save_plotted_pr_error[i]
+                  ,save_qsl_plotted_pr_names[i]
+                  ,false
+                  ,false
+                  );
+   }
+
+   plot_pr->replot();
 }

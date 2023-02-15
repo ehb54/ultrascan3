@@ -1449,6 +1449,24 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_width2, SIGNAL(clicked()), SLOT(set_width()));
    pr_widgets.push_back( pb_width2 );
 
+   pb_pr_info = new QPushButton(us_tr( "info" ), this);
+   pb_pr_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_pr_info->setMinimumHeight(minHeight1);
+   pb_pr_info->setPalette( PALET_PUSHB );
+   connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
+   pr_widgets.push_back( pb_pr_info );
+
+   cb_pr_eb = new QCheckBox(this);
+   cb_pr_eb->setText(us_tr("Err "));
+   cb_pr_eb->setMaximumWidth ( minHeight1 * 2 );
+   cb_pr_eb->setChecked( false );
+   cb_pr_eb->setMinimumHeight( minHeight1 );
+   cb_pr_eb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_pr_eb->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pr_eb );
+   connect( cb_pr_eb, SIGNAL( clicked() ), SLOT( set_pr_eb() ) );
+   pr_widgets.push_back( cb_pr_eb );
+
    pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
@@ -2036,6 +2054,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_pr->addWidget(pb_clear_plot_pr);
    hbl_plot_pr->addWidget(pb_pr_legend);
    hbl_plot_pr->addWidget(pb_width2);
+   hbl_plot_pr->addWidget(cb_pr_eb);
+   hbl_plot_pr->addWidget(pb_pr_info);
    background->addLayout( hbl_plot_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_bin_size, j, 0);
@@ -3268,6 +3288,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                vector < double > r;
                vector < double > pr;
                vector < double > pr_n;
+               vector < double > pr_error;
                r.resize(hist.size());
                pr.resize(hist.size());
                pr_n.resize(hist.size());
@@ -3278,7 +3299,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr_n[i] = (double) hist[i];
                }
                cout << QString( "get mw <%1>\n" ).arg( te_filename2->text() );
-               normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
+               normalize_pr(r, &pr_n, &pr_error, get_mw(te_filename2->text(), false));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                QString("")
                   .sprintf(
@@ -3287,7 +3308,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                            , US_Version.toLatin1().data()
                            , REVISION
                            , delta
-, get_mw(te_filename2->text(), false)
+                           , get_mw(te_filename2->text(), false)
                            , compute_pr_area(pr, r)
                            );
                fprintf(fpr, "%s",
@@ -3369,6 +3390,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    vector < double > r;
    vector < double > pr;
+   vector < double > pr_error;
    r.resize(hist.size());
    pr.resize(hist.size());
    for ( unsigned int i = 0; i < hist.size(); i++) 
@@ -3379,18 +3401,21 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       printf("%e %e\n", r[i], pr[i]);
 #endif
    }
-   plotted_pr_not_normalized.push_back(pr);
+   plotted_pr_not_normalized      .push_back(pr);
+   plotted_pr_not_normalized_error.push_back( pr_error );
+   
    plotted_pr_mw.push_back((float)get_mw(te_filename2->text()));
-   if ( cb_normalize->isChecked() )
-   {
-      normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
+   if ( cb_normalize->isChecked() ) {
+      normalize_pr(r, &pr, &pr_error, get_mw(te_filename2->text(),false));
    }
 
-   plotted_r.push_back(r);
-   plotted_pr.push_back(pr);
-   QString use_name = QFileInfo(model_filename).fileName();
+   plotted_r         .push_back(r);
+   plotted_pr        .push_back(pr);
+   plotted_pr_error  .push_back(pr_error);
+
+   QString use_name  = QFileInfo(model_filename).fileName();
    QString plot_name = use_name;
-   int extension = 0;
+   int extension     = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
    {
       plot_name = QString("%1-%2").arg(use_name).arg(++extension);
@@ -3453,12 +3478,14 @@ void US_Hydrodyn_Saxs::load_plot_pr()
 
 void US_Hydrodyn_Saxs::clear_plot_pr()
 {
-   plotted_pr.clear( );
-   plotted_pr_not_normalized.clear( );
-   plotted_pr_mw.clear( );
-   plotted_r.clear( );
-   qsl_plotted_pr_names.clear( );
-   dup_plotted_pr_name_check.clear( );
+   plotted_pr                     .clear();
+   plotted_pr_error               .clear();
+   plotted_pr_not_normalized      .clear();
+   plotted_pr_not_normalized_error.clear();
+   plotted_r                      .clear();
+   plotted_pr_mw                  .clear();
+   qsl_plotted_pr_names           .clear();
+   dup_plotted_pr_name_check      .clear();
    plot_pr->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_pr->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_pr->replot();
 #if QT_VERSION >= 0x040000

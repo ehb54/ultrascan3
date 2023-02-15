@@ -114,6 +114,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
 }
 
 void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw ) {
+   qDebug() << "normalize_pr() old style call, DEPRECATE!";
    vector < double > pre(r.size(),0);
    return normalize_pr( r, pr, &pre, mw );
 }
@@ -137,11 +138,16 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
          max = (*pr)[i];
       }
    }
-   if ( max > 0e0 )
-   {
-      for ( unsigned int i = 0; i < pr->size(); i++ )
-      {
-         (*pr)[i] /= max;
+   if ( max > 0e0 ) {
+      if ( pre->size() && pre->size() == pr->size() ) {
+         for ( unsigned int i = 0; i < pr->size(); i++ ) {
+            (*pr)[i]  /= max;
+            (*pre)[i] /= max;
+         }
+      } else {
+         for ( unsigned int i = 0; i < pr->size(); i++ ) {
+            (*pr)[i] /= max;
+         }
       }
    }
 #else
@@ -158,10 +164,15 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
       if ( area > 0e0 )
       {
          area /= mw;
-         for ( unsigned int i = 0; i < pr->size(); i++ )
-         {
-            (*pr) [i] /= area;
-            (*pre)[i] /= area;
+         if ( pre->size() && pre->size() == pr->size() ) {
+            for ( unsigned int i = 0; i < pr->size(); i++ ) {
+               (*pr) [i] /= area;
+               (*pre)[i] /= area;
+            }
+         } else {
+            for ( unsigned int i = 0; i < pr->size(); i++ ) {
+               (*pr) [i] /= area;
+            }
          }
       }
       // cout << "normalize_pr area " << area << "\n" << flush;
@@ -182,6 +193,7 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    }
    if ( area > 0e0 )
    {
+
       for ( unsigned int i = 0; i < pr->size(); i++ )
       {
          (*pr )[i] *= pr->size() / area ;
@@ -203,6 +215,12 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
 
 void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr )
 {
+   qDebug() << "check_pr_grid() old style call, DEPRECATE!";
+   vector < double > pr_error;
+   return check_pr_grid( r, pr, pr_error );
+}
+
+void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr, vector < double > &pr_error ) {
    if ( r.size() < 3 )
    {
       return;
@@ -288,11 +306,33 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
       }
    }
 
+   if ( pr_error.size() ) {
+      if ( r.size() != pr_error.size() ) {
+         editor_msg( "red", us_tr( "Error r pr_error length mismatch" ) );
+         return;
+      }
+         
+      vector < double > y2;
+      usu.natural_spline( r, pr_error, y2 );
+
+      vector < double > new_pr_error( new_r.size() );
+      
+      for ( unsigned int i = 0; i < new_r.size(); i++ )
+      {
+         if ( !usu.apply_natural_spline( r, pr_error, y2, new_r[ i ], new_pr_error[ i ] ) )
+         {
+            editor_msg( "red", usu.errormsg );
+            editor_msg( "red", us_tr( "Error attempting to interpolate" ) );
+            return;
+         }
+      }
+      pr_error = new_pr;
+   }
+
    r = new_r;
    pr = new_pr;
    return;
 }
-
 
 bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, double &internal_contrast )
 {
@@ -817,3 +857,62 @@ bool US_Hydrodyn_Saxs::get_conc_csv_values( QString name, double &conc, double &
 
    return false;
 }
+
+
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn_Saxs::pr_info( const QString & msg ) {
+
+   TSO
+      << "==== pr_info( " << msg << " ) ==== START ====\n"
+      << QString(
+                 "plotted_r.size()                          %1\n"
+                 "plotted_pr.size()                         %2\n"
+                 "plotted_pr_error.size()                   %3\n"
+                 "plotted_pr_not_normalized.size()          %4\n"
+                 "plotted_pr_not_normalized_error.size()    %5\n"
+                 "plotted_pr_mw.size()                      %6\n"
+                 "qsl_plotted_pr_names.size()               %7\n"
+                 )
+
+      .arg(plotted_r.size())
+      .arg(plotted_pr.size())
+      .arg(plotted_pr_error.size())
+      .arg(plotted_pr_not_normalized.size())
+      .arg(plotted_pr_not_normalized_error.size())
+      .arg(plotted_pr_mw.size())
+      .arg(qsl_plotted_pr_names.size())
+      ;
+
+   list < int > sizes;
+   sizes.push_back( (int) plotted_r.size() );
+   sizes.push_back( (int) plotted_pr.size() );
+   sizes.push_back( (int) plotted_pr_error.size() );
+   sizes.push_back( (int) plotted_pr_not_normalized.size() );
+   sizes.push_back( (int) plotted_pr_not_normalized_error.size() );
+   sizes.push_back( (int) qsl_plotted_pr_names.size() );
+   sizes.sort();
+
+   for ( int i = 0; i < sizes.back(); ++i ) {
+      TSO <<
+         QString(
+                 "entry %1 [%8]: r %2 pr %3 pr_error %4 pr_nn %5 pr_nn_e %6 pr_mw %7\n"
+                 )
+         .arg( i )
+         .arg( (int) plotted_r.size() > i ? (int) plotted_r[i].size() : -1 )
+         .arg( (int) plotted_pr.size() > i ? (int) plotted_pr[i].size() : -1 )
+         .arg( (int) plotted_pr_error.size() > i ? (int) plotted_pr_error[i].size() : -1 )
+         .arg( (int) plotted_pr_not_normalized.size() > i ? (int) plotted_pr_not_normalized[i].size() : -1 )
+         .arg( (int) plotted_pr_not_normalized_error.size() > i ? (int) plotted_pr_not_normalized_error[i].size() : -1 )
+         .arg( (int) plotted_pr_mw.size() > i ? plotted_pr_mw[i] : -1 )
+         .arg( (int) qsl_plotted_pr_names.size() > i ? qsl_plotted_pr_names[i] : QString( "?" ) )
+         ;
+   }
+
+   TSO
+      << "==== pr_info( " << msg << " ) ==== END ====\n"
+      ;
+}
+
+      
+   

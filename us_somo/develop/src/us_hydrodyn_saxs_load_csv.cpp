@@ -477,6 +477,21 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
                }
                qsl_pr_normed << this_pr_normed.join(",");
             }
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r) sd\"" ) {
+               QStringList this_pr_error;
+               this_pr_error
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed sd\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_error << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_error.join(",");
+            }
          }
       }
 

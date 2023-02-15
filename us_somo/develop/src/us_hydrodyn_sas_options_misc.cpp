@@ -208,7 +208,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    connect(cb_iqq_kratky_fit, SIGNAL(clicked()), this, SLOT(set_iqq_kratky_fit()));
 
    cb_ignore_errors = new QCheckBox(this);
-   cb_ignore_errors->setText(us_tr("Do not use experimental errors in Iq fits"));
+   cb_ignore_errors->setText(us_tr("Do not use experimental errors in Iq and Pr fits"));
    cb_ignore_errors->setEnabled(true);
    cb_ignore_errors->setChecked((*saxs_options).ignore_errors);
    cb_ignore_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

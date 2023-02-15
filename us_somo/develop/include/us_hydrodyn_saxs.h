@@ -262,6 +262,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_pp;
       QPushButton *pb_width;
       QPushButton *pb_width2;
+      QPushButton *pb_pr_info;
 
       QPushButton *pb_rescale;
       QPushButton *pb_rescale_y;
@@ -341,6 +342,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QCheckBox   *cb_resid_show_errorbars;
       QCheckBox   *cb_resid_show;
       QCheckBox   *cb_eb;
+      QCheckBox   *cb_pr_eb;
 
       mQLineEdit  * le_manual_guinier_fit_start;
       mQLineEdit  * le_manual_guinier_fit_end;
@@ -417,7 +419,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < QString, double >                      guinier_scratch;
 
       vector < vector < double > >                    plotted_pr;
+      vector < vector < double > >                    plotted_pr_error;
       vector < vector < double > >                    plotted_pr_not_normalized;
+      vector < vector < double > >                    plotted_pr_not_normalized_error;
       vector < vector < double > >                    plotted_r;
       vector < float >                                plotted_pr_mw;
 
@@ -568,6 +572,15 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        vector < double > pr, 
                        QString name,
                        bool skip_mw = false
+                       );
+
+      void plot_one_pr(
+                       vector < double > r, 
+                       vector < double > pr, 
+                       vector < double > pr_error, 
+                       QString name,
+                       bool skip_mw   = false,
+                       bool do_replot = true
                        );
 
       void calc_iqq_nnls_fit( 
@@ -750,6 +763,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool external_running;
 
       void check_pr_grid( vector < double > &r, vector < double > &pr );
+      void check_pr_grid( vector < double > &r, vector < double > &pr, vector < double > &pr_error );
       vector < double > range_crop( vector < double > &q, vector < double > &I );
 
       bool started_in_expert_mode;
@@ -828,8 +842,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                              ,const QString &           filename
                                              );
 
+
    private slots:
 
+      void pr_info( const QString & msg = "" ); // stdout report of pr vectors
+      void pr_replot();
       void do_rescale();
       void do_rescale_y();
 
@@ -941,6 +958,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void stop();
       void clear_display();
       void set_eb();
+      void set_pr_eb();
       void print();
       void update_font();
       void save();
