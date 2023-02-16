@@ -13,6 +13,7 @@
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
 #include "us_tmst_plot.h"
+#include "us_tar.h"
 
 #define MIN_NTC   25
 
@@ -59,6 +60,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
 
+  //QPushButton* pb_loadreport_db = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
   pb_view_report   = us_pushbutton( tr( "View Report" ) );
@@ -70,16 +72,17 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   pb_close         = us_pushbutton( tr( "Close" ) );
 		
   int row           = 0;
-  buttonsLayout->addWidget( bn_actions,     row++, 0, 1, 12 );
-  buttonsLayout->addWidget( lb_loaded_run,  row,   0, 1, 2 );
-  buttonsLayout->addWidget( le_loaded_run,  row++, 2, 1, 10 );
-  buttonsLayout->addWidget( pb_loadrun,     row++, 0, 1, 12 );
-  buttonsLayout->addWidget( pb_gen_report,  row++, 0, 1, 12 );
-  buttonsLayout->addWidget( pb_view_report, row++, 0, 1, 12 );
-  buttonsLayout->addWidget( pb_select_all,  row  , 0, 1, 6 );
-  buttonsLayout->addWidget( pb_unselect_all,row++, 6, 1, 6 );
-  buttonsLayout->addWidget( pb_expand_all,  row  , 0, 1, 6 );
-  buttonsLayout->addWidget( pb_collapse_all,row++, 6, 1, 6 );
+  buttonsLayout->addWidget( bn_actions,       row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_loaded_run,    row,   0, 1, 2 );
+  buttonsLayout->addWidget( le_loaded_run,    row++, 2, 1, 10 );
+  //buttonsLayout->addWidget( pb_loadreport_db, row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_loadrun,       row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_gen_report,    row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_view_report,   row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_select_all,    row  , 0, 1, 6 );
+  buttonsLayout->addWidget( pb_unselect_all,  row++, 6, 1, 6 );
+  buttonsLayout->addWidget( pb_expand_all,    row  , 0, 1, 6 );
+  buttonsLayout->addWidget( pb_collapse_all,  row++, 6, 1, 6 );
 
   buttonsLayout->addWidget( pb_help,        row,   0, 1, 6, Qt::AlignBottom );
   buttonsLayout->addWidget( pb_close,       row++, 6, 1, 6, Qt::AlignBottom );
@@ -96,6 +99,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   connect( pb_close,   SIGNAL( clicked()      ),
 	   this,       SLOT(   close()        ) );
 
+  // connect( pb_loadreport_db,SIGNAL( clicked()      ),
+  // 	   this,            SLOT(   load_gmp_report_db()   ) );
   connect( pb_loadrun,      SIGNAL( clicked()      ),
 	   this,            SLOT(   load_gmp_run()   ) );
   connect( pb_gen_report,   SIGNAL( clicked()      ),
@@ -407,6 +412,17 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
+
+  QString full_runname = protocol_details[ "filename" ];
+  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+    {
+      QString full_runname_edited  = full_runname.split(",")[0];
+      full_runname_edited.chop(3);
+      
+      full_runname = full_runname_edited + " (combined RI+IP) ";
+    }
+
+  FullRunName_auto = full_runname;
   
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -967,6 +983,88 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 }
 
 
+// //load GMP Rpeort from DB (.PDF)
+// void US_ReporterGMP::load_gmp_report_db ( void )
+// {
+//   list_all_gmp_reports_db( gmpReportsDBdata );
+  
+// }
+
+
+// // Query autoflow (history) table for records
+// int US_ReporterGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata )
+// {
+//   int nrecs        = 0;   
+//   gmpReportsDBdata.clear();
+  
+//   US_Passwd pw;
+//   US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+//   if ( db->lastErrno() != US_DB2::OK )
+//     {
+//       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+// 			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+//       return nrecs;
+//     }
+  
+//   QStringList qry;
+//   qry << "get_autoflow_gmp_report_desc";
+//   db->query( qry );
+
+//   while ( db->next() )
+//     {
+//       QStringList gmpreportentry;
+//       QString id                 = db->value( 0 ).toString();
+//       QString runname            = db->value( 5 ).toString();
+//       QString status             = db->value( 8 ).toString();
+//       QString optimaname         = db->value( 10 ).toString();
+      
+//       QDateTime time_started     = db->value( 11 ).toDateTime().toUTC();
+
+//       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
+//       QString gmpRun             = db->value( 14 ).toString();
+//       QString full_runname       = db->value( 15 ).toString();
+
+//       QString devRecord          = db->value( 18 ).toString();
+
+//       QDateTime local(QDateTime::currentDateTime());
+      
+//       //process runname: if combined, correct for nicer appearance
+//       if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+// 	{
+// 	  QString full_runname_edited  = full_runname.split(",")[0];
+// 	  full_runname_edited.chop(3);
+
+// 	  full_runname = full_runname_edited + " (combined RI+IP) ";
+// 	  runname += " (combined RI+IP) ";
+// 	}
+      
+//       gmpreportentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+
+//       if ( time_started.toString().isEmpty() )
+// 	gmpreportentry << QString( tr( "NOT STARTED" ) );
+//       else
+// 	{
+// 	  if ( status == "LIVE_UPDATE" )
+// 	    gmpreportentry << QString( tr( "RUNNING" ) );
+// 	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" )
+// 	    gmpreportentry << QString( tr( "COMPLETED" ) );
+// 	    //autoflowentry << time_started.toString();
+// 	}
+
+//       if ( status == "EDITING" )
+// 	status = "LIMS_IMPORT";
+      
+//       gmpreportentry << status << gmpRun;
+//       gmpReportsDBdata << gmpreportentry;
+
+//       nrecs++;
+//     }
+
+//   return nrecs;
+// }
+
 //load GMP run
 void US_ReporterGMP::load_gmp_run ( void )
 {
@@ -1023,6 +1121,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
+  AutoflowID_auto    = protocol_details[ "autoflowID" ];
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
@@ -1131,6 +1230,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   pb_expand_all   ->setEnabled( true );
   pb_collapse_all ->setEnabled( true );
 
+  FullRunName_auto = full_runname;
 
   //Capture tree state:
   JsonMask_gen_loaded     = tree_to_json ( topItem );
@@ -8745,8 +8845,132 @@ void US_ReporterGMP::write_pdf_report( void )
   qApp->processEvents();
 
   //Now delete all .png && .svgz && tar entire directory
-    
+  if ( auto_mode )
+    {
+      QStringList file_exts;
+      file_exts << "*.png" << "*.svgz";
+      remove_files_by_mask( dirName, file_exts );
 
+      /*
+      //Archive using US_Tar
+      QDir odir( dirName );
+      QStringList fileList = odir.entryList( QStringList( "*.pdf" ), QDir::Files );
+
+      QStringList fileList_fullPath;
+      for (int i=0; i<fileList.size(); ++i )
+       	{
+       	  fileList_fullPath << dirName + "/" + fileList[i];
+       	  qDebug() << "Files -- " << dirName + "/" + fileList[i];
+       	}
+      
+      US_Tar tar;
+      int result;
+       QString tarFilename = dirName + "/" + subDirName + ".tar.gz";
+       QStringList list_t;
+       //result = tar.create( tarFilename, dirName, &list_t );
+       result = tar.create( tarFilename, fileList_fullPath, &list_t );
+       
+       if ( result != TAR_OK )
+	 {
+	   QString errormsg = QString("Error: Problem creating tar archive %1").arg( tarFilename );
+	   
+	   QMessageBox::warning( this, tr( "Error with creating .TAR" ),
+				 errormsg );
+	   
+	   return;
+	 }
+      */
+      
+      //Archive using system TAR
+      QString tarFilename_t = subDirName + "_GMP.tar.gz";
+      QProcess *process = new QProcess(this);
+      process->setWorkingDirectory( US_Settings::reportDir() );
+      process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
+
+      //Write to autoflowGMPReport table as longblob
+      write_gmp_report_DB( tarFilename_t );
+
+    }
+}
+
+//write GMP report to DB
+void US_ReporterGMP::write_gmp_report_DB( QString filename )
+{
+  QString report_filepath = US_Settings::reportDir() + "/" + filename;
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+  
+  
+  
+  QStringList qry;
+  qry << "new_autoflow_gmp_report_record"
+      << AutoflowID_auto            
+      << FullRunName_auto           
+      << ProtocolName_auto;
+    
+  int autolfowGMPReportID = 0;
+  int state_new_gmpReport = db.statusQuery( qry );
+  autolfowGMPReportID = db.lastInsertID();
+  
+  bool clear_GMP_report_record = false;
+
+  qDebug() << "state_new_gmpReport, autolfowGMPReportID -- "
+	   << state_new_gmpReport
+	   << autolfowGMPReportID;
+  
+  if ( state_new_gmpReport == US_DB2::OK  && autolfowGMPReportID > 0 )
+    {
+      int writeStatus= db.writeBlobToDB(report_filepath,
+					QString( "upload_gmpReportData" ),
+					autolfowGMPReportID );
+      
+      if ( writeStatus == US_DB2::DBERROR )
+	{
+	  QMessageBox::warning(this, "Error", "Error processing file:\n"
+			       + report_filepath + "\n" + db.lastError() +
+			       "\n" + "Could not open file or no data \n");
+	  clear_GMP_report_record = true;
+	}
+      
+      else if ( writeStatus != US_DB2::OK )
+	{
+	  QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			       report_filepath + "\n" + db.lastError() + "\n");
+	  
+	  clear_GMP_report_record = true;
+	}
+      
+      if ( clear_GMP_report_record )
+	{
+	  qry.clear();
+	  qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
+	  db.query( qry );
+	}
+    }
+  else
+    {
+      QMessageBox::warning(this, "Error returned processing file", "File: " + report_filepath + db.lastError());
+    }
+}
+
+//remove files by extension from dirPath
+void US_ReporterGMP::remove_files_by_mask( QString dirPath, QStringList file_exts )
+{
+  QDir dir( dirPath );
+  dir.setNameFilters(file_exts);
+  dir.setFilter(QDir::Files);
+  foreach( QString dirFile, dir.entryList() ) 
+    {
+      dir.remove(dirFile);
+    }
 }
 
 //save trees' selections into internal structures
