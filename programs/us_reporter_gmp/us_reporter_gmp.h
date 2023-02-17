@@ -214,6 +214,9 @@ class US_ReporterGMP : public US_Widgets
 	 QPushButton*  pb_close;
 	 QLineEdit*    le_loaded_run;
          QLineEdit*    le_loaded_run_db;
+
+         QTextEdit*    te_fpath_info;
+         QTextEdit*    te_fpath_info_db;
   
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;

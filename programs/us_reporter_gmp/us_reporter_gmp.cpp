@@ -68,6 +68,16 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   pb_expand_all    = us_pushbutton( tr( "Expand All Tree Items" ) );
   pb_collapse_all  = us_pushbutton( tr( "Collapse All Tree Items" ) );
 
+  //Filename path
+  QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
+  te_fpath_info =  us_textedit();
+  QFontMetrics m (te_fpath_info -> font());
+  int RowHeight  = m.lineSpacing();
+  RowHeight *= 3;
+  te_fpath_info -> setFixedHeight  ( RowHeight);
+  te_fpath_info -> setText( tr( "" ) );
+  us_setReadOnly( te_fpath_info, true );
+
   //GMP Report From DB Items
   QLabel*      bn_actions_db     = us_banner( tr( "Download and View GMP Report from DB:" ), 1 );
   QLabel*      lb_loaded_run_db  = us_label( tr( "Loaded Run:" ) );
@@ -75,6 +85,13 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QPushButton* pb_loadreport_db  = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
   pb_view_report_db              = us_pushbutton( tr( "View Downloaded Report" ) );
 
+  //Filename DB path
+  QLabel*      lb_fpath_info_db  = us_label( tr( "Report File \nLocation:" ) );
+  te_fpath_info_db =  us_textedit();
+  te_fpath_info_db -> setFixedHeight  ( RowHeight );
+  te_fpath_info_db -> setText( tr( "" ) );
+  us_setReadOnly( te_fpath_info_db, true );
+  
   //Misc
   QLabel*      bn_actions_misc   = us_banner( tr( "" ), 1 );
   pb_help          = us_pushbutton( tr( "Help" ) );
@@ -86,6 +103,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   buttonsLayout->addWidget( le_loaded_run,    row++, 2, 1, 10 );
   buttonsLayout->addWidget( pb_loadrun,       row++, 0, 1, 12 );
   buttonsLayout->addWidget( pb_gen_report,    row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_fpath_info,    row,   0, 1, 2 );
+  buttonsLayout->addWidget( te_fpath_info,    row++, 2, 1, 10 );
   buttonsLayout->addWidget( pb_view_report,   row++, 0, 1, 12 );
   buttonsLayout->addWidget( pb_select_all,    row  , 0, 1, 6 );
   buttonsLayout->addWidget( pb_unselect_all,  row++, 6, 1, 6 );
@@ -96,6 +115,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   buttonsLayout->addWidget( lb_loaded_run_db, row,   0, 1, 2 );
   buttonsLayout->addWidget( le_loaded_run_db, row++, 2, 1, 10 );
   buttonsLayout->addWidget( pb_loadreport_db, row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_fpath_info_db, row,   0, 1, 2 );
+  buttonsLayout->addWidget( te_fpath_info_db, row++, 2, 1, 10 );
   buttonsLayout->addWidget( pb_view_report_db,row++, 0, 1, 12 );
 
   buttonsLayout->addWidget( bn_actions_misc,  row++, 0, 1, 12 );
@@ -1043,6 +1064,7 @@ void US_ReporterGMP::load_gmp_report_db ( void )
       gmpReport_filename_pdf       = gmpReportsDBdata[ prx ][ 3 ];
 
       pb_view_report_db -> setEnabled( false );
+      te_fpath_info_db  -> setText( "" );
     }
   else
     return;
@@ -1099,6 +1121,7 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   //Gui fields
   le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
   pb_view_report_db -> setEnabled( true );
+  te_fpath_info_db  -> setText( filePath_db );
 
   //Inform user of the PDF location
   QMessageBox msgBox;
@@ -2555,7 +2578,8 @@ void US_ReporterGMP::view_report_db ( void )
 //reset
 void US_ReporterGMP::reset_report_panel ( void )
 {
-  le_loaded_run ->setText( "" );
+  le_loaded_run -> setText( "" );
+  te_fpath_info -> setText( "" );
 
   //cleaning genTree && it's objects
   // for (int i = 0; i < genTree->topLevelItemCount(); ++i)
@@ -2829,9 +2853,8 @@ void US_ReporterGMP::generate_report( void )
   write_pdf_report( );
   qApp->processEvents();
 
-  pb_view_report->setEnabled( true );
-
-
+  pb_view_report -> setEnabled( true );
+  
   if ( auto_mode )
     {
       pb_view_report_auto->setVisible( true );
@@ -2892,6 +2915,8 @@ void US_ReporterGMP::generate_report( void )
     }
   else
     {
+      te_fpath_info  -> setText( filePath );
+      
       //Inform user of the PDF location
       QMessageBox msgBox;
       msgBox.setText(tr("Report PDF Ready!"));
