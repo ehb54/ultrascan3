@@ -172,8 +172,8 @@ namespace US_WinData
     },
 
     { P_GMPRPT,    1, 0, "us_reporter_gmp",
-      QObject::tr( "Loading GMP Report Generator" ),
-      QObject::tr( "GMP Report Generator Program" )
+      QObject::tr( "Loading GMP Report Generator and Viewer" ),
+      QObject::tr( "GMP Report Generator and Viewer Program" )
     },
             
     { P_CONVERT,  1, 0, "us_convert",

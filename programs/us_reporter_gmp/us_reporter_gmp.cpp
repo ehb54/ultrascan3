@@ -20,7 +20,7 @@
 // Constructor
 US_ReporterGMP::US_ReporterGMP() : US_Widgets()
 {
-  setWindowTitle( tr( "GMP Report Generator"));
+  setWindowTitle( tr( "GMP Report Generator & Viewer"));
   setPalette( US_GuiSettings::frameColor() );
 
   first_time_gen_tree_build = true;

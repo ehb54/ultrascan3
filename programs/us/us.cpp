@@ -229,7 +229,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
   addMenu(  P_ABDE_FIT , tr( "ABDE Fitter"                       ), utilities );
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
-  addMenu(  P_GMPRPT   , tr( "&GMP Report Generator"             ), utilities );
+  addMenu(  P_GMPRPT   , tr( "&GMP Report Generator and Viewer"  ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
 #if 0    // temporarily disable Create Experiment until truly ready
