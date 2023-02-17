@@ -227,7 +227,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
 
-  addMenu(  P_ABDE_FIT , tr( "ABDE Fitter"                       ), utilities );
+  addMenu(  P_ABDE_FIT , tr( "ABDE Analysis"                     ), utilities );
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
   addMenu(  P_GMPRPT   , tr( "&GMP Report Generator and Viewer"  ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
@@ -251,7 +251,6 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
   addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
   addMenu(  P_PSEUDO_ABS  , tr( "Pseudo-Absorbance"              ), utilities );
-  addMenu(  P_ABDE_ANALYSE, tr( "ABDE Analysis"                  ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
   addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
