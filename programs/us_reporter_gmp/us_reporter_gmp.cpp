@@ -2854,8 +2854,7 @@ void US_ReporterGMP::generate_report( void )
   qApp->processEvents();
 
   pb_view_report -> setEnabled( true );
-  te_fpath_info  -> setText( filePath );
-
+  
   if ( auto_mode )
     {
       pb_view_report_auto->setVisible( true );
@@ -2916,6 +2915,8 @@ void US_ReporterGMP::generate_report( void )
     }
   else
     {
+      te_fpath_info  -> setText( filePath );
+      
       //Inform user of the PDF location
       QMessageBox msgBox;
       msgBox.setText(tr("Report PDF Ready!"));
