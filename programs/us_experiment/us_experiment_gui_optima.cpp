@@ -6442,7 +6442,8 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   protocol_details[ "protocolName" ]   = currProto->protoname;
   protocol_details[ "experimentName" ] = currProto->runname;
   protocol_details[ "label" ]          = currProto->exp_label;
-  protocol_details[ "gmpRun" ]         = QString("NO");              //ALEXEY: state explicitly
+  //protocol_details[ "gmpRun" ]         = QString("NO");              //ALEXEY: state explicitly
+  protocol_details[ "gmpRun" ]         = QString("YES");              //ALEXEY: state explicitly
   protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
   protocol_details[ "devRecord" ]      = QString("YES");             //ALEXEY: state explicitly
   
