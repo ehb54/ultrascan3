@@ -276,12 +276,6 @@ namespace US_WinData
       QObject::tr( "Loading Pseudo-Absorbance Program" ),
       QObject::tr( "Managing Reference Scans Program" )
     },
-    
-    { P_ABDE_ANALYSE,  0, 0, "us_abde_analysis",
-      QObject::tr( "Loading ABDE Analysis Program" ),
-      QObject::tr( "Managing ABDE Analysis Program" )
-    },
-
  
     { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
       QObject::tr( "Loading View Multiwavelength Data"    ),

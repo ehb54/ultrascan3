@@ -37,6 +37,12 @@ class US_Buoyancy : public US_Widgets
   
       bool us_buoyancy_auto_mode;
 
+  signals:
+      void widgetClosed();
+
+  protected:
+      void closeEvent(QCloseEvent *event) override;
+
   private:
 
       QVector <WavelengthScan> v_wavelength;
