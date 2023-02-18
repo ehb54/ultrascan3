@@ -1,26 +1,11 @@
-//! \file us_abde_analysis_main.cpp
-//
 #include <QApplication>
 #include "us_license_t.h"
 #include "us_license.h"
-#include "us_abde_analysis.h"
+#include "us_norm_profile.h"
 
-int main( int argc, char* argv[] )
+US_Norm_Profile::US_Norm_Profile(): US_Widgets()
 {
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-
-   US_ABDE_Analysis w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
-
-US_ABDE_Analysis::US_ABDE_Analysis(): US_Widgets()
-{
-    setWindowTitle("ABDE Analysis");
+    setWindowTitle("Buoyancy Equilibrium Data Analysis");
     QPalette p = US_GuiSettings::frameColorDefault();
     setPalette( p );
 
@@ -140,7 +125,7 @@ US_ABDE_Analysis::US_ABDE_Analysis(): US_Widgets()
     connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
 }
 
-void US_ABDE_Analysis::slt_xrange(int state){
+void US_Norm_Profile::slt_xrange(int state){
     x_min_picked = -1;
     x_max_picked = -1;
     QString qs = "QPushButton { background-color: %1 }";
@@ -157,7 +142,7 @@ void US_ABDE_Analysis::slt_xrange(int state){
     return;
 }
 
-void US_ABDE_Analysis::slt_addRmItem(QListWidgetItem *item){
+void US_Norm_Profile::slt_addRmItem(QListWidgetItem *item){
     QString text = item->text();
     int id = selFilenames.indexOf(text);
     if (id == -1){
@@ -173,7 +158,7 @@ void US_ABDE_Analysis::slt_addRmItem(QListWidgetItem *item){
     selectData();
 }
 
-void US_ABDE_Analysis::slt_rmItem(void){
+void US_Norm_Profile::slt_rmItem(void){
     int row = lw_selData->currentRow();
     if (row < 0)
         return;
@@ -184,7 +169,7 @@ void US_ABDE_Analysis::slt_rmItem(void){
     selectData();
 }
 
-void US_ABDE_Analysis::slt_cleanList(void){
+void US_Norm_Profile::slt_cleanList(void){
     for (int i = 0; i < lw_selData->count(); i++){
         int rowInp = filenames.indexOf(lw_selData->item(i)->text());
         lw_inpData->item(rowInp)->setForeground(Qt::black);
@@ -194,7 +179,7 @@ void US_ABDE_Analysis::slt_cleanList(void){
     selectData();
 }
 
-void US_ABDE_Analysis::slt_loadAUC(){
+void US_Norm_Profile::slt_loadAUC(){
 
     QStringList fPath = QFileDialog::getOpenFileNames(this, tr("Open AUC File"),
                                                     US_Settings::importDir(),
@@ -229,7 +214,7 @@ void US_ABDE_Analysis::slt_loadAUC(){
     }
 }
 
-QMap<QString, QVector<double>> US_ABDE_Analysis::trapz(
+QMap<QString, QVector<double>> US_Norm_Profile::trapz(
                            QVector<double> xval, QVector<double> yval){
     QMap<QString, QVector<double>> out;
     QVector<double> yvalN;
@@ -264,7 +249,7 @@ QMap<QString, QVector<double>> US_ABDE_Analysis::trapz(
 
 }
 
-QVector<double> US_ABDE_Analysis::getXlimit(QVector<double> xval_in,
+QVector<double> US_Norm_Profile::getXlimit(QVector<double> xval_in,
                                                  double xmin, double xmax,
                                                  int *idMin, int *inMax){
     QVector<double> xval_out;
@@ -297,7 +282,7 @@ QVector<double> US_ABDE_Analysis::getXlimit(QVector<double> xval_in,
 
 }
 
-void US_ABDE_Analysis::selectData(void){
+void US_Norm_Profile::selectData(void){
     xvalues_sel.clear();
     yvalues_sel.clear();
     yvaluesN_sel.clear();
@@ -334,10 +319,10 @@ void US_ABDE_Analysis::selectData(void){
     plotData();
 }
 
-void US_ABDE_Analysis::plotData(void){
+void US_Norm_Profile::plotData(void){
     plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     plot->enableAxis(QwtPlot::yRight, false);
-    plot->enableAxis(QwtPlot::yLeft, false); 
+    plot->enableAxis(QwtPlot::yLeft, false);
     grid = us_grid(plot);
     QPen pen_mj = grid->majorPen();
     QPen pen_mn = grid->majorPen();
@@ -469,7 +454,7 @@ void US_ABDE_Analysis::plotData(void){
     plot->replot();
 }
 
-void US_ABDE_Analysis::slt_legend(int state) {
+void US_Norm_Profile::slt_legend(int state) {
 
     if (state == Qt::Checked) {
         QwtLegend* legend = new QwtLegend();
@@ -481,19 +466,19 @@ void US_ABDE_Analysis::slt_legend(int state) {
     plot->replot();
 }
 
-void US_ABDE_Analysis::slt_rawData(int) {
+void US_Norm_Profile::slt_rawData(int) {
     plotData();
 }
 
-void US_ABDE_Analysis::slt_integral(int) {
+void US_Norm_Profile::slt_integral(int) {
     plotData();
 }
 
-void US_ABDE_Analysis::slt_norm(int) {
+void US_Norm_Profile::slt_norm(int) {
     plotData();
 }
 
-void US_ABDE_Analysis::slt_pickPoint(){
+void US_Norm_Profile::slt_pickPoint(){
     picker->disconnect();
     x_min_picked = -1;
     x_max_picked = -1;
@@ -508,7 +493,7 @@ void US_ABDE_Analysis::slt_pickPoint(){
     return;
 }
 
-void US_ABDE_Analysis::slt_mouse(const QwtDoublePoint& point){
+void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
     double x = point.x();
     if (x_min_picked == -1){
         x_min_picked = x;
@@ -547,7 +532,7 @@ void US_ABDE_Analysis::slt_mouse(const QwtDoublePoint& point){
     return;
 }
 
-void US_ABDE_Analysis::slt_reset(){
+void US_Norm_Profile::slt_reset(){
     slt_cleanList();
     lw_inpData->clear();
     filenames.clear();
@@ -560,7 +545,7 @@ void US_ABDE_Analysis::slt_reset(){
 
 }
 
-void US_ABDE_Analysis::enableWidgets(bool state){
+void US_Norm_Profile::enableWidgets(bool state){
     pb_load->setEnabled(state);
     pb_reset->setEnabled(state);
     pb_save->setEnabled(state);
@@ -574,7 +559,7 @@ void US_ABDE_Analysis::enableWidgets(bool state){
     ckb_norm->setEnabled(state);
 }
 
-void US_ABDE_Analysis::slt_save(){
+void US_Norm_Profile::slt_save(){
     int nd = selFilenames.size();
     if (nd == 0)
         return;
@@ -672,7 +657,11 @@ void US_ABDE_Analysis::slt_save(){
             line ++;
         }
     }
+    qDebug() << "Saved the csv file!";
+}
 
-    qDebug() << "Done!";
-
+void US_Norm_Profile::closeEvent(QCloseEvent *event)
+{
+    emit widgetClosed();
+    event->accept();
 }

@@ -3078,3 +3078,8 @@ double US_Buoyancy::calc_stretch( )
 		   * pow( current_rpm, 2.0 ) );
 }
 
+void US_Buoyancy::closeEvent(QCloseEvent *event)
+{
+    emit widgetClosed();
+    event->accept();
+}
