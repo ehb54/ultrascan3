@@ -9043,10 +9043,11 @@ void US_ReporterGMP::write_pdf_report( void )
 
       //Write to autoflowGMPReport table as longblob
       write_gmp_report_DB( tarFilename_t, fileName );
-
+      qApp->processEvents();
+      
       //do we need to remove created .tar.gz?
-      QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
-      QFile::remove( tar_path );
+      // QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
+      // QFile::remove( tar_path );
     }
 }
 
