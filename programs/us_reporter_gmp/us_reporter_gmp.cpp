@@ -1088,10 +1088,10 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   remove_files_by_mask( i_folder, f_exts );
 
   // <---- TESTING: gZip algorithm NOT compatible (even for different Linux distros...) **
-  QString GMPReportfname = "GMP_Report_from_DB.tgz";
+  //QString GMPReportfname = "GMP_Report_from_DB.tgz";
   // END TESTING *************************************************************************
 
-  //QString GMPReportfname = "GMP_Report_from_DB.tar";
+  QString GMPReportfname = "GMP_Report_from_DB.tar";
   QString GMPReportfpath = dirName + "/" + GMPReportfname;
   
   int db_read = db.readBlobFromDB( GMPReportfpath,
@@ -1116,15 +1116,15 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   
   // <--- TESTING: tried .tar.gz - NOT compatible (even for different Linux distros...) ****
   // //Un-tar using system TAR && enable View Report btn:
-  QProcess *process = new QProcess(this);
-  process->setWorkingDirectory( dirName );
-  process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
+  // QProcess *process = new QProcess(this);
+  // process->setWorkingDirectory( dirName );
+  // process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
   // END TESTING ****************************************************************************
   
   // // Using .tar (NOT gzip: .tgz or tar.gz !!!)
-  // QProcess *process = new QProcess(this);
-  // process->setWorkingDirectory( dirName );
-  // process->start("tar", QStringList() << "-xvf" << GMPReportfname );
+  QProcess *process = new QProcess(this);
+  process->setWorkingDirectory( dirName );
+  process->start("tar", QStringList() << "-xvf" << GMPReportfname );
     
   filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
   qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
@@ -9048,24 +9048,24 @@ void US_ReporterGMP::write_pdf_report( void )
       
       //Archive using system TAR: do NOT use gZip (.tgz, .tar.gz)!!! 
       //<------ TESTING!!!! ***************************************************************
-      QString tarFilename_t = subDirName + "_GMP_DB.tgz";
-      QProcess *process = new QProcess(this);
-      process->setWorkingDirectory( US_Settings::reportDir() );
-      process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
-      //END TESTING ***********************************************************************
-            
-      // QString tarFilename_t = subDirName + "_GMP_DB.tar";
+      // QString tarFilename_t = subDirName + "_GMP_DB.tgz";
       // QProcess *process = new QProcess(this);
       // process->setWorkingDirectory( US_Settings::reportDir() );
-      // process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+      // process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
+      //END TESTING ***********************************************************************
+            
+      QString tarFilename_t = subDirName + "_GMP_DB.tar";
+      QProcess *process = new QProcess(this);
+      process->setWorkingDirectory( US_Settings::reportDir() );
+      process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
          
       //Write to autoflowGMPReport table as longblob
       write_gmp_report_DB( tarFilename_t, fileName );
       qApp->processEvents();
       
       //do we need to remove created .tar?
-      // QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
-      // QFile::remove( tar_path );
+      QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
+      QFile::remove( tar_path );
     }
 }
 
