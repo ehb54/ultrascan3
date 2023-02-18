@@ -9045,7 +9045,7 @@ void US_ReporterGMP::write_pdf_report( void )
       //write_gmp_report_DB( tarFilename_t, fileName );
       //<------ TEST!!!!
       QString file_pdf_toDB = subDirName + "/" + fileName;
-      write_gmp_report_DB( filePath, fileName );
+      write_gmp_report_DB( file_pdf_toDB, fileName );
       //END TEST
       
       qApp->processEvents();
