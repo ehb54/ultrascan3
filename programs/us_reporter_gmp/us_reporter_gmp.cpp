@@ -1088,7 +1088,7 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   remove_files_by_mask( i_folder, f_exts );
 
   // <---- TESTING: gZip algorithm NOT compatible (even for different Linux distros...) **
-  QString GMPReportfname = "GMP_Report_from_DB.tar.gz";
+  QString GMPReportfname = "GMP_Report_from_DB.tgz";
   // END TESTING *************************************************************************
 
   //QString GMPReportfname = "GMP_Report_from_DB.tar";
@@ -9048,7 +9048,7 @@ void US_ReporterGMP::write_pdf_report( void )
       
       //Archive using system TAR: do NOT use gZip (.tgz, .tar.gz)!!! 
       //<------ TESTING!!!! ***************************************************************
-      QString tarFilename_t = subDirName + "_GMP_DB.tar.gz";
+      QString tarFilename_t = subDirName + "_GMP_DB.tgz";
       QProcess *process = new QProcess(this);
       process->setWorkingDirectory( US_Settings::reportDir() );
       process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
