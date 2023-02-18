@@ -26,7 +26,7 @@ namespace US_WinData
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
     P_VIEWCFA,      P_VIEWXPN,      P_VIEWTMST,
-    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS, P_ABDE_ANALYSE,
+    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS,
 
     P_VIEWMWL,      P_VIEWMSS,      P_MWSPECF,  // MultiWavelength Menu
     P_MWFSIMU,
