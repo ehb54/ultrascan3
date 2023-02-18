@@ -9042,7 +9042,12 @@ void US_ReporterGMP::write_pdf_report( void )
       process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
 
       //Write to autoflowGMPReport table as longblob
-      write_gmp_report_DB( tarFilename_t, fileName );
+      //write_gmp_report_DB( tarFilename_t, fileName );
+      //<------ TEST!!!!
+      QString file_pdf_toDB = subDirName + "/" + fileName;
+      write_gmp_report_DB( filePath, fileName );
+      //END TEST
+      
       qApp->processEvents();
       
       //do we need to remove created .tar.gz?
@@ -9055,6 +9060,7 @@ void US_ReporterGMP::write_pdf_report( void )
 void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf )
 {
   QString report_filepath = US_Settings::reportDir() + "/" + filename;
+  qDebug() << "Writing Blob of filePath -- " << report_filepath;
   
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
