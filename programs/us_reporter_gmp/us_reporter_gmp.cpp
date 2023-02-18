@@ -1088,9 +1088,10 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   remove_files_by_mask( i_folder, f_exts );
   
   //QString GMPReportfname = "GMP_Report_from_DB.tar.gz";
-  // <---- TESTING !!
-  QString GMPReportfname = "GMP_Report_from_DB.pdf";
-  //END TESTING
+  // // <---- TESTING !!
+  QString GMPReportfname = "GMP_Report_from_DB.tar";
+  // QString GMPReportfname = "GMP_Report_from_DB.pdf";
+  // //END TESTING
   
   QString GMPReportfpath = dirName + "/" + GMPReportfname;
   
@@ -1119,13 +1120,19 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   // process->setWorkingDirectory( dirName );
   // process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
 
-  // filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
-  // qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
-
   //<--- TESTING
-  filePath_db = GMPReportfpath;
+  QProcess *process = new QProcess(this);
+  process->setWorkingDirectory( dirName );
+  process->start("tar", QStringList() << "-xvf" << GMPReportfname );
+  // END TESTING
+  
+  filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
   qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
-  //END TESTING
+
+  // //<--- TESTING
+  // filePath_db = GMPReportfpath;
+  // qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+  // //END TESTING
   
   //Gui fields
   le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
@@ -9044,18 +9051,25 @@ void US_ReporterGMP::write_pdf_report( void )
 	 }
       ***************************************************************************/
       
-      //Archive using system TAR
-      QString tarFilename_t = subDirName + "_GMP_DB.tar.gz";
+      // //Archive using system TAR
+      // QString tarFilename_t = subDirName + "_GMP_DB.tar.gz";
+      // QProcess *process = new QProcess(this);
+      // process->setWorkingDirectory( US_Settings::reportDir() );
+      // process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
+      //<------ TESTING!!!!
+      QString tarFilename_t = subDirName + "_GMP_DB.tar";
       QProcess *process = new QProcess(this);
       process->setWorkingDirectory( US_Settings::reportDir() );
-      process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
-
+      process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+      //END TESTING
+      
       //Write to autoflowGMPReport table as longblob
-      //write_gmp_report_DB( tarFilename_t, fileName );
-      //<------ TEST!!!!
-      QString file_pdf_toDB = subDirName + "/" + fileName;
-      write_gmp_report_DB( file_pdf_toDB, fileName );
-      //END TEST
+      write_gmp_report_DB( tarFilename_t, fileName );
+
+      // //<------ TESTING!!!!
+      // QString file_pdf_toDB = subDirName + "/" + fileName;
+      // write_gmp_report_DB( file_pdf_toDB, fileName );
+      // //END TESTING
       
       qApp->processEvents();
       
