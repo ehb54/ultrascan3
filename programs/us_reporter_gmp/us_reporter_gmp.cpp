@@ -1087,9 +1087,13 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   QString i_folder = dirName + "/" + gmpReport_runname_selected;
   remove_files_by_mask( i_folder, f_exts );
   
-  QString GMPReportfname = "GMP_Report_from_DB.tar.gz";
+  //QString GMPReportfname = "GMP_Report_from_DB.tar.gz";
+  // <---- TESTING !!
+  QString GMPReportfname = "GMP_Report_from_DB.pdf";
+  //END TESTING
+  
   QString GMPReportfpath = dirName + "/" + GMPReportfname;
-
+  
   int db_read = db.readBlobFromDB( GMPReportfpath,
 				   "download_gmpReportData",
 				   gmpReport_id_selected.toInt() );
@@ -1110,14 +1114,19 @@ void US_ReporterGMP::load_gmp_report_db ( void )
       return;
     }
 
-  //Un-tar using system TAR && enable View Report btn:
-  QProcess *process = new QProcess(this);
-  process->setWorkingDirectory( dirName );
-  process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
+  // //Un-tar using system TAR && enable View Report btn:
+  // QProcess *process = new QProcess(this);
+  // process->setWorkingDirectory( dirName );
+  // process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
 
-  filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
+  // filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
+  // qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+
+  //<--- TESTING
+  filePath_db = GMPReportfpath;
   qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
-
+  //END TESTING
+  
   //Gui fields
   le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
   pb_view_report_db -> setEnabled( true );
