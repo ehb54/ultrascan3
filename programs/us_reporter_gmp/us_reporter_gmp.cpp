@@ -1115,7 +1115,7 @@ void US_ReporterGMP::load_gmp_report_db ( void )
     }
   
   // <--- TESTING: tried .tar.gz - NOT compatible (even for different Linux distros...) ****
-  //Un-tar using system TAR && enable View Report btn:
+  // //Un-tar using system TAR && enable View Report btn:
   QProcess *process = new QProcess(this);
   process->setWorkingDirectory( dirName );
   process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
@@ -9064,8 +9064,8 @@ void US_ReporterGMP::write_pdf_report( void )
       qApp->processEvents();
       
       //do we need to remove created .tar?
-      QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
-      QFile::remove( tar_path );
+      // QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
+      // QFile::remove( tar_path );
     }
 }
 
