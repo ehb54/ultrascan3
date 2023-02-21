@@ -464,7 +464,8 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
       FullRunName_auto += " (combined RI+IP) ";   //Captures protDev names...
     }
   
-  lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
+  //lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
+  lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg( FullRunName_auto ) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
@@ -1026,6 +1027,20 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 //load GMP Rpeort from DB (.PDF)
 void US_ReporterGMP::load_gmp_report_db ( void )
 {
+  // //TESTING *************
+  // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
+  // if ( ! fin.open( QIODevice::ReadOnly ) )
+  //  {
+  //    qDebug() << "cannot open file ";;
+  //    return;
+  //  }
+  // QByteArray blobData = fin.readAll();
+  // fin.close();
+
+  // qDebug() << "BlobData size -- " << blobData.size();
+  // return;
+  // //END TESTING *********
+  
   US_Passwd pw;
   US_DB2 db( pw.getPasswd() );
   
@@ -2590,8 +2605,14 @@ void US_ReporterGMP::view_report_db ( void )
 void US_ReporterGMP::reset_report_panel ( void )
 {
   le_loaded_run -> setText( "" );
-  te_fpath_info -> setText( "" );
 
+  if ( !auto_mode )
+    {
+      te_fpath_info    -> setText( "" );
+      le_loaded_run_db -> setText( "" );
+      te_fpath_info_db -> setText( "" );
+    }
+      
   //cleaning genTree && it's objects
   // for (int i = 0; i < genTree->topLevelItemCount(); ++i)
   //   {
