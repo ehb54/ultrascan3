@@ -9105,8 +9105,32 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
     }
-   
+
   QStringList qry;
+  
+  //BEFORE writing, check if writing has been initiated, or completed from different session:
+  int status_report_unique = 0;
+  qry << "autoflow_report_status"
+      << AutoflowID_auto;
+  
+  status_report_unique = db.statusQuery( qry );
+
+  qDebug() << "status_report_unique -- " << status_report_unique ;
+  
+  if ( !status_report_unique )
+    {
+      QMessageBox::information( this,
+				tr( "The Program State Updated / Being Updated" ),
+				tr( "This happened because you, or different user "
+				    "has already saved the GMP Report into DB using "
+				    "different program session. \n\n"
+				    "You can still view generated GMP Report in .PDF format "
+				    "after closing this dialog window.") );
+      return;
+    }
+  ///////////////////////////////////////////////////////////////////////////////////////////
+     
+  qry. clear();
   qry << "new_autoflow_gmp_report_record"
       << AutoflowID_auto            
       << FullRunName_auto           
