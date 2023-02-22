@@ -3322,17 +3322,17 @@ void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QS
   //Record to autoflowStatus:
   qry.clear();
   
-  QString analysisJson;  //  [{"6 / B / 260": "fitted"}]','6 / B / 260', 'fitted'
-
+  QString analysisJson;   //  [{"6 / B / 260": "fitted"}]','6 / B / 260', 'fitted'
+   
   QString analysisTriple = triple_name;
   analysisTriple.replace( ".", " / ");
 
   QString analysisAction = (FMB_changed == "YES") ? "modified" : "best fit selected";
   analysisAction += ", by " + fname + ", " + lname;
 
-  analysisJson += "[{";
-  analysisJson += "\"" + analysisTriple + "\":\"" + analysisAction + "\"";  
-  analysisJson += "}]";
+  // analysisJson += "[{";
+  // analysisJson += "\"" + analysisTriple + "\":\"" + analysisAction + "\"";  
+  // analysisJson += "}]";
    
   if ( autoflowStatusID )
     {
@@ -3340,7 +3340,7 @@ void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QS
       qry << "update_autoflowStatusAnalysisFitmen_record"
 	  << QString::number( autoflowStatusID )
 	  << QString::number( autoflowID_passed )
-	  << analysisJson
+	// << analysisJson                            //ALEXEY: not needed with new proc.
 	  << analysisTriple
 	  << analysisAction;
 	  

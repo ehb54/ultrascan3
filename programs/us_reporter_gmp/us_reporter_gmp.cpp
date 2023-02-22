@@ -5528,7 +5528,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
+			   "<caption align=left> <b><i>Meniscus Position Determination from FITMEN_MANUAL stage: </i></b> </caption>"
 			   "</table>"
 			   
 			   "<table style=\"margin-left:25px\">"
@@ -5542,17 +5542,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	  QString mfa_value    = mfa.value();
 	  QString pos          = mfa_value.split(", by")[0];
 	  QString performed_by = mfa_value.split(", by")[1];
+	  QStringList whenList = mfa_value.split(" ;");
+	  QString when         = (whenList.size() > 1) ? whenList[1] : "N/A";
 	  
 	  html_assembled += tr(			       
 			       "<tr>"
-			       "<td> Channel:  %1 </td>"
-			       "<td> Position: %2 </td>"
-			       "<td> Performed by: %3 </td>"
+			       "<td> Channel:  %1, </td>"
+			       "<td>           %2, </td>"
+			       "<td> by:       %3, </td>"
+			       "<td> at:       %4  </td>"
 			       "</tr>"
 						       )
 	    .arg( mfa.key()   )     //1
 	    .arg( pos )             //2
-	    .arg( performed_by )    //3   
+	    .arg( performed_by )    //3
+	    .arg( when )            //4
 	    ;
 	}
       
