@@ -2363,6 +2363,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
       if ( finishing_live_update )
 	{
+	  qDebug() << "Exp. completed: finishing_live_update:  " << finishing_live_update;
 	  in_reload_check_sysdata   = false;
 	  return;
 	}
@@ -3244,6 +3245,9 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      }
    else
      {
+       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt() -- "
+		<< cellchans.count() << ", " <<  CellChNumber_map[ runType ].toInt() << "; "
+		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt();
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
 
