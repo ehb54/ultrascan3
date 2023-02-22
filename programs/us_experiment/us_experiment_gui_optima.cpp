@@ -6563,6 +6563,7 @@ void US_ExperGuiUpload::submitExperiment()
       
       //get # cells with interference channels
       int ncells_interference = 0;
+      int nchannels_uvvis = 0;
       QStringList active_channels;
       for ( int kk = 0; kk < oprof.count(); kk++ )
       {
@@ -6576,6 +6577,9 @@ void US_ExperGuiUpload::submitExperiment()
 	     
 	     ++ncells_interference;
 	   }
+	 
+	 if ( oprof[ kk ].contains( uvvis ) )
+	   ++nchannels_uvvis;
       }
 
       // return;
@@ -7437,12 +7441,18 @@ void US_ExperGuiUpload::submitExperiment()
 	   }
 	 else if ( !ncells_interference && nwavl_tot )  //Absorbance ONLY
 	   {
-	     protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     //protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     protocol_details[ "CellChNumber" ]   = QString::number( nchannels_uvvis ); 
 	     qDebug() << "UV: CellChNumber: " << protocol_details[ "CellChNumber" ];
 	   }
 	 else if ( ncells_interference && nwavl_tot )   // BOTH
 	   {
-	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) + QString(",RI:")  + QString::number(rpSolut->nschan);
+	     // QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	     //                       QString(",RI:")  + QString::number(rpSolut->nschan);
+
+	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	                           QString(",RI:")  + QString::number( nchannels_uvvis );
+
 	     protocol_details[ "CellChNumber" ] = cellnumber;
 
 	     qDebug() << "UV & ITF: cellnumber: " << cellnumber;
