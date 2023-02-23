@@ -2881,7 +2881,6 @@ void US_ReporterGMP::generate_report( void )
     }
   //End of Part 2
   
-
   write_pdf_report( );
   qApp->processEvents();
 
@@ -2889,6 +2888,7 @@ void US_ReporterGMP::generate_report( void )
   
   if ( auto_mode )
     {
+
       pb_view_report_auto->setVisible( true );
 
       //copy autoflow record to autoflowHistory table:
@@ -9178,7 +9178,47 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 	  qry.clear();
 	  qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
 	  db.query( qry );
+
+	  //Maybe revert 'reporting' stage in the autoflowStages??
 	}
+      else
+	{
+	  //Report generated && .PDF GMP report saved to autoflowGMPReport:
+	  //No, we can write information on who/when generated report: ///////////////////////
+
+	  //get user info
+	  qry.clear();
+	  qry <<  QString( "get_user_info" );
+	  db.query( qry );
+	  db.next();
+	  
+	  int ID        = db.value( 0 ).toInt();
+	  QString fname = db.value( 1 ).toString();
+	  QString lname = db.value( 2 ).toString();
+	  QString email = db.value( 4 ).toString();
+	  int     level = db.value( 5 ).toInt();
+
+	  QString reporting_Json;
+
+	  reporting_Json. clear();
+	  reporting_Json += "{ \"Person\": ";
+	  
+	  reporting_Json += "[{";
+	  reporting_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+	  reporting_Json += "\"fname\":\""  + fname                     + "\",";
+	  reporting_Json += "\"lname\":\""  + lname                     + "\",";
+	  reporting_Json += "\"email\":\""  + email                     + "\",";
+	  reporting_Json += "\"level\":\""  + QString::number( level )  + "\"";
+	  reporting_Json += "}]}";
+	  	  
+	  qry.clear();
+	  qry << "update_autoflowStatusReport_record"
+	      << autoflowStatusID
+	      << AutoflowID_auto
+	      << reporting_Json;
+	  
+	  db.query( qry );
+      	}
     }
   else
     {
