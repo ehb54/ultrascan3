@@ -738,7 +738,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    unsigned int org_errors_size = nnls_errors.size();
 
    nnls_B.resize(max_pr_len, 0);
-#warning propagating last error value, is this right?
+
    if ( use_errors && org_errors_size < max_pr_len )
    {
       editor_msg("darkred", QString(us_tr("NNLS propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\n")).arg(org_errors_size).arg(max_pr_len));
@@ -746,7 +746,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    }
 
    if ( use_errors ) {
-      nnls_errors.resize( max_pr_len, nnls_errors.back() );
+      prop_pr_sd_tail( nnls_errors, max_pr_len );
    }
 
    editor_msg("dark blue", 
@@ -1102,21 +1102,33 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       saxs_residuals_window->close();
    }
    
-   saxs_residuals_window = 
-      new US_Hydrodyn_Saxs_Residuals(
-                                     &saxs_residuals_widget,
-                                     plot_pr->width(),
-                                     us_tr("NNLS residuals & difference targeting:\n") + title,
-                                     nnls_r,
-                                     difference,
-                                     residual,
-                                     nnls_B,
-                                     true,
-                                     true,
-                                     true,
-                                     pen_width
-                                     );
-   saxs_residuals_window->show();
+   {
+      vector < double > use_nnls_r     = nnls_r;
+      vector < double > use_nnls_B     = nnls_B;
+      vector < double > use_difference = difference;
+      vector < double > use_residual   = residual;
+      vector < double > no_error;
+
+      crop_pr_tail( use_nnls_r, use_nnls_B, no_error );
+      use_difference.resize( use_nnls_r.size() );
+      use_residual  .resize( use_nnls_r.size() );
+      
+      saxs_residuals_window = 
+         new US_Hydrodyn_Saxs_Residuals(
+                                        &saxs_residuals_widget,
+                                        plot_pr->width(),
+                                        us_tr("NNLS residuals & difference targeting:\n") + title,
+                                        use_nnls_r,
+                                        use_difference,
+                                        use_residual,
+                                        use_nnls_B,
+                                        true,
+                                        true,
+                                        true,
+                                        pen_width
+                                        );
+      saxs_residuals_window->show();
+   }
    
    // save as csv
    
@@ -1245,14 +1257,14 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    best_fit_target.resize(max_pr_len, 0);
 
    unsigned int org_errors_size = nnls_errors.size();
-#warning propagating last error value, is this right?
+
    if ( use_errors && org_errors_size < max_pr_len )
    {
       editor_msg("darkred", QString(us_tr("Best propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\n")).arg(org_errors_size).arg(max_pr_len));
       nnls_csv_footer << QString(us_tr("\"Best fit propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\"")).arg(org_errors_size).arg(max_pr_len);
    }
    if ( use_errors ) {
-      best_fit_target_errors.resize( max_pr_len, best_fit_target_errors.back() );
+      prop_pr_sd_tail( best_fit_target_errors, max_pr_len );
    }
 
    vector < double > a(best_fit_models.size());

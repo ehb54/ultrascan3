@@ -85,9 +85,9 @@ static QStringList pr_csv_pad_holes( const QStringList &qsl ) {
       return qsl;
    }
 
-   US_Vector::printvector( "pr_csv_pad_holes() r", r );
+   // US_Vector::printvector( "pr_csv_pad_holes() r", r );
 
-   TSO << QString( "pr_csv_pad_holes() r is %1\n" ).arg( fixable ? "fixable" : "not Fixable" );
+   // TSO << QString( "pr_csv_pad_holes() r is %1\n" ).arg( fixable ? "fixable" : "not Fixable" );
 
    if ( !fixable ) {
       return qsl;
@@ -169,7 +169,10 @@ static QStringList pr_csv_pad_holes( const QStringList &qsl ) {
                qDebug() << QString( "pr_csv_pad_holes() : curve %1 %2 no nonneg sds! punt" ).arg( qsl_data_new[i][0] ).arg( qsl_data_new[i][3] ) ;
                break;
             }
+            sd_gz.sort();
             double use_min_sd = sd_gz.front() * 1e-3;
+            // let set_pr_sd handle setting up the values
+            use_min_sd = 0;
             // qDebug() << QString( "use min sd for curve %1 is %2" ).arg( qsl_data_new[i][0] ).arg( use_min_sd );
             // replace zeros with
             for ( int j = 4; j < (int) qsl_data_new[i].size(); ++j )  {
@@ -1002,10 +1005,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       vector < double > nic;
       vector < double > nic_errors;
 
-      QTextStream(stdout)
-         << "append all currently plotted I(q)s to qsl\n"
-         << US_Vector::qs_vector3( "plotted q, I, I_error", plotted_q[i], plotted_I[i], plotted_I_error[i] )
-         ;
+      // QTextStream(stdout)
+      //    << "append all currently plotted I(q)s to qsl\n"
+      //    << US_Vector::qs_vector3( "plotted q, I, I_error", plotted_q[i], plotted_I[i], plotted_I_error[i] )
+      //    ;
       if ( !usu.interpolate_iqq_by_case( plotted_q[i], plotted_I[i], plotted_I_error[i], q, nic, nic_errors ) )
       {
          editor_msg("red", usu.errormsg );
@@ -2451,6 +2454,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       return;
    }
 
+   // QTextStream(stdout) << "files to load:\n---\n" << filenames.join("\n") << "\n---\n";
+
    if ( !just_plotted_curves )
    {
       filename = filenames[0];
@@ -2476,6 +2481,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
    QString res = "";
    unsigned int startline = 1;
    unsigned int pop_last = 0;
+
+   pad_pr_plotted();
+   
    if ( just_plotted_curves || f.open(QIODevice::ReadOnly) )
    {
       if ( file_curve_type(f.fileName()) != -1 &&
@@ -2515,8 +2523,6 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
    
       if ( ext == "csv" || just_plotted_curves )
       {
-         qDebug() << "load_pr 1";
-          
          // attempt to read a csv file
          QStringList qsl;
          QStringList qsl_data_lines_plotted;  // for potential later average save
@@ -2585,9 +2591,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             qsl = new_qsl;
          }
 
+         // qDebug() << "pr_csv_pad_holes() called on qsl";
          qsl = pr_csv_pad_holes( qsl );
 
-         qDebug() << "load_pr 2";
          qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
          if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
          {
@@ -2624,7 +2630,6 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             }
          }
 
-         qDebug() << "load_pr 3";
          // get the r values
          QStringList qsl_r;
          QString header_tag;
@@ -2672,13 +2677,13 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          // ok, we have a header line
 
          // do we have multiple additonal files to plot ?
-         qDebug() << "load_pr 4";
+
+         map < QString, QString > source_filenames;
 
          if ( filenames.size() > 1 )
          {
-            qDebug() << "load_pr 4-1";
-
             map < QString, bool > interp_msg_done;
+            
             for ( unsigned int i = 1; i < (unsigned int)filenames.size(); i++ )
             {
                TSO << QString("trying file %1 %2\n").arg(i).arg(filenames[i]);
@@ -2751,6 +2756,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   qsl2 = new_qsl;
                }
 
+               // qDebug() << "pr_csv_pad_holes() called on qsl2";
                qsl2 = pr_csv_pad_holes( qsl2 );
 
                qsl2_headers = qsl2.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
@@ -2803,10 +2809,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   return;
                }
 
-               qDebug() << "load_pr 4-2";
-
                QStringList qsl_sd = qsl2.filter(",\"P(r) sd\",");
-               qDebug() << QString( "qsl_sd.size() %1" ).arg( qsl_sd.size() );
+               // qDebug() << QString( "qsl_sd.size() %1" ).arg( qsl_sd.size() );
 
                // get the r values
                QStringList qsl_r;
@@ -2872,10 +2876,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                      break;
                   }
                }
-               // TSO << QString("check all match %1\n").arg(all_match ? "true" : false);
 
+               // TSO << QString("check all match %1\n").arg(all_match ? "true" : "false");
 
-               qDebug() << "load_pr 4-9";
                for ( QStringList::iterator it = qsl_data.begin();
                      it != qsl_data.end();
                      it++ )
@@ -2898,6 +2901,14 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                         }
                         qsl << qs_tmp;
                         // TSO << "yes, all match\nadding:" << qs_tmp << endl;
+                        {
+                           QStringList qsl_pr_8;
+                           QStringList new_qsl = qs_tmp.split( "," );
+                           for ( int i = 0; i < 8 && i < (int) new_qsl.size(); ++i ) {
+                              qsl_pr_8 << new_qsl[i];
+                           }
+                           source_filenames[ qsl_pr_8.join(",") ] = QFileInfo(f2).fileName();
+                        }
                      } else {
                         // TSO << "not all match, interpolate\n";
                         if ( !interp_msg_done.count(f2.fileName()) )
@@ -2910,40 +2921,99 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                         QStringList new_pr_fields;
                         // pull the data values
                         vector < double > this_pr;
-                        for ( unsigned int i = 0; i < 5; i++ )
+                        for ( unsigned int i = 0; i < 4; i++ )
                         {
                            new_pr_fields.push_back(qsl_pr[i]);
                         }
                         {
                            QStringList::iterator it2 = qsl_pr.begin();
-                           it2 += 5;
+                           it2 += 4;
                            for ( ; it2 != qsl_pr.end(); it2++ )
                            {
                               this_pr.push_back((*it2).toDouble());
                            }
                         }
                         // interpolate r2, pr to r, reappend to new_pr_fields
-#warning warn also interpolate error if exists
-                        vector < double > npr = interpolate(r, r2, this_pr);
-                        QString line = QString("%1,%2\n")
-                           .arg(new_pr_fields.join(","))
-                           .arg(vector_double_to_csv(npr));
-                        // TSO << QString("r:\n%1\n").arg(vector_double_to_csv(r));
-                        // TSO << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
-                        // TSO << QString("org line:\n%1\n").arg(*it);
-                        // TSO << QString("new interpolated line:\n%1\n").arg(line);
-                        if ( line.contains(QRegExp("(Average|Standard deviation)")) )
-                        {
-                           line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                        vector < double > npr;
+                        bool ok = true;
+                        if ( !interpolate(r, r2, this_pr, npr ) ) {
+                           editor_msg( "red",  QString( us_tr("Interpolation error on curve in %1 ") ).arg( f2.fileName() ) );
+                           ok = false;
                         }
-                        qsl << line;
+
+                        if ( ok ) {
+                           QString qs_assoc_sd = assoc_sd( new_pr_fields[0], qsl_sd );
+                           // qDebug() << "spec qs_assoc_sd " << qs_assoc_sd;
+                           if ( !qs_assoc_sd.isEmpty() ) {
+                              // TSO << "--> Found SD for " << new_pr_fields[0] << " in " << QFileInfo(f2).baseName() << "\n";
+
+                              // the new pr_error:
+                              QStringList new_pr_error_fields;
+                              QStringList qsl_pr_error = qs_assoc_sd.split( "," );
+
+                              if ( qsl_pr_error.size() > 4 ) {
+                                 // pull the error values
+                                 vector < double > this_pr_error;
+                                 for ( unsigned int i = 0; i < 4; i++ ) {
+                                    new_pr_error_fields.push_back(qsl_pr_error[i]);
+                                 }
+                                 {
+                                    QStringList::iterator it2 = qsl_pr_error.begin();
+                                    it2 += 4;
+                                    for ( ; it2 != qsl_pr_error.end(); it2++ )
+                                    {
+                                       this_pr_error.push_back((*it2).toDouble());
+                                    }
+                                 }
+
+                                 vector < double > new_pr_error;
+                                 if ( !interpolate(r, r2, this_pr_error, new_pr_error ) ) {
+                                    editor_msg( "red",  QString( us_tr("Interpolation error on curve in %1 ") ).arg( f2.fileName() ) );
+                                 } else {
+                                    QString line = QString("%1,%2\n")
+                                       .arg(new_pr_error_fields.join(","))
+                                       .arg(vector_double_to_csv(new_pr_error));
+                                    // TSO << QString("r:\n%1\n").arg(vector_double_to_csv(r));
+                                    // TSO << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
+                                    // TSO << QString("org line:\n%1\n").arg(qs_assoc_sd);
+                                    // TSO << QString("new interpolated line:\n%1\n").arg(line);
+                                    if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                                    {
+                                       line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                                    }
+                                    qsl << line;
+                                 }
+                              }
+                           }
+
+                           QString line = QString("%1,%2\n")
+                              .arg(new_pr_fields.join(","))
+                              .arg(vector_double_to_csv(npr));
+                           // TSO << QString("r:\n%1\n").arg(vector_double_to_csv(r));
+                           // TSO << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
+                           // TSO << QString("org line:\n%1\n").arg(*it);
+                           // TSO << QString("new interpolated line:\n%1\n").arg(line);
+                           if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                           {
+                              line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                           }
+                           qsl << line;
+                           {
+                              QStringList qsl_pr_8;
+                              QStringList new_qsl = line.split( "," );
+                              for ( int i = 0; i < 8 && i < (int) new_qsl.size(); ++i ) {
+                                 qsl_pr_8 << new_qsl[i];
+                              }
+                              source_filenames[ qsl_pr_8.join(",") ] = QFileInfo(f2).fileName();
+                           }
+                        }
                      }
                   }
                }
             }            
          }
 
-         qDebug() << "load_pr 5";
+         // TSO << US_Vector::qs_mapqsqs( "source_filenames", source_filenames );
 
          // append all currently plotted p(r)s to qsl
          bool added_interpolate_msg = false;
@@ -2952,7 +3022,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          {
             vector < double > npr       = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
             vector < double > npr_error;
-            if ( plotted_pr_not_normalized_error.size() ) {
+            if ( plotted_pr_not_normalized_error[i].size() ) {
+               // US_Vector::printvector3( "errors exist r, plotted_r[i], plotted_pr_not_nomalized_error[i]", r, plotted_pr[i], plotted_pr_not_normalized_error[i] );                  
                npr_error = interpolate(r, plotted_r[i], plotted_pr_not_normalized_error[i]);
             }
             if ( !added_interpolate_msg && r.size() > 1 )
@@ -3034,7 +3105,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          }
 
          QStringList qsl_sd = qsl.filter(",\"P(r) sd\",");
-         qDebug() << QString( "qsl_sd.size() %1" ).arg( qsl_sd.size() );
+         // qDebug() << QString( "qsl_sd.size() %1" ).arg( qsl_sd.size() );
 
          if ( !just_plotted_curves )
          {
@@ -3207,6 +3278,17 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                it++ )
          {
             QStringList qsl_tmp = (*it).split( "," );
+            QString use_filename = QFileInfo(filename).fileName();
+            {
+               QStringList qsl_tmp_8;
+               for ( int i = 0; i < 8 && i < (int) qsl_tmp.size(); ++i ) {
+                  qsl_tmp_8 << qsl_tmp[i];
+               }
+               if ( source_filenames.count( qsl_tmp_8.join(",") ) ) {
+                  use_filename = source_filenames[ qsl_tmp_8.join(",") ];
+               }
+            }
+            
             if ( map_sel_names.count(qsl_tmp[0]) )
             {
                // TSO << "loading: " << qsl_tmp[0] << endl;
@@ -3283,10 +3365,12 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                                  .arg( pr_error.size() )
                                  .arg( pr.size() )
                                  );
-                     US_Vector::printvector3( "pr sd mismatch, r, pr, pr_error:", r, pr, pr_error );
+                     // US_Vector::printvector3( "pr sd mismatch, r, pr, pr_error:", r, pr, pr_error );
                      pr_error.clear();
                   }
                }
+
+               set_pr_sd( r, pr, pr_error );
 
                if ( run_nnls || run_best_fit )
                {
@@ -3332,7 +3416,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                               .arg( pr_error.size() )
                               .arg( pr.size() )
                               );
-                  US_Vector::printvector3( "pr sd mismatch, r, pr, pr_error:", r, pr, pr_error );
+                  // US_Vector::printvector3( "pr sd mismatch, r, pr, pr_error:", r, pr, pr_error );
                   pr_error.clear();
                }
 
@@ -3352,10 +3436,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                sum_count++;
 
                if ( !(create_avg && only_plot_stats) && !run_nnls && !run_best_fit ){
-                  (*remember_mw)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = tmp_mw;
-                  (*remember_mw_source)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = "loaded from csv";
-                  plot_one_pr( this_r, pr, pr_error, QFileInfo(filename).fileName() + " " + qsl_tmp[0], skip_mw );
-                  compute_rg_to_progress( this_r, pr, QFileInfo(filename).fileName() + " " + qsl_tmp[0] );
+                  (*remember_mw)[use_filename + " " + qsl_tmp[0]] = tmp_mw;
+                  (*remember_mw_source)[use_filename + " " + qsl_tmp[0]] = "loaded from csv";
+                  plot_one_pr( this_r, pr, pr_error, use_filename + " " + qsl_tmp[0], skip_mw );
+                  compute_rg_to_progress( this_r, pr, use_filename + " " + qsl_tmp[0] );
                }
             }
          }
@@ -3724,7 +3808,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          startline--;
       }
 
-      qDebug() << "load pr normal load"; 
+      // qDebug() << "load pr normal load"; 
 
       while ( !ts.atEnd() ) {
          // QString     qs  = ts.readLine();
@@ -3740,7 +3824,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             break;
          }
          
-         qDebug() << QString( "load_pr() qsl size %1 %2" ).arg( qsl.size() ).arg( qsl.join( "," ) );
+         // qDebug() << QString( "load_pr() qsl size %1 %2" ).arg( qsl.size() ).arg( qsl.join( "," ) );
 
          r .push_back( qsl[0].toDouble() );
          pr.push_back( qsl[1].toDouble() );
@@ -3750,6 +3834,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          }
       }
       f.close();
+      // US_Vector::printvector3( "pr load 0 r, pr, pr_error", r, pr, pr_error, 6, 10 );
 
       if ( pr_error.size() && pr.size() != pr_error.size() ) {
          pr_error.clear();
@@ -4648,5 +4733,583 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       cb_guinier   ->setChecked( false );
       cb_user_range->setChecked( false );
       set_guinier();
+   }
+}
+
+void US_Hydrodyn_Saxs::load_gnom()
+{
+   cb_guinier->setChecked( false );
+   set_guinier();
+   // map < QString, QString > params;
+   // params[ "wild" ] = "10.7";
+   // US_SAS_Dammin * usd = new US_SAS_Dammin( (US_Hydrodyn *)us_hydrodyn, 41e0, params );
+   // usd->show();
+   // return;
+
+   plotted = false;
+   QString use_dir = 
+      our_saxs_options->path_load_gnom.isEmpty() ?
+      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
+      our_saxs_options->path_load_gnom;
+
+   select_from_directory_history( use_dir, this );
+
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.out" );
+   if (filename.isEmpty())
+   {
+      return;
+   }
+   add_to_directory_history( filename );
+
+   QFile f(filename);
+   our_saxs_options->path_load_gnom = QFileInfo(filename).absolutePath();
+   QString ext = QFileInfo(filename).suffix().toLower();
+   bool plot_gnom = false;
+   vector < double > gnom_Iq_reg;
+   vector < double > gnom_Iq_exp;
+   vector < double > gnom_q;
+
+   if ( f.open(QIODevice::ReadOnly) )
+   {
+      QStringList qsl_gnom;
+      {
+         QTextStream ts(&f);
+         while ( !ts.atEnd() )
+         {
+            qsl_gnom << ts.readLine();
+         }
+      }
+      f.close();
+      f.open(QIODevice::ReadOnly);
+      bool ask_save_mw_to_gnom = false;
+      double gnom_mw = 0e0;
+
+      double units = 1;
+      if ( our_saxs_options->iq_scale_ask )
+      {
+         switch( QMessageBox::information( this, 
+                                           us_tr("UltraScan"),
+                                           us_tr("Is this file in 1/Angstrom or 1/nm units?"),
+                                           "1/&Angstrom", 
+                                           "1/&nm", 0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // load it as is
+            units = 1.0;
+            break;
+         case 1: // rescale
+            units = 0.1;
+            break;
+         } 
+      } else {
+         if ( our_saxs_options->iq_scale_angstrom ) 
+         {
+            units = 1.0;
+         } else {
+            units = 0.1;
+         }
+      }
+         
+      QTextStream ts(&f);
+      QRegExp iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
+      QRegExp prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
+      QRegExp rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
+      QRegExp rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
+      QRegExp rx5("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
+      QRegExp rxinputfile("Input file.s. : (\\S+)\\s*$");
+      QString tmp;
+      vector < QString > datafiles;
+      bool sprr_saved = false;
+      while ( !ts.atEnd() )
+      {
+         tmp = ts.readLine();
+         if ( rxinputfile.indexIn(tmp) != -1 ) 
+         {
+            // datafiles.push_back(rxinputfile.cap(1).trimmed());
+            continue;
+         }
+         if ( iqqh.indexIn(tmp) != -1 )
+         {
+            vector < double > I_exp;
+            vector < double > I_reg;
+            vector < double > q;
+            // cout << "start of iqq\n";
+            ts.readLine(); // blank line
+            while ( !ts.atEnd() )
+            {
+               tmp = ts.readLine();
+               if ( rx5.indexIn(tmp) != -1 )
+               {
+                  q.push_back(rx5.cap(1).toDouble() * units );
+                  I_exp.push_back(rx5.cap(2).toDouble());
+                  I_reg.push_back(rx5.cap(5).toDouble());
+                  // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
+               } else {
+                  // end of iqq?
+                  if ( rx2.indexIn(tmp) == -1 )
+                  {
+                     plot_gnom = true;
+                     gnom_Iq_reg = I_reg;
+                     gnom_Iq_exp = I_exp;
+                     gnom_q = q;
+                     // plot_one_iqq(q, I, QFileInfo(filename).fileName());
+                     // if ( plotted )
+                     // {
+                     //   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+                     //   editor->append("I(q) vs q plot done\n");
+                     //   plotted = false;
+                     // }
+                     break;
+                  } else {
+                     // cout << "iqq 2 fielder ignored\n";
+                  }
+               }
+            }
+            if ( ts.atEnd() &&
+                 q.size() )
+            {
+               plot_gnom = true;
+               gnom_Iq_reg = I_reg;
+               gnom_Iq_exp = I_exp;
+               gnom_q = q;
+            }
+            continue;
+         }
+         if ( prrh.indexIn(tmp) != -1 )
+         {
+            vector < double > r;
+            vector < double > pr;
+            vector < double > pre;
+            // cout << "start of prr\n";
+            ts.readLine(); // blank line
+            while ( !ts.atEnd() ) {
+               tmp = ts.readLine();
+               if ( rx3.indexIn(tmp) != -1 )
+               {
+                  r  .push_back(rx3.cap(1).toDouble() / units);
+                  pr .push_back(rx3.cap(2).toDouble());
+                  pre.push_back(rx3.cap(3).toDouble());
+                  // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
+               } else {
+                  // end of prr
+                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+                  QStringList mwline = qsl_gnom.filter(qx_mw);
+                  if ( mwline.size() )
+                  {
+                     if ( qx_mw.indexIn(mwline[0]) == -1 )
+                     {
+                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
+                        gnom_mw = 0e0;
+                     } else {
+                        // cout << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+                        gnom_mw = qx_mw.cap(1).toDouble();
+                     }
+                     if ( mwline.size() > 1 )
+                     {
+                        if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                           US_Static::us_message(us_tr("Please note:"), 
+                                                 QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
+                                                               "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+                        }
+                     }
+                     if ( gnom_mw > 0e0 )
+                     {
+                        (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
+                        (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+                     }
+                  }
+                  gnom_mw = get_mw(filename,false);
+                  if ( !mwline.size() )
+                  {
+                     ask_save_mw_to_gnom = true;
+                  }
+                  if ( cb_normalize->isChecked() )
+                  {
+                     normalize_pr(r, &pr, &pre, get_mw(filename, false));
+                  }
+                  plot_one_pr(r, pr, pre, QFileInfo(filename).fileName());
+                  compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
+
+                  // save sprr
+                  if ( !sprr_saved ) {
+                     sprr_saved = true;
+                     QString rxstr = "\\..*$";
+                     QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
+                     if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+                        dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+                     }
+
+                     double mw = get_mw(filename, false);
+                     QStringList sprrcontents;
+                     
+                     sprrcontents << 
+                        QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
+                        .arg(
+                             mw == -1e0
+                             ? QString( "" )
+                             : QString( " mw %1 Daltons" ).arg( mw )
+                             )
+                        ;
+
+                     for ( int i = 0; i < (int)r.size(); ++i ) {
+                        sprrcontents << QString( "%1 %2 %3\n" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+                     }
+                     QString error;
+                     QString putcontents = sprrcontents.join("");
+                     if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
+                        editor_msg( "red", error );
+                     } else {
+                        editor_msg( "blue", QString( "created %1" ).arg( dest ) );
+                     }            
+                     // save reinterpolated to current bin size sprr
+                     {
+                        bool ok = true;
+                        vector < double > to_grid;
+                        // build to grid
+                     
+                        for ( double x = 0; x < r.back(); x += our_saxs_options->bin_size ) {
+                           to_grid.push_back(x);
+                        }
+
+                        // interpolate pr as ipr
+                        vector < double > ipr;
+                     
+                        if ( !interpolate( to_grid, r, pr, ipr ) ) {
+                           editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+                           ok = false;
+                        }
+
+                        if ( pr.size() != pre.size() ) {
+                           qDebug() << "gnom load sprr create, data error length mismatch";
+                           ok = false;
+                        }
+                        
+                        // interpolate pr + pre as iprppre
+                        vector < double > iprppre;
+                        if ( ok ) {
+                           vector < double > prppre = pr;
+                           for ( int i = 0; i < (int)prppre.size(); ++i ) {
+                              prppre[ i ] += pre[ i ];
+                           }
+                        
+                           if ( !interpolate( to_grid, r, prppre, iprppre ) ) {
+                              editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+                              ok = false;
+                           }
+                        }
+                     
+                        // interpolate pr - pre as iprmpre
+                        vector < double > iprmpre;
+                        if ( ok ) {
+                           vector < double > prmpre = pr;
+                           for ( int i = 0; i < (int)prmpre.size(); ++i ) {
+                              prmpre[ i ] -= pre[ i ];
+                           }
+                        
+                           if ( !interpolate( to_grid, r, prmpre, iprmpre ) ) {
+                              editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+                              ok = false;
+                           }
+                        }
+
+                        if ( ok ) {
+                           // take ( iprppre - iprmpre ) / 2 as ipre
+                           vector < double > ipre(iprppre.size());
+                           for ( int i = 0; i < (int)iprmpre.size(); ++i ) {
+                              ipre[ i ] = 0.5 * ( iprppre[ i ] - iprmpre[ i ] );
+                           }
+                     
+                           // // is this different from iprppre - ipr or ipr - iprmpre ?
+                           // answer is no, we could get away with one less interpolation
+                           // {
+                           //    vector < double > iprppremipr = iprppre;
+                           //    vector < double > iprmiprmpre = ipr;
+
+                           //    for ( int i = 0; i < (int)ipr.size(); ++i ) {
+                           //       iprppremipr[ i ] -= ipr[i];
+                           //       iprmiprmpre[ i ] -= iprmpre[i];
+                           //    }
+                           //    QTextStream(stdout) << US_Vector::qs_vector4( "to_grid, ipre, iprppre-ipr, ipr-iprmpre", to_grid, ipre, iprppremipr, iprmiprmpre );
+                           // }
+                           // now create reinterpolated version
+                           QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
+                           if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+                              dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+                           }
+
+                           double mw = get_mw(filename, false);
+                           QStringList sprrcontents;
+                     
+                           sprrcontents << 
+                              QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
+                              .arg(
+                                   mw == -1e0
+                                   ? QString( "" )
+                                   : QString( " mw %1 Daltons" ).arg( mw )
+                                   )
+                              ;
+
+                           for ( int i = 0; i < (int)to_grid.size(); ++i ) {
+                              sprrcontents << QString( "%1 %2 %3\n" ).arg( to_grid[i], 0, 'g', 9 ).arg( ipr[i], 0, 'g', 9 ).arg( ipre[i], 0, 'g', 9 );
+                           }
+                           // add trailing zero
+                           sprrcontents << QString( "%1 0 0\n" ).arg( to_grid.back() + our_saxs_options->bin_size, 0, 'g', 9 );
+                           QString error;
+                           QString putcontents = sprrcontents.join("");
+                           if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
+                              editor_msg( "red", error );
+                           } else {
+                              editor_msg( "blue", QString( "created %1" ).arg( dest ) );
+                           }
+                        }
+                     }
+                  }
+                  r  .clear();
+                  pr .clear();
+                  pre.clear();
+                  if ( plotted )
+                  {
+                     editor_msg( "black", "P(r) plot done\n" );
+                     plotted = false;
+                  }
+                  ts.readAll();
+                  break;
+               }
+            }
+            if ( r.size() ) {
+               gnom_mw = get_mw(filename,false);
+               if ( cb_normalize->isChecked() )
+               {
+                  normalize_pr(r, &pr, &pre, get_mw(filename, false));
+               }
+               plot_one_pr(r, pr, pre, QFileInfo(filename).fileName());
+               compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
+
+               // save sprr
+               if ( !sprr_saved ) {
+                  QString rxstr = "\\..*$";
+                  QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
+                  if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+                     dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+                  }
+
+                  double mw = get_mw(filename, false);
+                  QStringList sprrcontents;
+                     
+                  sprrcontents << 
+                     QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
+                     .arg(
+                          mw == -1e0
+                          ? QString( "" )
+                          : QString( " mw %1 Daltons" ).arg( mw )
+                          )
+                     ;
+
+                  for ( int i = 0; i < (int)r.size(); ++i ) {
+                     sprrcontents << QString( "%1 %2 %3\n" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+                  }
+                  QString error;
+                  QString putcontents = sprrcontents.join("");
+                  if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
+                     editor_msg( "red", error );
+                  } else {
+                     editor_msg( "blue", QString( "created %1" ).arg( dest ) );
+                  }
+                  // save reinterpolated to current bin size sprr
+                  {
+                     bool ok = true;
+                     vector < double > to_grid;
+                     // build to grid
+                     
+                     for ( double x = 0; x < r.back(); x += our_saxs_options->bin_size ) {
+                        to_grid.push_back(x);
+                     }
+
+                     // interpolate pr as ipr
+                     vector < double > ipr;
+                     
+                     if ( !natural_spline_interpolate( to_grid, r, pr, ipr ) ) {
+                        editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+                        ok = false;
+                     }
+
+                     if ( pr.size() != pre.size() ) {
+                        qDebug() << "gnom load sprr create, data error length mismatch";
+                        ok = false;
+                     }
+                        
+                     // interpolate pr + pre as iprppre
+                     vector < double > iprppre;
+                     if ( ok ) {
+                        vector < double > prppre = pr;
+                        for ( int i = 0; i < (int)prppre.size(); ++i ) {
+                           prppre[ i ] += pre[ i ];
+                        }
+                        
+                        if ( !natural_spline_interpolate( to_grid, r, prppre, iprppre ) ) {
+                           editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+                           ok = false;
+                        }
+                     }
+                     
+                     // interpolate pr - pre as iprmpre
+                     vector < double > iprmpre;
+                     if ( ok ) {
+                        vector < double > prmpre = pr;
+                        for ( int i = 0; i < (int)prmpre.size(); ++i ) {
+                           prmpre[ i ] -= pre[ i ];
+                        }
+                        
+                        if ( !natural_spline_interpolate( to_grid, r, prmpre, iprmpre ) ) {
+                           editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+                           ok = false;
+                        }
+                     }
+
+                     if ( ok ) {
+                        // take ( iprppre - iprmpre ) / 2 as ipre
+                        vector < double > ipre(iprppre.size());
+                        for ( int i = 0; i < (int)iprmpre.size(); ++i ) {
+                           ipre[ i ] = 0.5 * ( iprppre[ i ] - iprmpre[ i ] );
+                        }
+                     
+                        // // is this different from iprppre - ipr or ipr - iprmpre ?
+                        // answer is no, we could get away with one less interpolation
+                        // {
+                        //    vector < double > iprppremipr = iprppre;
+                        //    vector < double > iprmiprmpre = ipr;
+
+                        //    for ( int i = 0; i < (int)ipr.size(); ++i ) {
+                        //       iprppremipr[ i ] -= ipr[i];
+                        //       iprmiprmpre[ i ] -= iprmpre[i];
+                        //    }
+                        //    QTextStream(stdout) << US_Vector::qs_vector4( "to_grid, ipre, iprppre-ipr, ipr-iprmpre", to_grid, ipre, iprppremipr, iprmiprmpre );
+                        // }
+                        // now create reinterpolated version
+
+                        QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
+                        if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+                           dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+                        }
+
+                        double mw = get_mw(filename, false);
+                        QStringList sprrcontents;
+                     
+                        sprrcontents << 
+                           QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
+                           .arg(
+                                mw == -1e0
+                                ? QString( "" )
+                                : QString( " mw %1 Daltons" ).arg( mw )
+                                )
+                           ;
+
+                        for ( int i = 0; i < (int)to_grid.size(); ++i ) {
+                           sprrcontents << QString( "%1 %2 %3\n" ).arg( to_grid[i], 0, 'g', 9 ).arg( ipr[i], 0, 'g', 9 ).arg( ipre[i], 0, 'g', 9 );
+                        }
+                        // add trailing zero
+                        sprrcontents << QString( "%1 0 0\n" ).arg( to_grid.back() + our_saxs_options->bin_size, 0, 'g', 9 );
+                        QString error;
+                        QString putcontents = sprrcontents.join("");
+                        if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
+                           editor_msg( "red", error );
+                        } else {
+                           editor_msg( "blue", QString( "created %1" ).arg( dest ) );
+                        }            
+                     }
+                  }
+               }
+
+               r  .clear();
+               pr .clear();
+               pre.clear();
+               if ( plotted )
+               {
+                  editor_msg( "black", "P(r) plot done\n" );
+                  plotted = false;
+               }
+            }
+         }
+      }
+      f.close();
+      if ( ask_save_mw_to_gnom && gnom_mw )
+      {
+         switch( QMessageBox::information( this, 
+                                           us_tr("Save GNOM with Molecular Weight"),
+                                           QString(us_tr("Do you want to save the molecular weight entered (%1 Daltons) into the gnom.out file?"))
+                                           .arg(gnom_mw),
+                                           "&Ok",  
+                                           "&Cancel", 
+                                           0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // write the file
+            {
+               QString fname = filename;
+               if ( QFile::exists(fname) )
+               {
+                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+               }
+               QFile f(fname);
+               if ( !f.open( QIODevice::WriteOnly ) )
+               {
+                  QMessageBox::warning( this, "UltraScan",
+                                        QString(us_tr("Could not open %1 for writing!")).arg(fname) );
+               } else {
+                  QTextStream t( &f );
+                  t << QString("Molecular weight %1 Daltons\n\n").arg(gnom_mw);
+                  t << qsl_gnom.join("\n");
+                  t << "\n";
+                  f.close();
+                  editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
+               }
+            }                  
+            break;
+         case 1: // Cancel clicked or Escape pressed
+            break;
+         }
+      }
+
+      if ( datafiles.size() )
+      {
+         for ( unsigned int i = 0; i < datafiles.size(); i++ )
+         {
+            QString datafile = our_saxs_options->path_load_gnom + QDir::separator() + datafiles[i];
+            if ( QFileInfo(datafile).exists() )
+            {
+               switch( QMessageBox::information( this, 
+                                                 us_tr("UltraScan"),
+                                                 us_tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
+                                                 us_tr("Do you want to load it?"),
+                                                 "&Ok", 
+                                                 "&No", 0,
+                                                 0,      // Enter == button 0
+                                                 1 ) ) { // Escape == button 2
+               case 0: // load it
+                  load_saxs(datafile);
+               break;
+               case 1: // Cancel clicked or Escape pressed
+                  break;
+               }
+            }
+         }
+      }
+      if ( plot_gnom )
+      {
+         vector < double > gnom_q_reg = gnom_q;
+
+         crop_iq_data(gnom_q, gnom_Iq_exp);
+         plot_one_iqq(gnom_q, gnom_Iq_exp, QFileInfo(filename).fileName() + " Experimental");
+         crop_iq_data(gnom_q_reg, gnom_Iq_reg);
+         plot_one_iqq(gnom_q_reg, gnom_Iq_reg, QFileInfo(filename).fileName() + " From P(r)");
+         if ( plotted )
+         {
+            editor_msg( "black", "I(q) vs q plot done\n" );
+            plotted = false;
+         }
+         cb_guinier->setChecked(false);
+         cb_user_range->setChecked(false);
+         set_guinier();
+      }
    }
 }

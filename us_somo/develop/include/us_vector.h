@@ -23,9 +23,10 @@ class US_Vector
    static void printvector( QString qs, vector < double > x, int digits = 8 );
    static void printvector2( QString qs, vector < double > x, vector < double > y, int digits = 8, unsigned int limit = 0 );
    static void printvector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits = 8, unsigned int limit = 0 );
-   static void printvector2( QString qs, vector < int > x, vector < int > y );
+   static void printvector4( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, int digits = 8, unsigned int limit = 0 );
+   static void printvector5( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, vector < double > t, int digits = 8, unsigned int limit = 0 );
    static void printvector( QString qs, vector < bool > x );
-
+   static void printvector2( QString qs, vector < int > x, vector < int > y );
    static QString qs_vector( QString qs, vector < unsigned int > x );
    static QString qs_vector( QString qs, vector < int > x );
    static QString qs_vector( QString qs, vector < double > x, int digits = 8, int newline = 0 );

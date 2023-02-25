@@ -416,6 +416,49 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    set_saxs_legend();
    set_pr_legend();
 #endif
+
+   // #define TEST_PR_SD_ZEROS
+#if defined( TEST_PR_SD_ZEROS )
+   {
+      vector < double > r       { 0,   1,   2,   3,   4, 5, 6, 7, 8 };
+      vector < double > pr      { 0,   1,   4,   5,   4, 0, 0, 0, 0 };
+      vector < double > pr_error{ 0, 0.1, 0.0, 0.0, 0.2, 0, 0, 0, 0 };
+
+      US_Vector::printvector3( "test_pr_sd_zeros init r, pr, pr_error", r, pr, pr_error );
+
+      prop_pr_sd_tail( pr_error, (int) pr_error.size() );
+
+      US_Vector::printvector3( "test_pr_sd_zeros after prop_pr_sd_tail r, pr, pr_error", r, pr, pr_error );
+
+      set_pr_sd( r, pr, pr_error );
+      
+      US_Vector::printvector3( "test_pr_sd_zeros after set_pr_sd r, pr, pr_error", r, pr, pr_error );
+      
+      crop_pr_tail( r, pr, pr_error );
+      
+      US_Vector::printvector3( "test_pr_sd_zeros after crop_pr_tail_pr_sd r, pr, pr_error", r, pr, pr_error );
+   }
+#endif
+
+   // #define TEST_SPLINE
+#if defined( TEST_SPLINE )
+   {
+      vector < double > r       { 0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,15.5,16,16.5,17,17.5,18,18.5,19,19.5,20,20.5,21,21.5,22,22.5,23,23.5,24,24.5,25,25.5,26,26.5,27,27.5,28,28.5,29,29.5,30,30.5,31,31.5,32,32.5,33,33.5,34,34.5,35,35.5,36,36.5,37,37.5,38,38.5,39,39.5,40,40.5,41,41.5,42,42.5,43,43.5,44,44.5,45,45.5,46,46.5,47,47.5,48 };
+      vector < double > r2      { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48 };
+      vector < double > pr      { 0,214.113,2899.98,4356.94,5064.47,5996.28,8773.47,9142.83,11972.1,14382.3,16433.9,17822.1,19401.3,21125.9,22991.6,23459.2,23826.9,24262.5,24312,24970.1,23414.5,24176.2,22509,21580.1,18877.5,16910.8,14819.3,12569.9,11300.5,9325.03,8177.13,6942.54,6054.87,4466.99,3982.04,2886.17,2360.64,2167.71,1586.22,1371.81,913.865,626.773,388.171,268.683,103.848,83.4387,42.6576,8.68127,6.99182 };
+      vector < double > npr;
+
+      natural_spline_interpolate( r, r2, pr, npr );
+
+      US_Vector::printvector2( "before  interp r2, pr", r2, pr, 8, 10 );
+      US_Vector::printvector2( "after  nat spline interp r, npr", r, npr, 8, 10 );
+
+      npr = interpolate( r, r2, pr );
+      US_Vector::printvector2( "after  'interpolate' r, npr", r, npr, 8, 10 );
+      
+   }
+#endif
+
 }
 
 void US_Hydrodyn_Saxs::push_back_color_if_ok( QColor bg, QColor set )
@@ -1456,6 +1499,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
    pr_widgets.push_back( pb_pr_info );
 
+   pb_pr_info2 = new QPushButton(us_tr( "info2" ), this);
+   pb_pr_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_pr_info2->setMinimumHeight(minHeight1);
+   pb_pr_info2->setPalette( PALET_PUSHB );
+   connect(pb_pr_info2, SIGNAL(clicked()), SLOT(pr_info2()));
+   pr_widgets.push_back( pb_pr_info2 );
+
    cb_pr_eb = new QCheckBox(this);
    cb_pr_eb->setText(us_tr("Err "));
    cb_pr_eb->setMaximumWidth ( minHeight1 * 2 );
@@ -2056,6 +2106,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_pr->addWidget(pb_width2);
    hbl_plot_pr->addWidget(cb_pr_eb);
    hbl_plot_pr->addWidget(pb_pr_info);
+   hbl_plot_pr->addWidget(pb_pr_info2);
    background->addLayout( hbl_plot_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_bin_size, j, 0);
@@ -6033,586 +6084,19 @@ void US_Hydrodyn_Saxs::reset_hplc_csv()
    }
 }
 
-void US_Hydrodyn_Saxs::load_gnom()
-{
-   cb_guinier->setChecked( false );
-   set_guinier();
-   // map < QString, QString > params;
-   // params[ "wild" ] = "10.7";
-   // US_SAS_Dammin * usd = new US_SAS_Dammin( (US_Hydrodyn *)us_hydrodyn, 41e0, params );
-   // usd->show();
-   // return;
-
-   plotted = false;
-   QString use_dir = 
-      our_saxs_options->path_load_gnom.isEmpty() ?
-      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
-      our_saxs_options->path_load_gnom;
-
-   select_from_directory_history( use_dir, this );
-
-   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.out" );
-   if (filename.isEmpty())
-   {
-      return;
-   }
-   add_to_directory_history( filename );
-
-   QFile f(filename);
-   our_saxs_options->path_load_gnom = QFileInfo(filename).absolutePath();
-   QString ext = QFileInfo(filename).suffix().toLower();
-   bool plot_gnom = false;
-   vector < double > gnom_Iq_reg;
-   vector < double > gnom_Iq_exp;
-   vector < double > gnom_q;
-
-   if ( f.open(QIODevice::ReadOnly) )
-   {
-      QStringList qsl_gnom;
-      {
-         QTextStream ts(&f);
-         while ( !ts.atEnd() )
-         {
-            qsl_gnom << ts.readLine();
-         }
-      }
-      f.close();
-      f.open(QIODevice::ReadOnly);
-      bool ask_save_mw_to_gnom = false;
-      double gnom_mw = 0e0;
-
-      double units = 1;
-      if ( our_saxs_options->iq_scale_ask )
-      {
-         switch( QMessageBox::information( this, 
-                                           us_tr("UltraScan"),
-                                           us_tr("Is this file in 1/Angstrom or 1/nm units?"),
-                                           "1/&Angstrom", 
-                                           "1/&nm", 0,
-                                           0,      // Enter == button 0
-                                           1 ) ) { // Escape == button 2
-         case 0: // load it as is
-            units = 1.0;
-            break;
-         case 1: // rescale
-            units = 0.1;
-            break;
-         } 
-      } else {
-         if ( our_saxs_options->iq_scale_angstrom ) 
-         {
-            units = 1.0;
-         } else {
-            units = 0.1;
-         }
-      }
-         
-      QTextStream ts(&f);
-      QRegExp iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
-      QRegExp prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
-      QRegExp rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rx5("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rxinputfile("Input file.s. : (\\S+)\\s*$");
-      QString tmp;
-      vector < QString > datafiles;
-      bool sprr_saved = false;
-      while ( !ts.atEnd() )
-      {
-         tmp = ts.readLine();
-         if ( rxinputfile.indexIn(tmp) != -1 ) 
-         {
-            // datafiles.push_back(rxinputfile.cap(1).trimmed());
-            continue;
-         }
-         if ( iqqh.indexIn(tmp) != -1 )
-         {
-            vector < double > I_exp;
-            vector < double > I_reg;
-            vector < double > q;
-            // cout << "start of iqq\n";
-            ts.readLine(); // blank line
-            while ( !ts.atEnd() )
-            {
-               tmp = ts.readLine();
-               if ( rx5.indexIn(tmp) != -1 )
-               {
-                  q.push_back(rx5.cap(1).toDouble() * units );
-                  I_exp.push_back(rx5.cap(2).toDouble());
-                  I_reg.push_back(rx5.cap(5).toDouble());
-                  // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
-               } else {
-                  // end of iqq?
-                  if ( rx2.indexIn(tmp) == -1 )
-                  {
-                     plot_gnom = true;
-                     gnom_Iq_reg = I_reg;
-                     gnom_Iq_exp = I_exp;
-                     gnom_q = q;
-                     // plot_one_iqq(q, I, QFileInfo(filename).fileName());
-                     // if ( plotted )
-                     // {
-                     //   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-                     //   editor->append("I(q) vs q plot done\n");
-                     //   plotted = false;
-                     // }
-                     break;
-                  } else {
-                     // cout << "iqq 2 fielder ignored\n";
-                  }
-               }
-            }
-            if ( ts.atEnd() &&
-                 q.size() )
-            {
-               plot_gnom = true;
-               gnom_Iq_reg = I_reg;
-               gnom_Iq_exp = I_exp;
-               gnom_q = q;
-            }
-            continue;
-         }
-         if ( prrh.indexIn(tmp) != -1 )
-         {
-            vector < double > r;
-            vector < double > pr;
-            vector < double > pre;
-            // cout << "start of prr\n";
-            ts.readLine(); // blank line
-            while ( !ts.atEnd() ) {
-               tmp = ts.readLine();
-               if ( rx3.indexIn(tmp) != -1 )
-               {
-                  r  .push_back(rx3.cap(1).toDouble() / units);
-                  pr .push_back(rx3.cap(2).toDouble());
-                  pre.push_back(rx3.cap(3).toDouble());
-                  // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
-               } else {
-                  // end of prr?
-                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
-                  QStringList mwline = qsl_gnom.filter(qx_mw);
-                  if ( mwline.size() )
-                  {
-                     if ( qx_mw.indexIn(mwline[0]) == -1 )
-                     {
-                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
-                        gnom_mw = 0e0;
-                     } else {
-                        // cout << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
-                        gnom_mw = qx_mw.cap(1).toDouble();
-                     }
-                     if ( mwline.size() > 1 )
-                     {
-                        if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                           US_Static::us_message(us_tr("Please note:"), 
-                                                 QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
-                                                               "Using the first one found (%1 Daltons)")).arg(gnom_mw));
-                        }
-                     }
-                     if ( gnom_mw > 0e0 )
-                     {
-                        (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
-                        (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
-                     }
-                  }
-                  gnom_mw = get_mw(filename,false);
-                  if ( !mwline.size() )
-                  {
-                     ask_save_mw_to_gnom = true;
-                  }
-                  if ( cb_normalize->isChecked() )
-                  {
-                     normalize_pr(r, &pr, &pre, get_mw(filename, false));
-                  }
-                  plot_one_pr(r, pr, QFileInfo(filename).fileName());
-                  compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
-
-                  // save sprr
-                  if ( !sprr_saved ) {
-                     sprr_saved = true;
-                     QString rxstr = "\\..*$";
-                     QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
-                     if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
-                        dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
-                     }
-
-                     double mw = get_mw(filename, false);
-                     QStringList sprrcontents;
-                     
-                     sprrcontents << 
-                        QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
-                        .arg(
-                             mw == -1e0
-                             ? QString( "" )
-                             : QString( " mw %1 Daltons" ).arg( mw )
-                             )
-                        ;
-
-                     for ( int i = 0; i < (int)r.size(); ++i ) {
-                        sprrcontents << QString( "%1 %2 %3\n" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
-                     }
-                     QString error;
-                     QString putcontents = sprrcontents.join("");
-                     if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
-                        editor_msg( "red", error );
-                     } else {
-                        editor_msg( "blue", QString( "created %1" ).arg( dest ) );
-                     }            
-                     // save reinterpolated to current bin size sprr
-                     {
-                        bool ok = true;
-                        vector < double > to_grid;
-                        // build to grid
-                     
-                        for ( double x = 0; x < r.back(); x += our_saxs_options->bin_size ) {
-                           to_grid.push_back(x);
-                        }
-
-                        // interpolate pr as ipr
-                        vector < double > ipr;
-                     
-                        if ( !natural_spline_interpolate( to_grid, r, pr, ipr ) ) {
-                           editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
-                           ok = false;
-                        }
-
-                        if ( pr.size() != pre.size() ) {
-                           qDebug() << "gnom load sprr create, data error length mismatch";
-                           ok = false;
-                        }
-                        
-                        // interpolate pr + pre as iprppre
-                        vector < double > iprppre;
-                        if ( ok ) {
-                           vector < double > prppre = pr;
-                           for ( int i = 0; i < (int)prppre.size(); ++i ) {
-                              prppre[ i ] += pre[ i ];
-                           }
-                        
-                           if ( !natural_spline_interpolate( to_grid, r, prppre, iprppre ) ) {
-                              editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
-                              ok = false;
-                           }
-                        }
-                     
-                        // interpolate pr - pre as iprmpre
-                        vector < double > iprmpre;
-                        if ( ok ) {
-                           vector < double > prmpre = pr;
-                           for ( int i = 0; i < (int)prmpre.size(); ++i ) {
-                              prmpre[ i ] -= pre[ i ];
-                           }
-                        
-                           if ( !natural_spline_interpolate( to_grid, r, prmpre, iprmpre ) ) {
-                              editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
-                              ok = false;
-                           }
-                        }
-
-                        if ( ok ) {
-                           // take ( iprppre - iprmpre ) / 2 as ipre
-                           vector < double > ipre(iprppre.size());
-                           for ( int i = 0; i < (int)iprmpre.size(); ++i ) {
-                              ipre[ i ] = 0.5 * ( iprppre[ i ] - iprmpre[ i ] );
-                           }
-                     
-                           // // is this different from iprppre - ipr or ipr - iprmpre ?
-                           // answer is no, we could get away with one less interpolation
-                           // {
-                           //    vector < double > iprppremipr = iprppre;
-                           //    vector < double > iprmiprmpre = ipr;
-
-                           //    for ( int i = 0; i < (int)ipr.size(); ++i ) {
-                           //       iprppremipr[ i ] -= ipr[i];
-                           //       iprmiprmpre[ i ] -= iprmpre[i];
-                           //    }
-                           //    QTextStream(stdout) << US_Vector::qs_vector4( "to_grid, ipre, iprppre-ipr, ipr-iprmpre", to_grid, ipre, iprppremipr, iprmiprmpre );
-                           // }
-                           // now create reinterpolated version
-                           QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
-                           if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
-                              dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
-                           }
-
-                           double mw = get_mw(filename, false);
-                           QStringList sprrcontents;
-                     
-                           sprrcontents << 
-                              QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
-                              .arg(
-                                   mw == -1e0
-                                   ? QString( "" )
-                                   : QString( " mw %1 Daltons" ).arg( mw )
-                                   )
-                              ;
-
-                           for ( int i = 0; i < (int)to_grid.size(); ++i ) {
-                              sprrcontents << QString( "%1 %2 %3\n" ).arg( to_grid[i], 0, 'g', 9 ).arg( ipr[i], 0, 'g', 9 ).arg( ipre[i], 0, 'g', 9 );
-                           }
-                           // add trailing zero
-                           sprrcontents << QString( "%1 0 0\n" ).arg( to_grid.back() + our_saxs_options->bin_size, 0, 'g', 9 );
-                           QString error;
-                           QString putcontents = sprrcontents.join("");
-                           if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
-                              editor_msg( "red", error );
-                           } else {
-                              editor_msg( "blue", QString( "created %1" ).arg( dest ) );
-                           }            
-                        }
-                     }
-                  }
-                  r  .clear();
-                  pr .clear();
-                  pre.clear();
-                  if ( plotted )
-                  {
-                     editor_msg( "black", "P(r) plot done\n" );
-                     plotted = false;
-                  }
-                  break;
-               }
-            }
-            if ( r.size() ) {
-               gnom_mw = get_mw(filename,false);
-               if ( cb_normalize->isChecked() )
-               {
-                  normalize_pr(r, &pr, &pre, get_mw(filename, false));
-               }
-               plot_one_pr(r, pr, QFileInfo(filename).fileName());
-               compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
-
-               // save sprr
-               if ( !sprr_saved ) {
-                  QString rxstr = "\\..*$";
-                  QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
-                  if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
-                     dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
-                  }
-
-                  double mw = get_mw(filename, false);
-                  QStringList sprrcontents;
-                     
-                  sprrcontents << 
-                     QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
-                     .arg(
-                          mw == -1e0
-                          ? QString( "" )
-                          : QString( " mw %1 Daltons" ).arg( mw )
-                          )
-                     ;
-
-                  for ( int i = 0; i < (int)r.size(); ++i ) {
-                     sprrcontents << QString( "%1 %2 %3\n" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
-                  }
-                  QString error;
-                  QString putcontents = sprrcontents.join("");
-                  if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
-                     editor_msg( "red", error );
-                  } else {
-                     editor_msg( "blue", QString( "created %1" ).arg( dest ) );
-                  }
-                  // save reinterpolated to current bin size sprr
-                  {
-                     bool ok = true;
-                     vector < double > to_grid;
-                     // build to grid
-                     
-                     for ( double x = 0; x < r.back(); x += our_saxs_options->bin_size ) {
-                        to_grid.push_back(x);
-                     }
-
-                     // interpolate pr as ipr
-                     vector < double > ipr;
-                     
-                     if ( !natural_spline_interpolate( to_grid, r, pr, ipr ) ) {
-                        editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
-                        ok = false;
-                     }
-
-                     if ( pr.size() != pre.size() ) {
-                        qDebug() << "gnom load sprr create, data error length mismatch";
-                        ok = false;
-                     }
-                        
-                     // interpolate pr + pre as iprppre
-                     vector < double > iprppre;
-                     if ( ok ) {
-                        vector < double > prppre = pr;
-                        for ( int i = 0; i < (int)prppre.size(); ++i ) {
-                           prppre[ i ] += pre[ i ];
-                        }
-                        
-                        if ( !natural_spline_interpolate( to_grid, r, prppre, iprppre ) ) {
-                           editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
-                           ok = false;
-                        }
-                     }
-                     
-                     // interpolate pr - pre as iprmpre
-                     vector < double > iprmpre;
-                     if ( ok ) {
-                        vector < double > prmpre = pr;
-                        for ( int i = 0; i < (int)prmpre.size(); ++i ) {
-                           prmpre[ i ] -= pre[ i ];
-                        }
-                        
-                        if ( !natural_spline_interpolate( to_grid, r, prmpre, iprmpre ) ) {
-                           editor_msg( "red", QString( "error interpolating gnom p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
-                           ok = false;
-                        }
-                     }
-
-                     if ( ok ) {
-                        // take ( iprppre - iprmpre ) / 2 as ipre
-                        vector < double > ipre(iprppre.size());
-                        for ( int i = 0; i < (int)iprmpre.size(); ++i ) {
-                           ipre[ i ] = 0.5 * ( iprppre[ i ] - iprmpre[ i ] );
-                        }
-                     
-                        // // is this different from iprppre - ipr or ipr - iprmpre ?
-                        // answer is no, we could get away with one less interpolation
-                        // {
-                        //    vector < double > iprppremipr = iprppre;
-                        //    vector < double > iprmiprmpre = ipr;
-
-                        //    for ( int i = 0; i < (int)ipr.size(); ++i ) {
-                        //       iprppremipr[ i ] -= ipr[i];
-                        //       iprmiprmpre[ i ] -= iprmpre[i];
-                        //    }
-                        //    QTextStream(stdout) << US_Vector::qs_vector4( "to_grid, ipre, iprppre-ipr, ipr-iprmpre", to_grid, ipre, iprppremipr, iprmiprmpre );
-                        // }
-                        // now create reinterpolated version
-
-                        QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
-                        if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
-                           dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
-                        }
-
-                        double mw = get_mw(filename, false);
-                        QStringList sprrcontents;
-                     
-                        sprrcontents << 
-                           QString( "# GNOM P(r) from " + filename + "%1\nR\tP(r)\tSD\n" )
-                           .arg(
-                                mw == -1e0
-                                ? QString( "" )
-                                : QString( " mw %1 Daltons" ).arg( mw )
-                                )
-                           ;
-
-                        for ( int i = 0; i < (int)to_grid.size(); ++i ) {
-                           sprrcontents << QString( "%1 %2 %3\n" ).arg( to_grid[i], 0, 'g', 9 ).arg( ipr[i], 0, 'g', 9 ).arg( ipre[i], 0, 'g', 9 );
-                        }
-                        // add trailing zero
-                        sprrcontents << QString( "%1 0 0\n" ).arg( to_grid.back() + our_saxs_options->bin_size, 0, 'g', 9 );
-                        QString error;
-                        QString putcontents = sprrcontents.join("");
-                        if ( !US_File_Util::putcontents( dest, putcontents, error ) ) {
-                           editor_msg( "red", error );
-                        } else {
-                           editor_msg( "blue", QString( "created %1" ).arg( dest ) );
-                        }            
-                     }
-                  }
-               }
-
-               r  .clear();
-               pr .clear();
-               pre.clear();
-               if ( plotted )
-               {
-                  editor_msg( "black", "P(r) plot done\n" );
-                  plotted = false;
-               }
-            }
-         }
-      }
-      f.close();
-      if ( ask_save_mw_to_gnom && gnom_mw )
-      {
-         switch( QMessageBox::information( this, 
-                                           us_tr("Save GNOM with Molecular Weight"),
-                                           QString(us_tr("Do you want to save the molecular weight entered (%1 Daltons) into the gnom.out file?"))
-                                           .arg(gnom_mw),
-                                           "&Ok",  
-                                           "&Cancel", 
-                                           0,
-                                           0,      // Enter == button 0
-                                           1 ) ) { // Escape == button 2
-         case 0: // write the file
-            {
-               QString fname = filename;
-               if ( QFile::exists(fname) )
-               {
-                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
-               }
-               QFile f(fname);
-               if ( !f.open( QIODevice::WriteOnly ) )
-               {
-                  QMessageBox::warning( this, "UltraScan",
-                                        QString(us_tr("Could not open %1 for writing!")).arg(fname) );
-               } else {
-                  QTextStream t( &f );
-                  t << QString("Molecular weight %1 Daltons\n\n").arg(gnom_mw);
-                  t << qsl_gnom.join("\n");
-                  t << "\n";
-                  f.close();
-                  editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
-               }
-            }                  
-            break;
-         case 1: // Cancel clicked or Escape pressed
-            break;
-         }
-      }
-
-      if ( datafiles.size() )
-      {
-         for ( unsigned int i = 0; i < datafiles.size(); i++ )
-         {
-            QString datafile = our_saxs_options->path_load_gnom + QDir::separator() + datafiles[i];
-            if ( QFileInfo(datafile).exists() )
-            {
-               switch( QMessageBox::information( this, 
-                                                 us_tr("UltraScan"),
-                                                 us_tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
-                                                 us_tr("Do you want to load it?"),
-                                                 "&Ok", 
-                                                 "&No", 0,
-                                                 0,      // Enter == button 0
-                                                 1 ) ) { // Escape == button 2
-               case 0: // load it
-                  load_saxs(datafile);
-               break;
-               case 1: // Cancel clicked or Escape pressed
-                  break;
-               }
-            }
-         }
-      }
-      if ( plot_gnom )
-      {
-         vector < double > gnom_q_reg = gnom_q;
-
-         crop_iq_data(gnom_q, gnom_Iq_exp);
-         plot_one_iqq(gnom_q, gnom_Iq_exp, QFileInfo(filename).fileName() + " Experimental");
-         crop_iq_data(gnom_q_reg, gnom_Iq_reg);
-         plot_one_iqq(gnom_q_reg, gnom_Iq_reg, QFileInfo(filename).fileName() + " Regularized");
-         if ( plotted )
-         {
-            editor_msg( "black", "I(q) vs q plot done\n" );
-            plotted = false;
-         }
-         cb_guinier->setChecked(false);
-         cb_user_range->setChecked(false);
-         set_guinier();
-      }
-   }
-}
-
 vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r, 
                                                  vector < double > from_r, 
                                                  vector < double > from_pr )
+{
+   vector < double > to_data;
+   interpolate( to_r, from_r, from_pr, to_data );
+   return to_data;
+}
+
+bool US_Hydrodyn_Saxs::interpolate( vector < double > to_r, 
+                                    vector < double > from_r, 
+                                    vector < double > from_pr,
+                                    vector < double > &to_data )
 {
    US_Saxs_Util usu;
 
@@ -6638,8 +6122,10 @@ vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r,
    if ( !usu.interpolate( "out", "to", "from" ) )
    {
       cout << usu.errormsg;
+      return false;
    }
-   return usu.wave["out"].r;
+   to_data = usu.wave["out"].r;
+   return true;
 }
 
 bool US_Hydrodyn_Saxs::natural_spline_interpolate( vector < double > to_grid, 

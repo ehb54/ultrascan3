@@ -263,7 +263,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_width;
       QPushButton *pb_width2;
       QPushButton *pb_pr_info;
-
+      QPushButton *pb_pr_info2;
       QPushButton *pb_rescale;
       QPushButton *pb_rescale_y;
 
@@ -550,6 +550,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                      vector < double > from_r, 
                                      vector < double > from_pr );
 
+      bool interpolate( vector < double > to_grid, 
+                        vector < double > from_grid, 
+                        vector < double > from_data,
+                        vector < double > &to_data );
+
       bool natural_spline_interpolate( vector < double > to_grid, 
                                        vector < double > from_grid, 
                                        vector < double > from_data,
@@ -781,6 +786,25 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool load_check_csvs_compatible( QStringList filenames );
       QString unify_csv_files( QStringList filenames );
 
+      void set_pr_sd      (
+                           vector < double > & r
+                           ,vector < double > & pr
+                           ,vector < double > & pr_error
+                           ); // sets a min sd value if pr has non-zero sds
+      
+      void crop_pr_tail   (
+                           vector < double > & r
+                           ,vector < double > & pr
+                           ,vector < double > & pr_error
+                           ); // crops the tail of zeros values, used for plotting
+      
+      void prop_pr_sd_tail(
+                           vector < double > & pr_error
+                           ,unsigned int len
+                           ); // propagate the last pr sd to the tail
+
+      void pad_pr_plotted(); // sets all plotted to max length
+      
    private:
       
       map < QString, QwtPlot *>    plot_info;
@@ -845,7 +869,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private slots:
 
-      void pr_info( const QString & msg = "" ); // stdout report of pr vectors
+      void pr_info( const QString & msg = "", bool detail = false ); // stdout report of pr vectors
+      void pr_info2( const QString & msg = "" ); // stdout report of pr vectors
       void pr_replot();
       void do_rescale();
       void do_rescale_y();
