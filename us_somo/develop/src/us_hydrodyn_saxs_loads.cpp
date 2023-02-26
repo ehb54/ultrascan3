@@ -3318,7 +3318,6 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
 
                // get the pr values
 
-               
                QStringList qsl_pr = QString(*it).replace( QRegularExpression( ",\\s*$" ), "" ).split( "," );
                if ( qsl_pr.size() < 6 )
                {

@@ -1104,14 +1104,23 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    
    {
       vector < double > use_nnls_r     = nnls_r;
+      vector < double > use_model      = model;
       vector < double > use_nnls_B     = nnls_B;
       vector < double > use_difference = difference;
       vector < double > use_residual   = residual;
       vector < double > no_error;
 
       crop_pr_tail( use_nnls_r, use_nnls_B, no_error );
-      use_difference.resize( use_nnls_r.size() );
-      use_residual  .resize( use_nnls_r.size() );
+      int max_len = (int) use_nnls_r.size();
+      use_nnls_r  = nnls_r;
+      crop_pr_tail( use_nnls_r, use_model, no_error );
+      max_len     = (int)use_nnls_r.size() > max_len ? (int)use_nnls_r.size() : max_len;
+      use_nnls_r  = nnls_r;
+
+      use_nnls_r    .resize( max_len );
+      use_difference.resize( max_len );
+      use_residual  .resize( max_len );
+      use_nnls_B    .resize( max_len );
       
       saxs_residuals_window = 
          new US_Hydrodyn_Saxs_Residuals(
@@ -1305,12 +1314,15 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    {
       vector < double > use_model  = best_fit_models[model_names[i]];
       
+      // US_Vector::printvector2( QString( "best fit model %1" ).arg( model_names[i] ), nnls_r, use_model );
+
       if ( use_errors ) {
          for ( int j = 0; j < (int) use_model.size(); ++j ) {
             use_model[j] /= best_fit_target_errors[j];
          }
       }
       
+#if defined( OLDSTYLE_PR_LINEAR_BEST_FIT )
       usu.linear_fit(
                      use_model,
                      use_target,
@@ -1326,6 +1338,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       {
          tmp_model[j] = a[i] + b[i] * best_fit_models[model_names[i]][j];
       }
+      // US_Vector::printvector3( QString( "best fit model %1, nnls_r, use_model, tmp_model(scaled)\n" ).arg( model_names[i] ), nnls_r, use_model, tmp_model );
       rmsds[i] = US_Saxs_Util::calc_nrmsd( tmp_model, best_fit_target );
       if ( !US_Saxs_Util::calc_chisq2( best_fit_models[model_names[i]],
                                        best_fit_target, 
@@ -1364,6 +1377,52 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                      .arg(df[i])
                      // .arg(prob[i])
                      );
+#else // SCALING FIT INSTEAD
+      usu.scaling_fit(
+                     use_model,
+                     use_target,
+                     a[i],
+                     chi2[i]
+                     );
+      // rescale model to target, compute rmsd
+      vector < double > tmp_model(best_fit_target.size());
+      for ( unsigned int j = 0; j < best_fit_target.size(); j++ )
+      {
+         tmp_model[j] = a[i] * best_fit_models[model_names[i]][j];
+      }
+      // US_Vector::printvector3( QString( "best fit model %1, nnls_r, use_model, tmp_model(scaled)\n" ).arg( model_names[i] ), nnls_r, use_model, tmp_model );
+      rmsds[i] = US_Saxs_Util::calc_nrmsd( tmp_model, best_fit_target );
+      if ( !US_Saxs_Util::calc_chisq2( best_fit_models[model_names[i]],
+                                       best_fit_target, 
+                                       df[i],
+                                       chi2[i],
+                                       prob[i] ) )
+      {
+         editor_msg( "red", us_tr("Internal error computing chi2" ) );
+      }
+
+      if ( !i )
+      {
+         lowest_chi2 = chi2[i];
+         // lowest_chi2_pos = 0;
+         lowest_rmsd = rmsds[i];
+         lowest_rmsd_pos = 0;
+         model = tmp_model;
+      } else {
+         if ( lowest_chi2 > chi2[i] )
+         {
+            lowest_chi2 = chi2[i];
+            // lowest_chi2_pos = i;
+         }
+         if ( lowest_rmsd > rmsds[i] )
+         {
+            lowest_rmsd = rmsds[i];
+            lowest_rmsd_pos = i;
+            model = tmp_model;
+         }
+      }
+      
+#endif
    }
       
    double model_mw = nnls_mw[model_names[lowest_rmsd_pos]];
@@ -1392,9 +1451,9 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    (*remember_mw_source)[csv_filename + " Model " + model_names[lowest_rmsd_pos]] = "weight of best fit model";
    
    plot_one_pr(nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos]);
-   compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos] );
+   compute_rg_to_progress( nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos] );
    
-   plot_one_pr(nnls_r, best_fit_target, csv_filename + " Target" );
+   plot_one_pr(nnls_r, best_fit_target, best_fit_target_errors, csv_filename + " Target" );
    compute_rg_to_progress( nnls_r, best_fit_target, csv_filename + " Target" );
 
    if ( plotted )
@@ -1409,21 +1468,43 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       saxs_residuals_window->close();
    }
    
-   saxs_residuals_window = 
-      new US_Hydrodyn_Saxs_Residuals(
-                                     &saxs_residuals_widget,
-                                     plot_pr->width(),
-                                     us_tr("Best fit residuals & difference targeting:\n") + title,
-                                     nnls_r,
-                                     difference,
-                                     residual,
-                                     best_fit_target,
-                                     true,
-                                     true,
-                                     true,
-                                     pen_width
-                                     );
-   saxs_residuals_window->show();
+   {
+      vector < double > use_nnls_r          = nnls_r;
+      vector < double > use_model           = model;
+      vector < double > use_best_fit_target = best_fit_target;
+      vector < double > use_difference      = difference;
+      vector < double > use_residual        = residual;
+      vector < double > no_error;
+
+      crop_pr_tail( use_nnls_r, use_best_fit_target, no_error );
+      int max_len = (int) use_nnls_r.size();
+      use_nnls_r  = nnls_r;
+
+      crop_pr_tail( use_nnls_r, use_model, no_error );
+      max_len     = (int)use_nnls_r.size() > max_len ? (int)use_nnls_r.size() : max_len;
+      use_nnls_r  = nnls_r;
+
+      use_nnls_r         .resize( max_len );
+      use_difference     .resize( max_len );
+      use_residual       .resize( max_len );
+      use_best_fit_target.resize( max_len );
+
+      saxs_residuals_window = 
+         new US_Hydrodyn_Saxs_Residuals(
+                                        &saxs_residuals_widget,
+                                        plot_pr->width(),
+                                        us_tr("Best fit residuals & difference targeting:\n") + title,
+                                        use_nnls_r,
+                                        use_difference,
+                                        use_residual,
+                                        use_best_fit_target,
+                                        true,
+                                        true,
+                                        true,
+                                        pen_width
+                                        );
+      saxs_residuals_window->show();
+   }
    
    // save as csv
    
