@@ -2843,6 +2843,20 @@ void US_Buoyancy::write_auto( void )
    te->e->setFontPointSize( 13 );
    te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");
    te->e->setFontPointSize( 11 );
+
+   te->e->append("Measure of the Total OD per Triple:\n");
+   QMap < QString, double >::iterator ta;
+   for ( ta = triple_name_to_total_area.begin(); ta !=  triple_name_to_total_area.end(); ++ta )
+     {
+       qDebug() << "triple, value -- " << ta.key() << ta.value();
+       te->e->append("Triple: " + ta.key() + ";\t Total OD, Volumetric Measure (corrected for centerpiece shape): " +
+		     QString::number(ta.value()) );
+       te->e->append("Triple: " + ta.key() + ";\t Total OD, Area Measure (un-corrected for centerpiece shape): " +
+		     QString::number(triple_name_to_total_area_uncorrected[ ta.key() ] ) );
+       te->e->append("\n");
+     }
+   te->e->append("\n\n");
+       
    for (int i=0; i<dpoint.size(); i++)
    {
       te->e->append("Peak " + str.setNum( i+1 ) + " (" + dpoint[i].name +
