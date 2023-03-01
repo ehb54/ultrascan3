@@ -139,6 +139,37 @@ void US_Vector::printvector5( QString qs, vector < double > x, vector < double >
    }
 }
 
+void US_Vector::printvector7( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, vector < double > t, vector < double > u, vector < double > v, int digits, unsigned int limit )
+{
+   cout << QString( "%1: size %2 %3 %4 %5 %6" ).arg( qs ).arg( x.size() ).arg( y.size() ).arg( z.size() ).arg( s.size() ).arg( t.size() );
+   unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+   max_size = max_size > z.size() ? max_size : z.size();
+   max_size = max_size > s.size() ? max_size : s.size();
+   max_size = max_size > t.size() ? max_size : t.size();
+   max_size = max_size > u.size() ? max_size : u.size();
+   max_size = max_size > v.size() ? max_size : v.size();
+
+   if ( limit && max_size > limit ) {
+      max_size = limit;
+      cout << QString( "; output limited to first %1 elements" ).arg( limit );
+   }
+   cout << ":\n";
+   
+   for ( unsigned int i = 0; i < max_size; i++ )
+   {
+      cout << QString( "\t%1 %2 %3 %4 %5 %6 %7\n" )
+         .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( z.size() > i ) ? QString( "%1" ).arg( z[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( s.size() > i ) ? QString( "%1" ).arg( s[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( t.size() > i ) ? QString( "%1" ).arg( t[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( u.size() > i ) ? QString( "%1" ).arg( u[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( v.size() > i ) ? QString( "%1" ).arg( v[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         ;
+   }
+}
+
+
 
 void US_Vector::printvector2( QString qs, vector < int > x, vector < int > y )
 {

@@ -1,5 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_residuals.h"
+#include "../include/us_vector.h"
+#include "../include/us_saxs_util.h"
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -15,26 +17,29 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
                                                        vector < double > difference,
                                                        vector < double > residuals,
                                                        vector < double > target,
+                                                       vector < double > error,
                                                        bool plot_residuals,
                                                        bool plot_difference,
                                                        bool plot_as_percent,
+                                                       bool use_errors,
                                                        unsigned pen_width,
                                                        QWidget *p, 
                                                        const char *
                                                        ) : QFrame( p )
 {
    this->saxs_residuals_widget = saxs_residuals_widget;
-   this->title = title;
-   this->r = r;
-   this->difference = difference;
-   this->residuals = residuals;
-   this->target = target;
-   this->plot_residuals = plot_residuals;
-   this->plot_difference = plot_difference;
-   this->plot_as_percent = plot_as_percent;
-   this->pen_width = pen_width;
-
-   plot_zoomer = (ScrollZoomer *)0;
+   this->title                 = title;
+   this->r                     = r;
+   this->difference            = difference;
+   this->residuals             = residuals;
+   this->target                = target;
+   this->error                 = error;
+   this->plot_residuals        = plot_residuals;
+   this->plot_difference       = plot_difference;
+   this->plot_as_percent       = plot_as_percent;
+   this->pen_width             = pen_width;
+   this->use_errors            = use_errors;
+   plot_zoomer                 = (ScrollZoomer *)0;
 
    // make sure things aren't to big
 
@@ -51,12 +56,15 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    {
       min_len = target.size();
    }
-   r.resize(min_len);
-   difference.resize(min_len);
-   residuals.resize(min_len);
-   target.resize(min_len);
+
+
+   r             .resize(min_len);
+   difference    .resize(min_len);
+   residuals     .resize(min_len);
+   target        .resize(min_len);
    difference_pct.resize(min_len);
-   residuals_pct.resize(min_len);
+   residuals_pct .resize(min_len);
+
    double area = 0e0;
    for ( unsigned int i = 0; i < target.size(); i++ )
    {
@@ -66,10 +74,33 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    {
       area /= target.size();
    }
-   for ( unsigned int i = 0; i < target.size(); i++ )
-   {
+   difference_div_sd = difference;
+   residuals_div_sd  = residuals;
+   
+   qDebug() << "use errors " << ( use_errors ? "true" : "false" );
+
+   if ( use_errors &&
+        ( error.size() != target.size()
+          || !US_Saxs_Util::is_nonzero_vector( error )
+          )
+        ) {
+      use_errors = false;
+   }
+
+   if ( use_errors ) {
+      this->plot_as_percent = false;
+   }
+   
+   for ( unsigned int i = 0; i < target.size(); i++ ) {
       difference_pct[i] = 100.0 * difference[i] / area;
-      residuals_pct[i] = 100.0 * residuals[i] / area;
+      residuals_pct [i] = 100.0 * residuals [i] / area;
+   }
+
+   if ( use_errors ) {
+      for ( unsigned int i = 0; i < target.size(); i++ ) {
+         difference_div_sd[i] = difference[i] / error[i];
+         residuals_div_sd [i] = residuals [i] / error[i];
+      }
    }
 
    USglobal = new US_Config();
@@ -80,6 +111,8 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    setGeometry(global_Xpos, global_Ypos, width, 0);
    update_plot();
    *saxs_residuals_widget = true;
+
+   // US_Vector::printvector7( "pr residuals r, diff, resid, target, error, dif/sd, resid/sd\n", r, difference, residuals, target, error, difference_div_sd, residuals_div_sd );
 }
 
 US_Hydrodyn_Saxs_Residuals::~US_Hydrodyn_Saxs_Residuals()
@@ -110,17 +143,6 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
    ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   plot->enableOutline(true);
-   plot->setOutlinePen(Qt::white);
-   plot->setOutlineStyle(Qwt::VLine);
-   plot->enableGridXMin();
-   plot->enableGridYMin();
-   plot->setPalette( PALET_NORMAL );
-   AUTFBACK( plot );
-   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -129,21 +151,10 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
-#endif
    plot->setAxisTitle(QwtPlot::xBottom, us_tr("Distance (Angstrom)"));
    plot->setAxisTitle(QwtPlot::yLeft, us_tr("Frequency"));
-#if QT_VERSION < 0x040000
-   plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle(title);
@@ -306,7 +317,17 @@ void US_Hydrodyn_Saxs_Residuals::set_plot_as_percent()
 void US_Hydrodyn_Saxs_Residuals::update_plot()
 {
    plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? us_tr("Percent") : us_tr("Frequency"));
+
+   QString left_axis_title =
+      plot_as_percent
+      ? "% delta freq."
+      : ( use_errors
+          ? "delta freq. / sd"
+          : "delta freq."
+          )
+      ;
+          
+   plot->setAxisTitle(QwtPlot::yLeft, left_axis_title );
 
    double minx;
    double maxx;
@@ -319,31 +340,39 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 
    if ( plot_residuals ) 
    {
-#if QT_VERSION < 0x040000
-      long prr = plot->insertCurve("P(r) vs r");
-      plot->setCurveStyle(prr, QwtCurve::Lines);
-      plot->setCurveData(prr, 
-                         (double *)&(r[0]), 
-                         plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
-                         (int)r.size());
-      plot->setCurvePen(prr, QPen(Qt::green, pen_width, SolidLine));
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSamples(
                      (double *)&(r[0]), 
-                     plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
+                     plot_as_percent
+                     ? (double *)&(residuals_pct[0])
+                     : ( use_errors
+                         ? (double *)&(residuals_div_sd[0])
+                         : (double *)&(residuals[0])
+                         ),
                      (int)r.size()
                      );
       curve->setPen( QPen(Qt::green, pen_width, Qt::SolidLine) );
       curve->attach( plot );
-#endif
-      double this_miny = plot_as_percent ? residuals_pct[ 0 ] : residuals[ 0 ];
+      double this_miny =
+         plot_as_percent
+         ? residuals_pct[ 0 ]
+         : ( use_errors
+             ? residuals_div_sd[ 0 ]
+             : residuals[ 0 ]
+             );
       double this_maxy = this_miny;
 
       for ( unsigned int i = 1; i < r.size(); i++ )
       {
-         double val = plot_as_percent ? residuals_pct[ i ] : residuals[ i ];
+         double val =
+            plot_as_percent
+            ? residuals_pct[ i ]
+            : ( use_errors
+                ? residuals_div_sd[i]
+                : residuals[ i ]
+                );
+         
          if ( this_miny > val )
          {
             this_miny = val;
@@ -371,31 +400,37 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    }
    if ( plot_difference ) 
    {
-#if QT_VERSION < 0x040000
-      long prr = plot->insertCurve("P(r) vs r");
-      plot->setCurveStyle(prr, QwtCurve::Lines);
-      plot->setCurveData(prr, 
-                         (double *)&(r[0]), 
-                         plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
-                         (int)r.size());
-      plot->setCurvePen(prr, QPen(Qt::yellow, pen_width, SolidLine));
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSamples(
                      (double *)&(r[0]), 
-                     plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
+                     plot_as_percent
+                     ? (double *)&(difference_pct[0])
+                     : ( use_errors
+                         ? (double *)&(difference_div_sd[0])
+                         : (double *)&(difference[0])
+                         ),
                      (int)r.size()
                      );
       curve->setPen( QPen(Qt::yellow, pen_width, Qt::SolidLine) );
       curve->attach( plot );
-#endif
-      double this_miny = plot_as_percent ? difference_pct[ 0 ] : difference[ 0 ];
+
+      double this_miny = plot_as_percent
+         ? difference_pct[ 0 ]
+         : ( use_errors
+             ? difference_div_sd[ 0 ]
+             : difference[ 0 ]
+             );
       double this_maxy = this_miny;
 
       for ( unsigned int i = 1; i < r.size(); i++ )
       {
-         double val = plot_as_percent ? difference_pct[ i ] : difference[ i ];
+         double val = plot_as_percent
+            ? difference_pct[ i ]
+            : ( use_errors
+                ? difference_div_sd[ i ]
+                : difference[ i ]
+                );
          if ( this_miny > val )
          {
             this_miny = val;
@@ -422,6 +457,42 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
       }
    }
 
+   // display 2sd bars
+   if ( use_errors && !plot_as_percent ) {
+      double linepos = 2e0;
+      double x[2];
+      double y[2];
+      x[0] = minx;
+      x[1] = maxx;
+      y[0] = linepos;
+      y[1] = linepos;
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setSamples(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, pen_width, Qt::SolidLine) );
+         curve->attach( plot );
+      }
+      {
+         y[0] = -linepos;
+         y[1] = -linepos;
+
+         QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setSamples(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, pen_width, Qt::SolidLine) );
+         curve->attach( plot );
+      }
+   }
+
    // enable zooming
    if ( plot_zoomer )
    {
@@ -433,13 +504,8 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    plot->setAxisScale( QwtPlot::yLeft,   miny, maxy );
    
    plot_zoomer = new ScrollZoomer(plot->canvas());
-#if QT_VERSION < 0x040000
-   plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
    plot_zoomer->setRubberBandPen( QPen(Qt::red, 1, Qt::DotLine ) );
    plot_zoomer->setTrackerPen( QPen(Qt::red ) );
-#endif
 
    plot->replot();
 }

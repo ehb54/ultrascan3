@@ -1108,20 +1108,26 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       vector < double > use_nnls_B     = nnls_B;
       vector < double > use_difference = difference;
       vector < double > use_residual   = residual;
+      vector < double > use_error      = nnls_errors;
       vector < double > no_error;
 
-      crop_pr_tail( use_nnls_r, use_nnls_B, no_error );
+      crop_pr_tail( use_nnls_r, use_nnls_B, use_error );
       int max_len = (int) use_nnls_r.size();
       use_nnls_r  = nnls_r;
       crop_pr_tail( use_nnls_r, use_model, no_error );
       max_len     = (int)use_nnls_r.size() > max_len ? (int)use_nnls_r.size() : max_len;
       use_nnls_r  = nnls_r;
+      use_error   = nnls_errors;
 
       use_nnls_r    .resize( max_len );
       use_difference.resize( max_len );
       use_residual  .resize( max_len );
       use_nnls_B    .resize( max_len );
       
+      if ( use_error.size() ) {
+         use_error.resize( max_len );
+      }
+
       saxs_residuals_window = 
          new US_Hydrodyn_Saxs_Residuals(
                                         &saxs_residuals_widget,
@@ -1131,9 +1137,11 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                                         use_difference,
                                         use_residual,
                                         use_nnls_B,
+                                        use_error,
                                         true,
                                         true,
                                         true,
+                                        use_error.size(),
                                         pen_width
                                         );
       saxs_residuals_window->show();
@@ -1474,6 +1482,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       vector < double > use_best_fit_target = best_fit_target;
       vector < double > use_difference      = difference;
       vector < double > use_residual        = residual;
+      vector < double > use_error           = best_fit_target_errors;
       vector < double > no_error;
 
       crop_pr_tail( use_nnls_r, use_best_fit_target, no_error );
@@ -1483,11 +1492,16 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       crop_pr_tail( use_nnls_r, use_model, no_error );
       max_len     = (int)use_nnls_r.size() > max_len ? (int)use_nnls_r.size() : max_len;
       use_nnls_r  = nnls_r;
+      use_error   = best_fit_target_errors;
 
       use_nnls_r         .resize( max_len );
       use_difference     .resize( max_len );
       use_residual       .resize( max_len );
       use_best_fit_target.resize( max_len );
+
+      if ( use_error.size() ) {
+         use_error.resize( max_len );
+      }
 
       saxs_residuals_window = 
          new US_Hydrodyn_Saxs_Residuals(
@@ -1498,9 +1512,11 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                                         use_difference,
                                         use_residual,
                                         use_best_fit_target,
+                                        use_error,
                                         true,
                                         true,
                                         true,
+                                        use_error.size(),
                                         pen_width
                                         );
       saxs_residuals_window->show();
