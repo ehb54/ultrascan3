@@ -1107,7 +1107,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       vector < double > use_model      = model;
       vector < double > use_nnls_B     = nnls_B;
       vector < double > use_difference = difference;
-      vector < double > use_residual   = residual;
+      // vector < double > use_residual   = residual;
       vector < double > use_error      = nnls_errors;
       vector < double > no_error;
 
@@ -1121,7 +1121,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
       use_nnls_r    .resize( max_len );
       use_difference.resize( max_len );
-      use_residual  .resize( max_len );
+      // use_residual  .resize( max_len );
       use_nnls_B    .resize( max_len );
       
       if ( use_error.size() ) {
@@ -1135,13 +1135,13 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                                         us_tr("NNLS residuals & difference targeting:\n") + title,
                                         use_nnls_r,
                                         use_difference,
-                                        use_residual,
+                                        // use_residual,
                                         use_nnls_B,
                                         use_error,
-                                        true,
-                                        true,
-                                        true,
-                                        use_error.size(),
+                                        // true,
+                                        // true,
+                                        // true,
+                                        // use_error.size(),
                                         pen_width
                                         );
       saxs_residuals_window->show();
@@ -1481,7 +1481,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       vector < double > use_model           = model;
       vector < double > use_best_fit_target = best_fit_target;
       vector < double > use_difference      = difference;
-      vector < double > use_residual        = residual;
+      // vector < double > use_residual        = residual;
       vector < double > use_error           = best_fit_target_errors;
       vector < double > no_error;
 
@@ -1496,7 +1496,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
 
       use_nnls_r         .resize( max_len );
       use_difference     .resize( max_len );
-      use_residual       .resize( max_len );
+      // use_residual       .resize( max_len );
       use_best_fit_target.resize( max_len );
 
       if ( use_error.size() ) {
@@ -1510,13 +1510,13 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                                         us_tr("Best fit residuals & difference targeting:\n") + title,
                                         use_nnls_r,
                                         use_difference,
-                                        use_residual,
+                                        // use_residual,
                                         use_best_fit_target,
                                         use_error,
-                                        true,
-                                        true,
-                                        true,
-                                        use_error.size(),
+                                        // true,
+                                        // true,
+                                        // true,
+                                        // use_error.size(),
                                         pen_width
                                         );
       saxs_residuals_window->show();

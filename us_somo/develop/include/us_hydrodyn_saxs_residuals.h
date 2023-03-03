@@ -47,14 +47,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
                                  unsigned int width,
                                  QString title,
                                  vector < double > r,
-                                 vector < double > difference,
+                                 // vector < double > difference,
                                  vector < double > residuals,
                                  vector < double > target,
                                  vector < double > error,
-                                 bool plot_residuals,
-                                 bool plot_difference,
-                                 bool plot_as_percent,
-                                 bool use_errors,
+                                 // bool plot_residuals,
+                                 // bool plot_difference,
+                                 // bool plot_as_percent,
+                                 // bool use_errors,
                                  unsigned int pen_width,
                                  QWidget *p = 0, 
                                  const char *name = 0
@@ -67,15 +67,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       bool *saxs_residuals_widget;
 
       vector < double > r;
-      vector < double > difference;
+      // vector < double > difference;
       vector < double > residuals;
       vector < double > target;
       vector < double > error;
 
-      vector < double > difference_pct;
+      // vector < double > difference_pct;
       vector < double > residuals_pct;
 
-      vector < double > difference_div_sd;
+      // vector < double > difference_div_sd;
       vector < double > residuals_div_sd;
 
       bool              plot_residuals;

@@ -2700,6 +2700,10 @@ void US_Hydrodyn_Saxs::set_pr_contrib()
 
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
+   if ( !selected_models.size() ) {
+      return;
+   }
+   
    progress_pr->set_cli_prefix( "pr" );
    pb_pr_contrib->setEnabled(false);
    stopFlag = false;
