@@ -61,6 +61,17 @@ class US_ConvertGui : public US_Widgets
 
   private:
 
+      struct ChanOptics
+      {
+	QString     channel;
+	QString     data_type;
+      };
+      
+      struct ProtocolOptics
+      {
+	QVector< ChanOptics > chopts;
+      };
+	
       struct ChanSolu
       {
 	QString     channel;       //!< Channel name ("2 / A")
@@ -127,6 +138,7 @@ class US_ConvertGui : public US_Widgets
 	ProtocolRotor     ProtRotor;
 	ProtocolCells     ProtCells;
 	ProtocolSolutions ProtSolutions;
+	ProtocolOptics    ProtOptics;
 
       };
        
@@ -282,6 +294,9 @@ class US_ConvertGui : public US_Widgets
       bool readProtocolRotor_auto ( QXmlStreamReader& );
       bool readProtocolCells_auto ( QXmlStreamReader& );
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
+      bool readProtocolOptics_auto ( QXmlStreamReader& );
+      bool isCorrectDataType( QString, QString );
+  int  getProtSolIndex( QString , QString);
 
       void read_aprofile_data_from_aprofile( void );
       bool readAProfileBasicParms_auto ( QXmlStreamReader& );

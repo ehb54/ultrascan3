@@ -582,14 +582,13 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("29");
    // QString aprofileguid = QString("fafe5452-eac9-44c6-b8e6-04b1b8b7e3d7");
 
-   // QString curdir   = QString("/home/alexey/ultrascan/imports/NielsenJ_AmyloidLL37-041822-37C-repeat-run1309");
-   // QString protname = QString("NielsenJ_AmyloidLL37-highconc-37C-v2");
-   // QString invid    = QString("115");
-   // QString aprofileguid = QString("bfcfa916-1c61-4084-8f3a-69ca98468d0b");
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/BreunigS_SLB3279_022123-run1895");
+   // QString protname = QString("BreunigS_SLB3279_022123");
+   // QString invid    = QString("152");
+   // QString aprofileguid = QString("d16f9f04-2a8b-4b6b-b08e-5652ee4dbc7e");
    
    
    // QMap < QString, QString > protocol_details;
-   // //protocol_details[ "status" ];
    // protocol_details[ "dataPath" ]       = curdir;
    // protocol_details[ "invID_passed" ]   = invid;
    // protocol_details[ "protocolName" ]   = protname;
@@ -599,9 +598,10 @@ DbgLv(1) << "CGui: reset complete";
    // //protocol_details[ "runID" ]          =  ;
    // protocol_details[ "label" ]          = QString("Some label");
    // protocol_details[ "aprofileguid" ]   = aprofileguid;
+   // protocol_details[ "CellChNumber" ]   = QString("IP:6,RI:2");
 
    
-   // // /*********************************************************************************/
+   // // // /*********************************************************************************/
 
    
    // import_data_auto( protocol_details ); 
@@ -1584,16 +1584,16 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      
      if( dataSavedOtherwise )
        return;
+
+     char chtype[ 3 ] = { 'R', 'A', '\0' };
+     strncpy( chtype, allData[ 0 ].type, 2 );
+     QString dataType = QString( chtype ).left( 2 );
+     qDebug() << "Data type -- " << dataType;
      
      readProtocol_auto();
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     char chtype[ 3 ] = { 'R', 'A', '\0' };
-     strncpy( chtype, allData[ 0 ].type, 2 );
-     QString dataType = QString( chtype ).left( 2 );
-     qDebug() << "Data type -- " << dataType;
-
      if ( dataType == "IP" )
        auto_ref_scan = false;
 
@@ -1717,16 +1717,16 @@ void US_ConvertGui::process_optics()
      
      if( dataSavedOtherwise )
        return;
+
+     char chtype[ 3 ] = { 'R', 'A', '\0' };
+     strncpy( chtype, allData[ 0 ].type, 2 );
+     QString dataType = QString( chtype ).left( 2 );
+     qDebug() << "Data type -- " << dataType;
      
      readProtocol_auto();
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     char chtype[ 3 ] = { 'R', 'A', '\0' };
-     strncpy( chtype, allData[ 0 ].type, 2 );
-     QString dataType = QString( chtype ).left( 2 );
-     qDebug() << "Data type -- " << dataType;
-
      if ( dataType == "IP" )
        auto_ref_scan = false;
      
@@ -2757,7 +2757,7 @@ void US_ConvertGui::readProtocol_auto( void )
 	   // else if ( ename == "speed" )      { rpSpeed.fromXml( xmli ); }
 	   else if ( ename == "cells" )      { readProtocolCells_auto( xmli ); }
 	   else if ( ename == "solutions" )  { readProtocolSolutions_auto( xmli ); }
-	   // else if ( ename == "optics" )     { rpOptic.fromXml( xmli ); }
+	   else if ( ename == "optics" )     { readProtocolOptics_auto( xmli ); }
 	   // else if ( ename == "ranges"  )    { rpRange.fromXml( xmli ); }
 	   // else if ( ename == "spectra" )    { rpRange.fromXml( xmli ); }
 	 }
@@ -2864,17 +2864,16 @@ bool US_ConvertGui::readProtocolSolutions_auto( QXmlStreamReader& xmli )
 
       if ( xmli.isStartElement() )
       {
-         if ( ename == "solution" )
-         {  // Accumulate each solution object
-            ChanSolu cs;
-            QXmlStreamAttributes attr = xmli.attributes();
-            cs.channel     = attr.value( "channel"      ).toString();
-            cs.solution    = attr.value( "name"         ).toString();
-            cs.sol_id      = attr.value( "id"           ).toString();
-            cs.ch_comment  = attr.value( "chan_comment" ).toString();
-            ProtInfo.ProtSolutions.chsols << cs;
-            //nschan++;
-         }
+	if ( ename == "solution" )
+	  {  // Accumulate each solution object
+	    ChanSolu cs;
+	    QXmlStreamAttributes attr = xmli.attributes();
+	    cs.channel     = attr.value( "channel"      ).toString();
+	    cs.solution    = attr.value( "name"         ).toString();
+	    cs.sol_id      = attr.value( "id"           ).toString();
+	    cs.ch_comment  = attr.value( "chan_comment" ).toString();
+	    ProtInfo.ProtSolutions.chsols << cs;
+	  }
       }
 
       bool was_end    = xmli.isEndElement();   // Just read was End of element?
@@ -2885,6 +2884,54 @@ bool US_ConvertGui::readProtocolSolutions_auto( QXmlStreamReader& xmli )
    }
    return ( ! xmli.hasError() );
 }
+
+
+bool US_ConvertGui::readProtocolOptics_auto( QXmlStreamReader& xmli )
+{
+  ProtInfo.ProtOptics.chopts.clear();
+
+  while( ! xmli.atEnd() )
+    {  // Read elements from optics portion of XML stream
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "optical_system" )
+	    {
+	      ChanOptics co;
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      co.channel      =  attr.value( "channel" ).toString();
+	      QString dt1     =  attr.value( "scan1"   ).toString();
+	      QString dt2     =  attr.value( "scan2"   ).toString();
+	      QString dt;
+	      
+	      if ( !dt1. isEmpty() ) //RI
+		{
+		  if ( dt2. isEmpty() ) 
+		    dt = "RI";
+		  else
+		    dt = "combined";
+		}
+	      else // not RI ( then IP by default but check...)
+		{
+		  dt = "IP";
+		  if ( dt2. isEmpty() )
+		    dt = "none";
+		}
+	      co.data_type   = dt;
+	      ProtInfo.ProtOptics.chopts << co;
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();   // Just read was End of element?
+      xmli.readNext();                         // Read the next element
+
+      if ( was_end  &&  ename == "optics" )    // Break after "</optics>"
+         break;
+    }
+  return ( ! xmli.hasError() );
+}
+
 
 
 void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
@@ -3048,6 +3095,21 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "Size ProtInfo.ProtCells.cells_used: " << ProtInfo.ProtCells.cells_used.size();
    qDebug() << "Size ProtInfo.ProtSolutions.chsols: " << ProtInfo.ProtSolutions.chsols.size();
 
+   //DEBUG ///////////////////////////////////////////////////////////////
+   for (int i = 0; i < out_tripinfo.size(); ++i )
+     {
+       qDebug() << "out_tripinfo[ " << i << " ]" <<  out_tripinfo[i].tripleDesc;
+     }
+   for (int i = 0; i < out_channels.size(); ++i )
+     {
+       qDebug() << "out_channels[ " << i << " ]" <<  out_channels[i];
+     }
+   for (int i = 0; i < out_triples.size(); ++i )
+     {
+       qDebug() << "out_triples[ " << i << " ]" <<  out_triples[i];
+     }  
+   ///////////////////////////////////////////////////////////////////////
+
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
    qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
    
@@ -3057,10 +3119,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    {
       qDebug() << "SOLUTION is READ in MWL mode !!! ";
       for (int i = 0; i < nchans; ++i )
-      {	   
+      {
+	// //ALEXEY: IMPORTANT -- check against dataType & what we wrote to ProtInfo.ProtSolutions.chsols[ i ].data_type:
+	// if ( ! isCorrectDataType( ProtInfo.ProtSolutions.chsols[ i ].channel, runType ) )
+	//   continue;
+
+	int index_curr = getProtSolIndex( out_channels[ i ], runType );
+	
          //Solution
-	 solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
-	 solution_auto.readFromDB(solutionID, &db);
+	 //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
+	solution_auto.readFromDB(solutionID, &db);
 
 	   qDebug() << "SOLS 0";
 
@@ -3143,8 +3212,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	    qDebug() << "SOLS 4";
 	    
 	   // Description
-	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-
+	   //triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+	    triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
+	    
 	   //ALEXEY: a problem here
 	   //outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
 
@@ -3189,15 +3259,29 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	 {
 	   for (int i = 0; i < ntrips; ++i )
 	     {
-	       int index_curr;
+	       // //ALEXEY: IMPORTANT -- check against dataType & what we wrote to ProtInfo.ProtSolutions.chsols[ i ].data_type:
+	       // if ( ! isCorrectDataType( ProtInfo.ProtSolutions.chsols[ i ].channel, runType ) )
+	       // 	 continue;
+
+	       int index_curr = getProtSolIndex( out_triples[ i ], runType );
+
+	       qDebug() << "index_curr -- " << index_curr;
 	       
-	       if ( runType == "IP" )
-		 index_curr = 2 * i;
-	       else
-		 index_curr = i;
+	       // int index_curr;
+	       
+	       // if ( runType == "IP" )
+	       // 	 index_curr = 2 * i;
+	       // else
+	       // 	 index_curr = i;
 		 
 	       //Solution
 	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
+
+	       // if ( runType == "IP" &&  ProtInfo.ProtSolutions.chsols[ i ].channel. contains( "reference [left]") )
+	       // 	 continue;
+	       
+	       //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       
 	       solution_auto.readFromDB(solutionID, &db);
 	       out_chaninfo[ i ].solution = solution_auto;
 	       out_tripinfo[ i ].solution = solution_auto;
@@ -3207,6 +3291,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       all_tripinfo[ i ].solution = solution_auto;  
 	       
 	       //Description
+	       //triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       outData[ i ]->description = triple_desc;
 
@@ -3263,9 +3348,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
 	   qDebug() << "nchans: " << nchans << ", ntrips: " << ntrips << "outData.size(): " << outData.size() << ", num_cent_holes: " << num_cent_holes;
 	   for (int i = 0; i < nchans; ++i )
-	     {	   
+	     {
+
+	       // if ( ! isCorrectDataType( ProtInfo.ProtSolutions.chsols[ i ].channel, runType ) )
+	       // 	 continue;
+
+	       int index_curr = getProtSolIndex( out_channels[ i ], runType );
+	       
 	       //Solution
-	       solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+
+	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
 	       solution_auto.readFromDB(solutionID, &db);  
 	   
 	       //Description
@@ -3339,6 +3432,55 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    enableSaveBtn_auto();
 }
 
+//get index of ProtInfo's Solutions based on channel name && data type:
+int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
+{
+  int index = 0;
+  channel_name.simplified();
+  channel_name.replace( " ", "" );
+
+  QStringList channelList = channel_name.split("/");
+  QString channel_name_mod = channelList[0] + " / " + channelList[1];
+  
+  qDebug() << "In getProtSolIndex():  channel_name_mod -- " <<  channel_name_mod; 
+  
+  for ( int i=0; i < ProtInfo.ProtSolutions.chsols.size(); ++i ) 
+    {
+      qDebug() << "ProtInfo.ProtSolutions.chsols[ i ].channel -- " << ProtInfo.ProtSolutions.chsols[ i ].channel;
+      if ( ProtInfo.ProtSolutions.chsols[ i ].channel. startsWith( channel_name_mod ) )
+	{
+	  index = i;
+	  break;
+	}
+    }
+
+  return index;
+}
+
+//Check for consistency btw channel's name, dataType, && optics system
+bool US_ConvertGui::isCorrectDataType( QString channel_name, QString dtype )
+{
+  bool isConsistent = true;
+  QString data_type_from_optics;
+  
+  for ( int i=0; i < ProtInfo.ProtOptics.chopts.size(); ++i ) 
+    {
+      if ( ProtInfo.ProtOptics.chopts[ i ].channel == channel_name )
+	{
+	  data_type_from_optics = ProtInfo.ProtOptics.chopts[ i ].data_type;
+	  break;
+	}
+    }
+
+  qDebug() << "In isCorrectDataType(): data_type_from_optics, dtype -- "
+	   << data_type_from_optics << ", " << dtype;
+  
+  if ( data_type_from_optics != dtype )
+    isConsistent = false;
+  
+  return isConsistent;
+}
+  
 // Function to generate a new guid for experiment, and associate with DB
 void US_ConvertGui::editRuninfo_auto( void )
 {
