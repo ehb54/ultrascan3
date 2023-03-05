@@ -354,6 +354,7 @@ struct saxs_options
 
    bool    alt_hydration;
    bool    ignore_errors;
+   bool    trunc_pr_dmax_target;
 
    unsigned int xsr_symmop;
    unsigned int xsr_nx;
