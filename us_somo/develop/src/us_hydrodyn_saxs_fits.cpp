@@ -354,13 +354,14 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       plot_one_iqq(nnls_r, nnls_B, csv_filename + " Target");
    }
 
-   rescale_iqq_curve( qsl_plotted_iq_names[ qsl_plotted_iq_names.size() - 1 ], nnls_r, model );
+   QString target_name = qsl_plotted_iq_names[ qsl_plotted_iq_names.size() - 1 ];
+   rescale_iqq_curve( target_name, nnls_r, model );
    plot_one_iqq(nnls_r, model, csv_filename + " Model");
    
    for ( int i = 0; i < (int) contrib_to_plot.size(); ++i ) {
-      vector < double > rescaled_A =nnls_A[model_names[contrib_to_plot[i]]];
+      vector < double > rescaled_A = nnls_A[model_names[contrib_to_plot[i]]];
       vector < double > no_errors;
-      rescale_iqq_curve( qsl_plotted_iq_names[ qsl_plotted_iq_names.size() - 2 ], nnls_r, rescaled_A );
+      rescale_iqq_curve( target_name, nnls_r, rescaled_A, false );
       plot_one_iqq( nnls_r, rescaled_A, no_errors, model_names[contrib_to_plot[i]] );
    }
 

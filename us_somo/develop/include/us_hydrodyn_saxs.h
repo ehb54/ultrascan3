@@ -649,23 +649,27 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void rescale_iqq_curve( QString scaling_target,
                               vector < double > &q,
-                              vector < double > &I );
-
-      void rescale_iqq_curve( QString scaling_target,
-                              vector < double > &q,
                               vector < double > &I,
-                              vector < double > &I2 );
-
-      void rescale_iqq_curve( QString scaling_target,
-                              vector < double > &q,
-                              vector < double > &I,
-                              QColor plot_color );
+                              bool do_plot_residuals = true );
 
       void rescale_iqq_curve( QString scaling_target,
                               vector < double > &q,
                               vector < double > &I,
                               vector < double > &I2,
-                              QColor plot_color );
+                              bool do_plot_residuals = true );
+
+      void rescale_iqq_curve( QString scaling_target,
+                              vector < double > &q,
+                              vector < double > &I,
+                              QColor plot_color,
+                              bool do_plot_residuals = true );
+
+      void rescale_iqq_curve( QString scaling_target,
+                              vector < double > &q,
+                              vector < double > &I,
+                              vector < double > &I2,
+                              QColor plot_color,
+                              bool   do_plot_resduals = true );
 
       void editor_msg( QColor  color, QString msg );
       void editor_msg( QString color, QString msg );

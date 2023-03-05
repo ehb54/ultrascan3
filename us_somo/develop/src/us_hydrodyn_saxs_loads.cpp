@@ -3885,42 +3885,49 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
 
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
-                                          vector < double > &I )
+                                          vector < double > &I,
+                                          bool do_plot_residuals
+                                          )
 {
    vector < double > I2;
    QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
-   rescale_iqq_curve( scaling_target, q, I, I2, plot_color );
+   rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
-                                          QColor plot_color )
+                                          QColor plot_color,
+                                          bool do_plot_residuals
+                                          )
 {
    vector < double > I2;
-   rescale_iqq_curve( scaling_target, q, I, I2, plot_color );
+   rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
-                                          vector < double > &I2 )
+                                          vector < double > &I2,
+                                          bool do_plot_residuals)
 {
    QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
-   rescale_iqq_curve( scaling_target, q, I, I2, plot_color );
+   rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
                                           vector < double > &/* I2 */,
-                                          QColor plot_color
+                                          QColor plot_color,
+                                          bool do_plot_residuals
                                           )
 {
    if ( !q.size() ||
         scaling_target.isEmpty() ||
         !plotted_iq_names_to_pos.count(scaling_target) )
    {
+      TSO << "rescale_iqq_curves() return 1\n";
       return;
    }
 
@@ -4005,6 +4012,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       QMessageBox::warning( this, "UltraScan",
                             QString(us_tr("Could not find sufficient q range overlap\n"
                                        "to scale the loaded data to the selected target")) );
+      TSO << "rescale_iqq_curves() return 2\n";
       return;
    }
 
@@ -4057,15 +4065,18 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
 
    if ( our_saxs_options->iqq_scale_nnls ) {
       // iqq_scale_nnls is an *experimental" option, not enabled for normal usage
-
       if ( !use_SDs_for_fitting_iqq )
       {
-         editor_msg( "red", us_tr("Chi^2 fitting is currently not compatable with NNLS scaling\n") );
+         if ( do_plot_residuals ) {
+            editor_msg( "red", us_tr("Chi^2 fitting is currently not compatable with NNLS scaling\n") );
+         }
          do_chi2_fitting = false;
       }
       if ( our_saxs_options->iqq_scale_linear_offset )
       {
-         editor_msg( "red", us_tr("Scale with linear offset is not compatable with NNLS scaling\n") );
+         if ( do_plot_residuals ) {
+            editor_msg( "red", us_tr("Scale with linear offset is not compatable with NNLS scaling\n") );
+         }
          do_scale_linear_offset = false;
       }
 
@@ -4076,29 +4087,37 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                    chi2
                    );
    } else {
-      editor_msg( "dark blue", do_chi2_fitting ? "Chi^2 fitting\n" : "" );
+      if ( do_plot_residuals ) {
+         editor_msg( "dark blue", do_chi2_fitting ? "Chi^2 fitting\n" : "" );
+      }
       if ( our_saxs_options->iqq_scale_linear_offset )
       {
-         editor_msg( "red", us_tr("Scale with linear offset is not currently implemented\n") );
+         if ( do_plot_residuals ) {
+            editor_msg( "red", us_tr("Scale with linear offset is not currently implemented\n") );
+         }
          do_scale_linear_offset = false;
       }
       if ( do_chi2_fitting && !is_nonzero_vector( use_I_error ) )
       {
-         editor_msg( "red", us_tr("Chi^2 fitting disabled, zeros in target standard deviation\n") );
+         if ( do_plot_residuals ) {
+            editor_msg( "red", us_tr("Chi^2 fitting disabled, zeros in target standard deviation\n") );
+         }
          do_chi2_fitting = false;
       }
-      editor_msg( "dark blue",
-                  QString( us_tr( "fitting range: %1 to %2 with %3 points\n" ) )
-                  .arg( use_q[ 0 ] )
-                  .arg( use_q.back() )
-                  .arg( use_q.size() ) );
+      if ( do_plot_residuals ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "fitting range: %1 to %2 with %3 points\n" ) )
+                     .arg( use_q[ 0 ] )
+                     .arg( use_q.back() )
+                     .arg( use_q.size() ) );
 
-      nnls_csv_footer <<
-         QString( us_tr( "\"fitting range start, end, points:\",%1,%2,%3" ) )
-         .arg( use_q[ 0 ] )
-         .arg( use_q.back() )
-         .arg( use_q.size() )
-         ;
+         nnls_csv_footer <<
+            QString( us_tr( "\"fitting range start, end, points:\",%1,%2,%3" ) )
+            .arg( use_q[ 0 ] )
+            .arg( use_q.back() )
+            .arg( use_q.size() )
+            ;
+      }
 
       if ( do_chi2_fitting )
       {
@@ -4177,80 +4196,81 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    // double chi2_prob = 0e0;
    QString fit_msg = "";
 
-   if ( do_chi2_fitting )
-   {
-      // usu.calc_chisq_prob( 0.5 * use_I.size() - ( do_scale_linear_offset ? 2 : 1 ),
-      // 0.5 * chi2,
-      // chi2_prob );
-      fit_msg = 
-         QString("chi^2=%1 df=%2 nchi=%3 nchi^2=%4")
-         .arg(chi2, 6)
-         .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
-         .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
-         .arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
-         ;
-
-      nnls_csv_footer
-         << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
-         << QString( "\"df\",%1" )    .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
-         << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
-         << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
-         ;
-
-      if ( avg_std_dev_frac )
+   if ( do_plot_residuals ) {
+      if ( do_chi2_fitting )
       {
-         fit_msg += QString( " r_sigma=%1 nchi*r_sigma=%2 " )
-            .arg( avg_std_dev_frac ) 
-            .arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 );
+         // usu.calc_chisq_prob( 0.5 * use_I.size() - ( do_scale_linear_offset ? 2 : 1 ),
+         // 0.5 * chi2,
+         // chi2_prob );
+         fit_msg = 
+            QString("chi^2=%1 df=%2 nchi=%3 nchi^2=%4")
+            .arg(chi2, 6)
+            .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
+            .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+            .arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
+            ;
 
          nnls_csv_footer
-            << QString( "\"r_sigma\",%1" )     .arg( avg_std_dev_frac ) 
-            << QString( "\"nchi*r_sigma\",%1" ).arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+            << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
+            << QString( "\"df\",%1" )    .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
+            << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
+            << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
             ;
-      }
-   } else {
-      fit_msg = QString("RMSD=%1").arg(chi2, 5);
-      nnls_csv_footer
-         << QString( "\"RMSD\",%1" ).arg(chi2, 5)
-         ;
-   }
 
-   // compute p value
-   {
-      vector < double > I1 = use_source_I;
-      vector < double > I2 = use_I;
-      double p;
-      QString emsg;
+         if ( avg_std_dev_frac )
+         {
+            fit_msg += QString( " r_sigma=%1 nchi*r_sigma=%2 " )
+               .arg( avg_std_dev_frac ) 
+               .arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 );
 
-      if ( pvalue( q, I1, I2, p, emsg ) ) {
-         QString p_status = "bad";
-         if ( p >= 0.05 ) {
-            p_status = "good";
-         } else if ( p >= 0.01 ) {
-            p_status = "fair";
+            nnls_csv_footer
+               << QString( "\"r_sigma\",%1" )     .arg( avg_std_dev_frac ) 
+               << QString( "\"nchi*r_sigma\",%1" ).arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+               ;
          }
-         
-         fit_msg += QString( " P-value=%1 (%2)" ).arg( p ).arg( p_status );
-         nnls_csv_footer
-            << QString( "\"P value\",%1,\"%2\"" ).arg( p ).arg( p_status );
-            ;
       } else {
-         qDebug() << emsg;
+         fit_msg = QString("RMSD=%1").arg(chi2, 5);
+         nnls_csv_footer
+            << QString( "\"RMSD\",%1" ).arg(chi2, 5)
+            ;
       }
-   }
-      
-   results += 
-      QString("factor: %1 %2\n")
-      .arg( k )
-      .arg( fit_msg );
 
-   nnls_csv_footer
-      << QString("\"Scaling factor\",%1" ).arg( k )
-      ;
+      // compute p value
+      {
+         vector < double > I1 = use_source_I;
+         vector < double > I2 = use_I;
+         double p;
+         QString emsg;
 
-   editor->append(results);
-
+         if ( pvalue( q, I1, I2, p, emsg ) ) {
+            QString p_status = "bad";
+            if ( p >= 0.05 ) {
+               p_status = "good";
+            } else if ( p >= 0.01 ) {
+               p_status = "fair";
+            }
          
+            fit_msg += QString( " P-value=%1 (%2)" ).arg( p ).arg( p_status );
+            nnls_csv_footer
+               << QString( "\"P value\",%1,\"%2\"" ).arg( p ).arg( p_status );
+            ;
+         } else {
+            qDebug() << emsg;
+         }
+      }
+      
+      results += 
+         QString("factor: %1 %2\n")
+         .arg( k )
+         .arg( fit_msg );
+
+      nnls_csv_footer
+         << QString("\"Scaling factor\",%1" ).arg( k )
+         ;
+
+      editor->append(results);
+   }
+
    last_rescaling_multiplier = k;
    last_rescaling_offset     = 0e0;
    last_rescaling_chi2       = chi2;
@@ -4269,13 +4289,15 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       use_source_I[i] = k * use_source_I[i];
    }
    
-   display_iqq_residuals( scaling_target, 
-                          use_q,
-                          use_I,
-                          use_source_I,
-                          plot_color,
-                          use_I_error
-                          );
+   if ( do_plot_residuals ) {
+      display_iqq_residuals( scaling_target, 
+                             use_q,
+                             use_I,
+                             use_source_I,
+                             plot_color,
+                             use_I_error
+                             );
+   }
    
    // check this, as I2 may need to be interpolated
    // if ( I2.size() )
@@ -4289,6 +4311,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    //                             I2,
    //                             save_use_I );
    //   }
+
 }
 
 void US_Hydrodyn_Saxs::rescale_iqq_curve_using_last_rescaling( vector < double > &I, bool use_offset )
