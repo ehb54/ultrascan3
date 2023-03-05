@@ -1140,6 +1140,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    bool run_best_fit        = false;
    bool run_ift             = false;
    use_SDs_for_fitting_iqq  = true;
+   nnls_plot_contrib        = false;
    QString nnls_target      = "";
    if ( !grid_target.isEmpty() )
    {
@@ -3155,6 +3156,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          bool nnls_csv            = false;
          bool run_best_fit        = false;
          use_SDs_for_fitting_prr  = false;
+         nnls_plot_contrib        = false;
          QString nnls_target      = "";
          bool clear_plot_first    = true;
          

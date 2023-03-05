@@ -427,6 +427,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
          fclose(of);
          if ( plotted )
          {
+            set_eb();
             editor_msg( "black", "I(q) plot done\n" );
             plotted = false;
          }
@@ -606,6 +607,7 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
 
    if ( plotted )
    {
+      set_eb();
       editor_msg( "black", "I(q) plot done\n");
       plotted = false;
    }
@@ -666,6 +668,7 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
          fclose(of);
          if ( plotted )
          {
+            set_eb();
             editor_msg( "black", "I(q) plot done\n");
             plotted = false;
          }
