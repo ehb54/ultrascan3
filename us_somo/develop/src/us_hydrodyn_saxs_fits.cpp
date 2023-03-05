@@ -78,8 +78,12 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    {
       use_errors = false;
    }
+   if ( use_errors && !use_SDs_for_fitting_iqq ) {
+      use_errors = false;
+   }
+   
    unsigned int org_errors_size = nnls_errors.size();
-   if ( use_errors &&  org_errors_size != max_iqq_len )
+   if ( use_errors && org_errors_size != max_iqq_len )
    {
       editor_msg("red", QString(us_tr("NNLS failed, target length mismatch %1 %2\n")).arg(org_errors_size).arg(max_iqq_len));
       nnls_csv_footer << QString(us_tr("\"NNLS failed, target length mismatch %1 %2\"")).arg(org_errors_size).arg(max_iqq_len);
@@ -274,6 +278,8 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
 
+   vector < int > contrib_to_plot;
+
    for ( auto it = sort_models.begin();
          it != sort_models.end();
          ++it ) {
@@ -313,6 +319,10 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       }      
 
       editor_msg( use_color, QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i] ) );
+
+      if ( nnls_plot_contrib && rescaled_x[i] > 0 ) {
+         contrib_to_plot.push_back( i );
+      }
    }
 
    nnls_csv_footer
@@ -347,8 +357,16 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    rescale_iqq_curve( qsl_plotted_iq_names[ qsl_plotted_iq_names.size() - 1 ], nnls_r, model );
    plot_one_iqq(nnls_r, model, csv_filename + " Model");
    
+   for ( int i = 0; i < (int) contrib_to_plot.size(); ++i ) {
+      vector < double > rescaled_A =nnls_A[model_names[contrib_to_plot[i]]];
+      vector < double > no_errors;
+      rescale_iqq_curve( qsl_plotted_iq_names[ qsl_plotted_iq_names.size() - 2 ], nnls_r, rescaled_A );
+      plot_one_iqq( nnls_r, rescaled_A, no_errors, model_names[contrib_to_plot[i]] );
+   }
+
    if ( plotted )
    {
+      set_eb();
       editor_msg( "black", "I(q) plot done\n");
       plotted = false;
    }
@@ -460,6 +478,9 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    bool use_errors = is_nonzero_vector( nnls_errors );
    if ( our_saxs_options->iqq_scale_nnls )
    {
+      use_errors = false;
+   }
+   if ( use_errors && !use_SDs_for_fitting_iqq ) {
       use_errors = false;
    }
 
@@ -697,6 +718,34 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    nnls_B.push_back(8.5e0);
 #endif
 
+   int dmax_croplen = 0;
+   
+   if ( our_saxs_options->trunc_pr_dmax_target ) {
+      vector < double > cropd_B = nnls_B;
+      vector < double > cropd_r = nnls_r;
+      vector < double > cropd_e = nnls_errors;
+
+      crop_pr_tail( cropd_r, cropd_B, cropd_e );
+      
+      if ( nnls_B.size() > cropd_B.size() ) {
+         editor_msg( "darkred", QString( us_tr( "Notice: cropping models to target Dmax %1\n" ) ).arg( cropd_r.back() ) );
+         qDebug() << QString( us_tr( "Notice: cropping models to target Dmax %1" ) ).arg( cropd_r.back() );
+         nnls_csv_footer << QString( us_tr( "\"Cropping models to target Dmax\",%1" ) ).arg( cropd_r.back() );
+
+         dmax_croplen = (int) cropd_B.size();
+         max_pr_len = dmax_croplen;
+         nnls_B      = cropd_B;
+         nnls_r      = cropd_r;
+         nnls_errors = cropd_e;
+
+         for ( auto it = nnls_A.begin();
+               it != nnls_A.end();
+               ++it ) {
+            it->second.resize( max_pr_len );
+         }
+      }
+   }
+
    for ( map < QString, vector < double > >::iterator it = nnls_A.begin();
         it != nnls_A.end();
         it++ )
@@ -710,7 +759,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
    // editor->append(QString("a size %1\n").arg(nnls_A.size()));
    // editor->append(QString("b size %1\n").arg(max_pr_len));
-
+   
    vector < double > use_A;
 
    vector < QString > model_names;
@@ -731,15 +780,14 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    }
 
    bool use_errors = is_nonzero_vector( nnls_errors );
-#warning should this be iqq_scale_chi2_fitting ?
-   if ( our_saxs_options->ignore_errors ) {
+   if ( !use_SDs_for_fitting_prr ) {
       use_errors = false;
    }
    unsigned int org_errors_size = nnls_errors.size();
 
    nnls_B.resize(max_pr_len, 0);
 
-   if ( use_errors && org_errors_size < max_pr_len )
+   if ( use_errors && org_errors_size < max_pr_len && !dmax_croplen )
    {
       editor_msg("darkred", QString(us_tr("NNLS propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\n")).arg(org_errors_size).arg(max_pr_len));
       nnls_csv_footer << QString(us_tr("\"NNLS propagating last error to extended zeros to match maximum model length. Errors size:%1 Maximum model length:%2\"")).arg(org_errors_size).arg(max_pr_len);
@@ -778,26 +826,6 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
    //   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
    editor->append("Running NNLS\n");
-#if defined(DEBUG_NNLS)
-   cout << "use A size " << use_A.size() << endl;
-   int a_size = nnls_A.size();
-   int b_size = nnls_B.size();
-   cout << "matrix: \n";
-   for ( int i = 0; i < a_size; i++ )
-   {
-      for ( int j = 0; j < b_size; j++ )
-      {
-         cout << use_A[i * b_size + j] << ",";
-      }
-      cout << endl;
-   }
-   cout << "b: \n";
-   for ( int j = 0; j < b_size; j++ )
-   {
-      cout << use_B[j] << ",";
-   }
-   cout << endl;
-#endif
    
    {
       // patch up nnls_r in case of truncated vector
@@ -904,6 +932,8 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
 
+   vector < int > contrib_to_plot;
+
    for ( auto it = sort_models.begin();
          it != sort_models.end();
          ++it ) {
@@ -943,6 +973,9 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       }      
 
       editor_msg( use_color, QString("%1 %2\n").arg(model_names[i]).arg( rescaled_x[i] ) );
+      if ( nnls_plot_contrib && rescaled_x[i] > 0 ) {
+         contrib_to_plot.push_back( i );
+      }
    }
    
    nnls_csv_footer
@@ -1091,6 +1124,12 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    plot_one_pr(nnls_r, nnls_B, nnls_errors, csv_filename + " Target");
    compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Target");
    
+   for ( int i = 0; i < (int) contrib_to_plot.size(); ++i ) {
+      vector < double > no_errors;
+      plot_one_pr( nnls_r, nnls_A[model_names[contrib_to_plot[i]]], no_errors, model_names[contrib_to_plot[i]] );
+      compute_rg_to_progress( nnls_r, nnls_A[model_names[contrib_to_plot[i]]], model_names[contrib_to_plot[i]] );
+   }
+
    if ( plotted )
    {
       editor_msg( "black", "P(r) plot done\n");
@@ -1221,14 +1260,41 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    //    give each model a chi^2
    //    sort by chi^2
 
+   unsigned int max_pr_len = 0;
+   int dmax_croplen = 0;
+
+   if ( our_saxs_options->trunc_pr_dmax_target ) {
+      vector < double > cropd_B = nnls_B;
+      vector < double > cropd_r = nnls_r;
+      vector < double > cropd_e = nnls_errors;
+
+      crop_pr_tail( cropd_r, cropd_B, cropd_e );
+      
+      if ( nnls_B.size() > cropd_B.size() ) {
+         editor_msg( "darkred", QString( us_tr( "Notice: cropping models to target Dmax %1\n" ) ).arg( cropd_r.back() ) );
+         qDebug() << QString( us_tr( "Notice: cropping models to target Dmax %1" ) ).arg( cropd_r.back() );
+         nnls_csv_footer << QString( us_tr( "\"Cropping models to target Dmax\",%1" ) ).arg( cropd_r.back() );
+
+         dmax_croplen = (int) cropd_B.size();
+         max_pr_len = dmax_croplen;
+         nnls_B      = cropd_B;
+         nnls_r      = cropd_r;
+         nnls_errors = cropd_e;
+
+         for ( auto it = nnls_A.begin();
+               it != nnls_A.end();
+               ++it ) {
+            it->second.resize( max_pr_len );
+         }
+      }
+   }
+
    map < QString, vector < double > > best_fit_models        = nnls_A;
    vector < double >                  best_fit_target        = nnls_B;
    vector < double >                  best_fit_target_errors = nnls_errors;
 
    // editor->append("setting up best fit run\n");
    // unify dimension of best_fit_models vectors
-
-   unsigned int max_pr_len = 0;
 
    QString tagged_csv_filename = csv_filename;
 
@@ -1249,8 +1315,8 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    }
 
    bool use_errors = is_nonzero_vector( nnls_errors );
-#warning should this be iqq_scale_chi2_fitting ?
-   if ( our_saxs_options->ignore_errors ) {
+
+   if ( !use_SDs_for_fitting_prr ) {
       use_errors = false;
    }
 

@@ -1136,11 +1136,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    csv_filename             = "summary";
    bool save_original_data  = false;
    bool run_nnls            = false;
-   bool nnls_plot_contrib   = false;
    bool nnls_csv            = false;
    bool run_best_fit        = false;
    bool run_ift             = false;
-   bool use_SDs_for_fitting = true;
+   use_SDs_for_fitting_iqq  = true;
    QString nnls_target      = "";
    if ( !grid_target.isEmpty() )
    {
@@ -1167,7 +1166,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &nnls_csv,
                                         &run_best_fit,
                                         &run_ift,
-                                        &use_SDs_for_fitting,
+                                        &use_SDs_for_fitting_iqq,
                                         &nnls_target,
                                         &clear_plot_first,
                                         1 || U_EXPT,
@@ -1507,6 +1506,14 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          }
 
          iq_std_dev = std_dev;
+         
+         if ( !scaling_target.isEmpty() && 
+              plotted_iq_names_to_pos.count(scaling_target) )
+         {
+            rescale_iqq_curve_using_last_rescaling( iq_avg );
+            rescale_iqq_curve_using_last_rescaling( iq_std_dev );
+         }
+
          plot_one_iqq(this_q, iq_avg, iq_std_dev, QFileInfo(filename).fileName() + " Average");
          
          I = sum_iq;
@@ -3145,10 +3152,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          csv_filename             = "summary";
          bool save_original_data  = false;
          bool run_nnls            = false;
-         bool nnls_plot_contrib   = false;
          bool nnls_csv            = false;
          bool run_best_fit        = false;
-         bool use_SDs_for_fitting = false;
+         use_SDs_for_fitting_prr  = false;
          QString nnls_target      = "";
          bool clear_plot_first    = true;
          
@@ -3170,7 +3176,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                                           &nnls_plot_contrib,
                                           &nnls_csv,
                                           &run_best_fit,
-                                          &use_SDs_for_fitting,
+                                          &use_SDs_for_fitting_prr,
                                           &nnls_target,
                                           &clear_plot_first,
                                           1 || U_EXPT,
@@ -3481,6 +3487,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
 
          if ( create_avg && sum_count && !run_nnls && !run_best_fit )
          {
+            vector < double > no_error;
             pr = sum_pr;
             for ( unsigned int i = 0; i < sum_pr.size(); i++ )
             {
@@ -3499,7 +3506,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
 
             double pr_avg_area = compute_pr_area(pr_avg, r);
 
-            plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " Average", skip_mw );
+            plot_one_pr( this_r, pr, no_error, QFileInfo(filename).fileName() + " Average", skip_mw );
             compute_rg_to_progress( this_r, pr, QFileInfo(filename).fileName() + " Average" );
 
             vector < double > pr_std_dev;
@@ -3617,7 +3624,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                }
                pr_avg_minus_std_dev = pr;
 
-               plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " Average minus 1 std dev", skip_mw );
+               plot_one_pr( this_r, pr, no_error, QFileInfo(filename).fileName() + " Average minus 1 std dev", skip_mw );
                
                pr = sum_pr;
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
@@ -3636,7 +3643,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                }
                pr_avg_plus_std_dev = pr;
 
-               plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average plus 1 std dev", skip_mw );
+               plot_one_pr(this_r, pr, no_error, QFileInfo(filename).fileName() + " Average plus 1 std dev", skip_mw );
             }
             if ( plotted )
             {
@@ -4006,7 +4013,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    double k;
    double chi2;
 
-   bool do_chi2_fitting        = our_saxs_options->iqq_scale_chi2_fitting;
+   bool do_chi2_fitting        = !use_SDs_for_fitting_iqq;
    bool do_scale_linear_offset = our_saxs_options->iqq_scale_linear_offset;
    bool do_kratky              = our_saxs_options->iqq_kratky_fit;
 
@@ -4049,7 +4056,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    if ( our_saxs_options->iqq_scale_nnls ) {
       // iqq_scale_nnls is an *experimental" option, not enabled for normal usage
 
-      if ( our_saxs_options->iqq_scale_chi2_fitting )
+      if ( !use_SDs_for_fitting_iqq )
       {
          editor_msg( "red", us_tr("Chi^2 fitting is currently not compatable with NNLS scaling\n") );
          do_chi2_fitting = false;
@@ -4260,8 +4267,6 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       use_source_I[i] = k * use_source_I[i];
    }
    
-#warning should use_I_error be clear if not using errors in fit (?)
-
    display_iqq_residuals( scaling_target, 
                           use_q,
                           use_I,

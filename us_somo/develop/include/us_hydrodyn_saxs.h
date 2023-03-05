@@ -805,6 +805,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void pad_pr_plotted(); // sets all plotted to max length
       
+      bool use_SDs_for_fitting_iqq;
+      bool use_SDs_for_fitting_prr;
+      bool nnls_plot_contrib;
+
    private:
       
       map < QString, QwtPlot *>    plot_info;

@@ -148,6 +148,10 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    this->remember_mw_source = &(((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source);
    this->match_remember_mw = &(((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw);
 
+   use_SDs_for_fitting_iqq = true;
+   use_SDs_for_fitting_prr = false;
+   nnls_plot_contrib       = false;
+   
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle( us_tr( "US-SOMO: " + us_tr( "SAS Functions" ) ) );
@@ -4878,6 +4882,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
         iq_plot_experimental_and_calculated_present() )
    {
       clear_plot_saxs_and_replot_experimental();
+      set_eb();
    } else {
       clear_plot_saxs_data();
    }
@@ -7080,10 +7085,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               QColor            plot_color,
                                               vector < double > I_errors)
 {
-#warning perhaps handled before the call?
-   if ( our_saxs_options->ignore_errors &&
-        I_errors.size() )
-   {
+   if ( !use_SDs_for_fitting_iqq && I_errors.size() ) {
       editor_msg( "dark red", us_tr( "Ignoring experimental errors" ) );
       I_errors.clear( );
    }
