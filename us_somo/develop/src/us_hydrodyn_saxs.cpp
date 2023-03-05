@@ -1497,14 +1497,16 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_info->setMinimumHeight(minHeight1);
    pb_pr_info->setPalette( PALET_PUSHB );
    connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
-   pr_widgets.push_back( pb_pr_info );
+   // pr_widgets.push_back( pb_pr_info );
+   pb_pr_info->hide();
 
    pb_pr_info2 = new QPushButton(us_tr( "info2" ), this);
    pb_pr_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_info2->setMinimumHeight(minHeight1);
    pb_pr_info2->setPalette( PALET_PUSHB );
    connect(pb_pr_info2, SIGNAL(clicked()), SLOT(pr_info2()));
-   pr_widgets.push_back( pb_pr_info2 );
+   // pr_widgets.push_back( pb_pr_info2 );
+   pb_pr_info2->hide();
 
    cb_pr_eb = new QCheckBox(this);
    cb_pr_eb->setText(us_tr("Err "));
@@ -7078,7 +7080,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               QColor            plot_color,
                                               vector < double > I_errors)
 {
-   // make sure things aren't to big
+#warning perhaps handled before the call?
    if ( our_saxs_options->ignore_errors &&
         I_errors.size() )
    {
@@ -7086,6 +7088,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       I_errors.clear( );
    }
 
+   // make sure things aren't to big
    unsigned int min_len = q.size();
    if ( I1.size() <  min_len ) 
    {
@@ -7096,7 +7099,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       min_len = I2.size();
    }
 
-   bool use_errors = is_nonzero_vector( I_errors );
+   bool use_errors = is_nonzero_vector( I_errors ) && I_errors.size();
 #if defined( DEBUG_RESID )
    cout << 
       QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")

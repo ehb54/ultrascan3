@@ -1665,6 +1665,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "batch.zeno" ] = QString( "%1" ).arg( batch.zeno );
 
       parameters[ "saxs_options.ignore_errors" ] = QString( "%1" ).arg( saxs_options.ignore_errors );
+      parameters[ "saxs_options.trunc_pr_dmax_target" ] = QString( "%1" ).arg( saxs_options.trunc_pr_dmax_target );
       parameters[ "saxs_options.alt_ff" ] = QString( "%1" ).arg( saxs_options.alt_ff );
       parameters[ "saxs_options.crysol_explicit_hydrogens" ] = QString( "%1" ).arg( saxs_options.crysol_explicit_hydrogens );
       parameters[ "saxs_options.use_somo_ff" ] = QString( "%1" ).arg( saxs_options.use_somo_ff );
@@ -2162,6 +2163,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "batch.zeno" ) ) batch.zeno = parameters[ "batch.zeno" ] == "1";
 
    if ( parameters.count( "saxs_options.ignore_errors" ) ) saxs_options.ignore_errors = parameters[ "saxs_options.ignore_errors" ] == "1";
+   if ( parameters.count( "saxs_options.trunc_pr_dmax_target" ) ) saxs_options.trunc_pr_dmax_target = parameters[ "saxs_options.trunc_pr_dmax_target" ] == "1";
    if ( parameters.count( "saxs_options.alt_ff" ) ) saxs_options.alt_ff = parameters[ "saxs_options.alt_ff" ] == "1";
    if ( parameters.count( "saxs_options.crysol_explicit_hydrogens" ) ) saxs_options.crysol_explicit_hydrogens = parameters[ "saxs_options.crysol_explicit_hydrogens" ] == "1";
    if ( parameters.count( "saxs_options.use_somo_ff" ) ) saxs_options.use_somo_ff = parameters[ "saxs_options.use_somo_ff" ] == "1";
@@ -3178,6 +3180,7 @@ void US_Hydrodyn::hard_coded_defaults()
    batch.zeno        = false;
 
    saxs_options.ignore_errors                      = false;
+   saxs_options.trunc_pr_dmax_target               = false;
    saxs_options.alt_ff                             = true;
    saxs_options.crysol_explicit_hydrogens          = false;
    saxs_options.use_somo_ff                        = false;

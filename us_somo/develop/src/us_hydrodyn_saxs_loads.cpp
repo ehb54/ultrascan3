@@ -1129,22 +1129,24 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    
    // ask for the names to load if more than one present (cb list? )
    QStringList qsl_sel_names;
-   bool create_avg         = false;
-   bool create_std_dev     = false;
-   bool only_plot_stats    = true;
-   save_to_csv             = false;
-   csv_filename            = "summary";
-   bool save_original_data = false;
-   bool run_nnls           = false;
-   bool nnls_csv           = false;
-   bool run_best_fit       = false;
-   bool run_ift            = false;
-   QString nnls_target     = "";
+   bool create_avg          = false;
+   bool create_std_dev      = false;
+   bool only_plot_stats     = true;
+   save_to_csv              = false;
+   csv_filename             = "summary";
+   bool save_original_data  = false;
+   bool run_nnls            = false;
+   bool nnls_plot_contrib   = false;
+   bool nnls_csv            = false;
+   bool run_best_fit        = false;
+   bool run_ift             = false;
+   bool use_SDs_for_fitting = true;
+   QString nnls_target      = "";
    if ( !grid_target.isEmpty() )
    {
       nnls_target = "\"" + grid_target + "\"";
    }
-   bool clear_plot_first = true;
+   bool clear_plot_first    = true;
 
    US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
       new US_Hydrodyn_Saxs_Iqq_Load_Csv(
@@ -1161,9 +1163,11 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &csv_filename,
                                         &save_original_data,
                                         &run_nnls,
+                                        &nnls_plot_contrib,
                                         &nnls_csv,
                                         &run_best_fit,
                                         &run_ift,
+                                        &use_SDs_for_fitting,
                                         &nnls_target,
                                         &clear_plot_first,
                                         1 || U_EXPT,
@@ -3134,17 +3138,19 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
 
          // ask for the names to load if more than one present (cb list? )
          QStringList qsl_sel_names;
-         bool create_avg         = false;
-         bool create_std_dev     = false;
-         bool only_plot_stats    = true;
-         save_to_csv             = false;
-         csv_filename            = "summary";
-         bool save_original_data = false;
-         bool run_nnls           = false;
-         bool nnls_csv           = false;
-         bool run_best_fit       = false;
-         QString nnls_target     = "";
-         bool clear_plot_first   = true;
+         bool create_avg          = false;
+         bool create_std_dev      = false;
+         bool only_plot_stats     = true;
+         save_to_csv              = false;
+         csv_filename             = "summary";
+         bool save_original_data  = false;
+         bool run_nnls            = false;
+         bool nnls_plot_contrib   = false;
+         bool nnls_csv            = false;
+         bool run_best_fit        = false;
+         bool use_SDs_for_fitting = false;
+         QString nnls_target      = "";
+         bool clear_plot_first    = true;
          
          US_Hydrodyn_Saxs_Load_Csv *hslc =
             new US_Hydrodyn_Saxs_Load_Csv(
@@ -3161,8 +3167,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                                           &csv_filename,
                                           &save_original_data,
                                           &run_nnls,
+                                          &nnls_plot_contrib,
                                           &nnls_csv,
                                           &run_best_fit,
+                                          &use_SDs_for_fitting,
                                           &nnls_target,
                                           &clear_plot_first,
                                           1 || U_EXPT,
@@ -4038,8 +4046,9 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    //       .arg( use_I[ i ] );
    // }
 
-   if ( our_saxs_options->iqq_scale_nnls )
-   {
+   if ( our_saxs_options->iqq_scale_nnls ) {
+      // iqq_scale_nnls is an *experimental" option, not enabled for normal usage
+
       if ( our_saxs_options->iqq_scale_chi2_fitting )
       {
          editor_msg( "red", us_tr("Chi^2 fitting is currently not compatable with NNLS scaling\n") );
@@ -4251,6 +4260,8 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       use_source_I[i] = k * use_source_I[i];
    }
    
+#warning should use_I_error be clear if not using errors in fit (?)
+
    display_iqq_residuals( scaling_target, 
                           use_q,
                           use_I,

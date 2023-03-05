@@ -181,13 +181,14 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    connect(cb_disable_iq_scaling, SIGNAL(clicked()), this, SLOT(set_disable_iq_scaling()));
 
    cb_disable_nnls_scaling = new QCheckBox(this);
-   cb_disable_nnls_scaling->setText(us_tr("Disable NNLS scaling"));
+   cb_disable_nnls_scaling->setText(us_tr("Disable NNLS scaling *experimental*"));
    cb_disable_nnls_scaling->setEnabled(true);
    cb_disable_nnls_scaling->setChecked((*saxs_options).disable_nnls_scaling);
    cb_disable_nnls_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_disable_nnls_scaling->setPalette( PALET_NORMAL );
    AUTFBACK( cb_disable_nnls_scaling );
    connect(cb_disable_nnls_scaling, SIGNAL(clicked()), this, SLOT(set_disable_nnls_scaling()));
+   cb_disable_nnls_scaling->hide();
 
    cb_iqq_scale_chi2_fitting = new QCheckBox(this);
    cb_iqq_scale_chi2_fitting->setText(us_tr("Chi^2 fitting"));
@@ -197,6 +198,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cb_iqq_scale_chi2_fitting->setPalette( PALET_NORMAL );
    AUTFBACK( cb_iqq_scale_chi2_fitting );
    connect(cb_iqq_scale_chi2_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_scale_chi2_fitting()));
+   cb_iqq_scale_chi2_fitting->hide();
 
    cb_iqq_kratky_fit = new QCheckBox(this);
    cb_iqq_kratky_fit->setText(us_tr("Kratky fit"));
@@ -215,6 +217,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cb_ignore_errors->setPalette( PALET_NORMAL );
    AUTFBACK( cb_ignore_errors );
    connect(cb_ignore_errors, SIGNAL(clicked()), this, SLOT(set_ignore_errors()));
+   cb_ignore_errors->hide();
 
    lbl_swh_excl_vol = new QLabel(us_tr(" Excluded volume WAT [A^3]: "), this);
    lbl_swh_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -326,6 +329,15 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cb_nnls_zero_list->setPalette( PALET_NORMAL );
    AUTFBACK( cb_nnls_zero_list );
    connect(cb_nnls_zero_list, SIGNAL(clicked()), this, SLOT(set_nnls_zero_list()));
+
+   cb_trunc_pr_dmax_target = new QCheckBox(this);
+   cb_trunc_pr_dmax_target->setText(us_tr("Truncate P(r) fits to Dmax of target "));
+   cb_trunc_pr_dmax_target->setEnabled(true);
+   cb_trunc_pr_dmax_target->setChecked((*saxs_options).trunc_pr_dmax_target);
+   cb_trunc_pr_dmax_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_trunc_pr_dmax_target->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_trunc_pr_dmax_target );
+   connect(cb_trunc_pr_dmax_target, SIGNAL(clicked()), this, SLOT(set_trunc_pr_dmax_target()));
 
    pb_clear_mw_cache = new QPushButton(us_tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -448,6 +460,9 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    j++;
 
    background->addWidget( cb_nnls_zero_list, j, 0, 1, 2 );
+   j++;
+
+   background->addWidget( cb_trunc_pr_dmax_target, j, 0, 1, 2 );
    j++;
 
    {
@@ -659,6 +674,12 @@ void US_Hydrodyn_SasOptionsMisc::set_iqq_kratky_fit()
 void US_Hydrodyn_SasOptionsMisc::set_ignore_errors()
 {
    (*saxs_options).ignore_errors = cb_ignore_errors->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_trunc_pr_dmax_target()
+{
+   (*saxs_options).trunc_pr_dmax_target = cb_trunc_pr_dmax_target->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

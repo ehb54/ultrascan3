@@ -169,7 +169,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
    cb_plot_residuals = new QCheckBox(this);
-   cb_plot_residuals->setText(us_tr(" Plot residuals"));
+   cb_plot_residuals->setText(us_tr(" Plot residuals/SD"));
    cb_plot_residuals->setEnabled(true);
    cb_plot_residuals->setChecked(plot_residuals);
    cb_plot_residuals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -193,7 +193,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    connect(cb_plot_residuals, SIGNAL(clicked()), SLOT(set_plot_residuals()));
 
    cb_plot_difference = new QCheckBox(this);
-   cb_plot_difference->setText(us_tr(" Plot difference"));
+   cb_plot_difference->setText(us_tr(" Plot residuals"));
    cb_plot_difference->setEnabled(true);
    cb_plot_difference->setChecked(plot_difference);
    cb_plot_difference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -359,10 +359,10 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 
    QString left_axis_title =
       plot_as_percent
-      ? "% diff."
+      ? "% difference"
       : ( plot_residuals
-          ? "residuals"
-          : "difference"
+          ? "Residuals/SD"
+          : "Residuals"
           )
       ;
           
