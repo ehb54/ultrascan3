@@ -318,7 +318,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    connect(le_iqq_scale_maxq, SIGNAL(textChanged(const QString &)), SLOT(update_iqq_scale_maxq(const QString &)));
 
    cb_nnls_zero_list = new QCheckBox(this);
-   cb_nnls_zero_list->setText(us_tr("List zero entries in NNLS fits"));
+   cb_nnls_zero_list->setText(us_tr("List zero contribution entries in NNLS fits"));
    cb_nnls_zero_list->setEnabled(true);
    cb_nnls_zero_list->setChecked(
                                  ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?
