@@ -741,6 +741,7 @@ class US_EXTERN US_Saxs_Util
       // to a coarser grid, otherwise an error will result with error_msg set
 
       static bool is_nonzero_vector( const vector < double > &v ); // returns true if all non-zero
+      static bool is_zero_vector( const vector < double > &v ); // returns true if all zero
 
       bool interpolate_iqq_by_case( vector < double > from_grid,
                                     vector < double > from_data,

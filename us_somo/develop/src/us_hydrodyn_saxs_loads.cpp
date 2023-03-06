@@ -4873,7 +4873,7 @@ void US_Hydrodyn_Saxs::load_gnom()
             vector < double > I_exp;
             vector < double > I_reg;
             vector < double > q;
-            // cout << "start of iqq\n";
+            // TSO << "load_gnom() start of iqq\n";
             ts.readLine(); // blank line
             while ( !ts.atEnd() )
             {
@@ -4920,7 +4920,7 @@ void US_Hydrodyn_Saxs::load_gnom()
             vector < double > r;
             vector < double > pr;
             vector < double > pre;
-            // cout << "start of prr\n";
+            // TSO << "load_gnom() start of prr\n";
             ts.readLine(); // blank line
             while ( !ts.atEnd() ) {
                tmp = ts.readLine();
@@ -4967,6 +4967,8 @@ void US_Hydrodyn_Saxs::load_gnom()
                   {
                      normalize_pr(r, &pr, &pre, get_mw(filename, false));
                   }
+
+                  // TSO << "load_gnom() plot_one_pr 1\n";
                   plot_one_pr(r, pr, pre, QFileInfo(filename).fileName());
                   compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
 
@@ -5122,6 +5124,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                {
                   normalize_pr(r, &pr, &pre, get_mw(filename, false));
                }
+               // TSO << "load_gnom() plot_one_pr 2\n";
                plot_one_pr(r, pr, pre, QFileInfo(filename).fileName());
                compute_rg_to_progress( r, pr, QFileInfo(filename).fileName());
 

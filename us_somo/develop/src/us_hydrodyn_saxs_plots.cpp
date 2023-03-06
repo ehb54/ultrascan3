@@ -7,9 +7,7 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
+#define TSO QTextStream(stdout)
 
 void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name, bool skip_mw ) {
    qDebug() << "plot_one_pr() old style pr call, DEPRECATE!";
@@ -35,7 +33,9 @@ void US_Hydrodyn_Saxs::plot_one_pr(
    }
 
    if ( pr_error.size() ) {
-      if ( pr_error.size() < pr.size() ) {
+      
+      if ( pr_error.size() < pr.size()
+           || US_Saxs_Util::is_zero_vector( pr_error ) ) {
          pr_error.clear();
       } else {
          pr_error.resize( pr.size() );
@@ -317,7 +317,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             par[ 8 ] = saxsC.c;
             ffe = compute_exponential_f( 2e0, (const double *)&(par[ 0 ] ) );
          }
-         cout << QString( "ff computes %1 ffe computes %2\n" ).arg( ffv ).arg( ffe );
+         TSO << QString( "ff computes %1 ffe computes %2\n" ).arg( ffv ).arg( ffe );
       }
 #endif                     
       if ( is_zero_vector( I_error ) )
@@ -380,7 +380,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             double            nnorm4;
             double            nnorm5;
             US_Saxs_Util usu;
-            cout << "compute exponentials\n" << flush;
+            TSO << "compute exponentials\n" << flush;
             editor_msg( "blue", us_tr( "Computing 4 & 5 term exponentials" ) );
             QMessageBox::information( this, 
                                       us_tr( "US-SOMO: Compute structure factors : start computation" ),
@@ -400,7 +400,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                            ) )
             {
                editor_msg( "red", usu.errormsg );
-               cout << usu.errormsg << endl;
+               TSO << usu.errormsg << endl;
             } else {
                nnorm4 = norm4 / q.size();
                nnorm5 = norm5 / q.size();
@@ -472,7 +472,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   qs4 += QString( " %1" ).arg( coeff4[ i ] );
                }
                qs4 += QString( " %1" ).arg( coeff4[ 0 ] );
-               cout << "Terms4: " << qs4 << endl;
+               TSO << "Terms4: " << qs4 << endl;
                editor_msg( "dark blue", QString( "Exponentials 4 terms norm %1 nnorm %2 (%3): %4" )
                            .arg( norm4 )
                            .arg( nnorm4 )
@@ -486,7 +486,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   qs5 += QString( " %1" ).arg( coeff5[ i ] );
                }
                qs5 += QString( " %1" ).arg( coeff5[ 0 ] );
-               cout << "Terms5: " << qs5 << endl;
+               TSO << "Terms5: " << qs5 << endl;
                editor_msg( "dark blue", QString( "Exponentials 5 terms norm %1 nnorm %2 (%3): %4" )
                            .arg( norm5 )
                            .arg( nnorm5 )
@@ -581,7 +581,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                            ok = false;
                            filename = QFileDialog::getSaveFileName( this , us_tr( "US-SOMO: Compute structure factors : save data" ) , org_filename , "*.saxs_atoms *.SAXS_ATOMS" );
 
-                           cout << QString( "filename is %1\n" ).arg( filename );
+                           TSO << QString( "filename is %1\n" ).arg( filename );
                            if ( !filename.isEmpty() )
                            {
                               f.setFileName( filename );
@@ -1672,7 +1672,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
    {
       if ( pts_removed.count( x[ i ] ) )
       {
-         // cout << QString( "do plot resid errs: %1 %2\n"  ).arg( x[ i ] ).arg( e[ i ] );
+         // TSO << QString( "do plot resid errs: %1 %2\n"  ).arg( x[ i ] ).arg( e[ i ] );
          QwtPlotMarker* marker = new QwtPlotMarker;
          marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
          marker->setValue( x[ i ], e[ i ] );

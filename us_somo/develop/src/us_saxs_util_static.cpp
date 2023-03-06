@@ -10908,6 +10908,22 @@ bool US_Saxs_Util::is_nonzero_vector( const vector < double > &v )
    return non_zero;
 }
 
+bool US_Saxs_Util::is_zero_vector( const vector < double > &v )
+{
+   if ( !v.size() ) {
+      return true; // empty vector is zero vector
+   }
+   
+   bool is_zero = true;
+   for ( unsigned int i = 0; i < v.size(); i++ ) {
+      if ( v[ i ] != 0e0 ) {
+         is_zero = false;
+         break;
+      }
+   }
+   return is_zero;
+}
+
 bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line_size )
 {
    
