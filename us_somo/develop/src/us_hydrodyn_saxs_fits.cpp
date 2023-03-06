@@ -1702,7 +1702,7 @@ bool US_Hydrodyn_Saxs::compute_rg_to_progress(
    if ( US_Saxs_Util::compute_rg_from_pr( use_r, pr, Rg, errormsg ) ) {
       editor_msg(
                  "black"
-                 ,QString( us_tr( "Rg computed from p(r) for %1 = %2\n" ) )
+                 ,QString( us_tr( "Rg computed from p(r) for %1 = %2 [A]\n" ) )
                  .arg( filename )
                  .arg( Rg, 0, 'f', 2 )
                  );
