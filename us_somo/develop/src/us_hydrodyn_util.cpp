@@ -8,6 +8,7 @@
 // (this) us_hydrodyn_util.cpp contains other various code, such as disulfide code
 
 #include "us_hydrodyn.h"
+#define TSO QTextStream(stdout)
 
 // #define DEBUG_SS
 
@@ -305,6 +306,15 @@ double US_Hydrodyn::protons_at_pH( double pH, const struct PDB_model & model ) {
             qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_atom not set!";
             continue;
          }
+         if ( model.molecule[ j ].atom[ k ].p_residue->name == "WAT" ) {
+            continue;
+         }
+              
+         // TSO <<
+         //    QString( "protons at pH p_residue name %1 p_atom name %2\n" )
+         //    .arg( model.molecule[ j ].atom[ k ].p_residue->name )
+         //    .arg( model.molecule[ j ].atom[ k ].p_atom->name )
+         //    ;
          vector < double > fractions = basic_fractions( pH, model.molecule[ j ].atom[ k ].p_residue );
          protons += ionized_residue_atom_protons( fractions,
                                                   model.molecule[ j ].atom[ k ].p_residue,
@@ -518,8 +528,6 @@ static quint64 dir_size(const QString & str) {
    return sizex;
 }
    
-#define TSO QTextStream(stdout)
-
 void US_Hydrodyn::clear_temp_dirs() {
    // somo_tmp_dir globally defined
    if ( gui_script ) {
