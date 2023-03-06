@@ -4814,14 +4814,19 @@ void US_Hydrodyn_Saxs::load_gnom()
       QStringList qsl_gnom;
       {
          QTextStream ts(&f);
-         while ( !ts.atEnd() )
-         {
+         while ( !ts.atEnd() ) {
             qsl_gnom << ts.readLine();
          }
       }
       f.close();
       f.open(QIODevice::ReadOnly);
-      bool ask_save_mw_to_gnom = false;
+      bool ask_save_mw_to_gnom;
+      {
+         QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+         QStringList mwline = qsl_gnom.filter(qx_mw);
+         ask_save_mw_to_gnom = !mwline.size();
+      }
+
       double gnom_mw = 0e0;
 
       double units = 1;
@@ -4932,6 +4937,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
                } else {
                   // end of prr
+                  TSO << "end of prr\n";
                   QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
                   QStringList mwline = qsl_gnom.filter(qx_mw);
                   if ( mwline.size() )
@@ -5275,6 +5281,7 @@ void US_Hydrodyn_Saxs::load_gnom()
          }
       }
       f.close();
+      TSO << QString( "ask_save_mw_to_gnom %1 gnom_mw %2\n" ).arg( ask_save_mw_to_gnom ).arg( gnom_mw );
       if ( ask_save_mw_to_gnom && gnom_mw )
       {
          switch( QMessageBox::information( this, 
