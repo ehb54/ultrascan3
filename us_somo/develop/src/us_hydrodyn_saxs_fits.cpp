@@ -1038,7 +1038,9 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
       US_Saxs_Util usu;
 
-      if ( use_errors ) {
+      bool use_errors_for_chi2 = use_errors || use_I_error.size() == use_I.size();
+
+      if ( use_errors_for_chi2 ) {
          usu.scaling_fit( 
                          use_source_I, 
                          use_I, 
@@ -1046,6 +1048,21 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                          k, 
                          chi2
                          );
+         fit_msg = 
+            QString("chi^2=%1 df=%2 nchi=%3 nchi^2=%4")
+            .arg(chi2, 6)
+            .arg(use_I.size() - 1 )
+            .arg(sqrt( chi2 / ( use_I.size() - 1 ) ), 5 )
+            .arg(chi2 / ( use_I.size() - 1 ), 5 )
+            ;
+
+         nnls_csv_footer
+            << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
+            << QString( "\"df\",%1" )    .arg(use_I.size() - 1 )
+            << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - 1 ), 5 )
+            << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - 1 ) ), 5 )
+            ;
+
       } else {
          usu.scaling_fit( 
                          use_source_I, 
@@ -1054,21 +1071,6 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                          chi2
                          );
       }
-
-      fit_msg = 
-         QString("chi^2=%1 df=%2 nchi=%3 nchi^2=%4")
-         .arg(chi2, 6)
-         .arg(use_I.size() - 1 )
-         .arg(sqrt( chi2 / ( use_I.size() - 1 ) ), 5 )
-         .arg(chi2 / ( use_I.size() - 1 ), 5 )
-         ;
-
-      nnls_csv_footer
-         << QString( "\"chi^2\",%1" ) .arg( chi2, 6 )
-         << QString( "\"df\",%1" )    .arg(use_I.size() - 1 )
-         << QString( "\"nchi^2\",%1" ).arg(chi2 / ( use_I.size() - 1 ), 5 )
-         << QString( "\"nchi\",%1" )  .arg(sqrt( chi2 / ( use_I.size() - 1 ) ), 5 )
-         ;
 
       // if ( avg_std_dev_frac )
       // {

@@ -3192,7 +3192,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          this->isVisible() ? this->raise() : this->show();
 
          if ( qsl_sel_names.size() && clear_plot_first ) {
-            clear_plot_pr();
+            clear_plot_pr( true );
          }
 
          // make sure target is selected

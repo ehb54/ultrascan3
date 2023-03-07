@@ -1856,7 +1856,7 @@ void US_Hydrodyn_Saxs::pr_replot() {
    QStringList                  save_qsl_plotted_pr_names            = qsl_plotted_pr_names;
 
    // clear plots
-   clear_plot_pr();
+   clear_plot_pr( true );
    
    // replot with plot_one_pr ...
 
@@ -2155,4 +2155,84 @@ void US_Hydrodyn_Saxs::pad_pr_plotted() {
       plotted_pr_not_normalized[i].resize( max_size, 0 );
       prop_pr_sd_tail( plotted_pr_not_normalized_error[i], max_size );
    }
+}
+
+void US_Hydrodyn_Saxs::clear_plot_pr( bool full_clear ) {
+   if ( full_clear ) {
+      plotted_pr                     .clear();
+      plotted_pr_error               .clear();
+      plotted_pr_not_normalized      .clear();
+      plotted_pr_not_normalized_error.clear();
+      plotted_r                      .clear();
+      plotted_pr_mw                  .clear();
+      qsl_plotted_pr_names           .clear();
+      dup_plotted_pr_name_check      .clear();
+      plot_pr->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_pr->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+      plot_pr->replot();
+      pr_legend_vis = false;
+      set_pr_legend();
+      return;
+   }
+   // if plotted data with errors & those without errors exist, clear those without errors
+   // if only plotted data with errors exist, drop the last one
+
+   int total_pr = (int) plotted_pr.size();
+   if ( total_pr <= 1 ) {
+      return clear_plot_pr( true );
+   }
+   
+   if (
+       (int) plotted_r.size() != total_pr
+       || (int) plotted_pr_error.size() != total_pr
+       || (int) plotted_pr_not_normalized.size() != total_pr
+       || (int) plotted_pr_not_normalized_error.size() != total_pr
+       || (int) plotted_pr_mw.size() != total_pr
+       || (int) qsl_plotted_pr_names.size() != total_pr ) {
+      qDebug() << "internal inconsistency, clearing all!";
+      return clear_plot_pr( true );
+   }
+
+   vector < int > pr_with_error_index;
+
+   for ( int i = 0; i < total_pr; ++i ) {
+      if ( plotted_pr_error[i].size() == plotted_r[i].size() ) {
+         pr_with_error_index.push_back( i );
+      }
+   }
+   
+   if ( !pr_with_error_index.size() ) {
+      // nothing with error, clear all
+      return clear_plot_pr( true );
+   }      
+
+   bool save_pr_eb                           = cb_pr_eb->isChecked();
+   auto save_plotted_pr                      = plotted_pr;
+   auto save_plotted_pr_error                = plotted_pr_error;
+   auto save_plotted_pr_not_normalized       = plotted_pr_not_normalized;
+   auto save_plotted_pr_not_normalized_error = plotted_pr_not_normalized_error;
+   auto save_plotted_r                       = plotted_r;
+   auto save_plotted_pr_mw                   = plotted_pr_mw;
+   auto save_qsl_plotted_pr_names            = qsl_plotted_pr_names;
+   auto save_dup_plotted_pr_name_check       = dup_plotted_pr_name_check;
+
+   if ( (int) pr_with_error_index.size() == total_pr ) {
+      pr_with_error_index.pop_back();
+   }
+
+   clear_plot_pr( true );
+   
+   cb_pr_eb->setChecked( save_pr_eb );
+
+   for ( int i = 0; i < (int) pr_with_error_index.size(); ++i ) {
+      plot_one_pr(
+                  save_plotted_r[pr_with_error_index[i]]
+                  ,save_plotted_pr[pr_with_error_index[i]]
+                  ,save_plotted_pr_error[pr_with_error_index[i]]
+                  ,save_qsl_plotted_pr_names[pr_with_error_index[i]]
+                  ,true
+                  ,false
+                  );
+   }
+
+   plot_pr->replot();
 }

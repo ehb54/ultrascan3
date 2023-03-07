@@ -2203,7 +2203,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->setColumnStretch(2, 10);
    update_saxs_sans();
    clear_plot_saxs();
-   clear_plot_pr();
+   clear_plot_pr( true );
    if ( source )
    {
       our_saxs_options->curve = 0;
@@ -3531,30 +3531,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName() ) );
 }
 
-
 void US_Hydrodyn_Saxs::load_plot_pr()
 {
    load_pr(true);
 }
-
-void US_Hydrodyn_Saxs::clear_plot_pr()
-{
-   plotted_pr                     .clear();
-   plotted_pr_error               .clear();
-   plotted_pr_not_normalized      .clear();
-   plotted_pr_not_normalized_error.clear();
-   plotted_r                      .clear();
-   plotted_pr_mw                  .clear();
-   qsl_plotted_pr_names           .clear();
-   dup_plotted_pr_name_check      .clear();
-   plot_pr->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_pr->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   plot_pr->replot();
-#if QT_VERSION >= 0x040000
-   pr_legend_vis = false;
-   set_pr_legend();
-#endif
-}
-
 
 //--------- thread for saxs I(q) plot -----------
 

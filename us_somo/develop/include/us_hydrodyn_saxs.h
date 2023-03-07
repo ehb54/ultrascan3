@@ -983,7 +983,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_curve(int);
       void load_pr( bool just_plotted_curves = false, QString load_this = "", bool skip_mw = false );
       void load_plot_pr();
-      void clear_plot_pr();
+      void clear_plot_pr( bool full_clear = false );
       void cancel();
       void pp();
       void help();
