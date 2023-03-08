@@ -914,7 +914,7 @@ void US_Hydrodyn_Saxs::pr_info( const QString & msg, bool detail ) {
    for ( int i = 0; i < sizes.back(); ++i ) {
       if ( detail ) {
          US_Vector::printvector5(
-                                 QString( "entry %1 [%2] mw %3: plotted_r,_pr,_pr_error,_pr_nn,pr_nn_error" )
+                                 QString( "entry %1 mw %2 plotted_r,_pr,_pr_error,_pr_nn,pr_nn_error" )
                                  .arg( (int) qsl_plotted_pr_names.size() > i ? qsl_plotted_pr_names[i] : QString( "?" ) )
                                  .arg( (int) plotted_pr_mw.size() > i ? plotted_pr_mw[i] : -1 )
                                  ,(int) plotted_r.size() > i ? plotted_r[i] : emptyv

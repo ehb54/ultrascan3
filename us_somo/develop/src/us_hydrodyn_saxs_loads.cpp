@@ -4023,21 +4023,23 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    double k;
    double chi2;
 
-   bool do_chi2_fitting        = !use_SDs_for_fitting_iqq;
+   bool do_chi2_fitting        = use_SDs_for_fitting_iqq || ( is_nonzero_vector( use_I_error ) && use_I_error.size() == use_I.size() );
    bool do_scale_linear_offset = our_saxs_options->iqq_scale_linear_offset;
    bool do_kratky              = our_saxs_options->iqq_kratky_fit;
 
-   if ( our_saxs_options->ignore_errors &&
-        !is_zero_vector( use_I_error ) )
+   if ( do_chi2_fitting &&
+        !is_nonzero_vector( use_I_error ) )
    {
       editor_msg( "dark red", us_tr( "Ignoring experimental errors" ) );
       do_chi2_fitting = false;
    }
 
-   if ( is_zero_vector( use_I_error ) )
+   if ( do_chi2_fitting && is_zero_vector( use_I_error ) )
    {
-      editor_msg( "red", us_tr("Chi^2 fitting requested, but target data has no standard deviation data\n"
-                            "Chi^2 fitting not used\n") );
+      if ( use_SDs_for_fitting_iqq ) {
+         editor_msg( "red", us_tr("Chi^2 fitting requested, but target data has no standard deviation data\n"
+                                  "Chi^2 fitting not used\n") );
+      }
       do_chi2_fitting = false;
    }
 

@@ -20,7 +20,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                                    ,vector < double > pr
                                    ,vector < double > pr_error
                                    ,QString name
-                                   ,bool skip_mw
+                                   ,bool /* skip_mw */
                                    ,bool do_replot
                                    ) {
    if ( r.size() < pr.size() )
@@ -49,8 +49,14 @@ void US_Hydrodyn_Saxs::plot_one_pr(
    plotted_pr_not_normalized      .push_back(pr);
    plotted_pr_not_normalized_error.push_back(pr_error);
 
-   plotted_pr_mw.push_back( skip_mw ? -1e0 : get_mw( name, false, true ) );
+   // skip_mw = !cb_normalize->isChecked();
 
+   plotted_pr_mw.push_back(
+                           cb_normalize->isChecked()
+                           ? get_mw( name, false, true )
+                           : -1e0
+                           );
+   
    if ( plotted_pr_mw.back() == -1 ) {
       plotted_pr_mw.back() = 1;
       cb_normalize->setChecked( false );
@@ -2176,6 +2182,8 @@ void US_Hydrodyn_Saxs::clear_plot_pr( bool full_clear ) {
    // if plotted data with errors & those without errors exist, clear those without errors
    // if only plotted data with errors exist, drop the last one
 
+   bool save_pr_legend_vis = pr_legend_vis;
+   
    int total_pr = (int) plotted_pr.size();
    if ( total_pr <= 1 ) {
       return clear_plot_pr( true );
@@ -2235,4 +2243,6 @@ void US_Hydrodyn_Saxs::clear_plot_pr( bool full_clear ) {
    }
 
    plot_pr->replot();
+   pr_legend_vis = save_pr_legend_vis;
+   set_pr_legend();
 }

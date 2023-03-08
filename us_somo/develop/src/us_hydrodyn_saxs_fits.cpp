@@ -1118,6 +1118,9 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
    // plot 
 
+   plot_one_pr(nnls_r, nnls_B, nnls_errors, csv_filename + " Target");
+   compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Target");
+
    {
       vector < double > no_errors;
       plot_one_pr(nnls_r, model, no_errors, csv_filename + " Model");
@@ -1126,9 +1129,6 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    compute_rg_to_progress( nnls_r, model, csv_filename + " Model");
 
    // plot_one_pr(nnls_r, residual, csv_filename + " Residual");
-   
-   plot_one_pr(nnls_r, nnls_B, nnls_errors, csv_filename + " Target");
-   compute_rg_to_progress( nnls_r, nnls_B, csv_filename + " Target");
    
    for ( int i = 0; i < (int) contrib_to_plot.size(); ++i ) {
       vector < double > no_errors;
