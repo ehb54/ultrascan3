@@ -23,7 +23,7 @@ contains( DEFINES, "OSX" ) {
      UNAME                  = $$system(uname -a)
      DEFINES               += UNIX
      QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
-
+    
      LIBS +=  -L$$US3SOMOPATH/lib -lus_somo
      contains(UNAME,x86_64) {
         LIBS    += -L$$QWTPATH/lib -lqwt

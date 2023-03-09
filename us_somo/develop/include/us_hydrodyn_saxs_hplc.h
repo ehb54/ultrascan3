@@ -160,6 +160,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                      bool              is_time = false,
                      bool              replot  = true );
 
+      void add_plot_gaussian(
+                             const QString     & file,
+                             const QString     & tag
+                             );
+
    private:
 #if QT_VERSION < 0x040000
       Mesh2MainWindow *plot3d_window;
@@ -474,6 +479,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox     *cb_ggauss_scroll_p_green;
       QCheckBox     *cb_ggauss_scroll_p_yellow;
       QCheckBox     *cb_ggauss_scroll_p_red;
+      QCheckBox     *cb_ggauss_scroll_smoothed;
+      QCheckBox     *cb_ggauss_scroll_oldstyle;
 
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
@@ -862,6 +869,30 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, double >             f_extc;
       map < QString, double >             f_time;
 
+      // for displaying last smoothing in gg scroll mode
+      map < QString, vector < double > >  f_qs_smoothed;
+      map < QString, vector < double > >  f_Is_smoothed;
+      map < QString, int >                f_best_smoothed_smoothing;
+      void                                clear_smoothed(); // resets the smoothing data
+      void                                list_smoothed();  // reports on smoothing
+      void                                add_smoothed(
+                                                       const QString            & name
+                                                       ,const vector < double > & q
+                                                       ,const vector < double > & I
+                                                       ,int                       best_smoothing
+                                                       );
+
+      // for displaying oldstyle in gg scroll mode
+      map < QString, vector < double > >  f_qs_oldstyle;
+      map < QString, vector < double > >  f_Is_oldstyle;
+      void                                clear_oldstyle(); // resets the oldstyle data
+      void                                list_oldstyle();  // reports on oldstyle
+      void                                add_oldstyle(
+                                                       const QString            & name
+                                                       ,const vector < double > & q
+                                                       ,const vector < double > & I
+                                                       );
+
       map < QString, bool >               created_files_not_saved;
 
       map < QString, double >             current_concs( bool quiet = false );
@@ -923,6 +954,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       // the cormap p values from pairwise comparisons
 
+      bool                                pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ); // compute pvalue comparing 2 curves
+      bool                                pvalue( const QString & file, double &P, QString &errormsg ); // compute pvalue comparing I with Gaussians
+      
       map < QString, bool >               all_files_map();
 
       void                                update_plot_errors( vector < double > &grid, 
@@ -1259,6 +1293,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         baseline_test_pos( int pos );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
+      bool                         compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget );
 
       bool                         ggauss_recompute();
 
@@ -1564,6 +1599,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_scroll_p_green       ();
       void ggauss_scroll_p_yellow      ();
       void ggauss_scroll_p_red         ();
+      void ggauss_scroll_smoothed      ();
+      void ggauss_scroll_oldstyle      ();
 
       bool gg_fit_replot               ();
 

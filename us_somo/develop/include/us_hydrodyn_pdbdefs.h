@@ -188,7 +188,7 @@ struct PDB_model
    double hydration;                        // number of waters assigned
    double hydration_gg;                     // hydration g/g
    double molar_volume;                     // mv of model
-   int   num_elect;                         // number of electrons
+   double num_elect;                         // number of electrons
    int   num_SS_bonds;                      // number of SS bonds
    int   num_SH_free;                       // number of free SH
 
@@ -320,6 +320,7 @@ struct saxs_options
    double  steric_clash_recheck_distance;
 
    bool    disable_iq_scaling;
+   bool    disable_nnls_scaling;
    bool    autocorrelate;
    bool    hybrid_radius_excl_vol;
    float   scale_excl_vol;
@@ -353,6 +354,7 @@ struct saxs_options
 
    bool    alt_hydration;
    bool    ignore_errors;
+   bool    trunc_pr_dmax_target;
 
    unsigned int xsr_symmop;
    unsigned int xsr_nx;
@@ -457,9 +459,9 @@ struct hybridization
    QString saxs_name;            // name for SAXS coefficients
    float   scat_len;             // Scattering length in H20 (*10^-12 cm)
    int     exch_prot;            // Number of exchangable protons
-   int     num_elect;            // Number of electrons
+   double  num_elect;            // Number of electrons
    int     hydrogens;            // Number of hydrogens
-   float   protons;              // Total # of protons
+   double  protons;              // Total # of protons
 };
 
 struct atom

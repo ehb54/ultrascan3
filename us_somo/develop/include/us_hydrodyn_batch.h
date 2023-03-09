@@ -259,6 +259,12 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool         overwriteForcedOn;
       bool         overwrite_all;
 
+      vector < int >     split_if_mm( int i );
+      vector < QString > split_mm_files;
+      QTemporaryDir    * split_dir;
+      bool               create_split_dir();
+      void               remove_split_dir();
+
    public :
       void add_file( QString filename );
       void add_files( vector < QString > filenames );
@@ -339,7 +345,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       void set_counts();
 
-      QString get_file_name(int i);
+      QString get_file_name(int i, int model = -1 );
       void check_for_missing_files(bool display_messages);
 
    protected slots:

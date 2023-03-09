@@ -615,6 +615,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
             prcontents        = newcontents.join( "\n" ) + "\n";
 
             if ( mw != -1 ) {
+               // US_Vector::printvector3( QString( "ift %1 pr r, pr, pre" ).arg( , r, pr, pre );
                normalize_pr( r, &pr, &pre, mw );
                for ( int i = 0; i < (int)r.size(); ++i ) {
                   newcontents_normed << QString( "%1 %2 %3" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
