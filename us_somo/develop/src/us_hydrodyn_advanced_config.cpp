@@ -115,6 +115,24 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    AUTFBACK( cb_experimental_renum );
    connect(cb_experimental_renum, SIGNAL(clicked()), this, SLOT(set_experimental_renum()));
 
+   lbl_temp_dir_threshold_mb =  new QLabel      ( us_tr( "Temporary directory clear size threshold [MB]:" ), this );
+   lbl_temp_dir_threshold_mb -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_temp_dir_threshold_mb -> setPalette      ( PALET_LABEL );
+   lbl_temp_dir_threshold_mb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   AUTFBACK( lbl_temp_dir_threshold_mb );
+
+   le_temp_dir_threshold_mb = new QLineEdit( this );    le_temp_dir_threshold_mb->setObjectName( "le_temp_dir_threshold_mb Line Edit" );
+   le_temp_dir_threshold_mb->setText( QString("%1").arg( advanced_config->temp_dir_threshold_mb ) );
+   le_temp_dir_threshold_mb->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_temp_dir_threshold_mb->setPalette( PALET_NORMAL );
+   AUTFBACK( le_temp_dir_threshold_mb );
+   le_temp_dir_threshold_mb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qdv = new QIntValidator( 1, 10000, le_temp_dir_threshold_mb );
+      le_temp_dir_threshold_mb->setValidator( qdv );
+   }
+   connect( le_temp_dir_threshold_mb, SIGNAL( textChanged( const QString & ) ), SLOT( set_temp_dir_threshold_mb( const QString & ) ) );
+
 #if defined(DEBUG_CTLS)
    cb_experimental_threads = new QCheckBox(this);
    cb_experimental_threads->setText(us_tr(" Use threads (experimental)"));
@@ -199,6 +217,11 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    j++;
    background->addWidget( cb_auto_show_hydro , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
+
+   background->addWidget( lbl_temp_dir_threshold_mb, j, 0 );
+   background->addWidget( le_temp_dir_threshold_mb, j, 1 );
+   j++;
+
 #if defined(DEBUG_CTLS)   
    background->addWidget( cb_pbr_broken_logic , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -315,6 +338,13 @@ void US_Hydrodyn_AdvancedConfig::set_experimental_threads()
 void US_Hydrodyn_AdvancedConfig::set_experimental_renum()
 {
    (*advanced_config).experimental_renum = cb_experimental_renum->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_temp_dir_threshold_mb( const QString & str )
+{
+   (*advanced_config).temp_dir_threshold_mb = str.toInt();
+   qDebug() << "threshold mb set to " << str << " " << str.toInt() << " " << advanced_config->temp_dir_threshold_mb;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

@@ -180,6 +180,52 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_mass );
    connect(cnt_avg_mass, SIGNAL(valueChanged(double)), SLOT(update_avg_mass(double)));
 
+   lbl_avg_num_elect = new QLabel(us_tr(" Average atomic number of electrons: "), this);
+   Q_CHECK_PTR(lbl_avg_num_elect);
+   lbl_avg_num_elect->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_avg_num_elect->setMinimumWidth(220);
+   lbl_avg_num_elect->setMinimumHeight(minHeight1);
+   lbl_avg_num_elect->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_avg_num_elect );
+   lbl_avg_num_elect->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_avg_num_elect = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_num_elect );
+   Q_CHECK_PTR(cnt_avg_num_elect);
+   cnt_avg_num_elect->setRange(1.0, 25.0); cnt_avg_num_elect->setSingleStep( 0.001);
+   cnt_avg_num_elect->setValue((*misc).avg_num_elect);
+   cnt_avg_num_elect->setMinimumHeight(minHeight1);
+   cnt_avg_num_elect->setMinimumWidth(220);
+   cnt_avg_num_elect->setEnabled(true);
+   cnt_avg_num_elect->setNumButtons(3);
+   cnt_avg_num_elect->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_avg_num_elect->setPalette( PALET_NORMAL );
+   AUTFBACK( cnt_avg_num_elect );
+   connect(cnt_avg_num_elect, SIGNAL(valueChanged(double)), SLOT(update_avg_num_elect(double)));
+
+   lbl_avg_protons = new QLabel(us_tr(" Average atomic number of protons: "), this);
+   Q_CHECK_PTR(lbl_avg_protons);
+   lbl_avg_protons->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_avg_protons->setMinimumWidth(220);
+   lbl_avg_protons->setMinimumHeight(minHeight1);
+   lbl_avg_protons->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_avg_protons );
+   lbl_avg_protons->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_avg_protons = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_protons );
+   Q_CHECK_PTR(cnt_avg_protons);
+   cnt_avg_protons->setRange(1.0, 25.0); cnt_avg_protons->setSingleStep( .001 );
+   cnt_avg_protons->setValue((*misc).avg_protons);
+   cnt_avg_protons->setMinimumHeight(minHeight1);
+   cnt_avg_protons->setMinimumWidth(220);
+   cnt_avg_protons->setEnabled(true);
+   cnt_avg_protons->setNumButtons(3);
+   cnt_avg_protons->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_avg_protons->setPalette( PALET_NORMAL );
+   AUTFBACK( cnt_avg_protons );
+   connect(cnt_avg_protons, SIGNAL(valueChanged(double)), SLOT(update_avg_protons(double)));
+
    lbl_avg_hydration = new QLabel(us_tr(" Average atomic hydration: "), this);
    Q_CHECK_PTR(lbl_avg_hydration);
    lbl_avg_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -533,6 +579,12 @@ void US_Hydrodyn_Misc::setupGUI()
       leftside->addWidget(lbl_avg_mass, j, 0);
       leftside->addWidget(cnt_avg_mass, j, 1);
       j++;
+      leftside->addWidget(lbl_avg_num_elect, j, 0);
+      leftside->addWidget(cnt_avg_num_elect, j, 1);
+      j++;
+      leftside->addWidget(lbl_avg_protons, j, 0);
+      leftside->addWidget(cnt_avg_protons, j, 1);
+      j++;
       leftside->addWidget(lbl_avg_hydration, j, 0);
       leftside->addWidget(cnt_avg_hydration, j, 1);
       j++;
@@ -799,6 +851,18 @@ void US_Hydrodyn_Misc::update_avg_radius(double val)
 void US_Hydrodyn_Misc::update_avg_mass(double val)
 {
    (*misc).avg_mass = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::update_avg_num_elect(double val)
+{
+   (*misc).avg_num_elect = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::update_avg_protons(double val)
+{
+   (*misc).avg_protons = val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

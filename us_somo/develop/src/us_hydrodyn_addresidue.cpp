@@ -1060,7 +1060,7 @@ void US_AddResidue::add()
       residue_list.push_back(new_residue);
    }
    write_residue_file();
-   str1.sprintf(us_trp(" Number of Residues in File: %d"), residue_list.size());
+   str1 = QString( us_tr( " Number of Residues in File: %1" ) ).arg( residue_list.size() );
    lbl_numresidues->setText(str1);
    pb_accept_bead->setEnabled(false);
    pb_add->setEnabled(false);
@@ -1415,7 +1415,7 @@ void US_AddResidue::select_residue_file()
          }
       }
    }
-   str1.sprintf(us_trp(" Number of Residues in File: %d"), residue_list.size());
+   str1 = QString( us_tr( " Number of Residues in File: %1" ) ).arg( residue_list.size() );
    lbl_numresidues->setText(str1);
 }
 
@@ -2606,7 +2606,7 @@ void US_AddResidue::delete_residue()
       }
    }
    write_residue_file();
-   str1.sprintf(us_trp(" Number of Residues in File: %d"), residue_list.size());
+   str1 = QString( us_tr( " Number of Residues in File: %d" ) ).arg( residue_list.size() );
    lbl_numresidues->setText(str1);
    pb_accept_bead->setEnabled(false);
    pb_add->setEnabled(false);

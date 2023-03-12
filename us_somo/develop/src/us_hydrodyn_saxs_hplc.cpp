@@ -199,6 +199,12 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ] = "5";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] = "false";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ] = "3";
+   }
 
    baseline_ready_to_apply = false;
 
@@ -1494,10 +1500,14 @@ void US_Hydrodyn_Saxs_Hplc::select_all()
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      lb_files->item( i)->setSelected( !all_selected );
-   }
+   
+   !all_selected ? lb_files->selectAll() : lb_files->clearSelection();
+
+   // for ( int i = 0; i < lb_files->count(); i++ )
+   // {
+   //    lb_files->item( i)->setSelected( !all_selected );
+   // }
+
    disable_updates = false;
    plot_files();
    update_enables();
