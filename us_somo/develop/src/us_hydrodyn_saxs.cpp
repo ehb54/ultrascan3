@@ -159,6 +159,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_screen_csv();
    reset_buffer_csv();
    reset_hplc_csv();
+   reset_mals_csv();
    setupGUI();
 
    // QTextStream(stdout) << US_Vector::qs_mapqsqs( "saxs residue_atom_hybrid_map\n", residue_atom_hybrid_map );
@@ -1234,6 +1235,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_saxs_hplc, SIGNAL(clicked()), SLOT(saxs_hplc()));
    iq_widgets.push_back( pb_saxs_hplc );
 
+   pb_mals = new QPushButton("MALS", this);
+   pb_mals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_mals->setMinimumHeight(minHeight1);
+   pb_mals->setMaximumWidth( maxWidth * 4 );
+   pb_mals->setPalette( PALET_PUSHB );
+   connect(pb_mals, SIGNAL(clicked()), SLOT(mals()));
+   iq_widgets.push_back( pb_mals );
+
    if ( started_in_expert_mode )
    {
 
@@ -1992,6 +2001,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
 
    hbl_various_0->addWidget(pb_saxs_buffer);
+   hbl_various_0->addWidget(pb_mals);
    hbl_various_0->addWidget(pb_saxs_hplc);
 
    if ( started_in_expert_mode )
@@ -5921,6 +5931,53 @@ void US_Hydrodyn_Saxs::saxs_hplc()
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();
 }
 
+void US_Hydrodyn_Saxs::mals()
+{
+   // qDebug() << "mals";
+   if ( ((US_Hydrodyn *)us_hydrodyn)->mals_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->mals_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv.name != "__empty__" )
+      {
+         hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->mals_window = new US_Hydrodyn_Mals( hplc_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->mals_window );
+      ((US_Hydrodyn *)us_hydrodyn)->mals_window->show();
+   }
+
+   ((US_Hydrodyn *)us_hydrodyn)->mals_window->disable_all();
+   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
+   {
+      if ( !( i % 500 ) ) {
+         qDebug() << "mals plotting curve " << i;
+      }
+      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                   plotted_q[ i ],
+                                                                   plotted_I[ i ],
+                                                                   plotted_I_error[ i ] );
+      } else {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                   plotted_q[ i ],
+                                                                   plotted_I[ i ] );
+      }
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->mals_window->update_enables();
+}
+
+
 void US_Hydrodyn_Saxs::reset_buffer_csv()
 {
    if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv.name != "__empty__" )
@@ -6072,6 +6129,83 @@ void US_Hydrodyn_Saxs::reset_hplc_csv()
          tmp_num_data.push_back(hplc_csv.data[i][j].toDouble());
       }
       hplc_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_mals_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv.name != "__empty__" )
+   {
+      hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv;
+      return;
+   } 
+
+   mals_csv.name = "SAXS I(q) Hplc";
+
+   mals_csv.header.clear( );
+   mals_csv.header_map.clear( );
+   mals_csv.data.clear( );
+   mals_csv.num_data.clear( );
+   mals_csv.prepended_names.clear( );
+
+   mals_csv.header.push_back("Parameter");
+   mals_csv.header.push_back("Active");
+   mals_csv.header.push_back("Low value");
+   mals_csv.header.push_back("High value");
+   mals_csv.header.push_back("Points");
+   mals_csv.header.push_back("Interval");
+   mals_csv.header.push_back("Current value");
+   mals_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear( );
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   mals_csv.prepended_names.push_back(tmp_data[0]);
+   mals_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   mals_csv.prepended_names.push_back(tmp_data[0]);
+   mals_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
+   tmp_data.push_back("");
+
+   mals_csv.prepended_names.push_back(tmp_data[0]);
+   mals_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < mals_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < mals_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(mals_csv.data[i][j].toDouble());
+      }
+      mals_csv.num_data.push_back(tmp_num_data);
    }
 }
 

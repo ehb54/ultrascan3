@@ -258,6 +258,34 @@ SOURCES *= \
         src/us_hydrodyn_hydro_zeno.cpp \
         src/us_hydrodyn_info.cpp \
         src/us_hydrodyn_load.cpp \
+        src/us_hydrodyn_mals.cpp \
+        src/us_hydrodyn_mals_baseline_best.cpp \
+        src/us_hydrodyn_mals_conc_csv_frames.cpp \
+        src/us_hydrodyn_mals_gui.cpp \
+        src/us_hydrodyn_mals_stack.cpp \
+        src/us_hydrodyn_mals_modes.cpp \
+        src/us_hydrodyn_mals_modes_bb.cpp \
+        src/us_hydrodyn_mals_modes_wheel.cpp \
+        src/us_hydrodyn_mals_makeiq.cpp \
+        src/us_hydrodyn_mals_plots.cpp \
+        src/us_hydrodyn_mals_ciq.cpp \
+        src/us_hydrodyn_mals_dctr.cpp \
+        src/us_hydrodyn_mals_gg.cpp \
+        src/us_hydrodyn_mals_p3d.cpp \
+        src/us_hydrodyn_mals_util.cpp \
+        src/us_hydrodyn_mals_movie.cpp \
+        src/us_hydrodyn_mals_conc.cpp \
+        src/us_hydrodyn_mals_conc_load.cpp \
+        src/us_hydrodyn_mals_fit.cpp \
+        src/us_hydrodyn_mals_fit_global.cpp \
+        src/us_hydrodyn_mals_fit_gsm.cpp \
+        src/us_hydrodyn_mals_fit_ga.cpp \
+        src/us_hydrodyn_mals_gauss_mode.cpp \
+        src/us_hydrodyn_mals_nth.cpp \
+        src/us_hydrodyn_mals_options.cpp \
+        src/us_hydrodyn_mals_simulate.cpp \
+        src/us_hydrodyn_mals_svd.cpp \
+        src/us_hydrodyn_mals_scale_trend.cpp \
         src/us_hydrodyn_misc.cpp \
         src/us_hydrodyn_other.cpp \
         src/us_hydrodyn_overlap.cpp \
@@ -289,7 +317,6 @@ SOURCES *= \
         src/us_hydrodyn_saxs_guinier.cpp \
         src/us_hydrodyn_saxs_fits.cpp \
         src/us_hydrodyn_saxs_ift.cpp \
-        src/us_hydrodyn_saxs_hplc_conc_csv_frames.cpp \
         src/us_hydrodyn_saxs_iqq.cpp \
         src/us_hydrodyn_saxs_iqq_bead_model.cpp \
         src/us_hydrodyn_saxs_iqq_load_csv.cpp \
@@ -311,6 +338,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_buffer_nth.cpp \
         src/us_hydrodyn_saxs_hplc.cpp \
         src/us_hydrodyn_saxs_hplc_baseline_best.cpp \
+        src/us_hydrodyn_saxs_hplc_conc_csv_frames.cpp \
         src/us_hydrodyn_saxs_hplc_gui.cpp \
         src/us_hydrodyn_saxs_hplc_stack.cpp \
         src/us_hydrodyn_saxs_hplc_modes.cpp \
@@ -335,6 +363,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_hplc_options.cpp \
         src/us_hydrodyn_saxs_hplc_simulate.cpp \
         src/us_hydrodyn_saxs_hplc_svd.cpp \
+        src/us_hydrodyn_saxs_hplc_scale_trend.cpp \
         src/us_hydrodyn_saxs_1d.cpp \
         src/us_hydrodyn_saxs_2d.cpp \
         src/us_hydrodyn_script.cpp \
@@ -462,7 +491,6 @@ SOURCES *= \
         src/qwt/scrollzoomer.cpp \
         src/us_gui_settings.cpp \
         src/us_hydrodyn_saxs_guinier_frames.cpp \
-        src/us_hydrodyn_saxs_hplc_scale_trend.cpp \
         src/us_plot_util.cpp \
         src/us3i_color.cpp \
         src/us3i_editor.cpp \
@@ -635,6 +663,23 @@ HEADERS *= \
         include/us_hydrodyn_grid_atob.h \
         include/us_hydrodyn_hydro.h \
         include/us_hydrodyn_hydro_zeno.h \
+        include/us_hydrodyn_mals.h \
+        include/us_hydrodyn_mals_ciq.h \
+        include/us_hydrodyn_mals_conc_csv_frames.h \
+        include/us_hydrodyn_mals_dctr.h \
+        include/us_hydrodyn_mals_p3d.h \
+        include/us_hydrodyn_mals_conc.h \
+        include/us_hydrodyn_mals_conc_load.h \
+        include/us_hydrodyn_mals_fit.h \
+        include/us_hydrodyn_mals_fit_global.h \
+        include/us_hydrodyn_mals_gauss_mode.h \
+        include/us_hydrodyn_mals_movie.h \
+        include/us_hydrodyn_mals_nth.h \
+        include/us_hydrodyn_mals_options.h \
+        include/us_hydrodyn_mals_scale_trend.h \
+        include/us_hydrodyn_mals_svd.h \
+        include/us_hydrodyn_mals_baseline_best.h \
+        include/us_hydrodyn_mals_simulate.h \
         include/us_hydrodyn_misc.h \
         include/us_hydrodyn_overlap.h \
         include/us_hydrodyn_overlap_reduction.h \
@@ -664,7 +709,6 @@ HEADERS *= \
         include/us_hydrodyn_saxs_mw.h \
         include/us_hydrodyn_saxs_options.h \
         include/us_hydrodyn_saxs_ift.h \
-        include/us_hydrodyn_saxs_hplc_conc_csv_frames.h \
         include/us_hydrodyn_saxs_iqq_load_csv.h \
         include/us_hydrodyn_saxs_iqq_residuals.h \
         include/us_hydrodyn_saxs_residuals.h \
@@ -676,6 +720,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_buffer_nth.h \
         include/us_hydrodyn_saxs_hplc.h \
         include/us_hydrodyn_saxs_hplc_ciq.h \
+        include/us_hydrodyn_saxs_hplc_conc_csv_frames.h \
         include/us_hydrodyn_saxs_hplc_dctr.h \
         include/us_hydrodyn_saxs_hplc_p3d.h \
         include/us_hydrodyn_saxs_hplc_conc.h \
@@ -686,7 +731,10 @@ HEADERS *= \
         include/us_hydrodyn_saxs_hplc_movie.h \
         include/us_hydrodyn_saxs_hplc_nth.h \
         include/us_hydrodyn_saxs_hplc_options.h \
+        include/us_hydrodyn_saxs_hplc_scale_trend.h \
         include/us_hydrodyn_saxs_hplc_svd.h \
+        include/us_hydrodyn_saxs_hplc_baseline_best.h \
+        include/us_hydrodyn_saxs_hplc_simulate.h \
         include/us_hydrodyn_saxs_1d.h \
         include/us_hydrodyn_saxs_2d.h \
         include/us_hydrodyn_supc.h \
@@ -777,10 +825,7 @@ HEADERS *= \
         include/qwt/scrollbar.h \
         include/qwt/scrollzoomer.h \
         include/us_hydrodyn_saxs_guinier_frames.h \
-        include/us_hydrodyn_saxs_hplc_scale_trend.h \
         include/us_hydrodyn_saxs_cormap.h \
-        include/us_hydrodyn_saxs_hplc_baseline_best.h \
-        include/us_hydrodyn_saxs_hplc_simulate.h \
         include/us_plot_util.h \
         include/us3i_color.h \
         include/us3i_extern.h \

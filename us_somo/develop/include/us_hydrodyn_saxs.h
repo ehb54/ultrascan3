@@ -131,6 +131,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Mals;
+      friend class US_Hydrodyn_Mals_Conc;
+      friend class US_Hydrodyn_Mals_Svd;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Buffer;
@@ -247,6 +250,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_saxs_screen;
       QPushButton *pb_saxs_buffer;
       QPushButton *pb_saxs_hplc;
+      QPushButton *pb_mals;
       QPushButton *pb_saxs_xsr;
       QPushButton *pb_saxs_1d;
       QPushButton *pb_saxs_2d;
@@ -754,6 +758,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void reset_buffer_csv();
       csv  hplc_csv;
       void reset_hplc_csv();
+      csv  mals_csv;
+      void reset_mals_csv();
 
       csv  conc_csv;         // stores curve specific data
       void sync_conc_csv();  // removes deleted curves, adds non-extant curves with default
@@ -1035,6 +1041,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_screen();
       void saxs_buffer();
       void saxs_hplc();
+      void mals();
       void saxs_xsr();
       void saxs_1d();
       void saxs_2d();
