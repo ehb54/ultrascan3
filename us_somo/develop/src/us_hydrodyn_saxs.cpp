@@ -2885,16 +2885,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
                      QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
-                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                        US_Static::us_message( us_tr("Missing Atom:"), 
-                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
-                     }
-                     progress_pr->reset();
-                     lbl_core_progress->setText("");
-                     pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
-                     // pb_plot_saxs_sans->setEnabled(true);
-                     pb_plot_pr->setEnabled(true);
-                     return;
+                     continue;
+                     // if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                     //    US_Static::us_message( us_tr("Missing Atom:"), 
+                     //                           QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     // }
+                     // progress_pr->reset();
+                     // lbl_core_progress->setText("");
+                     // pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
+                     // // pb_plot_saxs_sans->setEnabled(true);
+                     // pb_plot_pr->setEnabled(true);
+                     // return;
                   }
                   new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
@@ -2951,16 +2952,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
                      QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
-                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                        US_Static::us_message( us_tr("Missing Atom:"), 
-                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
-                     }
-                     progress_pr->reset();
-                     lbl_core_progress->setText("");
-                     pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
-                     // pb_plot_saxs_sans->setEnabled(true);
-                     pb_plot_pr->setEnabled(true);
-                     return;
+                     continue;
+                     // if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                     //    US_Static::us_message( us_tr("Missing Atom:"), 
+                     //                           QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     // }
+                     // progress_pr->reset();
+                     // lbl_core_progress->setText("");
+                     // pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
+                     // // pb_plot_saxs_sans->setEnabled(true);
+                     // pb_plot_pr->setEnabled(true);
+                     // return;
                   }
                   // cout << "atom " << this_atom->name 
                   // << " hybrid " << this_atom->hybrid_name
