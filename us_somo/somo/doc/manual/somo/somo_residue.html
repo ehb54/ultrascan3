@@ -23,7 +23,7 @@
 <h2>
 SOMO - Residue Definition Module:</h2>
 <p>
-<h3><center>Last updated: February 2021 </center></h3><p>
+<h3><center>Last updated: March 2023 </center></h3><p>
 
 <img SRC="somo-residue_new.png" ALT="SOMO Screen">
 </center>
@@ -66,7 +66,7 @@ The <i><b>Residue Type</b></i> field is then defined from the pull-down list, pr
 <li>Other
 </ul>
 <p>
-The <i><b>Residue anhydrous mol. vol. (A^3)</b></i> field has to be filled with a value usually derived from crystallography (see Tsai et al., J. Mol. Biol. 290:253-266, 1999; Nadassy et al., Nucl. Acid Res. 29:3362-3376, 2001; Voss and Gerstein, J. Mol. Biol. 346:477-492, 2005; Perkins, Eur. J. Biochem. 157:169-180, 1986). This is the volume that defines the total anhydrous volume of the bead(s) that will be used to model the residue, and for non tabulated entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://3vee.molmovdb.org/">http://3vee.molmovdb.org/</a>; a 0 &Aring; probe radius should be used). For ions, we used the values in Table I of Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).<br>
+The <i><b>Residue anhydrous mol. vol. (A^3)</b></i> field has to be filled with a value usually derived from crystallography (see Tsai et al., J. Mol. Biol. 290:253-266, 1999; Nadassy et al., Nucl. Acid Res. 29:3362-3376, 2001; Voss and Gerstein, J. Mol. Biol. 346:477-492, 2005; Perkins, Eur. J. Biochem. 157:169-180, 1986). This is the volume that defines the total anhydrous volume of the bead(s) that will be used to model the residue, and for non tabulated entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://3vee.molmovdb.org/">http://3vee.molmovdb.org/</a>; a 0 &Aring; probe radius should be used).<br>
 In contrast, the <i><b>Residue partial spec. vol. (cm^3/g)</b></i> field pertains to the solution partial specific volume (<i>vbar</i>) of the residue (in water @ 20&deg;C), and is used to compute the global <i>vbar</i> of the model, necessary to determine the sedimentation coefficient from the translational frictional coefficient (and to compute the molecular weight from SAXS data). Tabulated values are available for amino acids and some carbohydrates (see Perkins, Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsall method (Cohn and Edsall, Proteins, amino acids and peptides as ions and dipolar ions, Reinhold Publ. Comp., 1965, pp. 370-381; see also Durchschlag and Zipper, Biophys. Chem. 93:141-157, 2001; Durchschlag and Zipper, J. Appl. Cryst. 30:803-807, 1997; Durchschlag and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994).<br>
 For ions, they were mostly computed (<b>April 2012 revision!</b>) from the partial molar volumes (cm<sup>3</sup>/mol) at 25 &deg;C listed in Table 3 of Durchschlag and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994, divided by the molecular weight, and corrected to 20 &deg;C. For Cd<sup>2+</sup>, which is not present in that table, we used the values derived by Call et al. (J. Chem. Thermodynamics 32:1525-1538, 2000) for MgCl<sub>2</sub> and CdCl<sub>2</sub> at 0.35 MPa, after correction to 0.1 MPa by comparing the MgCl<sub>2</sub> value with that reported by Dunn (Trans. Faraday Soc. 62:2348-2354, 1966). Note that most of these <i>vbar</i> values for the cations are <b>negative</b>!<br> 
 Be aware, however, that there's <b>no guarantee</b> that a computed <i>vbar</i> will be correct: the use of an <b>experimental</b> <i>vbar</i> is <b>strongly</b> recommended!! (see also the <i>vbar</i> fields in the <a href="somo_misc.html"><i><b>Miscellaneous Options</b></i></a> editor.<br>
@@ -219,7 +219,7 @@ latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on February 27, 2021.
+Last modified on March 21, 2023.
 </font>
 
 </body>
