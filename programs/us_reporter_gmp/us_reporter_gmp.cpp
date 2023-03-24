@@ -1404,6 +1404,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 {
   int nrecs        = 0;   
   autoflowdata.clear();
+
+  QStringList qry;
   
   US_Passwd pw;
   US_DB2* db = new US_DB2( pw.getPasswd() );
@@ -1416,7 +1418,23 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       return nrecs;
     }
   
-  QStringList qry;
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  db->query( qry );
+  
+  int user_id = 0;
+  
+  if ( db->next() )
+    user_id = db->value( 0 ).toInt();
+  
+
+  //deal with autoflowHistory descriptions
+  qry. clear();
   qry << "get_autoflow_history_desc";
   db->query( qry );
 
@@ -1429,11 +1447,13 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       QString optimaname         = db->value( 10 ).toString();
       
       QDateTime time_started     = db->value( 11 ).toDateTime().toUTC();
+      QString invID              = db->value( 12 ).toString();
 
       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = db->value( 14 ).toString();
       QString full_runname       = db->value( 15 ).toString();
 
+      QString operatorID         = db->value( 16 ).toString();
       QString devRecord          = db->value( 18 ).toString();
 
       QDateTime local(QDateTime::currentDateTime());
@@ -1468,9 +1488,26 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
-      autoflowdata  << autoflowentry;
 
-      nrecs++;
+      //Check user level && GUID; if <3, check if the user is operator || investigator
+      if ( US_Settings::us_inv_level() < 3 )
+	{
+	  qDebug() << "User level low: " << US_Settings::us_inv_level();
+	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+
+	  if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	    {//Do we allow operator as defined in autoflow record to also see reports?? 
+	    
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	}
+      else
+	{
+	  autoflowdata  << autoflowentry;
+	  nrecs++;
+	}
+      
     }
 
   return nrecs;
