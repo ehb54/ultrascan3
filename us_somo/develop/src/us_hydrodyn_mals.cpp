@@ -2069,13 +2069,14 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       {
          QString errormsg;
          if ( mals_load( filename, qsl, errormsg ) ) {
+            editor_msg( "black", QString( us_tr( "%1 - MALS data\n" ) ).arg( filename ) );
             return false;
          }
          if ( errormsg != "not a mals file" ) {
             QMessageBox::warning(
                                  this
                                  ,"US-SOMO MALS load Error"
-                                 ,QString( us_tr( "Loading file %1 : %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
+                                 ,QString( us_tr( "Loading file %1:\nError: %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
                                  );
             return false;
          }

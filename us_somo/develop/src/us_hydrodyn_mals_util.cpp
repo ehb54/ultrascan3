@@ -5399,7 +5399,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
    // need Angles
 
    if ( !mals_angles.mals_angle.size() ) {
-      errormsg = "No MALS Angles have been defined";
+      errormsg = "No MALS Angles have been defined.\nLoad them prior to loading MALS data";
       return false;
    }
 
