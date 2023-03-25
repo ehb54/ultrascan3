@@ -488,7 +488,7 @@ void US_PlotPushbutton::us_plotClicked( void )
    \param f            Window Flags
 */
 US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US_WidgetsDialog( p, f ) //( false, p, f )
+  Qt::WindowFlags f ) : US_WidgetsDialog( p, f, false ) //( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US_GuiSettings::frameColor() );
@@ -1289,7 +1289,7 @@ void US_PlotConfig::gridConfigFinish( void )
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
       const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
-      : US_WidgetsDialog( parent, f ) //( false, parent, f )
+      : US_WidgetsDialog( parent, f, false ) //( false, parent, f )
 {
   plotConfigW = (US_PlotConfig*)parent;         //ALEXEY: access to parent's US_PlotConfig
   qDebug() << "In parent US_PlotConfig widget, plot canvas Color is: " << plotConfigW -> global_canvas_color;
@@ -1855,7 +1855,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags, false )//( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
@@ -2253,7 +2253,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags, false )//( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
