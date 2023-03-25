@@ -272,6 +272,7 @@ SOURCES *= \
         src/us_hydrodyn_mals_dctr.cpp \
         src/us_hydrodyn_mals_gg.cpp \
         src/us_hydrodyn_mals_p3d.cpp \
+        src/us_hydrodyn_mals_parameters.cpp \
         src/us_hydrodyn_mals_util.cpp \
         src/us_hydrodyn_mals_movie.cpp \
         src/us_hydrodyn_mals_conc.cpp \
@@ -668,6 +669,7 @@ HEADERS *= \
         include/us_hydrodyn_mals_conc_csv_frames.h \
         include/us_hydrodyn_mals_dctr.h \
         include/us_hydrodyn_mals_p3d.h \
+        include/us_hydrodyn_mals_parameters.h \
         include/us_hydrodyn_mals_conc.h \
         include/us_hydrodyn_mals_conc_load.h \
         include/us_hydrodyn_mals_fit.h \

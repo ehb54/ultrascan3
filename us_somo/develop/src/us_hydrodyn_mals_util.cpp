@@ -5374,3 +5374,151 @@ void US_Hydrodyn_Mals::gauss_mode()
    update_enables();
 }
 
+#define TSO QTextStream(stdout)
+
+bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & qsl, QString & errormsg ) {
+   errormsg = "";
+   
+   // check if qsl is a mals data file, if not return false
+   if (
+       qsl.size() < 4
+       || !qsl[0].contains( QRegularExpression( "^light scattering data:" ) )
+       ) {
+      errormsg = "not mals file";
+      return false;
+   }      
+      
+   if (
+       !qsl[1].contains( QRegularExpression( "^Rayleigh ratio" ) )
+       || !qsl[2].contains( QRegularExpression( "^time" ) )
+       ) {
+      errormsg = "incorrect MALS data format";
+      return false;
+   }
+
+   // need Angles
+
+   if ( !mals_angles.mals_angle.size() ) {
+      errormsg = "No MALS Angles have been defined";
+      return false;
+   }
+
+   if ( !mals_param_lambda || !mals_param_n ) {
+      errormsg = "Options->MALS parameters must be defined prior to loading MALS data";
+      return false;
+   }
+
+   double wavelength = mals_param_lambda;
+   double RI         = mals_param_n;
+
+   // process data and make i(q)
+
+   errormsg = "MALS ready to process... to do";
+
+   QStringList data_header = qsl[2].split( "," );
+
+   vector < int > detector_index;
+   for ( int i = 1; i < data_header.size(); i += 2 ) {
+      detector_index.push_back( data_header[i].toInt() );
+   }
+
+   US_Vector::printvector( "detector indices", detector_index );
+
+   map < int, vector < double > > t;
+   map < int, vector < double > > I;
+   map < int, vector < double > > sd;
+
+   QStringList data = qsl;
+   data.pop_front();
+   data.pop_front();
+   data.pop_front();
+
+   double last_time                 = 0;
+   double last_timedelta            = 0;
+   int    frame                     = 0;
+   int    timedelta_inconsistencies = 0;
+   double max_timedelta_diff        = 0;
+   int    max_timedelta_frame       = 0;
+
+#define TIME_DELTA_TOLERANCE  0.0000001 
+   
+   while( data.front().contains( QRegularExpression( "^-?[0-9.]+," ) ) ) {
+      QStringList data_line = data.front().split( "," );
+      data.pop_front();
+
+      double time      = data_line.front().toDouble();
+      double timedelta = time - last_time;
+      last_time        = time;
+      int use_frame    = ++frame;
+
+      if ( last_timedelta
+           && fabs( timedelta - last_timedelta ) > TIME_DELTA_TOLERANCE ) {
+         ++timedelta_inconsistencies;
+         if ( max_timedelta_diff < fabs( timedelta - last_timedelta ) ) {
+            max_timedelta_diff  = fabs( timedelta - last_timedelta );
+            max_timedelta_frame = frame;
+         }
+      }
+      if ( frame > 1 ) {
+         last_timedelta = timedelta;
+      }
+      
+      if ( (int)detector_index.size() * 2 + 1 != data_line.size() ) {
+         TSO << QString( "detector index size %1 data line size %2\n" ).arg( detector_index.size() ).arg( data_line.size() );
+         errormsg = "error in data line format : " + data_line.join("," ) + "\n";
+         return false;
+      }
+
+      for ( int i = 0; i < (int) detector_index.size(); ++i ) {
+         t [ detector_index[ i ] ].push_back( use_frame );
+         I [ detector_index[ i ] ].push_back( data_line[ 1 + 2 * i ].toDouble() );
+         sd[ detector_index[ i ] ].push_back( data_line[ 2 + 2 * i ].toDouble() );
+      }
+   }
+
+   if ( timedelta_inconsistencies ) {
+      QMessageBox::warning(
+                           this
+                           ,"US-SOMO MALS load"
+                           ,QString( us_tr(
+                                           "%1 inconsistent time interval(s) found in MALS data\n"
+                                           "Absolute value of maximum difference is %2\n"
+                                           "Which first occured between frames %3 & %4"
+                                           ) )
+                           .arg( timedelta_inconsistencies )
+                           .arg( max_timedelta_diff )
+                           .arg( max_timedelta_frame - 1 )
+                           .arg( max_timedelta_frame )
+                           );
+   }      
+
+   TSO << QString( "data front() failed regex contains: %1\n" ).arg( data.front() );
+
+   QString use_filename = QFileInfo( filename ).baseName();
+   // use_filename.replace( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ), "" );
+   
+   for ( auto it = t.begin();
+         it != t.end();
+         ++it ) {
+      if ( mals_angles.mals_angle.count( it->first ) &&
+           mals_angles.mals_angle[ it->first ].has_angle_ri_corr ) {
+         double q = RI * 4 * M_PI * sin( mals_angles.mals_angle[ it->first ].angle_ri_corr * M_PI / 360 ) / ( wavelength * 10 );
+         QString name = QString( "%1_Rt_q%2" ).arg( use_filename ).arg( q );
+         TSO << QString( "channel %1 angle %2 q %3\n" ).arg( it->first ).arg( mals_angles.mals_angle[ it->first ].angle_ri_corr ).arg( q );
+         add_plot( name, t[ it->first ], I[ it->first ], sd[ it->first ], true, false );
+      }
+   }
+
+   plot_files();
+   update_enables();
+
+   // for ( auto it = t.begin();
+   //       it != t.end();
+   //       ++it ) {
+   //    US_Vector::printvector3( QString( "channel %1" ).arg( it->first ), t[it->first], I[it->first], sd[it->first] );
+   // }
+   
+   // possibly also UV absorbance data at the end
+
+   return true;
+}

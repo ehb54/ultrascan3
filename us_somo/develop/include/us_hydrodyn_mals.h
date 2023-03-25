@@ -101,6 +101,30 @@ struct mals_stack_data
    set < QString >                     conc_files;
 };
 
+class MALS_Angle {
+ public:
+
+   double  angle;
+   double  angle_ri_corr;
+   double  gain;
+   double  norm_coef;
+   bool    has_gain;
+   bool    has_angle_ri_corr;
+   bool    has_norm_coef;
+   
+   QString list();
+   bool    populate( const QStringList & );
+};
+
+class MALS_Angles {
+ public:
+   map < int, MALS_Angle > mals_angle;
+   QString list();
+   bool    populate( const QStringList & );
+   bool    load( const QString & filename, QString & errormsg );
+   bool    save( const QString & filename, QString & errormsg );
+};
+
 class US_EXTERN US_Hydrodyn_Mals : public QFrame
 {
    Q_OBJECT
@@ -235,6 +259,15 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       void set_pbmode_none( );
 
  private:
+
+      MALS_Angles   mals_angles;
+      bool          mals_load( const QString & filename, const QStringList & qsl, QString & errormsg ); 
+
+      double        mals_param_lambda;
+      double        mals_param_n;
+      double        mals_param_g_dndc;
+      double        mals_param_g_conc;
+      int           mals_param_DLS_detector;
 
       csv           csv1;
 

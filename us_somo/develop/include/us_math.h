@@ -201,5 +201,7 @@ int __fpclassifyf (float x);
 
 float int_vol_2sphere(float r1, float r2, float d);
 
+QString us_double_decimal_places( double x, int dp );
+
 #endif
 

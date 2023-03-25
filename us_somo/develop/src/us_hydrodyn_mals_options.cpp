@@ -1,6 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_mals_options.h"
 #include "../include/us_hydrodyn_mals_dctr.h"
+#include "../include/us_hydrodyn_mals_parameters.h"
 #include "../include/us_hydrodyn_mals.h"
 //Added by qt3to4:
 #include <QHBoxLayout>
@@ -301,6 +302,12 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    pb_detector->setMinimumHeight(minHeight1);
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
+
+   pb_mals_parameters = new QPushButton(us_tr("MALS Parameters"), this);
+   pb_mals_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_mals_parameters->setMinimumHeight(minHeight1);
+   pb_mals_parameters->setPalette( PALET_PUSHB );
+   connect(pb_mals_parameters, SIGNAL(clicked()), SLOT(set_mals_parameters()));
 
    pb_fasta_file = new QPushButton(us_tr("Load FASTA sequence from file"), this);
    pb_fasta_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -722,6 +729,7 @@ void US_Hydrodyn_Mals_Options::setupGUI()
 
    background->addWidget( lbl_other_options );
    background->addWidget( pb_detector );
+   background->addWidget( pb_mals_parameters );
    {
       QBoxLayout * bl_fasta = new QHBoxLayout( 0 );
       bl_fasta->setContentsMargins( 0, 0, 0, 0 );
@@ -994,6 +1002,50 @@ void US_Hydrodyn_Mals_Options::set_detector()
       ((US_Hydrodyn_Mals *)mals_win)->detector_ri      = ( parameters.count( "ri" ) && parameters[ "ri" ] == "true" ) ? true : false;
       ((US_Hydrodyn_Mals *)mals_win)->detector_ri_conv = parameters[ "ri_conv" ].toDouble();
       ((US_Hydrodyn_Mals *)mals_win)->detector_uv_conv = parameters[ "uv_conv" ].toDouble();
+   }
+}
+
+void US_Hydrodyn_Mals_Options::set_mals_parameters()
+{
+   {
+      map < QString, QString > parameters;
+      parameters[ "mals_param_lambda" ]       = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_lambda, 0, 'g', 8 );
+      parameters[ "mals_param_n" ]            = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_n, 0, 'g', 8 );
+      parameters[ "mals_param_g_dndc" ]       = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_dndc, 0, 'g', 8 );
+      parameters[ "mals_param_g_conc" ]       = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_conc, 0, 'g', 8 );
+      parameters[ "mals_param_DLS_detector" ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_DLS_detector );
+
+
+      if ( ((US_Hydrodyn_Mals *)mals_win)->detector_uv )
+      {
+         parameters[ "uv" ] = "true";
+      } else {
+         if ( ((US_Hydrodyn_Mals *)mals_win)->detector_ri )
+         {
+            parameters[ "ri" ] = "true";
+         }
+      }
+
+      US_Hydrodyn_Mals_Parameters *mals_parameters = 
+         new US_Hydrodyn_Mals_Parameters(
+                                         this,
+                                         & parameters,
+                                         this );
+      US_Hydrodyn::fixWinButtons( mals_parameters );
+      mals_parameters->exec();
+      delete mals_parameters;
+
+      if ( !parameters.count( "keep" ) )
+      {
+         update_enables();
+         return;
+      }
+
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_lambda       = parameters[ "mals_param_lambda"       ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_n            = parameters[ "mals_param_n"            ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_dndc       = parameters[ "mals_param_g_dndc"       ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_conc       = parameters[ "mals_param_g_conc"       ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_DLS_detector = parameters[ "mals_param_DLS_detector" ].toInt();
    }
 }
 

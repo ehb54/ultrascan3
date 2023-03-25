@@ -108,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Mals_Options : public QDialog
       QLabel       *                          lbl_other_options;
 
       QPushButton  *                          pb_detector;
+      QPushButton  *                          pb_mals_parameters;
 
       QCheckBox    *                          cb_csv_transposed;
 
@@ -164,6 +165,7 @@ class US_EXTERN US_Hydrodyn_Mals_Options : public QDialog
       void                                    ok();
 
       void                                    set_detector();
+      void                                    set_mals_parameters();
 
       void                                    clear_gauss();
 

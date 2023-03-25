@@ -21,31 +21,157 @@
 // #define JAC_VERSION
 
 #define SLASH QDir::separator()
+#define TSO QTextStream(stdout)
 
-// note: this program uses cout and/or cerr and this should be replaced
+QString MALS_Angle::list() {
+   return
+      QString( "%1 %2 %3 %4" )
+      .arg( us_double_decimal_places( angle, 2 ), 8 )
+      .arg(
+           has_angle_ri_corr
+           ? QString( "%1" ).arg( us_double_decimal_places( angle_ri_corr, 2 ) )
+           : QString( "n/a" )
+           , 8
+           )
+      .arg(
+           has_gain
+           ? QString( "%1" ).arg( us_double_decimal_places( gain, 2 ) )
+           : QString( "n/a" )
+           ,8
+           )
+      .arg( us_double_decimal_places( norm_coef, 3 ), 8 )
+      ;
+}
+     
+bool MALS_Angle::populate( const QStringList & qsl ) {
 
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
+   QStringList qslu = qsl;
+
+   // angle
+   if ( !qslu.size() ) {
+      return false;
+   }
+
+   angle = qslu.front().replace( QRegularExpression( "[()]" ), "" ).toDouble();
+   qslu.pop_front();
+
+   // angle_ri_corr
+   if ( !qslu.size() ) {
+      return false;
+   }
+
+   if ( qslu.front() == "n/a" ) {
+      qslu.pop_front();
+      if ( !qslu.size() ) {
+         return false;
+      }
+      angle_ri_corr     = 0;
+      has_angle_ri_corr = false;
+   } else {
+      // remove angle symbol
+      QString qs = qslu.front();
+      qs.replace( QRegularExpression( ".$" ), "" );
+      angle_ri_corr     = qs.toDouble();
+      has_angle_ri_corr = true;
+   }
+   qslu.pop_front();
+
+   // gain
+   if ( !qslu.size() ) {
+      return false;
+   }
+
+   if ( qslu.front() == "n/a" ) {
+      gain     = 0;
+      has_gain = false;
+   } else {
+      gain     = qslu.front().toDouble();
+      has_gain = true;
+   }
+   qslu.pop_front();
+   
+   if ( !qslu.size() ) {
+      return false;
+   }
+
+   // normalization coeff
+   if ( qslu.front() == "n/a" ) {
+      norm_coef     = 0;
+      has_norm_coef = false;
+   } else {
+      norm_coef     = qslu.front().toDouble();
+      has_norm_coef = true;
+   }
+   qslu.pop_front();   
+   return true;
+}
+
+QString MALS_Angles::list() {
+   QStringList qsl;
+   qsl << "Detector Angle    RI-Corr.  Gain    Norm.-Coef.\n";
+   for ( auto it = mals_angle.begin();
+         it != mals_angle.end();
+         ++it ) {
+      qsl << QString( "%1" ).arg( it->first, 3 ) << "    " << it->second.list() << "\n";
+   }
+   return qsl.join( "" );
+}
+
+bool MALS_Angles::populate( const QStringList & qsl ) {
+   if ( !qsl.size()
+        || qsl[0] != "Detector"
+        || !qsl[1].contains( QRegularExpression( "^Refractive" ) ) ) {
+      return false;
+   }
+
+   mals_angle.clear();
+
+   for ( int i = 0; i < (int) qsl.size(); ++i ) {
+      if ( qsl[i].contains( QRegularExpression( "^[0-9]+\\s" ) ) ) {
+         QString qsu = qsl[i];
+         qsu.replace( QRegularExpression( "[()]" ), "" );
+         QStringList qsl_mals_angle = qsu.split( QRegularExpression( "\\s+" ) );
+         if ( qsl_mals_angle.size() >= 5 ) {
+            int index = qsl_mals_angle[0].toInt();
+            qsl_mals_angle.pop_front();
+            if ( !mals_angle[index].populate( qsl_mals_angle ) ) {
+               mals_angle.erase(index);
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+bool MALS_Angles::load( const QString & filename, QString & errormsg ) {
+   errormsg = "load not yet implemented";
+   return false;
+}
+
+bool MALS_Angles::save( const QString & filename, QString & errormsg ) {
+   errormsg = "save not yet implemented";
+   return false;
 }
 
 // static   void printvector( QString qs, vector < unsigned int > x )
 // {
-//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+//    TSO << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
 //    for ( unsigned int i = 0; i < x.size(); i++ )
 //    {
-//       cout << QString( " %1" ).arg( x[ i ] );
+//       TSO << QString( " %1" ).arg( x[ i ] );
 //    }
-//    cout << endl;
+//    TSO << endl;
 // }
 
 // static void printvector( QString qs, vector < double > x )
 // {
-//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+//    TSO << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
 //    for ( unsigned int i = 0; i < x.size(); i++ )
 //    {
-//       cout << QString( " %1" ).arg( x[ i ], 0, 'g', 8 );
+//       TSO << QString( " %1" ).arg( x[ i ], 0, 'g', 8 );
 //    }
-//    cout << endl;
+//    TSO << endl;
 // }
 
 US_Hydrodyn_Mals::US_Hydrodyn_Mals(
@@ -282,7 +408,7 @@ US_Hydrodyn_Mals::US_Hydrodyn_Mals(
    // unsigned int csv_height = 40;
    unsigned int csv_width =  1000;
 
-   // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
+   // TSO << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
 #if defined(DOES_WORK)
    // lb_files        ->setMaximumWidth( 3 * csv_width / 7 );
    // lb_created_files->setMaximumWidth( 3 * csv_width / 7 );
@@ -558,6 +684,19 @@ US_Hydrodyn_Mals::US_Hydrodyn_Mals(
    if ( QFile( dctr_file ).exists() )
    {
       load_file( dctr_file );
+   }
+
+   QString mals_params_file = 
+      USglobal->config_list.root_dir + QDir::separator() + "etc" + 
+      QDir::separator() + "somo_mals_default_mals_param.dat" ;
+   // set defaults always
+   mals_param_lambda       = 0;
+   mals_param_n            = 0;
+   mals_param_g_dndc       = 0;
+   mals_param_g_conc       = 0;
+   mals_param_DLS_detector = 0;
+   if ( QFile( mals_params_file ).exists() ) {
+      load_file( mals_params_file );
    }
 
    blanks_end_s = 0e0;
@@ -1100,10 +1239,13 @@ void US_Hydrodyn_Mals::add_files( bool load_conc, bool from_dir ) {
          //    filenames << filename;
          // }
       } else {
-         filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir , "dat files [foxs / other] (*.dat);;"
+         filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir
+                                                    ,
                                                     "All files (*);;"
+                                                    "dat files [foxs / other] (*.dat);;"
                                                     "ssaxs files (*.ssaxs);;"
-                                                    "txt files [specify q, I, sigma columns] (*.txt)" );
+                                                    "txt files [specify q, I, sigma columns] (*.txt)"
+                                                    );
       }
    }
    
@@ -1319,7 +1461,7 @@ void US_Hydrodyn_Mals::add_files( bool load_conc, bool from_dir ) {
          if ( f_conc.count( add_filenames[ i ] ) && f_conc[ add_filenames[ i ] ] != 0e0 )
          {
             add_with_conc[ add_filenames[ i ] ] = true;
-            // cout << QString( "add file found conc %1 %2\n" ).arg( add_filenames[ i ] ).arg( f_conc[ add_filenames[ i ] ] );
+            // TSO << QString( "add file found conc %1 %2\n" ).arg( add_filenames[ i ] ).arg( f_conc[ add_filenames[ i ] ] );
          }
       }
 
@@ -1427,7 +1569,7 @@ void US_Hydrodyn_Mals::add_files( QStringList filenames )
          if ( f_conc.count( add_filenames[ i ] ) && f_conc[ add_filenames[ i ] ] != 0e0 )
          {
             add_with_conc[ add_filenames[ i ] ] = true;
-            // cout << QString( "add file found conc %1 %2\n" ).arg( add_filenames[ i ] ).arg( f_conc[ add_filenames[ i ] ] );
+            // TSO << QString( "add file found conc %1 %2\n" ).arg( add_filenames[ i ] ).arg( f_conc[ add_filenames[ i ] ] );
          }
       }
 
@@ -1543,7 +1685,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       errormsg = QString("Error: %1 does not exist").arg( filename );
       return false;
    }
-   // cout << QString( "opening %1\n" ).arg( filename ) << flush;
+   // TSO << QString( "opening %1\n" ).arg( filename ) << flush;
    
    QString ext = QFileInfo( filename ).suffix().toLower();
 
@@ -1572,6 +1714,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    QTextStream ts(&f);
    vector < QString > qv;
    QStringList qsl;
+   QStringList qsl_nb;
 
    while ( !ts.atEnd() )
    {
@@ -1579,12 +1722,22 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       qv.push_back( qs );
 
       qsl << qs;
+
+      if ( !qs.contains( QRegularExpression( "^\\s*$" ) ) ) {
+         qsl_nb << qs.trimmed();
+      }
    }
    f.close();
 
    if ( !qv.size() )
    {
       errormsg = QString("Error: the file %1 is empty ").arg( filename );
+      return false;
+   }
+
+   if ( mals_angles.populate( qsl_nb ) ) {
+      editor_msg( "black", QString( "%1 MALS angles loaded\n" ).arg( filename ) );
+      editor_msg( "black", mals_angles.list() );
       return false;
    }
 
@@ -1632,7 +1785,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       {
          has_conc  = true;
          this_conc = rx_conc.cap( 1 ).toDouble();
-         // cout << QString( "found conc %1\n" ).arg( this_conc );
+         // TSO << QString( "found conc %1\n" ).arg( this_conc );
       }
       if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
       {
@@ -1666,6 +1819,44 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    {
       is_time = true;
       use_units = 1.0;
+   }
+
+   if ( ext == "dat" && qv[ 0 ].contains( " MALS parameter file" ) )
+   {
+      QRegExp rx_mals_param_lambda       ( "^# __mals_param_lambda: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_n            ( "^# __mals_param_n: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_g_dndc       ( "^# __mals_param_g_dndc: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_g_conc       ( "^# __mals_param_g_conc: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_DLS_detector ( "^# __mals_param_DLS_detector: (\\S+)\\s*$" );
+
+      for ( int i = 1; i < (int) qv.size(); i++ ) {
+
+         if ( rx_mals_param_lambda.indexIn( qv[ i ] ) != -1 ) {
+            mals_param_lambda = rx_mals_param_lambda.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_mals_param_n.indexIn( qv[ i ] ) != -1 ) {
+            mals_param_n = rx_mals_param_n.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_mals_param_g_dndc.indexIn( qv[ i ] ) != -1 ) {
+            mals_param_g_dndc = rx_mals_param_g_dndc.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_mals_param_g_conc.indexIn( qv[ i ] ) != -1 ) {
+            mals_param_g_conc = rx_mals_param_g_conc.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_mals_param_DLS_detector.indexIn( qv[ i ] ) != -1 ) {
+            mals_param_DLS_detector = rx_mals_param_DLS_detector.cap( 1 ).toInt();
+            continue;
+         }
+
+         errormsg = QString( us_tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
+         return false;
+      }
+      errormsg = "";
+      return false;
    }
 
    if ( ext == "dat" && qv[ 0 ].contains( " Detector State file" ) )
@@ -1875,6 +2066,21 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    // load csv columns as time curves
    if ( ext == "csv" )
    {
+      {
+         QString errormsg;
+         if ( mals_load( filename, qsl, errormsg ) ) {
+            return false;
+         }
+         if ( errormsg != "not a mals file" ) {
+            QMessageBox::warning(
+                                 this
+                                 ,"US-SOMO MALS load Error"
+                                 ,QString( us_tr( "Loading file %1 : %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
+                                 );
+            return false;
+         }
+      }
+
       editor_msg( "black", QString( us_tr( "%1" ) ).arg( filename ) );
 
       // first column is time
@@ -1931,7 +2137,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
             }
          }
 
-         // cout << QString( "curve %1 sizes: I %2 q %3 qs %4\n" ).arg( name ).arg( I.size() ).arg( use_q.size() ).arg( use_q_string.size() );
+         // TSO << QString( "curve %1 sizes: I %2 q %3 qs %4\n" ).arg( name ).arg( I.size() ).arg( use_q.size() ).arg( use_q_string.size() );
          // US_Vector::printvector2( "q, I", use_q, I );
 
          if ( I.size() )
@@ -2311,7 +2517,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
 
       if ( qv[ 0 ].contains( QRegExp( "Multiple (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
       {
-         // cout << "multiple gaussians\n";
+         // TSO << "multiple gaussians\n";
 
          QString           this_gaussian;
          QRegExp           rx_gname( "^(?:Gauss|EMG\\+GMG|EMG|GMG) (.*)$" ); 
@@ -2325,7 +2531,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
          {
             if ( rx_gname.indexIn( qv[ i ] ) != -1 )
             {
-               // cout << QString( "mg: found %1\n" ).arg( rx_gname.cap( 1 ) );
+               // TSO << QString( "mg: found %1\n" ).arg( rx_gname.cap( 1 ) );
                // new file specific gaussian
                if ( g.size() && !this_gaussian.isEmpty() )
                {
@@ -2444,7 +2650,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    
    // ad-hoc for soleil mals time/uv/conc data
 
-   // cout << "load: <" << qv[ 0 ] << ">" << endl;
+   // TSO << "load: <" << qv[ 0 ] << ">" << endl;
 
    if ( ext == "txt" && qv[ 0 ].contains( "temps depuis le debut" ) )
    {
@@ -2471,7 +2677,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
          continue;
       }
       
-      // cout << "line: <" << qv[ i ] << ">" << endl;
+      // TSO << "line: <" << qv[ i ] << ">" << endl;
 
       // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
@@ -2500,7 +2706,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
          }
          if ( q.size() && this_q <= q[ q.size() - 1 ] )
          {
-            cout << QString(" breaking %1 %2\n").arg( this_q ).arg( q[ q.size() - 1 ] );
+            TSO << QString(" breaking %1 %2\n").arg( this_q ).arg( q[ q.size() - 1 ] );
             break;
          }
          if ( is_time || !us_isnan( this_I ) )
@@ -2528,7 +2734,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       return false;
    }
 
-   // cout << QString( "opened %1\n" ).arg( filename ) << flush;
+   // TSO << QString( "opened %1\n" ).arg( filename ) << flush;
    QString basename = QFileInfo( filename ).completeBaseName();
    f_name      [ basename ] = filename;
    f_pos       [ basename ] = f_qs.size();
@@ -3236,7 +3442,7 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
                .arg( use_filename ) );
    created_files_not_saved.erase( file );
    f_name[ file ] = QDir::current().path() + QDir::separator() + use_filename;
-   //   cout << QString( "file <%1> path <%2>\n" ).arg( file ).arg( f_name[ file ] );
+   //   TSO << QString( "file <%1> path <%2>\n" ).arg( file ).arg( f_name[ file ] );
    return true;
 }
 
@@ -4449,17 +4655,17 @@ void US_Hydrodyn_Mals::join()
 void US_Hydrodyn_Mals::plot_zoomed( const QRectF & /* rect */ )
 {
    // qDebug() << "plot_zoomed event";
-   //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
+   //   TSO << QString( "zoomed: %1 %2 %3 %4\n" )
    // .arg( rect.x1() )
    // .arg( rect.x2() )
    // .arg( rect.y1() )
    // .arg( rect.y2() );
    if ( !running )
    {
-      // cout << "not running\n";
+      // TSO << "not running\n";
       update_enables();
    } else {
-      // cout << "is running, update_enables skipped\n";
+      // TSO << "is running, update_enables skipped\n";
    }
 }
 
@@ -4472,40 +4678,40 @@ void US_Hydrodyn_Mals::zoom_info()
    if ( plot_dist_zoomer )
    {
 #if QT_VERSION < 0x040000
-      cout << QString( "zoomrect: %1 %2 %3 %4\n" )
+      TSO << QString( "zoomrect: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomRect().x1() )
          .arg( plot_dist_zoomer->zoomRect().x2() )
          .arg( plot_dist_zoomer->zoomRect().y1() )
          .arg( plot_dist_zoomer->zoomRect().y2() );
-      cout << QString( "zoombase: %1 %2 %3 %4\n" )
+      TSO << QString( "zoombase: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomBase().x1() )
          .arg( plot_dist_zoomer->zoomBase().x2() )
          .arg( plot_dist_zoomer->zoomBase().y1() )
          .arg( plot_dist_zoomer->zoomBase().y2() );
 #else
-      cout << QString( "zoomrect: %1 %2 %3 %4\n" )
+      TSO << QString( "zoomrect: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomRect().left() )
          .arg( plot_dist_zoomer->zoomRect().right() )
          .arg( plot_dist_zoomer->zoomRect().top() )
          .arg( plot_dist_zoomer->zoomRect().bottom() );
-      cout << QString( "zoombase: %1 %2 %3 %4\n" )
+      TSO << QString( "zoombase: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomBase().left() )
          .arg( plot_dist_zoomer->zoomBase().right() )
          .arg( plot_dist_zoomer->zoomBase().top() )
          .arg( plot_dist_zoomer->zoomBase().bottom() );
 #endif
    } else {
-      cout << "no current zoomer\n";
+      TSO << "no current zoomer\n";
    }
 }
 
 void US_Hydrodyn_Mals::plot_mouse( const QMouseEvent & /* me */ )
 {
-   // cout << "mouse event\n";
+   // TSO << "mouse event\n";
    // zoom_info();
    if ( plot_dist_zoomer )
    {
-      // cout << QString( "is base %1\n" ).arg( plot_dist_zoomer->zoomBase() == 
+      // TSO << QString( "is base %1\n" ).arg( plot_dist_zoomer->zoomBase() == 
       // plot_dist_zoomer->zoomRect() ? "yes" : "no" );
       update_enables();
    }
@@ -4583,7 +4789,7 @@ void US_Hydrodyn_Mals::remove_vis()
    double zry2  = plot_dist_zoomer->zoomRect().bottom();
 #endif
    // find curves within zoomRect & select only them
-   cout << "select visible\n";
+   TSO << "select visible\n";
    QStringList selected_files;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
@@ -4741,7 +4947,7 @@ void US_Hydrodyn_Mals::crop_left()
          {
             newy = 0e0;
          }
-         cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
+         TSO << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
          plot_dist_zoomer->moveTo( QPointF( newx, newy ) );
          return;
       }
@@ -4972,7 +5178,7 @@ void US_Hydrodyn_Mals::crop_right()
          {
             newy = 0e0;
          }
-         cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
+         TSO << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
          plot_dist_zoomer->moveTo( QPointF( newx, newy ) );
          return;
       }
@@ -5552,7 +5758,7 @@ void US_Hydrodyn_Mals::similar_files()
    QString match   = similar;
    match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
 
-   cout << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
+   TSO << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
       .arg( similar )
       .arg( dir )
       .arg( match )
@@ -5827,7 +6033,7 @@ void US_Hydrodyn_Mals::add_plot( QString           name,
    name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    if ( q.size() != I.size() )
    {
-      cout << QString( "add_plot: size error %1 %2\n" ).arg( q.size() ).arg( I.size() );
+      TSO << QString( "add_plot: size error %1 %2\n" ).arg( q.size() ).arg( I.size() );
    }
 
    // printvector( "add_plot q", q );
@@ -6302,7 +6508,7 @@ void US_Hydrodyn_Mals::gauss_start()
    if ( f_gaussians.count( wheel_file ) &&
         f_gaussians[ wheel_file ].size() )
    {
-      cout << "using file specific gaussians\n";
+      TSO << "using file specific gaussians\n";
       gaussians = f_gaussians[ wheel_file ];
    }
 
@@ -6329,7 +6535,7 @@ void US_Hydrodyn_Mals::gauss_start()
    if ( le_gauss_fit_end->text().isEmpty() ||
         le_gauss_fit_end->text().toDouble() > f_qs[ wheel_file ].back() )
    {
-      cout << "setting gauss fit end\n";
+      TSO << "setting gauss fit end\n";
       disconnect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
       le_gauss_fit_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
       connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
@@ -6631,7 +6837,7 @@ void US_Hydrodyn_Mals::gauss_pos_text( const QString & text )
    {
       if ( current_mode == MODE_GAUSSIAN )
       {
-         // cout << QString( "gauss_pos_text <%1>, pos %2 size %3\n" ).arg( text ).arg( gaussian_pos ).arg( gaussians.size() );
+         // TSO << QString( "gauss_pos_text <%1>, pos %2 size %3\n" ).arg( text ).arg( gaussian_pos ).arg( gaussians.size() );
          gaussians[ 1 + gaussian_type_size * gaussian_pos ] = text.toDouble();
          if ( cb_gauss_match_amplitude->isChecked() )
          {
@@ -6681,7 +6887,7 @@ void US_Hydrodyn_Mals::gauss_pos_text( const QString & text )
                y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) gaussian_pos / 100e0 );
                y[ 1 ] = y[ 0 ];
 
-               // cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+               // TSO << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
                //    .arg( center )
                //    .arg( width )
                //    .arg( x[0] )
@@ -6780,7 +6986,7 @@ void US_Hydrodyn_Mals::gauss_pos_width_text( const QString & text )
                y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) gaussian_pos / 100e0 );
                y[ 1 ] = y[ 0 ];
 
-               // cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+               // TSO << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
                //    .arg( center )
                //    .arg( width )
                //    .arg( x[0] )
@@ -7043,7 +7249,7 @@ void US_Hydrodyn_Mals::gauss_add_hline( double center, double width )
    y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) plotted_hlines.size() / 100e0 );
    y[ 1 ] = y[ 0 ];
 
-   // cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+   // TSO << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
    //    .arg( center )
    //    .arg( width )
    //    .arg( x[0] )
@@ -7327,7 +7533,7 @@ void US_Hydrodyn_Mals::gauss_delete_gaussians()
 
 void US_Hydrodyn_Mals::gauss_pos_focus( bool hasFocus )
 {
-   cout << QString( "gauss_pos_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_pos_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_pos;
@@ -7344,7 +7550,7 @@ void US_Hydrodyn_Mals::gauss_pos_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::gauss_pos_width_focus( bool hasFocus )
 {
-   cout << QString( "gauss_pos_width_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_pos_width_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_pos_width;
@@ -7359,7 +7565,7 @@ void US_Hydrodyn_Mals::gauss_pos_width_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::gauss_pos_height_focus( bool hasFocus )
 {
-   cout << QString( "gauss_pos_height_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_pos_height_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_pos_height;
@@ -7374,7 +7580,7 @@ void US_Hydrodyn_Mals::gauss_pos_height_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::gauss_pos_dist1_focus( bool hasFocus )
 {
-   cout << QString( "gauss_pos_dist1_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_pos_dist1_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_pos_dist1;
@@ -7390,7 +7596,7 @@ void US_Hydrodyn_Mals::gauss_pos_dist1_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::gauss_pos_dist2_focus( bool hasFocus )
 {
-   cout << QString( "gauss_pos_dist2_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_pos_dist2_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_pos_dist2;
@@ -7406,7 +7612,7 @@ void US_Hydrodyn_Mals::gauss_pos_dist2_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::gauss_fit_start_focus( bool hasFocus )
 {
-   cout << QString( "gauss_fit_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_fit_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_fit_start;
@@ -7421,7 +7627,7 @@ void US_Hydrodyn_Mals::gauss_fit_start_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::gauss_fit_end_focus( bool hasFocus )
 {
-   cout << QString( "gauss_fit_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   TSO << QString( "gauss_fit_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       le_last_focus = le_gauss_fit_end;
@@ -7666,7 +7872,7 @@ void US_Hydrodyn_Mals::gauss_fit()
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    return;
    /*   
-        cout << "gauss fit start\n";
+        TSO << "gauss fit start\n";
 
         lm_fit_gauss_size = gaussians.size();
 
@@ -7787,7 +7993,7 @@ vector < double > US_Hydrodyn_Mals::compute_gaussian( vector < double > t, vecto
    double dist2 = dist2_active ? g[ 4 ] : 0e0;
 
    /*
-   cout << QString( "compute_gaussian use_qt is %1 dist1 %2 %3 dist2 %4 %5\n" )
+   TSO << QString( "compute_gaussian use_qt is %1 dist1 %2 %3 dist2 %4 %5\n" )
       .arg( use_gt )
       .arg( dist1_active ? "active" : "not active" )
       .arg( dist1 )
@@ -7821,7 +8027,7 @@ vector < double > US_Hydrodyn_Mals::compute_gaussian( vector < double > t, vecto
    {
    case GAUSS:
       {
-         // cout << "gaussian as: GAUSS\n";
+         // TSO << "gaussian as: GAUSS\n";
          double tmp;
          for ( unsigned int i = 0; i < q_size; ++i )
          {
@@ -7832,7 +8038,7 @@ vector < double > US_Hydrodyn_Mals::compute_gaussian( vector < double > t, vecto
       break;
    case GMG:
       {
-         // cout << "gaussian as: GMG\n";
+         // TSO << "gaussian as: GMG\n";
 
 #if defined( DEBUG_GMG )
          vector < double > q_exparg_org;
@@ -7920,7 +8126,7 @@ vector < double > US_Hydrodyn_Mals::compute_gaussian( vector < double > t, vecto
       break;
    case EMG:
       {
-         // cout << "gaussian as: EMG\n";
+         // TSO << "gaussian as: EMG\n";
          double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
          if ( fabs( dist1 ) < dist1_thresh )
          {
@@ -7972,7 +8178,7 @@ vector < double > US_Hydrodyn_Mals::compute_gaussian( vector < double > t, vecto
       break;
    case EMGGMG:
       {
-         // cout << "gaussian as: EMGGMG\n";
+         // TSO << "gaussian as: EMGGMG\n";
          double area = height * width * M_SQRT2PI;
 
          // GMG
@@ -8043,7 +8249,7 @@ vector < double > US_Hydrodyn_Mals::compute_gaussian( vector < double > t, vecto
 
 double US_Hydrodyn_Mals::compute_gaussian_peak( QString file, vector < double > g )
 {
-   // cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
+   // TSO << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
    vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
 
    double start_pos = le_gauss_fit_start->text().toDouble();
@@ -8080,6 +8286,7 @@ double US_Hydrodyn_Mals::compute_gaussian_peak( QString file, vector < double > 
 
 QString US_Hydrodyn_Mals::pad_zeros( int val, int max )
 {
+   // TSO << "pad_zeros( " << val << " , " << max << " )\n";
    unsigned int len = QString( "%1" ).arg( max ).length();
    QString      s   = QString( "%1" ).arg( val );
    while ( (unsigned int) s.length() < len )
@@ -8324,7 +8531,7 @@ bool US_Hydrodyn_Mals::ggaussian_compatible( QStringList & files, bool check_aga
             double width   = unified_ggaussian_params[ 2 * j + 1 ];
             double height  = unified_ggaussian_params[ index + j + 0 ];
 
-            //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+            //          TSO << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
             //             .arg( i )
             //             .arg( t )
             //             .arg( index )
@@ -8346,7 +8553,7 @@ bool US_Hydrodyn_Mals::ggaussian_compatible( QStringList & files, bool check_aga
             double height  = unified_ggaussian_params[ index + 2 * j + 0 ];
             double width   = unified_ggaussian_params[ index + 2 * j + 1 ];
 
-            //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+            //          TSO << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
             //             .arg( i )
             //             .arg( t )
             //             .arg( index )
@@ -8814,7 +9021,7 @@ void US_Hydrodyn_Mals::save_state()
 
 void US_Hydrodyn_Mals::update_gauss_mode()
 {
-   // cout << QString( "update_gauss_mode <%1>\n" ).arg( gaussian_type );
+   // TSO << QString( "update_gauss_mode <%1>\n" ).arg( gaussian_type );
    switch ( gaussian_type )
    {
    case EMGGMG :

@@ -87,7 +87,32 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
+// #define DP_TEST
+
+#if defined( DP_TEST )
+   {
+      QTextStream tso(stdout);
+
+      tso << "dp test\n";
+
+      vector < double > vals = { 0, 1, 1.2, 1.23, 1.234, 1.2345, 1.55555, 1e10, -5.2736 };
+      vector < int >    dps  = { 0, 1, 2, 3 };
+
+      for ( int i = 0; i < (int)dps.size(); ++i ) {
+         for ( int j = 0; j < (int)vals.size(); ++j ) {
+            tso << QString( "decimal places %1, value %2, converted %3\n" )
+               .arg( dps[i] )
+               .arg( vals[j] )
+               .arg( us_double_decimal_places( vals[j], dps[i] ) )
+               ;
+         }
+      }
+   }
+   
+#endif
+
    // #define PROCESS_TEST
+
 #if defined( PROCESS_TEST )
    QProcess * process = new QProcess( this );
    QString prog = "/usr/lib/rasmol/rasmol.16";

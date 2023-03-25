@@ -13,11 +13,7 @@
 #include <QTextStream>
 #endif
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
+#define TSO QTextStream(stdout)
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
@@ -183,7 +179,6 @@ bool US_Hydrodyn_Mals::create_i_of_q_ng( QStringList files, double t_min, double
    {
       tv.push_back( *it );
    }
-
 
    ql.sort();
 
@@ -371,6 +366,7 @@ bool US_Hydrodyn_Mals::create_i_of_q_ng( QStringList files, double t_min, double
 
       // build up an I(q)
 
+
       QString name = head + QString( "%1%2" )
          .arg( (any_bl || any_bi) ? "_bs" : "" )
          .arg( pad_zeros( tv[ t ], (int) tv.size() ) )
@@ -387,7 +383,9 @@ bool US_Hydrodyn_Mals::create_i_of_q_ng( QStringList files, double t_min, double
          name = use_name;
       }
          
-      // cout << QString( "name %1\n" ).arg( name );
+      // TSO << "curve " << t << " tv[t] " << tv[t] << " name " << name << "\n";
+      
+      // TSO << QString( "name %1\n" ).arg( name );
 
       // now go through all the files to pick out the I values and errors and distribute amoungst the various gaussian peaks
       // we could also reassemble the original sum of gaussians curves as a comparative
@@ -611,11 +609,11 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
          bl_slope    .push_back( 0e0 );
          bl_intercept.push_back( 0e0 );
       } else {
-         // cout << QString( "bl_cap 1 <%1>\n" ).arg( rx_bl.cap( 1 ) );
-         // cout << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl.cap( 3 ) );
+         // TSO << QString( "bl_cap 1 <%1>\n" ).arg( rx_bl.cap( 1 ) );
+         // TSO << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl.cap( 3 ) );
          bl_slope    .push_back( rx_bl.cap( 1 ).replace( "_", "." ).toDouble() );
          bl_intercept.push_back( rx_bl.cap( 3 ).replace( "_", "." ).toDouble() );
-         // cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).toLatin1().data();
+         // TSO << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).toLatin1().data();
          bl_count++;
          any_bl = true;
       }
@@ -625,11 +623,11 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
          // bi_delta    .push_back( 0e0 );
          // bi_alpha.push_back( 0e0 );
       } else {
-         // cout << QString( "bi_cap 1 <%1>\n" ).arg( rx_bi.cap( 1 ) );
-         // cout << QString( "bi_cap 2 <%1>\n" ).arg( rx_bi.cap( 3 ) );
+         // TSO << QString( "bi_cap 1 <%1>\n" ).arg( rx_bi.cap( 1 ) );
+         // TSO << QString( "bi_cap 2 <%1>\n" ).arg( rx_bi.cap( 3 ) );
          // bi_delta .push_back( rx_bi.cap( 1 ).replace( "_", "." ).toDouble() );
          // bi_alpha .push_back( rx_bi.cap( 3 ).replace( "_", "." ).toDouble() );
-         // cout << QString( "bi for file %1 delta  %2 alpha %3\n" ).arg( i ).arg( bi_delta.back(), 0, 'g', 8 ).arg( bi_alpha.back(), 0, 'g', 8 ).toLatin1().data();
+         // TSO << QString( "bi for file %1 delta  %2 alpha %3\n" ).arg( i ).arg( bi_delta.back(), 0, 'g', 8 ).arg( bi_alpha.back(), 0, 'g', 8 ).toLatin1().data();
          bi_delta[ ql.back() ] = rx_bi.cap( 1 ).replace( "_", "." ).toDouble();
          bi_alpha[ ql.back() ] = rx_bi.cap( 3 ).replace( "_", "." ).toDouble();
          bi_count++;
@@ -849,7 +847,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
             editor_msg( "dark red", us_tr( "Notice: no concentration repeak scaling value found" ) );
          }
       } else {
-         cout << "no conc\n";
+         TSO << "no conc\n";
       }
          
       if ( !any_detector )
@@ -869,14 +867,14 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
          parameters[ "expert_mode" ] = "true";
       }
 
-      //       cout << "parameters b4 ciq:\n";
+      //       TSO << "parameters b4 ciq:\n";
       //       for ( map < QString, QString >::iterator it = parameters.begin();
       //             it != parameters.end();
       //             it++ )
       //       {
-      //          cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
+      //          TSO << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
       //       }
-      //       cout << "end parameters b4 ciq:\n";
+      //       TSO << "end parameters b4 ciq:\n";
 
       parameters[ "mals_cb_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_cb_makeiq_avg_peaks" ];
       parameters[ "mals_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_makeiq_avg_peaks" ];
@@ -890,14 +888,14 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
       mals_ciq->exec();
       delete mals_ciq;
       
-      //       cout << "parameters:\n";
+      //       TSO << "parameters:\n";
       //       for ( map < QString, QString >::iterator it = parameters.begin();
       //             it != parameters.end();
       //             it++ )
       //       {
-      //          cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
+      //          TSO << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
       //       }
-      //       cout << "end parameters:\n";
+      //       TSO << "end parameters:\n";
 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_cb_makeiq_avg_peaks" ] = parameters[ "mals_cb_makeiq_avg_peaks" ];
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_makeiq_avg_peaks" ] = parameters[ "mals_makeiq_avg_peaks" ];
@@ -905,16 +903,16 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
       if ( bl_count && ( !parameters.count( "add_baseline" ) || parameters[ "add_baseline" ] == "false" ) )
       {
          bl_count = 0;
-         cout << "ciq: bl off\n";
+         TSO << "ciq: bl off\n";
       }
 
       if ( parameters.count( "save_as_pct_iq" ) && parameters[ "save_as_pct_iq" ] == "true" )
       {
          save_gaussians = false;
-         cout << "ciq: save_gaussians false\n";
+         TSO << "ciq: save_gaussians false\n";
       } else {
          save_gaussians = true;
-         cout << "ciq: save_gaussians true\n";
+         TSO << "ciq: save_gaussians true\n";
       }
       if ( parameters.count( "save_sum" ) && parameters[ "save_sum" ] == "true" )
       {
@@ -923,10 +921,10 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
       if ( parameters.count( "sd_source" ) && parameters[ "sd_source" ] == "difference" )
       {
          sd_from_difference = true;
-         cout << "ciq: sd_from_difference true\n";
+         TSO << "ciq: sd_from_difference true\n";
       } else {
          sd_from_difference = false;
-         cout << "ciq: sd_from_difference false\n";
+         TSO << "ciq: sd_from_difference false\n";
       }
       if ( !parameters.count( "go" ) )
       {
@@ -974,7 +972,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
          sd_keep_zeros = parameters[ "zero_keep_as_zeros" ] == "true";
       }
 
-      cout << QString( "sd_avg_local  %1\n"
+      TSO << QString( "sd_avg_local  %1\n"
                        "sd_drop_zeros %2\n"
                        "sd_set_pt1pct %3\n"
                        "sd_keep_zeros %4\n" )
@@ -1005,7 +1003,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
    //                               1
    //                               ) == 1 )
    //    {
-   //       cout << "not using baselines\n";
+   //       TSO << "not using baselines\n";
    //       bl_count = 0;
    //    }
 
@@ -1296,7 +1294,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
 
    // for each time, tv[ t ] 
 
-   // cout << QString( "num of gauss %1\n" ).arg( num_of_gauss );
+   // TSO << QString( "num of gauss %1\n" ).arg( num_of_gauss );
 
    bool reported_gs0 = false;
 
@@ -1429,7 +1427,6 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
          }
       }
    }
-   
 
    for ( unsigned int t = 0; t < tv.size(); t++ )
    {
@@ -1497,7 +1494,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
             double center = tmp_g[ 1 ];
             double width  = tmp_g[ 2 ];
             double fwhm   = 2.354820045e0 * width;
-            //             cout << QString( "peak %1 center %2 fwhm %3 t %4 tv[t] %5\n" )
+            //             TSO << QString( "peak %1 center %2 fwhm %3 t %4 tv[t] %5\n" )
             //                .arg( g + 1 )
             //                .arg( center )
             //                .arg( fwhm )
@@ -1532,7 +1529,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
             name = use_name;
          }
 
-         // cout << QString( "name %1\n" ).arg( name );
+         // TSO << QString( "name %1\n" ).arg( name );
 
          // now go through all the files to pick out the I values and errors and distribute amoungst the various gaussian peaks
          // we could also reassemble the original sum of gaussians curves as a comparative
@@ -1577,7 +1574,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
             {
                if ( !reported_gs0 )
                {
-                  cout << QString( "Notice: file %1 t %2 gaussian sum is zero (further instances ignored)\n" ).arg( i ).arg( t );
+                  TSO << QString( "Notice: file %1 t %2 gaussian sum is zero (further instances ignored)\n" ).arg( i ).arg( t );
                   reported_gs0 = true;
                }
                frac_of_gaussian_sum = 1e0 / ( double ) num_of_gauss;
@@ -2240,7 +2237,7 @@ bool US_Hydrodyn_Mals::create_unified_ggaussian_target( QStringList & files, boo
          if ( !f_errors.count( files[ i ] ) ||
               f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
          {
-            cout << QString( "file %1 no errors %2\n" )
+            TSO << QString( "file %1 no errors %2\n" )
                .arg( files[ i ] ).arg( f_errors.count( files[ i ] ) ?
                                        QString( "errors %1 vs Is %2" )
                                        .arg( f_errors[ files[ i ] ].size() )
@@ -2399,7 +2396,7 @@ bool US_Hydrodyn_Mals::ggauss_recompute()
    }
 
    unsigned int per_file_size = gaussian_type_size - common_size;
-   // cout << QString( "ggauss_recompute: common_size: %1 per_file_size %2\n" ).arg( common_size ).arg( per_file_size );
+   // TSO << QString( "ggauss_recompute: common_size: %1 per_file_size %2\n" ).arg( common_size ).arg( per_file_size );
 
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
    {
@@ -2479,7 +2476,6 @@ bool US_Hydrodyn_Mals::ggauss_recompute()
 }
 
 // #define GG_DEBUG
-#define TSO QTextStream(stdout)
 
 bool US_Hydrodyn_Mals::compute_f_gaussians( QString file, QWidget *mals_fit_widget )
 {
@@ -2827,7 +2823,7 @@ bool US_Hydrodyn_Mals::compute_f_gaussians_trial( QString file, QWidget *mals_fi
    {
       gauss_max_height *= 20e0;
    }
-   // cout << QString( "compute_f_gaussians():gauss_max_height for %1 is %2\n" ).arg( file ).arg( gauss_max_height );
+   // TSO << QString( "compute_f_gaussians():gauss_max_height for %1 is %2\n" ).arg( file ).arg( gauss_max_height );
 
    // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
@@ -2840,7 +2836,7 @@ bool US_Hydrodyn_Mals::compute_f_gaussians_trial( QString file, QWidget *mals_fi
 
    // double gmax2 = compute_gaussian_peak( file, gaussians );
 
-   // cout << QString( "cfg: %1 org_gaussian peak %2, curve peak %3, scaling %4 new gaussian peak %5\n" )
+   // TSO << QString( "cfg: %1 org_gaussian peak %2, curve peak %3, scaling %4 new gaussian peak %5\n" )
    //    .arg( file )
    //    .arg( gmax )
    //    .arg( peak )
