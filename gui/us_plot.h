@@ -175,6 +175,11 @@ class US_PlotConfig : public US_WidgetsDialog
       QJsonObject getGridJson( void );
       QJsonObject getAxisJson( int );
       QJsonObject getFontJson( QFont );
+      void setTitleJson( QJsonObject );
+      QFont jsonToFont( QJsonObject );
+      QMap<QString, bool> parseGridJson( QJsonObject, QPen*);
+      void setGridJson( QJsonObject );
+      void setAxisJson( int, QJsonObject );
 
    private slots:
       void updateTitleText  ( const QString& );

@@ -948,12 +948,237 @@ void US_PlotConfig::updateAxis( int axis )
 
 /* Load/Save Plot's profile 
  */
+QFont US_PlotConfig::jsonToFont(QJsonObject font_obj){
+    QFont font;
+    foreach (const QString& key, font_obj.keys()) {
+        QString value = font_obj.value(key).toString();
+        if (key.compare(tr("Family"), Qt::CaseInsensitive) == 0)
+            font.setFamily(value);
+        else if (key.compare(tr("Size"), Qt::CaseInsensitive) == 0)
+            font.setPointSize(value.toInt());
+        else if (key.compare(tr("Weight"), Qt::CaseInsensitive) == 0)
+            font.setWeight(static_cast<QFont::Weight>(QMetaEnum::fromType<QFont::Weight>().
+                                                      keyToValue(value.toUtf8())));
+        else if (key.compare(tr("Style"), Qt::CaseInsensitive) == 0)
+            font.setStyle(static_cast<QFont::Style>(QMetaEnum::fromType<QFont::Style>().
+                                                    keyToValue(value.toUtf8())));
+        else if (key.compare(tr("Underline"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                font.setUnderline(true);
+            else
+                font.setUnderline(false);
+        } else if (key.compare(tr("Strike Out"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                font.setStrikeOut(true);
+            else
+                font.setStrikeOut(false);
+        }
+    }
+
+    qDebug() << "Loaded font info:";
+    qDebug() << "Size: " << font.pointSize();
+    qDebug() << "Weight: " << QString::fromUtf8(QMetaEnum::fromType<QFont::Weight>().valueToKey(font.weight()));
+    qDebug() << "Style: " << QString::fromUtf8(QMetaEnum::fromType<QFont::Style>().valueToKey(font.style()));
+    QString font_underline = font.underline() ? "true" : "false";
+    QString font_strikeout = font.strikeOut() ? "true" : "false";
+    qDebug() << "Underline: " << font_underline;
+    qDebug() << "Strikeout: " << font_strikeout;
+    qDebug() << "Family: " << font.family();
+    return font;
+}
+
+QMap<QString, bool> US_PlotConfig::parseGridJson( QJsonObject grid_obj, QPen* pen){
+    QMap<QString, bool> out;
+    out["Vertical"] = false;
+    out["Horizontal"] = false;
+    QString value;
+    foreach (const QString& key, grid_obj.keys()) {
+        value = grid_obj.value(key).toString();
+        if (key.compare(tr("Style"), Qt::CaseInsensitive) == 0)
+            pen->setStyle(static_cast<Qt::PenStyle>(QMetaEnum::fromType<Qt::PenStyle>().
+                                                 keyToValue(value.toUtf8())));
+        else if (key.compare(tr("Width"), Qt::CaseInsensitive) == 0)
+            pen->setWidth(value.toInt());
+        else if (key.compare(tr("Vertical"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                out["Vertical"] = true;
+        }else if (key.compare(tr("Horizontal"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                out["Horizontal"] = true;
+        }
+    }
+    return out;
+}
+
+void US_PlotConfig::setTitleJson(QJsonObject title_obj){
+    QFont font;
+    QString text;
+    foreach (const QString& key, title_obj.keys()) {
+        QJsonValue value = title_obj.value(key);
+        if (key.compare(tr("Text"), Qt::CaseInsensitive) == 0)
+            text = value.toString();
+        else if (key.compare(tr("Font"), Qt::CaseInsensitive) == 0)
+            font = jsonToFont(value.toObject());
+    }
+    le_titleText->setText(text);
+    le_titleFont->setText( font.family() + ", "
+                           + QString::number( font.pointSize() ) + tr( " points" ) );
+    QwtText p_title = plot->title();
+    p_title.setText(text);
+    p_title.setFont(font);
+    plot->setTitle(p_title);
+}
+
+void US_PlotConfig::setGridJson( QJsonObject grid_obj){
+
+    int ngrid = 0;
+    // Get the grid - if it exists
+    QwtPlotItemList list = plot->itemList();
+    QwtPlotGrid*  grid = NULL;
+
+    for ( int i = 0; i< list.size(); i++ )
+    {
+       if ( list[i]->rtti() == QwtPlotItem::Rtti_PlotGrid )
+       {
+          ngrid++;
+          if ( ngrid == 1 )
+             grid = dynamic_cast<QwtPlotGrid*>( list[ i ] );
+          else
+             list[ i ]->detach();
+       }
+    }
+    // Add an inactive grid if necessary
+    if ( grid == NULL )
+    {
+       grid = new QwtPlotGrid;
+       grid->enableX   ( false );
+       grid->enableY   ( false );
+       grid->enableXMin( false );
+       grid->enableYMin( false );
+       grid->attach( plot );
+    }
+
+    QJsonObject json_obj;
+    if (grid_obj.contains(tr("Major"))){
+        json_obj = grid_obj.value(tr("Major")).toObject();
+        QPen pen = grid->majorPen();
+        QPen* pp = &pen;
+        QMap<QString, bool> states;
+        states = parseGridJson(json_obj, pp);
+        grid->enableX(states["Vertical"]);
+        grid->enableY(states["Horizontal"]);
+    } else if (grid_obj.contains(tr("Minor"))){
+        json_obj = grid_obj.value(tr("Minor")).toObject();
+        QPen pen = grid->minorPen();
+        QPen* pp = &pen;
+        QMap<QString, bool> states;
+        states = parseGridJson(json_obj, pp);
+        grid->enableXMin(states["Vertical"]);
+        grid->enableYMin(states["Horizontal"]);
+    }
+    plot->replot();
+}
+
+void US_PlotConfig::setAxisJson( int axis_id, QJsonObject axis_obj){
+
+    foreach (const QString& key, axis_obj.keys()) {
+        QJsonValue value = axis_obj.value(key);
+        if (key.compare(tr("Enable"), Qt::CaseInsensitive) == 0){
+            QString axis_enable = value.toString();
+            bool state = false;
+            if (axis_enable.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                state = true;
+            plot->enableAxis(axis_id, state);
+        } else if (key.compare(tr("Title"), Qt::CaseInsensitive) == 0){
+            QJsonObject json_obj = value.toObject();
+            QwtText title = plot->axisTitle( axis_id );
+            foreach (const QString& kk, json_obj.keys()) {
+                QJsonValue value = json_obj.value(kk);
+                if (kk.compare(tr("Text"), Qt::CaseInsensitive) == 0)
+                    title.setText(value.toString());
+                else if (kk.compare(tr("Color"), Qt::CaseInsensitive) == 0)
+                    title.setColor(QColor(Qt::black));
+                else if (kk.compare(tr("Font"), Qt::CaseInsensitive) == 0)
+                    title.setFont(jsonToFont(value.toObject()));
+            }
+            plot->setAxisTitle( axis_id, title );
+        } else if (key.compare(tr("Tick Color"), Qt::CaseInsensitive) == 0){
+//            QPalette axisPalette = plot->axisWidget( axis_id )->palette();
+//            axisPalette.setColor( QPalette::Text, QColor(value.toString()) );
+//            plot->axisWidget( axis_id )->setPalette( axisPalette );
+            continue;
+        } else if (key.compare(tr("Scale"), Qt::CaseInsensitive) == 0){
+            QJsonObject json_obj = value.toObject();
+            int attributes = 0;
+            double lower_bound = 0;
+            double upper_bound = 0;
+            double step_size = 0;
+            double reference = 0;
+            bool auto_scale = true;
+//            QPalette palette = plot->axisWidget( axis_id )->palette();
+//            bool linear = true;
+//            bool logarithmic = false;
+//            QFont font = plot->axisFont( axis_id );
+            QFont font;
+            foreach (const QString& kk, json_obj.keys()) {
+                QJsonValue value = json_obj.value(kk);
+                if (kk.compare(tr("Autoscale"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("false", Qt::CaseInsensitive) == 0)
+                        auto_scale = false;
+                } else if (kk.compare(tr("Color"), Qt::CaseInsensitive) == 0){
+//                    palette.setColor( QPalette::Text, QColor(value.toString()));
+                    continue;
+                } else if (kk.compare(tr("Floating Endpoints"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::Floating;
+                } else if (kk.compare(tr("Include Reference"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::IncludeReference;
+                } else if (kk.compare(tr("Inverted"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::Inverted;
+                } else if (kk.compare(tr("Symmetric"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::Symmetric;
+                } else if (kk.compare(tr("Lower Bound"), Qt::CaseInsensitive) == 0){
+                    lower_bound = value.toString().toDouble();
+                } else if (kk.compare(tr("Upper Bound"), Qt::CaseInsensitive) == 0){
+                    upper_bound = value.toString().toDouble();
+                } else if (kk.compare(tr("Step Size"), Qt::CaseInsensitive) == 0){
+                    step_size = value.toString().toDouble();
+                } else if (kk.compare(tr("Font"), Qt::CaseInsensitive) == 0){
+                    font = jsonToFont(value.toObject());
+                } else if (kk.compare(tr("Linear"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        continue; //linear = true;
+                } else if (kk.compare(tr("Logarithmic"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        continue; //logarithmic = true;
+                } else if (kk.compare(tr("Reference"), Qt::CaseInsensitive) == 0){
+                    reference = value.toString().toDouble();
+                }
+            }
+
+            plot->setAxisFont( axis_id, font );
+//            plot->axisWidget( axis_id )->setPalette( palette );
+            plot->setAxisScale( axis_id, lower_bound, step_size, upper_bound );
+            plot->setAxisAutoScale(axis_id, auto_scale);
+            plot->axisScaleEngine( axis_id )->setReference( reference );
+            plot->axisScaleEngine( axis_id )->setAttributes( (QwtScaleEngine::Attribute)attributes );
+            plot->replot();
+        }
+    }
+
+}
+
+
 void US_PlotConfig::loadPlotProfile( void )
 {
   qDebug() << "Loading Plot's profile -- ";
 
-  QString p_title, canvas_color, frame_color, border_margin;
-  QString p_title_font_size,  p_title_font_family;
+  QString canvas_color, frame_color, border_margin;
+  QString legend_pos;
+  QJsonObject title_obj, grid_obj, axes_obj;
   
   //open local file
   QString dirPath    = US_Settings::etcDir();
@@ -980,65 +1205,41 @@ void US_PlotConfig::loadPlotProfile( void )
 	{
 	  QJsonObject json_obj = document.object();
 
-	  foreach(const QString& key, json_obj.keys())
-	    {
+      foreach(const QString& key, json_obj.keys()){
 	      QJsonValue value = json_obj.value(key);
 
-	      if ( key. contains( "Title Text" )  ) 
-		{
-		  p_title = value.toString();
-		}
-	      if ( key. contains( "Canvas Color" ) )
-		{
-		  canvas_color = value.toString();
-		}
-	      if ( key. contains( "Frame Color" ) )
-		{
-		  frame_color = value.toString();
-		}
-	      if ( key. contains( "Border Margin" ) )
-		{
-		  border_margin = value.toString();
-		}
-	      if ( key. contains( "Title Font" ) )
-		{
-		  QJsonArray json_array = value.toArray();
-		  
-		  p_title_font_family = json_array[0].toObject().value( "Family" ).toString();
-		  p_title_font_size   = json_array[0].toObject().value( "Size" )  .toString();
-		      
-		}
+          if (key.compare(tr("Title"), Qt::CaseInsensitive) == 0)
+               title_obj = value.toObject();
+          else if (key.compare(tr("Canvas Color"), Qt::CaseInsensitive) == 0)
+              canvas_color = value.toString();
+          else if (key.compare(tr("Frame Color"), Qt::CaseInsensitive) == 0)
+              frame_color = value.toString();
+          else if (key.compare(tr("Border Margin"), Qt::CaseInsensitive) == 0)
+              border_margin = value.toString();
+          else if (key.compare(tr("Legend Position"), Qt::CaseInsensitive) == 0)
+              legend_pos = value.toString();
+          else if (key.compare(tr("Grid"), Qt::CaseInsensitive) == 0)
+              grid_obj = value.toObject();
+          else if (key.compare(tr("Axes"), Qt::CaseInsensitive) == 0)
+              axes_obj = value.toObject();
 	    }
 	}
     }
 
   qDebug() << "Loaded Plot Profile -- "
-	   << "Title: "           << p_title
+//	   << "Title: "           << p_title
 	   << ", Canvas Color: "  << canvas_color
 	   << ", Frame Color: "   << frame_color
-	   << ", Border Margin: " << border_margin
-	   << ", Title Font (Family, Size): (" << p_title_font_family << ", " << p_title_font_size << ")";
+       << ", Border Margin: " << border_margin;
+//	   << ", Title Font (Family, Size): (" << p_title_font_family << ", " << p_title_font_size << ")";
 
   
   //set plot's parameters
   //1. Title
-  plot->setTitle( p_title );
-  plot->updateLayout();
-
-  //2. Title's Font & Size
-  QFont newFont;
-  newFont.setFamily   ( p_title_font_family );
-  newFont.setPointSize( p_title_font_size.toInt() );
+  if (! title_obj.isEmpty())
+      setTitleJson(title_obj);
   
-  QwtText curr_title = plot->title();
-  curr_title.setFont( newFont );
-  plot->setTitle( curr_title );
-  
-  le_titleFont->setText( newFont.family() + ", " 
-			 + QString::number( newFont.pointSize() ) + tr( " points" ) );
-
-  
-  //3. Border Margin
+  //2. Border Margin
   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
 		       .arg( border_margin ) );
 
@@ -1046,7 +1247,7 @@ void US_PlotConfig::loadPlotProfile( void )
   kk  = qMax( 0, ( kk / 2 - 1 ) );
   cmbb_margin->setCurrentIndex( kk );
 
-  //4. Frame Color
+  //3. Frame Color
   QColor col_frame   = QColor( frame_color );
   QPalette pal_frame;
   
@@ -1058,7 +1259,7 @@ void US_PlotConfig::loadPlotProfile( void )
       plot->setPalette( pal_frame );
     }
   
-  //5. Canvas Color
+  //4. Canvas Color
   QColor col_canvas     = QColor( canvas_color );
   QPalette pal_canvas;
   
@@ -1077,8 +1278,29 @@ void US_PlotConfig::loadPlotProfile( void )
       plot->replot();
     }
 
-}
+  //5. Legend Position
+  cmbb_legendPos->setCurrentText(legend_pos);
+  selectLegendPos(cmbb_legendPos->currentIndex());
 
+  //6. Grid
+  if (! grid_obj.isEmpty())
+      setGridJson(grid_obj);
+
+  //7. Axes Config
+  foreach (const QString& key, axes_obj.keys()) {
+      QJsonObject value = axes_obj.value(key).toObject();
+      if (key.compare(tr("xBottom"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::xBottom, value);
+      else if (key.compare(tr("xTop"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::xTop, value);
+      else if (key.compare(tr("yLeft"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::yLeft, value);
+      else if (key.compare(tr("yRight"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::yRight, value);
+
+  }
+
+}
 
 QJsonObject US_PlotConfig::getAxisJson(int axis_id){
 
@@ -1187,7 +1409,7 @@ QJsonObject US_PlotConfig::getGridJson(){
                                             valueToKey(pen.style()));
     QString minor_width = QString::number(pen.width());
 
-    major_obj.insert("horizontal", major_y_state);
+    major_obj.insert("Horizontal", major_y_state);
     major_obj.insert("Vertical", major_x_state);
     major_obj.insert("Width", major_width);
     major_obj.insert("Style", major_style);
@@ -1287,9 +1509,6 @@ void US_PlotConfig::savePlotProfile( void )
 
   QJsonObject xTop_config = getAxisJson(QwtPlot::xTop);
   Axes_config.insert(tr("xTop"), xTop_config);
-
-
-
 
   profile_obj.insert("Axes", Axes_config);
 
