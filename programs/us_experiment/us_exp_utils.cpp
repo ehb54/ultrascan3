@@ -3171,6 +3171,38 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( false );
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
+
+   //DEBUG
+   //Opt system check, what cells will be uvvis and/or interference
+   QStringList oprof   = sibLValue( "optical", "profiles" );
+   QString uvvis       = tr( "UV/visible" );
+   QString rayleigh    = tr( "Rayleigh Interference" );
+   
+   //get # cells with interference channels
+   int ncells_interference = 0;
+   int nchannels_uvvis = 0;
+   QStringList active_channels;
+   for ( int kk = 0; kk < oprof.count(); kk++ )
+     {
+       if ( oprof[ kk ].contains( rayleigh ) )
+	 {
+	   if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
+	     {
+	       qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	       active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	     }
+	   
+	   ++ncells_interference;
+	 }
+       
+       if ( oprof[ kk ].contains( uvvis ) )
+	 ++nchannels_uvvis;
+     }
+
+   qDebug() << "Upload::initPanel(): oprof -- " << oprof;
+   qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
+	    << ncells_interference << ", " << nchannels_uvvis;
+   
 }
 
 bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )

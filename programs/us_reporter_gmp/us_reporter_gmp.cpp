@@ -1404,6 +1404,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 {
   int nrecs        = 0;   
   autoflowdata.clear();
+
+  QStringList qry;
   
   US_Passwd pw;
   US_DB2* db = new US_DB2( pw.getPasswd() );
@@ -1416,7 +1418,23 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       return nrecs;
     }
   
-  QStringList qry;
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  db->query( qry );
+  
+  int user_id = 0;
+  
+  if ( db->next() )
+    user_id = db->value( 0 ).toInt();
+  
+
+  //deal with autoflowHistory descriptions
+  qry. clear();
   qry << "get_autoflow_history_desc";
   db->query( qry );
 
@@ -1429,11 +1447,13 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       QString optimaname         = db->value( 10 ).toString();
       
       QDateTime time_started     = db->value( 11 ).toDateTime().toUTC();
+      QString invID              = db->value( 12 ).toString();
 
       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = db->value( 14 ).toString();
       QString full_runname       = db->value( 15 ).toString();
 
+      QString operatorID         = db->value( 16 ).toString();
       QString devRecord          = db->value( 18 ).toString();
 
       QDateTime local(QDateTime::currentDateTime());
@@ -1468,9 +1488,26 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
-      autoflowdata  << autoflowentry;
 
-      nrecs++;
+      //Check user level && GUID; if <3, check if the user is operator || investigator
+      if ( US_Settings::us_inv_level() < 3 )
+	{
+	  qDebug() << "User level low: " << US_Settings::us_inv_level();
+	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+
+	  if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	    {//Do we allow operator as defined in autoflow record to also see reports?? 
+	    
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	}
+      else
+	{
+	  autoflowdata  << autoflowentry;
+	  nrecs++;
+	}
+      
     }
 
   return nrecs;
@@ -5307,7 +5344,7 @@ int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filenam
 void US_ReporterGMP::assemble_user_inputs_html( void )
 {
   html_assembled += "<p class=\"pagebreak \">\n";
-  html_assembled += "<h2 align=left>User Interactions During Data Saving, Editing and Analysis</h2>";
+  html_assembled += "<h2 align=left>User Interactions During Data Import, Editing, and Analysis</h2>";
 
   //Maps && timestamps from DB
   // IMPORT
@@ -5345,24 +5382,39 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
   data_types_import_ts [ "RI" ] = importRIts;
   data_types_import_ts [ "IP" ] = importIPts;
+
+  //Check for dropped triples for each Optical System:
+  QStringList dropped_triples_RI, dropped_triples_IP;
+  read_reportLists_from_aprofile( dropped_triples_RI, dropped_triples_IP );
+  qDebug() << "List of dropped triples (all OSs): "
+	   <<  dropped_triples_RI
+	   <<  dropped_triples_IP;
+  
   
   //3. IMPORT
-  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Data Saving (3. IMPORT stage)</h3>" );
+  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT stage)</h3>" );
 
   QMap < QString, QString >::iterator im;
   for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
     {
       QString json_str = im.value();
-
+     
       if ( json_str.isEmpty() )
 	continue;
       
-      QString dtype_opt;
+      QString      dtype_opt;
+      QStringList  dtype_opt_dropped_triples;
 
       if ( im.key() == "RI" )
-	dtype_opt = "RI (UV/vis.)";
+	{
+	  dtype_opt = "RI (UV/vis.)";
+	  dtype_opt_dropped_triples = dropped_triples_RI;
+	}
       if ( im.key() == "IP" )
-	dtype_opt =  "IP (Interf.)";
+	{
+	  dtype_opt =  "IP (Interf.)";
+	  dtype_opt_dropped_triples = dropped_triples_IP;
+	}
       
       html_assembled += tr("<br>");
 
@@ -5414,6 +5466,34 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
 
+      //Add list if dropped triples per optics system:
+      if ( !dtype_opt_dropped_triples. isEmpty() )
+	{
+	  html_assembled += tr(
+			       "<table style=\"margin-left:10px\">"
+			       "<caption style=\"color:red;\" align=left> <b><i>List of Dropped Triples: </i></b> </caption>"
+			       "</table>"
+
+			       "<table style=\"margin-left:25px\">"
+			       );
+
+	  for ( int i=0; i < dtype_opt_dropped_triples.size(); ++i )
+	    {
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Triple Name: </td> <td style=\"color:red;\"> %1 </td> "
+				   "</tr>"
+				   )
+		.arg( dtype_opt_dropped_triples[ i ] )
+		;
+	    }
+	  
+	  html_assembled += tr(
+			       "</table>"
+			       );
+			       
+	}
+      
     }
    
   html_assembled += tr("<hr>");
@@ -5570,6 +5650,138 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
+}
+
+//Read AProfile's reportIDs per channel:
+void US_ReporterGMP::read_reportLists_from_aprofile( QStringList & dropped_triples_RI, QStringList & dropped_triples_IP )
+{
+  dropped_triples_RI. clear();
+  dropped_triples_IP. clear();
+  QMap< QString, QString> channame_to_reportIDs_RI;
+  QMap< QString, QString> channame_to_reportIDs_IP;
+  QString aprofile_xml;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  qDebug() << "AProfGUID: " << AProfileGUID;
+    
+  QStringList qry;
+  qry << "get_aprofile_info" << AProfileGUID;
+  db.query( qry );
+  
+  while ( db.next() )
+    {
+      aprofile_xml         = db.value( 2 ).toString();
+    }
+
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readReportLists( xmli, channame_to_reportIDs_RI, channame_to_reportIDs_IP );
+    }
+
+  //Now, construct list of dropped triples per optical system used:
+  dropped_triples_RI = buildDroppedTriplesList( &db, channame_to_reportIDs_RI );
+  dropped_triples_IP = buildDroppedTriplesList( &db, channame_to_reportIDs_IP );
+}
+
+//Build list of dropped triples out of channame_to_reportIDs QMap;
+QStringList US_ReporterGMP::buildDroppedTriplesList ( US_DB2* dbP, QMap <QString, QString> channame_to_reportIDs )
+{
+  QStringList dropped_triples_list;
+  
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channame_to_reportIDs.begin(); chan_rep != channame_to_reportIDs.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  QString rID = reportIDs_list[i];
+	  QString Wavelength;
+	  QString TripleDropped;
+	  
+	  QStringList qry;
+	  qry << "get_report_info_by_id" << rID;
+	  dbP->query( qry );
+	  
+	  if ( dbP->lastErrno() == US_DB2::OK )      
+	    {
+	      while ( dbP->next() )
+		{
+		  Wavelength    = dbP->value( 5 ).toString();
+		  TripleDropped = dbP->value( 9 ).toString();
+		}
+	      
+	      if ( TripleDropped == "YES" )
+		{
+		  QString dropped_triple_name = chan_key + "." + Wavelength;
+		  dropped_triples_list << dropped_triple_name;
+		}
+	    }
+	}
+    }
+	  
+  return dropped_triples_list;
+}
+
+//Read AProfile's reportIDs per channel:
+bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QString> & channame_to_reportIDs_RI, QMap< QString, QString> & channame_to_reportIDs_IP )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "channel_parms" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      
+	      if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+		{
+		  QString channel_name = attr.value( "channel" ).toString();
+		  QString channel_desc = attr.value( "chandesc" ).toString();
+		  
+		  QString opsys = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		  
+		  if ( opsys.contains("UV/vis")  ) //RI
+		    {
+		      //Read what reportID corresponds to channel:
+		      if ( attr.hasAttribute("report_id") )
+			channame_to_reportIDs_RI[ channel_name ] = attr.value( "report_id" ).toString();
+		    }
+		  if ( opsys.contains("Interf") )  //IP
+		    {
+		      //Read what reportID corresponds to channel:
+		      if ( attr.hasAttribute("report_id") )
+			channame_to_reportIDs_IP[ channel_name ] = attr.value( "report_id" ).toString();
+		    }
+		}
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+      
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+	break;
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
 //read autoflowStatus, populate internals

@@ -293,6 +293,11 @@ class US_ReporterGMP : public US_Widgets
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
          QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
+
+  void read_reportLists_from_aprofile( QStringList &, QStringList & );
+  bool readReportLists( QXmlStreamReader&, QMap< QString, QString> &, QMap< QString, QString> & );
+  QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
+  
 	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);

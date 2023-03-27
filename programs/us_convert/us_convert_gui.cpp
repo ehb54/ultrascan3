@@ -587,6 +587,11 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("152");
    // QString aprofileguid = QString("d16f9f04-2a8b-4b6b-b08e-5652ee4dbc7e");
    
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/YeQ_Calpain3-cross-linked_021723-run1894");
+   // QString protname = QString("YeQ_Calpain3-cross-linked_021723");
+   // QString invid    = QString("94");
+   // QString aprofileguid = QString("b39b3969-c6a9-4c42-9b0b-869ac9136035");
    
    // QMap < QString, QString > protocol_details;
    // protocol_details[ "dataPath" ]       = curdir;
@@ -598,10 +603,10 @@ DbgLv(1) << "CGui: reset complete";
    // //protocol_details[ "runID" ]          =  ;
    // protocol_details[ "label" ]          = QString("Some label");
    // protocol_details[ "aprofileguid" ]   = aprofileguid;
-   // protocol_details[ "CellChNumber" ]   = QString("IP:6,RI:2");
+   // protocol_details[ "CellChNumber" ]   = QString("2");
 
    
-   // // // /*********************************************************************************/
+   // // // // /*********************************************************************************/
 
    
    // import_data_auto( protocol_details ); 
@@ -6164,7 +6169,7 @@ bool US_ConvertGui::isSaved_auto( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-    /***/
+  /***/
   //Check if saving already initiated
   if ( us_convert_auto_mode )
     {
@@ -6174,23 +6179,23 @@ void US_ConvertGui::saveUS3( void )
       qDebug() << "status_import_unique -- " << status_import_unique ;
 
       if ( !status_import_unique )
-	{
-	  QMessageBox::information( this,
-				    tr( "The Program State Updated / Being Updated" ),
-				    tr( "The program advanced or is advancing to the next stage!\n\n"
-					"This happened because you or different user "
-					"has already saved the data into DB using different program "
-					"session and the program is proceeding to the next stage. \n\n"
-					"The program will return to the autoflow runs dialog where "
-					"you can re-attach to the actual current stage of the run. "
-					"Please allow some time for the status to be updated.") );
-	  
-	  
-	  resetAll_auto();
-	  emit saving_complete_back_to_initAutoflow();
-	  return;
-	}
-      
+  	{
+  	  QMessageBox::information( this,
+  				    tr( "The Program State Updated / Being Updated" ),
+  				    tr( "The program advanced or is advancing to the next stage!\n\n"
+  					"This happened because you or different user "
+  					"has already saved the data into DB using different program "
+  					"session and the program is proceeding to the next stage. \n\n"
+  					"The program will return to the autoflow runs dialog where "
+  					"you can re-attach to the actual current stage of the run. "
+  					"Please allow some time for the status to be updated.") );
+  	  
+  	  
+  	  resetAll_auto();
+  	  emit saving_complete_back_to_initAutoflow();
+  	  return;
+  	}
+   
     }
   /****/
 
@@ -6240,6 +6245,8 @@ void US_ConvertGui::saveUS3( void )
 		    }
 		}
 
+	      qDebug() << "GMP Report read: qry, wavelength  -- " << qry << ", " << Wavelength;
+	      
 	      //Now that we know triple-report's channel name && wavelength, go over excluded triples and update corresponding autoflowReport records.. 
 	      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
 		{
@@ -6264,7 +6271,6 @@ void US_ConvertGui::saveUS3( void )
 		    }
 		}
 	    }
-	  
 	}
 
       /***************************************************************/
