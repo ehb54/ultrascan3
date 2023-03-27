@@ -1161,8 +1161,10 @@ void US_PlotConfig::setAxisJson( int axis_id, QJsonObject axis_obj){
 
             plot->setAxisFont( axis_id, font );
 //            plot->axisWidget( axis_id )->setPalette( palette );
-            plot->setAxisScale( axis_id, lower_bound, step_size, upper_bound );
-            plot->setAxisAutoScale(axis_id, auto_scale);
+            if (auto_scale)
+                plot->setAxisAutoScale(axis_id);
+            else
+                plot->setAxisScale( axis_id, lower_bound, upper_bound, step_size);
             plot->axisScaleEngine( axis_id )->setReference( reference );
             plot->axisScaleEngine( axis_id )->setAttributes( (QwtScaleEngine::Attribute)attributes );
             plot->replot();
@@ -1829,7 +1831,6 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
       symbolStyle = selSymbol->style();
 
       qDebug() << "Curves props constr.: symbolStyle -- " << symbolStyle;
-	
       for ( int i = 0; i < symbolStyles.size(); i++ )
       {
          if ( symbolStyles [ i ] == symbolStyle )
@@ -1843,7 +1844,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    {
      qDebug() << "Curves props constr.: NULL ";
      cmbb_symbolStyle->setCurrentIndex( 0 );
-     selSymbol             = new QwtSymbol;
+     selSymbol             = new QwtSymbol();
    }
 
    connect( cmbb_symbolStyle, SIGNAL( currentIndexChanged( int ) ), 
