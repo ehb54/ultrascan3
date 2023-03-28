@@ -380,7 +380,14 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_create_i_of_q->setMinimumHeight(minHeight1);
    pb_create_i_of_q->setPalette( PALET_PUSHB );
    connect(pb_create_i_of_q, SIGNAL(clicked()), SLOT(create_i_of_q()));
+   pb_create_i_of_q->hide();
 
+   pb_create_ihash_t = new QPushButton(us_tr("Make I#(t)"), this);
+   pb_create_ihash_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_create_ihash_t->setMinimumHeight(minHeight1);
+   pb_create_ihash_t->setPalette( PALET_PUSHB );
+   connect(pb_create_ihash_t, SIGNAL(clicked()), SLOT(create_ihash_t()));
+   
    pb_load_conc = new QPushButton(us_tr("Conc. File Load"), this);
    pb_load_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_load_conc->setMinimumHeight(minHeight1);
@@ -3369,13 +3376,15 @@ void US_Hydrodyn_Mals::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
+   hbl_file_buttons_4->addWidget ( pb_create_ihash_t );
 
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
    files_widgets.push_back ( pb_svd );
    files_widgets.push_back ( pb_create_i_of_t );
    files_widgets.push_back ( pb_test_i_of_t );
-   files_widgets.push_back ( pb_create_i_of_q );
+   // files_widgets.push_back ( pb_create_i_of_q );
+   files_widgets.push_back ( pb_create_ihash_t );
 
    QBoxLayout * hbl_conc_file = new QHBoxLayout(); hbl_conc_file->setContentsMargins( 0, 0, 0, 0 ); hbl_conc_file->setSpacing( 0 );
    // hbl_conc_file->addWidget ( pb_repeak );
@@ -4543,6 +4552,7 @@ void US_Hydrodyn_Mals::update_enables()
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
+   pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && mals_param_n && mals_param_lambda && mals_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
    pb_load_conc          ->setEnabled( true );
    // pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_repeak             ->setEnabled( files_are_time && conc_files.size() &&
@@ -4849,6 +4859,7 @@ void US_Hydrodyn_Mals::disable_all()
    pb_svd                ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
+   pb_create_ihash_t     ->setEnabled( false );
    pb_load_conc          ->setEnabled( false );
    pb_conc_file          ->setEnabled( false );
    // pb_detector           ->setEnabled( false );

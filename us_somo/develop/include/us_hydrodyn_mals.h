@@ -333,6 +333,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
+      QPushButton   *pb_create_ihash_t;
 
       QPushButton   *pb_fasta_file;
       QLabel        *lbl_fasta_value;
@@ -1151,6 +1152,8 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       bool                         create_i_of_q_ng( set < QString > & fileset,
                                                      double t_min = -1e99,
                                                      double t_max = 1e99 );
+      bool                         create_ihash_t( QStringList files );
+
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files, bool quiet = false );
@@ -1520,6 +1523,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       void svd();
       void repeak();
       void create_i_of_t();
+      void create_ihash_t();
       void test_i_of_t();
       void create_i_of_q();
       void load_conc();

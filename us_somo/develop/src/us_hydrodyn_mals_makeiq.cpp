@@ -2977,3 +2977,66 @@ void US_Hydrodyn_Mals::add_oldstyle(
    f_Is_oldstyle[ name ]             = I;
 }
 
+
+void US_Hydrodyn_Mals::create_ihash_t() {
+   disable_all();
+
+   QStringList files = all_selected_files();
+   create_ihash_t( files );
+
+   update_enables();
+}
+
+bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
+   double lambda_cm = mals_param_lambda * 1e-7; // nm to cm
+
+   double K =
+      (
+       4
+       * M_PI * M_PI
+       * mals_param_n * mals_param_n
+       * mals_param_g_dndc * mals_param_g_dndc
+       ) / (
+            AVOGADRO
+            * lambda_cm * lambda_cm * lambda_cm * lambda_cm
+            );
+
+   double Kinv = 1.0 / K;
+
+
+   TSO << "create I#(t) : K is " << K << "\n";
+
+   for ( const auto & name : files ) {
+      QString hash_name = name;
+      hash_name.replace( "_Rt_", "_Ihasht_" );
+      if ( !f_Is.count( name )
+           || !f_errors.count( name )
+           || !f_qs.count( name ) ) {
+         editor_msg( "red", QString( "Internal error: missing data for %1\n" ).arg( name ) );
+      } else {
+         vector < double > hash_I = f_Is[ name ];
+         vector < double > hash_e = f_errors[ name ];
+
+         bool use_errors = hash_e.size() == hash_I.size();
+
+         if ( use_errors ) {
+            for ( int i = 0; i < (int) hash_I.size(); ++i ) {
+               hash_I[i] *= Kinv;
+               hash_e[i] *= Kinv;
+            }
+            add_plot( hash_name, f_qs[ name ], hash_I, hash_e, true, false );
+         } else {
+            for ( int i = 0; i < (int) hash_I.size(); ++i ) {
+               hash_I[i] *= Kinv;
+            }
+            add_plot( hash_name, f_qs[ name ], hash_I, true, false );
+         }
+      }
+   }
+
+   plot_files();
+   update_enables();
+   return true;
+}
+
+   

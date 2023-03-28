@@ -5449,7 +5449,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       double time      = data_line.front().toDouble();
       double timedelta = time - last_time;
       last_time        = time;
-      int use_frame    = ++frame;
+      // int use_frame    = ++frame;
 
       if ( last_timedelta
            && fabs( timedelta - last_timedelta ) > TIME_DELTA_TOLERANCE ) {
@@ -5470,7 +5470,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       }
 
       for ( int i = 0; i < (int) detector_index.size(); ++i ) {
-         t [ detector_index[ i ] ].push_back( use_frame );
+         t [ detector_index[ i ] ].push_back( time );
          I [ detector_index[ i ] ].push_back( data_line[ 1 + 2 * i ].toDouble() );
          sd[ detector_index[ i ] ].push_back( data_line[ 2 + 2 * i ].toDouble() );
       }
@@ -5509,8 +5509,6 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       }
    }
 
-   plot_files();
-   update_enables();
 
    // for ( auto it = t.begin();
    //       it != t.end();
@@ -5519,6 +5517,53 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
    // }
    
    // possibly also UV absorbance data at the end
+   
+   while ( data.size() && data.front().contains( QRegularExpression( "^\\s*$" ) ) ) {
+      data.pop_front();
+   }
+
+   if ( data.front().contains( QRegularExpression( "^\\s*UV absorbance data:" ) ) ) {
+      bool load_uv_data = false;
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Load MALS Data" )
+                                     ,us_tr( 
+                                            "The MALS data file contains UV absorbance data.\nDo you wish to load this?"
+                                             )
+                                     ) )
+      {
+      case QMessageBox::Yes : 
+         load_uv_data = true;
+         break;
+      default: 
+         break;
+      }
+
+      if ( load_uv_data ) {
+         data.pop_front();
+         data.pop_front();
+         data.pop_front();
+      
+         vector < double > t;
+         vector < double > I;
+
+         while( data.size() && data.front().contains( QRegularExpression( "^-?[0-9.]+," ) ) ) {
+            QStringList data_line = data.front().split( "," );
+            data.pop_front();
+
+            if ( data_line.size() > 1 ) {
+               t.push_back( data_line.front().toDouble() );
+               I.push_back( data_line[1].toDouble() );
+            }
+         }
+
+         QString name = QString( "%1_UV" ).arg( use_filename );
+         editor_msg( "block", QString( "UV plot data found and loaded as %1\n" ).arg( name ) );
+         add_plot( name, t, I, true, false );
+      }
+   }
+
+   plot_files();
+   update_enables();
 
    return true;
 }
