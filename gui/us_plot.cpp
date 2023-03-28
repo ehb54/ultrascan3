@@ -830,12 +830,15 @@ void US_PlotConfig::selectFrameColor( void )
 */
 void US_PlotConfig::selectMargin( int index )
 {
-   //plot->setMargin( ( index + 1 ) * 2 );
-   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
-         .arg( ( index + 1 ) * 2 ) );
+////   plot->setMargin( ( index + 1 ) * 2 );
+//   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+//         .arg( ( index + 1 ) * 2 ) );
 
-   QString style = plot->styleSheet();
-   qDebug() << "In ::selectMargin() Plot's style -- " << style;
+//   QString style = plot->styleSheet();
+//   qDebug() << "In ::selectMargin() Plot's style -- " << style;
+
+   int padding = ( index + 1 ) *  2;
+   plot->setContentsMargins(padding, padding, padding, padding);
 }
 
 /*!  \brief Change the plot legend position
