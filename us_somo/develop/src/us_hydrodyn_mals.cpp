@@ -8334,15 +8334,18 @@ double US_Hydrodyn_Mals::compute_gaussian_peak( QString file, vector < double > 
    return gmax;
 }
 
-QString US_Hydrodyn_Mals::pad_zeros( int val, int max )
-{
-   // TSO << "pad_zeros( " << val << " , " << max << " )\n";
+QString US_Hydrodyn_Mals::pad_zeros( int val, int max ) {
+   // N.B. - max is the maximum possible value, not the length !
+
    unsigned int len = QString( "%1" ).arg( max ).length();
    QString      s   = QString( "%1" ).arg( val );
    while ( (unsigned int) s.length() < len )
    {
       s = "0" + s;
    }
+
+   // TSO << "pad_zeros( " << val << " , " << max << " ) returns '" << s << "'\n";
+
    return s;
 }
 

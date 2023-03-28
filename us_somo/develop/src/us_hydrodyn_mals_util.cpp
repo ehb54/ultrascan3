@@ -5509,7 +5509,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
                            );
    }      
 
-   TSO << QString( "data front() failed regex contains: %1\n" ).arg( data.front() );
+   // TSO << QString( "data front() failed regex contains: %1\n" ).arg( data.front() );
 
    QString use_filename = QFileInfo( filename ).baseName();
    // use_filename.replace( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ), "" );
@@ -5520,8 +5520,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       if ( mals_angles.mals_angle.count( it->first ) &&
            mals_angles.mals_angle[ it->first ].has_angle_ri_corr ) {
          double q = RI * 4 * M_PI * sin( mals_angles.mals_angle[ it->first ].angle_ri_corr * M_PI / 360 ) / ( wavelength * 10 );
-         QString name = QString( "%1_Rt_q%2" ).arg( use_filename ).arg( q );
-         TSO << QString( "channel %1 angle %2 q %3\n" ).arg( it->first ).arg( mals_angles.mals_angle[ it->first ].angle_ri_corr ).arg( q );
+         QString name = QString( "%1_D%2_Rt_q%3" ).arg( use_filename ).arg( pad_zeros( it->first, t.end()->first ) ).arg( q );
          add_plot( name, t[ it->first ], I[ it->first ], sd[ it->first ], true, false );
       }
    }
