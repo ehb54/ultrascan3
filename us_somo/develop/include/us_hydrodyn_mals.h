@@ -113,16 +113,19 @@ class MALS_Angle {
    bool    has_norm_coef;
    
    QString list();
+   QString list_rich();
    bool    populate( const QStringList & );
 };
 
 class MALS_Angles {
  public:
    map < int, MALS_Angle > mals_angle;
-   QString list();
-   bool    populate( const QStringList & );
-   bool    load( const QString & filename, QString & errormsg );
-   bool    save( const QString & filename, QString & errormsg );
+   QString                 list();
+   QString                 list_rich();
+   QStringList             list_active();
+   bool                    populate( const QStringList & );
+   bool                    load( const QString & filename, QString & errormsg );
+   bool                    save( const QString & filename, QString & errormsg );
 };
 
 class US_EXTERN US_Hydrodyn_Mals : public QFrame

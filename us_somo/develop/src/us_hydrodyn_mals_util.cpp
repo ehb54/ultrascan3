@@ -5408,6 +5408,23 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       return false;
    }
 
+   switch ( QMessageBox::question(this, 
+                                  windowTitle() + us_tr( " : Load MALS Data" )
+                                  ,mals_angles.list_rich()
+                                  + QString(
+                                            "<hr>"
+                                            "Proceed with these MALS Angles?"
+                                            )
+                                  ) )
+   {
+   case QMessageBox::Yes : 
+      break;
+   default:
+      errormsg = "MALS Angles need to be loaded";
+      return false;
+      break;
+   }
+
    double wavelength = mals_param_lambda;
    double RI         = mals_param_n;
 
@@ -5538,6 +5555,27 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          break;
       }
 
+      int repeak_detector = 0;
+
+      if ( load_uv_data ) {
+         bool ok = false;
+
+         QString detector = US_Static::getItem(
+                                               windowTitle() + us_tr( " : Load MALS Data" )
+                                               ,"Choose the detector for repeaking the UV data or Cancel to not repeak"
+                                               ,mals_angles.list_active()
+                                               ,mals_angles.list_active().indexOf( QRegularExpression( "^\\s*\\d+\\s+90\\s+.*$" ) )
+                                               ,false
+                                               ,&ok
+                                               );
+         if ( ok ) {
+            QStringList qsl = detector.trimmed().split( QRegularExpression( "\\s+" ) );
+            repeak_detector = qsl.front().toInt();
+            TSO << "repeak detector " << repeak_detector << "\n";
+         }
+      }
+
+      
       if ( load_uv_data ) {
          data.pop_front();
          data.pop_front();

@@ -43,6 +43,26 @@ QString MALS_Angle::list() {
       ;
 }
      
+QString MALS_Angle::list_rich() {
+   return
+      QString( "<td>%1</td><td>%2</td><td>%3</td><td>%4</td>" )
+      .arg( us_double_decimal_places( angle, 2 ) )
+      .arg(
+           has_angle_ri_corr
+           ? QString( "%1" ).arg( us_double_decimal_places( angle_ri_corr, 2 ) )
+           : QString( "n/a" )
+           , 8
+           )
+      .arg(
+           has_gain
+           ? QString( "%1" ).arg( us_double_decimal_places( gain, 2 ) )
+           : QString( "n/a" )
+           ,8
+           )
+      .arg( us_double_decimal_places( norm_coef, 3 ) )
+      ;
+}
+
 bool MALS_Angle::populate( const QStringList & qsl ) {
 
    QStringList qslu = qsl;
@@ -115,6 +135,35 @@ QString MALS_Angles::list() {
       qsl << QString( "%1" ).arg( it->first, 3 ) << "    " << it->second.list() << "\n";
    }
    return qsl.join( "" );
+}
+
+QString MALS_Angles::list_rich() {
+   QStringList qsl;
+   qsl << "<table border=1>\n<tr><th>Detector</th><th>Angle</th><th>RI-Corr.</th><th> Gain</th><th>Norm.-Coef.</th></tr>\n";
+   for ( auto it = mals_angle.begin();
+         it != mals_angle.end();
+         ++it ) {
+      qsl << QString( "<tr><td>%1</td>" ).arg( it->first ) << it->second.list_rich() << "</tr>";
+   }
+   qsl << "</table>";
+   return qsl.join( "" );
+}
+
+QStringList MALS_Angles::list_active() {
+   QStringList qsl;
+   for ( auto it = mals_angle.begin();
+         it != mals_angle.end();
+         ++it ) {
+      if ( it->second.has_angle_ri_corr ) {
+         qsl <<
+            QString( "%1 %2 [%3]" )
+            .arg( it->first )
+            .arg( it->second.angle )
+            .arg( it->second.angle_ri_corr )
+            ;
+      }
+   }
+   return qsl;
 }
 
 bool MALS_Angles::populate( const QStringList & qsl ) {
