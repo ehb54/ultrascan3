@@ -5555,25 +5555,26 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          break;
       }
 
-      int repeak_detector = 0;
+      // deprecated - use standard conc files
+      // int repeak_detector = 0;
 
-      if ( load_uv_data ) {
-         bool ok = false;
+      // if ( load_uv_data ) {
+      //    bool ok = false;
 
-         QString detector = US_Static::getItem(
-                                               windowTitle() + us_tr( " : Load MALS Data" )
-                                               ,"Choose the detector for repeaking the UV data or Cancel to not repeak"
-                                               ,mals_angles.list_active()
-                                               ,mals_angles.list_active().indexOf( QRegularExpression( "^\\s*\\d+\\s+90\\s+.*$" ) )
-                                               ,false
-                                               ,&ok
-                                               );
-         if ( ok ) {
-            QStringList qsl = detector.trimmed().split( QRegularExpression( "\\s+" ) );
-            repeak_detector = qsl.front().toInt();
-            TSO << "repeak detector " << repeak_detector << "\n";
-         }
-      }
+      //    QString detector = US_Static::getItem(
+      //                                          windowTitle() + us_tr( " : Load MALS Data" )
+      //                                          ,"Choose the detector for repeaking the UV data or Cancel to not repeak"
+      //                                          ,mals_angles.list_active()
+      //                                          ,mals_angles.list_active().indexOf( QRegularExpression( "^\\s*\\d+\\s+90\\s+.*$" ) )
+      //                                          ,false
+      //                                          ,&ok
+      //                                          );
+      //    if ( ok ) {
+      //       QStringList qsl = detector.trimmed().split( QRegularExpression( "\\s+" ) );
+      //       repeak_detector = qsl.front().toInt();
+      //       TSO << "repeak detector " << repeak_detector << "\n";
+      //    }
+      // }
 
       
       if ( load_uv_data ) {
@@ -5597,6 +5598,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          QString name = QString( "%1_UV" ).arg( use_filename );
          editor_msg( "block", QString( "UV plot data found and loaded as %1\n" ).arg( name ) );
          add_plot( name, t, I, true, false );
+         conc_files.insert( name );
       }
    }
 
