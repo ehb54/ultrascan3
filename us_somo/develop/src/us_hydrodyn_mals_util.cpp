@@ -2506,6 +2506,8 @@ void US_Hydrodyn_Mals::options()
 
    check_mwt_constants();
 
+   lbl_mals_angles_data->setText( mals_angles.list_rich( mals_param_lambda, mals_param_n ) );
+
    update_enables();
 }
 
@@ -5525,7 +5527,6 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       }
    }
 
-
    // for ( auto it = t.begin();
    //       it != t.end();
    //       ++it ) {
@@ -5605,4 +5606,44 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
    update_enables();
 
    return true;
+}
+
+bool US_Hydrodyn_Mals::mals_angles_save() {
+   QString errormsg = "";
+   if ( mals_angles.mals_angle.size() ) {
+      QString use_dir = QDir::current().canonicalPath();
+      QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving the MALS Angles" ),  use_dir , "*.csv" );
+
+      if ( use_filename.isEmpty() ) {
+         return false;
+      }
+
+      if ( QFileInfo( use_filename ).suffix().toLower() != ".csv" )
+      {
+         use_filename += ".csv";
+      }
+   
+      if ( QFile::exists( use_filename ) ){
+         use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
+         raise();
+      }
+      
+      if ( !mals_angles.save( use_filename, errormsg ) ) {
+         QMessageBox::warning( this, 
+                               windowTitle(),
+                               QString(
+                                       us_tr(
+                                             "Error saving MALS Angles file %1\n"
+                                             "Error : %2\n"
+                                             )
+                                       )
+                               .arg( use_filename )
+                               .arg( errormsg )
+                               );
+         return false;
+      }
+      return true;
+   }
+   errormsg = us_tr( "No Angles loaded" );
+   return false;
 }

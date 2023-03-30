@@ -43,9 +43,28 @@ QString MALS_Angle::list() {
       ;
 }
      
-QString MALS_Angle::list_rich() {
+QString MALS_Angle::list_rich( double lambda, double n ) {
+   if ( !lambda || !n ) {
+      return
+         QString( "<td> %1 </td><td> %2 </td><td> %3 </td><td> %4 </td>" )
+         .arg( us_double_decimal_places( angle, 2 ) )
+         .arg(
+              has_angle_ri_corr
+              ? QString( "%1" ).arg( us_double_decimal_places( angle_ri_corr, 2 ) )
+              : QString( "n/a" )
+              , 8
+              )
+         .arg(
+              has_gain
+              ? QString( "%1" ).arg( us_double_decimal_places( gain, 2 ) )
+              : QString( "n/a" )
+              ,8
+              )
+         .arg( us_double_decimal_places( norm_coef, 3 ) )
+         ;
+   }
    return
-      QString( "<td>%1</td><td>%2</td><td>%3</td><td>%4</td>" )
+      QString( "<td> %1 </td><td> %2 </td><td> %3 </td><td> %4 </td><td> %5 </td>" )
       .arg( us_double_decimal_places( angle, 2 ) )
       .arg(
            has_angle_ri_corr
@@ -60,6 +79,11 @@ QString MALS_Angle::list_rich() {
            ,8
            )
       .arg( us_double_decimal_places( norm_coef, 3 ) )
+      .arg(
+           has_angle_ri_corr
+           ? QString( "%1" ).arg(  n * 4 * M_PI * sin( angle_ri_corr * M_PI / 360 ) / ( lambda * 10 ) )
+           : QString( "n/a" )
+           )
       ;
 }
 
@@ -137,15 +161,31 @@ QString MALS_Angles::list() {
    return qsl.join( "" );
 }
 
-QString MALS_Angles::list_rich() {
+QString MALS_Angles::list_rich( double lambda, double n ) {
    QStringList qsl;
-   qsl << "<table border=1>\n<tr><th>Detector</th><th>Angle</th><th>RI-Corr.</th><th> Gain</th><th>Norm.-Coef.</th></tr>\n";
-   for ( auto it = mals_angle.begin();
-         it != mals_angle.end();
-         ++it ) {
-      qsl << QString( "<tr><td>%1</td>" ).arg( it->first ) << it->second.list_rich() << "</tr>";
+   if ( !mals_angle.size() ) {
+      return us_tr( "<b>MALS Angles</b> not loaded" );
    }
-   qsl << "</table>";
+   if ( !lambda || !n ) {
+      qsl << "<table border=1>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th></tr>\n";
+      for ( auto it = mals_angle.begin();
+            it != mals_angle.end();
+            ++it ) {
+         qsl << QString( "<tr><td>%1</td>" ).arg( it->first ) << it->second.list_rich() << "</tr>";
+      }
+   } else {
+      qsl
+         << "<table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th><th> q </th></tr>\n"
+         ;
+      for ( auto it = mals_angle.begin();
+            it != mals_angle.end();
+            ++it ) {
+         qsl << QString( "<tr><td>%1</td>" ).arg( it->first ) << it->second.list_rich( lambda, n ) << "</tr>";
+      }
+   }
+   qsl
+      << "</table>"
+      ;
    return qsl.join( "" );
 }
 
@@ -1787,6 +1827,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    if ( mals_angles.populate( qsl_nb ) ) {
       editor_msg( "black", QString( "%1 MALS angles loaded\n" ).arg( filename ) );
       editor_msg( "black", mals_angles.list() );
+      lbl_mals_angles_data->setText( mals_angles.list_rich( mals_param_lambda, mals_param_n ) );
       return false;
    }
 

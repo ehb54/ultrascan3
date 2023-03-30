@@ -113,7 +113,7 @@ class MALS_Angle {
    bool    has_norm_coef;
    
    QString list();
-   QString list_rich();
+   QString list_rich( double lambda = 0, double n = 0 ); // set lambda & n non-zero to include q values
    bool    populate( const QStringList & );
 };
 
@@ -121,7 +121,7 @@ class MALS_Angles {
  public:
    map < int, MALS_Angle > mals_angle;
    QString                 list();
-   QString                 list_rich();
+   QString list_rich( double lambda = 0, double n = 0 ); // set lambda & n non-zero to include q values
    QStringList             list_active();
    bool                    populate( const QStringList & );
    bool                    load( const QString & filename, QString & errormsg );
@@ -237,6 +237,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
          PBMODE_CONC,
          PBMODE_SD,
          PBMODE_FASTA,
+         PBMODE_MALS,
          PBMODE_NONE
       };
 
@@ -248,6 +249,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       QRadioButton          * rb_pbmode_conc;
       QRadioButton          * rb_pbmode_sd;
       QRadioButton          * rb_pbmode_fasta;
+      QRadioButton          * rb_pbmode_mals;
       QRadioButton          * rb_pbmode_none;
       void                    pbmode_select( pbmodes mode );
 
@@ -259,6 +261,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       void set_pbmode_conc( );
       void set_pbmode_sd( );
       void set_pbmode_fasta( );
+      void set_pbmode_mals( );
       void set_pbmode_none( );
 
  private:
@@ -342,6 +345,9 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       QLabel        *lbl_fasta_value;
       QLineEdit     *le_fasta_value;
 
+      QPushButton   *pb_mals_angles_save;
+      QLabel        *lbl_mals_angles_data;
+      
  private slots:
       void           fasta_file();
  private:
@@ -354,6 +360,10 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
 
       QPushButton   *pb_set_mals;
       QLabel        *lbl_mals;
+
+ private slots:
+      bool           mals_angles_save();
+ private:
 
       QPushButton   *pb_set_empty;
       QLabel        *lbl_empty;
@@ -1033,6 +1043,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       vector < QWidget * >                pbmode_conc_widgets;
       vector < QWidget * >                pbmode_sd_widgets;
       vector < QWidget * >                pbmode_fasta_widgets;
+      vector < QWidget * >                pbmode_mals_widgets;
       vector < QWidget * >                rgc_widgets;
       vector < QWidget * >                pm_widgets;
       vector < QWidget * >                guinier_widgets;

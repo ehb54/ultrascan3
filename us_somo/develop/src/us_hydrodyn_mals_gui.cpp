@@ -3024,6 +3024,21 @@ void US_Hydrodyn_Mals::setupGUI()
    le_fasta_value->setEnabled( false );
    le_fasta_value->setReadOnly( true );
 
+   // mals
+   pb_mals_angles_save = new QPushButton(us_tr("Save Angles as CSV"), this);
+   pb_mals_angles_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_mals_angles_save->setMinimumHeight(minHeight1);
+   pb_mals_angles_save->setPalette( PALET_PUSHB );
+   connect(pb_mals_angles_save, SIGNAL(clicked()), SLOT(mals_angles_save()));
+
+   lbl_mals_angles_data = new QLabel( mals_angles.list_rich() );
+   lbl_mals_angles_data->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_mals_angles_data->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_mals_angles_data );
+   lbl_mals_angles_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_mals_angles_data->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_mals_angles_data->setCursor(QCursor(Qt::IBeamCursor));
+
    // pbmodes
 
    lbl_pbmode = new QLabel( us_tr( "Plot buttons:" ) );
@@ -3075,6 +3090,13 @@ void US_Hydrodyn_Mals::setupGUI()
    connect(rb_pbmode_fasta, SIGNAL(clicked( )), SLOT( set_pbmode_fasta( )));
    rb_pbmode_fasta->hide();
 
+   rb_pbmode_mals = new QRadioButton( "MALS info.", this ); 
+   rb_pbmode_mals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_mals->setMinimumHeight(minHeight3);
+   rb_pbmode_mals->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_mals );
+   connect(rb_pbmode_mals, SIGNAL(clicked( )), SLOT( set_pbmode_mals( )));
+
    rb_pbmode_none = new QRadioButton( "None", this ); 
    rb_pbmode_none->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    rb_pbmode_none->setMinimumHeight(minHeight3);
@@ -3089,6 +3111,7 @@ void US_Hydrodyn_Mals::setupGUI()
    bg_pbmode->addButton( rb_pbmode_conc );
    bg_pbmode->addButton( rb_pbmode_sd );
    bg_pbmode->addButton( rb_pbmode_fasta );
+   bg_pbmode->addButton( rb_pbmode_mals );
    bg_pbmode->addButton( rb_pbmode_none );
 
    // bottom
@@ -3246,6 +3269,7 @@ void US_Hydrodyn_Mals::setupGUI()
       l_pbmode->addWidget( rb_pbmode_conc );
       l_pbmode->addWidget( rb_pbmode_sd );
       l_pbmode->addWidget( rb_pbmode_fasta );
+      l_pbmode->addWidget( rb_pbmode_mals );
       l_pbmode->addWidget( rb_pbmode_none );
    }
 
@@ -3351,6 +3375,18 @@ void US_Hydrodyn_Mals::setupGUI()
       pbmode_fasta_widgets.push_back( pb_fasta_file );
       pbmode_fasta_widgets.push_back( lbl_fasta_value );
       pbmode_fasta_widgets.push_back( le_fasta_value );
+   }
+
+   QBoxLayout * l_pbmode_mals = new QHBoxLayout();
+   {
+      l_pbmode_mals->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_mals->setSpacing( 0 );
+
+      l_pbmode_mals->addWidget( pb_mals_angles_save );
+      // l_pbmode_mals->addWidget( lbl_mals_angles_data );
+
+      pbmode_mals_widgets.push_back( pb_mals_angles_save );
+      pbmode_mals_widgets.push_back( lbl_mals_angles_data );
    }
 
    
@@ -3827,6 +3863,9 @@ void US_Hydrodyn_Mals::setupGUI()
    vbl_plot_group->addLayout ( l_pbmode_conc );
    vbl_plot_group->addLayout ( l_pbmode_sd );
    vbl_plot_group->addLayout ( l_pbmode_fasta );
+   vbl_plot_group->addLayout ( l_pbmode_mals );
+   // vbl_plot_group->addWidget ( lbl_mals_angles_data, 0, Qt::AlignCenter ); // don't like this
+   vbl_plot_group->addWidget ( lbl_mals_angles_data );
    vbl_plot_group->addWidget ( qs_plots );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
@@ -4750,6 +4789,8 @@ void US_Hydrodyn_Mals::update_enables()
 
    pb_p3d              ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
 
+   pb_mals_angles_save ->setEnabled( mals_angles.mals_angle.size() );
+
    {
       QString title;
       if ( !files_compatible )
@@ -5490,6 +5531,10 @@ void US_Hydrodyn_Mals::set_pbmode_fasta() {
    pbmode_select( PBMODE_FASTA );
 }
 
+void US_Hydrodyn_Mals::set_pbmode_mals() {
+   pbmode_select( PBMODE_MALS );
+}
+
 void US_Hydrodyn_Mals::set_pbmode_none() {
    pbmode_select( PBMODE_NONE );
 }
@@ -5502,6 +5547,7 @@ void US_Hydrodyn_Mals::pbmode_select( pbmodes mode ) {
    ShowHide::hide_widgets( pbmode_conc_widgets, true );
    ShowHide::hide_widgets( pbmode_sd_widgets, true );
    ShowHide::hide_widgets( pbmode_fasta_widgets, true );
+   ShowHide::hide_widgets( pbmode_mals_widgets, true );
 
    switch ( mode ) {
    case PBMODE_MAIN :
@@ -5521,6 +5567,9 @@ void US_Hydrodyn_Mals::pbmode_select( pbmodes mode ) {
       break;
    case PBMODE_FASTA :
       ShowHide::hide_widgets( pbmode_fasta_widgets, false );
+      break;
+   case PBMODE_MALS :
+      ShowHide::hide_widgets( pbmode_mals_widgets, false );
       break;
    case PBMODE_NONE :
       break;
