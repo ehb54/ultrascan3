@@ -113,6 +113,7 @@ class MALS_Angle {
    bool    has_norm_coef;
    
    QString list();
+   QString list_csv();
    QString list_rich( double lambda = 0, double n = 0 ); // set lambda & n non-zero to include q values
    bool    populate( const QStringList & );
 };
@@ -124,6 +125,7 @@ class MALS_Angles {
    QString list_rich( double lambda = 0, double n = 0 ); // set lambda & n non-zero to include q values
    QStringList             list_active();
    bool                    populate( const QStringList & );
+   bool                    load( const QStringList & csvlines , QString & errormsg );
    bool                    load( const QString & filename, QString & errormsg );
    bool                    save( const QString & filename, QString & errormsg );
 };

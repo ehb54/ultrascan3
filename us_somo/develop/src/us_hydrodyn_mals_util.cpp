@@ -5618,10 +5618,8 @@ bool US_Hydrodyn_Mals::mals_angles_save() {
          return false;
       }
 
-      if ( QFileInfo( use_filename ).suffix().toLower() != ".csv" )
-      {
-         use_filename += ".csv";
-      }
+      use_filename.replace( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ), "" );
+      use_filename += ".csv";
    
       if ( QFile::exists( use_filename ) ){
          use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
@@ -5642,6 +5640,7 @@ bool US_Hydrodyn_Mals::mals_angles_save() {
                                );
          return false;
       }
+      editor_msg( "black", QString( us_tr( "Saved: %1\n" ) ).arg( use_filename ) );
       return true;
    }
    errormsg = us_tr( "No Angles loaded" );

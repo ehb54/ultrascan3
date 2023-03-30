@@ -42,6 +42,24 @@ QString MALS_Angle::list() {
       .arg( us_double_decimal_places( norm_coef, 3 ), 8 )
       ;
 }
+
+QString MALS_Angle::list_csv() {
+   return
+      QString( "%1,%2,%3,%4" )
+      .arg( us_double_decimal_places( angle, 2 ) )
+      .arg(
+           has_angle_ri_corr
+           ? QString( "%1" ).arg( us_double_decimal_places( angle_ri_corr, 2 ) )
+           : QString( "\"n/a\"" )
+           )
+      .arg(
+           has_gain
+           ? QString( "%1" ).arg( us_double_decimal_places( gain, 2 ) )
+           : QString( "\"n/a\"" )
+           )
+      .arg( us_double_decimal_places( norm_coef, 3 ) )
+      ;
+}
      
 QString MALS_Angle::list_rich( double lambda, double n ) {
    if ( !lambda || !n ) {
@@ -175,7 +193,7 @@ QString MALS_Angles::list_rich( double lambda, double n ) {
       }
    } else {
       qsl
-         << "<table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th><th> q </th></tr>\n"
+         << "<table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th><th> q [1/A]</th></tr>\n"
          ;
       for ( auto it = mals_angle.begin();
             it != mals_angle.end();
@@ -233,14 +251,78 @@ bool MALS_Angles::populate( const QStringList & qsl ) {
    return true;
 }
 
+bool MALS_Angles::load( const QStringList & csvlines, QString & errormsg ) {
+   if ( !csvlines.size() ) {
+      errormsg = us_tr( "Empty file" );
+      return false;
+   }
+
+   if ( !csvlines[0].contains( QRegularExpression( "^\\s*\"\\s*US-SOMO MALS Angles" ) ) ) {
+      errormsg = us_tr( "Not a MALS Angles csv file" );
+      return false;
+   }
+
+   QStringList data = csvlines;
+
+   data.pop_front();
+   data.pop_front();
+
+   mals_angle.clear();
+
+   int pos = 2;
+
+   while( data.size()
+          && data.front().contains( QRegularExpression( "^\\s*\\d+," ) ) ) {
+      ++pos;
+      QStringList qsl = data.front().split( "," );
+      data.pop_front();
+      if ( qsl.size() < 5 ) {
+         errormsg += QString( us_tr( "Error in MALS Angles csv line %1\n" ) ).arg( pos );
+         continue;
+      }
+      int index = qsl[0].toInt();
+
+      mals_angle[index].angle              = qsl[1].toDouble();
+
+      mals_angle[index].angle_ri_corr      = qsl[2] == "n/a" ? 0 : qsl[2].toDouble();
+      mals_angle[index].has_angle_ri_corr  = qsl[2] == "n/a" ? false : true;
+      
+      mals_angle[index].gain               = qsl[3] == "n/a" ? 0 : qsl[3].toDouble();
+      mals_angle[index].has_gain           = qsl[3] == "n/a" ? false : true;
+
+      mals_angle[index].norm_coef          = qsl[4] == "n/a" ? 0 : qsl[4].toDouble();
+      mals_angle[index].has_norm_coef      = qsl[4] == "n/a" ? false : true;
+   }      
+
+   return true;
+}
+
 bool MALS_Angles::load( const QString & filename, QString & errormsg ) {
-   errormsg = "load not yet implemented";
-   return false;
+   QString contents;
+   if ( !US_File_Util::getcontents( filename, contents, errormsg ) ) {
+      return false;
+   }
+
+   QStringList csvlines = contents.split( "\n" );
+   return load( csvlines, errormsg );
 }
 
 bool MALS_Angles::save( const QString & filename, QString & errormsg ) {
-   errormsg = "save not yet implemented";
-   return false;
+   QStringList qsl;
+
+   qsl
+      << "\"US-SOMO MALS Angles\"\n"
+      << "\"Detector\",\"Angle\",\"RI-Corr.\",\"Gain\",\"Norm.-Coef.\"\n";
+      ;
+
+   for ( auto it = mals_angle.begin();
+         it != mals_angle.end();
+         ++it ) {
+      qsl << QString( "%1," ).arg( it->first ) << it->second.list_csv() << "\n";
+   }
+
+   QString contents = qsl.join( "" );
+   return US_File_Util::putcontents( filename, contents, errormsg );
 }
 
 // static   void printvector( QString qs, vector < unsigned int > x )
@@ -2156,6 +2238,25 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    // load csv columns as time curves
    if ( ext == "csv" )
    {
+      {
+         QString errormsg;
+         if ( mals_angles.load( qsl, errormsg ) ) {
+            editor_msg( "black", QString( "%1 MALS angles loaded\n" ).arg( filename ) );
+            editor_msg( "black", mals_angles.list() );
+            lbl_mals_angles_data->setText( mals_angles.list_rich( mals_param_lambda, mals_param_n ) );
+            return false;
+         }
+         if ( errormsg != us_tr( "Not a MALS Angles csv file" ) ) {
+            QMessageBox::warning(
+                                 this
+                                 ,"US-SOMO MALS Angles load Error"
+                                 ,QString( us_tr( "Loading file %1:\nError: %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
+                                 );
+            return false;
+         }
+      }
+
+
       {
          QString errormsg;
          if ( mals_load( filename, qsl, errormsg ) ) {
