@@ -722,7 +722,7 @@ DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
    // }
      
    
-   // //For future dev.
+   // //For future DEV.
    // if ( ! usr_enab ) //UL <= 2
    //   {  // User not enabled to set investigator
 

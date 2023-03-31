@@ -775,7 +775,6 @@ void US_ExperGuiGeneral::sel_investigator( void )
    qDebug() << "Old invID: " << investID;
 
    //US_Investigator* dialog = new US_Investigator( "AUTO", true, investID );
-
    US_Investigator* dialog = new US_Investigator( true, investID );
    check_user_level();
    dialog->override_permit( usr_enab );
@@ -856,7 +855,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
    check_runname();
 
-    qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
+   qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
 
 }
 
