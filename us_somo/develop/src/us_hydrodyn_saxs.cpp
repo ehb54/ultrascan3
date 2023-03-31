@@ -2001,8 +2001,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
 
    hbl_various_0->addWidget(pb_saxs_buffer);
-   hbl_various_0->addWidget(pb_mals);
    hbl_various_0->addWidget(pb_saxs_hplc);
+   hbl_various_0->addWidget(pb_mals);
 
    if ( started_in_expert_mode )
    {

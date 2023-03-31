@@ -4493,6 +4493,9 @@ void US_Hydrodyn_Mals::update_enables()
       }
    }
 
+   bool all_rt                    = files_selected_count && files_selected_count == selected_files.filter( "_Rt_q" ).size();
+   bool all_ihasht                = files_selected_count && files_selected_count == selected_files.filter( "_Ihasht_q" ).size();
+
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
    //   bool one_conc_file    = files_selected_count == 1 && files_are_time && conc_files.count( last_selected_file );
@@ -4818,20 +4821,23 @@ void US_Hydrodyn_Mals::update_enables()
    }
    {
       QString title;
-      if ( !files_compatible )
-      {
+      if ( !files_compatible ) {
          title = us_tr( "Intensity [a.u.]" );
       } else {
-         if ( type_files( selected_files ) )
-         {
-            title = us_tr( "I(t) [a.u.]" );
+         if ( type_files( selected_files ) ) {
+            if ( all_rt ) {
+               title = us_tr( "R(theta, t) [cm^-1]" );
+            } else if ( all_ihasht ) {
+               title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
+            } else {
+               title = us_tr( "I(t) [a.u.]" );
+            }
          } else {
             title = us_tr( "I(q) [a.u.]" );
          }
       }
 
-      if ( axis_y_log )
-      {
+      if ( axis_y_log ) {
          plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
       } else {
          plot_dist->setAxisTitle(QwtPlot::yLeft, title );

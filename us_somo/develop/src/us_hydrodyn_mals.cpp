@@ -185,7 +185,7 @@ QString MALS_Angles::list_rich( double lambda, double n ) {
       return us_tr( "<b>MALS Angles</b> not loaded" );
    }
    if ( !lambda || !n ) {
-      qsl << "<table border=1>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th></tr>\n";
+      qsl << "<table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th></tr>\n";
       for ( auto it = mals_angle.begin();
             it != mals_angle.end();
             ++it ) {
@@ -284,14 +284,14 @@ bool MALS_Angles::load( const QStringList & csvlines, QString & errormsg ) {
 
       mals_angle[index].angle              = qsl[1].toDouble();
 
-      mals_angle[index].angle_ri_corr      = qsl[2] == "n/a" ? 0 : qsl[2].toDouble();
-      mals_angle[index].has_angle_ri_corr  = qsl[2] == "n/a" ? false : true;
+      mals_angle[index].angle_ri_corr      = qsl[2] == "\"n/a\"" ? 0 : qsl[2].toDouble();
+      mals_angle[index].has_angle_ri_corr  = qsl[2] == "\"n/a\"" ? false : true;
       
-      mals_angle[index].gain               = qsl[3] == "n/a" ? 0 : qsl[3].toDouble();
-      mals_angle[index].has_gain           = qsl[3] == "n/a" ? false : true;
+      mals_angle[index].gain               = qsl[3] == "\"n/a\"" ? 0 : qsl[3].toDouble();
+      mals_angle[index].has_gain           = qsl[3] == "\"n/a\"" ? false : true;
 
-      mals_angle[index].norm_coef          = qsl[4] == "n/a" ? 0 : qsl[4].toDouble();
-      mals_angle[index].has_norm_coef      = qsl[4] == "n/a" ? false : true;
+      mals_angle[index].norm_coef          = qsl[4] == "\"n/a\"" ? 0 : qsl[4].toDouble();
+      mals_angle[index].has_norm_coef      = qsl[4] == "\"n/a\"" ? false : true;
    }      
 
    return true;
@@ -1413,9 +1413,10 @@ void US_Hydrodyn_Mals::add_files( bool load_conc, bool from_dir ) {
          filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir
                                                     ,
                                                     "All files (*);;"
+                                                    "csv files [MALS data and Angles] (*.csv);;"
                                                     "dat files [foxs / other] (*.dat);;"
                                                     "ssaxs files (*.ssaxs);;"
-                                                    "txt files [specify q, I, sigma columns] (*.txt)"
+                                                    "txt files [Wyatt MALS Angles or specified q I sd] (*.txt)"
                                                     );
       }
    }
