@@ -5704,8 +5704,12 @@ void US_Hydrodyn_Saxs_Hplc::rename_created( QListWidgetItem *lbi, const QPoint &
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::normalize()
-{
+void US_Hydrodyn_Saxs_Hplc::normalize() {
+   set < QString > produced;
+   return normalize( produced );
+}
+
+void US_Hydrodyn_Saxs_Hplc::normalize( set < QString > & produced ) {
    QStringList files = all_selected_files();
    //    for ( int i = 0; i < lb_files->count(); i++ )
    //    {
@@ -5793,6 +5797,8 @@ void US_Hydrodyn_Saxs_Hplc::normalize()
             csv_conc.data[ i ][ 1 ] = "1";
          }
       }
+
+      produced.insert( norm_name );
 
       if ( conc_widget )
       {

@@ -2034,13 +2034,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       for ( unsigned int i = 0; i < (unsigned int) avg_peaks_names.size(); ++i ) {
          if ( avg_peaks_names[ i ].size() ) {
             set_selected( avg_peaks_names[ i ] );
-            // then average, normalize
+            // then average
             avg( all_selected_files(), QString( peak_tag ) );
             if ( conc_ok ) {
-               set < QString > last_selected;
-               last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
-               set_selected( last_selected );
-               normalize();
+               // normalize selected, then average again 
+               set < QString > norm_names;
+               normalize( norm_names );
+               set_selected( norm_names );
+               avg( all_selected_files(), QString( peak_tag ) );
+               remove_files( norm_names );
+               // set < QString > last_selected;
+               // last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
+               // set_selected( last_selected );
+               // normalize();
                final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
             } else {
                final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );

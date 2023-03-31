@@ -699,6 +699,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
 
+      void                                normalize( set < QString > & produced );
       int                                 guinier_scroll_pos;
       void                                guinier_scroll_highlight( int pos );
 

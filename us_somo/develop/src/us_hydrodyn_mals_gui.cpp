@@ -4493,8 +4493,8 @@ void US_Hydrodyn_Mals::update_enables()
       }
    }
 
-   bool all_rt                    = files_selected_count && files_selected_count == selected_files.filter( "_Rt_q" ).size();
-   bool all_ihasht                = files_selected_count && files_selected_count == selected_files.filter( "_Ihasht_q" ).size();
+   bool all_rt                    = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
+   bool all_ihasht                = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
