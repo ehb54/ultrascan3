@@ -179,11 +179,17 @@ QString MALS_Angles::list() {
    return qsl.join( "" );
 }
 
+void MALS_Angles::clear() {
+   mals_angle.clear();
+   loaded_filename = "";
+}
+
 QString MALS_Angles::list_rich( double lambda, double n ) {
    QStringList qsl;
    if ( !mals_angle.size() ) {
       return us_tr( "<b>MALS Angles</b> not loaded" );
    }
+   qsl << QString( us_tr( "<b>MALS Angles</b> loaded from %1<hr>" ) ).arg( loaded_filename );
    if ( !lambda || !n ) {
       qsl << "<table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th></tr>\n";
       for ( auto it = mals_angle.begin();
@@ -224,14 +230,15 @@ QStringList MALS_Angles::list_active() {
    return qsl;
 }
 
-bool MALS_Angles::populate( const QStringList & qsl ) {
+bool MALS_Angles::populate( const QString & filename, const QStringList & qsl ) {
    if ( !qsl.size()
         || qsl[0] != "Detector"
         || !qsl[1].contains( QRegularExpression( "^Refractive" ) ) ) {
       return false;
    }
 
-   mals_angle.clear();
+   clear();
+   loaded_filename = filename;
 
    for ( int i = 0; i < (int) qsl.size(); ++i ) {
       if ( qsl[i].contains( QRegularExpression( "^[0-9]+\\s" ) ) ) {
@@ -251,7 +258,7 @@ bool MALS_Angles::populate( const QStringList & qsl ) {
    return true;
 }
 
-bool MALS_Angles::load( const QStringList & csvlines, QString & errormsg ) {
+bool MALS_Angles::load( const QString & filename, const QStringList & csvlines, QString & errormsg ) {
    if ( !csvlines.size() ) {
       errormsg = us_tr( "Empty file" );
       return false;
@@ -267,7 +274,8 @@ bool MALS_Angles::load( const QStringList & csvlines, QString & errormsg ) {
    data.pop_front();
    data.pop_front();
 
-   mals_angle.clear();
+   clear();
+   loaded_filename = filename;
 
    int pos = 2;
 
@@ -304,7 +312,7 @@ bool MALS_Angles::load( const QString & filename, QString & errormsg ) {
    }
 
    QStringList csvlines = contents.split( "\n" );
-   return load( csvlines, errormsg );
+   return load( filename, csvlines, errormsg );
 }
 
 bool MALS_Angles::save( const QString & filename, QString & errormsg ) {
@@ -1907,7 +1915,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       return false;
    }
 
-   if ( mals_angles.populate( qsl_nb ) ) {
+   if ( mals_angles.populate( filename, qsl_nb ) ) {
       editor_msg( "black", QString( "%1 MALS angles loaded\n" ).arg( filename ) );
       editor_msg( "black", mals_angles.list() );
       lbl_mals_angles_data->setText( mals_angles.list_rich( mals_param_lambda, mals_param_n ) );
@@ -2241,7 +2249,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    {
       {
          QString errormsg;
-         if ( mals_angles.load( qsl, errormsg ) ) {
+         if ( mals_angles.load( filename, qsl, errormsg ) ) {
             editor_msg( "black", QString( "%1 MALS angles loaded\n" ).arg( filename ) );
             editor_msg( "black", mals_angles.list() );
             lbl_mals_angles_data->setText( mals_angles.list_rich( mals_param_lambda, mals_param_n ) );

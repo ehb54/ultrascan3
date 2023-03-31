@@ -124,8 +124,10 @@ class MALS_Angles {
    QString                 list();
    QString list_rich( double lambda = 0, double n = 0 ); // set lambda & n non-zero to include q values
    QStringList             list_active();
-   bool                    populate( const QStringList & );
-   bool                    load( const QStringList & csvlines , QString & errormsg );
+   void                    clear();
+   QString                 loaded_filename;
+   bool                    populate( const QString & filename, const QStringList & );
+   bool                    load( const QString & filename, const QStringList & csvlines , QString & errormsg );
    bool                    load( const QString & filename, QString & errormsg );
    bool                    save( const QString & filename, QString & errormsg );
 };
