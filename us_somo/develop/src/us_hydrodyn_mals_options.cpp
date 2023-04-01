@@ -1009,22 +1009,13 @@ void US_Hydrodyn_Mals_Options::set_mals_parameters()
 {
    {
       map < QString, QString > parameters;
-      parameters[ "mals_param_lambda" ]       = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_lambda, 0, 'g', 8 );
-      parameters[ "mals_param_n" ]            = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_n, 0, 'g', 8 );
-      parameters[ "mals_param_g_dndc" ]       = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_dndc, 0, 'g', 8 );
-      parameters[ "mals_param_g_conc" ]       = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_conc, 0, 'g', 8 );
-      parameters[ "mals_param_DLS_detector" ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_DLS_detector );
+      parameters[ "mals_param_lambda"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_lambda, 0, 'g', 8 );
+      parameters[ "mals_param_n"                 ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_n, 0, 'g', 8 );
+      parameters[ "mals_param_g_dndc"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_dndc, 0, 'g', 8 );
+      parameters[ "mals_param_g_extinction_coef" ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_extinction_coef, 0, 'g', 8 );
+      parameters[ "mals_param_g_conc"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_conc, 0, 'g', 8 );
+      parameters[ "mals_param_DLS_detector"      ] = QString( "%1" ).arg( ((US_Hydrodyn_Mals *)mals_win)->mals_param_DLS_detector );
 
-
-      if ( ((US_Hydrodyn_Mals *)mals_win)->detector_uv )
-      {
-         parameters[ "uv" ] = "true";
-      } else {
-         if ( ((US_Hydrodyn_Mals *)mals_win)->detector_ri )
-         {
-            parameters[ "ri" ] = "true";
-         }
-      }
 
       US_Hydrodyn_Mals_Parameters *mals_parameters = 
          new US_Hydrodyn_Mals_Parameters(
@@ -1041,11 +1032,12 @@ void US_Hydrodyn_Mals_Options::set_mals_parameters()
          return;
       }
 
-      ((US_Hydrodyn_Mals *)mals_win)->mals_param_lambda       = parameters[ "mals_param_lambda"       ].toDouble();
-      ((US_Hydrodyn_Mals *)mals_win)->mals_param_n            = parameters[ "mals_param_n"            ].toDouble();
-      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_dndc       = parameters[ "mals_param_g_dndc"       ].toDouble();
-      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_conc       = parameters[ "mals_param_g_conc"       ].toDouble();
-      ((US_Hydrodyn_Mals *)mals_win)->mals_param_DLS_detector = parameters[ "mals_param_DLS_detector" ].toInt();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_lambda            = parameters[ "mals_param_lambda"            ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_n                 = parameters[ "mals_param_n"                 ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_dndc            = parameters[ "mals_param_g_dndc"            ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_extinction_coef = parameters[ "mals_param_g_extinction_coef" ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_g_conc            = parameters[ "mals_param_g_conc"            ].toDouble();
+      ((US_Hydrodyn_Mals *)mals_win)->mals_param_DLS_detector      = parameters[ "mals_param_DLS_detector"      ].toInt();
    }
 }
 

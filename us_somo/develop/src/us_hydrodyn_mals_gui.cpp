@@ -362,6 +362,7 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_svd->setMinimumHeight(minHeight1);
    pb_svd->setPalette( PALET_PUSHB );
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
+   pb_svd->hide();
 
    pb_create_i_of_t = new QPushButton(us_tr("Make I(t)"), this);
    pb_create_i_of_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -387,6 +388,12 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_create_ihash_t->setMinimumHeight(minHeight1);
    pb_create_ihash_t->setPalette( PALET_PUSHB );
    connect(pb_create_ihash_t, SIGNAL(clicked()), SLOT(create_ihash_t()));
+
+   pb_create_istar_q = new QPushButton(us_tr("Make I*(q)"), this);
+   pb_create_istar_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_create_istar_q->setMinimumHeight(minHeight1);
+   pb_create_istar_q->setPalette( PALET_PUSHB );
+   connect(pb_create_istar_q, SIGNAL(clicked()), SLOT(create_istar_q()));
    
    pb_load_conc = new QPushButton(us_tr("Conc. File Load"), this);
    pb_load_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -3413,14 +3420,16 @@ void US_Hydrodyn_Mals::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
    hbl_file_buttons_4->addWidget ( pb_create_ihash_t );
+   hbl_file_buttons_4->addWidget ( pb_create_istar_q );
 
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
-   files_widgets.push_back ( pb_svd );
+   // hidden: files_widgets.push_back ( pb_svd );
    files_widgets.push_back ( pb_create_i_of_t );
    files_widgets.push_back ( pb_test_i_of_t );
-   // files_widgets.push_back ( pb_create_i_of_q );
+   // hidden: files_widgets.push_back ( pb_create_i_of_q );
    files_widgets.push_back ( pb_create_ihash_t );
+   files_widgets.push_back ( pb_create_istar_q );
 
    QBoxLayout * hbl_conc_file = new QHBoxLayout(); hbl_conc_file->setContentsMargins( 0, 0, 0, 0 ); hbl_conc_file->setSpacing( 0 );
    // hbl_conc_file->addWidget ( pb_repeak );
@@ -4495,6 +4504,7 @@ void US_Hydrodyn_Mals::update_enables()
 
    bool all_rt                    = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
    bool all_ihasht                = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
+   bool all_istarq                = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istar_" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -4595,6 +4605,7 @@ void US_Hydrodyn_Mals::update_enables()
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
    pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && mals_param_n && mals_param_lambda && mals_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
+   pb_create_istar_q     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_ihasht );
    pb_load_conc          ->setEnabled( true );
    // pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_repeak             ->setEnabled( files_are_time && conc_files.size() &&

@@ -40,6 +40,9 @@ class US_EXTERN US_Hydrodyn_Mals_Parameters : public QDialog
       QLabel *                                lbl_mals_param_g_dndc;
       QLineEdit *                             le_mals_param_g_dndc;
 
+      QLabel *                                lbl_mals_param_g_extinction_coef;
+      QLineEdit *                             le_mals_param_g_extinction_coef;
+
       QLabel *                                lbl_mals_param_g_conc;
       QLineEdit *                             le_mals_param_g_conc;
 
@@ -58,11 +61,12 @@ class US_EXTERN US_Hydrodyn_Mals_Parameters : public QDialog
 
    private slots:
 
-      void                                    set_mals_param_lambda      ( const QString & );
-      void                                    set_mals_param_n           ( const QString & );
-      void                                    set_mals_param_g_dndc      ( const QString & );
-      void                                    set_mals_param_g_conc      ( const QString & );
-      void                                    set_mals_param_DLS_detector( const QString & );
+      void                                    set_mals_param_lambda            ( const QString & );
+      void                                    set_mals_param_n                 ( const QString & );
+      void                                    set_mals_param_g_dndc            ( const QString & );
+      void                                    set_mals_param_g_extinction_coef ( const QString & );
+      void                                    set_mals_param_g_conc            ( const QString & );
+      void                                    set_mals_param_DLS_detector      ( const QString & );
 
       void                                    help();
       void                                    quit();

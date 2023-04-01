@@ -3040,3 +3040,16 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
 }
 
    
+void US_Hydrodyn_Mals::create_istar_q() {
+   disable_all();
+
+   QStringList files = all_selected_files();
+   create_istar_q( files );
+
+   update_enables();
+}
+
+bool US_Hydrodyn_Mals::create_istar_q( QStringList files ) {
+   TSO << "create_istar_q not implemented yet\n";
+   return false;
+}

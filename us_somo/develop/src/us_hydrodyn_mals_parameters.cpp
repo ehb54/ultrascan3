@@ -110,6 +110,27 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
    le_mals_param_g_dndc->setMinimumWidth( 200 );
    le_mals_param_g_dndc-> setMinimumHeight( minHeight1 );
 
+   lbl_mals_param_g_extinction_coef = new QLabel( us_tr( "Global extinction coefficient [ml mg^-1 cm^-1]: " ), this );
+   lbl_mals_param_g_extinction_coef->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_mals_param_g_extinction_coef->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_mals_param_g_extinction_coef );
+   lbl_mals_param_g_extinction_coef->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_mals_param_g_extinction_coef-> setMinimumHeight( minHeight1 );
+   
+   le_mals_param_g_extinction_coef = new QLineEdit( this );    le_mals_param_g_extinction_coef->setObjectName( "le_mals_param_g_extinction_coef Line Edit" );
+   le_mals_param_g_extinction_coef->setText( (*parameters)[ "mals_param_g_extinction_coef" ] );
+   le_mals_param_g_extinction_coef->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_mals_param_g_extinction_coef->setPalette( PALET_NORMAL );
+   AUTFBACK( le_mals_param_g_extinction_coef );
+   le_mals_param_g_extinction_coef->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0, 1, 5, le_mals_param_g_extinction_coef );
+      le_mals_param_g_extinction_coef->setValidator( qdv );
+   }
+   connect( le_mals_param_g_extinction_coef, SIGNAL( textChanged( const QString & ) ), SLOT( set_mals_param_g_extinction_coef( const QString & ) ) );
+   le_mals_param_g_extinction_coef->setMinimumWidth( 200 );
+   le_mals_param_g_extinction_coef-> setMinimumHeight( minHeight1 );
+
 
    lbl_mals_param_g_conc = new QLabel( us_tr( "Global concentration [g/cm^3]: " ), this );
    lbl_mals_param_g_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -201,6 +222,10 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
       gbl->addWidget( le_mals_param_g_dndc,  row, 1 );
       ++row;
       
+      gbl->addWidget( lbl_mals_param_g_extinction_coef, row, 0 );
+      gbl->addWidget( le_mals_param_g_extinction_coef,  row, 1 );
+      ++row;
+      
       gbl->addWidget( lbl_mals_param_g_conc, row, 0 );
       gbl->addWidget( le_mals_param_g_conc,  row, 1 );
       ++row;
@@ -273,6 +298,10 @@ void US_Hydrodyn_Mals_Parameters::save()
    {
       ts << "# __mals_param_g_dndc: " << le_mals_param_g_dndc->text() << Qt::endl;
    }
+   if ( !le_mals_param_g_extinction_coef->text().isEmpty() )
+   {
+      ts << "# __mals_param_g_extinction_coef: " << le_mals_param_g_extinction_coef->text() << Qt::endl;
+   }
 
    if ( !le_mals_param_g_conc->text().isEmpty() )
    {
@@ -324,6 +353,11 @@ void US_Hydrodyn_Mals_Parameters::set_mals_param_n( const QString & text )
 void US_Hydrodyn_Mals_Parameters::set_mals_param_g_dndc( const QString & text )
 {
    (*parameters)[ "mals_param_g_dndc" ] = text;
+}
+
+void US_Hydrodyn_Mals_Parameters::set_mals_param_g_extinction_coef( const QString & text )
+{
+   (*parameters)[ "mals_param_g_extinction_coef" ] = text;
 }
 
 void US_Hydrodyn_Mals_Parameters::set_mals_param_g_conc( const QString & text )

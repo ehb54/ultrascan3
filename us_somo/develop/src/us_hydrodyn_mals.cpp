@@ -869,11 +869,12 @@ US_Hydrodyn_Mals::US_Hydrodyn_Mals(
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
       QDir::separator() + "somo_mals_default_mals_param.dat" ;
    // set defaults always
-   mals_param_lambda       = 0;
-   mals_param_n            = 0;
-   mals_param_g_dndc       = 0;
-   mals_param_g_conc       = 0;
-   mals_param_DLS_detector = 0;
+   mals_param_lambda            = 0;
+   mals_param_n                 = 0;
+   mals_param_g_dndc            = 0;
+   mals_param_g_extinction_coef = 0;
+   mals_param_g_conc            = 0;
+   mals_param_DLS_detector      = 0;
    if ( QFile( mals_params_file ).exists() ) {
       load_file( mals_params_file );
    }
@@ -2004,11 +2005,12 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
 
    if ( ext == "dat" && qv[ 0 ].contains( " MALS parameter file" ) )
    {
-      QRegExp rx_mals_param_lambda       ( "^# __mals_param_lambda: (\\S+)\\s*$" );
-      QRegExp rx_mals_param_n            ( "^# __mals_param_n: (\\S+)\\s*$" );
-      QRegExp rx_mals_param_g_dndc       ( "^# __mals_param_g_dndc: (\\S+)\\s*$" );
-      QRegExp rx_mals_param_g_conc       ( "^# __mals_param_g_conc: (\\S+)\\s*$" );
-      QRegExp rx_mals_param_DLS_detector ( "^# __mals_param_DLS_detector: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_lambda            ( "^# __mals_param_lambda: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_n                 ( "^# __mals_param_n: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_g_dndc            ( "^# __mals_param_g_dndc: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_g_extinction_coef ( "^# __mals_param_g_extinction_coef: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_g_conc            ( "^# __mals_param_g_conc: (\\S+)\\s*$" );
+      QRegExp rx_mals_param_DLS_detector      ( "^# __mals_param_DLS_detector: (\\S+)\\s*$" );
 
       for ( int i = 1; i < (int) qv.size(); i++ ) {
 
@@ -2022,6 +2024,10 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
          }
          if ( rx_mals_param_g_dndc.indexIn( qv[ i ] ) != -1 ) {
             mals_param_g_dndc = rx_mals_param_g_dndc.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_mals_param_g_extinction_coef.indexIn( qv[ i ] ) != -1 ) {
+            mals_param_g_extinction_coef = rx_mals_param_g_extinction_coef.cap( 1 ).toDouble();
             continue;
          }
          if ( rx_mals_param_g_conc.indexIn( qv[ i ] ) != -1 ) {

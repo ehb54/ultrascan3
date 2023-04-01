@@ -276,6 +276,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       double        mals_param_lambda;
       double        mals_param_n;
       double        mals_param_g_dndc;
+      double        mals_param_g_extinction_coef;
       double        mals_param_g_conc;
       int           mals_param_DLS_detector;
 
@@ -344,6 +345,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
       QPushButton   *pb_create_ihash_t;
+      QPushButton   *pb_create_istar_q;
 
       QPushButton   *pb_fasta_file;
       QLabel        *lbl_fasta_value;
@@ -1171,6 +1173,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
                                                      double t_min = -1e99,
                                                      double t_max = 1e99 );
       bool                         create_ihash_t( QStringList files );
+      bool                         create_istar_q( QStringList files );
 
       QString                      last_created_file;
       void                         zoom_info();
@@ -1542,6 +1545,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       void repeak();
       void create_i_of_t();
       void create_ihash_t();
+      void create_istar_q();
       void test_i_of_t();
       void create_i_of_q();
       void load_conc();
