@@ -801,7 +801,8 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
    QPushButton *pb_new_bcomp = us_pushbutton("Create new");
    QGridLayout* lo_manual   = us_checkbox(
          tr( "Manual unadjusted Density and Viscosity" ), ck_manual );
-
+   QLabel *bn_general = us_banner(tr("General"));
+   QGridLayout *lo_cosed = us_checkbox(tr("Switch to cosedimenting buffer dialog"), ck_cosed);
    QLabel* bn_newbuf   = us_banner( tr( "Specify a new buffer to add" ), -1 );
    QLabel* lb_descrip  = us_label( tr( "Description:" ) );
    lb_bselect          = us_label( tr( "Please enter the concentration of\n"
@@ -814,7 +815,7 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
                                  + tr( ", cP):" ) );
    QLabel* lb_ph       = us_label( tr( "pH:" ) );
    QLabel* lb_compress = us_label( tr( "Compressibility:" ) );
-
+   QLabel *bn_buffer = us_banner(tr("Buffer Components"));
    le_descrip          = us_lineedit( "" );
    le_concen           = us_lineedit( "" );
    le_density          = us_lineedit( "" );
@@ -824,6 +825,8 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
 
    lw_allcomps         = us_listwidget();
    lw_bufcomps         = us_listwidget();
+   lw_upper_cosedcomps = us_listwidget();
+   lw_lower_cosedcomps = us_listwidget();
 
 
    QPalette upal       = lb_bselect->palette();
@@ -833,11 +836,15 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
    bn_newbuf  ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    bn_allcomps->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    bn_bufcomps->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   bn_buffer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+   bn_general->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+
 
    pb_accept  ->setEnabled       ( false );
    lw_allcomps->setSortingEnabled( true );
    lw_bufcomps->setSortingEnabled( true );
-
+   lw_upper_cosedcomps->setSortingEnabled(true);
+   lw_upper_cosedcomps->setSortingEnabled(true);
    us_setReadOnly( le_density,  true  );
    us_setReadOnly( le_viscos,   true  );
    us_setReadOnly( le_ph,       false );
@@ -848,25 +855,13 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
    main->addWidget( bn_newbuf,       row++, 0, 1, 8 );
    main->addWidget( lb_descrip,      row,   0, 1, 1 );
    main->addWidget( le_descrip,      row++, 1, 1, 7 );
+   main->addWidget( bn_general,      row++, 0, 1, 8 );
+   main->addLayout( lo_cosed,        row,   0, 1, 2 );
    main->addWidget( pb_cancel,       row,   4, 1, 2 );
    main->addWidget( pb_accept,       row++, 6, 1, 2 );
-   main->addWidget( lb_bselect,      row,   0, 2, 4 );
+   main->addLayout( lo_manual,       row,   0, 1, 2 );
    main->addWidget( pb_spectrum,     row,   4, 1, 2 );
    main->addWidget( pb_help,         row++, 6, 1, 2 );
-   main->addWidget( le_concen,       row++, 4, 1, 4 );
-   if (US_Settings::us_inv_level()>1){
-         main->addWidget(bn_allcomps, row, 0, 1, 3);
-         main->addWidget(pb_new_bcomp,row, 3,1,1);
-         connect(pb_new_bcomp, SIGNAL(clicked()), this, SLOT(create_new_buffer_component()));
-   }
-   else{
-         main->addWidget(bn_allcomps, row, 0, 1, 4);
-   }
-   main->addWidget( bn_bufcomps,     row++, 4, 1, 4 );
-   main->addWidget( lw_allcomps,     row,   0, 5, 4 );
-   main->addWidget( lw_bufcomps,     row,   4, 5, 4 );
-   row    += 5;
-   main->addLayout( lo_manual,       row++, 0, 1, 8 );
    main->addWidget( lb_density,      row,   0, 1, 2 );
    main->addWidget( le_density,      row,   2, 1, 2 );
    main->addWidget( lb_ph,           row,   4, 1, 2 );
@@ -874,7 +869,21 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
    main->addWidget( lb_viscos,       row,   0, 1, 2 );
    main->addWidget( le_viscos,       row,   2, 1, 2 );
    main->addWidget( lb_compress,     row,   4, 1, 2 );
-   main->addWidget( le_compress,     row,   6, 1, 2 );
+   main->addWidget( le_compress,     row++, 6, 1, 2 );
+   main->addWidget( lb_bselect,      row,   0, 1, 4 );
+   main->addWidget( le_concen,       row++, 4, 1, 4 );
+   main->addWidget( bn_buffer,       row++, 0, 1, 8 );
+   if (US_Settings::us_inv_level()>1){
+      main->addWidget( bn_allcomps,  row,   0, 1, 3 );
+      main->addWidget( pb_new_bcomp, row,   3, 1, 1 );
+      connect(pb_new_bcomp, SIGNAL(clicked()), this, SLOT(create_new_buffer_component()));
+   }
+   else{
+      main->addWidget( bn_allcomps,  row,   0, 1, 4 );
+   }
+   main->addWidget( bn_bufcomps,     row++, 4, 1, 4 );
+   main->addWidget( lw_allcomps,     row,   0, 3, 4 );
+   main->addWidget( lw_bufcomps,     row,   4, 3, 4 );
 
 
    QStringList keys = component_list.keys();
@@ -1038,7 +1047,7 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
       pb_spectrum = us_pushbutton(tr("Enter Spectrum"));
       //QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
       QPushButton *pb_help = us_pushbutton(tr("Help"));
-
+      QPushButton *pb_new_bcomp = us_pushbutton("Create new");
       QGridLayout *lo_manual = us_checkbox(tr("Manual unadjusted Density and Viscosity"), ck_manual);
       QGridLayout *lo_cosed = us_checkbox(tr("Switch to cosedimenting buffer dialog"), ck_cosed);
       QLabel *bn_newbuf = us_banner(tr("Specify a new buffer to add"), -1);
@@ -1091,31 +1100,38 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
 
 
       int row = 0;
-      main->addWidget(bn_newbuf, row++, 0, 1, 8);
-      main->addWidget(lb_descrip, row, 0, 1, 1);
-      main->addWidget(le_descrip, row++, 1, 1, 7);
-      main->addWidget(bn_general, row++, 0, 1, 8);
-      main->addLayout(lo_cosed, row, 0, 1, 2);
-      main->addWidget(pb_cancel, row, 4, 1, 2);
-      main->addWidget(pb_accept, row++, 6, 1, 2);
-      main->addLayout(lo_manual, row, 0, 1, 2);
-      main->addWidget(pb_spectrum, row, 4, 1, 2);
-      main->addWidget(pb_help, row++, 6, 1, 2);
-      main->addWidget(lb_density, row, 0, 1, 2);
-      main->addWidget(le_density, row, 2, 1, 2);
-      main->addWidget(lb_ph, row, 4, 1, 2);
-      main->addWidget(le_ph, row++, 6, 1, 2);
-      main->addWidget(lb_viscos, row, 0, 1, 2);
-      main->addWidget(le_viscos, row, 2, 1, 2);
-      main->addWidget(lb_compress, row, 4, 1, 2);
-      main->addWidget(le_compress, row++, 6, 1, 2);
-      main->addWidget(lb_bselect, row, 0, 1, 4);
-      main->addWidget(le_concen, row++, 4, 1, 4);
-      main->addWidget(bn_buffer, row++, 0, 1, 8);
-      main->addWidget(bn_allcomps, row, 0, 1, 4);
-      main->addWidget(bn_bufcomps, row++, 4, 1, 4);
-      main->addWidget(lw_allcomps, row, 0, 3, 4);
-      main->addWidget(lw_bufcomps, row, 4, 3, 4);
+      main->addWidget( bn_newbuf,       row++, 0, 1, 8 );
+      main->addWidget( lb_descrip,      row,   0, 1, 1 );
+      main->addWidget( le_descrip,      row++, 1, 1, 7 );
+      main->addWidget( bn_general,      row++, 0, 1, 8 );
+      main->addLayout( lo_cosed,        row,   0, 1, 2 );
+      main->addWidget( pb_cancel,       row,   4, 1, 2 );
+      main->addWidget( pb_accept,       row++, 6, 1, 2 );
+      main->addLayout( lo_manual,       row,   0, 1, 2 );
+      main->addWidget( pb_spectrum,     row,   4, 1, 2 );
+      main->addWidget( pb_help,         row++, 6, 1, 2 );
+      main->addWidget( lb_density,      row,   0, 1, 2 );
+      main->addWidget( le_density,      row,   2, 1, 2 );
+      main->addWidget( lb_ph,           row,   4, 1, 2 );
+      main->addWidget( le_ph,           row++, 6, 1, 2 );
+      main->addWidget( lb_viscos,       row,   0, 1, 2 );
+      main->addWidget( le_viscos,       row,   2, 1, 2 );
+      main->addWidget( lb_compress,     row,   4, 1, 2 );
+      main->addWidget( le_compress,     row++, 6, 1, 2 );
+      main->addWidget( lb_bselect,      row,   0, 1, 4 );
+      main->addWidget( le_concen,       row++, 4, 1, 4 );
+      main->addWidget( bn_buffer,       row++, 0, 1, 8 );
+      if (US_Settings::us_inv_level()>1){
+         main->addWidget( bn_allcomps,  row,   0, 1, 3 );
+         main->addWidget( pb_new_bcomp, row,   3, 1, 1 );
+         connect(pb_new_bcomp, SIGNAL(clicked()), this, SLOT(create_new_buffer_component()));
+      }
+      else{
+         main->addWidget( bn_allcomps,  row,   0, 1, 4 );
+      }
+      main->addWidget( bn_bufcomps,     row++, 4, 1, 4 );
+      main->addWidget( lw_allcomps,     row,   0, 3, 4 );
+      main->addWidget( lw_bufcomps,     row,   4, 3, 4 );
 
 
       QStringList keys = component_list.keys();
