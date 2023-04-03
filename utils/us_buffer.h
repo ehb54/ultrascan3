@@ -35,6 +35,11 @@ class US_UTIL_EXTERN US_BufferComponent
       //! Get the info for an individual component from the DB.
       //! \param db A \ref US_DB2 structure to an opened connection to the DB.
       void getInfoFromDB( US_DB2* = 0 );
+   
+      //! \brief Write a new buffer to the DB.
+      //! \param db An open database connection
+      //! \return The buffercomponentID of the new buffer component
+      int saveToDB( US_DB2* = 0);
 
    private:
       static void component( QXmlStreamReader&, QMap< QString, US_BufferComponent >& );

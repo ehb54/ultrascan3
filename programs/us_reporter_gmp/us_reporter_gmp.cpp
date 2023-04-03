@@ -13,13 +13,14 @@
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
 #include "us_tmst_plot.h"
+#include "us_tar.h"
 
 #define MIN_NTC   25
 
 // Constructor
 US_ReporterGMP::US_ReporterGMP() : US_Widgets()
 {
-  setWindowTitle( tr( "GMP Report Generator"));
+  setWindowTitle( tr( "GMP Report Generator & Viewer"));
   setPalette( US_GuiSettings::frameColor() );
 
   first_time_gen_tree_build = true;
@@ -55,41 +56,80 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   combPlotsLayout->setContentsMargins( 0, 0, 0, 0 );
 
   //leftLayout
-  QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
+  //GMP or Custom Report Generation Items
+  QLabel*      bn_actions     = us_banner( tr( "Generate GMP or Custom Report from Completed GMP Run:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
-
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
-  pb_view_report   = us_pushbutton( tr( "View Report" ) );
-  pb_select_all    = us_pushbutton( tr( "Select All" ) );
-  pb_unselect_all  = us_pushbutton( tr( "Unselect All" ) );
-  pb_expand_all    = us_pushbutton( tr( "Expand All" ) );
-  pb_collapse_all  = us_pushbutton( tr( "Collapse All" ) );
+  pb_view_report   = us_pushbutton( tr( "View Generated Report" ) );
+  pb_select_all    = us_pushbutton( tr( "Select All Tree Items" ) );
+  pb_unselect_all  = us_pushbutton( tr( "Unselect All Tree Items" ) );
+  pb_expand_all    = us_pushbutton( tr( "Expand All Tree Items" ) );
+  pb_collapse_all  = us_pushbutton( tr( "Collapse All Tree Items" ) );
+
+  //Filename path
+  QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
+  te_fpath_info =  us_textedit();
+  QFontMetrics m (te_fpath_info -> font());
+  int RowHeight  = m.lineSpacing();
+  RowHeight *= 3;
+  te_fpath_info -> setFixedHeight  ( RowHeight);
+  te_fpath_info -> setText( tr( "" ) );
+  us_setReadOnly( te_fpath_info, true );
+
+  //GMP Report From DB Items
+  QLabel*      bn_actions_db     = us_banner( tr( "Download and View GMP Report from DB:" ), 1 );
+  QLabel*      lb_loaded_run_db  = us_label( tr( "Loaded Run:" ) );
+  le_loaded_run_db               = us_lineedit( tr(""), 0, true );
+  QPushButton* pb_loadreport_db  = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
+  pb_view_report_db              = us_pushbutton( tr( "View Downloaded Report" ) );
+
+  //Filename DB path
+  QLabel*      lb_fpath_info_db  = us_label( tr( "Report File \nLocation:" ) );
+  te_fpath_info_db =  us_textedit();
+  te_fpath_info_db -> setFixedHeight  ( RowHeight );
+  te_fpath_info_db -> setText( tr( "" ) );
+  us_setReadOnly( te_fpath_info_db, true );
+  
+  //Misc
+  QLabel*      bn_actions_misc   = us_banner( tr( "" ), 1 );
   pb_help          = us_pushbutton( tr( "Help" ) );
   pb_close         = us_pushbutton( tr( "Close" ) );
 		
   int row           = 0;
-  buttonsLayout->addWidget( bn_actions,     row++, 0, 1, 12 );
-  buttonsLayout->addWidget( lb_loaded_run,  row,   0, 1, 2 );
-  buttonsLayout->addWidget( le_loaded_run,  row++, 2, 1, 10 );
-  buttonsLayout->addWidget( pb_loadrun,     row++, 0, 1, 12 );
-  buttonsLayout->addWidget( pb_gen_report,  row++, 0, 1, 12 );
-  buttonsLayout->addWidget( pb_view_report, row++, 0, 1, 12 );
-  buttonsLayout->addWidget( pb_select_all,  row  , 0, 1, 6 );
-  buttonsLayout->addWidget( pb_unselect_all,row++, 6, 1, 6 );
-  buttonsLayout->addWidget( pb_expand_all,  row  , 0, 1, 6 );
-  buttonsLayout->addWidget( pb_collapse_all,row++, 6, 1, 6 );
+  buttonsLayout->addWidget( bn_actions,       row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_loaded_run,    row,   0, 1, 2 );
+  buttonsLayout->addWidget( le_loaded_run,    row++, 2, 1, 10 );
+  buttonsLayout->addWidget( pb_loadrun,       row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_gen_report,    row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_fpath_info,    row,   0, 1, 2 );
+  buttonsLayout->addWidget( te_fpath_info,    row++, 2, 1, 10 );
+  buttonsLayout->addWidget( pb_view_report,   row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_select_all,    row  , 0, 1, 6 );
+  buttonsLayout->addWidget( pb_unselect_all,  row++, 6, 1, 6 );
+  buttonsLayout->addWidget( pb_expand_all,    row  , 0, 1, 6 );
+  buttonsLayout->addWidget( pb_collapse_all,  row++, 6, 1, 6 );
 
-  buttonsLayout->addWidget( pb_help,        row,   0, 1, 6, Qt::AlignBottom );
-  buttonsLayout->addWidget( pb_close,       row++, 6, 1, 6, Qt::AlignBottom );
+  buttonsLayout->addWidget( bn_actions_db,    row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_loaded_run_db, row,   0, 1, 2 );
+  buttonsLayout->addWidget( le_loaded_run_db, row++, 2, 1, 10 );
+  buttonsLayout->addWidget( pb_loadreport_db, row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_fpath_info_db, row,   0, 1, 2 );
+  buttonsLayout->addWidget( te_fpath_info_db, row++, 2, 1, 10 );
+  buttonsLayout->addWidget( pb_view_report_db,row++, 0, 1, 12 );
 
-  pb_gen_report  ->setEnabled( false );
-  pb_view_report ->setEnabled( false );
-  pb_select_all  ->setEnabled( false );
-  pb_unselect_all->setEnabled( false );
-  pb_expand_all  ->setEnabled( false );
-  pb_collapse_all->setEnabled( false );
+  buttonsLayout->addWidget( bn_actions_misc,  row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_help,          row,   0, 1, 6, Qt::AlignBottom );
+  buttonsLayout->addWidget( pb_close,         row++, 6, 1, 6, Qt::AlignBottom );
+
+  pb_gen_report     ->setEnabled( false );
+  pb_view_report    ->setEnabled( false );
+  pb_select_all     ->setEnabled( false );
+  pb_unselect_all   ->setEnabled( false );
+  pb_expand_all     ->setEnabled( false );
+  pb_collapse_all   ->setEnabled( false );
+  pb_view_report_db ->setEnabled( false );
   
   connect( pb_help,    SIGNAL( clicked()      ),
 	   this,       SLOT(   help()         ) );
@@ -110,7 +150,12 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
 	   this,            SLOT( expand_all()   ) );
   connect( pb_collapse_all, SIGNAL( clicked()      ),
 	   this,            SLOT(   collapse_all()   ) ); 
-    
+
+  connect( pb_loadreport_db,  SIGNAL( clicked()      ),
+  	   this,              SLOT(   load_gmp_report_db()   ) );
+  connect( pb_view_report_db, SIGNAL( clicked()      ),
+	   this,              SLOT(   view_report_db()   ) );
+  
   //rightLayout: genTree
   QLabel*      lb_gentree  = us_banner(      tr( "General Report Profile Settings:" ), 1 );
   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
@@ -407,8 +452,20 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
+
+  QString full_runname = protocol_details[ "filename" ];
+  FullRunName_auto = runName + "-run" + runID;
+  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+    {
+      QString full_runname_edited  = full_runname.split(",")[0];
+      full_runname_edited.chop(3);
+      full_runname = full_runname_edited + " (combined RI+IP) ";
+
+      FullRunName_auto += " (combined RI+IP) ";   //Captures protDev names...
+    }
   
-  lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
+  //lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
+  lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg( FullRunName_auto ) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
@@ -710,13 +767,20 @@ QString US_ReporterGMP::missing_models_msg( void )
 {
   QString models_str;
 
-  QMap < QString, QString >::iterator mm;
-  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+  // QMap < QString, QString >::iterator mm;
+  // for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+  //   {
+  //     if ( !mm.value().isEmpty() )
+  // 	{
+  // 	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
+  // 	}
+  //   }
+  
+  QMap < QString, QStringList >::iterator mmm;
+  for ( mmm = Triple_to_ModelsMissing.begin(); mmm != Triple_to_ModelsMissing.end(); ++mmm )
     {
-      if ( !mm.value().isEmpty() )
-	{
-	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
-	}
+      if ( !mmm.value().isEmpty() ) 
+	models_str += mmm.key() + ", missing models: " + mmm.value().join(", ") + "<br>";
     }
   
   if ( !models_str.isEmpty() )
@@ -733,19 +797,32 @@ QString US_ReporterGMP::compose_html_failed_stage_missing_models( void )
   
   failed_str += "<table>";
   
-  QMap < QString, QString >::iterator mm;
-  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
-    {
-      if ( !mm.value().isEmpty() )
-	{
-	  areFailed = true;
+  // QMap < QString, QString >::iterator mm;
+  // for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+  //   {
+  //     if ( !mm.value().isEmpty() )
+  // 	{
+  // 	  areFailed = true;
 	  
-	  failed_str += "<tr><td style=\"color:red;\">" + mm.key() + ",</td><td> analysis failed/canceled at stage: </td><td style=\"color:red;\">"
-	                + mm.value() + ";</td>" + 
-	                + "<td>Models missing: </td><td style=\"color:red;\">" +  Triple_to_ModelsMissing[ mm.key() ].join(", ") + "</td></tr>";
-	}
-    }
-
+  // 	  failed_str += "<tr><td style=\"color:red;\">" + mm.key() + ",</td><td> analysis failed/canceled at stage: </td><td style=\"color:red;\">"
+  // 	                + mm.value() + ";</td>" + 
+  // 	                + "<td>Models missing: </td><td style=\"color:red;\">" +  Triple_to_ModelsMissing[ mm.key() ].join(", ") + "</td></tr>";
+  // 	}
+  //   }
+  
+   QMap < QString, QStringList >::iterator mmm;
+   for ( mmm = Triple_to_ModelsMissing.begin(); mmm != Triple_to_ModelsMissing.end(); ++mmm )
+     {
+       if ( !mmm.value().isEmpty() )
+	 {
+   	  areFailed = true;
+  	  
+   	  failed_str += "<tr><td style=\"color:red;\">" + mmm.key() + ":</td>" + 
+	    + "<td>Models missing: </td><td style=\"color:red;\">" +  mmm.value().join(", ") + "</td></tr>";
+   	}
+     }
+  
+  
   failed_str += "</table>";
 
   if( !areFailed )
@@ -808,6 +885,7 @@ void US_ReporterGMP::check_models ( int autoflowID )
       //get requestID in autoflowAnalysis based on tripleName & autoflowID
       QStringList query;
       query << "get_modelAnalysisInfo" << Array_of_tripleNames[ i ] << QString::number( autoflowID );
+      qDebug() << "check_models qry -- " << query;
       db->query( query );
 
       QString modelDescJson;
@@ -870,6 +948,10 @@ void US_ReporterGMP::check_models ( int autoflowID )
       //populate QMap connecting triple name to it's existing models
       Triple_to_Models[ Array_of_tripleNames[ i ] ] = model_list;
     }
+
+  //DEBUG
+  
+  
 }
 
 //Create QMap for shorter desctiption of triple's models (2DSA-IT, ...) to modelIDs, OR to modelGUIDs
@@ -942,6 +1024,181 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 }
 
 
+//load GMP Rpeort from DB (.PDF)
+void US_ReporterGMP::load_gmp_report_db ( void )
+{
+  // //TESTING *************
+  // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
+  // if ( ! fin.open( QIODevice::ReadOnly ) )
+  //  {
+  //    qDebug() << "cannot open file ";;
+  //    return;
+  //  }
+  // QByteArray blobData = fin.readAll();
+  // fin.close();
+
+  // qDebug() << "BlobData size -- " << blobData.size();
+  // return;
+  // //END TESTING *********
+  
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+  
+  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+
+  QString pdtitle( tr( "Select GMP Report" ) );
+  QStringList hdrs;
+  int         prx;
+  
+  hdrs << "ID"
+       << "Run Name"
+    //<< "Protocol Name"
+       << "Created"
+       << "Filename (.pdf)";
+         
+  QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  QString gmpReport_id_selected("");
+  QString gmpReport_runname_selected("");
+  QString gmpReport_runname_selected_c("");
+  QString gmpReport_filename_pdf ("");
+  
+  if ( pdiag_autoflow_db->exec() == QDialog::Accepted )
+    {
+      gmpReport_id_selected        = gmpReportsDBdata[ prx ][ 0 ];
+      gmpReport_runname_selected_c = gmpReportsDBdata[ prx ][ 1 ];
+      gmpReport_filename_pdf       = gmpReportsDBdata[ prx ][ 3 ];
+
+      pb_view_report_db -> setEnabled( false );
+      te_fpath_info_db  -> setText( "" );
+    }
+  else
+    return;
+
+  //read 'data' .tar.gz for autoflowGMPReport record:
+  if ( gmpReport_runname_selected_c.  contains("combined") )
+    {
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
+      gmpReport_runname_selected. simplified();
+    }
+  else
+    gmpReport_runname_selected = gmpReport_runname_selected_c;
+  
+  QString subDirName = gmpReport_runname_selected + "_GMP_DB";
+  mkdir( US_Settings::reportDir(), subDirName );
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+
+  //Clean folder (if exists) where .tar.gz to be unpacked
+  QStringList f_exts = QStringList() <<  "*.*";
+  QString i_folder = dirName + "/" + gmpReport_runname_selected;
+  remove_files_by_mask( i_folder, f_exts );
+
+  // <---- TESTING: gZip algorithm NOT compatible (even for different Linux distros...) **
+  //QString GMPReportfname = "GMP_Report_from_DB.tgz";
+  // END TESTING *************************************************************************
+
+  QString GMPReportfname = "GMP_Report_from_DB.tar";
+  QString GMPReportfpath = dirName + "/" + GMPReportfname;
+  
+  int db_read = db.readBlobFromDB( GMPReportfpath,
+				   "download_gmpReportData",
+				   gmpReport_id_selected.toInt() );
+
+  if ( db_read == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + GMPReportfpath + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+
+      return;
+    }
+  else if ( db_read != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   GMPReportfpath + "\n" + db.lastError() + "\n");
+
+      return;
+    }
+  
+  // <--- TESTING: tried .tar.gz - NOT compatible (even for different Linux distros...) ****
+  // //Un-tar using system TAR && enable View Report btn:
+  // QProcess *process = new QProcess(this);
+  // process->setWorkingDirectory( dirName );
+  // process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
+  // END TESTING ****************************************************************************
+  
+  // // Using .tar (NOT gzip: .tgz or tar.gz !!!)
+  QProcess *process = new QProcess(this);
+  process->setWorkingDirectory( dirName );
+  process->start("tar", QStringList() << "-xvf" << GMPReportfname );
+    
+  filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
+  qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+
+  //Gui fields
+  le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
+  pb_view_report_db -> setEnabled( true );
+  te_fpath_info_db  -> setText( filePath_db );
+
+  //Inform user of the PDF location
+  QMessageBox msgBox;
+  msgBox.setText(tr("Report PDF Ready!"));
+  msgBox.setInformativeText(tr( "Report was downloaded form DB in .PDF format and saved at: \n%1\n\n"
+				"When this dialog is closed, the report can be re-opened by clicking \'View Downloaded Report\' button on the left.")
+			    .arg( filePath_db ) );
+  
+  msgBox.setWindowTitle(tr("Report Generation Complete"));
+  QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
+  //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+  
+  msgBox.setIcon(QMessageBox::Information);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Open)
+    {
+      view_report_db( );
+    }  
+}
+
+
+// Query autoflow (history) table for records
+int US_ReporterGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+{
+  int nrecs        = 0;   
+  gmpReportsDBdata.clear();
+
+  QStringList qry;
+  qry << "get_autoflowGMPReport_desc";
+  db->query( qry );
+
+  while ( db->next() )
+    {
+      QStringList gmpreportentry;
+      QString id                     = db->value( 0 ).toString();
+      QString autoflowHistoryID      = db->value( 1 ).toString();
+      QString autoflowHistoryName    = db->value( 2 ).toString();
+      QString protocolName           = db->value( 3 ).toString();
+      QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
+      QString filenamePdf            = db->value( 5 ).toString();
+         
+      gmpreportentry << id << autoflowHistoryName // << protocolName
+		     << time_created.toString() << filenamePdf;
+      gmpReportsDBdata << gmpreportentry;
+      nrecs++;
+    }
+
+  return nrecs;
+}
+
 //load GMP run
 void US_ReporterGMP::load_gmp_run ( void )
 {
@@ -998,6 +1255,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
+  AutoflowID_auto    = protocol_details[ "autoflowID" ];
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
@@ -1090,22 +1348,25 @@ void US_ReporterGMP::load_gmp_run ( void )
   //Enable some buttons
   //process runname: if combined, correct for nicer appearance
   QString full_runname = protocol_details[ "filename" ];
+  FullRunName_auto = runName + "-run" + runID;
   if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
     {
       QString full_runname_edited  = full_runname.split(",")[0];
       full_runname_edited.chop(3);
-      
       full_runname = full_runname_edited + " (combined RI+IP) ";
+      full_runname = runName + " (combined RI+IP)";  //Just use runName (captures ProtDev names)
+
+      FullRunName_auto += " (combined RI+IP)";
     }
       
-  le_loaded_run   ->setText( full_runname );
+  //le_loaded_run   ->setText( full_runname );
+  le_loaded_run   ->setText( FullRunName_auto );
   pb_gen_report   ->setEnabled( true );
   pb_view_report  ->setEnabled( false );
   pb_select_all   ->setEnabled( true );
   pb_unselect_all ->setEnabled( true );
   pb_expand_all   ->setEnabled( true );
   pb_collapse_all ->setEnabled( true );
-
 
   //Capture tree state:
   JsonMask_gen_loaded     = tree_to_json ( topItem );
@@ -1143,6 +1404,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 {
   int nrecs        = 0;   
   autoflowdata.clear();
+
+  QStringList qry;
   
   US_Passwd pw;
   US_DB2* db = new US_DB2( pw.getPasswd() );
@@ -1155,7 +1418,23 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       return nrecs;
     }
   
-  QStringList qry;
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  db->query( qry );
+  
+  int user_id = 0;
+  
+  if ( db->next() )
+    user_id = db->value( 0 ).toInt();
+  
+
+  //deal with autoflowHistory descriptions
+  qry. clear();
   qry << "get_autoflow_history_desc";
   db->query( qry );
 
@@ -1168,13 +1447,20 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       QString optimaname         = db->value( 10 ).toString();
       
       QDateTime time_started     = db->value( 11 ).toDateTime().toUTC();
+      QString invID              = db->value( 12 ).toString();
 
       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = db->value( 14 ).toString();
       QString full_runname       = db->value( 15 ).toString();
-      
+
+      QString operatorID         = db->value( 16 ).toString();
+      QString devRecord          = db->value( 18 ).toString();
+
       QDateTime local(QDateTime::currentDateTime());
 
+      if ( devRecord == "Processed" )
+	continue;
+      
       //process runname: if combined, correct for nicer appearance
       if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
 	{
@@ -1182,9 +1468,10 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	  full_runname_edited.chop(3);
 
 	  full_runname = full_runname_edited + " (combined RI+IP) ";
+	  runname += " (combined RI+IP) ";
 	}
       
-      autoflowentry << id << full_runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
@@ -1201,9 +1488,27 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
-      autoflowdata  << autoflowentry;
 
-      nrecs++;
+      //Check user level && GUID; if <3, check if the user is operator || investigator
+      if ( US_Settings::us_inv_level() < 3 )
+	{
+	  qDebug() << "User level low: " << US_Settings::us_inv_level();
+	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+
+	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  if ( user_id && user_id == invID.toInt() )
+	    {//Do we allow operator as defined in autoflow record to also see reports?? 
+	    
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	}
+      else
+	{
+	  autoflowdata  << autoflowentry;
+	  nrecs++;
+	}
+      
     }
 
   return nrecs;
@@ -1311,6 +1616,8 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   sdiag->inherit_protocol( &currProto );
   progress_msg->setValue( 4 );
   qApp->processEvents();
+
+  qDebug() << "After Inheriting Protocol -- ";
   
   currAProf              = sdiag->currProf;
   currAProf.protoGUID    = currProto.protoGUID;
@@ -1328,31 +1635,48 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   ch_reports             = currAProf.ch_reports;
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
-
   //Replicates
   replicates                   = currAProf. replicates;
   //replicates_to_channdesc
   replicates_to_channdesc      = currAProf. replicates_to_channdesc_main; //Empty ? (not needed?)
   //channdesc_to_overlapping_wvls
   channdesc_to_overlapping_wvls = currAProf. channdesc_to_overlapping_wvls_main;
-
+  
   //Debug: AProfile
+  qDebug() << "chndescs_alt QStringList -- " <<  chndescs_alt;
+  qDebug() << "ch_reports.keys() -- " <<  ch_reports.keys();
+  
   QString channel_desc_alt = chndescs_alt[ 0 ];
   QString channel_desc     = chndescs[ 0 ];
   QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
+
+  qDebug() << "Wavelengths ch_wvls[ channel_desc_alt ] " << ch_wvls[ channel_desc_alt ] << " for channel: " << channel_desc_alt;
   US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
-    
-  qDebug() << "AProfile's && ReportGMP's details: -- "
-	   << currAProf.aprofname
-	   << currAProf.protoname
-	   << currAProf.chndescs
-	   << currAProf.chndescs_alt
-	   << currAProf.lc_ratios
-	   << cAP2.parms[ 0 ].channel
-	   << cAPp.parms[ 0 ].channel
-	   << reportGMP.rmsd_limit
-	   << reportGMP.wavelength
-	   << reportGMP.reportItems[ 0 ].type;
+
+  if ( reportGMP.reportItems.size() > 0  )
+    qDebug() << "AProfile's && ReportGMP's details: -- "
+	     << currAProf.aprofname
+	     << currAProf.protoname
+	     << currAProf.chndescs
+	     << currAProf.chndescs_alt
+	     << currAProf.lc_ratios
+	     << cAP2.parms[ 0 ].channel
+	     << cAPp.parms[ 0 ].channel
+	     << reportGMP.rmsd_limit
+	     << reportGMP.wavelength
+	     << reportGMP.reportItems[ 0 ].type;
+  else
+    qDebug() << "AProfile's && ReportGMP's details: -- "
+	     << currAProf.aprofname
+	     << currAProf.protoname
+	     << currAProf.chndescs
+	     << currAProf.chndescs_alt
+	     << currAProf.lc_ratios
+	     << cAP2.parms[ 0 ].channel
+	     << cAPp.parms[ 0 ].channel
+	     << reportGMP.rmsd_limit
+	     << reportGMP.wavelength
+	     << "No GMP_Report_Items!!!";
 
   qDebug() << "Number of wvls in channel: " << chndescs_alt[ 0 ] << ": " <<  ch_wvls[ channel_desc_alt ].size();
   qDebug() << "Wvls in channel: " << chndescs_alt[ 0 ] << ": " << ch_wvls[ channel_desc_alt ];
@@ -2280,16 +2604,53 @@ void US_ReporterGMP::collapse_all ( void )
 void US_ReporterGMP::view_report ( void )
 {
   qDebug() << "Opening PDF at -- " << filePath;
-  
-  //Open with OS's applicaiton settings ?
-  QDesktopServices::openUrl(QUrl( filePath ));
+
+  QFileInfo check_file( filePath );
+  if (check_file.exists() && check_file.isFile())
+    {
+      //Open with OS's applicaiton settings ?
+      QDesktopServices::openUrl(QUrl( filePath ));
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Error: Cannot Open .PDF File" ),
+			    tr( "%1 \n\n"
+				"No such file or directory...") .arg( filePath ) );
+    }
 }
+
+//view report DB
+void US_ReporterGMP::view_report_db ( void )
+{
+  qDebug() << "Opening PDF (for downloaded form DB) at -- " << filePath_db;
+
+  QFileInfo check_file( filePath_db );
+  if (check_file.exists() && check_file.isFile())
+    {
+      //Open with OS's applicaiton settings ?
+      QDesktopServices::openUrl(QUrl( filePath_db ));
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Error: Cannot Open .PDF File" ),
+			    tr( "%1 \n\n"
+				"No such file or directory...") .arg( filePath_db ) );
+    }
+}
+ 
 
 //reset
 void US_ReporterGMP::reset_report_panel ( void )
 {
-  le_loaded_run ->setText( "" );
+  le_loaded_run -> setText( "" );
 
+  if ( !auto_mode )
+    {
+      te_fpath_info    -> setText( "" );
+      le_loaded_run_db -> setText( "" );
+      te_fpath_info_db -> setText( "" );
+    }
+      
   //cleaning genTree && it's objects
   // for (int i = 0; i < genTree->topLevelItemCount(); ++i)
   //   {
@@ -2412,6 +2773,14 @@ void US_ReporterGMP::reset_report_panel ( void )
 //Generate report
 void US_ReporterGMP::generate_report( void )
 {
+  //create main folder & clean it of anything
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  QStringList f_exts = QStringList() <<  "*.*"; 
+  remove_files_by_mask( dirName, f_exts );
+  ///////////////////////////////////////////////////
+  
   progress_msg->setWindowTitle(tr("Generating Report"));
   progress_msg->setLabelText( "Generating Report: Part 1..." );
   int msg_range = currProto.rpSolut.nschan + 5;
@@ -2550,15 +2919,14 @@ void US_ReporterGMP::generate_report( void )
     }
   //End of Part 2
   
-
   write_pdf_report( );
   qApp->processEvents();
 
-  pb_view_report->setEnabled( true );
-
-
+  pb_view_report -> setEnabled( true );
+  
   if ( auto_mode )
     {
+
       pb_view_report_auto->setVisible( true );
 
       //copy autoflow record to autoflowHistory table:
@@ -2598,9 +2966,9 @@ void US_ReporterGMP::generate_report( void )
       //Inform user of the PDF location
       QMessageBox msgBox_a;
       msgBox_a.setText(tr("Report PDF Ready!"));
-      msgBox_a.setInformativeText(tr( "Report PDF was saved at \n%1\n\n"
-				    "You can view the report by pressing \'View Report\' below.\n\n"
-				    "When this dialog is closed, the report can be re-opened by pressing \'View Report\' button at the bottom.") .arg( filePath ) );
+      msgBox_a.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
+				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom.")
+				  .arg( filePath ) );
 				    
       msgBox_a.setWindowTitle(tr("Report Generation Complete"));
       QPushButton *Open      = msgBox_a.addButton(tr("View Report"), QMessageBox::YesRole);
@@ -2614,15 +2982,17 @@ void US_ReporterGMP::generate_report( void )
 	  view_report();
 	}
       
-     }
+    }
   else
     {
+      te_fpath_info  -> setText( filePath );
+      
       //Inform user of the PDF location
       QMessageBox msgBox;
       msgBox.setText(tr("Report PDF Ready!"));
-      msgBox.setInformativeText(tr( "Report PDF was saved at \n%1\n\n"
-				    "You can view the report by pressing \'View Report\' below.\n\n"
-				    "When this dialog is closed, the report can be re-opened by pressing \'View Report\' button on the left.") .arg( filePath ) );
+      msgBox.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
+				    "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button on the left.")
+				.arg( filePath ) );
 				    
       msgBox.setWindowTitle(tr("Report Generation Complete"));
       QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
@@ -4339,12 +4709,17 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   qDebug() << "ComboPlots generation: modelDescModified -- "     << modelDescModified;
   qDebug() << "ComboPlots generation: modelDescModifiedGuid -- " << modelDescModifiedGuid;
 
-  mkdir( US_Settings::reportDir(), filename_passed );
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), filename_passed );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
+  QString basename = dirName + "/" + filename_passed + ".";
+  //QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
 
+  
   //estimate # of combined plots
   int combpl_number = 3*3;
   // Show msg while data downloaded and simulated
@@ -4509,12 +4884,17 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 
   QString filename_returned = get_filename( triple_name );
   qDebug() << "In plot_pseudo3D, filename_returned -- " << filename_returned;
-  
-  mkdir( US_Settings::reportDir(), filename_returned );
+
+
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), filename_returned );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + filename_returned + "/" + filename_returned + ".";
+  QString basename  = dirName + "/" + filename_returned + ".";
+  //QString basename  = US_Settings::reportDir() + "/" + filename_returned + "/" + filename_returned + ".";
   
   QString imgPseudo3d01File;
   QStringList Pseudo3dPlotsFileNames;
@@ -4965,7 +5345,7 @@ int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filenam
 void US_ReporterGMP::assemble_user_inputs_html( void )
 {
   html_assembled += "<p class=\"pagebreak \">\n";
-  html_assembled += "<h2 align=left>User Interactions During Data Saving, Editing and Analysis</h2>";
+  html_assembled += "<h2 align=left>User Interactions During Data Import, Editing, and Analysis</h2>";
 
   //Maps && timestamps from DB
   // IMPORT
@@ -5003,24 +5383,39 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
   data_types_import_ts [ "RI" ] = importRIts;
   data_types_import_ts [ "IP" ] = importIPts;
+
+  //Check for dropped triples for each Optical System:
+  QStringList dropped_triples_RI, dropped_triples_IP;
+  read_reportLists_from_aprofile( dropped_triples_RI, dropped_triples_IP );
+  qDebug() << "List of dropped triples (all OSs): "
+	   <<  dropped_triples_RI
+	   <<  dropped_triples_IP;
+  
   
   //3. IMPORT
-  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Data Saving (3. IMPORT stage)</h3>" );
+  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT stage)</h3>" );
 
   QMap < QString, QString >::iterator im;
   for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
     {
       QString json_str = im.value();
-
+     
       if ( json_str.isEmpty() )
 	continue;
       
-      QString dtype_opt;
+      QString      dtype_opt;
+      QStringList  dtype_opt_dropped_triples;
 
       if ( im.key() == "RI" )
-	dtype_opt = "RI (UV/vis.)";
+	{
+	  dtype_opt = "RI (UV/vis.)";
+	  dtype_opt_dropped_triples = dropped_triples_RI;
+	}
       if ( im.key() == "IP" )
-	dtype_opt =  "IP (Interf.)";
+	{
+	  dtype_opt =  "IP (Interf.)";
+	  dtype_opt_dropped_triples = dropped_triples_IP;
+	}
       
       html_assembled += tr("<br>");
 
@@ -5072,6 +5467,34 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
 
+      //Add list if dropped triples per optics system:
+      if ( !dtype_opt_dropped_triples. isEmpty() )
+	{
+	  html_assembled += tr(
+			       "<table style=\"margin-left:10px\">"
+			       "<caption style=\"color:red;\" align=left> <b><i>List of Dropped Triples: </i></b> </caption>"
+			       "</table>"
+
+			       "<table style=\"margin-left:25px\">"
+			       );
+
+	  for ( int i=0; i < dtype_opt_dropped_triples.size(); ++i )
+	    {
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Triple Name: </td> <td style=\"color:red;\"> %1 </td> "
+				   "</tr>"
+				   )
+		.arg( dtype_opt_dropped_triples[ i ] )
+		;
+	    }
+	  
+	  html_assembled += tr(
+			       "</table>"
+			       );
+			       
+	}
+      
     }
    
   html_assembled += tr("<hr>");
@@ -5186,7 +5609,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
+			   "<caption align=left> <b><i>Meniscus Position Determination from FITMEN_MANUAL stage: </i></b> </caption>"
 			   "</table>"
 			   
 			   "<table style=\"margin-left:25px\">"
@@ -5200,17 +5623,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	  QString mfa_value    = mfa.value();
 	  QString pos          = mfa_value.split(", by")[0];
 	  QString performed_by = mfa_value.split(", by")[1];
+	  QStringList whenList = mfa_value.split(" ;");
+	  QString when         = (whenList.size() > 1) ? whenList[1] : "N/A";
 	  
 	  html_assembled += tr(			       
 			       "<tr>"
-			       "<td> Channel:  %1 </td>"
-			       "<td> Position: %2 </td>"
-			       "<td> Performed by: %3 </td>"
+			       "<td> Channel:  %1, </td>"
+			       "<td>           %2, </td>"
+			       "<td> by:       %3, </td>"
+			       "<td> at:       %4  </td>"
 			       "</tr>"
 						       )
 	    .arg( mfa.key()   )     //1
 	    .arg( pos )             //2
-	    .arg( performed_by )    //3   
+	    .arg( performed_by )    //3
+	    .arg( when )            //4
 	    ;
 	}
       
@@ -5224,6 +5651,138 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
+}
+
+//Read AProfile's reportIDs per channel:
+void US_ReporterGMP::read_reportLists_from_aprofile( QStringList & dropped_triples_RI, QStringList & dropped_triples_IP )
+{
+  dropped_triples_RI. clear();
+  dropped_triples_IP. clear();
+  QMap< QString, QString> channame_to_reportIDs_RI;
+  QMap< QString, QString> channame_to_reportIDs_IP;
+  QString aprofile_xml;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  qDebug() << "AProfGUID: " << AProfileGUID;
+    
+  QStringList qry;
+  qry << "get_aprofile_info" << AProfileGUID;
+  db.query( qry );
+  
+  while ( db.next() )
+    {
+      aprofile_xml         = db.value( 2 ).toString();
+    }
+
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readReportLists( xmli, channame_to_reportIDs_RI, channame_to_reportIDs_IP );
+    }
+
+  //Now, construct list of dropped triples per optical system used:
+  dropped_triples_RI = buildDroppedTriplesList( &db, channame_to_reportIDs_RI );
+  dropped_triples_IP = buildDroppedTriplesList( &db, channame_to_reportIDs_IP );
+}
+
+//Build list of dropped triples out of channame_to_reportIDs QMap;
+QStringList US_ReporterGMP::buildDroppedTriplesList ( US_DB2* dbP, QMap <QString, QString> channame_to_reportIDs )
+{
+  QStringList dropped_triples_list;
+  
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channame_to_reportIDs.begin(); chan_rep != channame_to_reportIDs.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  QString rID = reportIDs_list[i];
+	  QString Wavelength;
+	  QString TripleDropped;
+	  
+	  QStringList qry;
+	  qry << "get_report_info_by_id" << rID;
+	  dbP->query( qry );
+	  
+	  if ( dbP->lastErrno() == US_DB2::OK )      
+	    {
+	      while ( dbP->next() )
+		{
+		  Wavelength    = dbP->value( 5 ).toString();
+		  TripleDropped = dbP->value( 9 ).toString();
+		}
+	      
+	      if ( TripleDropped == "YES" )
+		{
+		  QString dropped_triple_name = chan_key + "." + Wavelength;
+		  dropped_triples_list << dropped_triple_name;
+		}
+	    }
+	}
+    }
+	  
+  return dropped_triples_list;
+}
+
+//Read AProfile's reportIDs per channel:
+bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QString> & channame_to_reportIDs_RI, QMap< QString, QString> & channame_to_reportIDs_IP )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "channel_parms" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      
+	      if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+		{
+		  QString channel_name = attr.value( "channel" ).toString();
+		  QString channel_desc = attr.value( "chandesc" ).toString();
+		  
+		  QString opsys = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		  
+		  if ( opsys.contains("UV/vis")  ) //RI
+		    {
+		      //Read what reportID corresponds to channel:
+		      if ( attr.hasAttribute("report_id") )
+			channame_to_reportIDs_RI[ channel_name ] = attr.value( "report_id" ).toString();
+		    }
+		  if ( opsys.contains("Interf") )  //IP
+		    {
+		      //Read what reportID corresponds to channel:
+		      if ( attr.hasAttribute("report_id") )
+			channame_to_reportIDs_IP[ channel_name ] = attr.value( "report_id" ).toString();
+		    }
+		}
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+      
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+	break;
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
 //read autoflowStatus, populate internals
@@ -6044,7 +6603,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString model_desc_edited = model.description;
    model_desc_edited. replace(".", "_");
    
-   QString fileName_str = dirName + "/" + model_desc_edited + "_csv.txt";
+   QString fileName_str      = dirName + "/" + model_desc_edited + "_csv.txt";
+   QString fileName_str_only = model_desc_edited + "_csv.txt";
    QFile file_model_info(fileName_str);
    file_model_info.open(QIODevice::WriteOnly | QIODevice::Text);
    QTextStream out_model_info(&file_model_info);
@@ -6125,7 +6685,9 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    
    QString file_path = "";
 
-   mstr += "<a href=\"file:///" + fileName_str + "\">View Model Distributions</a>";
+   //mstr += "<a href=\"file:///" + fileName_str + "\">View Model Distributions</a>";
+   mstr += "<a href=\"./" + fileName_str_only + "\">View Model Distributions</a>";
+   
    
    /*
    mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
@@ -7033,12 +7595,16 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   
   
   QStringList PlotsFileNames;
-  mkdir( US_Settings::reportDir(), edata->runID );
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), edata->runID );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
   QString tripnode  = QString( currentTripleName ).replace( ".", "" );
-  QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
+  QString basename  = dirName + "/" + text_model( model, 0 ) + "." + tripnode + "."; 
+  //QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
 
   QString img01File = basename + "velocity_nc" + svgext;
   QString img02File = basename + "residuals"   + pngext;
@@ -7709,7 +8275,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   if ( !str_failed_stage_missing_models.isEmpty() )
     {
       html_failed  = tr(
-			"<h3 style=\"color:red;\" align=left> ATTENTION: Analyses for Some Triples Failed or Have Been Canceled!</h3>"
+			"<h3 style=\"color:red;\" align=left> ATTENTION: Analyses for Some Triples Failed, or Models are Missing!</h3>"
 			"%1"
 			"<hr>"
 			)
@@ -8677,6 +9243,212 @@ void US_ReporterGMP::write_pdf_report( void )
   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
     
   document.print(&printer);
+
+  qApp->processEvents();
+
+  //Now delete all .png && .svgz && tar entire directory
+  if ( auto_mode )
+    {
+      QStringList file_exts;
+      file_exts << "*.png" << "*.svgz";
+      remove_files_by_mask( dirName, file_exts );
+
+      
+      //Archive using US_Tar [does NOT work for filename lengths >=100 char]
+      /****************************************************************************
+      QDir odir( dirName );
+      QStringList fileList = odir.entryList( QStringList( "*.pdf" ), QDir::Files );
+
+      QStringList fileList_fullPath;
+      for (int i=0; i<fileList.size(); ++i )
+       	{
+       	  fileList_fullPath << dirName + "/" + fileList[i];
+       	  qDebug() << "Files -- " << dirName + "/" + fileList[i];
+       	}
+      
+      US_Tar tar;
+      int result;
+       QString tarFilename = dirName + "/" + subDirName + ".tar.gz";
+       QStringList list_t;
+       //result = tar.create( tarFilename, dirName, &list_t );
+       result = tar.create( tarFilename, fileList_fullPath, &list_t );
+       
+       if ( result != TAR_OK )
+	 {
+	   QString errormsg = QString("Error: Problem creating tar archive %1").arg( tarFilename );
+	   
+	   QMessageBox::warning( this, tr( "Error with creating .TAR" ),
+				 errormsg );
+	   
+	   return;
+	 }
+      ***************************************************************************/
+      
+      //Archive using system TAR: do NOT use gZip (.tgz, .tar.gz)!!! 
+      //<------ TESTING!!!! ***************************************************************
+      // QString tarFilename_t = subDirName + "_GMP_DB.tgz";
+      // QProcess *process = new QProcess(this);
+      // process->setWorkingDirectory( US_Settings::reportDir() );
+      // process->start("tar", QStringList() << "-czvf" << tarFilename_t << subDirName );
+      //END TESTING ***********************************************************************
+            
+      QString tarFilename_t = subDirName + "_GMP_DB.tar";
+      QProcess *process = new QProcess(this);
+      process->setWorkingDirectory( US_Settings::reportDir() );
+      process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+         
+      //Write to autoflowGMPReport table as longblob
+      write_gmp_report_DB( tarFilename_t, fileName );
+      qApp->processEvents();
+      
+      //do we need to remove created .tar?
+      QString tar_path = US_Settings::reportDir() + "/" + tarFilename_t;
+      QFile::remove( tar_path );
+    }
+}
+
+//write GMP report to DB
+void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf )
+{
+  QString report_filepath = US_Settings::reportDir() + "/" + filename;
+  qDebug() << "Writing Blob of filePath -- " << report_filepath;
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+
+  QStringList qry;
+  
+  //BEFORE writing, check if writing has been initiated, or completed from different session:
+  int status_report_unique = 0;
+  qry << "autoflow_report_status"
+      << AutoflowID_auto;
+  
+  status_report_unique = db.statusQuery( qry );
+
+  qDebug() << "status_report_unique -- " << status_report_unique ;
+  
+  if ( !status_report_unique )
+    {
+      QMessageBox::information( this,
+				tr( "The Program State Updated / Being Updated" ),
+				tr( "This happened because you, or different user "
+				    "has already saved the GMP Report into DB using "
+				    "different program session. \n\n"
+				    "You can still view generated GMP Report in .PDF format "
+				    "after closing this dialog window.") );
+      return;
+    }
+  ///////////////////////////////////////////////////////////////////////////////////////////
+     
+  qry. clear();
+  qry << "new_autoflow_gmp_report_record"
+      << AutoflowID_auto            
+      << FullRunName_auto           
+      << ProtocolName_auto
+      << filename_pdf;
+    
+  int autolfowGMPReportID = 0;
+  int state_new_gmpReport = db.statusQuery( qry );
+  autolfowGMPReportID = db.lastInsertID();
+  
+  bool clear_GMP_report_record = false;
+
+  qDebug() << "state_new_gmpReport, autolfowGMPReportID -- "
+	   << state_new_gmpReport
+	   << autolfowGMPReportID;
+  
+  if ( state_new_gmpReport == US_DB2::OK  && autolfowGMPReportID > 0 )
+    {
+      int writeStatus= db.writeBlobToDB(report_filepath,
+					QString( "upload_gmpReportData" ),
+					autolfowGMPReportID );
+      
+      if ( writeStatus == US_DB2::DBERROR )
+	{
+	  QMessageBox::warning(this, "Error", "Error processing file:\n"
+			       + report_filepath + "\n" + db.lastError() +
+			       "\n" + "Could not open file or no data \n");
+	  clear_GMP_report_record = true;
+	}
+      
+      else if ( writeStatus != US_DB2::OK )
+	{
+	  QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			       report_filepath + "\n" + db.lastError() + "\n");
+	  
+	  clear_GMP_report_record = true;
+	}
+      
+      if ( clear_GMP_report_record )
+	{
+	  qry.clear();
+	  qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
+	  db.query( qry );
+
+	  //Maybe revert 'reporting' stage in the autoflowStages??
+	}
+      else
+	{
+	  //Report generated && .PDF GMP report saved to autoflowGMPReport:
+	  //No, we can write information on who/when generated report: ///////////////////////
+
+	  //get user info
+	  qry.clear();
+	  qry <<  QString( "get_user_info" );
+	  db.query( qry );
+	  db.next();
+	  
+	  int ID        = db.value( 0 ).toInt();
+	  QString fname = db.value( 1 ).toString();
+	  QString lname = db.value( 2 ).toString();
+	  QString email = db.value( 4 ).toString();
+	  int     level = db.value( 5 ).toInt();
+
+	  QString reporting_Json;
+
+	  reporting_Json. clear();
+	  reporting_Json += "{ \"Person\": ";
+	  
+	  reporting_Json += "[{";
+	  reporting_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+	  reporting_Json += "\"fname\":\""  + fname                     + "\",";
+	  reporting_Json += "\"lname\":\""  + lname                     + "\",";
+	  reporting_Json += "\"email\":\""  + email                     + "\",";
+	  reporting_Json += "\"level\":\""  + QString::number( level )  + "\"";
+	  reporting_Json += "}]}";
+	  	  
+	  qry.clear();
+	  qry << "update_autoflowStatusReport_record"
+	      << autoflowStatusID
+	      << AutoflowID_auto
+	      << reporting_Json;
+	  
+	  db.query( qry );
+      	}
+    }
+  else
+    {
+      QMessageBox::warning(this, "Error returned processing file", "File: " + report_filepath + db.lastError());
+    }
+}
+
+//remove files by extension from dirPath
+void US_ReporterGMP::remove_files_by_mask( QString dirPath, QStringList file_exts )
+{
+  QDir dir( dirPath );
+  dir.setNameFilters(file_exts);
+  dir.setFilter(QDir::Files);
+  foreach( QString dirFile, dir.entryList() ) 
+    {
+      dir.remove(dirFile);
+    }
 }
 
 //save trees' selections into internal structures

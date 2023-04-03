@@ -1452,7 +1452,20 @@ void US_Hydrodyn_Saxs_Hplc::to_saxs()
 QStringList US_Hydrodyn_Saxs_Hplc::get_frames( QStringList files, QString head, QString tail )
 {
    QStringList result;
-   result = files.replaceInStrings( QRegExp( "^" + head ), "" ).replaceInStrings( QRegExp( tail + "$" ), "" );
+#if defined( DEBUG_FRAME_NAMES )
+   QTextStream(stdout) <<
+      QString(
+              "get_frames():\n"
+              "--> files: %1\n"
+              "--> head : %2\n"
+              "--> tail : %3\n"
+              )
+      .arg( files.join( "\n" ) )
+      .arg( head )
+      .arg( tail )
+      ;
+#endif
+   result = files.replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" ).replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" );
    // us_qdebug( QString( "get frames head %1 tail %2 result %3\n" )
    //         .arg( head )
    //         .arg( tail )
@@ -1464,6 +1477,10 @@ QStringList US_Hydrodyn_Saxs_Hplc::get_frames( QStringList files, QString head, 
 void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
 {
    // create average of selected
+
+#if defined( DEBUG_FRAME_NAMES )
+   QTextStream(stdout) << QString( "avg() of:\n--------\n%1\n--------\n" ).arg( files.join( "\n" ) );
+#endif
 
    vector < QString > avg_qs_string;
    vector < double >  avg_qs;
@@ -1679,12 +1696,27 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
       // source_I = each t_Is
       // target_I = avg_Is;
 
+      // add_plot(  "avg_Is", avg_qs, avg_Is, true, false );
+
       for ( int i = 0; i < (int)selected_count; ++i ) {
          QString this_file = files[ i ];
          vector < double > org_error = t_errors[ this_file ];
          double k;
          double chi2;
 
+         // vector < double > nnIs =  t_Is[ this_file ];
+         // double min_nz = 1e-10;
+         // for ( int i = 0; i < (int) nnIs.size(); ++i ) {
+         //    if ( nnIs[i] > 0 && nnIs[i] < min_nz) {
+         //       min_nz = nnIs[i];
+         //    }
+         // }
+         // for ( int i = 0; i < (int) nnIs.size(); ++i ) {
+
+         //    if ( nnIs[i] < 0 ) {
+         //       nnIs[i] = min_nz;
+         //    }
+         // }
          usu->scaling_fit( 
                           t_Is[ this_file ],
                           avg_Is,
@@ -1692,6 +1724,15 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
                           k,
                           chi2 );
          
+         // QTextStream(stdout) << QString( "%1 scaling factor %2 chi2 %3\n" ).arg( this_file ).arg( k ).arg( chi2 );
+         // {
+         //    vector <double> tmp_plot = t_Is[ this_file];
+         //    for ( int j = 0; j < (int)tmp_plot.size(); ++j ) {
+         //       tmp_plot[ j ] *= k;
+         //    }
+         //    add_plot(  QString( "%1_scaled" ).arg( this_file ), avg_qs, tmp_plot, true, false );
+         // }
+
          for ( int j = 0; j < (int)avg_qs.size(); ++j ) {
             t_errors[ this_file ][ j ] *= k;
          }
@@ -1736,6 +1777,25 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    }
 
    QString avg_name = head + suffix + framename + "avg" + tail;
+
+#if defined( DEBUG_FRAME_NAMES )
+   QTextStream(stdout) <<
+      QString(
+              "--------\n"
+              "head      : '%1'\n"
+              "suffix    : '%2'\n"
+              "framename : '%3'\n"
+              "tail      : '%4'\n"
+              "avg_name  : '%5'\n"
+              "--------\n"
+              )
+      .arg( head )
+      .arg( suffix )
+      .arg( framename )
+      .arg( tail )
+      .arg( avg_name )
+      ;
+#endif
 
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
@@ -2335,6 +2395,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
    parameters[ "hplc_guinier_qrgmax"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"           ];
    parameters[ "hplc_cb_guinier_qrgmax"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"        ];
+   parameters[ "hplc_gg_smooth"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth"                ];
+   parameters[ "hplc_cb_gg_smooth"          ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth"             ];
+   parameters[ "hplc_cb_gg_cyclic"          ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_cyclic"             ];
+   parameters[ "hplc_cb_gg_oldstyle"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_oldstyle"           ];
    parameters[ "hplc_dist_max"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"                 ];
    parameters[ "guinier_mwt_k"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"                 ];
    parameters[ "guinier_mwt_c"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"                 ];
@@ -2354,6 +2418,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_cb_makeiq_avg_peaks"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks"      ];
    parameters[ "hplc_makeiq_avg_peaks"      ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks"         ];
 
+   
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
       (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
@@ -2395,6 +2460,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"        ] = parameters[ "hplc_guinier_qrgmax"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"     ] = parameters[ "hplc_cb_guinier_qrgmax"        ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth"             ] = parameters[ "hplc_gg_smooth"                ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth"          ] = parameters[ "hplc_cb_gg_smooth"             ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_cyclic"          ] = parameters[ "hplc_cb_gg_cyclic"             ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_oldstyle"        ] = parameters[ "hplc_cb_gg_oldstyle"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"              ] = parameters[ "hplc_dist_max"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"              ] = parameters[ "guinier_mwt_k"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"              ] = parameters[ "guinier_mwt_c"                 ];

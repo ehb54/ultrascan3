@@ -156,7 +156,7 @@ class US_XpnDataViewer : public US_Widgets
      QStringList    sl_optimas;          // New
      QLineEdit*     le_optima_connected; //New
      
-     QLineEdit*     le_runID;
+     US_LineEdit_RE*     le_runID;
      QLineEdit*     le_lrange;
      QLineEdit*     le_status;
      QLineEdit*     le_colmap;

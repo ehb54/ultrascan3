@@ -26,6 +26,7 @@ int US_Hydrodyn::calc_somo_o()
 
 int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 {
+   progress->set_cli_prefix( "bm" );
    citation_build_bead_model( no_ovlp_removal ? "somo-overlaps" : "somo-no-overlaps" );
    {
       int models_selected = 0;

@@ -26,7 +26,7 @@ namespace US_WinData
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
     P_VIEWCFA,      P_VIEWXPN,      P_VIEWTMST,
-    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS, P_ABDE_ANALYSE,
+    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS,
 
     P_VIEWMWL,      P_VIEWMSS,      P_MWSPECF,  // MultiWavelength Menu
     P_MWFSIMU,
@@ -172,8 +172,8 @@ namespace US_WinData
     },
 
     { P_GMPRPT,    1, 0, "us_reporter_gmp",
-      QObject::tr( "Loading GMP Report Generator" ),
-      QObject::tr( "GMP Report Generator Program" )
+      QObject::tr( "Loading GMP Report Generator and Viewer" ),
+      QObject::tr( "GMP Report Generator and Viewer Program" )
     },
             
     { P_CONVERT,  1, 0, "us_convert",
@@ -276,12 +276,6 @@ namespace US_WinData
       QObject::tr( "Loading Pseudo-Absorbance Program" ),
       QObject::tr( "Managing Reference Scans Program" )
     },
-    
-    { P_ABDE_ANALYSE,  0, 0, "us_abde_analysis",
-      QObject::tr( "Loading ABDE Analysis Program" ),
-      QObject::tr( "Managing ABDE Analysis Program" )
-    },
-
  
     { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
       QObject::tr( "Loading View Multiwavelength Data"    ),

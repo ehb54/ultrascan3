@@ -303,4 +303,31 @@ class US_GUI_EXTERN US_Disk_DB_Controls : public QHBoxLayout
       void rb_changed( bool );
 };
 
+class US_GUI_EXTERN US_LineEdit_RE: public QLineEdit
+{
+    Q_OBJECT
+
+public:
+    US_LineEdit_RE(const QString& = 0, int = -1, bool = false);
+    void setMaxChars(int);
+    void setDefault(void);
+    QRegExp re;
+
+signals:
+    void textUpdated(void);
+
+public slots:
+    void setText(const QString &);
+
+private slots:
+    void newEdit(const QString &);
+
+private:
+    int _maxchrs;
+    int _dfltchrs;
+    QString _mytext;
+    bool _editstate;
+    void _set_etext(const QString &);
+};
+
 #endif

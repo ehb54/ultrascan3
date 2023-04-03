@@ -22,7 +22,10 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
 
    public:
       US_Investigator( bool = false, int = -1 );
+      US_Investigator( QString, bool = false, int = -1 );
 
+      bool us_inv_auto_mode;
+      
       //! \brief A method for overriding user permissions
       void override_permit( bool );
 

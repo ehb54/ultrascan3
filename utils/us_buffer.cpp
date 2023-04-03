@@ -183,6 +183,37 @@ void US_BufferComponent::putAllToHD(const QMap<QString, US_BufferComponent> &com
 }
 
 
+int US_BufferComponent::saveToDB(US_DB2 * db) {
+   QStringList q;
+   // construct density and viscosity
+   QString density;
+   for (int i = 0; i < 6; i++) {
+      density += QString(i > 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
+   }
+   QString viscosity;
+   for (int i = 0; i < 6; i++) {
+      viscosity += QString(i > 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
+   }
+
+   q.clear();
+   q << "create_buffer_component" << name << unit << range
+     << US_Util::bool_string(grad_form) << density << viscosity;
+
+   db->statusQuery(q);
+
+   if (db->lastErrno() != US_DB2::OK) {
+      qDebug() << "create_buffer_component error=" << db->lastErrno();
+      return -1;
+   }
+
+   int idBufferComponent = db->lastInsertID();
+   //qDebug() << "new_buffer-idBuffer" << idBuffer;
+
+   qDebug() << "buffer_component_ID for new buffer component: " << idBufferComponent;
+   componentID = QString::number(idBufferComponent);
+}
+
+
 bool US_CosedComponent::readFromDB(US_DB2 *db, const QString &cosed_compID) {
    QStringList q("get_cosed_component_info");
    q << cosed_compID;   // cosed_componentID from list widget entry
@@ -439,6 +470,7 @@ US_CosedComponent US_CosedComponent::clone(void) {
 
    return cloned;
 }
+
 
 
 //-------------  US_Buffer

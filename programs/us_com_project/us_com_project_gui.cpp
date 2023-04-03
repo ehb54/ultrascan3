@@ -1692,6 +1692,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 			 - analysisIDs
 
 	  */
+	  
+	  
 	  do_run_tables_cleanup( protocol_details );
 
 	  do_run_data_cleanup( protocol_details );
@@ -1842,12 +1844,116 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
       << run_details[ "autoflowID" ];
   db->query( qry );
 
+  //Restore autoflowReports' records 'tripleDropped' to DEFAULT ('none')
+  // 1. Create reportIDs list from protocol's AProfile;
+  // 2. Go over reports in the autoflowReport table & SET 'tripleDropped' to 'none'  
+
+  channels_report. clear();
+  QString aprofile_xml;
+  
+  qry. clear();
+  qry << "get_aprofile_info" << run_details[ "aprofileguid" ];
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      aprofile_xml         = db->value( 2 ).toString();
+    }
+  
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readAProfileBasicParms_auto( xmli );
+    }
+
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  qry. clear();
+	  QString rID = reportIDs_list[i];
+	  
+	  qry << "update_autoflow_report_at_import"
+	      << rID
+	      << QString("none");
+	  
+	  qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	  db->query( qry );
+	}
+    }
+  
+}
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
 
 //Cleanup failed run's data for further re-initializaiton:
 void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_details )
 {
+
+  //Get proper filename
+  QString FileName = run_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+
+  //show progress dialog
+  int progress_total = fileNameList.size()*6 + 1;
+  QProgressDialog* progress_msg = new QProgressDialog ("Cleaning Data for Current Run...", QString(), 0, progress_total, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Cleaning Data..."));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
+  
+  
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
@@ -1861,75 +1967,126 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
     }
 
   QStringList qry;
-  
-  //get experimentID from 'experiment' table:
-  qry << "get_experiment_info_by_runID"
-      << run_details[ "filename" ]
-      << run_details[ "invID_passed" ];
 
-  db->query( qry );
-  db->next();
-  QString expID  = db->value( 1 ).toString();
-
+  int progress = progress_msg->value();
   
-  // Let's make sure it's not a calibration experiment in use
-  qry. clear();
-  qry << "count_calibration_experiments" << expID;
-  int count = db->functionQuery( qry );
-  qDebug() << "Cleaning Failed Run: calexp count" << count;
-  
-  if ( count < 0 )
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
     {
-      qDebug() << "count_calibration_experiments( "
-               << expID
-               << " ) returned a negative count";
-      return;
+      qry.clear();
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << run_details[ "invID_passed" ];
+
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+      
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+
+	  progress_msg->close();
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+	  progress_msg->close();
+	  return;
+	}
+
+      int status;
+      
+      // Delete links between experiment and solutions
+      qry. clear();
+      qry << "delete_experiment_solutions"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del sols status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Same with cell table
+      qry. clear();
+      qry  << "delete_cell_experiments"
+	   << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del cells status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      //US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+       	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for FAILED run: del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( status != US_DB2::OK )
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
     }
-  
-  else if ( count > 0 )
-    {
-      QMessageBox::information( this,
-				tr( "Error" ),
-				tr( "Cannot delete an experiment that is associated "
-				    "with a rotor calibration\n" ) );
-      return;
-    }
 
-  int status;
-  
-  // Delete links between experiment and solutions
-  qry. clear();
-  qry << "delete_experiment_solutions"
-      << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del sols status" << status;
-  
-  // Same with cell table
-  qry. clear();
-  qry  << "delete_cell_experiments"
-       << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del cells status" << status;
-
-  // Let's delete any pcsa_modelrecs records to avoid
-  //  constraints problems
-  US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
-
-  // Now delete the experiment and all existing rawData, 
-  qry. clear();
-  qry << "delete_experiment"
-      << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del_exp stat" << status;
-  
-  if ( status != US_DB2::OK )
-    {
-      QMessageBox::information( this,
-				tr( "Error / Warning" ),
-				db -> lastError() + tr( " (error=%1, expID=%2)" )
-				.arg( status ).arg( expID ) );
-    }
-
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+  /** End Iterate over fileNameList ****************************************************************/
 }
 
 
@@ -2157,7 +2314,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	  qDebug() << "User level low: " << US_Settings::us_inv_level();
 	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
 
-	  if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  if ( user_id && user_id == invID.toInt() )
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
@@ -2257,6 +2415,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
 	 }
      }
    else

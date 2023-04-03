@@ -1,6 +1,7 @@
 include( ../../gui.pri )
 
 QT += datavisualization
+QT += printsupport
 
 TARGET        = us_mwl_species_fit
 

@@ -314,7 +314,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
                  le_dbhost   = us_lineedit( "", -1, true );
 
    QLabel*      lb_runID    = us_label( tr( "Run ID:" ), -1 );
-                 le_runID    = us_lineedit( "", -1, false );
+                 le_runID    = new US_LineEdit_RE( "", -1, false );
 
    QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
                 cb_cellchn  = us_comboBox();
@@ -935,7 +935,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
 
 		
    QLabel*      lb_runID    = us_label( tr( "Run ID:" ), -1 );
-                le_runID    = us_lineedit( "", -1, false );
+                le_runID    = new US_LineEdit_RE( "", -1, false );
 
    QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
                 cb_cellchn  = us_comboBox();
@@ -2363,6 +2363,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
       if ( finishing_live_update )
 	{
+	  qDebug() << "Exp. completed: finishing_live_update:  " << finishing_live_update;
 	  in_reload_check_sysdata   = false;
 	  return;
 	}
@@ -3244,6 +3245,9 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      }
    else
      {
+       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt() -- "
+		<< cellchans.count() << ", " <<  CellChNumber_map[ runType ].toInt() << "; "
+		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt();
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
 

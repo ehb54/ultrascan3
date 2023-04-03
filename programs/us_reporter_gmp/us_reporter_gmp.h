@@ -178,9 +178,11 @@ class US_ReporterGMP : public US_Widgets
 	 //CombPlots masks
 	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
 	 QMap<QString, QTreeWidgetItem *> ItemCombPlots;
-	 
+
+         QList< QStringList >  gmpReportsDBdata;
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
+         US_SelectItem* pdiag_autoflow_db;
 
 	 QString html_assembled;
 	 QString html_failed;
@@ -202,6 +204,7 @@ class US_ReporterGMP : public US_Widgets
 	 QPushButton*  pb_download_report;
 	 QPushButton*  pb_gen_report  ;
 	 QPushButton*  pb_view_report ;
+         QPushButton*  pb_view_report_db ;
 	 QPushButton*  pb_view_report_auto ;
 	 QPushButton*  pb_select_all ;
 	 QPushButton*  pb_unselect_all ;
@@ -210,14 +213,20 @@ class US_ReporterGMP : public US_Widgets
 	 QPushButton*  pb_help;
 	 QPushButton*  pb_close;
 	 QLineEdit*    le_loaded_run;
+         QLineEdit*    le_loaded_run_db;
 
+         QTextEdit*    te_fpath_info;
+         QTextEdit*    te_fpath_info_db;
+  
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;
 	 QString    AutoflowID_auto;
-	 int        invID;
+         QString    FullRunName_auto;
+         int        invID;
 	 QString    runID;
 	 QString    runName;
 	 QString    filePath;
+	 QString    filePath_db;  
 	 QString    FileName;
 	 QString    intensityID;
 	 QString    analysisIDs;
@@ -269,10 +278,13 @@ class US_ReporterGMP : public US_Widgets
 	 void  assemble_pdf( QProgressDialog * );
 	 void  add_solution_details( const QString, const QString, QString& );
 	 void  assemble_parts( QString& );
+         int   list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
 	 int   list_all_autoflow_records( QList< QStringList >&  );
 	 QMap < QString, QString > read_autoflow_record( int );
 	 void  write_pdf_report( void );
-
+         void  remove_files_by_mask( QString, QStringList );
+         void write_gmp_report_DB( QString, QString );
+  
 	 void  assemble_user_inputs_html( void );
          void  assemble_run_details_html( void );
          int   get_expID_by_runID_invID( US_DB2*, QString );
@@ -281,6 +293,11 @@ class US_ReporterGMP : public US_Widgets
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
          QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
+
+  void read_reportLists_from_aprofile( QStringList &, QStringList & );
+  bool readReportLists( QXmlStreamReader&, QMap< QString, QString> &, QMap< QString, QString> & );
+  QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
+  
 	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
@@ -485,6 +502,8 @@ class US_ReporterGMP : public US_Widgets
 	QString  missing_models_msg( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
+        void view_report_db ( void );
+        void load_gmp_report_db( void );
 	void load_gmp_run ( void );
 	void generate_report( void );
 	void changedItem    ( QTreeWidgetItem*, int );

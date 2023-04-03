@@ -1475,15 +1475,31 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_residue.molvol = misc.avg_volume * atom_counts[count_idx];
                         // new_residue.asa = misc.avg_asa * atom_counts[count_idx];
                         new_residue.asa = 0;
-                        new_residue.vbar = misc.avg_vbar;
+                        new_residue.vbar       = misc.avg_vbar;
+                        new_residue.vbar_at_pH = misc.avg_vbar;
                         new_residue.r_atom.clear( );
                         new_residue.r_bead.clear( );
+
                         new_bead.hydration = (unsigned int)(misc.avg_hydration * atom_counts[count_idx] + .5);
                         new_bead.color = 10;         // light green
                         new_bead.placing_method = 0; // cog
                         new_bead.chain = 1;          // side chain
                         new_bead.volume = misc.avg_volume * atom_counts[count_idx];
                         new_bead.mw = misc.avg_mass * atom_counts[count_idx];
+// #define DEBUG_ABB_VBAR
+#if defined( DEBUG_ABB_VBAR )
+                        QTextStream( stdout )
+                           << "--------------------------------------------------------------------------------\n"
+                           << "residue     : " << j << "\n"
+                           << "avg_volume  : " << misc.avg_volume << "\n"
+                           << "count_idx   : " << count_idx << "\n"
+                           << "atom_counts : " << atom_counts[count_idx] << "\n"
+                           << "molvol      : " << new_residue.molvol << "\n"
+                           << "bead.vol    : " << new_bead.volume << "\n"
+                           << "mw          : " << new_bead.mw << "\n"
+                           ;
+#endif
+
                         new_bead.ionized_mw_delta = 0;
                         new_residue.r_bead.push_back(new_bead);
                         multi_residue_map[new_residue.name].push_back(residue_list.size());
@@ -1585,11 +1601,16 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         }
                      }
             
-                     new_atom.name = (this_atom->name == "OXT" ? "OXT'" : this_atom->name);
-                     new_atom.hybrid.name = this_atom->name;
-                     new_atom.hybrid.mw = misc.avg_mass;
+                     new_atom.name                    = (this_atom->name == "OXT" ? "OXT'" : this_atom->name);
+                     new_atom.hybrid.name             = this_atom->name;
+                     new_atom.hybrid.mw               = misc.avg_mass;
                      new_atom.hybrid.ionized_mw_delta = 0;
-                     new_atom.hybrid.radius = misc.avg_radius;
+                     new_atom.hybrid.radius           = misc.avg_radius;
+                     new_atom.hybrid.scat_len         = 0;
+                     new_atom.hybrid.saxs_name        = "ABB";
+                     new_atom.hybrid.num_elect        = misc.avg_num_elect;
+                     new_atom.hybrid.protons          = misc.avg_protons;
+                     
                      new_atom.bead_assignment = current_bead_assignment; 
                      new_atom.positioner = true;
                      new_atom.serial_number = residue_list[respos].r_atom.size();
@@ -1615,8 +1636,25 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         }
                         if ( !residue_atom_hybrid_map.count( mapkey ) &&
                              residue_atom_abb_hybrid_map.count( atom_to_add.name ) ) {
-                           residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
+                           // should use ABB atoms hybridization
+                           // residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
                            // us_qdebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( residue_atom_abb_hybrid_map[atom_to_add.name ] ) );
+                           residue_atom_hybrid_map[ mapkey ] = "ABB";
+                           {
+                              QString mapkey_no_nc = QString("%1|%2").arg(this_atom->resName).arg(atom_to_add.name);
+                              residue_atom_hybrid_map[ mapkey_no_nc ] = "ABB";
+                           }
+                           residue_atom_hybrid_map[ mapkey ] = "ABB";
+                           if ( !saxs_util->hybrid_map.count( "ABB" ) ) {
+                              saxs_util->hybrid_map[ "ABB" ] = new_atom.hybrid;
+                           }
+                           {
+                              QString atom_map_key = new_atom.name + "~ABB";
+                              if ( !saxs_util->atom_map.count( atom_map_key ) ) {
+                                 saxs_util->atom_map[ atom_map_key ] = new_atom;
+                              }
+                           }
+                           us_qdebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( "ABB" ) );
                         }
                      }
                   }

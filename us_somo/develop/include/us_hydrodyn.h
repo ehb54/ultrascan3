@@ -142,6 +142,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       US_Hydrodyn(vector < QString >,
                   QString gui_script_file = "",
+                  bool init_configs_silently = false,
                   QWidget *p = 0, 
                   const char *name = 0);
 
@@ -169,7 +170,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_core_progress;
       void set_disabled( bool clear_bead_model_file = true );
       void set_enabled();
-      QTextEdit *editor;
+      mQTextEdit *editor;
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
       bool bead_model_from_file;
@@ -274,6 +275,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString  gui_script_file;
       void     gui_script_msg  ( int line, QString arg, QString msg );
       void     gui_script_error( int line, QString arg, QString msg, bool doexit = true );
+
+      bool     init_configs_silently;
       
       map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );
       map < QString, struct atom * > first_residue_atom_map( struct PDB_chain & chain );
@@ -1036,6 +1039,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool dmd_failed_validation;
       map < QString, map < QString, QStringList > > dmd_all_pdb_prepare_reports;
 
+      void clear_temp_dirs();
+      
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();
@@ -1048,8 +1053,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void gui_script_run();
       
    public:
-      QProgressBar *progress;
-      QProgressBar *mprogress;
+      bool          cli_progress;
+      mQProgressBar *progress;
+      mQProgressBar *mprogress;
 
       void set_expert( bool );
 
