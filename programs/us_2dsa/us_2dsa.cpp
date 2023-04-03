@@ -1061,6 +1061,7 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    // Skip adding speed steps if this is multi-speed, initially,
    // but set speed steps to the experiment vector.
    dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+   if (dataLoaded){dset.solution_rec = solution_rec;}
    edata->bottom   = ( edata->bottom > 0.0 ) ?
                      edata->bottom :
                      0.0;
