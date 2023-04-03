@@ -147,7 +147,9 @@ bool US_SolveSim::check_grid_size(double s_max, QString &smsg) {
 // Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
 void
 US_SolveSim::calc_residuals(int offset, int dataset_count, Simulation &sim_vals, bool padAB, QVector<double> *ASave,
-                            QVector<double> *BSave, QVector<double> *NSave) {
+                            QVector<double> *BSave, QVector<double> *NSave,
+                            US_Math_BF::Band_Forming_Gradient* bfg,
+                            US_LammAstfvm::CosedData* csD ) {
    QVector<double> sv_nnls_a;
    QVector<double> sv_nnls_b;
 
@@ -256,7 +258,7 @@ US_Settings::set_us_debug( dbg_level );
 #endif
    //==================================================================
    for (int ee = offset; ee < lim_offs; ee++) {
-      qDebug() << "SolveSim:calc_res: offset ee d_offs" << offset << ee << d_offs;
+//      qDebug() << "SolveSim:calc_res: offset ee d_offs" << offset << ee << d_offs;
       US_DataIO::EditedData *edata = &data_sets[ee]->run_data;
       edata = banddthr ? &wdata : edata;
       npoints = edata->pointCount();
@@ -449,8 +451,7 @@ US_Settings::set_us_debug( dbg_level );
             else{
                US_LammAstfvm astfvm(model,dset->simparams);
                US_Buffer tmp = dset->solution_rec.buffer;
-               DbgLv(0) << tmp.description << tmp.cosed_component.count();
-               astfvm.set_buffer(dset->solution_rec.buffer);
+               astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
                astfvm.calculate(simdat);
             }
 //DebugTime("END: clcr-NA-astfem");
@@ -718,8 +719,7 @@ DbgLv(0)<< " norm_s norm_a norm_b" << norm_s << norm_a << norm_b
             else{
                US_LammAstfvm astfvm(model,dset->simparams);
                US_Buffer tmp = dset->solution_rec.buffer;
-               DbgLv(0) << tmp.description << tmp.cosed_component.count();
-               astfvm.set_buffer(dset->solution_rec.buffer);
+               astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
                astfvm.calculate(simdat);
             }
 #if 0
@@ -910,8 +910,7 @@ DbgLv(1) << "CR: sdat:"
             else{
                US_LammAstfvm astfvm(model,dset->simparams);
                US_Buffer tmp = dset->solution_rec.buffer;
-               DbgLv(0) << tmp.description << tmp.cosed_component.count();
-               astfvm.set_buffer(dset->solution_rec.buffer);
+               astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
                astfvm.calculate(simdat);
             }
             if (abort) return;
