@@ -66,7 +66,7 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    uchar      key[ 16 ];  // The key is a 16 byte array 
    memset( key, 0, 16 );  // Zero it out
 
-   for ( int i = 0; i < pw.size(); i++ ) // Copy the password
+   for ( int i = 0; i < pw.size() && i < 16; i++ ) // Copy the password
       key[ i ] = pw[ i ].cell();
             
    QByteArray     iv_ba    = QByteArray::fromHex( initVector.toLatin1() );
@@ -76,7 +76,6 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    uchar*         cipher_ptr = (uchar*)cipher_ba.data();
 
    uchar          out   [ 100 ];   // Assume the plaintext is < 99 characters
-   uchar          final [ 100 ];
 
    int            ol;
    //EVP_CIPHER_CTX ctx;
@@ -84,9 +83,11 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
 
    EVP_DecryptInit  ( ctx, EVP_aes_128_cbc(), key, iv_ptr );
    EVP_DecryptUpdate( ctx, out, &ol, cipher_ptr, cipher_ba.size() );
-   EVP_DecryptFinal ( ctx, final, &ol );
 
-   QByteArray final_ba( (char*)final, ol );
+   int            ol_final;
+   EVP_DecryptFinal ( ctx, &out[ol], &ol_final );
+
+   QByteArray final_ba( (char*)out, ol + ol_final );
    EVP_CIPHER_CTX_free(ctx); 
 
    return final_ba;

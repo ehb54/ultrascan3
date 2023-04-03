@@ -24,10 +24,10 @@ US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI) : US_Widgets(
 	plotGroup = 0;
    plotResiduals = false;
    autoconverge = false;
-	maxIterations = 1000;
+	maxIterations = 50000;
 	suspend_flag = false;
-	lambdaStart = 1.0e5;
-   lambdaStep = 10.0;
+	lambdaStart = 20.0;
+   lambdaStep = 1.05;
    tolerance =  (float) 1.0e-12;
    constrained = false;
 	nlsMethod = 0;
@@ -172,7 +172,7 @@ void US_Minimize::setup_GUI()
 	gl3->addWidget(cb_nlsalg, 2, 1);
 	lbl_lambdaStart = us_label(tr("Lambda Start:"));
 	gl3->addWidget(lbl_lambdaStart, 3, 0);
-   le_lambdaStart = us_lineedit("1.0000e+05", 1, false);
+   le_lambdaStart = us_lineedit("20.0", 1, false);
    connect(le_lambdaStart, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStart(const QString &)));
 	gl3->addWidget(le_lambdaStart, 3, 1);
 	pb_plottwo = us_pushbutton(tr(""));
@@ -180,14 +180,14 @@ void US_Minimize::setup_GUI()
 	lbl_lambdaStep = us_label(tr("Lambda Step Size:"));
 	gl3->addWidget(lbl_lambdaStep, 4, 0);
 	//le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
-	le_lambdaStep = us_lineedit("2.000", 1, false);
+	le_lambdaStep = us_lineedit("1.050", 1, false);
    connect(le_lambdaStep, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStep(const QString &)));
 	gl3->addWidget(le_lambdaStep, 4, 1);
 	pb_plotthree = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotthree, 4, 2);
 	lbl_maxIterations = us_label(tr("Maximum Iterations:"));
 	gl3->addWidget(lbl_maxIterations, 5, 0);
-   le_maxIterations = us_lineedit("1000", 1, false);
+   le_maxIterations = us_lineedit("50000", 1, false);
 	connect(le_maxIterations, SIGNAL(textChanged(const QString&)), SLOT(update_maxIterations(const QString &)));
 	gl3->addWidget(le_maxIterations, 5, 1);
 	pb_plotfour = us_pushbutton(tr(""));
@@ -1395,38 +1395,38 @@ void US_Minimize::update_nlsMethod(int item)
    {
    case 0:
       {
-         lambdaStart = 1.0e6;
-         lambdaStep = 10.0;
+         lambdaStart = 20.0;
+         lambdaStep = 1.05;
          if (GUI)
          {
             //lbl_status4->setText(tr("Levenberg-Marquardt Method selected..."));
-            le_lambdaStart->setText(" 1.0e+06");
-            le_lambdaStep->setText(" 10.0");
+            le_lambdaStart->setText(" 20.0");
+            le_lambdaStep->setText(" 1.05");
          }
          break;
       }
    case 1:
       {
-         lambdaStart =  (float) 1.0e-6;
-         lambdaStep = 2.0;
+         lambdaStart =  (float) 20.0;
+         lambdaStep = 1.05;
          if (GUI)
          {
             //lbl_status4->setText(tr("Modified Gauss Newton Method selected..."));           
-            le_lambdaStart->setText(" 1.0e-6");
-            le_lambdaStep->setText(" 2.0");
+            le_lambdaStart->setText(" 20.0");
+            le_lambdaStep->setText(" 1.05");
 
          }
          break;
       }
    case 2:
       {
-         lambdaStart = 1.0e6;
-         lambdaStep = 10.0;
+         lambdaStart = 20;
+         lambdaStep = 1.05;
          if (GUI)
          {
             //lbl_status4->setText(tr("Hybrid Method selected..."));
-            le_lambdaStart->setText(" 1.0e6");
-            le_lambdaStep->setText(" 10.0");
+            le_lambdaStart->setText(" 20.0");
+            le_lambdaStep->setText(" 1.05");
          }
          break;
       }

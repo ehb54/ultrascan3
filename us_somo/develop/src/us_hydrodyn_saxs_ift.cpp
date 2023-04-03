@@ -402,7 +402,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    connect( le_prpoints, SIGNAL( textChanged( const QString & ) ), SLOT( update_prpoints( const QString & )));
 
 #if QT_VERSION > 0x040000
-   le_prpoints->setToolTip( us_tr( "<p>Optionally enter the number of points in the estimated function p(r): more points increase the cpu-time.</p><p>Default: 50, Maximum 100</p>" ) );
+   le_prpoints->setToolTip( us_tr( "<p>Optionally enter the number of points in the estimated function p(r): more points increase the cpu-time.</p><p>Default: 50, Maximum 500</p>" ) );
 #endif
 
    background->addWidget( le_prpoints, row, col++ );

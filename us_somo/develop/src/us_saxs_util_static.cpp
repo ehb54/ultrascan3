@@ -10894,7 +10894,7 @@ bool US_Saxs_Util::sscaling_fit(
    return true;
 }
 
-bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
+bool US_Saxs_Util::is_nonzero_vector( const vector < double > &v )
 {
    bool non_zero = v.size() > 0;
    for ( unsigned int i = 0; i < v.size(); i++ )
@@ -10906,6 +10906,22 @@ bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
       }
    }
    return non_zero;
+}
+
+bool US_Saxs_Util::is_zero_vector( const vector < double > &v )
+{
+   if ( !v.size() ) {
+      return true; // empty vector is zero vector
+   }
+   
+   bool is_zero = true;
+   for ( unsigned int i = 0; i < v.size(); i++ ) {
+      if ( v[ i ] != 0e0 ) {
+         is_zero = false;
+         break;
+      }
+   }
+   return is_zero;
 }
 
 bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line_size )
@@ -11461,4 +11477,91 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
    }
 
    return result;
+}
+
+bool US_Saxs_Util::calc_chisq(
+                              const vector < double > & x,
+                              const vector < double > & y,
+                              const vector < double > & sds,
+                              int                     parameters,
+                              double                  & chisq,
+                              double                  & nchi,
+                              QString                 & errors
+                              ) {
+   errors = "not yet implemented";
+   if ( x.size() != y.size() ) {
+      errors = QString( "Compute Chi2: Incompatible vector sizes for chi2 computation %1 %1\n" ).arg( x.size() ).arg( y.size() );
+      return false;
+   }
+   if ( x.size() != sds.size() ) {
+      errors = QString( "Compute Chi2: Incompatible vector error sizes for chi2 computation %1 %1\n" ).arg( x.size() ).arg( sds.size() );
+      return false;
+   }
+   if ( !is_nonzero_vector( sds ) ) {
+      errors = QString( "Compute Chi2: Errors have zero values, can not compute\n" );
+      return false;
+   }
+      
+   int size = (int) x.size();
+   int df   = size - parameters;
+
+   if ( df < 1 ) {
+      errors = QString( "Compute Chi2: Vector must have at least length %1, can not compute" ).arg( parameters + 1 );
+      return false;
+   }
+
+   chisq = 0;
+   for ( int i = 0; i < size; ++i ) {
+      chisq += pow( ( y[i] - x[i] ) / sds[i], 2 );
+   }
+   nchi = sqrt( chisq / df );
+
+   return true;
+}
+
+bool US_Saxs_Util::compute_rg_from_pr(
+                                      const vector < double >  & r
+                                      ,const vector < double > & pr
+                                      ,double                  & Rg
+                                      ,QString                 & errormsg
+                                      ) {
+   if ( r.size() != pr.size() ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : vector lengths differ r[%1]!=pr[%2]" ) )
+         .arg( r.size() )
+         .arg( pr.size() )
+         ;
+      return false;
+   }
+   
+   if ( r.size() < 2 ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : provided vectors too small [%1]" ) )
+         .arg( r.size() )
+         ;
+      return false;
+   }
+   
+   int pts = (int) r.size();
+
+   double intgrl_r2_pr = 0;
+   double intgrl_pr    = 0;
+   
+   double dr           = r[1] - r[0];
+
+   for ( int i = 0; i < pts; ++i ) {
+      intgrl_r2_pr += r[i]*r[i]*pr[i]*dr;
+      intgrl_pr    += pr[i]*dr;
+   }
+
+   if ( intgrl_pr <= 0 ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : integral of p(r) [%1] is zero or negative" ) )
+         .arg( intgrl_pr )
+         ;
+      return false;
+   }
+
+   Rg = sqrt( intgrl_r2_pr / ( 2.0 * intgrl_pr ) );
+   return true;
 }

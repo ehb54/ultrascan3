@@ -68,7 +68,7 @@ void US_Hydrodyn_Results::setupGUI()
    le_name = new QLineEdit( this );    le_name->setObjectName( "name Line Edit" );
    le_name->setText(results->name);
    le_name->setReadOnly(true);
-   le_name->setMinimumWidth(200);
+   le_name->setMinimumWidth(300);
    //   le_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_name->setPalette( PALET_NORMAL );
    AUTFBACK( le_name );

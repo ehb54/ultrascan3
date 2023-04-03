@@ -3,6 +3,7 @@
 #define US_PLOT_H
 
 #include "us_widgets_dialog.h"
+#include "us_widgets.h"
 #include "us_extern.h"
 
 #if QT_VERSION > 0x050000
@@ -16,6 +17,12 @@
 #include "qwt_plot_curve.h"
 #include "qwt_plot_canvas.h"
 #include "qwt_symbol.h"
+#include <QMetaEnum>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
 
 
 //! \brief A class to implement plot zooming
@@ -133,9 +140,11 @@ class US_PlotConfig : public US_WidgetsDialog
 
    public:
       //! \param current_plot - The plot to be configured
-      US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
 
       QColor global_canvas_color;
+
+      Q_ENUM(QwtPlot::Axis);
   //QPalette global_canvas_palette;
 
    //signals:
@@ -163,6 +172,14 @@ class US_PlotConfig : public US_WidgetsDialog
       US_PlotCurveConfig* curveWidget;
 
       void setLegendFontString( void );
+      QJsonObject getGridJson( void );
+      QJsonObject getAxisJson( int );
+      QJsonObject getFontJson( QFont );
+      void setTitleJson( QJsonObject );
+      QFont jsonToFont( QJsonObject );
+      QMap<QString, bool> parseGridJson( QJsonObject, QPen*);
+      void setGridJson( QJsonObject );
+      void setAxisJson( int, QJsonObject );
 
    private slots:
       void updateTitleText  ( const QString& );
@@ -195,7 +212,7 @@ class US_PlotCurveConfig : public US_WidgetsDialog
 
    public:
       US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = 0, 
-            Qt::WindowFlags = 0 );
+            Qt::WindowFlags = Qt::Dialog );
 
    //signals:
       //! \brief A signal to tell the parent that the window is closed
@@ -247,7 +264,7 @@ class US_PlotLabel : public QWidget
       //! \param caller - Parent configuration window
       //! \param p      - Parent widget, generally can be the default
       //! \param f      - Window flags to be passed, normally the default
-      US_PlotLabel( US_PlotCurveConfig*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotLabel( US_PlotCurveConfig*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
       
    private:
       US_PlotCurveConfig* data;
@@ -263,7 +280,7 @@ class US_PlotAxisConfig : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
       
    //signals:
       //! \brief A signal to ensure the parent knows the window is closed.
@@ -314,7 +331,7 @@ class US_PlotGridConfig : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_PlotGridConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotGridConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
       ~US_PlotGridConfig() {};
 
    //signals:

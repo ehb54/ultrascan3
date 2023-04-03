@@ -419,11 +419,18 @@ void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_de
   emit to_live_update( protocol_details );
 }
 
+// // [OLD - when starting from 4. EDIT ] When run submitted for ProtDev
+// void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_details )
+// {
+//   tabWidget->setCurrentIndex( 0 );
+//   emit to_editing_data( protocol_details );
+// }
+
 // When run submitted for ProtDev
 void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_details )
 {
   tabWidget->setCurrentIndex( 0 );
-  emit to_editing_data( protocol_details );
+  emit to_live_update( protocol_details );
 }
 
 // Panel for run and other general parameters
@@ -545,6 +552,8 @@ for (int jj=0;jj<gxentrs.count();jj++)
             this,            SLOT(   check_empty_runname(const QString &) ) );
    connect( le_runid,        SIGNAL( editingFinished()  ),
             this,            SLOT(   run_name_entered() ) );
+   connect( le_label,        SIGNAL( editingFinished()  ),
+            this,            SLOT(   label_name_entered() ) );
    connect( pb_project,      SIGNAL( clicked()          ),
             this,            SLOT(   sel_project()      ) );
    connect( pb_investigator, SIGNAL( clicked()          ),
@@ -654,6 +663,50 @@ bool US_ExperGuiGeneral::updateProtos( const QStringList prentry )
    return true;
 }
 
+// Verify valid label name (possible modify for valid-only characters)
+void US_ExperGuiGeneral::label_name_entered( void )
+{
+  QString lname     = le_label->text();
+  QString old_lname = lname;
+  bool changed      = false;
+  
+  /*** ALEXEY: RegExp COMMENTED OUT for now ****************************************/
+  /*
+  QRegExp rx( "[^A-Za-z0-9_-]" );
+  lname.replace( rx,  "_" );   //ALEXEY - we may use alpha-numeric only, but not nessessarily..
+  
+  if ( lname != old_lname )
+    {  // Report on invalid characters replaced
+      QMessageBox::warning( this,
+			    tr( "Label Changed" ),
+			    tr( "The label name has been changed. It may consist only\n"
+				"of alphanumeric characters or underscore or hyphen.\n"
+				"New label:\n  " )
+			    + lname );
+      changed           = true;
+    }
+  */
+  /***********************************************************************************/
+  
+  // Limit label's length to 60 characters
+  if ( lname.length() > 60 )
+    {
+      QMessageBox::warning( this,
+			    tr( "Label Name Too Long" ),
+			    tr( "The label name may be at most\n"
+				"60 characters in length." ) );
+      lname             = lname.left( 60 );
+      changed           = true;
+    }
+  qDebug() << "Exp:Gen:Label: changed" << changed;
+  
+  if ( changed )
+    {  // Replace runID in line edit box
+      le_label->setText( lname );
+      currProto->exp_label = lname;
+    }
+}
+
 // Verify valid run name (possible modify for valid-only characters)
 void US_ExperGuiGeneral::run_name_entered( void )
 {
@@ -716,11 +769,12 @@ void US_ExperGuiGeneral::sel_project( void )
 // Select DB investigator
 void US_ExperGuiGeneral::sel_investigator( void )
 {
-   int investID     = US_Settings::us_inv_ID();
+   int investID      = US_Settings::us_inv_ID();
    int old_investID  = investID;
 
    qDebug() << "Old invID: " << investID;
 
+   //US_Investigator* dialog = new US_Investigator( "AUTO", true, investID );
    US_Investigator* dialog = new US_Investigator( true, investID );
    check_user_level();
    dialog->override_permit( usr_enab );
@@ -752,7 +806,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
       US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
       US_ProtocolUtil::list_all( protdata, dbP );
-
+      //US_ProtocolUtil::list_all_auto( protdata, dbP );
+      
       for ( int ii = 0; ii < protdata.count(); ii++ )
          pr_names << protdata[ ii ][ 0 ];
 DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
@@ -800,7 +855,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
    check_runname();
 
-    qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
+   qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
 
 }
 
@@ -5707,6 +5762,14 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
+  // //DEBUG
+
+  // qDebug() << "InvestigatorID into autolfow -- " << QString::number(US_Settings::us_inv_ID());
+  // return;
+
+  //////////////////////////////////////////////////
+
+  
   // // ALEXEY: old way
   // QStringList dblist  = US_Settings::defaultXpnHost();
   // QString alias       = dblist[ 0 ];
@@ -5767,7 +5830,6 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	    saveRunProtocol();
 	    return;
 	  }
-	    
 	else if ( !mainw->automode && have_run && rps_differ )
 	  {
 	    saveRunProtocol();
@@ -5947,6 +6009,55 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	return;
     }
 
+  // Address separately the case when un-changed protocol is not re-saved before submission to OptimaX:
+  // Ensure all (existing) autoflowReport records for this protocol have 'tripleDropped' SET to 'none'!!!!!
+  if ( !rps_differ )
+    {
+      US_AnaProfile* aprof_t = mainw->get_aprofile();
+      
+      QMap <QString, QString> channels_report_t;
+      QString aprofile_xml_t;
+
+      QStringList qry;
+      qry << "get_aprofile_info" << aprof_t->aprofGUID;
+      qDebug() << "Accessing AProfile, qry -- " << qry;
+      dbP->query( qry );
+      
+      while ( dbP->next() )
+	{
+	  aprofile_xml_t  = dbP->value( 2 ).toString();
+	}
+      
+      if ( !aprofile_xml_t.isEmpty() )
+	{
+	  QXmlStreamReader xmli( aprofile_xml_t );
+	  readAProfileBasicParms( xmli, channels_report_t );
+	}
+      
+      QMap<QString, QString>::iterator chan_rep;
+      for ( chan_rep = channels_report_t.begin(); chan_rep != channels_report_t.end(); ++chan_rep )
+	{
+	  QString chan_key  = chan_rep.key();
+	  QString reportIDs = chan_rep.value();
+	  qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+	  
+	  QStringList reportIDs_list = reportIDs.split(",");
+	  for (int i=0; i<reportIDs_list.size(); ++i)
+	    {
+	      qry. clear();
+	      QString rID = reportIDs_list[i];
+	      
+	      qry << "update_autoflow_report_at_import"
+		  << rID
+		  << QString("none");
+	      
+	      qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	      dbP->query( qry );
+	    }
+	}
+    }
+  // End of dealing with unchanged protocol /////////////////////////////////////////////////////////////
+
   QMessageBox msgBox;
   QString message_protocol = tr( "");
   if ( rps_differ )
@@ -5977,6 +6088,43 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   
 }
 
+//Read channel-to-ref_wvl info from AProfile
+bool US_ExperGuiUpload::readAProfileBasicParms( QXmlStreamReader& xmli, QMap<QString, QString>& channels_report )
+{
+  channels_report. clear();
+  
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
 
 //Confirm submission for EDIT & ANALYIS: US_ProtDev
 void US_ExperGuiUpload::submitExperiment_confirm_protDev()
@@ -5989,9 +6137,10 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 
   //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
   QMessageBox msgBox_f;
-  msgBox_f.setText(tr( "You are about to reinitialize current run:<br><br>" )
-		   + tr("<b>Run Name:&emsp;</b>") + protocol_details[ "protocolName" ]
+  msgBox_f.setText(tr( "You are about to reinitialize the run based on the protocol:<br><br>" )
+		   + tr("<b>[OLD] Run Name:&emsp;</b>")  + protocol_details[ "protocolName" ]
 		   + tr("<br>")
+		   + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
 		   + tr("<br>") );
 		     
   msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
@@ -6027,10 +6176,128 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
     }
 }
 
+//  // [OLD - when starting from 4. EDIT ]  clear edit profiles, models noises
+//  void US_ExperGuiUpload::clearData_protDev()
+//  {
+//    QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+
+//    // Check DB connection
+//    US_Passwd pw;
+//    QString masterpw = pw.getPasswd();
+//    US_DB2* db = new US_DB2( masterpw );
+
+//    if ( db->lastErrno() != US_DB2::OK )
+//      {
+//        QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+//  			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+//        return;
+//      }
+
+//    int status;
+//    QStringList qry;
+
+//    //Get proper filename
+//    QString FileName = protocol_details[ "filename" ];
+//    QStringList fileNameList;
+//    fileNameList. clear();
+//    if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+//      fileNameList  = FileName.split(",");
+//    else
+//      fileNameList << FileName;
+
+//    /*** Iterate over fileNameList *********************************************/
+//    for ( int i=0; i<fileNameList.size(); ++i )
+//      {
+//        qry.clear();
+//        //get experimentID from 'experiment' table:
+//       qry << "get_experiment_info_by_runID"
+// 	  << fileNameList[ i ]
+// 	  << protocol_details[ "invID_passed" ];
+
+//       qDebug() << "clearData_protDev(), qry -- " << qry;
+      
+//       db->query( qry );
+//       db->next();
+//       QString expID  = db->value( 1 ).toString();
+      
+//       // Let's make sure it's not a calibration experiment in use
+//       qry. clear();
+//       qry << "count_calibration_experiments" << expID;
+//       int count = db->functionQuery( qry );
+//       qDebug() << "Cleaning Failed Run: calexp count" << count;
+      
+//       if ( count < 0 )
+// 	{
+// 	  qDebug() << "count_calibration_experiments( "
+// 		   << expID
+// 		   << " ) returned a negative count";
+// 	  return;
+// 	}
+      
+//       else if ( count > 0 )
+// 	{
+// 	  QMessageBox::information( this,
+// 				    tr( "Error" ),
+// 				    tr( "Cannot delete an experiment that is associated "
+// 					"with a rotor calibration\n" ) );
+// 	  return;
+// 	}
+      
+//       // Let's delete any pcsa_modelrecs records to avoid
+//       //  constraints problems
+//       qry. clear();
+//       qry << "delete_run_pcsa_recs"
+// 	  << fileNameList[ i ];
+//       status = db -> statusQuery( qry );
+//       qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
+//       //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
+      
+//       // Now delete editedData, models, noises, reports, 
+//       qry. clear();
+//       qry << "clear_data_for_experiment"
+// 	  << expID;
+//       status = db -> statusQuery( qry );
+//       qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
+      
+//       if ( status != US_DB2::OK )
+// 	{
+// 	  QMessageBox::information( this,
+// 				    tr( "Error / Warning" ),
+// 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+// 				    .arg( status ).arg( expID ) );
+// 	}
+//     }
+//   /** End Iterate over fileNameList ****************************************************************/
+// }
+
+
 // clear edit profiles, models noises
 void US_ExperGuiUpload::clearData_protDev()
 {
+
+  //Get proper filename
   QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+  QString FileName = protocol_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+  
+  //show progress dialog
+  int progress_total = fileNameList.size()*6 + 1;
+  QProgressDialog* progress_msg = new QProgressDialog ("Cleaning Data for Current Run...", QString(), 0, progress_total, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Cleaning Data..."));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
   
   // Check DB connection
   US_Passwd pw;
@@ -6046,54 +6313,128 @@ void US_ExperGuiUpload::clearData_protDev()
   
   int status;
   QStringList qry;
-  
-  //get experimentID from 'experiment' table:
-  qry << "get_experiment_info_by_runID"
-      << protocol_details[ "filename" ]
-      << protocol_details[ "invID_passed" ];
 
-  db->query( qry );
-  db->next();
-  QString expID  = db->value( 1 ).toString();
+  int progress = progress_msg->value();
 
-  // Let's make sure it's not a calibration experiment in use
-  qry. clear();
-  qry << "count_calibration_experiments" << expID;
-  int count = db->functionQuery( qry );
-  qDebug() << "Cleaning Failed Run: calexp count" << count;
-  
-  if ( count < 0 )
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
     {
-      qDebug() << "count_calibration_experiments( "
-               << expID
-               << " ) returned a negative count";
-      return;
-    }
-  
-  else if ( count > 0 )
-    {
-      QMessageBox::information( this,
-				tr( "Error" ),
-				tr( "Cannot delete an experiment that is associated "
-				    "with a rotor calibration\n" ) );
-      return;
+      qry.clear();
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << protocol_details[ "invID_passed" ];
+
+      qDebug() << "clearData_protDev(), qry -- " << qry;
+      
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+            
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+	  progress_msg->close();
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+
+	  progress_msg->close();
+	  return;
+	}
+      
+      int status;
+      // Delete links between experiment and solutions
+      qry. clear();
+      qry << "delete_experiment_solutions"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del sols status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Same with cell table
+      qry. clear();
+      qry  << "delete_cell_experiments"
+	   << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del cells status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
+      //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
+      
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+       	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( status != US_DB2::OK )
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
     }
 
-  // Now delete editedData, models, noises, reports, 
-  qry. clear();
-  qry << "clear_data_for_experiment"
-      << expID;
-  status = db -> statusQuery( qry );
-  qDebug() << "Cleaning Failed Run: del_exp stat" << status;
-  
-  if ( status != US_DB2::OK )
-    {
-      QMessageBox::information( this,
-				tr( "Error / Warning" ),
-				db -> lastError() + tr( " (error=%1, expID=%2)" )
-				.arg( status ).arg( expID ) );
-    }
-
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+  /** End Iterate over fileNameList ****************************************************************/
 }
 
 
@@ -6111,7 +6452,8 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   protocol_details[ "protocolName" ]   = currProto->protoname;
   protocol_details[ "experimentName" ] = currProto->runname;
   protocol_details[ "label" ]          = currProto->exp_label;
-  protocol_details[ "gmpRun" ]         = QString("NO");              //ALEXEY: state explicitly
+  //protocol_details[ "gmpRun" ]         = QString("NO");              //ALEXEY: state explicitly
+  protocol_details[ "gmpRun" ]         = QString("YES");              //ALEXEY: state explicitly
   protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
   protocol_details[ "devRecord" ]      = QString("YES");             //ALEXEY: state explicitly
   
@@ -6144,8 +6486,13 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   //Now add new autoflow record with the above params && flag 'DEV'!
   add_autoflow_record_protDev( protocol_details );
 
+  qDebug() << "statusID, intensityID from protocol QMAp -- "
+	   << protocol_details[ "statusID" ]
+	   << protocol_details[ "intensityID" ] ;
+
   emit expdef_submitted_dev( protocol_details );
 }
+
 
 // Slot to submit the experiment to the Optima DB
 void US_ExperGuiUpload::submitExperiment()
@@ -6226,6 +6573,7 @@ void US_ExperGuiUpload::submitExperiment()
       
       //get # cells with interference channels
       int ncells_interference = 0;
+      int nchannels_uvvis = 0;
       QStringList active_channels;
       for ( int kk = 0; kk < oprof.count(); kk++ )
       {
@@ -6239,6 +6587,9 @@ void US_ExperGuiUpload::submitExperiment()
 	     
 	     ++ncells_interference;
 	   }
+	 
+	 if ( oprof[ kk ].contains( uvvis ) )
+	   ++nchannels_uvvis;
       }
 
       // return;
@@ -7100,12 +7451,18 @@ void US_ExperGuiUpload::submitExperiment()
 	   }
 	 else if ( !ncells_interference && nwavl_tot )  //Absorbance ONLY
 	   {
-	     protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     //protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     protocol_details[ "CellChNumber" ]   = QString::number( nchannels_uvvis ); 
 	     qDebug() << "UV: CellChNumber: " << protocol_details[ "CellChNumber" ];
 	   }
 	 else if ( ncells_interference && nwavl_tot )   // BOTH
 	   {
-	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) + QString(",RI:")  + QString::number(rpSolut->nschan);
+	     // QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	     //                       QString(",RI:")  + QString::number(rpSolut->nschan);
+
+	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	                           QString(",RI:")  + QString::number( nchannels_uvvis );
+
 	     protocol_details[ "CellChNumber" ] = cellnumber;
 
 	     qDebug() << "UV & ITF: cellnumber: " << cellnumber;
@@ -7219,40 +7576,52 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    
    if ( db != NULL )
    {
-      QStringList qry;
-      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
-      //greater of:
-      //- max(ID) autoflowHistory
-      //- current AUTO_INCREMENT
-      QString current_db = US_Settings::defaultDB().at(2);
-      qry << "set_autoflow_auto_increment" << current_db;
-      int auto_incr = db->statusQuery( qry );
-      qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
-      
-      
-      //Now add autoflow record
-      qry.clear();
-      qry << "add_autoflow_record"
-          << protocol_details[ "protocolName" ]
-          << protocol_details[ "CellChNumber" ]
-          << protocol_details[ "TripleNumber" ]
-          << protocol_details[ "duration" ]
-          << protocol_details[ "experimentName" ]
-          << protocol_details[ "experimentId" ]
-          << protocol_details[ "OptimaName" ]
-          << protocol_details[ "invID_passed" ]
-          << protocol_details[ "label" ]
-          << protocol_details[ "gmpRun" ]
-          << protocol_details[ "aprofileguid" ]
-	  << protocol_details[ "operatorID" ];
-
-      db->statusQuery( qry );
-      //db->query( qry );
-      protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     int autoflowID_returned = 0;
+     QStringList qry;
+     //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+     //greater of:
+     //- max(ID) autoflowHistory
+     //- current AUTO_INCREMENT
+     QString current_db = US_Settings::defaultDB().at(2);
+     qry << "set_autoflow_auto_increment" << current_db;
+     int auto_incr = db->statusQuery( qry );
+     qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+     
+     
+     //Now add autoflow record
+     qry.clear();
+     qry << "add_autoflow_record"
+	 << protocol_details[ "protocolName" ]
+	 << protocol_details[ "CellChNumber" ]
+	 << protocol_details[ "TripleNumber" ]
+	 << protocol_details[ "duration" ]
+	 << protocol_details[ "experimentName" ]
+	 << protocol_details[ "experimentId" ]
+	 << protocol_details[ "OptimaName" ]
+	 << protocol_details[ "invID_passed" ]
+	 << protocol_details[ "label" ]
+	 << protocol_details[ "gmpRun" ]
+	 << protocol_details[ "aprofileguid" ]
+	 << protocol_details[ "operatorID" ];
+     
+     db->statusQuery( qry );
+     //db->query( qry );
+     
+     autoflowID_returned = db->lastInsertID();
+     //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
+   
+     
+     qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+     
+     if ( autoflowID_returned == 0 )
+       {
+	 QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+			       tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+	 return;
+       }
    }
-
-   qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
-
+   
    /***/
    //Also, create record in autoflowStages table:
    QStringList qry_stages;
@@ -7262,9 +7631,12 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    
 }
 
+
 // Add autoflow record for ProtocolDev
 void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & protocol_details )
 {
+  
+   QString autoflowHistoryID = protocol_details[ "autoflowID" ];
   
    // Check DB connection
    US_Passwd pw;
@@ -7281,6 +7653,7 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    
    if ( db != NULL )
    {
+      int new_autoflowID = 0;
       QStringList qry;
       //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
       //greater of:
@@ -7300,164 +7673,39 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	  << protocol_details[ "duration" ]       
 	  << protocol_details[ "experimentName" ] 
 	  << protocol_details[ "experimentId" ]   
-	  << protocol_details[ "runID" ]          
-	//<< protocol_details[ "status" ]         // Will be set explicitly to 'EDIT_DATA'  
-	  << protocol_details[ "dataPath" ]        
+
+	// << protocol_details[ "runID" ]          
+	// << protocol_details[ "dataPath" ]        
+
 	  << protocol_details[ "OptimaName" ]     
-	  << protocol_details[ "runStarted" ]     
+
+	// << protocol_details[ "runStarted" ]     
+
 	  << protocol_details[ "invID_passed" ]   
-	  << protocol_details[ "correctRadii" ]   
-	  << protocol_details[ "expAborted" ]     
+
+	//  << protocol_details[ "correctRadii" ]   
+	//  << protocol_details[ "expAborted" ]     
+
 	  << protocol_details[ "label" ]          
-	// << protocol_details[ "gmpRun" ]        //Must be "NO", will be set explicitly   
-	  << protocol_details[ "filename" ]       
+
+	//  << protocol_details[ "filename" ]       
+
 	  << protocol_details[ "aprofileguid" ]   
-	
-	// << protocol_details[ "intensityID" ]  //later: read exisiting autoflowIntensity record, copy it into new record & prescribe newly generated autoflowID!!!
-	
 	  << protocol_details[ "operatorID" ]
-	
-	// << protocol_details[ "statusID" ]     //later: read exisiting autoflowStaus record, copy it into new record & prescribe newly generated autoflowID!!! 
-	// << protocol_details[ "failedID" ]     //Attn: do NOT specify failed status: should be DEFAULT (NULL)
-	// << protocol_details[ "devRecord" ]   //Attn: MUST be "YES", will be set explicitly     
 	;   
-	
+
+      qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;
       db->statusQuery( qry );
       //db->query( qry );
-      int new_autoflowID = db->lastInsertID();
+      new_autoflowID = db->lastInsertID();
       protocol_details[ "autoflowID" ] = QString::number( new_autoflowID );
 
-      /************ autoflowIntensity *****************************************************************/
-      //read autoflowIntensity record by ID: protocol_details[ "intensityID" ]
-      qry. clear();
-      qry << "read_autoflow_intensity_record" << protocol_details[ "intensityID" ];
-      db->query( qry );
-      qDebug() << "readIntensity: qry -- " << qry;
-      QString intensityJsonRI;
-
-      if ( db->lastErrno() == US_DB2::OK )      // Intensity record exists
+      if ( new_autoflowID == 0 )
 	{
-	  while ( db->next() )
-	    {
-	      intensityJsonRI = db->value( 0 ).toString();
-	    }
-	}
-      
-      //create new autoflowIntensity record & set what's read above && newly generated autoflowID!
-      int autoflowIntensityID = 0;
-      if ( ! intensityJsonRI.isEmpty() )
-	{
-	  qry.clear();
-	  qry << "new_autoflow_intensity_record"
-	      << QString::number( new_autoflowID )
-	      << intensityJsonRI;
-	  
-	  autoflowIntensityID = db->functionQuery( qry );
-	  
-	  if ( !autoflowIntensityID )
-	    {
-	      QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
-				    tr( "ProtDev, autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
-	      
-	      return;
-	    }
-	}
-      qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
-      /*************************************************************************************************/
-      
-
-      /************* autoflowStatus *********************************************************************/
-      //read autoflowStatus record by ID: protocol_details[ "statusID" ]
-      qry. clear();
-      qry << "read_autoflow_status_record" <<  protocol_details[ "statusID" ];
-      db->query( qry );
-      qDebug() << "readStatus: qry -- " << qry;
-      QString importRIJson, importRIts, importIPJson, importIPts;
-
-      if ( db->lastErrno() == US_DB2::OK )    
-	{
-	  while ( db->next() )
-	    {
-	      importRIJson  = db->value( 0 ).toString();
-	      importRIts    = db->value( 1 ).toString();
-	      importIPJson  = db->value( 2 ).toString();
-	      importIPts    = db->value( 3 ).toString();
-
-	    }
-	}
-      qDebug() << "importRIJson, importRIts, importIPJson, importIPts -- "
-	       << importRIJson << importRIts <<  importIPJson << importIPts;
-
-
-      //create new autoflowStatus & set what's read above [import part!] && newly generated autoflowID!
-      int autoflowStatusID = 0;
-      qry. clear();
-
-      if ( !importRIJson.isEmpty() && !importIPJson.isEmpty() )
-	{
-	  qry << "new_autoflowStatusRI_IP_dev_record"
-	      << QString::number( new_autoflowID )
-	      << importRIJson
-	      << importRIts
-	      << importIPJson
-	      << importIPts;
-	}
-      else if ( !importRIJson.isEmpty() && importIPJson.isEmpty() )
-	{
-	  qry << "new_autoflowStatusRI_dev_record"
-	      << QString::number( new_autoflowID )
-	      << importRIJson
-	      << importRIts;
-	}
-      else if ( importRIJson.isEmpty() && !importIPJson.isEmpty() )
-	{
-	  qry << "new_autoflowStatusIP_dev_record"
-	      << QString::number( new_autoflowID )
-	      << importIPJson
-	      << importIPts;
-	}
-
-      qDebug() << "ProtDev: New autoflowStatus record, qry -- " << qry;
-      
-      autoflowStatusID = db->functionQuery( qry );
-      
-      if ( !autoflowStatusID || autoflowStatusID < 0 )
-	{
-	  QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
-				tr( "ProtDev, autoflowStatus (IMPORT {RI,IP}): There was a problem creating a record in autoflowStatus table \n" ) + db->lastError() );
-	  
+	  QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+				tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
 	  return;
 	}
-      qDebug() << "autoflowStatusID -- " << autoflowStatusID;
-      /*************************************************************************************************/
-      
-      //set BOTH returned autoflowIntensity & statusID to the new autoflow record
-      //Emulate updating at 3. IMPORT stage of GMP!!!
-      qry.clear();
-      qry << "update_autoflow_at_lims_import"
-	  << protocol_details[ "runID" ]
-	  << protocol_details[ "filename" ]
-	  << protocol_details[ "OptimaName" ]
-	  << QString::number( autoflowIntensityID )
-	  << QString::number( autoflowStatusID );
-      
-      qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
-
-      int status = db->statusQuery( qry );
-      if ( status == US_DB2::NO_AUTOFLOW_RECORD )
-	{
-	  QMessageBox::warning( this,
-				tr( "Autoflow Record Not Updated" ),
-				tr( "ProtDdev: No autoflow record\n"
-				    "associated with this experiment." ) );
-	  return;
-	}
-      /*************************************************************************************************/
-            
-
-      /* ALSO - CLEAN ALL DATA (Edit profiles, Models, Noises etc - look what's done when marking as "Failed".. )
-	 MAYBE performed at the beginnig of 2. EDIT.. 
-       */
    }
 
    qDebug() << "ProtDev:: Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
@@ -7468,9 +7716,241 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
    db->statusQuery( qry_stages );
    /**/
+
+   // Also, mark parent autoflowHistroy record as devRecord:Processed
+   QStringList qry_processed;
+   qry_processed << "mark_autoflowHistoryDevRun_Processed" << autoflowHistoryID;
+   db->query( qry_processed );
    
 }
+
+// // [OLD - when starting from 4. EDIT ] Add autoflow record for ProtocolDev
+// void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & protocol_details )
+// {
   
+//    // Check DB connection
+//    US_Passwd pw;
+//    QString masterpw = pw.getPasswd();
+//    US_DB2* db = new US_DB2( masterpw );
+
+//    if ( db->lastErrno() != US_DB2::OK )
+//    {
+//       QMessageBox::warning( this, tr( "Connection Problem" ),
+//                                   tr( "Read protocol: Could not connect to database \n" )
+//                                      + db->lastError() );
+//       return;
+//    }
+   
+//    if ( db != NULL )
+//    {
+//      int new_autoflowID = 0;
+//       QStringList qry;
+//       //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+//       //greater of:
+//       //- max(ID) autoflowHistory
+//       //- current AUTO_INCREMENT
+//       QString current_db = US_Settings::defaultDB().at(2);
+//       qry << "set_autoflow_auto_increment" << current_db;
+//       int auto_incr = db->statusQuery( qry );
+//       qDebug() << "ProtDev:: Autoflow table: AUTO_INCREMENT: " << auto_incr;
+      
+//       //Now add autoflow record
+//       qry.clear();
+//       qry << "add_autoflow_record_dev"
+// 	  << protocol_details[ "protocolName" ]   
+// 	  << protocol_details[ "CellChNumber" ]   
+// 	  << protocol_details[ "TripleNumber" ]   
+// 	  << protocol_details[ "duration" ]       
+// 	  << protocol_details[ "experimentName" ] 
+// 	  << protocol_details[ "experimentId" ]   
+// 	  << protocol_details[ "runID" ]          
+// 	//<< protocol_details[ "status" ]         // Will be set explicitly to 'EDIT_DATA'  
+// 	  << protocol_details[ "dataPath" ]        
+// 	  << protocol_details[ "OptimaName" ]     
+// 	  << protocol_details[ "runStarted" ]     
+// 	  << protocol_details[ "invID_passed" ]   
+// 	  << protocol_details[ "correctRadii" ]   
+// 	  << protocol_details[ "expAborted" ]     
+// 	  << protocol_details[ "label" ]          
+// 	// << protocol_details[ "gmpRun" ]        //Must be "NO", will be set explicitly   
+// 	  << protocol_details[ "filename" ]       
+// 	  << protocol_details[ "aprofileguid" ]   
+	
+// 	// << protocol_details[ "intensityID" ]  //later: read exisiting autoflowIntensity record, copy it into new record & prescribe newly generated autoflowID!!!
+	
+// 	  << protocol_details[ "operatorID" ]
+	
+// 	// << protocol_details[ "statusID" ]     //later: read exisiting autoflowStaus record, copy it into new record & prescribe newly generated autoflowID!!! 
+// 	// << protocol_details[ "failedID" ]     //Attn: do NOT specify failed status: should be DEFAULT (NULL)
+// 	// << protocol_details[ "devRecord" ]   //Attn: MUST be "YES", will be set explicitly     
+// 	;   
+
+//       qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;
+//       db->statusQuery( qry );
+//       //db->query( qry );
+//       new_autoflowID = db->lastInsertID();
+//       protocol_details[ "autoflowID" ] = QString::number( new_autoflowID );
+
+//       if ( new_autoflowID == 0 )
+// 	{
+// 	  QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+// 				tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+// 	  return;
+// 	}
+
+//       /************ autoflowIntensity *****************************************************************/
+//       //read autoflowIntensity record by ID: protocol_details[ "intensityID" ]
+//       qry. clear();
+//       qry << "read_autoflow_intensity_record" << protocol_details[ "intensityID" ];
+//       db->query( qry );
+//       qDebug() << "readIntensity: qry -- " << qry;
+//       QString intensityJsonRI;
+
+//       if ( db->lastErrno() == US_DB2::OK )      // Intensity record exists
+// 	{
+// 	  while ( db->next() )
+// 	    {
+// 	      intensityJsonRI = db->value( 0 ).toString();
+// 	    }
+// 	}
+      
+//       //create new autoflowIntensity record & set what's read above && newly generated autoflowID!
+//       int autoflowIntensityID = 0;
+//       if ( ! intensityJsonRI.isEmpty() )
+// 	{
+// 	  qry.clear();
+// 	  qry << "new_autoflow_intensity_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << intensityJsonRI;
+	  
+// 	  autoflowIntensityID = db->functionQuery( qry );
+	  
+// 	  if ( !autoflowIntensityID )
+// 	    {
+// 	      QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
+// 				    tr( "ProtDev, autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
+	      
+// 	      return;
+// 	    }
+// 	}
+//       qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
+//       /*************************************************************************************************/
+      
+
+//       /************* autoflowStatus *********************************************************************/
+//       //read autoflowStatus record by ID: protocol_details[ "statusID" ]
+//       qry. clear();
+//       qry << "read_autoflow_status_record" <<  protocol_details[ "statusID" ];
+//       db->query( qry );
+//       qDebug() << "readStatus: qry -- " << qry;
+//       QString importRIJson, importRIts, importIPJson, importIPts;
+
+//       if ( db->lastErrno() == US_DB2::OK )    
+// 	{
+// 	  while ( db->next() )
+// 	    {
+// 	      importRIJson  = db->value( 0 ).toString();
+// 	      importRIts    = db->value( 1 ).toString();
+// 	      importIPJson  = db->value( 2 ).toString();
+// 	      importIPts    = db->value( 3 ).toString();
+
+// 	    }
+// 	}
+//       qDebug() << "importRIJson, importRIts, importIPJson, importIPts -- "
+// 	       << importRIJson << importRIts <<  importIPJson << importIPts;
+
+
+//       //create new autoflowStatus & set what's read above [import part!] && newly generated autoflowID!
+//       int autoflowStatusID = 0;
+//       qry. clear();
+
+//       if ( !importRIJson.isEmpty() && !importIPJson.isEmpty() )
+// 	{
+// 	  qry << "new_autoflowStatusRI_IP_dev_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << importRIJson
+// 	      << importRIts
+// 	      << importIPJson
+// 	      << importIPts;
+// 	}
+//       else if ( !importRIJson.isEmpty() && importIPJson.isEmpty() )
+// 	{
+// 	  qry << "new_autoflowStatusRI_dev_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << importRIJson
+// 	      << importRIts;
+// 	}
+//       else if ( importRIJson.isEmpty() && !importIPJson.isEmpty() )
+// 	{
+// 	  qry << "new_autoflowStatusIP_dev_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << importIPJson
+// 	      << importIPts;
+// 	}
+
+//       qDebug() << "ProtDev: New autoflowStatus record, qry -- " << qry;
+      
+//       autoflowStatusID = db->functionQuery( qry );
+      
+//       if ( !autoflowStatusID || autoflowStatusID < 0 )
+// 	{
+// 	  QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+// 				tr( "ProtDev, autoflowStatus (IMPORT {RI,IP}): There was a problem creating a record in autoflowStatus table \n" ) + db->lastError() );
+	  
+// 	  return;
+// 	}
+//       qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+//       /*************************************************************************************************/
+      
+//       //set BOTH returned autoflowIntensity & statusID to the new autoflow record
+//       //Emulate updating at 3. IMPORT stage of GMP!!!
+//       qry.clear();
+//       qry << "update_autoflow_at_lims_import"
+// 	  << protocol_details[ "runID" ]
+// 	  << protocol_details[ "filename" ]
+// 	  << protocol_details[ "OptimaName" ]
+// 	  << QString::number( autoflowIntensityID )
+// 	  << QString::number( autoflowStatusID );
+      
+//       qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
+
+//       int status = db->statusQuery( qry );
+//       if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+// 	{
+// 	  QMessageBox::warning( this,
+// 				tr( "Autoflow Record Not Updated" ),
+// 				tr( "ProtDdev: No autoflow record\n"
+// 				    "associated with this experiment." ) );
+// 	  return;
+// 	}
+
+//       /**** Now, update protocol_details[ "statusID" ] && [ "intensityID" ] fields with the new ones ***/
+//       protocol_details[ "statusID" ]    = QString::number( autoflowStatusID );
+//       protocol_details[ "intensityID" ] = QString::number( autoflowIntensityID );
+      
+//       /*************************************************************************************************/
+      
+
+//       /* ALSO - CLEAN ALL DATA (Edit profiles, Models, Noises etc - look what's done when marking as "Failed".. )
+// 	 MAYBE performed at the beginnig of 2. EDIT.. 
+//        */
+//    }
+
+//    qDebug() << "ProtDev:: Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+
+//    /***/
+//    //Also, create record in autoflowStages table:
+//    QStringList qry_stages;
+//    qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+//    db->statusQuery( qry_stages );
+//    /**/
+   
+// }
+
+
+
+
+
 // Function to build a Json object and document holding experiment controls
 QString US_ExperGuiUpload::buildJson( void )
 {

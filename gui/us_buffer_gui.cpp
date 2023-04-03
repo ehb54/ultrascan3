@@ -796,83 +796,85 @@ US_BufferGuiNew::US_BufferGuiNew(int *invID, int *select_db_disk, US_Buffer *tmp
    pb_accept = us_pushbutton(tr("Accept"));
    pb_spectrum = us_pushbutton(tr("Enter Spectrum"));
    //QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
-   QPushButton *pb_help = us_pushbutton(tr("Help"));
 
-   QGridLayout *lo_manual = us_checkbox(tr("Manual unadjusted Density and Viscosity"), ck_manual);
-   QGridLayout *lo_cosed = us_checkbox(tr("Switch to cosedimenting buffer dialog"), ck_cosed);
-   QLabel *bn_newbuf = us_banner(tr("Specify a new buffer to add"), -1);
-   QLabel *lb_descrip = us_label(tr("Description:"));
-   QLabel *bn_general = us_banner(tr("General"));
-   lb_bselect = us_label(tr("Please enter the concentration of\n"
-                            " (component) in mM:"));
-   QLabel *bn_allcomps = us_banner(tr("Click on item to select"), -2);
-   QLabel *bn_bufcomps = us_banner(tr("Double-click an item to remove"), -2);
-   QLabel *lb_density = us_label(tr("Density (20") + DEGC + tr(", g/cm<sup>3</sup>):"));
-   QLabel *lb_viscos = us_label(tr("Viscosity (20") + DEGC + tr(", cP):"));
-   QLabel *lb_ph = us_label(tr("pH:"));
-   QLabel *lb_compress = us_label(tr("Compressibility:"));
-   QLabel *bn_buffer = us_banner(tr("Buffer Components"));
-   le_descrip = us_lineedit("");
-   le_concen = us_lineedit("");
-   le_density = us_lineedit("");
-   le_viscos = us_lineedit("");
-   le_ph = us_lineedit("7.0000");
-   le_compress = us_lineedit("0.0000e+0");
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QPushButton *pb_new_bcomp = us_pushbutton("Create new");
+   QGridLayout* lo_manual   = us_checkbox(
+         tr( "Manual unadjusted Density and Viscosity" ), ck_manual );
 
-   lw_allcomps = us_listwidget();
-   lw_bufcomps = us_listwidget();
-   lw_upper_cosedcomps = us_listwidget();
-   lw_lower_cosedcomps = us_listwidget();
+   QLabel* bn_newbuf   = us_banner( tr( "Specify a new buffer to add" ), -1 );
+   QLabel* lb_descrip  = us_label( tr( "Description:" ) );
+   lb_bselect          = us_label( tr( "Please enter the concentration of\n"
+                                       " (component) in mM:" ) );
+   QLabel* bn_allcomps = us_banner( tr( "Click on item to select" ), -2 );
+   QLabel* bn_bufcomps = us_banner( tr( "Double-click an item to remove" ), -2);
+   QLabel* lb_density  = us_label( tr( "Density (20" ) + DEGC
+                                 + tr( ", g/cm<sup>3</sup>):" ) );
+   QLabel* lb_viscos   = us_label( tr( "Viscosity (20" ) + DEGC
+                                 + tr( ", cP):" ) );
+   QLabel* lb_ph       = us_label( tr( "pH:" ) );
+   QLabel* lb_compress = us_label( tr( "Compressibility:" ) );
 
+   le_descrip          = us_lineedit( "" );
+   le_concen           = us_lineedit( "" );
+   le_density          = us_lineedit( "" );
+   le_viscos           = us_lineedit( "" );
+   le_ph               = us_lineedit( "7.0000" );
+   le_compress         = us_lineedit( "0.0000e+0" );
 
-   QPalette upal = lb_bselect->palette();
-   upal.setColor(QPalette::WindowText, Qt::red);
-   lb_bselect->setPalette(upal);
-
-   bn_newbuf->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-   bn_allcomps->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-   bn_bufcomps->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-   bn_buffer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-   bn_general->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+   lw_allcomps         = us_listwidget();
+   lw_bufcomps         = us_listwidget();
 
 
-   pb_accept->setEnabled(false);
-   lw_allcomps->setSortingEnabled(true);
-   lw_bufcomps->setSortingEnabled(true);
-   lw_upper_cosedcomps->setSortingEnabled(true);
-   lw_upper_cosedcomps->setSortingEnabled(true);
-   us_setReadOnly(le_density, true);
-   us_setReadOnly(le_viscos, true);
-   us_setReadOnly(le_ph, false);
-   us_setReadOnly(le_compress, false);
+   QPalette upal       = lb_bselect->palette();
+   upal.setColor( QPalette::WindowText, Qt::red );
+   lb_bselect ->setPalette( upal );
+
+   bn_newbuf  ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   bn_allcomps->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   bn_bufcomps->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   pb_accept  ->setEnabled       ( false );
+   lw_allcomps->setSortingEnabled( true );
+   lw_bufcomps->setSortingEnabled( true );
+
+   us_setReadOnly( le_density,  true  );
+   us_setReadOnly( le_viscos,   true  );
+   us_setReadOnly( le_ph,       false );
+   us_setReadOnly( le_compress, false );
 
 
    int row = 0;
-   main->addWidget(bn_newbuf, row++, 0, 1, 8);
-   main->addWidget(lb_descrip, row, 0, 1, 1);
-   main->addWidget(le_descrip, row++, 1, 1, 7);
-   main->addWidget(bn_general, row++, 0, 1, 8);
-   main->addLayout(lo_cosed, row, 0, 1, 2);
-   main->addWidget(pb_cancel, row, 4, 1, 2);
-   main->addWidget(pb_accept, row++, 6, 1, 2);
-   main->addLayout(lo_manual, row, 0, 1, 2);
-   main->addWidget(pb_spectrum, row, 4, 1, 2);
-   main->addWidget(pb_help, row++, 6, 1, 2);
-   main->addWidget(lb_density, row, 0, 1, 2);
-   main->addWidget(le_density, row, 2, 1, 2);
-   main->addWidget(lb_ph, row, 4, 1, 2);
-   main->addWidget(le_ph, row++, 6, 1, 2);
-   main->addWidget(lb_viscos, row, 0, 1, 2);
-   main->addWidget(le_viscos, row, 2, 1, 2);
-   main->addWidget(lb_compress, row, 4, 1, 2);
-   main->addWidget(le_compress, row++, 6, 1, 2);
-   main->addWidget(lb_bselect, row, 0, 1, 4);
-   main->addWidget(le_concen, row++, 4, 1, 4);
-   main->addWidget(bn_buffer, row++, 0, 1, 8);
-   main->addWidget(bn_allcomps, row, 0, 1, 4);
-   main->addWidget(bn_bufcomps, row++, 4, 1, 4);
-   main->addWidget(lw_allcomps, row, 0, 3, 4);
-   main->addWidget(lw_bufcomps, row, 4, 3, 4);
+   main->addWidget( bn_newbuf,       row++, 0, 1, 8 );
+   main->addWidget( lb_descrip,      row,   0, 1, 1 );
+   main->addWidget( le_descrip,      row++, 1, 1, 7 );
+   main->addWidget( pb_cancel,       row,   4, 1, 2 );
+   main->addWidget( pb_accept,       row++, 6, 1, 2 );
+   main->addWidget( lb_bselect,      row,   0, 2, 4 );
+   main->addWidget( pb_spectrum,     row,   4, 1, 2 );
+   main->addWidget( pb_help,         row++, 6, 1, 2 );
+   main->addWidget( le_concen,       row++, 4, 1, 4 );
+   if (US_Settings::us_inv_level()>1){
+         main->addWidget(bn_allcomps, row, 0, 1, 3);
+         main->addWidget(pb_new_bcomp,row, 3,1,1);
+         connect(pb_new_bcomp, SIGNAL(clicked()), this, SLOT(create_new_buffer_component()));
+   }
+   else{
+         main->addWidget(bn_allcomps, row, 0, 1, 4);
+   }
+   main->addWidget( bn_bufcomps,     row++, 4, 1, 4 );
+   main->addWidget( lw_allcomps,     row,   0, 5, 4 );
+   main->addWidget( lw_bufcomps,     row,   4, 5, 4 );
+   row    += 5;
+   main->addLayout( lo_manual,       row++, 0, 1, 8 );
+   main->addWidget( lb_density,      row,   0, 1, 2 );
+   main->addWidget( le_density,      row,   2, 1, 2 );
+   main->addWidget( lb_ph,           row,   4, 1, 2 );
+   main->addWidget( le_ph,           row++, 6, 1, 2 );
+   main->addWidget( lb_viscos,       row,   0, 1, 2 );
+   main->addWidget( le_viscos,       row,   2, 1, 2 );
+   main->addWidget( lb_compress,     row,   4, 1, 2 );
+   main->addWidget( le_compress,     row,   6, 1, 2 );
 
 
    QStringList keys = component_list.keys();
@@ -1372,6 +1374,71 @@ void US_BufferGuiNew::add_cosed_component(bool overlaying) {
    bool can_accept = this->can_accept();
    pb_accept->setEnabled(can_accept);
    pb_spectrum->setEnabled(can_accept);
+}
+
+
+void US_BufferGuiNew::create_new_buffer_component() {
+   DbgLv(1) << "BufN:New BComp";
+   // check if connected to database
+   if (!from_db) { // if not, exceed
+      QMessageBox::critical(this, tr("No database connection"), tr("Without a database you can create new buffer components."));
+      return;
+   }
+   // check user level against database
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+//qDebug() << "USCFG: UpdInv: ERROR connect";
+      QMessageBox::information( this,
+                                tr( "Error" ),
+                                tr( "Error making the DB connection.\n" ) );
+
+      return;
+   }
+
+   QStringList q( "get_user_info" );
+   db.query( q );
+   db.next();
+
+   int ID        = db.value( 0 ).toInt();
+   QString fname = db.value( 1 ).toString();
+   QString lname = db.value( 2 ).toString();
+   int     level = db.value( 5 ).toInt();
+   if (level < 2){
+      QMessageBox::critical(this, tr("Insufficient permissions"),
+                            tr("You have not enough permissions on the currently selected database to create "
+                               "new buffer components.\nYou need to be an admin or superuser."));
+      return;
+   }
+   // permissions sufficient
+   // create empty buffer component
+   US_BufferComponent bc;
+   US_BufferComponentRequerster* bcomp_dialog = new US_BufferComponentRequerster(&bc,component_list);
+   bcomp_dialog -> exec();
+   qApp->processEvents();
+   if (!bc.name.isEmpty())return;
+   bc.saveToDB(&db);
+
+   // update component list
+   lw_allcomps->clear();
+   // update buffer components file
+   //  $ULTRASCAN3/etc/bufferComponents xml file:
+   component_list.clear();
+   US_BufferComponent::getAllFromDB(pw.getPasswd(), component_list);
+   US_BufferComponent::putAllToHD(component_list);
+   QStringList keys = component_list.keys();
+   std::sort(keys.begin(),keys.end());
+
+   for (int ii = 0; ii < keys.size(); ii++) {
+      QString key = keys[ii];
+      US_BufferComponent bcomp = component_list[key];
+
+      // Insert the buffer component with its key
+      QString sitem = bcomp.name + " (" + bcomp.range + ")";
+      new QListWidgetItem(sitem, lw_allcomps, key.toInt());
+   }
 }
 
 // Slot for select of buffer component
@@ -2390,3 +2457,201 @@ void US_BufferGuiNew::newAccepted() {
       reject();
    }
 
+US_BufferComponentRequerster::US_BufferComponentRequerster(US_BufferComponent* comp_, QMap<QString,US_BufferComponent>& list_) : US_WidgetsDialog(nullptr, nullptr),
+                                                                                   comp(comp_), component_list(list_) {
+   setWindowTitle(tr("Buffer component creator"));
+   setPalette(US_GuiSettings::frameColor());
+
+   main = new QGridLayout(this);
+   main->setSpacing(2);
+   main->setContentsMargins(2, 2, 2, 2);
+   // construct the base buffer description
+
+   QString description_text =
+         tr("To create a new buffer component, please enter a name, the unit for the range values.\n") +
+         tr("Additionally you have to enter the density and viscosity coefficients for this component.\n")+
+         tr("Click on the check box if the buffer component is gradient forming.\n\n") +
+         tr("Click the \"Finish\" button to load the entered values.\n") +
+         tr("Click the \"Cancel\" button to exit this dialog.");
+   lb_description = us_banner(description_text);
+   lb_description->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+   lb_name = us_label(tr("Name of the buffer component"));
+   lb_unit = us_label(tr("Unit for concentration"));
+   lb_range = us_label(tr("Range for the buffer component"));
+   lb_range2 = us_label(tr("-"));
+   lb_visc = us_banner("Viscosity Coefficients");
+   lb_dens = us_banner("Density Coefficients");
+   le_name = us_lineedit("");
+   le_lrange = us_lineedit("");
+   le_urange = us_lineedit("");
+   le_unit = us_lineedit("");
+   le_density0 = us_lineedit("");
+   le_density1 = us_lineedit("");
+   le_density2 = us_lineedit("");
+   le_density3 = us_lineedit("");
+   le_density4 = us_lineedit("");
+   le_density5 = us_lineedit("");
+   le_viscosity0 = us_lineedit("");
+   le_viscosity1 = us_lineedit("");
+   le_viscosity2 = us_lineedit("");
+   le_viscosity3 = us_lineedit("");
+   le_viscosity4 = us_lineedit("");
+   le_viscosity5 = us_lineedit("");
+   QLabel* lb_range3 = us_label(tr("in M"));
+   lb_density0 = us_label(tr("Density coefficient independent of c"));
+   lb_density1 = us_label(tr("Density coefficient for sqrt(c) *1E3"));
+   lb_density2 = us_label(tr("Density coefficient for c *1E2"));
+   lb_density3 = us_label(tr("Density coefficient for c<sup>2</sup> *1E3"));
+   lb_density4 = us_label(tr("Density coefficient for c<sup>3</sup> *1E4"));
+   lb_density5 = us_label(tr("Density coefficient for c<sup>4</sup> *1E6"));
+   lb_viscosity0 = us_label(tr("Viscosity coefficient independent of c"));
+   lb_viscosity1 = us_label(tr("Viscosity coefficient for sqrt(c) *1E3"));
+   lb_viscosity2 = us_label(tr("Viscosity coefficient for c *1E2"));
+   lb_viscosity3 = us_label(tr("Viscosity coefficient for c<sup>2</sup> *1E3"));
+   lb_viscosity4 = us_label(tr("Viscosity coefficient for c<sup>3</sup> *1E4"));
+   lb_viscosity5 = us_label(tr("Viscosity coefficient for c<sup>4</sup> *1E6"));
+   QGridLayout* gfbox   = us_checkbox( tr( "Gradient-Forming" ), ck_gf );
+   int row = 0;
+   main->addWidget(lb_description, row++, 0, 1, 7);
+   main->addWidget(lb_name, row, 0, 1, 3);
+   main->addWidget(le_name, row++, 3, 1, 4);
+   main->addWidget(lb_unit, row, 0,1,3);
+   main->addWidget(le_unit,row++,4,1,1);
+   main->addWidget(lb_range, row, 0, 1, 2);
+   main->addWidget(le_lrange, row, 2, 1, 1);
+   main->addWidget(lb_range2, row, 3,1,1);
+   main->addWidget(le_urange, row, 4,1,1);
+   main->addWidget(lb_range3, row, 5,1,2);
+   main->addWidget(lb_unit, row, 5,1,1);
+   main->addWidget(le_unit,row++,6,1,1);
+   main->addWidget(lb_dens, row++, 0, 1, 7);
+   main->addWidget(lb_density0, row, 0, 1, 5);
+   main->addWidget(le_density0, row++, 5, 1, 2);
+   main->addWidget(lb_density1, row, 0, 1, 5);
+   main->addWidget(le_density1, row++, 5, 1, 2);
+   main->addWidget(lb_density2, row, 0, 1, 5);
+   main->addWidget(le_density2, row++, 5, 1, 2);
+   main->addWidget(lb_density3, row, 0, 1, 5);
+   main->addWidget(le_density3, row++, 5, 1, 2);
+   main->addWidget(lb_density4, row, 0, 1, 5);
+   main->addWidget(le_density4, row++, 5, 1, 2);
+   main->addWidget(lb_density5, row, 0, 1, 5);
+   main->addWidget(le_density5, row++, 5, 1, 2);
+   main->addWidget(lb_visc, row++, 0, 1, 7);
+   main->addWidget(lb_viscosity0, row, 0, 1, 5);
+   main->addWidget(le_viscosity0, row++, 5, 1, 2);
+   main->addWidget(lb_viscosity1, row, 0, 1, 5);
+   main->addWidget(le_viscosity1, row++, 5, 1, 2);
+   main->addWidget(lb_viscosity2, row, 0, 1, 5);
+   main->addWidget(le_viscosity2, row++, 5, 1, 2);
+   main->addWidget(lb_viscosity3, row, 0, 1, 5);
+   main->addWidget(le_viscosity3, row++, 5, 1, 2);
+   main->addWidget(lb_viscosity4, row, 0, 1, 5);
+   main->addWidget(le_viscosity4, row++, 5, 1, 2);
+   main->addWidget(lb_viscosity5, row, 0, 1, 5);
+   main->addWidget(le_viscosity5, row++, 5, 1, 2);
+   main->addLayout(gfbox,row++,0,1,7);
+
+
+   QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
+   pb_accept = us_pushbutton(tr("Accept"));
+   main->addWidget(pb_cancel, row, 0, 1, 2);
+   main->addWidget(pb_accept, row, 2, 1, 2);
+   pb_accept->setEnabled(false);
+   connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancelled()));
+   connect(pb_accept, SIGNAL(clicked()), this, SLOT(accept()));
+   connect(le_name, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_lrange, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_urange, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_unit, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(ck_gf, SIGNAL(toggled(bool)), this, SLOT  (gf_ck(bool)));
+   connect(le_density0, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_density1, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_density2, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_density3, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_density4, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_density5, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_viscosity0, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_viscosity1, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_viscosity2, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_viscosity3, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_viscosity4, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(le_viscosity5, SIGNAL(editingFinished()), this, SLOT(edit()));
+}
+
+void US_BufferComponentRequerster::cancelled(void) {
+   comp->name = QString("");
+   this->close();
+}
+
+void US_BufferComponentRequerster::accept(void) {
+   comp->name = le_name->text();
+   comp->unit = le_unit->text();
+   comp->range = QString::number(le_lrange->text().toDouble(),'f',3)+'-'+QString::number(le_urange->text().toDouble(),'f',3)+' M';
+   comp->dens_coeff[0] = le_density0->text().toDouble();
+   comp->dens_coeff[1] = le_density1->text().toDouble();
+   comp->dens_coeff[2] = le_density2->text().toDouble();
+   comp->dens_coeff[3] = le_density3->text().toDouble();
+   comp->dens_coeff[4] = le_density4->text().toDouble();
+   comp->dens_coeff[5] = le_density5->text().toDouble();
+   comp->visc_coeff[0] = le_viscosity0->text().toDouble();
+   comp->visc_coeff[1] = le_viscosity1->text().toDouble();
+   comp->visc_coeff[2] = le_viscosity2->text().toDouble();
+   comp->visc_coeff[3] = le_viscosity3->text().toDouble();
+   comp->visc_coeff[4] = le_viscosity4->text().toDouble();
+   comp->visc_coeff[5] = le_viscosity5->text().toDouble();
+   comp->grad_form = ck_gf->isChecked();
+   // check if it exists already
+   QList<QString> problems;
+   bool exists_already = false;
+   if (!(comp->unit == QString("M") || comp->unit == QString("mM"))){
+      problems << QString(tr("Invalid unit, currently only mM and M are supported."));
+      le_unit->setText("");
+   }
+   if (le_lrange->text().toDouble() <= le_urange->text().toDouble()){
+      problems << QString(tr("Invalid range, the upper limit is smaller or equal the lower limit."));
+      le_urange->setText("");
+      le_lrange->setText("");
+   }
+   foreach(US_BufferComponent bc, component_list){
+      if (bc.name == comp->name && comp->range == bc.range){
+         exists_already = true;
+         problems << QString(tr("A buffer component with the same name and range already exists."));
+         break;
+      }
+   }
+   QString msg = QString("");
+   if (!problems.isEmpty()){
+      msg += QString("The following problems were discovered while checking the input:\n");
+            foreach(QString prob, problems){
+            msg += prob + "\n";
+         }
+   }
+   if (exists_already){
+      QMessageBox::critical(this, tr("Duplicate error"),
+                            tr("A buffer component with the same name and range already exists.\n\n")+msg);
+      return;
+   }
+   else {
+      QMessageBox::information(this, tr("Input error"),
+                            msg);
+      return;
+   }
+   this->close();
+}
+
+void US_BufferComponentRequerster::edit(void) {
+   if (le_name->text().isEmpty() || le_unit->text().isEmpty() || le_density0->text().isEmpty() || le_density1->text().isEmpty() ||
+       le_density2->text().isEmpty() || le_density3->text().isEmpty() || le_density4->text().isEmpty() ||
+       le_density5->text().isEmpty() || le_viscosity0->text().isEmpty() || le_viscosity1->text().isEmpty() ||
+       le_viscosity2->text().isEmpty() || le_viscosity3->text().isEmpty() || le_viscosity4->text().isEmpty() ||
+       le_viscosity5->text().isEmpty() || le_lrange->text().isEmpty() || le_urange->text().isEmpty()) {
+      pb_accept->setEnabled(false);
+      return;
+   }
+   pb_accept->setEnabled(true);
+}
+
+void US_BufferComponentRequerster::gf_ck(bool) {
+
+}

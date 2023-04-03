@@ -83,6 +83,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QString gui_script_file,
+                         bool    init_configs_silently,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
@@ -120,6 +121,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    delete process;
    exit(0);
 #endif
+
+   this->init_configs_silently = init_configs_silently;
 
    if ( !gui_script_file.isEmpty() ) {
       qDebug() << "script active " << gui_script_file;
@@ -417,7 +420,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    guiFlag = true;
    bead_model_selected_filter = "";
    residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
-   editor = (QTextEdit *)0;
+   editor = (mQTextEdit *)0;
 
 #if QT_VERSION >= 0x040000
    gparams[ "zeno_cxx" ] = "true";
@@ -751,6 +754,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       us_qdebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
    }
 #endif
+   clear_temp_dirs();
+
    if ( gui_script ) {
       emit gui_script_run();
    }
@@ -1521,19 +1526,23 @@ void US_Hydrodyn::setupGUI()
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   progress = new QProgressBar( this );
+   progress = new mQProgressBar( this );
    progress->setPalette( PALET_NORMAL );
+   progress->set_cli_progress( cli_progress );
    AUTFBACK( progress );
    progress->reset();
 
-   mprogress = new QProgressBar( this );
+   mprogress = new mQProgressBar( this );
    mprogress->setPalette( PALET_NORMAL );
+   mprogress->set_cli_progress( cli_progress );
    AUTFBACK( mprogress );
    mprogress->reset();
    mprogress->hide();
 
-   editor = new QTextEdit(this);
+   editor = new mQTextEdit(this);
    editor->setPalette( PALET_NORMAL );
+   editor->set_cli_progress( cli_progress );
+   editor->set_cli_prefix  ( "somo" );
    editor->setReadOnly(true);
    editor->setMinimumWidth(600);
 
@@ -4305,7 +4314,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
             }
          } else {
             dammix_remember_mw[QFileInfo(filename).fileName()] =
-               model_vector[selected_models[0]].mw;
+               model_vector[selected_models[0]].mw + model_vector[selected_models[0]].ionized_mw_delta;
             dammix_remember_mw_source[QFileInfo(filename).fileName()] =
                "computed from pdb";
          }

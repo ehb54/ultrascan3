@@ -7,16 +7,16 @@
 #include <QtSql>
 
 
-//#include "../us_xpn_viewer/us_xpn_viewer_gui.h"
+#include "../us_xpn_viewer/us_xpn_viewer_gui.h"
 #include "../us_experiment/us_experiment_gui_optima.h"
-//#include "../us_convert/us_experiment.h"     
-//#include "../us_convert/us_experiment_gui.h" 
-//#include "../us_convert/us_convert_gui.h"    
-//#include "../us_convert/us_convertio.h"      
-//#include "../us_convert/us_get_run.h"        
-//#include "../us_convert/us_intensity.h"      
-//#include "../us_convert/us_selectbox.h"      
-//#include "../us_convert/us_select_triples.h"
+#include "../us_convert/us_experiment.h"     
+#include "../us_convert/us_experiment_gui.h" 
+#include "../us_convert/us_convert_gui.h"    
+#include "../us_convert/us_convertio.h"      
+#include "../us_convert/us_get_run.h"        
+#include "../us_convert/us_intensity.h"      
+#include "../us_convert/us_selectbox.h"      
+#include "../us_convert/us_select_triples.h"
 
 #include "../us_edit/us_edit.h"
 #include "../us_edit/us_edit_scan.h"
@@ -112,6 +112,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     int offset;
 
     int autoflow_records;
+    QMap < QString, QString > channels_report;
 
     void initRecords( void );
     //void initRecordsDialogue( void );
@@ -126,8 +127,9 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
     void load_autoflowHistory_dialog( void );
 
-    /* void do_run_tables_cleanup( QMap< QString, QString > ); */
-    /* void do_run_data_cleanup( QMap< QString, QString > ); */
+    void do_run_tables_cleanup( QMap< QString, QString > ); 
+    void do_run_data_cleanup( QMap< QString, QString > );
+    bool readAProfileBasicParms_auto ( QXmlStreamReader& );
       
  protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -172,23 +174,101 @@ class US_ExperGui : public US_WidgetsDialog
    private slots:
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
-      //void to_live_update( QMap < QString, QString > & protocol_details );
+      void to_live_update( QMap < QString, QString > & protocol_details );
       //void clear_experiment( QString & protocolName);
       void exp_cleared( void );
       void pass_used_instruments( QMap < QString, QString > & );
       void expsetup_msg_closed( void );
-  void to_editing( QMap < QString, QString > & );
+  //void to_editing( QMap < QString, QString > & );
       
       
    signals:
-      //void switch_to_live_update( QMap < QString, QString > & protocol_details );
+      void switch_to_live_update( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
       void reset_experiment( QString & protocolName);
       void to_autoflow_records( void );
       void define_used_instruments( QMap < QString, QString > &  );
-  void switch_to_editing( QMap < QString, QString > &);
+  //void switch_to_editing( QMap < QString, QString > &);
       //void close_expsetup_msg( void );
 };
+
+
+//! \brief Observ panel
+class US_ObservGui : public US_WidgetsDialog 
+{
+   Q_OBJECT
+
+   public:
+      US_ObservGui( QWidget* );
+      ~US_ObservGui() {};
+
+      US_XpnDataViewer*     sdiag;
+
+ private:
+      US_ProtocolDevMain*    mainw;      // Parent to all panels
+      //US_XpnDataViewer*     sdiag;
+      int offset;
+
+ protected:
+      void resizeEvent(QResizeEvent *event) override;
+      
+ private slots:
+      void process_protocol_details( QMap < QString, QString > & protocol_details );
+      //void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
+      void to_post_processing( QMap < QString, QString > & );
+      void to_close_program( void );
+      void reset_live_update( void );
+      void processes_stopped_passed( void );
+      void to_initAutoflow_xpnviewer ( void );
+ signals:
+      void to_xpn_viewer( QMap < QString, QString > & protocol_details );
+      //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
+      void switch_to_post_processing( QMap < QString, QString > &  );
+      void close_everything( void );
+      void reset_live_update_passed( void );
+      void processes_stopped( void );
+      void stop_nodata( void );
+};
+
+
+//! \brief PostProd panel
+class US_PostProdGui : public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_PostProdGui( QWidget* );
+    ~US_PostProdGui() {};
+  
+         
+  private:
+    US_ProtocolDevMain*    mainw;      // Parent to all panels
+    US_ConvertGui*        sdiag;
+    int offset;
+
+ protected:
+    void resizeEvent(QResizeEvent *event) override;
+      
+  private slots:
+    //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
+    void import_data_us_convert( QMap < QString, QString > &);
+    
+    void to_editing(  QMap < QString, QString > & );
+    //void to_experiment( QString & protocolName );
+    void to_initAutoflow( void );
+    void reset_lims_import( void );
+    void resize_main( void );
+        
+  signals:
+    //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
+    void to_post_prod( QMap < QString, QString > & ); 
+    
+    void switch_to_editing(  QMap < QString, QString > & );
+    //void switch_to_exp( QString & protocolName );
+    void switch_to_initAutoflow( void);
+    void reset_lims_import_passed( void );
+};
+
 
 //! \brief Editing panel
 class US_EditingGui : public US_WidgetsDialog 
@@ -333,8 +413,8 @@ class US_ProtocolDevMain : public US_Widgets
  private:
   US_InitDialogueGui*  epanInit;     // US_Init panel
   US_ExperGui*         epanExp;         // US_Exp panel
-  /* US_ObservGui*        epanObserv;      // US_Observ panel */
-  /* US_PostProdGui*      epanPostProd;    // US_PostProd panel */
+  US_ObservGui*        epanObserv;      // US_Observ panel 
+  US_PostProdGui*      epanPostProd;    // US_PostProd panel 
   US_EditingGui*       epanEditing;     // US_Editing panel
   US_AnalysisGui*      epanAnalysis;    // US_Analysis panel
   US_ReportStageGui*   epanReport;      // US_Report panel
@@ -363,8 +443,8 @@ private slots:
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
 
-  //void switch_to_live_update( QMap < QString, QString > & protocol_details );
-  //void switch_to_post_processing( QMap < QString, QString > & );
+  void switch_to_live_update( QMap < QString, QString > & protocol_details );
+  void switch_to_post_processing( QMap < QString, QString > & );
   void switch_to_editing( QMap < QString, QString > & protocol_details );
   void switch_to_analysis( QMap < QString, QString > & protocol_details );
   void switch_to_report( QMap < QString, QString > & protocol_details );
@@ -381,9 +461,9 @@ private slots:
 
   //void delete_psql_record( int );
   
-  //void liveupdate_stopped( void );
+  void liveupdate_stopped( void );
 
-  //void show_liveupdate_finishing_msg( void );
+  void show_liveupdate_finishing_msg( void );
 
   void analysis_update_stopped( void );
 

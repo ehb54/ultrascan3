@@ -72,11 +72,11 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // QMap < QString, QString > protocol_details;
 
 
-  // protocol_details[ "invID_passed" ] = QString("2");
-  // protocol_details[ "protocolName" ] = QString("pPOL1-20812-EcoR1-062422-GMP");
-  // protocol_details[ "aprofileguid" ] = QString("012b3860-c1b1-4962-8cc7-9d343aea694b");
-  // protocol_details[ "filename" ]     = QString("pPOL1-20812-EcoR1-062422-run1347");
-  // protocol_details[ "analysisIDs"  ] = QString( "2621,2622,2623,2624");
+  // protocol_details[ "invID_passed" ] = QString("165");
+  // protocol_details[ "protocolName" ] = QString("SBird-DNA-EcoRI-101322-PD5");
+  // protocol_details[ "aprofileguid" ] = QString("a350f5ea-305e-4e72-8500-ccf198c98b62");
+  // protocol_details[ "filename" ]     = QString("SBird-DNA-EcoRI-101322-run1843");
+  // protocol_details[ "analysisIDs"  ] = QString( "3109,3110,3111,3112");
 
   // // //What's needed ////////////////////////////////////////////////////////
   // AProfileGUID       = protocol_details[ "aprofileguid" ];
@@ -3322,17 +3322,17 @@ void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QS
   //Record to autoflowStatus:
   qry.clear();
   
-  QString analysisJson;  //  [{"6 / B / 260": "fitted"}]','6 / B / 260', 'fitted'
-
+  QString analysisJson;   //  [{"6 / B / 260": "fitted"}]','6 / B / 260', 'fitted'
+   
   QString analysisTriple = triple_name;
   analysisTriple.replace( ".", " / ");
 
   QString analysisAction = (FMB_changed == "YES") ? "modified" : "best fit selected";
   analysisAction += ", by " + fname + ", " + lname;
 
-  analysisJson += "[{";
-  analysisJson += "\"" + analysisTriple + "\":\"" + analysisAction + "\"";  
-  analysisJson += "}]";
+  // analysisJson += "[{";
+  // analysisJson += "\"" + analysisTriple + "\":\"" + analysisAction + "\"";  
+  // analysisJson += "}]";
    
   if ( autoflowStatusID )
     {
@@ -3340,7 +3340,7 @@ void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QS
       qry << "update_autoflowStatusAnalysisFitmen_record"
 	  << QString::number( autoflowStatusID )
 	  << QString::number( autoflowID_passed )
-	  << analysisJson
+	// << analysisJson                            //ALEXEY: not needed with new proc.
 	  << analysisTriple
 	  << analysisAction;
 	  

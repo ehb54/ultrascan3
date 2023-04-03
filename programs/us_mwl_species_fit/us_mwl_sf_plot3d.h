@@ -8,6 +8,7 @@
 #undef max
 #endif
 
+#include <cmath>
 #include <QtDataVisualization/Q3DSurface>
 #include <QtDataVisualization/QSurfaceDataProxy>
 #include <QtDataVisualization/QHeightMapSurfaceDataProxy>
@@ -22,6 +23,30 @@
 #include "us_settings.h"
 #include "us_plot.h"
 #include "qwt_legend.h"
+
+#include <qwt_plot.h>
+#include <qwt_plot_spectrogram.h>
+#include <qapplication.h>
+#include <qmainwindow.h>
+#include <qtoolbar.h>
+#include <qtoolbutton.h>
+#include <qcombobox.h>
+#include <qslider.h>
+#include <qlabel.h>
+#include <qcheckbox.h>
+#include "qwt_color_map.h"
+
+#include <qprinter.h>
+#include <qprintdialog.h>
+#include <qnumeric.h>
+#include <qwt_color_map.h>
+#include <qwt_plot_spectrogram.h>
+#include <qwt_scale_widget.h>
+#include <qwt_scale_draw.h>
+#include <qwt_plot_zoomer.h>
+#include <qwt_plot_panner.h>
+#include <qwt_plot_layout.h>
+#include <qwt_plot_renderer.h>
 
 
 using namespace QtDataVisualization;
@@ -63,14 +88,19 @@ private:
     QVector<int> lambda4ct;
     QVector<double> xvalsScaled;
     QVector<int> xvals4ct;
-   // scan < radial < lambda  < raw, fit, scaled SE > > > >
+   // scan < radial < lambda  < raw, fit, Err, sErr, absErr, sAbsErr > > > >
     QVector< QVector< QVector < QVector < double > > > > allData;
-    double minSSE;
-    double maxSSE;
+    QMap<int, QMap<int, QVector<int>>> lookupTable;
+    double min_sAbsErr;
+    double max_sAbsErr;
+    double min_AbsErr;
+    double max_AbsErr;
+    double min_Err;
+    double max_Err;
+    double min_sErr;
+    double max_sErr;
+    double RMSE;
     double padding;
-    double meanSE;
-    double minSE;
-    double maxSE;
     int idRP_l;
     int idRP_h;
     int idWL_l;
@@ -82,13 +112,12 @@ private:
     bool renderRunState;
 
     Q3DSurface *graph;
+    Q3DCamera *camera;
     QWidget *surfaceWgt;
     QTabWidget *tabs;
     QSurfaceDataProxy *dataProxy;
     QSurface3DSeries *dataSeries;
 
-    QRadioButton *rb_surface;
-    QRadioButton *rb_surface_wire;
     QRadioButton *rb_nosel;
     QRadioButton *rb_point;
     QRadioButton *rb_radial;
@@ -104,23 +133,37 @@ private:
     QPushButton *pb_G2R;
     QPushButton *pb_B2Y;
     QPushButton *pb_DFLT;
-    QPushButton *pb_camera;
     QPushButton *pb_help;
     QPushButton *pb_close;
+    QPushButton *pb_plotPixMap;
 
     QSlider *sli_xAngle;
     QSlider *sli_yAngle;
     QSlider *sli_zAngle;
     QSlider *sli_radial;
 
+    QLineEdit *le_rt_mean;
+    QLineEdit *le_rt_median;
+    QLineEdit *le_rt_np;
+    QLineEdit *le_rt_nruns;
+    QLineEdit *le_rt_nneg;
+    QLineEdit *le_rt_npos;
+    QLineEdit *le_rt_zstat;
+    QLineEdit *le_rt_pval;
+    QLineEdit *le_rt_zcrit;
+    QLineEdit *le_rt_region;
+    QLabel *lb_rt_rstate;
+    QLabel *lb_runs_test;
+
     QLineEdit *le_rpval;
     QLineEdit *le_rpid;
-    QLineEdit *le_meanSE;
-    QLineEdit *le_minSE;
-    QLineEdit *le_maxSE;
+    QLineEdit *le_RMSE;
+    QLineEdit *le_minErr;
+    QLineEdit *le_maxErr;
 
     QComboBox *cb_scan;
     QComboBox *cb_theme;
+    QComboBox *cb_camera;
 
     QwtCounter *ct_min_rp;
     QwtCounter *ct_max_rp;
@@ -130,7 +173,11 @@ private:
     QwtCounter *ct_scale;
 
     QCheckBox *ckb_rendall;
+    QCheckBox *ckb_plotAbs;
 
+    void fill_table(void);
+    QMap<int, QVector<int>> new_table_row(QString);
+    bool get_runs_test(QVector<double>, bool);
 protected:
     virtual void closeEvent(QCloseEvent *);
 
@@ -139,9 +186,7 @@ private slots:
     void newScan(int);
     void nextScan(void);
     void prevScan(void);
-    void resetCamera(void);
-    void setSurfaceWire(void);
-    void setSurface(void);
+    void resetCamera(int);
     void set_B2Y(void);
     void set_G2R(void);
     void set_DFLT(void);
@@ -169,6 +214,9 @@ private slots:
     void get_minMaxMean(void);
     void render_option(int);
     void enable_wgt(bool);
+    void cameraChanged(float);
+    void set_radial_slider(void);
+    void plotPixMap(void);
 };
 
 class CustomFormatter : public QValue3DAxisFormatter
@@ -190,6 +238,40 @@ private:
 
     qreal minVal;
     qreal maxVal;
+
+};
+
+class SpectrogramData: public QwtRasterData
+{
+public:
+    SpectrogramData(QVector<double> rp, QVector<double> sc,
+                    QVector<QVector<double>> st);
+
+    virtual double value( double x, double y ) const;
+
+private:
+    QVector<QVector<double>> zvals;
+    QVector<double> xrange;
+    QVector<double> yrange;
+};
+
+class RunsTestWidget: public QDialog
+{
+    Q_OBJECT
+public:
+    RunsTestWidget(QVector<double>, QVector<double>, QVector<QVector<double>>, QWidget * = NULL);
+
+private:
+    QwtPlot *d_plot;
+    QwtPlotSpectrogram *d_spectrogram;
+    QComboBox *cb_color_r;
+    QComboBox *cb_color_nr;
+
+private Q_SLOTS:
+    void setColorMap(void);
+    void showContour(bool);
+    void printPlot(void);
+    QColor getColor(QString);
 
 };
 

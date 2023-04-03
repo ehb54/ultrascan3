@@ -986,3 +986,95 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
   return layout;
 }
 
+US_LineEdit_RE::US_LineEdit_RE(const QString& txt, int fontAdjust, bool readonly): QLineEdit(){
+    _dfltchrs = 50;
+    _mytext = txt;
+    _editstate = false;
+    this->setFont(QFont(US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() + fontAdjust));
+    this->insert(_mytext);
+    this->setAutoFillBackground( true );
+    QPalette vlgray = US_GuiSettings::editColor();
+    vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+    if (readonly){
+        this->setPalette ( vlgray );
+        this->setReadOnly( true );
+    } else {
+        this->setPalette ( US_GuiSettings::normalColor() );
+        this->setReadOnly( false );
+    }
+    setDefault();
+    connect(this, SIGNAL(textEdited(const QString &)), this, SLOT(newEdit(const QString &)));
+}
+
+void US_LineEdit_RE::setDefault(){
+    setMaxChars(_dfltchrs);
+    re.setPattern("[^a-zA-Z0-9\+_-]" );
+}
+
+void US_LineEdit_RE::setMaxChars(int n){
+    _maxchrs = n;
+}
+
+void US_LineEdit_RE::setText(const QString & inText) {
+    QLineEdit::setText(inText);
+    _mytext = inText;
+    if (! _editstate){
+        QString outText = inText;
+        int reIdx = outText.indexOf(re, 0);
+        while (reIdx >= 0) {
+            outText.remove(reIdx, 1);
+            reIdx = outText.indexOf(re, 0);
+        }
+        if (outText.size() > _maxchrs){
+            outText = outText.left(_maxchrs);
+        }
+        if (outText != inText){
+            QMessageBox::warning( this,
+                  tr( "Warning!" ),
+                  tr( "Special characters are removed from the input string and the "
+                      "length of the string is limited to the first %1 characters.\n"
+                      "input: %2\noutput: %3" ).arg(_maxchrs).arg(inText, outText));
+            QLineEdit::setText(outText);
+            _mytext = outText;
+        }
+    }
+    _editstate = false;
+}
+
+void US_LineEdit_RE::_set_etext(const QString & txt){
+    _editstate = true;
+    this->setText(txt);
+}
+
+void US_LineEdit_RE::newEdit(const QString & newText){
+    int reIdx;
+    int crtpos = this->cursorPosition();
+    if (newText.size() < _mytext.size()){
+        reIdx = newText.indexOf(re, 0);
+        if (reIdx >= 0){
+            this->_set_etext(_mytext);
+            this->setCursorPosition(reIdx);
+        }else{
+            _mytext = newText;
+            emit textUpdated();
+        }
+    }else{
+        reIdx = newText.indexOf(re, 0);
+        if (reIdx >= 0){
+            this->_set_etext(_mytext);
+            this->setCursorPosition(reIdx);
+        }else{
+            if (newText.size() > _maxchrs){
+                QMessageBox::warning( this,
+                      tr( "Warning!" ),
+                      tr( "The length of the text cannot exceed %1 characters!" ).arg(_maxchrs));
+                this->_set_etext(_mytext);
+                this->setCursorPosition(crtpos - 1);
+            } else{
+                _mytext = newText;
+                emit textUpdated();
+            }
+        }
+    }
+    return;
+}

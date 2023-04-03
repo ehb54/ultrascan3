@@ -2,9 +2,9 @@
 #define US_PSEUDO_ABSORBANCE_H
 
 #include <us_widgets.h>
-#include <us_add_refScan.h>
-#include <us_convert_scan.h>
-#include <us_remove_ri.h>
+#include "us_add_refScan.h"
+#include "us_convert_scan.h"
+#include "us_remove_ri.h"
 
 class US_PseudoAbsorbance : public US_Widgets
 {

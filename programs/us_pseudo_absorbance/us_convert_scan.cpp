@@ -98,7 +98,8 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     ref_range_lyt->addWidget(ct_smooth);
 
     QLabel* lb_runIdAbs  = us_label(      tr( "Run ID:" ) );
-    le_runIdAbs          = us_lineedit(   "", 0, false );
+//    le_runIdAbs          = us_lineedit(   "", 0, false );
+    le_runIdAbs = new US_LineEdit_RE("", 0, false );
 
     QGridLayout* abs_info_lyt = new QGridLayout();
     abs_info_lyt->addWidget(lb_runIdAbs, 0, 0, 1, 1);
@@ -278,8 +279,6 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
             this, SLOT(slt_update_smooth(double)));
     connect(pb_pick_rp, SIGNAL(clicked()),
             this, SLOT(slt_pick_point()));
-    connect(le_runIdAbs, SIGNAL(textEdited(QString)), this, SLOT(slt_edit_le(QString)));
-
 }
 
 void US_ConvertScan::slt_reset(){
@@ -928,33 +927,6 @@ void US_ConvertScan::slt_update_buffer(int index){
 
 void US_ConvertScan::slt_update_smooth(double){
     emit sig_plot();
-    return;
-}
-
-void US_ConvertScan::slt_edit_le(QString text){
-    int txtlim = 60;
-    int reIdx;
-    int crtpos = le_runIdAbs->cursorPosition();
-    if (text.size() < runIdAbs.size()){
-        runIdAbs = text;
-    }else{
-        QRegExp re( "[^a-zA-Z0-9\+_-]" );
-        reIdx = text.indexOf(re, 0);
-        if (reIdx >= 0){
-            le_runIdAbs->setText(runIdAbs);
-            le_runIdAbs->setCursorPosition(reIdx);
-        }else{
-            if (text.size() > txtlim){
-                QMessageBox::warning( this,
-                      tr( "Warning!" ),
-                      tr( "Length of the run ID cannot exceed %1 characters!" ).arg(txtlim));
-                le_runIdAbs->setText(runIdAbs);
-                le_runIdAbs->setCursorPosition(crtpos - 1);
-            } else{
-                runIdAbs = text;
-            }
-        }
-    }
     return;
 }
 

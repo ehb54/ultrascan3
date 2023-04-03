@@ -108,6 +108,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void project_info    ( US_Project& ); // Slot for project diag results
       void sel_investigator( void );        // Slot for investigator changed
       void run_name_entered( void );        // Slot for run name entered
+      void label_name_entered( void );      // Slot for label name entered
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
@@ -830,11 +831,12 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
       void    clearData_protDev( void );
-
+ 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
       void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       bool    saveRunProtocol ( void );  // Save the Run Protocol
+      bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
       int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report

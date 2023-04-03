@@ -690,19 +690,97 @@ void US_ExperGuiGeneral::check_user_level()
 
    if ( ! usr_enab )
    {  // User not enabled to set investigator
-      pb_investigator->setEnabled( false );
-      pb_project     ->setEnabled( false );
-      ct_tempera     ->setEnabled( false );
-      ct_tedelay     ->setEnabled( false );
-      le_protocol    ->setEnabled( false );
+      // pb_investigator->setEnabled( false );
+      // pb_project     ->setEnabled( false );
+      // ct_tempera     ->setEnabled( false );
+      // ct_tedelay     ->setEnabled( false );
+      // le_protocol    ->setEnabled( false );
 
-      if ( !loaded_proto )
-         emit set_tabs_buttons_inactive();
-      else
-         emit set_tabs_buttons_active_readonly();
+      // if ( !loaded_proto )
+      //    emit set_tabs_buttons_inactive();
+      // else
+      //    emit set_tabs_buttons_active_readonly();
 
 DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
    }
+   
+   // //Old way of disabling all (read-only mode) for UL < 3
+   // if ( ! usr_enab )
+   // {  // User not enabled to set investigator
+   //    pb_investigator->setEnabled( false );
+   //    pb_project     ->setEnabled( false );
+   //    ct_tempera     ->setEnabled( false );
+   //    ct_tedelay     ->setEnabled( false );
+   //    le_protocol    ->setEnabled( false );
+
+   //    if ( !loaded_proto )
+   //       emit set_tabs_buttons_inactive();
+   //    else
+   //       emit set_tabs_buttons_active_readonly();
+
+   //    DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+   // }
+     
+   
+   // //For future DEV.
+   // if ( ! usr_enab ) //UL <= 2
+   //   {  // User not enabled to set investigator
+
+   //     //Check if selected investigator is the SAME as logged in user
+   //     US_Passwd pw;
+   //     QString masterpw = pw.getPasswd();
+   //     US_DB2* db = new US_DB2( masterpw );
+      
+   //     if ( db->lastErrno() != US_DB2::OK )
+   // 	 {
+   // 	   QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+   // 				 tr( "Could not connect to database \n" ) + db->lastError() );
+   // 	   return;
+   // 	 }
+       
+   //     QStringList qry;
+   //     //Check user level && ID
+   //     QStringList defaultDB = US_Settings::defaultDB();
+   //     QString user_guid   = defaultDB.at( 9 );
+       
+   //     //get personID from personGUID
+   //     qry.clear();
+   //     qry << QString( "get_personID_from_GUID" ) << user_guid;
+   //     db->query( qry );
+       
+   //     int user_id = 0;
+       
+   //     if ( db->next() )
+   // 	 user_id = db->value( 0 ).toInt();
+
+   //     qDebug() << "Check_user_level: US_Settings::us_inv_ID(), user_id -- "
+   // 		<< US_Settings::us_inv_ID() << ", "
+   // 		<< user_id;
+       
+   //     if ( user_id )
+   // 	 {
+   // 	   if ( US_Settings::us_inv_ID() != user_id )
+   // 	     {
+   // 	       pb_project     ->setEnabled( false );
+   // 	       ct_tempera     ->setEnabled( false );
+   // 	       ct_tedelay     ->setEnabled( false );
+   // 	       le_protocol    ->setEnabled( false );
+	       
+   // 	       if ( !loaded_proto )
+   // 		 emit set_tabs_buttons_inactive();
+   // 	       else
+   // 		 emit set_tabs_buttons_active_readonly();
+   // 	     }
+   // 	   else 
+   // 	     {
+   // 	       pb_investigator->setEnabled( false );
+   // 	       emit set_tabs_buttons_active();
+   // 	     }
+       
+   // 	   DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+   // 	 }
+   //   }
+      
 }
 
 // Save panel controls when about to leave the panel
@@ -3171,6 +3249,38 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( false );
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
+
+   //DEBUG
+   //Opt system check, what cells will be uvvis and/or interference
+   QStringList oprof   = sibLValue( "optical", "profiles" );
+   QString uvvis       = tr( "UV/visible" );
+   QString rayleigh    = tr( "Rayleigh Interference" );
+   
+   //get # cells with interference channels
+   int ncells_interference = 0;
+   int nchannels_uvvis = 0;
+   QStringList active_channels;
+   for ( int kk = 0; kk < oprof.count(); kk++ )
+     {
+       if ( oprof[ kk ].contains( rayleigh ) )
+	 {
+	   if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
+	     {
+	       qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	       active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	     }
+	   
+	   ++ncells_interference;
+	 }
+       
+       if ( oprof[ kk ].contains( uvvis ) )
+	 ++nchannels_uvvis;
+     }
+
+   qDebug() << "Upload::initPanel(): oprof -- " << oprof;
+   qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
+	    << ncells_interference << ", " << nchannels_uvvis;
+   
 }
 
 bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )
