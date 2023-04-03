@@ -94,6 +94,39 @@ int main( int argc, char* argv[] )
   }
 
   // License is OK.  Start up.
+  //First, check && update (if needed) user-level 
+  US_Passwd   pw;
+  US_DB2      db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      //qDebug() << "USCFG: UpdInv: ERROR connect";
+      QMessageBox msgBox;
+      msgBox.setWindowTitle ("ERROR");
+      msgBox.setText("Error making the DB connection!");
+      msgBox.setIcon  ( QMessageBox::Critical );
+      msgBox.exec();
+     
+      exit( -1 );
+    }
+  
+  QStringList q( "get_user_info" );
+  db.query( q );
+  db.next();
+  
+  int ID        = db.value( 0 ).toInt();
+  QString fname = db.value( 1 ).toString();
+  QString lname = db.value( 2 ).toString();
+  int     level = db.value( 5 ).toInt();
+
+  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+  //if(ID<1) return;
+  
+  US_Settings::set_us_inv_name ( lname + ", " + fname );
+  US_Settings::set_us_inv_ID   ( ID );
+  US_Settings::set_us_inv_level( level );
+  //END OF user-level check/update
+  
   US_Win w;
   w.show();
 #if QT_VERSION < 0x050000

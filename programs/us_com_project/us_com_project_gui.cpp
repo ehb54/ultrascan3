@@ -2314,7 +2314,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	  qDebug() << "User level low: " << US_Settings::us_inv_level();
 	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
 
-	  if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  if ( user_id && user_id == invID.toInt() )
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;

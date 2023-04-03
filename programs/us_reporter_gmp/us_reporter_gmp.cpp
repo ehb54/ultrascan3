@@ -1495,7 +1495,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	  qDebug() << "User level low: " << US_Settings::us_inv_level();
 	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
 
-	  if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  if ( user_id && user_id == invID.toInt() )
 	    {//Do we allow operator as defined in autoflow record to also see reports?? 
 	    
 	      autoflowdata  << autoflowentry;

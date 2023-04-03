@@ -629,25 +629,46 @@ void US_AnaprofPanGen::update_inv( void )
 }
 
 
-//IF USER cannot edit anything (low-level user)
+// //[OLD WAY] --  IF USER cannot edit anything (low-level user)
+// void US_AnaprofPanGen::check_user_level()
+// {
+//    //update_inv();
+// DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
+//    if ( US_Settings::us_inv_level() < 3 )
+//    {
+//       pb_aproname->setEnabled( false );
+//       pb_protname->setEnabled( false );
+
+// //      if ( !loaded_prof )
+// //         emit set_tabs_buttons_inactive();
+// //      else
+// //         emit set_tabs_buttons_active_readonly();
+
+//       emit set_tabs_buttons_active_readonly();
+
+// DbgLv(1) << "SIGNAL!!!!" ;
+//    }
+// }
+
+//NEW -- do NOT disable 8. AProfile && internal GUI for any-level UL
 void US_AnaprofPanGen::check_user_level()
 {
    //update_inv();
 DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
-   if ( US_Settings::us_inv_level() < 3 )
-   {
-      pb_aproname->setEnabled( false );
-      pb_protname->setEnabled( false );
+//    if ( US_Settings::us_inv_level() < 3 )
+//    {
+//       pb_aproname->setEnabled( false );
+//       pb_protname->setEnabled( false );
 
-//      if ( !loaded_prof )
-//         emit set_tabs_buttons_inactive();
-//      else
-//         emit set_tabs_buttons_active_readonly();
+// //      if ( !loaded_prof )
+// //         emit set_tabs_buttons_inactive();
+// //      else
+// //         emit set_tabs_buttons_active_readonly();
 
-      emit set_tabs_buttons_active_readonly();
+//       emit set_tabs_buttons_active_readonly();
 
-DbgLv(1) << "SIGNAL!!!!" ;
-   }
+// DbgLv(1) << "SIGNAL!!!!" ;
+//    }
 }
 
 // Save panel controls when about to leave the panel

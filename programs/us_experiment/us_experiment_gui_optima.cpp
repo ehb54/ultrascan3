@@ -769,11 +769,12 @@ void US_ExperGuiGeneral::sel_project( void )
 // Select DB investigator
 void US_ExperGuiGeneral::sel_investigator( void )
 {
-   int investID     = US_Settings::us_inv_ID();
+   int investID      = US_Settings::us_inv_ID();
    int old_investID  = investID;
 
    qDebug() << "Old invID: " << investID;
 
+   //US_Investigator* dialog = new US_Investigator( "AUTO", true, investID );
    US_Investigator* dialog = new US_Investigator( true, investID );
    check_user_level();
    dialog->override_permit( usr_enab );
@@ -805,7 +806,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
       US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
       US_ProtocolUtil::list_all( protdata, dbP );
-
+      //US_ProtocolUtil::list_all_auto( protdata, dbP );
+      
       for ( int ii = 0; ii < protdata.count(); ii++ )
          pr_names << protdata[ ii ][ 0 ];
 DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
@@ -853,7 +855,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
    check_runname();
 
-    qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
+   qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
 
 }
 
@@ -5760,6 +5762,14 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
+  // //DEBUG
+
+  // qDebug() << "InvestigatorID into autolfow -- " << QString::number(US_Settings::us_inv_ID());
+  // return;
+
+  //////////////////////////////////////////////////
+
+  
   // // ALEXEY: old way
   // QStringList dblist  = US_Settings::defaultXpnHost();
   // QString alias       = dblist[ 0 ];
