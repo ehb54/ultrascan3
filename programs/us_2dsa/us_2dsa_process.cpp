@@ -18,7 +18,6 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    bdata            = &dsets[ 0 ]->run_data;  // pointer to base experiment data
    edata            = bdata;          // working pointer to experiment
    parentw          = parent;
-   comp_x = 0;
    codiff_needed = false;
    cosed_needed = false;
    dbg_level        = US_Settings::us_debug();
@@ -57,7 +56,6 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    npoints          = bdata->pointCount();
    csD = nullptr;
    bfg = nullptr;
-   use_cached = false;
 
    if ( ( nscans * npoints ) > 50000 )
       //mintsols         = 80;
