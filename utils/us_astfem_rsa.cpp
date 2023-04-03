@@ -437,7 +437,7 @@ DbgLv(2)<< "s_n_D_values are" << sc->s << sc->D  << cc ;
          for ( int jj = 0; jj < af_data.radius.size(); jj++ )
          {
             scan1.radius        << af_data.radius[ jj ];
-            scan1.concentration << scan0->conc   [ jj ];
+            scan1.concentration << max(scan0->conc   [ jj ], 0.0);
          }
          US_AstfemMath::interpolate_C0( scan1, af_c0 );
       }
@@ -1199,7 +1199,7 @@ totT7+=(clcSt7.msecsTo(clcSt8));
          for ( int jj = 1; jj < af_data.scan[ ii ].conc.size(); jj++ )
          {
             double cval = af_data.scan[ ii ].conc[ jj ];
-            csum       += ( ( cval + pval ) * dltr );
+            csum       += ( ( cval + pval ) * 0.5 * (sq(af_data.radius[jj])-sq(af_data.radius[jj-1])));
             pval        = cval;
 //if ( ii < 19  &&  ( (jj/100)*100 == jj || (jj+5)>nconc ) )
 // DbgLv(3) << "   jj cval dltr csum" << jj << cval << dltr << csum;
