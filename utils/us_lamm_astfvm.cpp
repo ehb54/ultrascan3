@@ -686,7 +686,7 @@ US_LammAstfvm::US_LammAstfvm(US_Model &rmodel, US_SimulationParameters &rsimparm
    codiff_needed = false;
    dbg_level = US_Settings::us_debug();
    stopFlag = false;
-   movieFlag = false;
+   movieFlag = true;
    double speed = simparams.speed_step[ 0 ].rotorspeed;
    double *coefs = simparams.rotorcoeffs;
    double stretch = coefs[ 0 ] * speed + coefs[ 1 ] * sq(speed);
@@ -1382,6 +1382,9 @@ void US_LammAstfvm::SetNonIdealCase_2() {
          continue;
       }
       cosed_needed = true;
+      if (auc_data == nullptr){
+         continue;
+      }
       cosed_model_tmp.components.clear();
       US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
       tmp.name = cosed_comp.name;
