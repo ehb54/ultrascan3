@@ -191,6 +191,18 @@ double US_DataIO::EditedData::temperature_spread() const
    return qAbs( smax - smin );
 }
 
+US_DataIO::RawData US_DataIO::EditedData::convert_to_raw_data() {
+   US_DataIO::RawData rawData;
+   rawData.scanData = scanData;
+   rawData.scanData.detach();
+   rawData.xvalues = xvalues;
+   rawData.xvalues.detach();
+   rawData.cell = cell.toInt();
+   rawData.description = description;
+   rawData.channel = *channel.toStdString().c_str();
+   return rawData;
+}
+
 bool US_DataIO::readLegacyFile( const QString&  file, 
                                 BeckmanRawScan& data )
 {

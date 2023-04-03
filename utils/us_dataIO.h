@@ -221,6 +221,7 @@ class US_UTIL_EXTERN US_DataIO
          double std_dev     ( int, int );    //!< Get std.dev. for scan,radius
          double average_temperature() const; //!< Calculate average temperature
          double temperature_spread () const; //!< Calculate temperature spread
+         RawData convert_to_raw_data();
       };
 
       //! The CCW data after edits are applied
