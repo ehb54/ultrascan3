@@ -10,6 +10,7 @@
 #include "us_dataIO.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
+#include "us_math_bf.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -73,38 +74,43 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             void Refine(    double );
       };
 
-      //! \brief Salt data for co-sedimenting
-      class SaltData
+      //! \brief data for co-sedimenting
+      class CosedData
       {
          public:
 
-            //! \brief Create salt data
+            //! \brief Create cosed data
             //! \param amodel    Model with all components to simulate
             //! \param asparms   Simulation parameters for all components
             //! \param asim_data Simulation AUC data for all components
-            SaltData( US_Model, US_SimulationParameters,
-                      US_DataIO::RawData* );
+            CosedData( US_Model, US_SimulationParameters,
+                      US_DataIO::RawData*, US_LammAstfvm*, double&, double& );
 
             //! \brief Destroy salt data
-            ~SaltData();
+            ~CosedData();
 
             //! \brief Initialize time & concentration arrays for a component
-            void initSalt();
+            void initCosed();
 
-            //! \brief Interpolate concentrations of salt
+            //! \brief Interpolate concentrations of cosed
             //! \param N     Number of elements in arrays
             //! \param x     X (radius) array
             //! \param t     Current time value
-            //! \param Csalt Concentration of salt for current time
-            void InterpolateCSalt( int, double*, double, double* );
+            //! \param Denscosed Density of cosed buffer for current time
+            //! \param Visccosed Viscosity of cosed buffer for current time
+            void InterpolateCCosed( int, double*, double, double*, double*, double*, bool );
 
-            US_DataIO::RawData      sa_data;   //!< salt data 1-component
+            US_DataIO::RawData      sa_data;   //!< cosed data 1-component
                                                //!<  simulation for co-sed
+            QMap<QString, US_DataIO::RawData> cosed_comp_data;
+            US_LammAstfvm* lammAstfvm;
+            US_Model                model;     // cosed data co-sed model
+            US_SimulationParameters simparms;  // cosed simulation parameters
          private:
 
-            US_Model                model;     // salt data co-sed model
-            US_SimulationParameters simparms;  // salt simulation parameters
 
+
+            int count;
             int     Nx;       // number of points in radial direction
             int     Nt;       // number of points in time direction
             int     scn;      // index to next available salt data scan
@@ -114,6 +120,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             double* Cs0;      // salt concentration for the 1st time interval
             double* Cs1;      // salt concentration for the 2nd time interval
             int     dbg_level;          // debug level
+            double dens;
+            double visc;
             QVector< double > xsVec;    // Vector for xs
             QVector< double > Cs0Vec;   // Vector for Cs0
             QVector< double > Cs1Vec;   // Vector for Cs1
@@ -158,6 +166,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param flag    Flag for whether or not to operate in show-movie mode.
       void setMovieFlag( bool );
 
+      void save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1 );
    signals:
       //! \brief Signal calculation start and give maximum steps
       //! \param nsteps Number of expected total calculation progress steps
@@ -183,12 +192,19 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! The connected slot receives the scan time value from calc. functions.a
       void new_time     ( double );
 
+      //! \brief Signal that a calculate_ni()/calculate_ra2() step is complete.
+      //! The connected slot receives the integer step count from loops in
+      //! functions calculate_ni() and calculate_ra2().
+      void current_speed    ( int    );
+
+
+
    private:
 
       US_Model&                 model;       // input model
       US_SimulationParameters&  simparams;   // input simulation parameters
       US_DataIO::RawData*       auc_data;    // input/output AUC data
-
+      QMap<QString, US_DataIO::RawData> cosed_comp_data;
       US_AstfemMath::MfemData   af_data;     // internal data
 
       Mesh*   msh;             // radial grid
@@ -205,10 +221,17 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
                                // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
       double  density;         // buffer density
+      double  viscosity;       // buffer viscosity
       double  compressib;      // factor for compressibility
+      bool    manual;          // buffer manual
+      bool    cosed_needed;
+      bool    codiff_needed;
       double  vbar_salt;       // vbar of the salt
+      QList<US_CosedComponent> cosed_components;
 
-      SaltData* saltdata;      // data handle for cosedimenting
+      CosedData* saltdata;      // data handle for cosedimenting
+
+      US_Math_BF::Band_Forming_Gradient* bandFormingGradient;
 
       double  MeshSpeedFactor; // = 1: mesh following sedimentation
                                // = 0: fixed mesh in each time step
@@ -252,6 +275,9 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param err_tol Reference to error tolerance factor to set
       void SetNonIdealCase_3( int&, double& );
 
+      //! \brief Set up non-ideal case type 4 (co-diffusing)
+      void SetNonIdealCase_4( void   );
+
       // Lamm equation step for sedimentation difference - predict
       void LammStepSedDiff_P( double, double, int, double*, double*, double* );
 
@@ -272,7 +298,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       void   LocateStar( int, double*, int, double*, int*, double* );
 
       // Adjust s and D arrays
-      void   AdjustSD(   double, int, double*, double*, double*, double* );
+      void   AdjustSD(   double, int, double*, double*, double*, double*, bool );
 
       void   fun_phi(    double, double* );
 
