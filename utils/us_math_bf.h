@@ -14,7 +14,9 @@
 #define US_MATH_BF_H
 
 #include <QtCore>
+#include "us_simparms.h"
 #include "us_buffer.h"
+#include "us_dataIO.h"
 #include "us_extern.h"
 
 
@@ -24,7 +26,8 @@
 
 //! \brief A collection of mathematical routines related to the band forming experiment & simulation.
 //! all function are static
-class US_UTIL_EXTERN US_Math_BF {
+class US_UTIL_EXTERN US_Math_BF  : public QObject {
+   Q_OBJECT
 public:
    //! \brief Class to represent a solver using the secant method.
    //! \note The current implementation works fine for the roots with a change in the leading sign, it struggles with
@@ -65,7 +68,7 @@ public:
       //! \brief Finds all roots in a given interval [i_min, i_max] within epsilon for the function func using
       //! the secant method and a grid resolution of grid_res
       //! \return A boolean if a root was found, which means the solutions QVector isn't empty
-      bool solve_wrapper(void);
+      bool solve_wrapper( );
 
    private:
       int dbg_level;
@@ -74,14 +77,14 @@ public:
 
    class US_UTIL_EXTERN Band_Forming_Gradient {
    public:
-      const double meniscus; //!< Meniscus position in cm
-      const double bottom; //!< Bottom position in cm
-      const double overlay_volume; //!< Overlay volume in mL
+      double meniscus; //!< Meniscus position in cm
+      double bottom; //!< Bottom position in cm
+      double overlay_volume; //!< Overlay volume in mL
       double overlay_thickness; //!< Overlay layer thickness in cm
-      const double cp_pathlen;        //!< Pathlength of centerpiece in cm
-      const double cp_angle;          //!< Angle of centerpiece sector
-      const QList<US_CosedComponent> cosed_component; //!< Cosedimenting components
-
+      double cp_pathlen;        //!< Pathlength of centerpiece in cm
+      double cp_angle;          //!< Angle of centerpiece sector
+      QList<US_CosedComponent> cosed_component; //!< Cosedimenting components
+      bool is_empty;
 
 
       QList<US_CosedComponent> base_comps; //!< The cosedimenting components, which form the base of the buffer
@@ -90,6 +93,10 @@ public:
       double base_density; //!< The density of the buffer base
       double base_viscosity; //!< The viscosity of the buffer base
       QVector<double> eigenvalues; //!< QVector with the found eigenvalues
+      QVector<double> pre_calc_betas; //!< Map eigenvalues to their precalculated norm * Integral value
+      US_DataIO::RawData dens_bfg_data; //!< Scan like data of the gradient density
+      US_DataIO::RawData visc_bfg_data; //!< Scan like data of the gradient viscosity
+      US_SimulationParameters simparms; //!< Simulation parameters
 
       //! \brief Create a band forming gradient
       //! \param m The double value representing the meniscus
@@ -102,28 +109,26 @@ public:
                             QList<US_CosedComponent> &comps, double pathlen,
                             double angle);
 
-//      //! \brief Destroy a band forming gradient
-//      ~Band_Forming_Gradient();
-
+      Band_Forming_Gradient();
 
       //! \brief Calculate the eigenvalues
-      bool get_eigenvalues( void );
+      bool get_eigenvalues( );
 
 
       //! \brief Given an Vector of eigenvalues the norm is calculated for a given internal radius meniscus and
       //! the external radius bottom
       //! \param beta The double value representing the eigenvalue
-      double norm(const double &beta);
+      double norm(const double &beta) const;
 
       //! \brief Calculate the eigenfunction for a given eigenvalue beta, external radius bottom and position x
       //! (x<= bottom)
       //! \param beta The double value representing the eigenvalue
       //! \param x    The double value representing the position r inside the cell
-      double eigenfunction(const double &beta, const double &x);
+      double eigenfunction(const double &beta, const double &x) const;
 
       //! \brief Calculate the equilibrium concentration of a cosedimenting component
       //! \param cosed_comp The cosedimenting component to calculate for
-      double calc_eq_comp_conc(US_CosedComponent &cosed_comp);
+      double calc_eq_comp_conc(US_CosedComponent &cosed_comp) const;
 
       //! \brief Calculate the concentration of a given cosedimenting component at a given radius and a given time
       //! \param x The double value representing the radial position
@@ -132,7 +137,8 @@ public:
       //! \param cosed_comp The cosedimenting component to calculate for
       double calc_comp_conc(const double &x, const double &t,const double &temp, US_CosedComponent &cosed_comp);
 
-      //! \brief Calculate the density of the band forming gradient at a given radius x and a given point in time t
+      //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
+      //! at time t
       //! \param N The number of elements in the arrays
       //! \param x The pointer to start of radial position array
       //! \param t The double value representing the point of time
@@ -141,14 +147,31 @@ public:
       //! \param Visc The pointer to the start of the Viscosity array
       //! \param Conc The pointer to the start of the Concentration array
       //! \return boolean flag for the success of the adjustment
-      bool calc_dens_visc(int N, double* x, const double &t, double& T, double* Dens, double* Visc);
+      bool calc_dens_visc(int N, const double* x, const double &t, double& T, double* Dens, double* Visc);
 
       bool adjust_sd(const double &x, const double &t, double& s, double& d, double& T, double& vbar);
 
       bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T);
 
+      bool calculate_gradient(US_SimulationParameters asparms, US_DataIO::RawData* editedData);
+
+      //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
+      //! at time t
+      //! \param N The number of elements in the arrays
+      //! \param x The pointer to start of radial position array
+      //! \param t The double value representing the point of time
+      //! \param DensCosed The pointer to the start of the Density array
+      //! \param ViscCosed The pointer to the start of the Viscosity array
+      void interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed);
+
    private:
       QMap<QString, std::array<double,2>> value_cache;
+
+
+
+      int     Nx;       // number of points in radial direction
+      double dt;
+      int     dbg_level;          // debug level
    };
 
 
