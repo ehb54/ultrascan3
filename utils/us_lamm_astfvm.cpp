@@ -62,15 +62,15 @@ US_LammAstfvm::Mesh::~Mesh() {
 // ComputeMeshDen_D3
 //
 /////////////////////////
-void US_LammAstfvm::Mesh::ComputeMeshDen_D3( double *u0, double *u1 ) {
+void US_LammAstfvm::Mesh::ComputeMeshDen_D3( const double *u0, const double *u1 ) {
    int i;
    int i2;
    double h;
 
-   double *D20 = new double[Ne];
-   double *D21 = new double[Ne];
-   double *D30 = new double[Nv];
-   double *D31 = new double[Nv];
+   auto *D20 = new double[Ne];
+   auto *D21 = new double[Ne];
+   auto *D30 = new double[Nv];
+   auto *D31 = new double[Nv];
    // 2nd derivative on elems
    for ( i = 0; i < Ne; i++ ) {
       h = ( x[ i + 1 ] - x[ i ] ) / 2;
@@ -163,7 +163,7 @@ void US_LammAstfvm::Mesh::Unrefine( double alpha ) {
    int *RefLev1;       // refinement level of an elem
    double *MeshDen1;      // desired mesh density
 
-   while ( 1 ) {
+   while ( true ) {
       // set unref mark on each elem
       for ( i = 0; i < Ne; i++ ) Mark[ i ] = 0;
 
@@ -244,7 +244,7 @@ void US_LammAstfvm::Mesh::Refine( double beta ) {
    double *MeshDen1;      // desired mesh density
    double *x1;
 
-   while ( 1 ) {
+   while ( true ) {
 
       // set marker for elements that need to be refined
       for ( k = 0; k < Ne; k++ ) {
@@ -353,7 +353,7 @@ void US_LammAstfvm::Mesh::InitMesh(double s, double D, double w2) {
    double nu0;
    double nu1;
    double nu;
-   double t;
+   double t = 0.0;
    double m2;
    double b2;
    double x2;
@@ -370,7 +370,8 @@ void US_LammAstfvm::Mesh::InitMesh(double s, double D, double w2) {
    // FILE *fout;
    // fout = fopen("ti.tmp", "w");
 
-   for ( t = 0; t < 1; t = t + 0.1 ) {
+   for ( int i = 0; i < 10; i++ ) {
+      t += 0.1;
       u0 = new double[2 * Nv - 1];
       u1 = new double[2 * Nv - 1];
 
@@ -397,13 +398,13 @@ void US_LammAstfvm::Mesh::InitMesh(double s, double D, double w2) {
 }
 
 // create salt data set by solving ideal astfem equations
-US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asparms, US_DataIO::RawData *asim_data,
-                                    US_LammAstfvm *aastfvm, double &density, double &viscosity) {
+US_LammAstfvm::CosedData::CosedData(const US_Model& amodel, US_SimulationParameters asparms, US_DataIO::RawData *asim_data,
+                                    QList<US_CosedComponent>* cosed_comps, double &density, double &viscosity) {
    dbg_level = US_Settings::us_debug();
    model = amodel;
    simparms = asparms;
    sa_data = *asim_data;
-   lammAstfvm = aastfvm;
+   cosed_components = cosed_comps;
    count = 0;
    DbgLv(2) << "SaltD: sa_data avg.temp." << sa_data.average_temperature();
    DbgLv(2) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
@@ -430,7 +431,7 @@ US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asp
    DbgLv(2) << "SaltD: Nx" << Nx << "r0 rn ri" << sa_data.radius(0) << sa_data.radius(Nx - 1)
             << simparms.radial_resolution;
 
-   US_Astfem_RSA *astfem = new US_Astfem_RSA(model, simparms);
+   auto *astfem = new US_Astfem_RSA(model, simparms);
 
    //astfem->setTimeInterpolation( true );
    astfem->setTimeInterpolation(false);
@@ -467,7 +468,7 @@ US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asp
    DbgLv(2) << "SaltD: (2)Nx" << Nx << "r0 r1 rm rn" << sa_data.radius(0) << sa_data.radius(1) << sa_data.radius(Nx - 2)
             << sa_data.radius(Nx - 1);
 
-   astfem->calculate(sa_data, lammAstfvm->cosed_components);            // solve equations to create data
+   astfem->calculate(sa_data, *cosed_components);            // solve equations to create data
    DbgLv(1) << "SaltD: sa_data:"<< sa_data.scanCount() << sa_data.pointCount();
    Nt = sa_data.scanCount();
    Nx = sa_data.pointCount();
@@ -480,7 +481,6 @@ US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asp
    const double maxsalt = 1e100;
    const double minsalt = -9e99;
    const double minsala = 1e-100;
-   const double minsaln = -1e-100;
    int nchg = 0;
    for ( int ii = 0; ii < Nt; ii++ ) {
       for ( int jj = 0; jj < Nx; jj++ ) {
@@ -505,8 +505,7 @@ US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asp
             sa_data.setValue(ii, jj, saltv);
          } else if ( salta < minsala ) {  // Amplitude too small
             nchg++;
-            saltv = saltv > 0 ? minsala : minsala;
-            sa_data.setValue(ii, jj, saltv);
+            sa_data.setValue(ii, jj, minsala);
          }
       }
    }
@@ -515,12 +514,6 @@ US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asp
    //xs         = new double [ Nx ];
    //Cs0        = new double [ Nx ];
    //Cs1        = new double [ Nx ];
-   xsVec.fill(0.0, Nx);
-   Cs0Vec.fill(0.0, Nx);
-   Cs1Vec.fill(0.0, Nx);
-   xs = xsVec.data();
-   Cs0 = Cs0Vec.data();
-   Cs1 = Cs1Vec.data();
 
    if ( dbg_level > 2 ) { // save a copy of the salt data set so that it may be plotted for QC
       QString safile = US_Settings::resultDir() + "/salt_data";
@@ -532,37 +525,20 @@ US_LammAstfvm::CosedData::CosedData(US_Model amodel, US_SimulationParameters asp
    }
 
    delete astfem;                           // astfem solver no longer needed
-
-   for ( int jj = 0; jj < Nx; jj++ ) {  // set salt radius array
-      xs[ jj ] = sa_data.radius(jj);
-   }
-   DbgLv(2) << "SaltD:  Nx" << Nx << "xs sme" << xs[ 0 ] << xs[ 1 ] << xs[ 2 ] << xs[ Nx / 2 - 1 ] << xs[ Nx / 2 ]
-            << xs[ Nx - 2 + 1 ] << xs[ Nx - 3 ] << xs[ Nx - 2 ] << xs[ Nx - 1 ];
    cosed_comp_data[ model.components[ 0 ].analyteGUID ] = sa_data;
+   is_empty = false;
 }
 
-US_LammAstfvm::CosedData::~CosedData() {
-   //delete [] xs;
-   //delete [] Cs0;
-   //delete [] Cs1;
-   if (!xsVec.isEmpty())
-   xsVec .clear();
-   if (!Cs0Vec.isEmpty())
-   Cs0Vec.clear();
-   if (!Cs1Vec.isEmpty())
-   Cs1Vec.clear();
-}
-
-void US_LammAstfvm::CosedData::initCosed() {
-   t0 = sa_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
-   t1 = sa_data.scanData[ 1 ].seconds;
-   scn = 2;                             // index to next scan to use
+void US_LammAstfvm::CosedData::initCosed(double* Cs0, double* Cs1, double* xs) {
+   double t0 = sa_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
+   double t1 = sa_data.scanData[ 1 ].seconds;
+   int scn = 2;                             // index to next scan to use
    Nt = sa_data.scanCount() - 2;       // scan count less two used here
 
    for ( int j = 0; j < Nx; j++ ) {  // get 1st two salt arrays from 1st two salt scans
       Cs0[ j ] = sa_data.value(0, j);
       Cs1[ j ] = sa_data.value(1, j);
-      xs[ j ] = sa_data.xvalues[ j ];
+      xs[ j ] = sa_data.radius(j);
    }
    int k = Nx / 2;
    int n = Nx - 1;
@@ -572,23 +548,39 @@ void US_LammAstfvm::CosedData::initCosed() {
    DbgLv(2) << "initSalt:  xs Cs0 Cs1 j" << xs[ n ] << Cs0[ n ] << Cs1[ n ] << n;
 }
 
-void US_LammAstfvm::CosedData::InterpolateCCosed(int N, double *x, double t, double *DensCosed, double *ViscCosed,
-                                                 double *ConcCosed, bool log) {
+void US_LammAstfvm::CosedData::InterpolateCCosed(int N, const double *x, double t, double *DensCosed, double *ViscCosed) {
    count = (count + 1) % 20;
+   double t0 = sa_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
+   double t1 = sa_data.scanData[ 1 ].seconds;
+   int scn = 2;                             // index to next scan to use
+   int Nt_cosed = sa_data.scanCount() - 3;       // scan count less two used here
+   double* Cs0;      // density for the 1st time interval
+   double* Cs1;      // density for the 2nd time interval
+   double* xs;
+   QVector< double > tmpCs0;
+   QVector< double > tmpCs1;
+   QVector< double > tmpxs;
+   tmpCs0.fill(0.0, N);
+   tmpCs1.fill(0.0, N);
+   tmpxs.fill(0.0, N);
+   Cs0 = tmpCs0.data();
+   Cs1 = tmpCs1.data();
+
+   xs = tmpxs.data();
    foreach (US_Model::SimulationComponent comp, model.components) {
       sa_data = cosed_comp_data[ comp.analyteGUID ];
-      initCosed();
-      DbgLv(2) << "SaltD:ntrp:  N t t1 Nt Nx" << N << t << t1 << Nt << Nx << "Cs0N Cs1N" << Cs0[ Nx - 1 ]
+      initCosed(Cs0,Cs1,xs);
+      DbgLv(2) << "SaltD:ntrp:  N t t1 Nt Nx" << N << t << t1 << Nt_cosed << Nx << "Cs0N Cs1N" << Cs0[ Nx - 1 ]
                << Cs1[ Nx - 1 ];
 
-      while ((t1 < t) && (Nt > 0)) {  // walk down salt scans until we are straddling desired time value
+      while ((t1 < t) && (scn < sa_data.scanCount())) {  // walk down salt scans until we are straddling desired time value
          t0 = t1;
-         t1 = sa_data.scanData[ scn ].seconds;
-         Nt--;             // Nt = time level left
+         t1 = sa_data.scanData[ scn ].seconds;// Nt = time level left
+         Nt_cosed--;
          scn++;
-         DbgLv(3) << "SaltD:ntrp:      0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
+         DbgLv(3) << "SaltD:ntrp:      0 t 1" << t0 << t << t1 << "  N s" << Nt_cosed << scn;
       }
-      DbgLv(2) << "SaltD:ntrp:   t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
+      DbgLv(2) << "SaltD:ntrp:   t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt_cosed << scn;
       for ( int j = 0; j < Nx; j++ ) {  // get 1st two salt arrays from 1st two salt scans
          Cs0[ j ] = sa_data.value(scn-2, j);
          Cs1[ j ] = sa_data.value(scn-1, j);
@@ -608,7 +600,7 @@ void US_LammAstfvm::CosedData::InterpolateCCosed(int N, double *x, double t, dou
       int knan = 0;
       double dens_coeff[6] = {0.0};               //!< The density coefficients.
       double visc_coeff[6] = {0.0};
-      foreach (US_CosedComponent i, lammAstfvm->cosed_components) {
+      foreach (US_CosedComponent i, *cosed_components) {
          if ( i.GUID == comp.analyteGUID || i.name == comp.name ) {
             for ( int iii = 0; iii < 6; iii++ ) {
                dens_coeff[ iii ] = i.dens_coeff[ iii ];
@@ -626,11 +618,11 @@ void US_LammAstfvm::CosedData::InterpolateCCosed(int N, double *x, double t, dou
          // linear interpolation
          int m = k - 1;
          if (xs[k]<xs[m] || xs[k] < xj || xs[m] > xj){
-            DbgLv(1)<<"radius corrupted";
+            DbgLv(2)<<"radius corrupted";
          }
          double xik = (xj - xs[ m ]) / (xs[ k ] - xs[ m ]);
          if (xik < 0.0 || xik > 1.0){
-            DbgLv(1) << "radius corrupted again";
+            DbgLv(2) << "radius corrupted again";
          }
          xik = (xik > 1.0) ? 1.0 : xik;
          xik = (xik < 0.0) ? 0.0 : xik;
@@ -663,108 +655,26 @@ void US_LammAstfvm::CosedData::InterpolateCCosed(int N, double *x, double t, dou
          phi = qAbs(phi);
          DensCosed[ jf ] += rho;
          ViscCosed[ jf ] += phi;
-         ConcCosed[ jf ] = Cm;
          DbgLv(2) << "cosed comp" << comp.name << "Cm"
                   << et0 * (xim * Cs0[ m ] + xik * Cs0[ k ]) + et1 * (xim * Cs1[ m ] + xik * Cs1[ k ]) << rho
                   << phi;
       } // radius loop end
-      if ( (dbg_level > 0 && log)) {
-         QString conc_data = comp.name + "_conc_visc_dens_data.csv";
-         int count_existing_lines = 0;
-         QVector<QString> existing_lines;
-         {
-            QFile myFile(conc_data);
-            if ( !myFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-               DbgLv(1) << "Could not write to file:" << conc_data << "Error string:" << myFile.errorString();
-            } else {
-               QTextStream in(&myFile);
-               bool existing_already;
-               // Read file completely
-               QString tmp = in.readLine();
-               existing_already = tmp.contains(QString::number(t, 'f', 4));
-               if ( existing_already )continue;
-               if ( count != 0 ) continue;
-               existing_lines << tmp.replace("\n", "");
-               while ( !in.atEnd()) {
-                  tmp = in.readLine();
-                  existing_already = tmp.contains(QString::number(t, 'f', 4));
-                  existing_lines << tmp.replace("\n", "");
-                  count_existing_lines += 1;
-               }
-               myFile.flush();
-               myFile.close();
-            }
-            // get number of columns
-            int count_columns = 0;
-            if ( count_existing_lines > 0 ) { count_columns = existing_lines[ 0 ].count(";") + 1; }
-            QFile myFile2(conc_data);
-            if ( !myFile2.open(QIODevice::WriteOnly | QIODevice::Text)) {
-               DbgLv(1) << "Could not write to file:" << conc_data << "Error string:" << myFile.errorString();
-               continue;
-            }
-            QTextStream out(&myFile2);
-            if ( count_existing_lines == 0 ) {
-               QString line;
-               line = "Radius [cm]";
-               line += "; Conc" + QString::number(t, 'f', 4);
-               line += "; Dens" + QString::number(t, 'f', 4);
-               line += "; Visc" + QString::number(t, 'f', 4);
-               existing_lines << line;
-               for ( int j = 0; j < N; j++ ) {
-                  QString row = QString::number(x[ j ], 'f', 5);
-                  row += "; " + QString::number(ConcCosed[ j ], 'f', 4);
-                  row += "; " + QString::number(DensCosed[ j ], 'f', 4);
-                  row += "; " + QString::number(ViscCosed[ j ], 'f', 4);
-                  existing_lines << row;
-               }
-            }
-            if ( N + 1 <= count_existing_lines ) {
-               QString line;
-               line = "; Radius [cm] " + QString::number(t, 'f', 4);
-               line += "; Conc" + QString::number(t, 'f', 4);
-               line += "; Dens" + QString::number(t, 'f', 4);
-               line += "; Visc" + QString::number(t, 'f', 4);
-               existing_lines[ 0 ] += line;
-               for ( int j = 0; j < N; j++ ) {
-                  QString tmp_add = "; " + QString::number(x[ j ], 'f', 5);
-                  tmp_add += "; " + QString::number(ConcCosed[ j ], 'f', 4);
-                  tmp_add += "; " + QString::number(DensCosed[ j ], 'f', 4);
-                  tmp_add += "; " + QString::number(ViscCosed[ j ], 'f', 4);
-                  existing_lines[ j + 1 ] += tmp_add;
-               }
-            }
-            if ( N + 1 > count_existing_lines && count_existing_lines > 0 ) {
-               QString line;
-               line = "; Radius [cm] " + QString::number(t, 'f', 4);
-               line += "; Conc" + QString::number(t, 'f', 4);
-               line += "; Dens" + QString::number(t, 'f', 4);
-               line += "; Visc" + QString::number(t, 'f', 4);
-               existing_lines[ 0 ] += line;
-               for ( int j = 0; j < count_existing_lines - 1; j++ ) {
-                  QString tmp_add = "; " + QString::number(x[ j ], 'f', 5);
-                  tmp_add += "; " + QString::number(ConcCosed[ j ], 'f', 4);
-                  tmp_add += "; " + QString::number(DensCosed[ j ], 'f', 4);
-                  tmp_add += "; " + QString::number(ViscCosed[ j ], 'f', 4);
-                  existing_lines[ j + 1 ] += tmp_add;
-               }
-               for ( int j = count_existing_lines - 1; j < N; j++ ) {
-                  QString row = "";
-                  for ( int i = 0; i < count_columns - 1; i++ ) { row += " ;"; }
-                  row += "; " + QString::number(x[ j ], 'f', 5);
-                  row += "; " + QString::number(ConcCosed[ j ], 'f', 4);
-                  row += "; " + QString::number(DensCosed[ j ], 'f', 4);
-                  row += "; " + QString::number(ViscCosed[ j ], 'f', 4);
-                  existing_lines << row;
-               }
-            }
-            foreach(QString i, existing_lines) {
-                  out << i << Qt::endl;
-            }
-            myFile2.flush();
-            myFile2.close();
-         }
-      }
    } // cosed component loop end
+}
+
+US_LammAstfvm::CosedData::CosedData() {
+   is_empty = true;
+   sa_data = US_DataIO::RawData();
+   cosed_comp_data.clear();
+   cosed_components = nullptr;
+   model = US_Model();
+   simparms = US_SimulationParameters();
+   count = 0;
+   Nx = 0;
+   Nt = 0;
+   dbg_level = 1;
+   dens = 0.0;
+   visc = 0.0;
 }
 
 
@@ -806,12 +716,16 @@ US_LammAstfvm::US_LammAstfvm(US_Model &rmodel, US_SimulationParameters &rsimparm
 
    //err_tol         = 1.0e-4;
    err_tol = 1.0e-5;
-}
-
-// destroy
-US_LammAstfvm::~US_LammAstfvm() {
-   if ( NonIdealCaseNo == 2 && cosed_needed) delete saltdata;
-   if ( NonIdealCaseNo == 2 && codiff_needed) delete bandFormingGradient;
+   // init all variables
+   saltdata = nullptr;
+   bandFormingGradient = nullptr;
+   auc_data = nullptr;
+   viscosity = 0.0;
+   manual = false;
+   vbar_salt = 0.0;
+   param_s = 0.0;
+   param_D = 0.0;
+   dt = 0.0;
 }
 
 // primary method to calculate solutions for all species
@@ -832,6 +746,28 @@ int US_LammAstfvm::calculate(US_DataIO::RawData &sim_data) {
    qApp->processEvents();
 #endif
 
+   if (codiff_needed && (bandFormingGradient == nullptr || bandFormingGradient->is_empty || bandFormingGradient->dens_bfg_data.scanCount() == 0)) {
+      param_s = model.components.first().s != 0.0 ? model.components.first().s : 1e-14;
+      param_D = model.components.first().D;
+      dt = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
+      for (US_Model::SimulationComponent &comp: model.components){
+         double dt_temp;
+         param_s = comp.s != 0.0 ? comp.s : 1e-14;
+         param_D = comp.D;
+         dt_temp = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
+         int nts = af_data.scan.size();            // nbr. output times (scans)
+         double true_dt_min = dt_temp;
+         for ( int i = 1; i < nts; i++ ) {
+            true_dt_min = min(true_dt_min, af_data.scan[ i ].time - af_data.scan[ i - 1 ].time);
+         }
+         if ( true_dt_min < dt_temp ) {
+            DbgLv(0) << "dt Problem dt=" << dt_temp << " true_dt_min=" << true_dt_min;
+            dt_temp = true_dt_min / 1.5;
+         }
+         dt = min(dt,dt_temp);
+      }
+      bandFormingGradient->calculate_gradient(simparams,auc_data);
+   }
    // update concentrations for each model component
    for ( int ii = 0; ii < model.components.size(); ii++ ) {
       int rc = solve_component(ii);
@@ -869,7 +805,7 @@ int US_LammAstfvm::solve_component(int compx) {
    double *u1p;
    double *dtmp;
    double total_t = (param_b - param_m) * 2.0 / (param_s * param_w2 * param_m);
-   double dt = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
+   dt = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
 
    int ntcc = (int) (total_t / dt) + 1;      // nbr. times in calculations
    int jt = 0;
@@ -909,7 +845,7 @@ int US_LammAstfvm::solve_component(int compx) {
    if ( NonIdealCaseNo < 2 ) {
       // make sure the selected model is adjusted for the selected temperature
       // and buffer conditions:
-      US_Math2::SolutionData sol_data;
+      US_Math2::SolutionData sol_data{};
       sol_data.density = density;
       sol_data.viscosity = viscosity;
       sol_data.vbar20 = model.components[ compx ].vbar20; //The assumption here is that vbar does not change with
@@ -926,9 +862,9 @@ int US_LammAstfvm::solve_component(int compx) {
       ntc = (int) (solut_t / dt) + 1;
    }
 
-   DbgLv(2) << "LAsc:  CX=" << comp_x << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
-   DbgLv(2) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
-   DbgLv(2) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_w2;
+   DbgLv(1) << "LAsc:  CX=" << comp_x << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
+   DbgLv(1) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
+   DbgLv(1) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_w2;
 
 //   if ( NonIdealCaseNo == 2 )
 //   {  // co-sedimenting
@@ -985,13 +921,10 @@ int US_LammAstfvm::solve_component(int compx) {
 
    // get initial concentration for this component
    double sig_conc = model.components[ comp_x ].signal_concentration;
-   if ( simparams.band_forming ) {
-      sig_conc = sig_conc / 0.906402;
-   }
    DbgLv(1) << "component sig_conc s D" << model.components[ comp_x ].name << sig_conc << model.components[ comp_x ].s
             << model.components[ comp_x ].D;
 
-   QTime timer;
+   QElapsedTimer timer;
    int ktime1 = 0;
    int ktime2 = 0;
    int ktime3 = 0;
@@ -1103,24 +1036,24 @@ int US_LammAstfvm::solve_component(int compx) {
          DbgLv(2) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
          DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[ 0 ] << u0[ 1 ] << u0[ 2 ] << u0[ N0u - 3 ] << u0[ N0u - 2 ]
                   << u0[ N0u - 1 ];
-         tso << QString().sprintf("%12.5e %d %12.5e\n", t0, N0, u_ttl);
+         tso << QString("%12.5e %d %12.5e\n").arg(QString::number(t0), QString(N0), QString::number(u_ttl));
          for ( int j = 0; j < N0; j++ )
-            tso << QString().sprintf("%10.6e \n", x0[ j ]);
-         tso << QString().sprintf("\n");
+            tso << QString("%10.6e \n").arg( x0[ j ]);
+         tso << QString("\n");
          for ( int j = 0; j < N0u; j++ )
-            tso << QString().sprintf("%15.7e \n", u0[ j ]);
-         tso << QString().sprintf("\n\n");
+            tso << QString("%15.7e \n").arg(u0[ j ]);
+         tso << QString("\n\n");
       }
-      ktime1 += timer.restart();
+      ktime1 += (int) timer.restart();
 
       u1p0 = new double[N0u];
       LammStepSedDiff_P(t0, dt, N0 - 1, x0, u0, u1p0);
-      ktime2 += timer.restart();
+      ktime2 += (int) timer.restart();
 
       if ( MeshRefineOpt == 1 ) {
 
          msh->RefineMesh(u0, u1p0, err_tol);
-         ktime3 += timer.restart();
+         ktime3 += (int) timer.restart();
 
          N1 = msh->Nv;
          N1u = N1 + N1 - 1;
@@ -1137,15 +1070,15 @@ int US_LammAstfvm::solve_component(int compx) {
          delete[] u1;
          u1 = new double[N1u];
 
-         ktime4 += timer.restart();
+         ktime4 += (int) timer.restart();
          LammStepSedDiff_C(t0, dt, N0 - 1, x0, u0, N1 - 1, x1, u1p, u1);
 
          delete[] u1p;
       } else {
-         ktime4 += timer.restart();
+         ktime4 += (int) timer.restart();
          LammStepSedDiff_C(t0, dt, N0 - 1, x0, u0, N1 - 1, x1, u1p0, u1);
       }
-      ktime5 += timer.restart();
+      ktime5 += (int) timer.restart();
       // see if current scan is between calculated times; output scan if so
 
       if ( ts >= t0  &&  ts <= t1 )
@@ -1203,14 +1136,14 @@ int US_LammAstfvm::solve_component(int compx) {
          if ( movieFlag ) {
             emit new_scan(&af_data.radius, af_data.scan[ kt ].conc.data());
             emit new_time(af_data.scan[ kt ].time);
-            emit current_speed(af_data.scan[ kt ].rpm);
+            emit current_speed((int) af_data.scan[ kt ].rpm);
             qApp->processEvents();
          }
          else
 #endif
          {
          emit new_time(af_data.scan[ kt ].time);
-         emit current_speed(af_data.scan[ kt ].rpm);
+         emit current_speed((int) af_data.scan[ kt ].rpm);
          qApp->processEvents();
          kt++;    // bump output time(scan) index
          }
@@ -1256,7 +1189,7 @@ int US_LammAstfvm::solve_component(int compx) {
 
          for ( int jj = 1; jj < af_data.scan[ ii ].conc.size(); jj++ ) {
             double cval = af_data.scan[ ii ].conc[ jj ];
-            csum += ((cval + pval) * dltr);
+            csum += ( ( cval + pval ) * 0.5 * (sq(af_data.radius[jj])-sq(af_data.radius[jj-1])));
             pval = cval;
 //if ( ii < 19  &&  ( (jj/100)*100 == jj || (jj+5)>nconc ) )
 // DbgLv(3) << "   jj cval dltr csum" << jj << cval << dltr << csum;
@@ -1279,12 +1212,12 @@ int US_LammAstfvm::solve_component(int compx) {
    delete[] x1;
    delete[] u1;
    delete msh;
-   ktime6 += timer.elapsed();
+   ktime6 += (int) timer.elapsed();
    DbgLv(2) << "compx" << comp_x << "times 1-6" << ktime1 << ktime2 << ktime3 << ktime4 << ktime5 << ktime6;
    return 0;
 }
 
-void US_LammAstfvm::set_buffer(US_Buffer buffer) {
+void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradient* bfg, CosedData* csD) {
    density = buffer.density; // for compressibility
    viscosity = buffer.viscosity;
    compressib = buffer.compressibility;
@@ -1293,15 +1226,52 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer) {
    buffer.compositeCoeffs(d_coeff, v_coeff);
    if ( !buffer.cosed_component.isEmpty()) {
       cosed_components = buffer.cosed_component;
+       if (csD == nullptr){
+           DbgLv(1) << "nothing to do";
+           cosed_comp_data.clear();
+       }
+       else if (!csD->is_empty && csD->cosed_components != nullptr){
+           DbgLv(0) << "reused old csD";
+           saltdata = csD;
+         cosed_comp_data.clear();
+         cosed_comp_data = saltdata->cosed_comp_data;
+         cosed_comp_data.detach();
+         if (!csD->cosed_comp_data.isEmpty()){
+            cosed_needed = true;
+         }
+       }
+       else{
+           DbgLv(1) << "csD is not null pointer but empty";
+           cosed_comp_data.clear();
+       }
+      SetNonIdealCase_2();
+      if (codiff_needed){
+      if (bfg == nullptr){
+         bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
+                                                                       simparams.band_volume,
+                                                                       cosed_components, simparams.cp_pathlen,
+                                                                       simparams.cp_angle);
+         if (!bandFormingGradient->upper_comps.isEmpty()){
+            bandFormingGradient->get_eigenvalues();
+         }
+      }
+      else if (!bfg->is_empty){
+         DbgLv(0) << "reused old bfg";
+         bandFormingGradient = bfg;
+         codiff_needed = true;
+      }
+      else{
       bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
                                                                     simparams.band_volume,
                                                                     cosed_components, simparams.cp_pathlen,
                                                                     simparams.cp_angle);
-      if (!bandFormingGradient->upper_comps.empty()){
-         bandFormingGradient->get_eigenvalues();
-         codiff_needed = true;
-      }
-      DbgLv(0) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
+         if (!bandFormingGradient->upper_comps.isEmpty()){
+            bandFormingGradient->get_eigenvalues();
+            codiff_needed = true;
+         }
+      }}
+      else{bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient();}
+      DbgLv(1) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
    }
 }
 
@@ -1388,7 +1358,7 @@ void US_LammAstfvm::SetNonIdealCase_2() {
    }
    // make sure the selected model is adjusted for the selected temperature
    // and buffer conditions:
-   US_Math2::SolutionData sol_data;
+   US_Math2::SolutionData sol_data{};
    sol_data.density = base_density;
    sol_data.viscosity = base_viscosity;
    sol_data.manual = true;
@@ -1419,8 +1389,10 @@ void US_LammAstfvm::SetNonIdealCase_2() {
       tmp.molar_concentration = cosed_comp.conc;
       tmp.signal_concentration = cosed_comp.conc;
       tmp.vbar20 = cosed_comp.vbar;
-      sol_data.vbar20 = 0.72; //The assumption here is that vbar does not change with
-      sol_data.vbar = 0.72; //temp, so vbar correction will cancel in s correction
+      if (cosed_comp_data.contains(tmp.analyteGUID)){
+         continue;}
+      sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
+      sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
       US_Math2::data_correction(simparams.temperature, sol_data);
       tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
       tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
@@ -1429,54 +1401,19 @@ void US_LammAstfvm::SetNonIdealCase_2() {
       cosed_model.components << tmp;
       cosed_model_tmp.components << tmp;
       cosed_model_tmp.update_coefficients();
-      saltdata = new CosedData(cosed_model_tmp, simparams, auc_data, this, base_density, base_viscosity);
+      saltdata = new CosedData(cosed_model_tmp, simparams, auc_data, &cosed_components, base_density, base_viscosity);
       cosed_comp_data[ tmp.analyteGUID ] = saltdata->sa_data;
-      if ( dbg_level > 0 || true) {
-         QDir tmp_dir(US_Settings::importDir());
-         QString odir = QDateTime::currentDateTime().toUTC().toString("yyMMddhhmmss") + "_" +tmp.name;
-         tmp_dir.mkdir(odir);
-         odir = tmp_dir.path() + '/' +  odir;
-         QString run_id = odir.section("/", -1, -1);
-         QString tmst_tfpath = odir + "/p" + QString::number(getpid()) + "t" +
-                               QDateTime::currentDateTime().toUTC().toString("yyMMddhhmmss") + ".time_state.tmst";
-         DbgLv(1) << "ASIM:svscn: IN" << tmst_tfpath << "odir" << odir;
-         int nstep = simparams.speed_step.size();
-         QString xdef_tfpath = QString(tmst_tfpath).replace(".tmst", ".xml");
-         bool have_tmst = (QFile(tmst_tfpath).exists() && QFile(xdef_tfpath).exists());
-
-         if ( !odir.isEmpty()) {  // The user gave a directory name, save in openAUC format
-            odir = odir.replace("\\", "/");
-            simparams.sim = true;
-
-            if ( nstep == 1 ) {  // Single-speed case
-               save_xla(odir, saltdata->sa_data, 0);
-
-               // Create a timestate in the same directory
-               QString tmst_fbase = run_id + ".time_state.tmst";
-               QString tmst_fpath = odir + "/" + tmst_fbase;
-               QString xdef_fpath = QString(tmst_fpath).replace(".tmst", ".xml");
-               DbgLv(1) << "ASIM:svscn: 1-speed file paths" << odir << tmst_fpath;
-
-               if ( have_tmst ) {  // Copy temporary timestate files to imports subdirectory
-                  QFile::remove(tmst_fpath);
-                  QFile::remove(xdef_fpath);
-                  QFile::copy(tmst_tfpath, tmst_fpath);
-                  QFile::copy(xdef_tfpath, xdef_fpath);
-               } else {  // Create timestate file pair in imports subdirectory
-                  US_AstfemMath::writetimestate(tmst_fpath, simparams, saltdata->sa_data);
-               }
-            }  // End:  single-speed case
-         }// End:  output directory specified
-      }
       DbgLv(2) << "NonIdeal2: create saltdata";
       cosed_model.update_coefficients();
       saltdata->model = cosed_model;
       saltdata->cosed_comp_data = cosed_comp_data;
+      saltdata->cosed_comp_data.detach();
       DbgLv(1) << "CosedData: cosed_model comp" << saltdata->model.components.size() << "cosed_comp_data"
                << cosed_comp_data.size() << "sa_data.scanCount()" << saltdata->sa_data.scanCount();
       DbgLv(2) << "NonIdeal2: initSalt  comp_x" << comp_x;
-      saltdata->initCosed();
    }
+   if (!cosed_comp_data.isEmpty()){
+   saltdata->sa_data= cosed_comp_data.first();}
 }
 
 void US_LammAstfvm::save_xla(const QString &dirname, US_DataIO::RawData sim_data, int i1) {
@@ -1545,12 +1482,11 @@ void US_LammAstfvm::save_xla(const QString &dirname, US_DataIO::RawData sim_data
    }
 
    double dthresh = maxc;
-   double maxrad = brad;
    s1plat = qMin(s1plat, (dthresh * 0.5));
    DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
 
 
-   maxrad = brad;
+   double maxrad = brad;
    dthresh = maxc;
 
 
@@ -1602,20 +1538,20 @@ void US_LammAstfvm::save_xla(const QString &dirname, US_DataIO::RawData sim_data
    int cell = sim_data.cell;
    int wvlen = qRound(sim_data.scanData[ 0 ].wavelength);
    wvlen = (wvlen < 99) ? 123 : wvlen;
-   QString ofname = QString("%1/%2.%3.%4.%5.%6.auc").arg(dirname).arg(run_id).arg(stype).arg(cell).arg(schann).arg(
-         wvlen);
+   QString ofname = QString("%1/%2.%3.%4.%5.%6.auc")
+         .arg(dirname, run_id, stype, QString(cell), schann, QString(wvlen));
 
    US_DataIO::writeRawData(ofname, sim_data);
 }
 
-void US_LammAstfvm::SetNonIdealCase_3(int &mropt, double &err_tol) {
+void US_LammAstfvm::SetNonIdealCase_3(int &mropt, double &err_toll) {
    mropt = 0;
-   err_tol = 1.0e-5;
+   err_toll = 1.0e-5;
 }
 
 void US_LammAstfvm::SetNonIdealCase_4() {
    DbgLv(2) << "NonIdeal4: called";
-   if ( bandFormingGradient == 0 ) {
+   if ( bandFormingGradient == nullptr ) {
       DbgLv(2) << "NonIdeal4: create bandforming gradient";
       bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(simparams.meniscus, simparams.bottom,
                                                                   simparams.band_volume, cosed_components,
@@ -1645,8 +1581,8 @@ void US_LammAstfvm::SetMeshRefineOpt(int Opt) {
 // u1 = piecewise quadratic solution at t+dt on mesh x1
 //
 ///////////////////////////////////////////////////////////////
-void US_LammAstfvm::LammStepSedDiff_P(double t, double dt, int M0, double *x0, double *u0, double *u1) {
-   LammStepSedDiff_C(t, dt, M0, x0, u0, M0, x0, u0, u1);
+void US_LammAstfvm::LammStepSedDiff_P(double t, double dt_, int M0, double *x0, double *u0, double *u1) {
+   LammStepSedDiff_C(t, dt_, M0, x0, u0, M0, x0, u0, u1);
 }
 
 
@@ -1666,14 +1602,14 @@ void US_LammAstfvm::LammStepSedDiff_P(double t, double dt, int M0, double *x0, d
 //
 ///////////////////////////////////////////////////////////////
 void
-US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double *u0, int M1, double *x1, double *u1p,
+US_LammAstfvm::LammStepSedDiff_C(double t, double dt_, int M0, double *x0, double *u0, int M1, const double *x1, const double *u1p,
                                  double *u1) {
    int Ng = 2 * M1;     // number of x_star points
    int *ke = new int[Ng];
-   double *MemDouble = new double[12 * Ng + 15];
+   auto *MemDouble = new double[12 * Ng + 15];
    double *flux_p[3];
 
-   double dt2 = dt * 0.5;
+   double dt2 = dt_ * 0.5;
    double *xt = MemDouble;
    double *xi = xt + Ng;
    double *xg0 = xi + Ng;
@@ -1689,7 +1625,7 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
    double *phi = flux_p[ 2 ] + Ng;
    double *phiL = phi + 3;
    double *phiR = phiL + 6;
-   QTime timer;
+   QElapsedTimer timer;
    static int ktim1 = 0;
    static int ktim2 = 0;
    static int ktim3 = 0;
@@ -1710,15 +1646,15 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
    }
    DbgLv(2) << "preadjust  xg1 0 1 M Nm N" << xg1[ 0 ] << xg1[ 1 ] << xg1[ Ng / 2 ] << xg1[ Ng - 2 ] << xg1[ Ng - 1 ];
    DbgLv(2) << "preadjust  Sv 0 1 M Nm N" << Sv[ 0 ] << Sv[ 1 ] << Sv[ Ng / 2 ] << Sv[ Ng - 2 ] << Sv[ Ng - 1 ];
-   AdjustSD(t + dt, Ng, xg1, ug1, Sv, Dv, false);
-   ktim1 += timer.restart();
+   AdjustSD(t + dt_, Ng, xg1, ug1, Sv, Dv);
+   ktim1 += (int) timer.restart();
    DbgLv(2) << "  xg1 0 1 M Nm N" << xg1[ 0 ] << xg1[ 1 ] << xg1[ Ng / 2 ] << xg1[ Ng - 2 ] << xg1[ Ng - 1 ];
    DbgLv(2) << "  Sv 0 1 M Nm N" << Sv[ 0 ] << Sv[ 1 ] << Sv[ Ng / 2 ] << Sv[ Ng - 2 ] << Sv[ Ng - 1 ];
 
    // determine xg0=(xls, xrs)
    for ( int j = 0; j < Ng; j++ ) {
       double sw2 = Sv[ j ] * param_w2;
-      xg0[ j ] = xg1[ j ] - dt * MeshSpeedFactor * sw2 * xg1[ j ] * exp(-qAbs(sw2) * dt / 2);
+      xg0[ j ] = xg1[ j ] - dt_ * MeshSpeedFactor * sw2 * xg1[ j ] * exp(-qAbs(sw2) * dt_ / 2);
 
       xg0[ j ] = qMax(param_m, qMin(param_b, xg0[ j ]));
 
@@ -1742,14 +1678,14 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
 
       for ( int jm = 0; jm < cnt; jm++ ) {
          xg0[ j - jm ] = br - (double) jm / (double) cnt * (br - bl);
-         xt[ j - jm ] = (xg1[ j - jm ] - xg0[ j - jm ]) / dt;
+         xt[ j - jm ] = (xg1[ j - jm ] - xg0[ j - jm ]) / dt_;
       }
 
       bl = br;
    }
    DbgLv(2) << "   xg0 0 1 M Nm N" << xg0[ 0 ] << xg0[ 1 ] << xg0[ Ng / 2 ] << xg0[ Ng - 2 ] << xg0[ Ng - 1 ] << "Ng"
             << Ng;
-   ktim2 += timer.restart();
+   ktim2 += (int) timer.restart();
 
    // calculate Flux(phi, t+dt) at all xg1
    fun_dphi(-0.5, phiL);  // basis at xi=-1/2
@@ -1786,14 +1722,14 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
    }
 
    // calculate s, D at xg0 on time t
-   ktim3 += timer.restart();
-   AdjustSD(t, Ng, xg0, ug0, Sv, Dv, true);
-   ktim4 += timer.restart();
+   ktim3 += (int) timer.restart();
+   AdjustSD(t, Ng, xg0, ug0, Sv, Dv);
+   ktim4 += (int) timer.restart();
 
    // calculate Flux(u0,t) at all xg0
    // (i) Compute ux at nodes as average of Du from left and right
 
-   double *ux = new double[M0 + 1];     // D_x(u0) at all x0
+   auto *ux = new double[M0 + 1];     // D_x(u0) at all x0
 
    for ( int j = 1; j < M0; j++ )         // internal nodes
    {
@@ -1824,12 +1760,12 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
    //
    // assemble the linear system of equations
    //
-   double **Mtx = new double *[Ng + 1];
-   double *rhs = new double[Ng + 1];
+   auto **Mtx = new double *[Ng + 1];
+   auto *rhs = new double[Ng + 1];
    for ( int i = 0; i <= Ng; i++ )
       Mtx[ i ] = new double[5];
 
-   ktim5 += timer.restart();
+   ktim5 += (int) timer.restart();
    // Assemble the coefficient matrix
    for ( int i = 1; i < Ng; i += 2 ) {
       int k = (i - 1) / 2;
@@ -1867,7 +1803,7 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
    Mtx[ i ][ 1 ] = h * 5. / 24. + dt2 * flux_p[ 1 ][ i - 1 ];
    Mtx[ i ][ 2 ] = h * 8. / 24. + dt2 * flux_p[ 2 ][ i - 1 ];
 
-   ktim6 += timer.restart();
+   ktim6 += (int) timer.restart();
 
    // assemble the right hand side
    i = 0;
@@ -1880,9 +1816,9 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
    i = Ng;
    rhs[ i ] = IntQs(x0, u0, ke[ i - 1 ], xi[ i - 1 ], M0 - 1, 1.) + dt2 * (-flux_u[ i - 1 ]);
 
-   ktim7 += timer.restart();
+   ktim7 += (int) timer.restart();
    LsSolver53(Ng, Mtx, rhs, u1);
-   ktim8 += timer.restart();
+   ktim8 += (int) timer.restart();
 
    for ( i = 0; i <= Ng; i++ )
       delete[] Mtx[ i ];
@@ -1909,7 +1845,7 @@ US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, double
 //
 ////////////////////////////////////////////////////////////
 
-void US_LammAstfvm::LocateStar(int N0, double *x0, int Ns, double *xs, int *ke, double *xi) {
+void US_LammAstfvm::LocateStar(int N0, const double *x0, int Ns,  const double *xs, int *ke, double *xi) {
    int eix = 1;
 
    for ( int j = 0; j < Ns; j++ ) {
@@ -1927,14 +1863,13 @@ void US_LammAstfvm::LocateStar(int N0, double *x0, int Ns, double *xs, int *ke, 
 //  (note: the input is u=r*C)
 //
 ///////////////////////////////////////////////////////////////
-void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_adj, double *D_adj, bool log) {
+void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, double *s_adj, double *D_adj) {
    const double Tempt = 293.15;    // temperature in K
    const double vbar_w = 0.72;
    const double rho_w = 0.998234;  //  density of water
    int jj;
    QVector<double> ViscVec(Nv);
    QVector<double> DensVec(Nv);
-   QVector<double> ConcVec(Nv);
    double *Visc;
    double *Dens;
    double *Conc;
@@ -1945,7 +1880,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
    //double  vbar   = 0.72;      // 0.251;
    //double  vbar   = model.components[ 0 ].vbar20;
    double vbar = model.components[ comp_x ].vbar20;
-   QTime timer;
+   QElapsedTimer timer;
    static int kst1 = 0;
    static int kst2 = 0;
 
@@ -1973,19 +1908,16 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
          Visc = ViscVec.data();
          DensVec.resize(Nv);
          Dens = DensVec.data();
-         ConcVec.resize(Nv);
-         Conc = ConcVec.data();
          for ( int j = 0; j < Nv; j++ )      // loop for all x[m]
          {
             Dens[ j ] = density;
             Visc[ j ] = viscosity;
-            Conc[ j ] = 0.0;
          }
          DbgLv(2) << "NonIdeal2: ntrp Salt";
          if (cosed_needed){
-            saltdata->InterpolateCCosed(Nv, x, t, Dens, Visc, Conc, log);}
+            saltdata->InterpolateCCosed(Nv, x, t, Dens, Visc);}
          if (codiff_needed){
-            bandFormingGradient->calc_dens_visc(Nv, x, t, simparams.temperature, Dens, Visc);}
+            bandFormingGradient->interpolateCCodiff(Nv, x, t, Dens, Visc);}
 
          if (dbg_level > 0){
             // calculate density and viscosity mean avg std
@@ -2005,10 +1937,10 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
             double pdval = Dens[ 0 ];
             double pvval = Visc[ 0 ];
 
-            for ( int jj = 1; jj < Nv; jj++ ) {
-               double dval = Dens[ jj ];
-               double vval = Visc[ jj ];
-               double dltr = (x[jj]-x[jj-1])*0.5;
+            for ( int jjj = 1; jjj < Nv; jjj++ ) {
+               double dval = Dens[ jjj ];
+               double vval = Visc[ jjj ];
+               double dltr = (x[jjj]-x[jjj-1])*0.5;
                dsum += ((dval + pdval) * dltr);
                vsum += ((vval + pvval) * dltr);
                pvval = vval;
@@ -2034,7 +1966,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
             DbgLv(2) << "  ( range of" << vidf << "=" << vidp << " percent of mean )";
          }
 
-         kst1 += timer.restart();
+         kst1 += (int) timer.restart();
          {
             double smin = param_s;
             double dmin = param_D;
@@ -2044,7 +1976,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
             int dneg_in = 0;
             bool log_need = false;
             for ( jj = 0; jj < Nv; jj++ ) {
-               US_Math2::SolutionData sol_data;
+               US_Math2::SolutionData sol_data{};
                sol_data.density = Dens[ jj ];
                sol_data.viscosity = Visc[ jj ];
                sol_data.vbar20 = model.components[ comp_x ].vbar20; //The assumption here is that vbar does not change with
@@ -2083,7 +2015,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
             DbgLv(2) << "AdjSD:    vbar vbar_w rho_w" << vbar << vbar_w << rho_w;}
          }
 
-         kst2 += timer.restart();
+         kst2 += (int) timer.restart();
          DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
          break;
 
@@ -2111,7 +2043,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
       {
          timer.start();
          DbgLv(2) << "NonIdeal4";
-         kst1 += timer.restart();
+         kst1 += (int) timer.restart();
          for ( jj = 0; jj < Nv; jj++ ) {
             double adj_s = param_s;
             double adj_d = param_D;
@@ -2125,7 +2057,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, double *u, double *s_a
             DbgLv(2) << "AdjSD:   CoSed D_adj" << QString::number(adj_d * 1E+6, 'f', 4);
          }
       }
-         kst2 += timer.restart();
+         kst2 += (int) timer.restart();
          DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
          break;
 
@@ -2183,7 +2115,7 @@ void US_LammAstfvm::fun_Iphi(double x, double *y) {
 // here x=x[0]+(x[1]-x[0])*(xi+1)/2
 //
 ////////////////////////////////////////////
-double US_LammAstfvm::IntQ(double *x, double *u, double xia, double xib) {
+double US_LammAstfvm::IntQ(const double *x, const double *u, double xia, double xib) {
    double intgrl;
    double phia[3];
    double phib[3];
@@ -2235,7 +2167,7 @@ void US_LammAstfvm::ProjectQ(int M0, double *x0, double *u0, int M1, double *x1,
    double phi[3];
 
    int *ke = new int[M1 + 1];
-   double *xi = new double[M1 + 1];
+   auto *xi = new double[M1 + 1];
 
    LocateStar(M0 + 1, x0, M1 + 1, x1, ke, xi);
 
@@ -2307,8 +2239,8 @@ void US_LammAstfvm::LsSolver53(int m, double **A, double *b, double *x) {
 int US_LammAstfvm::nonIdealCaseNo() {
    int rc = 0;
 
-   if ( comp_x > 0 )
-      return rc;
+//   if ( comp_x > 0 )
+//      return rc;
 
    NonIdealCaseNo = 0;      // ideal
 
@@ -2337,7 +2269,7 @@ int US_LammAstfvm::nonIdealCaseNo() {
 }
 
 // perform quadratic interpolation to fill out full concentration vector
-void US_LammAstfvm::quadInterpolate(double *x0, double *u0, int N0, QVector<double> &xout, QVector<double> &cout) {
+void US_LammAstfvm::quadInterpolate(const double *x0, const double *u0, int N0, QVector<double> &xout, QVector<double> &cout) {
    int nout = xout.size();         // output concentrations count
    int kk = 0;                   // initial output index
    double xv = xout[ 0 ];           // first output X
@@ -2387,7 +2319,7 @@ void US_LammAstfvm::quadInterpolate(double *x0, double *u0, int N0, QVector<doub
 }
 
 // load MfemData object used internally from caller's RawData object
-void US_LammAstfvm::load_mfem_data(US_DataIO::RawData &edata, US_AstfemMath::MfemData &fdata, bool zeroout) {
+void US_LammAstfvm::load_mfem_data(US_DataIO::RawData &edata, US_AstfemMath::MfemData &fdata, bool zeroout) const {
    int nscan = edata.scanData.size();  // scan count
 
 //   int  nconc  = edata.x.size();         // concentrations count
@@ -2447,7 +2379,7 @@ fdata.radius[ jj ] = edata.radius( jj );
 }
 
 // store MfemData object used internally into caller's RawData object
-void US_LammAstfvm::store_mfem_data(US_DataIO::RawData &edata, US_AstfemMath::MfemData &fdata) {
+void US_LammAstfvm::store_mfem_data(US_DataIO::RawData &edata, US_AstfemMath::MfemData &fdata) const {
    int nscan = fdata.scan.size();     // scan count
    int nconc = fdata.radius.size();   // concentrations count
    int escan = edata.scanCount();
