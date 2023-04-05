@@ -2,6 +2,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_mals.h"
 #include "../include/us_hydrodyn_mals_ciq.h"
+#include "../include/us_hydrodyn_mals_cistarq.h"
 #include "../include/us_hydrodyn_mals_dctr.h"
 #include "../include/us_hydrodyn_mals_p3d.h"
 #include "../include/us_hydrodyn_mals_fit.h"
@@ -3039,17 +3040,544 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
    return true;
 }
 
-   
+void US_Hydrodyn_Mals::deselect_conc_file() {
+   if ( !lbl_conc_file->text().isEmpty() ) {
+      for ( int i = 0; i < lb_files->count(); i++ ) {
+         if ( lb_files->item( i )->isSelected() ) {
+            if ( lb_files->item( i )->text() == lbl_conc_file->text() ) {
+               lb_files->item( i)->setSelected( false );
+            }
+         }
+      }
+   }
+}
+
 void US_Hydrodyn_Mals::create_istar_q() {
    disable_all();
 
+   deselect_conc_file();
+   
    QStringList files = all_selected_files();
-   create_istar_q( files );
 
+   gaussians.size() ? (void) create_istar_q( files ) : (void) create_istar_q_ng( files );
+   
    update_enables();
 }
 
-bool US_Hydrodyn_Mals::create_istar_q( QStringList files ) {
-   TSO << "create_istar_q not implemented yet\n";
+bool US_Hydrodyn_Mals::create_istar_q( QStringList files, double t_min, double t_max ) {
+   QMessageBox::critical( this,
+                             windowTitle() + us_tr( ": Make I*(q)" ),
+                             us_tr( "Make I*(q) with Gaussians not currently implemented" )
+                             );
    return false;
+}
+
+bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, double t_max ) {
+   if ( lbl_conc_file->text().isEmpty() ) {
+      QMessageBox::information( this,
+                                windowTitle() + us_tr( ": Make I*(q)" ),
+                                us_tr( "I*(q) will be made without Gaussians" )
+                                );
+
+   } else {
+      QMessageBox::critical( this,
+                             windowTitle() + us_tr( ": Make I*(q)" ),
+                            us_tr( "I*(q) with concentration curve not currently implemented" )
+                            );
+      return false;
+   }
+      
+   // currently make using mals_param_g_dndc, mals_param_g_extinction_coef && mals_param_g_conc
+
+   double detector_conv = 0e0;
+   // if ( detector_uv ) {
+   //    detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
+   // }
+   // if ( detector_ri ) {
+   //    detector_conv = detector_ri_conv;
+   // }
+
+   if ( !mals_param_g_conc ) {
+      QMessageBox::critical( this,
+                            windowTitle() + us_tr( ": Make I*(q)" ),
+                            us_tr(
+                                  "To make I*(q) without a concentration curve,\n"
+                                  "the global concentration must be defined in Options->MALS parameters"
+                                  )
+                            );
+      return false;
+   }      
+
+   // if ( !detector_conv ) {
+   //    QMessageBox::critical( this,
+   //                          windowTitle() + us_tr( ": Make I*(q)" ),
+   //                          us_tr(
+   //                                "The detector properties must be defined Options->Concentraton Detector Properties"
+   //                                )
+   //                          );
+   //    return false;
+   // }      
+
+   bool mode_testiq = ( current_mode == MODE_TESTIQ );
+
+   editor_msg( "dark blue", us_tr( "Starting: Make I*(q) without Gaussians" ) );
+
+   QString head = qstring_common_head( files, true );
+
+   // TSO << "create_istar_q_ng()  common head: " << head << "\n";
+
+   head = head.replace( QRegularExpression( "_D\\d+_Ihasht_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "_D$" ), "" );
+   head += "_t";
+   
+   // TSO << "create_istar_q_ng()  head: " << head << "\n";
+
+   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+
+   vector < QString > q_string;
+   vector < double  > q;
+
+   bool         any_bl = false;
+   bool         any_bi = false;
+
+   // get q 
+
+   // map: [ timestamp ][ q_value ] = intensity
+
+   map < double, map < double , double > > I_values;
+   map < double, map < double , double > > e_values;
+
+   map < double, bool > used_t;
+   list < double >      tl;
+
+   map < double, bool > used_q;
+   list < double >      ql;
+
+   bool                 use_errors = true;
+
+   disable_all();
+
+   map < QString, bool >    no_errors;
+   map < QString, QString > zero_points;
+   QStringList              qsl_no_errors;
+   QStringList              qsl_zero_points;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      progress->setValue( i ); progress->setMaximum( files.size() * 2 );
+      qApp->processEvents();
+      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      {
+         editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
+         progress->reset();
+         update_enables();
+         return false;
+      }
+      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      if ( used_q.count( ql.back() ) )
+      {
+         editor_msg( "red", QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
+         progress->reset();
+         update_enables();
+         return false;
+      }
+      used_q[ ql.back() ] = true;
+         
+      if ( rx_bl.indexIn( files[ i ] ) != -1 )
+      {
+         any_bl = true;
+      }
+      if ( rx_bi.indexIn( files[ i ] ) != -1 )
+      {
+         any_bi = true;
+      }
+
+      if ( !f_qs.count( files[ i ] ) )
+      {
+         editor_msg( "red", QString( us_tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] ) );
+      } else {
+         for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
+         {
+            if ( !mode_testiq || ( f_qs[ files[ i ] ][ j ] >= t_min && f_qs[ files[ i ] ][ j ] <= t_max ) )
+            {
+               I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
+               if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
+               {
+                  e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
+               } else {
+                  if ( use_errors )
+                  {
+                     use_errors = false;
+                     editor_msg( "dark red", QString( us_tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
+                                 .arg( files[ i ] ) );
+                  }
+               }
+               if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
+               {
+                  tl.push_back( f_qs[ files[ i ] ][ j ] );
+                  used_t[ f_qs[ files[ i ] ][ j ] ] = true;
+               }
+            }
+         }
+
+         if ( !f_errors.count( files[ i ] ) ||
+              f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
+         {
+            no_errors[ files[ i ] ] = true;
+            qsl_no_errors           << files[ i ];
+         } else {
+            if ( !is_nonzero_vector( f_errors[ files[ i ] ] ) )
+            {
+               unsigned int zero_pts = 0;
+               for ( unsigned int j = 0; j < ( unsigned int ) f_errors[ files[ i ] ].size(); j++ )
+               {
+                  if ( !mode_testiq || ( f_qs[ files[ i ] ][ j ] >= t_min && f_qs[ files[ i ] ][ j ] <= t_max ) )
+                  {
+                     if ( us_isnan( f_errors[ files[ i ] ][ j ] ) || f_errors[ files[ i ] ][ j ] == 0e0 )
+                     {
+                        zero_pts++;
+                     }
+                  }
+               }
+               zero_points[ files[ i ] ] = QString( "%1: %2 of %3 points" ).arg( files[ i ] ).arg( zero_pts ).arg( f_errors[ files[ i ] ].size() );
+               qsl_zero_points           << zero_points[ files[ i ] ];
+            }
+         }
+
+      }
+   }
+
+   tl.sort();
+
+   vector < double > tv;
+   for ( list < double >::iterator it = tl.begin();
+         it != tl.end();
+         it++ )
+   {
+      tv.push_back( *it );
+   }
+
+   ql.sort();
+
+   vector < double  > qv;
+   vector < QString > qv_string;
+   for ( list < double >::iterator it = ql.begin();
+         it != ql.end();
+         it++ )
+   {
+      qv.push_back( *it );
+      qv_string.push_back( QString( "%1" ).arg( *it ) );
+   }
+
+
+   QString qs_no_errors;
+   QString qs_zero_points;
+
+   if ( zero_points.size() || no_errors.size() )
+   {
+      unsigned int used = 0;
+
+      QStringList qsl_list_no_errors;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_no_errors.size() && i < 12; i++ )
+      {
+         qsl_list_no_errors << qsl_no_errors[ i ];
+         used++;
+      }
+      if ( qsl_list_no_errors.size() < qsl_no_errors.size() )
+      {
+         qsl_list_no_errors << QString( us_tr( "... and %1 more not listed" ) ).arg( qsl_no_errors.size() - qsl_list_no_errors.size() );
+      }
+      qs_no_errors = qsl_list_no_errors.join( "\n" );
+      
+      QStringList qsl_list_zero_points;
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_zero_points.size() && i < 24 - used; i++ )
+      {
+         qsl_list_zero_points << qsl_zero_points[ i ];
+      }
+      if ( qsl_list_zero_points.size() < qsl_zero_points.size() )
+      {
+         qsl_list_zero_points << QString( us_tr( "... and %1 more not listed" ) ).arg( qsl_zero_points.size() - qsl_list_zero_points.size() );
+      }
+      qs_zero_points = qsl_list_zero_points.join( "\n" );
+   }
+
+   // bool   normalize_by_conc = false;
+   bool   conc_ok           = false;
+
+   double conv = 0e0;
+   double psv  = 0e0;
+   double I0se = 0e0;
+   double conc_repeak = 1e0;
+   
+   vector < double > conc_spline_x;
+   vector < double > conc_spline_y;
+   vector < double > conc_spline_y2;
+
+   if ( !mode_testiq ) {
+      map < QString, QString > parameters;
+
+      bool any_detector = false;
+      if ( detector_uv ) {
+         parameters[ "uv" ] = "true";
+         any_detector = true;
+      } else {
+         if ( detector_ri ) {
+            parameters[ "ri" ] = "true";
+            any_detector = true;
+         }
+      }
+
+      bool use_conc = true;
+      if ( lbl_conc_file->text().isEmpty() ) {
+         use_conc = false;
+      } 
+
+      if ( use_conc &&
+           (
+            !f_qs.count( lbl_conc_file->text() )
+            || !f_Is.count( lbl_conc_file->text() )
+            ) ) {
+         editor_msg( "red", QString( us_tr( "Internal error: Concentration file %1 set, but associated data is incomplete.  Concentration disabled." ) ).arg( lbl_conc_file->text() ) );
+         lbl_conc_file->setText( "" );
+         use_conc = false;
+      }
+
+      if ( use_conc ) {
+         if ( !any_detector ) {
+            if ( parameters.count( "error" ) ) {
+               parameters[ "error" ] += "\nYou must also select a detector type";
+            } else {
+               parameters[ "error" ] = "\nYou must select a detector type";
+            }
+         }
+         parameters[ "ngmode" ] = "true";
+         parameters[ "gaussians" ] = "1";
+         US_Hydrodyn_Mals_Ciq *mals_ciq = 
+            new US_Hydrodyn_Mals_Ciq(
+                                          this,
+                                          & parameters,
+                                          this );
+         US_Hydrodyn::fixWinButtons( mals_ciq );
+         mals_ciq->exec();
+         delete mals_ciq;
+
+         if ( !parameters.count( "go" ) ) {
+            progress->reset();
+            update_enables();
+            return false;
+         }
+
+         // conv = parameters.count( "conv 0" ) ? parameters[ "conv 0" ].toDouble() : 0e0;
+         // psv  = parameters.count( "psv 0" ) ? parameters[ "psv 0" ].toDouble() : 0e0;
+         // if ( conv == 0e0 ||
+         //      psv == 0e0 ) {
+         //    progress->reset();
+         //    update_enables();
+         //    return false;
+         // }
+            
+         conc_ok = true;
+         if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" ) {
+            // normalize_by_conc = true;
+         }
+
+         if ( parameters.count( "I0se" ) ) {
+            I0se = parameters[ "I0se" ].toDouble();
+         }
+
+         double detector_conv = 0e0;
+         if ( detector_uv )
+         {
+            detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
+         }
+         if ( detector_ri )
+         {
+            detector_conv = detector_ri_conv;
+         }
+         
+         {
+            QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+            if ( rx_repeak.indexIn( lbl_conc_file->text() ) != -1 )
+            {
+               conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
+               if ( conc_repeak == 0e0 )
+               {
+                  conc_repeak = 1e0;
+                  editor_msg( "red", us_tr( "Error: concentration repeak scaling value extracted is 0, turning off back scaling" ) );
+               } else {
+                  editor_msg( "dark blue", QString( us_tr( "Notice: concentration scaling repeak value %1" ) ).arg( conc_repeak ) );
+               }
+            }
+         }
+
+         conc_spline_x = f_qs[ lbl_conc_file->text() ];
+         conc_spline_y = f_Is[ lbl_conc_file->text() ];
+         for ( int i = 0; i < (int) conc_spline_y.size(); ++i ) {
+            conc_spline_y[ i ] *= detector_conv / ( conc_repeak * conv );
+         }
+         usu->natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2 );
+      }
+   }
+
+   running = true;
+
+   // now for each I(t) distribute the I for each frame 
+
+   // build up resulting curves
+
+   // for each time, tv[ t ] 
+
+   map < QString, bool > current_files;
+   if ( !mode_testiq )
+   {
+      for ( int i = 0; i < (int)lb_files->count(); i++ )
+      {
+         current_files[ lb_files->item( i )->text() ] = true;
+      }
+   }
+
+   for ( unsigned int t = 0; t < tv.size(); t++ )
+   {
+      progress->setValue( files.size() + t ); progress->setMaximum( files.size() + tv.size() );
+
+      // build up an I(q)
+
+
+      
+      QString name;
+
+      {
+         double whole, frac;
+         frac = std::modf( tv[ t ], &whole );
+         name = head + QString( "%1%2%3" )
+            .arg( (any_bl || any_bi) ? "_bs" : "" )
+            .arg( pad_zeros( whole, (int) (*tv.end() + .5) ) )
+            .arg( QString( "%1" ).arg( frac ).replace( QRegularExpression( "^0" ), "" ) )
+            .replace( ".", "_" )
+            ;
+      }
+
+      {
+         int ext = 0;
+         QString use_name = name;
+         while ( current_files.count( use_name ) )
+         {
+            use_name = name + QString( "-%1" ).arg( ++ext );
+         }
+         name = use_name;
+      }
+         
+      // TSO << "curve " << t << " tv[t] " << tv[t] << " name " << name << "\n";
+      
+      // TSO << QString( "name %1\n" ).arg( name );
+
+      // now go through all the files to pick out the I values and errors and distribute amoungst the various gaussian peaks
+      // we could also reassemble the original sum of gaussians curves as a comparative
+
+      vector < double > I;
+      vector < double > e;
+      // vector < double > G;
+
+      // vector < double > I_recon;
+      // vector < double > G_recon;
+
+      vector < double > this_used_pcts;
+      double conc_factor = 0e0;
+      if ( conc_ok ) {
+         if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
+            editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
+            conc_factor = 0e0;
+         }
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+      {
+         if ( !I_values.count( tv[ t ] ) )
+         {
+            editor_msg( "dark red", QString( us_tr( "Notice: I values missing frame/time = %1" ) ).arg( tv[ t ] ) );
+         }
+
+         if ( !I_values[ tv[ t ] ].count( qv[ i ] ) )
+         {
+            editor_msg( "red", QString( us_tr( "Notice: I values missing q = %1" ) ).arg( qv[ i ] ) );
+            continue;
+         }
+
+         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ] / mals_param_g_conc;
+         double tmp_e       = 0e0;
+
+         if ( use_errors )
+         {
+            if ( !e_values.count( tv[ t ] ) )
+            {
+               editor_msg( "red", QString( us_tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] ) );
+               running = false;
+               update_enables();
+               progress->reset();
+               return false;
+            }
+
+            if ( !e_values[ tv[ t ] ].count( qv[ i ] ) )
+            {
+               editor_msg( "red", QString( us_tr( "Internal error: error values missing q %1" ) ).arg( qv[ i ] ) );
+               running = false;
+               update_enables();
+               progress->reset();
+               return false;
+            }
+
+            tmp_e = e_values[ tv[ t ] ][ qv[ i ] ] / mals_param_g_conc;
+         }
+            
+         I      .push_back( tmp_I );
+         e      .push_back( tmp_e );
+      } // for each file
+         
+      if ( mode_testiq )
+      {
+         testiq_created_names.push_back( name );
+         testiq_created_t[ name ] = tv[ t ];
+         testiq_created_q[ name ] = qv;
+         testiq_created_I[ name ] = I;
+         testiq_created_e[ name ] = e;
+      } else {
+         lb_created_files->addItem( name );
+         lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+         lb_files->addItem( name );
+         lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
+         created_files_not_saved[ name ] = true;
+   
+         vector < QString > use_qv_string = qv_string;
+         vector < double  > use_qv        = qv;
+         vector < double  > use_I         = I;
+         vector < double  > use_e         = e;
+
+         f_pos       [ name ] = f_qs.size();
+         f_qs_string [ name ] = qv_string;
+         f_qs        [ name ] = qv;
+         f_Is        [ name ] = I;
+         f_errors    [ name ] = e;
+         f_is_time   [ name ] = false;
+         f_conc      [ name ] = conc_ok ? conc_factor : 0e0;
+         f_psv       [ name ] = conc_ok ? psv : 0e0;
+         f_I0se      [ name ] = conc_ok ? I0se : 0e0;
+         f_time      [ name ] = tv[ t ];
+         if ( conc_ok && conv ) {
+            f_extc      [ name ] = conv;
+         }
+      }
+   } // for each q value
+
+   if ( !mode_testiq )
+   {
+      editor_msg( "dark blue", us_tr( "Finished: Make I(q)" ) );
+      running = false;
+   }
+   progress->reset();
+   update_enables();
+   return true;
 }

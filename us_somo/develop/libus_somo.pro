@@ -269,6 +269,7 @@ SOURCES *= \
         src/us_hydrodyn_mals_makeiq.cpp \
         src/us_hydrodyn_mals_plots.cpp \
         src/us_hydrodyn_mals_ciq.cpp \
+        src/us_hydrodyn_mals_cistarq.cpp \
         src/us_hydrodyn_mals_dctr.cpp \
         src/us_hydrodyn_mals_gg.cpp \
         src/us_hydrodyn_mals_p3d.cpp \
@@ -666,6 +667,7 @@ HEADERS *= \
         include/us_hydrodyn_hydro_zeno.h \
         include/us_hydrodyn_mals.h \
         include/us_hydrodyn_mals_ciq.h \
+        include/us_hydrodyn_mals_cistarq.h \
         include/us_hydrodyn_mals_conc_csv_frames.h \
         include/us_hydrodyn_mals_dctr.h \
         include/us_hydrodyn_mals_p3d.h \

@@ -280,6 +280,8 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       double        mals_param_g_conc;
       int           mals_param_DLS_detector;
 
+      void          deselect_conc_file();
+      
       csv           csv1;
 
       void          *us_hydrodyn;
@@ -1173,7 +1175,16 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
                                                      double t_min = -1e99,
                                                      double t_max = 1e99 );
       bool                         create_ihash_t( QStringList files );
-      bool                         create_istar_q( QStringList files );
+      bool                         create_istar_q(
+                                                  QStringList files
+                                                  ,double t_min = -1e99
+                                                  ,double t_max = 1e99
+                                                  );
+      bool                         create_istar_q_ng(
+                                                     QStringList files
+                                                     ,double t_min = -1e99
+                                                     ,double t_max = 1e99
+                                                     );
 
       QString                      last_created_file;
       void                         zoom_info();
