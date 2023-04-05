@@ -132,7 +132,7 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
    le_mals_param_g_extinction_coef-> setMinimumHeight( minHeight1 );
 
 
-   lbl_mals_param_g_conc = new QLabel( us_tr( "Global concentration [g/cm^3]: " ), this );
+   lbl_mals_param_g_conc = new QLabel( us_tr( "Global concentration [mg/mL]: " ), this );
    lbl_mals_param_g_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mals_param_g_conc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_mals_param_g_conc );

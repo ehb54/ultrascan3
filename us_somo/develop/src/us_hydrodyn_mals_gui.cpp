@@ -4502,9 +4502,9 @@ void US_Hydrodyn_Mals::update_enables()
       }
    }
 
-   bool all_rt                    = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
-   bool all_ihasht                = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
-   bool all_istarq                = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istar_" ).size();
+   bool all_rt           = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
+   bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
+   bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -4841,10 +4841,14 @@ void US_Hydrodyn_Mals::update_enables()
             } else if ( all_ihasht ) {
                title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
             } else {
-               title = us_tr( "I(t) [a.u.]" );
+                  title = us_tr( "I(t) [a.u.]" );
             }
          } else {
-            title = us_tr( "I(q) [a.u.]" );
+            if ( all_istarq ) {
+               title = us_tr( "I*(q) [g mol^-1]" );
+            } else {
+               title = us_tr( "I(q) [a.u.]" );
+            }
          }
       }
 

@@ -5461,7 +5461,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
 
 #define TIME_DELTA_TOLERANCE  0.0000001 
    
-   while( data.front().contains( QRegularExpression( "^-?[0-9.]+," ) ) ) {
+   while( data.size() && data.front().contains( QRegularExpression( "^-?[0-9.]+," ) ) ) {
       QStringList data_line = data.front().split( "," );
       data.pop_front();
 
@@ -5539,7 +5539,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       data.pop_front();
    }
 
-   if ( data.front().contains( QRegularExpression( "^\\s*UV absorbance data:" ) ) ) {
+   if ( data.size() && data.front().contains( QRegularExpression( "^\\s*UV absorbance data:" ) ) ) {
       bool load_uv_data = false;
       switch ( QMessageBox::question(this, 
                                      windowTitle() + us_tr( " : Load MALS Data" )

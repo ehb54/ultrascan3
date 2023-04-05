@@ -3129,7 +3129,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    head = head.replace( QRegularExpression( "_D\\d+_Ihasht_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_D$" ), "" );
-   head += "_t";
+   head += "_Istarq_t";
    
    // TSO << "create_istar_q_ng()  head: " << head << "\n";
 
@@ -3455,7 +3455,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          frac = std::modf( tv[ t ], &whole );
          name = head + QString( "%1%2%3" )
             .arg( (any_bl || any_bi) ? "_bs" : "" )
-            .arg( pad_zeros( whole, (int) (*tv.end() + .5) ) )
+            .arg( pad_zeros( whole, (int) (tv.back() + .5) ) )
             .arg( QString( "%1" ).arg( frac ).replace( QRegularExpression( "^0" ), "" ) )
             .replace( ".", "_" )
             ;
@@ -3507,7 +3507,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             continue;
          }
 
-         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ] / mals_param_g_conc;
+         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ] / (mals_param_g_conc * 1e-3);
          double tmp_e       = 0e0;
 
          if ( use_errors )
