@@ -543,7 +543,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
     {
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
 				tr( "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
-				    "%2<br><br>"
+				    "%1<br><br>"
 				    "As a result, a non-GMP report will be generated!")
 				.arg( msg_missing_models) );
     }
