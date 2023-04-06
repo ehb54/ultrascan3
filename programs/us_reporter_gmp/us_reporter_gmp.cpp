@@ -10055,10 +10055,14 @@ void US_ReporterGMP::format_needed_params()
 //get current date
 void US_ReporterGMP::get_current_date()
 {
-  QDate dNow(QDate::currentDate());
-  QString fmt = "MM/dd/yyyy";
+  // QDate dNow(QDate::currentDate());
+  // QString fmt = "MM/dd/yyyy";
   
-  current_date = dNow.toString( fmt );
+  // current_date = dNow.toString( fmt );
+  
+  QDateTime date = QDateTime::currentDateTime();
+  current_date = date.toString("MM/dd/yyyy hh:mm:ss");
+
   qDebug() << "Current date -- " << current_date;
 }
 
