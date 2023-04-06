@@ -260,7 +260,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDescGuid;
 	 
-
+         QStringList droppedTriplesList;
 	 
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
@@ -498,7 +498,8 @@ class US_ReporterGMP : public US_Widgets
 	QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
 	void check_models ( int );
 	void check_for_missing_models ( void );
-	QString  compose_html_failed_stage_missing_models( void );
+        void check_for_dropped_triples( void );
+ 	QString  compose_html_failed_stage_missing_models( void );
 	QString  missing_models_msg( void );
 	void reset_report_panel ( void );
 	void view_report ( void );

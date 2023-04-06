@@ -1035,7 +1035,7 @@ void US_Analysis_auto::gui_update( )
 			   At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
 			   If NO - stop timer, show Msg that everything completed.
 		      **/
-		      Completed_triples[ triple_curr_key ] = true;
+		      Completed_triples[ triple_curr_key ] = true;  // May cause racing conditions!!!!
 		      qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
 		      
 		    }

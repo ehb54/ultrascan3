@@ -513,13 +513,17 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   //identify what's intended to be simulated
   check_for_missing_models( );
   ////
+
+  //Check for dropped triples
+  check_for_dropped_triples();
+  ////
   
   //build Trees
   build_genTree();  
   progress_msg->setValue( 9 );
   qApp->processEvents();
 
-   build_perChanTree();
+  build_perChanTree();
   progress_msg->setValue( 10);
   qApp->processEvents();
 
@@ -553,6 +557,26 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   
 }
 
+//check for dropped triples (at 3. IMPORT)
+void US_ReporterGMP::check_for_dropped_triples( void )
+{
+  droppedTriplesList. clear();
+  
+  QStringList dropped_triples_RI, dropped_triples_IP;
+  read_reportLists_from_aprofile( dropped_triples_RI, dropped_triples_IP );
+
+  for ( int i=0; i<dropped_triples_RI.size(); ++i )
+    droppedTriplesList << dropped_triples_RI[ i ];
+  for ( int i=0; i<dropped_triples_IP.size(); ++i )
+    {
+      QStringList tname = dropped_triples_IP[ i ].split(".");
+      QString tname_mod = tname[0] + "." + "Interference";
+      droppedTriplesList << tname_mod;
+    }
+  
+  qDebug() << "::check_for_dropped_triples(): List of ALL dropped triples : " << droppedTriplesList;
+
+}
 
 //check for failed triples
 void US_ReporterGMP::check_failed_triples( void )
@@ -767,20 +791,33 @@ QString US_ReporterGMP::missing_models_msg( void )
 {
   QString models_str;
 
-  // QMap < QString, QString >::iterator mm;
-  // for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
-  //   {
-  //     if ( !mm.value().isEmpty() )
-  // 	{
-  // 	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
-  // 	}
-  //   }
-  
   QMap < QString, QStringList >::iterator mmm;
   for ( mmm = Triple_to_ModelsMissing.begin(); mmm != Triple_to_ModelsMissing.end(); ++mmm )
     {
-      if ( !mmm.value().isEmpty() ) 
-	models_str += mmm.key() + ", missing models: " + mmm.value().join(", ") + "<br>";
+      if ( !mmm.value().isEmpty() )
+	{
+	  //check if missing models because of triple dropped
+	  bool isDropped = false;
+	  QString c_triple = mmm.key();
+	  c_triple.replace(".","");
+	  for (int i=0; i<droppedTriplesList.size(); ++i)
+	    {
+	      QString d_triple = droppedTriplesList[i];
+	      d_triple.replace(".","");
+	      if ( c_triple == d_triple )
+		{
+		  isDropped = true;
+		  break;
+		}
+	    }
+	  
+	  //compose
+	  models_str += mmm.key() + ", missing models: " + mmm.value().join(", ");
+	  if( isDropped )
+	    models_str += "<font color='red'> [triple dropped]</font>";
+	    
+	  models_str += "<br>";
+	}
     }
   
   if ( !models_str.isEmpty() )
@@ -816,9 +853,27 @@ QString US_ReporterGMP::compose_html_failed_stage_missing_models( void )
        if ( !mmm.value().isEmpty() )
 	 {
    	  areFailed = true;
+
+	  bool isDropped = false;
+	  QString c_triple = mmm.key();
+	  c_triple.replace(".","");
+	  for (int i=0; i<droppedTriplesList.size(); ++i)
+	    {
+	      QString d_triple = droppedTriplesList[i];
+	      d_triple.replace(".","");
+	      if ( c_triple == d_triple )
+		{
+		  isDropped = true;
+		  break;
+		}
+	    }
   	  
    	  failed_str += "<tr><td style=\"color:red;\">" + mmm.key() + ":</td>" + 
-	    + "<td>Models missing: </td><td style=\"color:red;\">" +  mmm.value().join(", ") + "</td></tr>";
+	    + "<td>Models missing: </td><td style=\"color:red;\">" +  mmm.value().join(", ") + "</td>";
+	  if ( isDropped )
+	    failed_str += "<td>[Triple dropped]</td>";
+	  
+	  failed_str +="</tr>";
    	}
      }
   
@@ -1317,6 +1372,10 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   //identify what's intended to be simulated
   check_for_missing_models();
+  ////
+
+  //Check for dropped triples
+  check_for_dropped_triples();
   ////
 
   build_genTree();  
@@ -2745,6 +2804,8 @@ void US_ReporterGMP::reset_report_panel ( void )
   Triple_to_ModelsDescGuid . clear();
   Triple_to_ModelsMissing  . clear();
   Triple_to_FailedStage    . clear();
+
+  droppedTriplesList       . clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -8269,8 +8330,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
   
   //Failed Triples' Analyses, Missing Models info (if any):
-  QString str_failed_stage_missing_models;
-  str_failed_stage_missing_models = compose_html_failed_stage_missing_models();
+  QString str_failed_stage_missing_models = compose_html_failed_stage_missing_models();
   qDebug() << "STR_on_failed: " << str_failed_stage_missing_models;
   if ( !str_failed_stage_missing_models.isEmpty() )
     {
