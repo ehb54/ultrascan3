@@ -3032,6 +3032,7 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
             }
             add_plot( hash_name, f_qs[ name ], hash_I, true, false );
          }
+         f_g_dndc[ last_created_file ] = mals_param_g_dndc;
       }
    }
 
@@ -3073,50 +3074,97 @@ bool US_Hydrodyn_Mals::create_istar_q( QStringList files, double t_min, double t
 }
 
 bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, double t_max ) {
-   if ( lbl_conc_file->text().isEmpty() ) {
-      QMessageBox::information( this,
-                                windowTitle() + us_tr( ": Make I*(q)" ),
-                                us_tr( "I*(q) will be made without Gaussians" )
-                                );
 
-   } else {
-      QMessageBox::critical( this,
+   // if ( lbl_conc_file->text().isEmpty() ) {
+   QMessageBox::information( this,
                              windowTitle() + us_tr( ": Make I*(q)" ),
-                            us_tr( "I*(q) with concentration curve not currently implemented" )
-                            );
-      return false;
+                             us_tr( "I*(q) will be made without Gaussians" )
+                             );
+
+   // } else {
+   //    QMessageBox::critical( this,
+   //                           windowTitle() + us_tr( ": Make I*(q)" ),
+   //                          us_tr( "I*(q) with concentration curve not currently implemented" )
+   //                          );
+   //    return false;
+   // }
+      
+   bool use_conc = !lbl_conc_file->text().isEmpty();
+   double detector_conv = 0e0;
+   if ( detector_uv ) {
+      detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
+   }
+   if ( detector_ri ) {
+      detector_conv = detector_ri_conv;
+   }
+
+   if ( use_conc &&
+        (
+         !f_qs.count( lbl_conc_file->text() )
+         || !f_Is.count( lbl_conc_file->text() )
+         ) ) {
+      editor_msg( "red", QString( us_tr( "Internal error: Concentration file %1 set, but associated data is incomplete.  Concentration disabled." ) ).arg( lbl_conc_file->text() ) );
+      lbl_conc_file->setText( "" );
+      use_conc = false;
+   }
+
+   double use_g_dndc = 0;
+   if ( use_conc ) {
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
+         if ( !f_g_dndc.count( files[i] ) ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Make I*(q)" ),
+                                   QString( 
+                                           us_tr( "I*(q) with concentration curve, global dn/dc not defined for curve %1" )
+                                            )
+                                   .arg( files[i] )
+                                   );
+            return false;
+         }
+
+         TSO << QString( "curve %1 g_dndc %2\n" ).arg( files[i] ).arg( f_g_dndc[ files[i] ] );
+
+         if ( !i ) {
+            use_g_dndc = f_g_dndc[ files[i] ];
+         } else {
+            if ( use_g_dndc != f_g_dndc[ files[i] ] ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Make I*(q)" ),
+                                      QString( 
+                                              us_tr( "I*(q) with concentration curve: global dn/dc inconsistent\n"
+                                                     "e.g. curve %1 has value %2 and curve %3 has value %4" )
+                                               )
+                                      .arg( files[0] )
+                                      .arg( use_g_dndc )
+                                      .arg( files[i] )
+                                      .arg( f_g_dndc[ files[i] ] )
+                                      );
+               return false;
+            }
+         }               
+      }
    }
       
-   // currently make using mals_param_g_dndc, mals_param_g_extinction_coef && mals_param_g_conc
-
-   double detector_conv = 0e0;
-   // if ( detector_uv ) {
-   //    detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
-   // }
-   // if ( detector_ri ) {
-   //    detector_conv = detector_ri_conv;
-   // }
-
-   if ( !mals_param_g_conc ) {
+   if ( !use_conc && !mals_param_g_conc ) {
       QMessageBox::critical( this,
-                            windowTitle() + us_tr( ": Make I*(q)" ),
-                            us_tr(
-                                  "To make I*(q) without a concentration curve,\n"
-                                  "the global concentration must be defined in Options->MALS parameters"
-                                  )
-                            );
+                             windowTitle() + us_tr( ": Make I*(q)" ),
+                             us_tr(
+                                   "To make I*(q) without a concentration curve,\n"
+                                   "the global concentration must be defined in Options->MALS parameters"
+                                   )
+                             );
       return false;
    }      
 
-   // if ( !detector_conv ) {
-   //    QMessageBox::critical( this,
-   //                          windowTitle() + us_tr( ": Make I*(q)" ),
-   //                          us_tr(
-   //                                "The detector properties must be defined Options->Concentraton Detector Properties"
-   //                                )
-   //                          );
-   //    return false;
-   // }      
+   if ( use_conc && !detector_conv ) {
+      QMessageBox::critical( this,
+                             windowTitle() + us_tr( ": Make I*(q)" ),
+                             us_tr(
+                                   "The detector properties must be defined Options->Concentraton Detector Properties"
+                                   )
+                             );
+      return false;
+   }      
 
    bool mode_testiq = ( current_mode == MODE_TESTIQ );
 
@@ -3129,7 +3177,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    head = head.replace( QRegularExpression( "_D\\d+_Ihasht_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_D$" ), "" );
-   head += "_Istarq_t";
+   head += "_MALS_Istarq_t";
    
    // TSO << "create_istar_q_ng()  head: " << head << "\n";
 
@@ -3165,8 +3213,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    QStringList              qsl_no_errors;
    QStringList              qsl_zero_points;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
       progress->setValue( i ); progress->setMaximum( files.size() * 2 );
       qApp->processEvents();
       if ( rx_q.indexIn( files[ i ] ) == -1 )
@@ -3309,7 +3356,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    bool   conc_ok           = false;
 
    double conv = 0e0;
-   double psv  = 0e0;
+   double dndc = 0e0;
    double I0se = 0e0;
    double conc_repeak = 1e0;
    
@@ -3329,21 +3376,6 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             parameters[ "ri" ] = "true";
             any_detector = true;
          }
-      }
-
-      bool use_conc = true;
-      if ( lbl_conc_file->text().isEmpty() ) {
-         use_conc = false;
-      } 
-
-      if ( use_conc &&
-           (
-            !f_qs.count( lbl_conc_file->text() )
-            || !f_Is.count( lbl_conc_file->text() )
-            ) ) {
-         editor_msg( "red", QString( us_tr( "Internal error: Concentration file %1 set, but associated data is incomplete.  Concentration disabled." ) ).arg( lbl_conc_file->text() ) );
-         lbl_conc_file->setText( "" );
-         use_conc = false;
       }
 
       if ( use_conc ) {
@@ -3366,19 +3398,21 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          delete mals_ciq;
 
          if ( !parameters.count( "go" ) ) {
+            // TSO << "mals_ciq no go\n";
             progress->reset();
             update_enables();
             return false;
          }
 
-         // conv = parameters.count( "conv 0" ) ? parameters[ "conv 0" ].toDouble() : 0e0;
-         // psv  = parameters.count( "psv 0" ) ? parameters[ "psv 0" ].toDouble() : 0e0;
-         // if ( conv == 0e0 ||
-         //      psv == 0e0 ) {
-         //    progress->reset();
-         //    update_enables();
-         //    return false;
-         // }
+         conv = parameters.count( "conv 0" ) ? parameters[ "conv 0" ].toDouble() : 0e0;
+         dndc = parameters.count( "dndc 0" ) ? parameters[ "dndc 0" ].toDouble() : 0e0;
+         if ( conv == 0e0 ||
+              dndc == 0e0 ) {
+            // TSO << "mals_ciq conv or dndc zero\n";
+            progress->reset();
+            update_enables();
+            return false;
+         }
             
          conc_ok = true;
          if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" ) {
@@ -3390,12 +3424,10 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          }
 
          double detector_conv = 0e0;
-         if ( detector_uv )
-         {
+         if ( detector_uv ) {
             detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
          }
-         if ( detector_ri )
-         {
+         if ( detector_ri ) {
             detector_conv = detector_ri_conv;
          }
          
@@ -3420,6 +3452,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             conc_spline_y[ i ] *= detector_conv / ( conc_repeak * conv );
          }
          usu->natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2 );
+         // TSO << "conc natural spine made\n";
       }
    }
 
@@ -3443,11 +3476,10 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    for ( unsigned int t = 0; t < tv.size(); t++ )
    {
       progress->setValue( files.size() + t ); progress->setMaximum( files.size() + tv.size() );
+      qApp->processEvents();
 
       // build up an I(q)
 
-
-      
       QString name;
 
       {
@@ -3486,19 +3518,27 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       // vector < double > G_recon;
 
       vector < double > this_used_pcts;
-      double conc_factor = 0e0;
-      if ( conc_ok ) {
+
+      // concentration factor with no conc curve
+      double conc_factor = 1 / (mals_param_g_conc * 1e-3);
+      if ( use_conc && conc_ok ) {
          if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
             editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
             conc_factor = 0e0;
+         } else {
+            // conc_factor will multiply I# intensities
+            // mals_param_g_dndc ^2 / dndc ^2 used to correct for K when computing I#
+            conc_factor = ( use_g_dndc * use_g_dndc ) / ( dndc * dndc * conc_factor );
          }
       }
 
+      // TSO << QString( "conc factor %1\n" ).arg( conc_factor );
+
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
-         if ( !I_values.count( tv[ t ] ) )
-         {
-            editor_msg( "dark red", QString( us_tr( "Notice: I values missing frame/time = %1" ) ).arg( tv[ t ] ) );
+         if ( !I_values.count( tv[ t ] ) ) {
+            editor_msg( "dark red", QString( us_tr( "Notice: I values missing frame/time = %1, curve creation skipped curve" ) ).arg( tv[ t ] ) );
+            continue;
          }
 
          if ( !I_values[ tv[ t ] ].count( qv[ i ] ) )
@@ -3507,7 +3547,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             continue;
          }
 
-         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ] / (mals_param_g_conc * 1e-3);
+         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ] * conc_factor;
          double tmp_e       = 0e0;
 
          if ( use_errors )
@@ -3530,7 +3570,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
                return false;
             }
 
-            tmp_e = e_values[ tv[ t ] ][ qv[ i ] ] / mals_param_g_conc;
+            tmp_e = e_values[ tv[ t ] ][ qv[ i ] ] * conc_factor;
          }
             
          I      .push_back( tmp_I );
@@ -3563,11 +3603,14 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
          f_conc      [ name ] = conc_ok ? conc_factor : 0e0;
-         f_psv       [ name ] = conc_ok ? psv : 0e0;
+         f_psv       [ name ] = conc_ok ? dndc : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
          f_time      [ name ] = tv[ t ];
          if ( conc_ok && conv ) {
             f_extc      [ name ] = conv;
+         }
+         if ( conc_ok && dndc ) {
+            f_dndc      [ name ] = dndc;
          }
       }
    } // for each q value

@@ -66,7 +66,7 @@ class US_EXTERN US_Hydrodyn_Mals_Ciq : public QDialog
       QLabel *                                lbl_conc;
       QLabel *                                lbl_gaussian;
       QLabel *                                lbl_conv;
-      QLabel *                                lbl_psv;
+      QLabel *                                lbl_dndc;
 
 #ifdef WIN32
 # if QT_VERSION < 0x040000
@@ -75,7 +75,7 @@ class US_EXTERN US_Hydrodyn_Mals_Ciq : public QDialog
 #endif
       vector < QLabel * >                     lbl_gaussian_id;
       vector < QLineEdit * >                  le_conv;
-      vector < QLineEdit * >                  le_psv;
+      vector < QLineEdit * >                  le_dndc;
 #ifdef WIN32
 # if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )

@@ -19,7 +19,7 @@ US_Hydrodyn_Mals_Ciq::US_Hydrodyn_Mals_Ciq(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: MALS : Make I(q)" ) );
+   setWindowTitle( us_tr( "US-SOMO: MALS : Make I*(q)" ) );
 
    setupGUI();
    update_enables();
@@ -50,7 +50,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
    int minHeight1  = 30;
    int minHeight2  = 25;
 
-   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: MALS : Make I(q) without Gaussians" ) :  us_tr( "US-SOMO: MALS : Make I(q)" ), this );
+   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: MALS : Make I*(q) without Gaussians" ) :  us_tr( "US-SOMO: MALS : Make I*(q)" ), this );
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
@@ -281,6 +281,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
    AUTFBACK( cb_I0se );
    cb_I0se-> setMinimumHeight( minHeight2 );
    cb_I0se->setToolTip( us_tr( "<html><head/><body><p>Note: This value will be stored in the produced files and used in SOMO-SAS MW computations.</p><p>If your data is already properly normalized, you should leave this checked with a value of 1.</p></body></html>" ) );
+   cb_I0se->hide();
 
    le_I0se = new QLineEdit( this );    le_I0se->setObjectName( "le_I0se Line Edit" );
    le_I0se->setText( "1" );
@@ -297,6 +298,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
    le_I0se->setMinimumWidth( 60 );
    le_I0se->setMinimumHeight( minHeight2 );
    le_I0se->setToolTip( us_tr( "<html><head/><body><p>Note: This value will be stored in the produced files and used in SOMO-SAS MW computations.</p><p>If your data is already properly normalized, you should leave this checked with a value of 1.</p></body></html>" ) );
+   le_I0se->hide();
    
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -348,7 +350,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
       lbl_conc_to_saxs_info3->hide();
    }
 
-   lbl_conc = new QLabel( us_tr( "Concentrations will be computed and will be written along with PSVs to the output I(q) curves" ), this );
+   lbl_conc = new QLabel( us_tr( "Concentrations will be computed and will be written along with dn/dc values to the output I(q) curves" ), this );
    lbl_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conc );
@@ -378,11 +380,11 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
    AUTFBACK( lbl_conv );
    lbl_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
 
-   lbl_psv = new QLabel( us_tr( "Partial specific volume (ml/g)" ), this );
-   lbl_psv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_psv->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_psv );
-   lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_dndc = new QLabel( us_tr( "dn/dc (ml/g)" ), this );
+   lbl_dndc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_dndc->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_dndc );
+   lbl_dndc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
 
    for ( unsigned int i = 0; i < (* parameters)[ "gaussians" ].toUInt(); i++ )
    {
@@ -426,7 +428,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
       connect( le_tmp, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
       le_tmp->setMinimumWidth( 200 );
       le_tmp-> setMinimumHeight( minHeight1 );
-      le_psv.push_back( le_tmp );
+      le_dndc.push_back( le_tmp );
    }
 
    pb_help =  new QPushButton ( us_tr( "Help" ), this );
@@ -441,7 +443,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
    pb_quit -> setPalette      ( PALET_PUSHB );
    connect( pb_quit, SIGNAL( clicked() ), SLOT( quit() ) );
 
-   pb_create_ng =  new QPushButton ( us_tr( "Make I(q) without Gaussians" ), this );
+   pb_create_ng =  new QPushButton ( us_tr( "Make I*(q) without Gaussians" ), this );
    pb_create_ng -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_create_ng -> setMinimumHeight( minHeight1 );
    pb_create_ng -> setPalette      ( PALET_PUSHB );
@@ -522,14 +524,14 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
 
    gl->addWidget( lbl_gaussian, j, 0 );
    gl->addWidget( lbl_conv    , j, 1 );
-   gl->addWidget( lbl_psv     , j, 2 );
+   gl->addWidget( lbl_dndc     , j, 2 );
    j++;
 
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
       gl->addWidget( lbl_gaussian_id[ i ], j, 0 );
       gl->addWidget( le_conv        [ i ], j, 1 );
-      gl->addWidget( le_psv         [ i ], j, 2 );
+      gl->addWidget( le_dndc         [ i ], j, 2 );
       j++;
    }
 
@@ -543,12 +545,12 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
       lbl_conc               ->hide();
       lbl_gaussian           ->hide();
       lbl_conv               ->hide();
-      lbl_psv                ->hide();
+      lbl_dndc                ->hide();
       for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
       {
          lbl_gaussian_id[ i ]->hide();
          le_conv        [ i ]->hide();
-         le_psv         [ i ]->hide();
+         le_dndc         [ i ]->hide();
       }
       pb_global   ->hide();
 
@@ -621,7 +623,7 @@ void US_Hydrodyn_Mals_Ciq::go()
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
       (*parameters)[ QString( "conv %1" ).arg( i ) ] = le_conv[ i ]->text();
-      (*parameters)[ QString( "psv %1" ) .arg( i ) ] = le_psv [ i ]->text();
+      (*parameters)[ QString( "dndc %1" ) .arg( i ) ] = le_dndc [ i ]->text();
    }
 
    if ( cb_I0se->isChecked() )
@@ -684,7 +686,7 @@ void US_Hydrodyn_Mals_Ciq::global()
    for ( unsigned int i = 1; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
       le_conv[ i ]->setText( le_conv[ 0 ]->text() );
-      le_psv [ i ]->setText( le_psv [ 0 ]->text() );
+      le_dndc [ i ]->setText( le_dndc [ 0 ]->text() );
    }
    update_enables();
 }
@@ -769,7 +771,7 @@ void US_Hydrodyn_Mals_Ciq::update_enables()
             no_go = true;
             break;
          }
-         if ( !le_psv [ i ]->text().toDouble() )
+         if ( !le_dndc [ i ]->text().toDouble() )
          {
             no_go = true;
             break;

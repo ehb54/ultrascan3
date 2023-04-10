@@ -1295,7 +1295,10 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          f_conc     .erase( lb_files->item( i )->text() );
          f_extc     .erase( lb_files->item( i )->text() );
          f_time     .erase( lb_files->item( i )->text() );
+         f_g_dndc   .erase( lb_files->item( i )->text() );
+         f_dndc     .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
+         qApp->processEvents();
       }
    }
 
@@ -1923,20 +1926,24 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       return false;
    }
 
-   bool is_time = false;
+   bool is_time       = false;
 
-   bool   has_conc  = false;
-   double this_conc = 0e0;
-   bool   has_psv   = false;
-   double this_psv  = 0e0;
-   bool   has_I0se  = false;
-   double this_I0se = 0e0;
-   bool   has_time  = false;
-   double this_time = 0e0;
-   bool   has_extc  = false;
-   double this_extc = 0e0;
+   bool   has_conc    = false;
+   double this_conc   = 0e0;
+   bool   has_psv     = false;
+   double this_psv    = 0e0;
+   bool   has_I0se    = false;
+   double this_I0se   = 0e0;
+   bool   has_time    = false;
+   double this_time   = 0e0;
+   bool   has_extc    = false;
+   double this_extc   = 0e0;
+   bool   has_g_dndc  = false;
+   double this_g_dndc = 0e0;
+   bool   has_dndc    = false;
+   double this_dndc   = 0e0;
 
-   double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
+   double use_units   = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
    if ( ext == "dat" ||
         ext == "sprr" )
@@ -1947,6 +1954,8 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_extc      ( "ExtC_or_DRIinc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_g_dndc    ( "Global_dndc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_dndc      ( " dndc:\\s*(\\S+)(\\s|$)" );
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
       {
          QString unitstr = rx_unit.cap( 1 ).toLower();
@@ -1988,6 +1997,16 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       {
          has_extc  = true;
          this_extc = rx_extc.cap( 1 ).toDouble();
+      }
+      if ( rx_g_dndc.indexIn( qv[ 0 ] ) != -1 )
+      {
+         has_g_dndc  = true;
+         this_g_dndc = rx_g_dndc.cap( 1 ).toDouble();
+      }
+      if ( rx_dndc.indexIn( qv[ 0 ] ) != -1 )
+      {
+         has_dndc  = true;
+         this_dndc = rx_dndc.cap( 1 ).toDouble();
       }
    }
 
@@ -2981,6 +3000,12 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    if ( has_extc ) {
       f_extc       [ basename ] = this_extc;
    }      
+   if ( has_g_dndc ) {
+      f_g_dndc     [ basename ] = this_g_dndc;
+   }      
+   if ( has_dndc ) {
+      f_dndc       [ basename ] = this_dndc;
+   }      
    return true;
 }
 
@@ -3586,7 +3611,7 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
       }
    }
 
-   ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
+   ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8%9%10\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
@@ -3594,6 +3619,8 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
       .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+      .arg( f_g_dndc.count( file ) ? QString( " Global_dndc:%1" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+      .arg( f_dndc.count( file ) ? QString( " dndc:%1" ).arg( f_dndc[ file ] ) : QString( "" ) )
       .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
       ;
 

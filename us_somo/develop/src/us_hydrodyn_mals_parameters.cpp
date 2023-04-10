@@ -89,7 +89,7 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
    le_mals_param_n-> setMinimumHeight( minHeight1 );
 
 
-   lbl_mals_param_g_dndc = new QLabel( us_tr( "Global dn/dc : " ), this );
+   lbl_mals_param_g_dndc = new QLabel( us_tr( "Global dn/dc [ml/g] : " ), this );
    lbl_mals_param_g_dndc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mals_param_g_dndc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_mals_param_g_dndc );
