@@ -260,7 +260,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDescGuid;
 	 
-
+         QStringList droppedTriplesList;
 	 
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
@@ -290,7 +290,9 @@ class US_ReporterGMP : public US_Widgets
          int   get_expID_by_runID_invID( US_DB2*, QString );
          double get_loading_volume( int );
   
-         void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
+         void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&,
+					   QString&,  QString&,  QString&,  QString&, QString&,
+					   QString&,  QString&,  QString&,  QString&);
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
          QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
 
@@ -498,7 +500,8 @@ class US_ReporterGMP : public US_Widgets
 	QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
 	void check_models ( int );
 	void check_for_missing_models ( void );
-	QString  compose_html_failed_stage_missing_models( void );
+        void check_for_dropped_triples( void );
+ 	QString  compose_html_failed_stage_missing_models( void );
 	QString  missing_models_msg( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
