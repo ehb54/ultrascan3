@@ -2248,7 +2248,7 @@ void US_XpnDataViewer::record_live_update_status( QString o_type )
       stopOptima_Json += "\"level\":\""  + QString::number( level )  + "\"";
       stopOptima_Json += "}],";
 
-      stopOptima_Json += "\"Operation\": \"" + o_type + "\"";
+      stopOptima_Json += "\"Remote Operation\": \"" + o_type + "\"";
       
       stopOptima_Json += "}";
       
@@ -2288,7 +2288,7 @@ void US_XpnDataViewer::record_live_update_status( QString o_type )
       skipOptima_Json += "\"level\":\""  + QString::number( level )  + "\"";
       skipOptima_Json += "}],";
 
-      skipOptima_Json += "\"Operation\": \"" + o_type + "\"";
+      skipOptima_Json += "\"Remote Operation\": \"" + o_type + "\"";
       
       skipOptima_Json += "}";
       

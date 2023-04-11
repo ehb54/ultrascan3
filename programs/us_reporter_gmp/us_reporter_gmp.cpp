@@ -5406,14 +5406,18 @@ int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filenam
 void US_ReporterGMP::assemble_user_inputs_html( void )
 {
   html_assembled += "<p class=\"pagebreak \">\n";
-  html_assembled += "<h2 align=left>User Interactions During Data Import, Editing, and Analysis</h2>";
+  html_assembled += "<h2 align=left>User Interactions During Live Update, Data Import, Editing, and Analysis</h2>";
 
   //Maps && timestamps from DB
+  //LIVE_UPDATE
+  QMap < QString, QString > operation_types_live_update;
+  QMap < QString, QString > operation_types_live_update_ts;
+  QString stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats;
   // IMPORT
   QMap < QString, QString > data_types_import;
   QMap < QString, QString > data_types_import_ts;
   QString importRIJson, importIPJson, importRIts, importIPts;
-  //EDITING
+  //EDITING & ANALYSIS
   QMap < QString, QString > data_types_edit;
   QMap < QString, QString > data_types_edit_ts;
   QString editRIJson, editIPJson, editRIts, editIPts, analysisJson;
@@ -5436,9 +5440,92 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
 
   //read autoflowStatus record:
-  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts, editRIJson, editRIts, editIPJson, editIPts, analysisJson ); 
+  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
+			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
+			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats); 
   /////////////////////////////
+
+  QMap < QString, QString >::iterator im;
+
+  //2. LIVE_UPDATE
+  operation_types_live_update[ "STOP" ] = stopOptimaJson;
+  operation_types_live_update[ "SKIP" ] = skipOptimaJson;
+
+  operation_types_live_update_ts[ "STOP" ] = stopOptimats;
+  operation_types_live_update_ts[ "SKIP" ] = skipOptimats;
+
+  if ( !stopOptimaJson.isEmpty() && !skipOptimaJson.isEmpty() )
+    html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE stage)</h3>" );
   
+  for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
+    {
+      QString json_str = im.value();
+     
+      if ( json_str.isEmpty() )
+	continue;
+      
+      QString      dtype_opt;
+         
+      if ( im.key() == "STOP" )
+	  dtype_opt    = "Stopping Optima";
+
+      if ( im.key() == "SKIP" )
+	  dtype_opt =  "Skipping Stage";
+      
+      html_assembled += tr("<br>");
+
+      html_assembled += tr(
+			   "<table>"		   
+			   "<tr>"
+			      "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			   "</tr>"
+			   "</table>"
+			)
+	.arg( dtype_opt )                       //1
+	;
+
+      //Parse Json
+      QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( json_str, im.key() );
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Person" ][ "ID"] )                       //1
+	.arg( status_map[ "Person" ][ "lname" ] )                   //2
+	.arg( status_map[ "Person" ][ "fname" ] )                   //3
+	.arg( status_map[ "Person" ][ "email" ] )                   //4
+	.arg( status_map[ "Person" ][ "level" ] )                   //5
+	;
+
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Operation, Timestamp: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Type:             %1 </td> "
+			   "<td> Performed at:     %2 </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Remote Operation" ][ "type"] )      //1
+	.arg( operation_types_live_update_ts[ im.key() ] )     //2
+	;
+    }
+  html_assembled += tr("<hr>");
+
+  
+  //3. IMPORT
   data_types_import [ "RI" ] = importRIJson;
   data_types_import [ "IP" ] = importIPJson;
 
@@ -5452,11 +5539,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	   <<  dropped_triples_RI
 	   <<  dropped_triples_IP;
   
-  
-  //3. IMPORT
   html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT stage)</h3>" );
-
-  QMap < QString, QString >::iterator im;
+  
   for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
     {
       QString json_str = im.value();
@@ -5848,7 +5932,8 @@ bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QSt
 
 //read autoflowStatus, populate internals
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
-						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson )
+						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson,
+						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -5859,6 +5944,10 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   editIPJson  .clear();
   editIPts    .clear();
   analysisJson.clear();
+  stopOptimaJson. clear();
+  stopOptimats  . clear();
+  skipOptimaJson. clear();
+  skipOptimats  . clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -5890,6 +5979,12 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  editIPts      = db.value( 7 ).toString();
 
 	  analysisJson  = db.value( 8 ).toString();
+
+	  stopOptimaJson = db.value( 9 ).toString();
+	  stopOptimats   = db.value( 10 ).toString();
+
+	  skipOptimaJson = db.value( 11 ).toString();
+	  skipOptimats   = db.value( 12 ).toString();
 	}
     }
 }
@@ -5974,6 +6069,11 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	    }
 
 	  status_map[ key ] = meniscus_map;
+	}
+
+      if ( key == "Remote Operation" )  //Live Update's remote operations [SKIP | STOP]
+	{
+	  status_map[ key ][ "type" ] = value.toString();
 	}
       
     }
