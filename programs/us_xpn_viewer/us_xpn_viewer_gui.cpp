@@ -246,8 +246,10 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
    auto_mode_bool     = true;
    experimentAborted  = false;
+   experimentAborted_remotely  = false;
    inExport           = false;
    combinedOptics     = false;
+   autoflowStatusID   = 0;
    
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
@@ -834,6 +836,8 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    
    auto_mode_bool = false;
    experimentAborted  = false;
+   experimentAborted_remotely  = false;
+   autoflowStatusID   = 0;
    
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
@@ -2035,7 +2039,20 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 
        details_at_live_update[ "expAborted" ] = QString("YES");
      }
-   
+
+   //If aborted remotely (From GUI, not from the panel!!), update autoflow record with 'statusID':
+   if ( experimentAborted_remotely )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_live_update_expaborted_remotely"
+	   << QString::number( autoflowStatusID )
+	   << RunID_to_retrieve
+	   << OptimaName;
+       
+       db->query( qry );
+       
+       details_at_live_update[ "statusID" ] = QString::number( autoflowStatusID );
+     }
 
    /***/
    //set autoflowStages record to "unknown" again !!
@@ -2115,44 +2132,199 @@ void US_XpnDataViewer::stop_optima( void )
   msgBox.setIcon(QMessageBox::Question);
   msgBox.exec();
   
-  if (msgBox.clickedButton() == Accept) {
-    qDebug() << "STOPPING Optima...";
-    link->stopOptima();
+  if (msgBox.clickedButton() == Accept)
+    {
+      qDebug() << "STOPPING Optima...";
+      link->stopOptima();
 
-    // And switch
-    // Do we need to do anything ??
-    // IF status "0", it will switch to IMPORT and will ask what to do with data
-    // IF status "0" && no data collected yet - what then ? Needs testing...
-    // **************  if ( link->tot_scans.toInt() == 0 ) ??? 
-    
-  }
-  else if (msgBox.clickedButton() == Cancel){
-    return;
-  }
+      // And switch
+      // Do we need to do anything ??
+      // IF status "0", it will switch to IMPORT and will ask what to do with data
+      // IF status "0" && no data collected yet - what then ? Needs testing...
+      // **************  if ( link->tot_scans.toInt() == 0 ) ??? 
+      
+      //Now, create OR update (if exists due to clicking "Skip Stage") autoflowStatus record: 
+      /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
+      /* since this will accurately reflect time when it was STOPPED                        */
+      experimentAborted_remotely = true;
+      record_live_update_status( "STOP" );
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    {
+      return;
+    }
 }
 
 //skip stage
 void US_XpnDataViewer::skip_optima_stage( void )
 {
-    QMessageBox msgBox;
-    msgBox.setText(tr("You are about to SKIP the current experiment stage."));
-    msgBox.setInformativeText( tr( "Do you want to proceed ?" ));
-    msgBox.setWindowTitle(tr("Confirm Stage Skipping"));
-    
-    QPushButton *Accept    = msgBox.addButton(tr("YES"), QMessageBox::YesRole);
-    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-
-    msgBox.setIcon(QMessageBox::Question);
-    msgBox.exec();
-    
-    if (msgBox.clickedButton() == Accept) {
+  QMessageBox msgBox;
+  msgBox.setText(tr("You are about to SKIP the current experiment stage."));
+  msgBox.setInformativeText( tr( "Do you want to proceed ?" ));
+  msgBox.setWindowTitle(tr("Confirm Stage Skipping"));
+  
+  QPushButton *Accept    = msgBox.addButton(tr("YES"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept)
+    {
       qDebug() << "SKIPPING EXP. STAGE...";
       link->skipOptimaStage();
+      
+      //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
+      /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
+      /* since this will accurately reflect time when it was SKIPPED                        */
+      record_live_update_status( "SKIP" );
+      
     }
-    else if (msgBox.clickedButton() == Cancel){
+  else if (msgBox.clickedButton() == Cancel)
+    {
       return;
     }
 }
+
+
+//
+void US_XpnDataViewer::record_live_update_status( QString o_type )
+{
+  autoflowStatusID = 0;
+  QString stopOptima_Json;
+  QString skipOptima_Json;
+
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+  
+  qDebug() << "IN LIVE_UPDATE, record autoflow status [STOP | SKIP]: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  // first, check if there is already a record in autoflowStatus with autoflowID == autoflowID_passed;
+  // that is a scenario for BOTH operations, SKIP && STOP
+  // if there IS record, update it; otherwise create a new one..
+  qry.clear();
+  qry << "get_autoflowStatus_id" << QString::number( autoflowID_passed );
+  autoflowStatusID = db->functionQuery( qry );
+
+  qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+  qDebug() << "Operation type -- "   << o_type;
+
+  
+  qry.clear();
+
+  if ( o_type == "STOP")
+    {
+      stopOptima_Json. clear();
+      stopOptima_Json += "{ \"Person\": ";
+
+      stopOptima_Json += "[{";
+      stopOptima_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      stopOptima_Json += "\"fname\":\""  + fname                     + "\",";
+      stopOptima_Json += "\"lname\":\""  + lname                     + "\",";
+      stopOptima_Json += "\"email\":\""  + email                     + "\",";
+      stopOptima_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      stopOptima_Json += "}],";
+
+      stopOptima_Json += "\"Operation\": \"" + o_type + "\"";
+      
+      stopOptima_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusStopOptima_record"
+	      << QString::number( autoflowID_passed )
+	      << stopOptima_Json;
+
+	  //qDebug() << "new_autoflowStatusStopOptima_record qry -- " << qry;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusStopOptima_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << stopOptima_Json;
+
+	  db->query( qry );
+	}
+    }
+
+  if ( o_type == "SKIP")
+    {
+      skipOptima_Json. clear();
+      skipOptima_Json += "{ \"Person\": ";
+
+      skipOptima_Json += "[{";
+      skipOptima_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      skipOptima_Json += "\"fname\":\""  + fname                     + "\",";
+      skipOptima_Json += "\"lname\":\""  + lname                     + "\",";
+      skipOptima_Json += "\"email\":\""  + email                     + "\",";
+      skipOptima_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      skipOptima_Json += "}],";
+
+      skipOptima_Json += "\"Operation\": \"" + o_type + "\"";
+      
+      skipOptima_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusSkipOptima_record"
+	      << QString::number( autoflowID_passed )
+	      << skipOptima_Json;
+
+	  //qDebug() << "new_autoflowStatusSkipOptima_record qry -- " << qry;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusSkipOptima_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << skipOptima_Json;
+
+	  db->query( qry );
+	}
+    }
+  
+  if ( !autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (LIVE_UPDATE {STOP,SKIP}): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+      
+      return;
+    }
+  qDebug() << "in record_live_update_status: stopOptima_Json,skipOptima_Json -- " << stopOptima_Json << "\n" << skipOptima_Json;
+}
+
 
 // Check periodically for SysData
 void US_XpnDataViewer::check_for_sysdata( void )

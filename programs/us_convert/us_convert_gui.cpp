@@ -6776,6 +6776,9 @@ DbgLv(1) << "Writing to database";
 //Record RI or IP  status to autoflowStatus
 void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 {
+  //Check if autoflowStatus record has been created at 2. LIVE_UPDATE already (by remotly SKIP stage &&|| STOP Optima signals):
+  qDebug() << "autoflowStatusID from 2. LIVE_UPDATE: " << details_at_editing[ "statusID" ]; 
+  
   autoflowStatusID = 0;
   QString importRI_Json;
   QString importIP_Json;
@@ -6818,7 +6821,9 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   qry << "get_autoflowStatus_id" << QString::number( autoflowID_passed );
   autoflowStatusID = db->functionQuery( qry );
 
-  qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+  qDebug() << "autoflowStatusID from DB ;; from 2. LIVE_UPDATE: -- "
+	   << autoflowStatusID << " ;; "
+	   << details_at_editing[ "statusID" ];
   qDebug() << "runtype -- "          << runtype;
   
   qry.clear();
