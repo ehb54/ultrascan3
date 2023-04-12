@@ -905,6 +905,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       map < QString, double >             f_time;
       map < QString, double >             f_g_dndc;
       map < QString, double >             f_dndc;
+      map < QString, QString >            f_conc_units;
 
       // for displaying last smoothing in gg scroll mode
       map < QString, vector < double > >  f_qs_smoothed;

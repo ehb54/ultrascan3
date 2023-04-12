@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_hydrodyn_saxs_hplc_dctr.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_hydrodyn_saxs_hplc_parameters.h"
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -301,6 +302,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    pb_detector->setMinimumHeight(minHeight1);
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
+
+   pb_saxs_hplc_parameters = new QPushButton(us_tr("SAXS Parameters"), this);
+   pb_saxs_hplc_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_saxs_hplc_parameters->setMinimumHeight(minHeight1);
+   pb_saxs_hplc_parameters->setPalette( PALET_PUSHB );
+   connect(pb_saxs_hplc_parameters, SIGNAL(clicked()), SLOT(set_saxs_hplc_parameters()));
 
    pb_fasta_file = new QPushButton(us_tr("Load FASTA sequence from file"), this);
    pb_fasta_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -722,6 +729,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    background->addWidget( lbl_other_options );
    background->addWidget( pb_detector );
+   background->addWidget( pb_saxs_hplc_parameters );
    {
       QBoxLayout * bl_fasta = new QHBoxLayout( 0 );
       bl_fasta->setContentsMargins( 0, 0, 0, 0 );
@@ -994,6 +1002,56 @@ void US_Hydrodyn_Saxs_Hplc_Options::set_detector()
       ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri      = ( parameters.count( "ri" ) && parameters[ "ri" ] == "true" ) ? true : false;
       ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri_conv = parameters[ "ri_conv" ].toDouble();
       ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_uv_conv = parameters[ "uv_conv" ].toDouble();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Options::set_saxs_hplc_parameters()
+{
+   map < QString, QString > parameters;
+
+   parameters[ "saxs_hplc_param_g_conc"                   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_g_psv"                    ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_I0_exp"                   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_I0_theo"                  ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_diffusion_len"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_diffusion_len, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_electron_nucleon_ratio"   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_electron_nucleon_ratio, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_nucleon_mass"             ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_nucleon_mass, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_solvent_electron_density" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density, 0, 'g', 8 );
+
+
+   US_Hydrodyn_Saxs_Hplc_Parameters *saxs_hplc_parameters = 
+      new US_Hydrodyn_Saxs_Hplc_Parameters(
+                                           this,
+                                           & parameters,
+                                           this );
+   US_Hydrodyn::fixWinButtons( saxs_hplc_parameters );
+   saxs_hplc_parameters->exec();
+   delete saxs_hplc_parameters;
+
+   if ( !parameters.count( "keep" ) )
+   {
+      update_enables();
+      return;
+   }
+
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc                   = parameters[ "saxs_hplc_param_g_conc"                   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv                    = parameters[ "saxs_hplc_param_g_psv"                    ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp                   = parameters[ "saxs_hplc_param_I0_exp"                   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo                  = parameters[ "saxs_hplc_param_I0_theo"                  ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_diffusion_len            = parameters[ "saxs_hplc_param_diffusion_len"            ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_electron_nucleon_ratio   = parameters[ "saxs_hplc_param_electron_nucleon_ratio"   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_nucleon_mass             = parameters[ "saxs_hplc_param_nucleon_mass"             ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density = parameters[ "saxs_hplc_param_solvent_electron_density" ].toDouble();
+
+   if ( parameters.count( "save" ) ) {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc                           = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv                            = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp                         = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo                        = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.diffusion_len                  = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_diffusion_len;
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_electron_nucleon_ratio" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_electron_nucleon_ratio );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.nucleon_mass                   = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_nucleon_mass;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density                = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density;
    }
 }
 

@@ -1264,7 +1264,7 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          {
             editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
          }
-         conc_files.erase( lb_files->item( i )->text() );
+         conc_files    .erase( lb_files->item( i )->text() );
          if ( lbl_conc_file->text() == lb_files->item( i )->text() )
          {
             lbl_conc_file->setText( "" );
@@ -1281,22 +1281,23 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          //          {
          //             lbl_empty->setText( "" );
          //          }
-         f_qs_string.erase( lb_files->item( i )->text() );
-         f_qs       .erase( lb_files->item( i )->text() );
-         f_Is       .erase( lb_files->item( i )->text() );
-         f_errors   .erase( lb_files->item( i )->text() );
-         f_pos      .erase( lb_files->item( i )->text() );
-         f_name     .erase( lb_files->item( i )->text() );
-         f_is_time  .erase( lb_files->item( i )->text() );
-         f_gaussians.erase( lb_files->item( i )->text() );
-         f_psv      .erase( lb_files->item( i )->text() );
-         f_header   .erase( lb_files->item( i )->text() );
-         f_I0se     .erase( lb_files->item( i )->text() );
-         f_conc     .erase( lb_files->item( i )->text() );
-         f_extc     .erase( lb_files->item( i )->text() );
-         f_time     .erase( lb_files->item( i )->text() );
-         f_g_dndc   .erase( lb_files->item( i )->text() );
-         f_dndc     .erase( lb_files->item( i )->text() );
+         f_qs_string   .erase( lb_files->item( i )->text() );
+         f_qs          .erase( lb_files->item( i )->text() );
+         f_Is          .erase( lb_files->item( i )->text() );
+         f_errors      .erase( lb_files->item( i )->text() );
+         f_pos         .erase( lb_files->item( i )->text() );
+         f_name        .erase( lb_files->item( i )->text() );
+         f_is_time     .erase( lb_files->item( i )->text() );
+         f_gaussians   .erase( lb_files->item( i )->text() );
+         f_psv         .erase( lb_files->item( i )->text() );
+         f_header      .erase( lb_files->item( i )->text() );
+         f_I0se        .erase( lb_files->item( i )->text() );
+         f_conc        .erase( lb_files->item( i )->text() );
+         f_extc        .erase( lb_files->item( i )->text() );
+         f_time        .erase( lb_files->item( i )->text() );
+         f_g_dndc      .erase( lb_files->item( i )->text() );
+         f_dndc        .erase( lb_files->item( i )->text() );
+         f_conc_units  .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
          qApp->processEvents();
       }
@@ -1926,22 +1927,24 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       return false;
    }
 
-   bool is_time       = false;
+   bool    is_time         = false;
 
-   bool   has_conc    = false;
-   double this_conc   = 0e0;
-   bool   has_psv     = false;
-   double this_psv    = 0e0;
-   bool   has_I0se    = false;
-   double this_I0se   = 0e0;
-   bool   has_time    = false;
-   double this_time   = 0e0;
-   bool   has_extc    = false;
-   double this_extc   = 0e0;
-   bool   has_g_dndc  = false;
-   double this_g_dndc = 0e0;
-   bool   has_dndc    = false;
-   double this_dndc   = 0e0;
+   bool    has_conc        = false;
+   double  this_conc       = 0e0;
+   bool    has_psv         = false;
+   double  this_psv        = 0e0;
+   bool    has_I0se        = false;
+   double  this_I0se       = 0e0;
+   bool    has_time        = false;
+   double  this_time       = 0e0;
+   bool    has_extc        = false;
+   double  this_extc       = 0e0;
+   bool    has_g_dndc      = false;
+   double  this_g_dndc     = 0e0;
+   bool    has_dndc        = false;
+   double  this_dndc       = 0e0;
+   bool    has_conc_units  = false;
+   QString this_conc_units = "";
 
    double use_units   = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
@@ -1949,6 +1952,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
         ext == "sprr" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_conc_units( "Conc:\\s*\\S+\\s+(\\[\\S+\\])(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
@@ -1976,6 +1980,12 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       {
          has_conc  = true;
          this_conc = rx_conc.cap( 1 ).toDouble();
+         // TSO << QString( "found conc %1\n" ).arg( this_conc );
+      }
+      if ( rx_conc_units.indexIn( qv[ 0 ] ) != -1 )
+      {
+         has_conc_units  = true;
+         this_conc_units = rx_conc.cap( 1 );
          // TSO << QString( "found conc %1\n" ).arg( this_conc );
       }
       if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
@@ -2988,6 +2998,9 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    if ( has_conc ) {
       f_conc       [ basename ] = this_conc;
    }
+   if ( has_conc_units ) {
+      f_conc_units [ basename ] = this_conc_units;
+   }
    if ( has_psv ) {
       f_psv        [ basename ] = this_psv;
    }
@@ -3608,13 +3621,17 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
       if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
       {
          use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+         if ( f_conc_units.count( file )
+              && !f_conc_units[ file ].isEmpty() ) {
+            use_conc += QString( " [%1]" ).arg( f_conc_units[ file ] );
+         }
       }
    }
 
    ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8%9%10\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
-      .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
+      .arg( f_psv .count( file ) && f_psv[ file ] ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )

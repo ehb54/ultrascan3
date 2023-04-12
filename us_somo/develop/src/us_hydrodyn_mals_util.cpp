@@ -5461,6 +5461,8 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
 
 #define TIME_DELTA_TOLERANCE  0.0000001 
    
+#warning seems to be dropping negative time... can we support?
+   
    while( data.size() && data.front().contains( QRegularExpression( "^-?[0-9.]+," ) ) ) {
       QStringList data_line = data.front().split( "," );
       data.pop_front();

@@ -256,6 +256,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
  private:
 
+      double        saxs_hplc_param_g_conc;
+      double        saxs_hplc_param_g_psv;
+      double        saxs_hplc_param_I0_exp;
+      double        saxs_hplc_param_I0_theo;
+      double        saxs_hplc_param_diffusion_len;
+      double        saxs_hplc_param_electron_nucleon_ratio;
+      double        saxs_hplc_param_nucleon_mass;
+      double        saxs_hplc_param_solvent_electron_density;
+
       csv           csv1;
 
       void          *us_hydrodyn;

@@ -560,6 +560,28 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       load_file( dctr_file );
    }
 
+   QString saxs_hplc_params_file = 
+      USglobal->config_list.root_dir + QDir::separator() + "etc" + 
+      QDir::separator() + "somo_saxs_hplc_default_saxs_param.dat" ;
+
+   // set defaults always
+   
+   saxs_hplc_param_g_conc                   = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc;
+   saxs_hplc_param_g_psv                    = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv;
+   saxs_hplc_param_I0_exp                   = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp;
+   saxs_hplc_param_I0_theo                  = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo;
+   saxs_hplc_param_diffusion_len            = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.diffusion_len;
+   saxs_hplc_param_electron_nucleon_ratio   =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "guinier_electron_nucleon_ratio" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0
+      ;
+   saxs_hplc_param_nucleon_mass             = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.nucleon_mass;
+   saxs_hplc_param_solvent_electron_density = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density, 0, 'f', 4 ).toDouble();
+
+   // if ( QFile( saxs_hplc_params_file ).exists() ) {
+   //    load_file( saxs_hplc_params_file );
+   // }
+
    blanks_end_s = 0e0;
    blanks_end_e = 0e0;
 
@@ -1667,6 +1689,59 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       is_time = true;
       use_units = 1.0;
    }
+
+   // if ( ext == "dat" && qv[ 0 ].contains( " SAXS_HPLC parameter file" ) )
+   // {
+   //    QRegExp rx_saxs_hplc_param_g_conc                  ( "^# __saxs_hplc_param_g_conc: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_g_psv                   ( "^# __saxs_hplc_param_g_psv: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_I0_exp                  ( "^# __saxs_hplc_param_I0_exp: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_I0_theo                 ( "^# __saxs_hplc_param_I0_theo: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_diffusion_len           ( "^# __saxs_hplc_param_diffusion_len: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_electron_nucleon_ratio  ( "^# __saxs_hplc_param_electron_nucleon_ratio: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_nucleon_mass            ( "^# __saxs_hplc_param_nucleon_mass: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_solvent_electron_density( "^# __saxs_hplc_param_solvent_electron_density: (\\S+)\\s*$" );
+
+   //    for ( int i = 1; i < (int) qv.size(); i++ ) {
+
+   //       if ( rx_saxs_hplc_param_g_conc.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_g_conc = rx_saxs_hplc_param_g_conc.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_g_psv.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_g_psv = rx_saxs_hplc_param_g_psv.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_I0_exp.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_I0_exp = rx_saxs_hplc_param_I0_exp.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_I0_theo.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_I0_theo = rx_saxs_hplc_param_I0_theo.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_diffusion_len.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_diffusion_len = rx_saxs_hplc_param_diffusion_len.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_electron_nucleon_ratio.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_electron_nucleon_ratio = rx_saxs_hplc_param_electron_nucleon_ratio.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_nucleon_mass.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_nucleon_mass = rx_saxs_hplc_param_nucleon_mass.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_solvent_electron_density.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_solvent_electron_density = rx_saxs_hplc_param_solvent_electron_density.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+
+   //       errormsg = QString( us_tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
+   //       return false;
+   //    }
+   //    errormsg = "";
+   //    return false;
+   // }
 
    if ( ext == "dat" && qv[ 0 ].contains( " Detector State file" ) )
    {

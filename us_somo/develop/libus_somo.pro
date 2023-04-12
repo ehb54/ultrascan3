@@ -347,6 +347,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_hplc_modes_bb.cpp \
         src/us_hydrodyn_saxs_hplc_modes_wheel.cpp \
         src/us_hydrodyn_saxs_hplc_makeiq.cpp \
+        src/us_hydrodyn_saxs_hplc_parameters.cpp \
         src/us_hydrodyn_saxs_hplc_plots.cpp \
         src/us_hydrodyn_saxs_hplc_ciq.cpp \
         src/us_hydrodyn_saxs_hplc_dctr.cpp \
@@ -735,6 +736,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_hplc_movie.h \
         include/us_hydrodyn_saxs_hplc_nth.h \
         include/us_hydrodyn_saxs_hplc_options.h \
+        include/us_hydrodyn_saxs_hplc_parameters.h \
         include/us_hydrodyn_saxs_hplc_scale_trend.h \
         include/us_hydrodyn_saxs_hplc_svd.h \
         include/us_hydrodyn_saxs_hplc_baseline_best.h \

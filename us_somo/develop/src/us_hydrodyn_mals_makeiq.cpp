@@ -3602,8 +3602,8 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          f_Is        [ name ] = I;
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
-         f_conc      [ name ] = conc_ok ? conc_factor : 0e0;
-         f_psv       [ name ] = conc_ok ? dndc : 0e0;
+         f_conc      [ name ] = conc_ok ? conc_factor * 1e3 : 0e0;
+         // f_psv       [ name ] = conc_ok ? dndc : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
          f_time      [ name ] = tv[ t ];
          if ( conc_ok && conv ) {
@@ -3611,6 +3611,9 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          }
          if ( conc_ok && dndc ) {
             f_dndc      [ name ] = dndc;
+         }
+         if ( conc_ok ) {
+            f_conc_units[ name ] = "mg/mL";
          }
       }
    } // for each q value
