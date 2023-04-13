@@ -566,7 +566,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    // set defaults always
    
-   saxs_hplc_param_g_conc                   = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc;
+   saxs_hplc_param_g_conc                   =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_g_conc" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ].toDouble() : 0
+      ;
    saxs_hplc_param_g_psv                    = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv;
    saxs_hplc_param_I0_exp                   = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp;
    saxs_hplc_param_I0_theo                  = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo;

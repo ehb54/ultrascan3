@@ -303,7 +303,7 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
 
-   pb_mals_parameters = new QPushButton(us_tr("MALS Parameters"), this);
+   pb_mals_parameters = new QPushButton(us_tr("MALS Processing Parameters"), this);
    pb_mals_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_mals_parameters->setMinimumHeight(minHeight1);
    pb_mals_parameters->setPalette( PALET_PUSHB );

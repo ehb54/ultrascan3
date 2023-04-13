@@ -303,7 +303,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
 
-   pb_saxs_hplc_parameters = new QPushButton(us_tr("SAXS Parameters"), this);
+   pb_saxs_hplc_parameters = new QPushButton(us_tr("SAXS Processing Parameters"), this);
    pb_saxs_hplc_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_saxs_hplc_parameters->setMinimumHeight(minHeight1);
    pb_saxs_hplc_parameters->setPalette( PALET_PUSHB );
@@ -1044,7 +1044,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::set_saxs_hplc_parameters()
    ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density = parameters[ "saxs_hplc_param_solvent_electron_density" ].toDouble();
 
    if ( parameters.count( "save" ) ) {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc                           = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc;
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ]         = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv                            = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv;
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp                         = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp;
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo                        = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo;

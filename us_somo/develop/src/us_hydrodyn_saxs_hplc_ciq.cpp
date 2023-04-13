@@ -271,6 +271,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       cb_normalize->hide();
    }
 
+   cb_istarq = new QCheckBox(this);
+   cb_istarq->setText( parameters->count( "istarq_message" ) ? (*parameters)[ "istarq_message" ] : QString("") );
+   cb_istarq->setEnabled( parameters->count( "istarq_ok" ) && (*parameters)[ "istarq_ok" ] == "true" );
+   connect( cb_istarq, SIGNAL( clicked() ), SLOT( set_istarq() ) );
+   cb_istarq->setChecked( false );
+   cb_istarq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_istarq->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_istarq );
+   if ( !parameters->count( "istarq_ok" ) ) {
+      cb_istarq->hide();
+   }
+
    cb_I0se = new QCheckBox(this);
    cb_I0se->setText( us_tr( "I0 standard experimental value (a.u.) : " ) );
    cb_I0se->setEnabled( true );
@@ -494,7 +506,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    }
 
    vbl->addWidget( cb_normalize );
-
+   vbl->addWidget( cb_istarq );
 
    QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
 
@@ -628,6 +640,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
    {
       (*parameters)[ "I0se" ] = le_I0se->text();
    }
+
+   (*parameters)[ "make_istarq" ] = cb_istarq->isChecked() ? "true" : "false";
+
    close();
 }
 
@@ -657,6 +672,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_sd_source()
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
+{
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_istarq()
 {
    update_enables();
 }

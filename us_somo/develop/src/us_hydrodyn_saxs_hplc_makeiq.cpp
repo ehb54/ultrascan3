@@ -881,6 +881,27 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       parameters[ "hplc_cb_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ];
       parameters[ "hplc_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ];
       
+      // Istarq bits
+
+      if ( no_conc ) {
+         if ( saxs_hplc_param_g_conc ) {
+            parameters[ "istarq_ok" ]      = "true";
+            parameters[ "istarq_message" ] =
+               QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL]?" ) )
+               .arg( saxs_hplc_param_g_conc )
+               ;
+         } else {
+            parameters[ "istarq_ok" ]      = "false";
+            parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: no concentration data available" );
+         }
+      } else {
+         parameters[ "istarq_ok" ]      = "true";
+         parameters[ "istarq_message" ] =
+            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
+            .arg( lbl_conc_file->text() )
+            ;
+      }         
+
       US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
          new US_Hydrodyn_Saxs_Hplc_Ciq(
                                        this,
@@ -930,6 +951,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       }
       if ( !parameters.count( "go" ) )
       {
+         progress->reset();
+         update_enables();
+         return false;
+      }
+
+      if ( parameters.count( "make_istarq" ) &&
+           parameters[ "make_istarq" ] == "true" ) {
+         editor_msg( "red", "make istarq not implemented yet\n" );
          progress->reset();
          update_enables();
          return false;

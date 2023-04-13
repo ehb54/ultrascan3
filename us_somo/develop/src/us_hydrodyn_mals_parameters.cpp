@@ -20,7 +20,7 @@ US_Hydrodyn_Mals_Parameters::US_Hydrodyn_Mals_Parameters(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: MALS : MALS Parameters" ) );
+   setWindowTitle( us_tr( "US-SOMO: MALS : MALS Processing Parameters" ) );
 
    setupGUI();
 
@@ -38,7 +38,7 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: MALS : MALS Parameters" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: MALS : MALS Processing Parameters" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );

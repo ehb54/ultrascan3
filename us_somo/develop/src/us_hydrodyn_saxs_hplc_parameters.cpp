@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Hplc_Parameters::US_Hydrodyn_Saxs_Hplc_Parameters(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : SAXS Parameters" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : SAXS Processing Parameters" ) );
 
    setupGUI();
 
@@ -38,7 +38,7 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : SAXS Parameters" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : SAXS Processing Parameters" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );
