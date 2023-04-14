@@ -16,6 +16,7 @@ class US_QueryRmsd : public US_Widgets{
     US_QueryRmsd();
 
     private:
+    int dbg_level;
     QTableWidget *tw_rmsd;
     US_Passwd pw;
     US_DB2* dbCon;
@@ -45,11 +46,14 @@ class US_QueryRmsd : public US_Widgets{
 
     void check_connection(void);
     void clear_data(void);
-    void fill_combos(void);
+    bool check_combo_content(QComboBox*, QString&);
 
     private slots:
     void load_runid(void);
     void fill_table(int);
+    void set_analysis(int);
+    void set_method(int);
+    void set_triple(int);
 
 };
 #endif

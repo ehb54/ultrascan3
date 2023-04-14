@@ -1,4 +1,4 @@
-//! \file us_mwl_species_fit.cpp
+//! \file us_query_rmsd.cpp
 
 #include <QApplication>
 
@@ -10,8 +10,7 @@
 #include "us_select_runs.h"
 
 
-//! \brief Main program. Loads translators and starts
-//         the class US_Convert.
+//! \brief Main program. Loads the Model RMSD values from DB
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
@@ -30,6 +29,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     setWindowTitle( tr( "Query Model RMSDs" ) );
     setPalette( US_GuiSettings::frameColor() );
 
+    dbg_level = US_Settings::us_debug();
     dbCon = new US_DB2();
 
     QPushButton *pb_load_runid = us_pushbutton(tr("Load Run ID"));
@@ -102,27 +102,15 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     this->setMinimumSize(QSize(800,600));
 
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
-    connect(cb_edit,     SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-    connect(cb_analysis, SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-    connect(cb_method,   SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-    connect(cb_cell,     SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-    connect(cb_channel,  SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-    connect(cb_lambda,   SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-
 }
 
 void US_QueryRmsd::check_connection(){
 
     QString error;
     dbCon->connect(pw.getPasswd(), error);
-    // First row
     if (dbCon->isConnected()){
         QStringList DB   = US_Settings::defaultDB();
-//        if (DB.isEmpty())
-//            le_dbName->setText("Undefined");
-//        else
-//            le_dbName->setText(DB.at(3));
-        qDebug() << DB;
+        DbgLv(1) << DB;
     }
     return;
 }
@@ -185,18 +173,8 @@ void US_QueryRmsd::load_runid(){
             allAnalysis << analysis;
             allMethod << method;
 
-            if (! cellList.contains(cell))
-                cellList << cell;
-            if (! channelList.contains(channel))
-                channelList << channel;
-            if (! lambdaList.contains(lambda))
-                lambdaList << lambda;
-            if (! methodList.contains(method))
-                methodList << method;
             if (! editList.contains(edit))
                 editList << edit;
-            if (! analysisList.contains(analysis))
-                analysisList << analysis;
 
             double var = dbCon->value(3).toDouble();
             allRmsd << qSqrt(var);
@@ -206,45 +184,127 @@ void US_QueryRmsd::load_runid(){
         return;
     }
 
-    cellList.sort();
-    channelList.sort();
-    lambdaList.sort();
-    methodList.sort();
     editList.sort();
-    analysisList.sort();
 
     le_runid->setText(runId);
-    fill_combos();
-    fill_table(0);
-
-}
-
-void US_QueryRmsd::fill_combos(void){
     cb_edit->clear();
-    cb_analysis->clear();
-    cb_method->clear();
-    cb_cell->clear();
-    cb_channel->clear();
-    cb_lambda->clear();
-
-    cb_analysis->addItem("ALL");
-    cb_method->addItem("ALL");
-    cb_cell->addItem("ALL");
-    cb_channel->addItem("ALL");
-    cb_lambda->addItem("ALL");
-
+    cb_edit->disconnect();
     foreach (QString item, editList)
         cb_edit->addItem(item);
     cb_edit->setCurrentIndex(cb_edit->count() - 1);
+    connect(cb_edit,     SIGNAL(currentIndexChanged(int)), this, SLOT(set_analysis(int)));
+    set_analysis(cb_edit->count() - 1);
+}
 
+bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
+    int cc = combo->count();
+    if (cc == 1){
+        if (text.compare(combo->currentText()) == 0)
+            return true;
+        else
+            return false;
+    } else {
+        if (combo->currentIndex() == 0)
+            return true;
+        else{
+            if (text.compare(combo->currentText()) == 0)
+                return true;
+            else
+                return false;
+        }
+
+    }
+}
+
+void US_QueryRmsd::set_analysis(int){
+    QString edit = cb_edit->currentText();
+    analysisList.clear();
+    for(int i = 0; i < allAnalysis.size(); i++) {
+        if (edit.compare(allEdit.at(i)) == 0){
+            QString analysis = allAnalysis.at(i);
+            if (! analysisList.contains(analysis))
+                analysisList << analysis;
+        }
+    }
+    analysisList.sort();
+    cb_analysis->disconnect();
+    cb_analysis->clear();
+    if (analysisList.size() > 1)
+        cb_analysis->addItem("ALL");
     foreach (QString item, analysisList)
         cb_analysis->addItem(item);
     cb_analysis->setCurrentIndex(0);
+    connect(cb_analysis, SIGNAL(currentIndexChanged(int)), this, SLOT(set_method(int)));
+    set_method(0);
+}
 
+void US_QueryRmsd:: set_method(int){
+
+    methodList.clear();
+    for(int i = 0; i < allAnalysis.size(); i++) {
+        QString edit = allEdit.at(i);
+        QString analysis = allAnalysis.at(i);
+        if (edit.compare(cb_edit->currentText()) != 0)
+            continue;
+        if (! check_combo_content(cb_analysis, analysis))
+            continue;
+        QString method = allMethod.at(i);
+        if (! methodList.contains(method))
+            methodList << method;
+    }
+    methodList.sort();
+    cb_method->disconnect();
+    cb_method->clear();
+    if (methodList.size() > 1)
+        cb_method->addItem("ALL");
     foreach (QString item, methodList)
         cb_method->addItem(item);
     cb_method->setCurrentIndex(0);
+    connect(cb_method, SIGNAL(currentIndexChanged(int)), this, SLOT(set_triple(int)));
+    set_triple(0);
+}
 
+void US_QueryRmsd::set_triple(int){
+    cellList.clear();
+    channelList.clear();
+    lambdaList.clear();
+
+    for (int i = 0; i < allRmsd.size(); i++){
+        QString edit = allEdit.at(i);
+        QString analysis = allAnalysis.at(i);
+        QString method = allMethod.at(i);
+        if (edit.compare(cb_edit->currentText()) != 0)
+            continue;
+        if (! check_combo_content(cb_analysis, analysis))
+            continue;
+        if (! check_combo_content(cb_method, method))
+            continue;
+
+        QString cell = allCell.at(i);
+        QString channel = allChannel.at(i);
+        QString lambda = allLambda.at(i);
+        if (! cellList.contains(cell))
+            cellList << cell;
+        if (! channelList.contains(channel))
+            channelList << channel;
+        if (! lambdaList.contains(lambda))
+            lambdaList << lambda;
+    }
+    cellList.sort();
+    channelList.sort();
+    lambdaList.sort();
+    cb_cell->disconnect();
+    cb_channel->disconnect();
+    cb_lambda->disconnect();
+    cb_cell->clear();
+    cb_channel->clear();
+    cb_lambda->clear();
+    if (cellList.size() > 1)
+        cb_cell->addItem("ALL");
+    if (channelList.size() > 1)
+        cb_channel->addItem("ALL");
+    if (lambdaList.size() > 1)
+        cb_lambda->addItem("ALL");
     foreach (QString item, cellList)
         cb_cell->addItem(item);
     cb_cell->setCurrentIndex(0);
@@ -256,6 +316,12 @@ void US_QueryRmsd::fill_combos(void){
     foreach (QString item, lambdaList)
         cb_lambda->addItem(item);
     cb_lambda->setCurrentIndex(0);
+
+    connect(cb_cell,     SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+    connect(cb_channel,  SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+    connect(cb_lambda,   SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+    fill_table(0);
+
 }
 
 void US_QueryRmsd::fill_table(int){
@@ -279,39 +345,38 @@ void US_QueryRmsd::fill_table(int){
         QString desc = tr("%1%2%3_%4").arg(cell, channel,lambda, method);
         if (edit.compare(cb_edit->currentText()) != 0)
             continue;
-        if (cb_analysis->currentIndex() != 0)
-            if (analysis.compare(cb_analysis->currentText()) != 0)
-                continue;
-        if (cb_method->currentIndex() != 0)
-            if (method.compare(cb_method->currentText()) != 0)
-                continue;
-        if (cb_cell->currentIndex() != 0)
-            if (cell.compare(cb_cell->currentText()) != 0)
-                continue;
-        if (cb_channel->currentIndex() != 0)
-            if (channel.compare(cb_channel->currentText()) != 0)
-                continue;
-        if (cb_lambda->currentIndex() != 0)
-            if (lambda.compare(cb_lambda->currentText()) != 0)
-                continue;
+        if (! check_combo_content(cb_analysis, analysis))
+            continue;
+        if (! check_combo_content(cb_method, method))
+            continue;
+        if (! check_combo_content(cb_cell, cell))
+            continue;
+        if (! check_combo_content(cb_channel, channel))
+            continue;
+        if (! check_combo_content(cb_lambda, lambda))
+            continue;
 
         QTableWidgetItem *twi;
 
         twi = new QTableWidgetItem(desc);
+        twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 0, twi);
 
         twi = new QTableWidgetItem(QString::number(rmsd));
+        twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 1, twi);
 
         tw_rmsd->setRowHeight(n, rowht);
         n++;
     }
-
+    tw_rmsd->setRowCount(n);
     tw_rmsd->verticalHeader()->setFont(tw_font);
     tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-
     tw_rmsd->sortItems(1, Qt::DescendingOrder);
-
+    QTableWidgetItem *item = tw_rmsd->item(0, 0);
+    item->setBackground(Qt::yellow);
+    item = tw_rmsd->item(0, 1);
+    item->setBackground(Qt::yellow);
 }
