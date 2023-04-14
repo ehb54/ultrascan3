@@ -64,38 +64,41 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::ResizeToContents);
     header->setSectionResizeMode(header->logicalIndexAt(1), QHeaderView::Stretch);
 
-    QGridLayout *main_lyt = new QGridLayout();
-    main_lyt->addWidget(pb_load_runid, 0, 0, 1, 2);
-    main_lyt->addWidget(lb_runid,      0, 2, 1, 1);
-    main_lyt->addWidget(le_runid,      0, 3, 1, 3);
+    QGridLayout *lyt_top = new QGridLayout();
+    lyt_top->addWidget(pb_load_runid, 0, 0, 1, 2);
+    lyt_top->addWidget(lb_runid,      0, 2, 1, 1);
+    lyt_top->addWidget(le_runid,      0, 3, 1, 3);
 
-    main_lyt->addWidget(lb_edit,       1, 0, 1, 1);
-    main_lyt->addWidget(cb_edit,       1, 1, 1, 1);
-    main_lyt->addWidget(lb_analysis,   1, 2, 1, 1);
-    main_lyt->addWidget(cb_analysis,   1, 3, 1, 1);
-    main_lyt->addWidget(lb_method,     1, 4, 1, 1);
-    main_lyt->addWidget(cb_method,     1, 5, 1, 1);
+    lyt_top->addWidget(lb_edit,       1, 0, 1, 1);
+    lyt_top->addWidget(cb_edit,       1, 1, 1, 1);
+    lyt_top->addWidget(lb_analysis,   1, 2, 1, 1);
+    lyt_top->addWidget(cb_analysis,   1, 3, 1, 1);
+    lyt_top->addWidget(lb_method,     1, 4, 1, 1);
+    lyt_top->addWidget(cb_method,     1, 5, 1, 1);
 
-    main_lyt->addWidget(lb_cell,       2, 0, 1, 1);
-    main_lyt->addWidget(cb_cell,       2, 1, 1, 1);
-    main_lyt->addWidget(lb_channel,    2, 2, 1, 1);
-    main_lyt->addWidget(cb_channel,    2, 3, 1, 1);
-    main_lyt->addWidget(lb_lambda,     2, 4, 1, 1);
-    main_lyt->addWidget(cb_lambda,     2, 5, 1, 1);
+    lyt_top->addWidget(lb_cell,       2, 0, 1, 1);
+    lyt_top->addWidget(cb_cell,       2, 1, 1, 1);
+    lyt_top->addWidget(lb_channel,    2, 2, 1, 1);
+    lyt_top->addWidget(cb_channel,    2, 3, 1, 1);
+    lyt_top->addWidget(lb_lambda,     2, 4, 1, 1);
+    lyt_top->addWidget(cb_lambda,     2, 5, 1, 1);
 
-    main_lyt->addWidget(tw_rmsd,       3, 0, 10, 6);
+    lyt_top->setColumnStretch(0, 0);
+    lyt_top->setColumnStretch(1, 1);
+    lyt_top->setColumnStretch(2, 0);
+    lyt_top->setColumnStretch(3, 1);
+    lyt_top->setColumnStretch(4, 0);
+    lyt_top->setColumnStretch(5, 1);
+    lyt_top->setMargin(0);
+    lyt_top->setSpacing(1);
 
-    main_lyt->setColumnStretch(0, 0);
-    main_lyt->setColumnStretch(1, 1);
-    main_lyt->setColumnStretch(2, 0);
-    main_lyt->setColumnStretch(3, 1);
-    main_lyt->setColumnStretch(4, 0);
-    main_lyt->setColumnStretch(5, 1);
+    QVBoxLayout *lyt_main = new QVBoxLayout();
+    lyt_main->addLayout(lyt_top);
+    lyt_main->addWidget(tw_rmsd);
+    lyt_main->setMargin(1);
+    lyt_main->setSpacing(1);
 
-    main_lyt->setMargin(1);
-    main_lyt->setSpacing(1);
-
-    this->setLayout(main_lyt);
+    this->setLayout(lyt_main);
     this->setMinimumSize(QSize(800,600));
 
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
@@ -307,6 +310,7 @@ void US_QueryRmsd::fill_table(int){
     }
 
     tw_rmsd->verticalHeader()->setFont(tw_font);
+    tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     tw_rmsd->sortItems(1, Qt::DescendingOrder);
 
