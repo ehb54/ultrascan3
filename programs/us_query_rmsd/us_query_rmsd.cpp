@@ -99,7 +99,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     lyt_main->setSpacing(1);
 
     this->setLayout(lyt_main);
-    this->setMinimumSize(QSize(800,600));
+    this->setMinimumSize(QSize(500,400));
 
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
 }
