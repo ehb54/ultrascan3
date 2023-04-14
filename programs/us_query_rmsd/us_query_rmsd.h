@@ -36,6 +36,7 @@ class US_QueryRmsd : public US_Widgets{
     QStringList lambdaList;
 
     QLineEdit *le_runid;
+    QLineEdit *le_file;
     QComboBox *cb_edit;
     QComboBox *cb_analysis;
     QComboBox *cb_cell;
@@ -54,6 +55,7 @@ class US_QueryRmsd : public US_Widgets{
     void set_analysis(int);
     void set_method(int);
     void set_triple(int);
+    void save_data(void);
 
 };
 #endif
