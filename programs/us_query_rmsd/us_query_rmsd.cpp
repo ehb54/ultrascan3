@@ -115,22 +115,21 @@ void US_QueryRmsd::check_connection(){
     return;
 }
 
-
 void US_QueryRmsd::clear_data(){
-    allCell.clear();
-    allChannel.clear();
-    allLambda.clear();
+    allRmsd.clear();
     allEdit.clear();
     allAnalysis.clear();
     allMethod.clear();
-    allRmsd.clear();
+    allCell.clear();
+    allChannel.clear();
+    allLambda.clear();
 
-    methodList.clear();
-    channelList.clear();
-    cellList.clear();
-    lambdaList.clear();
+    editList.clear();
     analysisList.clear();
+    methodList.clear();
+    cellList.clear();
     channelList.clear();
+    lambdaList.clear();
 }
 
 void US_QueryRmsd::load_runid(){
@@ -187,8 +186,8 @@ void US_QueryRmsd::load_runid(){
     editList.sort();
 
     le_runid->setText(runId);
-    cb_edit->clear();
     cb_edit->disconnect();
+    cb_edit->clear();
     foreach (QString item, editList)
         cb_edit->addItem(item);
     cb_edit->setCurrentIndex(cb_edit->count() - 1);
@@ -198,6 +197,8 @@ void US_QueryRmsd::load_runid(){
 
 bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
     int cc = combo->count();
+    if (cc == 0)
+        return false;
     if (cc == 1){
         if (text.compare(combo->currentText()) == 0)
             return true;
