@@ -1076,6 +1076,8 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    {
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
+      QwtSymbol* symbol = new QwtSymbol();
+      data_curv->setSymbol(symbol);
 
       ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv );
 
