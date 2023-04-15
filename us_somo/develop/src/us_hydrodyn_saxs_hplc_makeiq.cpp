@@ -1543,16 +1543,40 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             //    ;
             if ( istarq_mode == ISTARQ_CONC_POINTWISE ) {
                // TSO << "istarq ISTARQ_CONC_POINTWISE\n";
+
                norm_factor =
                   AVOGADRO /
-                  ( concs[ g ][ t ] * 1e-3
-                    * saxs_hplc_param_diffusion_len
-                    * saxs_hplc_param_diffusion_len
-                    * pow( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
-                           - ( psv[ g ] * saxs_hplc_param_solvent_electron_density )
-                           , 2e0 )
+                  ( concs[ g ][ t ]
+                    * 1e-3
+                    * pow( 
+                          saxs_hplc_param_diffusion_len
+                          * ( 1e0
+                              / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                              - ( psv[ g ] * 1e24 * saxs_hplc_param_solvent_electron_density )
+                              )
+                          , 2e0 )
                     )
                   ;
+
+               
+               // // from us_hydrodyn_saxs_pr.cpp 
+               // {
+               //    double internal_contrast =
+               //       saxs_hplc_param_diffusion_len
+               //       * ( 1e0
+               //           / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+               //           - psv[ g ] * ( 1e24 * saxs_hplc_param_solvent_electron_density )
+               //           )
+               //       ;
+
+               //    double norm_factor2 = 
+               //       AVOGADRO
+               //       / ( concs[ g ][ t ] * 1e-3 )
+               //       / ( internal_contrast * internal_contrast )
+               //       ;
+               //    TSO << QString( "norm factor %1 vs %2\n" ).arg( norm_factor ).arg( norm_factor2 );
+               // }
+               
                if ( I0se_process ) {
                   // TSO << "I0se_process\n";
                   norm_factor *= saxs_hplc_param_I0_theo / I0se;
