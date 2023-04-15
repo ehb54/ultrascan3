@@ -26,17 +26,7 @@ class US_EXTERN US_Hydrodyn_Mals_Options : public QDialog
    private:
       void         * mals_win;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       map < QString, QString > *              parameters;
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
       US_Hydrodyn *                           us_hydrodyn;
 
@@ -155,7 +145,7 @@ class US_EXTERN US_Hydrodyn_Mals_Options : public QDialog
       QLabel                                * lbl_fasta_value;
       QLineEdit                             * le_fasta_value;
 
-   private slots:
+      bool                                    any_changes();
 
    private slots:
       void                                    fasta_file();

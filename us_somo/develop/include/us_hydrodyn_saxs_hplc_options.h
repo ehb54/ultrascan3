@@ -155,7 +155,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel                                * lbl_fasta_value;
       QLineEdit                             * le_fasta_value;
 
-   private slots:
+      bool                                    any_changes();
 
    private slots:
       void                                    fasta_file();

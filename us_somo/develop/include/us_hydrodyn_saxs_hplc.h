@@ -244,6 +244,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton          * rb_pbmode_none;
       void                    pbmode_select( pbmodes mode );
 
+      enum istarq_modes {
+         ISTARQ_NONE
+         ,ISTARQ_CONC_GLOBAL
+         ,ISTARQ_CONC_POINTWISE
+      };
+
+      istarq_modes istarq_mode;
+
  private slots:
 
       void set_pbmode_main( );
