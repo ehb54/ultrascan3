@@ -658,6 +658,7 @@ void US_Norm_Profile::slt_save(){
         }
     }
     qDebug() << "Saved the csv file!";
+    file.close();
 }
 
 void US_Norm_Profile::closeEvent(QCloseEvent *event)

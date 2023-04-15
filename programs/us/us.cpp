@@ -303,6 +303,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SOMOCONFIG,   tr( "S&OMO Configuration"           ), simulation );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
+  addMenu(  P_RMSD         , tr( "&Query Model RMSDs" ), database );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
   addMenu(  P_BUFFER       , tr( "Manage &Buffer Data"       ), database );
   addMenu(  P_VBAR         , tr( "Manage &Analytes"          ), database );
