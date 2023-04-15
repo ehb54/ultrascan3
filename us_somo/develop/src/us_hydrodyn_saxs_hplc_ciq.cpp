@@ -284,7 +284,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    }
 
    cb_I0se = new QCheckBox(this);
-   cb_I0se->setText( us_tr( "I0 standard experimental value (a.u.) : " ) );
+   cb_I0se->setText( us_tr( "Data already normalized. I0 standard experimental value (a.u.) : " ) );
    cb_I0se->setEnabled( true );
    connect( cb_I0se, SIGNAL( clicked() ), SLOT( set_I0se() ) );
    cb_I0se->setChecked( true );
@@ -638,7 +638,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
 
    if ( cb_I0se->isChecked() )
    {
+      (*parameters)[ "I0se" ] = "1";
+      (*parameters)[ "I0se_process" ] = "false";
+   } else {
       (*parameters)[ "I0se" ] = le_I0se->text();
+      (*parameters)[ "I0se_process" ] = "true";
    }
 
    (*parameters)[ "make_istarq" ] = cb_istarq->isChecked() ? "true" : "false";
@@ -683,6 +687,14 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_istarq()
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_I0se()
 {
+   le_I0se->setText( cb_I0se->isChecked()
+                     ? QString( "1" )
+                     : (
+                        (*parameters).count( "hplc_param_I0_exp" )
+                        ? (*parameters)[ "hplc_param_I0_exp" ]
+                        : "1"
+                        )
+                     );
    update_enables();
 }
 
@@ -799,8 +811,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
 
    le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
 
-   le_I0se->setEnabled( cb_I0se->isChecked() );
-
+   le_I0se->setEnabled( !cb_I0se->isChecked() );
    pb_go->setEnabled( !no_go );
 }
 

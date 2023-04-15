@@ -854,6 +854,57 @@ void US_Hydrodyn_Mals_Options::quit()
    close();
 }
 
+bool US_Hydrodyn_Mals_Options::any_changes()
+{
+   QString gaussian_type = "";
+   if ( rb_gauss->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Mals::GAUSS );
+   } else if ( rb_gmg->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Mals::GMG );
+   } else if ( rb_emg->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Mals::EMG );
+   } else if ( rb_emggmg->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Mals::EMGGMG );
+   }
+
+   return
+      (*parameters)[ "mals_bl_linear"               ] != ( rb_linear              ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_bl_integral"             ] != ( rb_integral            ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_bl_save"                 ] != ( cb_save_bl             ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_bl_smooth"               ] != ( le_smooth              ->text() )
+      || (*parameters)[ "mals_bl_start_region"         ] != ( le_start_region        ->text() )
+      || (*parameters)[ "mals_bl_i_power"              ] != ( le_i_power             ->text() )
+      || (*parameters)[ "mals_bl_reps"                 ] != ( le_reps                ->text() )
+      || (*parameters)[ "mals_bl_epsilon"              ] != ( le_epsilon             ->text() )
+      || (*parameters)[ "mals_cormap_maxq"             ] != ( le_cormap_maxq         ->text() )
+      || (*parameters)[ "mals_cormap_alpha"            ] != ( le_cormap_alpha        ->text() )
+      || (*parameters)[ "mals_zi_window"               ] != ( le_zi_window           ->text() )
+      || (*parameters)[ "mals_cb_discard_it_sd_mult"   ] != ( cb_discard_it_sd_mult  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_discard_it_sd_mult"      ] != ( le_discard_it_sd_mult  ->text() )
+      || (*parameters)[ "mals_cb_guinier_qrgmax"       ] != ( cb_guinier_qrgmax      ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_guinier_qrgmax"          ] != ( le_guinier_qrgmax      ->text() )
+      || (*parameters)[ "mals_cb_gg_smooth"            ] != ( cb_gg_smooth  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_gg_smooth"               ] != ( le_gg_smooth  ->text() )
+      || (*parameters)[ "mals_cb_gg_cyclic"            ] != ( cb_gg_cyclic  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_cb_gg_oldstyle"          ] != ( cb_gg_oldstyle  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_dist_max"                ] != ( le_dist_max            ->text() )
+      || (*parameters)[ "guinier_mwt_k"                ] != ( le_mwt_k               ->text() )
+      || (*parameters)[ "guinier_mwt_c"                ] != ( le_mwt_c               ->text() )
+      || (*parameters)[ "guinier_mwt_qmax"             ] != ( le_mwt_qmax            ->text() )
+      || (*parameters)[ "mals_cb_makeiq_cutmax_pct"    ] != ( cb_makeiq_cutmax_pct   ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_makeiq_cutmax_pct"       ] != ( le_makeiq_cutmax_pct   ->text() )
+      || (*parameters)[ "mals_cb_makeiq_avg_peaks"     ] != ( cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_makeiq_avg_peaks"        ] != ( le_makeiq_avg_peaks    ->text() )
+      || (*parameters)[ "mals_csv_transposed"          ] != ( cb_csv_transposed->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_ampl_width_min"          ] != ( le_ampl_width_min      ->text() )
+      || (*parameters)[ "mals_lock_min_retry"          ] != ( cb_lock_min_retry->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_lock_min_retry_mult"     ] != ( le_lock_min_retry_mult ->text() )
+      || (*parameters)[ "mals_maxfpk_restart"          ] != ( cb_maxfpk_restart->isChecked() ? "true" : "false" )
+      || (*parameters)[ "mals_maxfpk_restart_pct"      ] != ( le_maxfpk_restart_pct  ->text() )
+      || (*parameters)[ "gaussian_type"                ] != ( gaussian_type )
+      ;
+}
+
 void US_Hydrodyn_Mals_Options::ok()
 {
    (*parameters)[ "ok" ] = "true";
@@ -926,6 +977,24 @@ void US_Hydrodyn_Mals_Options::help()
 
 void US_Hydrodyn_Mals_Options::closeEvent( QCloseEvent *e )
 {
+   if ( any_changes() ) {
+      QMessageBox mb( this->windowTitle(), 
+                      us_tr("Attention:\nAre you sure you wish to discard your changes?"),
+                      QMessageBox::Information,
+                      QMessageBox::Yes | QMessageBox::Default,
+                      QMessageBox::Cancel | QMessageBox::Escape,
+                      QMessageBox::NoButton);
+      mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
+      switch(mb.exec())
+      {
+      case QMessageBox::Cancel:
+         {
+            e->ignore();
+            return;
+         }
+      }
+   }
 
    global_Xpos -= 30;
    global_Ypos -= 30;

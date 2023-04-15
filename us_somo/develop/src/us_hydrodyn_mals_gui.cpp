@@ -327,7 +327,7 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_conc_avg->setPalette( PALET_PUSHB );
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
-   pb_normalize = new QPushButton(us_tr("Normalize"), this);
+   pb_normalize = new QPushButton(us_tr("Conc. Norm."), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_normalize->setMinimumHeight(minHeight1);
    pb_normalize->setPalette( PALET_PUSHB );
