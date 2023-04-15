@@ -57,7 +57,7 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::setupGUI()
    le_saxs_hplc_param_g_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_saxs_hplc_param_g_conc->setPalette( PALET_NORMAL );
    AUTFBACK( le_saxs_hplc_param_g_conc );
-   // le_saxs_hplc_param_g_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   le_saxs_hplc_param_g_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // {
    //    QDoubleValidator *qdv = new QDoubleValidator( 400, 600, 1, le_saxs_hplc_param_g_conc );
    //    le_saxs_hplc_param_g_conc->setValidator( qdv );
@@ -141,7 +141,7 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::setupGUI()
    le_saxs_hplc_param_diffusion_len->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_saxs_hplc_param_diffusion_len->setPalette( PALET_NORMAL );
    AUTFBACK( le_saxs_hplc_param_diffusion_len );
-   // le_saxs_hplc_param_diffusion_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   le_saxs_hplc_param_diffusion_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // {
    //    QDoubleValidator *qdv = new QDoubleValidator( 400, 600, 1, le_saxs_hplc_param_diffusion_len );
    //    le_saxs_hplc_param_diffusion_len->setValidator( qdv );
