@@ -1446,6 +1446,7 @@ void US_Hydrodyn_Saxs_Hplc::to_saxs()
          }
       }
    }
+   saxs_window->set_guinier();
    saxs_window->rescale_plot();
 }
 

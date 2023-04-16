@@ -1447,6 +1447,7 @@ void US_Hydrodyn_Mals::to_saxs()
       }
    }
    saxs_window->rescale_plot();
+   saxs_window->set_guinier();
 }
 
 QStringList US_Hydrodyn_Mals::get_frames( QStringList files, QString head, QString tail )
