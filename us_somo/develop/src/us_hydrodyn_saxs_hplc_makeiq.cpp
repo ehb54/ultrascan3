@@ -1841,10 +1841,17 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
          if ( ( normalize_by_conc || istarq_mode != ISTARQ_NONE ) && norm_factor != 1e0 )
          {
-            for ( unsigned int i = 0; i < use_I.size(); i++ )
+            for ( unsigned int i = 0; i < use_I.size(); ++i )
             {
                use_I[ i ] *= norm_factor;
             }
+            if ( istarq_mode != ISTARQ_NONE ) {
+               for ( unsigned int i = 0; i < use_e.size(); ++i )
+               {
+                  use_e[ i ] *= norm_factor;
+               }
+            }
+
             // TSO << QString( "use_I scaled by %1\n" ).arg( norm_factor );
          }
 
