@@ -57,6 +57,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
@@ -540,6 +541,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    if ( !ggaussian_compatible( false ) )
    {
@@ -2155,7 +2157,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             set_selected( avg_peaks_names[ i ] );
             // then average
             avg( all_selected_files(), QString( peak_tag ) );
-            if ( conc_ok ) {
+            if ( conc_ok && istarq_mode == ISTARQ_NONE ) {
                // normalize selected, then average again 
                set < QString > norm_names;
                normalize( norm_names );

@@ -5317,11 +5317,31 @@ void US_Hydrodyn_Saxs_Hplc::view()
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
          
-         if ( use_errors )
+
+         if ( f_is_time.count( file ) && f_is_time[ file ] )
          {
-            text += "q                  \tI(q)         \tsd\n";
+            if ( conc_files.count( file ) ) {
+               if ( use_errors )
+               {
+                  text += "t                 \tc(t)         \tsd\n";
+               } else {
+                  text += "t                 \tc(t)\n";
+               }
+            } else {
+               if ( use_errors )
+               {
+                  text += "t                 \tI(t)         \tsd\n";
+               } else {
+                  text += "t                 \tI(t)\n";
+               }
+            }
          } else {
-            text += "q                  \tI(q)\n";
+            if ( use_errors )
+            {
+               text += "q                 \tI(q)         \tsd\n";
+            } else {
+               text += "q                 \tI(q)\n";
+            }
          }
 
          for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )

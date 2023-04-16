@@ -352,6 +352,11 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
    double psv;
    double I0_std_exp;
 
+   if ( name.contains( QRegularExpression( "_Istarq_" ) ) ) {
+      MW = I0_exp;
+      return true;
+   }
+
 #if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;

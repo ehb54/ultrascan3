@@ -3616,7 +3616,7 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
    QString use_conc;
    if ( concs.count( file ) && concs[ file ] != 0e0 )
    {
-      use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+      use_conc = QString( " Conc:%1 [mg/mL]" ).arg( concs[ file ] );
    } else {
       if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
       {
@@ -3631,7 +3631,7 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
    ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8%9%10\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
-      .arg( f_psv .count( file ) && f_psv[ file ] ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
+      .arg( f_psv .count( file ) && f_psv[ file ] ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
@@ -5696,11 +5696,30 @@ void US_Hydrodyn_Mals::view()
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
          
-         if ( use_errors )
+         if ( f_is_time.count( file ) && f_is_time[ file ] )
          {
-            text += "q                  \tI(q)         \tsd\n";
+            if ( conc_files.count( file ) ) {
+               if ( use_errors )
+               {
+                  text += "t                 \tc(t)         \tsd\n";
+               } else {
+                  text += "t                 \tc(t)\n";
+               }
+            } else {
+               if ( use_errors )
+               {
+                  text += "t                 \tI(t)         \tsd\n";
+               } else {
+                  text += "t                 \tI(t)\n";
+               }
+            }
          } else {
-            text += "q                  \tI(q)\n";
+            if ( use_errors )
+            {
+               text += "q                 \tI(q)         \tsd\n";
+            } else {
+               text += "q                 \tI(q)\n";
+            }
          }
 
          for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )

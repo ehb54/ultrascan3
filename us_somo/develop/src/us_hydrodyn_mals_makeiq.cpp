@@ -53,6 +53,7 @@ bool US_Hydrodyn_Mals::create_i_of_q_ng( QStringList files, double t_min, double
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
@@ -536,6 +537,7 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    if ( !ggaussian_compatible( false ) )
    {
@@ -3177,6 +3179,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    head = head.replace( QRegularExpression( "_D\\d+_Ihasht_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_D$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
    head += "_MALS_Istarq_t";
    
    // TSO << "create_istar_q_ng()  head: " << head << "\n";
