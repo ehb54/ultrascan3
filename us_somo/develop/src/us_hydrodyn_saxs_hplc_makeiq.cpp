@@ -1510,6 +1510,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       // for "sd by differece"
       vector < vector < double > > used_pcts;
       vector < QString >           used_names;
+      map < QString, double >      istarq_norm_factors;
 
       for ( unsigned int g = 0; g < num_of_gauss; g++ )
       {
@@ -1530,23 +1531,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          // build up an I(q)
          double conc_factor = 0e0;
          double norm_factor = 1e0;
+         double istarq_norm_factor = 0e0;
          QString qs_fwhm;
          if ( ( conc_ok || normalize_by_conc ) && concs[ g ][ t ] > 0e0 )
          {
             // us_qdebug( QString( "ciq conc stuff" ) );
             conc_factor = concs[ g ][ t ];
             norm_factor = 1e0 / conc_factor;
-            // TSO <<
-            //    QString( "t %1 g %2 conc %3 norm_factor %4\n" )
-            //    .arg( t )
-            //    .arg( g )
-            //    .arg( concs[ g ][ t ] )
-            //    .arg( norm_factor )
-            //    ;
+
             if ( istarq_mode == ISTARQ_CONC_POINTWISE ) {
                // TSO << "istarq ISTARQ_CONC_POINTWISE\n";
+               norm_factor = 1e0;
 
-               norm_factor =
+               istarq_norm_factor =
                   AVOGADRO /
                   ( concs[ g ][ t ]
                     * 1e-3
@@ -1560,36 +1557,26 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                     )
                   ;
 
-               
-               // // from us_hydrodyn_saxs_pr.cpp 
-               // {
-               //    double internal_contrast =
-               //       saxs_hplc_param_diffusion_len
-               //       * ( 1e0
-               //           / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
-               //           - psv[ g ] * ( 1e24 * saxs_hplc_param_solvent_electron_density )
-               //           )
-               //       ;
-
-               //    double norm_factor2 = 
-               //       AVOGADRO
-               //       / ( concs[ g ][ t ] * 1e-3 )
-               //       / ( internal_contrast * internal_contrast )
-               //       ;
-               //    TSO << QString( "norm factor %1 vs %2\n" ).arg( norm_factor ).arg( norm_factor2 );
-               // }
-               
                if ( I0se_process ) {
                   // TSO << "I0se_process\n";
-                  norm_factor *= saxs_hplc_param_I0_theo / I0se;
+                  istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
                   // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
                }
+
+               // TSO <<
+               //    QString( "g = %1 t = %2 tv[%2] = %3 norm factor = %4\n" )
+               //    .arg( g )
+               //    .arg( t )
+               //    .arg( tv[t] )
+               //    .arg( istarq_norm_factor )
+               //    ;
+               
             }
             // TSO <<
             //    QString( "t %1 g %2 norm_factor after istarq adj %3\n" )
             //    .arg( t )
             //    .arg( g )
-            //    .arg( norm_factor )
+            //    .arg( istarq_norm_factor )
             //    ;
 
             double detector_conv = 0e0;
@@ -1652,6 +1639,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
             name = use_name;
          }
+
 
          // cout << QString( "name %1\n" ).arg( name );
 
@@ -1839,19 +1827,12 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
          }
 
-         if ( ( normalize_by_conc || istarq_mode != ISTARQ_NONE ) && norm_factor != 1e0 )
+         if ( normalize_by_conc && istarq_mode == ISTARQ_NONE && norm_factor != 1e0 )
          {
             for ( unsigned int i = 0; i < use_I.size(); ++i )
             {
                use_I[ i ] *= norm_factor;
             }
-            if ( istarq_mode != ISTARQ_NONE ) {
-               for ( unsigned int i = 0; i < use_e.size(); ++i )
-               {
-                  use_e[ i ] *= norm_factor;
-               }
-            }
-
             // TSO << QString( "use_I scaled by %1\n" ).arg( norm_factor );
          }
 
@@ -1975,6 +1956,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                }
             }
          }
+
+         // TSO <<
+         //    QString( "name %1 istarq_norm_factor %2\n" )
+         //    .arg( name )
+         //    .arg( istarq_norm_factor )
+         //    ;
+         istarq_norm_factors[ name ] = istarq_norm_factor;
+
       } // for each gaussian
 
       if ( sd_from_difference )
@@ -2110,7 +2099,27 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                f_errors   [ used_names[ i ] ] = use_e;
             }
          }
-      }         
+      }
+
+      // istarq 
+
+      if ( istarq_mode != ISTARQ_NONE ) {
+         for ( auto it = istarq_norm_factors.begin();
+               it != istarq_norm_factors.end();
+               ++it ) {
+            if ( f_Is.count( it->first ) ) {
+               for ( int i = 0; i < (int) f_Is[ it->first ].size(); ++i ) {
+                  f_Is[ it->first ][ i ] *= it->second;
+               }
+            }
+            if ( f_errors.count( it->first ) ) {
+               for ( int i = 0; i < (int) f_errors[ it->first ].size(); ++i ) {
+                  f_errors[ it->first ][ i ] *= it->second;
+               }
+            }
+         }
+      }
+                  
       if ( !mode_testiq && save_sum )
       {
          if ( save_gaussians )
