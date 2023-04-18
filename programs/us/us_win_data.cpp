@@ -35,7 +35,7 @@ namespace US_WinData
     P_SASSOC,       P_MODEL1,       P_MODEL2,
     P_SOMO,         P_SOMOCONFIG,
 
-    P_INVESTIGATOR, P_BUFFER,                   // Database Menu
+    P_RMSD,         P_INVESTIGATOR, P_BUFFER,   // Database Menu
     P_VBAR,         P_MODEL,        P_MANAGEDATA,
     P_MANAGESOLN,   P_MANAGEPROJ,   P_MANAGEROTOR,
 
@@ -330,6 +330,11 @@ namespace US_WinData
     { P_SOMOCONFIG, 0, 0, "us3_config",
       QObject::tr( "Loading SOMO Bead Modeling Configuration" ),
       QObject::tr( "SOMO Path Configuration" )
+    },
+    
+    { P_RMSD,  1, 0, "us_query_rmsd",
+      QObject::tr( "Loading Query Model RMSDs" ),
+      QObject::tr( "Query Model RMSDs Program" )
     },
 
     { P_INVESTIGATOR,  1, 0, "us_investigator",
