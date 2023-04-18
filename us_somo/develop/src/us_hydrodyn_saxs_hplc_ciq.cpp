@@ -813,6 +813,16 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
 
    le_I0se->setEnabled( !cb_I0se->isChecked() );
    pb_go->setEnabled( !no_go );
+
+   if ( parameters->count( "error" ) ) {
+      if ( cb_istarq->isChecked() ) {
+         cb_I0se->show();
+         le_I0se->show();
+      } else {
+         cb_I0se->hide();
+         le_I0se->hide();
+      }
+   }         
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::ws_hide( vector < QWidget * > ws, bool hide )

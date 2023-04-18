@@ -892,17 +892,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       istarq_mode = ISTARQ_NONE;
       
       if ( no_conc ) {
-         if ( saxs_hplc_param_g_conc ) {
+         if ( saxs_hplc_param_g_conc
+              && saxs_hplc_param_g_psv ) {
             istarq_mode                    = ISTARQ_CONC_GLOBAL;
             parameters[ "istarq_ok" ]      = "true";
             parameters[ "istarq_message" ] =
-               QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL]?" ) )
+               QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL] and psv %2 [mL/g]?" ) )
                .arg( saxs_hplc_param_g_conc )
+               .arg( saxs_hplc_param_g_psv )
                ;
          } else {
             istarq_mode                    = ISTARQ_NONE;
             parameters[ "istarq_ok" ]      = "false";
-            parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: no concentration data available" );
+            parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: no concentration nor psv data available" );
          }
       } else {
          istarq_mode                    = ISTARQ_CONC_POINTWISE;
@@ -915,6 +917,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
       parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
 
+      // TSO << US_Vector::qs_mapqsqs( "hplc_ciq parameters before ciq", parameters );
+
       US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
          new US_Hydrodyn_Saxs_Hplc_Ciq(
                                        this,
@@ -923,7 +927,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       US_Hydrodyn::fixWinButtons( hplc_ciq );
       hplc_ciq->exec();
       delete hplc_ciq;
-      // TSO << US_Vector::qs_mapqsqs( "hplc_ciq parameters", parameters );
+      // TSO << US_Vector::qs_mapqsqs( "hplc_ciq parameters after ciq", parameters );
       
       //       cout << "parameters:\n";
       //       for ( map < QString, QString >::iterator it = parameters.begin();
@@ -1614,6 +1618,28 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             if ( tv[ t ] >= center - fwhm && tv[ t ] <= center + fwhm )
             {
                qs_fwhm = "_fwhm";
+            }
+         }
+
+         if ( istarq_mode == ISTARQ_CONC_GLOBAL ) {
+            istarq_norm_factor =
+               AVOGADRO /
+               ( saxs_hplc_param_g_conc
+                 * 1e-3
+                 * pow( 
+                       saxs_hplc_param_diffusion_len
+                       * ( 1e0
+                           / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                           - ( saxs_hplc_param_g_psv * 1e24 * saxs_hplc_param_solvent_electron_density )
+                           )
+                       , 2e0 )
+                 )
+               ;
+
+            if ( I0se_process ) {
+               // TSO << "I0se_process\n";
+               istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+               // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
             }
          }
 
