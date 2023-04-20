@@ -892,20 +892,24 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       istarq_mode = ISTARQ_NONE;
       
       if ( no_conc ) {
-         if ( saxs_hplc_param_g_conc
-              && saxs_hplc_param_g_psv ) {
-            istarq_mode                    = ISTARQ_CONC_GLOBAL;
-            parameters[ "istarq_ok" ]      = "true";
-            parameters[ "istarq_message" ] =
-               QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL] and psv %2 [mL/g]?" ) )
-               .arg( saxs_hplc_param_g_conc )
-               .arg( saxs_hplc_param_g_psv )
-               ;
-         } else {
-            istarq_mode                    = ISTARQ_NONE;
-            parameters[ "istarq_ok" ]      = "false";
-            parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: no concentration nor psv data available" );
-         }
+         istarq_mode                    = ISTARQ_NONE;
+         parameters[ "istarq_ok" ]      = "false";
+         parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: a concentration curve must be set when Gaussians are defined" );
+
+         // if ( saxs_hplc_param_g_conc
+         //      && saxs_hplc_param_g_psv ) {
+         //    istarq_mode                    = ISTARQ_CONC_GLOBAL;
+         //    parameters[ "istarq_ok" ]      = "true";
+         //    parameters[ "istarq_message" ] =
+         //       QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL] and psv %2 [mL/g]?" ) )
+         //       .arg( saxs_hplc_param_g_conc )
+         //       .arg( saxs_hplc_param_g_psv )
+         //       ;
+         // } else {
+         //    istarq_mode                    = ISTARQ_NONE;
+         //    parameters[ "istarq_ok" ]      = "false";
+         //    parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: no concentration nor psv data available" );
+         // }
       } else {
          istarq_mode                    = ISTARQ_CONC_POINTWISE;
          parameters[ "istarq_ok" ]      = "true";

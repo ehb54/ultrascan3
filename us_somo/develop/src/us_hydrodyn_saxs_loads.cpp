@@ -4823,13 +4823,40 @@ void US_Hydrodyn_Saxs::load_gnom()
       f.close();
       f.open(QIODevice::ReadOnly);
       bool ask_save_mw_to_gnom;
+      double gnom_mw = 0e0;
+
       {
          QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
          QStringList mwline = qsl_gnom.filter(qx_mw);
          ask_save_mw_to_gnom = !mwline.size();
-      }
 
-      double gnom_mw = 0e0;
+         if ( mwline.size() ) {
+
+            if ( qx_mw.indexIn(mwline[0]) == -1 )
+            {
+               TSO << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
+               gnom_mw = 0e0;
+            } else {
+               TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+               gnom_mw = qx_mw.cap(1).toDouble();
+            }
+            if ( mwline.size() > 1 )
+            {
+               if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                  US_Static::us_message(us_tr("Please note:"), 
+                                        QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
+                                                      "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+               }
+            }
+            if ( gnom_mw > 0e0 )
+            {
+               (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
+               (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+            }
+         } else {
+            TSO << "mwline empty\n";
+         }
+      }
 
       double units = 1;
       if ( our_saxs_options->iq_scale_ask )
@@ -4940,37 +4967,39 @@ void US_Hydrodyn_Saxs::load_gnom()
                } else {
                   // end of prr
                   TSO << "end of prr\n";
-                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
-                  QStringList mwline = qsl_gnom.filter(qx_mw);
-                  if ( mwline.size() )
-                  {
-                     if ( qx_mw.indexIn(mwline[0]) == -1 )
-                     {
-                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
-                        gnom_mw = 0e0;
-                     } else {
-                        // cout << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
-                        gnom_mw = qx_mw.cap(1).toDouble();
-                     }
-                     if ( mwline.size() > 1 )
-                     {
-                        if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                           US_Static::us_message(us_tr("Please note:"), 
-                                                 QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
-                                                               "Using the first one found (%1 Daltons)")).arg(gnom_mw));
-                        }
-                     }
-                     if ( gnom_mw > 0e0 )
-                     {
-                        (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
-                        (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
-                     }
-                  }
+                  // QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+                  // QStringList mwline = qsl_gnom.filter(qx_mw);
+                  // if ( mwline.size() )
+                  // {
+                  //    if ( qx_mw.indexIn(mwline[0]) == -1 )
+                  //    {
+                  //       TSO << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
+                  //       gnom_mw = 0e0;
+                  //    } else {
+                  //       TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+                  //       gnom_mw = qx_mw.cap(1).toDouble();
+                  //    }
+                  //    if ( mwline.size() > 1 )
+                  //    {
+                  //       if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                  //          US_Static::us_message(us_tr("Please note:"), 
+                  //                                QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
+                  //                                              "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+                  //       }
+                  //    }
+                  //    if ( gnom_mw > 0e0 )
+                  //    {
+                  //       (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
+                  //       (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+                  //    }
+                  // } else {
+                  //    TSO << "mwline empty\n";
+                  // }
                   gnom_mw = get_mw(filename,false);
-                  if ( !mwline.size() )
-                  {
-                     ask_save_mw_to_gnom = true;
-                  }
+                  // if ( !mwline.size() )
+                  // {
+                  //    ask_save_mw_to_gnom = true;
+                  // }
                   if ( cb_normalize->isChecked() )
                   {
                      normalize_pr(r, &pr, &pre, get_mw(filename, false));
