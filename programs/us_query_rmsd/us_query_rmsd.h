@@ -18,6 +18,7 @@ class US_QueryRmsd : public US_Widgets{
     private:
     int dbg_level;
     QTableWidget *tw_rmsd;
+    QHeaderView *hheader;
     US_Passwd pw;
     US_DB2* dbCon;
     QStringList allCell;
@@ -27,6 +28,7 @@ class US_QueryRmsd : public US_Widgets{
     QStringList allAnalysis;
     QStringList allMethod;
     QVector<double> allRmsd;
+    int n_data;
 
     QStringList methodList;
     QStringList editList;
@@ -45,6 +47,7 @@ class US_QueryRmsd : public US_Widgets{
     QComboBox *cb_method;
 
 
+
     void check_connection(void);
     void clear_data(void);
     bool check_combo_content(QComboBox*, QString&);
@@ -56,6 +59,21 @@ class US_QueryRmsd : public US_Widgets{
     void set_method(int);
     void set_triple(int);
     void save_data(void);
+};
+
+class DoubleTableWidgetItem : public QTableWidgetItem
+{
+public:
+    DoubleTableWidgetItem(double value) : QTableWidgetItem(QString::number(value, 'f', 8)), m_value(value) {}
+
+    bool operator<(const QTableWidgetItem &other) const override
+    {
+        return m_value < other.data(Qt::EditRole).toDouble();
+    }
+
+
+private:
+    double m_value;
 
 };
 #endif

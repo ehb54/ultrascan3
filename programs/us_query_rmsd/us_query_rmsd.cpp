@@ -57,12 +57,26 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
 
     tw_rmsd = new QTableWidget();
     tw_rmsd->setRowCount(0);
-    tw_rmsd->setColumnCount(2);
+    tw_rmsd->setColumnCount(4);
     tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Triple_Method_Analysis", "RMSD"});
+    tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Edit", "Analysis", "Triple_Method", "RMSD"});
+    hheader = tw_rmsd->horizontalHeader();
     tw_rmsd->setStyleSheet("background-color: white");
     QHeaderView *header = tw_rmsd->horizontalHeader();
-    header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::ResizeToContents);
-    header->setSectionResizeMode(header->logicalIndexAt(1), QHeaderView::Stretch);
+//    header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::Stretch);
+//    header->setSectionResizeMode(header->logicalIndexAt(2), QHeaderView::Stretch);
+//    header->setSectionResizeMode(header->logicalIndexAt(3), QHeaderView::ResizeToContents);
+//    header->setSectionResizeMode(header->logicalIndexAt(4), QHeaderView::Stretch);
+
+//    header->setSectionResizeMode(0, QHeaderView::Stretch);
+//    header->setSectionResizeMode(2, QHeaderView::Stretch);
+//    header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+//    header->setSectionResizeMode(4, QHeaderView::Stretch);
+
+    header->setSectionResizeMode(QHeaderView::Stretch);
+//    tw_rmsd->setColumnWidth(0, 100);
+//    tw_rmsd->setColumnWidth(1, 150);
+//    tw_rmsd->setColumnWidth(3, 120);
 
     QGridLayout *lyt_top = new QGridLayout();
     lyt_top->addWidget(pb_load_runid, 0, 0, 1, 2);
@@ -136,6 +150,7 @@ void US_QueryRmsd::clear_data(){
     allCell.clear();
     allChannel.clear();
     allLambda.clear();
+    n_data = 0;
 
     editList.clear();
     analysisList.clear();
@@ -195,12 +210,14 @@ void US_QueryRmsd::load_runid(){
         QMessageBox::warning(this, "Error", dbCon->lastError());
         return;
     }
-
+    n_data = allRmsd.size();
     editList.sort();
 
     le_runid->setText(runId);
     cb_edit->disconnect();
     cb_edit->clear();
+    if (editList.size() > 1)
+        cb_edit->addItem("ALL");
     foreach (QString item, editList)
         cb_edit->addItem(item);
     cb_edit->setCurrentIndex(cb_edit->count() - 1);
@@ -233,12 +250,13 @@ bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
 void US_QueryRmsd::set_analysis(int){
     QString edit = cb_edit->currentText();
     analysisList.clear();
-    for(int i = 0; i < allAnalysis.size(); i++) {
-        if (edit.compare(allEdit.at(i)) == 0){
-            QString analysis = allAnalysis.at(i);
-            if (! analysisList.contains(analysis))
-                analysisList << analysis;
-        }
+
+    for(int i = 0; i < n_data; i++) {
+        if (! check_combo_content(cb_edit, edit))
+            continue;
+        QString analysis = allAnalysis.at(i);
+        if (! analysisList.contains(analysis))
+            analysisList << analysis;
     }
     analysisList.sort();
     cb_analysis->disconnect();
@@ -253,12 +271,12 @@ void US_QueryRmsd::set_analysis(int){
 }
 
 void US_QueryRmsd:: set_method(int){
-
     methodList.clear();
-    for(int i = 0; i < allAnalysis.size(); i++) {
+
+    for(int i = 0; i < n_data; i++) {
         QString edit = allEdit.at(i);
         QString analysis = allAnalysis.at(i);
-        if (edit.compare(cb_edit->currentText()) != 0)
+        if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
             continue;
@@ -283,11 +301,11 @@ void US_QueryRmsd::set_triple(int){
     channelList.clear();
     lambdaList.clear();
 
-    for (int i = 0; i < allRmsd.size(); i++){
+    for (int i = 0; i < n_data; i++){
         QString edit = allEdit.at(i);
         QString analysis = allAnalysis.at(i);
         QString method = allMethod.at(i);
-        if (edit.compare(cb_edit->currentText()) != 0)
+        if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
             continue;
@@ -344,11 +362,10 @@ void US_QueryRmsd::fill_table(int){
     QFontMetrics* fm = new QFontMetrics( tw_font );
     int rowht        = fm->height() + 2;
     tw_rmsd->clearContents();
-    tw_rmsd->setSortingEnabled( true );
     tw_rmsd->setRowCount(allRmsd.size());
 
     int n = 0;
-    for (int i = 0; i < allRmsd.size(); i++){
+    for (int i = 0; i < n_data; i++){
         double rmsd = allRmsd.at(i);
         QString edit = allEdit.at(i);
         QString analysis = allAnalysis.at(i);
@@ -356,8 +373,9 @@ void US_QueryRmsd::fill_table(int){
         QString cell = allCell.at(i);
         QString channel = allChannel.at(i);
         QString lambda = allLambda.at(i);
-        QString desc = tr("%1%2%3_%4_%5").arg(cell, channel,lambda, method, analysis);
-        if (edit.compare(cb_edit->currentText()) != 0)
+//        QString desc = tr("%1%2%3_%4_%5").arg(cell, channel,lambda, method, analysis);
+        QString desc = tr("%1%2%3_%4").arg(cell, channel,lambda, method);
+        if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
             continue;
@@ -369,18 +387,28 @@ void US_QueryRmsd::fill_table(int){
             continue;
         if (! check_combo_content(cb_lambda, lambda))
             continue;
-
         QTableWidgetItem *twi;
-
-        twi = new QTableWidgetItem(desc);
+        twi = new QTableWidgetItem(edit);
         twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 0, twi);
 
-        twi = new QTableWidgetItem(QString::number(rmsd));
+        twi = new QTableWidgetItem(analysis);
         twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 1, twi);
+
+
+        twi = new QTableWidgetItem(desc);
+        twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
+        twi->setFont(tw_font);
+        tw_rmsd->setItem(n, 2, twi);
+
+        DoubleTableWidgetItem *dtwi = new DoubleTableWidgetItem(rmsd);
+        dtwi->setData(Qt::EditRole, QVariant(rmsd));
+        dtwi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
+        dtwi->setFont(tw_font);
+        tw_rmsd->setItem(n, 3, dtwi);
 
         tw_rmsd->setRowHeight(n, rowht);
         n++;
@@ -388,7 +416,8 @@ void US_QueryRmsd::fill_table(int){
     tw_rmsd->setRowCount(n);
     tw_rmsd->verticalHeader()->setFont(tw_font);
     tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    tw_rmsd->sortItems(2, Qt::DescendingOrder);
+    tw_rmsd->setSortingEnabled( true );
+    tw_rmsd->sortItems(3, Qt::DescendingOrder);
     QTableWidgetItem *item = tw_rmsd->item(0, 0);
     item->setBackground(Qt::yellow);
     item = tw_rmsd->item(0, 1);
