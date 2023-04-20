@@ -3765,21 +3765,36 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          return;
       }
 
+      float mw = 0.0;
+
       if ( !ext.contains(QRegExp("^sprr(|_(x|n|r))")) )
       {
          // check for gnom output
          QTextStream ts(&f);
          QString tmp;
          unsigned int pos = 0;
+         QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+
          while ( !ts.atEnd() )
          {
             tmp = ts.readLine();
+            if ( qx_mw.indexIn( tmp ) != -1 ) {
+               mw = qx_mw.cap(1).toFloat();
+               TSO <<
+                  QString(
+                          "load pr found gnom mw %1\n"
+                          )
+                  .arg( mw )
+                  ;
+               (*remember_mw)[QFileInfo(filename).fileName()] = mw;
+               (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+            }
             pos++;
             if ( tmp.contains("Distance distribution  function of particle") ) 
             {
                editor->append("\nRecognized GNOM output.\n");
-               startline = pos + 4;
-               pop_last = 2;
+               startline = pos + 3;
+               pop_last = 1;
                break;
             }
          }
@@ -3791,7 +3806,6 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       //      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
       QString firstLine = ts.readLine();
       QRegExp sprr_mw_line("mw\\s+(\\S+)\\s+Daltons");
-      float mw = 0.0;
       if ( sprr_mw_line.indexIn(firstLine) != -1 )
       {
          mw = sprr_mw_line.cap(1).toFloat();
@@ -3850,7 +3864,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          }
       }
       f.close();
-      // US_Vector::printvector3( "pr load 0 r, pr, pr_error", r, pr, pr_error, 6, 10 );
+      // US_Vector::printvector3( "pr load 0 r, pr, pr_error", r, pr, pr_error, 6 );
 
       if ( pr_error.size() && pr.size() != pr_error.size() ) {
          pr_error.clear();
@@ -3875,7 +3889,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       if ( mw )
       {
          (*remember_mw)[use_filename] = mw;
-         (*remember_mw_source)[use_filename] = "loaded from sprr file";
+         (*remember_mw_source)[use_filename] = (*remember_mw_source)[QFileInfo(filename).fileName()];
       }         
       check_pr_grid( r, pr, pr_error );
       plot_one_pr(r, pr, pr_error, use_filename, skip_mw );
