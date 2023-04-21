@@ -217,7 +217,7 @@ DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    double ssulim = suplim * 1.0e-13;
    int    ncomps = model.components.size();
    double vbar20 = dsets[ 0 ]->vbar20;
-
+   bool dens_grad = simparms->meshType == US_SimulationParameters::ASTFVM && !dsets[0]->solution_rec.buffer.cosed_component.isEmpty();
    // Generate the original sub-grid solutes list
    if ( jgrefine > 0 )
    {
@@ -307,8 +307,10 @@ DbgLv(1) << "2P:SF: orig_sols: "
  << orig_sols[k0][0].s*1.e+13 << orig_sols[k0][0].k << "  "
  << orig_sols[k0][k2].s*1.e+13 << orig_sols[k0][k2].k;
    // Calculate Cosedimenting/Codiffusing stuff if needed
-   if (simparms->meshType == US_SimulationParameters::ASTFVM && !dsets[0]->solution_rec.buffer.cosed_component.isEmpty())
+   if (dens_grad)
    {
+      emit message_update( pmessage_head() +
+                           tr( "Calculating co-sedimenting components" ), false );
       cosed_components = dsets[0]->solution_rec.buffer.cosed_component;
       cosed_components.detach();
       US_DataIO::RawData auc_data = dsets[0]->run_data.convert_to_raw_data();
@@ -389,7 +391,7 @@ DbgLv(1) << "2P:SF: orig_sols: "
       }
       // make sure the selected model is adjusted for the selected temperature
       // and buffer conditions:
-      US_Math2::SolutionData sol_data;
+      US_Math2::SolutionData sol_data{};
       sol_data.density = base_density;
       sol_data.viscosity = base_viscosity;
       sol_data.manual = true;
@@ -432,6 +434,9 @@ DbgLv(1) << "2P:SF: orig_sols: "
          cosed_model.components << tmp;
          cosed_model_tmp.components << tmp;
          cosed_model_tmp.update_coefficients();
+         emit message_update( pmessage_head() +
+                              tr( "Calculating co-sedimenting component %1 ..." )
+                                    .arg( cosed_comp.name ), false );
          csD = new US_LammAstfvm::CosedData(cosed_model_tmp, *simparms, &auc_data, &cosed_components,
                                              base_density, base_viscosity);
          cosed_comp_data[ tmp.analyteGUID ] = csD->sa_data;
@@ -447,6 +452,9 @@ DbgLv(1) << "2P:SF: orig_sols: "
          csD->sa_data= cosed_comp_data.first();}
 
       if (codiff_needed){
+         emit message_update( pmessage_head() +
+                              tr( "Calculating co-diffusing components ..." )
+                                    , false );
          bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
                                                       simparms->band_volume,
                                                       dsets[0]->solution_rec.buffer.cosed_component,
@@ -456,7 +464,9 @@ DbgLv(1) << "2P:SF: orig_sols: "
       }
 
    }
-
+   emit message_update( pmessage_head() +
+                        tr( "Queueing depth-0 tasks \n of %1 subgrids\n using %2 threads ..." )
+                              .arg( nsubgrid ).arg( nthreads ), false );
    // Queue all the depth-0 tasks
    for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
