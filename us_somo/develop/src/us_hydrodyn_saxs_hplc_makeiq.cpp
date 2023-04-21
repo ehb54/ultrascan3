@@ -605,6 +605,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          f_conc      [ name ] = conc_ok ? conc_factor : 0e0;
          f_psv       [ name ] = conc_ok ? psv : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
+         if ( istarq_mode == ISTARQ_CONC_GLOBAL ) {
+            // TSO <<
+            //    QString( "ISTARQ_CONC_GLOBAL name %1 conc %2 psv%3 I0se %4\n" )
+            //    .arg( name )
+            //    .arg( saxs_hplc_param_g_conc )
+            //    .arg( saxs_hplc_param_g_psv )
+            //    .arg( I0se )
+            //    ;
+            f_conc      [ name ] = saxs_hplc_param_g_conc;
+            f_psv       [ name ] = saxs_hplc_param_g_psv;
+            f_I0se      [ name ] = I0se;
+         }
+
          f_time      [ name ] = tv[ t ];
          if ( conc_ok && conv ) {
             f_extc      [ name ] = conv;
