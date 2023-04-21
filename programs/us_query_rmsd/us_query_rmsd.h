@@ -17,6 +17,7 @@ class US_QueryRmsd : public US_Widgets{
 
     private:
     int dbg_level;
+    double threshold;
     QTableWidget *tw_rmsd;
     QHeaderView *hheader;
     US_Passwd pw;
@@ -45,12 +46,12 @@ class US_QueryRmsd : public US_Widgets{
     QComboBox *cb_channel;
     QComboBox *cb_lambda;
     QComboBox *cb_method;
-
-
+    QLineEdit *le_threshold;
 
     void check_connection(void);
     void clear_data(void);
     bool check_combo_content(QComboBox*, QString&);
+    void highlight(void);
 
     private slots:
     void load_runid(void);
@@ -59,6 +60,8 @@ class US_QueryRmsd : public US_Widgets{
     void set_method(int);
     void set_triple(int);
     void save_data(void);
+    void simulate(void);
+    void new_threshold(void);
 };
 
 class DoubleTableWidgetItem : public QTableWidgetItem
@@ -69,6 +72,11 @@ public:
     bool operator<(const QTableWidgetItem &other) const override
     {
         return m_value < other.data(Qt::EditRole).toDouble();
+    }
+
+    double get_value()
+    {
+        return m_value;
     }
 
 

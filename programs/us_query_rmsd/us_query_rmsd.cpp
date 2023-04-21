@@ -55,11 +55,16 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     QLabel *lb_method = us_label(tr("Method:"));
     cb_method = us_comboBox();
 
+    QLabel *lb_trsh = us_label(tr("RMSD Threshold:"));
+    le_threshold = us_lineedit("", 0);
+
+    QPushButton *pb_simulate = us_pushbutton("Simulate");
+
     tw_rmsd = new QTableWidget();
     tw_rmsd->setRowCount(0);
-    tw_rmsd->setColumnCount(4);
+    tw_rmsd->setColumnCount(5);
     tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Triple_Method_Analysis", "RMSD"});
-    tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Edit", "Analysis", "Triple_Method", "RMSD"});
+    tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Edit", "Analysis", "Method", "Triple", "RMSD"});
     hheader = tw_rmsd->horizontalHeader();
     tw_rmsd->setStyleSheet("background-color: white");
     QHeaderView *header = tw_rmsd->horizontalHeader();
@@ -97,6 +102,10 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     lyt_top->addWidget(lb_lambda,     2, 4, 1, 1);
     lyt_top->addWidget(cb_lambda,     2, 5, 1, 1);
 
+    lyt_top->addWidget(lb_trsh,       3, 0, 1, 2);
+    lyt_top->addWidget(le_threshold,  3, 2, 1, 2);
+    lyt_top->addWidget(pb_simulate,   3, 4, 1, 2);
+
     lyt_top->setColumnStretch(0, 0);
     lyt_top->setColumnStretch(1, 1);
     lyt_top->setColumnStretch(2, 0);
@@ -122,13 +131,15 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     lyt_main->addWidget(tw_rmsd);
     lyt_main->addLayout(lyt_bottom);
     lyt_main->setMargin(1);
-    lyt_main->setSpacing(1);
+    lyt_main->setSpacing(3);
 
     this->setLayout(lyt_main);
-    this->setMinimumSize(QSize(500,400));
+    setMinimumSize(QSize(500,400));
 
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
     connect(pb_save, SIGNAL(clicked()), this, SLOT(save_data()));
+    connect(pb_simulate, SIGNAL(clicked()), this, SLOT(simulate()));
+    connect(le_threshold, SIGNAL(editingFinished()), this, SLOT(new_threshold()));
 }
 
 void US_QueryRmsd::check_connection(){
@@ -151,6 +162,7 @@ void US_QueryRmsd::clear_data(){
     allChannel.clear();
     allLambda.clear();
     n_data = 0;
+    threshold = -1;
 
     editList.clear();
     analysisList.clear();
@@ -373,8 +385,7 @@ void US_QueryRmsd::fill_table(int){
         QString cell = allCell.at(i);
         QString channel = allChannel.at(i);
         QString lambda = allLambda.at(i);
-//        QString desc = tr("%1%2%3_%4_%5").arg(cell, channel,lambda, method, analysis);
-        QString desc = tr("%1%2%3_%4").arg(cell, channel,lambda, method);
+        QString triple = tr("%1%2%3").arg(cell, channel,lambda);
         if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
@@ -398,17 +409,21 @@ void US_QueryRmsd::fill_table(int){
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 1, twi);
 
-
-        twi = new QTableWidgetItem(desc);
+        twi = new QTableWidgetItem(method);
         twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 2, twi);
+
+        twi = new QTableWidgetItem(triple);
+        twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
+        twi->setFont(tw_font);
+        tw_rmsd->setItem(n, 3, twi);
 
         DoubleTableWidgetItem *dtwi = new DoubleTableWidgetItem(rmsd);
         dtwi->setData(Qt::EditRole, QVariant(rmsd));
         dtwi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         dtwi->setFont(tw_font);
-        tw_rmsd->setItem(n, 3, dtwi);
+        tw_rmsd->setItem(n, 4, dtwi);
 
         tw_rmsd->setRowHeight(n, rowht);
         n++;
@@ -417,11 +432,13 @@ void US_QueryRmsd::fill_table(int){
     tw_rmsd->verticalHeader()->setFont(tw_font);
     tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     tw_rmsd->setSortingEnabled( true );
-    tw_rmsd->sortItems(3, Qt::DescendingOrder);
-    QTableWidgetItem *item = tw_rmsd->item(0, 0);
-    item->setBackground(Qt::yellow);
-    item = tw_rmsd->item(0, 1);
-    item->setBackground(Qt::yellow);
+    tw_rmsd->sortItems(4, Qt::DescendingOrder);
+    if (threshold == -1){
+        DoubleTableWidgetItem *item = static_cast<DoubleTableWidgetItem*>(tw_rmsd->item(0, 4));
+        threshold = item->get_value();
+        le_threshold->setText(QString::number(threshold));
+    }
+    highlight();
 
     QString fname("RMSD_%1_%2_%3_%4-%5-%6.dat");
     le_file->setText(fname.arg(cb_edit->currentText(), cb_analysis->currentText(),
@@ -432,6 +449,7 @@ void US_QueryRmsd::fill_table(int){
 
 void US_QueryRmsd::save_data(){
     int nRows = tw_rmsd->rowCount();
+    int nCol = tw_rmsd->columnCount();
     if( nRows == 0){
         QMessageBox::warning(this, tr("Warning!"), tr("RMSD data not found!"));
         return;
@@ -452,13 +470,68 @@ void US_QueryRmsd::save_data(){
     QFile file{finfo.absoluteFilePath()};
     if (file.open(QIODevice::WriteOnly)) {
         QTextStream outStream{&file};
-        outStream << tr("Triple_Method_Analysis,RMSD\n");
+        for (int j = 0; j < nCol; j++){
+            QString header = tw_rmsd->horizontalHeaderItem(j)->text();
+            outStream << header;
+            if (j < nCol - 1)
+                outStream << ",";
+            else
+                outStream << "\n";
+        }
         for (int i = 0; i < nRows; i++){
-            QString desc = tw_rmsd->item(i, 0)->text();
-            QString rmsd = tw_rmsd->item(i, 1)->text();
-            outStream << desc << "," << rmsd << "\n";
+            for (int j = 0; j < nCol; j++){
+                outStream << tw_rmsd->item(i, j)->text();
+                if (j < nCol - 1)
+                    outStream << ",";
+                else
+                    outStream << "\n";
+            }
         }
     }
     file.close();
+}
 
+void US_QueryRmsd::simulate(){
+    DbgLv(0) << tw_rmsd->currentColumn();
+    DbgLv(0) << tw_rmsd->currentRow();
+}
+
+void US_QueryRmsd::highlight(){
+    QTableWidgetItem *twi;
+    DoubleTableWidgetItem *dtwi;
+    QColor color;
+    for (int i = 0; i < tw_rmsd->rowCount(); i++){
+        dtwi = static_cast<DoubleTableWidgetItem*>(tw_rmsd->item(i, 4));
+        if (threshold == -1){
+            color = QColor(152,251,152);
+        } else{
+            if (dtwi->get_value() >= threshold)
+                color = QColor(255,250,205);
+            else
+                color = QColor(152,251,152);
+        }
+        dtwi->setBackground(color);
+        for (int j = 0; j < 4; j++){
+            twi = tw_rmsd->item(i, j);
+            twi->setBackground(color);
+        }
+    }
+}
+
+void US_QueryRmsd::new_threshold(){
+    QString text = le_threshold->text();
+    if (text.isEmpty()){
+        threshold = -1;
+        highlight();
+        return;
+    }
+    bool ok;
+    double th = text.toDouble(&ok);
+    if (ok){
+        threshold = th;
+    }else{
+        le_threshold->setText(QString::number(threshold));
+        return;
+    }
+    highlight();
 }
