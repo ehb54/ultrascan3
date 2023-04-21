@@ -235,10 +235,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
    // bool   normalize_by_conc = false;
    bool   conc_ok           = false;
 
-   double conv = 0e0;
-   double psv  = 0e0;
-   double I0se = 0e0;
-   double conc_repeak = 1e0;
+   double conv         = 0e0;
+   double psv          = 0e0;
+   double I0se         = 0e0;
+   bool   I0se_process = false;
+   double conc_repeak  = 1e0;
    
    vector < double > conc_spline_x;
    vector < double > conc_spline_y;
@@ -273,6 +274,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          use_conc = false;
       }
 
+      istarq_mode = ISTARQ_NONE;
+
       if ( use_conc ) {
          if ( !any_detector ) {
             if ( parameters.count( "error" ) ) {
@@ -285,6 +288,15 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          parameters[ "gaussians" ]         = "1";
          parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
 
+         // Istarq bits
+      
+         istarq_mode                    = ISTARQ_CONC_POINTWISE;
+         parameters[ "istarq_ok" ]      = "true";
+         parameters[ "istarq_message" ] =
+            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
+            .arg( lbl_conc_file->text() )
+                                    ;
+         
          US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
             new US_Hydrodyn_Saxs_Hplc_Ciq(
                                           this,
@@ -298,6 +310,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
             progress->reset();
             update_enables();
             return false;
+         }
+
+         if ( !parameters.count( "make_istarq" )
+              || parameters[ "make_istarq" ] != "true" ) {
+            istarq_mode = ISTARQ_NONE;
          }
 
          conv = parameters.count( "conv 0" ) ? parameters[ "conv 0" ].toDouble() : 0e0;
@@ -349,7 +366,53 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
             conc_spline_y[ i ] *= detector_conv / ( conc_repeak * conv );
          }
          usu->natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2 );
+      } else {
+         if ( saxs_hplc_param_g_conc
+              && saxs_hplc_param_g_psv ) {
+            istarq_mode                    = ISTARQ_CONC_GLOBAL;
+            parameters[ "istarq_ok" ]      = "true";
+            parameters[ "istarq_message" ] =
+               QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL] and psv %2 [mL/g]?" ) )
+               .arg( saxs_hplc_param_g_conc )
+               .arg( saxs_hplc_param_g_psv )
+               ;
+
+            parameters[ "ngmode" ]            = "true";
+            parameters[ "gaussians" ]         = "0";
+            parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
+         
+            US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
+               new US_Hydrodyn_Saxs_Hplc_Ciq(
+                                             this,
+                                             & parameters,
+                                             this );
+            US_Hydrodyn::fixWinButtons( hplc_ciq );
+            hplc_ciq->exec();
+            delete hplc_ciq;
+
+            if ( !parameters.count( "go" ) ) {
+               progress->reset();
+               update_enables();
+               return false;
+            }
+            if ( !parameters.count( "make_istarq" )
+                 || parameters[ "make_istarq" ] != "true" ) {
+               istarq_mode = ISTARQ_NONE;
+            }
+
+            psv = saxs_hplc_param_g_psv;
+            if ( parameters.count( "I0se" ) ) {
+               I0se = parameters[ "I0se" ].toDouble();
+               if ( parameters.count( "I0se_process" ) ) {
+                  I0se_process = parameters[ "I0se_process" ] == "true";
+               }
+            }
+         }
       }
+   }
+
+   if ( istarq_mode != ISTARQ_NONE ) {
+      head += "_SAXS_Istarq_";
    }
 
    running = true;
@@ -404,11 +467,59 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       // vector < double > G_recon;
 
       vector < double > this_used_pcts;
-      double conc_factor = 0e0;
+      double conc_factor        = 0e0;
+      double istarq_norm_factor = 0e0;
+      
       if ( conc_ok ) {
          if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
             editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
             conc_factor = 0e0;
+         } else {
+            if ( istarq_mode == ISTARQ_CONC_POINTWISE ) {
+               // TSO << "istarq ISTARQ_CONC_POINTWISE\n";
+
+               istarq_norm_factor =
+                  AVOGADRO /
+                  ( conc_factor
+                    * 1e-3
+                    * pow( 
+                          saxs_hplc_param_diffusion_len
+                          * ( 1e0
+                              / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                              - ( psv * 1e24 * saxs_hplc_param_solvent_electron_density )
+                              )
+                          , 2e0 )
+                    )
+                  ;
+
+               if ( I0se_process ) {
+                  // TSO << "I0se_process\n";
+                  istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+                  // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
+               }
+            }
+         }
+      }
+
+      if ( istarq_mode == ISTARQ_CONC_GLOBAL ) {
+         istarq_norm_factor =
+            AVOGADRO /
+            ( saxs_hplc_param_g_conc
+              * 1e-3
+              * pow( 
+                    saxs_hplc_param_diffusion_len
+                    * ( 1e0
+                        / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                        - ( saxs_hplc_param_g_psv * 1e24 * saxs_hplc_param_solvent_electron_density )
+                        )
+                    , 2e0 )
+              )
+            ;
+
+         if ( I0se_process ) {
+            // TSO << "I0se_process\n";
+            istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+            // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
          }
       }
 
@@ -455,6 +566,17 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          e      .push_back( tmp_e );
       } // for each file
          
+      // istarq bits
+      if ( istarq_mode != ISTARQ_NONE && istarq_norm_factor ) {
+         for ( int i = 0; i < (int) I.size(); ++i ) {
+            I[i] *= istarq_norm_factor;
+         }
+         for ( int i = 0; i < (int) e.size(); ++i ) {
+            e[i] *= istarq_norm_factor;
+         }
+      }
+      
+
       if ( mode_testiq )
       {
          testiq_created_names.push_back( name );

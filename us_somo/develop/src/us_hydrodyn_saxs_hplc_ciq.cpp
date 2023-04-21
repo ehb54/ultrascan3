@@ -365,6 +365,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_conc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conc );
    lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ));
+   if ( !parameters->count( "gaussians" ) || (*parameters)["gaussians"] == "0" ) {
+      lbl_conc->hide();
+   }
 
    pb_global =  new QPushButton ( us_tr( "Duplicate Gaussian 1 values globally" ), this );
    pb_global -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -389,12 +392,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_conv->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conv );
    lbl_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   if ( !parameters->count( "gaussians" ) || (*parameters)["gaussians"] == "0" ) {
+      lbl_conv->hide();
+   }
 
    lbl_psv = new QLabel( us_tr( "Partial specific volume (ml/g)" ), this );
    lbl_psv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_psv->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_psv );
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   if ( !parameters->count( "gaussians" ) || (*parameters)["gaussians"] == "0" ) {
+      lbl_psv->hide();
+   }
 
    for ( unsigned int i = 0; i < (* parameters)[ "gaussians" ].toUInt(); i++ )
    {
