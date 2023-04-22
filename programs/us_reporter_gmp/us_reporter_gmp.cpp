@@ -5454,7 +5454,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   operation_types_live_update_ts[ "STOP" ] = stopOptimats;
   operation_types_live_update_ts[ "SKIP" ] = skipOptimats;
 
-  if ( !stopOptimaJson.isEmpty() && !skipOptimaJson.isEmpty() )
+  if ( !stopOptimaJson.isEmpty() || !skipOptimaJson.isEmpty() )
     html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE stage)</h3>" );
   
   for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
@@ -5987,6 +5987,10 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  skipOptimats   = db.value( 12 ).toString();
 	}
     }
+
+  qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson -- "
+	   << stopOptimaJson
+	   << skipOptimaJson;
 }
 
 //Parse autoflowStatus Analysis Json
