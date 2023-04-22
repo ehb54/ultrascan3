@@ -2134,6 +2134,20 @@ void US_XpnDataViewer::stop_optima( void )
   
   if (msgBox.clickedButton() == Accept)
     {
+      //Put a reason for a STOP (comment):
+      bool ok;
+      QString msg = QString(tr("Put a comment describing reason for a STOP:"));
+      QString default_text = QString(tr("Reason for STOP: "));
+      QString comment_text = QInputDialog::getText( this,
+						    tr( "Reason for STOP" ),
+						    msg, QLineEdit::Normal, default_text, &ok );
+
+      if ( !ok )
+	{
+	  return;
+	}
+      ///////////////////////////////////////
+      
       qDebug() << "STOPPING Optima...";
       link->stopOptima();
 
@@ -2147,7 +2161,7 @@ void US_XpnDataViewer::stop_optima( void )
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was STOPPED                        */
       experimentAborted_remotely = true;
-      record_live_update_status( "STOP" );
+      record_live_update_status( "STOP", comment_text );
     }
   else if (msgBox.clickedButton() == Cancel)
     {
@@ -2177,7 +2191,7 @@ void US_XpnDataViewer::skip_optima_stage( void )
       //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was SKIPPED                        */
-      record_live_update_status( "SKIP" );
+      record_live_update_status( "SKIP", "" );
       
     }
   else if (msgBox.clickedButton() == Cancel)
@@ -2188,7 +2202,7 @@ void US_XpnDataViewer::skip_optima_stage( void )
 
 
 //
-void US_XpnDataViewer::record_live_update_status( QString o_type )
+void US_XpnDataViewer::record_live_update_status( QString o_type, QString comment_text )
 {
   autoflowStatusID = 0;
   QString stopOptima_Json;
@@ -2248,7 +2262,8 @@ void US_XpnDataViewer::record_live_update_status( QString o_type )
       stopOptima_Json += "\"level\":\""  + QString::number( level )  + "\"";
       stopOptima_Json += "}],";
 
-      stopOptima_Json += "\"Remote Operation\": \"" + o_type + "\"";
+      stopOptima_Json += "\"Remote Operation\": \"" + o_type         + "\",";
+      stopOptima_Json += "\"Comment\": \""          + comment_text   + "\"";
       
       stopOptima_Json += "}";
       
@@ -2288,7 +2303,8 @@ void US_XpnDataViewer::record_live_update_status( QString o_type )
       skipOptima_Json += "\"level\":\""  + QString::number( level )  + "\"";
       skipOptima_Json += "}],";
 
-      skipOptima_Json += "\"Remote Operation\": \"" + o_type + "\"";
+      skipOptima_Json += "\"Remote Operation\": \"" + o_type + "\",";
+      skipOptima_Json += "\"Comment\": \""          + comment_text   + "\"";
       
       skipOptima_Json += "}";
       
