@@ -4282,18 +4282,21 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
          //                               : ( cc_osyss[ ii ]->button( 1 )->isChecked()
          //                                 ? cc_osyss[ ii ]->button( 1 )->text()
          //                                 : "" );
-	 //ALEXEY: set checked by default for UV/vis
-	 rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
-         rpOptic->chopts[ ii ].scan2   = ii > 3
-                                       ? notinst
-                                       : ( cc_osyss[ ii ]->button( 2 )->isChecked()
-                                         ? cc_osyss[ ii ]->button( 2 )->text()
-                                         : "" );
-         rpOptic->chopts[ ii ].scan3   = ii > 3
-                                       ? notinst
-                                       : ( cc_osyss[ ii ]->button( 3 )->isChecked()
-                                         ? cc_osyss[ ii ]->button( 3 )->text()
-                                         : "" );
+	 // //ALEXEY: set checked by default for UV/vis
+	 // rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
+         // rpOptic->chopts[ ii ].scan2   = ii > 3
+         //                               ? notinst
+         //                               : ( cc_osyss[ ii ]->button( 2 )->isChecked()
+         //                                 ? cc_osyss[ ii ]->button( 2 )->text()
+         //                                 : "" );
+         // rpOptic->chopts[ ii ].scan3   = ii > 3
+         //                               ? notinst
+         //                               : ( cc_osyss[ ii ]->button( 3 )->isChecked()
+         //                                 ? cc_osyss[ ii ]->button( 3 )->text()
+         //                                 : "" );
+	 rpOptic->chopts[ ii ].scan1   = "";
+	 rpOptic->chopts[ ii ].scan2   = "";
+	 rpOptic->chopts[ ii ].scan3   = "";
 #endif
       }
 DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";

@@ -341,7 +341,7 @@ class US_XpnDataViewer : public US_Widgets
      //Sys_server
      void   stop_optima( void );
      void   skip_optima_stage( void );
-     void   record_live_update_status( QString);
+  void   record_live_update_status( QString, QString);
   
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
      bool   load_xpn_raw_auto   ( void );
