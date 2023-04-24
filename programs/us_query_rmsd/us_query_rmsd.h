@@ -4,6 +4,8 @@
 #include "us_widgets.h"
 #include "us_passwd.h"
 #include "us_db2.h"
+#include "us_model.h"
+#include "us_dataIO.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -29,6 +31,11 @@ class US_QueryRmsd : public US_Widgets{
     QStringList allAnalysis;
     QStringList allMethod;
     QVector<double> allRmsd;
+    QVector<US_Model *> allModel;
+    QVector<int> selIndex;
+    QMap<int, US_DataIO::EditedData*> editData;
+    QMap<int, US_DataIO::RawData*> rawData;
+    QMap<int, int> allEditDataMap;
     int n_data;
 
     QStringList methodList;
@@ -52,6 +59,8 @@ class US_QueryRmsd : public US_Widgets{
     void clear_data(void);
     bool check_combo_content(QComboBox*, QString&);
     void highlight(void);
+    bool load_model(QString, US_Model*);
+    bool loadData(QVector<int>&);
 
     private slots:
     void load_runid(void);
