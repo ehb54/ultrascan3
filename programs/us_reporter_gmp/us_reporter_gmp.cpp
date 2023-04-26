@@ -5780,12 +5780,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
 	{
 	  
-	  QString mfa_value    = mfa.value();
-	  QString pos          = mfa_value.split(", by")[0];
-	  QString performed_by = mfa_value.split(", by")[1];
-	  QStringList whenList = mfa_value.split(" ;");
-	  QString when         = (whenList.size() > 1) ? whenList[1] : "N/A";
-	  
+	  QString mfa_value         = mfa.value();
+	  QString pos               = mfa_value.split(", by")[0];
+	  QString performed_by_time = mfa_value.split(", by")[1];
+
+	  QString performed_by, when;
+	  if ( performed_by_time.contains(";") )
+	    {
+	      performed_by      = performed_by_time.split(";")[0];
+	      when              = performed_by_time.split(";")[1];  
+	    }
+	  else
+	    {
+	      performed_by = performed_by_time;
+	      when         = "N/A";
+	    }
 	  html_assembled += tr(			       
 			       "<tr>"
 			       "<td> Channel:  %1, </td>"
