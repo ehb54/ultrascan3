@@ -102,7 +102,7 @@ int main( int argc, char* argv[] )
   QStringList defaultDB      = US_Settings::defaultDB();
   if ( DB_list.size() > 0 && defaultDB.size() > 0 )
     {
-      qDebug() << "defaultDB -- " << DB_list.at( 2 );
+      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
             
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
