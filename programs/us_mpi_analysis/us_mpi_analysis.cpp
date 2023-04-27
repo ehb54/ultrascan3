@@ -1049,6 +1049,15 @@ void US_MPI_Analysis::start( void )
    gcores_count            = proc_count;
    group_rank              = my_rank;
 
+   if ( my_rank == 0 ) {
+#define TSO QTextStream( stdout )
+      for ( auto it = data_sets.begin();
+            it != data_sets.end();
+            ++it ) {
+         TSO << (*it)->debug_qsl( "US_MPI_Analysis::start() dataset" ).join( "\n" ) << "\n";
+      }
+   }
+
    // Real processing goes here
    if ( analysis_type.startsWith( "2DSA" ) )
    {

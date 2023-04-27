@@ -2342,3 +2342,98 @@ DbgLv(1)<<"angle between two vectors: " << angle  << "sum1="<< sum1 <<"sum2="<< 
    return angle;
 }
 
+
+QStringList US_SolveSim::debug_qsl( const QString & msg ) {
+   QStringList qsl;
+
+   qsl
+      << "================================================================================"
+      << QString( "US_SolveSim_RSA %1" ).arg( msg )
+      << "--------------------------------------------------------------------------------"
+      << QString( "d_offs        : %1" ).arg( d_offs )
+      << QString( "noisflag      : %1" ).arg( noisflag )
+      << QString( "dbg_level     : %1" ).arg( dbg_level )
+      << QString( "dbg_timing    : %1" ).arg( dbg_timing ? "true" : "false" )
+      << QString( "abort         : %1" ).arg( abort ? "true" : "false" )
+      << QString( "calc_ti       : %1" ).arg( calc_ti ? "true" : "false" )
+      << QString( "calc_ri       : %1" ).arg( calc_ri ? "true" : "false" )
+      << QString( "banddthr      : %1" ).arg( banddthr ? "true" : "false" )
+      << QString( "startCalc     : %1" ).arg( startCalc.toString( "ddd MMMM d yy hh:mm:ss" ) )
+      << "--------------------------------------------------------------------------------"
+      ;
+
+   for ( auto it = data_sets.begin();
+         it != data_sets.end();
+         ++it ) {
+      qsl 
+         << (*it)->debug_qsl( "dataset" )
+         ;
+   }
+            
+   qsl
+      << "================================================================================"
+      ;
+   return qsl;
+}
+   
+QStringList US_SolveSim::DataSet::debug_qsl( const QString & msg ) {
+   QStringList qsl;
+   qsl 
+      << "================================================================================"
+      << QString( "US_SolveSim::DataSet : %1" ).arg( msg )
+      << "--------------------------------------------------------------------------------"
+      << QString( "requestID            : %1" ).arg( requestID )
+      << QString( "auc_file             : %1" ).arg( auc_file )
+      << QString( "edit_file            : %1" ).arg( edit_file )
+      << QString( "tmst_file            : %1" ).arg( tmst_file )
+      << QString( "model_file           : %1" ).arg( model_file )
+      << QString( "noise_files          : %1" ).arg( noise_files.join( " " ) )
+      << QString( "run_data             : %1" ).arg( "US_DataIO::EditedData run_data" )
+      << model.debug_qsl( "model for SolveSim_RSA" )
+      << simparams.debug_qsl( "SimulationParameters for SolveSim_RSA" )
+      << QString( "solution_rec         : %1" ).arg( "US_Solution solution_rec" )
+      << QString( "viscosity            : %1" ).arg( viscosity )
+      << QString( "density              : %1" ).arg( density )
+      << QString( "compress             : %1" ).arg( compress )
+      << QString( "temperature          : %1" ).arg( temperature )
+      << QString( "vbar20               : %1" ).arg( vbar20 )
+      << QString( "vbartb               : %1" ).arg( vbartb )
+      << QString( "s20w_correction      : %1" ).arg( s20w_correction )
+      << QString( "D20w_correction      : %1" ).arg( D20w_correction )
+      << QString( "rotor_stretch[ 2 ]   : %1 %2 " ).arg( rotor_stretch[ 0 ] ).arg( rotor_stretch[ 1 ] )
+      << QString( "centerpiece_bottom   : %1" ).arg( centerpiece_bottom )
+      << QString( "zcoeffs[ 4 ]         : %1 %2 %3 %4" ).arg( zcoeffs[ 0 ] ).arg( zcoeffs[ 1 ] ).arg( zcoeffs[ 2 ] ).arg( zcoeffs[ 3 ] )
+
+      << QString( "solute_type          : %1" ).arg( solute_type )
+      << QString( "manual               : %1" ).arg( manual ? "true" : "false" )
+      << "================================================================================"
+      ;
+
+   return qsl;
+}
+
+QStringList US_SolveSim::Simulation::debug_qsl( const QString & msg ) {
+   QStringList qsl;
+   qsl 
+      << "================================================================================"
+      << QString( "US_SolveSim::Simulation : %1" ).arg( msg )
+      << "--------------------------------------------------------------------------------"
+      << QString( "variance   : %1" ).arg( variance )
+      << QString( "xnormsq    : %1" ).arg( xnormsq )
+      << QString( "alpha      : %1" ).arg( alpha )
+      << QString( "variances  : %1" ).arg( "QVector< double > variances" )
+      << QString( "ti_noise   : %1" ).arg( "QVector <double > ti_noise" )
+      << QString( "ri_noise   : %1" ).arg( "QVector <double > ri_noise" )
+      << QString( "solutes    : %1" ).arg( "QVector <US_Solute> solutes" )
+      << QString( "zsolutes   : %1" ).arg( "QVector <US_ZSolute> zsolutes" )
+      << QString( "maxrss     : %1" ).arg( maxrss )
+      << QString( "noisflag   : %1" ).arg( noisflag )
+      << QString( "dbg_level  : %1" ).arg( dbg_level )
+      << QString( "dbg_timing : %1" ).arg( dbg_timing ? "true" : "false" )
+      << QString( "sim_data   : %1" ).arg( "US_DataIO::RawData sim_data" )
+      << QString( "residuals  : %1" ).arg( "US_DataIO::RawData residuals" )
+      << "================================================================================"
+      ;
+
+   return qsl;
+}

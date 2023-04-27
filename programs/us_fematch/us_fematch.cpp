@@ -2386,6 +2386,8 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
 void US_FeMatch::show_results( )
 {
    progress->setValue( progress->maximum() );
+#define TSO QTextStream(stdout)
+   qsl << simparams.debug_qsl( "US_FeMatch::show_results()" ).join( "\n" ) << "\n";
 
 #if 0
    double rmsd = 0.0;

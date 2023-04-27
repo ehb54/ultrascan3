@@ -55,6 +55,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
             int               solute_type;        //!< Solute type (0,1,2)
             bool              manual;             //!< visc.,dens. manual
+
+            QStringList             debug_qsl( const QString & msg = "" );
     };
 
     //! Class for communicating simulation
@@ -78,6 +80,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
          bool                  dbg_timing; //!< Debug-timing-prints flag
          US_DataIO::RawData    sim_data;   //!< Simulation data
          US_DataIO::RawData    residuals;  //!< Residuals data (run-sim-noi)
+
+         QStringList           debug_qsl( const QString & msg = "" );
     };
 
     //! Constructor for the SolveSim class
@@ -117,6 +121,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
+
+    //! \brief Dump class contents for debugging
+    QStringList debug_qsl( const QString & msg = "" );
 
   signals:
     //! \brief emit a signal that includes a progress step count
