@@ -938,7 +938,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                   qDebug() << "The simulated data does not cover the entire "
                               "experimental time range and ends too early!\n"
                               "exiting...\n";
-		  exit(-1);
+		  // exit(-1);
                }
 
 #ifdef NO_DB
