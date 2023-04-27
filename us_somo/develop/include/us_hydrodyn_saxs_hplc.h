@@ -264,6 +264,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
  private:
 
+      double        saxs_hplc_param_frame_interval;
       double        saxs_hplc_param_g_conc;
       double        saxs_hplc_param_g_psv;
       double        saxs_hplc_param_I0_exp;

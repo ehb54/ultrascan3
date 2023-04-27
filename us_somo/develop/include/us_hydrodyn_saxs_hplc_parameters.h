@@ -31,6 +31,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Parameters : public QDialog
 
       QLabel *                                lbl_title;
 
+      QLabel *                                lbl_saxs_hplc_param_frame_interval;
+      QLineEdit *                             le_saxs_hplc_param_frame_interval;
+
       QLabel *                                lbl_saxs_hplc_param_g_conc;
       QLineEdit *                             le_saxs_hplc_param_g_conc;
 
@@ -67,6 +70,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Parameters : public QDialog
 
    private slots:
 
+      void                                    set_saxs_hplc_param_frame_interval           ( const QString & );
       void                                    set_saxs_hplc_param_g_conc                   ( const QString & );
       void                                    set_saxs_hplc_param_g_psv                    ( const QString & );
       void                                    set_saxs_hplc_param_I0_exp                   ( const QString & );

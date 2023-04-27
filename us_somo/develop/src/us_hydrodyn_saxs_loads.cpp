@@ -3239,7 +3239,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             if ( run_nnls )
             {
                editor->append("NNLS target: " + nnls_target + "\n");
-               nnls_csv_footer << "\"NNLS target:\"," + nnls_target;
+
+               // {
+               //    nnls_csv_footer << "\"NNLS target:\"," + nnls_target;
+               // }
             }
             if ( nnls_csv ) {
                QString use_dir = USglobal->config_list.root_dir + "/" + "somo" + "/" + "saxs";
@@ -3727,6 +3730,36 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   (*remember_mw_source)[use_csv_filename + " Model"] =  "copied from target curve";
                   if ( run_nnls )
                   {
+
+                     {
+                        QString rg_msg;
+                        {
+                           double Rg;
+                           QString errormsg;
+                           if ( US_Saxs_Util::compute_rg_from_pr( nnls_r, nnls_B, Rg, errormsg ) ) {
+                              rg_msg = QString( "%1" ).arg( Rg, 0, 'f', 2 );
+                           } else {
+                              rg_msg = errormsg;
+                           }
+                        }
+                        double dmax = nnls_r.back();
+                        {
+                           int i = (int) nnls_r.size() - 1;
+                           if ( i > (int) nnls_B.size() - 1 ) {
+                              i = (int) nnls_B.size() - 1;
+                           }
+                           while ( --i >= 0 && nnls_B[i] == 0 ) {
+                              dmax = nnls_r[i];
+                           }
+                        }               
+                        
+                        nnls_csv_footer << QString( "\"NNLS target:\",\"%1\",,%2,%3" )
+                           .arg( QString( "%1" ).arg( nnls_target ).replace( QRegularExpression( "(\"| )" ) , "_" ) )
+                           .arg( rg_msg )
+                           .arg( dmax )
+                           ;
+                     }
+
                      calc_nnls_fit( nnls_target, use_csv_filename );
                      if ( nnls_csv ) {
                         if ( QFile::exists(nnls_csv_filename) )
@@ -3737,7 +3770,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                         QFile f( nnls_csv_filename );
                         if ( f.open(QIODevice::WriteOnly ) ) {
                            QTextStream tso(&f);
-                           tso << "\"File\",\"Model\",\"Contribution weight\"\n";
+                           tso << "\"File\",\"Model\",\"Contribution weight\",\"Rg [A]\",\"Dmax [A]\"\n";
                            tso << nnls_csv_data.join("\n") << "\n";
                            tso << "\n\"Messages:\"\n";
                            tso << nnls_csv_footer.join("\n") << "\n";

@@ -1078,6 +1078,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::set_saxs_hplc_parameters()
 {
    map < QString, QString > parameters;
 
+   parameters[ "saxs_hplc_param_frame_interval"           ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_frame_interval, 0, 'g', 8 );
    parameters[ "saxs_hplc_param_g_conc"                   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc, 0, 'g', 8 );
    parameters[ "saxs_hplc_param_g_psv"                    ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv, 0, 'g', 8 );
    parameters[ "saxs_hplc_param_I0_exp"                   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp, 0, 'g', 8 );
@@ -1104,6 +1105,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::set_saxs_hplc_parameters()
    }
 
    ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc                   = parameters[ "saxs_hplc_param_g_conc"                   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_frame_interval           = parameters[ "saxs_hplc_param_frame_interval"           ].toDouble();
    ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv                    = parameters[ "saxs_hplc_param_g_psv"                    ].toDouble();
    ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp                   = parameters[ "saxs_hplc_param_I0_exp"                   ].toDouble();
    ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo                  = parameters[ "saxs_hplc_param_I0_theo"                  ].toDouble();
@@ -1114,6 +1116,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::set_saxs_hplc_parameters()
 
    if ( parameters.count( "save" ) ) {
       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ]         = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc );
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_frame_interval" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_frame_interval );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv                            = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv;
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp                         = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp;
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo                        = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo;

@@ -45,6 +45,27 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::setupGUI()
    AUTFBACK( lbl_title );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
+   lbl_saxs_hplc_param_frame_interval = new QLabel( us_tr( "Frame Interval [s] :" ), this );
+   lbl_saxs_hplc_param_frame_interval->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_saxs_hplc_param_frame_interval->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_saxs_hplc_param_frame_interval );
+   lbl_saxs_hplc_param_frame_interval->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_saxs_hplc_param_frame_interval-> setMinimumHeight( minHeight1 );
+   
+   le_saxs_hplc_param_frame_interval = new QLineEdit( this );    le_saxs_hplc_param_frame_interval->setObjectName( "le_saxs_hplc_param_frame_interval Line Edit" );
+   le_saxs_hplc_param_frame_interval->setText( (*parameters)[ "saxs_hplc_param_frame_interval" ] );
+   le_saxs_hplc_param_frame_interval->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_saxs_hplc_param_frame_interval->setPalette( PALET_NORMAL );
+   AUTFBACK( le_saxs_hplc_param_frame_interval );
+   le_saxs_hplc_param_frame_interval->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0.1, 600, 1, le_saxs_hplc_param_frame_interval );
+      le_saxs_hplc_param_frame_interval->setValidator( qdv );
+   }
+   connect( le_saxs_hplc_param_frame_interval, SIGNAL( textChanged( const QString & ) ), SLOT( set_saxs_hplc_param_frame_interval( const QString & ) ) );
+   le_saxs_hplc_param_frame_interval->setMinimumWidth( 200 );
+   le_saxs_hplc_param_frame_interval-> setMinimumHeight( minHeight1 );
+
    lbl_saxs_hplc_param_g_conc = new QLabel( us_tr( "Default concentration [mg/mL] :" ), this );
    lbl_saxs_hplc_param_g_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_hplc_param_g_conc->setPalette( PALET_NORMAL );
@@ -248,6 +269,10 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::setupGUI()
    {
       int row = 0;
       
+      gbl->addWidget( lbl_saxs_hplc_param_frame_interval, row, 0 );
+      gbl->addWidget( le_saxs_hplc_param_frame_interval,  row, 1 );
+      ++row;
+
       gbl->addWidget( lbl_saxs_hplc_param_g_conc, row, 0 );
       gbl->addWidget( le_saxs_hplc_param_g_conc,  row, 1 );
       ++row;
@@ -387,6 +412,11 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::closeEvent( QCloseEvent *e )
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Parameters::set_saxs_hplc_param_frame_interval( const QString & text )
+{
+   (*parameters)[ "saxs_hplc_param_frame_interval" ] = text;
 }
 
 void US_Hydrodyn_Saxs_Hplc_Parameters::set_saxs_hplc_param_g_conc( const QString & text )

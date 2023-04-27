@@ -566,6 +566,11 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    // set defaults always
    
+   saxs_hplc_param_frame_interval                   =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_frame_interval" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_frame_interval" ].toDouble() : 1
+      ;
+
    saxs_hplc_param_g_conc                   =
       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_g_conc" ) ?
       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ].toDouble() : 0
@@ -3243,18 +3248,18 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    QString use_conc;
    if ( concs.count( file ) && concs[ file ] != 0e0 )
    {
-      use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+      use_conc = QString( " Conc:%1 [mg/mL]" ).arg( concs[ file ] );
    } else {
       if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
       {
-         use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+         use_conc = QString( " Conc:%1 [mg/mL]" ).arg( f_conc[ file ] );
       }
    }
 
    ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
-      .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
+      .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )

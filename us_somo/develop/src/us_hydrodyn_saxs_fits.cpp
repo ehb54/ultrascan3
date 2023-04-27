@@ -963,16 +963,41 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       }
       {
          QString model_name = model_names[i];
+
+         // compute Rg, dmax
+         QString rg_msg = "\"missing model for Rg computation\"";
+         double dmax = nnls_r.back();
+         if ( nnls_A.count( model_name ) ) {
+            {
+               double Rg;
+               QString errormsg;
+               if ( US_Saxs_Util::compute_rg_from_pr( nnls_r, nnls_A[model_name], Rg, errormsg ) ) {
+                  rg_msg = QString( "%1" ).arg( Rg, 0, 'f', 2 );
+               } else {
+                  rg_msg = "\"" + errormsg + "\"";
+               }
+            }
+            {
+               int i = (int) nnls_r.size() - 1;
+               if ( i > (int) nnls_A[model_name].size() - 1 ) {
+                  i = (int) nnls_A[model_name].size() - 1;
+               }
+               while ( --i >= 0 && nnls_A[model_name][i] == 0 ) {
+                  dmax = nnls_r[i];
+               }
+            }               
+         }
+
          model_name.replace( "\"", "" );
 
          QRegularExpressionMatch match = rx.match( model_name );
          
          if ( match.hasMatch() ) {
             nnls_csv_data <<
-               QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
+               QString("\"%1\",%2,%3,%4,%5").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
          } else {
             nnls_csv_data <<
-               QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+               QString("\"%1\",,%2,%3,%4").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
          }
       }      
 
