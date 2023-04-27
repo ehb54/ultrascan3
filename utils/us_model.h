@@ -190,6 +190,9 @@ class US_UTIL_EXTERN US_Model
       //! \brief Dump model data for debugging
       void debug( void );
 
+      //! \brief Dump model data for debugging
+      QStringList debug_qsl( const QString & msg = "" );
+
       //! A class representing the initial concentration distribution of a
       //! solute in the buffer.
       class MfemInitial

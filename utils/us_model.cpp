@@ -1692,3 +1692,70 @@ void US_Model::debug( void )
    }
 }
 
+
+// Output debug print model details
+QStringList US_Model::debug_qsl( const QString & msg )
+{
+   QStringList qsl;
+
+   qsl 
+      << "================================================================================"
+      << QString( "US_Model %1" ).arg( msg )
+      << "--------------------------------------------------------------------------------"
+      ;
+
+   qsl
+      << QString( "description  : %1" ).arg( description )
+      << QString( "modelGUID    : %1" ).arg( modelGUID )
+      << QString( "variance     : %1" ).arg( variance )
+      << QString( "meniscus     : %1" ).arg( meniscus )
+      << QString( "bottom       : %1" ).arg( bottom )
+      << QString( "alphaRP      : %1" ).arg( alphaRP )
+      << QString( "editGUID     : %1" ).arg( editGUID )
+      << QString( "requestGUID  : %1" ).arg( requestGUID )
+      << QString( "wavelength   : %1" ).arg( wavelength )
+      << QString( "monteCarlo   : %1" ).arg( monteCarlo )
+      << QString( "coSedSolute  : %1" ).arg( coSedSolute )
+      << QString( "subGrids     : %1" ).arg( subGrids )
+      << QString( "analysis     : %1" ).arg( (int)analysis )
+      << QString( "global       : %1" ).arg( (int)global )
+      << QString( "optics       : %1" ).arg( (int)optics )
+      << QString( "dataDescript : %1" ).arg( dataDescrip )
+      ;
+
+   for ( int i = 0; i < components.size(); i++ ) {
+      SimulationComponent* sc = &components[ i ];
+      qsl
+         << "--------------------------------------------------------------------------------"
+         << QString( " component   : %1" ).arg( ( i + 1 ) )
+         << QString( "  name       : %1" ).arg( sc->name )
+         << QString( "  vbar20     : %1" ).arg( sc->vbar20 )
+         << QString( "  mw         : %1" ).arg( sc->mw )
+         << QString( "  s          : %1" ).arg( sc->s )
+         << QString( "  D          : %1" ).arg( sc->D )
+         << QString( "  f          : %1" ).arg( sc->f )
+         << QString( "  f/f0       : %1" ).arg( sc->f_f0 )
+         << QString( "  extinction : %1" ).arg( sc->extinction )
+         << QString( "  axial      : %1" ).arg( sc->axial_ratio )
+         << QString( "  sigma      : %1" ).arg( sc->sigma )
+         << QString( "  delta      : %1" ).arg( sc->delta )
+         << QString( "  molar C    : %1" ).arg( sc->molar_concentration )
+         << QString( "  signal C   : %1" ).arg( sc->signal_concentration )
+         << QString( "  oligomer   : %1" ).arg( sc->oligomer )
+         << QString( "  shape      : %1" ).arg( (int)sc->shape )
+         << QString( "  type       : %1" ).arg( (int)sc->analyte_type )
+         ;
+
+      for ( int j = 0; j < sc->c0.radius.size(); j++ ) {
+         qsl
+            << QString( "   c0 r c    : %1 %2" ).arg( sc->c0.radius[ j ] ).arg( sc->c0.concentration[ j ] )
+            ;
+      }
+   }
+
+   qsl
+      << "================================================================================"
+      ;
+
+   return qsl;
+}

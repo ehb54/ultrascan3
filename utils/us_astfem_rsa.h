@@ -61,6 +61,9 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 
       void set_buffer( US_Buffer );
 
+      //! \brief Dump class contents for debugging
+      QStringList debug_qsl( const QString & msg = "" );
+
    signals:
       //! \brief Signal that a calculate_ni()/calculate_ra2() step is complete.
       //! The connected slot receives the radius vector and concentration

@@ -145,6 +145,8 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \brief Dump class contents to stderr
    void debug( void );
 
+   //! \brief Dump class contents to a QStringList
+   QStringList debug_qsl( const QString & msg = "" );
 
    //! The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 

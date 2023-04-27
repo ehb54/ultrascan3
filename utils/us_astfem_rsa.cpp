@@ -4327,3 +4327,40 @@ DbgLv(1) << "IS_Z:    s D rpm t men bot" << s << D << rpm << t << meniscus << bo
    return is_zero;
 }
 
+QStringList US_Astfem_RSA::debug_qsl( const QString & msg ) {
+   QStringList qsl;
+
+   qsl
+      << "================================================================================"
+      << QString( "US_Astfem_RSA %1" ).arg( msg )
+      << "--------------------------------------------------------------------------------"
+      << QString( "timestate       : %1 " ).arg( "structure" )
+      << QString( "stopFlag        : %1 " ).arg( stopFlag ? "true" : "false" )
+      << QString( "time_correction : %1 " ).arg( time_correction ? "true" : "false" )
+      << QString( "use_time        : %1 " ).arg( use_time ? "true" : "false" )
+      << QString( "show_movie      : %1 " ).arg( show_movie ? "true" : "false" )
+      << QString( "simout_flag     : %1 " ).arg( simout_flag ? "true" : "false" )
+      << QString( "is_zero         : %1 " ).arg( is_zero ? "true" : "false" )
+      << QString( "stfb0           : %1 " ).arg( "structure" )
+      << QString( "density         : %1 " ).arg( density )
+      << QString( "compressib      : %1 " ).arg( compressib )
+      << QString( "d_coeff         : %1 " ).arg( "array double[6]" )
+      << QString( "v_coeff         : %1 " ).arg( "array double[6]" )
+      << QString( "last_time       : %1 " ).arg( last_time )
+      << QString( "w2t_integral    : %1 " ).arg( w2t_integral )
+      << QString( "tot_conc        : %1 " ).arg( tot_conc )
+      << QString( "Nx              : %1 " ).arg( Nx )
+      << QString( "af_params       : %1 " ).arg( "structure" )
+      << QString( "af_data         : %1 " ).arg( "structure" )
+      << QString( "af_c0           : %1 " ).arg( "structure" )
+      << QString( "xA              : %1 " ).arg( "array * of double" )
+      << QString( "x               : %1 size %2" ).arg( "QVector( double )" ).arg( x.size() )
+      << QString( "rg              : %1 size %2" ).arg( "QVector( ReactionGroup )" ).arg( rg.size() )
+      << QString( "system          : %1" ).arg( "structure US_Model" )
+      << system.debug_qsl( msg )
+      << QString( "simparams       : %1" ).arg( "structure US_SimulationParameters" )
+      << simparams.debug_qsl( msg )
+      << "================================================================================"
+      ;
+   return qsl;
+}

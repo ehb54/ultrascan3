@@ -1593,3 +1593,68 @@ void US_SimulationParameters::debug( void )
    }
 }
 
+
+// Debug print
+QStringList US_SimulationParameters::debug_qsl( const QString & msg )
+{
+   
+   QStringList qsl;
+
+   qsl 
+      << "================================================================================"
+      << QString( "US_SimulationParameters %1" ).arg( msg )
+      << "--------------------------------------------------------------------------------"
+      ;
+
+   qsl
+      << QString( "Mesh radius size : %1" ).arg( mesh_radius.size() )
+      << QString( "Simpoints        : %1" ).arg( simpoints )
+      << QString( "Mesh Type        : %1" ).arg( meshType )
+      << QString( "Grid Type        : %1" ).arg( gridType )
+      << QString( "Radial Res       : %1" ).arg( radial_resolution )
+      << QString( "Meniscus         : %1" ).arg( meniscus )
+      << QString( "Bottom Pos       : %1" ).arg( bottom_position )
+      << QString( "Bottom           : %1" ).arg( bottom )
+      << QString( "Temperature      : %1" ).arg( temperature )
+      << QString( "Random noise     : %1" ).arg( rnoise )
+      << QString( "Random noise (l) : %1" ).arg( lrnoise )
+      << QString( "Time Inv Noise   : %1" ).arg( tinoise )
+      << QString( "Radial Inv Noise : %1" ).arg( rinoise )
+      << QString( "Band Forming     : %1" ).arg( band_forming )
+      << QString( "Band Volume      : %1" ).arg( band_volume )
+      << QString( "Rotor Calibr.ID  : %1" ).arg( rotorCalID )
+      << QString( "Rotor Coeffs     : %1 %2" ).arg( rotorcoeffs[ 0 ] ).arg( rotorcoeffs[ 1 ] )
+      << QString( "CP Sector        : %1" ).arg( cp_sector )
+      << QString( "CP Pathlength    : %1" ).arg( cp_pathlen )
+      << QString( "CP Angle         : %1" ).arg( cp_angle )
+      << QString( "CP Width         : %1" ).arg( cp_width )
+   ;
+
+   for ( int i = 0; i < speed_step.size(); i++ ) {
+      qsl
+         << "--------------------------------------------------------------------------------"
+         << QString( " Step " ).arg( i )
+         << QString( "  Duration Hours : %1" ).arg( speed_step[ i ].duration_hours )
+         << QString( "  Duration Mins  : %1" ).arg( speed_step[ i ].duration_minutes )
+         << QString( "  Delay Hours    : %1" ).arg( speed_step[ i ].delay_hours )
+         << QString( "  Delay Mins     : %1" ).arg( speed_step[ i ].delay_minutes )
+         << QString( "  Scans          : %1" ).arg( speed_step[ i ].scans )
+         << QString( "  Acceleration   : %1" ).arg( speed_step[ i ].acceleration )
+         << QString( "  Rotor Speed    : %1" ).arg( speed_step[ i ].rotorspeed )
+         << QString( "  Accel Flag     : %1" ).arg( speed_step[ i ].acceleration_flag )
+         << QString( "  Omega2t First  : %1" ).arg( speed_step[ i ].w2t_first )
+         << QString( "  Omega2t Last   : %1" ).arg( speed_step[ i ].w2t_last )
+         << QString( "  Time First     : %1" ).arg( speed_step[ i ].time_first )
+         << QString( "  Time Last      : %1" ).arg( speed_step[ i ].time_last )
+         << QString( "  Set Speed      : %1" ).arg( speed_step[ i ].set_speed )
+         << QString( "  Average Speed  : %1" ).arg( speed_step[ i ].avg_speed )
+         << QString( "  Speed StdDev   : %1" ).arg( speed_step[ i ].speed_stddev )
+         ;
+   }
+   qsl
+      << "================================================================================"
+      ;
+
+   return qsl;
+}
+
