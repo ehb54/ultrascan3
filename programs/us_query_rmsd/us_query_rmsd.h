@@ -28,14 +28,15 @@ class US_QueryRmsd : public US_Widgets{
     QStringList allChannel;
     QStringList allLambda;
     QStringList allEdit;
+    QVector<int> allEditIds;
     QStringList allAnalysis;
     QStringList allMethod;
     QVector<double> allRmsd;
     QVector<US_Model *> allModel;
     QVector<int> selIndex;
-    QMap<int, US_DataIO::EditedData*> editData;
-    QMap<int, US_DataIO::RawData*> rawData;
-    QMap<int, int> allEditDataMap;
+    QMap<int, US_DataIO::EditedData> editData;  //DB edit id -> EditedData
+//    QMap<int, US_DataIO::RawData*> rawData;      //DB edit id -> RawData
+//    QMap<int, int> allEditDataMap;  // id of allRmsd -> DB edit id
     int n_data;
 
     QStringList methodList;
@@ -55,12 +56,12 @@ class US_QueryRmsd : public US_Widgets{
     QComboBox *cb_method;
     QLineEdit *le_threshold;
 
-    void check_connection(void);
+    bool check_connection(void);
     void clear_data(void);
     bool check_combo_content(QComboBox*, QString&);
     void highlight(void);
     bool load_model(QString, US_Model*);
-    bool loadData(QVector<int>&);
+    bool loadData(void);
 
     private slots:
     void load_runid(void);

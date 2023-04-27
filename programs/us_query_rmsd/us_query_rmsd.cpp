@@ -144,15 +144,16 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     connect(le_threshold, SIGNAL(editingFinished()), this, SLOT(new_threshold()));
 }
 
-void US_QueryRmsd::check_connection(){
+bool US_QueryRmsd::check_connection(){
 
     QString error;
     dbCon->connect(pw.getPasswd(), error);
     if (dbCon->isConnected()){
         QStringList DB   = US_Settings::defaultDB();
         DbgLv(1) << DB;
-    }
-    return;
+        return true;
+    } else
+        return false;
 }
 
 void US_QueryRmsd::clear_data(){
@@ -170,19 +171,20 @@ void US_QueryRmsd::clear_data(){
     }
     allModel.clear();
     selIndex.clear();
-    allEditDataMap.clear();
-    QMapIterator<int, US_DataIO::EditedData*> ite(editData);
-    while (ite.hasNext()) {
-        ite.next();
-        delete ite.value();
-    }
+//    allEditDataMap.clear();
+    allEditIds.clear();
+//    QMapIterator<int, US_DataIO::EditedData*> ite(editData);
+//    while (ite.hasNext()) {
+//        ite.next();
+//        delete ite.value();
+//    }
     editData.clear();
-    QMapIterator<int, US_DataIO::RawData*> itr(rawData);
-    while (itr.hasNext()) {
-        itr.next();
-        delete itr.value();
-    }
-    rawData.clear();
+//    QMapIterator<int, US_DataIO::RawData*> itr(rawData);
+//    while (itr.hasNext()) {
+//        itr.next();
+//        delete itr.value();
+//    }
+//    rawData.clear();
 
 
     editList.clear();
@@ -200,7 +202,8 @@ void US_QueryRmsd::load_runid(){
     selrun->exec();
     if (runList.size() == 0)
         return;
-    check_connection();
+    if (! check_connection())
+        return;
 
     QString runId = runList.at(0);
 
@@ -212,55 +215,55 @@ void US_QueryRmsd::load_runid(){
     qDebug() << q;
 
     dbCon->query( q );
-    QVector<int> editIDs;
-    int counter = 0;
+
+    QStringList modelIDs_tmp;
+    QVector<int> editIDs_tmp;
     if ( dbCon->lastErrno() == US_DB2::OK ){
-        clear_data();
-        while (dbCon->next()) {
-            US_Model *model = new US_Model();
-            bool st = load_model(dbCon->value(0).toString(), model);
-            if (st){
-                QStringList list1 = model->description.split(u'.');
-                QString cell = list1.at(1).at(0);
-                QString channel = list1.at(1).at(1);
-                QString lambda = list1.at(1).mid(2);
-                QStringList list2 = list1.at(2).split(u'_');
-                QString edit = list2.at(0);
-                QString analysis = list2.at(1);
-                QString method = list2.at(2);
-
-                allCell << cell;
-                allChannel << channel;
-                allLambda << lambda;
-                allEdit << edit;
-                allAnalysis << analysis;
-                allMethod << method;
-
-                if (! editList.contains(edit))
-                    editList << edit;
-
-                allRmsd << qSqrt(model->variance);
-
-                allModel << model;
-
-                bool ok;
-                int eId = dbCon->value(6).toInt(&ok);
-                if (ok){
-                    if (editIDs.contains(eId))
-                        editIDs << eId;
-                    allEditDataMap[counter] = eId;
-                } else {
-                    allEditDataMap[counter] = -1;
-                }
-                counter++;
-            }
+        while (dbCon->next()){
+            modelIDs_tmp << dbCon->value(0).toString();
+            editIDs_tmp << dbCon->value(6).toInt();
         }
     }else{
         QMessageBox::warning(this, "Error", dbCon->lastError());
         return;
     }
+    clear_data();
+
+    for (int i = 0; i < modelIDs_tmp.size(); i++){
+        US_Model *model = new US_Model();
+        int state = model->load(modelIDs_tmp.at(i), dbCon);
+        if (state == US_DB2::OK){
+            QStringList list1 = model->description.split(u'.');
+            QString cell = list1.at(1).at(0);
+            QString channel = list1.at(1).at(1);
+            QString lambda = list1.at(1).mid(2);
+            QStringList list2 = list1.at(2).split(u'_');
+            QString edit = list2.at(0);
+            QString analysis = list2.at(1);
+            QString method = list2.at(2);
+
+            allCell << cell;
+            allChannel << channel;
+            allLambda << lambda;
+            allEdit << edit;
+            allAnalysis << analysis;
+            allMethod << method;
+
+            if (! editList.contains(edit))
+                editList << edit;
+
+            allRmsd << qSqrt(model->variance);
+
+            allModel << model;
+            allEditIds << editIDs_tmp.at(i);
+        } else {
+            delete model;
+        }
+
+    }
+
     n_data = allRmsd.size();
-    loadData(editIDs);
+    loadData();
 
     editList.sort();
 
@@ -277,6 +280,8 @@ void US_QueryRmsd::load_runid(){
 }
 
 bool US_QueryRmsd::load_model(QString mID, US_Model *model){
+    if (! check_connection())
+        return false;
     int  rc      = 0;
     qDebug() << "ModelID to retrieve: -- " << mID;
     rc   = model->load( mID , dbCon );
@@ -315,9 +320,10 @@ bool US_QueryRmsd::load_model(QString mID, US_Model *model){
 }
 
 
-bool US_QueryRmsd::loadData( QVector<int>& editIDs){
-    rawData.clear();
-    editData.clear();
+bool US_QueryRmsd::loadData(){
+
+    if (! check_connection())
+        return false;
 
 //    US_Passwd   pw;
 //    US_DB2* db = new US_DB2( pw.getPasswd() );
@@ -337,10 +343,16 @@ bool US_QueryRmsd::loadData( QVector<int>& editIDs){
     if (! temp_dir.isValid())
         return false;
     QDir dir(temp_dir.path());
-    QFileInfo efile(dir, tr("edit.xml"));
-    QFileInfo rfile(dir, tr("data.auc"));
-    rawData.clear();
-    foreach (int eId, editIDs) {
+    QString efn = "sample.000.RI.1.A.280.xml";
+    QString rfn = "sample.RI.1.A.280.auc";
+    QFileInfo efile(dir, efn);
+    QFileInfo rfile(dir, rfn);
+    editData.clear();
+    QVector<int> elist;
+    foreach (int eId, allEditIds) {
+        if (elist.contains(eId))
+            continue;
+        elist << eId;
         QStringList query;
         query << "get_editedData" << QString::number(eId);
         dbCon->query(query);
@@ -350,15 +362,18 @@ bool US_QueryRmsd::loadData( QVector<int>& editIDs){
                 rId = dbCon->value(0).toInt();
         }else{
             QMessageBox::warning(this, "Error", dbCon->lastError());
+//            rawData[eId] = NULL;
+            continue;
         }
         dbCon->readBlobFromDB(efile.absoluteFilePath(), "download_editData", eId);
         dbCon->readBlobFromDB(rfile.absoluteFilePath(), "download_aucData", rId);
-        US_DataIO::RawData* rdata;
+//        US_DataIO::RawData* rdata;
         US_DataIO::EditedData edata;
-        US_DataIO::readEdits(efile.absoluteFilePath(), edata);
+        US_DataIO::loadData(dir.absolutePath(), efn, edata);
+        editData[eId] = edata;
     }
 
-
+    dir.removeRecursively();
 
 //    int rID=0;
 //    QString rfilename;
