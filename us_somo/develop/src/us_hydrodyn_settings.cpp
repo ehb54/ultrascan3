@@ -1610,6 +1610,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.crysol_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.crysol_hydration_shell_contrast );
       parameters[ "saxs_options.crysol_default_load_difference_intensity" ] = QString( "%1" ).arg( saxs_options.crysol_default_load_difference_intensity );
       parameters[ "saxs_options.crysol_version_26" ] = QString( "%1" ).arg( saxs_options.crysol_version_26 );
+      parameters[ "saxs_options.crysol_version_3" ] = QString( "%1" ).arg( saxs_options.crysol_version_3 );
       parameters[ "saxs_options.fast_bin_size" ] = QString( "%1" ).arg( saxs_options.fast_bin_size );
       parameters[ "saxs_options.fast_modulation" ] = QString( "%1" ).arg( saxs_options.fast_modulation );
       parameters[ "saxs_options.compute_saxs_coeff_for_bead_models" ] = QString( "%1" ).arg( saxs_options.compute_saxs_coeff_for_bead_models );
@@ -2108,6 +2109,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.crysol_hydration_shell_contrast" ) ) saxs_options.crysol_hydration_shell_contrast = parameters[ "saxs_options.crysol_hydration_shell_contrast" ].toFloat();
    if ( parameters.count( "saxs_options.crysol_default_load_difference_intensity" ) ) saxs_options.crysol_default_load_difference_intensity = parameters[ "saxs_options.crysol_default_load_difference_intensity" ] == "1";
    if ( parameters.count( "saxs_options.crysol_version_26" ) ) saxs_options.crysol_version_26 = parameters[ "saxs_options.crysol_version_26" ] == "1";
+   if ( parameters.count( "saxs_options.crysol_version_3" ) ) saxs_options.crysol_version_3 = parameters[ "saxs_options.crysol_version_3" ] == "1";
    if ( parameters.count( "saxs_options.fast_bin_size" ) ) saxs_options.fast_bin_size = parameters[ "saxs_options.fast_bin_size" ].toFloat();
    if ( parameters.count( "saxs_options.fast_modulation" ) ) saxs_options.fast_modulation = parameters[ "saxs_options.fast_modulation" ].toFloat();
    if ( parameters.count( "saxs_options.compute_saxs_coeff_for_bead_models" ) ) saxs_options.compute_saxs_coeff_for_bead_models = parameters[ "saxs_options.compute_saxs_coeff_for_bead_models" ] == "1";
@@ -3110,7 +3112,8 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.sh_fibonacci_grid_order = 17;
    saxs_options.crysol_hydration_shell_contrast = 0.03f;
    saxs_options.crysol_default_load_difference_intensity = true;
-   saxs_options.crysol_version_26 = true;
+   saxs_options.crysol_version_26 = false;
+   saxs_options.crysol_version_3 = false;
 
    saxs_options.fast_bin_size = 0.5f;
    saxs_options.fast_modulation = 0.23f;

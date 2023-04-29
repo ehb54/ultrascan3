@@ -944,7 +944,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       "bin"
 #endif
       + SLASH
-      + "crysol" 
+      + ( our_saxs_options->crysol_version_3 ? "crysol3" : "crysol" )
 #if defined(WIN32)
       + ".exe"
 #endif      
@@ -1353,59 +1353,47 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    } else {
       crysol = new QProcess( this );
       crysol->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-      crysol->addArgument( prog );
-
-      crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
-
-      crysol->addArgument( "/sm" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
-
-      crysol->addArgument( "/ns" );
-      crysol->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-
-      crysol->addArgument( "/dns" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->water_e_density ) );
-
-      crysol->addArgument( "/dro" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
-
-      crysol->addArgument( "/lm" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
-      
-      crysol->addArgument( "/fb" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
-
-      if ( our_saxs_options->crysol_explicit_hydrogens )
       {
-         crysol->addArgument( "/eh" );
-      }
-#else
-      {
-         args
-            << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb )
+         if ( our_saxs_options->crysol_version_3 ) {
+            args
+               << QString("--smax=%1").arg( our_saxs_options->end_q )
+               << QString("--ns=%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
+               << QString("--dns=%1").arg( our_saxs_options->water_e_density )
+               << QString("--dro=%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
+               << QString("--lm=%1").arg( our_saxs_options->sh_max_harmonics )
+               << QString("--fb=%1").arg( our_saxs_options->sh_fibonacci_grid_order )
+               ;
 
-            << "/sm"
-            <<  QString("%1").arg( our_saxs_options->end_q )
+            if ( our_saxs_options->crysol_explicit_hydrogens ) {
+               args << "--explicit-hydrogens";
+            }
+            args << QFileInfo( use_pdb ).fileName();
+         } else {
+            args
+               << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb )
+
+               << "/sm"
+               <<  QString("%1").arg( our_saxs_options->end_q )
          
-            << "/ns"
-            << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
+               << "/ns"
+               << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
 
-            << "/dns"
-            << QString("%1").arg( our_saxs_options->water_e_density )
+               << "/dns"
+               << QString("%1").arg( our_saxs_options->water_e_density )
 
-            << "/dro"
-            << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
+               << "/dro"
+               << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
 
-            << "/lm"
-            << QString("%1").arg( our_saxs_options->sh_max_harmonics )
+               << "/lm"
+               << QString("%1").arg( our_saxs_options->sh_max_harmonics )
       
-            << "/fb"
-            << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order )
-            ;
+               << "/fb"
+               << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order )
+               ;
 
-         if ( our_saxs_options->crysol_explicit_hydrogens ) {
-            args << "/eh";
+            if ( our_saxs_options->crysol_explicit_hydrogens ) {
+               args << "/eh";
+            }
          }
 
          if ( U_EXPT &&
@@ -1429,7 +1417,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             }
          }
       }
-#endif
    }
    connect( crysol, SIGNAL(readyReadStandardOutput()), this, SLOT(crysol_readFromStdout()) );
    connect( crysol, SIGNAL(readyReadStandardError()), this, SLOT(crysol_readFromStderr()) );
@@ -1672,7 +1659,12 @@ void US_Hydrodyn_Saxs::crysol_finishup()
       type = ".fit";
    }
 
-   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00" + type;
+   QString created_dat;
+   if ( our_saxs_options->crysol_version_3 ) {
+      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + type;
+   } else {
+      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + "00" + type;
+   }
 
    // us_qdebug( "created_dat: " + created_dat );
 

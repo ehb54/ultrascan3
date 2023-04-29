@@ -307,6 +307,7 @@ struct saxs_options
 
    bool    crysol_default_load_difference_intensity;
    bool    crysol_version_26;
+   bool    crysol_version_3;
 
    // bead model control
    bool    compute_saxs_coeff_for_bead_models;
