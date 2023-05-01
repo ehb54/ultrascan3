@@ -6,6 +6,7 @@
 #include "us_db2.h"
 #include "us_model.h"
 #include "us_dataIO.h"
+#include "us_noise.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -32,11 +33,13 @@ class US_QueryRmsd : public US_Widgets{
     QStringList allAnalysis;
     QStringList allMethod;
     QVector<double> allRmsd;
-    QVector<US_Model *> allModel;
+    QVector<int> allModelIDs;
     QVector<int> selIndex;
+    QMap<int, US_Model *> Models;  //DB model id -> Model
+    QMap<int, US_Noise *> TI_Noise;  //DB model id -> TI_Noise
+    QMap<int, US_Noise *> RI_Noise;  //DB model id -> RI_Noise
     QMap<int, US_DataIO::EditedData> editData;  //DB edit id -> EditedData
 //    QMap<int, US_DataIO::RawData*> rawData;      //DB edit id -> RawData
-//    QMap<int, int> allEditDataMap;  // id of allRmsd -> DB edit id
     int n_data;
 
     QStringList methodList;
@@ -60,8 +63,9 @@ class US_QueryRmsd : public US_Widgets{
     void clear_data(void);
     bool check_combo_content(QComboBox*, QString&);
     void highlight(void);
-    bool load_model(QString, US_Model*);
+//    bool load_model(QString, US_Model*);
     bool loadData(void);
+    bool loadNoises(void);
 
     private slots:
     void load_runid(void);
