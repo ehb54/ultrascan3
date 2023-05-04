@@ -329,11 +329,13 @@ void US_Spectrum::load_target()
    {
       fileName = dialog.selectedFiles().first();
       qDebug() << "filename: " << fileName;
-      load_spectra(w_target, fileName);
-      QFileInfo fi;
-      fi.setFile(fileName);
-      w_target.filenameBasis = fi.baseName();
-      //lw_target->insertItem(0, w_target.filenameBasis);
+      if (load_spectra(w_target, fileName)){
+        QFileInfo fi;
+        fi.setFile(fileName);
+        w_target.filenameBasis = fi.baseName();
+        //lw_target->insertItem(0, w_target.filenameBasis);
+      }
+
    }
    
    plot_target();
@@ -376,7 +378,7 @@ void US_Spectrum:: plot_target()
 }
 
 //read spectrum
-void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString &fileName)
+bool US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString &fileName)
 {
    QString line;
    QString str1;
@@ -391,42 +393,75 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
    //   strList.resize(0);
    if(f.open(QIODevice::ReadOnly | QIODevice::Text))
    {
-     QTextStream ts2(&f); 
-     ts2.readLine();      // description
-     ts2.readLine();
-     QRegExp separator("(\\s+|,)");
-     
-     while(!ts2.atEnd())
-	{
-	  str1 = ts2.readLine();
-	  str1 = str1.simplified();
-	  
-	  strList.push_back(str1);
-	}
-      f.close();
-      
-      qSort( strList );
-      //qDebug() << "strLIST_size: " << strList.size();
-      for ( int i = 0; i < strList.size(); i++)
-	{
-	  //qDebug() << strList[i]; 
-	  temp_x = strList[i].split(QRegExp(separator), QString::SkipEmptyParts)[0].toDouble();
-	  temp_y = strList[i].split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble();
-	  
-	  profile.extinction.push_back(temp_y);
-	  profile.wvl.push_back(temp_x);
-	}
-      profile.lambda_min = profile.wvl[0];
-      profile.lambda_max = profile.wvl.last();
+     QTextStream ts2(&f);
+     if ( fileName.endsWith(".dsp", Qt::CaseInsensitive) ){
+        for(int i = 0; i < 5; i++) ts2.readLine();
+        double wl_min = ts2.readLine().toDouble();
+        double wl_max = ts2.readLine().toDouble();
+        double dwl = ts2.readLine().toInt();
+        int np = ts2.readLine().toInt();
+        while(!ts2.atEnd() && ts2.readLine().simplified().compare("#DATA") != 0){}
 
-      //qDebug() << "min/max: " << profile.lambda_min << "/" << profile.lambda_max;
+        QVector<double> xx;
+        QVector<double> yy;
+        for (int i = 0; i < np; i++){
+            if (ts2.atEnd()){
+                f.close();
+                QMessageBox::warning(this, tr("Error!"),
+                                     tr("Error in reading file:\n%1").arg(fileName));
+                profile.filename.clear();
+                profile.filenameBasis.clear();
+                return false;
+            }
+            xx << wl_min + i * dwl;
+            yy << ts2.readLine().toDouble();
+        }
+        profile.wvl << xx;
+        profile.extinction << yy;
+
+        profile.lambda_min = wl_min;
+        profile.lambda_max = wl_max;
+
+     } else {
+
+        ts2.readLine();      // description
+        ts2.readLine();
+        QRegExp separator("(\\s+|,)");
+
+        while(!ts2.atEnd())
+        {
+            str1 = ts2.readLine();
+            str1 = str1.simplified();
+
+            strList.push_back(str1);
+        }
+        f.close();
+
+        qSort( strList );
+        //qDebug() << "strLIST_size: " << strList.size();
+        for ( int i = 0; i < strList.size(); i++)
+        {
+            //qDebug() << strList[i];
+            temp_x = strList[i].split(QRegExp(separator), QString::SkipEmptyParts)[0].toDouble();
+            temp_y = strList[i].split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble();
+
+            profile.extinction.push_back(temp_y);
+            profile.wvl.push_back(temp_x);
+        }
+        profile.lambda_min = profile.wvl[0];
+        profile.lambda_max = profile.wvl.last();
+
+        //qDebug() << "min/max: " << profile.lambda_min << "/" << profile.lambda_max;
+     }
    }
    else
    {
       QMessageBox mb;
       mb.setWindowTitle(tr("Attention:"));
       mb.setText("Could not read the wavelength data file:\n" + fileName);
+      return false;
    }
+   return true;
 }
 
 void US_Spectrum::new_value(const QwtDoublePoint& p)
