@@ -410,6 +410,7 @@ void US_ViewSpectrum::save_csv(){
   QFile file{fileName};
   if (file.open(QIODevice::WriteOnly)) {
     QTextStream outStream{&file};
+    outStream << tr("Lamda,Data\n");
     for (int i = 0; i < x.size(); i++){
         outStream << QString::number(x.at(i)) << ",";
         outStream << QString::number(y.at(i)) << "\n";
