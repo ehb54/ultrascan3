@@ -5454,7 +5454,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   operation_types_live_update_ts[ "STOP" ] = stopOptimats;
   operation_types_live_update_ts[ "SKIP" ] = skipOptimats;
 
-  if ( !stopOptimaJson.isEmpty() && !skipOptimaJson.isEmpty() )
+  if ( !stopOptimaJson.isEmpty() || !skipOptimaJson.isEmpty() )
     html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE stage)</h3>" );
   
   for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
@@ -5520,6 +5520,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   )
 	.arg( status_map[ "Remote Operation" ][ "type"] )      //1
 	.arg( operation_types_live_update_ts[ im.key() ] )     //2
+	;
+
+      QString t_comment = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Reason for Operation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:          %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( t_comment )                                      //1
 	;
     }
   html_assembled += tr("<hr>");
@@ -5765,12 +5780,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
 	{
 	  
-	  QString mfa_value    = mfa.value();
-	  QString pos          = mfa_value.split(", by")[0];
-	  QString performed_by = mfa_value.split(", by")[1];
-	  QStringList whenList = mfa_value.split(" ;");
-	  QString when         = (whenList.size() > 1) ? whenList[1] : "N/A";
-	  
+	  QString mfa_value         = mfa.value();
+	  QString pos               = mfa_value.split(", by")[0];
+	  QString performed_by_time = mfa_value.split(", by")[1];
+
+	  QString performed_by, when;
+	  if ( performed_by_time.contains(";") )
+	    {
+	      performed_by      = performed_by_time.split(";")[0];
+	      when              = performed_by_time.split(";")[1];  
+	    }
+	  else
+	    {
+	      performed_by = performed_by_time;
+	      when         = "N/A";
+	    }
 	  html_assembled += tr(			       
 			       "<tr>"
 			       "<td> Channel:  %1, </td>"
@@ -5987,6 +6011,10 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  skipOptimats   = db.value( 12 ).toString();
 	}
     }
+
+  qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson -- "
+	   << stopOptimaJson
+	   << skipOptimaJson;
 }
 
 //Parse autoflowStatus Analysis Json
@@ -6028,7 +6056,7 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
       
       qDebug() << "statusJson key, value: " << key << value;
       
-      if ( key == "Person" )  //import || edit
+      if ( key == "Person" )  //live_update || import || edit
 	{	  
 	  QJsonArray json_array = value.toArray();
 	  QMap< QString, QString > person_map;
@@ -6074,6 +6102,10 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
       if ( key == "Remote Operation" )  //Live Update's remote operations [SKIP | STOP]
 	{
 	  status_map[ key ][ "type" ] = value.toString();
+	}
+      if ( key == "Comment" )           //Live Update's remote operations [SKIP | STOP]
+	{
+	  status_map[ key ][ "comment" ] = value.toString();
 	}
       
     }
