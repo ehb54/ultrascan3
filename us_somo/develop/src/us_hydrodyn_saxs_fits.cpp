@@ -277,6 +277,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
+   QRegularExpression rx2( "^(.*)(\\d+)\\.[^.]+$" );
 
    vector < int > contrib_to_plot;
 
@@ -313,8 +314,14 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
             nnls_csv_data <<
                QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
          } else {
-            nnls_csv_data <<
-               QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+            QRegularExpressionMatch match = rx2.match( model_name );
+            if ( match.hasMatch() ) {
+               nnls_csv_data <<
+                  QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
+            } else {
+               nnls_csv_data <<
+                  QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+            }
          }
       }      
 
@@ -935,6 +942,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
+   QRegularExpression rx2( "^(.*)(\\d+)\\.[^.]+$" );
 
    vector < int > contrib_to_plot;
 
@@ -996,8 +1004,14 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
             nnls_csv_data <<
                QString("\"%1\",%2,%3,%4,%5").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
          } else {
-            nnls_csv_data <<
-               QString("\"%1\",,%2,%3,%4").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
+            QRegularExpressionMatch match = rx2.match( model_name );
+            if ( match.hasMatch() ) {
+               nnls_csv_data <<
+                  QString("\"%1\",%2,%3,%4,%5").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
+            } else {
+               nnls_csv_data <<
+                  QString("\"%1\",,%2,%3,%4").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
+            }
          }
       }      
 
