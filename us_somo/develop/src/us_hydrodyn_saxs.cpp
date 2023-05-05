@@ -7592,6 +7592,65 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
    }
 
 
+   // regrid question ...
+
+   {
+      switch( QMessageBox::question(this
+                                    ,windowTitle() + " : Rebin" 
+                                    ,QString(us_tr("Do you wish to rebin the selected target %1?") )
+                                    .arg( grid_target )
+                                    ) ) {
+      case QMessageBox::Yes :
+         {
+            bool ok;
+            int intervals = US_Static::getInteger(
+                                                  windowTitle() + " : Log Rebin Rebin" 
+                                                  ,QString( us_tr( 
+                                                                  "Enter the number of log bins"
+                                                                   ) )
+                                                  ,100
+                                                  ,10
+                                                  ,10000
+                                                  ,1
+                                                  ,&ok
+                                                  ,this 
+                                                  );
+            if ( ok ) {
+               vector < double > rebin_q;
+               vector < double > rebin_I;
+               vector < double > rebin_e;
+               QString errors;
+
+               if (
+                   log_rebin(
+                             intervals
+                             ,plotted_q[ pos ]
+                             ,plotted_I[ pos ]
+                             ,plotted_I_error[ pos ]
+                             ,rebin_q
+                             ,rebin_I
+                             ,rebin_e
+                             ,errors
+                             )
+                   ) {
+                  QString new_target = grid_target;
+                  new_target.replace( QRegularExpression( "\\.[^.]+$" ), "" );
+                  plot_one_iqq( rebin_q, rebin_I, rebin_e, QString( "%1-lb%2" ).arg( new_target ).arg( intervals ) );
+                  set_guinier();
+               } else {
+                  QMessageBox::critical( this
+                                         ,windowTitle() + " : Log Rebin Rebin"
+                                         ,errors );
+               }
+            }
+            return;
+         }
+         break;
+      default:
+         break;
+      }
+   }
+
    int last_result = 1;
 
    float save_start_q      = our_saxs_options->start_q;

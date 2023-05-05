@@ -1759,3 +1759,109 @@ bool US_Hydrodyn_Saxs::compute_rg_to_progress(
       return false;
    }
 }
+
+
+bool US_Hydrodyn_Saxs::log_rebin(
+                                 int intervals
+                                 ,const vector <double> & q
+                                 ,const vector <double> & I
+                                 ,vector <double> & rebin_q
+                                 ,vector <double> & rebin_I
+                                 ,QString & errors
+                                 ) {
+   vector < double > e;
+   vector < double > rebin_e;
+
+   return log_rebin( intervals, q, I, e, rebin_q, rebin_I, rebin_e, errors );
+}
+   
+
+bool US_Hydrodyn_Saxs::log_rebin(
+                                 int intervals
+                                 ,const vector <double> & q
+                                 ,const vector <double> & I
+                                 ,const vector <double> & e
+                                 ,vector <double> & rebin_q
+                                 ,vector <double> & rebin_I
+                                 ,vector <double> & rebin_e
+                                 ,QString & errors
+                                 ) {
+   errors = "";
+
+   errors = "not yet implemented";
+
+   if ( !q.size() ) {
+      errors = "log_rebin(): empty q vector";
+      return false;
+   }
+   
+   if ( q.size() != I.size() ) {
+      errors = "log_rebin(): q I vector size mismatch";
+      return false;
+   }
+
+   vector < double > use_e = e;
+   
+   if ( use_e.size() < q.size() ) {
+      use_e.resize( q.size(), 0 );
+   }
+
+   vector < double > bins;
+   double start = q[0];
+   double end   = q.back();
+   
+   // setup bins
+   {
+      int start_interval_val = 1;
+      int end_interval_val   = intervals + 1;
+      double min_log         = log( start );
+      double max_log         = log( end );
+      double scale           = (max_log - min_log) / (end_interval_val - start_interval_val);
+   
+      for ( int i = 1; i <= intervals + 1; ++i )  {
+         bins.push_back( exp( min_log + scale * ( i - start_interval_val ) ) );
+      }
+   }
+
+   // rebin data & return
+
+   rebin_q.clear();
+   rebin_I.clear();
+   rebin_e.clear();
+
+   int bin = 0;
+
+   double qsum  = 0;
+   double Isum  = 0;
+   double esum2 = 0;
+   int    count = 0;
+   
+   for ( int i = 0; i < (int) q.size() && bin < (int) bins.size(); ++i ) {
+      if ( q[i] > bins[ bin ] ) {
+         // add any points previously collected 
+         if ( count ) {
+            rebin_q.push_back( qsum / count );
+            rebin_I.push_back( Isum / count );
+            rebin_e.push_back( sqrt( esum2 ) / count );
+            qsum  = 0;
+            Isum  = 0;
+            esum2 = 0;
+            count = 0;
+         }
+         ++bin;
+      }
+      qsum += q[i];
+      Isum += I[i];
+      esum2 += use_e[i] * use_e[i];
+      ++count;
+   }
+
+   if ( count ) {
+      rebin_q.push_back( qsum / count );
+      rebin_I.push_back( Isum / count );
+      rebin_e.push_back( sqrt( esum2 ) / count );
+   }      
+
+   return true;
+}
+

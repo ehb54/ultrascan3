@@ -472,6 +472,26 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool write_temp_pdb_selected_models( QString & error_msg );
       QString last_selected_pdb_filename;
 
+      bool log_rebin(
+                     int intervals
+                     ,const vector <double> & q
+                     ,const vector <double> & I
+                     ,const vector <double> & e
+                     ,vector <double> & rebin_q
+                     ,vector <double> & rebin_I
+                     ,vector <double> & rebin_e
+                     ,QString & errors
+                     );                     
+
+      bool log_rebin(
+                     int intervals
+                     ,const vector <double> & q
+                     ,const vector <double> & I
+                     ,vector <double> & rebin_q
+                     ,vector <double> & rebin_I
+                     ,QString & errors
+                     );                     
+
       QBoxLayout * qbl_plots;
       QBoxLayout * qbl_resid;
 
