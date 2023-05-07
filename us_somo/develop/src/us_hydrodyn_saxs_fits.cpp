@@ -277,7 +277,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
-   QRegularExpression rx2( "^(.*)(\\d+)\\.[^.]+$" );
+   QRegularExpression rx2( "^(.*)\\D(\\d+)\\.[^.]+$" );
 
    vector < int > contrib_to_plot;
 
@@ -317,7 +317,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
             QRegularExpressionMatch match = rx2.match( model_name );
             if ( match.hasMatch() ) {
                nnls_csv_data <<
-                  QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
+                  QString("\"%1\",%2,%3").arg(model_name).arg(match.captured(2)).arg(rescaled_x[i]);
             } else {
                nnls_csv_data <<
                   QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
@@ -942,7 +942,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
-   QRegularExpression rx2( "^(.*)(\\d+)\\.[^.]+$" );
+   QRegularExpression rx2( "^(.*)\\D(\\d+)\\.[^.]+$" );
 
    vector < int > contrib_to_plot;
 
@@ -1007,7 +1007,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
             QRegularExpressionMatch match = rx2.match( model_name );
             if ( match.hasMatch() ) {
                nnls_csv_data <<
-                  QString("\"%1\",%2,%3,%4,%5").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
+                  QString("\"%1\",%2,%3,%4,%5").arg(model_name).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
             } else {
                nnls_csv_data <<
                   QString("\"%1\",,%2,%3,%4").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
@@ -1814,12 +1814,12 @@ bool US_Hydrodyn_Saxs::log_rebin(
    {
       int start_interval_val = 1;
       int end_interval_val   = intervals + 1;
-      double min_log         = log( start );
-      double max_log         = log( end );
+      double min_log         = log2( start );
+      double max_log         = log2( end );
       double scale           = (max_log - min_log) / (end_interval_val - start_interval_val);
    
       for ( int i = 1; i <= intervals + 1; ++i )  {
-         bins.push_back( exp( min_log + scale * ( i - start_interval_val ) ) );
+         bins.push_back( pow(2, min_log + scale * ( i - start_interval_val ) ) );
       }
    }
 
