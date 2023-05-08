@@ -519,66 +519,100 @@ bool US_Extinction::loadScan(const QString &fileName)
    {
       int row = 0;
       QTextStream ts(&f);
-      //wls.description = ts.readLine();
-      QString description_str = ts.readLine();
-      //wls.description = description_str;
-            
-      while(!ts.atEnd())
-      {
-         bool flag1 = true;
-   
-         //true while text information is not a number
-         if(flag1 && !ts.atEnd())
-         {
-            str1 = ts.readLine();
-         }
-         else
-         {
-            flag1 = false;
-         }
-         str1 = str1.simplified();
-         str1 = str1.replace("\"", " ");
-         str1 = str1.replace(",", " ");
-         strl = str1.split(" ");
+      QString description_str;
 
-	 temp_x = strl.at(0).toFloat();
-	 int strl_size = strl.size();
+      if ( fileName.endsWith(".dsp", Qt::CaseInsensitive) ){
+        for(int i = 0; i < 3; i++) ts.readLine();
+        description_str = ts.readLine();
+        ts.readLine();
+        double wl_min = ts.readLine().toDouble();
+        ts.readLine().toDouble();
+        double dwl = ts.readLine().toInt();
+        int np = ts.readLine().toInt();
+        while(!ts.atEnd() && ts.readLine().simplified().compare("#DATA") != 0){}
 
-	 //temp_y = strl.at(1).toFloat();  //ALEXEY: here, reads only first column
+        for (int i = 0; i < np; i++){
+            if (ts.atEnd()){
+                f.close();
+                QMessageBox::warning(this, tr("Error!"),
+                                     tr("Error in reading file:\n%1").arg(fileName));
+                Wvs_to_descr_map [ description_str ]. v_readings.clear();
+                return false;
+            }
 
-	 /*
-	   go for all columns; 
-	   check if it's a number (regex ?); 
-	   store y-coor into a temporary array QVector< float > << push( temp_y )
-	   store wavelength scans into array   
-	 */
-	 
-	 for ( int i=1; i < strl_size; ++i )    //Start from i=1 (all Y's)
-	   {
-	     temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
+            float temp_x = wl_min + i * dwl;
+            float temp_y = ts.readLine().toDouble();
+            Reading r = {temp_x, temp_y};
 
-	     if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
-	       {
-		 qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
-		 Reading r = {temp_x, temp_y};
+            Wvs_to_descr_map [ description_str ]. v_readings.push_back(r);
 
-		 //wls.v_readings.push_back(r);
+            lambda_max = max(temp_x, lambda_max);
+            lambda_min = min (temp_x, lambda_min);
+        }
 
-		 QString Wls_desc_curr;
+      } else {
+        //wls.description = ts.readLine();
+        description_str = ts.readLine();
+        //wls.description = description_str;
 
-		 if ( strl_size > 1 ) 
-		   Wls_desc_curr = "Column " + QString::number( i );
-		 else
-		   Wls_desc_curr = description_str;
-		   
+        while(!ts.atEnd())
+        {
+            bool flag1 = true;
 
-		 Wvs_to_descr_map [ Wls_desc_curr ]. v_readings.push_back(r);
-		 
-		 lambda_max = max(temp_x, lambda_max);  
-		 lambda_min = min (temp_x, lambda_min);
-	       }
-	   }
+            //true while text information is not a number
+            if(flag1 && !ts.atEnd())
+            {
+                str1 = ts.readLine();
+            }
+            else
+            {
+                flag1 = false;
+            }
+            str1 = str1.simplified();
+            str1 = str1.replace("\"", " ");
+            str1 = str1.replace(",", " ");
+            strl = str1.split(" ");
+
+            temp_x = strl.at(0).toFloat();
+            int strl_size = strl.size();
+
+            //temp_y = strl.at(1).toFloat();  //ALEXEY: here, reads only first column
+
+            /*
+          go for all columns;
+          check if it's a number (regex ?);
+          store y-coor into a temporary array QVector< float > << push( temp_y )
+          store wavelength scans into array
+        */
+
+            for ( int i=1; i < strl_size; ++i )    //Start from i=1 (all Y's)
+            {
+                temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
+
+                if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
+                {
+                    qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
+                    Reading r = {temp_x, temp_y};
+
+                    //wls.v_readings.push_back(r);
+
+                    QString Wls_desc_curr;
+
+                    if ( strl_size > 1 )
+                        Wls_desc_curr = "Column " + QString::number( i );
+                    else
+                        Wls_desc_curr = description_str;
+
+
+                    Wvs_to_descr_map [ Wls_desc_curr ]. v_readings.push_back(r);
+
+                    lambda_max = max(temp_x, lambda_max);
+                    lambda_min = min (temp_x, lambda_min);
+                }
+            }
+        }
       }
+
       f.close();
       qDebug() << "Inside LOAD 1";
       
@@ -836,8 +870,8 @@ void US_Extinction::update_data(void)
        msg.exec();
        
        if (msg.clickedButton()==pContinue) {
-	 ct_coefficient->setValue(wvlnewref);
-	 ct_coefficient->setRange(lambda_min, lambda_max);
+        ct_coefficient->setValue(wvlnewref);
+        ct_coefficient->setRange(lambda_min, lambda_max);
 	 //ct_coefficient->setStyleSheet("border: 2px solid red");
        }
      }
