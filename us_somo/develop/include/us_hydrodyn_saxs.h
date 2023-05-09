@@ -492,6 +492,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                      ,QString & errors
                      );                     
 
+      bool last_pr_rebin_save(
+                              const QString & header
+                              ,const QString & rxstr
+                              ,QStringList & created_files
+                              );
+
       QBoxLayout * qbl_plots;
       QBoxLayout * qbl_resid;
 

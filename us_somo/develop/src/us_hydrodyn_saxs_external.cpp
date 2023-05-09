@@ -478,6 +478,63 @@ void US_Hydrodyn_Saxs::ift_readFromStderr()
    //  qApp->processEvents();
 }
    
+bool US_Hydrodyn_Saxs::last_pr_rebin_save(
+                                          const QString & header
+                                          ,const QString & rxstr
+                                          ,QStringList & created_files
+                                          ) {
+   vector < double > rebin_r;
+   // new bin
+   for ( double x = 0; x <= plotted_r.back().back(); x += our_saxs_options->bin_size ) {
+      rebin_r.push_back( x );
+   }
+   vector < double > rebin_pr;
+   vector < double > rebin_sd;
+
+   interpolate( plotted_r.back(), rebin_r, plotted_pr.back(), rebin_pr );
+   interpolate( plotted_r.back(), rebin_r, plotted_pr_error.back(), rebin_sd );
+               
+   // US_Vector::printvector3( "rebin'd r,pr,sd", rebin_r, rebin_pr, rebin_sd );
+
+   QString dest_rebin =
+      USglobal->config_list.root_dir
+      + "/somo/saxs/"
+      + QString( "%1" )
+      .arg( ift_last_processed ).replace( QRegExp( rxstr )
+                                          , QString("_bin%1_%2ift.dat" )
+                                          .arg( our_saxs_options->bin_size )
+                                          .arg( cb_normalize->isChecked() ? "normed_" : "" )
+                                          )
+      ;
+
+   qDebug() << "dest_rebin: " << dest_rebin;
+
+   QStringList rebin_pr_contents;
+   for ( int i = 0; i < (int)rebin_r.size(); ++i ) {
+      rebin_pr_contents << QString( "%1 %2 %3" )
+         .arg( rebin_r[i], 0, 'g', 9 )
+         .arg( rebin_pr[i], 0, 'g', 9 )
+         .arg( rebin_sd[i], 0, 'g', 9 )
+         ;
+   }
+
+   QString rebin_pr_out = header + rebin_pr_contents.join( "\n" ) + "\n";
+   if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+      dest_rebin = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest_rebin, 0, this );
+   }
+   {
+      QString error;
+      if ( !US_File_Util::putcontents( dest_rebin, rebin_pr_out, error ) ) {
+         editor_msg( "red", error );
+         return false;
+      } else {
+         created_files << dest_rebin;
+      }
+   }
+   return true;
+}
+
+
 void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
 {
    //   for ( int i = 0; i < 10000; i++ )
@@ -651,7 +708,9 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          } else {
             created_files << dest;
             if ( prcontents_normed.isEmpty() || !cb_normalize->isChecked() ) {
+               cb_normalize->setChecked( false );
                load_pr( false, dest, mw == -1e0 );
+               last_pr_rebin_save( header, rxstr, created_files );
             }
          }            
          if ( !prcontents_normed.isEmpty() ) {
@@ -669,6 +728,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
                } else {
                   load_pr( false, dest, mw == -1e0 );
                }
+               last_pr_rebin_save( header, rxstr, created_files );
             }
          }
       } else {
@@ -678,6 +738,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          } else {
             created_files << dest;
             load_pr( false, dest, mw == -1e0 );
+            last_pr_rebin_save( header, rxstr, created_files );
          }
       }
    }
