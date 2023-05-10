@@ -5524,7 +5524,7 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
    // Modify triples or cell/channels and wavelengths for specified excludes
    if ( selsiz > 0 )
      {
-       //check if there will be any data left
+       //check if there will be any data left: in principle, never realizes!!
        if ( (out_triples.size() - selsiz) <= 0 )
 	 {
 	   int stat     = QMessageBox::warning( this,
@@ -5585,7 +5585,13 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 								 "Otherwise, you should \"Cancel\".\n" ).arg( triple_name ).arg( celchn ),
 							     tr( "&Proceed" ), tr( "&Cancel" ) );
 		  
-		  if ( status != 0 ) return;
+		  if ( status != 0 )
+		    {
+		      //reset all .ecluded to false:
+		      for ( int trx = 0; trx < all_triples.size(); trx++ )
+			all_tripinfo[ trx ].excluded = false;
+		      return;
+		    }
 
 		  //Now check for remainig data using "cellchannel"
 		  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
@@ -5599,8 +5605,13 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 							       "with this program<br>"),
 							   tr( "&Proceed" ), tr( "&Cancel" ) );
 		      
-		      if ( stat != 0 ) 
-			return;
+		      if ( stat != 0 )
+			{
+			  //reset all .ecluded to false:
+			  for ( int trx = 0; trx < all_triples.size(); trx++ )
+			    all_tripinfo[ trx ].excluded = false;
+			  return;
+			}
 		      
 		      //delete autoflow record & return to Run Manager
 		      //delete_autoflow_record();
@@ -5630,6 +5641,10 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	    }
 	}
       //END of adiitional drop-out
+
+
+      
+      
       
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
@@ -5872,8 +5887,8 @@ void US_ConvertGui::drop_channel()
   QString chann  = lw_triple->currentItem()->text()
                     .section( "/", 1, 1 ).simplified();  // "A" or "B"  
 
-  //check if there will be any data left
-  if ( check_for_data_left( chann, "channel" ) <= 0 )
+  //check if there will be any data left && check if AUTO constructor
+  if ( us_convert_auto_mode && check_for_data_left( chann, "channel" ) <= 0 )
     {
       int stat     = QMessageBox::warning( this,
 					   tr( "All Data To Be Dropped" ),
@@ -5952,8 +5967,8 @@ void US_ConvertGui::drop_cellchan()
   QString celchn = lw_triple->currentItem()->text()
     .section( "/", 0, 1 ).simplified();  // "1 / A"
   
-  //check if there will be any data left
-  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
+  //check if there will be any data left && check if AUTO constructor
+  if ( us_convert_auto_mode && check_for_data_left( celchn, "cellchannel" ) <= 0 )
     {
       int stat     = QMessageBox::warning( this,
 					   tr( "All Data To Be Dropped" ),
