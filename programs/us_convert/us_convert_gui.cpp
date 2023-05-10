@@ -1146,6 +1146,8 @@ void US_ConvertGui::reset_auto( void )
    allData     .clear();
    outData     .clear();
    ExpData     .clear();
+
+   drop_operations. clear();
    if ( isMwl )
       mwl_data.clear();
    show_plot_progress = true;
@@ -5504,6 +5506,8 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
 // Drop selected triples
 void US_ConvertGui::drop_reference( void )
 {
+  qDebug() << "runType -- " << runType;
+  
    QStringList selected;
    QStringList celchns;
 
@@ -5642,9 +5646,25 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	}
       //END of adiitional drop-out
 
-
       
-      
+      //Add small dialog for reason / comment to triples' drop:
+      if ( us_convert_auto_mode )
+	{
+	  QString t_comment = comment_for_drop_dialog( "triple(s)" );
+	  if ( t_comment. isEmpty() )
+	    return;
+	  else
+	    {
+	      //write t_comment as follows:
+	      /** 
+		  QMap< QString, QMap < QString, QString > > drop_operations;
+		  drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
+	      **/
+	      drop_operations[ runType ][ "Triples" ] = t_comment;
+	    }
+	}
+      //record_live_update_status( "STOP", comment_text );
+       
       
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
@@ -5668,6 +5688,8 @@ DbgLv(1) << "DelTrip: bldout  RTN";
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
+
    
 }
 
@@ -5943,6 +5965,24 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
       }
    }
 
+   //Add small dialog for reason / comment to triples' drop:
+   if ( us_convert_auto_mode )
+     {
+       QString t_comment = comment_for_drop_dialog( "channel(s)" );
+       if ( t_comment. isEmpty() )
+	 return;
+       else
+	 {
+	   //write t_comment as follows:
+	   /** 
+	       QMap< QString, QMap < QString, QString > > drop_operations;
+	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
+	   **/
+	   drop_operations[ runType ][ "Channels" ] = t_comment;
+	 }
+     }
+   
+     
    build_output_data();        // Rebuild the output data controls
 
    build_lambda_ctrl();        // Rebuild lambda controls
@@ -5960,6 +6000,29 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
 }
+
+QString US_ConvertGui::comment_for_drop_dialog( QString drop_type )
+{
+  //Add small dialog for reason / comment to drop_type:
+  bool ok;
+  QString msg = QString(tr("Put a comment describing reason for ")) + drop_type + QString(tr(" DROP:"));
+  QString default_text = QString(tr("Reason for ")) + drop_type + QString(tr(" DROP:"));
+  QString title = QString(tr( "Reason for ")) + drop_type + QString(tr(" DROP" ));
+  QString comment_text = QInputDialog::getText( this,
+						title,
+						msg, QLineEdit::Normal, default_text, &ok );
+  
+  if ( !ok )
+    {
+      //Make sure that if user refused to provide comment, reset all:
+      comment_text . clear();
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	all_tripinfo[ trx ].excluded = false;
+    }
+
+  return comment_text;
+}
+
 
 // Drop the triples for the selected cell/channel ('Drop Selected Data')
 void US_ConvertGui::drop_cellchan()
@@ -6018,6 +6081,24 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
       }
    }
 
+   //Add small dialog for reason / comment to triples' drop:
+   if ( us_convert_auto_mode )
+     {
+       QString t_comment = comment_for_drop_dialog( "selected channel" );
+       if ( t_comment. isEmpty() )
+	 return;
+       else
+	 {
+	   //write t_comment as follows:
+	   /** 
+	       QMap< QString, QMap < QString, QString > > drop_operations;
+	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
+	   **/
+	   drop_operations[ runType ][ "Selected Channel" ] = t_comment;
+	 }
+     }
+   
+   
    build_output_data();        // Rebuild the output data controls
 
    build_lambda_ctrl();        // Rebuild lambda controls
@@ -6859,6 +6940,21 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       importRI_Json += "}],";
 
       importRI_Json += "\"RefScan\": \"" + refScan + "\"";
+
+      //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
+      if ( !drop_operations[ runType ]. isEmpty() )
+	{
+	  importRI_Json += ",";
+	  QMap<QString, QString>::iterator jj;
+	  for ( jj = drop_operations[ runType ].begin(); jj != drop_operations[ runType ].end(); ++jj )
+	    {
+	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
+	      
+	      importRI_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
+	    }
+	}
+      importRI_Json.chop(1);
+      //////////////////////////////////////////////////////////////////////////////////
       
       importRI_Json += "}";
       
@@ -6901,6 +6997,21 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       importIP_Json += "}],";
 
       importIP_Json += "\"RefScan\": \"" + refScan + "\"";
+
+      //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
+      if ( !drop_operations[ runType ]. isEmpty() )
+	{
+	  importIP_Json += ",";
+	  QMap<QString, QString>::iterator jj;
+	  for ( jj = drop_operations[ runType ].begin(); jj != drop_operations[ runType ].end(); ++jj )
+	    {
+	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
+	      
+	      importIP_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
+	    }
+	}
+      importIP_Json.chop(1);
+      //////////////////////////////////////////////////////////////////////////////////
       
       importIP_Json += "}";
       
