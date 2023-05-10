@@ -6944,16 +6944,17 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
       if ( !drop_operations[ runType ]. isEmpty() )
 	{
-	  importRI_Json += ",";
+	  importRI_Json += ", \"Dropped\": ";
+	  importRI_Json += "[{";
 	  QMap<QString, QString>::iterator jj;
 	  for ( jj = drop_operations[ runType ].begin(); jj != drop_operations[ runType ].end(); ++jj )
 	    {
 	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
-	      
 	      importRI_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
 	    }
+	  importRI_Json.chop(1);
+	  importRI_Json += "}]";
 	}
-      importRI_Json.chop(1);
       //////////////////////////////////////////////////////////////////////////////////
       
       importRI_Json += "}";
@@ -7001,18 +7002,19 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
       if ( !drop_operations[ runType ]. isEmpty() )
 	{
-	  importIP_Json += ",";
+	  importIP_Json += ", \"Dropped\": ";
+	  importIP_Json += "[{";
 	  QMap<QString, QString>::iterator jj;
 	  for ( jj = drop_operations[ runType ].begin(); jj != drop_operations[ runType ].end(); ++jj )
 	    {
 	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
-	      
 	      importIP_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
 	    }
+	  importIP_Json.chop(1);
+	  importIP_Json += "}]";
 	}
-      importIP_Json.chop(1);
       //////////////////////////////////////////////////////////////////////////////////
-      
+
       importIP_Json += "}";
       
       if ( !autoflowStatusID )
