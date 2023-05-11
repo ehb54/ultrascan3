@@ -1163,6 +1163,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    skip_waters.insert( "HOH" );
    skip_waters.insert( "DOD" );
    skip_waters.insert( "SOL" );
+   skip_waters.insert( "CIM" );
 
    QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", Qt::CaseInsensitive );
    if ( f.open( QIODevice::ReadOnly ) )
@@ -1406,6 +1407,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                str1.mid(12,1) != "H" &&
                str1.mid(13,1) != "H" &&
                !str1.mid(12,5).trimmed().startsWith( "H" ) &&
+               !str1.mid(12,5).trimmed().contains( QRegularExpression( "^\\dH" ) ) &&
                !skip_waters.count( str1.mid(17,3).trimmed() )
                )
             {                  
