@@ -356,6 +356,7 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, bool >    channels_to_drop;
       QMap < QString, QString > channels_report;
       QMap < QString, QStringList >    triples_dropped_from_channel;
+  QMap < QString, QMap <QString, QString> > drop_operations;								   
 
   private slots:
       //! \brief Select the current investigator
@@ -428,6 +429,7 @@ class US_ConvertGui : public US_Widgets
       void drop_reference    ( void );
       void drop_channel      ( void );
       void drop_cellchan     ( void );
+      QString comment_for_drop_dialog( QString );
       void saveUS3           ( void );
       int  saveUS3Disk       ( void );
       void saveUS3DB         ( void );

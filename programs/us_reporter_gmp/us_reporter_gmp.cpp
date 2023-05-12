@@ -5654,7 +5654,35 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			       );
 			       
 	}
-      
+
+      //Add comments for Dropped triples|channels|select channels (if any):
+      if ( status_map. contains("Dropped") )
+	{
+	  //iterate over comments for different types of dropping operations:
+	  html_assembled += tr(
+			       "<table style=\"margin-left:10px\">"
+			       "<caption align=left> <b><i>Comments on [triples | channels | select channel] dropped: </i></b> </caption>"
+			       "</table>"
+			       
+			       "<table style=\"margin-left:25px\">"
+			       )
+	    ;
+	  
+	  QMap < QString, QString >::iterator dr;
+	  for ( dr = status_map[ "Dropped" ].begin(); dr != status_map[ "Dropped" ].end(); ++dr )
+	    {
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Dropped:     %1 </td>"
+				   "<td> Comment:     %2 </td>"
+				   "</tr>"
+				   )
+		.arg( dr.key()   )     //1
+		.arg( dr.value() )     //2
+		;
+	    }
+	  html_assembled += tr( "</table>" );
+	}
     }
    
   html_assembled += tr("<hr>");
@@ -6079,6 +6107,26 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	{
 	  status_map[ key ][ "type" ] = value.toString();
 	}
+
+      if ( key == "Dropped" )   // import: Dropped triples/channels/select channels operaitons 
+	{	  
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > dropped_map;
+	  
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  dropped_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		  qDebug() << "Dropped Map: -- key, value: "
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+
+	  status_map[ key ] = dropped_map;
+	}
+      
 
       if ( key == "Meniscus" )   //edit  
 	{	  
