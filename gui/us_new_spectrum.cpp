@@ -391,11 +391,11 @@ void US_ViewSpectrum::save_csv(){
   QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
                                                   US_Settings::reportDir(),
                                                   tr("CSV (*.csv)"));
-  if (fileName.isEmpty())
-    return;
+  if (fileName.isEmpty()) return;
 
-  if (! (fileName.endsWith(".csv") or fileName.endsWith(".CSV")))
+  if (! (fileName.endsWith(".csv") or fileName.endsWith(".CSV"))) {
     fileName.append(".csv");
+  }  
 
   QVector <double> x;
   QVector <double> y;

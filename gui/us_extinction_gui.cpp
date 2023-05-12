@@ -870,8 +870,8 @@ void US_Extinction::update_data(void)
        msg.exec();
        
        if (msg.clickedButton()==pContinue) {
-        ct_coefficient->setValue(wvlnewref);
-        ct_coefficient->setRange(lambda_min, lambda_max);
+	 ct_coefficient->setValue(wvlnewref);
+	 ct_coefficient->setRange(lambda_min, lambda_max);
 	 //ct_coefficient->setStyleSheet("border: 2px solid red");
        }
      }
