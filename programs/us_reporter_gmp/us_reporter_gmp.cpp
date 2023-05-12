@@ -5420,7 +5420,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   //EDITING & ANALYSIS
   QMap < QString, QString > data_types_edit;
   QMap < QString, QString > data_types_edit_ts;
-  QString editRIJson, editIPJson, editRIts, editIPts, analysisJson;
+  QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
   
   // //TEMP: DEBUG
   // importRIJson =
@@ -5442,7 +5442,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   //read autoflowStatus record:
   read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
 			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
-			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats); 
+			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
+			      analysisCancelJson); 
   /////////////////////////////
 
   QMap < QString, QString >::iterator im;
@@ -5790,7 +5791,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   //5. ANALYSIS
   html_assembled += tr( "<h3 align=left>Meniscus Position: Fit vs. Manual Adjustment (5. ANALYSIS: FITMEN stage)</h3>" );
 
-  QMap < QString, QString > analysis_status_map = parse_autoflowStatus_analysis_json( analysisJson );
+  QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
+  QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
 
   if ( !cAP2.job3auto ) // interactive FITMEN (manual)
     {
@@ -5844,6 +5846,65 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     {
       html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
     }
+
+  
+  //Now add info on the CANCELED Jobs as captured in DB:
+  if ( !analysisCancelJson. isEmpty() )
+    {
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Information on CANCELED analysis jobs: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   )
+	;
+
+      QMap < QString, QString >::iterator cj;
+      for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
+	{
+	  
+	  QString cj_value                 = cj.value();
+	  QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
+	  
+	  QString performed_by, reason, when;
+	  if ( performed_by_reason_time.contains(";") )
+	    {
+	      performed_by      = performed_by_reason_time.split(";")[0];
+	      reason            = performed_by_reason_time.split(";")[1];
+	      when              = performed_by_reason_time.split(";")[2];  
+	    }
+	  else
+	    {
+	      performed_by = performed_by_reason_time;
+	      reason       = "N/A";
+	      when         = "N/A";
+	    }
+	  html_assembled += tr(			       
+			       "<tr>"
+			       "<td> Jobs Canceled for:  %1, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Jobs Canceled by:   %2, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Reason:             %3, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> When:               %4  </td>"
+			       "</tr>"
+						       )
+	    .arg( cj.key()   )      //1
+	    .arg( performed_by )    //2
+	    .arg( reason )          //3
+	    .arg( when )            //4
+	    ;
+	}
+      
+      html_assembled += tr( "</table>" );
+      
+    }
+  	
   
   html_assembled += tr("<hr>");
   //
@@ -5985,7 +6046,8 @@ bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QSt
 //read autoflowStatus, populate internals
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
 						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson,
-						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats )
+						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats,
+						 QString& analysisCancelJson)
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -6000,6 +6062,7 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   stopOptimats  . clear();
   skipOptimaJson. clear();
   skipOptimats  . clear();
+  analysisCancelJson. clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -6037,6 +6100,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 
 	  skipOptimaJson = db.value( 11 ).toString();
 	  skipOptimats   = db.value( 12 ).toString();
+
+	  analysisCancelJson = db.value( 13 ).toString();
 	}
     }
 
