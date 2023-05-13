@@ -69,6 +69,13 @@ void US_Hydrodyn::gui_script_run() {
          advanced_config.expert_mode = true;
       } else if ( cmd == "norasmol" ) {
          advanced_config.auto_view_pdb = false;
+      } else if ( cmd == "progress" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         cli_progress = true;
+         progress->set_cli_prefix( opt1 );
       } else if ( cmd == "config" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -77,6 +84,16 @@ void US_Hydrodyn::gui_script_run() {
          if ( read_config( opt1 ) ) {
             gui_script_error( i, cmd, QString( "config file '%1' failed" ).arg( opt1 ) );
          }            
+      } else if ( cmd == "saveparams" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         if ( opt1 == "init" ) {
+            save_params.field.clear();
+         } else {
+            save_params.field.push_back( opt1 );
+         }
       } else if ( cmd == "global" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -186,6 +203,12 @@ void US_Hydrodyn::gui_script_run() {
             }
             batch_window->cb_zeno->setChecked( true );
             batch_window->set_zeno();
+         } else if ( opt1 == "grpy" ) {
+            if ( !batch_window->cb_grpy->isEnabled() ) {
+               gui_script_error( i, cmd, opt1 + ": not enabled" );
+            }
+            batch_window->cb_grpy->setChecked( true );
+            batch_window->set_grpy();
          } else if ( opt1 == "combineh" ) {
             if ( !batch_window->cb_avg_hydro->isEnabled() ) {
                gui_script_error( i, cmd, opt1 + ": not enabled" );

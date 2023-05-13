@@ -1,4 +1,4 @@
-#include <us_add_refScan.h>
+#include "us_add_refScan.h"
 
 US_AddRefScan::US_AddRefScan() : US_Widgets()
 {
@@ -1378,9 +1378,8 @@ bool US_AddRefScan::parse_files(QStringList files_path){
         if (min_x != x1 || max_x != x2){
             QMessageBox::information( this,
                                       tr( "Error" ),
-                                      tr( "The minimum and maxmimum radial point of the current file are not equal to the"
-                                          "corresponding values of the first parsed file."
-                                          "This might be due to chromatic aberration correction!\n\n"
+                                      tr( "The radial points of all AUC files do not match together. "
+                                          "This might be due to the chromatic aberration correction!\n\n"
                                           "First file:\nName:%1\n\n"
                                           "Current file:\nName:%2\n").arg(
                                           files_path.at(0), files_path.at(i)));

@@ -2302,14 +2302,16 @@ bool US_Saxs_Util::run_align(
       return false;
    }
 
-   bool quiet   = parameters.count( "quiet" )   != 0;
+   bool quiet     = parameters.count( "quiet" )   != 0;
 
-   bool save    = parameters.count( "save" )    != 0;
+   bool save      = parameters.count( "save" )    != 0;
 
-   bool frommap = parameters.count( "frommap" ) != 0;
+   bool frommap   = parameters.count( "frommap" ) != 0;
 
-   bool atter   = parameters.count( "atter" )   != 0;
+   bool atter     = parameters.count( "atter" )   != 0;
    QString atter_chainid = atter ? parameters[ "atter" ] : "";
+
+   bool adjcoords = parameters.count( "adjcoords" ) != 0 && parameters[ "adjcoords" ].toInt() != 0;
 
    // get files
    QStringList from;
@@ -2437,6 +2439,7 @@ bool US_Saxs_Util::run_align(
    map < QString, tuple < double, double, double > > from_points;
    map < QString, tuple < double, double, double > > to_points;
    map < QString, tuple < double, double, double > > remapped_from_points;
+   tuple < double, double, double > adjcoords_mins;
    
    {   
       for ( int i = 0; i < from_size; ++i ) {
@@ -2521,6 +2524,68 @@ bool US_Saxs_Util::run_align(
    //       TSO << *it << "\n";
    //    }
    // }
+
+   // optional adjust all coordinates
+   
+
+   if ( adjcoords ) {
+      TSO << "adjusting coordinates to positive values active\n";
+      {
+         double min_x = 1e99;
+         double min_y = 1e99;
+         double min_z = 1e99;
+
+         for ( auto it = from_points.begin();
+               it != from_points.end();
+               ++it ) {
+            if ( min_x > get<0>(it->second) ) {
+               min_x = get<0>(it->second);
+            }
+            if ( min_y > get<1>(it->second) ) {
+               min_y = get<1>(it->second);
+            }
+            if ( min_z > get<2>(it->second) ) {
+               min_z = get<2>(it->second);
+            }
+         }
+         TSO << QString( "mins of from points [%1,%2,%3]\n" ).arg( min_x ).arg( min_y ).arg( min_z );
+         for ( auto it = from_points.begin();
+               it != from_points.end();
+               ++it ) {
+            get<0>(it->second) -= min_x;
+            get<1>(it->second) -= min_y;
+            get<2>(it->second) -= min_z;
+         }
+      }
+      {
+         double min_x = 1e99;
+         double min_y = 1e99;
+         double min_z = 1e99;
+
+         for ( auto it = to_points.begin();
+               it != to_points.end();
+               ++it ) {
+            if ( min_x > get<0>(it->second) ) {
+               min_x = get<0>(it->second);
+            }
+            if ( min_y > get<1>(it->second) ) {
+               min_y = get<1>(it->second);
+            }
+            if ( min_z > get<2>(it->second) ) {
+               min_z = get<2>(it->second);
+            }
+         }
+         TSO << QString( "mins of to points [%1,%2,%3]\n" ).arg( min_x ).arg( min_y ).arg( min_z );
+         for ( auto it = to_points.begin();
+               it != to_points.end();
+               ++it ) {
+            get<0>(it->second) -= min_x;
+            get<1>(it->second) -= min_y;
+            get<2>(it->second) -= min_z;
+         }
+         adjcoords_mins = make_tuple( min_x, min_y, min_z );
+      }
+   }
 
    // print coordinates for the atom keys
 
@@ -2630,6 +2695,17 @@ bool US_Saxs_Util::run_align(
       }
    }
    
+   // adjcoords
+   if ( adjcoords ) {
+      for ( auto it = remapped_from_points.begin();
+            it != remapped_from_points.end();
+            ++it ) {
+         get<0>(it->second) += get<0>(adjcoords_mins);
+         get<1>(it->second) += get<1>(adjcoords_mins);
+         get<2>(it->second) += get<2>(adjcoords_mins);
+      }
+   }
+
    // create replacement pdb atoms
 
    QStringList rplc_atoms;

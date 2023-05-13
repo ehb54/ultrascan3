@@ -1,11 +1,22 @@
 #!/usr/bin/perl
 
+## n.b. when adding a new image, it's best to pull the base image, esp. if multiples might be selected
+### otherwise, buildpkg might appear to hang waiting for a selection which never is displayed
+### e.g.
+#### STEP 1/70: FROM rockylinux:8.7
+#### ? Please select an image: 
+####   ▸ container-registry.oracle.com/rockylinux:8.7
+####     docker.io/library/rockylinux:8.7
+####
+### pulling from docker.io seems to be a working choice
+##
+
 my %supported =
     (
      "ubuntu:18.04"  => "python"
      ,"ubuntu:20.04" => "python"
      ,"ubuntu:22.04" => "python3"
-     ,"redhat:8.6"   => "python3"
+     ,"redhat:8.7"   => "python3"
     );
 
 $snames = join( "\n", keys %supported );

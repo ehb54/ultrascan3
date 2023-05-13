@@ -2098,6 +2098,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    if ( do_init )
    {
       unified_ggaussian_errors_skip = false;
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
+         editor_msg( "darkred", QString( "Experimental smoothing points %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
+      }
+
       if ( !initial_ggaussian_fit( files, only_init_unset ) )
       {
          progress->reset();
@@ -2471,12 +2478,28 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    return true;
 }
 
+// #define GG_DEBUG
+#define TSO QTextStream(stdout)
+
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
 {
+
+#if defined(GG_DEBUG)
+   TSO << "================================================================================\n";
+   TSO << QString( "compute_f_gaussians %1\n" ).arg( file );
+   TSO << "--------------------------------------------------------------------------------\n";
+#endif
+
+   if (
+       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
+       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true"
+       ) {
+      editor_msg( "darkRed", us_tr( "Experimental: Global Gaussian Gaussian cyclic fit - active\n" ) );
+   }
    // us_qdebug( QString( "compute_f_gaussians %1" ).arg( file ) );
    // take current gaussians & compute for this curve
    // find peak of curve
-   US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
+   // US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
 
    vector < double > save_q;
    vector < double > save_I;
@@ -2513,8 +2536,8 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       if ( !f_qs[ file ].size() )
       {
          saved = false;
-         f_qs[ file ] = save_q;
-         f_Is[ file ] = save_I;
+         f_qs[ file ]     = save_q;
+         f_Is[ file ]     = save_I;
          f_errors[ file ] = save_e;
       }
       // US_Vector::printvector( QString( "cfg as %1 q" ).arg( file ), f_qs[ file ] );
@@ -2522,20 +2545,279 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       // US_Vector::printvector( QString( "cfg as %1 e" ).arg( file ), f_errors[ file ] );
    }
 
-   double peak;
-   if ( !get_peak( file, peak ) )
-   {
-      if ( saved )
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_oldstyle" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_oldstyle" ] == "true" ) {
+      bool cyclic_on =
+         ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
+         ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true";
+      bool smooth_on = 
+         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+         && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+         && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+         && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0
+         ;
+
+      if ( cyclic_on || smooth_on ) {
+         ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] = "false";
+         ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_smooth" ] = "false";
+
+         // process "oldstyle" fit and save
+
+         vector < double > save_gaussians   = gaussians;
+         vector < double > save_f_gaussians = f_gaussians[ file ];
+
+         if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+            editor_msg( "red", QString( us_tr( "Error: computing Gaussians for %1" ) ).arg( file ) );
+            return false;
+         }
+
+         vector < double > gsum = compute_gaussian_sum( f_qs[file], f_gaussians[ file ] );
+
+         add_oldstyle( file
+                       ,f_qs[ file ]
+                       ,gsum );
+                       
+         gaussians           = save_gaussians;
+         f_gaussians[ file ] = save_f_gaussians;
+      
+         if ( cyclic_on ) {
+            ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] = "true";
+         }         
+         if ( smooth_on ) {
+            ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_smooth" ] = "true";
+         }
+      }
+   }
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
+      if ( !saved ) {
+         saved = true;
+
+         save_q = f_qs[ file ];
+         save_I = f_Is[ file ];
+         save_e = f_errors[ file ];
+      }
+
+      vector < double > save2_q = f_qs[ file ];
+      vector < double > save2_I = f_Is[ file ];
+      vector < double > save2_e = f_errors[ file ];
+
+      int smoothing = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt();
+
+      int best_smoothing = 0;
+      double best_pvalue;
+
+      // get initial fit
+
+#if defined(GG_DEBUG)
+      TSO << QString( "******** get initial fit %1\n" ).arg( file );
+#endif
+      if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+         editor_msg( "red", QString( "Error computing gaussians %1 [a]" ).arg( file ) );
+         f_qs[ file ]     = save_q;
+         f_Is[ file ]     = save_I;
+         f_errors[ file ] = save_e;
+         return false;
+      }         
+
+      vector < double > bestg         = f_gaussians[ file ];
+      vector < double > bestsmoothedI; // = f_Is[ file ];
+
+      // vector < vector < double > > bestgs_debug;
+
+      // bestgs_debug.push_back( bestg );
+
+      // get initial fit p value
       {
-         f_qs[ file ] = save_q;
-         f_Is[ file ] = save_I;
+         double P;
+         QString errormsg;
+      
+         if ( pvalue( file, P, errormsg ) ) {
+            editor_msg( "darkblue", QString( "%1 pvalue %2\n" ).arg( file ).arg( P ) );
+         } else {
+            editor_msg( "red", QString( "%1 pvalue compute failed %2\n" ).arg( file ).arg( errormsg ) );
+            f_qs[ file ]     = save_q;
+            f_Is[ file ]     = save_I;
+            f_errors[ file ] = save_e;
+            return false;
+         }
+         best_pvalue = P;
+      }
+
+      // qDebug() << QString( "gg smoothing %1 s %2 p %3" ).arg( file ).arg( 0 ).arg( best_pvalue );
+
+      // check smoothing for improvement
+
+      for ( int s = 1; s <= smoothing; ++s ) {
+         f_qs[ file ]     = save2_q;
+         f_Is[ file ]     = save2_I;
+         f_errors[ file ] = save2_e;
+
+         vector < double > smoothed_I;
+
+         if ( usu->smooth( f_Is[ file ], smoothed_I, s ) ) {
+            f_Is[ file ] = smoothed_I;
+         } else {
+            editor_msg( "red", QString( "Error smoothing %1 : %2" ).arg( file ).arg( usu->errormsg ) );
+            return false;
+         }
+
+#if defined(GG_DEBUG)
+         TSO << QString( "******** get smoothing fit %1 %2\n" ).arg( s ).arg( file );
+#endif
+
+         if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+            f_qs[ file ]     = save_q;
+            f_Is[ file ]     = save_I;
+            f_errors[ file ] = save_e;
+            editor_msg( "red", QString( "Error computing gaussians %1 [b]" ).arg( file ) );
+            return false;
+         }         
+
+         // bestgs_debug.push_back( f_gaussians[ file ] );
+
+         // get p value
+         {
+            double P;
+            QString errormsg;
+      
+            f_qs[ file ]     = save2_q;
+            f_Is[ file ]     = save2_I;
+            f_errors[ file ] = save2_e;
+
+            if ( pvalue( file, P, errormsg ) ) {
+               editor_msg( "darkblue", QString( "%1 pvalue %2\n" ).arg( file ).arg( P ) );
+            } else {
+               editor_msg( "red", QString( "%1 pvalue compute failed %2\n" ).arg( file ).arg( errormsg ) );
+               return false;
+            }
+            if ( best_pvalue < P ) {
+               best_pvalue    = P;
+               best_smoothing = s;
+               bestg          = f_gaussians[ file ];
+               bestsmoothedI  = smoothed_I;
+
+            }
+            // qDebug() << QString( "gg smoothing %1 s %2 p %3" ).arg( file ).arg( s ).arg( P );
+         }
+      }
+
+      f_gaussians[ file ] = bestg;
+
+      if ( best_smoothing > 0 ) {
+         // qDebug() << QString( "gg smoothing %1 best s %2 p %3" ).arg( file ).arg( best_smoothing ).arg( best_pvalue );
+         add_plot(
+                  QString( "%1-sm%2" ).arg( file ).arg( best_smoothing )
+                  ,f_qs[ file ]
+                  ,bestsmoothedI
+                  ,f_errors[ file ]
+                  ,true
+                  ,false
+                  );
+         add_smoothed(
+                      file
+                      ,f_qs[ file ]
+                      ,bestsmoothedI
+                      ,best_smoothing
+                      );
+                        
+         // add_plot_gaussian( file, QString( "sm%1-g" ).arg( best_smoothing ) );
+         // to debug them all
+         // vector < double > save_g = f_gaussians[ file ];
+         // for ( int i = 0; i < (int) bestgs_debug.size(); ++i ) {
+         //    f_gaussians[file] = bestgs_debug[i];
+         //    add_plot_gaussian( file, QString( "g_s%1" ).arg( i ) );
+         // }
+         // f_gaussians[ file ] = save_g;
+      }
+
+      f_qs[ file ]     = save_q;
+      f_Is[ file ]     = save_I;
+      f_errors[ file ] = save_e;
+
+      return true;
+   }
+
+#if defined(GG_DEBUG)
+   TSO << QString( "******* get final fit %1\n" ).arg( file );
+#endif
+
+   if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+      if ( saved ) {
+         f_qs[ file ]     = save_q;
+         f_Is[ file ]     = save_I;
          f_errors[ file ] = save_e;
       }         
       return false;
+   }         
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool only_init_unset ) {
+   wheel_file = files[ 0 ];
+
+   // us_qdebug( "creating fit window" );
+
+   US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
+      new US_Hydrodyn_Saxs_Hplc_Fit(
+                                    this,
+                                    false,
+                                    this
+                                    );
+   US_Hydrodyn::fixWinButtons( hplc_fit_window );
+
+   hplc_fit_window->update_hplc = false;
+
+   clear_smoothed();
+   clear_oldstyle();
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
+      progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
+      qApp->processEvents();
+#if defined(GG_DEBUG)
+      us_qdebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
+#endif
+      
+      if ( !only_init_unset || !f_gaussians.count( files[ i ] ) ) {
+         if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) ) {
+            return false;
+         }
+      }
    }
 
-   // printvector( "cfg: org_gauss", org_gaussians );
+   delete hplc_fit_window;
+
+   list_smoothed();
    
+   return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::add_plot_gaussian( const QString &file, const QString &tag ) {
+   add_plot(
+            QString( "%1-%2" ).arg( file ).arg( tag )
+            ,f_qs[ file ]
+            ,compute_gaussian_sum( f_qs[ file ], f_gaussians[ file ] )
+            ,true
+            ,false
+            );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget ) {
+   // printvector( "cfg: org_gauss", org_gaussians );
+#if defined(GG_DEBUG)
+   TSO << "--------------------------------------------------------------------------------\n";
+   TSO << QString( "compute_f_gaussians_trial %1\n" ).arg( file );
+   TSO << "--------------------------------------------------------------------------------\n";
+#endif
+   double peak;
+   if ( !get_peak( file, peak ) ) {
+      return false;
+   }
+
    double gmax = compute_gaussian_peak( file, org_gaussians );
    
    double scale = peak / gmax;   
@@ -2571,18 +2853,49 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
    // vector < double > tmp_gs = gaussians;
 
+   US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
+
    fit->redo_settings();
    fit->gaussians_undo.clear( );
    fit->gaussians_undo.push_back( gaussians );
-   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
 
    fit->cb_fix_center    ->setChecked( true );
    fit->cb_fix_width     ->setChecked( true );
    fit->cb_fix_amplitude ->setChecked( false );
    fit->cb_fix_dist1     ->setChecked( true );
    fit->cb_fix_dist2     ->setChecked( true );
+
+   // QTextStream(stdout) << QString( "compute_f_gaussians_trial number of gaussians %1\n" ).arg( fit->cb_fix_curves.size() );
+#if defined(GG_DEBUG)
+   QTextStream(stdout) << QString( "epsilon is %1\n" ).arg( fit->le_epsilon->text() );
+#endif
+
+   if (
+       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
+       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true"
+       ) {
+      // QTextStream(stdout) << QString( "Experimental: Global Gaussian Gaussian cyclic fit - active - %1\n" ).arg( file );
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         for ( int j = 0; j < (int) fit->cb_fix_curves.size(); ++j ) {
+            fit->cb_fix_curves[j]->setChecked( i != j );
+         }
+#if defined(GG_DEBUG)
+         TSO << QString( "******** fit %1 fix %2\n" ).arg( file ).arg( i + 1 );
+#endif
+         fit->lm();
+      }
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         fit->cb_fix_curves[i]->setChecked( false );
+      }
+   }
+
+   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
+      
    // fit initial amplitudes
    // us_qdebug( "call first lm fit in compute_f_gaussians" );
+#if defined(GG_DEBUG)
+   TSO << QString( "fit %1 fit all centers mobile\n" ).arg( file );
+#endif
    fit->lm();
    // us_qdebug( "return from first lm fit in compute_f_gaussians" );
    // US_Vector::printvector2( "compute_f_gaussians: gaussians before, after", tmp_gs, gaussians );
@@ -2594,6 +2907,9 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
         ( dist1_active && !cb_fix_dist1->isChecked() ) ||
         ( dist2_active && !cb_fix_dist2->isChecked() ) )
    {
+#if defined(GG_DEBUG)
+      TSO << QString( "fit %1 fit 'open'?\n" ).arg( file );
+#endif
       // us_qdebug( "call second lm fit in compute_f_gaussians" );
       fit->cb_fix_width     ->setChecked( cb_fix_width->isChecked() );
       fit->cb_fix_dist1     ->setChecked( cb_fix_dist1->isChecked() );
@@ -2602,45 +2918,66 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       // us_qdebug( "return from second lm fit in compute_f_gaussians" );
       // printvector( "cfg: after fit2 gaussians", gaussians );
    }
-
+   
    f_gaussians[ file ] = gaussians;
    gaussians = org_gaussians;
-   if ( saved )
-   {
-      f_qs[ file ] = save_q;
-      f_Is[ file ] = save_I;
-      f_errors[ file ] = save_e;
-   }         
+
    return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool only_init_unset ) {
-   wheel_file = files[ 0 ];
-
-   // us_qdebug( "creating fit window" );
-
-   US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
-      new US_Hydrodyn_Saxs_Hplc_Fit(
-                                    this,
-                                    false,
-                                    this
-                                    );
-   US_Hydrodyn::fixWinButtons( hplc_fit_window );
-
-   hplc_fit_window->update_hplc = false;
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
-      progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
-      qApp->processEvents();
-      us_qdebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
-      
-      if ( !only_init_unset || !f_gaussians.count( files[ i ] ) ) {
-         if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) ) {
-            return false;
-         }
-      }
+void US_Hydrodyn_Saxs_Hplc::clear_smoothed() {
+   f_qs_smoothed.clear();
+   f_Is_smoothed.clear();
+   f_best_smoothed_smoothing.clear();
+}
+   
+void US_Hydrodyn_Saxs_Hplc::list_smoothed() {
+   TSO << "list_smoothed():\n";
+   for ( auto it = f_qs_smoothed.begin();
+         it != f_qs_smoothed.end();
+         ++it ) {
+      TSO << QString( "%1 smoothing %2 data points %3\n" )
+         .arg( it->first )
+         .arg( f_best_smoothed_smoothing[ it->first ] )
+         .arg( it->second.size() )
+         ;
    }
-
-   delete hplc_fit_window;
-   return true;
 }
+            
+void US_Hydrodyn_Saxs_Hplc::add_smoothed(
+                                         const QString            & name
+                                         ,const vector < double > & q
+                                         ,const vector < double > & I
+                                         ,int                       best_smoothing
+                                         ) {
+   f_qs_smoothed[ name ]             = q;
+   f_Is_smoothed[ name ]             = I;
+   f_best_smoothed_smoothing[ name ] = best_smoothing;
+}
+
+void US_Hydrodyn_Saxs_Hplc::clear_oldstyle() {
+   f_qs_oldstyle.clear();
+   f_Is_oldstyle.clear();
+}
+   
+void US_Hydrodyn_Saxs_Hplc::list_oldstyle() {
+   TSO << "list_oldstyle():\n";
+   for ( auto it = f_qs_oldstyle.begin();
+         it != f_qs_oldstyle.end();
+         ++it ) {
+      TSO << QString( "%1 oldstyle data points %2\n" )
+         .arg( it->first )
+         .arg( it->second.size() )
+         ;
+   }
+}
+            
+void US_Hydrodyn_Saxs_Hplc::add_oldstyle(
+                                         const QString            & name
+                                         ,const vector < double > & q
+                                         ,const vector < double > & I
+                                         ) {
+   f_qs_oldstyle[ name ]             = q;
+   f_Is_oldstyle[ name ]             = I;
+}
+

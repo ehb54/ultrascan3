@@ -37,6 +37,12 @@ class US_Buoyancy : public US_Widgets
   
       bool us_buoyancy_auto_mode;
 
+  signals:
+      void widgetClosed();
+
+  protected:
+      void closeEvent(QCloseEvent *event) override;
+
   private:
 
       QVector <WavelengthScan> v_wavelength;
@@ -45,6 +51,7 @@ class US_Buoyancy : public US_Widgets
             
   QMap< QString, QVector<double> > xfit_data;
   QMap< QString, QVector<double> > yfit_data;
+  QMap< QString, QVector<double> > triple_name_to_Cdata;
   
       QMap < QString, QMap < double, QMap < int, QVector< double > > > > xfit_data_all_orders;
       QMap < QString, QMap < double, QMap < int, QVector< double > > > > yfit_data_all_orders;

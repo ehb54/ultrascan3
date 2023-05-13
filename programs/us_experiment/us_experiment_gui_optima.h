@@ -62,6 +62,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       int         getProtos   ( QStringList&, QList< QStringList >& );
       // Append to the names,summary-data protocol lists
       bool        updateProtos( const QStringList );
+      void        setProtos   ( QStringList );
+  
 
       void check_user_level( void );
       void update_inv( void );
@@ -98,6 +100,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList           pr_names;   // List of protocol names
       QStringList           instr_opers;  // Instrument operators
 
+      QMap < QString, bool >  ul2_operator_for_optima; //for UL<3, determine if the user is an operator, for each machine
+
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
@@ -106,15 +110,19 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void project_info    ( US_Project& ); // Slot for project diag results
       void sel_investigator( void );        // Slot for investigator changed
       void run_name_entered( void );        // Slot for run name entered
+      void label_name_entered( void );      // Slot for label name entered
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
       void check_empty_runname(const QString &);
       void update_protdata( void );
+      
  signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
       void  set_tabs_buttons_active  ( void );
+      void  go_back_to_run_manager( void );
+      
 };
 
 //! \brief Experiment Rotor panel
@@ -825,22 +833,30 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
-
+      void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
+      void    clearData_protDev( void );
+ 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
+      void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       bool    saveRunProtocol ( void );  // Save the Run Protocol
+      bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
       int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report
       int     writeReportItemToDB( US_DB2*, QString, int, US_ReportGMP::ReportItem ); 
 
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
+  
+      bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
 
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
-      
+      void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+  
    signals:
-      void expdef_submitted( QMap < QString, QString > &protocol_details );
+      void expdef_submitted    ( QMap < QString, QString > &protocol_details );
+      void expdef_submitted_dev( QMap < QString, QString > &protocol_details );
 };
 
 //! \brief Experiment AnalysisProfile panel
@@ -925,10 +941,13 @@ class US_ExperimentMain : public US_Widgets
       // \brief Update the list of protocols with a newly named entry
       bool        updateProtos( const QStringList );
 
+      void        setProtos   ( QStringList );
+
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
       US_AnaProfile   currAProf;   // Current AnaProfile controls
-
+      US_AnaProfile   loadAProf;   // Current AnaProfile controls
+  
       QPushButton* pb_next;
       QPushButton* pb_prev;
       QPushButton* pb_close;
@@ -947,12 +966,17 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
+  bool    us_prot_dev_mode;
       bool    global_reset;
+
+  QMap <QString, QString> protocol_details_passed; 
       
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
 
       QStringList instruments_in_use;
+      QStringList instruments_no_permit;
+  bool isOperatorAny;
 
       int tabHeight;
       int buttLHeight;
@@ -987,24 +1011,34 @@ class US_ExperimentMain : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+      void set_tabs_buttons_readonly( void );
+      void switch_to_run_manager( void );					
+					    
       
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
+      void submitted_protDev( QMap < QString, QString > & );
+
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
       void    exclude_used_instruments( QStringList &);
+      void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
 
       US_AnaProfile* get_aprofile( void );
-
+      US_AnaProfile* get_aprofile_loaded( void );
+      void set_loadAProf ( US_AnaProfile );
+  
       void back_to_pcsa( void );
 	
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
+      void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
-      void close_expsetup_msg( void ); 
+      void close_expsetup_msg( void );
+  void back_to_initAutoflow( void );
       
       
 };

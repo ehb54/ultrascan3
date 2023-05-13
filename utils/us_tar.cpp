@@ -149,6 +149,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 
 void US_Tar::process_dir( const QString& path, QStringList& all )
 {
+  qDebug() << "In process dir: path -- " << path;
    QDir                  dir( path );
    QStringList           files = dir.entryList( QDir::Files | QDir::NoSymLinks );
    QStringList::Iterator it    = files.begin();
@@ -156,7 +157,7 @@ void US_Tar::process_dir( const QString& path, QStringList& all )
    // Add the files
    while(  it != files.end() )
    {
-      all << path + "/" +  *it;
+     all << path + "/" +  *it;
       it++;
    }
 

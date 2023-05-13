@@ -91,6 +91,8 @@ int US_Hydrodyn::total_beads_count( const vector < PDB_atom > & use_model ) {
 // when all models complete grpy_finalize() - which stores save_data etc
 
 bool US_Hydrodyn::calc_grpy_hydro() {
+   progress->set_cli_prefix( "ch" );
+
    {
       QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
       editor_msg( "dark blue", courier, visc_dens_msg() );

@@ -21,9 +21,9 @@
 <hr>
 <center>
 <h2>
-SOMO - PDB Parsing Options Module:</h2>
+SOMO - Advanced Configuration Module:</h2>
 <p>
-<img SRC="somo-advanced_conf.png" ALT="SOMO Advanced Configuration Options Screen">
+<img SRC="somo-advanced_conf_new.png" ALT="SOMO Advanced Configuration Options Screen">
 </center>
 <p>
 
@@ -50,6 +50,15 @@ will launch the SoMo bead model building method immediately after loading a PDB 
 <b><i>Automatically show hydrodynamic calculations</i></b>. The pop-up window with the results
 of the hydrodynamic calculation will be automatically shown after the computations are completed
 if this checkbox is selected.
+
+<li>
+<b><i>Temporary directory clear size threshold [MB]</i></b>. In both the ".../ultrascan/somo" and ".../ultrascan/somo/saxs" directories (check full path under different operating systems) "/tmp" directories are present, where temporary files and sub-directories are created during <i><b>US-SOMO</i></b> various operations. While some recent improvements as in the NMR-style file processing in the <a href="somo_batch.html"><i></b>Batch Mode Operations</i></b></a> module will automatically clear temporary directories upon completion or operation halting, other modules will not perform post-processing clearing operations. This new feature, installed in <span style="color:#CC0000">January 2023</span>, will check the size of the ".../ultrascan/somo/tmp" and ".../ultrascan/somo/saxs/tmp" directories upon either launching or exiting <i><b>US-SOMO</i></b>. If their total size is above the value listed in this field (<i><b>default:</i> 50 MB</b>), a pop-up message will appear:
+<p>
+<center>
+<img SRC="somo_clear_directories_alert.png" ALT="SOMO Clear Directories message">
+</center>
+<p>
+Reporting the global size (such as the "540 MB" shown in the image above) of the ".../ultrascan/somo/tmp" and/or the ".../ultrascan/somo/saxs/tmp" directories. Clicking on "<u>Y</u>es" will instruct the program to clear the ".../tmp" directories, clicking on "<u>N</u>o" will leave the content of the ".../tmp" directories untouched, clicking on "<u>C</u>ancel" will halt the current operation. <b>Important</b>: as reported in the pop-up panel, you should <b>not</b> clear the content of the ".../ultrascan/somo/tmp" and ".../ultrascan/somo/saxs/tmp" directories <b>IF</b> you have other <i><b>US-SOMO</i></b> independent instances running, as they might be using the content of temporary directories!!!
 
 <li>
 <b><i>Activate sound notifications</i></b>. A sound file, named
@@ -86,7 +95,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 4, 2009.
+Last modified on January 25, 2023.
 </font>
 </body>
 </html>

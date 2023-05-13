@@ -386,7 +386,7 @@ void US_AddAtom::write_atom_file()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       cmb_atom->clear( );
-      str1.sprintf(us_trp(" Number of Atoms in File: %d"), atom_list.size());
+      str1 = QString( us_tr(" Number of Atoms in File: %1" ) ).arg( atom_list.size() );
       QTextStream ts(&f);
       for (unsigned int i=0; i<atom_list.size(); i++)
       {
@@ -451,7 +451,7 @@ void US_AddAtom::select_atom_file()
    }
    cb_excl_vol->setChecked(false);
    le_excl_vol->setEnabled(true);
-   str1.sprintf(us_trp(" Number of Atoms in File: %d"), atom_list.size());
+   str1 = QString( us_tr( " Number of Atoms in File: %1" ) ).arg( atom_list.size() );
    lbl_number_of_atoms->setText(str1);
    pb_add->setEnabled(true);
    if (!atom_filename.isEmpty() && !hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
@@ -500,7 +500,7 @@ void US_AddAtom::select_hybrid_file()
          f.close();
       }
    }
-   str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
+   str1 = QString( us_tr( " Number of Hybridizations in File: %1" ) ).arg( hybrid_list.size() );
    lbl_number_of_hybrids->setText(str1);
    pb_add->setEnabled(true);
    if (!atom_filename.isEmpty() && !hybrid_filename.isEmpty() && !saxs_filename.isEmpty())

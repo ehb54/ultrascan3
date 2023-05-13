@@ -108,6 +108,53 @@ qDebug() << "PU:l_all: nrecs" << nrecs;
    return nrecs;
 }
 
+int US_ProtocolUtil::list_all_auto( QList< QStringList >& protdata,
+				    US_DB2* dbP )
+{
+  int nrecs        = 0;    // Count of records found
+  protdata.clear();        // Initialize list of entries
+
+qDebug() << "[AUTO] PU:l_all: dbP" << dbP;
+ if ( dbP != NULL )
+   {  // Read protocol records from the database
+     QString inv_id      = QString::number( US_Settings::us_inv_ID() );
+     QStringList qry;
+     qry << "get_protocol_desc_auto" << inv_id;
+     dbP->query( qry );
+     
+     qDebug() << "[AUTO] PU:l_all: qry" << qry;
+     qDebug() << "[AUTO] PU:l_all:  qry stat" << dbP->lastError();
+     qDebug() << "[AUTO] PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
+     
+     if ( dbP->lastErrno() != US_DB2::OK )
+       return nrecs;
+     
+     while ( dbP->next() )
+       {
+         QStringList protentry;
+         QString pdbid    = dbP->value( 0 ).toString();
+         QString pguid    = dbP->value( 1 ).toString();
+         QString pname    = dbP->value( 2 ).toString();
+         QDateTime date   = dbP->value( 5 ).toDateTime().toUTC();
+	 //         QString pdate    = US_Util::toUTCDatetimeText( date
+	 //                               .toString( Qt::ISODate ), true )
+	 //                               .section( " ", 0, 0 ).simplified();
+         QString pdate = US_Util::toUTCDatetimeText( date
+						     .toString( Qt::ISODate ), true )
+	   .section( ":", 0, 1 ) + " UTC";
+         protentry << pname << pdate << pdbid << pguid;
+	 qDebug() << "[AUTO] PU:l_all:  protentry" << protentry;
+	 
+         protdata  << protentry;
+         nrecs++;
+      }
+   }
+ qDebug() << "[AUTO] PU:l_all: nrecs" << nrecs;
+ return nrecs;
+}
+
+
+
 // Update the protocol data list with a new entry.
 //
 // This adds a new entry to the list of protocol summary entries or

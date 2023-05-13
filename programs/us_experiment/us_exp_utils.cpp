@@ -364,6 +364,78 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
 
 }
 
+//Set all tabs their all Widgets (but 8. AProfile section) READ-ONLY for US_ProtocolDev
+void US_ExperimentMain::set_tabs_buttons_readonly( void )
+{
+  pb_next   ->setEnabled(true);
+  pb_prev   ->setEnabled(true);
+
+  for (int ii=0; ii<tabWidget->count(); ii++)
+    {
+      tabWidget ->setTabEnabled( ii, true );
+      QPalette pal = tabWidget ->tabBar()->palette();
+      //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
+      tabWidget ->tabBar()->setTabTextColor( ii, pal.color(QPalette::WindowText) ); // Qt::black
+
+      
+      
+      if ( ii == 7 ) //8. AProfile
+	continue;
+      
+      QWidget* pWidget= tabWidget->widget(ii);
+
+      //Find all children of each Tab in QTabWidget [children of all types...]
+      QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
+      QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
+      QList<QSpinBox *>    allSBoxes   = pWidget->findChildren<QSpinBox *>();
+      QList<QwtCounter *>  allCounters = pWidget->findChildren<QwtCounter *>();
+      QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
+
+      // and so on ..
+
+      if ( ii == 0 ) //1. General
+	{
+	  for (int i=0; i < allPButtons.count(); i++)
+	    allPButtons[i]->setEnabled(false);
+	  for ( int i = 0; i < allCounters.count(); i++ )
+	    allCounters[i]->setEnabled(false);
+	      
+	  continue;
+	}
+      
+      for (int i=0; i < allPButtons.count(); i++)
+      {
+         if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
+              (allPButtons[i]->text()).contains("View Ranges" ) ||
+              (allPButtons[i]->text()).contains("View Experiment Details" ) ||
+              (allPButtons[i]->text()).contains("Test Connection" ) )
+            allPButtons[i]->setEnabled(true);
+         else
+            allPButtons[i]->setEnabled(false);
+      }
+
+      for ( int i = 0; i < allCBoxes.count(); i++ )
+      {
+	// if ( (allCBoxes[i]->currentText()).contains("Speed Profile") ||
+	//      ( allCBoxes[i]->currentText()).contains(": Optima") )
+	//   {
+	//     allCBoxes[i]->setEnabled(true);
+	//   }
+	// else
+	allCBoxes[i]->setEnabled(false);
+      }
+      for ( int i = 0; i < allSBoxes.count(); i++ )
+         allSBoxes[i]->setEnabled(false);
+      for ( int i = 0; i < allCounters.count(); i++ )
+         allCounters[i]->setEnabled(false);
+      for ( int i = 0; i < allChBoxes.count(); i++ )
+         allChBoxes[i]->setEnabled(false);
+      // and so on ..
+
+    }
+
+}
+
 
 // Use main interface to call general utility functions
 bool US_ExperimentMain::centpInfo( const QString par1,
@@ -373,6 +445,11 @@ bool US_ExperimentMain::centpInfo( const QString par1,
 int  US_ExperimentMain::getProtos( QStringList& par1,
                                    QList< QStringList >& par2 )
 { return epanGeneral->getProtos( par1, par2 ); }
+
+void  US_ExperimentMain::setProtos( QStringList par1 )
+{
+  epanGeneral->setProtos( par1 );
+}
 
 bool US_ExperimentMain::updateProtos( const QStringList par1 )
 { return epanGeneral->updateProtos( par1 ); }
@@ -447,6 +524,7 @@ qDebug() << "TEST: llstring2" << llstring2;
 use_db=false;
 #endif
 DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
+DbgLv(1) << "mainw->automode" << mainw->automode;
 
    // Populate GUI settings from protocol controls
    le_investigator->setText ( currProto->investigator );
@@ -459,6 +537,38 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    le_label       ->setText ( currProto->exp_label );
 
    check_user_level();
+
+   //Here, check if UL<3 is set as operator for each Optima:
+  //Debug
+   qDebug() << "ul2_operator_for_optima.keys().size() -- " << ul2_operator_for_optima.keys().size(); 
+  QMap<QString, bool>::iterator opd;
+  for ( opd = ul2_operator_for_optima.begin(); opd != ul2_operator_for_optima.end(); ++opd )
+    qDebug() << "Optima, operator -- " << opd.key() << opd.value();
+  ///////////
+  
+   int inv_lev    = US_Settings::us_inv_level();
+
+   if ( inv_lev < 3 && mainw->automode )
+     {
+       mainw->isOperatorAny = false;
+       QMap<QString, bool>::iterator op;
+       for ( op = ul2_operator_for_optima.begin(); op != ul2_operator_for_optima.end(); ++op )
+	 {
+	   if ( op.value() )
+	     {
+	       mainw->isOperatorAny = true;
+	       break;
+	     }
+	 }
+
+       for ( op = ul2_operator_for_optima.begin(); op != ul2_operator_for_optima.end(); ++op )
+	 {
+	   QString iname = op.key();
+	   if ( !op.value() )
+	     mainw->instruments_no_permit << iname;
+	 }
+     }
+   //////////////////
 
 }
 
@@ -546,86 +656,191 @@ void US_ExperGuiGeneral::check_user_level()
    {  // All admin users and above are enabled
       usr_enab       = true;
    }
-   /*
+   
    else
-   {  // Non-admin users enabled if they have instrument permit
-      int inv_id     = US_Settings::us_inv_ID();
-      QString pID    = QString::number( inv_id );
+     {  // Non-admin users enabled if they have instrument permit
+       int inv_id     = US_Settings::us_inv_ID();
+       QString pID    = QString::number( inv_id );
 
-      if ( instr_opers.count() < 1 )
-      {  // Must read lab/instrument/operator info one time
-         US_Passwd   pw;
-         US_DB2      db( pw.getPasswd() );
+       qDebug() << "instr_opers.count(); check_user_level(): inv_lev -- "
+		<< instr_opers.count() << "; " << inv_lev;
+       
+       // if ( instr_opers.count() < 1 )
+       // 	 {  // Must read lab/instrument/operator info one time
+	   US_Passwd   pw;
+	   US_DB2      db( pw.getPasswd() );
+	   
+	   if ( db.lastErrno() != US_DB2::OK )
+	     {
+	       QMessageBox::information( this, tr( "Error" ),
+					 tr( "Error making the DB connection.\n" ) );
+	     }
+	   
+	   QVector< US_Rotor::Lab > lablist;
+	   US_Rotor::readLabsDB( lablist, &db );
 
-         if ( db.lastErrno() != US_DB2::OK )
-         {
-            QMessageBox::information( this, tr( "Error" ),
-               tr( "Error making the DB connection.\n" ) );
-         }
+	   qDebug() << "check_user_level():  lablist.count() -- " << lablist.count();
+	   
+	   for ( int ii = 0; ii < lablist.count(); ii++ )
+	     {  // Look through lab info
+	       QList< US_Rotor::Instrument > instruments
+		 = lablist[ ii ].instruments;
 
-         QVector< US_Rotor::Lab > lablist;
-         US_Rotor::readLabsDB( lablist, &db );
+	       ul2_operator_for_optima.clear();
 
-         for ( int ii = 0; ii < lablist.count(); ii++ )
-         {  // Look through lab info
-            QList< US_Rotor::Instrument > instruments
-                           = lablist[ ii ].instruments;
+	       qDebug() << "check_user_level():  instruments.count() -- " << instruments.count();
+	       
+	       //First, set map of usl2_oper_to_Optimas to default: false
+	       for ( int kk = 0; kk < instruments.count(); kk++ )
+		 {
+		   QString inname = instruments[ kk ].name;
+		   // Skip any non-Optima
+		   if ( ! inname.startsWith( "Optima" ) )
+		     continue;
+		   		   
+		   ul2_operator_for_optima[ inname ] = false;
+		 }
 
-            for ( int jj = 0; jj < instruments.count(); jj++ )
-            {  // Look at instruments in the lab
-               QString inname = instruments[ jj ].name;
+	       //Go over instruments, and determine if the current user an operator: per instrument
+	       for ( int jj = 0; jj < instruments.count(); jj++ )
+		 {  // Look at instruments in the lab
+		   QString inname = instruments[ jj ].name;
+		   
+		   // Skip any non-Optima
+		   if ( ! inname.startsWith( "Optima" ) )
+		     continue;
+		   
+		   QList< US_Rotor::Operator > operators = instruments[ jj ].operators;
+		   
+		   for ( int kk = 0; kk < operators.count(); kk++ )
+		     {  // Look at operators permitted on the instrument
+		       int opr_id     = operators[ kk ].ID;
+		       QString olname = operators[ kk ].lname;
+		       QString ofname = operators[ kk ].fname;
+		       QString oID    = QString::number( opr_id );
 
-               // Skip any non-Optima
-               if ( ! inname.startsWith( "Optima" ) )
-                  continue;
-
-               QList< US_Rotor::Operator > operators
-                              = instruments[ jj ].operators;
-
-               for ( int kk = 0; kk < operators.count(); kk++ )
-               {  // Look at operators permitted on the instrument
-                  int opr_id     = operators[ kk ].ID;
-                  QString olname = operators[ kk ].lname;
-                  QString ofname = operators[ kk ].fname;
-                  QString oID    = QString::number( opr_id );
-
-                  // Entry is string combining operator and instrument name
-                  instr_opers << oID + ": " + olname + ", " + ofname
-                                 + "^" + inname;
-               } // END: operators for instrument
-            } // END: instruments for lab
-         } // END: labs
-      } // END: No list of operator^instrument entries
-
-      // See if investigator is in permit list
-      for ( int ii = 0; ii < instr_opers.count(); ii++ )
-      {
-         QString iID    = instr_opers[ ii ].section( ":", 0, 0 );
-
-         if ( pID == iID )
-         {  // Person ID matches an Instrument ID in the list
-            usr_enab       = true;
-            break;
-         }
-      }
-   } // END: Test of non-admin instrument permit
-   */
+		       //QMap
+		       if ( pID == oID )
+			 {
+			   ul2_operator_for_optima[ inname ] = true;
+			   break;
+			 }
+		       
+		       // // Entry is string combining operator and instrument name
+		       // instr_opers << oID + ": " + olname + ", " + ofname
+		       // 	 + "^" + inname;
+		     } 
+		 }
+	     } 
+	 } 
+       
+       // // See if investigator is in permit list
+       // for ( int ii = 0; ii < instr_opers.count(); ii++ )
+       // 	 {
+       // 	   QString iID    = instr_opers[ ii ].section( ":", 0, 0 );
+	   
+       // 	   if ( pID == iID )
+       // 	     {  // Person ID matches an Instrument ID in the list
+       // 	       usr_enab       = true;
+       // 	       break;
+       // 	     }
+       // 	 }
+   // } // END: Test of non-admin instrument permit
+   
 
    if ( ! usr_enab )
-   {  // User not enabled to set investigator
-      pb_investigator->setEnabled( false );
-      pb_project     ->setEnabled( false );
-      ct_tempera     ->setEnabled( false );
-      ct_tedelay     ->setEnabled( false );
-      le_protocol    ->setEnabled( false );
+     {  // User not enabled to set investigator
+       // pb_investigator->setEnabled( false );
+       // pb_project     ->setEnabled( false );
+       // ct_tempera     ->setEnabled( false );
+       // ct_tedelay     ->setEnabled( false );
+       // le_protocol    ->setEnabled( false );
+       
+       // if ( !loaded_proto )
+       //    emit set_tabs_buttons_inactive();
+       // else
+       //    emit set_tabs_buttons_active_readonly();
+       
+       DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+     }
+   
+   // //Old way of disabling all (read-only mode) for UL < 3
+   // if ( ! usr_enab )
+   // {  // User not enabled to set investigator
+   //    pb_investigator->setEnabled( false );
+   //    pb_project     ->setEnabled( false );
+   //    ct_tempera     ->setEnabled( false );
+   //    ct_tedelay     ->setEnabled( false );
+   //    le_protocol    ->setEnabled( false );
 
-      if ( !loaded_proto )
-         emit set_tabs_buttons_inactive();
-      else
-         emit set_tabs_buttons_active_readonly();
+   //    if ( !loaded_proto )
+   //       emit set_tabs_buttons_inactive();
+   //    else
+   //       emit set_tabs_buttons_active_readonly();
 
-DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
-   }
+   //    DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+   // }
+     
+   
+   // //For future DEV.
+   // if ( ! usr_enab ) //UL <= 2
+   //   {  // User not enabled to set investigator
+
+   //     //Check if selected investigator is the SAME as logged in user
+   //     US_Passwd pw;
+   //     QString masterpw = pw.getPasswd();
+   //     US_DB2* db = new US_DB2( masterpw );
+      
+   //     if ( db->lastErrno() != US_DB2::OK )
+   // 	 {
+   // 	   QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+   // 				 tr( "Could not connect to database \n" ) + db->lastError() );
+   // 	   return;
+   // 	 }
+       
+   //     QStringList qry;
+   //     //Check user level && ID
+   //     QStringList defaultDB = US_Settings::defaultDB();
+   //     QString user_guid   = defaultDB.at( 9 );
+       
+   //     //get personID from personGUID
+   //     qry.clear();
+   //     qry << QString( "get_personID_from_GUID" ) << user_guid;
+   //     db->query( qry );
+       
+   //     int user_id = 0;
+       
+   //     if ( db->next() )
+   // 	 user_id = db->value( 0 ).toInt();
+
+   //     qDebug() << "Check_user_level: US_Settings::us_inv_ID(), user_id -- "
+   // 		<< US_Settings::us_inv_ID() << ", "
+   // 		<< user_id;
+       
+   //     if ( user_id )
+   // 	 {
+   // 	   if ( US_Settings::us_inv_ID() != user_id )
+   // 	     {
+   // 	       pb_project     ->setEnabled( false );
+   // 	       ct_tempera     ->setEnabled( false );
+   // 	       ct_tedelay     ->setEnabled( false );
+   // 	       le_protocol    ->setEnabled( false );
+	       
+   // 	       if ( !loaded_proto )
+   // 		 emit set_tabs_buttons_inactive();
+   // 	       else
+   // 		 emit set_tabs_buttons_active_readonly();
+   // 	     }
+   // 	   else 
+   // 	     {
+   // 	       pb_investigator->setEnabled( false );
+   // 	       emit set_tabs_buttons_active();
+   // 	     }
+       
+   // 	   DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+   // 	 }
+   //   }
+      
 }
 
 // Save panel controls when about to leave the panel
@@ -1184,6 +1399,8 @@ void US_ExperGuiSpeeds::savePanel()
 
  qDebug() << " DURATION SAVED IN  PROTOTCOL: speed " << ii <<  ", duration: " << rpSpeed->ssteps[ ii ].duration;
    }
+
+   
 }
 
 // Get a specific panel value
@@ -2723,12 +2940,19 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  cb_scancount_int->addItem( scancount_stage_int );   
 	}
       
-      
-         
    }
-   
    // End of ScanCount listbox
 
+   //If for US_ProtocolDev mode, set all widgets in read-only mode:
+   if ( mainw->us_prot_dev_mode )
+     {
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   cc_wavls[ ii ]->setEnabled( false );
+	   cc_lrads[ ii ]->setEnabled( false );
+	   cc_hrads[ ii ]->setEnabled( false );
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
@@ -2957,7 +3181,7 @@ void US_ExperGuiUpload::initPanel()
 {
    currProto       = &mainw->currProto;
    loadProto       = &mainw->loadProto;
-   rps_differ      = ( mainw->currProto !=  mainw->loadProto );
+   //rps_differ      = ( mainw->currProto !=  mainw->loadProto );
    rpRotor         = &currProto->rpRotor;
    rpSpeed         = &currProto->rpSpeed;
    rpCells         = &currProto->rpCells;
@@ -2967,28 +3191,49 @@ void US_ExperGuiUpload::initPanel()
    rpAprof         = &currProto->rpAprof;
    rpSubmt         = &currProto->rpSubmt;
 
+   //Also, compare US_AnaProfile internals for current & loaded AProfiles
+   US_AnaProfile aprof_curr   = *(mainw->get_aprofile());
+   US_AnaProfile aprof_loaded = *(mainw->get_aprofile_loaded());
+   
+   rps_differ = false;
+   if ( mainw->currProto !=  mainw->loadProto )
+     rps_differ = true;
+
+   if ( aprof_curr       !=  aprof_loaded )
+     rps_differ = true;
+
+   //finally, check for differences in currAProf's & loadAProf's nested  QMap< QString, QMap < QString, US_ReportGMP > > ch_reports
+   // {it's easier to perform this check separately}
+   if ( areReportMapsDifferent( aprof_curr, aprof_loaded ) )
+     rps_differ = true;
+   
 
    qDebug() << "rpSPEED: duration: " << rpSpeed->ssteps[0].duration;
+   
+   if(rps_differ)
+     {
+       US_RunProtocol* cRP = currProto;
+       US_RunProtocol* lRP = loadProto;
+       US_AnaProfile aprof_c   = *(mainw->get_aprofile());
+       US_AnaProfile aprof_l   = *(mainw->get_aprofile_loaded());
+       DbgLv(1) << "EGUp:inP: RPs DIFFER";
 
-if(rps_differ)
-{
-US_RunProtocol* cRP = currProto;
-US_RunProtocol* lRP = loadProto;
-DbgLv(1) << "EGUp:inP: RPs DIFFER";
-DbgLv(1) << "EGUp:inP:  cPname" << cRP->protoname << "lPname" << lRP->protoname;
-DbgLv(1) << "EGUp:inP:  cInves" << cRP->investigator << "lInves" << lRP->investigator;
-DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protoGUID << "lPguid" << lRP->protoGUID;
-DbgLv(1) << "EGUp:inP:  cOhost" << cRP->optimahost << "lOhost" << lRP->optimahost;
-DbgLv(1) << "EGUp:inP:  cTempe" << cRP->temperature << "lTempe" << lRP->temperature;
-DbgLv(1) << "EGUp:inP:   rpRotor diff" << (cRP->rpRotor!=lRP->rpRotor);
-DbgLv(1) << "EGUp:inP:   rpSpeed diff" << (cRP->rpSpeed!=lRP->rpSpeed);
-DbgLv(1) << "EGUp:inP:   rpCells diff" << (cRP->rpCells!=lRP->rpCells);
-DbgLv(1) << "EGUp:inP:   rpSolut diff" << (cRP->rpSolut!=lRP->rpSolut);
-DbgLv(1) << "EGUp:inP:   rpOptic diff" << (cRP->rpOptic!=lRP->rpOptic);
-DbgLv(1) << "EGUp:inP:   rpRange diff" << (cRP->rpRange!=lRP->rpRange);
-DbgLv(1) << "EGUp:inP:   rpAprof diff" << (cRP->rpAprof!=lRP->rpAprof);
-DbgLv(1) << "EGUp:inP:   rpSubmt diff" << (cRP->rpSubmt!=lRP->rpSubmt);
-}
+       DbgLv(1) << "EGUp:inP:   AProfile diff" << ( aprof_c != aprof_l );
+       
+       DbgLv(1) << "EGUp:inP:  cPname" << cRP->protoname << "lPname" << lRP->protoname;
+       DbgLv(1) << "EGUp:inP:  cInves" << cRP->investigator << "lInves" << lRP->investigator;
+       DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protoGUID << "lPguid" << lRP->protoGUID;
+       DbgLv(1) << "EGUp:inP:  cOhost" << cRP->optimahost << "lOhost" << lRP->optimahost;
+       DbgLv(1) << "EGUp:inP:  cTempe" << cRP->temperature << "lTempe" << lRP->temperature;
+       DbgLv(1) << "EGUp:inP:   rpRotor diff" << (cRP->rpRotor!=lRP->rpRotor);
+       DbgLv(1) << "EGUp:inP:   rpSpeed diff" << (cRP->rpSpeed!=lRP->rpSpeed);
+       DbgLv(1) << "EGUp:inP:   rpCells diff" << (cRP->rpCells!=lRP->rpCells);
+       DbgLv(1) << "EGUp:inP:   rpSolut diff" << (cRP->rpSolut!=lRP->rpSolut);
+       DbgLv(1) << "EGUp:inP:   rpOptic diff" << (cRP->rpOptic!=lRP->rpOptic);
+       DbgLv(1) << "EGUp:inP:   rpRange diff" << (cRP->rpRange!=lRP->rpRange);
+       DbgLv(1) << "EGUp:inP:   rpAprof diff" << (cRP->rpAprof!=lRP->rpAprof);
+       DbgLv(1) << "EGUp:inP:   rpSubmt diff" << (cRP->rpSubmt!=lRP->rpSubmt);
+     }
 
    have_run          = ! sibSValue( "general",   "runID"    ).isEmpty();
    have_proj         = ! sibSValue( "general",   "project"  ).isEmpty();
@@ -3033,22 +3278,201 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    pb_saverp  ->setEnabled( have_cells && have_solus && have_range && rps_differ );      // ALEXEY: add check here is rps_differ == true (protocols differ)
 
    // Show/hide Submit and Save buttons based on RunId given
-   if ( US_Settings::us_inv_level() > 2 )
-   {  // Can show/hide buttons as admin
-DbgLv(1) << "EGUp:inP: have_run" << have_run;
-      if ( have_run )
-      {  // RunId given, so show submit
-DbgLv(1) << "EGUp:inP: have_run";
-         pb_submit->show();
-         pb_saverp->hide();
-      }
-      else
-      {  // RunID not given, so show save
-DbgLv(1) << "EGUp:inP: NOT have_run";
-         pb_submit->hide();
-         pb_saverp->show();
-      }
-   }
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       if ( US_Settings::us_inv_level() > 2 )
+	 {  // Can show/hide buttons as admin
+	   DbgLv(1) << "EGUp:inP: have_run" << have_run;
+	   if ( have_run )
+	     {  // RunId given, so show submit
+	       DbgLv(1) << "EGUp:inP: have_run";
+	       pb_submit->show();
+	       pb_saverp->hide();
+	     }
+	   else
+	     {  // RunID not given, so show save
+	       DbgLv(1) << "EGUp:inP: NOT have_run";
+	       pb_submit->hide();
+	       pb_saverp->show();
+	     }
+	 }
+     }
+   else
+     {
+       pb_submit -> disconnect();
+       connect( pb_submit,    SIGNAL( clicked()          ),
+		this,         SLOT  ( submitExperiment_confirm_protDev() ) );
+       
+       pb_submit->show();
+       pb_saverp->hide();
+
+       pb_submit  ->setEnabled( false );
+       pb_submit  ->setEnabled( have_run && rps_differ );
+     }
+
+   //DEBUG
+   //Opt system check, what cells will be uvvis and/or interference
+   QStringList oprof   = sibLValue( "optical", "profiles" );
+   QString uvvis       = tr( "UV/visible" );
+   QString rayleigh    = tr( "Rayleigh Interference" );
+   
+   //get # cells with interference channels
+   int ncells_interference = 0;
+   int nchannels_uvvis = 0;
+   QStringList active_channels;
+   for ( int kk = 0; kk < oprof.count(); kk++ )
+     {
+       if ( oprof[ kk ].contains( rayleigh ) )
+	 {
+	   if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
+	     {
+	       qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	       active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	     }
+	   
+	   ++ncells_interference;
+	 }
+       
+       if ( oprof[ kk ].contains( uvvis ) )
+	 ++nchannels_uvvis;
+     }
+
+   qDebug() << "Upload::initPanel(): oprof -- " << oprof;
+   qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
+	    << ncells_interference << ", " << nchannels_uvvis;
+   
+}
+
+bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )
+{
+  bool maps_different = false;
+
+  QMap< QString, QMap < QString, US_ReportGMP > > aprof_curr_ch_reports = aprof_curr.ch_reports;
+  QMap< QString, QMap < QString, US_ReportGMP > > aprof_load_ch_reports = aprof_load.ch_reports;
+  
+  //check number & content of keys:
+  QStringList aprof_curr_keys   = aprof_curr_ch_reports.  keys();
+  QStringList aprof_load_keys   = aprof_load_ch_reports.  keys();
+
+  qDebug() << "Top-level Report Maps Keys: curr, loaded -- "
+	   << aprof_curr_keys
+	   << aprof_load_keys ;
+    
+  if ( aprof_curr_keys.size() != aprof_load_keys.size() )
+    return true;
+    
+  if ( aprof_curr_keys != aprof_load_keys ) 
+    return true;
+  
+  //Now iterate over channels
+  for ( int i=0; i<aprof_curr_keys.size(); i++ )
+    {	
+      QMap < QString, US_ReportGMP > triple_reports_curr = aprof_curr_ch_reports[ aprof_curr_keys[i] ];
+      QMap < QString, US_ReportGMP > triple_reports_load = aprof_load_ch_reports[ aprof_curr_keys[i] ];
+
+      //check number & content of keys:
+      QStringList triple_reports_curr_keys   = triple_reports_curr.  keys();
+      QStringList triple_reports_load_keys   = triple_reports_load.  keys();
+      
+      qDebug() << "Triple's Report Maps Keys: curr, loaded -- "
+	       << triple_reports_curr_keys
+	       << triple_reports_load_keys ;
+      
+      if ( triple_reports_curr_keys.size() != triple_reports_load_keys.size() )
+	{
+	  maps_different = true;
+	  break;
+	}
+      if ( triple_reports_curr_keys != triple_reports_load_keys ) 
+	{
+	  maps_different = true;
+	  break;
+	}
+      
+      //now, iterate over triple's report & reportItems
+      for ( int j=0; j < triple_reports_curr_keys.size(); j++ )
+	{
+	  US_ReportGMP report_curr = triple_reports_curr[ triple_reports_curr_keys[j] ];
+	  US_ReportGMP report_load = triple_reports_load[ triple_reports_curr_keys[j] ];
+
+	  //compare general report parameters
+	  if ( report_curr.tot_conc                != report_load.tot_conc     ||
+	       report_curr.tot_conc_tol            != report_load.tot_conc_tol ||
+	       report_curr.rmsd_limit              != report_load.rmsd_limit   ||
+	       report_curr.av_intensity            != report_load.av_intensity ||
+	       report_curr.experiment_duration     != report_load.experiment_duration ||
+	       report_curr.experiment_duration_tol != report_load.experiment_duration_tol
+	       )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  //compare report masks
+	  if ( report_curr.tot_conc_mask            != report_load.tot_conc_mask     ||
+	       report_curr.rmsd_limit_mask          != report_load.rmsd_limit_mask   ||
+	       report_curr.av_intensity_mask        != report_load.av_intensity_mask ||
+	       report_curr.experiment_duration_mask != report_load.experiment_duration_mask ||
+	       report_curr.integration_results_mask != report_load.integration_results_mask ||
+	       report_curr.plots_mask               != report_load.plots_mask 
+	       )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  //compare Pseudo3D masks
+	  if ( report_curr.pseudo3d_mask           !=   report_load.pseudo3d_mask           ||    
+	       report_curr.pseudo3d_2dsait_s_ff0   !=	report_load.pseudo3d_2dsait_s_ff0   ||
+	       report_curr.pseudo3d_2dsait_s_d     !=   report_load.pseudo3d_2dsait_s_d     ||
+	       report_curr.pseudo3d_2dsait_mw_ff0  != 	report_load.pseudo3d_2dsait_mw_ff0  ||
+	       report_curr.pseudo3d_2dsait_mw_d	   != 	report_load.pseudo3d_2dsait_mw_d    ||	  
+	       report_curr.pseudo3d_2dsamc_s_ff0   != 	report_load.pseudo3d_2dsamc_s_ff0   ||
+	       report_curr.pseudo3d_2dsamc_s_d	   !=   report_load.pseudo3d_2dsamc_s_d	    ||
+	       report_curr.pseudo3d_2dsamc_mw_ff0  != 	report_load.pseudo3d_2dsamc_mw_ff0  ||
+	       report_curr.pseudo3d_2dsamc_mw_d    != 	report_load.pseudo3d_2dsamc_mw_d    ||
+	       report_curr.pseudo3d_pcsa_s_ff0	   != 	report_load.pseudo3d_pcsa_s_ff0	    ||
+	       report_curr.pseudo3d_pcsa_s_d	   != 	report_load.pseudo3d_pcsa_s_d	    ||
+	       report_curr.pseudo3d_pcsa_mw_ff0	   != 	report_load.pseudo3d_pcsa_mw_ff0    ||	  
+	       report_curr.pseudo3d_pcsa_mw_d      !=   report_load.pseudo3d_pcsa_mw_d      
+	       )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  //compare reportItems: first, check # of reportItems in curr, load
+	  int reportItems_curr_size = report_curr.reportItems.size();
+	  int reportItems_load_size = report_load.reportItems.size();
+	  if ( reportItems_curr_size != reportItems_load_size )
+	    {
+	      maps_different = true;
+	      break;
+	    }
+	  
+	  for ( int k = 0; k < report_curr.reportItems.size(); k++ )
+	    {
+	      US_ReportGMP::ReportItem curr_reportItem = report_curr.reportItems[ k ];
+	      US_ReportGMP::ReportItem load_reportItem = report_load.reportItems[ k ];
+
+	      if ( curr_reportItem.type             != load_reportItem.type             ||
+		   curr_reportItem.method           != load_reportItem.method           ||
+		   curr_reportItem.range_low        != load_reportItem.range_low        ||
+		   curr_reportItem.range_high       != load_reportItem.range_high       ||
+		   curr_reportItem.integration_val  != load_reportItem.integration_val  ||
+		   curr_reportItem.tolerance        != load_reportItem.tolerance        ||
+		   curr_reportItem.total_percent    != load_reportItem.total_percent    ||
+		   curr_reportItem.combined_plot    != load_reportItem.combined_plot
+		   )
+		{
+		  maps_different = true;
+		  break;
+		}
+	    }
+	}
+    }
+  
+  return maps_different;
 }
 
 // Save panel controls when about to leave the panel

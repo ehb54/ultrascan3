@@ -148,6 +148,10 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    this->remember_mw_source = &(((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source);
    this->match_remember_mw = &(((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw);
 
+   use_SDs_for_fitting_iqq = true;
+   use_SDs_for_fitting_prr = false;
+   nnls_plot_contrib       = false;
+   
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle( us_tr( "US-SOMO: " + us_tr( "SAS Functions" ) ) );
@@ -156,6 +160,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_buffer_csv();
    reset_hplc_csv();
    setupGUI();
+
+   // QTextStream(stdout) << US_Vector::qs_mapqsqs( "saxs residue_atom_hybrid_map\n", residue_atom_hybrid_map );
 
    fix_sas_options();
 
@@ -414,6 +420,49 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    set_saxs_legend();
    set_pr_legend();
 #endif
+
+   // #define TEST_PR_SD_ZEROS
+#if defined( TEST_PR_SD_ZEROS )
+   {
+      vector < double > r       { 0,   1,   2,   3,   4, 5, 6, 7, 8 };
+      vector < double > pr      { 0,   1,   4,   5,   4, 0, 0, 0, 0 };
+      vector < double > pr_error{ 0, 0.1, 0.0, 0.0, 0.2, 0, 0, 0, 0 };
+
+      US_Vector::printvector3( "test_pr_sd_zeros init r, pr, pr_error", r, pr, pr_error );
+
+      prop_pr_sd_tail( pr_error, (int) pr_error.size() );
+
+      US_Vector::printvector3( "test_pr_sd_zeros after prop_pr_sd_tail r, pr, pr_error", r, pr, pr_error );
+
+      set_pr_sd( r, pr, pr_error );
+      
+      US_Vector::printvector3( "test_pr_sd_zeros after set_pr_sd r, pr, pr_error", r, pr, pr_error );
+      
+      crop_pr_tail( r, pr, pr_error );
+      
+      US_Vector::printvector3( "test_pr_sd_zeros after crop_pr_tail_pr_sd r, pr, pr_error", r, pr, pr_error );
+   }
+#endif
+
+   // #define TEST_SPLINE
+#if defined( TEST_SPLINE )
+   {
+      vector < double > r       { 0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,15.5,16,16.5,17,17.5,18,18.5,19,19.5,20,20.5,21,21.5,22,22.5,23,23.5,24,24.5,25,25.5,26,26.5,27,27.5,28,28.5,29,29.5,30,30.5,31,31.5,32,32.5,33,33.5,34,34.5,35,35.5,36,36.5,37,37.5,38,38.5,39,39.5,40,40.5,41,41.5,42,42.5,43,43.5,44,44.5,45,45.5,46,46.5,47,47.5,48 };
+      vector < double > r2      { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48 };
+      vector < double > pr      { 0,214.113,2899.98,4356.94,5064.47,5996.28,8773.47,9142.83,11972.1,14382.3,16433.9,17822.1,19401.3,21125.9,22991.6,23459.2,23826.9,24262.5,24312,24970.1,23414.5,24176.2,22509,21580.1,18877.5,16910.8,14819.3,12569.9,11300.5,9325.03,8177.13,6942.54,6054.87,4466.99,3982.04,2886.17,2360.64,2167.71,1586.22,1371.81,913.865,626.773,388.171,268.683,103.848,83.4387,42.6576,8.68127,6.99182 };
+      vector < double > npr;
+
+      natural_spline_interpolate( r, r2, pr, npr );
+
+      US_Vector::printvector2( "before  interp r2, pr", r2, pr, 8, 10 );
+      US_Vector::printvector2( "after  nat spline interp r, npr", r, npr, 8, 10 );
+
+      npr = interpolate( r, r2, pr );
+      US_Vector::printvector2( "after  'interpolate' r, npr", r, npr, 8, 10 );
+      
+   }
+#endif
+
 }
 
 void US_Hydrodyn_Saxs::push_back_color_if_ok( QColor bg, QColor set )
@@ -1447,6 +1496,33 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_width2, SIGNAL(clicked()), SLOT(set_width()));
    pr_widgets.push_back( pb_width2 );
 
+   pb_pr_info = new QPushButton(us_tr( "info" ), this);
+   pb_pr_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_pr_info->setMinimumHeight(minHeight1);
+   pb_pr_info->setPalette( PALET_PUSHB );
+   connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
+   // pr_widgets.push_back( pb_pr_info );
+   pb_pr_info->hide();
+
+   pb_pr_info2 = new QPushButton(us_tr( "info2" ), this);
+   pb_pr_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_pr_info2->setMinimumHeight(minHeight1);
+   pb_pr_info2->setPalette( PALET_PUSHB );
+   connect(pb_pr_info2, SIGNAL(clicked()), SLOT(pr_info2()));
+   // pr_widgets.push_back( pb_pr_info2 );
+   pb_pr_info2->hide();
+
+   cb_pr_eb = new QCheckBox(this);
+   cb_pr_eb->setText(us_tr("Err "));
+   cb_pr_eb->setMaximumWidth ( minHeight1 * 2 );
+   cb_pr_eb->setChecked( false );
+   cb_pr_eb->setMinimumHeight( minHeight1 );
+   cb_pr_eb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_pr_eb->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pr_eb );
+   connect( cb_pr_eb, SIGNAL( clicked() ), SLOT( set_pr_eb() ) );
+   pr_widgets.push_back( cb_pr_eb );
+
    pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
@@ -1767,22 +1843,26 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    hide_widgets( manual_guinier_widgets );
 
-   progress_saxs = new QProgressBar( this );
+   progress_saxs = new mQProgressBar( this );
    progress_saxs->setMinimumHeight(minHeight1);
    progress_saxs->setPalette( PALET_NORMAL );
+   progress_saxs->set_cli_progress( ( ( US_Hydrodyn * ) us_hydrodyn )->cli_progress );
    AUTFBACK( progress_saxs );
    progress_saxs->reset();
    iq_widgets.push_back( progress_saxs );
 
-   progress_pr = new QProgressBar( this );
+   progress_pr = new mQProgressBar( this );
    progress_pr->setMinimumHeight(minHeight1);
    progress_pr->setPalette( PALET_NORMAL );
+   progress_pr->set_cli_progress( ( ( US_Hydrodyn * ) us_hydrodyn )->cli_progress );
    AUTFBACK( progress_pr );
    progress_pr->reset();
    pr_widgets.push_back( progress_pr );
 
-   editor = new QTextEdit(this);
+   editor = new mQTextEdit(this);
    editor->setPalette( PALET_NORMAL );
+   editor->set_cli_progress( ( ( US_Hydrodyn * ) us_hydrodyn )->cli_progress );
+   editor->set_cli_prefix( "saxs" );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setMinimumWidth(300);
@@ -2030,6 +2110,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_pr->addWidget(pb_clear_plot_pr);
    hbl_plot_pr->addWidget(pb_pr_legend);
    hbl_plot_pr->addWidget(pb_width2);
+   hbl_plot_pr->addWidget(cb_pr_eb);
+   hbl_plot_pr->addWidget(pb_pr_info);
+   hbl_plot_pr->addWidget(pb_pr_info2);
    background->addLayout( hbl_plot_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_bin_size, j, 0);
@@ -2120,7 +2203,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->setColumnStretch(2, 10);
    update_saxs_sans();
    clear_plot_saxs();
-   clear_plot_pr();
+   clear_plot_pr( true );
    if ( source )
    {
       our_saxs_options->curve = 0;
@@ -2212,7 +2295,7 @@ void saxs_pr_thr_t::saxs_pr_thr_setup(
                                       vector < float > *hist,
                                       double delta,
                                       unsigned int threads,
-                                      QProgressBar *progress,
+                                      mQProgressBar *progress,
                                       QLabel *lbl_core_progress,
                                       bool *stopFlag,
                                       float b_bar_inv2
@@ -2623,6 +2706,11 @@ void US_Hydrodyn_Saxs::set_pr_contrib()
 
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
+   if ( !selected_models.size() ) {
+      return;
+   }
+   
+   progress_pr->set_cli_prefix( "pr" );
    pb_pr_contrib->setEnabled(false);
    stopFlag = false;
    pb_stop->setEnabled(true);
@@ -2743,14 +2831,18 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                  it != hybrid_map.end();
                  it++)
             {
-               // cout << " computing b for " << it->first 
-               // << " hydrogens " << it->second.hydrogens 
-               // << " exch_prot " << it->second.exch_prot
-               // << " num elect " << it->second.num_elect
-               // << " saxs_name " << it->second.saxs_name
-               // << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
-               // // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
-               // << endl;
+// #define DEBUG_PR_COEFF
+#if defined(DEBUG_PR_COEFF)               
+               QTextStream(stdout)  << " computing b for " << it->first 
+                                    << " hydrogens " << it->second.hydrogens 
+                                    << " exch_prot " << it->second.exch_prot
+                                    << " num elect " << it->second.num_elect
+                                    << " saxs_name " << it->second.saxs_name
+                                    << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
+                  // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
+                                    << endl
+                  ;
+#endif
                b[it->first] = 
                   it->second.num_elect;
             }
@@ -2779,10 +2871,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      mapkey = "OXT|OXT";
                   }
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
-                  if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
+                  QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+                  if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
-                     US_Static::us_message( us_tr("Missing Atom:"), 
-                                           QString( us_tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
+                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                        US_Static::us_message( us_tr("Missing Atom:"), 
+                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     }
                      progress_pr->reset();
                      lbl_core_progress->setText("");
                      pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2790,14 +2886,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      pb_plot_pr->setEnabled(true);
                      return;
                   }
-                  new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+                  new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
-#if defined(BUG_DEBUG)
+#if defined(BUG_DEBUG) || defined(DEBUG_PR_COEFF)
                   printf("atom %d %d hybrid name %s, atom name %s b %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.toLatin1().data(),
-                         this_atom->name.toLatin1().data(),
+                         this_atom_name.toLatin1().data(),
                          new_atom.b,
                          mapkey.toLatin1().data(),
                          hybrid_name.toLatin1().data()
@@ -2814,6 +2910,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   {
                      mapkey = "OXT|OXT";
                   }
+#if defined(DEBUG_PR_COEFF)
+                  QTextStream(stdout)
+                     << "mapkey " << mapkey
+                     << Qt::endl
+                     ;
+#endif
+
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
                   // double radius = 0e0;
                   if ( rb_curve_saxs->isChecked() )
@@ -2834,10 +2937,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                         // radius = hybrid_map[hybrid_name].radius;
                      }
                   }
-                  if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
+                  QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+                  if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
-                     US_Static::us_message( us_tr("Missing Atom:"), 
-                                           QString( us_tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
+                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                        US_Static::us_message( us_tr("Missing Atom:"), 
+                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     }
                      progress_pr->reset();
                      lbl_core_progress->setText("");
                      pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2847,18 +2954,26 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   }
                   // cout << "atom " << this_atom->name 
                   // << " hybrid " << this_atom->hybrid_name
-                  // << " excl_vol " <<  atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol 
+                  // << " excl_vol " <<  atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol 
                   // << " radius cubed " << radius * radius * radius 
                   // << " pi radius cubed " << M_PI * radius * radius * radius 
                   // << endl;
-                  new_atom.b = b[hybrid_name] - (double) our_saxs_options->water_e_density * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+#if defined(DEBUG_PR_COEFF)
+                  QTextStream(stdout)
+                     << "atom " << this_atom_name
+                     << " hybrid " << hybrid_name
+                     << " electrons " << hybrid_map[hybrid_name].num_elect
+                     << Qt::endl
+                     ;
+#endif
+                  new_atom.b = b[hybrid_name] - (double) our_saxs_options->water_e_density * atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
 #if defined(BUG_DEBUG)
                   printf("atom %d %d hybrid name %s, atom name %s b %e correction %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.toLatin1().data(),
-                         this_atom->name.toLatin1().data(),
+                         this_atom_name.toLatin1().data(),
                          new_atom.b,
                          our_saxs_options->water_e_density * radius * radius * radius,
                          mapkey.toLatin1().data(),
@@ -3139,9 +3254,16 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(PR_DEBUG)
       cout << "hist.size() " << hist.size() << endl;
 #endif
-      while( hist.size() && !hist[hist.size()-1] ) 
+      // while( hist.size() && !hist[hist.size()-1] ) 
+      while( hist.size() && hist[hist.size()-1] <= 0 ) 
       {
          hist.pop_back();
+      }
+      // set remaining negatives to zero
+      for ( int i = 0; i < (int) hist.size(); ++i ) {
+         if ( hist[i] < 0 ) {
+            hist[i] = 0;
+         }
       }
       if ( contrib_array.size() ) 
       {
@@ -3227,6 +3349,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                vector < double > r;
                vector < double > pr;
                vector < double > pr_n;
+               vector < double > pr_error;
                r.resize(hist.size());
                pr.resize(hist.size());
                pr_n.resize(hist.size());
@@ -3237,7 +3360,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr_n[i] = (double) hist[i];
                }
                cout << QString( "get mw <%1>\n" ).arg( te_filename2->text() );
-               normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
+               normalize_pr(r, &pr_n, &pr_error, get_mw(te_filename2->text(), false));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                QString("")
                   .sprintf(
@@ -3246,7 +3369,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                            , US_Version.toLatin1().data()
                            , REVISION
                            , delta
-, get_mw(te_filename2->text(), false)
+                           , get_mw(te_filename2->text(), false)
                            , compute_pr_area(pr, r)
                            );
                fprintf(fpr, "%s",
@@ -3254,12 +3377,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
-                  if ( hist[i] ) {
-                     fprintf(fpr, "%.6e\t%.6e\t%.6e\n", r[i], pr[i], pr_n[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
-                  }
+                  // allow zeros in output ... esp important for intermediates...
+                  // if ( hist[i] ) {
+                  fprintf(fpr, "%.6e\t%.6e\t%.6e\n", r[i], pr[i], pr_n[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
+                  // }
                }
                fclose(fpr);
             }
@@ -3315,17 +3439,19 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      );
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
-            if ( hist[i] ) {
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
-            }
+            // allow zeros in output ... esp important for intermediates...
+            // if ( hist[i] ) {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
+            // }
          }
       }
    } // models
 
    vector < double > r;
    vector < double > pr;
+   vector < double > pr_error;
    r.resize(hist.size());
    pr.resize(hist.size());
    for ( unsigned int i = 0; i < hist.size(); i++) 
@@ -3336,18 +3462,21 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       printf("%e %e\n", r[i], pr[i]);
 #endif
    }
-   plotted_pr_not_normalized.push_back(pr);
+   plotted_pr_not_normalized      .push_back(pr);
+   plotted_pr_not_normalized_error.push_back( pr_error );
+   
    plotted_pr_mw.push_back((float)get_mw(te_filename2->text()));
-   if ( cb_normalize->isChecked() )
-   {
-      normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
+   if ( cb_normalize->isChecked() ) {
+      normalize_pr(r, &pr, &pr_error, get_mw(te_filename2->text(),false));
    }
 
-   plotted_r.push_back(r);
-   plotted_pr.push_back(pr);
-   QString use_name = QFileInfo(model_filename).fileName();
+   plotted_r         .push_back(r);
+   plotted_pr        .push_back(pr);
+   plotted_pr_error  .push_back(pr_error);
+
+   QString use_name  = QFileInfo(model_filename).fileName();
    QString plot_name = use_name;
-   int extension = 0;
+   int extension     = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
    {
       plot_name = QString("%1-%2").arg(use_name).arg(++extension);
@@ -3391,6 +3520,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    plot_pr->replot();
 
+   compute_rg_to_progress( r, pr, use_name );
+
    progress_pr->setMaximum(1);
    progress_pr->setValue(1);
    pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -3400,28 +3531,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName() ) );
 }
 
-
 void US_Hydrodyn_Saxs::load_plot_pr()
 {
    load_pr(true);
 }
-
-void US_Hydrodyn_Saxs::clear_plot_pr()
-{
-   plotted_pr.clear( );
-   plotted_pr_not_normalized.clear( );
-   plotted_pr_mw.clear( );
-   plotted_r.clear( );
-   qsl_plotted_pr_names.clear( );
-   dup_plotted_pr_name_check.clear( );
-   plot_pr->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_pr->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   plot_pr->replot();
-#if QT_VERSION >= 0x040000
-   pr_legend_vis = false;
-   set_pr_legend();
-#endif
-}
-
 
 //--------- thread for saxs I(q) plot -----------
 
@@ -3446,7 +3559,7 @@ void saxs_Iq_thr_t::saxs_Iq_thr_setup(
                                       vector < double > *Ic,
                                       vector < double > *q,
                                       unsigned int threads,
-                                      QProgressBar *progress,
+                                      mQProgressBar *progress,
                                       QLabel *lbl_core_progress,
                                       bool *stopFlag
                                       )
@@ -3886,12 +3999,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs 1) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red",
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
@@ -3915,7 +4029,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                continue;
             }
 
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
 
@@ -4748,6 +4862,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
         iq_plot_experimental_and_calculated_present() )
    {
       clear_plot_saxs_and_replot_experimental();
+      set_eb();
    } else {
       clear_plot_saxs_data();
    }
@@ -5006,6 +5121,23 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
       }
       f.close();
    }
+   // add generic ABB
+   {
+      atom abb_atom;
+      abb_atom.name                    = "ABB";
+      abb_atom.hybrid.name             = "ABB";
+      abb_atom.hybrid.mw               = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_mass;
+      abb_atom.hybrid.ionized_mw_delta = 0;
+      abb_atom.hybrid.radius           = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_radius;
+      abb_atom.hybrid.scat_len         = 0;
+      abb_atom.hybrid.saxs_name        = "ABB";
+      abb_atom.hybrid.num_elect        = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_num_elect;
+      abb_atom.hybrid.protons          = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_protons;
+      abb_atom.saxs_excl_vol           = (4/3)*M_PI*pow(((US_Hydrodyn *)us_hydrodyn)->misc.avg_radius, 3 );
+
+      atom_list.push_back(abb_atom);
+      atom_map[abb_atom.name + "~" + abb_atom.hybrid.name] = abb_atom;
+   }   
 }
 
 void US_Hydrodyn_Saxs::select_hybrid_file()
@@ -5059,6 +5191,20 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          }
       }
       f.close();
+   }
+   // add ABB defaults
+   {
+      hybridization abb_hybrid;
+      abb_hybrid.saxs_name        = "ABB";
+      abb_hybrid.name             = "ABB";
+      abb_hybrid.mw               = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_mass;
+      abb_hybrid.ionized_mw_delta = 0;
+      abb_hybrid.radius           = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_radius;
+      abb_hybrid.scat_len         = 0;
+      abb_hybrid.num_elect        = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_num_elect;
+      abb_hybrid.protons          = ((US_Hydrodyn *)us_hydrodyn)->misc.avg_protons;
+      hybrid_list.push_back( abb_hybrid );
+      hybrid_map[ abb_hybrid.name ] = abb_hybrid;
    }
 }
 
@@ -5731,6 +5877,7 @@ void US_Hydrodyn_Saxs::saxs_buffer()
 
 void US_Hydrodyn_Saxs::saxs_hplc()
 {
+   // qDebug() << "saxs_hplc";
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget )
    {
       if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->isVisible() )
@@ -5753,8 +5900,12 @@ void US_Hydrodyn_Saxs::saxs_hplc()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->show();
    }
 
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->disable_all();
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
+      if ( !( i % 500 ) ) {
+         qDebug() << "saxs_hplc plotting curve " << i;
+      }
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
@@ -5767,6 +5918,7 @@ void US_Hydrodyn_Saxs::saxs_hplc()
                                                                    plotted_I[ i ] );
       }
    }
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();
 }
 
 void US_Hydrodyn_Saxs::reset_buffer_csv()
@@ -5923,306 +6075,19 @@ void US_Hydrodyn_Saxs::reset_hplc_csv()
    }
 }
 
-void US_Hydrodyn_Saxs::load_gnom()
-{
-   cb_guinier->setChecked( false );
-   set_guinier();
-   // map < QString, QString > params;
-   // params[ "wild" ] = "10.7";
-   // US_SAS_Dammin * usd = new US_SAS_Dammin( (US_Hydrodyn *)us_hydrodyn, 41e0, params );
-   // usd->show();
-   // return;
-
-   plotted = false;
-   QString use_dir = 
-      our_saxs_options->path_load_gnom.isEmpty() ?
-      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
-      our_saxs_options->path_load_gnom;
-
-   select_from_directory_history( use_dir, this );
-
-   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.out" );
-   if (filename.isEmpty())
-   {
-      return;
-   }
-   add_to_directory_history( filename );
-
-   QFile f(filename);
-   our_saxs_options->path_load_gnom = QFileInfo(filename).absolutePath();
-   QString ext = QFileInfo(filename).suffix().toLower();
-   bool plot_gnom = false;
-   vector < double > gnom_Iq_reg;
-   vector < double > gnom_Iq_exp;
-   vector < double > gnom_q;
-
-   if ( f.open(QIODevice::ReadOnly) )
-   {
-      QStringList qsl_gnom;
-      {
-         QTextStream ts(&f);
-         while ( !ts.atEnd() )
-         {
-            qsl_gnom << ts.readLine();
-         }
-      }
-      f.close();
-      f.open(QIODevice::ReadOnly);
-      bool ask_save_mw_to_gnom = false;
-      double gnom_mw = 0e0;
-
-      double units = 1;
-      if ( our_saxs_options->iq_scale_ask )
-      {
-         switch( QMessageBox::information( this, 
-                                           us_tr("UltraScan"),
-                                           us_tr("Is this file in 1/Angstrom or 1/nm units?"),
-                                           "1/&Angstrom", 
-                                           "1/&nm", 0,
-                                           0,      // Enter == button 0
-                                           1 ) ) { // Escape == button 2
-         case 0: // load it as is
-            units = 1.0;
-            break;
-         case 1: // rescale
-            units = 0.1;
-            break;
-         } 
-      } else {
-         if ( our_saxs_options->iq_scale_angstrom ) 
-         {
-            units = 1.0;
-         } else {
-            units = 0.1;
-         }
-      }
-         
-      QTextStream ts(&f);
-      QRegExp iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
-      QRegExp prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
-      QRegExp rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rx5("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rxinputfile("Input file.s. : (\\S+)\\s*$");
-      QString tmp;
-      vector < QString > datafiles;
-      while ( !ts.atEnd() )
-      {
-         tmp = ts.readLine();
-         if ( rxinputfile.indexIn(tmp) != -1 ) 
-         {
-            // datafiles.push_back(rxinputfile.cap(1).trimmed());
-            continue;
-         }
-         if ( iqqh.indexIn(tmp) != -1 )
-         {
-            vector < double > I_exp;
-            vector < double > I_reg;
-            vector < double > q;
-            // cout << "start of iqq\n";
-            ts.readLine(); // blank line
-            while ( !ts.atEnd() )
-            {
-               tmp = ts.readLine();
-               if ( rx5.indexIn(tmp) != -1 )
-               {
-                  q.push_back(rx5.cap(1).toDouble() * units );
-                  I_exp.push_back(rx5.cap(2).toDouble());
-                  I_reg.push_back(rx5.cap(5).toDouble());
-                  // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
-               } else {
-                  // end of iqq?
-                  if ( rx2.indexIn(tmp) == -1 )
-                  {
-                     plot_gnom = true;
-                     gnom_Iq_reg = I_reg;
-                     gnom_Iq_exp = I_exp;
-                     gnom_q = q;
-                     // plot_one_iqq(q, I, QFileInfo(filename).fileName());
-                     // if ( plotted )
-                     // {
-                     //   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-                     //   editor->append("I(q) vs q plot done\n");
-                     //   plotted = false;
-                     // }
-                     break;
-                  } else {
-                     // cout << "iqq 2 fielder ignored\n";
-                  }
-               }
-            }
-            if ( ts.atEnd() &&
-                 q.size() )
-            {
-               plot_gnom = true;
-               gnom_Iq_reg = I_reg;
-               gnom_Iq_exp = I_exp;
-               gnom_q = q;
-            }
-            continue;
-         }
-         if ( prrh.indexIn(tmp) != -1 )
-         {
-            vector < double > r;
-            vector < double > pr;
-            // cout << "start of prr\n";
-            ts.readLine(); // blank line
-            while ( !ts.atEnd() ) {
-               tmp = ts.readLine();
-               if ( rx3.indexIn(tmp) != -1 )
-               {
-                  r.push_back(rx3.cap(1).toDouble() / units);
-                  pr.push_back(rx3.cap(2).toDouble());
-                  // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
-               } else {
-                  // end of prr?
-                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
-                  QStringList mwline = qsl_gnom.filter(qx_mw);
-                  if ( mwline.size() )
-                  {
-                     if ( qx_mw.indexIn(mwline[0]) == -1 )
-                     {
-                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
-                        gnom_mw = 0e0;
-                     } else {
-                        // cout << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
-                        gnom_mw = qx_mw.cap(1).toDouble();
-                     }
-                     if ( mwline.size() > 1 )
-                     {
-                        US_Static::us_message(us_tr("Please note:"), 
-                                             QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
-                                                        "Using the first one found (%1 Daltons)")).arg(gnom_mw));
-                     }
-                     if ( gnom_mw > 0e0 )
-                     {
-                        (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
-                        (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
-                     }
-                  }
-                  gnom_mw = get_mw(filename,false);
-                  if ( !mwline.size() )
-                  {
-                     ask_save_mw_to_gnom = true;
-                  }
-                  if ( cb_normalize->isChecked() )
-                  {
-                     normalize_pr(r, &pr, get_mw(filename, false));
-                  }
-                  plot_one_pr(r, pr, QFileInfo(filename).fileName());
-                  r.clear( );
-                  pr.clear( );
-                  if ( plotted )
-                  {
-                     editor_msg( "black", "P(r) plot done\n" );
-                     plotted = false;
-                  }
-                  break;
-               }
-            }
-            if ( r.size() ) {
-               gnom_mw = get_mw(filename,false);
-               if ( cb_normalize->isChecked() )
-               {
-                  normalize_pr(r, &pr, get_mw(filename, false));
-               }
-               plot_one_pr(r, pr, QFileInfo(filename).fileName());
-               r.clear( );
-               pr.clear( );
-               if ( plotted )
-               {
-                  editor_msg( "black", "P(r) plot done\n" );
-                  plotted = false;
-               }
-            }
-         }
-      }
-      f.close();
-      if ( ask_save_mw_to_gnom && gnom_mw )
-      {
-         switch( QMessageBox::information( this, 
-                                           us_tr("Save GNOM with Molecular Weight"),
-                                           QString(us_tr("Do you want to save the molecular weight entered (%1 Daltons) into the gnom.out file?"))
-                                           .arg(gnom_mw),
-                                           "&Ok",  
-                                           "&Cancel", 
-                                           0,
-                                           0,      // Enter == button 0
-                                           1 ) ) { // Escape == button 2
-         case 0: // write the file
-            {
-               QString fname = filename;
-               if ( QFile::exists(fname) )
-               {
-                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
-               }
-               QFile f(fname);
-               if ( !f.open( QIODevice::WriteOnly ) )
-               {
-                  QMessageBox::warning( this, "UltraScan",
-                                        QString(us_tr("Could not open %1 for writing!")).arg(fname) );
-               } else {
-                  QTextStream t( &f );
-                  t << QString("Molecular weight %1 Daltons\n\n").arg(gnom_mw);
-                  t << qsl_gnom.join("\n");
-                  t << "\n";
-                  f.close();
-                  editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
-               }
-            }                  
-            break;
-         case 1: // Cancel clicked or Escape pressed
-            break;
-         }
-      }
-
-      if ( datafiles.size() )
-      {
-         for ( unsigned int i = 0; i < datafiles.size(); i++ )
-         {
-            QString datafile = our_saxs_options->path_load_gnom + QDir::separator() + datafiles[i];
-            if ( QFileInfo(datafile).exists() )
-            {
-               switch( QMessageBox::information( this, 
-                                                 us_tr("UltraScan"),
-                                                 us_tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
-                                                 us_tr("Do you want to load it?"),
-                                                 "&Ok", 
-                                                 "&No", 0,
-                                                 0,      // Enter == button 0
-                                                 1 ) ) { // Escape == button 2
-               case 0: // load it
-                  load_saxs(datafile);
-               break;
-               case 1: // Cancel clicked or Escape pressed
-                  break;
-               }
-            }
-         }
-      }
-      if ( plot_gnom )
-      {
-         vector < double > gnom_q_reg = gnom_q;
-
-         crop_iq_data(gnom_q, gnom_Iq_exp);
-         plot_one_iqq(gnom_q, gnom_Iq_exp, QFileInfo(filename).fileName() + " Experimental");
-         crop_iq_data(gnom_q_reg, gnom_Iq_reg);
-         plot_one_iqq(gnom_q_reg, gnom_Iq_reg, QFileInfo(filename).fileName() + " Regularized");
-         if ( plotted )
-         {
-            editor_msg( "black", "I(q) vs q plot done\n" );
-            plotted = false;
-         }
-         cb_guinier->setChecked(false);
-         cb_user_range->setChecked(false);
-         set_guinier();
-      }
-   }
-}
-
 vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r, 
                                                  vector < double > from_r, 
                                                  vector < double > from_pr )
+{
+   vector < double > to_data;
+   interpolate( to_r, from_r, from_pr, to_data );
+   return to_data;
+}
+
+bool US_Hydrodyn_Saxs::interpolate( vector < double > to_r, 
+                                    vector < double > from_r, 
+                                    vector < double > from_pr,
+                                    vector < double > &to_data )
 {
    US_Saxs_Util usu;
 
@@ -6248,8 +6113,10 @@ vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r,
    if ( !usu.interpolate( "out", "to", "from" ) )
    {
       cout << usu.errormsg;
+      return false;
    }
-   return usu.wave["out"].r;
+   to_data = usu.wave["out"].r;
+   return true;
 }
 
 bool US_Hydrodyn_Saxs::natural_spline_interpolate( vector < double > to_grid, 
@@ -7198,14 +7065,12 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               QColor            plot_color,
                                               vector < double > I_errors)
 {
-   // make sure things aren't to big
-   if ( our_saxs_options->ignore_errors &&
-        I_errors.size() )
-   {
+   if ( !use_SDs_for_fitting_iqq && I_errors.size() ) {
       editor_msg( "dark red", us_tr( "Ignoring experimental errors" ) );
       I_errors.clear( );
    }
 
+   // make sure things aren't to big
    unsigned int min_len = q.size();
    if ( I1.size() <  min_len ) 
    {
@@ -7216,7 +7081,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       min_len = I2.size();
    }
 
-   bool use_errors = is_nonzero_vector( I_errors );
+   bool use_errors = is_nonzero_vector( I_errors ) && I_errors.size();
 #if defined( DEBUG_RESID )
    cout << 
       QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")
@@ -7699,8 +7564,10 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
          our_saxs_options->delta_angle = save_delta_angle;
          unsigned int grid_points = 
             (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
-         US_Static::us_message(us_tr("SOMO: Grid restored"), 
-                              QString(us_tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
+         if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+            US_Static::us_message(us_tr("SOMO: Grid restored"), 
+                                  QString(us_tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
+         }
          ok = true;
       }
    } while ( !ok );

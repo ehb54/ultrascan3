@@ -1392,6 +1392,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "misc.pb_rule_on" ] = QString( "%1" ).arg( misc.pb_rule_on );
       parameters[ "misc.avg_radius" ] = QString( "%1" ).arg( misc.avg_radius );
       parameters[ "misc.avg_mass" ] = QString( "%1" ).arg( misc.avg_mass );
+      parameters[ "misc.avg_num_elect" ] = QString( "%1" ).arg( misc.avg_num_elect );
+      parameters[ "misc.avg_protons" ] = QString( "%1" ).arg( misc.avg_protons );
       parameters[ "misc.avg_hydration" ] = QString( "%1" ).arg( misc.avg_hydration );
       parameters[ "misc.avg_volume" ] = QString( "%1" ).arg( misc.avg_volume );
       parameters[ "misc.avg_vbar" ] = QString( "%1" ).arg( misc.avg_vbar );
@@ -1619,6 +1621,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.steric_clash_distance" ] = QString( "%1" ).arg( saxs_options.steric_clash_distance );
       parameters[ "saxs_options.steric_clash_recheck_distance" ] = QString( "%1" ).arg( saxs_options.steric_clash_recheck_distance );
       parameters[ "saxs_options.disable_iq_scaling" ] = QString( "%1" ).arg( saxs_options.disable_iq_scaling );
+      parameters[ "saxs_options.disable_nnls_scaling" ] = QString( "%1" ).arg( saxs_options.disable_nnls_scaling );
       parameters[ "saxs_options.autocorrelate" ] = QString( "%1" ).arg( saxs_options.autocorrelate );
       parameters[ "saxs_options.hybrid_radius_excl_vol" ] = QString( "%1" ).arg( saxs_options.hybrid_radius_excl_vol );
       parameters[ "saxs_options.scale_excl_vol" ] = QString( "%1" ).arg( saxs_options.scale_excl_vol );
@@ -1662,6 +1665,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "batch.zeno" ] = QString( "%1" ).arg( batch.zeno );
 
       parameters[ "saxs_options.ignore_errors" ] = QString( "%1" ).arg( saxs_options.ignore_errors );
+      parameters[ "saxs_options.trunc_pr_dmax_target" ] = QString( "%1" ).arg( saxs_options.trunc_pr_dmax_target );
       parameters[ "saxs_options.alt_ff" ] = QString( "%1" ).arg( saxs_options.alt_ff );
       parameters[ "saxs_options.crysol_explicit_hydrogens" ] = QString( "%1" ).arg( saxs_options.crysol_explicit_hydrogens );
       parameters[ "saxs_options.use_somo_ff" ] = QString( "%1" ).arg( saxs_options.use_somo_ff );
@@ -1727,6 +1731,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ] = QString( "%1" ).arg( saxs_options.cryson_sh_fibonacci_grid_order ); //     = 17;
       parameters[ "saxs_options.cryson_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.cryson_hydration_shell_contrast ); //    = 0.03f;
       parameters[ "saxs_options.cryson_manual_hs" ] = QString( "%1" ).arg( saxs_options.cryson_manual_hs ); //    = 0.03f;
+
+      parameters[ "advanced_config.temp_dir_threshold_mb" ] = QString( "%1" ).arg( advanced_config.temp_dir_threshold_mb );
 
       // vectors to write:
       {
@@ -1884,6 +1890,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "misc.pb_rule_on" ) ) misc.pb_rule_on = parameters[ "misc.pb_rule_on" ] == "1";
    if ( parameters.count( "misc.avg_radius" ) ) misc.avg_radius = parameters[ "misc.avg_radius" ].toDouble();
    if ( parameters.count( "misc.avg_mass" ) ) misc.avg_mass = parameters[ "misc.avg_mass" ].toDouble();
+   if ( parameters.count( "misc.avg_num_elect" ) ) misc.avg_num_elect = parameters[ "misc.avg_num_elect" ].toDouble();
+   if ( parameters.count( "misc.avg_protons" ) ) misc.avg_protons = parameters[ "misc.avg_protons" ].toDouble();
    if ( parameters.count( "misc.avg_hydration" ) ) misc.avg_hydration = parameters[ "misc.avg_hydration" ].toDouble();
    if ( parameters.count( "misc.avg_volume" ) ) misc.avg_volume = parameters[ "misc.avg_volume" ].toDouble();
    if ( parameters.count( "misc.avg_vbar" ) ) misc.avg_vbar = parameters[ "misc.avg_vbar" ].toDouble();
@@ -2111,6 +2119,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.steric_clash_distance" ) ) saxs_options.steric_clash_distance = parameters[ "saxs_options.steric_clash_distance" ].toDouble();
    if ( parameters.count( "saxs_options.steric_clash_recheck_distance" ) ) saxs_options.steric_clash_recheck_distance = parameters[ "saxs_options.steric_clash_recheck_distance" ].toDouble();
    if ( parameters.count( "saxs_options.disable_iq_scaling" ) ) saxs_options.disable_iq_scaling = parameters[ "saxs_options.disable_iq_scaling" ] == "1";
+   if ( parameters.count( "saxs_options.disable_nnls_scaling" ) ) saxs_options.disable_nnls_scaling = parameters[ "saxs_options.disable_nnls_scaling" ] == "1";
    if ( parameters.count( "saxs_options.autocorrelate" ) ) saxs_options.autocorrelate = parameters[ "saxs_options.autocorrelate" ] == "1";
    if ( parameters.count( "saxs_options.hybrid_radius_excl_vol" ) ) saxs_options.hybrid_radius_excl_vol = parameters[ "saxs_options.hybrid_radius_excl_vol" ] == "1";
    if ( parameters.count( "saxs_options.scale_excl_vol" ) ) saxs_options.scale_excl_vol = parameters[ "saxs_options.scale_excl_vol" ].toFloat();
@@ -2154,6 +2163,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "batch.zeno" ) ) batch.zeno = parameters[ "batch.zeno" ] == "1";
 
    if ( parameters.count( "saxs_options.ignore_errors" ) ) saxs_options.ignore_errors = parameters[ "saxs_options.ignore_errors" ] == "1";
+   if ( parameters.count( "saxs_options.trunc_pr_dmax_target" ) ) saxs_options.trunc_pr_dmax_target = parameters[ "saxs_options.trunc_pr_dmax_target" ] == "1";
    if ( parameters.count( "saxs_options.alt_ff" ) ) saxs_options.alt_ff = parameters[ "saxs_options.alt_ff" ] == "1";
    if ( parameters.count( "saxs_options.crysol_explicit_hydrogens" ) ) saxs_options.crysol_explicit_hydrogens = parameters[ "saxs_options.crysol_explicit_hydrogens" ] == "1";
    if ( parameters.count( "saxs_options.use_somo_ff" ) ) saxs_options.use_somo_ff = parameters[ "saxs_options.use_somo_ff" ] == "1";
@@ -2219,6 +2229,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.cryson_sh_fibonacci_grid_order" ) ) saxs_options.cryson_sh_fibonacci_grid_order = parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ].toUInt();
    if ( parameters.count( "saxs_options.cryson_hydration_shell_contrast" ) ) saxs_options.cryson_hydration_shell_contrast = parameters[ "saxs_options.cryson_hydration_shell_contrast" ].toFloat();
    if ( parameters.count( "saxs_options.cryson_manual_hs" ) ) saxs_options.cryson_manual_hs = parameters[ "saxs_options.cryson_manual_hs" ] == "1";
+
+   if ( parameters.count( "advanced_config.temp_dir_threshold_mb" ) ) advanced_config.temp_dir_threshold_mb = parameters[ "advanced_config.temp_dir_threshold_mb" ].toInt();
 
    // vectors to read:
 
@@ -2842,17 +2854,18 @@ void US_Hydrodyn::hard_coded_defaults()
    grid.enable_asa = true;   // true: enable asa
    grid.equalize_radii_constant_volume = false;
 
-   misc.hydrovol = 24.041;
-   misc.compute_vbar = true;
-   misc.vbar = 0.72;
+   misc.hydrovol         = 24.041;
+   misc.compute_vbar     = true;
+   misc.vbar             = 0.72;
    misc.vbar_temperature = 20.0;
-   misc.pb_rule_on = true;
-   misc.avg_radius = 1.68;
-   misc.avg_mass = 16.0;
-   misc.avg_hydration = 0.4;
-   misc.avg_volume = 15.3;
-   misc.avg_vbar = 0.72;
-   overlap_tolerance = 0.001;
+   misc.pb_rule_on       = true;
+   misc.avg_radius       = 1.68;
+   misc.avg_mass         = 14.5;
+   misc.avg_num_elect    = 7.7;
+   misc.avg_protons      = 7.7;
+   misc.avg_volume       = 15.3;
+   misc.avg_vbar         = 0.72;
+   overlap_tolerance     = 0.001;
 
    hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
 
@@ -3114,6 +3127,7 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.steric_clash_recheck_distance = 0.0;
 
    saxs_options.disable_iq_scaling = false;
+   saxs_options.disable_nnls_scaling = false;
    saxs_options.autocorrelate = true;
    saxs_options.hybrid_radius_excl_vol = false;
    saxs_options.scale_excl_vol = 1.0f;
@@ -3166,6 +3180,7 @@ void US_Hydrodyn::hard_coded_defaults()
    batch.zeno        = false;
 
    saxs_options.ignore_errors                      = false;
+   saxs_options.trunc_pr_dmax_target               = false;
    saxs_options.alt_ff                             = true;
    saxs_options.crysol_explicit_hydrogens          = false;
    saxs_options.use_somo_ff                        = false;
@@ -3235,6 +3250,8 @@ void US_Hydrodyn::hard_coded_defaults()
       ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
    saxs_options.cryson_manual_hs                   = false;
 
+   advanced_config.temp_dir_threshold_mb           = 50;
+
    gparams                                         .clear( );
    gparams[ "guinier_auto_fit" ]                   = "1";
    gparams[ "perdeuteration" ]                     = "0";
@@ -3284,15 +3301,22 @@ void US_Hydrodyn::set_default()
    // only keep one copy of defaults in system root dir
    f.setFileName( US_Config::get_home_dir() + "etc/somo.defaults");
    bool config_read = false;
+
    if (f.open(QIODevice::ReadOnly)) // read system directory
    {
       j=read_config(f);
       if ( j )
       {
          QTextStream( stdout ) << "read config returned " << j << Qt::endl;
-         US_Static::us_message(us_tr("Please note:"),
-                              us_tr("The somo.default configuration file was found to be corrupt.\n"
-                                 "Resorting to hard-coded defaults."));
+         if ( init_configs_silently ) {
+            qDebug() <<
+               QString( "The somo.default configuration file %1 was found to be corrupt, resorting to hard-coded defaults" )
+               .arg( f.fileName() );
+         } else {
+            US_Static::us_message(us_tr("Please note:"),
+                                  us_tr("The somo.default configuration file was found to be corrupt.\n"
+                                        "Resorting to hard-coded defaults."));
+         }
       }
       else
       {
@@ -3301,9 +3325,15 @@ void US_Hydrodyn::set_default()
    }
    else
    {
-      US_Static::us_message(us_tr("Notice:"),
-                           us_tr("Configuration defaults file ") +
-                           f.fileName() + us_tr(" not found\nUsing hard-coded defaults."));
+      if ( init_configs_silently ) {
+         qDebug() <<
+            QString( "The somo.default configuration file %1 was not found, resorting to hard-coded defaults" )
+            .arg( f.fileName() );
+      } else {
+         US_Static::us_message(us_tr("Notice:"),
+                               us_tr("Configuration defaults file ") +
+                               f.fileName() + us_tr(" not found\nUsing hard-coded defaults."));
+      }
    }
 
    if ( !config_read )
@@ -3959,6 +3989,14 @@ QString US_Hydrodyn::default_differences_misc()
    if ( misc.avg_mass != default_misc.avg_mass )
    {
       str += QString(base + sub + "atomic mass (Da): %1\n").arg(misc.avg_mass);
+   }
+   if ( misc.avg_num_elect != default_misc.avg_num_elect )
+   {
+      str += QString(base + sub + "atomic number of electrons: %1\n").arg(misc.avg_num_elect);
+   }
+   if ( misc.avg_protons != default_misc.avg_protons )
+   {
+      str += QString(base + sub + "atomic number of protons: %1\n").arg(misc.avg_protons);
    }
    if ( misc.avg_hydration != default_misc.avg_hydration )
    {

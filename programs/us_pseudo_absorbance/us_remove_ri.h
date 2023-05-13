@@ -2,8 +2,8 @@
 #define US_REMOVE_RI_H
 #include <us_widgets.h>
 #include <us_settings.h>
-#include <us_dataIO.h>
-#include <us_refScan_dataIO.h>
+#include "us_dataIO.h"
+#include "us_refScan_dataIO.h"
 #include "us_plot.h"
 #include "us_pabs_common.h"
 #include "us_images.h"
@@ -45,7 +45,6 @@ private slots:
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
     void slt_polyfit(void);
-    void slt_edit_le(QString);
 
 private:
     enum states {INTG_S, FIT_S, INTG_FIT_S, RDATA_S, CDATA_S};
@@ -62,7 +61,7 @@ private:
     QLineEdit* le_lambstrt;
     QLineEdit* le_lambstop;
     QLineEdit* le_runIdIn;
-    QLineEdit* le_runIdOut;
+    US_LineEdit_RE* le_runIdOut;
     QLineEdit* le_dir;
     QLineEdit* le_desc;
     QLineEdit* le_status;

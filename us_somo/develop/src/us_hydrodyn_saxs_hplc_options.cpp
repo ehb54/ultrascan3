@@ -410,6 +410,46 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_guinier_qrgmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
+   cb_gg_smooth = new QCheckBox(this);
+   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Maximum smoothing points: "));
+   cb_gg_smooth->setEnabled( true );
+   cb_gg_smooth->setChecked( (*parameters)[ "hplc_cb_gg_smooth" ] == "true" );
+   cb_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_smooth->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_smooth );
+   connect( cb_gg_smooth, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   le_gg_smooth = new QLineEdit( this );    le_gg_smooth->setObjectName( "le_gg_smooth Line Edit" );
+   le_gg_smooth->setText( (*parameters)[ "hplc_gg_smooth" ] );
+   le_gg_smooth->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_gg_smooth->setPalette( PALET_NORMAL );
+   AUTFBACK( le_gg_smooth );
+   le_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qiv = new QIntValidator( 1, 50, le_gg_smooth );
+      le_gg_smooth->setValidator( qiv );
+   }
+   connect( le_gg_smooth, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_gg_smooth->setMinimumWidth( 60 );
+
+   cb_gg_cyclic = new QCheckBox(this);
+   cb_gg_cyclic->setText(us_tr( "Experimental: Global Gaussian Gaussian cyclic fit"));
+   cb_gg_cyclic->setEnabled( true );
+   cb_gg_cyclic->setChecked( (*parameters)[ "hplc_cb_gg_cyclic" ] == "true" );
+   cb_gg_cyclic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_cyclic->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_cyclic );
+   connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_gg_oldstyle = new QCheckBox(this);
+   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable old style Gaussian fit display"));
+   cb_gg_oldstyle->setEnabled( true );
+   cb_gg_oldstyle->setChecked( (*parameters)[ "hplc_cb_gg_oldstyle" ] == "true" );
+   cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_oldstyle->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_oldstyle );
+   connect( cb_gg_oldstyle, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    lbl_mwt_k = new QLabel(us_tr(" MW[RT] k : "), this);
    lbl_mwt_k -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_mwt_k -> setPalette( PALET_LABEL );
@@ -701,29 +741,38 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    {
       QGridLayout * gl_other = new QGridLayout( 0 ); gl_other->setContentsMargins( 0, 0, 0, 0 ); gl_other->setSpacing( 0 );
 
-      gl_other->addWidget         ( lbl_zi_window , 0, 0 );
-      gl_other->addWidget         ( le_zi_window  , 0, 1 );
+      int row = 0;
 
-      gl_other->addWidget         ( cb_discard_it_sd_mult , 1, 0 );
-      gl_other->addWidget         ( le_discard_it_sd_mult , 1, 1 );
+      gl_other->addWidget         ( lbl_zi_window , row, 0 );
+      gl_other->addWidget         ( le_zi_window  , row, 1 );
 
-      gl_other->addWidget         ( cb_guinier_qrgmax , 2, 0 );
-      gl_other->addWidget         ( le_guinier_qrgmax , 2, 1 );
+      gl_other->addWidget         ( cb_discard_it_sd_mult , ++row, 0 );
+      gl_other->addWidget         ( le_discard_it_sd_mult , row, 1 );
 
-      gl_other->addWidget         ( lbl_mwt_k , 3, 0 );
-      gl_other->addWidget         ( le_mwt_k  , 3, 1 );
+      gl_other->addWidget         ( cb_guinier_qrgmax , ++row, 0 );
+      gl_other->addWidget         ( le_guinier_qrgmax , row, 1 );
 
-      gl_other->addWidget         ( lbl_mwt_c , 4, 0 );
-      gl_other->addWidget         ( le_mwt_c  , 4, 1 );
+      gl_other->addWidget         ( cb_gg_smooth , ++row, 0 );
+      gl_other->addWidget         ( le_gg_smooth , row, 1 );
 
-      gl_other->addWidget         ( lbl_mwt_qmax , 5, 0 );
-      gl_other->addWidget         ( le_mwt_qmax  , 5, 1 );
+      ++row;  gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
 
-      gl_other->addWidget         ( cb_makeiq_cutmax_pct , 6, 0 );
-      gl_other->addWidget         ( le_makeiq_cutmax_pct , 6, 1 );
+      ++row;  gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
 
-      gl_other->addWidget         ( cb_makeiq_avg_peaks , 7, 0 );
-      gl_other->addWidget         ( le_makeiq_avg_peaks , 7, 1 );
+      gl_other->addWidget         ( lbl_mwt_k , ++row, 0 );
+      gl_other->addWidget         ( le_mwt_k  , row, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_c , ++row, 0 );
+      gl_other->addWidget         ( le_mwt_c  , row, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_qmax , ++row, 0 );
+      gl_other->addWidget         ( le_mwt_qmax  , row, 1 );
+
+      gl_other->addWidget         ( cb_makeiq_cutmax_pct , ++row, 0 );
+      gl_other->addWidget         ( le_makeiq_cutmax_pct , row, 1 );
+
+      gl_other->addWidget         ( cb_makeiq_avg_peaks , ++row, 0 );
+      gl_other->addWidget         ( le_makeiq_avg_peaks , row, 1 );
 
       background->addLayout( gl_other );
    }
@@ -816,6 +865,10 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
    (*parameters)[ "hplc_cb_guinier_qrgmax"       ] = cb_guinier_qrgmax      ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_guinier_qrgmax"          ] = le_guinier_qrgmax      ->text();
+   (*parameters)[ "hplc_cb_gg_smooth"            ] = cb_gg_smooth  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_gg_smooth"               ] = le_gg_smooth  ->text();
+   (*parameters)[ "hplc_cb_gg_cyclic"            ] = cb_gg_cyclic  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_cb_gg_oldstyle"          ] = cb_gg_oldstyle  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_dist_max"                ] = le_dist_max            ->text();
    (*parameters)[ "guinier_mwt_k"                ] = le_mwt_k               ->text();
    (*parameters)[ "guinier_mwt_c"                ] = le_mwt_c               ->text();
@@ -881,6 +934,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    le_epsilon              ->setEnabled( rb_integral->isChecked() );
    le_discard_it_sd_mult   ->setEnabled( cb_discard_it_sd_mult->isChecked() );
    le_guinier_qrgmax       ->setEnabled( cb_guinier_qrgmax->isChecked() );
+   le_gg_smooth            ->setEnabled( cb_gg_smooth->isChecked() );
    le_makeiq_cutmax_pct    ->setEnabled( cb_makeiq_cutmax_pct->isChecked() );
    le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
    if ( cb_makeiq_cutmax_pct->isEnabled() &&

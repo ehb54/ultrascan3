@@ -615,7 +615,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          }
 
          plot_one_pr( r, pr, te_filename2->text() );
-         
+         compute_rg_to_progress( r, pr, te_filename2->text() );
       } // compute_pr
 
       progress_saxs->setValue( 1 ); progress_saxs->setMaximum( 2 );

@@ -262,7 +262,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_pp;
       QPushButton *pb_width;
       QPushButton *pb_width2;
-
+      QPushButton *pb_pr_info;
+      QPushButton *pb_pr_info2;
       QPushButton *pb_rescale;
       QPushButton *pb_rescale_y;
 
@@ -303,7 +304,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QFont ft;
 
-      QTextEdit *editor;
+      mQTextEdit *editor;
 
       QMenuBar *m;
 
@@ -341,14 +342,15 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QCheckBox   *cb_resid_show_errorbars;
       QCheckBox   *cb_resid_show;
       QCheckBox   *cb_eb;
+      QCheckBox   *cb_pr_eb;
 
       mQLineEdit  * le_manual_guinier_fit_start;
       mQLineEdit  * le_manual_guinier_fit_end;
       QwtWheel    * qwtw_wheel;
       QPushButton * pb_manual_guinier_process;
 
-      QProgressBar *progress_pr;
-      QProgressBar *progress_saxs;
+      mQProgressBar *progress_pr;
+      mQProgressBar *progress_saxs;
 
       struct atom current_atom;
       struct hybridization current_hybrid;
@@ -417,7 +419,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < QString, double >                      guinier_scratch;
 
       vector < vector < double > >                    plotted_pr;
+      vector < vector < double > >                    plotted_pr_error;
       vector < vector < double > >                    plotted_pr_not_normalized;
+      vector < vector < double > >                    plotted_pr_not_normalized_error;
       vector < vector < double > >                    plotted_r;
       vector < float >                                plotted_pr_mw;
 
@@ -435,6 +439,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < double >                  nnls_r;
       vector < double >                  nnls_q;
       double                             nnls_rmsd;
+      QStringList                        nnls_csv_data;
+      QStringList                        nnls_csv_footer;
 
       QString nnls_B_name;
       QString nnls_header_tag;
@@ -453,7 +459,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool stopFlag;
       bool create_native_saxs;
 
-      QProgressBar *progress;
+      mQProgressBar *progress;
 
       void set_current_method_buttons();
       void update_iqq_suffix();
@@ -544,6 +550,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                      vector < double > from_r, 
                                      vector < double > from_pr );
 
+      bool interpolate( vector < double > to_grid, 
+                        vector < double > from_grid, 
+                        vector < double > from_data,
+                        vector < double > &to_data );
+
       bool natural_spline_interpolate( vector < double > to_grid, 
                                        vector < double > from_grid, 
                                        vector < double > from_data,
@@ -566,6 +577,15 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        vector < double > pr, 
                        QString name,
                        bool skip_mw = false
+                       );
+
+      void plot_one_pr(
+                       vector < double > r, 
+                       vector < double > pr, 
+                       vector < double > pr_error, 
+                       QString name,
+                       bool skip_mw   = false,
+                       bool do_replot = true
                        );
 
       void calc_iqq_nnls_fit( 
@@ -629,23 +649,27 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void rescale_iqq_curve( QString scaling_target,
                               vector < double > &q,
-                              vector < double > &I );
-
-      void rescale_iqq_curve( QString scaling_target,
-                              vector < double > &q,
                               vector < double > &I,
-                              vector < double > &I2 );
-
-      void rescale_iqq_curve( QString scaling_target,
-                              vector < double > &q,
-                              vector < double > &I,
-                              QColor plot_color );
+                              bool do_plot_residuals = true );
 
       void rescale_iqq_curve( QString scaling_target,
                               vector < double > &q,
                               vector < double > &I,
                               vector < double > &I2,
-                              QColor plot_color );
+                              bool do_plot_residuals = true );
+
+      void rescale_iqq_curve( QString scaling_target,
+                              vector < double > &q,
+                              vector < double > &I,
+                              QColor plot_color,
+                              bool do_plot_residuals = true );
+
+      void rescale_iqq_curve( QString scaling_target,
+                              vector < double > &q,
+                              vector < double > &I,
+                              vector < double > &I2,
+                              QColor plot_color,
+                              bool   do_plot_resduals = true );
 
       void editor_msg( QColor  color, QString msg );
       void editor_msg( QString color, QString msg );
@@ -748,6 +772,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool external_running;
 
       void check_pr_grid( vector < double > &r, vector < double > &pr );
+      void check_pr_grid( vector < double > &r, vector < double > &pr, vector < double > &pr_error );
       vector < double > range_crop( vector < double > &q, vector < double > &I );
 
       bool started_in_expert_mode;
@@ -762,8 +787,34 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_color_if_ok( QColor bg, QColor set );
       unsigned int pen_width;
 
-   private:
+      bool load_check_csvs_compatible( QStringList filenames );
+      QString unify_csv_files( QStringList filenames );
 
+      void set_pr_sd      (
+                           vector < double > & r
+                           ,vector < double > & pr
+                           ,vector < double > & pr_error
+                           ); // sets a min sd value if pr has non-zero sds
+      
+      void crop_pr_tail   (
+                           vector < double > & r
+                           ,vector < double > & pr
+                           ,vector < double > & pr_error
+                           ); // crops the tail of zeros values, used for plotting
+      
+      void prop_pr_sd_tail(
+                           vector < double > & pr_error
+                           ,unsigned int len
+                           ); // propagate the last pr sd to the tail
+
+      void pad_pr_plotted(); // sets all plotted to max length
+      
+      bool use_SDs_for_fitting_iqq;
+      bool use_SDs_for_fitting_prr;
+      bool nnls_plot_contrib;
+
+   private:
+      
       map < QString, QwtPlot *>    plot_info;
 
       bool mw_from_I0 ( QString name, double I0_exp, double &MW, double &internal_contrast );
@@ -807,8 +858,28 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool                         wheel_is_pressed;
       void           fix_xBottom();
 
+      // the cormap p values from pairwise comparisons
+
+      bool            pvalue(
+                             const vector < double > &q
+                             ,vector < double > &I
+                             ,vector < double > &G
+                             ,double &P
+                             ,QString &errormsg
+                             ); // compute pvalue comparing 2 curves
+      
+      bool            compute_rg_to_progress(
+                                             const vector < double >  & r
+                                             ,const vector < double > & pr
+                                             ,const QString &           filename
+                                             );
+
+
    private slots:
 
+      void pr_info( const QString & msg = "", bool detail = false ); // stdout report of pr vectors
+      void pr_info2( const QString & msg = "" ); // stdout report of pr vectors
+      void pr_replot();
       void do_rescale();
       void do_rescale_y();
 
@@ -912,7 +983,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_curve(int);
       void load_pr( bool just_plotted_curves = false, QString load_this = "", bool skip_mw = false );
       void load_plot_pr();
-      void clear_plot_pr();
+      void clear_plot_pr( bool full_clear = false );
       void cancel();
       void pp();
       void help();
@@ -920,6 +991,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void stop();
       void clear_display();
       void set_eb();
+      void set_pr_eb();
       void print();
       void update_font();
       void save();
@@ -1008,7 +1080,7 @@ class saxs_Iq_thr_t : public QThread
                          vector < double > *Ic,
                          vector < double > *q,
                          unsigned int threads,
-                         QProgressBar *progress,
+                         mQProgressBar *progress,
                          QLabel *lbl_core_progress,
                          bool *stopFlag
                          );
@@ -1029,7 +1101,7 @@ class saxs_Iq_thr_t : public QThread
   vector < double > *q;
 
   unsigned int threads;
-  QProgressBar *progress;
+  mQProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
 
@@ -1052,7 +1124,7 @@ class saxs_pr_thr_t : public QThread
                          vector < float > *hist,
                          double delta,
                          unsigned int threads,
-                         QProgressBar *progress,
+                         mQProgressBar *progress,
                          QLabel *lbl_core_progress,
                          bool *stopFlag,
                          float b_bar_inv2
@@ -1070,7 +1142,7 @@ class saxs_pr_thr_t : public QThread
 
   double delta;
   unsigned int threads;
-  QProgressBar *progress;
+  mQProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
   float b_bar_inv2;

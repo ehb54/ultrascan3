@@ -3,8 +3,8 @@
 #include <us_widgets.h>
 #include <us_settings.h>
 #include <us_dataIO.h>
-#include <../us_convert/us_select_triples.h>
-#include <us_refScan_dataIO.h>
+#include "../us_convert/us_select_triples.h"
+#include "us_refScan_dataIO.h"
 #include "us_plot.h"
 #include "us_pabs_common.h"
 #include "us_db2.h"
@@ -15,6 +15,7 @@
 //#include "us_defines.h"
 //#include "us_extern.h"
 //#include "us_help.h"
+
 
 class US_ConvertScan : public US_Widgets
 {
@@ -54,7 +55,6 @@ private slots:
     void slt_update_smooth(double);
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
-    void slt_edit_le(QString);
     void slt_cac(int);
 
 private:
@@ -73,7 +73,7 @@ private:
     QLineEdit* le_lambstrt;
     QLineEdit* le_lambstop;
     QLineEdit* le_runIdInt;
-    QLineEdit* le_runIdAbs;
+    US_LineEdit_RE* le_runIdAbs;
     QLineEdit* le_dir;
     QLineEdit* le_desc;
     QLineEdit* le_status;

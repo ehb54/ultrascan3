@@ -1,5 +1,5 @@
-#ifndef US_ABDE_ANALYSIS_H
-#define US_ABDE_ANALYSIS_H
+#ifndef US_NORM_PROFILE_H
+#define US_NORM_PROFILE_H
 
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -12,10 +12,16 @@
 #include "qwt_legend.h"
 
 
-class US_ABDE_Analysis : public US_Widgets{
+class US_Norm_Profile : public US_Widgets{
     Q_OBJECT
 public:
-    explicit US_ABDE_Analysis();
+    explicit US_Norm_Profile();
+
+signals:
+    void widgetClosed();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 
 private:
     QPushButton* pb_load;
@@ -79,5 +85,4 @@ private slots:
     void slt_save(void);
 };
 
-
-#endif // US_ABDE_ANALYSIS_H
+#endif // US_NORM_PROFILE_H

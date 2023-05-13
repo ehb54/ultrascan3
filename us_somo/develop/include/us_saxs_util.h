@@ -475,6 +475,17 @@ class US_EXTERN US_Saxs_Util
 
       static double calc_rmsd( vector < double > v1,  vector < double > v2 );
       static double calc_nrmsd( vector < double > v1,  vector < double > v2 ); // normalized rmsd is rmsd divided by the range (of v2) time 100 (for percent)
+
+      static bool calc_chisq(
+                             const vector < double > & x,
+                             const vector < double > & y,
+                             const vector < double > & sds,
+                             int                     parameters,
+                             double                  & chisq,
+                             double                  & nchi,
+                             QString                 & errors
+                             );
+
       static bool calc_chisq1( vector < double > bins,
                                vector < double > ebins,
                                unsigned int      &df,
@@ -729,7 +740,8 @@ class US_EXTERN US_Saxs_Util
       // for systems with errors, these are assumed to be experimental data it is only acceptible going
       // to a coarser grid, otherwise an error will result with error_msg set
 
-      static bool is_nonzero_vector( vector < double > &v ); // returns true if all non-zero
+      static bool is_nonzero_vector( const vector < double > &v ); // returns true if all non-zero
+      static bool is_zero_vector( const vector < double > &v ); // returns true if all zero
 
       bool interpolate_iqq_by_case( vector < double > from_grid,
                                     vector < double > from_data,
@@ -1250,6 +1262,13 @@ class US_EXTERN US_Saxs_Util
       double compute_gsm_exponentials_f( our_vector *v );
 
       bool c2check( QString a, QString b );
+
+      static bool compute_rg_from_pr(
+                                     const vector < double >  & r
+                                     ,const vector < double > & pr
+                                     ,double                  & Rg
+                                     ,QString                 & errormsg
+                                     );
 
    private:
       // exponential gsm:

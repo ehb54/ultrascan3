@@ -11,6 +11,8 @@ VER          = 10
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 QT          += xml
+DESTDIR       = ../lib
+DLLDESTDIR = ../bin
 
 unix {
   contains( DEFINES, NO_DB ) {
@@ -24,7 +26,7 @@ unix {
     INCLUDEPATH  += $$MYSQLPATH
   }
   DEFINES      += INTEL LINUX
-  DESTDIR       = ../lib
+  
 }
 
 win32 {
@@ -48,7 +50,6 @@ win32 {
   #QMAKE_CXXFLAGS_RELEASE += /wd4996
 
   DEFINES                += INTEL US_MAKE_DLL
-  DESTDIR                 = ../lib
 }
 
 macx {
@@ -57,6 +58,5 @@ macx {
   INCLUDEPATH  += ../gui ../utils $$QWTPATH/include ../mysql/include
   DEFINES      += MAC OSX
   LIBS         += $$QWTLIB
-  DESTDIR       = ../lib
 }
 

@@ -287,7 +287,7 @@ void US_AddHybridization::add()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       cmb_hybrid->clear( );
-      str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
+      str1 = QString( us_tr(" Number of Hybridizations in File: %1" ) ).arg( hybrid_list.size() );
       QTextStream ts(&f);
       for (unsigned int i=0; i<hybrid_list.size(); i++)
       {
@@ -353,7 +353,8 @@ void US_AddHybridization::select_file()
          pb_select_saxs_file->setEnabled(true);
       }
    }
-   str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
+   str1 = QString( us_tr(" Number of Hybridizations in File: %1" ) ).arg( hybrid_list.size() );
+
    lbl_number_of_hybrids->setText(str1);
    pb_add->setEnabled(true);
    if (!hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
@@ -449,7 +450,7 @@ void US_AddHybridization::select_saxs_file()
          f.close();
       }
    }
-   str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
+   str1 = QString( us_tr( " Number of SAXS Entries in File: %1 " ) ).arg( saxs_list.size() );
    lbl_number_of_saxs->setText(str1);
    if (!hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
    {
@@ -498,7 +499,7 @@ void US_AddHybridization::select_hybrid(int val)
    le_scat_len->setText(str);
    str.sprintf("%d", hybrid_list[val].exch_prot);
    le_exch_prot->setText(str);
-   str.sprintf("%d", hybrid_list[val].num_elect);
+   str.sprintf("%3.0f", hybrid_list[val].num_elect);
    le_num_elect->setText(str);
    le_name->setText(hybrid_list[val].name.toUpper());
    unsigned int i;

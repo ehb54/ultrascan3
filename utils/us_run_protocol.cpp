@@ -545,6 +545,8 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
 bool US_RunProtocol::RunProtoSpeed::SpeedStep::operator==
                   ( const SpeedStep& ss ) const
 {
+  qDebug() << "RP:SPEED: speed, ss.speed -- " << speed << ", " << ss.speed;
+  
    if ( speed    != ss.speed    ) return false;
    if ( accel    != ss.accel    ) return false;
    if ( duration != ss.duration ) return false;

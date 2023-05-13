@@ -488,7 +488,7 @@ void US_AddSaxs::add()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       cmb_saxs->clear( );
-      str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
+      str1 = QString( us_tr( " Number of SAXS Entries in File: %1" ) ).arg( saxs_list.size() );
       QTextStream ts(&f);
       ts << qSetRealNumberPrecision(8);
       for (unsigned int i=0; i<saxs_list.size(); i++)
@@ -525,7 +525,7 @@ void US_AddSaxs::add()
          cmb_saxs->addItem(str1);
       }
       f.close();
-      lbl_number_of_saxs->setText( QString().sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size() ) );
+      lbl_number_of_saxs->setText( QString( us_tr( " Number of SAXS Entries in File: %1" ) ).arg( saxs_list.size() ) );
    }
    else
    {
@@ -601,7 +601,7 @@ void US_AddSaxs::select_file()
          }
       }
    }
-   str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
+   str1 = QString( us_tr( " Number of SAXS Entries in File: %1" ) ).arg( saxs_list.size() );
    lbl_number_of_saxs->setText(str1);
    pb_add->setEnabled(true);
 }

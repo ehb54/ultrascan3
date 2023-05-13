@@ -1,4 +1,4 @@
-//! \file us_analysis_profile.cpp
+//! \file us_analysis_profile.cp
 
 #include "us_analysis_profile.h"
 #include "us_table.h"
@@ -325,11 +325,15 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
+		qDebug() << "nchn < kchn: Filling currProf.ch_reports -- ";
+		qDebug() << "chentr_wvls, c_wvl -- " << chentr_wvls << ", " << c_wvl;
+		
 		//set different default params for Interf. reportGMP
 		if ( chentr_wvls.contains("Interf.") )
 		  {
 		    if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].interf_report_changed )
 		      {
+			qDebug() << "nchn < kchn: IP Report: read from DB";
 		      }
 		    else
 		      {
@@ -410,11 +414,15 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
+		qDebug() << "nchn > kchn: Filling currProf.ch_reports -- ";
+		qDebug() << "chentr_wvls, c_wvl -- " << chentr_wvls << ", " << c_wvl;
+
 		//set different default params for Interf. reportGMP
 		if ( chentr_wvls.contains("Interf.") )
 		  {
 		    if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].interf_report_changed )
 		      {
+			qDebug() << "nchn > kchn: IP Report: read from DB";
 		      }
 		    else
 		      {
@@ -669,6 +677,8 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		     
 		     //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
 		     currProf.ch_reports[ channel_alt_desc ][ wvl_read ] = *reportFromDB;
+
+		     qDebug() << "Filling currProf.ch_reports from DB: channel_alt_desc, wvl_read -- " << channel_alt_desc << ", " << wvl_read;
 		   }
 	       }
 	   }
@@ -791,6 +801,9 @@ DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
     // currProf_copy.apPCSA = currProf.apPCSA;
 
     // qDebug() << "Inherit: AFTER copying..";
+
+
+ qDebug() << "Size, Keys of currProf.ch_reports -- " << currProf.ch_reports.size() << ", " <<  currProf.ch_reports.keys();
 }
 
 //retrieve Report by ID from DB into ReportGMP structure
@@ -2212,7 +2225,12 @@ void US_AnaprofPanGen::update_gen_report_settings( QString& mask_updated )
 void US_AnaprofPanGen::set_combplot_parms( ) 
 {
   qDebug() << "currProf->combPlots_parms --  " << currProf->combPlots_parms;
+  qDebug() << "loadProf->combPlots_parms --  " << mainw->loadProf.combPlots_parms;
 
+  if ( currProf->combPlots_parms == mainw->loadProf.combPlots_parms )
+    qDebug() << "They are EQUAL!";
+  
+  
   //collect all 'type-method' combinations across all triples:
   QStringList type_method_list;
   //int nchna   = currProf->pchans.count();

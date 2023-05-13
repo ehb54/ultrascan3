@@ -30,7 +30,8 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param dbP       Pointer to DB connector or NULL to read from disk.
       //! \returns         The count of records listed.
       static int list_all( QList< QStringList >&, US_DB2* );
-
+      static int list_all_auto( QList< QStringList >&, US_DB2* );
+      
       //! \brief Update the protocol data list with a new entry.
       //!
       //! This adds a new entry to the list of protocol summary entries or

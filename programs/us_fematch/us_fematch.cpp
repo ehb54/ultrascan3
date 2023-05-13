@@ -452,9 +452,13 @@ void US_FeMatch::load( void )
    dataLatest = ck_edit->isChecked();
    int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
                                   : US_Disk_DB_Controls::Disk;
+   // US_DataLoader* dialog =
+   //   new US_DataLoader( dataLatest, local, rawList, dataList,
+   //          triples, workingDir, QString( "velocity" ) );
+
    US_DataLoader* dialog =
-      new US_DataLoader( dataLatest, local, rawList, dataList,
-            triples, workingDir, QString( "velocity" ) );
+     new US_DataLoader( dataLatest, local, rawList, dataList,
+            triples, workingDir, QString( "none" ) );
 
    connect( dialog, SIGNAL( changed(      bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );

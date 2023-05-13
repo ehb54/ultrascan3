@@ -94,6 +94,52 @@ int main( int argc, char* argv[] )
   }
 
   // License is OK.  Start up.
+  
+
+  //Sync User-level with that set in DB //////////////////////////////////////////
+  //If DB set ?
+  QList<QStringList> DB_list = US_Settings::databases();
+  QStringList defaultDB      = US_Settings::defaultDB();
+  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
+    {
+      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
+            
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      
+      if ( db.lastErrno() != US_DB2::OK )
+        {
+	  QMessageBox msgBox;
+          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
+          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+          msgBox.setIcon  ( QMessageBox::Critical );
+          msgBox.exec();
+      
+          //exit( -1 );
+        }
+      else
+	{
+      
+	  QStringList q( "get_user_info" );
+	  db.query( q );
+	  db.next();
+	  
+	  int ID        = db.value( 0 ).toInt();
+	  QString fname = db.value( 1 ).toString();
+	  QString lname = db.value( 2 ).toString();
+	  int     level = db.value( 5 ).toInt();
+	  
+	  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+	  //if(ID<1) return;
+	  
+	  US_Settings::set_us_inv_name ( lname + ", " + fname );
+	  US_Settings::set_us_inv_ID   ( ID );
+	  US_Settings::set_us_inv_level( level );
+	}
+    }
+  
+  //END OF user-level sync//////////////////////////////////////
+  
   US_Win w;
   w.show();
 #if QT_VERSION < 0x050000
@@ -226,9 +272,10 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
   addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
-  
+
+  addMenu(  P_ABDE_FIT , tr( "ABDE Analysis"                     ), utilities );
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
-  addMenu(  P_GMPRPT   , tr( "&GMP Report Generator"             ), utilities );
+  addMenu(  P_GMPRPT   , tr( "&GMP Report Generator and Viewer"  ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
 #if 0    // temporarily disable Create Experiment until truly ready
@@ -250,7 +297,6 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
   addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
   addMenu(  P_PSEUDO_ABS  , tr( "Pseudo-Absorbance"              ), utilities );
-  addMenu(  P_ABDE_ANALYSE, tr( "ABDE Analysis"                  ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
   addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
@@ -270,6 +316,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SOMOCONFIG,   tr( "S&OMO Configuration"           ), simulation );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
+  addMenu(  P_RMSD         , tr( "&Query Model RMSDs" ), database );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
   addMenu(  P_BUFFER       , tr( "Manage &Buffer Data"       ), database );
   addMenu(  P_VBAR         , tr( "Manage &Analytes"          ), database );

@@ -111,6 +111,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     int offset;
 
     int autoflow_records;
+    QMap < QString, QString > channels_report;
 
     void initRecords( void );
     //void initRecordsDialogue( void );
@@ -125,6 +126,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
     void do_run_tables_cleanup( QMap< QString, QString > );
     void do_run_data_cleanup( QMap< QString, QString > );
+    bool readAProfileBasicParms_auto ( QXmlStreamReader& );
       
  protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -176,6 +178,7 @@ class US_ExperGui : public US_WidgetsDialog
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
+      void to_initAutoflow( void );
       
       
    signals:
@@ -185,6 +188,7 @@ class US_ExperGui : public US_WidgetsDialog
       void to_autoflow_records( void );
       void define_used_instruments( QStringList & );
       //void close_expsetup_msg( void );
+      void switch_to_initAutoflow( void );
 };
 
 
