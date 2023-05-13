@@ -524,6 +524,7 @@ qDebug() << "TEST: llstring2" << llstring2;
 use_db=false;
 #endif
 DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
+DbgLv(1) << "mainw->automode" << mainw->automode;
 
    // Populate GUI settings from protocol controls
    le_investigator->setText ( currProto->investigator );
@@ -536,6 +537,38 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    le_label       ->setText ( currProto->exp_label );
 
    check_user_level();
+
+   //Here, check if UL<3 is set as operator for each Optima:
+  //Debug
+   qDebug() << "ul2_operator_for_optima.keys().size() -- " << ul2_operator_for_optima.keys().size(); 
+  QMap<QString, bool>::iterator opd;
+  for ( opd = ul2_operator_for_optima.begin(); opd != ul2_operator_for_optima.end(); ++opd )
+    qDebug() << "Optima, operator -- " << opd.key() << opd.value();
+  ///////////
+  
+   int inv_lev    = US_Settings::us_inv_level();
+
+   if ( inv_lev < 3 && mainw->automode )
+     {
+       mainw->isOperatorAny = false;
+       QMap<QString, bool>::iterator op;
+       for ( op = ul2_operator_for_optima.begin(); op != ul2_operator_for_optima.end(); ++op )
+	 {
+	   if ( op.value() )
+	     {
+	       mainw->isOperatorAny = true;
+	       break;
+	     }
+	 }
+
+       for ( op = ul2_operator_for_optima.begin(); op != ul2_operator_for_optima.end(); ++op )
+	 {
+	   QString iname = op.key();
+	   if ( !op.value() )
+	     mainw->instruments_no_permit << iname;
+	 }
+     }
+   //////////////////
 
 }
 
@@ -623,86 +656,113 @@ void US_ExperGuiGeneral::check_user_level()
    {  // All admin users and above are enabled
       usr_enab       = true;
    }
-   /*
+   
    else
-   {  // Non-admin users enabled if they have instrument permit
-      int inv_id     = US_Settings::us_inv_ID();
-      QString pID    = QString::number( inv_id );
+     {  // Non-admin users enabled if they have instrument permit
+       int inv_id     = US_Settings::us_inv_ID();
+       QString pID    = QString::number( inv_id );
 
-      if ( instr_opers.count() < 1 )
-      {  // Must read lab/instrument/operator info one time
-         US_Passwd   pw;
-         US_DB2      db( pw.getPasswd() );
+       qDebug() << "instr_opers.count(); check_user_level(): inv_lev -- "
+		<< instr_opers.count() << "; " << inv_lev;
+       
+       // if ( instr_opers.count() < 1 )
+       // 	 {  // Must read lab/instrument/operator info one time
+	   US_Passwd   pw;
+	   US_DB2      db( pw.getPasswd() );
+	   
+	   if ( db.lastErrno() != US_DB2::OK )
+	     {
+	       QMessageBox::information( this, tr( "Error" ),
+					 tr( "Error making the DB connection.\n" ) );
+	     }
+	   
+	   QVector< US_Rotor::Lab > lablist;
+	   US_Rotor::readLabsDB( lablist, &db );
 
-         if ( db.lastErrno() != US_DB2::OK )
-         {
-            QMessageBox::information( this, tr( "Error" ),
-               tr( "Error making the DB connection.\n" ) );
-         }
+	   qDebug() << "check_user_level():  lablist.count() -- " << lablist.count();
+	   
+	   for ( int ii = 0; ii < lablist.count(); ii++ )
+	     {  // Look through lab info
+	       QList< US_Rotor::Instrument > instruments
+		 = lablist[ ii ].instruments;
 
-         QVector< US_Rotor::Lab > lablist;
-         US_Rotor::readLabsDB( lablist, &db );
+	       ul2_operator_for_optima.clear();
 
-         for ( int ii = 0; ii < lablist.count(); ii++ )
-         {  // Look through lab info
-            QList< US_Rotor::Instrument > instruments
-                           = lablist[ ii ].instruments;
+	       qDebug() << "check_user_level():  instruments.count() -- " << instruments.count();
+	       
+	       //First, set map of usl2_oper_to_Optimas to default: false
+	       for ( int kk = 0; kk < instruments.count(); kk++ )
+		 {
+		   QString inname = instruments[ kk ].name;
+		   // Skip any non-Optima
+		   if ( ! inname.startsWith( "Optima" ) )
+		     continue;
+		   		   
+		   ul2_operator_for_optima[ inname ] = false;
+		 }
 
-            for ( int jj = 0; jj < instruments.count(); jj++ )
-            {  // Look at instruments in the lab
-               QString inname = instruments[ jj ].name;
+	       //Go over instruments, and determine if the current user an operator: per instrument
+	       for ( int jj = 0; jj < instruments.count(); jj++ )
+		 {  // Look at instruments in the lab
+		   QString inname = instruments[ jj ].name;
+		   
+		   // Skip any non-Optima
+		   if ( ! inname.startsWith( "Optima" ) )
+		     continue;
+		   
+		   QList< US_Rotor::Operator > operators = instruments[ jj ].operators;
+		   
+		   for ( int kk = 0; kk < operators.count(); kk++ )
+		     {  // Look at operators permitted on the instrument
+		       int opr_id     = operators[ kk ].ID;
+		       QString olname = operators[ kk ].lname;
+		       QString ofname = operators[ kk ].fname;
+		       QString oID    = QString::number( opr_id );
 
-               // Skip any non-Optima
-               if ( ! inname.startsWith( "Optima" ) )
-                  continue;
-
-               QList< US_Rotor::Operator > operators
-                              = instruments[ jj ].operators;
-
-               for ( int kk = 0; kk < operators.count(); kk++ )
-               {  // Look at operators permitted on the instrument
-                  int opr_id     = operators[ kk ].ID;
-                  QString olname = operators[ kk ].lname;
-                  QString ofname = operators[ kk ].fname;
-                  QString oID    = QString::number( opr_id );
-
-                  // Entry is string combining operator and instrument name
-                  instr_opers << oID + ": " + olname + ", " + ofname
-                                 + "^" + inname;
-               } // END: operators for instrument
-            } // END: instruments for lab
-         } // END: labs
-      } // END: No list of operator^instrument entries
-
-      // See if investigator is in permit list
-      for ( int ii = 0; ii < instr_opers.count(); ii++ )
-      {
-         QString iID    = instr_opers[ ii ].section( ":", 0, 0 );
-
-         if ( pID == iID )
-         {  // Person ID matches an Instrument ID in the list
-            usr_enab       = true;
-            break;
-         }
-      }
-   } // END: Test of non-admin instrument permit
-   */
+		       //QMap
+		       if ( pID == oID )
+			 {
+			   ul2_operator_for_optima[ inname ] = true;
+			   break;
+			 }
+		       
+		       // // Entry is string combining operator and instrument name
+		       // instr_opers << oID + ": " + olname + ", " + ofname
+		       // 	 + "^" + inname;
+		     } 
+		 }
+	     } 
+	 } 
+       
+       // // See if investigator is in permit list
+       // for ( int ii = 0; ii < instr_opers.count(); ii++ )
+       // 	 {
+       // 	   QString iID    = instr_opers[ ii ].section( ":", 0, 0 );
+	   
+       // 	   if ( pID == iID )
+       // 	     {  // Person ID matches an Instrument ID in the list
+       // 	       usr_enab       = true;
+       // 	       break;
+       // 	     }
+       // 	 }
+   // } // END: Test of non-admin instrument permit
+   
 
    if ( ! usr_enab )
-   {  // User not enabled to set investigator
-      // pb_investigator->setEnabled( false );
-      // pb_project     ->setEnabled( false );
-      // ct_tempera     ->setEnabled( false );
-      // ct_tedelay     ->setEnabled( false );
-      // le_protocol    ->setEnabled( false );
-
-      // if ( !loaded_proto )
-      //    emit set_tabs_buttons_inactive();
-      // else
-      //    emit set_tabs_buttons_active_readonly();
-
-DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
-   }
+     {  // User not enabled to set investigator
+       // pb_investigator->setEnabled( false );
+       // pb_project     ->setEnabled( false );
+       // ct_tempera     ->setEnabled( false );
+       // ct_tedelay     ->setEnabled( false );
+       // le_protocol    ->setEnabled( false );
+       
+       // if ( !loaded_proto )
+       //    emit set_tabs_buttons_inactive();
+       // else
+       //    emit set_tabs_buttons_active_readonly();
+       
+       DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+     }
    
    // //Old way of disabling all (read-only mode) for UL < 3
    // if ( ! usr_enab )

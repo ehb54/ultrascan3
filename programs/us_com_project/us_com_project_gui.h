@@ -178,6 +178,7 @@ class US_ExperGui : public US_WidgetsDialog
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
+      void to_initAutoflow( void );
       
       
    signals:
@@ -187,6 +188,7 @@ class US_ExperGui : public US_WidgetsDialog
       void to_autoflow_records( void );
       void define_used_instruments( QStringList & );
       //void close_expsetup_msg( void );
+      void switch_to_initAutoflow( void );
 };
 
 

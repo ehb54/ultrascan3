@@ -53,6 +53,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    
    global_reset = false;
    instruments_in_use.clear();
+   instruments_no_permit.clear();
    ScanCount_global       = 0;
    ScanCount_global_int   = 0;
    TotalWvlNum_global     = 0;
@@ -131,9 +132,12 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )),
             this,        SLOT(   disable_tabs_buttons( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void )),
-              this,      SLOT(   enable_tabs_buttons_readonly( void ) ));
+	    this,      SLOT(   enable_tabs_buttons_readonly( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),
-              this,      SLOT(   enable_tabs_buttons( void ) ));
+	    this,      SLOT(   enable_tabs_buttons( void ) ));
+
+   connect( epanGeneral, SIGNAL( go_back_to_run_manager( void )),
+	    this,      SLOT( switch_to_run_manager( void ) ));
 
    //int min_width = tabWidget->tabBar()->width();
 
@@ -158,6 +162,13 @@ void US_ExperimentMain::back_to_pcsa( void )
   
 }
 
+
+void US_ExperimentMain::switch_to_run_manager( void )
+{
+  reset();
+
+  emit back_to_initAutoflow();
+}
      
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
@@ -264,17 +275,50 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
   reset();
 
   instruments_in_use.clear();
+  instruments_no_permit.clear();
+  isOperatorAny = true;
+  
   qDebug() << "OCCUPIED IINSTRUMENTS: " << occupied_instruments;
-
+  
   for ( int i=0; i < occupied_instruments.size(); i++)
     instruments_in_use << occupied_instruments[i];
 
+  //and re-init epanGeneral:
+  epanGeneral -> initPanel();
+
+  if ( !isOperatorAny )
+    {
+      emit close_expsetup_msg();
+      
+      //If UL<3 && not an operator (on any instrument), STOP!
+      QMessageBox * msg_instr_not_avail = new QMessageBox(this);
+      msg_instr_not_avail->setIcon(QMessageBox::Critical);
+      msg_instr_not_avail->setWindowTitle(tr("Optimas' Permissions NOT set!"));
+      msg_instr_not_avail->setText(tr( "<font color='red'><b>ATTENTION:</b></font> There are no permissions for the current user <br>"
+				       "to use Optima instruments from the list below: <br><br>"
+				       "<b>%1</b> <br><br>"
+				       "[Current user is NOT defined as an operator!]"
+				       "<br><br> The program will return to the Run Manager..."
+				       )
+				   .arg( instruments_no_permit. join(", ") ) );
+      
+      msg_instr_not_avail->exec();
+
+      reset();
+      emit back_to_initAutoflow();
+      //go_back_to_run_manager();
+
+      return;
+    }
+    
+  
   //Re-initialize Instruments based on  the passed excluded list
   epanRotor->setFirstLab();
 
   //qApp->processEvents();
   //msg_expsetup->close();
   emit close_expsetup_msg();
+
 }
 
 //Accepting protocol details from PROTOCOL DEV program:
@@ -391,6 +435,7 @@ void US_ExperimentMain::auto_mode_passed( void )
 
   this->pb_close->hide();
 
+  
 }
 
 // Reset parameters to their defaults
@@ -1213,7 +1258,7 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
    //ALEXEY identify instruments & operators, fill Gui elements
    US_Rotor::Lab lab_selected;
    lab_selected.readDB( labID, dbP );
-   instruments = lab_selected.instruments;
+   instruments = lab_selected.instruments;   //ALEXEY: operators (per instrument) are read here
 
    //Instruments
    sl_optimas.clear();
@@ -1241,7 +1286,18 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
                }
             }
 
-            if ( !optima_in_use)
+	    //compare to instruments_no_permit (as operator for current user) List:
+	    bool optima_no_permit = false;
+	    for (int ll = 0; ll < mainw->instruments_no_permit.size(); ll++)
+            {
+               if ( instrument.name == mainw->instruments_no_permit[ll] )
+               {
+                  optima_no_permit = true;
+                  break;
+               }
+            }
+	    
+            if ( !optima_in_use && !optima_no_permit )
             {
                sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
                qDebug() << "ASSIGNING FREE INSTRUMENTS: " << instrument.name;
@@ -1305,12 +1361,31 @@ void US_ExperGuiRotor::changeOptima( int ndx )
    currentOperator = cb_operator->currentText();
    
    sl_operators.clear();
+   int inv_lev    = US_Settings::us_inv_level();
+   int inv_id     = US_Settings::us_inv_ID();
+   
    QList< US_Rotor::Operator > operators = currentInstrument.operators;
    foreach ( US_Rotor::Operator oper, operators )
    {
       qDebug() << "Operator: " << oper.lname;
-      sl_operators << QString::number( oper.ID )
-                      + ": " + oper.fname + " " + oper.lname;
+
+      //Here: if UL<3, enforce operator to be ONLY the current non-admin user:
+      if ( inv_lev < 3 )
+	{
+	  if ( inv_id == oper.ID )
+	    {
+	      sl_operators << QString::number( oper.ID )
+		+ ": " + oper.fname + " " + oper.lname;
+
+	      break;
+	    }
+	}
+      else
+	{
+	  
+	  sl_operators << QString::number( oper.ID )
+	    + ": " + oper.fname + " " + oper.lname;
+	}
    }
    cb_operator->clear();
    cb_operator->addItems( sl_operators );

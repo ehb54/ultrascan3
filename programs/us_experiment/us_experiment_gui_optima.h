@@ -100,6 +100,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList           pr_names;   // List of protocol names
       QStringList           instr_opers;  // Instrument operators
 
+      QMap < QString, bool >  ul2_operator_for_optima; //for UL<3, determine if the user is an operator, for each machine
+
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
@@ -119,6 +121,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
       void  set_tabs_buttons_active  ( void );
+      void  go_back_to_run_manager( void );
+      
 };
 
 //! \brief Experiment Rotor panel
@@ -971,6 +975,8 @@ class US_ExperimentMain : public US_Widgets
       void    us_mode_passed( void );
 
       QStringList instruments_in_use;
+      QStringList instruments_no_permit;
+  bool isOperatorAny;
 
       int tabHeight;
       int buttLHeight;
@@ -1005,7 +1011,9 @@ class US_ExperimentMain : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
-      void set_tabs_buttons_readonly( void );			     
+      void set_tabs_buttons_readonly( void );
+      void switch_to_run_manager( void );					
+					    
       
     public slots:
       void close_program( void );
@@ -1029,7 +1037,8 @@ class US_ExperimentMain : public US_Widgets
       void to_live_update( QMap < QString, QString > &protocol_details );
       void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
-      void close_expsetup_msg( void ); 
+      void close_expsetup_msg( void );
+  void back_to_initAutoflow( void );
       
       
 };

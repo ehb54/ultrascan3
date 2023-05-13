@@ -232,6 +232,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
+   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
@@ -482,6 +483,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
+   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
@@ -1492,7 +1494,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     }
   /* ---------------------------------------------------------------------------------------*/
     
-  if ( autoflow_records < 1 )
+  //if ( autoflow_records < 1 )
+  if ( autoflow_records < 1 || autoflowdata.size() < 1 ) //can be that for UL<3, autoflow runs from others are not shown
     {
       //ALEXEY: should close pdiag_autoflow if wasn't closed already
       initMsgNorecOpen = true;
@@ -2610,6 +2613,10 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
+
+   //return automatically to Run Manager:
+   connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   
    
    sdiag->pb_close->setEnabled(false);  // Disable Close button
    offset = 0;
@@ -2664,6 +2671,11 @@ void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
   emit define_used_instruments( occupied_instruments );
 }
 
+
+void US_ExperGui::to_initAutoflow( void )
+{
+   emit switch_to_initAutoflow();
+}
 
 //When run is submitted to Optima & protocol details are passed .. 
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
