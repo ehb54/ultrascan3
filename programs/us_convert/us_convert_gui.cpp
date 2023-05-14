@@ -5663,8 +5663,7 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	      drop_operations[ runType ][ "Triples" ] = t_comment;
 	    }
 	}
-      //record_live_update_status( "STOP", comment_text );
-       
+          
       
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";

@@ -3189,7 +3189,7 @@ void US_Analysis_auto::delete_job( QString triple_stage )
 	    other_chan_triples = triple_list_affected.join(",");
 	}
       
-      //Also update autoflowStatus's "analysis" JSON:
+      //Also update autoflowStatus's "analysisCancel" JSON:
       record_or_update_analysis_cancel_status( &db, triple_n, other_chan_triples, comment_t );
            
     }
