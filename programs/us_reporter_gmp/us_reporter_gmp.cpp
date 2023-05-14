@@ -5789,7 +5789,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr("<hr>");
 
   //5. ANALYSIS
-  html_assembled += tr( "<h3 align=left>Meniscus Position: Fit vs. Manual Adjustment (5. ANALYSIS: FITMEN stage)</h3>" );
+  html_assembled += tr( "<h3 align=left>Meniscus Position from FITMEN Stage, Job Cancellation (5. ANALYSIS)</h3>" );
 
   QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
   QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
@@ -5849,17 +5849,17 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
   
   //Now add info on the CANCELED Jobs as captured in DB:
+  html_assembled += tr(
+			"<table style=\"margin-left:10px\">"
+			"<caption align=left> <b><i>Information on CANCELED analysis jobs: </i></b> </caption>"
+			"</table>"
+			
+			"<table style=\"margin-left:25px\">"
+		       )
+    ;
+  
   if ( !analysisCancelJson. isEmpty() )
     {
-      html_assembled += tr(
-			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Information on CANCELED analysis jobs: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   )
-	;
-
       QMap < QString, QString >::iterator cj;
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
@@ -5900,11 +5900,13 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	    .arg( when )            //4
 	    ;
 	}
-      
-      html_assembled += tr( "</table>" );
-      
     }
-  	
+  else
+    {
+      html_assembled += tr( "No CANCELLED jobs." );
+    }
+  
+  html_assembled += tr( "</table>" );
   
   html_assembled += tr("<hr>");
   //
