@@ -2748,6 +2748,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       editor_msg( "darkblue", QString( "Exclude volume of solvent atom: %1\n" ).arg( atom_map[ "OW~O2H2" ].saxs_excl_vol ) );
    }
 
+   QString use_name  = QFileInfo(model_filename).fileName();
+
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
       current_model = selected_models[i];
@@ -3096,7 +3098,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   editor_msg( "darkblue", "Finding distance of WATs to non-WATs\n" );
                   qApp->processEvents();
 
+                  progress_pr->setMaximum(atoms.size());
+                     
+
                   for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                     progress_pr->setValue(i);
+                     qApp->processEvents();
                      if ( atoms[i].atom_name == "OW" ) {
                         for ( unsigned int j = 0; j < atoms.size(); ++j ) {
                            if ( i != j && atoms[j].atom_name != "OW" ) {
@@ -3127,6 +3134,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   }
 
                   editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
+                  progress_pr->reset();
                   
                   atoms = new_atoms;
                }
@@ -3556,6 +3564,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
          if ( ok_to_write )
          {
+            use_name = QFileInfo(fpr_name).baseName();
             FILE *fpr = us_fopen(fpr_name, "w");
             if ( fpr ) 
             {
@@ -3696,7 +3705,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plotted_pr        .push_back(pr);
    plotted_pr_error  .push_back(pr_error);
 
-   QString use_name  = QFileInfo(model_filename).fileName();
    QString plot_name = use_name;
    int extension     = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
