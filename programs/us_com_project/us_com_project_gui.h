@@ -6,7 +6,6 @@
 #include <fstream>
 #include <QtSql>
 
-
 #include "../us_xpn_viewer/us_xpn_viewer_gui.h"
 #include "../us_experiment/us_experiment_gui_optima.h"
 #include "../us_convert/us_experiment.h"     
@@ -27,6 +26,7 @@
 
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
 #include "../us_reporter_gmp/us_reporter_gmp.h"
+#include "../us_esigner_gmp/us_esigner_gmp.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
@@ -365,6 +365,33 @@ class US_ReportStageGui : public US_WidgetsDialog
 };
 
 
+//! \brief eSign panel
+class US_eSignaturesGui: public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_eSignaturesGui( QWidget* );
+    ~US_eSignaturesGui() {};
+  
+     US_eSignaturesGMP*   sdiag;
+    
+  private:
+    US_ComProjectMain*    mainw;      // Parent to all panels
+    int offset;
+
+ protected:
+    void resizeEvent(QResizeEvent *event) override;
+      
+  private slots:
+  //  void do_report( QMap < QString, QString > & );
+  //  void reset_reporting( void );
+
+  signals:
+  // void start_report( QMap < QString, QString > & );
+  //  void reset_reporting_passed ( void );
+};
+
 
 //! \brief ComProject Main Window
 class US_ComProjectMain : public US_Widgets
@@ -412,13 +439,14 @@ class US_ComProjectMain : public US_Widgets
   //US_SelectItem* pdiag_autoflow;
     
  private:
-  US_InitDialogueGui*  epanInit;     // US_Init panel
+  US_InitDialogueGui*  epanInit;        // US_Init panel
   US_ExperGui*         epanExp;         // US_Exp panel
   US_ObservGui*        epanObserv;      // US_Observ panel
   US_PostProdGui*      epanPostProd;    // US_PostProd panel
   US_EditingGui*       epanEditing;     // US_Editing panel
   US_AnalysisGui*      epanAnalysis;    // US_Analysis panel
   US_ReportStageGui*   epanReport;      // US_Report panel
+  US_eSignaturesGui*   epanSign;        // electronic signatures 
     
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag
