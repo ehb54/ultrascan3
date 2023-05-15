@@ -3061,8 +3061,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
       bool spec_wat_check = false;
       int ow_wat_count = 0;
-      double ow_cutoff = 0;
 
+#warning REMOVE BEFORE DIST
 #warning REMOVE BEFORE DIST
       {
          for ( unsigned int i = 0; i < atoms.size(); ++i ) {
@@ -3072,6 +3072,67 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          }
 
          if ( ow_wat_count > 1 ) {
+            {
+               double ow_cutoff2 = 0;
+               bool ok;
+               double d = QInputDialog::getDouble(this
+                                                  ,windowTitle() + " : WAT cutoff"
+                                                  ,tr("Cutoff WAT to non-WAT distance [A] (0 or CANCEL for no cutoff) : ")
+                                                  ,10
+                                                  ,0
+                                                  ,100
+                                                  ,3
+                                                  ,&ok
+                                                  ,Qt::WindowFlags(), 1);
+               if (ok) {
+                  ow_cutoff2 = d * d;
+               }
+
+               if ( ow_cutoff2 ) {
+                  // remove atoms with cutoff > ow_cutoff2
+                  map < int, double > min_dist2_to_prot;
+                  
+                  // step 1 find minimum distance
+                  editor_msg( "darkblue", "Finding distance of WATs to non-WATs\n" );
+                  qApp->processEvents();
+
+                  for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                     if ( atoms[i].atom_name == "OW" ) {
+                        for ( unsigned int j = 0; j < atoms.size(); ++j ) {
+                           if ( i != j && atoms[j].atom_name != "OW" ) {
+                              double rik2 = 
+                                 (atoms[i].pos[0] - atoms[j].pos[0]) *
+                                 (atoms[i].pos[0] - atoms[j].pos[0]) +
+                                 (atoms[i].pos[1] - atoms[j].pos[1]) *
+                                 (atoms[i].pos[1] - atoms[j].pos[1]) +
+                                 (atoms[i].pos[2] - atoms[j].pos[2]) *
+                                 (atoms[i].pos[2] - atoms[j].pos[2])
+                                 ;
+                              if ( !min_dist2_to_prot.count( i )
+                                   || min_dist2_to_prot[ i ] > rik2
+                                   ) {
+                                 min_dist2_to_prot[ i ] = rik2;
+                              }
+                           }
+                        }
+                     }
+                  }
+                                 
+                  vector < saxs_atom > new_atoms;
+                  for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                     if ( !min_dist2_to_prot.count( i )
+                          || min_dist2_to_prot[ i ] <= ow_cutoff2 ) {
+                        new_atoms.push_back( atoms[i] );
+                     }
+                  }
+
+                  editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
+                  
+                  atoms = new_atoms;
+               }
+            }
+
+
             switch( QMessageBox::question(this
                                           ,windowTitle() + " : WAT treatment" 
                                           ,QString( us_tr("Exclude WAT WAT from P(r)?") )
@@ -3082,22 +3143,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             default:
                break;
             }
-         }
-      }
-#warning REMOVE BEFORE DIST
-      if ( spec_wat_check ) {
-         bool ok;
-         double d = QInputDialog::getDouble(this
-                                            ,windowTitle() + " : WAT treatment cutoff"
-                                            ,tr("Cutoff WAT to non-WAT distance [A] (0 or CANCEL for no cutoff) : ")
-                                            ,10
-                                            ,0
-                                            ,100
-                                            ,3
-                                            ,&ok
-                                            ,Qt::WindowFlags(), 1);
-         if (ok) {
-            ow_cutoff = d;
          }
       }
 
@@ -3229,46 +3274,41 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                 (atoms[i].pos[2] - atoms[j].pos[2]) *
                                 (atoms[i].pos[2] - atoms[j].pos[2])
                                 );
-                        if ( !ow_cutoff
-                             || rik < ow_cutoff
-                             || ( atoms[i].atom_name != "OW" && atoms[j].atom_name != "OW" )
-                             ) {
-                           pos = (unsigned int)floor(rik / delta);
-                           if ( hist.size() <= pos )
+                        pos = (unsigned int)floor(rik / delta);
+                        if ( hist.size() <= pos )
+                        {
+                           hist.resize(pos + 1024);
+                           // if ( cb_guinier->isChecked() )
+                           // {
+                           for ( unsigned int k = 0; k < atoms.size(); k++ )
                            {
-                              hist.resize(pos + 1024);
-                              // if ( cb_guinier->isChecked() )
-                              // {
-                              for ( unsigned int k = 0; k < atoms.size(); k++ )
-                              {
-                                 contrib_array[k].resize(pos + 1024);
-                              }
-                              // }
+                              contrib_array[k].resize(pos + 1024);
                            }
-                           if ( rb_curve_raw->isChecked() )
-                           {
-                              hist[pos]++;
-                              // if ( cb_guinier->isChecked() )
-                              // {
-                              contrib_array[i][pos]++;
-                              contrib_array[j][pos]++;
-                              // } else {
-                              //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
-                              //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
-                              // }
-                           } else {
-                              // good for both saxs & sans
-                              double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
-                              hist[pos] += this_pr;
-                              // if ( cb_guinier->isChecked() )
-                              // {
-                              contrib_array[i][pos] += this_pr;
-                              contrib_array[j][pos] += this_pr;
-                              // } else {
-                              //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
-                              //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
-                              // }
-                           }
+                           // }
+                        }
+                        if ( rb_curve_raw->isChecked() )
+                        {
+                           hist[pos]++;
+                           // if ( cb_guinier->isChecked() )
+                           // {
+                           contrib_array[i][pos]++;
+                           contrib_array[j][pos]++;
+                           // } else {
+                           //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
+                           //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
+                           // }
+                        } else {
+                           // good for both saxs & sans
+                           double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                           hist[pos] += this_pr;
+                           // if ( cb_guinier->isChecked() )
+                           // {
+                           contrib_array[i][pos] += this_pr;
+                           contrib_array[j][pos] += this_pr;
+                           // } else {
+                           //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
+                           //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
+                           // }
                         }
                      }
                   }
@@ -3355,24 +3395,19 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                 (atoms[i].pos[2] - atoms[j].pos[2]) *
                                 (atoms[i].pos[2] - atoms[j].pos[2])
                                 );
-                        if ( !ow_cutoff
-                             || rik < ow_cutoff
-                             || ( atoms[i].atom_name != "OW" && atoms[j].atom_name != "OW" )
-                             ) {
-                           ++total_terms;
+                        ++total_terms;
 
-                           pos = (unsigned int)floor(rik / delta);
-                           if ( hist.size() <= pos )
-                           {
-                              hist.resize(pos + 128);
-                           }
-                           if ( rb_curve_raw->isChecked() )
-                           {
-                              hist[pos]++;
-                           } else {
-                              // good for both saxs & sans
-                              hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
-                           }
+                        pos = (unsigned int)floor(rik / delta);
+                        if ( hist.size() <= pos )
+                        {
+                           hist.resize(pos + 128);
+                        }
+                        if ( rb_curve_raw->isChecked() )
+                        {
+                           hist[pos]++;
+                        } else {
+                           // good for both saxs & sans
+                           hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
                         }
                      }
                   }
