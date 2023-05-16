@@ -1047,7 +1047,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void run_guinier_cs();
       void run_guinier_Rt();
       QString saxs_filestring();
-      QString sprr_filestring();
+      QString sprr_filestring( const QString & append = "" );
       void set_create_native_saxs();
       void set_guinier();
       void set_cs_guinier();

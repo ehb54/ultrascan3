@@ -3063,6 +3063,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
       bool spec_wat_check = false;
       int ow_wat_count = 0;
+      double ow_cutoff = 0;
 
 #warning REMOVE BEFORE DIST
 #warning REMOVE BEFORE DIST
@@ -3077,7 +3078,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             {
                double ow_cutoff2 = 0;
                bool ok;
-               double d = QInputDialog::getDouble(this
+               ow_cutoff = QInputDialog::getDouble(this
                                                   ,windowTitle() + " : WAT cutoff"
                                                   ,tr("Cutoff WAT to non-WAT distance [A] (0 or CANCEL for no cutoff) : ")
                                                   ,10
@@ -3087,7 +3088,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                                   ,&ok
                                                   ,Qt::WindowFlags(), 1);
                if (ok) {
-                  ow_cutoff2 = d * d;
+                  ow_cutoff2 = ow_cutoff * ow_cutoff;
                }
 
                if ( ow_cutoff2 ) {
@@ -3531,15 +3532,26 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       // save the data to a file
       if ( create_native_saxs )
       {
+         QString append = "";
+         if ( ow_wat_count ) {
+            if ( ow_cutoff ) {
+               append += QString( "_co%1" ).arg( ow_cutoff );
+            }
+            append +=
+               QString("_hs%1").arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+            if ( spec_wat_check ) {
+               append += "_noWW";
+            }
+         }
+
          QString fpr_name = 
             USglobal->config_list.root_dir + 
-            SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring();
+            SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring( append );
          
          bool ok_to_write = true;
          if ( QFile::exists(fpr_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
          {
-
             fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name, 0, this);
             ok_to_write = true;
 #if defined(OLD_WAY)
@@ -5769,13 +5781,19 @@ QString US_Hydrodyn_Saxs::saxs_filestring()
    return result;
 }
 
-QString US_Hydrodyn_Saxs::sprr_filestring()
+QString US_Hydrodyn_Saxs::sprr_filestring( const QString & append )
 {
    QString result = 
       QString("%1_%2b%3")
       .arg(te_filename2->text())
       .arg( model_vector[ current_model ].model_id )
       .arg(our_saxs_options->bin_size);
+
+   if ( our_saxs_options->smooth ) {
+      result += QString( "_sm%1" ).arg( our_saxs_options->smooth ).replace( ".", "_" );
+   }
+
+   result += append;
 
    if ( rb_curve_sans->isChecked() )
    {
