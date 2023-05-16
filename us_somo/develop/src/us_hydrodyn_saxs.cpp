@@ -3136,8 +3136,65 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
                   editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
                   progress_pr->reset();
-                  
-                  atoms = new_atoms;
+                  if ( new_atoms.size() != atoms.size() ) {
+                     switch( QMessageBox::question(this
+                                                   ,windowTitle() + " : WAT treatment" 
+                                                   ,QString( us_tr("Write the modified PDB?") )
+                                                   ) ) {
+                     case QMessageBox::Yes :
+                        {
+                           // build up coordinate map of removed WATs
+                           set < point > keep_WAT;
+                           for ( int i = 0; i < (int) new_atoms.size(); ++i ) {
+                              if ( new_atoms[ i ].atom_name == "OW" ) {
+                                 point p;
+                                 p.axis[0] = new_atoms[ i ].pos[0];
+                                 p.axis[1] = new_atoms[ i ].pos[1];
+                                 p.axis[2] = new_atoms[ i ].pos[2];
+                                 
+                                 keep_WAT.insert( p );
+                              }
+                           }
+                           
+                           PDB_model tmp_model = model_vector[current_model];
+                           for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j ) {
+                              tmp_model.molecule[j].atom.clear();
+                              for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+                                 PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                                 if ( this_atom->name != "OW" ) {
+                                    tmp_model.molecule[j].atom.push_back( *this_atom );
+                                 } else {
+                                    if ( keep_WAT.count( this_atom->coordinate ) ) {
+                                       tmp_model.molecule[j].atom.push_back( *this_atom );
+                                    }
+                                 }
+                              }
+                           }
+                           {
+                              QString errors;
+                              QString writtenname;
+                              if ( 
+                                  ((US_Hydrodyn *)us_hydrodyn)->write_pdb_from_model( tmp_model
+                                                                                      ,errors
+                                                                                      ,writtenname
+                                                                                      ,QString( " WATs further than %1 [A] removed" ).arg( ow_cutoff )
+                                                                                      ,QString( "_co%1" ).arg( ow_cutoff )
+                                                                                      ,model_filepathname
+                                                                                      ) ) {
+                                 editor_msg( "black", QString( us_tr( "File %1 created\n" ) ).arg( writtenname ) );
+                              } else {
+                                 editor_msg( "red", QString( us_tr( "Error writing File %1. %2\n" ) ).arg( writtenname ).arg( errors ) );
+                              }
+                           }
+                        }
+                        break;
+                     default:
+                        break;
+                     }
+                     atoms = new_atoms;
+                  } else {
+                     ow_cutoff = 0;
+                  }
                }
             }
 

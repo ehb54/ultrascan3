@@ -2409,6 +2409,11 @@ void US_Hydrodyn::select_residue_file()
 
 void US_Hydrodyn::reload_pdb()
 {
+   // {
+   //    qDebug() << "test write pdb";
+   //    QString errors;
+   //    write_pdb_from_model( model_vector[current_model], errors, "my header note", "my_suffex", "outputfile" );
+   // }
    citation_load_pdb();
    if ( advanced_config.debug_1 )
    {

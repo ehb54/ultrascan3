@@ -880,3 +880,73 @@ void US_Hydrodyn::write_dati1_pat_bead_model( QString filename,
 
    write_bead_model( filename, &bm, US_HYDRODYN_OUTPUT_SOMO );
 }
+
+bool US_Hydrodyn::write_pdb_from_model(
+                                       const PDB_model & model
+                                       ,QString & errors
+                                       ,QString & writtenname
+                                       ,const QString & headernote
+                                       ,const QString & suffix
+                                       ,const QString & filename
+                                       ) {
+   QString fname = filename.isEmpty() ? pdb_file : filename;
+   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" );
+   fname += suffix + ".pdb";
+
+   if ( !overwrite && QFile::exists( fname ) )
+   {
+      fname = fileNameCheck( fname, 0, this );
+   }
+
+   QFile f( fname );
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      errors = QString( us_tr("can not open file %1 for writing" ) ).arg( fname );
+      return false;
+   }
+
+   writtenname = fname;
+
+   QString pdb_header =
+      QString( "HEADER  US-SOMO %1 File %2\n" ).arg( headernote ).arg( QFileInfo( fname ).fileName() );
+
+   map < QString, bool > chains_used;
+
+   QString pdb_text = "";
+
+   for (unsigned int j = 0; j < (unsigned int) model.molecule.size (); j++) {
+      for (unsigned int k = 0; k < (unsigned int) model.molecule[j].atom.size (); k++) {
+         PDB_atom *this_atom = (PDB_atom *)&(model.molecule[j].atom[k]);
+
+         pdb_text +=
+            QString("")
+            .sprintf(     
+                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                     this_atom->serial,
+                     this_atom->orgName.toLatin1().data(),
+                     this_atom->resName.toLatin1().data(),
+                     this_atom->chainID.toLatin1().data(),
+                     this_atom->resSeq.toUInt(),
+                     this_atom->coordinate.axis[ 0 ],
+                     this_atom->coordinate.axis[ 1 ],
+                     this_atom->coordinate.axis[ 2 ],
+                     this_atom->occupancy,
+                     this_atom->tempFactor,
+                     this_atom->element.toLatin1().data()
+                     );
+      }
+   }
+
+   QTextStream ts( &f );
+   ts << pdb_header
+      << pdb_text
+      << "TER\n"
+      << "END\n"
+      ;
+   f.close();
+
+   editor->append( QString( us_tr( "File %1 created\n" ) ).arg( fname ) );
+
+   return true;
+}   
+   
