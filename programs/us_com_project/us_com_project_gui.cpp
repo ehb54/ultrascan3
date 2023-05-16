@@ -2341,30 +2341,120 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	autoflowentry << "NO";
     
 
-      //Check user level && GUID; if <3, check if the user is operator || investigator
-      if ( US_Settings::us_inv_level() < 3 )
+      //Treat eSign separately: only show runs at this stage to reviewers && operator:
+      if ( status == "E-SIGNATURES" )
 	{
-	  qDebug() << "User level low: " << US_Settings::us_inv_level();
-	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+	  // //taking care of UL=2, who owns a run, and thus, is an operator
+	  // if (  user_id && user_id == operatorID.toInt() )
+	  //   {
+	  //     autoflowdata  << autoflowentry;
+	  //     nrecs++;
+	  //   }
 
-	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
-	  if ( user_id && user_id == invID.toInt() )
+	  //reviewers: check against new 'autoflowGMPReportEsign. statusSignJson["to_process"]' table's field: 
+	  if ( isOperRev( user_id, id ) )
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
 	    }
+	  
 	}
       else
 	{
-	  autoflowdata  << autoflowentry;
-	  nrecs++;
+	  //Check user level && GUID; if <3, check if the user is investigator
+	  if ( US_Settings::us_inv_level() < 3 )
+	    {
+	      qDebug() << "User level low: " << US_Settings::us_inv_level();
+	      qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+	      
+	      //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	      if ( user_id && user_id == invID.toInt() )
+		{
+		  autoflowdata  << autoflowentry;
+		  nrecs++;
+		}
+	    }
+	  else
+	    {
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
 	}
     }
 
   return nrecs;
 }
 
-    
+
+//Check for e-Signature stage, if the logged in user an operator || reviewer
+bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
+{
+  bool yesRev = false;
+
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+
+  if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return yesRev;
+     }
+
+  QStringList qry;
+  qry << "get_gmp_review_info_by_autoflowID" << autoflow_id;
+
+  db->query( qry );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    return yesRev;
+  
+  QString esign_id;
+  QString gmp_run_id;
+  QString autoflow_name ;
+  QString reviewers_list;
+  QString eSignStatusJson;
+  QString eSignStatusAll;
+  QString createUpdateJsonLog;
+  
+  while ( db->next() )
+    {
+      esign_id             = db->value( 0 ).toString();    //INT
+      gmp_run_id           = db->value( 1 ).toString();    //INT
+      autoflow_name        = db->value( 2 ).toString();    //TEXT 
+      reviewers_list       = db->value( 3 ).toString();    //json array
+      eSignStatusJson      = db->value( 4 ).toString();    //json
+      eSignStatusAll       = db->value( 5 ).toString();    //ENUM
+      createUpdateJsonLog  = db->value( 6 ).toString();    //json
+    }
+
+  //process 'reviewers_list' Json array:
+  QJsonDocument jsonDocRevList = QJsonDocument::fromJson( reviewers_list.toUtf8() );
+  if ( !jsonDocRevList.isObject() || !jsonDocRevList. isArray() )
+    {
+      qDebug() << "jsonDocRevList not a JSON, and not an JSON Array!";
+      return yesRev;
+    }
+  
+  QJsonArray jsonDocRevList_array  = jsonDocRevList.array();
+  for (int i=0; i < jsonDocRevList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocRevList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  yesRev = true;
+	  break;
+	}
+    }
+  
+  return yesRev;
+}
+
+
 // Query autoflow for # records
 int US_InitDialogueGui::get_autoflow_records( void )
 {
