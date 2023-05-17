@@ -42,3 +42,20 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
 
   resize( 1350, 800 );
 }
+
+
+//For the end of 1. EXP: defined by admin
+US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & protocol_details ) : US_Widgets()
+{
+  this->protocol_details = protocol_details;
+  
+  setWindowTitle( tr( "GMP e-Signatures"));
+  setPalette( US_GuiSettings::frameColor() );
+
+  // primary layouts
+  QHBoxLayout* mainLayout     = new QHBoxLayout( this );
+  mainLayout->setSpacing        ( 2 );
+  mainLayout->setContentsMargins( 2, 2, 2, 2 );
+
+  resize( 1350, 800 );
+}

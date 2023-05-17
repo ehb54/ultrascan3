@@ -18,15 +18,19 @@ class US_eSignaturesGMP : public US_Widgets
       public:
          US_eSignaturesGMP();
 	 US_eSignaturesGMP( QString );
+         US_eSignaturesGMP( QMap <QString, QString>& );
+  
 
      private:
-
+        QMap< QString, QString > protocol_details;
+    
      public slots:
 
      private slots:
 
      signals:  
-
-	 
+       void accept_reviewers( QMap< QString, QString > & );
+       void cancel_reviewers( QMap< QString, QString > & );
+  
 };
 #endif

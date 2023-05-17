@@ -17,6 +17,8 @@
 #include "us_datafiles.h"
 #include "us_select_item.h"
 
+#include "../us_esigner_gmp/us_esigner_gmp.h"
+
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -6156,13 +6158,15 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   msgBox.setIcon(QMessageBox::Question);
   msgBox.exec();
   
-  if (msgBox.clickedButton() == Accept) {
-    qDebug() << "Submitting...";
-    submitExperiment();
-  }
-  else if (msgBox.clickedButton() == Cancel){
-    return;
-  }
+  if (msgBox.clickedButton() == Accept)
+    {
+      qDebug() << "Submitting...";
+      submitExperiment();
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    {
+      return;
+    }
   
 }
 
@@ -7629,10 +7633,66 @@ void US_ExperGuiUpload::submitExperiment()
 
    //Make 'autoflow' table record:
    if ( mainw->automode )
-     add_autoflow_record( protocol_details );
-   
+     {
+       add_autoflow_record( protocol_details );
+       
+       //Do we ask if UL>=3 (admin) wants to set operator/reviewers???
+       //Returned autoflowID: protocol_details[ "autoflowID" ]
+       if ( US_Settings::us_inv_level() > 2 )
+	 {
+	   QMessageBox msg_rev;
+	   msg_rev.setWindowTitle(tr("Defining Reviewers for GMP Run"));
+	   msg_rev.setText( QString(tr("As an admin user, you can define operator and reviewer(s) for "
+				       "the currently submitted GMP run, for further review and e-Signing. "
+				       )
+				    ));
+	   msg_rev.setInformativeText( QString( tr( "Do you want to do this now?" )));
+				      
+	   QPushButton *Accept    = msg_rev.addButton(tr("YES"), QMessageBox::YesRole);
+	   QPushButton *Cancel    = msg_rev.addButton(tr("Cancel"), QMessageBox::RejectRole);
+	   
+	   msg_rev.setIcon(QMessageBox::Question);
+	   msg_rev.exec();
+	   
+	   if (msg_rev.clickedButton() == Accept)
+	     {
+	       qDebug() << "Setting up operator, reviewers...";
+
+	       US_eSignaturesGMP* rev_dialog = new US_eSignaturesGMP();
+	       rev_dialog->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+	       rev_dialog->setWindowModality(Qt::ApplicationModal);
+
+	       connect( rev_dialog, SIGNAL( accept_reviewers ( QMap< QString, QString >& ) ),
+			this, SLOT( do_accept_reviewers  ( QMap< QString, QString >& )  ) );
+	       connect( rev_dialog, SIGNAL( cancel_reviewers ( QMap< QString, QString >& ) ),
+			this, SLOT( cancel_reviewers  ( QMap< QString, QString >& )  ) );
+	       
+	       rev_dialog->show();
+	       
+	     }
+	   else if (msg_rev.clickedButton() == Cancel)
+	     {
+	       emit expdef_submitted( protocol_details );
+	       return;
+	     }
+	 }
+     }
+      
+   //Finish, emit, switch to 2. LIVE_UPDATE
    emit expdef_submitted( protocol_details );
 }
+
+void US_ExperGuiUpload::do_accept_reviewers( QMap< QString, QString >& protocol_details  )
+{
+  emit expdef_submitted( protocol_details );
+}
+
+
+void US_ExperGuiUpload::cancel_reviewers( QMap< QString, QString >& protocol_details  )
+{
+  emit expdef_submitted( protocol_details );
+}
+
 
 // Read Protocol details
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )

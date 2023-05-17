@@ -771,7 +771,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QPushButton* pb_details;
 
       QGridLayout* genL;
-      
+
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
@@ -853,6 +853,9 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
       void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+
+      void    do_accept_reviewers( QMap< QString, QString >& );
+      void    cancel_reviewers( QMap< QString, QString >& );
   
    signals:
       void expdef_submitted    ( QMap < QString, QString > &protocol_details );
