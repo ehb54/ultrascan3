@@ -3065,9 +3065,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
       cout << "contrib_file " << contrib_file << endl;
 
-      bool spec_wat_check = false;
-      int ow_wat_count = 0;
-      double ow_cutoff = 0;
+      bool spec_wat_check        = false;
+      int ow_wat_count           = 0;
+      int ow_wat_count_remaining = 0;
+      double ow_cutoff           = 0;
 
 #warning REMOVE BEFORE DIST
 #warning REMOVE BEFORE DIST
@@ -3135,6 +3136,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      if ( !min_dist2_to_prot.count( i )
                           || min_dist2_to_prot[ i ] <= ow_cutoff2 ) {
                         new_atoms.push_back( atoms[i] );
+                        if ( atoms[i].atom_name == "OW" ) {
+                           ++ow_wat_count_remaining;
+                        }
                      }
                   }
 
@@ -3182,7 +3186,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                                                                       ,errors
                                                                                       ,writtenname
                                                                                       ,QString( " WATs further than %1 [A] removed" ).arg( ow_cutoff )
-                                                                                      ,QString( "_co%1" ).arg( ow_cutoff )
+                                                                                      ,QString( "_co%1" ).arg( ow_cutoff ).replace(".","_")
                                                                                       ,model_filepathname
                                                                                       ) ) {
                                  editor_msg( "black", QString( us_tr( "File %1 created\n" ) ).arg( writtenname ) );
@@ -3519,8 +3523,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                  )
                         .arg( total_terms )
                         .arg( atoms.size() )
-                        .arg( atoms.size() - ow_wat_count )
-                        .arg( ow_wat_count )
+                        .arg( (int) atoms.size() - ow_wat_count_remaining )
+                        .arg( ow_wat_count_remaining )
                         );
          }
       } // end non-threaded
@@ -3596,7 +3600,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          QString append = "";
          if ( ow_wat_count ) {
             if ( ow_cutoff ) {
-               append += QString( "_co%1" ).arg( ow_cutoff );
+               append += QString( "_co%1" ).arg( ow_cutoff ).replace(".","_");
             }
             append +=
                QString("_hs%1").arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
