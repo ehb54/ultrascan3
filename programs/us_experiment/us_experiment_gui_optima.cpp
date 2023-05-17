@@ -7635,7 +7635,9 @@ void US_ExperGuiUpload::submitExperiment()
    if ( mainw->automode )
      {
        add_autoflow_record( protocol_details );
-       
+
+
+       /****
        //Do we ask if UL>=3 (admin) wants to set operator/reviewers???
        //Returned autoflowID: protocol_details[ "autoflowID" ]
        if ( US_Settings::us_inv_level() > 2 )
@@ -7676,6 +7678,7 @@ void US_ExperGuiUpload::submitExperiment()
 	       return;
 	     }
 	 }
+       *****/
      }
       
    //Finish, emit, switch to 2. LIVE_UPDATE
