@@ -43,6 +43,7 @@ class US_Vector
    static QString qs_vector_vector( QString qs, vector < vector < double > > m, int digits = 8 );
 
    static QString qs_mapqsqs( QString qs, map < QString, QString > & x );
+   static QString qs_mapqsfloat( QString qs, map < QString, float > & x );
 
    static vector < double > intersection( vector < double > &x, vector < double > &y );
    static vector < double > intersection( vector < vector < double > > &x );

@@ -945,8 +945,6 @@ bool US_Hydrodyn::write_pdb_from_model(
       ;
    f.close();
 
-   editor->append( QString( us_tr( "File %1 created\n" ) ).arg( fname ) );
-
    return true;
 }   
    

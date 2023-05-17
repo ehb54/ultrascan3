@@ -375,20 +375,72 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
       {
          map_sel_names[*it] = true;
       }
+
+      // create normed versions on-the-fly if MW is non-zero
+      QStringList qsl_pr_normed;
+      for ( QStringList::iterator it = qsl->begin();
+            it != qsl->end();
+            it++ ) {
+         if ( it == qsl->begin() ) {
+            qsl_pr_normed << *it;
+            continue;
+         }
+         QStringList qsl_tmp = (*it).split( "," );
+
+         if ( qsl_tmp.size() > 4 ) {
+            double this_mw   = qsl_tmp[1].toDouble();
+            double this_area = qsl_tmp[2].toDouble();
+            // QTextStream(stdout) << QString( "save pr this mw %1 area %2\n" ).arg( this_mw ).arg( this_area );
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r)\"" ) {
+               // QTextStream(stdout) << "ok to make P(r) normed\n";
+               QStringList this_pr_normed;
+               this_pr_normed
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_normed << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_normed.join(",");
+            }
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r) sd\"" ) {
+               QStringList this_pr_error;
+               this_pr_error
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed sd\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_error << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_error.join(",");
+            }
+         }
+      }
       
       // find max length & build a 2d array of values
       unsigned int max_len = 0;
       vector < vector < QString > > array2d_to_save;
-      for ( QStringList::iterator it = qsl->begin();
-               it != qsl->end();
+      for ( QStringList::iterator it = qsl_pr_normed.begin();
+               it != qsl_pr_normed.end();
                it++ )
       {
          QStringList qsl_tmp = (*it).split( "," );
          if ( qsl_tmp.size() )
          {
-            if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) &&
-                 ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" ) )
-            {
+            // QTextStream(stdout) << "before array_to_save line: " << *it << "\n";
+            
+            if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl_pr_normed.begin() )
+                 // && ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" )
+                 ) {
+               // QTextStream(stdout) << "array_to_save accepted\n";
                vector < QString > array_to_save;
                // cout << "ok: " << qsl_tmp[0] << endl;
                if ( max_len < (unsigned int)qsl_tmp.count() )

@@ -556,6 +556,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map < QString, float > *remember_mw;
       map < QString, float > *match_remember_mw;
       map < QString, QString > *remember_mw_source;
+      QString info_remember_mw( const QString & msg = "" ); // report contents of remember_mw maps
       // map < QString, float > contrib;
       vector < vector < float > > contrib_array;
       vector < PDB_atom * >  contrib_pdb_atom;

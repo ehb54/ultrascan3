@@ -2720,6 +2720,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       return;
    }
    
+   // QTextStream(stdout)
+   //    << info_remember_mw( ": show_plot_pr() start" )
+   //    ;
+
    progress_pr->set_cli_prefix( "pr" );
    pb_pr_contrib->setEnabled(false);
    stopFlag = false;
@@ -3631,6 +3635,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
          }
 
+         // QTextStream(stdout)
+         //    << info_remember_mw( ": show_plot_pr() before ok_to_write" )
+         //    ;
+         
          if ( ok_to_write )
          {
             use_name = QFileInfo(fpr_name).baseName();
@@ -8545,4 +8553,19 @@ bool US_Hydrodyn_Saxs::write_temp_pdb_selected_models( QString & error_msg ) {
 
    // qDebug() << QString( us_tr( "File %1 created\n" ) ).arg( last_selected_pdb_filename );
    return true;
+}
+
+QString US_Hydrodyn_Saxs::info_remember_mw( const QString & msg ) {
+   return
+      QString( "--------------------------------------------------------------------------------\n" )
+      + QString( "info_remember_mw() %1\n" ).arg( msg )
+      + "--------------------------------------------------------------------------------\n"
+      + US_Vector::qs_mapqsfloat( "remember_mw", *remember_mw )
+      + "\n"
+      + US_Vector::qs_mapqsfloat( "match_remember_mw", *match_remember_mw )
+      + "\n"
+      + US_Vector::qs_mapqsqs( "remember_mw_source", *remember_mw_source )
+      + "\n"
+      + "--------------------------------------------------------------------------------\n"
+      ;
 }
