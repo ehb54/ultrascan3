@@ -2413,6 +2413,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
   QString esign_id;
   QString gmp_run_id;
   QString autoflow_name ;
+  QString operator_list;
   QString reviewers_list;
   QString eSignStatusJson;
   QString eSignStatusAll;
@@ -2422,18 +2423,22 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
     {
       esign_id             = db->value( 0 ).toString();    //INT
       gmp_run_id           = db->value( 1 ).toString();    //INT
-      autoflow_name        = db->value( 2 ).toString();    //TEXT 
-      reviewers_list       = db->value( 3 ).toString();    //json array
-      eSignStatusJson      = db->value( 4 ).toString();    //json
-      eSignStatusAll       = db->value( 5 ).toString();    //ENUM
-      createUpdateJsonLog  = db->value( 6 ).toString();    //json
+      autoflow_name        = db->value( 2 ).toString();    //TEXT
+      operator_list        = db->value( 3 ).toString();    //json array [1 value for now]
+      reviewers_list       = db->value( 4 ).toString();    //json array
+      eSignStatusJson      = db->value( 5 ).toString();    //json
+      eSignStatusAll       = db->value( 6 ).toString();    //ENUM
+      createUpdateJsonLog  = db->value( 7 ).toString();    //json
     }
 
-  //process 'reviewers_list' Json array:
-  QJsonDocument jsonDocRevList = QJsonDocument::fromJson( reviewers_list.toUtf8() );
-  if ( !jsonDocRevList.isObject() || !jsonDocRevList. isArray() )
+  //process 'reviewers_list' & 'operList' Json arrays:
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewers_list.toUtf8() );
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operator_list .toUtf8() );
+  
+  if ( !jsonDocRevList.isObject()  || !jsonDocRevList. isArray() ||
+       !jsonDocOperList.isObject() || !jsonDocOperList. isArray()  )
     {
-      qDebug() << "jsonDocRevList not a JSON, and not an JSON Array!";
+      qDebug() << "jsonDocRevList OR jsonDocOperList not a JSON, and not an JSON Array!";
       return yesRev;
     }
   
@@ -2447,7 +2452,21 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
       if ( uID == current_reviewer_id )
 	{
 	  yesRev = true;
-	  break;
+	  return yesRev;
+	}
+    }
+
+  QJsonArray jsonDocOperList_array  = jsonDocOperList.array();
+  for (int i=0; i < jsonDocOperList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocOperList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  yesRev = true;
+	  return yesRev;
 	}
     }
   

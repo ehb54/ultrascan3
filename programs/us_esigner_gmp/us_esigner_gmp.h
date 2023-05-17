@@ -19,10 +19,23 @@ class US_eSignaturesGMP : public US_Widgets
          US_eSignaturesGMP();
 	 US_eSignaturesGMP( QString );
          US_eSignaturesGMP( QMap <QString, QString>& );
-  
+
+         bool auto_mode;
 
      private:
         QMap< QString, QString > protocol_details;
+	QListWidget*  lw_inv_list;
+        QTextEdit*    te_inv_smry;
+	QLabel*       lb_inv_search;
+        QLineEdit*    le_inv_search;
+
+        QListWidget*  lw_grev_list;
+        QTextEdit*    te_grev_smry;
+        QLabel*       lb_grev_search;
+        QLineEdit*    le_grev_search;  
+    
+        QPushButton*  pb_set_global_rev ;
+	QPushButton*  pb_unset_global_rev ;			  
     
      public slots:
 
