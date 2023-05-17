@@ -406,6 +406,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                   this_pr_normed << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
                }
                qsl_pr_normed << this_pr_normed.join(",");
+               continue;
             }
             if ( this_mw > 0 &&
                  this_area > 0 &&
@@ -421,6 +422,10 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                   this_pr_error << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
                }
                qsl_pr_normed << this_pr_error.join(",");
+               continue;
+            }
+            if ( this_mw <= 0 || this_area <= 0 ) {
+               qsl_pr_normed << *it;
             }
          }
       }
