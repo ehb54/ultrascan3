@@ -22,8 +22,29 @@ class US_eSignaturesGMP : public US_Widgets
 
          bool auto_mode;
 
+         class US_InvestigatorData
+	 {
+           public:
+	   int     invID;        //!< The uniqe ID in the DB for the entry.
+	   int     ulev;         //!< User level
+	   int     gmpReviewer;  //!< Is user set a reviewer (0 | 1 )
+	   QString invGuid;      //!< Investigator's global ID
+	   QString lastName;     //!< Last Name
+	   QString firstName;    //!< First Name   
+	   QString address;      //!< Investigator's address
+	   QString city;         //!< Investigator's city
+	   QString state;        //!< Investigator's state
+	   QString zip;          //!< Investigator's zip code
+	   QString phone;        //!< Investigator's phone number
+	   QString email;        //!< Investigator's email address
+	   QString organization; //!< Investigator's organization
+	 };
+  
+
      private:
         QMap< QString, QString > protocol_details;
+        QList< US_InvestigatorData > investigators;
+        US_InvestigatorData          info;
 
   //set global Revs. from the list of investigators
         QListWidget*  lw_inv_list;
@@ -64,6 +85,11 @@ class US_eSignaturesGMP : public US_Widgets
      public slots:
 
      private slots:
+       void init_invs     ( void );
+       void init_grevs     ( void );
+       void limit_inv_names( const QString& );
+       void get_inv_data( QListWidgetItem* );
+       QString get_inv_or_grev_smry( US_InvestigatorData, QString );
 
      signals:  
        void accept_reviewers( QMap< QString, QString > & );

@@ -89,8 +89,14 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   row += 5;
   revGlobalGrid -> addWidget( pb_set_global_rev,       row,       0,  1,  10  );
   revGlobalGrid -> addWidget( pb_unset_global_rev,     row++,     10, 1,  10  );
- 
 
+  connect( le_inv_search, SIGNAL( textChanged( const QString& ) ), 
+	   SLOT  ( limit_inv_names( const QString& ) ) );
+  connect( lw_inv_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
+	   SLOT  ( get_inv_data  ( QListWidgetItem* ) ) );
+
+  
+ 
   //for setting oper, revs. for selected GMP Run
   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
   revOperGMPRunGrid->setSpacing     ( 2 );
@@ -163,7 +169,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   pb_view_report_db  -> setEnabled( false );
   pb_esign_report    -> setEnabled( false );
 
-  pb_esign_report -> setStyleSheet( "QPushButton::enabled {background: #556B2F; color: lightgray; } QPushButton::disabled {background: #90EE90; color: black}");
+  pb_esign_report -> setStyleSheet( tr("QPushButton::enabled {background: #556B2F; color: lightgray; }"
+				       "QPushButton::disabled {background: #90EE90; color: black}" ));
 
   QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report for Run:" ) );
   le_loaded_run_db          = us_lineedit( tr(""), 0, true );
@@ -198,9 +205,12 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   mainLayout -> addStretch();
 
+  //initialize investigators, global reviewers
+  init_invs();
   
+  init_grevs();
 			 
-  resize( 1000, 700 );
+  resize( 1200, 700 );
 }
 
 
@@ -235,4 +245,153 @@ US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & protocol_detail
   mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
   resize( 1000, 700 );
+}
+
+
+//init investigators list
+void US_eSignaturesGMP::init_invs( void )
+{
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+
+  lw_inv_list-> clear();
+
+  QStringList query;
+  query << "get_people" << "%" + le_inv_search->text() + "%"; 
+  db.query( query );
+
+  US_InvestigatorData data;
+  int inv = US_Settings::us_inv_ID();
+  int lev = US_Settings::us_inv_level();
+  
+  while ( db.next() )
+    {
+      data.invID     = db.value( 0 ).toInt();
+      data.lastName  = db.value( 1 ).toString();
+      data.firstName = db.value( 2 ).toString();
+      
+      // Only add to investigator list if admin login or login-inv match
+      // if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
+      //    continue;
+      
+      if ( lev < 3  &&  inv != data.invID )
+	continue;
+      
+      investigators << data;
+      
+      lw_inv_list-> addItem( new QListWidgetItem( 
+						 "InvID: (" + QString::number( data.invID ) + "), " + 
+						 data.lastName + ", " + data.firstName ) );
+    }
+}
+
+void US_eSignaturesGMP::limit_inv_names( const QString& s )
+{
+  lw_inv_list->clear();
+  
+  for ( int i = 0; i < investigators.size(); i++ )
+   {
+     if ( investigators[ i ].lastName.contains( 
+					       QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+	  investigators[ i ].firstName.contains(
+						QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+       lw_inv_list->addItem( new QListWidgetItem(
+						 "InvID: (" + QString::number( investigators[ i ].invID ) + "), " +
+						 investigators[ i ].lastName + ", " + 
+						 investigators[ i ].firstName ) );
+   }
+}
+
+void US_eSignaturesGMP::get_inv_data( QListWidgetItem* item )
+{
+   QString entry = item->text();
+   
+   int     left  = entry.indexOf( '(' ) + 1;
+   int     right = entry.indexOf( ')' );
+   QString invID = entry.mid( left, right - left );
+
+   US_Passwd   pw;
+   QString     masterPW  = pw.getPasswd();
+   US_DB2      db( masterPW ); 
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" ) 
+             + db.lastError() );
+      return;
+   } 
+
+   QStringList query;
+   query << "get_person_info" << invID; 
+      
+   db.query( query );
+   db.next();
+
+   info.invID        = invID.toInt();
+   info.firstName    = db.value( 0 ).toString();
+   info.lastName     = db.value( 1 ).toString();
+   info.address      = db.value( 2 ).toString();
+   info.city         = db.value( 3 ).toString();
+   info.state        = db.value( 4 ).toString();
+   info.zip          = db.value( 5 ).toString();
+   info.phone        = db.value( 6 ).toString();
+   info.organization = db.value( 7 ).toString();
+   info.email        = db.value( 8 ).toString();
+   info.invGuid      = db.value( 9 ).toString();
+   info.ulev         = db.value( 10 ).toInt();
+   info.gmpReviewer  = db.value( 11 ).toInt();
+
+   te_inv_smry->setText( get_inv_or_grev_smry( info, "Investigator") );
+
+
+   pb_set_global_rev -> setEnabled( true );
+}
+
+// Message string for investigator summary
+QString US_eSignaturesGMP::get_inv_or_grev_smry( US_InvestigatorData p_info, QString p_type )
+{
+  QString smry;
+  QStringList mlines;
+
+  mlines << QString( tr( "== Selected %1 ==" )). arg( p_type );
+    
+  mlines << "Last Name:\n "       +  p_info.lastName; 
+  mlines << "First Name:\n "      +  p_info.firstName;
+  mlines << "User Level:\n "      +  QString::number( p_info.ulev ) ;
+  mlines << "GMP Reviewer:\n "    +  QString::number( p_info.gmpReviewer ) ;
+  mlines << "Email:\n "           +  p_info.email       ; 
+  mlines << "Organization:\n "    +  p_info.organization; 
+
+  // mlines << "Investigator ID:\n\t" +  p_info.invID ;
+  // mlines << "Address:\t"         +  p_info.address     ;
+  // mlines << "City:\t"            +  p_info.city        ; 
+  // mlines << "State:\t"           +  p_info.state       ; 
+  // mlines << "Zip:\t"             +  p_info.zip         ; 
+  // mlines << "Phone:\t"           +  p_info.phone       ; 
+  
+  for ( int ii = 0; ii < mlines.count(); ii++ )
+    smry         += mlines[ ii ] + "\n";
+   
+
+  return smry;
+}
+
+
+//init global reviewers list
+void US_eSignaturesGMP::init_grevs( void )
+{
+  
 }
