@@ -20,7 +20,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   auto_mode  = false;
   
   setWindowTitle( tr( "GMP e-Signatures"));
-  setPalette( US_GuiSettings::frameColor() );
+  //setPalette( US_GuiSettings::frameColor() );
+  setPalette( US_GuiSettings::normalColor() );
 
   //main V-layout
   QVBoxLayout* mainLayout     = new QVBoxLayout( this );
@@ -94,14 +95,59 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
   revOperGMPRunGrid->setSpacing     ( 2 );
   revOperGMPRunGrid->setContentsMargins( 1, 1, 1, 1 );
-  
+
   QLabel* bn_revOperGMP     = us_banner( tr( "Assign Operator and Reviewer(s) for GMP Run:" ), 1 );
   bn_revOperGMP -> setFixedHeight  (1.5 * RowHeight);
 
-  row = 0;
-  revOperGMPRunGrid -> addWidget( bn_revOperGMP,     row++,    0, 1,  12 );
+  pb_selRun_operRev_set = us_pushbutton( tr( "Select GMP Run" ) );
+  pb_set_operRev        = us_pushbutton( tr( "Change/Set Operators and Reviewers" ) );
+
+  QLabel* lb_run_name       = us_label( "Run Name:" );
+  QLabel* lb_optima_name    = us_label( "Optima:" );
+  QLabel* lb_operator_names = us_label( "Assigned Operator:" );
+  QLabel* lb_reviewer_names = us_label( "Assigned Reviewers:" );
+  
+  QLabel* lb_choose_oper      = us_label( "Choose Operator:" );
+  QLabel* lb_choose_rev1      = us_label( "Choose Reviewer 1:" );
+  QLabel* lb_choose_rev2      = us_label( "Choose Reviewer 2:" );
+
+  le_run_name       = us_lineedit( tr(""), 0, true );
+  le_optima_name    = us_lineedit( tr(""), 0, true );
+  le_operator_names = us_lineedit( tr(""), 0, true );
+  le_reviewer_names = us_lineedit( tr(""), 0, true );
+
+  cb_choose_operator   = new QComboBox( this );
+  cb_choose_rev1       = new QComboBox( this );
+  cb_choose_rev2       = new QComboBox( this ); 
 
   
+  row = 0;
+  revOperGMPRunGrid -> addWidget( bn_revOperGMP,          row++,    0, 1,  14 );
+  
+  revOperGMPRunGrid -> addWidget( pb_selRun_operRev_set,  row++,    0, 1,  6 );
+  revOperGMPRunGrid -> addWidget( lb_run_name,            row,      0, 1,  3 );
+  revOperGMPRunGrid -> addWidget( le_run_name,            row,      3, 1,  4 );
+
+  revOperGMPRunGrid -> addWidget( lb_choose_oper,         row,      8,  1,  3 );
+  revOperGMPRunGrid -> addWidget( cb_choose_operator,     row++,    11, 1,  3 );
+
+  revOperGMPRunGrid -> addWidget( lb_optima_name,         row,      0, 1,  3 );
+  revOperGMPRunGrid -> addWidget( le_optima_name,         row,      3, 1,  4 );
+
+  revOperGMPRunGrid -> addWidget( lb_choose_rev1,         row,      8,  1,  3 );
+  revOperGMPRunGrid -> addWidget( cb_choose_rev1,         row++,    11, 1,  3 );
+
+  revOperGMPRunGrid -> addWidget( lb_operator_names,      row,      0, 1,  3 );
+  revOperGMPRunGrid -> addWidget( le_operator_names,      row,      3, 1,  4 );
+
+  revOperGMPRunGrid -> addWidget( lb_choose_rev2,         row,      8,  1,  3 );
+  revOperGMPRunGrid -> addWidget( cb_choose_rev2,         row++,    11, 1,  3 );
+
+  revOperGMPRunGrid -> addWidget( lb_reviewer_names,      row,      0, 1,  3 );
+  revOperGMPRunGrid -> addWidget( le_reviewer_names,      row,      3, 1,  4 );
+
+  revOperGMPRunGrid -> addWidget( pb_set_operRev,         row++,    8, 1,  6 );
+    
   //for eSigning selected GMP Run
   QGridLayout* eSignGMPRunGrid     = new QGridLayout();
   eSignGMPRunGrid->setSpacing        ( 2 );
@@ -110,13 +156,49 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   QLabel* bn_eSignGMP     = us_banner( tr( "Manage e-Signatures for GMP Run:" ), 1 );
   bn_eSignGMP -> setFixedHeight  (1.5 * RowHeight);
 
+  pb_loadreport_db          =  us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
+  pb_view_report_db         =  us_pushbutton( tr( "Review Downloaded Report" ) );
+  pb_esign_report           =  us_pushbutton( tr( "e-Sign Report" ) );
+
+  pb_view_report_db  -> setEnabled( false );
+  pb_esign_report    -> setEnabled( false );
+
+  pb_esign_report -> setStyleSheet( "QPushButton::enabled {background: #556B2F; color: lightgray; } QPushButton::disabled {background: #90EE90; color: black}");
+
+  QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report for Run:" ) );
+  le_loaded_run_db          = us_lineedit( tr(""), 0, true );
+  
+  //Filename path
+  QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
+  te_fpath_info =  us_textedit();
+  te_fpath_info -> setFixedHeight  ( RowHeight * 3 );
+  te_fpath_info -> setText( tr( "" ) );
+  us_setReadOnly( te_fpath_info, true );
+  
   row = 0;
-  eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0, 1,  12 );
+  eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0, 1,  14 );
+
+  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,      0, 1,  6);
+  
+  eSignGMPRunGrid -> addWidget( lb_loaded_run_db,   row,      0, 1,  3);
+  eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      3, 1,  4);
+
+  eSignGMPRunGrid -> addWidget( pb_view_report_db , row++,    8,  1,  4 );
+
+  eSignGMPRunGrid -> addWidget( lb_fpath_info,      row,      0, 1,  3);
+  eSignGMPRunGrid -> addWidget( te_fpath_info,      row,      3, 1,  4);
+
+  eSignGMPRunGrid -> addWidget( pb_esign_report,    row++,    8,  1,  4 );
+  
 
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
   mainLayout -> addLayout( revOperGMPRunGrid );
   mainLayout -> addLayout( eSignGMPRunGrid );
+
+  mainLayout -> addStretch();
+
+  
 			 
   resize( 1000, 700 );
 }
