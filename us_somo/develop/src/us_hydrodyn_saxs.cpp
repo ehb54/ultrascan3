@@ -3069,9 +3069,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       int ow_wat_count           = 0;
       int ow_wat_count_remaining = 0;
       double ow_cutoff           = 0;
+      int ow_wats_kept           = 0;
 
-#warning REMOVE BEFORE DIST
-#warning REMOVE BEFORE DIST
+#warning REMOVE BEFORE DIST (WAT controls)
       {
          for ( unsigned int i = 0; i < atoms.size(); ++i ) {
             if ( atoms[i].atom_name == "OW" ) {
@@ -3080,23 +3080,19 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          }
 
          if ( ow_wat_count > 1 ) {
+            // by count
             {
-               double ow_cutoff2 = 0;
                bool ok;
-               ow_cutoff = QInputDialog::getDouble(this
-                                                  ,windowTitle() + " : WAT cutoff"
-                                                  ,tr("Cutoff WAT to non-WAT distance [A] (0 or CANCEL for no cutoff) : ")
-                                                  ,10
-                                                  ,0
-                                                  ,100
-                                                  ,3
-                                                  ,&ok
-                                                  ,Qt::WindowFlags(), 1);
-               if (ok) {
-                  ow_cutoff2 = ow_cutoff * ow_cutoff;
-               }
-
-               if ( ow_cutoff2 ) {
+               int ow_user_count =
+                  QInputDialog::getInt(this
+                                       ,windowTitle() + " : WAT cutoff"
+                                       ,tr("Closest number of WATs to keep (0 or CANCEL to keep all) : ")
+                                       ,ow_wat_count
+                                       ,1
+                                       ,ow_wat_count
+                                       ,1
+                                       ,&ok );
+               if (ok && ow_user_count < ow_wat_count) {
                   // remove atoms with cutoff > ow_cutoff2
                   map < int, double > min_dist2_to_prot;
                   
@@ -3105,8 +3101,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   qApp->processEvents();
 
                   progress_pr->setMaximum(atoms.size());
-                     
-
+                  
                   for ( unsigned int i = 0; i < atoms.size(); ++i ) {
                      progress_pr->setValue(i);
                      qApp->processEvents();
@@ -3131,10 +3126,34 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      }
                   }
                                  
+                  // order by distance
+                  map < double, set < int > > min_dist2_to_atoms;
+                  for ( auto it = min_dist2_to_prot.begin();
+                        it != min_dist2_to_prot.end();
+                        ++it ) {
+                     min_dist2_to_atoms[ it->second ].insert( it->first );
+                  }
+
+                  // keep ow_user_count
+                  set < int > min_dist2_to_prot_keep;
+                  int elements_so_far = 0;
+                  for ( auto it = min_dist2_to_atoms.begin();
+                        it != min_dist2_to_atoms.end();
+                        ++it ) {
+                     min_dist2_to_prot_keep.insert( it->second.begin(), it->second.end() );
+                     elements_so_far += (int)it->second.size();
+                     if ( elements_so_far >= ow_user_count ) {
+                        break;
+                     }
+                  }
+                  ow_wats_kept = elements_so_far;
+
+                  // recreate atoms
+                  
                   vector < saxs_atom > new_atoms;
                   for ( unsigned int i = 0; i < atoms.size(); ++i ) {
                      if ( !min_dist2_to_prot.count( i )
-                          || min_dist2_to_prot[ i ] <= ow_cutoff2 ) {
+                          || min_dist2_to_prot_keep.count( i ) ) {
                         new_atoms.push_back( atoms[i] );
                         if ( atoms[i].atom_name == "OW" ) {
                            ++ow_wat_count_remaining;
@@ -3144,6 +3163,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
                   editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
                   progress_pr->reset();
+                  
                   if ( new_atoms.size() != atoms.size() ) {
                      switch( QMessageBox::question(this
                                                    ,windowTitle() + " : WAT treatment" 
@@ -3186,7 +3206,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                                                                       ,errors
                                                                                       ,writtenname
                                                                                       ,QString( " WATs further than %1 [A] removed" ).arg( ow_cutoff )
-                                                                                      ,QString( "_co%1" ).arg( ow_cutoff ).replace(".","_")
+                                                                                      ,QString( "_wc%1" ).arg( ow_wats_kept )
                                                                                       ,model_filepathname
                                                                                       ) ) {
                                  editor_msg( "black", QString( us_tr( "File %1 created\n" ) ).arg( writtenname ) );
@@ -3205,7 +3225,132 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   }
                }
             }
+            {
+               double ow_cutoff2 = 0;
+               if ( !ow_wats_kept ) {
+                  bool ok;
+                  ow_cutoff = QInputDialog::getDouble(this
+                                                      ,windowTitle() + " : WAT cutoff"
+                                                      ,tr("Cutoff WAT to non-WAT distance [A] (0 or CANCEL for no cutoff) : ")
+                                                      ,10
+                                                      ,0
+                                                      ,100
+                                                      ,3
+                                                      ,&ok
+                                                      ,Qt::WindowFlags(), 1);
+                  if (ok) {
+                     ow_cutoff2 = ow_cutoff * ow_cutoff;
+                  }
 
+                  if ( ow_cutoff2 ) {
+                     // remove atoms with cutoff > ow_cutoff2
+                     map < int, double > min_dist2_to_prot;
+                  
+                     // step 1 find minimum distance
+                     editor_msg( "darkblue", "Finding distance of WATs to non-WATs\n" );
+                     qApp->processEvents();
+
+                     progress_pr->setMaximum(atoms.size());
+
+                     for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                        progress_pr->setValue(i);
+                        qApp->processEvents();
+                        if ( atoms[i].atom_name == "OW" ) {
+                           for ( unsigned int j = 0; j < atoms.size(); ++j ) {
+                              if ( i != j && atoms[j].atom_name != "OW" ) {
+                                 double rik2 = 
+                                    (atoms[i].pos[0] - atoms[j].pos[0]) *
+                                    (atoms[i].pos[0] - atoms[j].pos[0]) +
+                                    (atoms[i].pos[1] - atoms[j].pos[1]) *
+                                    (atoms[i].pos[1] - atoms[j].pos[1]) +
+                                    (atoms[i].pos[2] - atoms[j].pos[2]) *
+                                    (atoms[i].pos[2] - atoms[j].pos[2])
+                                    ;
+                                 if ( !min_dist2_to_prot.count( i )
+                                      || min_dist2_to_prot[ i ] > rik2
+                                      ) {
+                                    min_dist2_to_prot[ i ] = rik2;
+                                 }
+                              }
+                           }
+                        }
+                     }
+                                 
+                     vector < saxs_atom > new_atoms;
+                     for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                        if ( !min_dist2_to_prot.count( i )
+                             || min_dist2_to_prot[ i ] <= ow_cutoff2 ) {
+                           new_atoms.push_back( atoms[i] );
+                           if ( atoms[i].atom_name == "OW" ) {
+                              ++ow_wat_count_remaining;
+                           }
+                        }
+                     }
+
+                     editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
+                     progress_pr->reset();
+                     if ( new_atoms.size() != atoms.size() ) {
+                        switch( QMessageBox::question(this
+                                                      ,windowTitle() + " : WAT treatment" 
+                                                      ,QString( us_tr("Write the modified PDB?") )
+                                                      ) ) {
+                        case QMessageBox::Yes :
+                           {
+                              // build up coordinate map of removed WATs
+                              set < point > keep_WAT;
+                              for ( int i = 0; i < (int) new_atoms.size(); ++i ) {
+                                 if ( new_atoms[ i ].atom_name == "OW" ) {
+                                    point p;
+                                    p.axis[0] = new_atoms[ i ].pos[0];
+                                    p.axis[1] = new_atoms[ i ].pos[1];
+                                    p.axis[2] = new_atoms[ i ].pos[2];
+                                 
+                                    keep_WAT.insert( p );
+                                 }
+                              }
+                           
+                              PDB_model tmp_model = model_vector[current_model];
+                              for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j ) {
+                                 tmp_model.molecule[j].atom.clear();
+                                 for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+                                    PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                                    if ( this_atom->name != "OW" ) {
+                                       tmp_model.molecule[j].atom.push_back( *this_atom );
+                                    } else {
+                                       if ( keep_WAT.count( this_atom->coordinate ) ) {
+                                          tmp_model.molecule[j].atom.push_back( *this_atom );
+                                       }
+                                    }
+                                 }
+                              }
+                              {
+                                 QString errors;
+                                 QString writtenname;
+                                 if ( 
+                                     ((US_Hydrodyn *)us_hydrodyn)->write_pdb_from_model( tmp_model
+                                                                                         ,errors
+                                                                                         ,writtenname
+                                                                                         ,QString( " WATs further than %1 [A] removed" ).arg( ow_cutoff )
+                                                                                         ,QString( "_co%1" ).arg( ow_cutoff ).replace(".","_")
+                                                                                         ,model_filepathname
+                                                                                         ) ) {
+                                    editor_msg( "black", QString( us_tr( "File %1 created\n" ) ).arg( writtenname ) );
+                                 } else {
+                                    editor_msg( "red", QString( us_tr( "Error writing File %1. %2\n" ) ).arg( writtenname ).arg( errors ) );
+                                 }
+                              }
+                           }
+                           break;
+                        default:
+                           break;
+                        }
+                        atoms = new_atoms;
+                     } else {
+                        ow_cutoff = 0;
+                     }
+                  }
+               }
+            }
 
             switch( QMessageBox::question(this
                                           ,windowTitle() + " : WAT treatment" 
@@ -3601,6 +3746,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          if ( ow_wat_count ) {
             if ( ow_cutoff ) {
                append += QString( "_co%1" ).arg( ow_cutoff ).replace(".","_");
+            }
+            if ( ow_wats_kept ) {
+               append += QString( "_wc%1" ).arg( ow_wats_kept );
             }
             append +=
                QString("_hs%1").arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
