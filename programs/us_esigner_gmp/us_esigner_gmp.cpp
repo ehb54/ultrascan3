@@ -47,7 +47,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   te_inv_smry      = us_textedit();
   te_inv_smry      ->setTextColor( Qt::blue );
   te_inv_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
-                                    US_GuiSettings::fontSize() ) );
+                                    US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_inv_smry, true );
 
   lb_grev_search     = us_label( tr( "Global Reviewer Search:" ) );
@@ -59,7 +59,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   te_grev_smry      = us_textedit();
   te_grev_smry      ->setTextColor( Qt::blue );
   te_grev_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
-                                    US_GuiSettings::fontSize() ) );
+                                    US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_grev_smry, true );
 
   pb_set_global_rev    = us_pushbutton( tr( "Set Investigator as Global Reviewer" ) );
@@ -95,7 +95,13 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   connect( lw_inv_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
 	   SLOT  ( get_inv_data  ( QListWidgetItem* ) ) );
 
-  
+  connect( le_grev_search, SIGNAL( textChanged( const QString& ) ), 
+	   SLOT  ( limit_grev_names( const QString& ) ) );
+  connect( lw_grev_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
+	   SLOT  ( get_grev_data  ( QListWidgetItem* ) ) );
+
+  connect( pb_set_global_rev,   SIGNAL( clicked() ), SLOT ( set_greviewer() ) );
+  connect( pb_unset_global_rev, SIGNAL( clicked() ), SLOT ( unset_greviewer() ) );
  
   //for setting oper, revs. for selected GMP Run
   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
@@ -185,7 +191,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   row = 0;
   eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0, 1,  14 );
 
-  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,      0, 1,  6);
+  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,    0, 1,  6);
   
   eSignGMPRunGrid -> addWidget( lb_loaded_run_db,   row,      0, 1,  3);
   eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      3, 1,  4);
@@ -251,6 +257,8 @@ US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & protocol_detail
 //init investigators list
 void US_eSignaturesGMP::init_invs( void )
 {
+  investigators. clear();
+  
   US_Passwd   pw;
   QString     masterPW  = pw.getPasswd();
   US_DB2      db( masterPW );  // New constructor
@@ -268,7 +276,8 @@ void US_eSignaturesGMP::init_invs( void )
   lw_inv_list-> clear();
 
   QStringList query;
-  query << "get_people" << "%" + le_inv_search->text() + "%"; 
+  query << "get_people_inv" << "%" + le_inv_search->text() + "%";
+  qDebug() << "init_invs(), query --  " << query;
   db.query( query );
 
   US_InvestigatorData data;
@@ -280,11 +289,7 @@ void US_eSignaturesGMP::init_invs( void )
       data.invID     = db.value( 0 ).toInt();
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
-      
-      // Only add to investigator list if admin login or login-inv match
-      // if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
-      //    continue;
-      
+            
       if ( lev < 3  &&  inv != data.invID )
 	continue;
       
@@ -296,8 +301,10 @@ void US_eSignaturesGMP::init_invs( void )
     }
 }
 
+
 void US_eSignaturesGMP::limit_inv_names( const QString& s )
 {
+  
   lw_inv_list->clear();
   
   for ( int i = 0; i < investigators.size(); i++ )
@@ -312,6 +319,24 @@ void US_eSignaturesGMP::limit_inv_names( const QString& s )
 						 investigators[ i ].firstName ) );
    }
 }
+
+void US_eSignaturesGMP::limit_grev_names( const QString& s )
+{
+  lw_grev_list->clear();
+  
+  for ( int i = 0; i < g_reviewers.size(); i++ )
+   {
+     if ( g_reviewers[ i ].lastName.contains( 
+					       QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+	  g_reviewers[ i ].firstName.contains(
+						QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+       lw_grev_list->addItem( new QListWidgetItem(
+						 "InvID: (" + QString::number( g_reviewers[ i ].invID ) + "), " +
+						 g_reviewers[ i ].lastName + ", " + 
+						 g_reviewers[ i ].firstName ) );
+   }
+}
+
 
 void US_eSignaturesGMP::get_inv_data( QListWidgetItem* item )
 {
@@ -366,12 +391,13 @@ QString US_eSignaturesGMP::get_inv_or_grev_smry( US_InvestigatorData p_info, QSt
   QString smry;
   QStringList mlines;
 
-  mlines << QString( tr( "== Selected %1 ==" )). arg( p_type );
+  mlines << QString( tr( "== Selected %1 ==\n" )). arg( p_type );
     
   mlines << "Last Name:\n "       +  p_info.lastName; 
   mlines << "First Name:\n "      +  p_info.firstName;
   mlines << "User Level:\n "      +  QString::number( p_info.ulev ) ;
-  mlines << "GMP Reviewer:\n "    +  QString::number( p_info.gmpReviewer ) ;
+  QString grev_set = (p_info.gmpReviewer) ? "YES" : "NO" ;
+  mlines << "GMP Reviewer:\n "    +  grev_set;
   mlines << "Email:\n "           +  p_info.email       ; 
   mlines << "Organization:\n "    +  p_info.organization; 
 
@@ -393,5 +419,188 @@ QString US_eSignaturesGMP::get_inv_or_grev_smry( US_InvestigatorData p_info, QSt
 //init global reviewers list
 void US_eSignaturesGMP::init_grevs( void )
 {
+  g_reviewers. clear();
   
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  lw_grev_list -> clear();
+
+  QStringList query;
+  query << "get_people_grev" << "%" + le_grev_search->text() + "%";
+  qDebug() << "init_invs(), query --  " << query;
+  db.query( query );
+
+  US_InvestigatorData data;
+  int inv = US_Settings::us_inv_ID();
+  int lev = US_Settings::us_inv_level();
+
+  //QList< US_InvestigatorData > g_reviewers_t;
+  
+  while ( db.next() )
+    {
+      data.invID     = db.value( 0 ).toInt();
+      data.lastName  = db.value( 1 ).toString();
+      data.firstName = db.value( 2 ).toString();
+            
+      if ( lev < 3  &&  inv != data.invID )
+	continue;
+
+      //new approach
+      g_reviewers << data;
+      lw_grev_list-> addItem( new QListWidgetItem( 
+						  "InvID: (" + QString::number( data.invID ) + "), " + 
+						  data.lastName + ", " + data.firstName ) );
+    }
+}
+
+
+void US_eSignaturesGMP::get_grev_data( QListWidgetItem* item )
+{
+   QString entry = item->text();
+   
+   int     left  = entry.indexOf( '(' ) + 1;
+   int     right = entry.indexOf( ')' );
+   QString invID = entry.mid( left, right - left );
+
+   US_Passwd   pw;
+   QString     masterPW  = pw.getPasswd();
+   US_DB2      db( masterPW ); 
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" ) 
+             + db.lastError() );
+      return;
+   } 
+
+   QStringList query;
+   query << "get_person_info" << invID; 
+      
+   db.query( query );
+   db.next();
+
+   info_grev.invID        = invID.toInt();
+   info_grev.firstName    = db.value( 0 ).toString();
+   info_grev.lastName     = db.value( 1 ).toString();
+   info_grev.address      = db.value( 2 ).toString();
+   info_grev.city         = db.value( 3 ).toString();
+   info_grev.state        = db.value( 4 ).toString();
+   info_grev.zip          = db.value( 5 ).toString();
+   info_grev.phone        = db.value( 6 ).toString();
+   info_grev.organization = db.value( 7 ).toString();
+   info_grev.email        = db.value( 8 ).toString();
+   info_grev.invGuid      = db.value( 9 ).toString();
+   info_grev.ulev         = db.value( 10 ).toInt();
+   info_grev.gmpReviewer  = db.value( 11 ).toInt();
+
+   te_grev_smry->setText( get_inv_or_grev_smry( info_grev, "Reviewer") );
+
+   pb_unset_global_rev -> setEnabled( true );
+}
+
+void US_eSignaturesGMP::set_greviewer()
+{
+
+  QString entry = lw_inv_list->currentItem()->text();
+  qDebug() << "Set gRev: -- " << entry;
+
+  int     left  = entry.indexOf( '(' ) + 1;
+  int     right = entry.indexOf( ')' );
+  QString invID = entry.mid( left, right - left );
+
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW ); 
+  
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::information( this,
+				 tr( "DB Connection Problem" ),
+				 tr( "There was an error connecting to the database:\n" ) 
+				 + db.lastError() );
+       return;
+     }
+   
+   QStringList query;
+   query << "set_person_grev_status" << invID;
+
+   db.query( query );
+   db.next();
+
+   //update both inv && grev lw_lists
+   lw_inv_list -> clear();
+   lw_grev_list-> clear();
+
+   le_inv_search   ->setText("");
+   le_grev_search  ->setText("");
+   
+   te_inv_smry -> clear();
+   te_grev_smry-> clear();
+   
+   init_invs();
+   init_grevs();
+}
+
+void US_eSignaturesGMP::unset_greviewer()
+{
+  QString entry = lw_grev_list->currentItem()->text();
+  qDebug() << "[UN]Set gRev: -- " << entry;
+  
+  int     left  = entry.indexOf( '(' ) + 1;
+  int     right = entry.indexOf( ')' );
+  QString invID = entry.mid( left, right - left );
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW ); 
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+   QStringList query;
+   query << "unset_person_grev_status" << invID;
+
+   db.query( query );
+   db.next();
+  
+   //update both inv && grev lw_lists
+   lw_inv_list -> clear();
+   lw_grev_list-> clear();
+
+   le_inv_search   ->setText("");
+   le_grev_search  ->setText("");
+   
+   te_inv_smry -> clear();
+   te_grev_smry-> clear();
+    
+   init_invs();
+   init_grevs();
+
+   ///Debug
+   for(int i=0; i<investigators.size(); ++i )
+     qDebug() << "inv after unsetting -- " << investigators[i].lastName;
+
+   // limit_inv_names ( le_inv_search  -> text() );
+   // limit_grev_names( le_grev_search -> text() );
+   
 }

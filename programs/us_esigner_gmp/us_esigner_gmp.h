@@ -44,7 +44,9 @@ class US_eSignaturesGMP : public US_Widgets
      private:
         QMap< QString, QString > protocol_details;
         QList< US_InvestigatorData > investigators;
+        QList< US_InvestigatorData > g_reviewers;
         US_InvestigatorData          info;
+        US_InvestigatorData          info_grev;
 
   //set global Revs. from the list of investigators
         QListWidget*  lw_inv_list;
@@ -88,12 +90,17 @@ class US_eSignaturesGMP : public US_Widgets
        void init_invs     ( void );
        void init_grevs     ( void );
        void limit_inv_names( const QString& );
+       void limit_grev_names( const QString& );
        void get_inv_data( QListWidgetItem* );
+       void get_grev_data( QListWidgetItem* );
        QString get_inv_or_grev_smry( US_InvestigatorData, QString );
+       void set_greviewer( void );
+       void unset_greviewer( void );
 
      signals:  
        void accept_reviewers( QMap< QString, QString > & );
        void cancel_reviewers( QMap< QString, QString > & );
+  
   
 };
 #endif
