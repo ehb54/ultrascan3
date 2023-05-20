@@ -7,10 +7,13 @@
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_protocol_util.h"
+#include "us_run_protocol.h"
 #include "us_math2.h"
 #include "us_constants.h"
 #include "us_solution_vals.h"
 #include "us_tar.h"
+
+//#include "../us_reporter_gmp/us_reporter_gmp.h"
 
 #define MIN_NTC   25
 
@@ -113,7 +116,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   pb_selRun_operRev_set = us_pushbutton( tr( "Select GMP Run" ) );
   pb_set_operRev        = us_pushbutton( tr( "Change/Set Operators and Reviewers" ) );
-
+  pb_set_operRev -> setEnabled( false );
+  
   QLabel* lb_run_name       = us_label( "Run Name:" );
   QLabel* lb_optima_name    = us_label( "Optima:" );
   QLabel* lb_operator_names = us_label( "Assigned Operator:" );
@@ -125,8 +129,25 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   le_run_name       = us_lineedit( tr(""), 0, true );
   le_optima_name    = us_lineedit( tr(""), 0, true );
-  le_operator_names = us_lineedit( tr(""), 0, true );
-  le_reviewer_names = us_lineedit( tr(""), 0, true );
+
+
+  te_operator_names    = us_textedit();
+  //te_operator_names    ->setTextColor( Qt::blue );
+  te_operator_names    -> setFixedHeight  ( RowHeight * 3 );
+  te_operator_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_operator_names, true );
+
+  te_reviewer_names    = us_textedit();
+  //te_reviewer_names    ->setTextColor( Qt::blue );
+  te_reviewer_names    -> setFixedHeight  ( RowHeight * 3 );
+  te_reviewer_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_reviewer_names, true );
+  
+  
+  // le_operator_names = us_lineedit( tr(""), 0, true );
+  // le_reviewer_names = us_lineedit( tr(""), 0, true );
 
   cb_choose_operator   = new QComboBox( this );
   cb_choose_rev1       = new QComboBox( this );
@@ -150,15 +171,18 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   revOperGMPRunGrid -> addWidget( cb_choose_rev1,         row++,    11, 1,  3 );
 
   revOperGMPRunGrid -> addWidget( lb_operator_names,      row,      0, 1,  3 );
-  revOperGMPRunGrid -> addWidget( le_operator_names,      row,      3, 1,  4 );
+  revOperGMPRunGrid -> addWidget( te_operator_names,      row,      3, 1,  4 );
 
   revOperGMPRunGrid -> addWidget( lb_choose_rev2,         row,      8,  1,  3 );
   revOperGMPRunGrid -> addWidget( cb_choose_rev2,         row++,    11, 1,  3 );
 
   revOperGMPRunGrid -> addWidget( lb_reviewer_names,      row,      0, 1,  3 );
-  revOperGMPRunGrid -> addWidget( le_reviewer_names,      row,      3, 1,  4 );
+  revOperGMPRunGrid -> addWidget( te_reviewer_names,      row,      3, 1,  4 );
 
   revOperGMPRunGrid -> addWidget( pb_set_operRev,         row++,    8, 1,  6 );
+
+
+  connect( pb_selRun_operRev_set,   SIGNAL( clicked() ), SLOT ( selectGMPRun() ) );
     
   //for eSigning selected GMP Run
   QGridLayout* eSignGMPRunGrid     = new QGridLayout();
@@ -213,7 +237,6 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   //initialize investigators, global reviewers
   init_invs();
-  
   init_grevs();
 			 
   resize( 1200, 700 );
@@ -420,6 +443,9 @@ QString US_eSignaturesGMP::get_inv_or_grev_smry( US_InvestigatorData p_info, QSt
 void US_eSignaturesGMP::init_grevs( void )
 {
   g_reviewers. clear();
+  lw_grev_list -> clear();
+  cb_choose_rev1 -> clear();
+  cb_choose_rev2 -> clear();
   
   US_Passwd   pw;
   QString     masterPW  = pw.getPasswd();
@@ -435,8 +461,6 @@ void US_eSignaturesGMP::init_grevs( void )
       return;
     }
   
-  lw_grev_list -> clear();
-
   QStringList query;
   query << "get_people_grev" << "%" + le_grev_search->text() + "%";
   qDebug() << "init_invs(), query --  " << query;
@@ -457,11 +481,16 @@ void US_eSignaturesGMP::init_grevs( void )
       if ( lev < 3  &&  inv != data.invID )
 	continue;
 
-      //new approach
       g_reviewers << data;
+      //populate lists
       lw_grev_list-> addItem( new QListWidgetItem( 
 						  "InvID: (" + QString::number( data.invID ) + "), " + 
 						  data.lastName + ", " + data.firstName ) );
+      cb_choose_rev1->addItem( QString::number( data.invID ) + ", " + 
+			       data.lastName + ", " + data.firstName );
+      cb_choose_rev2->addItem( QString::number( data.invID ) + ", " + 
+			       data.lastName + ", " + data.firstName );
+      
     }
 }
 
@@ -603,4 +632,401 @@ void US_eSignaturesGMP::unset_greviewer()
    // limit_inv_names ( le_inv_search  -> text() );
    // limit_grev_names( le_grev_search -> text() );
    
+}
+
+
+void US_eSignaturesGMP::selectGMPRun( void )
+{
+  list_all_autoflow_records( autoflowdata  );
+
+  QString pdtitle( tr( "Select GMP Run" ) );
+  QStringList hdrs;
+  int         prx;
+  hdrs << "ID"
+       << "Run Name"
+       << "Optima Name"
+       << "Created"
+       << "Run Status"
+       << "Stage"
+       << "GMP";
+  
+  QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  QString autoflow_id_selected("");
+  if ( pdiag_autoflow->exec() == QDialog::Accepted )
+    {
+      autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+
+      //reset Gui && internal structures
+      reset_set_revOper_panel();
+    }
+  else
+    return;
+
+  // Get detailed info on the autoflow record
+  QMap < QString, QString > protocol_details;
+  
+  int autoflowID = autoflow_id_selected.toInt();
+  protocol_details = read_autoflow_record( autoflowID );
+
+  set_revOper_panel_gui( protocol_details );
+
+  //Enable button to change/set assigned oper(s) / rev(s) 
+  pb_set_operRev -> setEnabled( true );
+}
+
+
+void US_eSignaturesGMP::reset_set_revOper_panel( void )
+{
+  le_run_name        -> clear();
+  le_optima_name     -> clear();
+  te_operator_names  -> clear();
+  te_reviewer_names  -> clear();
+  cb_choose_operator -> clear();
+}
+
+void US_eSignaturesGMP::set_revOper_panel_gui( QMap< QString, QString >& protocol_details )
+{
+  QString full_runname = protocol_details[ "filename" ];
+  QString FullRunName_auto = protocol_details[ "experimentName" ] + "-run" + protocol_details[ "runID" ];
+  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+    FullRunName_auto += " (combined RI+IP)";
+    
+  QString OptimaName = protocol_details["OptimaName"]; 
+  le_run_name        -> setText( FullRunName_auto );
+  le_optima_name     -> setText( OptimaName );
+
+  //Set Operators for Optima:
+  QStringList sl_operators = read_operators( protocol_details[ "OptimaID" ] );
+  cb_choose_operator -> addItems( sl_operators );
+
+  //Read autoflowGMPReportEsign record by autoflowID:
+  QMap < QString, QString > eSign_details = read_autoflowGMPReportEsign_record( protocol_details[ "autoflowID" ] );
+  
+  //&& Set defined Operator/Reviewers (if any)
+  if ( !eSign_details. contains("operatorListJson") )
+    te_operator_names  -> setText( "NOT SET" );
+  else
+    {
+      QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
+      te_operator_names -> setText( get_assigned_oper_revs( jsonDocOperList ) );
+
+      
+    }
+  
+  if ( !eSign_details. contains("reviewersListJson") )
+    te_reviewer_names  -> setText( "NOT SET" );
+  else
+    {
+      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
+      te_reviewer_names  -> setText( get_assigned_oper_revs( jsonDocRevList ) );
+	
+    }
+}
+
+//form a string of opers/revs out of jsonDoc
+QString US_eSignaturesGMP::get_assigned_oper_revs( QJsonDocument jsonDoc )
+{
+  QString smry;
+  QStringList assigned_list;
+  
+  if ( !jsonDoc. isArray() )
+    {
+      qDebug() << "jsonDoc not a JSON, and/or not an JSON Array!";
+      return smry;
+    }
+  
+  QJsonArray jsonDoc_array  = jsonDoc.array();
+  for (int i = 0; i < jsonDoc_array.size(); ++i )
+    assigned_list << jsonDoc_array[i].toString();
+  
+  for ( int ii = 0; ii < assigned_list.count(); ii++ )
+    smry += assigned_list[ ii ] + "\n";
+
+  return smry;
+}
+
+// Query autoflow (history) table for records
+int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflowdata )
+{
+  int nrecs        = 0;   
+  autoflowdata.clear();
+
+  QStringList qry;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+      return nrecs;
+    }
+  
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  db->query( qry );
+  
+  int user_id = 0;
+  
+  if ( db->next() )
+    user_id = db->value( 0 ).toInt();
+
+
+  //deal with autoflow descriptions
+  qry. clear();
+  qry << "get_autoflow_desc";
+  db->query( qry );
+
+  while ( db->next() )
+    {
+      QStringList autoflowentry;
+      QString id                 = db->value( 0 ).toString();
+      QString runname            = db->value( 5 ).toString();
+      QString status             = db->value( 8 ).toString();
+      QString optimaname         = db->value( 10 ).toString();
+      
+      QDateTime time_started     = db->value( 11 ).toDateTime().toUTC();
+      QString invID              = db->value( 12 ).toString();
+
+      QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
+      QString gmpRun             = db->value( 14 ).toString();
+      QString full_runname       = db->value( 15 ).toString();
+
+      QString operatorID         = db->value( 16 ).toString();
+      QString devRecord          = db->value( 18 ).toString();
+
+      QDateTime local(QDateTime::currentDateTime());
+
+      if ( devRecord == "Processed" )
+	continue;
+      
+      //process runname: if combined, correct for nicer appearance
+      if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+	{
+	  QString full_runname_edited  = full_runname.split(",")[0];
+	  full_runname_edited.chop(3);
+
+	  full_runname = full_runname_edited + " (combined RI+IP) ";
+	  runname += " (combined RI+IP) ";
+	}
+      
+      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+
+      if ( time_started.toString().isEmpty() )
+	autoflowentry << QString( tr( "NOT STARTED" ) );
+      else
+	{
+	  if ( status == "LIVE_UPDATE" )
+	    autoflowentry << QString( tr( "RUNNING" ) );
+	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" )
+	    autoflowentry << QString( tr( "COMPLETED" ) );
+	    //autoflowentry << time_started.toString();
+	}
+
+      if ( status == "EDITING" )
+	status = "LIMS_IMPORT";
+      
+      autoflowentry << status << gmpRun;
+
+      //Check user level && GUID; if <3, check if the user is operator || investigator
+      if ( US_Settings::us_inv_level() < 3 )
+	{
+	  qDebug() << "User level low: " << US_Settings::us_inv_level();
+	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+
+	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	  if ( user_id && user_id == invID.toInt() )
+	    {//Do we allow operator as defined in autoflow record to also see reports?? 
+	    
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	}
+      else
+	{
+	  autoflowdata  << autoflowentry;
+	  nrecs++;
+	}
+      
+    }
+
+  return nrecs;
+}
+
+
+// Query autoflow record
+QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> protocol_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return protocol_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_record"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   protocol_details[ "protocolName" ]   = db->value( 0 ).toString();
+	   protocol_details[ "CellChNumber" ]   = db->value( 1 ).toString();
+	   protocol_details[ "TripleNumber" ]   = db->value( 2 ).toString();
+	   protocol_details[ "duration" ]       = db->value( 3 ).toString();
+	   protocol_details[ "experimentName" ] = db->value( 4 ).toString();
+	   protocol_details[ "experimentId" ]   = db->value( 5 ).toString();
+	   protocol_details[ "runID" ]          = db->value( 6 ).toString();
+	   protocol_details[ "status" ]         = db->value( 7 ).toString();
+           protocol_details[ "dataPath" ]       = db->value( 8 ).toString();   
+	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
+	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
+	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
+
+	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
+	   protocol_details[ "label" ]          = db->value( 15 ).toString();
+	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
+
+	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
+	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
+	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
+
+	   protocol_details[ "statusID" ]       = db->value( 21 ).toString();
+	   	   
+	 }
+     }
+
+   protocol_details[ "autoflowID" ]  = QString::number( autoflowID );
+   
+   qry. clear();
+   QString xmlstr( "" );
+   US_ProtocolUtil::read_record_auto(  protocol_details[ "protocolName" ],
+				       protocol_details[ "invID_passed" ].toInt(),
+				       &xmlstr, NULL, db );
+   QXmlStreamReader xmli( xmlstr );
+   US_RunProtocol currProto;
+   currProto. fromXml( xmli );
+
+   qDebug() << "Instrument ID from protocol -- " << currProto.rpRotor. instID;
+   protocol_details[ "OptimaID" ] = QString::number( currProto.rpRotor. instID );
+   
+   return protocol_details;
+}
+
+
+
+// get operators from instrumentID
+QStringList US_eSignaturesGMP::read_operators( QString optima_id )
+{
+  QStringList instr_opers;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+      return instr_opers;
+    }
+
+  qDebug() << "OptimaID -- " << optima_id;
+  
+  //Get operators for this instrID:
+  QStringList qry;
+  qry << "get_operator_names" << optima_id;
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )
+    {
+      while ( db->next() )
+	{
+	  int ID    = db->value( 0 ).toString().toInt();
+	  //QString GUID  = db->value( 1 ).toString();
+	  QString lname = db->value( 2 ).toString();
+	  QString fname = db->value( 3 ).toString();
+	  
+	  instr_opers << ID + ": " + lname + ", " + fname;
+	}
+    }
+
+  return instr_opers;
+}
+
+
+//read eSign GMP record for assigned oper(s) && rev(s) && status
+QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID)
+{
+  QMap< QString, QString> eSign_details;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+      return eSign_details;
+    }
+
+  QStringList qry;
+  qry << "get_gmp_review_info_by_autoflowID" << aID;
+  qDebug() << "read eSing rec, qry -- " << qry;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )      // e-Sign record exists
+    {
+      while ( db->next() )
+	{
+	  eSign_details[ "ID" ]                   = db->value( 0 ).toString(); 
+	  eSign_details[ "autoflowID" ]           = db->value( 1 ).toString();
+	  eSign_details[ "autoflowName" ]         = db->value( 2 ).toString();
+	  eSign_details[ "operatorListJson" ]     = db->value( 3 ).toString();
+	  eSign_details[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	  eSign_details[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	  eSign_details[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	  eSign_details[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	}
+    }
+  else
+    {
+      //No record, so no oper/revs assigned!
+      qDebug() << "No e-Sign GMP record exists!!";
+
+      eSign_details. clear();
+
+      //TEST ---------------------------
+      eSign_details[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
+      eSign_details[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
+      //END TEST ------------------------
+    }
+
+  return eSign_details;
 }

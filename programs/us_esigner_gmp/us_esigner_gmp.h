@@ -66,14 +66,18 @@ class US_eSignaturesGMP : public US_Widgets
         QPushButton*  pb_selRun_operRev_set;
         QPushButton*  pb_set_operRev;			     
 				    
-	QLineEdit*   le_run_name;
-        QLineEdit*   le_optima_name;
-        QLineEdit*   le_operator_names;
-        QLineEdit*   le_reviewer_names;
+	QLineEdit*    le_run_name;
+        QLineEdit*    le_optima_name;
+  
+        QTextEdit*    te_operator_names;
+        QTextEdit*    te_reviewer_names;
 
         QComboBox*   cb_choose_operator;
 	QComboBox*   cb_choose_rev1;
 	QComboBox*   cb_choose_rev2;
+
+        QList< QStringList >  autoflowdata;
+        US_SelectItem* pdiag_autoflow;
 
   //Download GMP Report form DB && Review, e-Sign, && upload back
        QPushButton* pb_loadreport_db;			   
@@ -96,7 +100,15 @@ class US_eSignaturesGMP : public US_Widgets
        QString get_inv_or_grev_smry( US_InvestigatorData, QString );
        void set_greviewer( void );
        void unset_greviewer( void );
-
+       void selectGMPRun( void );
+       void reset_set_revOper_panel( void );
+       void set_revOper_panel_gui( QMap< QString, QString >& );
+       int list_all_autoflow_records( QList< QStringList >&  );
+       QMap < QString, QString > read_autoflow_record( int );
+       QStringList read_operators( QString );
+       QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
+       QString get_assigned_oper_revs( QJsonDocument );
+  
      signals:  
        void accept_reviewers( QMap< QString, QString > & );
        void cancel_reviewers( QMap< QString, QString > & );

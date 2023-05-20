@@ -1458,6 +1458,20 @@ void US_ReporterGMP::load_gmp_run ( void )
     }
 }
 
+
+// //public functions:
+// int US_ReporterGMP::list_all_autoflow_records_pub( QList< QStringList >& autoflowdata )
+// {
+//   return list_all_autoflow_records( autoflowdata );
+// }
+
+// QMap < QString, QString > US_ReporterGMP::read_autoflow_record_pub( int aID )
+// {
+//   return read_autoflow_record( aID );
+// }
+// // END of public functions ///////////////////////////////////////
+
+
 // Query autoflow (history) table for records
 int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdata )
 {

@@ -2435,10 +2435,9 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
   QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewers_list.toUtf8() );
   QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operator_list .toUtf8() );
   
-  if ( !jsonDocRevList.isObject()  || !jsonDocRevList. isArray() ||
-       !jsonDocOperList.isObject() || !jsonDocOperList. isArray()  )
+  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray()  )
     {
-      qDebug() << "jsonDocRevList OR jsonDocOperList not a JSON, and not an JSON Array!";
+      qDebug() << "jsonDocRevList OR jsonDocOperList not a JSON Array!";
       return yesRev;
     }
   
