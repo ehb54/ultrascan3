@@ -42,6 +42,7 @@ class US_eSignaturesGMP : public US_Widgets
   
 
      private:
+        QMap< QString, QString > gmp_run_details;
         QMap< QString, QString > protocol_details;
         QList< US_InvestigatorData > investigators;
         QList< US_InvestigatorData > g_reviewers;
@@ -64,17 +65,28 @@ class US_eSignaturesGMP : public US_Widgets
 
   //Set Oper/Revs for selected GMP Run from eligible operators & global reviewers
         QPushButton*  pb_selRun_operRev_set;
-        QPushButton*  pb_set_operRev;			     
-				    
+        QPushButton*  pb_set_operRev;
+  
+	QPushButton*  pb_add_oper;
+        QPushButton*  pb_remove_oper;
+	QPushButton*  pb_add_rev;
+        QPushButton*  pb_remove_rev;
+  
+  
 	QLineEdit*    le_run_name;
         QLineEdit*    le_optima_name;
   
         QTextEdit*    te_operator_names;
         QTextEdit*    te_reviewer_names;
+        QTextEdit*    te_opers_to_assign;
+        QTextEdit*    te_revs_to_assign;
 
-        QComboBox*   cb_choose_operator;
-	QComboBox*   cb_choose_rev1;
-	QComboBox*   cb_choose_rev2;
+        QComboBox*    cb_choose_operator;
+        QComboBox*    cb_choose_rev;
+	// QComboBox*   cb_choose_rev1;
+	// QComboBox*   cb_choose_rev2;
+
+  
 
         QList< QStringList >  autoflowdata;
         US_SelectItem* pdiag_autoflow;
@@ -102,12 +114,17 @@ class US_eSignaturesGMP : public US_Widgets
        void unset_greviewer( void );
        void selectGMPRun( void );
        void reset_set_revOper_panel( void );
-       void set_revOper_panel_gui( QMap< QString, QString >& );
+       void set_revOper_panel_gui( void );
        int list_all_autoflow_records( QList< QStringList >&  );
        QMap < QString, QString > read_autoflow_record( int );
        QStringList read_operators( QString );
        QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
        QString get_assigned_oper_revs( QJsonDocument );
+       void assignOperRevs( void );
+       void addOpertoList( void );
+       void removeOperfromList( void );
+       void addRevtoList( void );
+       void removeRevfromList( void ); 
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );
