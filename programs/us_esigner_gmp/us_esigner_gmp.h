@@ -71,8 +71,7 @@ class US_eSignaturesGMP : public US_Widgets
         QPushButton*  pb_remove_oper;
 	QPushButton*  pb_add_rev;
         QPushButton*  pb_remove_rev;
-  
-  
+    
 	QLineEdit*    le_run_name;
         QLineEdit*    le_optima_name;
   
@@ -90,6 +89,8 @@ class US_eSignaturesGMP : public US_Widgets
 
         QList< QStringList >  autoflowdata;
         US_SelectItem* pdiag_autoflow;
+
+        bool      isEsignRecord;
 
   //Download GMP Report form DB && Review, e-Sign, && upload back
        QPushButton* pb_loadreport_db;			   

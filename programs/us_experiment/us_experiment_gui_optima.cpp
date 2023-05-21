@@ -7636,6 +7636,9 @@ void US_ExperGuiUpload::submitExperiment()
      {
        add_autoflow_record( protocol_details );
 
+       /*** 
+	    Maybe add audit trail who submitted - the owner himself OR an admin on his behalf?
+	***/
 
        /****
        //Do we ask if UL>=3 (admin) wants to set operator/reviewers???

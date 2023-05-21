@@ -712,6 +712,7 @@ void US_eSignaturesGMP::reset_set_revOper_panel( void )
 
   //main QMap for the loaded GMP run
   gmp_run_details.   clear();
+  isEsignRecord    = false;
 }
 
 void US_eSignaturesGMP::set_revOper_panel_gui( void )
@@ -1040,6 +1041,8 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
 	  eSign_details[ "eSignStatusJson" ]      = db->value( 5 ).toString();
 	  eSign_details[ "eSignStatusAll" ]       = db->value( 6 ).toString();
 	  eSign_details[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+
+	  isEsignRecord = true;
 	}
     }
   else
@@ -1047,12 +1050,13 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
       //No record, so no oper/revs assigned!
       qDebug() << "No e-Sign GMP record exists!!";
 
+      isEsignRecord = false;
       eSign_details. clear();
 
-      //TEST ---------------------------
-      eSign_details[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
-      eSign_details[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
-      //END TEST ------------------------
+      // //TEST ---------------------------
+      // eSign_details[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
+      // eSign_details[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
+      // //END TEST ------------------------
     }
 
   return eSign_details;
@@ -1132,6 +1136,13 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
   //Now make Db record: aID =  gmp_run_details[ "autoflowID" ];
   /** 
+      0. FIRST, check if e-Signature process already BEGAN !!!!         <-- 1st thing to check
+        -- if YES, STOP!!!!
+	-- if NOT, e.g. 
+	            ** if (!isEsignRecord)
+		    ** if (isEsignRecord) BUT eSignStatusJson indicates it began
+		    ** above && || autoflowStatus indicates 7. e-Signature stage in the signing mode 
+
       1. check if eSign record in Db exists;
       2. if YES, update as admin 
         -- update_gmp_review_record_by_admin << p_eSignID       INT,
@@ -1150,5 +1161,59 @@ void US_eSignaturesGMP::assignOperRevs( void )
      4. Update autolfow run's gmpReviewID with p_eSignID [if 3. "NO"]
       
    **/
+
+  /***********************************************************************
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+      return;
+    }
+
+  QStringList qry;
+  
+  if ( !isEsignRecord )
+    {
+      int eSignID_returned = 0;
+      
+      qry. clear();
+      qry << "new_gmp_review_record"
+	  << gmp_run_details[ "autoflowID" ]
+	  << gmp_run_details[ "protocolName" ]
+	  << operListJsonArray
+	  << revListJsonArray
+	  << eSignStatusJson        //<-- develop
+	  << logJson;               //<-- develop
+
+      db->statusQuery( qry );
+      eSignID_returned = db->lastInsertID();
+
+      if ( eSignID_returned == 0 )
+	{
+	  QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	  return;
+	}
+
+      //Update primary autolfow record with the new generated eSignID:
+      qry. clear();
+      qry << "update_autoflow_with_gmpReviewID"
+	  <<  gmp_run_details[ "autoflowID" ]
+	  <<  eSignID_returned;
+
+      db->query( qry );
+      
+    }
+//exists eSign record: so update as ADMIN
+   else
+    {
+
+    }
+ 
+  **************************************************/
 
 }
