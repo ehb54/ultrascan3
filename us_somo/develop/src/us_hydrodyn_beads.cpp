@@ -1601,7 +1601,28 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       editor_msg( "dark red", us_tr( QString( "WARNING: beads are inflated by a factor of %1" ).arg( vdw_inflate_mult ) ) );
    }
 
+   // redo summary info
+   class summary_info {
+   public: 
+      int     count;
+      double  theo_waters;
+      int     count_exposed;
+      double  theo_waters_exposed;
+      summary_info() {
+         count               = 0;
+         count_exposed       = 0;
+         theo_waters         = 0;
+         theo_waters_exposed = 0;
+      };
+   };
+
+   map < QString, summary_info > summary_infos;
+   summary_info next_summary_info;
+   bool         summary_info_exposed_counted = false;
+
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+      QString last_resSeq;
+
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
          PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
@@ -1612,6 +1633,12 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          if ( !this_atom->p_atom) {
             editor_msg( "red", QString( us_tr( "Internal error: p_atom not set!, contact the developers" ) ) );
             return -1;
+         }
+
+         if ( last_resSeq != this_atom->resSeq ) {
+            ++summary_infos[ this_atom->resName ].count;
+            last_resSeq = this_atom->resSeq;
+            summary_info_exposed_counted = false;
          }
 
          // QTextStream( stdout )
@@ -1670,7 +1697,15 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             this_vdwf.r                = this_atom->p_atom->hybrid.radius;
             this_vdwf.w                = this_atom->p_atom->hydration;
             this_vdwf.e                = this_atom->p_atom->hybrid.num_elect;
-            
+            summary_infos[ this_atom->resName ].theo_waters += this_vdwf.w;
+            if ( this_atom->asa >= asa.threshold && this_vdwf.w ) {
+               summary_infos[ this_atom->resName ].theo_waters_exposed += this_vdwf.w;
+               if ( !summary_info_exposed_counted ) {
+                  ++summary_infos[ this_atom->resName ].count_exposed;
+                  summary_info_exposed_counted = true;
+               }
+            }
+
             if ( this_atom->resName == "WAT" ) {
                this_vdwf.mw = 0.0;
             }
@@ -1755,10 +1790,44 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       }
    }      
 
+   {
+      QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
+      editor_msg( "black", courier, "Residue\t count\tpercent\t Theo. wat\tExposed\tExp. theo. waters\n" );
+      summary_info summary_totals;
+      for ( auto it = summary_infos.begin();
+            it != summary_infos.end();
+            ++it ) {
+         summary_totals.count               += it->second.count;
+         summary_totals.theo_waters         += it->second.theo_waters;
+         summary_totals.count_exposed       += it->second.count_exposed;
+         summary_totals.theo_waters_exposed += it->second.theo_waters_exposed;
+      }
+      for ( auto it = summary_infos.begin();
+            it != summary_infos.end();
+            ++it ) {
+         editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\t%5\t%6\n" )
+                     .arg( it->first )
+                     .arg( it->second.count )
+                     .arg( floor( 100 * 100.0 * (double) it->second.count / (double) summary_totals.count ) / 100, 0, 'g', 3 )
+                     .arg( it->second.theo_waters, 0, 'f', 0 )
+                     .arg( it->second.count_exposed )
+                     .arg( it->second.theo_waters_exposed, 0, 'f', 0 )
+                     );
+      }
+      
+      editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\t%5\t%6\n" )
+                  .arg( "Total" )
+                  .arg( summary_totals.count )
+                  .arg( floor( 100 * 100.0 * (double) summary_totals.count / (double) summary_totals.count ) / 100, 0, 'g', 3 )
+                  .arg( summary_totals.theo_waters, 0, 'f', 0 )
+                  .arg( summary_totals.count_exposed )
+                  .arg( summary_totals.theo_waters_exposed, 0, 'f', 0 )
+                  );
+   }
+
    if ( WAT_Tf_used ) {
       editor_msg( "dark blue", QString( us_tr( "Notice: %1 WATs using PDB's Tf radius recognized\n" ) ).arg( WAT_Tf_used ) );
    }
-
 
    // if we wanted to compute asa at bead model generation
    // if ( !hydro.bead_inclusion ) {

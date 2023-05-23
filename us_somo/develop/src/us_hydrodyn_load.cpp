@@ -1359,7 +1359,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                                  .arg( it->first )
                                  .arg( it->second )
                                  .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
-                                 .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                                 .arg( (double)(resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0), 0, 'f', 0 )
                                  );
                   }
                   if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
@@ -1504,7 +1504,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
       // the residue list is wrong if there are unknown residues
 
       map < QString, int > resname_counts_nonwat;
-      map < QString, int > resname_theo_wat;
+      map < QString, double > resname_theo_wat;
       map < QString, int > resname_counts_wat;
       int resname_counts_nonwat_total = 0;
       int resname_counts_wat_total    = 0;
@@ -1560,6 +1560,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             }
          }
       }
+      qDebug() << "tot_theo_wat " << tot_theo_wat;
+      
       // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
       // {
       //   str += temp_model.residue[m].name + " ";
@@ -1583,7 +1585,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                            .arg( it->first )
                            .arg( it->second )
                            .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
-                           .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                           .arg( (double)(resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0), 0, 'f', 0 )
                            );
             }
             if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
