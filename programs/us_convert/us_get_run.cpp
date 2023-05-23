@@ -256,6 +256,27 @@ qDebug() << "GetRun:  accept : runID" << runID;
    accept();
 }
 
+//Check if the run [filename] a part of the GMP framework
+bool US_GetRun::check_filename_for_autoflow( QString rFilename )
+{
+  bool isRequired = false;
+  int  autoflowNumber = 0;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  QStringList q;
+  q  << QString( "check_filename_for_autoflow" ) 
+     << rFilename;
+
+  autoflowNumber  = db -> functionQuery( q );
+
+  autoflowNumber ? isRequired = true : isRequired = false;
+  
+  return isRequired;
+}
+
+
 // Function to delete the highlighted run when delete button is pressed
 void US_GetRun::deleteRun( void )
 {
@@ -271,6 +292,28 @@ void US_GetRun::deleteRun( void )
       return;
    }
 
+   //first, check if the run belongs / was generated to/by GMP framework:
+   int ndx_1 = tw ->currentRow();
+   QString rFilename = tw ->item( ndx_1, 0 )->text().simplified();
+   QString rExpID = tw ->item( ndx_1, 2 )->text().simplified();
+   qDebug() << "GetRun::check for GMP: ndx_1 -- " << ndx_1
+	    << ", rFilename -- " << rFilename
+	    << ", expID  -- " << rExpID;
+
+   bool isRequired = check_filename_for_autoflow( rFilename );
+   if ( isRequired )
+     {
+       QMessageBox::information( this, tr( "Data Cannot be Deleted" ),
+				 tr( "The Data for the Run:\n\n"
+				     "\"%1\"\n\n"
+				     "can NOT be deleted since it is required by the GMP framework!" )
+				 .arg( rFilename ) );
+       
+       return;
+     }
+   // End check for GMP ///////////////////////////////////////////////
+
+   
    int status = QMessageBox::information( this,
       tr( "Warning" ),
       tr( "Are you sure you want to delete this run from the DB? " ) +
