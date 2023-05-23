@@ -16,7 +16,7 @@ WorkerThread2D::WorkerThread2D( QObject* parent )
 {
    dbg_level  = US_Settings::us_debug();
    abort      = false;
-   solvesim   = NULL;
+   solvesim   = nullptr;
    thrn       = -1;
 DbgLv(1) << "2P(WT): Thread created";
 }
@@ -72,6 +72,8 @@ DbgLv(1) << "WT:DWk: "
    sim_vals.ti_noise    = workin.sim_vals.ti_noise;
    sim_vals.ri_noise    = workin.sim_vals.ri_noise;
    sim_vals.solutes     = workin.sim_vals.solutes;
+   bandFormingGradient  = workin.bandFormingGradient;
+   cosedData            = workin.cosedData;
 }
 
 // get results of a completed worker thread
@@ -139,13 +141,11 @@ void WorkerThread2D::calc_residuals()
    sim_vals.dbg_level  = dbg_level;
    sim_vals.dbg_timing = US_Settings::debug_match( "2dsaTiming" );
 
-   solvesim->calc_residuals( 0, 1, sim_vals );
+   solvesim->calc_residuals( 0, 1, sim_vals,false, nullptr, nullptr, nullptr, bandFormingGradient, cosedData );
 
    solutes_c           = sim_vals.solutes;
    ti_noise.values     = sim_vals.ti_noise;
    ri_noise.values     = sim_vals.ri_noise;
-
-   return;
 }
 
 // Slot to forward a progress signal
@@ -165,7 +165,7 @@ void WorkerThread2D::calc_resids_ratio()
    ri_noise.values.clear();
 
    // Create a single model from the solutes
-   int nsolutes  = solutes_i.size();
+   nsolutes  = solutes_i.size();
 DbgLv(1) << "WT:CRR nsolutes" << nsolutes << "0vb" << solutes_i[0].v;
    US_Model wmodel;
    wmodel.components.resize( nsolutes );
@@ -180,15 +180,15 @@ DbgLv(1) << "WT:CRR nsolutes" << nsolutes << "0vb" << solutes_i[0].v;
       wmodel.components[ ii ].mw     = 0.0;
       wmodel.components[ ii ].f      = 0.0;
 
-      wmodel.calc_coefficients( wmodel.components[ ii ] );
+      US_Model::calc_coefficients( wmodel.components[ ii ] );
 
       wmodel.components[ ii ].s     /= dset->s20w_correction;
       wmodel.components[ ii ].D     /= dset->D20w_correction;
    }
 
-   US_DataIO::EditedData* edata = &dset->run_data;
-   int npoints   = edata->pointCount();
-   int nscans    = edata->scanCount();
+   edata = &dset->run_data;
+   npoints   = edata->pointCount();
+   nscans    = edata->scanCount();
    int ntotal    = nscans * npoints;
    QVector< double > nnls_a( ntotal, 0.0 );
    QVector< double > nnls_b( ntotal, 0.0 );
@@ -232,13 +232,11 @@ DbgLv(1) << "WT:CRR  CMULT" << cmult;
       double cval     = cvali * cmult;
       wmodel.components[ ii ].signal_concentration = cval;
 
-      wmodel.calc_coefficients( wmodel.components[ ii ] );
+      US_Model::calc_coefficients( wmodel.components[ ii ] );
 
       solutes_c[ ii ]     = solutes_i[ ii ];
       solutes_c[ ii ].c   = cval;
 DbgLv(1) << "WT:CRR     ii cvali cval" << ii << cvali << cval;
    }
-
-   return;
 }
 

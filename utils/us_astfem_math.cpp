@@ -1145,7 +1145,8 @@ DbgLv(1) << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size(
 #ifdef NO_DB
             //MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif
-            exit( -2 );
+         jj--;
+         break;
          }
       }
 

@@ -202,6 +202,7 @@ US_SimParamsGui::US_SimParamsGui(
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
    cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
    cmb_mesh->setCurrentIndex( (int)simparams.meshType );
+   cmb_mesh->setCurrentText(cmb_mesh->itemData(cmb_mesh->currentIndex()).toString());
    
    main->addWidget( cmb_mesh, row++, 0, 1, 4 );
 
@@ -225,16 +226,17 @@ US_SimParamsGui::US_SimParamsGui(
    connect( rb_standard, SIGNAL( toggled           ( bool ) ), 
                          SLOT  ( select_centerpiece( bool ) ) );
 
+
    // Band loading
    QLabel* lb_lamella = us_label( tr( "Band loading volume (" )
          + QString( QChar( 181 ) ) + "l):" );
    main->addWidget( lb_lamella, row, 4, 1, 3 );
 
-   cnt_lamella = us_counter( 3, 1, 20, 15 );
+   cnt_lamella = us_counter( 3, 1, 20, simparams.band_forming?simparams.band_volume*1000:15 );
    cnt_lamella->setSingleStep    ( 0.1 );
    cnt_lamella->setIncSteps( QwtCounter::Button1,   1 );
    cnt_lamella->setIncSteps( QwtCounter::Button2,  10 );
-   cnt_lamella->setEnabled( false );
+   cnt_lamella->setEnabled( simparams.band_forming );
 
    main->addWidget( cnt_lamella, row++, 7, 1, 1 );
    connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ), 
@@ -373,6 +375,7 @@ US_SimParamsGui::US_SimParamsGui(
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
    cmb_moving->setCurrentIndex( (int)simparams.gridType );
+   cmb_moving->setCurrentText(cmb_moving->itemData(cmb_moving->currentIndex()).toString());
    connect( cmb_moving, SIGNAL( activated    ( int ) ), 
                         SLOT  ( update_moving( int ) ) );
    
