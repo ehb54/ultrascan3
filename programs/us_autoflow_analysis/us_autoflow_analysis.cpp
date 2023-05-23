@@ -3124,7 +3124,8 @@ void US_Analysis_auto::delete_job( QString triple_stage )
     .arg( triple_n )
     .arg( stage_n  );
 
-  if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+  //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+  if ( Process_2dsafm [ triple_n ] && mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) ) // don't we have to do this ONLY fro representative triple??
     msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, ongoing jobs for the following same-channel triples will be canceled as well: \n %1")
       .arg( triple_list_affected.join(",") );
   
@@ -3142,6 +3143,20 @@ void US_Analysis_auto::delete_job( QString triple_stage )
     {
       //Send signal to autoflowAnalysis record ? 
       qDebug() << "DELETION chosen !!";
+
+      //Dialog for a Comment, why triple(s) analyses are set for deletion:
+      bool ok;
+      QString msg = QString(tr("Put a comment describing reason for a STOP:"));
+      QString default_text = QString(tr("Reason for job CANCELLATION: "));
+      QString comment_t    = QInputDialog::getText( this,
+						    tr( "Reason for job CANCELLATION" ),
+						    msg, QLineEdit::Normal, default_text, &ok );
+
+      if ( !ok )
+	{
+	  return;
+	}
+      ////////////////////////////////////////////////////////////////////
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -3165,9 +3180,18 @@ void US_Analysis_auto::delete_job( QString triple_stage )
       update_autoflowAnalysis_uponDeletion( &db, requestID );
 
       // Now, if 2DSA or 2DSA-FM of the representative wvl in the MWL case: DELETE jobs for all other triples in a channel:
-      if ( Process_2dsafm [ triple_n ] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel ) 
-	update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+      QString other_chan_triples;
+      if ( Process_2dsafm [ triple_n ] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel )
+	{
+	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+
+	  if ( !triple_list_affected. isEmpty() )
+	    other_chan_triples = triple_list_affected.join(",");
+	}
       
+      //Also update autoflowStatus's "analysisCancel" JSON:
+      record_or_update_analysis_cancel_status( &db, triple_n, other_chan_triples, comment_t );
+           
     }
   else if ( msg_delete.clickedButton() == Cancel_sys )
     return;
@@ -3286,6 +3310,62 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   timer_update->start(5000);
 
   qDebug() << "Timer restarted after updating EditProfiles for channel -- " << channel_name;
+}
+
+
+//Keep track on meniscus (or bottom) deviations in FITMEN from the best fit:
+void US_Analysis_auto::record_or_update_analysis_cancel_status( US_DB2* db, QString triple_name, QString other_chan_triples, QString comment_t )
+{
+  // Check DB connection
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "Updating autoflowStatus's analysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qry.clear();
+
+  QString CancelTriples = triple_name;
+  if ( !other_chan_triples. isEmpty() )
+    CancelTriples += "," + other_chan_triples;
+  
+  QString CancelAction = "CANCELED, by " + fname + ", " + lname + "; COMMENT, " + comment_t;
+
+  if ( autoflowStatusID )
+    {
+      //update OR insert NEW Json
+      qry << "update_autoflowStatusAnalysisCancel_record"
+	  << QString::number( autoflowStatusID )
+	  << QString::number( autoflowID_passed )
+	  << CancelTriples
+	  << CancelAction;
+	  
+      db->query( qry );
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (Analysis {CANCELED triples}): "
+				"There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+      
+      return;
+    }
+  
 }
 
 

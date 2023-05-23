@@ -2100,6 +2100,7 @@ void US_Edit::process_optics_auto( )
   editProfile.clear();
   editProfile_scans_excl.clear();
   automatic_meniscus.clear();
+  manual_edit_comments. clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
@@ -8177,6 +8178,22 @@ void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edi
 
   automatic_meniscus[ t_name ] = false;
 
+  //Put a comment, why this triple was processed manually
+  bool ok;
+  QString msg = QString(tr("Put a comment on MANUAL editing :"));
+  QString default_text = QString(tr("Reason for MANUAL editing: "));
+  QString comment_t    = QInputDialog::getText( this,
+						tr( "Reason for MANUAL editing" ),
+						msg, QLineEdit::Normal, default_text, &ok );
+  
+  if ( !ok )
+    {
+      return;
+    }
+
+  manual_edit_comments[ t_name ] = comment_t;
+  ///////////////////////////////////////////////////////
+
   new_triple_auto( 0 ); 
 }
 
@@ -8699,7 +8716,14 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
     {
       QString meniscus_method = os.value() ? QString("automated") : QString("manual");
       
-      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method     + "\",";
+      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method;
+
+      if ( !os.value() )
+	{
+	  editRI_IP_Json += ", Comment: " + manual_edit_comments[ os.key() ] + "\",";
+	}
+      else
+	editRI_IP_Json += "\",";
     }
   
   editRI_IP_Json.chop(1);

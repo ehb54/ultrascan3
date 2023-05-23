@@ -99,6 +99,7 @@ class US_Edit : public US_Widgets
       QMap< QString, QStringList> editProfile;
       QMap< QString, QStringList> editProfile_scans_excl;
       QMap< QString, bool> automatic_meniscus;
+      QMap< QString, QString> manual_edit_comments;
 
       QStringList        centparms_info;
       QMap< int, QStringList>  centerpieceParameters;

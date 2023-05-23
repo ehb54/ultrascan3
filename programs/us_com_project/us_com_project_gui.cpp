@@ -118,7 +118,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    // tabWidget->setCornerWidget(m_exit, Qt::TopRightCorner);
    
    tabWidget->setCurrentIndex( curr_panx );
-   tabWidget->tabBar()->setFixedHeight(500);
+   tabWidget->tabBar()->setFixedHeight(400);
    //tabWidget->tabBar()->setFixedWidth(200);
    
    //icon_path = std::getenv("ULTRASCAN");
@@ -181,7 +181,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    int pos_x_offset = fm_t.width("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
-   int pos_y = (tabWidget->tabBar()->height())*1.12;
+   int pos_y = (tabWidget->tabBar()->height())*1.22;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
@@ -232,6 +232,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
+   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
@@ -355,9 +356,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanEditing         = new US_EditingGui ( this );
    epanAnalysis        = new US_AnalysisGui( this );
    epanReport          = new US_ReportStageGui  ( this );
+   epanSign            = new US_eSignaturesGui ( this );
       
-   //   statflag            = 0;
-
    // Add panels to the tab widget
    tabWidget->addTab( epanInit,      tr( "Manage Optima Runs"   ) );
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
@@ -366,14 +366,12 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->addTab( epanEditing,   tr( "4: Editing"  ) );
    tabWidget->addTab( epanAnalysis,  tr( "5: Analysis"  ) );
    tabWidget->addTab( epanReport,    tr( "6: Report"  ) );
-   //tabWidget->addTab( epanExit,      tr( "Close Program"  ) );
-
+   tabWidget->addTab( epanSign,      tr( "e-Signatures"  ) );
 
    
    tabWidget->setCurrentIndex( curr_panx );
-   tabWidget->tabBar()->setFixedHeight(500);
-   //tabWidget->tabBar()->setFixedWidth(200);
-
+   tabWidget->tabBar()->setFixedHeight(600);
+  
    //icon_path = std::getenv("ULTRASCAN");
    //qDebug() << "Path is: " << icon_path;
    //icon_path.append("/etc/"); 
@@ -392,7 +390,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
    //no hoover
-   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } QTabBar::tab:last:disabled {background: #90EE90;  min-width: 50;}  QTabBar::tab:last:selected {background: #556B2F; color: lightgray;  min-width: 50;}");
 
    //Close & Help
    cornerWidget = new QWidget(tabWidget);
@@ -426,7 +424,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    int pos_x_offset = fm_t.width("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
-   int pos_y = (tabWidget->tabBar()->height())*1.12;
+   int pos_y = (tabWidget->tabBar()->height())*1.08;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
@@ -437,8 +435,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
-       if ( i == 0 ) 
-    	 tabWidget->tabBar()->setTabEnabled(i, true);
+       if ( i == 0 )
+	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
     	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
@@ -482,6 +480,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
+   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
@@ -508,7 +507,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
    
-   setMinimumSize( QSize( 1350, 800 ) );
+   setMinimumSize( QSize( 1350, 850 ) );
    adjustSize();
 
  }
@@ -1317,7 +1316,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	    {
 	      if ( daysToExpiration > 0 )
 		{
-		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:")).arg( QChar(0x2022), alias );
+		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:\n")).arg( QChar(0x2022), alias );
 		  msg_sys_text_info += QString( tr("1. %1 is turned on\n"
 						   "2. the data acquisition server on %1 is running\n"
 						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is valid and not expired.\n")).arg( alias );
@@ -1492,7 +1491,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     }
   /* ---------------------------------------------------------------------------------------*/
     
-  if ( autoflow_records < 1 )
+  //if ( autoflow_records < 1 )
+  if ( autoflow_records < 1 || autoflowdata.size() < 1 ) //can be that for UL<3, autoflow runs from others are not shown
     {
       //ALEXEY: should close pdiag_autoflow if wasn't closed already
       initMsgNorecOpen = true;
@@ -2341,30 +2341,138 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	autoflowentry << "NO";
     
 
-      //Check user level && GUID; if <3, check if the user is operator || investigator
-      if ( US_Settings::us_inv_level() < 3 )
+      //Treat eSign separately: only show runs at this stage to reviewers && operator:
+      if ( status == "E-SIGNATURES" )
 	{
-	  qDebug() << "User level low: " << US_Settings::us_inv_level();
-	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+	  // //taking care of UL=2, who owns a run, and thus, is an operator
+	  // if (  user_id && user_id == operatorID.toInt() )
+	  //   {
+	  //     autoflowdata  << autoflowentry;
+	  //     nrecs++;
+	  //   }
 
-	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
-	  if ( user_id && user_id == invID.toInt() )
+	  //reviewers: check against new 'autoflowGMPReportEsign. statusSignJson["to_process"]' table's field: 
+	  if ( isOperRev( user_id, id ) )
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
 	    }
+	  
 	}
       else
 	{
-	  autoflowdata  << autoflowentry;
-	  nrecs++;
+	  //Check user level && GUID; if <3, check if the user is investigator
+	  if ( US_Settings::us_inv_level() < 3 )
+	    {
+	      qDebug() << "User level low: " << US_Settings::us_inv_level();
+	      qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+	      
+	      //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	      if ( user_id && user_id == invID.toInt() )
+		{
+		  autoflowdata  << autoflowentry;
+		  nrecs++;
+		}
+	    }
+	  else
+	    {
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
 	}
     }
 
   return nrecs;
 }
 
-    
+
+//Check for e-Signature stage, if the logged in user an operator || reviewer
+bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
+{
+  bool yesRev = false;
+
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+
+  if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return yesRev;
+     }
+
+  QStringList qry;
+  qry << "get_gmp_review_info_by_autoflowID" << autoflow_id;
+
+  db->query( qry );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    return yesRev;
+  
+  QString esign_id;
+  QString gmp_run_id;
+  QString autoflow_name ;
+  QString operator_list;
+  QString reviewers_list;
+  QString eSignStatusJson;
+  QString eSignStatusAll;
+  QString createUpdateJsonLog;
+  
+  while ( db->next() )
+    {
+      esign_id             = db->value( 0 ).toString();    //INT
+      gmp_run_id           = db->value( 1 ).toString();    //INT
+      autoflow_name        = db->value( 2 ).toString();    //TEXT
+      operator_list        = db->value( 3 ).toString();    //json array [1 value for now]
+      reviewers_list       = db->value( 4 ).toString();    //json array
+      eSignStatusJson      = db->value( 5 ).toString();    //json
+      eSignStatusAll       = db->value( 6 ).toString();    //ENUM
+      createUpdateJsonLog  = db->value( 7 ).toString();    //json
+    }
+
+  //process 'reviewers_list' & 'operList' Json arrays:
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewers_list.toUtf8() );
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operator_list .toUtf8() );
+  
+  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray()  )
+    {
+      qDebug() << "jsonDocRevList OR jsonDocOperList not a JSON Array!";
+      return yesRev;
+    }
+  
+  QJsonArray jsonDocRevList_array  = jsonDocRevList.array();
+  for (int i=0; i < jsonDocRevList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocRevList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  yesRev = true;
+	  return yesRev;
+	}
+    }
+
+  QJsonArray jsonDocOperList_array  = jsonDocOperList.array();
+  for (int i=0; i < jsonDocOperList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocOperList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  yesRev = true;
+	  return yesRev;
+	}
+    }
+  
+  return yesRev;
+}
+
+
 // Query autoflow for # records
 int US_InitDialogueGui::get_autoflow_records( void )
 {
@@ -2610,6 +2718,10 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
+
+   //return automatically to Run Manager:
+   connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   
    
    sdiag->pb_close->setEnabled(false);  // Disable Close button
    offset = 0;
@@ -2664,6 +2776,11 @@ void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
   emit define_used_instruments( occupied_instruments );
 }
 
+
+void US_ExperGui::to_initAutoflow( void )
+{
+   emit switch_to_initAutoflow();
+}
 
 //When run is submitted to Optima & protocol details are passed .. 
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
@@ -3387,5 +3504,85 @@ void US_ReportStageGui::reset_reporting( void )
 }
 
 
+//eSignatures
+US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
+  : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
 
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
 
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+   // // Open  ...  
+   sdiag = new US_eSignaturesGMP( "AUTO" );
+   sdiag->setParent(this, Qt::Widget);
+   
+   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
+
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+}
+
+void US_eSignaturesGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}

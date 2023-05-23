@@ -1816,10 +1816,12 @@ void US_BufferGuiNew::viscosity(void) {
 }
 
 // Slot for manually changed density
-void US_BufferGuiNew::manual_flag(bool is_on) {
-   DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
-   us_setReadOnly(le_density, !is_on);
-   us_setReadOnly(le_viscos, !is_on);
+void US_BufferGuiNew::manual_flag( bool is_on )
+{
+DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
+   us_setReadOnly( le_density, ! is_on );
+   us_setReadOnly( le_viscos,  ! is_on );
+   buffer->manual     = is_on;
 }
 
 // Display a spectrum dialog for list/manage

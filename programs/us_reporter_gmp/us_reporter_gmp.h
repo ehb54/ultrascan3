@@ -22,7 +22,10 @@ class US_ReporterGMP : public US_Widgets
       public:
          US_ReporterGMP();
 	 US_ReporterGMP( QString );
-	 
+
+         // QMap < QString, QString > read_autoflow_record_pub( int );
+         // int list_all_autoflow_records_pub( QList< QStringList >& );
+  
 	 QTreeWidget     * genTree;
          QTreeWidget     * miscTree;
 	 QTreeWidget     * perChanTree;
@@ -292,7 +295,7 @@ class US_ReporterGMP : public US_Widgets
   
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&,
 					   QString&,  QString&,  QString&,  QString&, QString&,
-					   QString&,  QString&,  QString&,  QString&);
+					   QString&,  QString&,  QString&,  QString&, QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
          QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
 
