@@ -166,6 +166,7 @@ struct PDB_atom
    int hydrogens;    
    float        saxs_excl_vol;   // SAXS excluded volume value
    double       si;
+   double num_elect;  // number of electrons for vdw bead models + saxs pr
 };
 
 struct PDB_chain   // chain in PDB file
@@ -448,6 +449,7 @@ struct saxs_atom
    float radius;      // radius of atomic group
    // for bead models:
    float srv;         // square root of relative volume
+   double electrons;
    saxs saxs_data;    
 };
 

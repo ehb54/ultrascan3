@@ -329,6 +329,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
                        US_Hydrodyn *use_us_hydrodyn
                        )
 {
+   // QTextStream(stdout) << "ASAB1 main\n";
 
    // em("asab1_main");
    // em("asab1_main 1");

@@ -908,6 +908,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                              );
 
 
+      bool            bead_model_has_electrons();
+
    private slots:
 
       void pr_info( const QString & msg = "", bool detail = false ); // stdout report of pr vectors

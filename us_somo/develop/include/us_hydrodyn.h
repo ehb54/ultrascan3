@@ -105,6 +105,7 @@ struct _vdwf {
    double ionized_mw_delta;
    double r;
    double w;
+   double e;
    int color;
 };
 
@@ -1050,6 +1051,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void clear_temp_dirs();
       
+      // for vdw beads saxs excl vol
+      vector < atom >                atom_list;
+      map < QString, atom >          atom_map;
+      void                           select_atom_file(const QString &filename);
+
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();

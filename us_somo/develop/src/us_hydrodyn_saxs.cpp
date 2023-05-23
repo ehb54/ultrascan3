@@ -566,6 +566,11 @@ void US_Hydrodyn_Saxs::refresh(
       // rb_curve_saxs_dry->setEnabled(false);
       rb_curve_saxs->setEnabled(false);
       rb_curve_sans->setEnabled(false);
+      if ( bead_model_has_electrons() ) {
+         rb_curve_raw->setEnabled(true);
+         rb_curve_saxs->setChecked(true);
+         rb_curve_saxs->setEnabled(true);
+      }
    } else {
       rb_curve_raw->setEnabled(true);
       // rb_curve_saxs_dry->setEnabled(true);
@@ -1511,7 +1516,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_info->setPalette( PALET_PUSHB );
    connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
    // pr_widgets.push_back( pb_pr_info );
-   pb_pr_info->hide();
+   // pb_pr_info->hide();
 
    pb_pr_info2 = new QPushButton(us_tr( "info2" ), this);
    pb_pr_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1519,7 +1524,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_info2->setPalette( PALET_PUSHB );
    connect(pb_pr_info2, SIGNAL(clicked()), SLOT(pr_info2()));
    // pr_widgets.push_back( pb_pr_info2 );
-   pb_pr_info2->hide();
+   // pb_pr_info2->hide();
 
    cb_pr_eb = new QCheckBox(this);
    cb_pr_eb->setText(us_tr("Err "));
@@ -2223,6 +2228,11 @@ void US_Hydrodyn_Saxs::setupGUI()
       rb_curve_raw->setEnabled(false);
       rb_curve_saxs->setEnabled(false);
       rb_curve_sans->setEnabled(false);
+      if ( bead_model_has_electrons() ) {
+         rb_curve_raw->setEnabled(true);
+         rb_curve_saxs->setChecked(true);
+         rb_curve_saxs->setEnabled(true);
+      }
    } else {
       rb_curve_raw->setEnabled(true);
       rb_curve_saxs->setEnabled(true);
@@ -2795,9 +2805,23 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          for (unsigned int j = 0; j < bead_models[current_model].size(); j++)
          {
             PDB_atom *this_atom = &(bead_models[current_model][j]);
-            new_atom.pos[0] = this_atom->bead_coordinate.axis[0];
-            new_atom.pos[1] = this_atom->bead_coordinate.axis[1];
-            new_atom.pos[2] = this_atom->bead_coordinate.axis[2];
+            new_atom.pos[0]    = this_atom->bead_coordinate.axis[0];
+            new_atom.pos[1]    = this_atom->bead_coordinate.axis[1];
+            new_atom.pos[2]    = this_atom->bead_coordinate.axis[2];
+            new_atom.b =
+               this_atom->num_elect
+               // - (double) our_saxs_options->water_e_density * (4/3) * M_PI * pow( this_atom->bead_computed_radius, 3.0 )
+               - (double) our_saxs_options->water_e_density * this_atom->saxs_excl_vol
+               ;
+            b_count++;
+            b_bar += new_atom.b;
+
+            new_atom.atom_name     = this_atom->name;
+            new_atom.hybrid_name   = this_atom->resName;
+            new_atom.electrons     = this_atom->num_elect;
+            // new_atom.excl_vol      = (4/3) * M_PI * pow( this_atom->bead_computed_radius, 3.0 );
+            new_atom.excl_vol      = this_atom->saxs_excl_vol;
+
             atoms.push_back(new_atom);
             contrib_pdb_atom.push_back(this_atom);
          }
@@ -3011,27 +3035,30 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
                   new_atom.atom_name = this_atom_name;
                   new_atom.hybrid_name = hybrid_name;
+                  new_atom.electrons     = b[hybrid_name];
+                  new_atom.excl_vol      = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                }
                   
                atoms.push_back(new_atom);
                contrib_pdb_atom.push_back(this_atom);
             }
          }
-         if ( !rb_curve_raw->isChecked() )
+      }
+      if ( !rb_curve_raw->isChecked() )
+      {
+         b_bar /= b_count;
+         if ( b_bar )
          {
-            b_bar /= b_count;
-            if ( b_bar )
-            {
-               b_bar_inv2 = 1.0 / (b_bar * b_bar);
-            } else {
-               b_bar_inv2 = 0.0;
-               rb_curve_raw->setChecked(true);
-               rb_curve_saxs->setChecked(false);
-               rb_curve_sans->setChecked(false);
-               editor_msg( "red", us_tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
-            }
+            b_bar_inv2 = 1.0 / (b_bar * b_bar);
+         } else {
+            b_bar_inv2 = 0.0;
+            rb_curve_raw->setChecked(true);
+            rb_curve_saxs->setChecked(false);
+            rb_curve_sans->setChecked(false);
+            editor_msg( "red", us_tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
          }
       }
+
 #if defined(BUG_DEBUG)
       qApp->processEvents();
       cout << "atoms size " << atoms.size() << endl;
@@ -3040,16 +3067,27 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       cout << " sleep 1 b done" << endl;
 #endif
       // ok now we have all the atoms
-      // for ( auto it = atoms.begin();
-      //       it != atoms.end();
-      //       ++it ) {
-      //    QTextStream( stdout ) << QString( "saxs_name %1 hybrid_name %2 residue_name %3 atom_name %4\n" )
-      //       .arg( it->saxs_name )
-      //       .arg( it->hybrid_name )
-      //       .arg( it->residue_name )
-      //       .arg( it->atom_name )
-      //       ;
-      // }
+      for ( auto it = atoms.begin();
+            it != atoms.end();
+            ++it ) {
+      //    // QTextStream( stdout ) << QString( "saxs_name %1 hybrid_name %2 residue_name %3 atom_name %4 b %5\n" )
+      //    //    .arg( it->saxs_name )
+      //    //    .arg( it->hybrid_name )
+      //    //    .arg( it->residue_name )
+      //    //    .arg( it->atom_name )
+      //    //    .arg( it->b )
+      //    //    ;
+         QTextStream( stdout ) << QString( "%1 %2 [%3,%4,%5] b %6 elect %7 exclvol %8\n" )
+            .arg( it->atom_name )
+            .arg( it->hybrid_name )
+            .arg( it->pos[0] )
+            .arg( it->pos[1] )
+            .arg( it->pos[2] )
+            .arg( it->b )
+            .arg( it->electrons )
+            .arg( it->excl_vol )
+            ;
+      }
 
       editor_msg( "black", 
                   QString("Number of atoms %1. Bin size %2.\n")
@@ -3460,11 +3498,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          double rik; 
          unsigned int pos;
          progress_pr->setMaximum((int)(atoms.size()));
+         QTextStream(stdout) << QString( "ready to compute pr, atoms.size() %1\n" ).arg( atoms.size() );
          if ( cb_pr_contrib->isChecked() &&
               !source &&
               contrib_file.contains(QRegExp("(PDB|pdb)$")) )
          {
             // contrib version
+            QTextStream(stdout) << "running contrib pr\n";
+            
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
@@ -3586,6 +3627,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          } else {
             // non contrib version:
             printf( "atoms.size() %d\n", (int) atoms.size() );
+            QTextStream(stdout) << QString( "running not contrib pr, b_bar_inv2 %1\n" ).arg( b_bar_inv2 );
             int total_terms = 0;
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
@@ -7644,6 +7686,19 @@ void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
    bead_model_ok_for_saxs = true;
 }
 
+
+bool US_Hydrodyn_Saxs::bead_model_has_electrons() {
+   for ( unsigned int i = 0; i < selected_models.size(); i++ ) {
+      for ( unsigned int j = 0; j < bead_models[selected_models[i]].size(); j++ ) {
+         // cout << "saxs name [" << j << "] = " << bead_models[i][j].saxs_data.saxs_name << endl;
+         if ( bead_models[i][j].active &&
+              bead_models[i][j].num_elect <= 0 ){
+            return false;
+         }
+      }
+   }
+   return true;
+}
 
 // #define DEBUG_RESID
 

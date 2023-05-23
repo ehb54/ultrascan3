@@ -305,7 +305,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
 
    QString fstring_somo =
-      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.6f\t%d\t%s\t%.4f\n").
+      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.6f\t%d\t%s\t%.4f\t%f\t%.4f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts).
@@ -534,7 +534,9 @@ void US_Hydrodyn::write_bead_model( QString fname,
                     use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta,
                     get_color(use_model[i]),
                     residues.toLatin1().data(),
-                    use_model[i]->bead_recheck_asa
+                    use_model[i]->bead_recheck_asa,
+                    use_model[i]->num_elect,
+                    use_model[i]->saxs_excl_vol
                     );
          }
          if (fbeams) {
@@ -586,7 +588,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
               "Field contents:\n"
               "  Line 1: Number of beads, Global partial specific volume\n"
               "  From line 2 on: X, Y, Z coordinates, Radius, Mass, Color coding, "
-              "Correspondence with original residues, ASA\n"
+              "Correspondence with original residues, ASA, electrons\n"
 
               "\n"
               "Bead Model Output:\n"

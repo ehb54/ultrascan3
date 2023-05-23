@@ -3222,3 +3222,51 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
    
    return US_File_Util::putcontents( filename, qs, error );
 }   
+
+
+void US_Hydrodyn::select_atom_file(const QString &filename)
+{
+   QString str1;
+   QFileInfo fi(filename);
+   // lbl_atom_table->setText(fi.baseName() + "." + fi.completeSuffix());
+   atom_list.clear( );
+   atom_map.clear( );
+   QFile f(filename);
+   struct atom current_atom;
+   if (f.open(QIODevice::ReadOnly|QIODevice::Text))
+   {
+      QTextStream ts(&f);
+      while (!ts.atEnd())
+      {
+         ts >> current_atom.name;
+         ts >> current_atom.hybrid.name;
+         ts >> current_atom.hybrid.mw;
+         ts >> current_atom.hybrid.radius;
+         ts >> current_atom.saxs_excl_vol;
+         str1 = ts.readLine(); // read rest of line
+         if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
+         {
+            atom_list.push_back(current_atom);
+            atom_map[current_atom.name + "~" + current_atom.hybrid.name] = current_atom;
+         }
+      }
+      f.close();
+   }
+   // add generic ABB
+   {
+      atom abb_atom;
+      abb_atom.name                    = "ABB";
+      abb_atom.hybrid.name             = "ABB";
+      abb_atom.hybrid.mw               = misc.avg_mass;
+      abb_atom.hybrid.ionized_mw_delta = 0;
+      abb_atom.hybrid.radius           = misc.avg_radius;
+      abb_atom.hybrid.scat_len         = 0;
+      abb_atom.hybrid.saxs_name        = "ABB";
+      abb_atom.hybrid.num_elect        = misc.avg_num_elect;
+      abb_atom.hybrid.protons          = misc.avg_protons;
+      abb_atom.saxs_excl_vol           = (4/3)*M_PI*pow(misc.avg_radius, 3 );
+
+      atom_list.push_back(abb_atom);
+      atom_map[abb_atom.name + "~" + abb_atom.hybrid.name] = abb_atom;
+   }   
+}

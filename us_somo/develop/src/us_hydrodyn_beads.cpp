@@ -14,6 +14,7 @@
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_hydrodyn_pat.h"
+#include "../include/us_hydrodyn_asab1.h"
 
 #define SLASH        "/"
 #define DOTSOMO      ""
@@ -1485,6 +1486,11 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
    bool hydrate = !any_wats;
 
+#warning hydration off
+   hydrate = false;
+   vdw_ot_mult = 0;
+   editor_msg( "red", "hydration off for testing\n" );
+
    if ( !quiet ) 
    {
       editor->append("Creating vdW beads from atomic model\n");
@@ -1492,6 +1498,54 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
 
    bead_model.clear( );
+
+   // compute ASA for hydration
+   {
+      vector < PDB_atom * > active_atoms;
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+            active_atoms.push_back( this_atom );
+         }
+      }
+      progress->reset();
+      qApp->processEvents();
+      int retval = us_hydrodyn_asab1_main(active_atoms,
+                                          &asa,
+                                          &results,
+                                          false,
+                                          progress,
+                                          editor,
+                                          this
+                                          );
+
+      if ( retval )
+      {
+         editor->append("Errors found during ASA calculation\n");
+         progress->reset();
+         qApp->processEvents();
+         if (stopFlag)
+         {
+            return -1;
+         }
+         switch ( retval )
+         {
+         case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
+            {
+               printError("US_HYDRODYN_ASAB1 encountered a memory allocation error");
+               return US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC;
+               break;
+            }
+         default:
+            {
+               printError("US_HYDRODYN_ASAB1 encountered an unknown error");
+               // unknown error
+               return -1;
+               break;
+            }
+         }
+      }
+   }
 
    if ( vdw_ot_mult ) {
       editor_msg( "black", QString( us_tr( "Using OT multiplier %1\nStart CoM calculation.\n" ) ).arg( vdw_ot_mult ) );
@@ -1585,6 +1639,25 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             .arg( use_atom_name )
             ;
 
+         double saxs_excl_vol;
+         {
+            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            if ( this_atom->name == "OXT" ) {
+               mapkey = "OXT|OXT";
+            }
+            if ( !residue_atom_hybrid_map.count( mapkey ) ) {
+               editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
+               return -1;
+            }
+            QString hybrid_name = residue_atom_hybrid_map[mapkey];
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) ) {
+               editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
+               return -1;
+            }
+            saxs_excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
+         }
+
          // QTextStream( stdout ) << "vdwf: res_idx is " << res_idx << " " << endl;
          
          if ( vdwf.count( res_idx ) ) {
@@ -1596,6 +1669,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             this_vdwf.ionized_mw_delta = this_atom->p_atom->hybrid.ionized_mw_delta;
             this_vdwf.r                = this_atom->p_atom->hybrid.radius;
             this_vdwf.w                = this_atom->p_atom->hydration;
+            this_vdwf.e                = this_atom->p_atom->hybrid.num_elect;
             
             if ( this_atom->resName == "WAT" ) {
                this_vdwf.mw = 0.0;
@@ -1639,6 +1713,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.bead_mw                   = this_vdwf.mw;
             tmp_atom.bead_ionized_mw_delta     = this_vdwf.ionized_mw_delta;
             tmp_atom.bead_color                = this_vdwf.color;
+#warning recolored for ASA testing
+            tmp_atom.bead_color                = this_atom->asa >= asa.threshold ? 6 : 8;
+            tmp_atom.bead_recheck_asa          = this_atom->asa;
+            tmp_atom.num_elect                 = this_vdwf.e;
             tmp_atom.exposed_code              = 1;
             tmp_atom.all_beads                 .clear( );
             tmp_atom.active                    = true;
@@ -1646,6 +1724,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.resName                   = this_atom->resName;
             tmp_atom.iCode                     = this_atom->iCode;
             tmp_atom.chainID                   = this_atom->chainID;
+            tmp_atom.saxs_excl_vol             = saxs_excl_vol;
             tmp_atom.saxs_data.saxs_name       = "";
             tmp_atom.bead_model_code = QString( "%1.%2.%3.%4.%5" )
                .arg( this_atom->serial )
@@ -1655,10 +1734,19 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                .arg( this_atom->resSeq )
                ;
 
+            // QTextStream(stdout) << QString( "atom name %1 resname %2 asa %3 bead_asa %4 ref_asa %5 bead_recheck_asa %6\n" )
+            //    .arg( tmp_atom.name )
+            //    .arg( tmp_atom.resName )
+            //    .arg( this_atom->asa )
+            //    .arg( this_atom->bead_asa )
+            //    .arg( this_atom->ref_asa )
+            //    .arg( this_atom->bead_recheck_asa )
+            //    ;
+
             this_atom->mw               = tmp_atom.mw;
             this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
             this_atom->radius           = tmp_atom.radius;
-            
+
             bead_model.push_back(tmp_atom);
          } else {
             editor_msg( "red", QString( "Residue atom pair %1 unknown in vdwf.json" ).arg( res_idx ) );

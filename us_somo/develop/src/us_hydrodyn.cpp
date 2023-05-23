@@ -779,6 +779,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       us_qdebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
    }
 #endif
+
+#warning - perhaps add select_atom_file() to input selections
+
+   select_atom_file( US_Config::get_home_dir() + "etc/somo.atom" );
    clear_temp_dirs();
 
    if ( gui_script ) {
@@ -3373,129 +3377,6 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
    }
 }
 
-void US_Hydrodyn::load_bead_model()
-{
-   QString use_dir = 
-      path_load_bead_model.isEmpty() ?
-      somo_dir :
-      path_load_bead_model;
-
-   select_from_directory_history( use_dir, this );
-
-   QString filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "Bead models (*.bead_model *.BEAD_MODEL);;"
-                                                   "BEAMS (*.beams *.BEAMS);;"
-                                                   "DAMMIN/DAMMIF/DAMAVER (*.pdb)" , &bead_model_selected_filter );
-
-
-   if ( !filename.isEmpty() )
-   {
-      path_load_bead_model = QFileInfo(filename).absolutePath();
-   }
-
-   if ( QFileInfo(filename).fileName().contains(" ") )
-   {
-      printError(us_tr("Filenames containing spaces are not currently supported.\n"
-                    "Please rename the file to remove spaces."));
-      return;
-   }
-
-   if (!filename.isEmpty())
-   {
-      add_to_directory_history( filename );
-      citation_load_bead_model( filename );
-
-      options_log = "";
-      pb_somo->setEnabled(false);
-      pb_somo_o->setEnabled(false);
-      pb_visualize->setEnabled(false);
-      pb_equi_grid_bead_model->setEnabled(false);
-      pb_calc_hydro->setEnabled(false);
-      pb_calc_zeno->setEnabled(false);
-      pb_calc_grpy->setEnabled( false);
-      pb_calc_hullrad->setEnabled( false );
-      pb_show_hydro_results->setEnabled(false);
-      pb_grid_pdb->setEnabled(false);
-      pb_vdw_beads->setEnabled(false);
-      pb_grid->setEnabled(false);
-      bead_model_prefix = "";
-      le_bead_model_prefix->setText(bead_model_prefix);
-      bead_model_suffix = "";
-
-      if (results_widget)
-      {
-         results_window->close();
-         delete results_window;
-         results_widget = false;
-      }
-
-      bead_model_file = filename;
-      le_bead_model_file->setText( QDir::toNativeSeparators( filename ) );
-
-      if ( is_dammin_dammif(filename) &&
-           advanced_config.auto_view_pdb ) 
-      {
-#if defined(START_RASMOL)
-         model_viewer( filename );
-#endif
-      }
-
-      bool only_overlap = false;
-      if (!read_bead_model(filename, only_overlap ))
-      {
-         bool so_ovlp = QFileInfo( filename ).completeBaseName().contains( "so_ovlp" );
-         us_qdebug( QString( "load bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
-         state = BEAD_MODEL_LOADED;
-         pb_visualize->setEnabled(true);
-         pb_equi_grid_bead_model->setEnabled(true);
-         pb_calc_hydro->setEnabled( !so_ovlp );
-         pb_calc_zeno->setEnabled(true);
-         pb_calc_grpy->setEnabled( true );
-         pb_calc_hullrad->setEnabled( true );
-         pb_grid->setEnabled(true);
-         pb_bead_saxs->setEnabled(true);
-         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-         pb_pdb_saxs->setEnabled(false);
-         bd_anaflex_enables(false);
-         pb_somo     ->setEnabled( false );
-         pb_somo_o   ->setEnabled( false );
-         pb_somo     ->setEnabled( false );
-         pb_grid_pdb ->setEnabled( false );
-         pb_vdw_beads->setEnabled( false );
-      }
-      else
-      {
-         if ( only_overlap )
-         {
-            state = BEAD_MODEL_LOADED;
-            pb_visualize->setEnabled(true);
-            pb_equi_grid_bead_model->setEnabled(true);
-            pb_calc_hydro->setEnabled( false );
-            pb_calc_zeno->setEnabled( true );
-            pb_calc_grpy->setEnabled( true );
-            pb_calc_hullrad->setEnabled( true );
-            pb_grid->setEnabled(true);
-            pb_bead_saxs->setEnabled(true);
-            pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-            pb_pdb_saxs->setEnabled(false);
-            bd_anaflex_enables(false);
-            pb_somo     ->setEnabled( false );
-            pb_somo_o   ->setEnabled( false );
-            pb_somo     ->setEnabled( false );
-            pb_grid_pdb ->setEnabled( false );
-            pb_vdw_beads->setEnabled( false );
-
-         } else {            
-            pb_visualize->setEnabled(true);
-            pb_equi_grid_bead_model->setEnabled(true);
-            pb_bead_saxs->setEnabled(false);
-            pb_rescale_bead_model->setEnabled(false);
-            pb_pdb_saxs->setEnabled(true);
-         }
-      }
-      // bead_model_prefix = "";
-   }
-}
-
 void US_Hydrodyn::update_bead_model_file(const QString &str)
 {
    bead_model_file = str;
@@ -4422,16 +4303,17 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
          filename = "unknown";
       }
       
-      printf("selected models size %u bead_models.size %u\n",
+      printf("selected models size %u bead_models.size %u beads in selected_models[0] %u\n",
              (unsigned int)bead_models.size(),
-             (unsigned int)selected_models.size()
+             (unsigned int)selected_models.size(),
+             (unsigned int)bead_models[selected_models[0]].size()
              );
 
       // compute mw
       float tmp_mw = 0.0;
       for ( unsigned int i = 0; i < bead_models[selected_models[0]].size(); i++ )
       {
-         tmp_mw += bead_models[selected_models[0]][i].bead_mw;
+         tmp_mw    += bead_models[selected_models[0]][i].bead_mw + bead_models[selected_models[0]][i].bead_ionized_mw_delta;
       }
 
       if ( tmp_mw != 0.0 &&
