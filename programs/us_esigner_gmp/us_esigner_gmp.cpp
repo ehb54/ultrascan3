@@ -113,7 +113,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   bn_revOperGMP -> setFixedHeight  (1.5 * RowHeight);
 
   pb_selRun_operRev_set = us_pushbutton( tr( "Select GMP Run" ) );
-  pb_set_operRev        = us_pushbutton( tr( "Change/Set Operators and Reviewers" ) );
+  pb_set_operRev        = us_pushbutton( tr( "Assign/Change Operators and Reviewers" ) );
   pb_set_operRev -> setEnabled( false );
 
   pb_add_oper      = us_pushbutton( tr( "Add" ) );
@@ -133,9 +133,6 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   QLabel* lb_opers_to_assign  = us_label( "Operators to Assign:" );
   QLabel* lb_revs_to_assign   = us_label( "Reviewers to Assign:" );
   
-  //QLabel* lb_choose_rev1      = us_label( "Choose Reviewer 1:" );
-  //QLabel* lb_choose_rev2      = us_label( "Choose Reviewer 2:" );
-
   le_run_name       = us_lineedit( tr(""), 0, true );
   le_optima_name    = us_lineedit( tr(""), 0, true );
 
@@ -495,8 +492,6 @@ void US_eSignaturesGMP::init_grevs( void )
   US_InvestigatorData data;
   int inv = US_Settings::us_inv_ID();
   int lev = US_Settings::us_inv_level();
-
-  //QList< US_InvestigatorData > g_reviewers_t;
   
   while ( db.next() )
     {
@@ -693,7 +688,6 @@ void US_eSignaturesGMP::selectGMPRun( void )
   set_revOper_panel_gui();
 
   //Enable button to change/set assigned oper(s) / rev(s) 
-  pb_set_operRev -> setEnabled( true );
   pb_add_oper    -> setEnabled( true );
   pb_remove_oper -> setEnabled( true );
 }
@@ -713,6 +707,8 @@ void US_eSignaturesGMP::reset_set_revOper_panel( void )
   //main QMap for the loaded GMP run
   gmp_run_details.   clear();
   isEsignRecord    = false;
+
+  pb_set_operRev -> setEnabled( false );
 }
 
 void US_eSignaturesGMP::set_revOper_panel_gui( void )
@@ -1062,12 +1058,38 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
   return eSign_details;
 }
 
+//Set/Unset  pb_set_operRev -> setEnabled( false );
+void US_eSignaturesGMP::setUnsetPb_operRev( void )
+{
+  QString e_operList = te_opers_to_assign->toPlainText();
+  QString e_revList  = te_revs_to_assign->toPlainText();
+
+  if ( e_operList.isEmpty() || e_revList.isEmpty() )
+    pb_set_operRev -> setEnabled( false );
+  else
+    pb_set_operRev -> setEnabled( true );
+}
 
 //Add operator to list 
 void US_eSignaturesGMP::addOpertoList( void )
 {
   QString c_oper = cb_choose_operator->currentText();
+  
+  //check if selected item already in the list:
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_oper ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Operator" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of operators.<br>"
+				    "Please choose other operator.")
+				.arg( c_oper ) );
+      return;
+    }
+  
   te_opers_to_assign->append( c_oper );
+  setUnsetPb_operRev();
 }
 
 //Remove operator from list 
@@ -1081,13 +1103,31 @@ void US_eSignaturesGMP::removeOperfromList( void )
   te_opers_to_assign->textCursor().removeSelectedText();
   te_opers_to_assign->textCursor().deletePreviousChar();
   te_opers_to_assign->setTextCursor(storeCursorPos);
+
+  setUnsetPb_operRev();
 }
 
 //Add reviewer to list 
 void US_eSignaturesGMP::addRevtoList( void )
 {
   QString c_rev = cb_choose_rev->currentText();
+
+  //check if selected item already in the list:
+  QString e_revList = te_revs_to_assign->toPlainText();
+  if ( e_revList. contains( c_rev ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Reviewer" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of reviewers.<br>"
+				    "Please choose other reviewer.")
+				.arg( c_rev ) );
+      return;
+    }
+  
   te_revs_to_assign->append( c_rev );
+
+  setUnsetPb_operRev();
 }
 
 //Remove reviewer from list 
@@ -1103,11 +1143,34 @@ void US_eSignaturesGMP::removeRevfromList( void )
   te_revs_to_assign->setTextCursor(storeCursorPos);
 
   qDebug() << "Revs to ASSIGN: " << te_revs_to_assign->toPlainText();
+
+  setUnsetPb_operRev();
 }
 
 //Assign operators & reviewers for the current GMP run:
 void US_eSignaturesGMP::assignOperRevs( void )
 {
+  /** 
+      0. FIRST, check if e-Signature process already BEGAN !!!!         <-- 1st thing to check
+        -- if YES, STOP!!!!
+	      ** if (isEsignRecord) BUT eSignStatusJson indicates it began
+	      ** above && || autoflowStatus indicates 7. e-Signature stage in the signing mode  
+	-- if NOT, PROCEED: 
+	      ** if (!isEsignRecord)
+	      ** if (isEsignRecord) BUT eSignStatusJson HAS NOT began: at least 1 signature put!!!
+  ***/		    
+
+  if ( is_eSignProcessBegan() )
+    {
+      QMessageBox::information( this, tr( "Operator(s), Reviewer(s) CANNOT be Assigned" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Operator(s), Reviewer(s)"
+				    "cannot be set/changed for the currently uploaded GMP run: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "E-Signing process has already began.")
+				.arg( le_run_name->text() ) );
+      return;
+    }
+  
   QString oper_list = te_opers_to_assign->toPlainText();
   te_operator_names -> setText( oper_list );
   QString rev_list = te_revs_to_assign->toPlainText();
@@ -1119,13 +1182,20 @@ void US_eSignaturesGMP::assignOperRevs( void )
   QString revListJsonArray  = "[";
   QStringList oper_listList = oper_list.split("\n");
   QStringList rev_listList  = rev_list.split("\n");
+  QStringList oper_rev_joinedList;
 
   for (int i=0; i<oper_listList.size(); ++i )
-    operListJsonArray += "\"" + oper_listList[i] + "\",";
-
+    {
+      oper_rev_joinedList << oper_listList[i]; 
+      operListJsonArray += "\"" + oper_listList[i] + "\",";
+    }
+      
   for (int i=0; i<rev_listList.size(); ++i )
-    revListJsonArray += "\"" + rev_listList[i] + "\",";
-
+    {
+      oper_rev_joinedList << rev_listList[i]; 
+      revListJsonArray += "\"" + rev_listList[i] + "\",";
+    }
+  
   operListJsonArray.chop(1);
   revListJsonArray.chop(1);
   operListJsonArray += "]";
@@ -1134,35 +1204,18 @@ void US_eSignaturesGMP::assignOperRevs( void )
   qDebug() << "operListJsonArray -- " << operListJsonArray;
   qDebug() << "revListJsonArray -- "  << revListJsonArray;
 
-  //Now make Db record: aID =  gmp_run_details[ "autoflowID" ];
-  /** 
-      0. FIRST, check if e-Signature process already BEGAN !!!!         <-- 1st thing to check
-        -- if YES, STOP!!!!
-	-- if NOT, e.g. 
-	            ** if (!isEsignRecord)
-		    ** if (isEsignRecord) BUT eSignStatusJson indicates it began
-		    ** above && || autoflowStatus indicates 7. e-Signature stage in the signing mode 
+  //Minimum structure of eSignStatusJson field:
+  QString eSignStatusJson = "{\"to_sign\":[";
+  for (int i=0; i<oper_rev_joinedList.size(); ++i )
+    {
+      eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+    }
+  eSignStatusJson. chop(1);
+  eSignStatusJson += "]}";
+  
+  qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
 
-      1. check if eSign record in Db exists;
-      2. if YES, update as admin 
-        -- update_gmp_review_record_by_admin << p_eSignID       INT,
-					     << p_autoflowID    INT,
-					     << p_operListJson  TEXT,
-                                             << p_revListJson   TEXT,
-					     << p_eSignJson     TEXT
-     3. if NOT, create new one: 
-        --  new_gmp_review_record  <<	 p_autoflowID   INT,
-				   <<	 p_autoflowName TEXT,
-				   <<	 p_operListJson TEXT,
-				   <<	 p_revListJson  TEXT,
-				   <<    p_eSignJson    TEXT,
-				   <<    p_logJson      TEXT )
-			 
-     4. Update autolfow run's gmpReviewID with p_eSignID [if 3. "NO"]
-      
-   **/
-
-  /***********************************************************************
+  //DB 
   US_Passwd pw;
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
@@ -1173,47 +1226,176 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
       return;
     }
-
+  
   QStringList qry;
   
-  if ( !isEsignRecord )
+  
+  //Minimum structure of logJson when record created from scratch:
+  /** 
+      { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+        "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+      }
+  **/
+  QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db -> query( qry );
+  db -> next();
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+
+  QDateTime date = QDateTime::currentDateTime();
+  QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+
+  logJsonFirstTime += "\"" + QString::number(ID) + ". " + lname + ", " + fname +  "\",";
+  logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+  logJsonFirstTime += "\"Comment\": \"Created first time\"";
+
+  logJsonFirstTime += "}]}";
+  qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+
+   
+  /**  NEXT, 2 scenarios:
+     --- check if eSign record in Db exists;
+      1. if YES, update as ADMIN 
+        -- update_gmp_review_record_by_admin << p_eSignID       INT,
+					     << p_autoflowID    INT,
+					     << p_operListJson  TEXT,
+                                             << p_revListJson   TEXT,
+					     << p_logJson       TEXT
+     2. if NOT, create new one: 
+        --  new_gmp_review_record  <<	 p_autoflowID   INT,
+				   <<	 p_autoflowName TEXT,
+				   <<	 p_operListJson TEXT,
+				   <<	 p_revListJson  TEXT,
+				   <<    p_eSignStatusJson TEXT,
+				   <<    p_logJson      TEXT )
+			 
+     FINALLY. Update autolfow run's gmpReviewID with p_eSignID [if 3. "NO"]
+      
+   **/
+
+  /***********************************************************************/
+
+
+  if ( !isEsignRecord ) //No eSignature Record exists, so create new one, with minimal status, createupdatelog
     {
       int eSignID_returned = 0;
       
       qry. clear();
       qry << "new_gmp_review_record"
-	  << gmp_run_details[ "autoflowID" ]
-	  << gmp_run_details[ "protocolName" ]
-	  << operListJsonArray
-	  << revListJsonArray
-	  << eSignStatusJson        //<-- develop
-	  << logJson;               //<-- develop
+      	  << gmp_run_details[ "autoflowID" ]
+      	  << gmp_run_details[ "protocolName" ]
+      	  << operListJsonArray
+      	  << revListJsonArray
+      	  << eSignStatusJson       
+      	  << logJsonFirstTime;     
 
+      qDebug() << "new_gmp_review_record qry -- " << qry;
       db->statusQuery( qry );
       eSignID_returned = db->lastInsertID();
 
       if ( eSignID_returned == 0 )
-	{
-	  QMessageBox::warning( this, tr( "New eSign Record Problem" ),
-				tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
-	  return;
-	}
+      	{
+      	  QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+      				tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+      	  return;
+      	}
 
       //Update primary autolfow record with the new generated eSignID:
       qry. clear();
       qry << "update_autoflow_with_gmpReviewID"
-	  <<  gmp_run_details[ "autoflowID" ]
-	  <<  eSignID_returned;
+      	  <<  gmp_run_details[ "autoflowID" ]
+      	  <<  QString::number( eSignID_returned );
 
+      qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
       db->query( qry );
-      
     }
-//exists eSign record: so update as ADMIN
-   else
+    
+   else //exists eSign record: so update as ADMIN
     {
-
+      //develop
+      qDebug() << "TO BE DEVELOPED: will be updated by ADMIN!!";
     }
- 
-  **************************************************/
 
+  /**************************************************/
+
+}
+
+
+//Check if e-Signing process for the GMP run started
+bool US_eSignaturesGMP::is_eSignProcessBegan( void )
+{
+  bool isBegan = false;
+  QMap < QString, QString > eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
+
+  if ( !isEsignRecord )
+    return isBegan;
+  
+  QString operatorListJson  = eSign_details[ "operatorListJson" ];
+  QString reviewersListJson = eSign_details[ "reviewersListJson" ];
+  QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
+
+  /****
+     Proposed JSON Struncture of eSignStatusJson:
+     { 
+        "to_sign": ["Rev1","Rev2"],       <===== ORIGINALLY, full combined list of Oper(s) && Rev(s)
+	                                         i.e. ["Oper1","Oper2",..., "Rev1","Rev2",..]
+	"signed" : [
+	              { "Oper1": 
+	                      { 
+			        "Comment"  : "Explanation",
+			        "timeData" : "timestamp"
+			      }},
+		      { "Oper2" :
+		              {
+			        Same ...
+			      }}
+		    ]
+     }
+
+     So, to understand if e-Signing started, investigate eSignStatusJson[ "signed" ] JSON...
+   ****/
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
+  if (!jsonDoc.isObject())
+    {
+      qDebug() << "is_eSignProcessBegan(): eSignStatusJson: NOT a JSON Doc !!";
+      return isBegan;
+    }
+  
+  const QJsonValue &to_esign = jsonDoc.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDoc.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+  //to_sign:
+  if ( to_esign.isUndefined() )
+    qDebug() << "All signatures have been collected; noone left to e-sign !!";
+
+  //signed
+  if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
+    {
+      qDebug() << "Nothing has been e-Signed yet !!! Oper(s), Rev(s) CAN BE changed/assigned!!!";
+      return false;
+    }
+  else
+    {
+      for (int i=0; i < esigned_array.size(); ++i )
+	{
+	  foreach(const QString& key, esigned_array[i].toObject().keys())
+	    {
+	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	      
+	      qDebug() << "E-Signed - " << key << ": Comment, timeData -- "
+		       << newObj["Comment"]   .toString()
+		       << newObj["timeData"]  .toString();
+	    }
+	}
+      // There is/are e-Signee already; 
+      isBegan = true;
+    }
+  return isBegan;
 }

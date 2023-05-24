@@ -82,10 +82,6 @@ class US_eSignaturesGMP : public US_Widgets
 
         QComboBox*    cb_choose_operator;
         QComboBox*    cb_choose_rev;
-	// QComboBox*   cb_choose_rev1;
-	// QComboBox*   cb_choose_rev2;
-
-  
 
         QList< QStringList >  autoflowdata;
         US_SelectItem* pdiag_autoflow;
@@ -125,7 +121,9 @@ class US_eSignaturesGMP : public US_Widgets
        void addOpertoList( void );
        void removeOperfromList( void );
        void addRevtoList( void );
-       void removeRevfromList( void ); 
+       void removeRevfromList( void );
+       bool is_eSignProcessBegan( void );
+       void setUnsetPb_operRev( void );
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );
