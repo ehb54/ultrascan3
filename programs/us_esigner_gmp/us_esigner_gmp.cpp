@@ -705,9 +705,10 @@ void US_eSignaturesGMP::reset_set_revOper_panel( void )
   te_revs_to_assign  -> clear();
 
   //main QMap for the loaded GMP run
-  gmp_run_details.   clear();
-  isEsignRecord    = false;
-
+  gmp_run_details   .clear();
+  eSign_details     .clear();
+  isEsignRecord     = false;
+  
   pb_set_operRev -> setEnabled( false );
 }
 
@@ -727,7 +728,7 @@ void US_eSignaturesGMP::set_revOper_panel_gui( void )
   cb_choose_operator -> addItems( sl_operators );
 
   //Read autoflowGMPReportEsign record by autoflowID:
-  QMap < QString, QString > eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
+  eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
   
   //&& Set defined Operator/Reviewers (if any)
   if ( !eSign_details. contains("operatorListJson") )
@@ -767,8 +768,12 @@ QString US_eSignaturesGMP::get_assigned_oper_revs( QJsonDocument jsonDoc )
     assigned_list << jsonDoc_array[i].toString();
   
   for ( int ii = 0; ii < assigned_list.count(); ii++ )
-    smry += assigned_list[ ii ] + "\n";
-
+    {
+      smry += assigned_list[ ii ];
+      if ( ii != assigned_list.count() -1 )
+	smry += "\n";
+    }
+  
   return smry;
 }
 
@@ -1006,7 +1011,7 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
 //read eSign GMP record for assigned oper(s) && rev(s) && status
 QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID)
 {
-  QMap< QString, QString> eSign_details;
+  QMap< QString, QString> eSign_record;
   
   US_Passwd pw;
   US_DB2* db = new US_DB2( pw.getPasswd() );
@@ -1016,7 +1021,7 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
 			    tr( "Could not connect to database \n" ) + db->lastError() );
 
-      return eSign_details;
+      return eSign_record;
     }
 
   QStringList qry;
@@ -1029,14 +1034,14 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
     {
       while ( db->next() )
 	{
-	  eSign_details[ "ID" ]                   = db->value( 0 ).toString(); 
-	  eSign_details[ "autoflowID" ]           = db->value( 1 ).toString();
-	  eSign_details[ "autoflowName" ]         = db->value( 2 ).toString();
-	  eSign_details[ "operatorListJson" ]     = db->value( 3 ).toString();
-	  eSign_details[ "reviewersListJson" ]    = db->value( 4 ).toString();
-	  eSign_details[ "eSignStatusJson" ]      = db->value( 5 ).toString();
-	  eSign_details[ "eSignStatusAll" ]       = db->value( 6 ).toString();
-	  eSign_details[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	  eSign_record[ "ID" ]                   = db->value( 0 ).toString(); 
+	  eSign_record[ "autoflowID" ]           = db->value( 1 ).toString();
+	  eSign_record[ "autoflowName" ]         = db->value( 2 ).toString();
+	  eSign_record[ "operatorListJson" ]     = db->value( 3 ).toString();
+	  eSign_record[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	  eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	  eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	  eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
 
 	  isEsignRecord = true;
 	}
@@ -1047,15 +1052,15 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
       qDebug() << "No e-Sign GMP record exists!!";
 
       isEsignRecord = false;
-      eSign_details. clear();
+      eSign_record. clear();
 
       // //TEST ---------------------------
-      // eSign_details[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
-      // eSign_details[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
+      // eSign_record[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
+      // eSign_record[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
       // //END TEST ------------------------
     }
 
-  return eSign_details;
+  return eSign_record;
 }
 
 //Set/Unset  pb_set_operRev -> setEnabled( false );
@@ -1170,7 +1175,12 @@ void US_eSignaturesGMP::assignOperRevs( void )
 				.arg( le_run_name->text() ) );
       return;
     }
-  
+
+  //save existign operators && reviewers:
+  QString exsisting_oper_list = te_operator_names->toPlainText();
+  QString exsisting_rev_list  = te_reviewer_names->toPlainText();
+
+  //Set new opers && revs in the te areas
   QString oper_list = te_opers_to_assign->toPlainText();
   te_operator_names -> setText( oper_list );
   QString rev_list = te_revs_to_assign->toPlainText();
@@ -1242,14 +1252,14 @@ void US_eSignaturesGMP::assignOperRevs( void )
   qry <<  QString( "get_user_info" );
   db -> query( qry );
   db -> next();
-  int ID        = db->value( 0 ).toInt();
-  QString fname = db->value( 1 ).toString();
-  QString lname = db->value( 2 ).toString();
+  int u_ID        = db->value( 0 ).toInt();
+  QString u_fname = db->value( 1 ).toString();
+  QString u_lname = db->value( 2 ).toString();
 
   QDateTime date = QDateTime::currentDateTime();
   QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
 
-  logJsonFirstTime += "\"" + QString::number(ID) + ". " + lname + ", " + fname +  "\",";
+  logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
   logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
   logJsonFirstTime += "\"Comment\": \"Created first time\"";
 
@@ -1316,24 +1326,89 @@ void US_eSignaturesGMP::assignOperRevs( void )
     
    else //exists eSign record: so update as ADMIN
     {
-      //develop
-      qDebug() << "TO BE DEVELOPED: will be updated by ADMIN!!";
+      qDebug() << "e-Signature record exists: will be updated by ADMIN!!";
+      
+      qDebug() << "Old Operators -- " << exsisting_oper_list;
+      qDebug() << "New Operators -- " << oper_list;
+      qDebug() << "Old Reviewers -- " << exsisting_rev_list;
+      qDebug() << "New Reviewers -- " << rev_list;
+      
+      //check if at least one of tehe operator OR reviewer lists has been changed 
+      if ( exsisting_oper_list == oper_list && exsisting_rev_list == rev_list )
+	{
+	  qDebug() << "Operators and Reviewers are the same...";
+	  QMessageBox::information( this, tr( "Operator(s), Reviewer(s) NOT CHANGED" ),
+				    tr( "Existing and to-be assigned "
+					"Operator(s) and Reviewer(s) " 
+					"lists are the same.<br><br>"
+					"Nothing will be changed..."));
+	  
+	  return;
+	}
+      
+      QStringList exsisting_oper_listList = exsisting_oper_list.split("\n");
+      QStringList exsisting_rev_listList  = exsisting_rev_list .split("\n");
+
+      QMessageBox msg_rev;
+      msg_rev.setWindowTitle(tr("Operator(s), Reviewer(s) Change"));
+      msg_rev.setText( tr( "<font color='red'><b>ATTENTION:</b> </font><br>"
+			   "You are about to change assigned operator(s) and/or reviewer(s): <br><br>"
+			   "Old Operators: <font ><b>%1</b><br>"
+			   "New Operators: <font ><b>%2</b><br><br>"
+			   "Old Reviewers: <font ><b>%3</b><br>"
+			   "New Reviewers: <font ><b>%4</b><br><br>")
+		       .arg( exsisting_oper_listList.join(",") )
+		       .arg( oper_listList.join(",") )
+		       .arg( exsisting_rev_listList.join(",") )
+		       .arg( rev_listList.join(",") )
+		       );
+      
+      msg_rev.setInformativeText( QString( tr( "Do you want to Proceed?" )));
+      
+      QPushButton *Accept    = msg_rev.addButton(tr("Proceed"), QMessageBox::YesRole);
+      QPushButton *Cancel    = msg_rev.addButton(tr("Cancel"), QMessageBox::RejectRole);
+      
+      msg_rev.setIcon(QMessageBox::Question);
+      msg_rev.exec();
+      
+      if (msg_rev.clickedButton() == Accept)
+	{
+	  //Minimum structure JSON for logJsonUpdateTime:
+	  QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname );
+	  qDebug() << "logJsonUpdateTimeJsonObject -- "  << logJsonUpdateTime;
+	  
+	  qry. clear();
+	  qry << "update_gmp_review_record_by_admin"
+	      << eSign_details[ "ID" ]
+	      << gmp_run_details[ "autoflowID" ]
+	      << operListJsonArray
+	      << revListJsonArray
+	      << logJsonUpdateTime;
+
+	  qDebug() << "update_gmp_review_record_by_admin, qry -- " << qry;
+	  db->query( qry );
+	}
+      else
+	{
+	  qDebug() << "Canceling oper(s)/rev(s) change...";
+	  return;
+	}
     }
 
   /**************************************************/
 
 }
 
-
 //Check if e-Signing process for the GMP run started
 bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 {
   bool isBegan = false;
-  QMap < QString, QString > eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
+  eSign_details .clear();
+  eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
 
   if ( !isEsignRecord )
     return isBegan;
-  
+
   QString operatorListJson  = eSign_details[ "operatorListJson" ];
   QString reviewersListJson = eSign_details[ "reviewersListJson" ];
   QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
@@ -1383,6 +1458,7 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
     }
   else
     {
+      //DEBUG
       for (int i=0; i < esigned_array.size(); ++i )
 	{
 	  foreach(const QString& key, esigned_array[i].toObject().keys())
@@ -1394,8 +1470,40 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 		       << newObj["timeData"]  .toString();
 	    }
 	}
-      // There is/are e-Signee already; 
+      // END DEBUG: There is/are e-Signee already; 
       isBegan = true;
     }
   return isBegan;
+}
+
+
+//append eSign log Json by admin upon opers/rev Update:
+QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fname, QString u_lname )
+{
+  QString e_logJson   = eSign_details[ "createUpdateLogJson" ];
+
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( e_logJson.toUtf8() );
+  if (!jsonDoc.isObject())
+    {
+      qDebug() << "compose_updated_admin_logJson(): createUpdateLogJson: NOT a JSON Doc !!";
+      return e_logJson;
+    }
+
+  //Appended portion
+  QString logJsonUpdateTime = ",\"Updated by\":[{\"Person\":";
+
+  QDateTime date = QDateTime::currentDateTime();
+  QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+
+  logJsonUpdateTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+  logJsonUpdateTime += "\"timeDate\":\"" + current_date +  "\",";
+  logJsonUpdateTime += "\"Comment\": \"Updated Operator, Reviewer lists\"";
+
+  logJsonUpdateTime += "}]}";
+
+  //Combined JSON
+  e_logJson.chop(1); //remove trailing '}'
+  QString composedJson = e_logJson + logJsonUpdateTime;
+
+  return composedJson;
 }
