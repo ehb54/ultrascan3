@@ -1417,6 +1417,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       {
          if ( our_saxs_options->crysol_version_3 ) {
             args
+               << "--shell=water"
                << QString("--smax=%1").arg( our_saxs_options->end_q )
                << QString("--ns=%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
                << QString("--dns=%1").arg( our_saxs_options->water_e_density )
