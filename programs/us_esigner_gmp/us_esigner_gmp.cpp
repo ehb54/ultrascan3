@@ -1182,9 +1182,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
   //Set new opers && revs in the te areas
   QString oper_list = te_opers_to_assign->toPlainText();
-  te_operator_names -> setText( oper_list );
   QString rev_list = te_revs_to_assign->toPlainText();
-  te_reviewer_names -> setText( rev_list );
 
   //Compose JSON arrays: QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
                                      
@@ -1292,6 +1290,10 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
   if ( !isEsignRecord ) //No eSignature Record exists, so create new one, with minimal status, createupdatelog
     {
+      //Update te fileds
+      te_operator_names -> setText( oper_list );
+      te_reviewer_names -> setText( rev_list );
+      
       int eSignID_returned = 0;
       
       qry. clear();
@@ -1373,6 +1375,10 @@ void US_eSignaturesGMP::assignOperRevs( void )
       
       if (msg_rev.clickedButton() == Accept)
 	{
+	  //Update te fileds
+	  te_operator_names -> setText( oper_list );
+	  te_reviewer_names -> setText( rev_list );
+	  
 	  //Minimum structure JSON for logJsonUpdateTime:
 	  QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname );
 	  qDebug() << "logJsonUpdateTimeJsonObject -- "  << logJsonUpdateTime;
