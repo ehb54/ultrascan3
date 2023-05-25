@@ -114,7 +114,7 @@ bool US_Math_BF::Band_Forming_Gradient::get_eigenvalues( ) {
    std::function<double(const double &)> func = [&men, &bot](const double &a) {
       return US_Math_BF::transcendental_equation(a, men, bot);
    };
-   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 2500, func,
+   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 15000, func,
                                                                            0.01,
                                                                            GSL_DBL_EPSILON, 20);
    bool return_value = secantSolver.solve_wrapper();
@@ -159,13 +159,22 @@ double US_Math_BF::Band_Forming_Gradient::calc_comp_conc(const double &x, const 
                                                          US_CosedComponent &cosed_comp) {
    double eq_conc = calc_eq_comp_conc(cosed_comp);
    double decay = 0.0;
-   for (int i = 0; i < eigenvalues.size(); i++) {
-      double pre_calc = pre_calc_betas[i];
-      double beta = eigenvalues[i];
-      decay += pre_calc * eigenfunction(beta, x) *
-            exp(-cosed_comp.d_coeff * temp / 293.15 * sq(beta) * t) * cosed_comp.conc;
+   if (t < 1){
+       if (x > meniscus+overlay_thickness){
+           return 0;
+       }
+       else{
+           return cosed_comp.conc;
+       }
    }
-
+   else {
+       for (int i = 0; i < eigenvalues.size(); i++) {
+           double pre_calc = pre_calc_betas[i];
+           double beta = eigenvalues[i];
+           decay += pre_calc * eigenfunction(beta, x) *
+                    exp(-cosed_comp.d_coeff * temp / 293.15 * sq(beta) * t) * cosed_comp.conc;
+       }
+   }
    return eq_conc + decay;
 }
 
@@ -188,7 +197,6 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const int N, const double
          double tmp_v = 0.0;
          for ( US_CosedComponent &cosed_comp: upper_comps ) {
             double c1 = calc_comp_conc(x_c, t, T, cosed_comp);
-            if ( c1 < 0.002 ) { continue; }
             double c2 = c1 * c1;      // c1^2
             double c3 = c2 * c1;      // c1^3
             double c4 = c3 * c1;      // c1^4
@@ -300,16 +308,16 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    simparms.radial_resolution =
          ( visc_bfg_data.radius( Nx - 1 ) - visc_bfg_data.radius( 0 ) ) / (double)( Nx - 1 );
    // Calculate dt
-   double min_D = 1.0;
+   double max_D = 0.0;
    for (US_CosedComponent &cosed_comp: upper_comps) {
-      min_D = min(min_D,cosed_comp.d_coeff);
+      max_D = max(max_D,cosed_comp.d_coeff);
    }
    // Declares the scan structure
    US_DataIO::Scan dens_scan;
    US_DataIO::Scan visc_scan;
    visc_scan.rvalues.reserve(Nx);
    dens_scan.rvalues.reserve(Nx);
-   dt = max(simparms.radial_resolution / 6 / min_D, 5.0); // set lower limit for dt to keep workload reasonable
+   dt = max(simparms.radial_resolution*simparms.radial_resolution / 6 / max_D, 1.0); // set lower limit for dt to keep workload reasonable
    dens_bfg_data.scanData.clear();
    visc_bfg_data.scanData.clear();
    int nstep = qCeil(duration/dt)+1;
@@ -370,25 +378,28 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
          break;
       }
       else if (runtime > 5000){
-         dt_scaling *= 1.005;
+         dt_scaling *= 1.05;
       }
       else if (runtime > 4000 ){
+         dt_scaling *= 1.01;
+      }
+      else if (runtime > 3600){
+         dt_scaling *= 1.005;
+      }
+      else if (runtime > 1800){
          dt_scaling *= 1.001;
       }
-      else if (runtime > 3000){
-         dt_scaling *= 1.0005;
-      }
-      else if (runtime > 2000){
-         dt_scaling *= 1.0001;
-      }
       else if (runtime > 1000){
-         dt_scaling += dt*0.01;
+         dt_scaling += dt*0.1;
+      }else if (runtime > 300){
+          dt_scaling += dt*0.05;
       }
       runtime += (dt + dt_scaling);
       scan_count++;
+      DbgLv(2) << "BFG:CG: scan dt dt_scaling runtime" << scan_count << dt << dt_scaling << runtime;
    }
 
-   qDebug() << "Calculated BFG for" << Nx << "radial points and" <<scan_count<<"scans";
+   DbgLv(1) << "Calculated BFG for" << Nx << "radial points and" <<scan_count<<"scans";
    return false;
 }
 
@@ -397,7 +408,6 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, do
    double t0 = dens_bfg_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
    double t1 = dens_bfg_data.scanData[ 1 ].seconds;
    int scn = 2;                             // index to next scan to use
-   int Nt = dens_bfg_data.scanCount() - 3;       // scan count less two used here
    double* Ds0;      // density for the 1st time interval
    double* Ds1;      // density for the 2nd time interval
    double* Vs0;      // viscosity for the 1st time interval
@@ -419,29 +429,19 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, do
    Vs1 = tmpVs1.data();
    xs = tmpxs.data();
 
-
-
-
-   for ( int j = 0; j < Nx; j++ ) {  // get 1st two salt arrays from 1st two salt scans
-      Ds0[ j ] = dens_bfg_data.value(0, j);
-      Ds1[ j ] = dens_bfg_data.value(1, j);
-      Vs0[ j ] = visc_bfg_data.value(0, j);
-      Vs1[ j ] = visc_bfg_data.value(1, j);
-      xs[ j ] = dens_bfg_data.xvalues[ j ];
-   }
-   while ((t1 < t) && (Nt > 0)) {  // walk down salt scans until we are straddling desired time value
+   while ((t1 < t) && scn < dens_bfg_data.scanCount()) {  // walk down salt scans until we are straddling desired time value
       t0 = t1;
       t1 = dens_bfg_data.scanData[ scn ].seconds;
-      Nt--;             // Nt = time level left
       scn++;
-      DbgLv(3) << "SaltD:ntrp:      0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
+      DbgLv(3) << "SaltD:ntrp:      0 t 1" << t0 << t << t1 << "  N s" << scn;
    }
-   DbgLv(2) << "SaltD:ntrp:   t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
+   DbgLv(2) << "SaltD:ntrp:   t0 t t1" << t0 << t << t1 << "  Nt scn" << scn;
    for ( int j = 0; j < Nx; j++ ) {  // get 1st two salt arrays from 1st two salt scans
       Ds0[ j ] = dens_bfg_data.value(scn-2, j);
       Ds1[ j ] = dens_bfg_data.value(scn-1, j);
       Vs0[ j ] = visc_bfg_data.value(scn-2, j);
       Vs1[ j ] = visc_bfg_data.value(scn-1, j);
+      xs[ j ] = dens_bfg_data.xvalues[ j ];
    }
    // interpolate between t0 and t1
    double et1 = (t - t0) / (t1 - t0);
@@ -454,25 +454,24 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, do
 
    // interpolate between xs[k-1] and xs[k]
    int k = 1;
-   int Lx = Nx - 1;
    for ( int jf = 0; jf < N; jf++ )      // loop for all x[m]
    {
       double xj = x[ jf ];
-      while ( xj > xs[ k ] && k < Lx ) k++; // radial point
+      while ( xj > xs[ k ] && k < Nx - 1 ) k++; // radial point
 
       // linear interpolation
       int m = k - 1;
       if (xs[k]<xs[m] || xs[k] < xj || xs[m] > xj){
-         DbgLv(2)<<"radius corrupted";
+         DbgLv(3)<<"radius corrupted";
       }
       double xik = (xj - xs[ m ]) / (xs[ k ] - xs[ m ]);
       if (xik < 0.0 || xik > 1.0){
-         DbgLv(2) << "radius corrupted again";
+         DbgLv(3) << "radius corrupted again";
       }
       xik = (xik > 1.0) ? 1.0 : xik;
       xik = (xik < 0.0) ? 0.0 : xik;
       double xim = 1.0 - xik;
-      DbgLv(2) << "jf=" << jf << " k=" << k << " m=" << m << " xj=" << xj << " xs[k]" << xs[ k ] << " Lx=" << Lx
+      DbgLv(3) << "jf=" << jf << " k=" << k << " m=" << m << " xj=" << xj << " xs[k]" << xs[ k ] << " Nx=" << Nx
                << " xik=" << xik << " xim=" << xim;
       // interpolate linearly in both time and radius
       DensCosed[ jf ] += et0 * (xim * Ds0[ m ] + xik * Ds0[ k ]) + et1 * (xim * Ds1[ m ] + xik * Ds1[ k ]) - base_density;
