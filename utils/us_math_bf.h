@@ -164,13 +164,13 @@ public:
       //! \param ViscCosed The pointer to the start of the Viscosity array
       void interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed);
 
+       double dt;
    private:
       QMap<QString, std::array<double,2>> value_cache;
 
 
 
       int     Nx;       // number of points in radial direction
-      double dt;
       int     dbg_level;          // debug level
    };
 
