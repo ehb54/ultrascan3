@@ -26,7 +26,8 @@ class US_Edit : public US_Widgets
 	 // New constructor for automated read/upload/update
 	 US_Edit(QString auto_mode);
 
-	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir );
+	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currChInd );
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
