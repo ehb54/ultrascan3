@@ -20,7 +20,7 @@ US_LammAstfvm::Mesh::Mesh( double xl, double xr, int Nelem, int Opt ) {
    // constants
    MaxRefLev = 20;
    MonScale = 1;
-   MonCutoff = 1000;
+   MonCutoff = 10000;
    SmoothingWt = 0.7;
    SmoothingCyl = 4;
 
@@ -596,7 +596,7 @@ void US_LammAstfvm::CosedData::InterpolateCCosed(int N, const double *x, double 
 
       // interpolate between xs[k-1] and xs[k]
       int k = 1;
-      int Lx = Nx - 1;
+      int Lx = Nx;
       int knan = 0;
       double dens_coeff[6] = {0.0};               //!< The density coefficients.
       double visc_coeff[6] = {0.0};
@@ -617,11 +617,11 @@ void US_LammAstfvm::CosedData::InterpolateCCosed(int N, const double *x, double 
 
          // linear interpolation
          int m = k - 1;
-         if (xs[k]<xs[m] || xs[k] < xj || xs[m] > xj){
+         if ((xs[k]<xs[m] || xs[k] < xj || xs[m] > xj) && k == Lx){
             DbgLv(2)<<"radius corrupted";
          }
          double xik = (xj - xs[ m ]) / (xs[ k ] - xs[ m ]);
-         if (xik < 0.0 || xik > 1.0){
+         if ((xik < 0.0 || xik > 1.0) && k == Lx){
             DbgLv(2) << "radius corrupted again";
          }
          xik = (xik > 1.0) ? 1.0 : xik;
@@ -749,24 +749,84 @@ int US_LammAstfvm::calculate(US_DataIO::RawData &sim_data) {
    if (codiff_needed && (bandFormingGradient == nullptr || bandFormingGradient->is_empty || bandFormingGradient->dens_bfg_data.scanCount() == 0)) {
       param_s = model.components.first().s != 0.0 ? model.components.first().s : 1e-14;
       param_D = model.components.first().D;
-      dt = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
+      dt = log(param_b / param_m) / (param_w2 * param_s * 10000);
       for (US_Model::SimulationComponent &comp: model.components){
          double dt_temp;
          param_s = comp.s != 0.0 ? comp.s : 1e-14;
          param_D = comp.D;
-         dt_temp = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
+         dt_temp = log(param_b / param_m) / (param_w2 * param_s * 10000);
          int nts = af_data.scan.size();            // nbr. output times (scans)
          double true_dt_min = dt_temp;
          for ( int i = 1; i < nts; i++ ) {
             true_dt_min = min(true_dt_min, af_data.scan[ i ].time - af_data.scan[ i - 1 ].time);
          }
          if ( true_dt_min < dt_temp ) {
-            DbgLv(0) << "dt Problem dt=" << dt_temp << " true_dt_min=" << true_dt_min;
+            DbgLv(1) << "dt Problem dt=" << dt_temp << " true_dt_min=" << true_dt_min;
             dt_temp = true_dt_min / 1.5;
          }
          dt = min(dt,dt_temp);
       }
       bandFormingGradient->calculate_gradient(simparams,auc_data);
+//       QString visc_data = "visc_data.txt";
+//       QString dens_data = "dens_data.txt";
+//       {
+//           QFile myFile(dens_data);
+//           if (!myFile.open(QIODevice::WriteOnly)) {
+//               qDebug() << "Could not write to file:" << dens_data << "Error string:" << myFile.errorString();
+//               return 0;
+//           }
+//
+//
+//           QTextStream out(&myFile);
+//           QVector<QString> radius;
+//           foreach (double x, bandFormingGradient->dens_bfg_data.xvalues) {
+//               radius << QString::number(x, 'f', 4);
+//           }
+//           out << "radius";
+//                   for(int i = 0; i < bandFormingGradient->dens_bfg_data.scanCount(); i++) {
+//                   out << "; " << QString::number(i+1, 'f', 0)<< " " <<
+//                   QString::number(bandFormingGradient->dens_bfg_data.scanData[i].seconds) << " s";
+//               }
+//           out << Qt::endl;
+//           for (int r = 0; r < radius.count() - 1; r++) {
+//               out << radius.value(r);
+//                       for (int s = 0; s < bandFormingGradient->dens_bfg_data.scanCount(); s++) {
+//                       out << "; " << QString::number(bandFormingGradient->dens_bfg_data.reading(s,r), 'f', 6);
+//                   }
+//               out << Qt::endl;
+//           }
+//           myFile.flush();
+//           myFile.close();
+//       }
+//
+//       {
+//           QFile myFile(visc_data);
+//           if (!myFile.open(QIODevice::WriteOnly)) {
+//               qDebug() << "Could not write to file:" << visc_data << "Error string:" << myFile.errorString();
+//               return 0;
+//           }
+//
+//
+//           QTextStream out(&myFile);
+//           QVector<QString> radius;
+//           foreach (double x, bandFormingGradient->visc_bfg_data.xvalues) {
+//                   radius << QString::number(x, 'f', 4);
+//               }
+//           out << "radius";
+//           for(int i = 0; i < bandFormingGradient->visc_bfg_data.scanCount(); i++) {
+//               out << "; " << QString::number(i+1, 'f', 0);
+//           }
+//           out << Qt::endl;
+//           for (int r = 0; r < radius.count() - 1; r++) {
+//               out << radius.value(r);
+//               for (int s = 0; s < bandFormingGradient->visc_bfg_data.scanCount(); s++) {
+//                   out << "; " << QString::number(bandFormingGradient->visc_bfg_data.reading(s,r), 'f', 6);
+//               }
+//               out << Qt::endl;
+//           }
+//           myFile.flush();
+//           myFile.close();
+//       }
    }
    // update concentrations for each model component
    for ( int ii = 0; ii < model.components.size(); ii++ ) {
@@ -805,7 +865,7 @@ int US_LammAstfvm::solve_component(int compx) {
    double *u1p;
    double *dtmp;
    double total_t = (param_b - param_m) * 2.0 / (param_s * param_w2 * param_m);
-   dt = log(param_b / param_m) / (param_w2 * param_s * simparams.simpoints);
+   dt = log(param_b / param_m) / (param_w2 * param_s * 1000);
 
    int ntcc = (int) (total_t / dt) + 1;      // nbr. times in calculations
    int jt = 0;
@@ -818,12 +878,12 @@ int US_LammAstfvm::solve_component(int compx) {
    int N1u;
    int istep = compx * nts;
 
-   double true_dt_min = dt;
+   double true_dt_min = af_data.scan[0].time;
    for ( int i = 1; i < nts; i++ ) {
       true_dt_min = min(true_dt_min, af_data.scan[ i ].time - af_data.scan[ i - 1 ].time);
    }
    if ( true_dt_min < dt ) {
-      DbgLv(0) << "dt Problem dt=" << dt << " true_dt_min=" << true_dt_min;
+      DbgLv(1) << "dt Problem dt=" << dt << " true_dt_min=" << true_dt_min << "new dt" << true_dt_min / 1.5;
       dt = true_dt_min / 1.5;
    }
 
@@ -891,11 +951,11 @@ int US_LammAstfvm::solve_component(int compx) {
    conc1.resize(ncs);
    rads.resize(ncs);
 
-   Mesh *msh = new Mesh(param_m, param_b, 500, 0);
+   Mesh *msh = new Mesh(param_m, param_b, simparams.simpoints, 0);
 
    msh->InitMesh(param_s, param_D, param_w2);
-   int mropt = 1;                   // mesh refine option;
-
+   int mropt = 0;                   // mesh refine option;
+    double dt_old = dt;
    // make settings based on non-ideal case type
    if ( NonIdealCaseNo == 1 )                   // concentration-dependent
    {
@@ -906,6 +966,9 @@ int US_LammAstfvm::solve_component(int compx) {
    {
       SetNonIdealCase_2();
       mropt = 0;
+      dt = min(bandFormingGradient->dt,dt);
+      solut_t = af_data.scan[ nts - 1 ].time;  // true total time
+      ntc = (int) (solut_t / dt) + 1;
    } else if ( NonIdealCaseNo == 3 )              // compressibility
    {
       SetNonIdealCase_3(mropt, err_tol);
@@ -953,8 +1016,15 @@ int US_LammAstfvm::solve_component(int compx) {
          double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
          double base = sq(simparams.meniscus) + simparams.band_volume * 360.0 / (angl * plen * M_PI);
          double lamella_width = sqrt(base) - simparams.meniscus;
-         base = (msh->x[ jj ] - (simparams.meniscus + lamella_width)) / lamella_width;
-         u0[ kk ] = msh->x[ jj ] * sig_conc * exp(-pow(base, 4.0));   // C*r value
+         if (msh->x[ jj ] < simparams.meniscus + lamella_width){
+             u0[kk] = msh->x[ jj ] * sig_conc;
+         }
+         else
+         {
+//             base = (msh->x[jj] - (simparams.meniscus + lamella_width)) / lamella_width;
+//             u0[kk] = msh->x[ jj ] * sig_conc * exp(-pow(base, 4.0));   // C*r value
+             u0[kk] = 0.0;
+         }
       } else {
          u0[ kk ] = msh->x[ jj ] * sig_conc;   // C*r value
       }
@@ -1008,13 +1078,47 @@ int US_LammAstfvm::solve_component(int compx) {
 //ntc=ntcc;
    if ( dbg_level > 0 )
       tso << ntc << "\n";
-
+   double runtime = 0.0;
+   double dt_scaling = 0.0;
+   bool break_switch = false;
+   const double original_dt = dt;
    // main loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ ) {
       DbgLv(1) << "---------------------------------------";
       timer.restart();
-      t0 = dt * (double) jt;
-      t1 = t0 + dt;
+      if (NonIdealCaseNo == 2){
+          if (t0 > af_data.scan.last().time && !break_switch){
+              break_switch = true;
+          }
+          else if (t0 > af_data.scan.last().time && break_switch){
+              break;
+          }
+          else if (runtime > 5000){
+              dt_scaling *= 1.05;
+          }
+          else if (runtime > 4000 ){
+              dt_scaling *= 1.01;
+          }
+          else if (runtime > 3600){
+              dt_scaling *= 1.005;
+          }
+          else if (runtime > 1800){
+              dt_scaling *= 1.001;
+          }
+          else if (runtime > 1000){
+              dt_scaling += original_dt*0.1;
+          }else if (runtime > 300){
+              dt_scaling += original_dt*0.05;
+          }
+          t0 = runtime;
+          runtime += (original_dt + dt_scaling);
+          t1 = runtime;
+          dt = t1-t0;
+      }
+      else{
+          t0 = dt * (double) jt;
+          t1 = t0 + dt;
+      }
       ts = af_data.scan[ kt ].time;           // time at output scan
       while ( ts < t0 ) {
          int kt_old = kt;
@@ -1036,18 +1140,24 @@ int US_LammAstfvm::solve_component(int compx) {
          DbgLv(2) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
          DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[ 0 ] << u0[ 1 ] << u0[ 2 ] << u0[ N0u - 3 ] << u0[ N0u - 2 ]
                   << u0[ N0u - 1 ];
-         tso << QString("%12.5e %d %12.5e\n").arg(QString::number(t0), QString(N0), QString::number(u_ttl));
+         tso << QString("%1 %2 %3\n").arg(QString::number(t0,'f', 5), QString::number(N0), QString::number(u_ttl,'f', 5));
          for ( int j = 0; j < N0; j++ )
-            tso << QString("%10.6e \n").arg( x0[ j ]);
+            tso << QString("%1\n").arg( x0[ j ],0,'g',6);
          tso << QString("\n");
          for ( int j = 0; j < N0u; j++ )
-            tso << QString("%15.7e \n").arg(u0[ j ]);
+            tso << QString("%1\n").arg(u0[ j ],0,'g',7);
          tso << QString("\n\n");
       }
       ktime1 += (int) timer.restart();
 
       u1p0 = new double[N0u];
       LammStepSedDiff_P(t0, dt, N0 - 1, x0, u0, u1p0);
+//      for (int i = 0; i < N0u; i++){
+//          double v = u1p0[i];
+//          if (qAbs(v)< 1e-6){
+//              u1p0[i] = 0.0;
+//          }
+//      }
       ktime2 += (int) timer.restart();
 
       if ( MeshRefineOpt == 1 ) {
@@ -1066,7 +1176,12 @@ int US_LammAstfvm::solve_component(int compx) {
             x1[ jj ] = msh->x[ jj ];
 
          ProjectQ(N0 - 1, x0, u1p0, N1 - 1, x1, u1p);
-
+//          for (int i = 0; i < N1u; i++){
+//              double v = u1p[i];
+//              if (qAbs(v)< 1e-6){
+//                  u1p[i] = 0.0;
+//              }
+//          }
          delete[] u1;
          u1 = new double[N1u];
 
@@ -1078,6 +1193,12 @@ int US_LammAstfvm::solve_component(int compx) {
          ktime4 += (int) timer.restart();
          LammStepSedDiff_C(t0, dt, N0 - 1, x0, u0, N1 - 1, x1, u1p0, u1);
       }
+//       for (int i = 0; i < N1u; i++){
+//           double v = u1[i];
+//           if (qAbs(v)< 1e-6){
+//               u1[i] = 0.0;
+//           }
+//       }
       ktime5 += (int) timer.restart();
       // see if current scan is between calculated times; output scan if so
 
@@ -1141,12 +1262,13 @@ int US_LammAstfvm::solve_component(int compx) {
          }
          else
 #endif
-         {
-         emit new_time(af_data.scan[ kt ].time);
-         emit current_speed((int) af_data.scan[ kt ].rpm);
-         qApp->processEvents();
+          {
+              emit new_time(af_data.scan[kt].time);
+              emit current_speed((int) af_data.scan[kt].rpm);
+              qApp->processEvents();
+          }
          kt++;    // bump output time(scan) index
-         }
+
 
       if ( stopFlag ) break;
       } else {
@@ -1231,7 +1353,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
            cosed_comp_data.clear();
        }
        else if (!csD->is_empty && csD->cosed_components != nullptr){
-           DbgLv(0) << "reused old csD";
+           DbgLv(1) << "reused old csD";
            saltdata = csD;
          cosed_comp_data.clear();
          cosed_comp_data = saltdata->cosed_comp_data;
@@ -1256,7 +1378,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
          }
       }
       else if (!bfg->is_empty){
-         DbgLv(0) << "reused old bfg";
+         DbgLv(1) << "reused old bfg";
          bandFormingGradient = bfg;
          codiff_needed = true;
       }
@@ -1925,7 +2047,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
          if (dbg_level > 0){
             // calculate density and viscosity mean avg std
             DbgLv(2) << "#####################################";
-            DbgLv(2) << "LFVM:AdjustSD: dens visc: t" << t ;
+            DbgLv(2) << "LFVM:AdjustSD: dens visc: t" << t << param_s << param_D;
             double dimn = 9e+14;
             double dimx = 0.0;
             double diav = 0.0;
@@ -1937,17 +2059,12 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
 
             double dsum = 0.0;
             double vsum = 0.0;
-            double pdval = Dens[ 0 ];
-            double pvval = Visc[ 0 ];
 
-            for ( int jjj = 1; jjj < Nv; jjj++ ) {
+            for ( int jjj = 0; jjj < Nv; jjj++ ) {
                double dval = Dens[ jjj ];
                double vval = Visc[ jjj ];
-               double dltr = (x[jjj]-x[jjj-1])*0.5;
-               dsum += ((dval + pdval) * dltr);
-               vsum += ((vval + pvval) * dltr);
-               pvval = vval;
-               pdval = dval;
+               dsum += dval;
+               vsum += vval;
                dimn = (dimn < dval) ? dimn : dval;
                dimx = (dimx > dval) ? dimx : dval;
                vimn = (vimn < vval) ? vimn : vval;
@@ -1959,13 +2076,13 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
             diav /= (double) Nv;
             double didf = dimx - dimn;
             double didp = (double) (qRound(10000.0 * didf / diav)) / 100.0;
-            DbgLv(2) << "  Integral Density Min Max Mean" << dimn << dimx << diav;
+            DbgLv(2) << "  Density Min Max Mean" << dimn << dimx << diav;
             DbgLv(2) << "  ( range of" << didf << "=" << didp << " percent of mean )";
             DbgLv(2) << "-------------";
             viav /= (double) Nv;
             double vidf = vimx - vimn;
             double vidp = (double) (qRound(10000.0 * vidf / viav)) / 100.0;
-            DbgLv(2) << "  Integral Viscosity Min Max Mean" << vimn << vimx << viav;
+            DbgLv(2) << "  Viscosity Min Max Mean" << vimn << vimx << viav;
             DbgLv(2) << "  ( range of" << vidf << "=" << vidp << " percent of mean )";
          }
 
@@ -2004,7 +2121,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
                }
                //D_adj[ jj ] = qAbs( dA / visc );
             }
-            if (dbg_level > 0 && (sneg_in > 0 || dneg_in > 0) && (smin*smax < 0.0 || dmin*dmax < 0.0)){
+            if (dbg_level > 0){
                DbgLv(2) << "AdjSD:  s or D negative: t" << t << param_s << param_D << Nv;
                DbgLv(2) << "AdjSD:  smin smax sneg_in r(sneg_in)" << smin << smax << sneg_in << x[sneg_in];
                DbgLv(2) << "AdjSD:  dmin dmax dneg_in r(dneg_in)" << dmin << dmax << dneg_in << x[dneg_in];
@@ -2310,12 +2427,23 @@ void US_LammAstfvm::quadInterpolate(const double *x0, const double *u0, int N0, 
          (( ( xv - x2 ) * ( xv - x3 ) ) / ( ( x1 - x2 ) * ( x1 - x3 ) )) * y1 +
          (( ( xv - x1 ) * ( xv - x3 ) ) / ( ( x2 - x1 ) * ( x2 - x3 ) )) * y2 +
          (( ( xv - x1 ) * ( xv - x2 ) ) / ( ( x3 - x1 ) * ( x3 - x2 ) )) * y3;
+       double yv1    =
+               (( ( xv - x2 ) * ( xv - x3 ) ) / ( ( x1 - x2 ) * ( x1 - x3 ) )) * y1/x1 +
+               (( ( xv - x1 ) * ( xv - x3 ) ) / ( ( x2 - x1 ) * ( x2 - x3 ) )) * y2/x2 +
+               (( ( xv - x1 ) * ( xv - x2 ) ) / ( ( x3 - x1 ) * ( x3 - x2 ) )) * y3/x3;
+       if (abs(yv/xv-yv1)>1e-5){
+           qDebug() << "yv yv1 xv" << QString::number(yv,'e',7) << QString::number(yv1,'e',7) << QString::number(xv,'f',6);
+           qDebug() << "x1 y1" << QString::number(x1,'f',6) << QString::number(y1,'e',7);
+           qDebug() << "x2 y2" << QString::number(x2,'f',6) << QString::number(y2,'e',7);
+           qDebug() << "x3 y3" << QString::number(x3,'f',6) << QString::number(y3,'e',7);
+           qDebug() << "----";
+       }
 //y1 *= x1;
 //y2 *= x2;
 //y3 *= x3;
 
       // output interpolated concentration with r factor removed (C = (C*r)/r)
-      cout[ kk++ ] = yv / xv;
+      cout[ kk++ ] = yv1;
 //cout[ kk++ ] = yv;
    }
 

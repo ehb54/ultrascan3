@@ -244,6 +244,7 @@ US_Settings::set_us_debug( dbg_level );
    //-------------------------------------------------------------
    if (banddthr) {  // If band forming, hold data within thresholds
       //mfactex=mfactor;
+
       wdata = data_sets[d_offs]->run_data;
       data_threshold(&wdata, zerothr, linethr, maxod, mfactex);
    }
@@ -384,16 +385,8 @@ US_Settings::set_us_debug( dbg_level );
 // << model.components[0].s << model.components[0].f_f0
 // << model.components[0].mw << model.components[0].vbar20
 // << model.components[0].D << model.components[0].signal_concentration;
-            double buoyancyb       = 1.0 - model.components[0].vbar20 * dset->density;
-            double buoyancyw       = 1.0 - model.components[0].vbar20 * DENS_20W;
-            double s20w_correction = ( buoyancyw / buoyancyb ) * ( dset->viscosity / VISC_20W );
 
-            double K          = dset->temperature + K0;
 
-            double D20w_correction = ( K20 / K ) * ( dset->viscosity / VISC_20W );
-            // Convert to experimental space
-            model.components[0].s /= s20w_correction;
-            model.components[0].D /= D20w_correction;
 //DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
 // << model.components[0].s << model.components[0].f_f0
 // << model.components[0].mw << model.components[0].vbar20
@@ -447,6 +440,9 @@ US_Settings::set_us_debug( dbg_level );
             //DebugTime("BEG: clcr-NA-astfem");
             DbgLv(2) << "solve_sim_2: smeni sbott" << dset->simparams.meniscus << dset->simparams.bottom;
             if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+                // Convert to experimental space
+                model.components[0].s /= dset->s20w_correction;
+                model.components[0].D /= dset->D20w_correction;
                US_Astfem_RSA astfem_rsa(model, dset->simparams);
                DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 

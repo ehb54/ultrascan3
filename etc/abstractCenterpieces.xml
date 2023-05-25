@@ -160,5 +160,30 @@
      width="0" >
       <row pathlen="0.3" bottom="7.10" />
    </abstractCenterpiece> 
+   <abstractCenterpiece
+     id="13"
+     guid="30a5f2f8-b33a-42b8-a8a8-df077bf1b435"
+     name="Epon-BF-Lukas 2-channel SpinAnalytic"
+     materialName="Epon-Helmut"
+     channels="1"
+     shape="band forming"
+     maxRPM="60000"
+     angle="1.41"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+     id="14"
+     guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b431"
+     name="Epon-BF-Lukas 2-channel Beckman"
+     materialName="Epon-Helmut"
+     channels="1"
+     shape="band forming"
+     maxRPM="60000"
+     angle="2.78"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
+
 
 </abstractCenterpieces>

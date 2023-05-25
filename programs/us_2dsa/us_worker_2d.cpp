@@ -96,10 +96,10 @@ DbgLv(1) << "norm_size_from_get_result_worker_2d"<< workout.Anorm.size() ;
 int nn=workout.csolutes.size();
 int kk=nn/2;
 int ni=solutes_i.size();
-DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
- << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
- << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
- << solutes_i[0].c << solutes_i[ni-1].c;
+//DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
+// << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
+// << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+// << solutes_i[0].c << solutes_i[ni-1].c;
 }
 
 // run the worker thread
