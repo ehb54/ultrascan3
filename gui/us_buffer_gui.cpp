@@ -1910,27 +1910,37 @@ void US_BufferGuiNew::newAccepted() {
             lower_cosed[i.name] = i.clone();
 
       }
-      foreach (QString key, lower_cosed.keys()){
-         US_CosedComponent cosed_comp = lower_cosed.value(key);
-         // construct excess buffer
-         QList<US_CosedComponent> excess_buffer;
-         for (US_CosedComponent& excess_comp : buffer->cosed_component){
-            // append all cosed comps which are not overlaying and not the component itself
-            if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
-               excess_buffer << excess_comp;
-            }
-         }
-         DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
-                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
-         US_LowerCosedComponentRequester* coseddiag = new US_LowerCosedComponentRequester(excess_buffer,&cosed_comp);
-         coseddiag -> exec();
-         qApp->processEvents();
-         lower_cosed[key] = cosed_comp;
-         DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
-                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
-      }
-      // Determine the base of the buffer
       QMap<QString, US_CosedComponent> base;
+      if (lower_cosed.size() > 1){
+          foreach (QString key, lower_cosed.keys()){
+                  US_CosedComponent cosed_comp = lower_cosed.value(key);
+                  // construct excess buffer
+                  QList<US_CosedComponent> excess_buffer;
+                  for (US_CosedComponent& excess_comp : buffer->cosed_component){
+                      // append all cosed comps which are not overlaying and not the component itself
+                      if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
+                          excess_buffer << excess_comp;
+                      }
+                  }
+                  DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                           << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+                  US_LowerCosedComponentRequester* coseddiag = new US_LowerCosedComponentRequester(excess_buffer,&cosed_comp);
+                  coseddiag -> exec();
+                  qApp->processEvents();
+                  lower_cosed[key] = cosed_comp;
+                  DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                           << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+          }
+      }
+      else {
+          auto cosed_comp = lower_cosed.last();
+          cosed_comp.s_coeff = 0.0;
+          cosed_comp.d_coeff = 0.0;
+          base[cosed_comp.name] = cosed_comp.clone();
+      }
+
+      // Determine the base of the buffer
+
       for (US_CosedComponent cosed_comp: buffer->cosed_component) {
          if (cosed_comp.overlaying) { continue; } // overlaying components can't be part of the base of the buffer
          if (lower_cosed.contains(cosed_comp.name) &&
@@ -1941,7 +1951,7 @@ void US_BufferGuiNew::newAccepted() {
             base[cosed_comp.name] = cosed_comp;
          }
       }
-      if (base.size() == 0){
+      if (base.isEmpty()){
          // base is empty, throw error
          QMessageBox::critical( this,
                                 tr("Incompatible base buffer"),
@@ -1977,27 +1987,27 @@ void US_BufferGuiNew::newAccepted() {
          DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
                   << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
       }
-      foreach (QString key, lower_cosed.keys()){
-         US_CosedComponent cosed_comp = lower_cosed.value(key);
-         // construct excess buffer
-         QList<US_CosedComponent> excess_buffer;
-         for (US_CosedComponent& excess_comp : buffer->cosed_component){
-            // append all cosed comps which are not overlaying and not the component itself
-            if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
-               excess_buffer << excess_comp;
-            }
-         }
-         DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
-                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
-         US_CosedComponentRequester* coseddiag = new US_CosedComponentRequester(base, excess_buffer,&cosed_comp);
-         coseddiag -> exec();
-         qApp->processEvents();
-         lower_cosed[key] = cosed_comp;
-         DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
-                  << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+      if (lower_cosed.size() > 1){
+          foreach (QString key, lower_cosed.keys()){
+              US_CosedComponent cosed_comp = lower_cosed.value(key);
+              // construct excess buffer
+              QList<US_CosedComponent> excess_buffer;
+              for (US_CosedComponent& excess_comp : buffer->cosed_component){
+                  // append all cosed comps which are not overlaying and not the component itself
+                  if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
+                      excess_buffer << excess_comp;
+                  }
+              }
+              DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                       << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+              US_CosedComponentRequester* coseddiag = new US_CosedComponentRequester(base, excess_buffer,&cosed_comp);
+              coseddiag -> exec();
+              qApp->processEvents();
+              lower_cosed[key] = cosed_comp;
+              DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                       << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+          }
       }
-
-
 
       // Set density and viscosity to the base buffer to break no other existing code
       buffer->manual = true;
