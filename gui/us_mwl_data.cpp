@@ -1187,6 +1187,7 @@ DbgLv(1) << "MwDa:RdXML take_i" << att.value( "take_intensity" ).toString()
 int US_MwlData::set_celchnx( int ccx )
 {
 //DbgLv(1) << "SetCCX" << ccx;
+   if (ccx != -1)
    curccx    = qMax( 0, qMin( ccx, ( ncelchn - 1 ) ) );
 
    return curccx;
