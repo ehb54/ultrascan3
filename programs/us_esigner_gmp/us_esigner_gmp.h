@@ -43,6 +43,7 @@ class US_eSignaturesGMP : public US_Widgets
 
      private:
         QMap< QString, QString > gmp_run_details;
+        QMap< QString, QString > eSign_details;
         QMap< QString, QString > protocol_details;
         QList< US_InvestigatorData > investigators;
         QList< US_InvestigatorData > g_reviewers;
@@ -82,23 +83,18 @@ class US_eSignaturesGMP : public US_Widgets
 
         QComboBox*    cb_choose_operator;
         QComboBox*    cb_choose_rev;
-	// QComboBox*   cb_choose_rev1;
-	// QComboBox*   cb_choose_rev2;
-
-  
 
         QList< QStringList >  autoflowdata;
         US_SelectItem* pdiag_autoflow;
 
         bool      isEsignRecord;
-
+        
   //Download GMP Report form DB && Review, e-Sign, && upload back
        QPushButton* pb_loadreport_db;			   
        QPushButton* pb_view_report_db;
        QPushButton* pb_esign_report;
 
        QLineEdit*   le_loaded_run_db;
-
        QTextEdit*   te_fpath_info;			    
 
      public slots:
@@ -125,7 +121,10 @@ class US_eSignaturesGMP : public US_Widgets
        void addOpertoList( void );
        void removeOperfromList( void );
        void addRevtoList( void );
-       void removeRevfromList( void ); 
+       void removeRevfromList( void );
+       bool is_eSignProcessBegan( void );
+       void setUnsetPb_operRev( void );
+       QString compose_updated_admin_logJson( int, QString, QString );
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );
