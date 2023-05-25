@@ -1482,7 +1482,7 @@ void US_Astfem_Sim::plot( int step )
 
    // Set plot scale
    if ( simparams.band_forming )
-      scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc*2.0 );
+       scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
 
    else if ( system.coSedSolute >= 0 )
    {
@@ -1524,7 +1524,7 @@ void US_Astfem_Sim::plot( int step )
 
       for ( int j = 0; j < scan_count; j++ )
       {
-         for ( int k = 0; k < points; k++ )
+         for ( int k = 0; k < sim_datas[step].scanData[j].rvalues.size(); k++ )
             y[ j ][ k ] = sim_datas[ step ].value( j, k );
       }
 
@@ -1653,9 +1653,9 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 
 
       // Set plot scale
-      if ( simparams.band_forming )
-         scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc*2.0 );
-
+      if ( simparams.band_forming ) {
+          scanPlot->setAxisAutoScale(QwtPlot::yLeft);
+      }
       else if ( system.coSedSolute >= 0 )
       {
          scanPlot->setAxisAutoScale( QwtPlot::yLeft );
@@ -1683,11 +1683,10 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
          plotCurve->setPen ( QPen( mcolors[ scanx % nmcols ] ) );
       else
          plotCurve->setPen ( QPen( Qt::yellow ) );
-      plotCurve->attach    ( scanPlot );
       plotCurve->setSamples( r, c, x->size() );
-
+      plotCurve->attach    ( scanPlot );
       scanPlot->replot();
-
+      scanPlot->detachItems();
    }
    qApp->processEvents();
 //int k=x->size()-1;
