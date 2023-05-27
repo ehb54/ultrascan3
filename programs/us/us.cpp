@@ -203,7 +203,11 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                            ,QMessageBox::NoButton
                            );
   }
-
+  searchDialog = new US_SearchDialog(this);
+  connect(searchDialog->searchLineEdit, SIGNAL(textChanged(const QString &)),
+          this, SLOT(handleSearchTextChanged(const QString &)));
+  connect(searchDialog->searchResultsList, SIGNAL(itemSelectionChanged()),
+          this, SLOT(handleResultSelected()));
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
   QPoint p = g.global_position();
   setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
@@ -411,6 +415,72 @@ void US_Win::onIndexTriggered( int index )
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
   if ( index >= HELP     && index < HELP_END ) help  ( index );
 }
+
+void US_Win::handleSearchTextChanged(const QString &text) {
+
+   QString search_string = text;
+   QString search_end = search_string.endsWith(" ")?QString(" "):QString("");
+   search_string = search_string.simplified() + search_end;
+   searchDialog->searchLineEdit->setText(search_string);
+   search_string = search_string.simplified().toLower();
+   QStringList search_words = search_string.split(" ",Qt::SkipEmptyParts);
+   QStringList matches;
+   matches.clear();
+   QVector<int> ignored;
+   ignored << P_EXIT;
+   ignored << P_END;
+   for(const auto& program : p){
+      if (ignored.contains(program.index)) continue;
+      bool p_match = false;
+      foreach(QString search_word, search_words){
+         if (program.name.toLower().contains(search_word)) {
+            p_match = true;
+         }
+         else if (program.runningMsg.toLower().contains(search_word)){
+            p_match = true;
+         }
+         else if (program.publicName.toLower().contains(search_word)){
+             p_match = true;
+         }
+         else {
+            p_match = false;
+            break;
+         }
+      }
+      if (p_match && !matches.contains(program.publicName)){
+          matches << program.publicName;
+          searchDialog->progam_matches[program.publicName] = program.index;
+      }
+   }
+   searchDialog->searchResultsList->clear();
+   searchDialog->searchResultsList->clearSelection();
+   for(const auto& m_p: matches) {
+       auto item = new QListWidgetItem(searchDialog->searchResultsList);
+       item->setText(m_p);
+       searchDialog->searchResultsList->addItem(item);
+
+   }
+   if (searchDialog->searchResultsList->count() == 0){
+      searchDialog->searchResultsList->addItem(QString("No Program found"));
+   }
+}
+
+void US_Win::handleResultSelected() {
+   if (searchDialog->searchResultsList->selectedItems().size() == 0){ return;}
+   QList<QListWidgetItem*> selected_programs = searchDialog->searchResultsList->selectedItems();
+   if (selected_programs[0]->text() == QString("No Program found")){
+       setFocus();
+   }
+   QString program = selected_programs[0]->text();
+   qDebug() << program << searchDialog->progam_matches.contains(program);
+   if (searchDialog->progam_matches.contains(program)){
+      launch(searchDialog->progam_matches.value(program));
+   }
+   else{
+       searchDialog->close();
+   }
+}
+
 
 void US_Win::terminated( int code, QProcess::ExitStatus status )
 {
@@ -819,6 +889,22 @@ void US_Win::apply_prefs()
    bigframe->setPalette( US_GuiSettings::frameColor() );
 
    show();
+}
+
+void US_Win::keyPressEvent(QKeyEvent *event)
+{
+    qDebug() << "keypress called";
+    if (!isActiveWindow()){
+        return;
+    }
+    // Open search dialog on any key press
+    searchDialog->searchLineEdit->setText(event->text());
+    searchDialog->show();
+    searchDialog->setFocus();
+    searchDialog->searchLineEdit->setFocus();
+
+    // Pass the event to the base class
+    QMainWindow::keyPressEvent(event);
 }
 
 // Check for posted US3 notices

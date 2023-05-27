@@ -7,7 +7,7 @@
 
 #include "us_global.h"
 #include "us_help.h"
-
+#include "us_search.h"
 //! \brief UltraScan initial screen
 
 class US_Win : public QMainWindow
@@ -28,6 +28,10 @@ public:
   //! Destructor for US_Win.  Resets position in global memory. 
   ~US_Win();
 
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
+
 private:
   US_Global  g;
   QLabel*    bigframe;
@@ -35,7 +39,8 @@ private:
   QLabel*    splash_shadow;
   US_Help    showhelp;
   QDateTime  ln_time;                // Last notice-check time
-  
+  US_SearchDialog* searchDialog;
+
   void addMenu( int, const QString&, QMenu* );
   void splash ( void );
   void logo   ( int );
@@ -59,6 +64,8 @@ private slots:
   void terminated      ( int, QProcess::ExitStatus );
   void closeEvent      ( QCloseEvent* );
   void closeProcs      ( void );
+  void handleSearchTextChanged(const QString &text);
+  void handleResultSelected( void );
 };
 
 //////////////
