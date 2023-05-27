@@ -44,10 +44,10 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     int b = option.rect.bottom() - 1;
     QString title = index.data(Qt::DisplayRole).toString();
     QString description = index.data(Qt::UserRole + 2).toString();
-    r = option.rect.adjusted(5, 0, -5, -14);
+    r = option.rect.adjusted(5, 5, -5, -5);
     painter->setFont(QFont( US_GuiSettings::fontFamily(),
-                            US_GuiSettings::fontSize(), QFont::Bold));
-    painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignBottom|Qt::AlignLeft|Qt::TextWordWrap, title, &r);
+                            US_GuiSettings::fontSize()+3, QFont::Bold));
+    painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignVCenter|Qt::AlignLeft|Qt::TextWordWrap, title, &r);
     painter->setClipping(true);
     painter->setClipRect(option.rect);
 
