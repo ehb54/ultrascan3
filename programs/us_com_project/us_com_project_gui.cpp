@@ -2450,8 +2450,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
 
       if ( uID == current_reviewer_id )
 	{
-	  yesRev = true;
-	  return yesRev;
+	  return true;
 	}
     }
 
@@ -2464,8 +2463,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
 
       if ( uID == current_reviewer_id )
 	{
-	  yesRev = true;
-	  return yesRev;
+	  return true;
 	}
     }
   

@@ -2993,7 +2993,8 @@ void US_ReporterGMP::generate_report( void )
       
     }
   //End of Part 2
-  
+
+  //Create .PDF file && write to Db:
   write_pdf_report( );
   qApp->processEvents();
 
@@ -3003,6 +3004,30 @@ void US_ReporterGMP::generate_report( void )
     {
 
       pb_view_report_auto->setVisible( true );
+
+      /******* NOTES ********************
+	       
+	       1. Check if GMP Report is set for e-Signature: 
+	          -- if operator(s) / reviewer(s) are assigned:
+	       
+	       2. If YES, assigned: 
+	          -- inform user that they are assigned && those assignees will re-attach later;
+		  -- do NOT let to proceed to 7. e-Signatures
+		  -- still enable to View GMP Report
+		  -- update autoflow's status to 'E-SIGNATURE'
+	       
+	       3. If NOT, not assiged: 
+	          -- if ADMIN (OR, an admin who can assign reviewer(s)), offer to assign: 
+		        ** add button to open us_esigner [assigner section]
+			** while assigned, inform that assignees will re-attach later;
+			** do NOT let to proceed to 7. e-Signatures
+			** still enable to View GMP Report
+			** update autoflow's status to 'E-SIGNATURE'
+		  -- if NON-ADMIN:
+		        ** just enable to View
+			** update autoflow's status to 'E-SIGNATURE'
+	       
+       ***************************/
 
       //copy autoflow record to autoflowHistory table:
       //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
@@ -3034,7 +3059,6 @@ void US_ReporterGMP::generate_report( void )
       qry.clear();
       qry << "delete_autoflow_stages_record" << AutoflowID_auto;
       db->statusQuery( qry );
-
       //END of copy to History, deletion of primary autoflow record
       
       

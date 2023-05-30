@@ -207,8 +207,9 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
   connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
+
   
-  //for eSigning selected GMP Run
+  //for eSigning selected GMP Run's Report with Assigned Operator && Reviewers
   QGridLayout* eSignGMPRunGrid     = new QGridLayout();
   eSignGMPRunGrid->setSpacing        ( 2 );
   eSignGMPRunGrid->setContentsMargins( 1, 1, 1, 1 );
@@ -216,7 +217,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   QLabel* bn_eSignGMP     = us_banner( tr( "Manage e-Signatures for GMP Run:" ), 1 );
   bn_eSignGMP -> setFixedHeight  (1.5 * RowHeight);
 
-  pb_loadreport_db          =  us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
+  pb_loadreport_db          =  us_pushbutton( tr( "Load GMP Report from DB (.PDF) with Assigned Reviewers" ) );
   pb_view_report_db         =  us_pushbutton( tr( "Review Downloaded Report" ) );
   pb_esign_report           =  us_pushbutton( tr( "e-Sign Report" ) );
 
@@ -239,7 +240,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   row = 0;
   eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0, 1,  14 );
 
-  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,    0, 1,  6);
+  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,    0, 1,  7);
   
   eSignGMPRunGrid -> addWidget( lb_loaded_run_db,   row,      0, 1,  3);
   eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      3, 1,  4);
@@ -251,7 +252,9 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   eSignGMPRunGrid -> addWidget( pb_esign_report,    row++,    8,  1,  4 );
   
-
+  connect( pb_loadreport_db, SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned() ) );
+  
+  
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
   mainLayout -> addLayout( revOperGMPRunGrid );
@@ -1042,7 +1045,8 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
 	  eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
 	  eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
 	  eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
-
+	  
+	  eSign_record[ "isEsignRecord" ]        = QString("YES");
 	  isEsignRecord = true;
 	}
     }
@@ -1051,6 +1055,7 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
       //No record, so no oper/revs assigned!
       qDebug() << "No e-Sign GMP record exists!!";
 
+      eSign_record[ "isEsignRecord" ]        = QString("NO");
       isEsignRecord = false;
       eSign_record. clear();
 
@@ -1476,7 +1481,7 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 		       << newObj["timeData"]  .toString();
 	    }
 	}
-      // END DEBUG: There is/are e-Signee already; 
+      // END DEBUG: There is/are e-Signee(s) already; 
       isBegan = true;
     }
   return isBegan;
@@ -1512,4 +1517,225 @@ QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fn
   QString composedJson = e_logJson + logJsonUpdateTime;
 
   return composedJson;
+}
+
+//Load GMP Report form Db with assigned operator(s) && reviewer(s)
+void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
+{
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+  
+  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+
+  QString pdtitle( tr( "Select GMP Report" ) );
+  QStringList hdrs;
+  int         prx;
+  
+  hdrs << "ID"
+       << "Run Name"
+    //<< "Protocol Name"
+       << "Created"
+       << "Filename (.pdf)";
+         
+  QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  QString gmpReport_id_selected("");
+  QString gmpReport_runname_selected("");
+  QString gmpReport_runname_selected_c("");
+  QString gmpReport_filename_pdf ("");
+  
+  if ( pdiag_autoflow_db->exec() == QDialog::Accepted )
+    {
+      gmpReport_id_selected        = gmpReportsDBdata[ prx ][ 0 ];
+      gmpReport_runname_selected_c = gmpReportsDBdata[ prx ][ 1 ];
+      gmpReport_filename_pdf       = gmpReportsDBdata[ prx ][ 3 ];
+
+      pb_view_report_db -> setEnabled( false );
+      te_fpath_info  -> setText( "" );
+    }
+  else
+    return;
+
+  //read 'data' .tar.gz for autoflowGMPReport record:
+  if ( gmpReport_runname_selected_c.  contains("combined") )
+    {
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
+      gmpReport_runname_selected. simplified();
+    }
+  else
+    gmpReport_runname_selected = gmpReport_runname_selected_c;
+  
+  QString subDirName = gmpReport_runname_selected + "_GMP_DB";
+  mkdir( US_Settings::reportDir(), subDirName );
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+
+  //Clean folder (if exists) where .tar.gz to be unpacked
+  QStringList f_exts = QStringList() <<  "*.*";
+  QString i_folder = dirName + "/" + gmpReport_runname_selected;
+  remove_files_by_mask( i_folder, f_exts );
+
+  QString GMPReportfname = "GMP_Report_from_DB.tar";
+  QString GMPReportfpath = dirName + "/" + GMPReportfname;
+  
+  int db_read = db.readBlobFromDB( GMPReportfpath,
+				   "download_gmpReportData",
+				   gmpReport_id_selected.toInt() );
+
+  if ( db_read == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + GMPReportfpath + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+
+      return;
+    }
+  else if ( db_read != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   GMPReportfpath + "\n" + db.lastError() + "\n");
+
+      return;
+    }
+  
+  // <--- TESTING: tried .tar.gz - NOT compatible (even for different Linux distros...) ****
+  // //Un-tar using system TAR && enable View Report btn:
+  // QProcess *process = new QProcess(this);
+  // process->setWorkingDirectory( dirName );
+  // process->start("tar", QStringList() << "-zxvf" << GMPReportfname );
+  // END TESTING ****************************************************************************
+  
+  // // Using .tar (NOT gzip: .tgz or tar.gz !!!)
+  QProcess *process = new QProcess(this);
+  process->setWorkingDirectory( dirName );
+  process->start("tar", QStringList() << "-xvf" << GMPReportfname );
+    
+  QString filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
+  qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+
+  //Gui fields
+  le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
+  pb_view_report_db -> setEnabled( true );
+  te_fpath_info     -> setText( filePath_db );
+
+  //Inform user of the PDF location
+  QMessageBox msgBox;
+  msgBox.setText(tr("Report PDF Ready!"));
+  msgBox.setInformativeText(tr( "Report was downloaded form DB in .PDF format and saved at: \n%1\n\n"
+				"When this dialog is closed, the report can be re-opened by clicking \'View Downloaded Report\' button on the left.")
+			    .arg( filePath_db ) );
+  
+  msgBox.setWindowTitle(tr("GMP Report Downloaded"));
+  QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
+  //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+  
+  msgBox.setIcon(QMessageBox::Information);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Open)
+    {
+      view_report_db( filePath_db );
+    }  
+
+}
+
+
+// Get .pdf GMP reports with assigned reviewers:
+int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+{
+  int nrecs        = 0;   
+  gmpReportsDBdata.clear();
+
+  QStringList qry;
+  qry << "get_autoflowGMPReport_desc";
+  db->query( qry );
+
+  while ( db->next() )
+    {
+      QStringList gmpreportentry;
+      QString id                     = db->value( 0 ).toString();
+      QString autoflowHistoryID      = db->value( 1 ).toString();
+      QString autoflowHistoryName    = db->value( 2 ).toString();
+      QString protocolName           = db->value( 3 ).toString();
+      QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
+      QString filenamePdf            = db->value( 5 ).toString();
+
+      //check if report has assigned operator(s) & reviewer(s)
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( autoflowHistoryID );
+      QString operatorListJson  = eSign[ "operatorListJson" ];
+      QString reviewersListJson = eSign[ "reviewersListJson" ];
+      QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
+
+      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
+      QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operatorListJson .toUtf8() );
+  
+      if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
+	   && !operatorListJson.isEmpty() && reviewersListJson.isEmpty() )
+      	{
+	  gmpreportentry << id << autoflowHistoryName // << protocolName
+			 << time_created.toString() << filenamePdf;
+	  gmpReportsDBdata << gmpreportentry;
+	  nrecs++;
+	}
+    }
+
+  return nrecs;
+}
+
+
+
+//remove files by extension from dirPath
+void US_eSignaturesGMP::remove_files_by_mask( QString dirPath, QStringList file_exts )
+{
+  QDir dir( dirPath );
+  dir.setNameFilters(file_exts);
+  dir.setFilter(QDir::Files);
+  foreach( QString dirFile, dir.entryList() ) 
+    {
+      dir.remove(dirFile);
+    }
+}
+
+//view report DB
+void US_eSignaturesGMP::view_report_db ( QString  filePath_db )
+{
+  qDebug() << "Opening PDF (for downloaded form DB) at -- " << filePath_db;
+
+  QFileInfo check_file( filePath_db );
+  if (check_file.exists() && check_file.isFile())
+    {
+      //Open with OS's applicaiton settings ?
+      QDesktopServices::openUrl(QUrl( filePath_db ));
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Error: Cannot Open .PDF File" ),
+			    tr( "%1 \n\n"
+				"No such file or directory...") .arg( filePath_db ) );
+    }
+}
+
+
+// Create a subdirectory if need be
+bool US_eSignaturesGMP::mkdir( const QString& baseDir, const QString& subdir )
+{
+   QDir folder( baseDir );
+
+   if ( folder.exists( subdir ) ) return true;
+
+   if ( folder.mkdir( subdir ) ) return true;
+
+   QMessageBox::warning( this,
+      tr( "File error" ),
+      tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
+
+   return false;
 }

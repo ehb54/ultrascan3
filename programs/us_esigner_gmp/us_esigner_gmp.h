@@ -86,7 +86,7 @@ class US_eSignaturesGMP : public US_Widgets
 
         QList< QStringList >  autoflowdata;
         US_SelectItem* pdiag_autoflow;
-
+        
         bool      isEsignRecord;
         
   //Download GMP Report form DB && Review, e-Sign, && upload back
@@ -96,7 +96,9 @@ class US_eSignaturesGMP : public US_Widgets
 
        QLineEdit*   le_loaded_run_db;
        QTextEdit*   te_fpath_info;			    
-
+       US_SelectItem* pdiag_autoflow_db;
+       QList< QStringList >  gmpReportsDBdata;
+				 
      public slots:
 
      private slots:
@@ -125,6 +127,11 @@ class US_eSignaturesGMP : public US_Widgets
        bool is_eSignProcessBegan( void );
        void setUnsetPb_operRev( void );
        QString compose_updated_admin_logJson( int, QString, QString );
+       void loadGMPReportDB_assigned( void );
+       int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
+       void  remove_files_by_mask( QString, QStringList );
+       void view_report_db ( QString );
+       bool    mkdir         ( const QString&, const QString& );
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );
