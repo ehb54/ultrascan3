@@ -837,6 +837,7 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
    DbgLv(1) << "User Level: " << US_Settings::us_inv_level();
    qDebug() << "NEW invID: " << investID;
+   //qDebug() << "InvID from currProto: " << currProto->investigator.split(":")[0];
 
 
    // ALEXEY: Re-read in summary information on all existing run protocols when user changed
@@ -7553,8 +7554,9 @@ void US_ExperGuiUpload::submitExperiment()
     	   }
 	   
          protocol_details[ "duration" ]       = QString::number(Total_duration);
-         protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
-         protocol_details[ "correctRadii" ]   = QString("YES");
+         //protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID()); 
+	 protocol_details[ "invID_passed" ]   = currProto->investigator.split(":")[0];
+	 protocol_details[ "correctRadii" ]   = QString("YES");
          protocol_details[ "expAborted" ]     = QString("NO");
 
          protocol_details[ "label" ]          = currProto->exp_label;
