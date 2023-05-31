@@ -254,6 +254,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   
   connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned() ) );
   connect( pb_view_report_db, SIGNAL( clicked() ), SLOT ( view_report_db() ) );
+  connect( pb_esign_report, SIGNAL( clicked() ), SLOT ( esign_report() ) );
+
   
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
@@ -1433,7 +1435,7 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 	              { "Oper1": 
 	                      { 
 			        "Comment"  : "Explanation",
-			        "timeData" : "timestamp"
+			        "timeDate" : "timestamp"
 			      }},
 		      { "Oper2" :
 		              {
@@ -1476,9 +1478,9 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeData -- "
+	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
 		       << newObj["Comment"]   .toString()
-		       << newObj["timeData"]  .toString();
+		       << newObj["timeDate"]  .toString();
 	    }
 	}
       // END DEBUG: There is/are e-Signee(s) already; 
@@ -1542,7 +1544,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
        << "Run Name"
     //<< "Protocol Name"
        << "Created"
-       << "Filename (.pdf)";
+       << "Filename (.pdf)"
+       << "GMP Run ID";
          
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
@@ -1552,12 +1555,13 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   QString gmpReport_runname_selected("");
   QString gmpReport_runname_selected_c("");
   QString gmpReport_filename_pdf ("");
-  
+        
   if ( pdiag_autoflow_db->exec() == QDialog::Accepted )
     {
       gmpReport_id_selected        = gmpReportsDBdata[ prx ][ 0 ];
       gmpReport_runname_selected_c = gmpReportsDBdata[ prx ][ 1 ];
       gmpReport_filename_pdf       = gmpReportsDBdata[ prx ][ 3 ];
+      gmpRunID_eSign               = gmpReportsDBdata[ prx ][ 4 ];
 
       pb_view_report_db -> setEnabled( false );
       te_fpath_info  -> setText( "" );
@@ -1565,6 +1569,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   else
     return;
 
+  
   //read 'data' .tar.gz for autoflowGMPReport record:
   if ( gmpReport_runname_selected_c.  contains("combined") )
     {
@@ -1624,6 +1629,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   //Gui fields
   le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
   pb_view_report_db -> setEnabled( true );
+  pb_esign_report   -> setEnabled( true );
   te_fpath_info     -> setText( filePath_db );
 
   //Inform user of the PDF location
@@ -1645,6 +1651,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
       view_report_db();
     }  
 
+  qDebug() << "After download GMP Report, gmpRunID_eSign -- " << gmpRunID_eSign;
 }
 
 
@@ -1686,7 +1693,9 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
 	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << time_created.toString() << filenamePdf;
+			 << time_created.toString()
+			 << filenamePdf
+			 << autoflowHistoryID;
 	  gmpReportsDBdata << gmpreportentry;
 	  nrecs++;
 	}
@@ -1743,4 +1752,298 @@ bool US_eSignaturesGMP::mkdir( const QString& baseDir, const QString& subdir )
       tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
 
    return false;
+}
+
+
+//eSign GMP Report
+void US_eSignaturesGMP::esign_report( void )
+{
+  //first, check if you (as logged in user) are among listed operators && reviewers
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  
+  QStringList qry;
+  //Check user level && ID
+  qry <<  QString( "get_user_info" );
+  db.query( qry );
+  db.next();
+  int u_ID        = db.value( 0 ).toInt();
+  QString u_fname = db.value( 1 ).toString();
+  QString u_lname = db.value( 2 ).toString();
+          
+  qDebug() << "eSign: user_id, gmpRunID_eSign -- "
+	   << u_ID << gmpRunID_eSign;
+  
+  QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( gmpRunID_eSign );
+  QString operatorListJson  = eSign[ "operatorListJson" ];
+  QString reviewersListJson = eSign[ "reviewersListJson" ];
+  QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
+  QString eSignStatusAll    = eSign[ "eSignStatusAll" ];
+  QString eSignID           = eSign[ "ID" ];
+
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operatorListJson .toUtf8() );
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
+  
+  qDebug() << "eSign: operatorListJson, reviewersListJson,  eSignStatusAll -- "
+	   << operatorListJson << reviewersListJson << eSignStatusAll;
+
+  QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
+  if (!jsonDocEsign.isObject())
+    {
+      qDebug() << "to_eSign(): ERROR: eSignStatusJson: NOT a JSON Doc !!";
+      return;
+    }
+  
+  const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDocEsign.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+  //to_sign:
+  if ( to_esign.isUndefined() || to_esign_array.size() == 0
+       || !to_esign_array.size() || eSignStatusAll == "YES" )
+    {
+      qDebug() << "to_eSign(): All signatures have been collected; noone left to e-sign !!";
+
+      QMessageBox::information( this, tr( "GMP Report e-Signed" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font>" 
+				    "All parties e-Signed current GMP Report!" ));
+				       
+      return;
+    }
+
+  //Check if the person among reviewers, OR if the person already e-signed:
+  //ro_sign section:
+  bool yesToSign = false;
+  for (int i=0; i < to_esign_array.size(); ++i )
+    {
+      QString current_reviewer = to_esign_array[i].toString();
+      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+
+      if ( u_ID == current_reviewer_id.toInt() )
+	{
+	  yesToSign = true;
+	  break;
+	}
+    }
+
+  //signed section:
+  bool yesWasSigned = false;
+  if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
+      qDebug() << "to_eSign(): Nothing has been e-Signed yet !!!";
+  else
+    {
+      qDebug() << "to_eSign(): Some parties have e-Signed already !!!";
+      for (int i=0; i < esigned_array.size(); ++i )
+	{
+	  foreach(const QString& key, esigned_array[i].toObject().keys())
+	    {
+	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	      
+	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+		       << newObj["Comment"]   .toString()
+		       << newObj["timeDate"]  .toString();
+
+	      QString current_reviewer = key;
+	      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+
+	      if ( u_ID == current_reviewer_id.toInt() )
+		{
+		  qDebug() << "Current user, " << key << ", has already e-Signed!";
+		  yesWasSigned = true;
+		  break;
+		}
+	    }
+	}
+    }
+  //END of verifying user in toSign, has already e-Signed  ///////////
+
+  QString msg_current_user;
+  if ( !yesToSign )
+    {
+      if ( !yesWasSigned )
+	{
+	  //inform user he is NOT either operator || assigned reviewer
+	  msg_current_user = tr("<font color='red'><b>ATTENTION:</b> </font>" 
+				"You cannot e-Sign!<br><br>"
+				"You are not among assigned operator(s), or reviewer(s)<br>"
+				"for downloaded GMP Report.");
+	}
+      else
+	{
+	  msg_current_user = tr("<font color='red'><b>ATTENTION:</b> </font>" 
+				"You cannot e-Sign!<br><br>"
+				"You have already e-Signed current GMP Report.");
+	}
+      
+      QMessageBox::information( this, tr( "Not Eligible for e-Signing" ),
+				msg_current_user );
+      
+      return;
+    }
+
+  //QDialog for an e-Signee's Comment:
+  QString user_esignee = u_lname + ", " + u_fname;
+  bool ok;
+  QString msg = QString(tr("e-Sign: comment by <b>%1</b>").arg( user_esignee ) );
+  QString default_text = QString(tr("e-Sign Comment: "));
+  QString comment_t    = QInputDialog::getText( this,
+						tr( "e-Sign Comment" ),
+						msg, QLineEdit::Normal, default_text, &ok );
+  
+  if ( !ok )
+    {
+      qDebug() << "e-Signee refused to comment...";
+      return;
+    }
+
+  //OK, eSign downloaded GMP Report
+  //Compose/Update eSignStatusJson && eSignStatusAll:
+
+  QString eSignStatusAll_updated;
+  QString eSignStatusJson_updated = compose_updated_eSign_Json( u_ID, u_fname, u_lname, to_esign_array,
+								esigned_array, comment_t, eSignStatusAll_updated );
+  
+  qry.clear();
+  qry << "update_gmp_review_record_by_esigner"
+      << eSignID
+      << gmpRunID_eSign
+      << eSignStatusJson_updated
+      << eSignStatusAll_updated;
+
+  qDebug() << "e-Sign(): qry -- " << qry;
+
+  db.query( qry );
+
+  //msg:
+  QString msg_f = QString( tr("<font color='red'><b>SUCCESS:</b> </font><br><br>"
+			      "Operator | Reviewer, <br>"
+			      "<b>%1,</b><br>"
+			      "successfully e-Signed GMP report.")
+			   .arg( user_esignee ) );
+			
+  if ( eSignStatusAll_updated == "YES" )
+    msg_f += tr("<br><br>All parties e-signed the report!");
+  
+  QMessageBox::information( this, tr( "Successful e-Signing" ),
+			    msg_f );
+}
+
+
+//Compose /Update eSignStatusJson:
+QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname, QString u_lname,
+						       QJsonArray to_esign_array,  QJsonArray esigned_array,
+						       QString comment_esignee, QString& eSignStatusAll_updated )
+{
+  /****
+     Proposed JSON Struncture of eSignStatusJson:
+     { 
+        "to_sign": ["Rev1","Rev2"],       <===== ORIGINALLY, full combined list of Oper(s) && Rev(s)
+	                                         i.e. ["Oper1","Oper2",..., "Rev1","Rev2",..]
+	"signed" : [
+	              { "Oper1": 
+	                      { 
+			        "Comment"  : "Explanation",
+			        "timeDate" : "timestamp"
+			      }},
+		      { "Oper2" :
+		              {
+			        Same ...
+			      }}
+		    ]
+     }
+   ****/
+  
+  QString statusJson = "{";
+
+  // "to_sign" section:
+  QString to_sign_str = "\"to_sign\":[";
+  QString current_esignee;
+  int esignees_left = 0;
+    
+  for (int i=0; i < to_esign_array.size(); ++i )
+    {
+      QString current_reviewer = to_esign_array[i].toString();
+      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+
+      qDebug() << "Curr reviewer: " << current_reviewer;
+
+      if ( u_ID == current_reviewer_id.toInt() )
+	{
+	  current_esignee = "{\"" + current_reviewer  + "\":";
+	  continue;
+	}
+
+      ++esignees_left;
+      to_sign_str += "\"" + current_reviewer + "\",";
+    }
+  
+  
+  //update global e-Sign status:
+  if ( !esignees_left )
+    {
+      eSignStatusAll_updated = "YES";
+    }
+  else
+    {
+      eSignStatusAll_updated = "NO";
+      to_sign_str.chop(1);
+    }
+  to_sign_str += "],";
+  
+  
+  // "esigned" section":
+  QString esigned_str = "\"signed\":[";
+
+  //Comment for current e-Signee:
+  current_esignee += "{\"Comment\":\"" + comment_esignee + "\",";
+
+  //TimeDate fro current e-signee:
+  QDateTime date = QDateTime::currentDateTime();
+  QString timedate_esignee = date.toString("MM-dd-yyyy hh:mm:ss");
+  current_esignee += "\"timeDate\":\"" + timedate_esignee + "\"}}";
+  
+  if (  esigned_array.size() == 0 || !esigned_array.size() )
+    {
+      //1st time e-Signing:
+      esigned_str += current_esignee;
+    }
+  else
+    {
+      QString existing_esignees;
+      for (int i=0; i < esigned_array.size(); ++i )
+	{
+	  foreach(const QString& key, esigned_array[i].toObject().keys())
+	    {
+	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	      
+	      qDebug() << "Updating E-Signed section - " << key << ": Comment, timeDate -- "
+		       << newObj["Comment"]   .toString()
+		       << newObj["timeDate"]  .toString();
+
+	      
+	      existing_esignees += "{\"" + key + "\":{\"Comment\":\"" + newObj["Comment"]  .toString() + "\",";
+	      existing_esignees +=                  "\"timeDate\":\"" + newObj["timeDate"] .toString() + "\"}},";
+	    }
+	}
+      esigned_str += existing_esignees;
+      esigned_str += current_esignee;
+    }
+  esigned_str += "]";
+
+  //Compose final statusJson:
+  statusJson += to_sign_str;
+  statusJson += esigned_str;
+  statusJson += "}";
+  
+  return statusJson;
 }

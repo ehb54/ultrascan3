@@ -98,8 +98,9 @@ class US_eSignaturesGMP : public US_Widgets
        QTextEdit*   te_fpath_info;			    
        US_SelectItem* pdiag_autoflow_db;
        QList< QStringList >  gmpReportsDBdata;
-       QString    filePath_db; 				     
-					     
+       QString    filePath_db;
+       QString    gmpRunID_eSign;		     
+			     
 				 
      public slots:
 
@@ -134,6 +135,9 @@ class US_eSignaturesGMP : public US_Widgets
        void  remove_files_by_mask( QString, QStringList );
        void view_report_db ( );
        bool    mkdir         ( const QString&, const QString& );
+       void esign_report( void );
+       QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
+					   QString, QString& );
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );

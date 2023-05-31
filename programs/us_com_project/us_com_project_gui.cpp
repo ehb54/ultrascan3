@@ -2446,7 +2446,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
     {
       QString current_reviewer = jsonDocRevList_array[i].toString();
       //uname =  oID + ": " + olname + ", " + ofname;
-      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
 
       if ( uID == current_reviewer_id )
 	{
@@ -2459,7 +2459,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
     {
       QString current_reviewer = jsonDocOperList_array[i].toString();
       //uname =  oID + ": " + olname + ", " + ofname;
-      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
 
       if ( uID == current_reviewer_id )
 	{
