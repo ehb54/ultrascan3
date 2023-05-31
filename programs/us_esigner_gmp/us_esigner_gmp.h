@@ -98,6 +98,8 @@ class US_eSignaturesGMP : public US_Widgets
        QTextEdit*   te_fpath_info;			    
        US_SelectItem* pdiag_autoflow_db;
        QList< QStringList >  gmpReportsDBdata;
+       QString    filePath_db; 				     
+					     
 				 
      public slots:
 
@@ -130,7 +132,7 @@ class US_eSignaturesGMP : public US_Widgets
        void loadGMPReportDB_assigned( void );
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
-       void view_report_db ( QString );
+       void view_report_db ( );
        bool    mkdir         ( const QString&, const QString& );
   
      signals:  

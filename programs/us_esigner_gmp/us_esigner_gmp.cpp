@@ -240,20 +240,20 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   row = 0;
   eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0, 1,  14 );
 
-  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,    0, 1,  7);
+  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,    0, 1,  8);
   
   eSignGMPRunGrid -> addWidget( lb_loaded_run_db,   row,      0, 1,  3);
-  eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      3, 1,  4);
+  eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      3, 1,  5);
 
-  eSignGMPRunGrid -> addWidget( pb_view_report_db , row++,    8,  1,  4 );
+  eSignGMPRunGrid -> addWidget( pb_view_report_db , row++,    9,  1,  4 );
 
   eSignGMPRunGrid -> addWidget( lb_fpath_info,      row,      0, 1,  3);
-  eSignGMPRunGrid -> addWidget( te_fpath_info,      row,      3, 1,  4);
+  eSignGMPRunGrid -> addWidget( te_fpath_info,      row,      3, 1,  5);
 
-  eSignGMPRunGrid -> addWidget( pb_esign_report,    row++,    8,  1,  4 );
+  eSignGMPRunGrid -> addWidget( pb_esign_report,    row++,    9,  1,  4 );
   
-  connect( pb_loadreport_db, SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned() ) );
-  
+  connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned() ) );
+  connect( pb_view_report_db, SIGNAL( clicked() ), SLOT ( view_report_db() ) );
   
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
@@ -840,7 +840,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
       QDateTime local(QDateTime::currentDateTime());
 
       if ( devRecord == "Processed" )
-	continue;
+      	continue;
       
       //process runname: if combined, correct for nicer appearance
       if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
@@ -1618,7 +1618,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   process->setWorkingDirectory( dirName );
   process->start("tar", QStringList() << "-xvf" << GMPReportfname );
     
-  QString filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
+  filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
   qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
 
   //Gui fields
@@ -1642,7 +1642,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   
   if (msgBox.clickedButton() == Open)
     {
-      view_report_db( filePath_db );
+      view_report_db();
     }  
 
 }
@@ -1674,11 +1674,16 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
 
+      qDebug() << "In listing GMP Reports with assigned reviewers -- ";
+      qDebug() << "operatorListJson, reviewersListJson -- "
+	       << operatorListJson << ",   "
+	       << reviewersListJson;
+
       QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
       QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operatorListJson .toUtf8() );
   
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
-	   && !operatorListJson.isEmpty() && reviewersListJson.isEmpty() )
+	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
 	  gmpreportentry << id << autoflowHistoryName // << protocolName
 			 << time_created.toString() << filenamePdf;
@@ -1705,7 +1710,7 @@ void US_eSignaturesGMP::remove_files_by_mask( QString dirPath, QStringList file_
 }
 
 //view report DB
-void US_eSignaturesGMP::view_report_db ( QString  filePath_db )
+void US_eSignaturesGMP::view_report_db ( )
 {
   qDebug() << "Opening PDF (for downloaded form DB) at -- " << filePath_db;
 
