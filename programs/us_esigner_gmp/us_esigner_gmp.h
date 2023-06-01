@@ -99,6 +99,7 @@ class US_eSignaturesGMP : public US_Widgets
        US_SelectItem* pdiag_autoflow_db;
        QList< QStringList >  gmpReportsDBdata;
        QString    filePath_db;
+       QString    filePath_eSign;
        QString    gmpRunID_eSign;		     
 			     
 				 
@@ -138,6 +139,7 @@ class US_eSignaturesGMP : public US_Widgets
        void esign_report( void );
        QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
 					   QString, QString& );
+       void write_pdf_eSignatures( QString, QString, QString, QString );
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );

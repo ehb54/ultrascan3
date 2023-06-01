@@ -5516,10 +5516,10 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       html_assembled += tr(
 			   "<table>"		   
 			   "<tr>"
-			      "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			        "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
 			   "</tr>"
 			   "</table>"
-			)
+			   )
 	.arg( dtype_opt )                       //1
 	;
 

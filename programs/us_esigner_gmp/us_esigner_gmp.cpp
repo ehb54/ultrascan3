@@ -1924,7 +1924,18 @@ void US_eSignaturesGMP::esign_report( void )
 
   db.query( qry );
 
-  //msg:
+  //generate .PDF with e-Signatires page
+  write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson );
+
+  //merge original && e-Signatures page:
+  /*** 
+       do we need to do this at all?
+       do we need to do this ONLY when ALL eSignatures collected??
+       OR
+       do we store eSignatures .PDF separately, in autoflowGMPReportEsign table??
+   ***/
+  
+  //concluding msg:
   QString msg_f = QString( tr("<font color='red'><b>SUCCESS:</b> </font><br><br>"
 			      "Operator | Reviewer, <br>"
 			      "<b>%1,</b><br>"
@@ -1944,25 +1955,6 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
 						       QJsonArray to_esign_array,  QJsonArray esigned_array,
 						       QString comment_esignee, QString& eSignStatusAll_updated )
 {
-  /****
-     Proposed JSON Struncture of eSignStatusJson:
-     { 
-        "to_sign": ["Rev1","Rev2"],       <===== ORIGINALLY, full combined list of Oper(s) && Rev(s)
-	                                         i.e. ["Oper1","Oper2",..., "Rev1","Rev2",..]
-	"signed" : [
-	              { "Oper1": 
-	                      { 
-			        "Comment"  : "Explanation",
-			        "timeDate" : "timestamp"
-			      }},
-		      { "Oper2" :
-		              {
-			        Same ...
-			      }}
-		    ]
-     }
-   ****/
-  
   QString statusJson = "{";
 
   // "to_sign" section:
@@ -2046,4 +2038,92 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
   statusJson += "}";
   
   return statusJson;
+}
+
+
+//write .PDF eSignatures page
+void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignStatusJson_upd,
+					       QString operList, QString revList )
+{
+  QString fpath = filePath;
+  fpath. replace( filePath.section('/', -1), "" );
+  qDebug() << "Writing .PDF: basename -- " << fpath;
+
+  //html string
+  QString html_assembled = tr( "<h2 align=left>Electronic Signatures:</h2>" );
+
+  //Parse JSON
+  QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson_upd.toUtf8() );
+  if (!jsonDocEsign.isObject())
+    {
+      qDebug() << "write_pdf_eSigns(): ERROR: eSignStatusJson_upd: NOT a JSON Doc !!";
+      return;
+    }
+  
+  const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDocEsign.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+  int eSigner_counter = 0;
+  for (int i=0; i < esigned_array.size(); ++i )
+    {
+      foreach(const QString& key, esigned_array[i].toObject().keys())
+	{
+	  QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	  ++eSigner_counter;
+
+	  //role
+	  QString eSigner_role;
+	  if ( operList. contains( key ) )
+	    eSigner_role = "Operator";
+	  else if ( revList. contains( key ) )
+	    eSigner_role = "Reviewer"; 
+	  
+	  qDebug() << "write_pdf_eSign() -- " << key
+		   << ": Comment, timeDate, eSigner_role -- "
+		   << newObj["Comment"]   .toString()
+		   << newObj["timeDate"]  .toString()
+		   << eSigner_role;
+
+	  QString eSigner = (key. split(".")[1]).trimmed();
+	  //eSigner
+	  html_assembled += tr( "<h3 style=\"margin-left:10px\">%1. %2</h3>" )
+	    .arg( QString::number( eSigner_counter ) )
+	    .arg( eSigner );
+	  
+	  //details
+	  html_assembled += tr(
+			       "<table style=\"margin-left:30px\">"
+			       "<tr><td>Role:        </td> <td> %1 </td></tr>"
+			       "<tr><td>Comment:     </td> <td> %2 </td></tr>"
+			       "<tr><td>e-Signed at: </td> <td> %3 </td></tr>"
+			       "</table>"
+			       )
+	    .arg( eSigner_role )                                      //1
+	    .arg( newObj["Comment"]   .toString() )                   //2
+	    .arg( newObj["timeDate"]  .toString() )                   //3
+	    ;
+	}
+    }
+  
+  
+  //write .PDF   
+  QTextDocument document;
+  document.setHtml( html_assembled );
+  
+  QPrinter printer(QPrinter::PrinterResolution);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setPaperSize(QPrinter::Letter);
+  
+  filePath_eSign  = fpath + "eSignatures.pdf";
+  
+  printer.setOutputFileName( filePath_eSign );
+  printer.setFullPage(true);
+  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  
+  document.print(&printer);
+
+  qApp->processEvents();
 }
