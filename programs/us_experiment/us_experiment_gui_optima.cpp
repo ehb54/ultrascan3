@@ -1191,6 +1191,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    changed         = false;
    message_instr_shown = false;
 
+   //hide Operator Info:
+   lb_operator -> hide();
+   cb_operator -> hide();
+
    initPanel();
 
    first_time_init = false;
