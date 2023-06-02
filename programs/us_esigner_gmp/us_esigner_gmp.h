@@ -93,14 +93,18 @@ class US_eSignaturesGMP : public US_Widgets
        QPushButton* pb_loadreport_db;			   
        QPushButton* pb_view_report_db;
        QPushButton* pb_esign_report;
-
+       QPushButton* pb_view_eSigns;
+  
        QLineEdit*   le_loaded_run_db;
-       QTextEdit*   te_fpath_info;			    
+       QTextEdit*   te_fpath_info;
+       QLineEdit*   le_eSign_status;
+  
        US_SelectItem* pdiag_autoflow_db;
        QList< QStringList >  gmpReportsDBdata;
        QString    filePath_db;
        QString    filePath_eSign;
-       QString    gmpRunID_eSign;		     
+       QString    gmpRunID_eSign;
+       QString    eSignID_global;				
 			     
 				 
      public slots:
@@ -134,12 +138,16 @@ class US_eSignaturesGMP : public US_Widgets
        void loadGMPReportDB_assigned( void );
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
-       void view_report_db ( );
+       void view_report_db ( void );
+       void view_eSignatures ( void );
        bool    mkdir         ( const QString&, const QString& );
        void esign_report( void );
        QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
 					   QString, QString& );
        void write_pdf_eSignatures( QString, QString, QString, QString );
+       QString check_eSign_status_for_gmpReport( void );
+       void write_download_eSignatures_DB( QString, QString );
+       
   
      signals:  
        void accept_reviewers( QMap< QString, QString > & );

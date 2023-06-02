@@ -227,7 +227,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   pb_esign_report    -> setStyleSheet( tr("QPushButton::enabled {background: #556B2F; color: lightgray; }"
 					  "QPushButton::disabled {background: #90EE90; color: black}" ));
 
-  QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report for Run:" ) );
+  QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report:" ) );
   le_loaded_run_db          = us_lineedit( tr(""), 0, true );
   
   //Filename path
@@ -236,26 +236,35 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   te_fpath_info -> setFixedHeight  ( RowHeight * 3 );
   te_fpath_info -> setText( tr( "" ) );
   us_setReadOnly( te_fpath_info, true );
+
+  //Status
+  QLabel*      lb_eSign_status = us_label( tr( "e-Signing Status:" ) );
+  le_eSign_status              = us_lineedit( tr(""), 0, true );
+  pb_view_eSigns  =  us_pushbutton( tr( "View e-Signatures" ) );
+  pb_view_eSigns  -> setEnabled( false );
   
   row = 0;
-  eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0, 1,  14 );
+  eSignGMPRunGrid -> addWidget( bn_eSignGMP,        row++,    0,  1,  14 );
 
-  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row++,    0, 1,  8);
+  eSignGMPRunGrid -> addWidget( pb_loadreport_db,   row,      0,  1,  7);
+  eSignGMPRunGrid -> addWidget( lb_eSign_status,    row,      8,  1,  3);
+  eSignGMPRunGrid -> addWidget( le_eSign_status,    row++,    11, 1,  3);
   
-  eSignGMPRunGrid -> addWidget( lb_loaded_run_db,   row,      0, 1,  3);
-  eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      3, 1,  5);
+  eSignGMPRunGrid -> addWidget( lb_loaded_run_db,   row,      0, 1,  2);
+  eSignGMPRunGrid -> addWidget( le_loaded_run_db,   row,      2, 1,  5);
 
-  eSignGMPRunGrid -> addWidget( pb_view_report_db , row++,    9,  1,  4 );
+  eSignGMPRunGrid -> addWidget( pb_view_report_db,  row,      8,   1,  3 );
+  eSignGMPRunGrid -> addWidget( pb_view_eSigns,     row++,    11,  1,  3 );
 
-  eSignGMPRunGrid -> addWidget( lb_fpath_info,      row,      0, 1,  3);
-  eSignGMPRunGrid -> addWidget( te_fpath_info,      row,      3, 1,  5);
+  eSignGMPRunGrid -> addWidget( lb_fpath_info,      row,      0, 1,  2);
+  eSignGMPRunGrid -> addWidget( te_fpath_info,      row,      2, 1,  5);
 
   eSignGMPRunGrid -> addWidget( pb_esign_report,    row++,    9,  1,  4 );
   
   connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned() ) );
   connect( pb_view_report_db, SIGNAL( clicked() ), SLOT ( view_report_db() ) );
-  connect( pb_esign_report, SIGNAL( clicked() ), SLOT ( esign_report() ) );
-
+  connect( pb_esign_report,   SIGNAL( clicked() ), SLOT ( esign_report() ) );
+  connect( pb_view_eSigns,    SIGNAL( clicked() ), SLOT ( view_eSignatures() ) );
   
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
@@ -1564,7 +1573,10 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
       gmpRunID_eSign               = gmpReportsDBdata[ prx ][ 4 ];
 
       pb_view_report_db -> setEnabled( false );
-      te_fpath_info  -> setText( "" );
+      pb_view_eSigns    -> setEnabled( false );
+      te_fpath_info     -> setText( "" );
+      le_loaded_run_db  -> setText( "" );
+      le_eSign_status   -> setText( "" );
     }
   else
     return;
@@ -1579,7 +1591,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
   
-  QString subDirName = gmpReport_runname_selected + "_GMP_DB";
+  QString subDirName = gmpReport_runname_selected + "_GMP_DB_Esign";
   mkdir( US_Settings::reportDir(), subDirName );
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
 
@@ -1631,6 +1643,13 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   pb_view_report_db -> setEnabled( true );
   pb_esign_report   -> setEnabled( true );
   te_fpath_info     -> setText( filePath_db );
+
+  //Check, the status of e-Signing: NOT signed, Partially, Completed
+  QString eSign_status = check_eSign_status_for_gmpReport();
+
+  if ( eSign_status == "PARTIALLY COMPLETED" || eSign_status == "COMPLETED" )
+    write_download_eSignatures_DB( filePath_db, "download_gmpReportEsignData" );
+  
 
   //Inform user of the PDF location
   QMessageBox msgBox;
@@ -1705,6 +1724,93 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 }
 
 
+//Check eSign status for GMP Report
+QString US_eSignaturesGMP::check_eSign_status_for_gmpReport()
+{
+  QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( gmpRunID_eSign );
+  QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
+  QString eSignStatusAll    = eSign[ "eSignStatusAll" ];
+  eSignID_global            = eSign[ "ID" ];
+
+  QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
+  if (!jsonDocEsign.isObject())
+    {
+      qDebug() << "to_eSign(): ERROR: eSignStatusJson: NOT a JSON Doc !!";
+      return QString("");
+    }
+  
+  const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDocEsign.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+  //Palette of eStatus:
+  QPalette orig_pal = le_eSign_status->palette();
+  QPalette *new_palette = new QPalette();
+  new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+  
+
+  //to_sign:
+  if ( to_esign.isUndefined() || to_esign_array.size() == 0
+       || !to_esign_array.size() || eSignStatusAll == "YES" )
+    {
+      qDebug() << "check_eSign_status(): All signatures have been collected; none left to e-sign !!";
+      
+      le_eSign_status -> setText( "COMPLETED" );
+      new_palette->setColor(QPalette::Text,Qt::green);
+      le_eSign_status->setPalette(*new_palette);
+      pb_view_eSigns   -> setEnabled( true );
+
+      return QString("COMPLETED");
+    }
+
+  //signed:
+  if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
+    {
+      qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
+
+      le_eSign_status -> setText( "NOT STARTED" );
+      new_palette->setColor(QPalette::Text,Qt::red);
+      le_eSign_status->setPalette(*new_palette);
+      pb_view_eSigns   -> setEnabled( true );
+      
+      return QString("NOT STARTED");
+    }
+  else
+    {
+      qDebug() << "check_eSign_status(): Some parties have e-Signed already !!!";
+      //DEBUG
+      QStringList eSignees_current;
+      for (int i=0; i < esigned_array.size(); ++i )
+	{
+	  foreach(const QString& key, esigned_array[i].toObject().keys())
+	    {
+	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	      
+	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+		       << newObj["Comment"]   .toString()
+		       << newObj["timeDate"]  .toString();
+
+	      QString current_reviewer = key;
+	      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+
+	      eSignees_current << key;
+	    }
+	}
+      //END DEBUG:
+      qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
+
+      le_eSign_status -> setText( "PARTIALLY COMPLETED" );
+      new_palette->setColor(QPalette::Text,Qt::blue);
+      le_eSign_status->setPalette(*new_palette);
+      pb_view_eSigns   -> setEnabled( true );
+      
+      return QString("PARTIALLY COMPLETED");
+    }
+}
+
+
 
 //remove files by extension from dirPath
 void US_eSignaturesGMP::remove_files_by_mask( QString dirPath, QStringList file_exts )
@@ -1721,7 +1827,7 @@ void US_eSignaturesGMP::remove_files_by_mask( QString dirPath, QStringList file_
 //view report DB
 void US_eSignaturesGMP::view_report_db ( )
 {
-  qDebug() << "Opening PDF (for downloaded form DB) at -- " << filePath_db;
+  qDebug() << "Opening PDF (for downloaded from DB) at -- " << filePath_db;
 
   QFileInfo check_file( filePath_db );
   if (check_file.exists() && check_file.isFile())
@@ -1737,6 +1843,28 @@ void US_eSignaturesGMP::view_report_db ( )
     }
 }
 
+//view current e-Signatures
+void US_eSignaturesGMP::view_eSignatures ( )
+{
+  QString fpath = filePath_db;
+  fpath. replace( filePath_db.section('/', -1), "" );
+  QString filePath_to_eSigns = fpath + "eSignatures.pdf";
+
+  qDebug() << "Opening PDF for e-Signatures (either downloaded OR generated) at -- " << filePath_to_eSigns;
+  
+  QFileInfo check_file( filePath_to_eSigns );
+  if (check_file.exists() && check_file.isFile())
+    {
+      //Open with OS's applicaiton settings ?
+      QDesktopServices::openUrl(QUrl( filePath_to_eSigns ));
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Error: Cannot Open .PDF File" ),
+			    tr( "%1 \n\n"
+				"No such file or directory...") .arg( filePath_to_eSigns ) );
+    }
+}
 
 // Create a subdirectory if need be
 bool US_eSignaturesGMP::mkdir( const QString& baseDir, const QString& subdir )
@@ -1822,7 +1950,7 @@ void US_eSignaturesGMP::esign_report( void )
     }
 
   //Check if the person among reviewers, OR if the person already e-signed:
-  //ro_sign section:
+  //to_sign section:
   bool yesToSign = false;
   for (int i=0; i < to_esign_array.size(); ++i )
     {
@@ -1906,9 +2034,30 @@ void US_eSignaturesGMP::esign_report( void )
       return;
     }
 
-  //OK, eSign downloaded GMP Report
-  //Compose/Update eSignStatusJson && eSignStatusAll:
+  //OK, eSign downloaded GMP Report /////////////////////////////////////////////////////////////////////////
+  //BEFORE writing, check if writing has been initiated, or completed from different session:
+  int status_esign_unique = 0;
+  qry. clear();
+  qry << "autoflow_esigning_status"
+      << gmpRunID_eSign;
 
+  qDebug() << "Checking eSining autoflowStages -- " << qry;
+  status_esign_unique = db.statusQuery( qry );
+
+  qDebug() << "status_esign_unique -- " << status_esign_unique ;
+  
+  if ( !status_esign_unique )
+    {
+      QMessageBox::information( this,
+				tr( "The e-Signature record can NOT be updated" ),
+				tr( "The e-Signature record is currenlty being updated" 
+				    "by other reviewer(s) and/or operator(s).\n\n"
+				    "Please try to e-Sign again later.") );
+      return;
+    }
+  ///////////////////////////////////////////////////////////////////////////////////////////
+
+  //Compose/Update eSignStatusJson && eSignStatusAll:
   QString eSignStatusAll_updated;
   QString eSignStatusJson_updated = compose_updated_eSign_Json( u_ID, u_fname, u_lname, to_esign_array,
 								esigned_array, comment_t, eSignStatusAll_updated );
@@ -1924,16 +2073,26 @@ void US_eSignaturesGMP::esign_report( void )
 
   db.query( qry );
 
-  //generate .PDF with e-Signatires page
+  //generate .PDF with e-Signatires page && write to Db
   write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson );
 
-  //merge original && e-Signatures page:
+  //Revert 'esigning' stage status back to DEFAULT for other reviewers to be able to e-sign:
+  qry. clear();
+  qry << "autoflow_esigning_status_revert"
+      << gmpRunID_eSign;
+  db.query( qry );
+  
+  //merge original && e-Signatures page??:
   /*** 
        do we need to do this at all?
        do we need to do this ONLY when ALL eSignatures collected??
        OR
        do we store eSignatures .PDF separately, in autoflowGMPReportEsign table??
    ***/
+
+  //update le_esing_status:
+  QString eSign_status = check_eSign_status_for_gmpReport();
+  qDebug() << "Current eSigning Status -- " << eSign_status;
   
   //concluding msg:
   QString msg_f = QString( tr("<font color='red'><b>SUCCESS:</b> </font><br><br>"
@@ -2124,6 +2283,60 @@ void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignSt
   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
   
   document.print(&printer);
-
   qApp->processEvents();
+
+  //Write to autoflowGMPReportEsign table as blob
+  write_download_eSignatures_DB( filePath_db, "upload_gmpReportEsignData" );
+  qApp->processEvents();
+  
+}
+
+//write blob of eSignatures page
+void US_eSignaturesGMP::write_download_eSignatures_DB( QString filePath, QString proc_name )
+{
+  QString fpath = filePath;
+  fpath. replace( filePath.section('/', -1), "" );
+  qDebug() << "Writing basename -- " << fpath;
+
+  QString final_fpath = fpath + "eSignatures.pdf";
+   
+  qDebug() << "write_eSignatures_DB():: Writing Blob of final_fpath, eSignID -- "
+	   << final_fpath << eSignID_global.toInt();
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+
+  QStringList qry;
+  
+  int writeStatus;
+
+  if ( proc_name. contains("upload") )
+    writeStatus = db.writeBlobToDB( final_fpath,
+				    proc_name,
+				    eSignID_global.toInt() );
+  if ( proc_name. contains("download") )
+    writeStatus = db.readBlobFromDB( final_fpath,
+				     proc_name,
+				     eSignID_global.toInt() );
+  
+  
+  if ( writeStatus == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + filePath_eSign + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+    }
+  
+  else if ( writeStatus != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   filePath_eSign + "\n" + db.lastError() + "\n");
+    }
 }
