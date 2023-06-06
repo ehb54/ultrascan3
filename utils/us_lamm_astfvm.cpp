@@ -749,12 +749,12 @@ int US_LammAstfvm::calculate(US_DataIO::RawData &sim_data) {
    if (codiff_needed && (bandFormingGradient == nullptr || bandFormingGradient->is_empty || bandFormingGradient->dens_bfg_data.scanCount() == 0)) {
       param_s = model.components.first().s != 0.0 ? model.components.first().s : 1e-14;
       param_D = model.components.first().D;
-      dt = log(param_b / param_m) / (param_w2 * param_s * 10000);
+      dt = log(param_b / param_m) / (param_w2 * param_s * 5000);
       for (US_Model::SimulationComponent &comp: model.components){
          double dt_temp;
          param_s = comp.s != 0.0 ? comp.s : 1e-14;
          param_D = comp.D;
-         dt_temp = log(param_b / param_m) / (param_w2 * param_s * 10000);
+         dt_temp = log(param_b / param_m) / (param_w2 * param_s * 5000);
          int nts = af_data.scan.size();            // nbr. output times (scans)
          double true_dt_min = dt_temp;
          for ( int i = 1; i < nts; i++ ) {
@@ -852,9 +852,24 @@ int US_LammAstfvm::calculate(US_DataIO::RawData &sim_data) {
 int US_LammAstfvm::solve_component(int compx) {
    comp_x = compx;
 
-   param_s = model.components[ compx ].s != 0.0 ? model.components[ compx ].s : 1e-14;
-   param_D = model.components[ compx ].D;
-
+   param_s20w = model.components[ compx ].s != 0.0 ? model.components[ compx ].s : 1e-14;
+   param_D20w = model.components[ compx ].D;
+   if ( nonIdealCaseNo() != 0 )            // set non-ideal case number
+   {  // if multiple cases, abort
+       return 1;
+   }
+   qDebug() << "LAV:SC: NonIdealCaseNo" << NonIdealCaseNo;
+   // make sure the selected model is adjusted for the selected temperature
+   // and buffer conditions:
+   US_Math2::SolutionData sol_data{};
+   sol_data.density = density;
+   sol_data.viscosity = viscosity;
+   sol_data.vbar20 = model.components[ compx ].vbar20; //The assumption here is that vbar does not change with
+   sol_data.vbar = model.components[ compx ].vbar20; //temp, so vbar correction will cancel in s correction
+   sol_data.manual = manual;
+   US_Math2::data_correction(simparams.temperature, sol_data);
+   param_s = param_s20w / sol_data.s20w_correction;
+   param_D = param_D20w / sol_data.D20w_correction;
    double t0 = 0.;
    double t1 = 100.;
    double *x0;
@@ -865,7 +880,7 @@ int US_LammAstfvm::solve_component(int compx) {
    double *u1p;
    double *dtmp;
    double total_t = (param_b - param_m) * 2.0 / (param_s * param_w2 * param_m);
-   dt = log(param_b / param_m) / (param_w2 * param_s * 1000);
+   dt = log(param_b / param_m) / (param_w2 * param_s * 5000);
 
    int ntcc = (int) (total_t / dt) + 1;      // nbr. times in calculations
    int jt = 0;
@@ -902,21 +917,6 @@ int US_LammAstfvm::solve_component(int compx) {
    {  // if multiple cases, abort
       return 1;
    }
-   if ( NonIdealCaseNo < 2 ) {
-      // make sure the selected model is adjusted for the selected temperature
-      // and buffer conditions:
-      US_Math2::SolutionData sol_data{};
-      sol_data.density = density;
-      sol_data.viscosity = viscosity;
-      sol_data.vbar20 = model.components[ compx ].vbar20; //The assumption here is that vbar does not change with
-      sol_data.vbar = model.components[ compx ].vbar20; //temp, so vbar correction will cancel in s correction
-      sol_data.manual = manual;
-      US_Math2::data_correction(simparams.temperature, sol_data);
-      param_s = param_s / sol_data.s20w_correction;
-      param_D = param_D / sol_data.D20w_correction;
-   }
-
-
    if ( NonIdealCaseNo == 3 ) {  // compressibility:  8-fold smaller delta-t and greater time points
       dt /= 8.0;
       ntc = (int) (solut_t / dt) + 1;
@@ -924,28 +924,7 @@ int US_LammAstfvm::solve_component(int compx) {
 
    DbgLv(1) << "LAsc:  CX=" << comp_x << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
    DbgLv(1) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
-   DbgLv(1) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_w2;
-
-//   if ( NonIdealCaseNo == 2 )
-//   {  // co-sedimenting
-//      if ( comp_x == model.coSedSolute )
-//      {  // if this component is the salt, skip solving for it
-//         if ( comp_x == 0 )
-//         {
-//DbgLv(2) << "NonIdeal2: new saltdata  comp_x" << comp_x;
-//            saltdata  = new CosedData( model, simparams, auc_data, this, density, viscosity );
-//            vbar_salt = model.components[ 0 ].vbar20;
-//         }
-//
-//         //saltdata->initSalt();
-//         return 0;
-//      }
-//
-//      else if ( compx > model.coSedSolute )
-//      {  // if beyond the salt component, adjust step count
-//         istep    -= nts;
-//      }
-//   }
+   DbgLv(1) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_s20w << param_D << param_D20w << param_w2;
 
    conc0.resize(ncs);
    conc1.resize(ncs);
@@ -955,7 +934,7 @@ int US_LammAstfvm::solve_component(int compx) {
 
    msh->InitMesh(param_s, param_D, param_w2);
    int mropt = 0;                   // mesh refine option;
-    double dt_old = dt;
+   double dt_old = dt;
    // make settings based on non-ideal case type
    if ( NonIdealCaseNo == 1 )                   // concentration-dependent
    {
@@ -1111,7 +1090,7 @@ int US_LammAstfvm::solve_component(int compx) {
               dt_scaling += original_dt*0.05;
           }
           t0 = runtime;
-          runtime += (original_dt + dt_scaling);
+          runtime += qMin((original_dt + dt_scaling),dt_old);
           t1 = runtime;
           dt = t1-t0;
       }
@@ -1120,7 +1099,7 @@ int US_LammAstfvm::solve_component(int compx) {
           t1 = t0 + dt;
       }
       ts = af_data.scan[ kt ].time;           // time at output scan
-      while ( ts < t0 ) {
+      while ( ts < t0 && kt < af_data.scan.size() - 1) {
          int kt_old = kt;
          double ts_old = ts;
          double tmp = af_data.scan[ kt + 1 ].time;
@@ -2047,7 +2026,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
          if (dbg_level > 0){
             // calculate density and viscosity mean avg std
             DbgLv(2) << "#####################################";
-            DbgLv(2) << "LFVM:AdjustSD: dens visc: t" << t << param_s << param_D;
+            DbgLv(2) << "LFVM:AdjustSD: dens visc: t" << t << param_s20w << param_D20w;
             double dimn = 9e+14;
             double dimx = 0.0;
             double diav = 0.0;
@@ -2103,26 +2082,26 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
                sol_data.vbar = model.components[ comp_x ].vbar20; //temp, so vbar correction will cancel in s correction
                sol_data.manual = manual;
                US_Math2::data_correction(simparams.temperature, sol_data);
-               s_adj[ jj ] = param_s / sol_data.s20w_correction;
-               if (param_s / sol_data.s20w_correction < smin){
-                  if (smin > 0.0 && param_s / sol_data.s20w_correction < 0.0) sneg_in = jj;
-                  smin = param_s / sol_data.s20w_correction;
+               s_adj[ jj ] = param_s20w / sol_data.s20w_correction;
+               if (param_s20w / sol_data.s20w_correction < smin){
+                  if (smin > 0.0 && param_s20w / sol_data.s20w_correction < 0.0) sneg_in = jj;
+                  smin = param_s20w / sol_data.s20w_correction;
                }
-               if (param_s / sol_data.s20w_correction > smax){
-                  smax = param_s / sol_data.s20w_correction;
+               if (param_s20w / sol_data.s20w_correction > smax){
+                  smax = param_s20w / sol_data.s20w_correction;
                }
-               D_adj[ jj ] = param_D / sol_data.D20w_correction;
-               if (param_D / sol_data.D20w_correction < smin){
-                  if (dmin > 0.0 && param_D / sol_data.D20w_correction < 0.0) dneg_in = jj;
-                  dmin = param_D / sol_data.D20w_correction;
+               D_adj[ jj ] = param_D20w / sol_data.D20w_correction;
+               if (param_D20w / sol_data.D20w_correction < dmin){
+                  if (dmin > 0.0 && param_D20w / sol_data.D20w_correction < 0.0) dneg_in = jj;
+                  dmin = param_D20w / sol_data.D20w_correction;
                }
-               if (param_D / sol_data.D20w_correction > dmax){
-                  dmax = param_D / sol_data.D20w_correction;
+               if (param_D20w / sol_data.D20w_correction > dmax){
+                  dmax = param_D20w / sol_data.D20w_correction;
                }
                //D_adj[ jj ] = qAbs( dA / visc );
             }
             if (dbg_level > 0){
-               DbgLv(2) << "AdjSD:  s or D negative: t" << t << param_s << param_D << Nv;
+               DbgLv(2) << "AdjSD:  s or D negative: t" << t << param_s << param_D << Nv << param_s20w << param_D20w;
                DbgLv(2) << "AdjSD:  smin smax sneg_in r(sneg_in)" << smin << smax << sneg_in << x[sneg_in];
                DbgLv(2) << "AdjSD:  dmin dmax dneg_in r(dneg_in)" << dmin << dmax << dneg_in << x[dneg_in];
                log_need = true;
@@ -2150,8 +2129,8 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
          for ( jj = 0; jj < Nv; jj++ ) {
             rho = density / (1.0 - factn * (x[ jj ] * x[ jj ] - msq));
             double beta = (1.0 - phip * rho) / sA;
-            s_adj[ jj ] = param_s * alpha * beta;
-            D_adj[ jj ] = param_D * alpha;
+            s_adj[ jj ] = param_s20w * alpha * beta;
+            D_adj[ jj ] = param_D20w * alpha;
          }
          DbgLv(3) << "AdjSD: compr dens" << compressib << density;
          DbgLv(3) << "AdjSD:    factn msq sa" << factn << msq << sA;
