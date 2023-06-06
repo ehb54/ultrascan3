@@ -184,6 +184,52 @@
      width="0" >
       <row pathlen="1.2" bottom="7.2" />
    </abstractCenterpiece>
-
-
+   <abstractCenterpiece
+     id="15"
+     guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b415"
+     name="Epon-BF II A"
+     materialName="Epon-Helmut"
+     channels="1"
+     shape="band forming"
+     maxRPM="60000"
+     angle="2.47"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+     id="16"
+     guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b416"
+     name="Epon-BF II B"
+     materialName="Epon-Helmut"
+     channels="1"
+     shape="band forming"
+     maxRPM="60000"
+     angle="2.36"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+     id="17"
+     guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b417"
+     name="Epon-BF SA2 A"
+     materialName="Epon-Helmut"
+     channels="1"
+     shape="band forming"
+     maxRPM="60000"
+     angle="1.64"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+     id="18"
+     guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b418"
+     name="Epon-BF SA2 B"
+     materialName="Epon-Helmut"
+     channels="1"
+     shape="band forming"
+     maxRPM="60000"
+     angle="1.75"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
 </abstractCenterpieces>
