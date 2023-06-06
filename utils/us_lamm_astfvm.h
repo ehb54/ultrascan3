@@ -239,6 +239,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
 
       double  param_m;         // m of cell (meniscus)
       double  param_b;         // b of cell (bottom)
+      double  param_s20w;      // base s value (sedimentation coefficient)
+      double  param_D20w;       // base D value (diffusion coefficient)
       double  param_s;         // base s value (sedimentation coefficient)
       double  param_D;         // base D value (diffusion coefficient)
       double  param_w2;        // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
