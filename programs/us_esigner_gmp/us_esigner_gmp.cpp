@@ -350,10 +350,18 @@ void US_eSignaturesGMP::init_invs( void )
       data.invID     = db.value( 0 ).toInt();
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
-            
+      data.ulev      = db.value( 4 ).toInt();
+
+      // qDebug() << "init_invs(): lname, fname, ulev -- "
+      // 	       <<  data.lastName << data.firstName << data.ulev;
+	
       if ( lev < 3  &&  inv != data.invID )
 	continue;
-      
+
+      //Filter by userlevel: cannot be UL=1
+      if ( data.ulev < 2 )
+	continue;
+
       investigators << data;
       
       lw_inv_list-> addItem( new QListWidgetItem( 
