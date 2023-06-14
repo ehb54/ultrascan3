@@ -20,13 +20,16 @@ class US_SearchDialog : public QDialog
 
 public:
     explicit US_SearchDialog(QWidget *parent = nullptr);
-
-
+    int current_hover;
     QLineEdit* searchLineEdit;
     QListWidget *searchResultsList;
     QMap<QString,int> progam_matches;
 
     void dismiss();
+protected:
+   void keyPressEvent(QKeyEvent *event) override;
+signals:
+   void ResultSelected(QListWidgetItem*);
 };
 
 class Delegate: public QStyledItemDelegate{

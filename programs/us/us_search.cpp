@@ -8,10 +8,10 @@
 
 US_SearchDialog::US_SearchDialog(QWidget *parent) : QDialog(parent)
 {
+    current_hover = -1;
     setModal(true);
     setMinimumWidth(500);
     searchLineEdit = new QLineEdit( this );
-
 
     searchLineEdit->setFont    ( QFont( US_GuiSettings::fontFamily(),
                             US_GuiSettings::fontSize  () ) );
@@ -34,16 +34,43 @@ US_SearchDialog::US_SearchDialog(QWidget *parent) : QDialog(parent)
     setLayout(mainLayout);
 }
 
+void US_SearchDialog::keyPressEvent(QKeyEvent *event)
+{
+   if (!isActiveWindow()) {
+      return;
+   }
+   // manage navigation
+   if (event->key() == Qt::Key_Up) {
+      current_hover = fmax(-1, current_hover -1 );
+      searchResultsList->clearSelection();
+      if (current_hover > -1 && current_hover < searchResultsList->count()){
+         searchResultsList->item(current_hover)->setSelected(true);
+         searchResultsList->setCurrentRow(current_hover);
+      }
+
+   }
+   else if (event->key() == Qt::Key_Down){
+      current_hover = fmin(searchResultsList->count()-1, current_hover +1 );
+      searchResultsList->clearSelection();
+      if (current_hover > -1 && current_hover < searchResultsList->count()){
+         searchResultsList->item(current_hover)->setSelected(true);
+         searchResultsList->setCurrentRow(current_hover);
+      }
+   }
+   else if (event->text() == "\r"){
+      emit ResultSelected(searchResultsList->item(current_hover));
+      qApp->processEvents();
+   }
+}
+
 void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
+    QStyledItemDelegate::paint(painter, option, index);
     QRect r = option.rect;
     painter->save();
     //Color: #333
-    QPen fontPen(QColor::fromRgb(51,51,51), 1, Qt::SolidLine);
-    painter->setPen(fontPen);
     int b = option.rect.bottom() - 1;
-    QString title = index.data(Qt::DisplayRole).toString();
-    QString description = index.data(Qt::UserRole + 2).toString();
+    QString title = index.data(Qt::UserRole+1).toString();
     r = option.rect.adjusted(5, 5, -5, -5);
     painter->setFont(QFont( US_GuiSettings::fontFamily(),
                             US_GuiSettings::fontSize()+3, QFont::Bold));
@@ -55,8 +82,6 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
         painter->drawLine(option.rect.left() + 5, b, option.rect.right() - 5, b);
 
     painter->restore();
-
-//    QStyledItemDelegate::paint(painter, option, index);
 }
 
 QSize Delegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const

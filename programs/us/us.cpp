@@ -206,8 +206,10 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   searchDialog = new US_SearchDialog(this);
   connect(searchDialog->searchLineEdit, SIGNAL(textChanged(const QString &)),
           this, SLOT(handleSearchTextChanged(const QString &)));
-  connect(searchDialog->searchResultsList, SIGNAL(itemSelectionChanged()),
-          this, SLOT(handleResultSelected()));
+  connect(searchDialog->searchResultsList, SIGNAL(itemClicked(QListWidgetItem *)),
+          this, SLOT(handleResultSelected(QListWidgetItem *)));
+  connect(searchDialog, SIGNAL(ResultSelected(QListWidgetItem *)),
+          this, SLOT(handleResultSelected(QListWidgetItem *)));
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
   QPoint p = g.global_position();
   setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
@@ -422,6 +424,7 @@ void US_Win::handleSearchTextChanged(const QString &text) {
    QString search_end = search_string.endsWith(" ")?QString(" "):QString("");
    search_string = search_string.simplified() + search_end;
    searchDialog->searchLineEdit->setText(search_string);
+   searchDialog->current_hover = -1;
    search_string = search_string.simplified().toLower();
    QStringList search_words = search_string.split(" ",Qt::SkipEmptyParts);
    QStringList matches;
@@ -455,29 +458,29 @@ void US_Win::handleSearchTextChanged(const QString &text) {
    searchDialog->searchResultsList->clear();
    searchDialog->searchResultsList->clearSelection();
    for(const auto& m_p: matches) {
-       auto item = new QListWidgetItem(searchDialog->searchResultsList);
-       item->setText(m_p);
+      auto item = new QListWidgetItem(searchDialog->searchResultsList);
+      item->setData(Qt::UserRole+1, m_p);
        searchDialog->searchResultsList->addItem(item);
 
    }
    if (searchDialog->searchResultsList->count() == 0){
-      searchDialog->searchResultsList->addItem(QString("No Program found"));
+      auto item = new QListWidgetItem(searchDialog->searchResultsList);
+      item->setData(Qt::UserRole+1, QString("No Program found"));
+      searchDialog->searchResultsList->addItem(item);
    }
 }
 
-void US_Win::handleResultSelected() {
-   if (searchDialog->searchResultsList->selectedItems().size() == 0){ return;}
-   QList<QListWidgetItem*> selected_programs = searchDialog->searchResultsList->selectedItems();
-   if (selected_programs[0]->text() == QString("No Program found")){
-       setFocus();
+void US_Win::handleResultSelected(QListWidgetItem* item) {
+   QString program = item->data(Qt::UserRole+1).toString();
+   if (program == QString("No Program found")){
+      searchDialog->close();
+      setFocus();
    }
-   QString program = selected_programs[0]->text();
-   qDebug() << program << searchDialog->progam_matches.contains(program);
-   if (searchDialog->progam_matches.contains(program)){
+   else if (searchDialog->progam_matches.contains(program)){
       launch(searchDialog->progam_matches.value(program));
    }
    else{
-       searchDialog->close();
+      searchDialog->close();
    }
 }
 
@@ -893,15 +896,18 @@ void US_Win::apply_prefs()
 
 void US_Win::keyPressEvent(QKeyEvent *event)
 {
-    qDebug() << "keypress called";
     if (!isActiveWindow()){
         return;
     }
-    // Open search dialog on any key press
-    searchDialog->searchLineEdit->setText(event->text());
-    searchDialog->show();
-    searchDialog->setFocus();
-    searchDialog->searchLineEdit->setFocus();
+    // ignore all non text keys
+    if (!event->text().isEmpty()){
+       // Open search dialog on any key press
+       searchDialog->current_hover = -1;
+       searchDialog->searchLineEdit->setText(event->text());
+       searchDialog->show();
+       searchDialog->setFocus();
+       searchDialog->searchLineEdit->setFocus();
+    }
 
     // Pass the event to the base class
     QMainWindow::keyPressEvent(event);

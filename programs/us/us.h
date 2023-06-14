@@ -65,7 +65,7 @@ private slots:
   void closeEvent      ( QCloseEvent* );
   void closeProcs      ( void );
   void handleSearchTextChanged(const QString &text);
-  void handleResultSelected( void );
+  void handleResultSelected(QListWidgetItem *item);
 };
 
 //////////////
