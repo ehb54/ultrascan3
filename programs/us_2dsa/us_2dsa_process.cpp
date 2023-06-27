@@ -755,10 +755,11 @@ DbgLv(1) << "FIN_FIN: solute_type" << dset->solute_type << "nsols" << nsolutes
 DbgLv(1) << "FIN_FIN:  Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0
  << "comp vb20" << mcomp.vbar20;
 //DbgLv(1) << "norms_process_value"<< wthrd->norms [cc];
-
-         // Convert to experiment-space for simulation below
-         mcomp.s     *= sfactor;
-         mcomp.D     *= dfactor;
+        if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+            // Convert to experiment-space for simulation below
+            mcomp.s     *= sfactor;
+            mcomp.D     *= dfactor;
+        }
 DbgLv(1) << "FIN_FIN:   Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
@@ -795,9 +796,11 @@ DbgLv(1) << " Bcc comp D" << mcomp.D << "comp vbar" << mcomp.vbar20;
          sd.vbar20    = mcomp.vbar20;
          sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
          US_Math2::data_correction( avtemp, sd );
-
-         mcomp.s     /= sd.s20w_correction;
-         mcomp.D     /= sd.D20w_correction;
+          if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+              // Convert to experiment-space for simulation below
+              mcomp.s     /= sd.s20w_correction;
+              mcomp.D     /= sd.D20w_correction;
+          }
 DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
@@ -834,8 +837,11 @@ DbgLv(1) << " Bcc 20w comp D" << mcomp.D;
          sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
          US_Math2::data_correction( avtemp, sd );
 
-         mcomp.s     /= sd.s20w_correction;
-         mcomp.D     /= sd.D20w_correction;
+          if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+              // Convert to experiment-space for simulation below
+              mcomp.s     /= sd.s20w_correction;
+              mcomp.D     /= sd.D20w_correction;
+          }
 DbgLv(1) << "  Bcc  comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
@@ -897,8 +903,19 @@ DbgLv(1) << "FIN_FIN:  n) s D c"
  << s_model.components[lc].s << s_model.components[lc].D
  << s_model.components[lc].signal_concentration;
 dset->simparams.debug();
-US_Astfem_RSA astfem_rsa2( s_model, dset->simparams );
-astfem_rsa2.calculate( swdat );
+    if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+        US_Astfem_RSA astfem_rsa2( s_model, dset->simparams );
+
+        astfem_rsa2.set_debug_flag( dbg_level) ;
+
+        astfem_rsa2.calculate( swdat );
+    }
+    else{
+        US_LammAstfvm astfvm2( s_model,dset->simparams );
+        US_Buffer tmp = dset->solution_rec.buffer;
+        astfvm2.set_buffer( dset->solution_rec.buffer, bfg, csD );
+        astfvm2.calculate( swdat );
+    }
 bool have_ti=((noisflag&1)!=0);
 bool have_ri=((noisflag&2)!=0);
 for (int ss=0; ss<nscans; ss++)
@@ -1049,34 +1066,35 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
       iterate();                        // reset to run another iteration
       return;
    }
+   if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+       // Convert model components s,D back to 20,w form for output
+       if ( dset->solute_type == 0 )
+       {  // Constant vbar
+           for ( int cc = 0; cc < nsolutes; cc++ )
+           {
+               DbgLv(1) << "cc comp D" << model.components[ cc ].D;
+               model.components[ cc ].s *= dset->s20w_correction;
+               model.components[ cc ].D *= dset->D20w_correction;
+               DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
+           }
+       }
+       else
+       {  // Varying vbar or custom
+           US_Math2::SolutionData sd;
+           sd.viscosity  = dset->viscosity;
+           sd.density    = dset->density;
+           double avtemp = dset->temperature;
 
-   // Convert model components s,D back to 20,w form for output
-   if ( dset->solute_type == 0 )
-   {  // Constant vbar
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-         model.components[ cc ].s *= dset->s20w_correction;
-         model.components[ cc ].D *= dset->D20w_correction;
-DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
-      }
-   }
-   else
-   {  // Varying vbar or custom
-      US_Math2::SolutionData sd;
-      sd.viscosity  = dset->viscosity;
-      sd.density    = dset->density;
-      double avtemp = dset->temperature;
+           for ( int cc = 0; cc < nsolutes; cc++ )
+           {
+               sd.vbar20    = model.components[ cc ].vbar20;
+               sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+               US_Math2::data_correction( avtemp, sd );
 
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-         sd.vbar20    = model.components[ cc ].vbar20;
-         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-         US_Math2::data_correction( avtemp, sd );
-
-         model.components[ cc ].s *= sd.s20w_correction;
-         model.components[ cc ].D *= sd.D20w_correction;
-      }
+               model.components[ cc ].s *= sd.s20w_correction;
+               model.components[ cc ].D *= sd.D20w_correction;
+           }
+       }
    }
 
    // Done with refinement iterations:   check for meniscus or MC iteration
