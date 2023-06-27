@@ -236,7 +236,6 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
       // -> for now iterate only over upper_cosed
       for (US_CosedComponent &cosed_comp: upper_comps) {
          double c1 = calc_comp_conc(x, t, T, cosed_comp);
-         if (c1 < 0.002) { continue; }
          double c2 = c1 * c1;      // c1^2
          double c3 = c2 * c1;      // c1^3
          double c4 = c3 * c1;      // c1^4
@@ -256,13 +255,14 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
    return true;
 }
 
-bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const double &t, double &dens, double &visc,const double& T) {
+bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const double &t, double &dens, double &visc,const double& T, double& conc) {
    // check if eigenvalues exist already
    if (eigenvalues.isEmpty()) {
       return false;
    }
    double density = base_density;
    double viscosity = base_viscosity;
+   double concentration = 0.0;
    if (value_cache.contains(QString::number(x, 'f', 3)+ QString::number(t, 'f', 0)))
    {
       std::array<double,2> tmp = value_cache.value(QString::number(x, 'f', 3)+QString::number(t, 'f', 0));
@@ -275,7 +275,7 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
       // -> for now iterate only over upper_cosed
       for (US_CosedComponent &cosed_comp: upper_comps) {
          double c1 = calc_comp_conc(x, t, T, cosed_comp);
-         if (c1 < 0.002) { continue; }
+         concentration += c1;
          double c2 = c1 * c1;      // c1^2
          double c3 = c2 * c1;      // c1^3
          double c4 = c3 * c1;      // c1^4
@@ -292,6 +292,7 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
    }
    dens = density;
    visc = viscosity;
+   conc = concentration;
    return true;
 }
 
@@ -303,6 +304,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    visc_bfg_data.xvalues = editedData->xvalues;
    visc_bfg_data.xvalues.detach();
    dens_bfg_data = visc_bfg_data;
+   conc_bfg_data = visc_bfg_data;
    Nx = visc_bfg_data.pointCount();
    double duration = editedData->scanData.last().seconds;
    simparms.radial_resolution =
@@ -315,11 +317,14 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    // Declares the scan structure
    US_DataIO::Scan dens_scan;
    US_DataIO::Scan visc_scan;
+   US_DataIO::Scan conc_scan;
    visc_scan.rvalues.reserve(Nx);
    dens_scan.rvalues.reserve(Nx);
+   conc_scan.rvalues.reserve(Nx);
    dt = max(simparms.radial_resolution*simparms.radial_resolution / 6 / max_D, 1.0); // set lower limit for dt to keep workload reasonable
    dens_bfg_data.scanData.clear();
    visc_bfg_data.scanData.clear();
+   conc_bfg_data.scanData.clear();
    int nstep = qCeil(duration/dt)+1;
    double runtime = 0.00001;
    int scan_count = 1;
@@ -364,16 +369,25 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
       visc_scan.rpm = rpm;
       visc_scan.seconds = runtime;
       visc_scan.omega2t = omega2t;
+       conc_scan.rvalues.clear();
+       conc_scan.rvalues.reserve(Nx);
+       conc_scan.temperature = temp;
+       conc_scan.rpm = rpm;
+       conc_scan.seconds = runtime;
+       conc_scan.omega2t = omega2t;
       for ( int jj = 0; jj < Nx; jj++ )// iterate over all radial points for each scan
       {
          double dens;
          double visc;
-         calc_dens_visc(visc_bfg_data.radius(jj),runtime,dens,visc,temp);
+         double conc;
+         calc_dens_visc(visc_bfg_data.radius(jj),runtime,dens,visc,temp, conc);
          dens_scan.rvalues.append(dens);
          visc_scan.rvalues.append(visc);
+         conc_scan.rvalues.append(conc);
       }
       dens_bfg_data.scanData.append(dens_scan);
       visc_bfg_data.scanData.append(visc_scan);
+      conc_bfg_data.scanData.append(conc_scan);
       if (runtime > editedData->scanData.last().seconds){
          break;
       }
@@ -400,6 +414,36 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    }
 
    DbgLv(1) << "Calculated BFG for" << Nx << "radial points and" <<scan_count<<"scans";
+    if ( dbg_level > 0 ) {
+        DbgLv(1) << "#####################################";
+        // calculate and print the integral of scan curves
+        double cimn = 9e+14;
+        double cimx = 0.0;
+        double ciav = 0.0;
+
+        for ( int ii = 0; ii < conc_bfg_data.scanData.size(); ii++ ) {
+            double csum = 0.0;
+            double pval = conc_bfg_data.scanData[ ii ].rvalues[ 0 ];
+
+            for ( int jj = 1; jj < conc_bfg_data.scanData[ ii ].rvalues.size(); jj++ ) {
+                double cval = conc_bfg_data.scanData[ ii ].rvalues[ jj ];
+                csum += ( ( cval + pval ) * 0.5 * (sq(conc_bfg_data.xvalues[jj])-sq(conc_bfg_data.xvalues[jj-1])));
+                pval = cval;
+//if ( ii < 19  &&  ( (jj/100)*100 == jj || (jj+5)>nconc ) )
+// DbgLv(3) << "   jj cval dltr csum" << jj << cval << dltr << csum;
+            }
+            DbgLv(1) << "Scan" << ii + 1 << " Time " << conc_bfg_data.scanData[ ii ].seconds << "  Integral" << csum;
+            cimn = (cimn < csum) ? cimn : csum;
+            cimx = (cimx > csum) ? cimx : csum;
+            ciav += csum;
+        }
+
+        ciav /= (double) conc_bfg_data.scanData.size();
+        double cidf = cimx - cimn;
+        double cidp = (double) (qRound(10000.0 * cidf / ciav)) / 100.0;
+        DbgLv(1) << "  Integral Min Max Mean" << cimn << cimx << ciav;
+        DbgLv(1) << "  ( range of" << cidf << "=" << cidp << " percent of mean )";
+    }
    return false;
 }
 
@@ -408,41 +452,41 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, do
    double t0 = dens_bfg_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
    double t1 = dens_bfg_data.scanData[ 1 ].seconds;
    int scn = 2;                             // index to next scan to use
-   double* Ds0;      // density for the 1st time interval
-   double* Ds1;      // density for the 2nd time interval
-   double* Vs0;      // viscosity for the 1st time interval
-   double* Vs1;      // viscosity for the 2nd time interval
-   double* xs;       // grids in radial direction
-   QVector< double > tmpDs0;
-   QVector< double > tmpDs1;
-   QVector< double > tmpVs0;
-   QVector< double > tmpVs1;
-   QVector< double > tmpxs;
-   tmpDs0.fill(0.0, N);
-   tmpDs1.fill(0.0, N);
-   tmpVs0.fill(0.0, N);
-   tmpVs1.fill(0.0, N);
-   tmpxs.fill(0.0, N);
-   Ds0 = tmpDs0.data();
-   Ds1 = tmpDs1.data();
-   Vs0 = tmpVs0.data();
-   Vs1 = tmpVs1.data();
-   xs = tmpxs.data();
+//   double* Ds0;      // density for the 1st time interval
+//   double* Ds1;      // density for the 2nd time interval
+//   double* Vs0;      // viscosity for the 1st time interval
+//   double* Vs1;      // viscosity for the 2nd time interval
+//   double* xs;       // grids in radial direction
+//   QVector< double > tmpDs0;
+//   QVector< double > tmpDs1;
+//   QVector< double > tmpVs0;
+//   QVector< double > tmpVs1;
+//   QVector< double > tmpxs;
+//   tmpDs0.fill(0.0, N);
+//   tmpDs1.fill(0.0, N);
+//   tmpVs0.fill(0.0, N);
+//   tmpVs1.fill(0.0, N);
+//   tmpxs.fill(0.0, N);
+//   Ds0 = tmpDs0.data();
+//   Ds1 = tmpDs1.data();
+//   Vs0 = tmpVs0.data();
+//   Vs1 = tmpVs1.data();
+//   xs = tmpxs.data();
 
-   while ((t1 < t) && scn < dens_bfg_data.scanCount()) {  // walk down salt scans until we are straddling desired time value
+   while ((t1 < t) && scn < dens_bfg_data.scanCount() - 1) {  // walk down salt scans until we are straddling desired time value
       t0 = t1;
       t1 = dens_bfg_data.scanData[ scn ].seconds;
       scn++;
       DbgLv(3) << "SaltD:ntrp:      0 t 1" << t0 << t << t1 << "  N s" << scn;
    }
    DbgLv(2) << "SaltD:ntrp:   t0 t t1" << t0 << t << t1 << "  Nt scn" << scn;
-   for ( int j = 0; j < Nx; j++ ) {  // get 1st two salt arrays from 1st two salt scans
-      Ds0[ j ] = dens_bfg_data.value(scn-2, j);
-      Ds1[ j ] = dens_bfg_data.value(scn-1, j);
-      Vs0[ j ] = visc_bfg_data.value(scn-2, j);
-      Vs1[ j ] = visc_bfg_data.value(scn-1, j);
-      xs[ j ] = dens_bfg_data.xvalues[ j ];
-   }
+//   for ( int j = 0; j < Nx; j++ ) {  // get 1st two salt arrays from 1st two salt scans
+//      Ds0[ j ] = dens_bfg_data.value(scn-2, j);
+//      Ds1[ j ] = dens_bfg_data.value(scn-1, j);
+//      Vs0[ j ] = visc_bfg_data.value(scn-2, j);
+//      Vs1[ j ] = visc_bfg_data.value(scn-1, j);
+//      xs[ j ] = dens_bfg_data.xvalues[ j ];
+//   }
    // interpolate between t0 and t1
    double et1 = (t - t0) / (t1 - t0);
    if (et1 < 0.0 || et1 > 1.0){
@@ -457,25 +501,29 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, do
    for ( int jf = 0; jf < N; jf++ )      // loop for all x[m]
    {
       double xj = x[ jf ];
-      while ( xj > xs[ k ] && k < Nx - 1 ) k++; // radial point
+      while ( xj > dens_bfg_data.radius(k) && k < Nx - 2 ) k++; // radial point
 
       // linear interpolation
       int m = k - 1;
-      if (xs[k]<xs[m] || xs[k] < xj || xs[m] > xj){
+      double xs_k = dens_bfg_data.radius(k);
+      double xs_m = dens_bfg_data.radius(m);
+      if (xs_k<xs_m || xs_k < xj || xs_m > xj){
          DbgLv(3)<<"radius corrupted";
       }
-      double xik = (xj - xs[ m ]) / (xs[ k ] - xs[ m ]);
+      double xik = (xj - xs_m) / (xs_k - xs_m);
       if (xik < 0.0 || xik > 1.0){
          DbgLv(3) << "radius corrupted again";
       }
       xik = (xik > 1.0) ? 1.0 : xik;
       xik = (xik < 0.0) ? 0.0 : xik;
       double xim = 1.0 - xik;
-      DbgLv(3) << "jf=" << jf << " k=" << k << " m=" << m << " xj=" << xj << " xs[k]" << xs[ k ] << " Nx=" << Nx
-               << " xik=" << xik << " xim=" << xim;
+      DbgLv(3) << "jf=" << jf << " k=" << k << " m=" << m << " xj=" << xj << " xs[k]" << dens_bfg_data.radius(k)
+                << " Nx=" << Nx << " xik=" << xik << " xim=" << xim;
       // interpolate linearly in both time and radius
-      DensCosed[ jf ] += et0 * (xim * Ds0[ m ] + xik * Ds0[ k ]) + et1 * (xim * Ds1[ m ] + xik * Ds1[ k ]) - base_density;
-      ViscCosed[ jf ] += et0 * (xim * Vs0[ m ] + xik * Vs0[ k ]) + et1 * (xim * Vs1[ m ] + xik * Vs1[ k ]) - base_viscosity;
+      DensCosed[ jf ] += et0 * (xim * dens_bfg_data.reading(scn-2, m) + xik * dens_bfg_data.reading(scn-2, k)) +
+              et1 * (xim * dens_bfg_data.reading(scn-1, m) + xik * dens_bfg_data.reading(scn-1, k)) - base_density;
+      ViscCosed[ jf ] += et0 * (xim * visc_bfg_data.reading(scn-2,m) + xik * visc_bfg_data.reading(scn-2,k)) +
+              et1 * (xim * visc_bfg_data.reading(scn-1,m) + xik * visc_bfg_data.reading(scn-1,k))- base_viscosity;
    } // radius loop end
 }
 
