@@ -181,9 +181,10 @@ DbgLv(1) << "WT:CRR nsolutes" << nsolutes << "0vb" << solutes_i[0].v;
       wmodel.components[ ii ].f      = 0.0;
 
       US_Model::calc_coefficients( wmodel.components[ ii ] );
-
-      wmodel.components[ ii ].s     /= dset->s20w_correction;
-      wmodel.components[ ii ].D     /= dset->D20w_correction;
+      if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+          wmodel.components[ ii ].s     /= dset->s20w_correction;
+          wmodel.components[ ii ].D     /= dset->D20w_correction;
+      }
    }
 
    edata = &dset->run_data;
@@ -195,11 +196,18 @@ DbgLv(1) << "WT:CRR nsolutes" << nsolutes << "0vb" << solutes_i[0].v;
    QVector< double > nnls_x( 1,      0.0 );
 
 DbgLv(1) << "WT:CRR ns np nt" << nscans << npoints << ntotal;
-   US_AstfemMath::initSimData( sim_vals.sim_data, *edata, 0.0 );
+    US_AstfemMath::initSimData( sim_vals.sim_data, *edata, 0.0 );
+    if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+        US_Astfem_RSA astfem_rsa( wmodel, dset->simparams );
 
-   US_Astfem_RSA astfem_rsa( wmodel, dset->simparams );
+        astfem_rsa.calculate( sim_vals.sim_data );
+    }
+    else{
+        US_LammAstfvm astfvm(wmodel, dset->simparams);
+        astfvm.set_buffer(dset->solution_rec.buffer,bandFormingGradient, cosedData);
+        astfvm.calculate(sim_vals.sim_data);
+    }
 
-   astfem_rsa.calculate( sim_vals.sim_data );
 
    int kk        = 0;
 

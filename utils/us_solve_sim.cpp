@@ -662,8 +662,6 @@ DbgLv(0)<< " norm_s norm_a norm_b" << norm_s << norm_a << norm_b
                sd.D20w_correction = dcorre;
             }
 
-            model.components[0].s /= sd.s20w_correction;
-            model.components[0].D /= sd.D20w_correction;
 //DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
 // << model.components[0].s << model.components[0].f_f0
 // << model.components[0].mw << model.components[0].vbar20
@@ -711,6 +709,8 @@ DbgLv(0)<< " norm_s norm_a norm_b" << norm_s << norm_a << norm_b
                }
             }
             if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+               model.components[0].s /= sd.s20w_correction;
+               model.components[0].D /= sd.D20w_correction;
                US_Astfem_RSA astfem_rsa(model, dset->simparams);
                DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 
@@ -858,9 +858,6 @@ DbgLv(1) << "CR: sdat:"
 
             US_Math2::data_correction(avtemp, sd);
 
-            model.components[0].s /= sd.s20w_correction;
-            model.components[0].D /= sd.D20w_correction;
-
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData(simdat, *edata, 0.0);
 
@@ -902,6 +899,8 @@ DbgLv(1) << "CR: sdat:"
             }
 
             if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+               model.components[0].s /= sd.s20w_correction;
+               model.components[0].D /= sd.D20w_correction;
                US_Astfem_RSA astfem_rsa(model, dset->simparams);
                DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 
