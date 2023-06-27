@@ -96,6 +96,7 @@ public:
       QVector<double> pre_calc_betas; //!< Map eigenvalues to their precalculated norm * Integral value
       US_DataIO::RawData dens_bfg_data; //!< Scan like data of the gradient density
       US_DataIO::RawData visc_bfg_data; //!< Scan like data of the gradient viscosity
+      US_DataIO::RawData conc_bfg_data; //!< Scan like data of the gradient viscosity
       US_SimulationParameters simparms; //!< Simulation parameters
 
       //! \brief Create a band forming gradient
@@ -151,7 +152,7 @@ public:
 
       bool adjust_sd(const double &x, const double &t, double& s, double& d, double& T, double& vbar);
 
-      bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T);
+      bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T, double& conc);
 
       bool calculate_gradient(US_SimulationParameters asparms, US_DataIO::RawData* editedData);
 
