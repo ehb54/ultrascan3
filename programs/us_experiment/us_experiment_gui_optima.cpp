@@ -6275,7 +6275,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   
   if (msgBox.clickedButton() == Accept)
     {
-      if ( o_list == "MISSING" || r_list == "MISSING" )
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) ) 
 	{
 	  return;
 	}
