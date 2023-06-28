@@ -420,6 +420,7 @@ void US_ExperimentMain::us_mode_passed( void )
   usmode = true;
   this->tabWidget->removeTab(7);
   this->tabWidget->setTabText( 7, "8: Submit");
+  
 }
 
 void US_ExperimentMain::auto_mode_passed( void )
@@ -1117,7 +1118,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
 
-   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine, Operator and Experiment Type " ) );
+   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
    QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
@@ -1157,7 +1158,71 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
    genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
 
+   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
+
+   //[NEW] Add gui for assigning operator(s) && reviewer(s)
+   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
+      
+   lb_operator_reviewer_banner    = us_banner( tr( "Assign Operator and Reviewer(s) " ) );
+   QFontMetrics m (lb_operator_reviewer_banner -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   lb_operator_reviewer_banner  -> setFixedHeight  (1.5 * RowHeight);
+   
+   lb_choose_oper      = us_label( "Choose Operator:" );
+   lb_choose_rev       = us_label( "Choose Reviewer:" );
+   lb_opers_to_assign  = us_label( "Operator List:" );
+   lb_revs_to_assign   = us_label( "Reviewer List:" );
+
+   pb_add_oper      = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_rev       = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
+
+   te_opers_to_assign    = us_textedit();
+   //te_opers_to_assign    ->setTextColor( Qt::blue );
+   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_opers_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_opers_to_assign, true );
+
+   te_revs_to_assign    = us_textedit();
+   //te_revs_to_assign    ->setTextColor( Qt::blue );
+   te_revs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_revs_to_assign, true );
+  
+   cb_choose_operator   = new QComboBox( this );
+   cb_choose_rev        = new QComboBox( this );
+   
+   row = 0;
+   //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
+   revOperGMPRunGrid -> addWidget( lb_operator_reviewer_banner,row++, 0, 1, 15 );
+   
+   revOperGMPRunGrid -> addWidget( lb_choose_oper,         row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_operator,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_oper,            row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_choose_rev,          row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_rev,          row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_rev,             row++,   13, 1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_opers_to_assign,     row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_opers_to_assign,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_oper,         row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_revs_to_assign,      row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_revs_to_assign,      row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_rev,          row++,   13, 1,  2 );
+
+   
+   connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
+   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
+   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
+   connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
+   
    panel->addLayout( genL );
+   panel->addLayout( revOperGMPRunGrid ); 
    panel->addStretch();
 
    US_Passwd pw;
@@ -1370,29 +1435,39 @@ void US_ExperGuiRotor::changeOptima( int ndx )
    sl_operators.clear();
    int inv_lev    = US_Settings::us_inv_level();
    int inv_id     = US_Settings::us_inv_ID();
+
+   //Clear cb_choose_operator [assign] & rebuild
+   cb_choose_operator -> clear();
+   te_opers_to_assign -> clear();
    
    QList< US_Rotor::Operator > operators = currentInstrument.operators;
    foreach ( US_Rotor::Operator oper, operators )
    {
       qDebug() << "Operator: " << oper.lname;
 
-      //Here: if UL<3, enforce operator to be ONLY the current non-admin user:
-      if ( inv_lev < 3 )
-	{
-	  if ( inv_id == oper.ID )
-	    {
-	      sl_operators << QString::number( oper.ID )
-		+ ": " + oper.fname + " " + oper.lname;
+      // //Here: if UL<3, enforce operator to be ONLY the current non-admin user:
+      // if ( inv_lev < 3 )
+      // 	{
+      // 	  if ( inv_id == oper.ID )
+      // 	    {
+      // 	      sl_operators << QString::number( oper.ID )
+      // 		+ ": " + oper.fname + " " + oper.lname;
 
-	      break;
-	    }
-	}
-      else
-	{
+      // 	      break;
+      // 	    }
+      // 	}
+      // else
+      // 	{
 	  
-	  sl_operators << QString::number( oper.ID )
-	    + ": " + oper.fname + " " + oper.lname;
-	}
+      // 	  sl_operators << QString::number( oper.ID )
+      // 	    + ": " + oper.fname + " " + oper.lname;
+      // 	}
+      
+      sl_operators << QString::number( oper.ID )
+	+ ": " + oper.fname + " " + oper.lname;
+
+      
+      cb_choose_operator ->addItem( QString::number( oper.ID ) + ". " + oper.lname + ", " + oper.fname );
    }
    cb_operator->clear();
    cb_operator->addItems( sl_operators );
@@ -6149,13 +6224,33 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
   
   QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
+
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QStringList oper_listList = rpRotor->operListAssign.split("\n");
+  QStringList rev_listList  = rpRotor->revListAssign.split("\n");
   
   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
   msgBox.setText( message_submission );
-  msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
-			     .arg(alias)
-			     .arg(dbhost)
-			     .arg(dbport));
+
+  QString info_text = QString( tr ("<b>Name:</b> %1 <br>  <b>Host:</b>  %2 <br> <b>Port:</b>  %3 ") )
+    .arg(alias)
+    .arg(dbhost)
+    .arg(dbport);
+  
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2"))
+	.arg(oper_listList.join(", "))
+	.arg(rev_listList.join(", "));
+      
+    }
+  
+  msgBox.setInformativeText( info_text);  
+    
   msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
   QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);

@@ -1003,9 +1003,153 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
    changed              = was_changed;   // Restore changed state
-DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
- << "cb_rotor text" << cb_rotor->currentText();
-DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
+   DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
+	    << "cb_rotor text" << cb_rotor->currentText();
+   DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
+
+   //Show current oper(s) & rev(s)
+   te_opers_to_assign -> setText( rpRotor->operListAssign );
+   te_revs_to_assign  -> setText( rpRotor->revListAssign );
+
+   
+   //initiate global reviewers list:
+   init_grevs();
+
+
+   //BAsed on mode [usmode - R&D], hide/show oper/rev section:
+      //show Assign oper/rev ONLY for GMP:
+   qDebug() << "In Rotor: mainw->automode, mainw->usmode -- "
+	    <<  mainw->automode << ", " <<  mainw->usmode;
+   if ( mainw->usmode )
+     {
+       lb_operator_reviewer_banner -> hide();
+       lb_choose_oper -> hide();
+       cb_choose_operator -> hide();
+       pb_add_oper        -> hide();
+
+       lb_choose_rev -> hide();
+       cb_choose_rev -> hide();
+       pb_add_rev    -> hide();
+
+       lb_opers_to_assign -> hide();
+       te_opers_to_assign -> hide();
+       pb_remove_oper     -> hide();
+
+       lb_revs_to_assign -> hide();
+       te_revs_to_assign -> hide();
+       pb_remove_rev     -> hide(); 
+            
+     }
+ 
+}
+
+void US_ExperGuiRotor::init_grevs( void )
+{
+  cb_choose_rev  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people_grev" << "%" + QString("") + "%";
+  qDebug() << "init_invs(), query --  " << query;
+  db.query( query );
+
+  while ( db.next() )
+    {
+      int g_invID         = db.value( 0 ).toInt();
+      QString g_lastName  = db.value( 1 ).toString();
+      QString g_firstName = db.value( 2 ).toString();
+      
+      //populate 
+      cb_choose_rev->addItem( QString::number( g_invID ) + ". " + 
+			      g_lastName + ", " + g_firstName );
+      
+    }
+}
+
+
+//Add operator to list 
+void US_ExperGuiRotor::addOpertoList( void )
+{
+  QString c_oper = cb_choose_operator->currentText();
+  
+  //check if selected item already in the list:
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_oper ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Operator" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of operators.<br>"
+				    "Please choose other operator.")
+				.arg( c_oper ) );
+      return;
+    }
+  
+  te_opers_to_assign->append( c_oper );
+}
+
+//Remove operator from list 
+void US_ExperGuiRotor::removeOperfromList( void )
+{
+  te_opers_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_opers_to_assign->textCursor();
+  te_opers_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_opers_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_opers_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_opers_to_assign->textCursor().removeSelectedText();
+  te_opers_to_assign->textCursor().deletePreviousChar();
+  te_opers_to_assign->setTextCursor(storeCursorPos);
+
+}
+
+//Add reviewer to list 
+void US_ExperGuiRotor::addRevtoList( void )
+{
+  QString c_rev = cb_choose_rev->currentText();
+
+  //check if selected item already in the list:
+  QString e_revList = te_revs_to_assign->toPlainText();
+  if ( e_revList. contains( c_rev ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Reviewer" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of reviewers.<br>"
+				    "Please choose other reviewer.")
+				.arg( c_rev ) );
+      return;
+    }
+  
+  te_revs_to_assign->append( c_rev );
+
+}
+
+//Remove reviewer from list 
+void US_ExperGuiRotor::removeRevfromList( void )
+{
+  te_revs_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_revs_to_assign->textCursor();
+  te_revs_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_revs_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_revs_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_revs_to_assign->textCursor().removeSelectedText();
+  te_revs_to_assign->textCursor().deletePreviousChar();
+  te_revs_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "Revs to ASSIGN: " << te_revs_to_assign->toPlainText();
 
 }
 
@@ -1135,6 +1279,15 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    }
 
    qDebug() << "Rotor Save panel Done: " ;
+
+   //And save info on selected assigned oper(s) & rev(s)
+   QString oper_list = te_opers_to_assign->toPlainText();
+   QString rev_list  = te_revs_to_assign->toPlainText();
+
+   rpRotor->operListAssign = oper_list;
+   rpRotor->revListAssign  = rev_list;
+
+   
 }
 
 // Get a specific panel string value

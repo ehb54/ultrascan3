@@ -193,6 +193,26 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList  experimentTypes;
       //int          currentOperator_index;
       QString      currentOperator;
+
+
+      //Assigning oper(s) && rev(s)
+      QLabel*      lb_operator_reviewer_banner;
+      QLabel* lb_choose_oper;
+      QLabel* lb_choose_rev;
+      QLabel* lb_opers_to_assign;
+      QLabel* lb_revs_to_assign;
+  
+  
+      QPushButton*  pb_add_oper;
+      QPushButton*  pb_remove_oper;
+      QPushButton*  pb_add_rev;
+      QPushButton*  pb_remove_rev;
+  
+      QTextEdit*    te_opers_to_assign;
+      QTextEdit*    te_revs_to_assign;
+
+      QComboBox*    cb_choose_operator;
+      QComboBox*    cb_choose_rev;				  
       
    private slots:
       void changeLab  ( int );     // Slot for change in lab
@@ -210,6 +230,11 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       // Get pointer to abstractRotor for named rotor
       US_Rotor::AbstractRotor* abstractRotor( const QString );
       void test_optima_connection( void );
+      void init_grevs( void );
+      void addOpertoList( void );
+      void removeOperfromList( void );
+      void addRevtoList( void );
+      void removeRevfromList( void );
 };
 
 //! \brief Experiment Speeds panel
@@ -969,7 +994,7 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
-  bool    us_prot_dev_mode;
+      bool    us_prot_dev_mode;
       bool    global_reset;
 
   QMap <QString, QString> protocol_details_passed; 
