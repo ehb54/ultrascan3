@@ -5672,8 +5672,11 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
 // Slot to save the current Run Protocol
 bool US_ExperGuiUpload::saveRunProtocol()
 {
-
   bool save_aborted = false;
+  
+  if ( proto_svd )
+    return save_aborted;
+    
   
   if ( mainw->ScanCount_global > 1501 )
     {
@@ -6219,20 +6222,27 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   // End of dealing with unchanged protocol /////////////////////////////////////////////////////////////
 
   QMessageBox msgBox;
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
   QString message_protocol = tr( "");
-  if ( rps_differ )
+  if ( rps_differ && !proto_svd )
     message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
   
   QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
 
   //Info on assigened oper/revs: ONLY for GMP!!!!
-  QStringList oper_listList = rpRotor->operListAssign.split("\n");
-  QStringList rev_listList  = rpRotor->revListAssign.split("\n");
-  
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+    
   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
   msgBox.setText( message_submission );
 
-  QString info_text = QString( tr ("<b>Name:</b> %1 <br>  <b>Host:</b>  %2 <br> <b>Port:</b>  %3 ") )
+  QString info_text = QString( tr ("<b>Run Name:</b> %1 <br> <b>Instrument:</b> %2 <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
+    .arg( currProto->runname )
     .arg(alias)
     .arg(dbhost)
     .arg(dbport);
@@ -6244,24 +6254,36 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 				  "&emsp; %1 <br><br>"
 				  "<b>Assigner Reviewer(s):</b> <br>"
 				  "&emsp; %2"))
-	.arg(oper_listList.join(", "))
-	.arg(rev_listList.join(", "));
-      
+	.arg( o_list )
+	.arg( r_list );
     }
-  
+
+  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) )
+    {
+      info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				"Experiment <b>can NOT</b> be submitted due to<br>"
+				"missing assigned operator(s) and/or reviewer(s).<br><br>"
+				"Please return to 2. Labs/Rotor settings and provide missing information.")
+			    );
+    }
+
   msgBox.setInformativeText( info_text);  
-    
   msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
-  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
-  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-  
+ 
   msgBox.setIcon(QMessageBox::Question);
   msgBox.exec();
   
   if (msgBox.clickedButton() == Accept)
     {
-      qDebug() << "Submitting...";
-      submitExperiment();
+      if ( o_list == "MISSING" || r_list == "MISSING" )
+	{
+	  return;
+	}
+      else
+	{
+	  qDebug() << "Submitting...";
+	  submitExperiment();
+	}
     }
   else if (msgBox.clickedButton() == Cancel)
     {
