@@ -278,6 +278,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   init_grevs();
 			 
   resize( 1200, 700 );
+  adjustSize();
 }
 
 
@@ -295,6 +296,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
   resize( 1000, 700 );
+  adjustSize();
 }
 
 
@@ -312,6 +314,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & protocol_detail
   mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
   resize( 1000, 700 );
+  adjustSize();
 }
 
 
