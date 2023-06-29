@@ -848,6 +848,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool         connected;   // We are Connected to the Optima
       QString      json_upl;    // JSON to upload
 
+      QMap<QString,QString> gmp_submitter_map;
+
       QJsonObject absorbanceObject;
 
       QSqlDatabase dbxpn;

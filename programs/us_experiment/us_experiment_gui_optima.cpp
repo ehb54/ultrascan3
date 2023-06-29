@@ -6281,8 +6281,27 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	}
       else
 	{
-	  qDebug() << "Submitting...";
-	  submitExperiment();
+	  //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	  qDebug() << "Checking master password...";
+	  gmp_submitter_map.clear();
+	  US_Passwd   pw;
+	  gmp_submitter_map  = pw.getPasswd_auditTrail( "GMP Run Submitter Form", "Savelyev, Alexey" );
+
+	  int submit_map_size = gmp_submitter_map.keys().size();
+	  qDebug() << "Submitter map: "
+		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		   << gmp_submitter_map.keys().isEmpty() 
+		   << gmp_submitter_map[ "User:" ]
+		   << gmp_submitter_map[ "Comment:" ]
+		   << gmp_submitter_map[ "Master Password:" ];
+
+	  //Enable GMP run submit ONLY if form was filled && password correct
+	  
+	  if ( submit_map_size > 0 ) 
+	    {
+	      qDebug() << "Submitting...";
+	      submitExperiment();
+	    }
 	}
     }
   else if (msgBox.clickedButton() == Cancel)
@@ -7842,10 +7861,10 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    }
 
    QStringList qry;
+   int autoflowID_returned = 0;
    
    if ( db != NULL )
    {
-     int autoflowID_returned = 0;
      qry. clear();
      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
      //greater of:
@@ -7879,26 +7898,29 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
      autoflowID_returned = db->lastInsertID();
      //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
      protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
-   
-     
+        
      qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
      
-     if ( autoflowID_returned == 0 )
-       {
-	 QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
-			       tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
-	 return;
-       }
    }
    
-   /***/
+   if ( autoflowID_returned == 0 )
+     {
+       QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+			     tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+       return;
+     }
+   /*******************************************************************************/
+   
+   
+   /******************************************************************************/
    //Also, create record in autoflowStages table:
    qry. clear();
    qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
    db->statusQuery( qry );
-   /**/
+   /********************************************************************************/
 
-
+   
+   /*******************************************************************************/
    //Also, create [NEW] eSign's record ////////////////////////////////////
    QStringList oper_listList = rpRotor->operListAssign.split("\n");
    QStringList rev_listList  = rpRotor->revListAssign.split("\n");
@@ -7985,7 +8007,10 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 			     tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
        return;
      }
+   /*********************************************************************************/
    
+
+   /********************************************************************************/
    //Update primary autolfow record with the new generated eSignID:
    qry. clear();
    qry <<  "update_autoflow_with_gmpReviewID"
@@ -7994,6 +8019,14 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    
    qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
    db->query( qry );
+   /********************************************************************************/
+
+   /********************************************************************************/
+   //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+   
+   /********************************************************************************/
+
+   
 }
 
 
