@@ -60,7 +60,6 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
   // if ( ! pw.isEmpty() ) return pw;
 
   QMap < QString, QString > form_map;
-  
   QString pw;
 
   // See if the master pasword has been set

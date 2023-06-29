@@ -6281,11 +6281,27 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	}
       else
 	{
+	  //get user info:
+	  //get info on logged in user [submitter]:
+	  US_Passwd   pw;
+	  QString     masterPW  = pw.getPasswd();
+	  US_DB2      db( masterPW );  // New constructor
+	  QStringList qry;
+	  qry <<  QString( "get_user_info" );
+	  db.  query( qry );
+	  db. next();
+	  int u_ID        = db. value( 0 ).toInt();
+	  QString u_fname = db. value( 1 ).toString();
+	  QString u_lname = db. value( 2 ).toString();
+	  int u_lev       = db. value( 5 ).toInt();
+	  
+	  QString user_submitter = u_lname + ", " + u_fname;
+	  
 	  //ask for submitter's credentials: password, comment [for subsequent audit trail]:
 	  qDebug() << "Checking master password...";
 	  gmp_submitter_map.clear();
-	  US_Passwd   pw;
-	  gmp_submitter_map  = pw.getPasswd_auditTrail( "GMP Run Submitter Form", "Savelyev, Alexey" );
+	  US_Passwd   pw_at;
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", user_submitter );
 
 	  int submit_map_size = gmp_submitter_map.keys().size();
 	  qDebug() << "Submitter map: "
