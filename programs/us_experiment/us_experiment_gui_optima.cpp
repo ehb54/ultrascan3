@@ -6256,15 +6256,16 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 				  "&emsp; %2"))
 	.arg( o_list )
 	.arg( r_list );
-    }
-
-  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) )
-    {
-      info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
-				"Experiment <b>can NOT</b> be submitted due to<br>"
-				"missing assigned operator(s) and/or reviewer(s).<br><br>"
-				"Please return to 2. Labs/Rotor settings and provide missing information.")
-			    );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Experiment <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s) and/or reviewer(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
     }
 
   msgBox.setInformativeText( info_text);  
@@ -6275,49 +6276,57 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   
   if (msgBox.clickedButton() == Accept)
     {
-      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) ) 
+      if ( !mainw->usmode )
 	{
-	  return;
+	  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) ) 
+	    {
+	      return;
+	    }
+	  else
+	    {
+	      //get user info:
+	      //get info on logged in user [submitter]:
+	      US_Passwd   pw;
+	      QString     masterPW  = pw.getPasswd();
+	      US_DB2      db( masterPW );  // New constructor
+	      QStringList qry;
+	      qry <<  QString( "get_user_info" );
+	      db.  query( qry );
+	      db. next();
+	      int u_ID        = db. value( 0 ).toInt();
+	      QString u_fname = db. value( 1 ).toString();
+	      QString u_lname = db. value( 2 ).toString();
+	      int u_lev       = db. value( 5 ).toInt();
+	      
+	      QString user_submitter = u_lname + ", " + u_fname;
+	      
+	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	      qDebug() << "Checking master password...";
+	      gmp_submitter_map.clear();
+	      US_Passwd   pw_at;
+	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", user_submitter );
+	      
+	      int submit_map_size = gmp_submitter_map.keys().size();
+	      qDebug() << "Submitter map: "
+		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		       << gmp_submitter_map.keys().isEmpty() 
+		       << gmp_submitter_map[ "User:" ]
+		       << gmp_submitter_map[ "Comment:" ]
+		       << gmp_submitter_map[ "Master Password:" ];
+	      
+	      //Enable GMP run submit ONLY if form was filled && password correct
+	      
+	      if ( submit_map_size > 0 ) 
+		{
+		  qDebug() << "Submitting GMP...";
+		  submitExperiment();
+		}
+	    }
 	}
       else
 	{
-	  //get user info:
-	  //get info on logged in user [submitter]:
-	  US_Passwd   pw;
-	  QString     masterPW  = pw.getPasswd();
-	  US_DB2      db( masterPW );  // New constructor
-	  QStringList qry;
-	  qry <<  QString( "get_user_info" );
-	  db.  query( qry );
-	  db. next();
-	  int u_ID        = db. value( 0 ).toInt();
-	  QString u_fname = db. value( 1 ).toString();
-	  QString u_lname = db. value( 2 ).toString();
-	  int u_lev       = db. value( 5 ).toInt();
-	  
-	  QString user_submitter = u_lname + ", " + u_fname;
-	  
-	  //ask for submitter's credentials: password, comment [for subsequent audit trail]:
-	  qDebug() << "Checking master password...";
-	  gmp_submitter_map.clear();
-	  US_Passwd   pw_at;
-	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", user_submitter );
-
-	  int submit_map_size = gmp_submitter_map.keys().size();
-	  qDebug() << "Submitter map: "
-		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
-		   << gmp_submitter_map.keys().isEmpty() 
-		   << gmp_submitter_map[ "User:" ]
-		   << gmp_submitter_map[ "Comment:" ]
-		   << gmp_submitter_map[ "Master Password:" ];
-
-	  //Enable GMP run submit ONLY if form was filled && password correct
-	  
-	  if ( submit_map_size > 0 ) 
-	    {
-	      qDebug() << "Submitting...";
-	      submitExperiment();
-	    }
+	  qDebug() << "Submitting R&D...";
+	  submitExperiment();
 	}
     }
   else if (msgBox.clickedButton() == Cancel)
@@ -7937,105 +7946,110 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 
    
    /*******************************************************************************/
-   //Also, create [NEW] eSign's record ////////////////////////////////////
-   QStringList oper_listList = rpRotor->operListAssign.split("\n");
-   QStringList rev_listList  = rpRotor->revListAssign.split("\n");
-   
-   QString operListJsonArray = "[";
-   QString revListJsonArray  = "[";
-   QStringList oper_rev_joinedList;
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+       
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int u_ID        = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+       
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+     }
 
-   for (int i=0; i<oper_listList.size(); ++i )
-     {
-       oper_rev_joinedList << oper_listList[i]; 
-       operListJsonArray += "\"" + oper_listList[i] + "\",";
-     }
-      
-   for (int i=0; i<rev_listList.size(); ++i )
-     {
-       oper_rev_joinedList << rev_listList[i]; 
-       revListJsonArray += "\"" + rev_listList[i] + "\",";
-     }
-  
-   operListJsonArray.chop(1);
-   revListJsonArray.chop(1);
-   operListJsonArray += "]";
-   revListJsonArray  += "]";
-   
-   qDebug() << "operListJsonArray -- " << operListJsonArray;
-   qDebug() << "revListJsonArray -- "  << revListJsonArray;
-   
-   //Minimum structure of eSignStatusJson field:
-   QString eSignStatusJson = "{\"to_sign\":[";
-   for (int i=0; i<oper_rev_joinedList.size(); ++i )
-     {
-       eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
-     }
-   eSignStatusJson. chop(1);
-   eSignStatusJson += "]}";
-  
-   qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
-   
-   //Minimum structure of logJson when record created from scratch:
-   /** 
-       { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
-       "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
-       }
-   **/
-   QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
-   
-   qry.clear();
-   qry <<  QString( "get_user_info" );
-   db -> query( qry );
-   db -> next();
-   int u_ID        = db->value( 0 ).toInt();
-   QString u_fname = db->value( 1 ).toString();
-   QString u_lname = db->value( 2 ).toString();
-   
-   QDateTime date = QDateTime::currentDateTime();
-   QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
-   
-   logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
-   logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
-   logJsonFirstTime += "\"Comment\": \"Created first time\"";
-   
-   logJsonFirstTime += "}]}";
-   qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
-   
-   // Make a primary 'autoflowGMPReportEsign' record:
-   int eSignID_returned = 0;
-   qry. clear();
-   qry << "new_gmp_review_record"
-       << protocol_details[ "autoflowID" ]
-       << protocol_details[ "protocolName" ]
-       << operListJsonArray
-       << revListJsonArray
-       << eSignStatusJson       
-       << logJsonFirstTime;     
-   
-   qDebug() << "new_gmp_review_record qry -- " << qry;
-   db->statusQuery( qry );
-   eSignID_returned = db->lastInsertID();
-   
-   if ( eSignID_returned == 0 )
-     {
-       QMessageBox::warning( this, tr( "New eSign Record Problem" ),
-			     tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
-       return;
-     }
-   /*********************************************************************************/
-   
-
-   /********************************************************************************/
-   //Update primary autolfow record with the new generated eSignID:
-   qry. clear();
-   qry <<  "update_autoflow_with_gmpReviewID"
-       <<  protocol_details[ "autoflowID" ]
-       <<  QString::number( eSignID_returned );
-   
-   qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
-   db->query( qry );
-   /********************************************************************************/
 
    /********************************************************************************/
    //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
