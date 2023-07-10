@@ -224,8 +224,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Frictional ratio s.d.", 
 
             "results.viscosity_sd", 
-            "Intrisic viscosity s.d.", 
-            "Intrisic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
 
             "dt_d0",
             "Dt/d0",
@@ -519,8 +519,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Frictional ratio s.d.", 
 
             "results.viscosity_sd", 
-            "Intrisic viscosity s.d.", 
-            "Intrisic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
 
             "dt_d0",
             "Dt/d0",
