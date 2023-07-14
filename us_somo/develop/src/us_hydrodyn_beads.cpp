@@ -1729,7 +1729,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                this_vdwf.mw = 0.0;
             }
             tmp_atom.bead_coordinate = this_atom->coordinate;
-            if ( hydrate && this_vdwf.w ) {
+            if ( hydrate && this_vdwf.w && this_atom->asa >= asa.threshold && this_vdwf.w ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
                double use_vdw_ot_mult = vdw_ot_mult;
