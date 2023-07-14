@@ -4428,10 +4428,11 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
          bool vdw_ot_alt = gparams.count( "vdw_ot_alt" ) && gparams[ "vdw_ot_alt" ] == "true";
          if ( vdw_ot_mult ) {
             if ( vdw_ot_dpct ) {
-               result += QString( "OT%1%2DP%3-vdw").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct );
+               result += QString( "OT%1%2DP%3").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct );
             } else {
-               result += QString( "OT%1%2-vdw").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult );
+               result += QString( "OT%1%2").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult );
             }
+            result += QString( "_PR%1_TH%2-vdw" ).arg( asa.hydrate_probe_radius ).arg( asa.hydrate_threshold );
          } else {
             result += bead_model_suffix = "vdw";
          }

@@ -1517,14 +1517,21 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       }
       progress->reset();
       qApp->processEvents();
-      int retval = us_hydrodyn_asab1_main(active_atoms,
-                                          &asa,
-                                          &results,
-                                          false,
-                                          progress,
-                                          editor,
-                                          this
-                                          );
+      int retval;
+      {
+         float save_radius = asa.probe_radius;
+         asa.probe_radius  = asa.hydrate_probe_radius; 
+
+         retval = us_hydrodyn_asab1_main(active_atoms,
+                                         &asa,
+                                         &results,
+                                         false,
+                                         progress,
+                                         editor,
+                                         this
+                                         );
+         asa.probe_radius  = save_radius;
+      }         
 
       if ( retval )
       {
@@ -1717,7 +1724,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             this_vdwf.w                = this_atom->p_atom->hydration;
             this_vdwf.e                = this_atom->p_atom->hybrid.num_elect;
             summary_infos[ this_atom->resName ].theo_waters += this_vdwf.w;
-            if ( this_atom->asa >= asa.threshold && this_vdwf.w ) {
+            if ( this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
                summary_infos[ this_atom->resName ].theo_waters_exposed += this_vdwf.w;
                if ( !summary_info_exposed_counted ) {
                   ++summary_infos[ this_atom->resName ].count_exposed;
@@ -1729,7 +1736,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                this_vdwf.mw = 0.0;
             }
             tmp_atom.bead_coordinate = this_atom->coordinate;
-            if ( hydrate && this_vdwf.w && this_atom->asa >= asa.threshold && this_vdwf.w ) {
+            if ( hydrate && this_vdwf.w && this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
                double use_vdw_ot_mult = vdw_ot_mult;
@@ -1770,7 +1777,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             // #warning recolored for hydration
             // tmp_atom.bead_color = hydrate && this_vdwf.w ? 1 : 6;
             // #warning recolored for ASA testing
-            // tmp_atom.bead_color                = this_atom->asa >= asa.threshold ? 6 : 8;
+            // tmp_atom.bead_color                = this_atom->asa >= asa.hydrate_threshold ? 6 : 8;
             tmp_atom.bead_recheck_asa          = this_atom->asa;
             tmp_atom.num_elect                 = this_vdwf.e;
             tmp_atom.exposed_code              = 1;
@@ -1781,7 +1788,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.iCode                     = this_atom->iCode;
             tmp_atom.chainID                   = this_atom->chainID;
             tmp_atom.saxs_excl_vol             = saxs_excl_vol;
-            if ( this_atom->asa >= asa.threshold && this_vdwf.w ) {
+            if ( this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
                tmp_atom.bead_hydration            = this_vdwf.w;
             } else {
                tmp_atom.bead_hydration            = 0;
