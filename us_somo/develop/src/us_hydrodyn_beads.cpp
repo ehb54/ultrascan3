@@ -1811,9 +1811,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             //    .arg( this_atom->bead_recheck_asa )
             //    ;
 
-            this_atom->mw               = tmp_atom.mw;
-            this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
-            this_atom->radius           = tmp_atom.radius;
+#warning commented out the next three lines, likely side effects ... were they added for some purpose?
+            // this_atom->mw               = tmp_atom.mw;
+            // this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
+            // this_atom->radius           = tmp_atom.radius;
 
             bead_model.push_back(tmp_atom);
          } else {
