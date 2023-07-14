@@ -525,13 +525,27 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vdw_ot_dpct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vdw_ot_dpct, SIGNAL(textChanged(const QString &)), SLOT(update_vdw_ot_dpct(const QString &)));
 
+   cb_vdw_ot_alt = new QCheckBox(this);
+   cb_vdw_ot_alt->setText(us_tr(" vdW use alternate method for OT"));
+   cb_vdw_ot_alt->setChecked(( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_ot_alt" ) &&
+                             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_alt" ] == "true" );
+   cb_vdw_ot_alt->setMinimumHeight(minHeight1);
+   cb_vdw_ot_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_vdw_ot_alt->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_vdw_ot_alt );
+   connect(cb_vdw_ot_alt, SIGNAL(clicked()), SLOT(set_vdw_ot_alt()));
+   
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
       cb_export_ssbond->hide();
       lbl_vdw_ot_mult ->hide();
       le_vdw_ot_mult  ->hide();
       lbl_vdw_ot_dpct ->hide();
       le_vdw_ot_dpct  ->hide();
+      cb_vdw_ot_alt   ->hide();
    }
+
+   lbl_vdw_ot_dpct ->hide();
+   le_vdw_ot_dpct  ->hide();
    
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -620,6 +634,10 @@ void US_Hydrodyn_Misc::setupGUI()
       leftside->addWidget(lbl_vdw_ot_dpct, j, 0);
       leftside->addWidget(le_vdw_ot_dpct, j, 1);
       j++;
+
+      leftside->addWidget( cb_vdw_ot_alt , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      j++;
+
 #if !defined( USE_RIGHTSIDE )
       leftside->addWidget(pb_help, j, 0);
       leftside->addWidget(pb_cancel, j, 1);
@@ -779,6 +797,12 @@ void US_Hydrodyn_Misc::update_vdw_ot_mult(const QString &str)
 void US_Hydrodyn_Misc::update_vdw_ot_dpct(const QString &str)
 {
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_dpct" ] = str;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_vdw_ot_alt()
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_alt" ] = cb_vdw_ot_alt->isChecked() ? "true" : "false";
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

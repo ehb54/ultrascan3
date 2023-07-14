@@ -132,6 +132,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                tmp_atom.saxs_excl_vol = 0;
             }
             if (!ts.atEnd()) {
+               ts >> tmp_atom.bead_hydration;
+            }
+            else
+            {
+               tmp_atom.bead_hydration = 0;
+            }
+            if (!ts.atEnd()) {
                QString tmp_string;
                // strip extra fields
                tmp_string = ts.readLine();

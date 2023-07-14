@@ -134,6 +134,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QLineEdit *le_vdw_ot_mult;
       QLabel    *lbl_vdw_ot_dpct;
       QLineEdit *le_vdw_ot_dpct;
+      QCheckBox *cb_vdw_ot_alt;
 
    private slots:
 
@@ -163,6 +164,9 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       void update_vdw_ot_mult(const QString &);
       void update_vdw_ot_dpct(const QString &);
+
+      void set_vdw_ot_alt();
+      
       void set_set_target_on_load_pdb();
       void set_equalize_radii();
 

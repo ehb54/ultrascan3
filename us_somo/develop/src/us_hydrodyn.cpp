@@ -4425,11 +4425,12 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
       {
          double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
          double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+         bool vdw_ot_alt = gparams.count( "vdw_ot_alt" ) && gparams[ "vdw_ot_alt" ] == "true";
          if ( vdw_ot_mult ) {
             if ( vdw_ot_dpct ) {
-               result += QString( "OT%1DP%2-vdw").arg( vdw_ot_mult ).arg( vdw_ot_dpct );
+               result += QString( "OT%1%2DP%3-vdw").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct );
             } else {
-               result += QString( "OT%1-vdw").arg( vdw_ot_mult );
+               result += QString( "OT%1%2-vdw").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult );
             }
          } else {
             result += bead_model_suffix = "vdw";

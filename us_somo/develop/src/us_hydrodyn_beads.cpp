@@ -1457,9 +1457,16 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    // info_mw( "create_vdw_beads() start : model_vector[current_model]", model_vector[current_model], true );
    error_string = "";
    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
-   double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
-   double vdw_ot_d = vdw_ot_dpct * 0.01;
+   // double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+   // double vdw_ot_d = vdw_ot_dpct * 0.01;
    // us_qdebug( QString( "vdw ot mult %1, additional water decrease percent %2" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ) );
+   bool vdw_ot_alt = gparams.count( "vdw_ot_alt" ) && gparams[ "vdw_ot_alt" ] == "true";
+
+   if ( vdw_ot_alt ) {
+      editor_msg( "darkred", us_tr( "OT alternate method selected but not yet implemented\n" ) );
+      return -1;
+   }
+      
    point com;
    com.axis[ 0 ] = 0;
    com.axis[ 1 ] = 0;
@@ -1486,10 +1493,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
    bool hydrate = !any_wats;
 
-#warning hydration off
-   hydrate = false;
-   vdw_ot_mult = 0;
-   editor_msg( "red", "hydration off for testing\n" );
+// #warning hydration off
+//    hydrate = false;
+//    vdw_ot_mult = 0;
+//    editor_msg( "red", "hydration off for testing\n" );
 
    if ( !quiet ) 
    {
@@ -1548,10 +1555,22 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
 
    if ( vdw_ot_mult ) {
-      editor_msg( "black", QString( us_tr( "Using OT multiplier %1\nStart CoM calculation.\n" ) ).arg( vdw_ot_mult ) );
-      qApp->processEvents();
-
       hydro_radius = pow( ( 3e0 / ( 4e0 * M_PI ) ) * misc.hydrovol, 1e0 / 3e0 );
+      if ( vdw_ot_alt ) {
+         editor_msg( "black", us_tr( "OT alternate method active\n" ) );
+      }
+      editor_msg( "black"
+                  ,QString(
+                           us_tr(
+                                 "Using OT multiplier %1 hydrodynamic radius %2 multiplied %3\n"
+                                 "Start global CoM calculation.\n"
+                                 )
+                           )
+                  .arg( vdw_ot_mult )
+                  .arg( hydro_radius )
+                  .arg( hydro_radius * vdw_ot_mult )
+                  );
+      qApp->processEvents();
       
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
          for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
@@ -1580,7 +1599,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          editor_msg( "black", QString( us_tr( "CoM computed as [%1,%2,%3]\n" ).arg( com.axis[ 0 ] ).arg( com.axis[ 1 ] ).arg( com.axis[ 2 ] ) ) );
       } else {
          editor_msg( "red", QString( us_tr( "Error computing CoM, OT turned off.\n" ) ) );
-         return -1;
+         vdw_ot_mult = 0;
       }         
    }
 
@@ -1714,12 +1733,12 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
                double use_vdw_ot_mult = vdw_ot_mult;
-               if ( this_vdwf.w > 1 ) {
-                  use_vdw_ot_mult -= vdw_ot_mult * vdw_ot_d * ( this_vdwf.w - 1 );
-                  if ( use_vdw_ot_mult < 0e0 ) {
-                     use_vdw_ot_mult = 0e0;
-                  }
-               }
+               // if ( this_vdwf.w > 1 ) {
+               //    use_vdw_ot_mult -= vdw_ot_mult * vdw_ot_d * ( this_vdwf.w - 1 );
+               //    if ( use_vdw_ot_mult < 0e0 ) {
+               //       use_vdw_ot_mult = 0e0;
+               //    }
+               // }
                // us_qdebug( QString( "original ot mult %1, waters %2, decreased multiplier %3" ).arg( vdw_ot_mult ).arg( this_vdwf.w ).arg( use_vdw_ot_mult ) );
                if ( use_vdw_ot_mult ) {
                   tmp_atom.bead_coordinate = saxs_util->plus( tmp_atom.bead_coordinate, saxs_util->scale( saxs_util->normal( saxs_util->minus( this_atom->coordinate, com ) ), use_vdw_ot_mult * hydro_radius ) );
@@ -1748,8 +1767,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.bead_mw                   = this_vdwf.mw;
             tmp_atom.bead_ionized_mw_delta     = this_vdwf.ionized_mw_delta;
             tmp_atom.bead_color                = this_vdwf.color;
-#warning recolored for ASA testing
-            tmp_atom.bead_color                = this_atom->asa >= asa.threshold ? 6 : 8;
+            // #warning recolored for hydration
+            // tmp_atom.bead_color = hydrate && this_vdwf.w ? 1 : 6;
+            // #warning recolored for ASA testing
+            // tmp_atom.bead_color                = this_atom->asa >= asa.threshold ? 6 : 8;
             tmp_atom.bead_recheck_asa          = this_atom->asa;
             tmp_atom.num_elect                 = this_vdwf.e;
             tmp_atom.exposed_code              = 1;
@@ -1760,6 +1781,11 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.iCode                     = this_atom->iCode;
             tmp_atom.chainID                   = this_atom->chainID;
             tmp_atom.saxs_excl_vol             = saxs_excl_vol;
+            if ( this_atom->asa >= asa.threshold && this_vdwf.w ) {
+               tmp_atom.bead_hydration            = this_vdwf.w;
+            } else {
+               tmp_atom.bead_hydration            = 0;
+            }
             tmp_atom.saxs_data.saxs_name       = "";
             tmp_atom.bead_model_code = QString( "%1.%2.%3.%4.%5" )
                .arg( this_atom->serial )

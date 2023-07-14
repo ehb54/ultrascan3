@@ -7864,10 +7864,17 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       if ( our_saxs_options->saxs_iq_crysol )
       {
          qs += "cr";
-         qs += QString("_h%1_g%2_hs%3")
-            .arg( our_saxs_options->sh_max_harmonics )
-            .arg( our_saxs_options->sh_fibonacci_grid_order )
-            .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         if ( our_saxs_options->crysol_version_3
+              && our_saxs_options->crysol_water_dummy_beads ) {
+            qs += QString("_h%1_sw_hs%2")
+               .arg( our_saxs_options->sh_max_harmonics )
+               .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         } else {
+            qs += QString("_h%1_g%2_hs%3")
+               .arg( our_saxs_options->sh_max_harmonics )
+               .arg( our_saxs_options->sh_fibonacci_grid_order )
+               .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         }
          if ( U_EXPT &&
               (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
               (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 )
