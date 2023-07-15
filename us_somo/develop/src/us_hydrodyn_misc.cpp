@@ -534,6 +534,26 @@ void US_Hydrodyn_Misc::setupGUI()
    cb_vdw_ot_alt->setPalette( PALET_NORMAL );
    AUTFBACK( cb_vdw_ot_alt );
    connect(cb_vdw_ot_alt, SIGNAL(clicked()), SLOT(set_vdw_ot_alt()));
+
+   cb_vdw_saxs_water_beads = new QCheckBox(this);
+   cb_vdw_saxs_water_beads->setText(us_tr(" vdW saxs pr create water beads"));
+   cb_vdw_saxs_water_beads->setChecked(( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_water_beads" ) &&
+                                       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_water_beads" ] == "true" );
+   cb_vdw_saxs_water_beads->setMinimumHeight(minHeight1);
+   cb_vdw_saxs_water_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_vdw_saxs_water_beads->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_vdw_saxs_water_beads );
+   connect(cb_vdw_saxs_water_beads, SIGNAL(clicked()), SLOT(set_vdw_saxs_water_beads()));
+
+   cb_vdw_saxs_skip_pr0pair = new QCheckBox(this);
+   cb_vdw_saxs_skip_pr0pair->setText(us_tr(" vdW saxs pr skip 0 distance pairs"));
+   cb_vdw_saxs_skip_pr0pair->setChecked(( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_skip_pr0pair" ) &&
+                                       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_skip_pr0pair" ] == "true" );
+   cb_vdw_saxs_skip_pr0pair->setMinimumHeight(minHeight1);
+   cb_vdw_saxs_skip_pr0pair->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_vdw_saxs_skip_pr0pair->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_vdw_saxs_skip_pr0pair );
+   connect(cb_vdw_saxs_skip_pr0pair, SIGNAL(clicked()), SLOT(set_vdw_saxs_skip_pr0pair()));
    
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
       cb_export_ssbond->hide();
@@ -542,6 +562,7 @@ void US_Hydrodyn_Misc::setupGUI()
       lbl_vdw_ot_dpct ->hide();
       le_vdw_ot_dpct  ->hide();
       cb_vdw_ot_alt   ->hide();
+      cb_vdw_saxs_skip_pr0pair   ->hide();
    }
 
    lbl_vdw_ot_dpct ->hide();
@@ -636,6 +657,12 @@ void US_Hydrodyn_Misc::setupGUI()
       j++;
 
       leftside->addWidget( cb_vdw_ot_alt , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      j++;
+
+      leftside->addWidget( cb_vdw_saxs_water_beads , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      j++;
+
+      leftside->addWidget( cb_vdw_saxs_skip_pr0pair , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
 
 #if !defined( USE_RIGHTSIDE )
@@ -803,6 +830,18 @@ void US_Hydrodyn_Misc::update_vdw_ot_dpct(const QString &str)
 void US_Hydrodyn_Misc::set_vdw_ot_alt()
 {
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_alt" ] = cb_vdw_ot_alt->isChecked() ? "true" : "false";
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_vdw_saxs_water_beads()
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_water_beads" ] = cb_vdw_saxs_water_beads->isChecked() ? "true" : "false";
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_vdw_saxs_skip_pr0pair()
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_skip_pr0pair" ] = cb_vdw_saxs_skip_pr0pair->isChecked() ? "true" : "false";
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

@@ -2760,6 +2760,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    if ( (double) our_saxs_options->water_e_density ) {
       atom_map[ "OW~O2H2" ].saxs_excl_vol = 10 / ( (double) our_saxs_options->water_e_density + (double) our_saxs_options->crysol_hydration_shell_contrast );
       editor_msg( "darkblue", QString( "Exclude volume of solvent atom: %1\n" ).arg( atom_map[ "OW~O2H2" ].saxs_excl_vol ) );
+   } else {
+      atom_map[ "OW~O2H2" ].saxs_excl_vol = 0;
    }
 
    QString use_name  = QFileInfo(model_filename).fileName();
@@ -2799,11 +2801,26 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
       contrib_pdb_atom.clear( );
 
+      bool include_0_dist_pairs =
+         !(
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_skip_pr0pair" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_skip_pr0pair" ] == "true"
+           )
+         ;
+
+      if ( !include_0_dist_pairs ) {
+         editor_msg( "darkblue", us_tr( "experimental: zero distance pairs skipped\n" ) );
+      }
+      
       if ( source )
       {
          // bead models
-         for (unsigned int j = 0; j < bead_models[current_model].size(); j++)
-         {
+         bool saxs_water_beads =
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_water_beads" ) &&
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_water_beads" ] == "true"
+            ;
+         
+         for (unsigned int j = 0; j < bead_models[current_model].size(); j++) {
             PDB_atom *this_atom = &(bead_models[current_model][j]);
             new_atom.pos[0]    = this_atom->bead_coordinate.axis[0];
             new_atom.pos[1]    = this_atom->bead_coordinate.axis[1];
@@ -2824,6 +2841,35 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
             atoms.push_back(new_atom);
             contrib_pdb_atom.push_back(this_atom);
+
+            if ( this_atom->bead_hydration && saxs_water_beads ) {
+               int addbeads = (int)(this_atom->bead_hydration + 0.5 );
+               new_atom.atom_name   = "OW";
+               new_atom.hybrid_name = "O2H2";
+
+               if ( !hybrid_map.count( new_atom.hybrid_name ) ) {
+                  QTextStream(stdout) << QString( "--> %1 missing from hybrid_map\n" ).arg( new_atom.hybrid_name );
+               }
+               new_atom.electrons     = hybrid_map[ new_atom.hybrid_name ].num_elect;
+               new_atom.excl_vol      = atom_map[ "OW~O2H2" ].saxs_excl_vol;
+               new_atom.b             =
+                  new_atom.electrons
+                  - (double) our_saxs_options->water_e_density * new_atom.excl_vol
+                  ;
+               
+               QTextStream(stdout) <<
+                  QString( "pr calc bead model : atom %1 %2 e %3 bead_hydration %4 rounded %5\n" )
+                  .arg( this_atom->name )
+                  .arg( this_atom->resName )
+                  .arg( new_atom.electrons )
+                  .arg( this_atom->bead_hydration )
+                  .arg( addbeads )
+                  ;
+
+               for ( int i = 0; i < addbeads; ++i ) {
+                  atoms.push_back( new_atom );
+               }
+            }
          }
       }
       else 
@@ -3534,6 +3580,59 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                 (atoms[i].pos[2] - atoms[j].pos[2]) *
                                 (atoms[i].pos[2] - atoms[j].pos[2])
                                 );
+                        if ( include_0_dist_pairs || rik ) {
+                           pos = (unsigned int)floor(rik / delta);
+                           if ( hist.size() <= pos )
+                           {
+                              hist.resize(pos + 1024);
+                              // if ( cb_guinier->isChecked() )
+                              // {
+                              for ( unsigned int k = 0; k < atoms.size(); k++ )
+                              {
+                                 contrib_array[k].resize(pos + 1024);
+                              }
+                              // }
+                           }
+                           if ( rb_curve_raw->isChecked() )
+                           {
+                              hist[pos]++;
+                              // if ( cb_guinier->isChecked() )
+                              // {
+                              contrib_array[i][pos]++;
+                              contrib_array[j][pos]++;
+                              // } else {
+                              //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
+                              //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
+                              // }
+                           } else {
+                              // good for both saxs & sans
+                              double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                              hist[pos] += this_pr;
+                              // if ( cb_guinier->isChecked() )
+                              // {
+                              contrib_array[i][pos] += this_pr;
+                              contrib_array[j][pos] += this_pr;
+                              // } else {
+                              //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
+                              //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
+                              // }
+                           }
+                        }
+                     }
+                  }
+               } else {
+                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
+                  {
+                     rik = 
+                        sqrt(
+                             (atoms[i].pos[0] - atoms[j].pos[0]) *
+                             (atoms[i].pos[0] - atoms[j].pos[0]) +
+                             (atoms[i].pos[1] - atoms[j].pos[1]) *
+                             (atoms[i].pos[1] - atoms[j].pos[1]) +
+                             (atoms[i].pos[2] - atoms[j].pos[2]) *
+                             (atoms[i].pos[2] - atoms[j].pos[2])
+                             );
+                     if ( include_0_dist_pairs || rik ) {
                         pos = (unsigned int)floor(rik / delta);
                         if ( hist.size() <= pos )
                         {
@@ -3572,55 +3671,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                         }
                      }
                   }
-               } else {
-                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
-                  {
-                     rik = 
-                        sqrt(
-                             (atoms[i].pos[0] - atoms[j].pos[0]) *
-                             (atoms[i].pos[0] - atoms[j].pos[0]) +
-                             (atoms[i].pos[1] - atoms[j].pos[1]) *
-                             (atoms[i].pos[1] - atoms[j].pos[1]) +
-                             (atoms[i].pos[2] - atoms[j].pos[2]) *
-                             (atoms[i].pos[2] - atoms[j].pos[2])
-                             );
-                     pos = (unsigned int)floor(rik / delta);
-                     if ( hist.size() <= pos )
-                     {
-                        hist.resize(pos + 1024);
-                        // if ( cb_guinier->isChecked() )
-                        // {
-                        for ( unsigned int k = 0; k < atoms.size(); k++ )
-                        {
-                           contrib_array[k].resize(pos + 1024);
-                        }
-                        // }
-                     }
-                     if ( rb_curve_raw->isChecked() )
-                     {
-                        hist[pos]++;
-                        // if ( cb_guinier->isChecked() )
-                        // {
-                        contrib_array[i][pos]++;
-                        contrib_array[j][pos]++;
-                        // } else {
-                        //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
-                        //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
-                        // }
-                     } else {
-                        // good for both saxs & sans
-                        double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
-                        hist[pos] += this_pr;
-                        // if ( cb_guinier->isChecked() )
-                        // {
-                        contrib_array[i][pos] += this_pr;
-                        contrib_array[j][pos] += this_pr;
-                        // } else {
-                        //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
-                        //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
-                        // }
-                     }
-                  }
                }
             }
             pb_pr_contrib->setEnabled(true);
@@ -3656,8 +3706,38 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                 (atoms[i].pos[2] - atoms[j].pos[2]) *
                                 (atoms[i].pos[2] - atoms[j].pos[2])
                                 );
-                        ++total_terms;
+                        if ( include_0_dist_pairs || rik ) {
+                           ++total_terms;
 
+                           pos = (unsigned int)floor(rik / delta);
+                           if ( hist.size() <= pos )
+                           {
+                              hist.resize(pos + 128);
+                           }
+                           if ( rb_curve_raw->isChecked() )
+                           {
+                              hist[pos]++;
+                           } else {
+                              // good for both saxs & sans
+                              hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                           }
+                        }
+                     }
+                  }
+               } else {
+                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
+                  {
+                     rik = 
+                        sqrt(
+                             (atoms[i].pos[0] - atoms[j].pos[0]) *
+                             (atoms[i].pos[0] - atoms[j].pos[0]) +
+                             (atoms[i].pos[1] - atoms[j].pos[1]) *
+                             (atoms[i].pos[1] - atoms[j].pos[1]) +
+                             (atoms[i].pos[2] - atoms[j].pos[2]) *
+                             (atoms[i].pos[2] - atoms[j].pos[2])
+                             );
+                     if ( include_0_dist_pairs || rik ) {
+                        ++total_terms;
                         pos = (unsigned int)floor(rik / delta);
                         if ( hist.size() <= pos )
                         {
@@ -3670,32 +3750,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                            // good for both saxs & sans
                            hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
                         }
-                     }
-                  }
-               } else {
-                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
-                  {
-                     ++total_terms;
-                     rik = 
-                        sqrt(
-                             (atoms[i].pos[0] - atoms[j].pos[0]) *
-                             (atoms[i].pos[0] - atoms[j].pos[0]) +
-                             (atoms[i].pos[1] - atoms[j].pos[1]) *
-                             (atoms[i].pos[1] - atoms[j].pos[1]) +
-                             (atoms[i].pos[2] - atoms[j].pos[2]) *
-                             (atoms[i].pos[2] - atoms[j].pos[2])
-                             );
-                     pos = (unsigned int)floor(rik / delta);
-                     if ( hist.size() <= pos )
-                     {
-                        hist.resize(pos + 128);
-                     }
-                     if ( rb_curve_raw->isChecked() )
-                     {
-                        hist[pos]++;
-                     } else {
-                        // good for both saxs & sans
-                        hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
                      }
                   }
                }
