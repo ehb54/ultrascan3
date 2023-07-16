@@ -846,6 +846,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool use_SDs_for_fitting_prr;
       bool nnls_plot_contrib;
 
+      bool pr_to_iq( int pos, QString name );
+
    private:
       
       map < QString, QwtPlot *>    plot_info;
@@ -917,6 +919,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void pr_replot();
       void do_rescale();
       void do_rescale_y();
+
+      bool pr_to_iq(); // pick name
 
       void manual_guinier_process();
       void set_manual_guinier();

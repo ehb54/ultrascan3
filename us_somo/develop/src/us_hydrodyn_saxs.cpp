@@ -2766,8 +2766,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    QString use_name  = QFileInfo(model_filename).fileName();
 
+   bool do_make_iq = false;
+
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+#warning pr_to_iq off except for bead model source
       current_model = selected_models[i];
 #if defined(PR_DEBUG)
       printf("creating pr %u\n", current_model); fflush(stdout);
@@ -2815,6 +2818,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       if ( source )
       {
          // bead models
+         do_make_iq = true;
+
          bool saxs_water_beads =
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_water_beads" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_water_beads" ] == "true"
@@ -3113,26 +3118,28 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       cout << " sleep 1 b done" << endl;
 #endif
       // ok now we have all the atoms
-      for ( auto it = atoms.begin();
-            it != atoms.end();
-            ++it ) {
-      //    // QTextStream( stdout ) << QString( "saxs_name %1 hybrid_name %2 residue_name %3 atom_name %4 b %5\n" )
-      //    //    .arg( it->saxs_name )
-      //    //    .arg( it->hybrid_name )
-      //    //    .arg( it->residue_name )
-      //    //    .arg( it->atom_name )
-      //    //    .arg( it->b )
-      //    //    ;
-         QTextStream( stdout ) << QString( "%1 %2 [%3,%4,%5] b %6 elect %7 exclvol %8\n" )
-            .arg( it->atom_name )
-            .arg( it->hybrid_name )
-            .arg( it->pos[0] )
-            .arg( it->pos[1] )
-            .arg( it->pos[2] )
-            .arg( it->b )
-            .arg( it->electrons )
-            .arg( it->excl_vol )
-            ;
+      if ( 0 ) {
+         for ( auto it = atoms.begin();
+               it != atoms.end();
+               ++it ) {
+            //    // QTextStream( stdout ) << QString( "saxs_name %1 hybrid_name %2 residue_name %3 atom_name %4 b %5\n" )
+            //    //    .arg( it->saxs_name )
+            //    //    .arg( it->hybrid_name )
+            //    //    .arg( it->residue_name )
+            //    //    .arg( it->atom_name )
+            //    //    .arg( it->b )
+            //    //    ;
+            QTextStream( stdout ) << QString( "%1 %2 [%3,%4,%5] b %6 elect %7 exclvol %8\n" )
+               .arg( it->atom_name )
+               .arg( it->hybrid_name )
+               .arg( it->pos[0] )
+               .arg( it->pos[1] )
+               .arg( it->pos[2] )
+               .arg( it->b )
+               .arg( it->electrons )
+               .arg( it->excl_vol )
+               ;
+         }
       }
 
       editor_msg( "black", 
@@ -4040,12 +4047,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
 
-#if QT_VERSION < 0x040000
-   long ppr = plot_pr->insertCurve( plot_name );
-   plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
-   plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
-   plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
    curve->setStyle( QwtPlotCurve::Lines );
    curve->setSamples(
@@ -4055,7 +4056,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   );
    curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
    curve->attach( plot_pr );
-#endif
 
    if ( plot_pr_zoomer )
    {
@@ -4076,6 +4076,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plot_pr->replot();
 
    compute_rg_to_progress( r, pr, use_name );
+
+   if ( do_make_iq ) {
+      pr_to_iq( plotted_r.size() - 1, plot_name );
+   }
 
    progress_pr->setMaximum(1);
    progress_pr->setValue(1);

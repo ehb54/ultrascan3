@@ -951,5 +951,116 @@ void US_Hydrodyn_Saxs::pr_info( const QString & msg, bool detail ) {
       ;
 }
 
-      
+bool US_Hydrodyn_Saxs::pr_to_iq() {
+   TSO << "US_Hydrodyn_Saxs::pr_to_iq() slot not yet implemented\n";
+   return false;
+}
+
+bool US_Hydrodyn_Saxs::pr_to_iq( int pos, QString name ) {
+   errormsg = "";
+   TSO << QString( "pr_to_iq( %1 )\n" ).arg( pos );
+
+   if (
+       (int) plotted_pr.size() <= pos
+       || (int) plotted_r.size() <= pos
+       ) {
+      errormsg = QString( "pr_to_iq:: pos %1 not available\n" );
+      pr_info( errormsg );
+      return false;
+   }
    
+   double two_pi2 = 2 * M_PI * M_PI;
+   
+   vector < double > *r  = &plotted_r[pos];
+   vector < double > *pr = &plotted_pr[pos];
+
+   int r_points = (int) r->size();
+   
+   int q_points = 
+      (int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+
+   if ( our_saxs_options->iq_exact_q )
+   {
+      editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
+      if ( !exact_q.size() ){
+         editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+         exact_q.resize( q_points );
+         for ( int j = 0; j < q_points; j++ ) {
+            exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+         }
+      } else {
+         q_points = ( int ) exact_q.size();
+      }
+   }
+   
+   vector < double > q( q_points ); 
+   vector < double > I( q_points ); 
+
+   if ( our_saxs_options->iq_exact_q ) {
+      q = exact_q;
+      q_points = q.size();
+   } else {
+      for ( int i = 0; i < q_points; i++ ) {
+         q[i] = our_saxs_options->start_q + i * our_saxs_options->delta_q;
+      }
+   }      
+
+   // calc for i = 0 first
+   {
+      int i = 0;
+      I[i] = 0;
+
+      for ( int j = 0; j < r_points; j++ ) {
+         I[i] += (*pr)[j];
+      }
+      I[i] *= two_pi2;
+   }
+
+   // and then the rest
+   for ( int i = 1; i < q_points; ++i ) {
+      {
+         int j = 0;
+         I[i] += (*pr)[j];
+      }
+
+      double qr;
+      for ( int j = 1; j < r_points; j++ ) {
+         qr = q[i] * (*r)[j];
+         // if ( j < 2 ) {
+         //    TSO << QString( "q[%1] = %2  (*r)[%3] = %4   qr = %5  sin(qr) = %6  sin(qr)/qr = %7\n" )
+         //       .arg( i )
+         //       .arg( q[i] )
+         //       .arg( j )
+         //       .arg( (*r)[j] )
+         //       .arg( qr )
+         //       .arg( sin(qr) )
+         //       .arg( sin(qr) / qr )
+         //       ;
+         // }
+         I[i] += (*pr)[j] * sin( qr ) / qr;
+      }
+      I[i] *= two_pi2;
+   }
+
+   // US_Vector::printvector2( "source r, pr", *r, *pr );
+   // US_Vector::printvector2( "computed q, I", q, I );
+   
+   // setup scaling
+
+   {
+      QString scaling_target = "";
+      set_scaling_target( scaling_target );
+   
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         rescale_iqq_curve( scaling_target, q, I );
+      }
+   }
+   
+   plot_one_iqq( q, I, name );
+
+   return true;
+}
+
