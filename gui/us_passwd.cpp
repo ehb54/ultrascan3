@@ -158,9 +158,9 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     if ( hash == currentHash && !form_map["Comment:"].isEmpty()  )
       break;
     
-    QMessageBox::information( this,
+    QMessageBox::critical( this,
           tr( "No Comment and/or Password Error" ),
-          tr( "ERROR: The Comment field is empty, or the password is incorrect." ) );
+          tr( "<font color='red'>ERROR:</font> The Comment field is empty, or the password is incorrect." ) );
   }
 
   // // Save the password in global memory and return

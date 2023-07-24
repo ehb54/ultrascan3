@@ -7804,51 +7804,11 @@ void US_ExperGuiUpload::submitExperiment()
        add_autoflow_record( protocol_details );
 
        /*** 
-	    Maybe add audit trail who submitted - the owner himself OR an admin on his behalf?
-	***/
-
-       /****
-       //Do we ask if UL>=3 (admin) wants to set operator/reviewers???
-       //Returned autoflowID: protocol_details[ "autoflowID" ]
-       if ( US_Settings::us_inv_level() > 2 )
-	 {
-	   QMessageBox msg_rev;
-	   msg_rev.setWindowTitle(tr("Defining Reviewers for GMP Run"));
-	   msg_rev.setText( QString(tr("As an admin user, you can define operator and reviewer(s) for "
-				       "the currently submitted GMP run, for further review and e-Signing. "
-				       )
-				    ));
-	   msg_rev.setInformativeText( QString( tr( "Do you want to do this now?" )));
-				      
-	   QPushButton *Accept    = msg_rev.addButton(tr("YES"), QMessageBox::YesRole);
-	   QPushButton *Cancel    = msg_rev.addButton(tr("Cancel"), QMessageBox::RejectRole);
-	   
-	   msg_rev.setIcon(QMessageBox::Question);
-	   msg_rev.exec();
-	   
-	   if (msg_rev.clickedButton() == Accept)
-	     {
-	       qDebug() << "Setting up operator, reviewers...";
-
-	       US_eSignaturesGMP* rev_dialog = new US_eSignaturesGMP();
-	       rev_dialog->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-	       rev_dialog->setWindowModality(Qt::ApplicationModal);
-
-	       connect( rev_dialog, SIGNAL( accept_reviewers ( QMap< QString, QString >& ) ),
-			this, SLOT( do_accept_reviewers  ( QMap< QString, QString >& )  ) );
-	       connect( rev_dialog, SIGNAL( cancel_reviewers ( QMap< QString, QString >& ) ),
-			this, SLOT( cancel_reviewers  ( QMap< QString, QString >& )  ) );
-	       
-	       rev_dialog->show();
-	       
-	     }
-	   else if (msg_rev.clickedButton() == Cancel)
-	     {
-	       emit expdef_submitted( protocol_details );
-	       return;
-	     }
-	 }
-       *****/
+	    Add audit trail who submitted - the owner himself OR an admin on his behalf
+       ***/
+       
+       
+ 
      }
       
    //Finish, emit, switch to 2. LIVE_UPDATE
@@ -7999,9 +7959,11 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        qry <<  QString( "get_user_info" );
        db -> query( qry );
        db -> next();
-       int u_ID        = db->value( 0 ).toInt();
+       int     u_ID    = db->value( 0 ).toInt();
        QString u_fname = db->value( 1 ).toString();
        QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
        
        QDateTime date = QDateTime::currentDateTime();
        QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
@@ -8048,15 +8010,44 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
        db->query( qry );
        /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       //qDebug() << "new_autoflowStatusStopOptima_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
      }
-
-
-   /********************************************************************************/
-   //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
-   
-   /********************************************************************************/
-
-   
 }
 
 
