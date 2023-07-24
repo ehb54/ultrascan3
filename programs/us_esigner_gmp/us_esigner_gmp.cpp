@@ -291,14 +291,114 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   setPalette( US_GuiSettings::frameColor() );
 
   // primary layouts
-  QHBoxLayout* mainLayout     = new QHBoxLayout( this );
-  mainLayout->setSpacing        ( 2 );
-  mainLayout->setContentsMargins( 2, 2, 2, 2 );
+  mainLayout_auto     = new QHBoxLayout( this );
+  mainLayout_auto ->setSpacing        ( 2 );
+  mainLayout_auto ->setContentsMargins( 2, 2, 2, 2 );
 
+  eSignersGrid_auto     = new QGridLayout();
+  eSignersGrid_auto ->setSpacing        ( 2 );
+  eSignersGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
+
+  eSignActionsGrid_auto      = new QGridLayout();
+  eSignActionsGrid_auto ->setSpacing        ( 2 );
+  eSignActionsGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
+
+  /** TEST ***/
+  QMap < QString, QString > protocol_details;
+  protocol_details[ "autoflowID" ] = QString("900");
+  
+  initPanel_auto( protocol_details );
+  /***************/
+  
+  // resize( 1000, 700 );
+  // adjustSize();
+}
+
+//slot to execute when switching form REPORT:
+void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
+{
+  //Left section: E-Signers info:
+  QLabel* bn_revs     = us_banner( tr( "e-Signers Information:" ), 1 );
+  QFontMetrics m (bn_revs -> font()) ;
+  int RowHeight = m.lineSpacing() ;
+  bn_revs -> setFixedHeight  (1.5 * RowHeight);
+
+  int row = 0;
+  eSignersGrid_auto -> addWidget( bn_revs,      row++,    0,  1,  8 );
+  QLabel* lb_name   = us_label( tr("Name:") );
+  QLabel* lb_role   = us_label( tr("Role:") );
+  QLabel* lb_status = us_label( tr("Status:") );
+  //lb_name -> setFixedHeight  (1.5 * RowHeight);
+
+  eSignersGrid_auto -> addWidget( lb_name,      row,      0,  1,  4 );
+  eSignersGrid_auto -> addWidget( lb_role,      row,      4,  1,  2 );
+  eSignersGrid_auto -> addWidget( lb_status,    row++,    6,  1,  2 );
+  
+  QMap< QString, QString> eSign_record_auto = read_autoflowGMPReportEsign_record( protocol_details[ "autoflowID" ] );
+
+  //&& Set defined Operator/Reviewers (if any)
+  if ( eSign_record_auto. contains("operatorListJson") )
+    {
+      QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_record_auto[ "operatorListJson" ] .toUtf8() );
+      QJsonArray jsonDocOperList_array  = jsonDocOperList.array();
+      for (int i=0; i < jsonDocOperList_array.size(); ++i )
+	{
+	  QString current_reviewer = jsonDocOperList_array[i].toString();
+	  //uname =  oID + ": " + olname + ", " + ofname;
+	  
+	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
+	  le_name -> setObjectName( current_reviewer );
+	  QLineEdit* le_role = us_lineedit( tr("Operator"), 0, true );
+	  
+	  QString u_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto );
+	  qDebug() << "oper: u_stat -- " << u_stat;
+	  QLineEdit* le_stat = us_lineedit( u_stat, 0, true );         
+	  
+	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
+	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
+	  eSignersGrid_auto -> addWidget( le_stat,      row++,    6,  1,  2 );
+	}
+    }
+  
+  if ( eSign_record_auto. contains("reviewersListJson") )
+    {
+      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_record_auto[ "reviewersListJson" ] .toUtf8() );
+      QJsonArray jsonDocRevList_array  = jsonDocRevList.array();
+      for (int i=0; i < jsonDocRevList_array.size(); ++i )
+	{
+	  QString current_reviewer = jsonDocRevList_array[i].toString();
+
+	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
+	  le_name -> setObjectName( current_reviewer );
+	  QLineEdit* le_role = us_lineedit( tr("Reviewer"), 0, true );
+
+	  QString u_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto );
+	  qDebug() << "rev: u_stat -- " << u_stat;
+	  QLineEdit* le_stat = us_lineedit( u_stat, 0, true );
+	  	  
+	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
+	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
+	  eSignersGrid_auto -> addWidget( le_stat,      row++,    6,  1,  2 );
+	  
+	}
+    }
+  //Maybe later add Approver's section...
+
+  //rigth section: actions
+  QLabel* bn_act     = us_banner( tr( "e-Sign: Actions:" ), 1 );
+  bn_act -> setFixedHeight  (1.5 * RowHeight);
+
+  row = 0;
+  eSignActionsGrid_auto -> addWidget( bn_act,      row++,    0,  1,  8 );
+
+  //assemble
+  mainLayout_auto -> addLayout( eSignersGrid_auto );
+  mainLayout_auto -> addLayout( eSignActionsGrid_auto );
+  mainLayout_auto -> addStretch();
+  
   resize( 1000, 700 );
   adjustSize();
 }
-
 
 //For the end of 1. EXP: defined by admin
 US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & protocol_details ) : US_Widgets()
@@ -1656,7 +1756,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   te_fpath_info     -> setText( filePath_db );
 
   //Check, the status of e-Signing: NOT signed, Partially, Completed
-  QString eSign_status = check_eSign_status_for_gmpReport();
+  QString eSign_status = check_eSign_status_for_gmpReport(); 
 
   if ( eSign_status == "PARTIALLY COMPLETED" || eSign_status == "COMPLETED" )
     write_download_eSignatures_DB( filePath_db, "download_gmpReportEsignData" );
@@ -1734,10 +1834,79 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
   return nrecs;
 }
 
+//Check eSign status for GMP Report fior particular reviewer:
+QString US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats )
+{
+  QString eSignStatusJson   = eSign_stats[ "eSignStatusJson" ];
+  QString eSignStatusAll    = eSign_stats[ "eSignStatusAll" ];
+
+  qDebug() << "In check_eSign_status_for_gmpReport_auto(): eSignStatusJson, eSignStatusAll -- "
+	   << eSignStatusJson << eSignStatusAll;
+    
+    
+  QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
+  if (!jsonDocEsign.isObject())
+    {
+      qDebug() << "to_eSign(): ERROR: eSignStatusJson: NOT a JSON Doc !!";
+      return QString("");
+    }
+  
+  const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDocEsign.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+
+  //to_sign:
+  if ( to_esign.isUndefined() || to_esign_array.size() == 0
+       || !to_esign_array.size() || eSignStatusAll == "YES" )
+    {
+      qDebug() << "check_eSign_status(): All signatures have been collected; none left to e-sign !!";
+      return  QString("SIGNED");
+    }
+
+  //signed:
+  if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
+    {
+      qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
+      return QString("NOT SIGNED");
+    }
+  else
+    {
+      qDebug() << "check_eSign_status(): Some parties have e-Signed already !!!";
+      //DEBUG
+      QStringList eSignees_current;
+      for (int i=0; i < esigned_array.size(); ++i )
+	{
+	  foreach(const QString& key, esigned_array[i].toObject().keys())
+	    {
+	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	      
+	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+		       << newObj["Comment"]   .toString()
+		       << newObj["timeDate"]  .toString();
+
+	      QString current_reviewer = key;
+	      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+
+	      eSignees_current << key;
+	      
+	    }
+	}
+      //END DEBUG:
+      qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
+      if ( eSignees_current.contains( u_passed ) )
+      	return  QString("SIGNED");
+      else
+	return  QString("NOT SIGNED");
+    }
+}
 
 //Check eSign status for GMP Report
-QString US_eSignaturesGMP::check_eSign_status_for_gmpReport()
+QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
 {
+  QMap <QString, QString > stats;
   QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( gmpRunID_eSign );
   QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
   QString eSignStatusAll    = eSign[ "eSignStatusAll" ];
@@ -1772,8 +1941,8 @@ QString US_eSignaturesGMP::check_eSign_status_for_gmpReport()
       new_palette->setColor(QPalette::Text,Qt::green);
       le_eSign_status->setPalette(*new_palette);
       pb_view_eSigns   -> setEnabled( true );
-
-      return QString("COMPLETED");
+      
+      return  QString("COMPLETED");
     }
 
   //signed:
@@ -1785,7 +1954,7 @@ QString US_eSignaturesGMP::check_eSign_status_for_gmpReport()
       new_palette->setColor(QPalette::Text,Qt::red);
       le_eSign_status->setPalette(*new_palette);
       pb_view_eSigns   -> setEnabled( true );
-      
+
       return QString("NOT STARTED");
     }
   else
@@ -1816,8 +1985,9 @@ QString US_eSignaturesGMP::check_eSign_status_for_gmpReport()
       new_palette->setColor(QPalette::Text,Qt::blue);
       le_eSign_status->setPalette(*new_palette);
       pb_view_eSigns   -> setEnabled( true );
+
+      return  QString("PARTIALLY COMPLETED");
       
-      return QString("PARTIALLY COMPLETED");
     }
 }
 

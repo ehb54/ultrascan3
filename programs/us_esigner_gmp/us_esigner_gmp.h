@@ -104,12 +104,16 @@ class US_eSignaturesGMP : public US_Widgets
        QString    filePath_db;
        QString    filePath_eSign;
        QString    gmpRunID_eSign;
-       QString    eSignID_global;				
-			     
-				 
+       QString    eSignID_global;
+
+       QHBoxLayout* mainLayout_auto;
+       QGridLayout* eSignersGrid_auto;
+       QGridLayout* eSignActionsGrid_auto;				     
+  				 
      public slots:
 
      private slots:
+       void initPanel_auto( QMap < QString, QString > &  );
        void init_invs     ( void );
        void init_grevs     ( void );
        void limit_inv_names( const QString& );
@@ -146,6 +150,7 @@ class US_eSignaturesGMP : public US_Widgets
 					   QString, QString& );
        void write_pdf_eSignatures( QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
+       QString check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );
        
   

@@ -7996,7 +7996,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
 	   return;
 	 }
-       
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
        /*********************************************************************************/
        
        
