@@ -106,10 +106,16 @@ class US_eSignaturesGMP : public US_Widgets
        QString    gmpRunID_eSign;
        QString    eSignID_global;
 
+       QHBoxLayout* topLayout_auto;
        QHBoxLayout* mainLayout_auto;
        QGridLayout* eSignersGrid_auto;
-       QGridLayout* eSignActionsGrid_auto;				     
-  				 
+       QGridLayout* eSignActionsGrid_auto;
+       QVBoxLayout* leftLayout;				 
+       QVBoxLayout* rghtLayout;
+       QWidget*     mainWidget_auto; 
+  
+       QString autoflowID_passed; 
+			      
      public slots:
 
      private slots:
@@ -140,6 +146,7 @@ class US_eSignaturesGMP : public US_Widgets
        void setUnsetPb_operRev( void );
        QString compose_updated_admin_logJson( int, QString, QString );
        void loadGMPReportDB_assigned( void );
+       void loadGMPReportDB_assigned_auto( QString );
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
        void view_report_db ( void );
@@ -150,7 +157,7 @@ class US_eSignaturesGMP : public US_Widgets
 					   QString, QString& );
        void write_pdf_eSignatures( QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
-       QString check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
+       QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );
        
   

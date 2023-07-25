@@ -288,13 +288,76 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   auto_mode  = true;
 
   setWindowTitle( tr( "GMP e-Signatures"));
-  setPalette( US_GuiSettings::frameColor() );
+  //setPalette( US_GuiSettings::frameColor() );
+  setPalette( US_GuiSettings::normalColor() );
 
+  //primary widget
+  mainWidget_auto = new QWidget;
+  
   // primary layouts
+  topLayout_auto  = new QHBoxLayout( this );
+  topLayout_auto->setSpacing        ( 0 );
+  topLayout_auto->setContentsMargins( 0, 0, 0, 0 );
+  
   mainLayout_auto     = new QHBoxLayout( this );
   mainLayout_auto ->setSpacing        ( 2 );
   mainLayout_auto ->setContentsMargins( 2, 2, 2, 2 );
 
+  leftLayout     = new QVBoxLayout();
+  rghtLayout     = new QVBoxLayout();
+  leftLayout->setSpacing        ( 0 );
+  leftLayout->setContentsMargins( 0, 1, 0, 1 );
+  rghtLayout->setSpacing        ( 0 );
+  rghtLayout->setContentsMargins( 0, 1, 0, 1 );
+  
+  // eSignersGrid_auto     = new QGridLayout();
+  // eSignersGrid_auto ->setSpacing        ( 2 );
+  // eSignersGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
+
+  // eSignActionsGrid_auto      = new QGridLayout();
+  // eSignActionsGrid_auto ->setSpacing        ( 2 );
+  // eSignActionsGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
+
+  /** TEST ***/
+  QMap < QString, QString > protocol_details;
+  protocol_details[ "autoflowID" ] = QString("900");
+
+  //set to NULL internal layouts
+  eSignersGrid_auto     = NULL;
+  eSignActionsGrid_auto = NULL;
+  
+  initPanel_auto( protocol_details );
+  /***************/
+}
+
+//slot to execute when switching form REPORT:
+void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
+{
+  //reset inernals && clear GUI:
+  if ( eSignersGrid_auto != NULL && eSignersGrid_auto->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = eSignersGrid_auto->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete eSignersGrid_auto;
+    }
+  //same for other:
+  if ( eSignActionsGrid_auto != NULL && eSignActionsGrid_auto->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = eSignActionsGrid_auto->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete eSignActionsGrid_auto;
+    }
+  //End cleaning layouts
+
+  //Now, initialize main internal layouts:
   eSignersGrid_auto     = new QGridLayout();
   eSignersGrid_auto ->setSpacing        ( 2 );
   eSignersGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
@@ -303,20 +366,9 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   eSignActionsGrid_auto ->setSpacing        ( 2 );
   eSignActionsGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
 
-  /** TEST ***/
-  QMap < QString, QString > protocol_details;
-  protocol_details[ "autoflowID" ] = QString("900");
+  //Main ID for parent GMP run:
+  autoflowID_passed = protocol_details[ "autoflowID" ];
   
-  initPanel_auto( protocol_details );
-  /***************/
-  
-  // resize( 1000, 700 );
-  // adjustSize();
-}
-
-//slot to execute when switching form REPORT:
-void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
-{
   //Left section: E-Signers info:
   QLabel* bn_revs     = us_banner( tr( "e-Signers Information:" ), 1 );
   QFontMetrics m (bn_revs -> font()) ;
@@ -328,13 +380,13 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   QLabel* lb_name   = us_label( tr("Name:") );
   QLabel* lb_role   = us_label( tr("Role:") );
   QLabel* lb_status = us_label( tr("Status:") );
-  //lb_name -> setFixedHeight  (1.5 * RowHeight);
-
+ 
   eSignersGrid_auto -> addWidget( lb_name,      row,      0,  1,  4 );
   eSignersGrid_auto -> addWidget( lb_role,      row,      4,  1,  2 );
   eSignersGrid_auto -> addWidget( lb_status,    row++,    6,  1,  2 );
-  
-  QMap< QString, QString> eSign_record_auto = read_autoflowGMPReportEsign_record( protocol_details[ "autoflowID" ] );
+
+  //read e-Sign record, to check e-Signing status of each reviewer/operator:
+  QMap< QString, QString> eSign_record_auto = read_autoflowGMPReportEsign_record( autoflowID_passed );
 
   //&& Set defined Operator/Reviewers (if any)
   if ( eSign_record_auto. contains("operatorListJson") )
@@ -347,12 +399,13 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
 	  //uname =  oID + ": " + olname + ", " + ofname;
 	  
 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
-	  le_name -> setObjectName( current_reviewer );
+	  le_name -> setObjectName( "name: " + current_reviewer );
 	  QLineEdit* le_role = us_lineedit( tr("Operator"), 0, true );
 	  
-	  QString u_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto );
-	  qDebug() << "oper: u_stat -- " << u_stat;
-	  QLineEdit* le_stat = us_lineedit( u_stat, 0, true );         
+	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto ); 
+	  le_stat -> setObjectName( "status: " + current_reviewer );
+
+	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
 	  
 	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
 	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
@@ -372,10 +425,9 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
 	  le_name -> setObjectName( current_reviewer );
 	  QLineEdit* le_role = us_lineedit( tr("Reviewer"), 0, true );
 
-	  QString u_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto );
-	  qDebug() << "rev: u_stat -- " << u_stat;
-	  QLineEdit* le_stat = us_lineedit( u_stat, 0, true );
-	  	  
+	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto );
+	  le_stat -> setObjectName( "status: " + current_reviewer );
+	  
 	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
 	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
 	  eSignersGrid_auto -> addWidget( le_stat,      row++,    6,  1,  2 );
@@ -388,16 +440,58 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   QLabel* bn_act     = us_banner( tr( "e-Sign: Actions:" ), 1 );
   bn_act -> setFixedHeight  (1.5 * RowHeight);
 
-  row = 0;
-  eSignActionsGrid_auto -> addWidget( bn_act,      row++,    0,  1,  8 );
-
-  //assemble
-  mainLayout_auto -> addLayout( eSignersGrid_auto );
-  mainLayout_auto -> addLayout( eSignActionsGrid_auto );
-  mainLayout_auto -> addStretch();
+  QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report:" ) );
+  le_loaded_run_db          = us_lineedit( tr(""), 0, true );
   
-  resize( 1000, 700 );
-  adjustSize();
+  QLabel*      lb_eSign_status = us_label( tr( "e-Signing Status:" ) );
+  le_eSign_status              = us_lineedit( tr(""), 0, true );
+
+  pb_view_report_db  =  us_pushbutton( tr( "Review Generated Report" ) );
+  pb_view_report_db  -> setEnabled( false );
+
+  pb_view_eSigns  =  us_pushbutton( tr( "View e-Signatures" ) );
+  pb_view_eSigns  -> setEnabled( false );
+
+  pb_esign_report    =  us_pushbutton( tr( "e-Sign Report" ) );
+  pb_esign_report    -> setEnabled( false );
+  pb_esign_report    -> setStyleSheet( tr("QPushButton::enabled {background: #556B2F; color: lightgray; }"
+					  "QPushButton::disabled {background: #90EE90; color: black}" ));
+
+  row = 0;
+  eSignActionsGrid_auto -> addWidget( bn_act,             row++,    0,  1,  8 );
+
+  eSignActionsGrid_auto -> addWidget( lb_loaded_run_db,   row,      0,  1,  2 );
+  eSignActionsGrid_auto -> addWidget( le_loaded_run_db,   row++,    2,  1,  6 );
+  
+  eSignActionsGrid_auto -> addWidget( lb_eSign_status,    row,      0,  1,  4 );
+  eSignActionsGrid_auto -> addWidget( le_eSign_status,    row++,    4,  1,  4 );
+  
+  eSignActionsGrid_auto -> addWidget( pb_view_report_db,  row,      0,  1,  4 );
+  eSignActionsGrid_auto -> addWidget( pb_view_eSigns,     row++,    4,  1,  4 );
+  eSignActionsGrid_auto -> addWidget( pb_esign_report,    row++,    2,  1,  4 );
+
+  connect( pb_view_report_db, SIGNAL( clicked() ), SLOT ( view_report_db() ) );
+  connect( pb_esign_report,   SIGNAL( clicked() ), SLOT ( esign_report() ) );
+  connect( pb_view_eSigns,    SIGNAL( clicked() ), SLOT ( view_eSignatures() ) );
+  
+
+  //load primary GMP Rpeort && internals:
+  loadGMPReportDB_assigned_auto( autoflowID_passed );
+  
+  //assemble
+  leftLayout->addLayout( eSignersGrid_auto );
+  leftLayout->addStretch();
+  rghtLayout->addLayout( eSignActionsGrid_auto );
+  rghtLayout->addStretch();
+  
+  mainLayout_auto -> addLayout( leftLayout );
+  mainLayout_auto -> addLayout( rghtLayout );
+
+  mainWidget_auto -> setLayout( mainLayout_auto );
+
+  topLayout_auto -> addWidget( mainWidget_auto );
+  
+  resize( 1200, 300 );
 }
 
 //For the end of 1. EXP: defined by admin
@@ -1641,6 +1735,115 @@ QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fn
   return composedJson;
 }
 
+//For auto: Load GMP Report form Db with assigned operator(s) && reviewer(s)
+void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
+{
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+  
+  QStringList qry;
+  qry << "get_autoflowGMPReport_desc";
+  db.query( qry );
+
+  QString gmpReport_id_selected("");        //0
+  QString gmpReport_runname_selected_c(""); //1 
+  QString gmpReport_filename_pdf ("");      //3
+  QString gmpRunID_auto("");                //4 / also global identifier gmpRunID_eSign
+  QString gmpReport_runname_selected("");
+  
+  while ( db.next() )
+    {
+      QString id                     = db.value( 0 ).toString();
+      QString autoflowHistoryID      = db.value( 1 ).toString();
+      QString autoflowHistoryName    = db.value( 2 ).toString();
+      QString protocolName           = db.value( 3 ).toString();
+      QDateTime time_created         = db.value( 4 ).toDateTime().toUTC();
+      QString filenamePdf            = db.value( 5 ).toString();
+
+      if ( autoflowHistoryID == aID_passed )
+	{
+	  gmpReport_id_selected        = id;
+	  gmpReport_runname_selected_c = autoflowHistoryName;
+	  gmpReport_filename_pdf       = filenamePdf;
+	  gmpRunID_auto                = autoflowHistoryID;
+	  gmpRunID_eSign               = autoflowHistoryID;  //global
+	  
+	  break;
+	}
+    }
+
+  //Correct name for 'combined' runs:
+  if ( gmpReport_runname_selected_c.  contains("combined") )
+    {
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
+      gmpReport_runname_selected. simplified();
+    }
+  else
+    gmpReport_runname_selected = gmpReport_runname_selected_c;
+
+  //download GMP Report
+  QString subDirName = gmpReport_runname_selected + "_GMP_DB_Esign";
+  mkdir( US_Settings::reportDir(), subDirName );
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+
+  //Clean folder (if exists) where .tar.gz to be unpacked
+  QStringList f_exts = QStringList() <<  "*.*";
+  QString i_folder = dirName + "/" + gmpReport_runname_selected;
+  remove_files_by_mask( i_folder, f_exts );
+  
+  QString GMPReportfname = "GMP_Report_from_DB.tar";
+  QString GMPReportfpath = dirName + "/" + GMPReportfname;
+  
+  int db_read = db.readBlobFromDB( GMPReportfpath,
+				   "download_gmpReportData",
+				   gmpReport_id_selected.toInt() );
+
+  if ( db_read == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + GMPReportfpath + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+      
+      return;
+    }
+  else if ( db_read != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   GMPReportfpath + "\n" + db.lastError() + "\n");
+      
+      return;
+    }
+
+  // // Using .tar (NOT gzip: .tgz or tar.gz !!!)
+  QProcess *process = new QProcess(this);
+  process->setWorkingDirectory( dirName );
+  process->start("tar", QStringList() << "-xvf" << GMPReportfname );
+    
+  filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
+  qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+
+  //Gui fields
+  le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
+  pb_view_report_db -> setEnabled( true );
+  pb_esign_report   -> setEnabled( true );
+
+  qDebug() << "GUI set, after GMP Report downloading... ";
+
+  //Check, the status of e-Signing: NOT signed, Partially, Completed
+  QString eSign_status = check_eSign_status_for_gmpReport(); 
+
+  if ( eSign_status == "PARTIALLY COMPLETED" || eSign_status == "COMPLETED" )
+    write_download_eSignatures_DB( filePath_db, "download_gmpReportEsignData" );
+
+}
+
 //Load GMP Report form Db with assigned operator(s) && reviewer(s)
 void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 {
@@ -1835,8 +2038,11 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 }
 
 //Check eSign status for GMP Report fior particular reviewer:
-QString US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats )
+QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats )
 {
+  QLineEdit* le_stat = us_lineedit( "", 0, true );
+  //QPalette *new_palette = new QPalette();
+      
   QString eSignStatusJson   = eSign_stats[ "eSignStatusJson" ];
   QString eSignStatusAll    = eSign_stats[ "eSignStatusAll" ];
 
@@ -1848,7 +2054,7 @@ QString US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_pass
   if (!jsonDocEsign.isObject())
     {
       qDebug() << "to_eSign(): ERROR: eSignStatusJson: NOT a JSON Doc !!";
-      return QString("");
+      return le_stat;
     }
   
   const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
@@ -1863,14 +2069,29 @@ QString US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_pass
        || !to_esign_array.size() || eSignStatusAll == "YES" )
     {
       qDebug() << "check_eSign_status(): All signatures have been collected; none left to e-sign !!";
-      return  QString("SIGNED");
+
+      le_stat -> setText( QString("SIGNED") );
+      le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
+      // new_palette->setColor(QPalette::Base, Qt::darkGreen);
+      // new_palette->setColor(QPalette::Text, Qt::black);
+      // le_stat->setPalette(*new_palette);
+
+      return le_stat;
     }
 
   //signed:
   if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
     {
       qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
-      return QString("NOT SIGNED");
+
+      le_stat -> setText( QString("NOT SIGNED") );
+      le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
+      
+      // new_palette->setColor(QPalette::Base, Qt::red);
+      // new_palette->setColor(QPalette::Text, Qt::black);
+      // le_stat->setPalette(*new_palette);
+      
+      return le_stat;
     }
   else
     {
@@ -1897,9 +2118,23 @@ QString US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_pass
       //END DEBUG:
       qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
       if ( eSignees_current.contains( u_passed ) )
-      	return  QString("SIGNED");
+	{
+	  le_stat -> setText( QString("SIGNED") );
+	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
+	  // new_palette->setColor(QPalette::Base, Qt::darkGreen);
+	  // new_palette->setColor(QPalette::Text, Qt::black);
+	  // le_stat->setPalette(*new_palette);
+	  return le_stat;
+	}
       else
-	return  QString("NOT SIGNED");
+	{
+	  le_stat -> setText( QString("NOT SIGNED") );
+	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
+	  // new_palette->setColor(QPalette::Base, Qt::red);
+	  // new_palette->setColor(QPalette::Text, Qt::black);
+	  // le_stat->setPalette(*new_palette);
+	  return  le_stat;
+	}
     }
 }
 
@@ -1925,10 +2160,10 @@ QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
   QJsonArray to_esign_array  = to_esign .toArray();
   QJsonArray esigned_array   = esigned  .toArray();
 
-  //Palette of eStatus:
-  QPalette orig_pal = le_eSign_status->palette();
-  QPalette *new_palette = new QPalette();
-  new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+  // //Palette of eStatus:
+  // QPalette orig_pal = le_eSign_status->palette();
+  // QPalette *new_palette = new QPalette();
+  // new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
   
 
   //to_sign:
@@ -1938,8 +2173,7 @@ QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
       qDebug() << "check_eSign_status(): All signatures have been collected; none left to e-sign !!";
       
       le_eSign_status -> setText( "COMPLETED" );
-      new_palette->setColor(QPalette::Text,Qt::green);
-      le_eSign_status->setPalette(*new_palette);
+      le_eSign_status -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
       pb_view_eSigns   -> setEnabled( true );
       
       return  QString("COMPLETED");
@@ -1951,8 +2185,10 @@ QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
       qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
 
       le_eSign_status -> setText( "NOT STARTED" );
-      new_palette->setColor(QPalette::Text,Qt::red);
-      le_eSign_status->setPalette(*new_palette);
+      le_eSign_status -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
+      // new_palette->setColor(QPalette::Base,Qt::red);
+      // new_palette->setColor(QPalette::Text,Qt::black);
+      // le_eSign_status->setPalette(*new_palette);
       pb_view_eSigns   -> setEnabled( true );
 
       return QString("NOT STARTED");
@@ -1982,8 +2218,10 @@ QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
       qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
 
       le_eSign_status -> setText( "PARTIALLY COMPLETED" );
-      new_palette->setColor(QPalette::Text,Qt::blue);
-      le_eSign_status->setPalette(*new_palette);
+      le_eSign_status -> setStyleSheet( "QLineEdit { background-color:  rgb(95, 152, 238); }"); //blue
+      // new_palette->setColor(QPalette::Base,Qt::blue);
+      // new_palette->setColor(QPalette::Text,Qt::black);
+      // le_eSign_status->setPalette(*new_palette);
       pb_view_eSigns   -> setEnabled( true );
 
       return  QString("PARTIALLY COMPLETED");
@@ -2274,6 +2512,32 @@ void US_eSignaturesGMP::esign_report( void )
   //update le_esing_status:
   QString eSign_status = check_eSign_status_for_gmpReport();
   qDebug() << "Current eSigning Status -- " << eSign_status;
+
+  //Also, in case of auto_mode, update e-signer status:
+  if ( auto_mode )
+    {
+      QString current_reviewer_name =  QString::number( u_ID ) + ". " + u_lname + ", " + u_fname;
+      QString obj_name = "status: " + current_reviewer_name;
+
+      qDebug() << "u_ID, u_lname, u_fname, obj_name -- "
+	       << u_ID << u_lname << u_fname << obj_name;
+      QLineEdit * lineedit_u_status = NULL;
+      lineedit_u_status = mainWidget_auto->findChild<QLineEdit *>(obj_name, Qt::FindDirectChildrenOnly);
+      qDebug() << "widget identified ?" ;
+
+      if ( lineedit_u_status != NULL )
+	{
+	  qDebug() << "YES, identified...";
+	  lineedit_u_status-> setText( "SIGNED" );
+	  lineedit_u_status-> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
+	  
+	  //palette
+	  // QPalette *new_palette = new QPalette();
+	  // new_palette->setColor(QPalette::Base, Qt::darkGreen);
+	  // new_palette->setColor(QPalette::Text, Qt::black);
+	  // lineedit_u_status->setPalette(*new_palette);
+	}
+    }
   
   //concluding msg:
   QString msg_f = QString( tr("<font color='red'><b>SUCCESS:</b> </font><br><br>"
