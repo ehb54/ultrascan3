@@ -329,6 +329,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   // initPanel_auto( protocol_details );
   /***************/
 
+  qDebug() << "Alt. constructor SET";
   
 }
 
