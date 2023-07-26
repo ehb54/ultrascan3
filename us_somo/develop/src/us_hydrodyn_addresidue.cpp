@@ -55,6 +55,7 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SoMo: Modify Residue Lookup Table"));
+   new_atom.hydration2 = 0;
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -2093,6 +2094,8 @@ void US_AddResidue::accept_residue()
    {
       pb_atom_continue->setEnabled(true); // all atoms are defined now
    }
+
+   // info_residue( "accept residue" );
 }
 
 void US_AddResidue::atom_continue()
@@ -2317,6 +2320,61 @@ void US_AddResidue::accept_atom()
 void US_AddResidue::info_residue( const QString & msg ) {
    TSO << LD << "info_residue() : " << msg << Qt::endl << LD;
    
+   TSO << new_residue.comment << Qt::endl;
+   TSO << new_residue.name.toUpper()
+       << "\t" << new_residue.type
+       << "\t" << QString().sprintf("%7.2f", new_residue.molvol)
+       << "\t" << new_residue.asa
+       << "\t" << new_residue.r_atom.size()
+       << "\t" << new_residue.r_bead.size()
+       << "\t" << new_residue.vbar;
+
+   for ( int j = 0; j < (int) new_residue.pKas.size(); ++j ) {
+      TSO << "\t" << new_residue.vbar
+          << "\t" << new_residue.pKas[ j ]
+         ;
+   }
+            
+   TSO << "\n";
+            
+   for (unsigned int j=0; j<new_residue.r_atom.size(); j++)
+   {
+      TSO << new_residue.r_atom[j].name.toUpper()
+          << "\t" << new_residue.r_atom[j].hybrid.name
+          << "\t" << new_residue.r_atom[j].hybrid.mw
+          << "\t" << new_residue.r_atom[j].hybrid.radius
+          << "\t" << new_residue.r_atom[j].bead_assignment
+          << "\t" << (unsigned int) new_residue.r_atom[j].positioner
+          << "\t" << new_residue.r_atom[j].serial_number 
+          << "\t" << new_residue.r_atom[j].hydration
+         ;
+      if ( new_residue.r_atom[j].ionization_index ) {
+         int ionization_index = new_residue.r_atom[j].ionization_index;
+         if ( new_residue.r_atom_1.count( ionization_index ) ) {
+            TSO << "\t" << ionization_index
+                << "\t" << new_residue.r_atom_1[ ionization_index ].hybrid.name
+                << "\t" << new_residue.r_atom_1[ ionization_index ].hybrid.mw
+                << "\t" << new_residue.r_atom_1[ ionization_index ].hybrid.radius
+                << "\t" << new_residue.r_atom_1[ ionization_index ].bead_assignment
+                << "\t" << (unsigned int) new_residue.r_atom_1[ ionization_index ].positioner
+                << "\t" << new_residue.r_atom_1[ ionization_index ].serial_number 
+                << "\t" << new_residue.r_atom_1[ ionization_index ].hydration
+               ;
+         }
+      }
+      TSO << "\n";               
+   }
+   for (unsigned int j=0; j<new_residue.r_bead.size(); j++)
+   {
+      TSO << new_residue.r_bead[j].hydration
+          << "\t" << new_residue.r_bead[j].color
+          << "\t" << new_residue.r_bead[j].placing_method
+          << "\t" << new_residue.r_bead[j].chain
+          << "\t" << new_residue.r_bead[j].volume << "\n";
+   }
+
+   TSO << LD;
+
    for ( int i = 0; i < (int) new_residue.r_atom.size(); ++i ) {
       TSO <<
          QString( "r_atom %1 name %2 hybrid.name %3 ionization_index %4\n" )
@@ -2354,7 +2412,7 @@ void US_AddResidue::info_residue( const QString & msg ) {
 
 bool US_AddResidue::update_pKas( int atomno ) {
    TSO << LEQ;
-   TSO << "update_pKas( " << atomno << " )";
+   TSO << "update_pKas( " << atomno << " )\n";
    TSO << LD;
 
    bool ok = true;
@@ -2410,13 +2468,14 @@ bool US_AddResidue::update_pKas( int atomno ) {
          new_residue.r_atom_1[ ionization_index ].ionization_index = ionization_index;
       } else {
          // removed a pKa
-         TSO << "update_pKas() removed a pKa\n";
+         TSO << "update_pKas() removed a pKa with ionization index " << ionization_index << "\n";
          // doesn't effect sort order
          new_residue.r_atom_1.erase( ionization_index );
          {
             int lost_index = ionization_index - 1;
             vector < float > org_pKas = new_residue.pKas;
             new_residue.pKas.resize( lost_index );
+            new_residue.r_atom[ atomno ].ionization_index = 0;
 
             for ( int i = lost_index + 1; i < (int) org_pKas.size(); ++i ) {
                new_residue.pKas.push_back( org_pKas[ i ] );
@@ -2444,10 +2503,14 @@ bool US_AddResidue::update_pKas( int atomno ) {
          ionization_index                                          = (int) new_residue.pKas.size() + 1;
          new_residue.pKas                                          .push_back( new_atom.pKa );
          new_residue.r_atom_1[ ionization_index ]                  = atom_list[ atom_list_pos_hybrid2 ];
+         new_residue.r_atom_1[ ionization_index ].hybrid           = atom_list[ atom_list_pos_hybrid2 ].hybrid;
          new_residue.r_atom_1[ ionization_index ].hydration        = new_atom.hydration2;
          new_residue.r_atom_1[ ionization_index ].pKa              = new_atom.pKa;
          new_residue.r_atom[ atomno ].ionization_index             = ionization_index;
          new_residue.r_atom_1[ ionization_index ].ionization_index = ionization_index;
+         new_residue.r_atom_1[ ionization_index ].bead_assignment  = new_residue.r_atom[ atomno ].bead_assignment;
+         new_residue.r_atom_1[ ionization_index ].positioner       = new_residue.r_atom[ atomno ].positioner;
+         new_residue.r_atom_1[ ionization_index ].serial_number    = new_residue.r_atom[ atomno ].serial_number;
       } else {
          // nothing to do
       }
@@ -2551,6 +2614,7 @@ void US_AddResidue::set_hydration()
 void US_AddResidue::set_enable_pKa()
 {
    // qDebug() << "set_enable_pKa()";
+   // info_residue( "enable pKa()" );
    if (cb_enable_pKa->isChecked()) {
       pKa_flag = true;
       lbl_pKa->show();
