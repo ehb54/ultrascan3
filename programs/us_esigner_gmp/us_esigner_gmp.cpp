@@ -318,16 +318,18 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   // eSignActionsGrid_auto ->setSpacing        ( 2 );
   // eSignActionsGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
 
-  /** TEST ***/
-  QMap < QString, QString > protocol_details;
-  protocol_details[ "autoflowID" ] = QString("900");
-
   //set to NULL internal layouts
   eSignersGrid_auto     = NULL;
   eSignActionsGrid_auto = NULL;
   
-  initPanel_auto( protocol_details );
+  /** TEST ***/
+  // QMap < QString, QString > protocol_details;
+  // protocol_details[ "autoflowID" ] = QString("900");
+  
+  // initPanel_auto( protocol_details );
   /***************/
+
+  
 }
 
 //reset eSign mod. constructor
