@@ -120,6 +120,7 @@ class US_eSignaturesGMP : public US_Widgets
 
      private slots:
        void initPanel_auto( QMap < QString, QString > &  );
+       void display_reviewers_auto( int&, QMap< QString, QString>, QString );
        void init_invs     ( void );
        void init_grevs     ( void );
        void limit_inv_names( const QString& );
