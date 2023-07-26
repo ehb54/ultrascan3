@@ -330,8 +330,8 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   /***************/
 }
 
-//slot to execute when switching form REPORT:
-void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
+//reset eSign mod. constructor
+void US_eSignaturesGMP::reset_esign_panel( void )
 {
   //reset inernals && clear GUI:
   if ( eSignersGrid_auto != NULL && eSignersGrid_auto->layout() != NULL )
@@ -356,6 +356,15 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
       delete eSignActionsGrid_auto;
     }
   //End cleaning layouts
+
+  qApp->processEvents();
+}
+
+//slot to execute when switching form REPORT:
+void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
+{
+  //clear all GUI, internals
+  reset_esign_panel();
 
   //Now, initialize main internal layouts:
   eSignersGrid_auto     = new QGridLayout();
@@ -391,54 +400,7 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   //&& Set defined Operator/Reviewers (if any)
   display_reviewers_auto( row, eSign_record_auto, "operatorListJson" );
   display_reviewers_auto( row, eSign_record_auto, "reviewersListJson" );
-  //display_reviewers( "approversListJson" );
-
-  // if ( eSign_record_auto. contains("operatorListJson") )
-  //   {
-  //     QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_record_auto[ "operatorListJson" ] .toUtf8() );
-  //     QJsonArray jsonDocOperList_array  = jsonDocOperList.array();
-  //     for (int i=0; i < jsonDocOperList_array.size(); ++i )
-  // 	{
-  // 	  QString current_reviewer = jsonDocOperList_array[i].toString();
-  // 	  //uname =  oID + ": " + olname + ", " + ofname;
-	  
-  // 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
-  // 	  le_name -> setObjectName( "name: " + current_reviewer );
-  // 	  QLineEdit* le_role = us_lineedit( tr("Operator"), 0, true );
-	  
-  // 	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto ); 
-  // 	  le_stat -> setObjectName( "status: " + current_reviewer );
-
-  // 	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
-	  
-  // 	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
-  // 	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
-  // 	  eSignersGrid_auto -> addWidget( le_stat,      row++,    6,  1,  2 );
-  // 	}
-  //   }
-  
-  // if ( eSign_record_auto. contains("reviewersListJson") )
-  //   {
-  //     QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_record_auto[ "reviewersListJson" ] .toUtf8() );
-  //     QJsonArray jsonDocRevList_array  = jsonDocRevList.array();
-  //     for (int i=0; i < jsonDocRevList_array.size(); ++i )
-  // 	{
-  // 	  QString current_reviewer = jsonDocRevList_array[i].toString();
-
-  // 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
-  // 	  le_name -> setObjectName( current_reviewer );
-  // 	  QLineEdit* le_role = us_lineedit( tr("Reviewer"), 0, true );
-
-  // 	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_record_auto );
-  // 	  le_stat -> setObjectName( "status: " + current_reviewer );
-	  
-  // 	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
-  // 	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
-  // 	  eSignersGrid_auto -> addWidget( le_stat,      row++,    6,  1,  2 );
-	  
-  // 	}
-  //   }
-  //Maybe later add Approver's section...
+  //display_reviewers_auto( row, eSign_record_auto, "approversListJson" ); // Approvers also? [TO BE ADDED]
 
   //rigth section: actions
   QLabel* bn_act     = us_banner( tr( "e-Sign: Actions:" ), 1 );

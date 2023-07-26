@@ -452,6 +452,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
+  optimaName         = protocol_details[ "OptimaName" ] ;
 
   QString full_runname = protocol_details[ "filename" ];
   FullRunName_auto = runName + "-run" + runID;
@@ -1320,6 +1321,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   intensityID        = protocol_details[ "intensityID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
+  optimaName         = protocol_details[ "OptimaName" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -1638,9 +1640,11 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
-
 	   protocol_details[ "statusID" ]       = db->value( 21 ).toString();
-	   	   
+	   protocol_details[ "failedID" ]       = db->value( 22 ).toString();
+	   protocol_details[ "operatorID" ]     = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]      = db->value( 24 ).toString();
+	   protocol_details[ "gmpReviewID" ]    = db->value( 25 ).toString();	   
 	 }
      }
 
@@ -3005,32 +3009,16 @@ void US_ReporterGMP::generate_report( void )
 
       pb_view_report_auto->setVisible( true );
 
-      /******* NOTES ********************
+      /******* NOTES *******************************************
 	       
-	       1. Check if GMP Report is set for e-Signature: 
-	          -- if operator(s) / reviewer(s) are assigned:
-	       
-	       2. If YES, assigned: 
+	       1. For assigned oper/rev/appr. cases (default): 
 	          -- inform user that they are assigned && those assignees will re-attach later;
 		  -- do NOT let to proceed to 7. e-Signatures
 		  -- still enable to View GMP Report
 		  -- update autoflow's status to 'E-SIGNATURE'
-	       
-	       3. If NOT, not assiged: 
-	          -- if ADMIN (OR, an admin who can assign reviewer(s)), offer to assign: 
-		        ** add button to open us_esigner [assigner section]
-			** while assigned, inform that assignees will re-attach later;
-			** do NOT let to proceed to 7. e-Signatures
-			** still enable to View GMP Report
-			** update autoflow's status to 'E-SIGNATURE'
-		  -- if NON-ADMIN:
-		        ** just enable to View
-			** update autoflow's status to 'E-SIGNATURE'
-	       
-       ***************************/
+      ************************************************************/
 
-      //copy autoflow record to autoflowHistory table:
-      //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
+      //Update autoflow status to 'E-SIGNATURES':
       US_Passwd   pw;
       US_DB2* db = new US_DB2( pw.getPasswd() );
       
@@ -3041,10 +3029,33 @@ void US_ReporterGMP::generate_report( void )
 				    tr( "DB Connection Problem" ),
 				    tr( "AutoflowHistory: there was an error connecting to the database:\n" )
 				    + db->lastError() );
-	  
+	  	  return;
+	}
+      
+      QStringList qry;
+      qry << "update_autoflow_at_report"
+	  << runID
+	  << optimaName;
+      //db->query( qry );
+      
+      int status = db->statusQuery( qry );
+      
+      if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+	{
+	  QMessageBox::warning( this,
+				tr( "Autoflow Record Not Updated" ),
+				tr( "No autoflow record\n"
+				    "associated with this experiment." ) );
 	  return;
 	}
-
+      
+      /** Do NOT delete anythign here !!!!!!! *****/
+      /** WILL BE DELETED/COPIED to HISTORY after e-Signing!!!!! ***********/
+      /************************************************************************
+      //copy autoflow record to autoflowHistory table:
+      //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
+      
+      
       QStringList qry;
       qry << "new_autoflow_history_record" << AutoflowID_auto;
       qDebug() << "Query for autoflowHistory -- " << qry;
@@ -3060,8 +3071,11 @@ void US_ReporterGMP::generate_report( void )
       qry << "delete_autoflow_stages_record" << AutoflowID_auto;
       db->statusQuery( qry );
       //END of copy to History, deletion of primary autoflow record
-      
-      
+      ***************************************************************************/
+
+      //IF user is NOT among reviewers, inform that can NOT proceed to e-SIGNS stage!
+      //IF user IS among reviewers, offer to View Report and / OR proceed to e-SIGNS, OR re-attach later!!!
+           
       //Inform user of the PDF location
       QMessageBox msgBox_a;
       msgBox_a.setText(tr("Report PDF Ready!"));

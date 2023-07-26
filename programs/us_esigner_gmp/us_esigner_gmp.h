@@ -160,6 +160,8 @@ class US_eSignaturesGMP : public US_Widgets
        QString check_eSign_status_for_gmpReport( void );
        QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );
+
+       void reset_esign_panel ( void );
        
   
      signals:  

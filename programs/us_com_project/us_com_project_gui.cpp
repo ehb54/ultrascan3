@@ -473,6 +473,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( switch_to_esign_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
@@ -506,6 +507,11 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
 
    connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
+
+   //E-Signs
+   connect( epanReport, SIGNAL( switch_to_esign( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( pass_to_esign( QMap < QString, QString > & ) ),  epanSign, SLOT( do_esign( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_esigning() ),  epanSign, SLOT( reset_esigning( )  ) );
    
    setMinimumSize( QSize( 1350, 850 ) );
    adjustSize();
@@ -619,9 +625,14 @@ void US_ComProjectMain::initPanels( int  panx )
       if ( curr_panx == 6 )
 	{
 	  qDebug() << "Jumping from Report.";
-	  
 	  emit reset_reporting();
-	}      
+	}
+
+      if ( curr_panx == 7 )
+	{
+	  qDebug() << "Jumping from e-Signs.";
+	  emit reset_esigning();
+	}
       
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
@@ -1096,6 +1107,40 @@ void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_d
 
    emit pass_to_report( protocol_details );
 }
+
+// Slot to switch to e-Signtab
+void US_ComProjectMain::switch_to_esign( QMap < QString, QString > & protocol_details )
+{
+  /**  BEFORE going to e-Signatures: Check if user is among operators|reviewers|approvers**/
+
+  /* 
+     Covered in list_all_autoflow_records():
+      -- isOperRev( user_id, autolfowId ): if false, run NOT shown in the GMP run list
+      Do we want to rather show all runs BUT not allow to switch to E-SIGN if ( !isOperRev( user_id, autolfowId )) ??
+  */
+  
+  /****************************************************************************************/
+  
+  tabWidget->setCurrentIndex( 7 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 7;
+  
+  // ALEXEY: Temporariy NOT lock here... Will need later
+  
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 7 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+  
+  
+  qApp->processEvents();
+  // ALEXEY: Make a record to 'autoflow' table: stage# = 4; 
+  
+  emit pass_to_esign( protocol_details );
+}
+
 
 
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
@@ -1787,6 +1832,13 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	{
 	  qDebug() << "To REPORT SWITCH ";
 	  emit switch_to_report_init( protocol_details );
+	  
+	}
+
+      if ( stage == "E-SIGNATURES" )
+	{
+	  qDebug() << "To E-SIGNS SWITCH ";
+	  emit switch_to_esign_init( protocol_details );
 	  
 	}
 
@@ -3545,8 +3597,8 @@ US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
    sdiag = new US_eSignaturesGMP( "AUTO" );
    sdiag->setParent(this, Qt::Widget);
    
-   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
+   connect( this, SIGNAL( start_esign( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel_auto ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_esigning_passed( ) ), sdiag, SLOT(  reset_esign_panel (  )  ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3584,4 +3636,14 @@ void US_eSignaturesGui::resizeEvent(QResizeEvent *event)
     }
      
     QWidget::resizeEvent(event);
+}
+
+void US_eSignaturesGui::do_esign( QMap < QString, QString > & protocol_details )
+{
+  emit start_esign( protocol_details );
+}
+
+void US_eSignaturesGui::reset_esigning( void )
+{
+  emit reset_esigning_passed();
 }
