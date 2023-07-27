@@ -35,6 +35,8 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
+#define TSO QTextStream( stdout )
+
 // #define DEBUG_RESIDUE
 
 US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *) : QWidget( p )
@@ -59,13 +61,13 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
+   setGeometry(global_Xpos, global_Ypos, 0, 0);
    new_residue.type = 0;
    new_bead.color = 0;
    new_bead.placing_method = 0;
    new_bead.hydration = 0;
    new_bead.visibility = 0;
    new_bead.volume = 0;
-   setGeometry(global_Xpos, global_Ypos, 0, 0);
    hybrids.clear( );
    atoms.clear( );
 }
@@ -77,7 +79,7 @@ US_AddResidue::~US_AddResidue()
 void US_AddResidue::setupGUI()
 {
    int minHeight1 = 24;
-   int minWidth1  = 144;
+   int minWidth1  = 270;
 
    lbl_info1 = new QLabel(us_tr(" 1: Define Residue Properties: "), this);
    Q_CHECK_PTR(lbl_info1);
@@ -132,7 +134,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lb_residues );
    lb_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    lb_residues->setMinimumHeight(minHeight1);
-   connect(lb_residues, SIGNAL(currentRowChanged(int)), this, SLOT(select_residue(int)));
+   connect(lb_residues, SIGNAL(itemSelectionChanged()), this, SLOT(residue_selection_changed()));
 
    lbl_residue_name = new QLabel(us_tr(" Residue Name:"), this);
    Q_CHECK_PTR(lbl_residue_name);
@@ -1071,6 +1073,7 @@ void US_AddResidue::add()
 
 void US_AddResidue::read_residue_file(const QString & filename)
 {
+   // TSO << "read_residue_file() begin\n";
    QString str1, str2;
    unsigned int numatoms, numbeads, i, j;
    QFile f(filename);
@@ -1361,10 +1364,13 @@ void US_AddResidue::read_residue_file(const QString & filename)
                               "Please select a different file."),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }
+   // TSO << "read_residue_file() end\n";
 }
 
 void US_AddResidue::select_residue_file()
 {
+   disconnect(lb_residues, SIGNAL(itemSelectionChanged()), 0, 0);
+   // TSO << "select_residue_file() begin\n";
    QString old_filename = residue_filename, str1;
    residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
@@ -1411,13 +1417,18 @@ void US_AddResidue::select_residue_file()
             }
          default:
             {
-               return;   
+               connect(lb_residues, SIGNAL(itemSelectionChanged()), this, SLOT(residue_selection_changed()));
             }
          }
       }
    }
    str1 = QString( us_tr( " Number of Residues in File: %1" ) ).arg( residue_list.size() );
+
    lbl_numresidues->setText(str1);
+   reset( true );
+   lb_residues->clearSelection();
+   connect(lb_residues, SIGNAL(itemSelectionChanged()), this, SLOT(residue_selection_changed()));
+   // TSO << "select_residue_file() end\n";
 }
 
 void US_AddResidue::calc_bead_mw(struct residue *res)
@@ -1859,6 +1870,10 @@ void US_AddResidue::select_residue(int val)
 #endif
 }
 
+void US_AddResidue::residue_selection_changed() {
+   emit select_residue( lb_residues->currentRow() );
+}
+
 void US_AddResidue::print_residue(struct residue res)
 {
    unsigned int i;
@@ -1904,10 +1919,11 @@ void US_AddResidue::help()
    online_help->show_help("manual/somo/somo_residue.html");
 }
 
-void US_AddResidue::reset( bool reselect )
+void US_AddResidue::reset( bool /* reselect */ )
 {
    // some oddness on pb_reset, clears too much but this reset() is called in multiple places
 
+   // TSO << "reset() begin\n";
    pb_delete_residue->setEnabled(false);
    pb_select_atom_file->setEnabled(false);
    pb_select_residue_file->setEnabled(false);
@@ -1979,14 +1995,31 @@ void US_AddResidue::reset( bool reselect )
    enable_area_2(false);
    enable_area_3(false);
 
-   if ( reselect ) {
-      lb_residues->clearSelection();
-      lb_residues->setCurrentRow(0);
-   }
+   // if ( reselect ) {
+   //    TSO << "reset() reselect\n";
+   //    lb_residues->clearSelection();
+   //    lb_residues->setCurrentRow(0);
+   // }
+   lb_residues->clearSelection();
+   // TSO << "reset() end\n";
 }
 
 void US_AddResidue::accept_residue()
 {
+   update_name( le_residue_name->text() );
+   update_comment( le_residue_comment->text() );
+   if ( cnt_numatoms->value() != new_residue.r_atom.size() ) {
+      update_numatoms(cnt_numatoms->value() );
+   }
+   if ( cnt_numbeads->value() != new_residue.r_bead.size() ) {
+      update_numbeads(cnt_numbeads->value() );
+   }
+
+   select_type( cmb_type->currentIndex() );
+   update_molvol( le_molvol->text() );
+   update_vbar( le_vbar->text() );
+   update_asa( le_asa->text() );
+   
    if(new_residue.name.isEmpty()
       || new_residue.r_atom.size() == 0
       || new_residue.r_bead.size() == 0
@@ -2318,7 +2351,6 @@ void US_AddResidue::accept_atom()
 
 #define LEQ "============================================================\n"
 #define LD  "------------------------------------------------------------\n"
-#define TSO QTextStream( stdout )
 
 void US_AddResidue::info_residue( const QString & msg ) {
    TSO << LD << "info_residue() : " << msg << Qt::endl << LD;
