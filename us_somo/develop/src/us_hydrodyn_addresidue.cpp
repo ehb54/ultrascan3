@@ -1613,6 +1613,9 @@ void US_AddResidue::select_beadatom()
          lb_list_beadatom->addItem(lb_select_beadatom->item(i)->text());
          //         cout << "Current bead 1: " << current_bead << endl;
          new_residue.r_atom[i].bead_assignment = current_bead;
+         if ( int ionization_index = new_residue.r_atom[i].ionization_index ) {
+            new_residue.r_atom_1[ ionization_index ].bead_assignment = current_bead;
+         }
       }
    }
    calc_bead_mw(&new_residue);
@@ -2232,6 +2235,8 @@ void US_AddResidue::accept_bead()
    }
    new_residue.r_bead[current_bead] = new_bead;
    new_bead.volume = 0.0;
+
+   // info_residue( "accept bead" );
 }
 
 void US_AddResidue::accept_atom()
