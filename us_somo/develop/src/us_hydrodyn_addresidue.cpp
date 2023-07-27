@@ -2091,12 +2091,10 @@ void US_AddResidue::accept_residue()
       if (str.contains("undefined"))
       {
          flag = false;
+         break;
       }
    }
-   if (flag)
-   {
-      pb_atom_continue->setEnabled(true); // all atoms are defined now
-   }
+   pb_atom_continue->setEnabled(flag); 
 
    // info_residue( "accept residue" );
 }
@@ -2523,10 +2521,20 @@ bool US_AddResidue::update_pKas( int atomno ) {
 
    map < QString, int > atom_name_to_no;
    for ( int i = 0; i < (int) new_residue.r_atom.size(); ++i ) {
-      if ( atom_name_to_no[ new_residue.r_atom[ i ].name ] ) {
-         errors += QString( "Duplicate atom name %1 found in atom %2, atom names must be unique\n" ).arg( new_residue.r_atom[ i ].name ).arg( i + 1 );
+      if ( atom_name_to_no[ new_residue.r_atom[ i ].name ]
+           && !new_residue.r_atom[ i ].name.isEmpty() ) {
+         errors +=
+            QString( "Duplicate atom name %1 found in atom %2, atom names must be unique\n" )
+            .arg( new_residue.r_atom[ i ].name )
+            .arg( i + 1 );
          ok = false;
       }
+      if ( new_residue.r_atom[ i ].name.isEmpty() ) {
+         errors +=
+            QString( "Undefined atom name for atom %2\n" )
+            .arg( i + 1 );
+         ok = false;
+      }         
       atom_name_to_no[ new_residue.r_atom[ i ].name ] = i;
    }
 
@@ -2568,7 +2576,7 @@ bool US_AddResidue::update_pKas( int atomno ) {
 
    if ( !errors.isEmpty() ) {
       QMessageBox::warning(this, us_tr( windowTitle() ),
-                           us_tr("Errors found and must be corrected before you will be able to 'Continue':\n" + errors ),
+                           us_tr("Warning: problems below must be corrected before you will be able to 'Continue':\n" + errors ),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }
 
