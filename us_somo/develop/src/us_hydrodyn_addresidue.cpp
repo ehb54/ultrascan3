@@ -559,6 +559,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cb_hydration );
    cb_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    connect(cb_hydration, SIGNAL(clicked()), SLOT(set_hydration()));
+   cb_hydration->hide();
 
    cnt_hydration= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hydration );
@@ -572,6 +573,7 @@ void US_AddResidue::setupGUI()
    cnt_hydration->setPalette( PALET_NORMAL );
    AUTFBACK( cnt_hydration );
    connect(cnt_hydration, SIGNAL(valueChanged(double)), SLOT(update_hydration(double)));
+   cnt_hydration->hide();
 
    lbl_placing = new QLabel(us_tr(" Select Positioning Method: "), this);
    Q_CHECK_PTR(lbl_placing);
@@ -903,7 +905,7 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_select_beadatom, j, 4);
    j++;
    {
-      int rows = 10;
+      int rows = 11;
       background->addWidget( lb_list_beadatom , j , 3 , 1 + ( j + rows ) - ( j ) , 1 + ( 3 ) - ( 3 ) );
       background->addWidget( lb_select_beadatom , j , 4 , 1 + ( j + rows ) - ( j ) , 1 + ( 4 ) - ( 4 ) );
       j+= rows + 1;
@@ -917,9 +919,11 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_bead_hydro_from_atom, j, 3);
    background->addWidget(le_bead_hydro_from_atom, j, 4);
    j++;
-   background->addWidget(cb_hydration, j, 3);
-   background->addWidget(cnt_hydration, j, 4);
-   j++;
+   // currently hidden, complications with pKa
+   // hydration should be defined at the atom level
+   // background->addWidget(cb_hydration, j, 3);
+   // background->addWidget(cnt_hydration, j, 4);
+   // j++;
    background->addWidget(lbl_bead_hydrovol, j, 3);
    background->addWidget(le_bead_hydrovol, j, 4);
    j++;
@@ -1658,6 +1662,7 @@ void US_AddResidue::update_hydration(double val)
    new_bead.hydration = (unsigned int) val;
    cb_hydration->setChecked ( new_bead.hydration != 
                               new_bead.atom_hydration );
+   clear_bead_hydrated_info();
 }
 
 void US_AddResidue::update_atom_hydration(double val)
@@ -1690,11 +1695,14 @@ void US_AddResidue::select_placing_method(int val)
 
 void US_AddResidue::select_r_bead(int val)
 {
+   // TSO << "select_r_bead(" << val << ") start\n";
+   // info_residue( "select_r_bead" );
    QString str;
    QString str2;
    current_bead = (unsigned int) val;
-   if (existing_residue)
-   {
+   // this works for existing_residue or not, so always use
+   if (1 || existing_residue) {
+      // TSO << "select_r_bead(" << val << ") existing residue\n";
       new_bead.color = new_residue.r_bead[current_bead].color;
       new_bead.chain = new_residue.r_bead[current_bead].chain;
       new_bead.placing_method = new_residue.r_bead[current_bead].placing_method;
@@ -1726,21 +1734,25 @@ void US_AddResidue::select_r_bead(int val)
       cb_hydration->setChecked ( new_residue.r_bead[current_bead].atom_hydration != 
                                  new_residue.r_bead[current_bead].hydration );
       new_bead.atom_hydration = new_residue.r_bead[current_bead].atom_hydration;
-      float h_volume  = new_residue.r_bead[current_bead].hydration       * hydrovol + new_residue.r_bead[current_bead].volume;
-      float h_volume2 = new_residue.r_bead[current_bead].atom_hydration2 * hydrovol + new_residue.r_bead[current_bead].volume;
+
+      update_bead_hydrated_info();
       
-      float radius = pow((h_volume * (3.0/(4.0*M_PI))), 1.0/3.0);
-      float radius2 = pow((h_volume2 * (3.0/(4.0*M_PI))), 1.0/3.0);
-      if ( h_volume == h_volume2 &&
-           radius == radius2 ) {
-         str.sprintf("%7.2f A^3", h_volume );
-         str2.sprintf("%7.2f A", radius );
-      } else {
-         str.sprintf("[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
-         str2.sprintf("[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
-      }         
-      le_bead_hydrovol->setText(str);
-      le_bead_hydrorad->setText(str2);
+      // below replaced by function above
+      // float h_volume  = new_residue.r_bead[current_bead].hydration       * hydrovol + new_residue.r_bead[current_bead].volume;
+      // float h_volume2 = new_residue.r_bead[current_bead].atom_hydration2 * hydrovol + new_residue.r_bead[current_bead].volume;
+      
+      // float radius = pow((h_volume * (3.0/(4.0*M_PI))), 1.0/3.0);
+      // float radius2 = pow((h_volume2 * (3.0/(4.0*M_PI))), 1.0/3.0);
+      // if ( h_volume == h_volume2 &&
+      //      radius == radius2 ) {
+      //    str.sprintf("%7.2f A^3", h_volume );
+      //    str2.sprintf("%7.2f A", radius );
+      // } else {
+      //    str.sprintf("[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
+      //    str2.sprintf("[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
+      // }         
+      // le_bead_hydrovol->setText(str);
+      // le_bead_hydrorad->setText(str2);
 
       if (new_residue.r_bead[current_bead].chain)
       {
@@ -1758,9 +1770,8 @@ void US_AddResidue::select_r_bead(int val)
          rb_backbone->setChecked( true );
 #endif
       }
-   }
-   else
-   {
+   } else {
+      // TSO << "select_r_bead(" << val << ") NOT existing residue\n";
       set_chain(0); // default is backbone for a new bead
    }
    unsigned int i;
@@ -1785,6 +1796,36 @@ void US_AddResidue::select_r_bead(int val)
    }
 }
 
+void US_AddResidue::update_bead_hydrated_info() {
+   int current_bead = cmb_r_beads->currentIndex();
+   // TSO << "update_hydrated_info() current_bead " << current_bead << " start\n";
+
+   float h_volume  = new_residue.r_bead[current_bead].hydration       * hydrovol + new_residue.r_bead[current_bead].volume;
+   float h_volume2 = new_residue.r_bead[current_bead].atom_hydration2 * hydrovol + new_residue.r_bead[current_bead].volume;
+      
+   float radius = pow((h_volume * (3.0/(4.0*M_PI))), 1.0/3.0);
+   float radius2 = pow((h_volume2 * (3.0/(4.0*M_PI))), 1.0/3.0);
+
+   QString str;
+   QString str2;
+
+   if ( h_volume == h_volume2 &&
+        radius == radius2 ) {
+      str.sprintf("%7.2f A^3", h_volume );
+      str2.sprintf("%7.2f A", radius );
+   } else {
+      str.sprintf("[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
+      str2.sprintf("[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
+   }         
+   le_bead_hydrovol->setText(str);
+   le_bead_hydrorad->setText(str2);
+}
+
+void US_AddResidue::clear_bead_hydrated_info() {
+   le_bead_hydrovol->setText("");
+   le_bead_hydrorad->setText("");
+}
+   
 void US_AddResidue::select_r_atom(int val)
 {
    if (1 || existing_residue) {
@@ -2228,6 +2269,8 @@ void US_AddResidue::atom_continue()
      }
      }
    */
+      
+   // info_residue( "atom_continue()" );
 }
 
 void US_AddResidue::accept_bead()
@@ -2241,9 +2284,8 @@ void US_AddResidue::accept_bead()
    if (new_bead.color == 0 || new_bead.color == 6)
    {
       QMessageBox::warning(this, us_tr("UltraScan Warning"),
-                           us_tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different bead color."),
+                           us_tr("Please note:\n\nBlack (0) and brown (6) are reserved colors,\nplease choose a different bead color."),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-      cmb_bead_color->setCurrentIndex(1);
       return;
    }
    
@@ -2267,6 +2309,7 @@ void US_AddResidue::accept_bead()
    new_residue.r_bead[current_bead] = new_bead;
    new_bead.volume = 0.0;
 
+   select_r_bead( cmb_r_beads->currentIndex() );
    // info_residue( "accept bead" );
 }
 
@@ -2695,6 +2738,7 @@ void US_AddResidue::closeEvent(QCloseEvent *e)
 void US_AddResidue::update_bead_volume(const QString & val)
 {
    new_bead.volume = val.toFloat();
+   clear_bead_hydrated_info();
 }
 
 void US_AddResidue::update_pKa(const QString & val)
