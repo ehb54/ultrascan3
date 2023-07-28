@@ -51,6 +51,7 @@ class US_UTIL_EXTERN US_RunProtocol
 	    //assigned oper/rev lists
 	    QString operListAssign;
 	    QString revListAssign;
+	    QString apprListAssign;
       };
 
       //! \brief Protocol Speed Steps controls class

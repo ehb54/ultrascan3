@@ -2467,6 +2467,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
   QString autoflow_name ;
   QString operator_list;
   QString reviewers_list;
+  QString approvers_list;
   QString eSignStatusJson;
   QString eSignStatusAll;
   QString createUpdateJsonLog;
@@ -2481,15 +2482,17 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
       eSignStatusJson      = db->value( 5 ).toString();    //json
       eSignStatusAll       = db->value( 6 ).toString();    //ENUM
       createUpdateJsonLog  = db->value( 7 ).toString();    //json
+      approvers_list       = db->value( 8 ).toString();    //json array
     }
 
   //process 'reviewers_list' & 'operList' Json arrays:
   QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewers_list.toUtf8() );
   QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operator_list .toUtf8() );
+  QJsonDocument jsonDocApprList = QJsonDocument::fromJson( approvers_list .toUtf8() );
   
-  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray()  )
+  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray() || !jsonDocApprList. isArray() )
     {
-      qDebug() << "jsonDocRevList OR jsonDocOperList not a JSON Array!";
+      qDebug() << "jsonDocRevList OR jsonDocOperList OR jsonDocApprList not a JSON Array!";
       return yesRev;
     }
   
@@ -2518,6 +2521,20 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
 	  return true;
 	}
     }
+
+  QJsonArray jsonDocApprList_array  = jsonDocApprList.array();
+  for (int i=0; i < jsonDocApprList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocApprList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  return true;
+	}
+    }
+ 
   
   return yesRev;
 }

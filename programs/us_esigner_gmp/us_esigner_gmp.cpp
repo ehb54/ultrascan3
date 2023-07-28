@@ -48,9 +48,9 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   te_inv_smry      = us_textedit();
   te_inv_smry      ->setTextColor( Qt::blue );
   te_inv_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
-                                    US_GuiSettings::fontSize() - 1) );
+				     US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_inv_smry, true );
-
+  
   lb_grev_search     = us_label( tr( "Global Reviewer Search:" ) );
   le_grev_search     = us_lineedit();
   lw_grev_list       = us_listwidget();
@@ -60,36 +60,62 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   te_grev_smry      = us_textedit();
   te_grev_smry      ->setTextColor( Qt::blue );
   te_grev_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
-                                    US_GuiSettings::fontSize() - 1) );
+				      US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_grev_smry, true );
+  
+  lb_gappr_search     = us_label( tr( "Global Approver Search:" ) );
+  le_gappr_search     = us_lineedit();
+  lw_gappr_list       = us_listwidget();
+  lw_gappr_list       ->setSelectionMode( QAbstractItemView::ExtendedSelection );
+  
+  QLabel* lb_gappr_smry     = us_label( tr( "Approver Information:" ), 1 );
+  te_gappr_smry      = us_textedit();
+  te_gappr_smry      ->setTextColor( Qt::blue );
+  te_gappr_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
+				       US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_gappr_smry, true );
 
-  pb_set_global_rev    = us_pushbutton( tr( "Set Investigator as Global Reviewer" ) );
-  pb_unset_global_rev  = us_pushbutton( tr( "Remove from List of Global Reviewers" ) );
-
+  pb_set_global_rev    = us_pushbutton( tr( "Set Inv. as Global Reviewer" ) );
+  pb_set_global_appr   = us_pushbutton( tr( "Set Inv. as Global Approver" ) );
+  pb_unset_global_rev  = us_pushbutton( tr( "Remove from List of Reviewers" ) );
+  pb_unset_global_appr = us_pushbutton( tr( "Remove from List of Approvers" ) );
+  
   pb_set_global_rev   ->setEnabled( false );
   pb_unset_global_rev ->setEnabled( false );
+  pb_set_global_appr  ->setEnabled( false );
+  pb_unset_global_appr->setEnabled( false );
 
   int row = 0;
-  revGlobalGrid -> addWidget( bn_revGlobal,             row++,    0, 1,  20 );
-  
+  revGlobalGrid -> addWidget( bn_revGlobal,             row++,    0, 1,  30 );
+
+  //Inv.
   revGlobalGrid -> addWidget( lb_inv_search,   row,      0, 1,  2  );
   revGlobalGrid -> addWidget( le_inv_search,   row,      2, 1,  3  );
-
   revGlobalGrid -> addWidget( lb_inv_smry,     row,      5, 1,  5  );
-  
+
+  //G.Rev.
   revGlobalGrid -> addWidget( lb_grev_search,  row,      10, 1, 2  );
   revGlobalGrid -> addWidget( le_grev_search,  row,      12, 1, 3  );
+  revGlobalGrid -> addWidget( lb_grev_smry,    row,      15, 1, 5  );
 
-  revGlobalGrid -> addWidget( lb_grev_smry,    row++,    15, 1, 5  );
+  //G.Appr.
+  revGlobalGrid -> addWidget( lb_gappr_search,  row,      20, 1, 2  );
+  revGlobalGrid -> addWidget( le_gappr_search,  row,      22, 1, 3  );
+  revGlobalGrid -> addWidget( lb_gappr_smry,    row++,    25, 1, 5  );
   
   revGlobalGrid -> addWidget( lw_inv_list,     row,      0,  3,  5  );
   revGlobalGrid -> addWidget( te_inv_smry,     row,      5,  3,  5  );
   revGlobalGrid -> addWidget( lw_grev_list,    row,      10, 3,  5  );
-  revGlobalGrid -> addWidget( te_grev_smry,    row++,    15, 3,  5  );
-
+  revGlobalGrid -> addWidget( te_grev_smry,    row,      15, 3,  5  );
+  revGlobalGrid -> addWidget( lw_gappr_list,   row,      20, 3,  5  );
+  revGlobalGrid -> addWidget( te_gappr_smry,   row++,    25, 3,  5  );
+  
   row += 5;
-  revGlobalGrid -> addWidget( pb_set_global_rev,       row,       0,  1,  10  );
-  revGlobalGrid -> addWidget( pb_unset_global_rev,     row++,     10, 1,  10  );
+  revGlobalGrid -> addWidget( pb_set_global_rev,       row,       0,  1,  5  );
+  revGlobalGrid -> addWidget( pb_set_global_appr,      row,       5,  1,  5  );
+  revGlobalGrid -> addWidget( pb_unset_global_rev,     row,       10, 1,  10  );
+  revGlobalGrid -> addWidget( pb_unset_global_appr,    row++,     20, 1,  10  );
+  
 
   connect( le_inv_search, SIGNAL( textChanged( const QString& ) ), 
 	   SLOT  ( limit_inv_names( const QString& ) ) );
@@ -101,9 +127,16 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   connect( lw_grev_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
 	   SLOT  ( get_grev_data  ( QListWidgetItem* ) ) );
 
-  connect( pb_set_global_rev,   SIGNAL( clicked() ), SLOT ( set_greviewer() ) );
-  connect( pb_unset_global_rev, SIGNAL( clicked() ), SLOT ( unset_greviewer() ) );
- 
+  connect( le_gappr_search, SIGNAL( textChanged( const QString& ) ), 
+	   SLOT  ( limit_gappr_names( const QString& ) ) );
+  connect( lw_gappr_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
+	   SLOT  ( get_gappr_data  ( QListWidgetItem* ) ) );
+
+  connect( pb_set_global_rev,    SIGNAL( clicked() ), SLOT ( set_greviewer() ) );
+  connect( pb_unset_global_rev,  SIGNAL( clicked() ), SLOT ( unset_greviewer() ) );
+  connect( pb_set_global_appr,   SIGNAL( clicked() ), SLOT ( set_gappr() ) );
+  connect( pb_unset_global_appr, SIGNAL( clicked() ), SLOT ( unset_gappr() ) );
+   
   //for setting oper, revs. for selected GMP Run
   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
   revOperGMPRunGrid->setSpacing     ( 2 );
@@ -122,16 +155,21 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   pb_remove_oper   -> setEnabled( false );
   pb_add_rev       = us_pushbutton( tr( "Add" ) );
   pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
+  pb_add_appr      = us_pushbutton( tr( "Add" ) );
+  pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
   
   QLabel* lb_run_name       = us_label( "Run Name:" );
   QLabel* lb_optima_name    = us_label( "Optima:" );
   QLabel* lb_operator_names = us_label( "Assigned Operators:" );
   QLabel* lb_reviewer_names = us_label( "Assigned Reviewers:" );
-  
+  QLabel* lb_appr_names     = us_label( "Assigned Approvers:" );
+
   QLabel* lb_choose_oper      = us_label( "Choose Operator:" );
   QLabel* lb_choose_rev       = us_label( "Choose Reviewer:" );
+  QLabel* lb_choose_appr      = us_label( "Choose Approver:" );
   QLabel* lb_opers_to_assign  = us_label( "Operators to Assign:" );
   QLabel* lb_revs_to_assign   = us_label( "Reviewers to Assign:" );
+  QLabel* lb_apprs_to_assign  = us_label( "Approvers to Assign:" );
   
   le_run_name       = us_lineedit( tr(""), 0, true );
   le_optima_name    = us_lineedit( tr(""), 0, true );
@@ -152,6 +190,14 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   us_setReadOnly( te_reviewer_names, true );
 
 
+  te_appr_names    = us_textedit();
+  //te_appr_names    ->setTextColor( Qt::blue );
+  te_appr_names    -> setFixedHeight  ( RowHeight * 3 );
+  te_appr_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_appr_names, true );
+
+
   te_opers_to_assign    = us_textedit();
   //te_opers_to_assign    ->setTextColor( Qt::blue );
   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 2 );
@@ -165,39 +211,62 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
 					 US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_revs_to_assign, true );
+
+  te_apprs_to_assign    = us_textedit();
+  //te_apprs_to_assign    ->setTextColor( Qt::blue );
+  te_apprs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+  te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_apprs_to_assign, true );
   
   
   cb_choose_operator   = new QComboBox( this );
   cb_choose_rev        = new QComboBox( this );
+  cb_choose_appr       = new QComboBox( this );
    
   row = 0;
   revOperGMPRunGrid -> addWidget( bn_revOperGMP,          row++,    0,  1,  14 );
-  
-  revOperGMPRunGrid -> addWidget( pb_selRun_operRev_set,  row++,    0,  1,  6 );
 
-  revOperGMPRunGrid -> addWidget( lb_run_name,            row,      0,  1,  2 );
-  revOperGMPRunGrid -> addWidget( le_run_name,            row,      2,  1,  4 );
+  //1
+  revOperGMPRunGrid -> addWidget( pb_selRun_operRev_set,  row,      0,  1,  6 );
   revOperGMPRunGrid -> addWidget( lb_choose_oper,         row,      7,  1,  2 );
   revOperGMPRunGrid -> addWidget( cb_choose_operator,     row,      9,  1,  3 );
   revOperGMPRunGrid -> addWidget( pb_add_oper,            row++,    12, 1,  2 );
 
-  revOperGMPRunGrid -> addWidget( lb_optima_name,         row,      0,  1,  2 );
-  revOperGMPRunGrid -> addWidget( le_optima_name,         row,      2,  1,  4 );
+  //2
+  revOperGMPRunGrid -> addWidget( lb_run_name,            row,      0,  1,  2 );
+  revOperGMPRunGrid -> addWidget( le_run_name,            row,      2,  1,  4 );
   revOperGMPRunGrid -> addWidget( lb_choose_rev,          row,      7,  1,  2 );
   revOperGMPRunGrid -> addWidget( cb_choose_rev,          row,      9,  1,  3 );
   revOperGMPRunGrid -> addWidget( pb_add_rev,             row++,    12, 1,  2 );
-  
+ 
+  //3
+  revOperGMPRunGrid -> addWidget( lb_optima_name,         row,      0,  1,  2 );
+  revOperGMPRunGrid -> addWidget( le_optima_name,         row,      2,  1,  4 );
+  revOperGMPRunGrid -> addWidget( lb_choose_appr,         row,      7,  1,  2 );
+  revOperGMPRunGrid -> addWidget( cb_choose_appr,         row,      9,  1,  3 );
+  revOperGMPRunGrid -> addWidget( pb_add_appr,            row++,    12, 1,  2 );
+
+  //4
   revOperGMPRunGrid -> addWidget( lb_operator_names,      row,      0, 1,  2 );
   revOperGMPRunGrid -> addWidget( te_operator_names,      row,      2, 1,  4 );
   revOperGMPRunGrid -> addWidget( lb_opers_to_assign,     row,      7,  1,  2 );
   revOperGMPRunGrid -> addWidget( te_opers_to_assign,     row,      9,  1,  3 );
   revOperGMPRunGrid -> addWidget( pb_remove_oper,         row++,    12, 1,  2 );
 
+  //5
   revOperGMPRunGrid -> addWidget( lb_reviewer_names,      row,      0,  1,  2 );
   revOperGMPRunGrid -> addWidget( te_reviewer_names,      row,      2,  1,  4 );
   revOperGMPRunGrid -> addWidget( lb_revs_to_assign,      row,      7,  1,  2 );
   revOperGMPRunGrid -> addWidget( te_revs_to_assign,      row,      9,  1,  3 );
   revOperGMPRunGrid -> addWidget( pb_remove_rev,          row++,    12, 1,  2 );
+
+  //6
+  revOperGMPRunGrid -> addWidget( lb_appr_names,          row,      0,  1,  2 );
+  revOperGMPRunGrid -> addWidget( te_appr_names,          row,      2,  1,  4 );
+  revOperGMPRunGrid -> addWidget( lb_apprs_to_assign,     row,      7,  1,  2 );
+  revOperGMPRunGrid -> addWidget( te_apprs_to_assign,     row,      9,  1,  3 );
+  revOperGMPRunGrid -> addWidget( pb_remove_appr,         row++,    12, 1,  2 ); 
 
   revOperGMPRunGrid -> addWidget( pb_set_operRev,         row++,    7,  1,  6 );
 
@@ -207,6 +276,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
   connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
+  connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
+  connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
 
   
   //for eSigning selected GMP Run's Report with Assigned Operator && Reviewers
@@ -276,8 +347,13 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   //initialize investigators, global reviewers
   init_invs();
   init_grevs();
-			 
-  resize( 1200, 700 );
+  init_gapprs();
+
+  //Check if Grev/Gappr. list are empty: SET Add/Remove bttns. accordingly
+  setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
+  setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
+  
+  resize( 1250, 850 );
   adjustSize();
 }
 
@@ -310,19 +386,11 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   rghtLayout->setSpacing        ( 0 );
   rghtLayout->setContentsMargins( 0, 1, 0, 1 );
   
-  // eSignersGrid_auto     = new QGridLayout();
-  // eSignersGrid_auto ->setSpacing        ( 2 );
-  // eSignersGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
-
-  // eSignActionsGrid_auto      = new QGridLayout();
-  // eSignActionsGrid_auto ->setSpacing        ( 2 );
-  // eSignActionsGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
-
   //set to NULL internal layouts
   eSignersGrid_auto     = NULL;
   eSignActionsGrid_auto = NULL;
   
-  /** TEST ***/
+  // /** TEST ***/
   // QMap < QString, QString > protocol_details;
   // protocol_details[ "autoflowID" ] = QString("900");
   
@@ -403,7 +471,7 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   //&& Set defined Operator/Reviewers (if any)
   display_reviewers_auto( row, eSign_record_auto, "operatorListJson" );
   display_reviewers_auto( row, eSign_record_auto, "reviewersListJson" );
-  //display_reviewers_auto( row, eSign_record_auto, "approversListJson" ); // Approvers also? [TO BE ADDED]
+  display_reviewers_auto( row, eSign_record_auto, "approversListJson" ); // Approvers  [TO BE ADDED]
 
   //rigth section: actions
   QLabel* bn_act     = us_banner( tr( "e-Sign: Actions:" ), 1 );
@@ -608,6 +676,22 @@ void US_eSignaturesGMP::limit_grev_names( const QString& s )
    }
 }
 
+void US_eSignaturesGMP::limit_gappr_names( const QString& s )
+{
+  lw_gappr_list->clear();
+  
+  for ( int i = 0; i < g_apprs.size(); i++ )
+   {
+     if ( g_apprs[ i ].lastName.contains( 
+					       QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+	  g_apprs[ i ].firstName.contains(
+						QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+       lw_gappr_list->addItem( new QListWidgetItem(
+						 "InvID: (" + QString::number( g_apprs[ i ].invID ) + "), " +
+						 g_apprs[ i ].lastName + ", " + 
+						 g_apprs[ i ].firstName ) );
+   }
+}
 
 void US_eSignaturesGMP::get_inv_data( QListWidgetItem* item )
 {
@@ -649,11 +733,13 @@ void US_eSignaturesGMP::get_inv_data( QListWidgetItem* item )
    info.invGuid      = db.value( 9 ).toString();
    info.ulev         = db.value( 10 ).toInt();
    info.gmpReviewer  = db.value( 11 ).toInt();
-
+   info.gmpApprover  = db.value( 12 ).toInt();
+   
    te_inv_smry->setText( get_inv_or_grev_smry( info, "Investigator") );
 
 
-   pb_set_global_rev -> setEnabled( true );
+   pb_set_global_rev  -> setEnabled( true );
+   pb_set_global_appr -> setEnabled( true );
 }
 
 // Message string for investigator summary
@@ -667,8 +753,10 @@ QString US_eSignaturesGMP::get_inv_or_grev_smry( US_InvestigatorData p_info, QSt
   mlines << "Last Name:\n "       +  p_info.lastName; 
   mlines << "First Name:\n "      +  p_info.firstName;
   mlines << "User Level:\n "      +  QString::number( p_info.ulev ) ;
-  QString grev_set = (p_info.gmpReviewer) ? "YES" : "NO" ;
+  QString grev_set  = (p_info.gmpReviewer) ? "YES" : "NO" ;
+  QString gappr_set = (p_info.gmpApprover) ? "YES" : "NO" ;
   mlines << "GMP Reviewer:\n "    +  grev_set;
+  mlines << "GMP Approver:\n "    +  gappr_set;
   mlines << "Email:\n "           +  p_info.email       ; 
   mlines << "Organization:\n "    +  p_info.organization; 
 
@@ -738,6 +826,58 @@ void US_eSignaturesGMP::init_grevs( void )
 }
 
 
+//init global approvers list
+void US_eSignaturesGMP::init_gapprs( void )
+{
+  g_apprs. clear();
+  lw_gappr_list   -> clear();
+  cb_choose_appr  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people_gappr" << "%" + le_grev_search->text() + "%";
+  qDebug() << "init_appr(), query --  " << query;
+  db.query( query );
+
+  US_InvestigatorData data;
+  int inv = US_Settings::us_inv_ID();
+  int lev = US_Settings::us_inv_level();
+  
+  while ( db.next() )
+    {
+      data.invID     = db.value( 0 ).toInt();
+      data.lastName  = db.value( 1 ).toString();
+      data.firstName = db.value( 2 ).toString();
+            
+      if ( lev < 3  &&  inv != data.invID )
+	continue;
+
+      g_apprs << data;
+      //populate lists
+      lw_gappr_list-> addItem( new QListWidgetItem( 
+						   "InvID: (" + QString::number( data.invID ) + "), " + 
+						   data.lastName + ", " + data.firstName ) );
+      cb_choose_appr->addItem( QString::number( data.invID ) + ". " + 
+			       data.lastName + ", " + data.firstName );
+      
+    }
+}
+
+
+
 void US_eSignaturesGMP::get_grev_data( QListWidgetItem* item )
 {
    QString entry = item->text();
@@ -778,11 +918,61 @@ void US_eSignaturesGMP::get_grev_data( QListWidgetItem* item )
    info_grev.invGuid      = db.value( 9 ).toString();
    info_grev.ulev         = db.value( 10 ).toInt();
    info_grev.gmpReviewer  = db.value( 11 ).toInt();
+   info_grev.gmpApprover  = db.value( 12 ).toInt();
 
    te_grev_smry->setText( get_inv_or_grev_smry( info_grev, "Reviewer") );
 
    pb_unset_global_rev -> setEnabled( true );
 }
+
+
+void US_eSignaturesGMP::get_gappr_data( QListWidgetItem* item )
+{
+   QString entry = item->text();
+   
+   int     left  = entry.indexOf( '(' ) + 1;
+   int     right = entry.indexOf( ')' );
+   QString invID = entry.mid( left, right - left );
+
+   US_Passwd   pw;
+   QString     masterPW  = pw.getPasswd();
+   US_DB2      db( masterPW ); 
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" ) 
+             + db.lastError() );
+      return;
+   } 
+
+   QStringList query;
+   query << "get_person_info" << invID; 
+      
+   db.query( query );
+   db.next();
+
+   info_gappr.invID        = invID.toInt();
+   info_gappr.firstName    = db.value( 0 ).toString();
+   info_gappr.lastName     = db.value( 1 ).toString();
+   info_gappr.address      = db.value( 2 ).toString();
+   info_gappr.city         = db.value( 3 ).toString();
+   info_gappr.state        = db.value( 4 ).toString();
+   info_gappr.zip          = db.value( 5 ).toString();
+   info_gappr.phone        = db.value( 6 ).toString();
+   info_gappr.organization = db.value( 7 ).toString();
+   info_gappr.email        = db.value( 8 ).toString();
+   info_gappr.invGuid      = db.value( 9 ).toString();
+   info_gappr.ulev         = db.value( 10 ).toInt();
+   info_gappr.gmpReviewer  = db.value( 11 ).toInt();
+   info_gappr.gmpApprover  = db.value( 12 ).toInt();
+
+   te_gappr_smry->setText( get_inv_or_grev_smry( info_gappr, "Approver") );
+
+   pb_unset_global_appr -> setEnabled( true );
+}
+
 
 void US_eSignaturesGMP::set_greviewer()
 {
@@ -825,6 +1015,10 @@ void US_eSignaturesGMP::set_greviewer()
    
    init_invs();
    init_grevs();
+   init_gapprs();
+
+   setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
+   
 }
 
 void US_eSignaturesGMP::unset_greviewer()
@@ -867,6 +1061,106 @@ void US_eSignaturesGMP::unset_greviewer()
     
    init_invs();
    init_grevs();
+   init_gapprs();
+
+   setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
+
+   ///Debug
+   for(int i=0; i<investigators.size(); ++i )
+     qDebug() << "inv after unsetting -- " << investigators[i].lastName;
+
+}
+
+
+void US_eSignaturesGMP::set_gappr()
+{
+
+  QString entry = lw_inv_list->currentItem()->text();
+  qDebug() << "Set gAppr.: -- " << entry;
+
+  int     left  = entry.indexOf( '(' ) + 1;
+  int     right = entry.indexOf( ')' );
+  QString invID = entry.mid( left, right - left );
+
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW ); 
+  
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::information( this,
+				 tr( "DB Connection Problem" ),
+				 tr( "There was an error connecting to the database:\n" ) 
+				 + db.lastError() );
+       return;
+     }
+   
+   QStringList query;
+   query << "set_person_gappr_status" << invID;
+
+   db.query( query );
+   db.next();
+
+   //update both inv && grev lw_lists
+   lw_inv_list -> clear();
+   lw_gappr_list-> clear();
+
+   le_inv_search   ->setText("");
+   le_gappr_search  ->setText("");
+   
+   te_inv_smry  -> clear();
+   te_gappr_smry-> clear();
+   
+   init_invs();
+   init_grevs();
+   init_gapprs();
+
+   setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
+}
+
+void US_eSignaturesGMP::unset_gappr()
+{
+  QString entry = lw_gappr_list->currentItem()->text();
+  qDebug() << "[UN]Set gAppr: -- " << entry;
+  
+  int     left  = entry.indexOf( '(' ) + 1;
+  int     right = entry.indexOf( ')' );
+  QString invID = entry.mid( left, right - left );
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW ); 
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+   QStringList query;
+   query << "unset_person_gappr_status" << invID;
+
+   db.query( query );
+   db.next();
+  
+   //update both inv && grev lw_lists
+   lw_inv_list -> clear();
+   lw_gappr_list-> clear();
+
+   le_inv_search    ->setText("");
+   le_gappr_search  ->setText("");
+   
+   te_inv_smry -> clear();
+   te_gappr_smry-> clear();
+    
+   init_invs();
+   init_grevs();
+   init_gapprs();
+
+   setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
 
    ///Debug
    for(int i=0; i<investigators.size(); ++i )
@@ -911,9 +1205,11 @@ void US_eSignaturesGMP::selectGMPRun( void )
 
   set_revOper_panel_gui();
 
-  //Enable button to change/set assigned oper(s) / rev(s) 
+  //Enable button to change/set assigned oper(s) / rev(s)
   pb_add_oper    -> setEnabled( true );
   pb_remove_oper -> setEnabled( true );
+  setUnset_AddRemove_RevAppr_bttn( "Reviewer" );
+  setUnset_AddRemove_RevAppr_bttn( "Approver" );
 }
 
 
@@ -923,11 +1219,13 @@ void US_eSignaturesGMP::reset_set_revOper_panel( void )
   le_optima_name     -> clear();
   te_operator_names  -> clear();
   te_reviewer_names  -> clear();
+  te_appr_names      -> clear();
   cb_choose_operator -> clear();
 
   te_opers_to_assign -> clear();
   te_revs_to_assign  -> clear();
-
+  te_apprs_to_assign -> clear();
+  
   //main QMap for the loaded GMP run
   gmp_run_details   .clear();
   eSign_details     .clear();
@@ -953,26 +1251,31 @@ void US_eSignaturesGMP::set_revOper_panel_gui( void )
 
   //Read autoflowGMPReportEsign record by autoflowID:
   eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
+
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
+  QString opers_a = get_assigned_oper_revs( jsonDocOperList );
+
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
+  QString revs_a = get_assigned_oper_revs( jsonDocRevList );
+
+  QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
+  QString apprs_a = get_assigned_oper_revs( jsonDocApprList );
   
   //&& Set defined Operator/Reviewers (if any)
-  if ( !eSign_details. contains("operatorListJson") )
+  if ( !eSign_details. contains("operatorListJson")  || opers_a.isEmpty() )
     te_operator_names  -> setText( "NOT SET" );
   else
-    {
-      QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
-      te_operator_names -> setText( get_assigned_oper_revs( jsonDocOperList ) );
-
-      
-    }
+    te_operator_names -> setText( opers_a );
   
-  if ( !eSign_details. contains("reviewersListJson") )
+  if ( !eSign_details. contains("reviewersListJson") || revs_a.isEmpty() )
     te_reviewer_names  -> setText( "NOT SET" );
   else
-    {
-      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
-      te_reviewer_names  -> setText( get_assigned_oper_revs( jsonDocRevList ) );
-	
-    }
+    te_reviewer_names  -> setText( revs_a );
+
+  if ( !eSign_details. contains("approversListJson") || apprs_a.isEmpty() )
+    te_appr_names  -> setText( "NOT SET" );
+  else
+    te_appr_names  -> setText( apprs_a );
 }
 
 //form a string of opers/revs out of jsonDoc
@@ -1060,7 +1363,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 
       QDateTime local(QDateTime::currentDateTime());
 
-      if ( devRecord == "Processed" )
+      if ( devRecord == "Processed" )                      
       	continue;
       
       //process runname: if combined, correct for nicer appearance
@@ -1266,7 +1569,8 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
 	  eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
 	  eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
 	  eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
-	  
+	  eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	                
 	  eSign_record[ "isEsignRecord" ]        = QString("YES");
 	  isEsignRecord = true;
 	}
@@ -1289,13 +1593,35 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
   return eSign_record;
 }
 
+//Set/Unset Add/Remove Rev/Appr bttn.
+void US_eSignaturesGMP::setUnset_AddRemove_RevAppr_bttn( QString p_type )
+{
+  if ( p_type == "Reviewer" )
+    {
+      if ( g_reviewers.isEmpty() )
+	pb_add_rev -> setEnabled( false );
+      else
+	pb_add_rev -> setEnabled( true );
+    }
+  
+  if ( p_type == "Approver" )
+    {
+      if ( g_apprs.isEmpty() )
+	pb_add_appr -> setEnabled( false );
+      else
+	pb_add_appr -> setEnabled( true );
+    }
+  
+}
+
 //Set/Unset  pb_set_operRev -> setEnabled( false );
 void US_eSignaturesGMP::setUnsetPb_operRev( void )
 {
   QString e_operList = te_opers_to_assign->toPlainText();
   QString e_revList  = te_revs_to_assign->toPlainText();
+  QString e_apprList = te_apprs_to_assign->toPlainText();
 
-  if ( e_operList.isEmpty() || e_revList.isEmpty() )
+  if ( e_operList.isEmpty() || e_revList.isEmpty() || e_apprList.isEmpty()  )
     pb_set_operRev -> setEnabled( false );
   else
     pb_set_operRev -> setEnabled( true );
@@ -1378,6 +1704,47 @@ void US_eSignaturesGMP::removeRevfromList( void )
   setUnsetPb_operRev();
 }
 
+//Add reviewer to list 
+void US_eSignaturesGMP::addApprtoList( void )
+{
+  QString c_appr = cb_choose_appr->currentText();
+
+  //check if selected item already in the list:
+  QString e_apprList = te_apprs_to_assign->toPlainText();
+  if ( e_apprList. contains( c_appr ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Approver" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of approvers.<br>"
+				    "Please choose other approver.")
+				.arg( c_appr) );
+      return;
+    }
+  
+  te_apprs_to_assign->append( c_appr );
+
+  setUnsetPb_operRev();
+}
+
+//Remove reviewer from list 
+void US_eSignaturesGMP::removeApprfromList( void )
+{
+  te_apprs_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  te_apprs_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_apprs_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_apprs_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_apprs_to_assign->textCursor().removeSelectedText();
+  te_apprs_to_assign->textCursor().deletePreviousChar();
+  te_apprs_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "Apprs to ASSIGN: " << te_apprs_to_assign->toPlainText();
+
+  setUnsetPb_operRev();
+}
+
+
 //Assign operators & reviewers for the current GMP run:
 void US_eSignaturesGMP::assignOperRevs( void )
 {
@@ -1393,8 +1760,8 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
   if ( is_eSignProcessBegan() )
     {
-      QMessageBox::information( this, tr( "Operator(s), Reviewer(s) CANNOT be Assigned" ),
-				tr( "<font color='red'><b>ATTENTION:</b> </font> Operator(s), Reviewer(s)"
+      QMessageBox::information( this, tr( "Operator(s), Reviewer(s), Approver(s) CANNOT be Assigned" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Operator(s), Reviewer(s) and/or Approver(s)"
 				    "cannot be set/changed for the currently uploaded GMP run: <br><br>"
 				    "<font ><b>%1</b><br><br>"
 				    "E-Signing process has already began.")
@@ -1405,17 +1772,22 @@ void US_eSignaturesGMP::assignOperRevs( void )
   //save existign operators && reviewers:
   QString exsisting_oper_list = te_operator_names->toPlainText();
   QString exsisting_rev_list  = te_reviewer_names->toPlainText();
+  QString exsisting_appr_list = te_appr_names->toPlainText();
 
   //Set new opers && revs in the te areas
   QString oper_list = te_opers_to_assign->toPlainText();
-  QString rev_list = te_revs_to_assign->toPlainText();
+  QString rev_list  = te_revs_to_assign->toPlainText();
+  QString appr_list = te_apprs_to_assign->toPlainText();
 
   //Compose JSON arrays: QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
                                      
   QString operListJsonArray = "[";
   QString revListJsonArray  = "[";
+  QString apprListJsonArray = "[";
   QStringList oper_listList = oper_list.split("\n");
   QStringList rev_listList  = rev_list.split("\n");
+  QStringList appr_listList = appr_list.split("\n");
+
   QStringList oper_rev_joinedList;
 
   for (int i=0; i<oper_listList.size(); ++i )
@@ -1429,14 +1801,23 @@ void US_eSignaturesGMP::assignOperRevs( void )
       oper_rev_joinedList << rev_listList[i]; 
       revListJsonArray += "\"" + rev_listList[i] + "\",";
     }
+
+  for (int i=0; i<appr_listList.size(); ++i )
+    {
+      oper_rev_joinedList << appr_listList[i]; 
+      apprListJsonArray += "\"" + appr_listList[i] + "\",";
+    } 
   
   operListJsonArray.chop(1);
   revListJsonArray.chop(1);
+  apprListJsonArray.chop(1);
   operListJsonArray += "]";
   revListJsonArray  += "]";
+  apprListJsonArray += "]";
 
   qDebug() << "operListJsonArray -- " << operListJsonArray;
   qDebug() << "revListJsonArray -- "  << revListJsonArray;
+  qDebug() << "apprListJsonArray -- " << apprListJsonArray;
 
   //Minimum structure of eSignStatusJson field:
   QString eSignStatusJson = "{\"to_sign\":[";
@@ -1498,12 +1879,14 @@ void US_eSignaturesGMP::assignOperRevs( void )
 					     << p_autoflowID    INT,
 					     << p_operListJson  TEXT,
                                              << p_revListJson   TEXT,
+					     << p_apprListJson  TEXT,
 					     << p_logJson       TEXT
      2. if NOT, create new one: 
         --  new_gmp_review_record  <<	 p_autoflowID   INT,
 				   <<	 p_autoflowName TEXT,
 				   <<	 p_operListJson TEXT,
 				   <<	 p_revListJson  TEXT,
+                                   <<    p_apprListJson TEXT,
 				   <<    p_eSignStatusJson TEXT,
 				   <<    p_logJson      TEXT )
 			 
@@ -1519,6 +1902,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
       //Update te fileds
       te_operator_names -> setText( oper_list );
       te_reviewer_names -> setText( rev_list );
+      te_appr_names     -> setText( appr_list );
       
       int eSignID_returned = 0;
       
@@ -1528,6 +1912,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
       	  << gmp_run_details[ "protocolName" ]
       	  << operListJsonArray
       	  << revListJsonArray
+	  << apprListJsonArray
       	  << eSignStatusJson       
       	  << logJsonFirstTime;     
 
@@ -1560,14 +1945,16 @@ void US_eSignaturesGMP::assignOperRevs( void )
       qDebug() << "New Operators -- " << oper_list;
       qDebug() << "Old Reviewers -- " << exsisting_rev_list;
       qDebug() << "New Reviewers -- " << rev_list;
+      qDebug() << "Old Approvers -- " << exsisting_appr_list;
+      qDebug() << "New Approvers -- " << appr_list;
       
       //check if at least one of tehe operator OR reviewer lists has been changed 
-      if ( exsisting_oper_list == oper_list && exsisting_rev_list == rev_list )
+      if ( exsisting_oper_list == oper_list && exsisting_rev_list == rev_list && exsisting_appr_list == appr_list )
 	{
-	  qDebug() << "Operators and Reviewers are the same...";
-	  QMessageBox::information( this, tr( "Operator(s), Reviewer(s) NOT CHANGED" ),
+	  qDebug() << "Operators and Reviewers and Approvers are the same...";
+	  QMessageBox::information( this, tr( "Operator(s), Reviewer(s), Approver(s) NOT CHANGED" ),
 				    tr( "Existing and to-be assigned "
-					"Operator(s) and Reviewer(s) " 
+					"Operator(s), Reviewer(s), and Approver(s) " 
 					"lists are the same.<br><br>"
 					"Nothing will be changed..."));
 	  
@@ -1576,19 +1963,24 @@ void US_eSignaturesGMP::assignOperRevs( void )
       
       QStringList exsisting_oper_listList = exsisting_oper_list.split("\n");
       QStringList exsisting_rev_listList  = exsisting_rev_list .split("\n");
+      QStringList exsisting_appr_listList = exsisting_appr_list .split("\n");
 
       QMessageBox msg_rev;
-      msg_rev.setWindowTitle(tr("Operator(s), Reviewer(s) Change"));
+      msg_rev.setWindowTitle(tr("Operator(s), Reviewer(s), Approver(s) Change"));
       msg_rev.setText( tr( "<font color='red'><b>ATTENTION:</b> </font><br>"
-			   "You are about to change assigned operator(s) and/or reviewer(s): <br><br>"
+			   "You are about to change assigned operator(s) and/or reviewer(s) and/or approver(s): <br><br>"
 			   "Old Operators: <font ><b>%1</b><br>"
 			   "New Operators: <font ><b>%2</b><br><br>"
 			   "Old Reviewers: <font ><b>%3</b><br>"
-			   "New Reviewers: <font ><b>%4</b><br><br>")
+			   "New Reviewers: <font ><b>%4</b><br><br>"
+			   "Old Approvers: <font ><b>%5</b><br>"
+			   "New Approvers: <font ><b>%6</b><br><br>" )
 		       .arg( exsisting_oper_listList.join(",") )
 		       .arg( oper_listList.join(",") )
 		       .arg( exsisting_rev_listList.join(",") )
 		       .arg( rev_listList.join(",") )
+		       .arg( exsisting_appr_listList.join(",") )
+		       .arg( appr_listList.join(",") )
 		       );
       
       msg_rev.setInformativeText( QString( tr( "Do you want to Proceed?" )));
@@ -1604,6 +1996,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
 	  //Update te fileds
 	  te_operator_names -> setText( oper_list );
 	  te_reviewer_names -> setText( rev_list );
+	  te_appr_names     -> setText( appr_list );
 	  
 	  //Minimum structure JSON for logJsonUpdateTime:
 	  QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname );
@@ -1615,9 +2008,12 @@ void US_eSignaturesGMP::assignOperRevs( void )
 	      << gmp_run_details[ "autoflowID" ]
 	      << operListJsonArray
 	      << revListJsonArray
+	      << apprListJsonArray
+	      << eSignStatusJson
 	      << logJsonUpdateTime;
 
 	  qDebug() << "update_gmp_review_record_by_admin, qry -- " << qry;
+	  qDebug() << "eSignStatusJson -- " << eSignStatusJson;
 	  db->query( qry );
 	}
       else
@@ -1643,6 +2039,7 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 
   QString operatorListJson  = eSign_details[ "operatorListJson" ];
   QString reviewersListJson = eSign_details[ "reviewersListJson" ];
+  QString apprsListJson     = eSign_details[ "approversListJson" ];
   QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
 
   /****
@@ -2017,12 +2414,14 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( autoflowHistoryID );
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
+      QString approversListJson = eSign[ "approversListJson" ];
       QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
 
       qDebug() << "In listing GMP Reports with assigned reviewers -- ";
       qDebug() << "operatorListJson, reviewersListJson -- "
 	       << operatorListJson << ",   "
-	       << reviewersListJson;
+	       << reviewersListJson << ", "
+	       << approversListJson;
 
       QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
       QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operatorListJson .toUtf8() );
@@ -2337,15 +2736,17 @@ void US_eSignaturesGMP::esign_report( void )
   QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( gmpRunID_eSign );
   QString operatorListJson  = eSign[ "operatorListJson" ];
   QString reviewersListJson = eSign[ "reviewersListJson" ];
+  QString approversListJson = eSign[ "approversListJson" ];
   QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
   QString eSignStatusAll    = eSign[ "eSignStatusAll" ];
   QString eSignID           = eSign[ "ID" ];
 
   QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operatorListJson .toUtf8() );
   QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
-  
-  qDebug() << "eSign: operatorListJson, reviewersListJson,  eSignStatusAll -- "
-	   << operatorListJson << reviewersListJson << eSignStatusAll;
+  QJsonDocument jsonDocApprList = QJsonDocument::fromJson( approversListJson.toUtf8() );
+
+  qDebug() << "eSign: operatorListJson, reviewersListJson, approversListJson, eSignStatusAll -- "
+	   << operatorListJson << reviewersListJson << approversListJson << eSignStatusAll;
 
   QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
   if (!jsonDocEsign.isObject())
@@ -2475,7 +2876,7 @@ void US_eSignaturesGMP::esign_report( void )
       QMessageBox::information( this,
 				tr( "The e-Signature record can NOT be updated" ),
 				tr( "The e-Signature record is currenlty being updated" 
-				    "by other reviewer(s) and/or operator(s).\n\n"
+				    "by other reviewer(s), operator(s) and/or approver(s).\n\n"
 				    "Please try to e-Sign again later.") );
       return;
     }
@@ -2498,7 +2899,7 @@ void US_eSignaturesGMP::esign_report( void )
   db.query( qry );
 
   //generate .PDF with e-Signatires page && write to Db
-  write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson );
+  write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson, approversListJson);
 
   //Revert 'esigning' stage status back to DEFAULT for other reviewers to be able to e-sign:
   qry. clear();
@@ -2652,7 +3053,7 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
 
 //write .PDF eSignatures page
 void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignStatusJson_upd,
-					       QString operList, QString revList )
+					       QString operList, QString revList, QString apprList )
 {
   QString fpath = filePath;
   fpath. replace( filePath.section('/', -1), "" );
@@ -2688,8 +3089,10 @@ void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignSt
 	  if ( operList. contains( key ) )
 	    eSigner_role = "Operator";
 	  else if ( revList. contains( key ) )
-	    eSigner_role = "Reviewer"; 
-	  
+	    eSigner_role = "Reviewer";
+	  else if ( apprList. contains( key ) )
+	    eSigner_role = "Approver";
+	    
 	  qDebug() << "write_pdf_eSign() -- " << key
 		   << ": Comment, timeDate, eSigner_role -- "
 		   << newObj["Comment"]   .toString()

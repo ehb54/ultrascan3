@@ -27,7 +27,8 @@ class US_eSignaturesGMP : public US_Widgets
            public:
 	   int     invID;        //!< The uniqe ID in the DB for the entry.
 	   int     ulev;         //!< User level
-	   int     gmpReviewer;  //!< Is user set a reviewer (0 | 1 )
+	   int     gmpReviewer;  //!< Is user set a reviewer  (0 | 1 )
+	   int     gmpApprover;  //!< Is user set an approver (0 | 1 )
 	   QString invGuid;      //!< Investigator's global ID
 	   QString lastName;     //!< Last Name
 	   QString firstName;    //!< First Name   
@@ -47,8 +48,10 @@ class US_eSignaturesGMP : public US_Widgets
         QMap< QString, QString > protocol_details;
         QList< US_InvestigatorData > investigators;
         QList< US_InvestigatorData > g_reviewers;
+        QList< US_InvestigatorData > g_apprs;
         US_InvestigatorData          info;
         US_InvestigatorData          info_grev;
+        US_InvestigatorData          info_gappr;
 
   //set global Revs. from the list of investigators
         QListWidget*  lw_inv_list;
@@ -59,11 +62,18 @@ class US_eSignaturesGMP : public US_Widgets
         QListWidget*  lw_grev_list;
         QTextEdit*    te_grev_smry;
         QLabel*       lb_grev_search;
-        QLineEdit*    le_grev_search;  
+        QLineEdit*    le_grev_search;
+  
+        QListWidget*  lw_gappr_list;
+        QTextEdit*    te_gappr_smry;
+        QLabel*       lb_gappr_search;
+        QLineEdit*    le_gappr_search; 
     
         QPushButton*  pb_set_global_rev;
+        QPushButton*  pb_set_global_appr;
 	QPushButton*  pb_unset_global_rev;			  
-
+        QPushButton*  pb_unset_global_appr;
+  
   //Set Oper/Revs for selected GMP Run from eligible operators & global reviewers
         QPushButton*  pb_selRun_operRev_set;
         QPushButton*  pb_set_operRev;
@@ -72,17 +82,22 @@ class US_eSignaturesGMP : public US_Widgets
         QPushButton*  pb_remove_oper;
 	QPushButton*  pb_add_rev;
         QPushButton*  pb_remove_rev;
+        QPushButton*  pb_add_appr;
+        QPushButton*  pb_remove_appr;
     
 	QLineEdit*    le_run_name;
         QLineEdit*    le_optima_name;
   
         QTextEdit*    te_operator_names;
         QTextEdit*    te_reviewer_names;
+        QTextEdit*    te_appr_names;
         QTextEdit*    te_opers_to_assign;
         QTextEdit*    te_revs_to_assign;
+        QTextEdit*    te_apprs_to_assign;
 
         QComboBox*    cb_choose_operator;
         QComboBox*    cb_choose_rev;
+        QComboBox*    cb_choose_appr;
 
         QList< QStringList >  autoflowdata;
         US_SelectItem* pdiag_autoflow;
@@ -121,15 +136,20 @@ class US_eSignaturesGMP : public US_Widgets
      private slots:
        void initPanel_auto( QMap < QString, QString > &  );
        void display_reviewers_auto( int&, QMap< QString, QString>, QString );
-       void init_invs     ( void );
+       void init_invs      ( void );
        void init_grevs     ( void );
+       void init_gapprs    ( void );
        void limit_inv_names( const QString& );
        void limit_grev_names( const QString& );
+       void limit_gappr_names( const QString& );
        void get_inv_data( QListWidgetItem* );
        void get_grev_data( QListWidgetItem* );
+       void get_gappr_data( QListWidgetItem* );
        QString get_inv_or_grev_smry( US_InvestigatorData, QString );
        void set_greviewer( void );
+       void set_gappr( void );
        void unset_greviewer( void );
+       void unset_gappr( void );
        void selectGMPRun( void );
        void reset_set_revOper_panel( void );
        void set_revOper_panel_gui( void );
@@ -143,8 +163,11 @@ class US_eSignaturesGMP : public US_Widgets
        void removeOperfromList( void );
        void addRevtoList( void );
        void removeRevfromList( void );
+       void addApprtoList( void );
+       void removeApprfromList( void );
        bool is_eSignProcessBegan( void );
        void setUnsetPb_operRev( void );
+       void setUnset_AddRemove_RevAppr_bttn( QString );
        QString compose_updated_admin_logJson( int, QString, QString );
        void loadGMPReportDB_assigned( void );
        void loadGMPReportDB_assigned_auto( QString );
@@ -156,7 +179,7 @@ class US_eSignaturesGMP : public US_Widgets
        void esign_report( void );
        QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
 					   QString, QString& );
-       void write_pdf_eSignatures( QString, QString, QString, QString );
+       void write_pdf_eSignatures( QString, QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
        QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );

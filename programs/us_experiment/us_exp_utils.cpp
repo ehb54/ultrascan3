@@ -1010,11 +1010,11 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
    te_revs_to_assign  -> setText( rpRotor->revListAssign );
-
+   te_apprs_to_assign -> setText( rpRotor->apprListAssign );
    
    //initiate global reviewers list:
    init_grevs();
-
+   init_gapprs();
 
    //BAsed on mode [usmode - R&D], hide/show oper/rev section:
       //show Assign oper/rev ONLY for GMP:
@@ -1031,13 +1031,22 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        cb_choose_rev -> hide();
        pb_add_rev    -> hide();
 
+       lb_choose_appr -> hide();
+       cb_choose_appr -> hide();
+       pb_add_appr    -> hide();
+
        lb_opers_to_assign -> hide();
        te_opers_to_assign -> hide();
        pb_remove_oper     -> hide();
 
        lb_revs_to_assign -> hide();
        te_revs_to_assign -> hide();
-       pb_remove_rev     -> hide(); 
+       pb_remove_rev     -> hide();
+
+       lb_apprs_to_assign -> hide();
+       te_apprs_to_assign -> hide();
+       pb_remove_appr     -> hide();
+
             
      }
  
@@ -1076,6 +1085,41 @@ void US_ExperGuiRotor::init_grevs( void )
       cb_choose_rev->addItem( QString::number( g_invID ) + ". " + 
 			      g_lastName + ", " + g_firstName );
       
+    }
+}
+
+void US_ExperGuiRotor::init_gapprs( void )
+{
+  cb_choose_appr  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people_gappr" << "%" + QString("") + "%";
+  qDebug() << "init_apprs(), query --  " << query;
+  db.query( query );
+
+  while ( db.next() )
+    {
+      int g_invID         = db.value( 0 ).toInt();
+      QString g_lastName  = db.value( 1 ).toString();
+      QString g_firstName = db.value( 2 ).toString();
+      
+      //populate
+      cb_choose_appr->addItem( QString::number( g_invID ) + ". " + 
+			       g_lastName + ", " + g_firstName );
     }
 }
 
@@ -1151,6 +1195,47 @@ void US_ExperGuiRotor::removeRevfromList( void )
 
   qDebug() << "Revs to ASSIGN: " << te_revs_to_assign->toPlainText();
 
+}
+
+
+
+//Add approver to list 
+void US_ExperGuiRotor::addApprtoList( void )
+{
+  QString c_appr = cb_choose_appr->currentText();
+
+  //check if selected item already in the list:
+  QString e_apprList = te_apprs_to_assign->toPlainText();
+  if ( e_apprList. contains( c_appr ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Approver" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of approvers.<br>"
+				    "Please choose other approver.")
+				.arg( c_appr) );
+      return;
+    }
+  
+  te_apprs_to_assign->append( c_appr );
+
+}
+
+//Remove reviewer from list 
+void US_ExperGuiRotor::removeApprfromList( void )
+{
+  te_apprs_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  te_apprs_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_apprs_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_apprs_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_apprs_to_assign->textCursor().removeSelectedText();
+  te_apprs_to_assign->textCursor().deletePreviousChar();
+  te_apprs_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "Apprs to ASSIGN: " << te_apprs_to_assign->toPlainText();
+
+  //setUnsetPb_operRev();
 }
 
 
@@ -1283,10 +1368,11 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    //And save info on selected assigned oper(s) & rev(s)
    QString oper_list = te_opers_to_assign->toPlainText();
    QString rev_list  = te_revs_to_assign->toPlainText();
+   QString appr_list = te_apprs_to_assign->toPlainText();
 
    rpRotor->operListAssign = oper_list;
    rpRotor->revListAssign  = rev_list;
-
+   rpRotor->apprListAssign = appr_list;
    
 }
 
