@@ -5696,10 +5696,12 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
 bool US_ExperGuiUpload::saveRunProtocol()
 {
   bool save_aborted = false;
-  
+
+  qDebug() << "in saveRunProtoocl(): proto_svd -- " << proto_svd;
   if ( proto_svd )
     return save_aborted;
     
+  qDebug() << "Peoceed with Saving protocol!";
   
   if ( mainw->ScanCount_global > 1501 )
     {
@@ -6249,7 +6251,8 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
   
   QString message_protocol = tr( "");
-  if ( rps_differ && !proto_svd )
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
     message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
   
   QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
@@ -7939,7 +7942,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
      {
        QStringList oper_listList = rpRotor->operListAssign.split("\n");
        QStringList rev_listList  = rpRotor->revListAssign.split("\n");
-       QStringList appr_listList = {""};           // TO_BE rpRotor->apprListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
        
        QString operListJsonArray = "[";
        QString revListJsonArray  = "[";
@@ -8077,7 +8080,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   << protocol_details[ "autoflowID" ]
 	   << createGMPRun_Json;
        
-       //qDebug() << "new_autoflowStatusStopOptima_record qry -- " << qry;
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
        
        int autoflowStatusID = db->functionQuery( qry );
 
@@ -8089,6 +8092,17 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   return;
 	 }
        qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
      }
 }
 
