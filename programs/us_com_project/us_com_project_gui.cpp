@@ -512,9 +512,16 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanReport, SIGNAL( switch_to_esign( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_esign( QMap < QString, QString > & ) ),  epanSign, SLOT( do_esign( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( reset_esigning() ),  epanSign, SLOT( reset_esigning( )  ) );
-   
+
+   //Hide/disable eSigs tab:
+   this->tabWidget->removeTab(7);
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) }");
+   //this->tabWidget->setTabEnabled( 7, false );
+     
    setMinimumSize( QSize( 1350, 850 ) );
    adjustSize();
+
+   
 
  }
 

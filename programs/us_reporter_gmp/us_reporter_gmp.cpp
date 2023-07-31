@@ -3049,14 +3049,11 @@ void US_ReporterGMP::generate_report( void )
 	  return;
 	}
       
-      /** Do NOT delete anythign here !!!!!!! *****/
-      /** WILL BE DELETED/COPIED to HISTORY after e-Signing!!!!! ***********/
-      /************************************************************************
+      /************************************************************************/
       //copy autoflow record to autoflowHistory table:
       //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
       
-      
-      QStringList qry;
+      qry. clear();
       qry << "new_autoflow_history_record" << AutoflowID_auto;
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
@@ -3066,21 +3063,20 @@ void US_ReporterGMP::generate_report( void )
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
 
-      //Also delete record from autoflowStages table:
-      qry.clear();
-      qry << "delete_autoflow_stages_record" << AutoflowID_auto;
-      db->statusQuery( qry );
-      //END of copy to History, deletion of primary autoflow record
-      ***************************************************************************/
+      // //Also delete record from autoflowStages table:           //DO NOT DELETE autoflowStages yet - req. by eSigning process!!
+      // qry.clear();
+      // qry << "delete_autoflow_stages_record" << AutoflowID_auto;
+      // db->statusQuery( qry );
+      // //END of copy to History, deletion of primary autoflow record
+      /***************************************************************************/
 
-      //IF user is NOT among reviewers, inform that can NOT proceed to e-SIGNS stage!
-      //IF user IS among reviewers, offer to View Report and / OR proceed to e-SIGNS, OR re-attach later!!!
-           
       //Inform user of the PDF location
       QMessageBox msgBox_a;
       msgBox_a.setText(tr("Report PDF Ready!"));
       msgBox_a.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
-				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom.")
+				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
+				      "\n\n"
+				      "Reviwer(s) of the current GMP report will be notified.")
 				  .arg( filePath ) );
 				    
       msgBox_a.setWindowTitle(tr("Report Generation Complete"));

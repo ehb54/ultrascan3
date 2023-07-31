@@ -19,6 +19,7 @@
 US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 {
   auto_mode  = false;
+  auto_separate_status = false;
   
   setWindowTitle( tr( "GMP e-Signatures"));
   //setPalette( US_GuiSettings::frameColor() );
@@ -362,30 +363,17 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
 {
   auto_mode  = true;
-
+  auto_separate_status = false;
+    
   setWindowTitle( tr( "GMP e-Signatures"));
   //setPalette( US_GuiSettings::frameColor() );
   setPalette( US_GuiSettings::normalColor() );
 
-  //primary widget
-  mainWidget_auto = new QWidget;
-  
-  // primary layouts
-  topLayout_auto  = new QHBoxLayout( this );
+  // primary layout
+  topLayout_auto  = new QVBoxLayout( this );
   topLayout_auto->setSpacing        ( 0 );
   topLayout_auto->setContentsMargins( 0, 0, 0, 0 );
-  
-  mainLayout_auto     = new QHBoxLayout( this );
-  mainLayout_auto ->setSpacing        ( 2 );
-  mainLayout_auto ->setContentsMargins( 2, 2, 2, 2 );
-
-  leftLayout     = new QVBoxLayout();
-  rghtLayout     = new QVBoxLayout();
-  leftLayout->setSpacing        ( 0 );
-  leftLayout->setContentsMargins( 0, 1, 0, 1 );
-  rghtLayout->setSpacing        ( 0 );
-  rghtLayout->setContentsMargins( 0, 1, 0, 1 );
-  
+    
   //set to NULL internal layouts
   eSignersGrid_auto     = NULL;
   eSignActionsGrid_auto = NULL;
@@ -395,11 +383,96 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   // protocol_details[ "autoflowID" ] = QString("900");
   
   // initPanel_auto( protocol_details );
-  /***************/
+  // /***************/
 
-  qDebug() << "Alt. constructor SET";
+  if ( a_mode == "SEPARATE" )
+    {
+      auto_separate_status = true;
+
+      QLabel* bn_loadGMPReport = us_banner( tr( "Select GMP Report to Reveiew:" ), 1 );
+      QFontMetrics m (bn_loadGMPReport -> font()) ;
+      int RowHeight = m.lineSpacing() ;
+      bn_loadGMPReport -> setFixedHeight  (1.5 * RowHeight);
+
+      pb_loadreport_db  =  us_pushbutton( tr( "Load GMP Report from DB (.PDF) with Assigned Reviewers" ) );
+
+      topLayout_auto -> addWidget(  bn_loadGMPReport );
+      topLayout_auto -> addWidget(  pb_loadreport_db );
+      int ihgt        = pb_loadreport_db ->height();
+      QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
+      topLayout_auto->addItem( spacer2 );
+      
+      connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned_separate() ) );
+
+      resize( 1200, 300 );
+    }
+  
+  qDebug() << "Alt. constructor SET for [AUTO], within autoflow -- ";
   
 }
+
+
+//Load GMP Report form Db with assigned operator(s) && reviewer(s)
+void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
+{
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+  
+  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+
+  QString pdtitle( tr( "Select GMP Report to e-Sign" ) );
+  QStringList hdrs;
+  int         prx;
+  
+  hdrs << "ID"
+       << "Run Name"
+    //<< "Protocol Name"
+       << "Created"
+       << "Filename (.pdf)"
+       << "GMP Run ID";
+         
+  QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  QString gmpReport_id_selected("");
+  QString gmpReport_runname_selected("");
+  QString gmpReport_runname_selected_c("");
+  QString gmpReport_filename_pdf ("");
+        
+  if ( pdiag_autoflow_db->exec() == QDialog::Accepted )
+    {
+      gmpReport_id_selected        = gmpReportsDBdata[ prx ][ 0 ];
+      gmpReport_runname_selected_c = gmpReportsDBdata[ prx ][ 1 ];
+      gmpReport_filename_pdf       = gmpReportsDBdata[ prx ][ 3 ];
+      gmpRunID_eSign               = gmpReportsDBdata[ prx ][ 4 ];
+
+    }
+  else
+    return;
+  
+  //read 'data' .tar.gz for autoflowGMPReport record:
+  if ( gmpReport_runname_selected_c.  contains("combined") )
+    {
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
+      gmpReport_runname_selected. simplified();
+    }
+  else
+    gmpReport_runname_selected = gmpReport_runname_selected_c;
+
+
+  QMap< QString, QString> p_details;
+  p_details[ "autoflowID" ] = gmpRunID_eSign;
+  initPanel_auto( p_details );
+}
+
 
 //reset eSign mod. constructor
 void US_eSignaturesGMP::reset_esign_panel( void )
@@ -414,6 +487,7 @@ void US_eSignaturesGMP::reset_esign_panel( void )
 	  delete item;
 	}
       delete eSignersGrid_auto;
+      delete leftLayout;
     }
   //same for other:
   if ( eSignActionsGrid_auto != NULL && eSignActionsGrid_auto->layout() != NULL )
@@ -425,9 +499,11 @@ void US_eSignaturesGMP::reset_esign_panel( void )
 	  delete item;
 	}
       delete eSignActionsGrid_auto;
+      delete rghtLayout;
     }
-  //End cleaning layouts
 
+  //End cleaning layouts
+  
   qApp->processEvents();
 }
 
@@ -436,8 +512,22 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
 {
   //clear all GUI, internals
   reset_esign_panel();
-
+  
   //Now, initialize main internal layouts:
+  mainLayout_auto     = new QHBoxLayout( this );
+  mainLayout_auto ->setSpacing        ( 2 );
+  mainLayout_auto ->setContentsMargins( 2, 2, 2, 2 );
+
+  leftLayout     = new QVBoxLayout();
+  rghtLayout     = new QVBoxLayout();
+  leftLayout->setSpacing        ( 0 );
+  leftLayout->setContentsMargins( 0, 1, 0, 1 );
+  rghtLayout->setSpacing        ( 0 );
+  rghtLayout->setContentsMargins( 0, 1, 0, 1 );
+
+  //primary widget
+  mainWidget_auto = new QWidget;
+  
   eSignersGrid_auto     = new QGridLayout();
   eSignersGrid_auto ->setSpacing        ( 2 );
   eSignersGrid_auto ->setContentsMargins( 1, 1, 1, 1 );
@@ -2397,6 +2487,17 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
   gmpReportsDBdata.clear();
 
   QStringList qry;
+  qry <<  QString( "get_user_info" );
+  db -> query( qry );
+  db -> next();
+  int u_ID        = db->value( 0 ).toInt();
+  QString u_fname = db->value( 1 ).toString();
+  QString u_lname = db->value( 2 ).toString();
+
+  QString logged_user =  QString::number(u_ID) + ". " + u_lname + ", " + u_fname;
+
+  //
+  qry.clear();
   qry << "get_autoflowGMPReport_desc";
   db->query( qry );
 
@@ -2416,15 +2517,17 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
       QString eSignStatusJson   = eSign[ "eSignStatusJson" ];
-
+    
       qDebug() << "In listing GMP Reports with assigned reviewers -- ";
-      qDebug() << "operatorListJson, reviewersListJson -- "
+      qDebug() << "logged_user, operatorListJson, reviewersListJson, approversListJson -- "
+	       << logged_user << ", "
 	       << operatorListJson << ",   "
 	       << reviewersListJson << ", "
 	       << approversListJson;
 
-      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
       QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operatorListJson .toUtf8() );
+      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewersListJson.toUtf8() );
+      QJsonDocument jsonDocApprList = QJsonDocument::fromJson( approversListJson .toUtf8() );
   
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
 	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
@@ -2433,7 +2536,18 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 			 << time_created.toString()
 			 << filenamePdf
 			 << autoflowHistoryID;
-	  gmpReportsDBdata << gmpreportentry;
+
+	  //additionally filter by userID for {operator, reviewer, appr.} in case of SEPARATE const.
+	  if ( auto_separate_status )
+	    {
+	      if ( operatorListJson.contains( logged_user ) ||
+		   reviewersListJson.contains( logged_user ) ||
+		   approversListJson.contains( logged_user )  )
+		gmpReportsDBdata << gmpreportentry;
+	    }
+	  else
+	    gmpReportsDBdata << gmpreportentry;
+
 	  nrecs++;
 	}
     }

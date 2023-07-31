@@ -21,6 +21,7 @@ class US_eSignaturesGMP : public US_Widgets
          US_eSignaturesGMP( QMap <QString, QString>& );
 
          bool auto_mode;
+         bool auto_separate_status;
 
          class US_InvestigatorData
 	 {
@@ -121,7 +122,7 @@ class US_eSignaturesGMP : public US_Widgets
        QString    gmpRunID_eSign;
        QString    eSignID_global;
 
-       QHBoxLayout* topLayout_auto;
+       QVBoxLayout* topLayout_auto;
        QHBoxLayout* mainLayout_auto;
        QGridLayout* eSignersGrid_auto;
        QGridLayout* eSignActionsGrid_auto;
@@ -171,6 +172,8 @@ class US_eSignaturesGMP : public US_Widgets
        QString compose_updated_admin_logJson( int, QString, QString );
        void loadGMPReportDB_assigned( void );
        void loadGMPReportDB_assigned_auto( QString );
+       void loadGMPReportDB_assigned_separate( void );
+  
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
        void view_report_db ( void );
