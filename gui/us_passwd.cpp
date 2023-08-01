@@ -53,7 +53,7 @@ QString US_Passwd::getPasswd( void  )
 }
 
 
-QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QString user_s )
+QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QString i_text, QString user_s )
 {
   // // If the pw is in global memory, return it
   // QString pw = g.passwd();
@@ -89,7 +89,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     QFormLayout form(&dialog);
         
     // Add some text above the fields
-    form.addRow(new QLabel("Please fill out GMP run submitter form:"));
+    form.addRow(new QLabel( i_text ));
     
     // Add the lineEdits with their respective labels
     QList<QLineEdit *> fields;
@@ -160,7 +160,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     
     QMessageBox::critical( this,
           tr( "No Comment and/or Password Error" ),
-          tr( "<font color='red'>ERROR:</font> The Comment field is empty, or the password is incorrect." ) );
+          tr( "<font color='red'><b>ERROR:</b></font> The Comment field is empty, or the password is incorrect." ) );
   }
 
   // // Save the password in global memory and return

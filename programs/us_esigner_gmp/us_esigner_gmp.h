@@ -110,6 +110,8 @@ class US_eSignaturesGMP : public US_Widgets
        QPushButton* pb_view_report_db;
        QPushButton* pb_esign_report;
        QPushButton* pb_view_eSigns;
+       QPushButton* pb_help;
+       QPushButton* pb_cancel;
   
        QLineEdit*   le_loaded_run_db;
        QTextEdit*   te_fpath_info;
@@ -128,7 +130,9 @@ class US_eSignaturesGMP : public US_Widgets
        QGridLayout* eSignActionsGrid_auto;
        QVBoxLayout* leftLayout;				 
        QVBoxLayout* rghtLayout;
-       QWidget*     mainWidget_auto; 
+       QWidget*     mainWidget_auto;
+       QHBoxLayout* lowerButtons;
+       QVBoxLayout* spacerLayout;
   
        QString autoflowID_passed; 
 			      

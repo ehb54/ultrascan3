@@ -377,8 +377,10 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
   //set to NULL internal layouts
   eSignersGrid_auto     = NULL;
   eSignActionsGrid_auto = NULL;
+  spacerLayout          = NULL;   
+  lowerButtons          = NULL;
   
-  // /** TEST ***/
+  // /** TEST FOR "AUTO" -- within autoflow [not used currently] ***/
   // QMap < QString, QString > protocol_details;
   // protocol_details[ "autoflowID" ] = QString("900");
   
@@ -502,6 +504,27 @@ void US_eSignaturesGMP::reset_esign_panel( void )
       delete rghtLayout;
     }
 
+  if ( spacerLayout != NULL && spacerLayout->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = spacerLayout->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete spacerLayout;
+    } 
+  
+   if ( lowerButtons != NULL && lowerButtons->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = lowerButtons->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete lowerButtons;
+    } 
   //End cleaning layouts
   
   qApp->processEvents();
@@ -616,7 +639,29 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
 
   mainWidget_auto -> setLayout( mainLayout_auto );
 
-  topLayout_auto -> addWidget( mainWidget_auto );
+  topLayout_auto  -> addWidget( mainWidget_auto );
+  
+  if ( auto_separate_status )
+    {
+      spacerLayout     = new QVBoxLayout();
+      lowerButtons     = new QHBoxLayout();
+
+      pb_cancel   = us_pushbutton( tr( "Close" ) );
+      pb_help     = us_pushbutton( tr( "Help" ) );
+  
+      connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
+      connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
+      int ihgt        = pb_cancel ->height();
+      QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
+      
+      spacerLayout -> addItem( spacer2 );
+      
+      lowerButtons -> addWidget( pb_help );
+      lowerButtons -> addWidget( pb_cancel );
+
+      topLayout_auto -> addLayout( spacerLayout );
+      topLayout_auto -> addLayout( lowerButtons );
+    }
   
   resize( 1200, 300 );
 }
@@ -2976,11 +3021,11 @@ void US_eSignaturesGMP::esign_report( void )
       qDebug() << "E-Signees before the current one -- "
 	       << esignees_to_sign_before;
 
-      QMessageBox::information( this, tr( "Cannot e-Sign: wrong order" ),
-				tr( "<font color='red'><b>WRONG E-SIGNING ORDER:</b> </font> You have to wait <br>"
-				    "for the following reviewers to e-Sign to be able to proceed: <br><br>"
+      QMessageBox::information( this, tr( "Cannot e-Sign: Wrong Order" ),
+				tr( "<font color='red'><b>WRONG E-SIGNING ORDER:</b> </font> <br>"
+				    "You have to wait for the following reviewers to e-Sign before proceeding: <br><br>"
 				    "<b>%1</b><br><br>"
-				    "Please try again later.")
+				    "You will be notified by e-mail on e-Signing status.")
 				.arg( esignees_to_sign_before.join(",") ) );
       return;
     }
@@ -2988,19 +3033,34 @@ void US_eSignaturesGMP::esign_report( void )
   
   //QDialog for an e-Signee's Comment:
   QString user_esignee = u_lname + ", " + u_fname;
-  bool ok;
-  QString msg = QString(tr("e-Sign: comment by <b>%1</b>").arg( user_esignee ) );
-  QString default_text = QString(tr("e-Sign Comment: "));
-  QString comment_t    = QInputDialog::getText( this,
-						tr( "e-Sign Comment" ),
-						msg, QLineEdit::Normal, default_text, &ok );
+  // bool ok;
+  // QString msg = QString(tr("e-Sign: comment by <b>%1</b>").arg( user_esignee ) );
+  // QString default_text = QString(tr("e-Sign Comment: "));
+  // QString comment_t    = QInputDialog::getText( this,
+  // 						tr( "e-Sign Comment" ),
+  // 						msg, QLineEdit::Normal, default_text, &ok );
   
-  if ( !ok )
-    {
-      qDebug() << "e-Signee refused to comment...";
-      return;
-    }
+  // if ( !ok )
+  //   {
+  //     qDebug() << "e-Signee refused to comment...";
+  //     return;
+  //   }
 
+  US_Passwd   pw_at;
+  QMap< QString, QString > gmp_esigning_map; 
+  gmp_esigning_map  = pw_at.getPasswd_auditTrail( "GMP e-Signing Form", "Please fill out GMP e-Signing form:", user_esignee );
+  
+  int gmp_esigning_map_size = gmp_esigning_map.keys().size();
+  qDebug() << "e-Signing map: "
+	   << gmp_esigning_map.keys()  << gmp_esigning_map.keys().size() << gmp_esigning_map_size
+	   << gmp_esigning_map.keys().isEmpty() 
+	   << gmp_esigning_map[ "User:" ]
+	   << gmp_esigning_map[ "Comment:" ]
+	   << gmp_esigning_map[ "Master Password:" ];
+
+  if ( gmp_esigning_map_size == 0 ||  gmp_esigning_map.keys().isEmpty() ) 
+    return;
+  
   //OK, eSign downloaded GMP Report /////////////////////////////////////////////////////////////////////////
   //BEFORE writing, check if writing has been initiated, or completed from different session:
   int status_esign_unique = 0;
@@ -3027,7 +3087,7 @@ void US_eSignaturesGMP::esign_report( void )
   //Compose/Update eSignStatusJson && eSignStatusAll:
   QString eSignStatusAll_updated;
   QString eSignStatusJson_updated = compose_updated_eSign_Json( u_ID, u_fname, u_lname, to_esign_array,
-								esigned_array, comment_t, eSignStatusAll_updated );
+								esigned_array, gmp_esigning_map[ "Comment:" ], eSignStatusAll_updated );
   
   qry.clear();
   qry << "update_gmp_review_record_by_esigner"
@@ -3089,7 +3149,7 @@ void US_eSignaturesGMP::esign_report( void )
   
   //concluding msg:
   QString msg_f = QString( tr("<font color='red'><b>SUCCESS:</b> </font><br><br>"
-			      "Operator | Reviewer, <br>"
+			      "Operator | Reviewer | Approver, <br>"
 			      "<b>%1,</b><br>"
 			      "successfully e-Signed GMP report.")
 			   .arg( user_esignee ) );

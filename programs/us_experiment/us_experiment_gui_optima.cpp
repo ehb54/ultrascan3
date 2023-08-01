@@ -6335,7 +6335,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	      qDebug() << "Checking master password...";
 	      gmp_submitter_map.clear();
 	      US_Passwd   pw_at;
-	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", user_submitter );
+	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
 	      
 	      int submit_map_size = gmp_submitter_map.keys().size();
 	      qDebug() << "Submitter map: "
