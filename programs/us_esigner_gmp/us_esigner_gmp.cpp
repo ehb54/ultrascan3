@@ -2891,6 +2891,10 @@ void US_eSignaturesGMP::esign_report( void )
   //Check if the person among reviewers, OR if the person already e-signed:
   //to_sign section:
   bool yesToSign = false;
+  QStringList esignees_to_sign_before;
+  QString current_esignee_in_order    = to_esign_array[ 0 ].toString();
+  QString current_esignee_in_order_id = current_esignee_in_order. section( ".", 0, 0 );
+  
   for (int i=0; i < to_esign_array.size(); ++i )
     {
       QString current_reviewer = to_esign_array[i].toString();
@@ -2901,6 +2905,8 @@ void US_eSignaturesGMP::esign_report( void )
 	  yesToSign = true;
 	  break;
 	}
+      else
+	esignees_to_sign_before << current_reviewer;
     }
 
   //signed section:
@@ -2948,7 +2954,7 @@ void US_eSignaturesGMP::esign_report( void )
       else
 	{
 	  msg_current_user = tr("<font color='red'><b>ATTENTION:</b> </font>" 
-				"You cannot e-Sign!<br><br>"
+				"You cannot e-Sign more than once!<br><br>"
 				"You have already e-Signed current GMP Report.");
 	}
       
@@ -2958,6 +2964,28 @@ void US_eSignaturesGMP::esign_report( void )
       return;
     }
 
+  //OK, now check if the current reviewer is the first in order;
+  //If not, inform whom he/she needs to wait for....
+  if ( u_ID != current_esignee_in_order_id.toInt() )
+    {
+      qDebug() << "u_ID, current_esignee_in_order_id -- "
+	       << u_ID << current_esignee_in_order_id.toInt();
+      qDebug() << "Current esignee, logged in user -- "
+	       << u_ID << ". " << u_lname << ", " << u_fname << ",    "
+	       << current_esignee_in_order;
+      qDebug() << "E-Signees before the current one -- "
+	       << esignees_to_sign_before;
+
+      QMessageBox::information( this, tr( "Cannot e-Sign: wrong order" ),
+				tr( "<font color='red'><b>WRONG E-SIGNING ORDER:</b> </font> You have to wait <br>"
+				    "for the following reviewers to e-Sign to be able to proceed: <br><br>"
+				    "<b>%1</b><br><br>"
+				    "Please try again later.")
+				.arg( esignees_to_sign_before.join(",") ) );
+      return;
+    }
+  
+  
   //QDialog for an e-Signee's Comment:
   QString user_esignee = u_lname + ", " + u_fname;
   bool ok;
