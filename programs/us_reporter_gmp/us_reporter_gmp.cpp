@@ -6311,6 +6311,27 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       QString filename = PlotsFilenames[ i ];
       QString label = "";
 
+      //Get size of the image
+      QImageReader reader( filename );
+      QSize sizeOfImage = reader.size();
+      int i_height = sizeOfImage.height();
+      int i_width = sizeOfImage.width();
+
+      qDebug() << "Image, " << filename << "width, height: " << i_width << i_height;
+      
+      //QPrinter below must be the same as defined just prior painting QTextDocument in ::write_pdf
+      QPrinter printer_t(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
+      printer_t.setOutputFormat(QPrinter::PdfFormat);
+      printer_t.setPaperSize(QPrinter::Letter);
+      QSizeF pageSize = printer_t.pageRect().size();
+      qreal qprinters_width = pageSize.width()*0.8; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
+      qDebug() << "qprinters_width: " << qprinters_width; 
+      double i_scale_factor = double( qprinters_width / i_width ); 
+      int scaled_i_width  = i_width  * i_scale_factor;
+      int scaled_i_height = i_height * i_scale_factor;
+
+      qDebug() << "Image scaled, " << filename << "scaled_width, scaledheight: " << scaled_i_width << scaled_i_height;
+      
       /* for Combined Plots 
 
 	 <img style='height: 100%; width: 100%; object-fit: contain'/>
@@ -6325,9 +6346,15 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
        	+ "\" alt=\"" + label;
 
       if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
-	html_assembled  += "\"height=\"500\" width=\"500";
-	
-	
+       	//html_assembled  += "\"height=\"500 \"width=\"500";
+	html_assembled  += "\"height=\"" + QString::number( scaled_i_width ) + "\"width=\"" + QString::number( scaled_i_width);
+      else
+	{
+	  html_assembled  += "\"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
+	}
+
+      qDebug() << "Image size html string: " << "\"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
+      
       html_assembled   += "\"/></div>\n\n";
       
       html_assembled   += "<br>";
@@ -7964,6 +7991,10 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
+
+  ////TEMP -- REVERT back after test!!!
+  //const QString pngext( ".svgz" );
+  
   QString tripnode  = QString( currentTripleName ).replace( ".", "" );
   QString basename  = dirName + "/" + text_model( model, 0 ) + "." + tripnode + "."; 
   //QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
@@ -9629,7 +9660,7 @@ void US_ReporterGMP::write_pdf_report( void )
   t_f. setPointSize( 7 );
   textDocument. setDefaultFont( t_f );
   
-  QPrinter printer(QPrinter::PrinterResolution);
+  QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
   printer.setPaperSize(QPrinter::Letter);
 
@@ -9750,6 +9781,7 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   qDebug() << "Printing page" << pageNumber;
   const QSizeF pageSize = printer.paperRect().size();
   qDebug() << "pageSize=" << pageSize;
+  qDebug() << "printerResolution=" << printer.resolution();
   
   const double bm = mmToPixels(printer, borderMargins);
   const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
@@ -9782,8 +9814,9 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   // Footer: e-Signer comment && page number
   QRectF footerRect = textRect;
   footerRect.setTop(textRect.bottom());
-  footerRect.setHeight( 2*footerHeight);
+  footerRect.setHeight( 2*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
 
+  painter->setPen(Qt::blue);
   painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers 1\n"
 							   "Footer to be passed by e-Signers 2"));
   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
