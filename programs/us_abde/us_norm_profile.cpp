@@ -94,8 +94,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     right_lyt->setMargin(1);
     right_lyt->setSpacing(1);
 
-    main_lyt->addLayout(left_lyt);
-    main_lyt->addLayout(right_lyt);
+    main_lyt->addLayout(left_lyt, 1);
+    main_lyt->addLayout(right_lyt, 5);
     main_lyt->setMargin(1);
     main_lyt->setSpacing(0);
 

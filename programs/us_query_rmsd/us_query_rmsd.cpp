@@ -8,6 +8,8 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_select_runs.h"
+#include <QTemporaryDir>
+
 
 
 //! \brief Main program. Loads the Model RMSD values from DB
@@ -55,14 +57,33 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     QLabel *lb_method = us_label(tr("Method:"));
     cb_method = us_comboBox();
 
+    QLabel *lb_trsh = us_label(tr("RMSD Threshold:"));
+    le_threshold = us_lineedit("", 0);
+
+    QPushButton *pb_simulate = us_pushbutton("Simulate");
+
     tw_rmsd = new QTableWidget();
     tw_rmsd->setRowCount(0);
-    tw_rmsd->setColumnCount(2);
+    tw_rmsd->setColumnCount(5);
     tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Triple_Method_Analysis", "RMSD"});
+    tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Edit", "Analysis", "Method", "Triple", "RMSD"});
+    hheader = tw_rmsd->horizontalHeader();
     tw_rmsd->setStyleSheet("background-color: white");
     QHeaderView *header = tw_rmsd->horizontalHeader();
-    header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::ResizeToContents);
-    header->setSectionResizeMode(header->logicalIndexAt(1), QHeaderView::Stretch);
+//    header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::Stretch);
+//    header->setSectionResizeMode(header->logicalIndexAt(2), QHeaderView::Stretch);
+//    header->setSectionResizeMode(header->logicalIndexAt(3), QHeaderView::ResizeToContents);
+//    header->setSectionResizeMode(header->logicalIndexAt(4), QHeaderView::Stretch);
+
+//    header->setSectionResizeMode(0, QHeaderView::Stretch);
+//    header->setSectionResizeMode(2, QHeaderView::Stretch);
+//    header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+//    header->setSectionResizeMode(4, QHeaderView::Stretch);
+
+    header->setSectionResizeMode(QHeaderView::Stretch);
+//    tw_rmsd->setColumnWidth(0, 100);
+//    tw_rmsd->setColumnWidth(1, 150);
+//    tw_rmsd->setColumnWidth(3, 120);
 
     QGridLayout *lyt_top = new QGridLayout();
     lyt_top->addWidget(pb_load_runid, 0, 0, 1, 2);
@@ -82,6 +103,10 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     lyt_top->addWidget(cb_channel,    2, 3, 1, 1);
     lyt_top->addWidget(lb_lambda,     2, 4, 1, 1);
     lyt_top->addWidget(cb_lambda,     2, 5, 1, 1);
+
+    lyt_top->addWidget(lb_trsh,       3, 0, 1, 2);
+    lyt_top->addWidget(le_threshold,  3, 2, 1, 2);
+    lyt_top->addWidget(pb_simulate,   3, 4, 1, 2);
 
     lyt_top->setColumnStretch(0, 0);
     lyt_top->setColumnStretch(1, 1);
@@ -108,24 +133,33 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     lyt_main->addWidget(tw_rmsd);
     lyt_main->addLayout(lyt_bottom);
     lyt_main->setMargin(1);
-    lyt_main->setSpacing(1);
+    lyt_main->setSpacing(3);
 
     this->setLayout(lyt_main);
-    this->setMinimumSize(QSize(500,400));
+    setMinimumSize(QSize(500,400));
 
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
     connect(pb_save, SIGNAL(clicked()), this, SLOT(save_data()));
+    connect(pb_simulate, SIGNAL(clicked()), this, SLOT(simulate()));
+    connect(le_threshold, SIGNAL(editingFinished()), this, SLOT(new_threshold()));
 }
 
-void US_QueryRmsd::check_connection(){
+bool US_QueryRmsd::check_connection(){
 
     QString error;
     dbCon->connect(pw.getPasswd(), error);
     if (dbCon->isConnected()){
         QStringList DB   = US_Settings::defaultDB();
         DbgLv(1) << DB;
+        return true;
+    } else{
+        QApplication::restoreOverrideCursor();
+        QMessageBox::information( this,
+                                 tr( "DB Connection Problem" ),
+                                 tr( "There was an error connecting to the database:\n" )
+                                     + dbCon->lastError() );
+        return false;
     }
-    return;
 }
 
 void US_QueryRmsd::clear_data(){
@@ -136,6 +170,43 @@ void US_QueryRmsd::clear_data(){
     allCell.clear();
     allChannel.clear();
     allLambda.clear();
+    n_data = 0;
+    threshold = -1;
+
+    for (auto it = Models.begin(); it != Models.end(); ++it) {
+        delete it.value();
+    }
+    Models.clear();
+    allModelIDs.clear();
+
+    for (auto it = TI_Noise.begin(); it != TI_Noise.end(); ++it) {
+        delete it.value();
+    }
+    TI_Noise.clear();
+
+    for (auto it = RI_Noise.begin(); it != RI_Noise.end(); ++it) {
+        delete it.value();
+    }
+    RI_Noise.clear();
+
+    selIndex.clear();
+//    allEditDataMap.clear();
+    allEditIds.clear();
+//    QMapIterator<int, US_DataIO::EditedData*> ite(editData);
+//    while (ite.hasNext()) {
+//        ite.next();
+//        delete ite.value();
+//    }
+    editData.clear();
+//    QMapIterator<int, US_DataIO::RawData*> itr(rawData);
+//    while (itr.hasNext()) {
+//        itr.next();
+//        delete itr.value();
+//    }
+//    rawData.clear();
+
+
+
 
     editList.clear();
     analysisList.clear();
@@ -152,7 +223,8 @@ void US_QueryRmsd::load_runid(){
     selrun->exec();
     if (runList.size() == 0)
         return;
-    check_connection();
+    if (! check_connection())
+        return;
 
     QString runId = runList.at(0);
 
@@ -165,11 +237,25 @@ void US_QueryRmsd::load_runid(){
 
     dbCon->query( q );
 
+    QStringList modelIDs_tmp;
+    QVector<int> editIDs_tmp;
     if ( dbCon->lastErrno() == US_DB2::OK ){
-        clear_data();
-        while (dbCon->next()) {
-            QString desc = dbCon->value(2).toString();
-            QStringList list1 = desc.split(u'.');
+        while (dbCon->next()){
+            modelIDs_tmp << dbCon->value(0).toString();
+            editIDs_tmp << dbCon->value(6).toInt();
+        }
+    }else{
+        QMessageBox::warning(this, "Error", dbCon->lastError());
+        return;
+    }
+    clear_data();
+
+    for (int i = 0; i < modelIDs_tmp.size(); i++){
+        US_Model *model = new US_Model();
+        int mId = modelIDs_tmp.at(i).toInt();
+        int state = model->load(modelIDs_tmp.at(i), dbCon);
+        if (state == US_DB2::OK){
+            QStringList list1 = model->description.split(u'.');
             QString cell = list1.at(1).at(0);
             QString channel = list1.at(1).at(1);
             QString lambda = list1.at(1).mid(2);
@@ -188,25 +274,341 @@ void US_QueryRmsd::load_runid(){
             if (! editList.contains(edit))
                 editList << edit;
 
-            double var = dbCon->value(3).toDouble();
-            allRmsd << qSqrt(var);
+            allRmsd << qSqrt(model->variance);
+
+            allModelIDs << mId;
+            Models[mId] = model;
+            allEditIds << editIDs_tmp.at(i);
+        } else {
+            delete model;
         }
-    }else{
-        QMessageBox::warning(this, "Error", dbCon->lastError());
-        return;
+
     }
+
+    n_data = allRmsd.size();
+    loadData();
+    loadNoises();
 
     editList.sort();
 
     le_runid->setText(runId);
     cb_edit->disconnect();
     cb_edit->clear();
+    if (editList.size() > 1)
+        cb_edit->addItem("ALL");
     foreach (QString item, editList)
         cb_edit->addItem(item);
-    cb_edit->setCurrentIndex(cb_edit->count() - 1);
+    cb_edit->setCurrentIndex(0);
     connect(cb_edit,     SIGNAL(currentIndexChanged(int)), this, SLOT(set_analysis(int)));
     set_analysis(cb_edit->count() - 1);
 }
+
+//bool US_QueryRmsd::load_model(QString mID, US_Model *model){
+//    if (! check_connection())
+//        return false;
+//    int  rc      = 0;
+//    qDebug() << "ModelID to retrieve: -- " << mID;
+//    rc   = model->load( mID , dbCon );
+//    qDebug() << "LdM:  model load rc" << rc;
+////    qApp->processEvents();
+
+////    model_loaded = model;   // Save model exactly as loaded
+////    model_used   = model;   // Make that the working model
+////    is_dmga_mc   = ( model.monteCarlo  &&
+////                  model.description.contains( "DMGA" )  &&
+////                  model.description.contains( "_mcN" ) );
+////    qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
+////             << "description" << model.description;
+
+//    if ( model->components.size() == 0 )
+//    {
+//        QMessageBox::critical( this, tr( "Empty Model" ),
+//                              tr( "Loaded model has ZERO components!" ) );
+//        return false;
+//    }
+
+////    ti_noise.count = 0;
+////    ri_noise.count = 0;
+////    ti_noise.values.clear();
+////    ri_noise.values.clear();
+
+////    //Load noise files
+////    triple_information[ "mID" ] = QString::number( mID );
+
+////    progress_msg->setValue( 4 );
+////    qApp->processEvents();
+
+////    loadNoises( triple_information );
+
+//    return true;
+//}
+
+
+bool US_QueryRmsd::loadData(){
+
+    if (! check_connection())
+        return false;
+
+    QTemporaryDir temp_dir;
+    if (! temp_dir.isValid())
+        return false;
+    QDir dir(temp_dir.path());
+    QString efn = "sample.000.RI.1.A.280.xml";
+    QString rfn = "sample.RI.1.A.280.auc";
+    QFileInfo efile(dir, efn);
+    QFileInfo rfile(dir, rfn);
+    editData.clear();
+    QVector<int> elist;
+    foreach (int eId, allEditIds) {
+        if (elist.contains(eId))
+            continue;
+        elist << eId;
+        QStringList query;
+        query << "get_editedData" << QString::number(eId);
+        dbCon->query(query);
+        int rId = -1;
+        if ( dbCon->lastErrno() == US_DB2::OK ){
+            if (dbCon->next())
+                rId = dbCon->value(0).toInt();
+        }else{
+            QMessageBox::warning(this, "Error", dbCon->lastError());
+//            rawData[eId] = NULL;
+            continue;
+        }
+        dbCon->readBlobFromDB(efile.absoluteFilePath(), "download_editData", eId);
+        dbCon->readBlobFromDB(rfile.absoluteFilePath(), "download_aucData", rId);
+//        US_DataIO::RawData* rdata;
+        US_DataIO::EditedData edata;
+        US_DataIO::loadData(dir.absolutePath(), efn, edata);
+        editData[eId] = edata;
+    }
+
+    dir.removeRecursively();
+
+//    int rID=0;
+//    QString rfilename;
+//    int eID=0;
+//    QString efilename;
+
+//    //get EditedData filename && editedDataID for current triple, then infer rawDataID
+//    QStringList query;
+
+//    query << "get_editedDataFilenamesIDs" << triple_information["filename"];
+//    db->query( query );
+
+//    qDebug() << "In loadData() Query: " << query;
+//    qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+
+//    int latest_update_time = 1e100;
+
+//    QString triple_name_actual = triple_information[ "triple_name" ];
+
+//    if ( triple_name_actual.contains("Interference") )
+//        triple_name_actual.replace( "Interference", "660" );
+
+//    while ( db->next() )
+//    {
+//        QString  filename            = db->value( 0 ).toString();
+//        int      editedDataID        = db->value( 1 ).toInt();
+//        int      rawDataID           = db->value( 2 ).toInt();
+//        //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+//        QDateTime date               = db->value( 3 ).toDateTime();
+
+//        QDateTime now = QDateTime::currentDateTime();
+
+//        if ( filename.contains( triple_name_actual ) )
+//        {
+//            int time_to_now = date.secsTo(now);
+//            if ( time_to_now < latest_update_time )
+//            {
+//                latest_update_time = time_to_now;
+//                //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+
+//                rID       = rawDataID;
+//                eID       = editedDataID;
+//                efilename = filename;
+//            }
+//        }
+//    }
+
+//    qDebug() << "In loadData() after Query ";
+
+//    QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
+//    QDir edir( edirpath );
+//    if (!edir.exists())
+//        edir.mkpath( edirpath );
+
+//    QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
+
+//    qDebug() << "In loadData() efilename: " << efilename;
+
+
+    // Can check here if such filename exists
+    // QFileInfo check_file( efilepath );
+    // if ( check_file.exists() && check_file.isFile() )
+    //   qDebug() << "EditProfile file: " << efilepath << " exists";
+    // else
+//    db->readBlobFromDB( efilepath, "download_editData", eID );
+
+//    qDebug() << "In loadData() after readBlobFromDB ";
+
+//    //Now download rawData corresponding to rID:
+//    QString efilename_copy = efilename;
+//    QStringList efilename_copy_list = efilename_copy.split(".");
+
+//    rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
+//                + efilename_copy_list[3] + "."
+//                + efilename_copy_list[4] + "."
+//                + efilename_copy_list[5] + ".auc";
+
+//    QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
+//    //do we need to check for existance ?
+//    db->readBlobFromDB( rfilepath, "download_aucData", rID );
+
+//    qApp->processEvents();
+
+//    qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
+
+//    //Put downloaded data in memory:
+//    QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/";
+//    US_DataIO::loadData( uresdir, efilename, editedData, rawData );
+
+//    eID_global = eID;
+
+//    qDebug() << "END of loadData(), eID_global: " << eID_global;
+
+    return true;
+}
+
+bool US_QueryRmsd::loadNoises(){
+    if (! check_connection())
+        return false;
+
+    QVector<int> mlist;
+
+    for (int i = 0; i < allModelIDs.size(); i++){
+        int mId = allModelIDs.at(i);
+        if (mlist.contains(mId))
+            continue;
+        mlist << mId;
+
+        // get noiseIDs, types & lastUpd by modelID
+        QStringList query;
+        query << "get_noiseTypesIDs" << QString::number(mId);
+        dbCon->query( query );
+
+        qDebug() << "In loadNoises() Query: " << query;
+
+        int latest_update_time_ti = 1e100;
+        int latest_update_time_ri = 1e100;
+        int nID_ti=0;
+        int nID_ri=0;
+
+        while ( dbCon->next() ){
+            int       noiseID        = dbCon->value( 0 ).toInt();
+            QString   noiseType      = dbCon->value( 1 ).toString();
+            //QString  date                = US_Util::toUTCDatetimeText( db->value( 2 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+            QDateTime date          = dbCon->value( 2 ).toDateTime();
+
+            QDateTime now = QDateTime::currentDateTime();
+
+            qDebug() << "Noises: noiseID, noiseType, date -- " << noiseID << noiseType << date;
+
+            if ( noiseType.contains( "ti_" ) )
+            {
+                int time_to_now = date.secsTo(now);
+                if ( time_to_now < latest_update_time_ti )
+                {
+                    latest_update_time_ti = time_to_now;
+
+                    nID_ti       = noiseID;
+                }
+            }
+            if ( noiseType.contains( "ri_" ) )
+            {
+                int time_to_now = date.secsTo(now);
+                if ( time_to_now < latest_update_time_ri )
+                {
+                    latest_update_time_ri = time_to_now;
+
+                    nID_ri       = noiseID;
+                }
+            }
+        }
+
+        US_Noise *ri_noise = new US_Noise();
+        US_Noise *ti_noise = new US_Noise();
+
+        //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
+        //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
+        //void US_FeMatch::load_noise( ) in us_fematch.cpp
+//        if ( !nID_ti && !nID_ri )
+//            loadNoises_whenAbsent();
+
+        //creare US_noise objects
+        if ( nID_ti )
+        {
+            ti_noise->load( QString::number( nID_ti ), dbCon );
+            qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
+        }
+        if ( nID_ri )
+        {
+            ri_noise->load( QString::number( nID_ri ), dbCon );
+            qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
+        }
+
+        // noise loaded:  insure that counts jive with data
+        int ntinois = ti_noise->values.size();
+        int nrinois = ri_noise->values.size();
+        int nscans  = editData[allEditIds.at(i)].scanCount();
+        int npoints  = editData[allEditIds.at(i)].pointCount();
+        int npadded = 0;
+
+
+        qDebug() << "ti_noise.count, ri_noise.count: " <<  ti_noise->count << ri_noise->count;
+        qDebug() << "ti_noise.values.size(), ri_noise.values.size(): " << ti_noise->values.size() << ri_noise->values.size();
+
+        if ( ntinois > 0  &&  ntinois < npoints )
+        {  // pad out ti noise values to radius count
+            int jj      = ntinois;
+            while ( jj++ < npoints )
+                ti_noise->values << 0.0;
+            ti_noise->count = ti_noise->values.size();
+            npadded++;
+        }
+
+        if ( nrinois > 0  &&  nrinois < nscans )
+        {  // pad out ri noise values to scan count
+            int jj      = nrinois;
+            while ( jj++ < nscans )
+                ri_noise->values << 0.0;
+            ri_noise->count = ri_noise->values.size();
+            npadded++;
+        }
+
+        if ( npadded  > 0 )
+        {  // let user know that padding occurred
+            QString pmsg;
+
+            if ( npadded == 1 )
+                pmsg = tr( "The noise file was padded out with zeroes\n"
+                          "in order to match the data range." );
+            else
+                pmsg = tr( "The noise files were padded out with zeroes\n"
+                          "in order to match the data ranges." );
+
+            QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
+        }
+
+        TI_Noise[mId] = ti_noise;
+        RI_Noise[mId] = ri_noise;
+
+    }
+
+
+    return true;
+}
+
 
 bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
     int cc = combo->count();
@@ -233,12 +635,13 @@ bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
 void US_QueryRmsd::set_analysis(int){
     QString edit = cb_edit->currentText();
     analysisList.clear();
-    for(int i = 0; i < allAnalysis.size(); i++) {
-        if (edit.compare(allEdit.at(i)) == 0){
-            QString analysis = allAnalysis.at(i);
-            if (! analysisList.contains(analysis))
-                analysisList << analysis;
-        }
+
+    for(int i = 0; i < n_data; i++) {
+        if (! check_combo_content(cb_edit, edit))
+            continue;
+        QString analysis = allAnalysis.at(i);
+        if (! analysisList.contains(analysis))
+            analysisList << analysis;
     }
     analysisList.sort();
     cb_analysis->disconnect();
@@ -253,12 +656,12 @@ void US_QueryRmsd::set_analysis(int){
 }
 
 void US_QueryRmsd:: set_method(int){
-
     methodList.clear();
-    for(int i = 0; i < allAnalysis.size(); i++) {
+
+    for(int i = 0; i < n_data; i++) {
         QString edit = allEdit.at(i);
         QString analysis = allAnalysis.at(i);
-        if (edit.compare(cb_edit->currentText()) != 0)
+        if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
             continue;
@@ -283,11 +686,11 @@ void US_QueryRmsd::set_triple(int){
     channelList.clear();
     lambdaList.clear();
 
-    for (int i = 0; i < allRmsd.size(); i++){
+    for (int i = 0; i < n_data; i++){
         QString edit = allEdit.at(i);
         QString analysis = allAnalysis.at(i);
         QString method = allMethod.at(i);
-        if (edit.compare(cb_edit->currentText()) != 0)
+        if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
             continue;
@@ -344,11 +747,11 @@ void US_QueryRmsd::fill_table(int){
     QFontMetrics* fm = new QFontMetrics( tw_font );
     int rowht        = fm->height() + 2;
     tw_rmsd->clearContents();
-    tw_rmsd->setSortingEnabled( true );
     tw_rmsd->setRowCount(allRmsd.size());
 
+    selIndex.clear();
     int n = 0;
-    for (int i = 0; i < allRmsd.size(); i++){
+    for (int i = 0; i < n_data; i++){
         double rmsd = allRmsd.at(i);
         QString edit = allEdit.at(i);
         QString analysis = allAnalysis.at(i);
@@ -356,8 +759,8 @@ void US_QueryRmsd::fill_table(int){
         QString cell = allCell.at(i);
         QString channel = allChannel.at(i);
         QString lambda = allLambda.at(i);
-        QString desc = tr("%1%2%3_%4_%5").arg(cell, channel,lambda, method, analysis);
-        if (edit.compare(cb_edit->currentText()) != 0)
+        QString triple = tr("%1%2%3").arg(cell, channel,lambda);
+        if (! check_combo_content(cb_edit, edit))
             continue;
         if (! check_combo_content(cb_analysis, analysis))
             continue;
@@ -369,18 +772,33 @@ void US_QueryRmsd::fill_table(int){
             continue;
         if (! check_combo_content(cb_lambda, lambda))
             continue;
-
+        selIndex << i;
         QTableWidgetItem *twi;
-
-        twi = new QTableWidgetItem(desc);
+        twi = new QTableWidgetItem(edit);
         twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 0, twi);
 
-        twi = new QTableWidgetItem(QString::number(rmsd));
+        twi = new QTableWidgetItem(analysis);
         twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
         twi->setFont(tw_font);
         tw_rmsd->setItem(n, 1, twi);
+
+        twi = new QTableWidgetItem(method);
+        twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
+        twi->setFont(tw_font);
+        tw_rmsd->setItem(n, 2, twi);
+
+        twi = new QTableWidgetItem(triple);
+        twi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
+        twi->setFont(tw_font);
+        tw_rmsd->setItem(n, 3, twi);
+
+        DoubleTableWidgetItem *dtwi = new DoubleTableWidgetItem(rmsd);
+        dtwi->setData(Qt::EditRole, QVariant(rmsd));
+        dtwi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
+        dtwi->setFont(tw_font);
+        tw_rmsd->setItem(n, 4, dtwi);
 
         tw_rmsd->setRowHeight(n, rowht);
         n++;
@@ -388,11 +806,14 @@ void US_QueryRmsd::fill_table(int){
     tw_rmsd->setRowCount(n);
     tw_rmsd->verticalHeader()->setFont(tw_font);
     tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    tw_rmsd->sortItems(2, Qt::DescendingOrder);
-    QTableWidgetItem *item = tw_rmsd->item(0, 0);
-    item->setBackground(Qt::yellow);
-    item = tw_rmsd->item(0, 1);
-    item->setBackground(Qt::yellow);
+    tw_rmsd->setSortingEnabled( true );
+    tw_rmsd->sortItems(4, Qt::DescendingOrder);
+    if (threshold == -1){
+        DoubleTableWidgetItem *item = static_cast<DoubleTableWidgetItem*>(tw_rmsd->item(0, 4));
+        threshold = item->get_value();
+        le_threshold->setText(QString::number(threshold));
+    }
+    highlight();
 
     QString fname("RMSD_%1_%2_%3_%4-%5-%6.dat");
     le_file->setText(fname.arg(cb_edit->currentText(), cb_analysis->currentText(),
@@ -403,6 +824,7 @@ void US_QueryRmsd::fill_table(int){
 
 void US_QueryRmsd::save_data(){
     int nRows = tw_rmsd->rowCount();
+    int nCol = tw_rmsd->columnCount();
     if( nRows == 0){
         QMessageBox::warning(this, tr("Warning!"), tr("RMSD data not found!"));
         return;
@@ -423,13 +845,68 @@ void US_QueryRmsd::save_data(){
     QFile file{finfo.absoluteFilePath()};
     if (file.open(QIODevice::WriteOnly)) {
         QTextStream outStream{&file};
-        outStream << tr("Triple_Method_Analysis,RMSD\n");
+        for (int j = 0; j < nCol; j++){
+            QString header = tw_rmsd->horizontalHeaderItem(j)->text();
+            outStream << header;
+            if (j < nCol - 1)
+                outStream << ",";
+            else
+                outStream << "\n";
+        }
         for (int i = 0; i < nRows; i++){
-            QString desc = tw_rmsd->item(i, 0)->text();
-            QString rmsd = tw_rmsd->item(i, 1)->text();
-            outStream << desc << "," << rmsd << "\n";
+            for (int j = 0; j < nCol; j++){
+                outStream << tw_rmsd->item(i, j)->text();
+                if (j < nCol - 1)
+                    outStream << ",";
+                else
+                    outStream << "\n";
+            }
         }
     }
     file.close();
+}
 
+void US_QueryRmsd::simulate(){
+    DbgLv(0) << tw_rmsd->currentColumn();
+    DbgLv(0) << tw_rmsd->currentRow();
+}
+
+void US_QueryRmsd::highlight(){
+    QTableWidgetItem *twi;
+    DoubleTableWidgetItem *dtwi;
+    QColor color;
+    for (int i = 0; i < tw_rmsd->rowCount(); i++){
+        dtwi = static_cast<DoubleTableWidgetItem*>(tw_rmsd->item(i, 4));
+        if (threshold == -1){
+            color = QColor(152,251,152);
+        } else{
+            if (dtwi->get_value() >= threshold)
+                color = QColor(255,250,205);
+            else
+                color = QColor(152,251,152);
+        }
+        dtwi->setBackground(color);
+        for (int j = 0; j < 4; j++){
+            twi = tw_rmsd->item(i, j);
+            twi->setBackground(color);
+        }
+    }
+}
+
+void US_QueryRmsd::new_threshold(){
+    QString text = le_threshold->text();
+    if (text.isEmpty()){
+        threshold = 1e99;
+        highlight();
+        return;
+    }
+    bool ok;
+    double th = text.toDouble(&ok);
+    if (ok){
+        threshold = th;
+    }else{
+        le_threshold->setText(QString::number(threshold));
+        return;
+    }
+    highlight();
 }

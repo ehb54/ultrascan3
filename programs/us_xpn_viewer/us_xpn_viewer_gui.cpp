@@ -2185,13 +2185,27 @@ void US_XpnDataViewer::skip_optima_stage( void )
   
   if (msgBox.clickedButton() == Accept)
     {
+      //Put a reason for a SKIP (comment):
+      bool ok;
+      QString msg = QString(tr("Put a comment describing reason for a SKIP stage:"));
+      QString default_text = QString(tr("Reason for SKIP: "));
+      QString comment_text = QInputDialog::getText( this,
+						    tr( "Reason for SKIP" ),
+						    msg, QLineEdit::Normal, default_text, &ok );
+
+      if ( !ok )
+	{
+	  return;
+	}
+      
+      
       qDebug() << "SKIPPING EXP. STAGE...";
       link->skipOptimaStage();
       
       //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was SKIPPED                        */
-      record_live_update_status( "SKIP", "" );
+      record_live_update_status( "SKIP", comment_text );
       
     }
   else if (msgBox.clickedButton() == Cancel)

@@ -452,6 +452,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
+  optimaName         = protocol_details[ "OptimaName" ] ;
 
   QString full_runname = protocol_details[ "filename" ];
   FullRunName_auto = runName + "-run" + runID;
@@ -1320,6 +1321,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   intensityID        = protocol_details[ "intensityID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
+  optimaName         = protocol_details[ "OptimaName" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -1457,6 +1459,20 @@ void US_ReporterGMP::load_gmp_run ( void )
       				.arg( msg_missing_models) );
     }
 }
+
+
+// //public functions:
+// int US_ReporterGMP::list_all_autoflow_records_pub( QList< QStringList >& autoflowdata )
+// {
+//   return list_all_autoflow_records( autoflowdata );
+// }
+
+// QMap < QString, QString > US_ReporterGMP::read_autoflow_record_pub( int aID )
+// {
+//   return read_autoflow_record( aID );
+// }
+// // END of public functions ///////////////////////////////////////
+
 
 // Query autoflow (history) table for records
 int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdata )
@@ -1624,9 +1640,11 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
-
 	   protocol_details[ "statusID" ]       = db->value( 21 ).toString();
-	   	   
+	   protocol_details[ "failedID" ]       = db->value( 22 ).toString();
+	   protocol_details[ "operatorID" ]     = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]      = db->value( 24 ).toString();
+	   protocol_details[ "gmpReviewID" ]    = db->value( 25 ).toString();	   
 	 }
      }
 
@@ -2894,6 +2912,9 @@ void US_ReporterGMP::generate_report( void )
   //here, add Run Details based on timestamp info (OR timestapms of IP+RI?)
   if ( miscMask_edited. ShowMiscParts[ "Run Details" ] ) 
     assemble_run_details_html( ) ;
+
+  //add trailing </body>\n</html> to part 1
+  html_assembled += "</body>\n</html>";
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -2979,7 +3000,8 @@ void US_ReporterGMP::generate_report( void )
       
     }
   //End of Part 2
-  
+
+  //Create .PDF file && write to Db:
   write_pdf_report( );
   qApp->processEvents();
 
@@ -2990,8 +3012,16 @@ void US_ReporterGMP::generate_report( void )
 
       pb_view_report_auto->setVisible( true );
 
-      //copy autoflow record to autoflowHistory table:
-      //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
+      /******* NOTES *******************************************
+	       
+	       1. For assigned oper/rev/appr. cases (default): 
+	          -- inform user that they are assigned && those assignees will re-attach later;
+		  -- do NOT let to proceed to 7. e-Signatures
+		  -- still enable to View GMP Report
+		  -- update autoflow's status to 'E-SIGNATURE'
+      ************************************************************/
+
+      //Update autoflow status to 'E-SIGNATURES':
       US_Passwd   pw;
       US_DB2* db = new US_DB2( pw.getPasswd() );
       
@@ -3002,11 +3032,31 @@ void US_ReporterGMP::generate_report( void )
 				    tr( "DB Connection Problem" ),
 				    tr( "AutoflowHistory: there was an error connecting to the database:\n" )
 				    + db->lastError() );
-	  
+	  	  return;
+	}
+      
+      QStringList qry;
+      qry << "update_autoflow_at_report"
+	  << runID
+	  << optimaName;
+      //db->query( qry );
+      
+      int status = db->statusQuery( qry );
+      
+      if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+	{
+	  QMessageBox::warning( this,
+				tr( "Autoflow Record Not Updated" ),
+				tr( "No autoflow record\n"
+				    "associated with this experiment." ) );
 	  return;
 	}
-
-      QStringList qry;
+      
+      /************************************************************************/
+      //copy autoflow record to autoflowHistory table:
+      //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
+      
+      qry. clear();
       qry << "new_autoflow_history_record" << AutoflowID_auto;
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
@@ -3016,19 +3066,20 @@ void US_ReporterGMP::generate_report( void )
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
 
-      //Also delete record from autoflowStages table:
-      qry.clear();
-      qry << "delete_autoflow_stages_record" << AutoflowID_auto;
-      db->statusQuery( qry );
+      // //Also delete record from autoflowStages table:           //DO NOT DELETE autoflowStages yet - req. by eSigning process!!
+      // qry.clear();
+      // qry << "delete_autoflow_stages_record" << AutoflowID_auto;
+      // db->statusQuery( qry );
+      // //END of copy to History, deletion of primary autoflow record
+      /***************************************************************************/
 
-      //END of copy to History, deletion of primary autoflow record
-      
-      
       //Inform user of the PDF location
       QMessageBox msgBox_a;
       msgBox_a.setText(tr("Report PDF Ready!"));
       msgBox_a.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
-				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom.")
+				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
+				      "\n\n"
+				      "Reviwer(s) of the current GMP report will be notified.")
 				  .arg( filePath ) );
 				    
       msgBox_a.setWindowTitle(tr("Report Generation Complete"));
@@ -5420,7 +5471,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   //EDITING & ANALYSIS
   QMap < QString, QString > data_types_edit;
   QMap < QString, QString > data_types_edit_ts;
-  QString editRIJson, editIPJson, editRIts, editIPts, analysisJson;
+  QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
   
   // //TEMP: DEBUG
   // importRIJson =
@@ -5442,7 +5493,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   //read autoflowStatus record:
   read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
 			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
-			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats); 
+			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
+			      analysisCancelJson); 
   /////////////////////////////
 
   QMap < QString, QString >::iterator im;
@@ -5477,10 +5529,10 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       html_assembled += tr(
 			   "<table>"		   
 			   "<tr>"
-			      "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			        "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
 			   "</tr>"
 			   "</table>"
-			)
+			   )
 	.arg( dtype_opt )                       //1
 	;
 
@@ -5654,7 +5706,35 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			       );
 			       
 	}
-      
+
+      //Add comments for Dropped triples|channels|select channels (if any):
+      if ( status_map. contains("Dropped") )
+	{
+	  //iterate over comments for different types of dropping operations:
+	  html_assembled += tr(
+			       "<table style=\"margin-left:10px\">"
+			       "<caption align=left> <b><i>Comments on [triples | channels | select channel] dropped: </i></b> </caption>"
+			       "</table>"
+			       
+			       "<table style=\"margin-left:25px\">"
+			       )
+	    ;
+	  
+	  QMap < QString, QString >::iterator dr;
+	  for ( dr = status_map[ "Dropped" ].begin(); dr != status_map[ "Dropped" ].end(); ++dr )
+	    {
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Dropped:     %1 </td>"
+				   "<td> Comment:     %2 </td>"
+				   "</tr>"
+				   )
+		.arg( dr.key()   )     //1
+		.arg( dr.value() )     //2
+		;
+	    }
+	  html_assembled += tr( "</table>" );
+	}
     }
    
   html_assembled += tr("<hr>");
@@ -5760,9 +5840,10 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr("<hr>");
 
   //5. ANALYSIS
-  html_assembled += tr( "<h3 align=left>Meniscus Position: Fit vs. Manual Adjustment (5. ANALYSIS: FITMEN stage)</h3>" );
+  html_assembled += tr( "<h3 align=left>Meniscus Position from FITMEN Stage, Job Cancellation (5. ANALYSIS)</h3>" );
 
-  QMap < QString, QString > analysis_status_map = parse_autoflowStatus_analysis_json( analysisJson );
+  QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
+  QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
 
   if ( !cAP2.job3auto ) // interactive FITMEN (manual)
     {
@@ -5816,6 +5897,67 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     {
       html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
     }
+
+  
+  //Now add info on the CANCELED Jobs as captured in DB:
+  html_assembled += tr(
+			"<table style=\"margin-left:10px\">"
+			"<caption align=left> <b><i>Information on CANCELED analysis jobs: </i></b> </caption>"
+			"</table>"
+			
+			"<table style=\"margin-left:25px\">"
+		       )
+    ;
+  
+  if ( !analysisCancelJson. isEmpty() )
+    {
+      QMap < QString, QString >::iterator cj;
+      for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
+	{
+	  
+	  QString cj_value                 = cj.value();
+	  QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
+	  
+	  QString performed_by, reason, when;
+	  if ( performed_by_reason_time.contains(";") )
+	    {
+	      performed_by      = performed_by_reason_time.split(";")[0];
+	      reason            = performed_by_reason_time.split(";")[1];
+	      when              = performed_by_reason_time.split(";")[2];  
+	    }
+	  else
+	    {
+	      performed_by = performed_by_reason_time;
+	      reason       = "N/A";
+	      when         = "N/A";
+	    }
+	  html_assembled += tr(			       
+			       "<tr>"
+			       "<td> Jobs Canceled for:  %1, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Jobs Canceled by:   %2, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Reason:             %3, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> When:               %4  </td>"
+			       "</tr>"
+						       )
+	    .arg( cj.key()   )      //1
+	    .arg( performed_by )    //2
+	    .arg( reason )          //3
+	    .arg( when )            //4
+	    ;
+	}
+    }
+  else
+    {
+      html_assembled += tr( "No CANCELLED jobs." );
+    }
+  
+  html_assembled += tr( "</table>" );
   
   html_assembled += tr("<hr>");
   //
@@ -5957,7 +6099,8 @@ bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QSt
 //read autoflowStatus, populate internals
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
 						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson,
-						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats )
+						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats,
+						 QString& analysisCancelJson)
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -5972,6 +6115,7 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   stopOptimats  . clear();
   skipOptimaJson. clear();
   skipOptimats  . clear();
+  analysisCancelJson. clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -6009,6 +6153,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 
 	  skipOptimaJson = db.value( 11 ).toString();
 	  skipOptimats   = db.value( 12 ).toString();
+
+	  analysisCancelJson = db.value( 13 ).toString();
 	}
     }
 
@@ -6080,6 +6226,26 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	  status_map[ key ][ "type" ] = value.toString();
 	}
 
+      if ( key == "Dropped" )   // import: Dropped triples/channels/select channels operaitons 
+	{	  
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > dropped_map;
+	  
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  dropped_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		  qDebug() << "Dropped Map: -- key, value: "
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+
+	  status_map[ key ] = dropped_map;
+	}
+      
+
       if ( key == "Meniscus" )   //edit  
 	{	  
 	  QJsonArray json_array = value.toArray();
@@ -6121,6 +6287,7 @@ void  US_ReporterGMP::assemble_distrib_html( QMap < QString, QString> & tripleIn
   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
   html_assembled += distrib_info( tripleInfo );
   html_assembled += "</p>\n";
+  html_assembled += "</body></html>";
 }
 
 
@@ -6131,6 +6298,7 @@ void  US_ReporterGMP::assemble_replicate_av_integration_html( void )
   html_assembled += "<p class=\"pagebreak \">\n";
   html_assembled += calc_replicates_averages();
   html_assembled += "</p>\n";
+  
 }
 
 //output HTML plots for currentTriple
@@ -6158,7 +6326,8 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
 
       if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
 	html_assembled  += "\"height=\"500\" width=\"500";
-
+	
+	
       html_assembled   += "\"/></div>\n\n";
       
       html_assembled   += "<br>";
@@ -8424,9 +8593,20 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   rptpage  += "    {\n";
   rptpage  += "      font-family: monospace;\n";
   rptpage  += "    }\n";
+
+  //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
+  //rptpage  += "   footer { position: absolute; bottom: 0; }";
+  
+  // rptpage  += "  div.footer { display: block; text-align: center;  position: running(footer);";
+  // rptpage  += "  @page { @bottom-center { content: element(footer) }}";
+  
   rptpage  += "  </style>\n";
   rptpage  += "  </head>\n  <body>\n";
-   
+
+  //rptpage  += "  <footer> This is the text that goes at the bottom of every page. </footer>\n";
+  //rptpage  += " <div class='footer'>Footer</div>";
+
+  
   
   //HEADER: begin
   QString html_header = QString("");
@@ -9414,13 +9594,6 @@ void US_ReporterGMP::write_pdf_report( void )
     ;
   
   html_assembled += html_footer;
-   
-  QTextDocument document;
-  document.setHtml( html_assembled );
-  
-  QPrinter printer(QPrinter::PrinterResolution);
-  printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
 
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -9430,11 +9603,42 @@ void US_ReporterGMP::write_pdf_report( void )
   //filePath  = US_Settings::tmpDir() + "/" + fileName;
   filePath  = dirName + "/" + fileName;
   
+  // //Standard way if printing: ******************************/
+  // QTextDocument document;
+  // document.setHtml( html_assembled );
+  
+  // QPrinter printer(QPrinter::PrinterResolution);
+  // printer.setOutputFormat(QPrinter::PdfFormat);
+  // printer.setPaperSize(QPrinter::Letter);
+
+  // printer.setOutputFileName( filePath );
+  // printer.setFullPage(true);
+  // printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+    
+  // document.print(&printer);
+  /** END of standard way of printing *************************/
+
+
+  /** ALT. painting ********************************************/
+
+  QTextDocument textDocument;
+  textDocument.setHtml( html_assembled );
+
+  qDebug() << "Default QtextDoc font: " << textDocument.defaultFont();
+  QFont t_f = textDocument.defaultFont();
+  t_f. setPointSize( 7 );
+  textDocument. setDefaultFont( t_f );
+  
+  QPrinter printer(QPrinter::PrinterResolution);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setPaperSize(QPrinter::Letter);
+
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
-  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
-    
-  document.print(&printer);
+
+  printDocument(printer, &textDocument ); //, 0);
+  
+  /*************************************************************/
 
   qApp->processEvents();
 
@@ -9498,6 +9702,100 @@ void US_ReporterGMP::write_pdf_report( void )
       QFile::remove( tar_path );
     }
 }
+
+
+double US_ReporterGMP::mmToPixels(QPrinter& printer, int mm)
+{
+  return mm * 0.039370147 * printer.resolution();
+}
+
+void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QWidget* parentWidget)
+{
+  int textMargins = 12; // in millimeters
+  
+  QPainter painter( &printer );
+  QSizeF pageSize = printer.pageRect().size(); // page size in pixels
+  // Calculate the rectangle where to lay out the text
+  const double tm = mmToPixels(printer, textMargins);
+  const qreal footerHeight = painter.fontMetrics().height();
+  const QRectF textRect(tm, tm, pageSize.width() - 2 * tm, pageSize.height() - 2 * tm - footerHeight);
+  qDebug() << "textRect=, width, height: " << textRect << textRect.width() << textRect.height();
+  qDebug() << "footerHeigh: " << footerHeight;
+  doc->setPageSize(textRect.size());
+  
+  const int pageCount = doc->pageCount();
+  // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
+  // dialog.setWindowModality( Qt::ApplicationModal );
+  
+  bool firstPage = true;
+  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
+  //   dialog.setValue( pageIndex );
+  //   if (dialog.wasCanceled())
+  //     break;
+    
+    if (!firstPage)
+      printer.newPage();
+    
+    paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
+    firstPage = false;
+  }
+}
+
+
+void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
+			       QPainter* painter, QTextDocument* doc,
+			       const QRectF& textRect, qreal footerHeight )
+{
+  int borderMargins = 10;  // in millimeters
+  qDebug() << "Printing page" << pageNumber;
+  const QSizeF pageSize = printer.paperRect().size();
+  qDebug() << "pageSize=" << pageSize;
+  
+  const double bm = mmToPixels(printer, borderMargins);
+  const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
+  //painter->drawRect(borderRect);
+  
+  painter->save();
+  // textPageRect is the rectangle in the coordinate system of the QTextDocument, in pixels,
+  // and starting at (0,0) for the first page. Second page is at y=doc->pageSize().height().
+  const QRectF textPageRect(0, pageNumber * doc->pageSize().height(), doc->pageSize().width(), doc->pageSize().height());
+  // Clip the drawing so that the text of the other pages doesn't appear in the margins
+  painter->setClipRect(textRect);
+  // Translate so that 0,0 is now the page corner
+  painter->translate(0, -textPageRect.top());
+  // Translate so that 0,0 is the text rect corner
+  painter->translate(textRect.left(), textRect.top());
+
+  // qDebug() << "Painter's settings: font, metrics -- "
+  // 	   << painter->fontMetrics()
+  // 	   << painter->fontInfo()
+  // 	   << painter->font();
+
+  qDebug() << "Painter's settings: font, metrics -- "
+	   << painter->fontInfo().family()
+	   << painter->fontInfo().pointSizeF()
+	   << painter->fontInfo().pointSize();
+  
+  doc->drawContents(painter);
+  painter->restore();
+  
+  // Footer: e-Signer comment && page number
+  QRectF footerRect = textRect;
+  footerRect.setTop(textRect.bottom());
+  footerRect.setHeight( 2*footerHeight);
+
+  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers 1\n"
+							   "Footer to be passed by e-Signers 2"));
+  painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+
+  // Footer: page number or "end"
+  // if (pageNumber == pageCount - 1)
+  //   painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers"));
+  // else
+  //   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+}
+
+
 
 //write GMP report to DB
 void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf )

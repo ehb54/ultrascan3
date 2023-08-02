@@ -41,6 +41,7 @@ private slots:
     void slt_prev_id(void);
     void slt_next_id(void);
     void slt_plot(void);
+    void slt_channelBlanking(int);
     void slt_load_refScans(void);
     void slt_update_scrng(double);
     void slt_zeroing(int);
@@ -97,10 +98,13 @@ private:
     QwtCounter* ct_scan_u;
     QwtCounter* ct_smooth;
 
+    QFrame *frm_refScan;
+
     QListWidget* lw_triple;
+    QCheckBox *ckb_channelBlanking;
     QCheckBox *ckb_zeroing;
     QCheckBox *ckb_xrange;
-    QCheckBox *ckb_CAC;
+    QCheckBox *ckb_ChroAberCorr;
     US_Disk_DB_Controls* diskDB_ctrl;
 
     CCW ccwList;
@@ -135,13 +139,14 @@ private:
     void plot_refscan(void);
     void plot_absorbance(void);
     void set_scan_ct(void);
-    void get_absorbance(int, int, bool buffer);
+    void get_pseudo_absorbance(int, int, bool buffer);
+    void get_absorbance(int, int);
     void get_intensity(int);
     bool get_refId(double);
     void set_buffer_list(void);
     void get_relative_absorbance(int);
     void trim_absorbance(void);
-    QVector<double> get_smooth(QVector<double>, int, bool);
+    QVector<double> get_smooth(QVector<double>, int, bool, bool);
     void load_from_DB(void);
     void uncheck_CA_silently(void);
 };

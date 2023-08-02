@@ -255,6 +255,7 @@ class US_Analysis_auto : public US_Widgets
 	 
 	 void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
          void record_or_update_analysis_meniscus_status ( US_DB2*, QString, QString );
+         void record_or_update_analysis_cancel_status ( US_DB2*, QString, QString, QString );
 
 	 void update_autoflowAnalysis_uponDeletion ( US_DB2*, const QString& );
 	 void update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2*, const QStringList& );

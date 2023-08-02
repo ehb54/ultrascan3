@@ -101,9 +101,9 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
   connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
- connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
+  connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
- connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
+  connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );  
    
   qDebug() << "Report params on load: tot_conc, conc_tol, duraiton, duration_tol -- "

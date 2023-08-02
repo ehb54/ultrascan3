@@ -347,12 +347,16 @@ US_ViewSpectrum::US_ViewSpectrum(QMap<double,double>& tmp_extinction) : US_Widge
   data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
 
   us_grid(data_plot);
+
+  QPushButton *pb_save = us_pushbutton(tr("Save to CSV"));
+  connect(pb_save, SIGNAL(clicked()), this, SLOT(save_csv()));
    
   QGridLayout* main;
   main = new QGridLayout(this);
   main->setSpacing(2);
-  //main->setContentsMargins(2,2,2,2);
-  main->addLayout(plotLayout, 0, 1);
+  main->setContentsMargins(0,0,0,0);
+  main->addLayout(plotLayout, 0, 0, 1, 8);
+  main->addWidget(pb_save,    1, 6, 1, 2);
 
   plot_extinction();
 
@@ -381,4 +385,36 @@ void US_ViewSpectrum::plot_extinction()
   spectrum->setSymbol(symbol);    
   spectrum->setSamples( x.data(), y.data(), (int) x.size() );
   data_plot->replot();
+}
+
+void US_ViewSpectrum::save_csv(){
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                                  US_Settings::reportDir(),
+                                                  tr("CSV (*.csv)"));
+  if (fileName.isEmpty()) return;
+
+  if (! (fileName.endsWith(".csv") or fileName.endsWith(".CSV"))) {
+    fileName.append(".csv");
+  }  
+
+  QVector <double> x;
+  QVector <double> y;
+
+  QMap<double, double>::iterator it;
+
+  for (it = extinction.begin(); it != extinction.end(); ++it) {
+    x.push_back(it.key());
+    y.push_back(it.value());
+  }
+
+  QFile file{fileName};
+  if (file.open(QIODevice::WriteOnly)) {
+    QTextStream outStream{&file};
+    outStream << tr("Lamda,Data\n");
+    for (int i = 0; i < x.size(); i++){
+        outStream << QString::number(x.at(i)) << ",";
+        outStream << QString::number(y.at(i)) << "\n";
+    }
+  }
+  file.close();
 }

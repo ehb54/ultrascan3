@@ -1272,132 +1272,137 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             last_was_ENDMDL = true;
             if ( temp_chain.atom.size() ) {
                sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+               temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             }
-            temp_model.molecule.push_back(temp_chain); // add the last chain of this model
-            SS_apply( temp_model, QString( "%1_model_%2").arg( project ).arg( temp_model.model_id ) );
-            editor_msg( "black", "\nResidue sequence from " + project +".pdb model " +
+            if (temp_model.molecule.size() ) {
+               temp_model.molecule.push_back(temp_chain); // add the last chain of this model
+               SS_apply( temp_model, QString( "%1_model_%2").arg( project ).arg( temp_model.model_id ) );
+               editor_msg( "black", "\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg( temp_model.model_id ) + ":");
-            str = "";
-            QString sstr = "";
-            int sstr_pos = 0;
+               str = "";
+               QString sstr = "";
+               int sstr_pos = 0;
             
-            map < QString, int > resname_counts_nonwat;
-            map < QString, int > resname_theo_wat;
-            map < QString, int > resname_counts_wat;
-            int resname_counts_nonwat_total = 0;
-            int resname_counts_wat_total    = 0;
+               map < QString, int > resname_counts_nonwat;
+               map < QString, int > resname_theo_wat;
+               map < QString, int > resname_counts_wat;
+               int resname_counts_nonwat_total = 0;
+               int resname_counts_wat_total    = 0;
       
-            double mw_nonwat     = 0e0;
-            double mw_wat        = 0e0;
-            double tot_theo_wat  = 0e0;
+               double mw_nonwat     = 0e0;
+               double mw_wat        = 0e0;
+               double tot_theo_wat  = 0e0;
 
-            // the residue list is wrong if there are unknown residues
-            for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
-            {
-               QString lastResSeq = "";
-               for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
+               // the residue list is wrong if there are unknown residues
+               for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
                {
-                  PDB_atom *this_atom = &(temp_model.molecule[i].atom[j]);
-                  QString resname = this_atom->resName;
-
-                  QString res_idx =
-                     QString("%1|%2")
-                     .arg(this_atom->name != "OXT" ? resname : "OXT" )
-                     .arg(this_atom->name);
-
-                  if ( vdwf.count( res_idx ) ) {
-                     if ( waters.count( resname ) ) {
-                        mw_wat += vdwf[ res_idx ].mw;
-                     } else {
-                        mw_nonwat    += vdwf[ res_idx ].mw;
-                        tot_theo_wat += vdwf[ res_idx ].w;
-                        resname_theo_wat[ resname ] += vdwf[ res_idx ].w;
-                     }
-                  }
-
-                  if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
+                  QString lastResSeq = "";
+                  for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
                   {
-                     if ( waters.count( resname ) ) {
-                        resname_counts_wat[ resname ]++;
-                        resname_counts_wat_total++;
-                     } else {
-                        resname_counts_nonwat[ resname ]++;
-                        resname_counts_nonwat_total++;
+                     PDB_atom *this_atom = &(temp_model.molecule[i].atom[j]);
+                     QString resname = this_atom->resName;
+
+                     QString res_idx =
+                        QString("%1|%2")
+                        .arg(this_atom->name != "OXT" ? resname : "OXT" )
+                        .arg(this_atom->name);
+
+                     if ( vdwf.count( res_idx ) ) {
+                        if ( waters.count( resname ) ) {
+                           mw_wat += vdwf[ res_idx ].mw;
+                        } else {
+                           mw_nonwat    += vdwf[ res_idx ].mw;
+                           tot_theo_wat += vdwf[ res_idx ].w;
+                           resname_theo_wat[ resname ] += vdwf[ res_idx ].w;
+                        }
                      }
 
-                     str += resname + " ";
-                     sstr += 
-                        residue_short_names.count( resname ) ? 
-                        QString(residue_short_names[ resname ] ) : "?"; 
-                     sstr_pos++;
-                     if ( !( sstr_pos % 42 ) )
+                     if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
                      {
-                        sstr += "\n";
+                        if ( waters.count( resname ) ) {
+                           resname_counts_wat[ resname ]++;
+                           resname_counts_wat_total++;
+                        } else {
+                           resname_counts_nonwat[ resname ]++;
+                           resname_counts_nonwat_total++;
+                        }
+
+                        str += resname + " ";
+                        sstr += 
+                           residue_short_names.count( resname ) ? 
+                           QString(residue_short_names[ resname ] ) : "?"; 
+                        sstr_pos++;
+                        if ( !( sstr_pos % 42 ) )
+                        {
+                           sstr += "\n";
+                        }
+                        lastResSeq = temp_model.molecule[i].atom[j].resSeq;
                      }
-                     lastResSeq = temp_model.molecule[i].atom[j].resSeq;
                   }
                }
-            }
-            // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
-            // {
-            //   str += temp_model.residue[m].name + " ";
-            // }
-            editor->append(str);
-            {
-               QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
-               editor_msg( "black", us_tr("\nSequence in one letter code:"));
-               editor_msg( "black", courier, sstr + "\n");
-               editor_msg( "black", courier, "Residue\t count\tpercent\t Theoretical waters\n" );
-               temp_model.hydration_gg = 0;
+               // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+               // {
+               //   str += temp_model.residue[m].name + " ";
+               // }
+               editor->append(str);
+               {
+                  QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
+                  editor_msg( "black", us_tr("\nSequence in one letter code:"));
+                  editor_msg( "black", courier, sstr + "\n");
+                  editor_msg( "black", courier, "Residue\t count\tpercent\t Theoretical waters\n" );
+                  temp_model.hydration_gg = 0;
 
-               if ( resname_counts_nonwat_total ) {
-                  for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
-                        it != resname_counts_nonwat.end();
-                        ++it ) {
-                     editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\n" )
-                                 .arg( it->first )
-                                 .arg( it->second )
-                                 .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
-                                 .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
-                                 );
-                  }
-                  if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
-                     editor_msg( "black", courier, QString( "All\t %1\t%2%\t %3\n" )
-                                 .arg( resname_counts_nonwat_total )
-                                 .arg( 100 )
-                                 .arg( round( tot_theo_wat ) )
-                                 );
-                  }
-
-                  if ( resname_counts_wat_total ) {
-                     editor_msg( "blue", courier, "\nWater\t count\tAvg. Waters\n" );
-                     for ( map < QString, int >::iterator it = resname_counts_wat.begin();
-                           it != resname_counts_wat.end();
+                  if ( resname_counts_nonwat_total ) {
+                     for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
+                           it != resname_counts_nonwat.end();
                            ++it ) {
-                        editor_msg( "blue", courier, QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg(  (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                        editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\n" )
+                                    .arg( it->first )
+                                    .arg( it->second )
+                                    .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
+                                    .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                                    );
                      }
-                     if ( resname_counts_wat_total && resname_counts_wat.size() > 1 ) {
-                        editor_msg( "blue", courier, QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                     if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
+                        editor_msg( "black", courier, QString( "All\t %1\t%2%\t %3\n" )
+                                    .arg( resname_counts_nonwat_total )
+                                    .arg( 100 )
+                                    .arg( round( tot_theo_wat ) )
+                                    );
                      }
+
+                     if ( resname_counts_wat_total ) {
+                        editor_msg( "blue", courier, "\nWater\t count\tAvg. Waters\n" );
+                        for ( map < QString, int >::iterator it = resname_counts_wat.begin();
+                              it != resname_counts_wat.end();
+                              ++it ) {
+                           editor_msg( "blue", courier, QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg(  (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                        }
+                        if ( resname_counts_wat_total && resname_counts_wat.size() > 1 ) {
+                           editor_msg( "blue", courier, QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                        }
+                     }
+                     if ( mw_nonwat ) {
+                        if ( mw_wat ) {
+                           temp_model.hydration_gg = mw_wat / mw_nonwat;
+                           editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+                        } else if ( tot_theo_wat ) {
+                           temp_model.hydration_gg = tot_theo_wat * 18.01528 / mw_nonwat;
+                           editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
+                        }
+                     }
+                     temp_model.hydration = tot_theo_wat;
                   }
-                  if ( mw_nonwat ) {
-                     if ( mw_wat ) {
-                        temp_model.hydration_gg = mw_wat / mw_nonwat;
-                        editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
-                     } else if ( tot_theo_wat ) {
-                        temp_model.hydration_gg = tot_theo_wat * 18.01528 / mw_nonwat;
-                        editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
-                     }
-                  }
-                  temp_model.hydration = tot_theo_wat;
+                  editor_msg( "black", "\n" );
                }
-               editor_msg( "black", "\n" );
-            }
-            qApp->processEvents();
+               qApp->processEvents();
             
-            // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
-            calc_vbar(&temp_model); // update the calculated vbar for this model
-            model_vector.push_back(temp_model); // save the model in the model vector.
+               // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
+               calc_vbar(&temp_model); // update the calculated vbar for this model
+               model_vector.push_back(temp_model); // save the model in the model vector.
+            } else {
+               editor_msg( "dark red", QString( us_tr( "Warning: Empty model in PDB ignored\n" ) ) );
+            }
             clear_temp_chain(&temp_chain); // we are done with this molecule and can delete it
          }
          if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER

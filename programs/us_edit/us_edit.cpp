@@ -312,7 +312,7 @@ pb_plateau->setVisible(false);
 
    //pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    pb_write       = us_pushbutton( tr( "Save Edit Profiles" ), false );
-   pb_emanual     = us_pushbutton( tr( "Edit Profiles Manually" ), false );
+   pb_emanual     = us_pushbutton( tr( "Edit Currently Selected Profile Manually" ), false );
    
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
@@ -698,14 +698,20 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("HuberS_bCAll-DNSA_012623");
    // details[ "statusID" ]     = QString("116");
    // details[ "autoflowID" ]   = QString("814");
-   
+
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("AAV396_CsCl-46kRpm_21APRIL23-run1916");
+   // details[ "protocolName" ] = QString("AAV396_CsCl-46kRpm_21APRIL23");
+   // details[ "statusID" ]     = QString("148");
+   // details[ "autoflowID" ]   = QString("866");
+
    // load_auto( details );
   
 }
 
 
 // AUTO: Constructor for manual processing 
-US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir  ) : US_Widgets()
+US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir, int currenChtInd ) : US_Widgets()
 {
  
    check        = US_Images::getIcon( US_Images::CHECK );
@@ -884,6 +890,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
+
+
 
    // Edit controls 
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
@@ -1094,7 +1102,7 @@ pb_plateau->setVisible(false);
    // buttons->addWidget( pb_accept );
 
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
-   pb_pass    = us_pushbutton( tr( "Accept" ), false );
+   pb_pass    = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
    
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( close()  ) );
    connect( pb_pass,   SIGNAL( clicked()    ),
@@ -1105,8 +1113,9 @@ pb_plateau->setVisible(false);
 
 
 
-   // -- Hide some buttons ----
-      
+   // -- Hide && || disable some buttons ----
+
+   cb_triple      -> setEnabled( false );
    pb_investigator->hide();
    le_investigator->hide();
    pb_load        ->hide(); 
@@ -1114,7 +1123,7 @@ pb_plateau->setVisible(false);
    pb_report      ->hide();
    lb_gaps        ->hide();
    ct_gaps        ->hide();
-
+   pb_nextChan    ->hide();
    
    lb_scan        ->hide();
    lb_from        ->hide();
@@ -1143,31 +1152,6 @@ pb_plateau->setVisible(false);
    // pb_reset       ->hide();
    // pb_help        ->hide();
    // pb_accept      ->hide();
-
-   //MWL
-   lb_mwlctl      ->hide();
-   lb_ldelta      ->hide();
-   ct_ldelta      ->hide();
-   lb_lstart      ->hide();
-   lb_lend        ->hide();
-   lb_lplot       ->hide();
-   cb_lplot       ->hide();
-   cb_lstart      ->hide();
-   cb_lend        ->hide();
-   le_ltrng       ->hide();
-   le_lxrng       ->hide();
-   pb_custom      ->hide();
-   pb_incall      ->hide();
-   pb_larrow      ->hide();
-   pb_rarrow      ->hide();
-   //lo_writemwl    ->hide();
-   ck_writemwl    ->hide();
-   	 
-   rb_lrange      ->hide();
-   rb_custom      ->hide();
-   rb_radius      ->hide();
-   rb_waveln      ->hide();
-   
    
    //---------------------
    
@@ -1208,6 +1192,12 @@ pb_plateau->setVisible(false);
    this->triples    = triples;
    this->workingDir = workingDir;
    load_manual_auto();
+
+   //pre-select channel passed from main window:
+   cb_triple->setCurrentIndex( currenChtInd );
+   new_triple( currenChtInd );
+
+   show_mwl_controls( false );
 }
 
 
@@ -2100,6 +2090,7 @@ void US_Edit::process_optics_auto( )
   editProfile.clear();
   editProfile_scans_excl.clear();
   automatic_meniscus.clear();
+  manual_edit_comments. clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
@@ -8153,7 +8144,8 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 // Call manuall editor
 void US_Edit::manual_edit_auto( void )
 {
-  sdiag = new US_Edit( allData, triples, workingDir );
+  int currChIndex = cb_triple->currentIndex();
+  sdiag = new US_Edit( allData, triples, workingDir, currChIndex );
   /** The following will block parent windows from closing BUT not from continuing timer execution ***/
   sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   sdiag->setWindowModality(Qt::ApplicationModal);
@@ -8161,7 +8153,7 @@ void US_Edit::manual_edit_auto( void )
 
   connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
 	   this,  SLOT( update_triple_edit_params (  QMap < QString, QStringList > &) ) );
-  
+
   sdiag->show();
 }
 
@@ -8176,6 +8168,22 @@ void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edi
   qDebug() << "In update_triple_edit_params: editProfile[ t_name ] -- " << editProfile[ t_name ];
 
   automatic_meniscus[ t_name ] = false;
+
+  //Put a comment, why this triple was processed manually
+  bool ok;
+  QString msg = QString(tr("Put a comment on MANUAL editing :"));
+  QString default_text = QString(tr("Reason for MANUAL editing: "));
+  QString comment_t    = QInputDialog::getText( this,
+						tr( "Reason for MANUAL editing" ),
+						msg, QLineEdit::Normal, default_text, &ok );
+  
+  if ( !ok )
+    {
+      return;
+    }
+
+  manual_edit_comments[ t_name ] = comment_t;
+  ///////////////////////////////////////////////////////
 
   new_triple_auto( 0 ); 
 }
@@ -8699,7 +8707,14 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
     {
       QString meniscus_method = os.value() ? QString("automated") : QString("manual");
       
-      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method     + "\",";
+      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method;
+
+      if ( !os.value() )
+	{
+	  editRI_IP_Json += ", Comment: " + manual_edit_comments[ os.key() ] + "\",";
+	}
+      else
+	editRI_IP_Json += "\",";
     }
   
   editRI_IP_Json.chop(1);

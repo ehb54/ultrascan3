@@ -2783,7 +2783,8 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
    bn_modana->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
-   us_setReadOnly( le_descrip, false );
+   //us_setReadOnly( le_descrip, false );
+   us_setReadOnly( le_descrip, true );
 
    int row = 0;
    main->addWidget( bn_modana,       row++, 0, 1, 8 );

@@ -27,6 +27,7 @@
 
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
 #include "../us_reporter_gmp/us_reporter_gmp.h"
+#include "../us_esigner_gmp/us_esigner_gmp.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"

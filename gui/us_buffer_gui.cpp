@@ -1378,6 +1378,7 @@ void US_BufferGuiNew::manual_flag( bool is_on )
 DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
    us_setReadOnly( le_density, ! is_on );
    us_setReadOnly( le_viscos,  ! is_on );
+   buffer->manual     = is_on;
 }
 
 // Display a spectrum dialog for list/manage
@@ -1500,8 +1501,8 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
-   //us_setReadOnly( le_descrip, true );
-   us_setReadOnly( le_descrip, false );
+   us_setReadOnly( le_descrip, true );
+   //us_setReadOnly( le_descrip, false );
 
    int row = 0;
    main->addWidget( bn_modbuf,       row++, 0, 1, 8 );

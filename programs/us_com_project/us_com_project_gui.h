@@ -6,7 +6,6 @@
 #include <fstream>
 #include <QtSql>
 
-
 #include "../us_xpn_viewer/us_xpn_viewer_gui.h"
 #include "../us_experiment/us_experiment_gui_optima.h"
 #include "../us_convert/us_experiment.h"     
@@ -27,6 +26,7 @@
 
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
 #include "../us_reporter_gmp/us_reporter_gmp.h"
+#include "../us_esigner_gmp/us_esigner_gmp.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
@@ -117,9 +117,10 @@ class US_InitDialogueGui : public US_WidgetsDialog
     //void initRecordsDialogue( void );
     
     int  get_autoflow_records( void );
+    bool isOperRev( int, QString );
     QMap < QString, QString > read_autoflow_record( int );
     QMap < QString, QString > read_autoflow_failed_record( QString );
-    static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
+    int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
     
     void read_optima_machines( US_DB2* = 0 ); 
     QList< QMap<QString, QString> > instruments;
@@ -141,6 +142,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
      void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
      void switch_to_report_init(  QMap < QString, QString > & protocol_details );
+     void switch_to_esign_init(  QMap < QString, QString > & protocol_details );
      void to_initAutoflow( void );
 
 };
@@ -178,6 +180,7 @@ class US_ExperGui : public US_WidgetsDialog
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
+      void to_initAutoflow( void );
       
       
    signals:
@@ -187,6 +190,7 @@ class US_ExperGui : public US_WidgetsDialog
       void to_autoflow_records( void );
       void define_used_instruments( QStringList & );
       //void close_expsetup_msg( void );
+      void switch_to_initAutoflow( void );
 };
 
 
@@ -360,8 +364,36 @@ class US_ReportStageGui : public US_WidgetsDialog
   signals:
     void start_report( QMap < QString, QString > & );
     void reset_reporting_passed ( void );
+    void switch_to_esign( QMap < QString, QString > & );
 };
 
+
+//! \brief eSign panel
+class US_eSignaturesGui: public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_eSignaturesGui( QWidget* );
+    ~US_eSignaturesGui() {};
+  
+     US_eSignaturesGMP*   sdiag;
+    
+  private:
+    US_ComProjectMain*    mainw;      // Parent to all panels
+    int offset;
+
+ protected:
+    void resizeEvent(QResizeEvent *event) override;
+      
+  private slots:
+    void do_esign( QMap < QString, QString > & );
+    void reset_esigning( void );
+
+  signals:
+    void start_esign( QMap < QString, QString > & );
+    void reset_esigning_passed ( void );
+};
 
 
 //! \brief ComProject Main Window
@@ -410,13 +442,14 @@ class US_ComProjectMain : public US_Widgets
   //US_SelectItem* pdiag_autoflow;
     
  private:
-  US_InitDialogueGui*  epanInit;     // US_Init panel
+  US_InitDialogueGui*  epanInit;        // US_Init panel
   US_ExperGui*         epanExp;         // US_Exp panel
   US_ObservGui*        epanObserv;      // US_Observ panel
   US_PostProdGui*      epanPostProd;    // US_PostProd panel
   US_EditingGui*       epanEditing;     // US_Editing panel
   US_AnalysisGui*      epanAnalysis;    // US_Analysis panel
   US_ReportStageGui*   epanReport;      // US_Report panel
+  US_eSignaturesGui*   epanSign;        // electronic signatures 
     
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag
@@ -447,6 +480,7 @@ private slots:
   void switch_to_editing( QMap < QString, QString > & protocol_details );
   void switch_to_analysis( QMap < QString, QString > & protocol_details );
   void switch_to_report( QMap < QString, QString > & protocol_details );
+  void switch_to_esign( QMap < QString, QString > & ); 
   
     
   //void switch_to_experiment( QString & protocolName );
@@ -474,6 +508,7 @@ signals:
   void pass_to_editing( QMap < QString, QString > & protocol_details );
   void pass_to_analysis( QMap < QString, QString > & protocol_details );
   void pass_to_report( QMap < QString, QString > & protocol_details );
+  void pass_to_esign( QMap < QString, QString > & protocol_details );
   
 
   //void clear_experiment( QString & protocolName);
@@ -483,6 +518,7 @@ signals:
   void reset_data_editing( void );
   void reset_live_update( void );
   void reset_reporting( void );
+  void reset_esigning( void );
 };
 
 
