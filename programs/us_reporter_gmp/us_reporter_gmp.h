@@ -1,6 +1,8 @@
 #ifndef US_REPORTER_GMP_H
 #define US_REPORTER_GMP_H
 
+#include <QPrinter>
+
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -555,7 +557,14 @@ class US_ReporterGMP : public US_Widgets
 			   const QString&, const QString&,
 			   const QString&, const QString&,
 			   const QString& ) const;
-	
+
+       void paintPage(QPrinter& printer, int pageNumber, int pageCount,
+       		     QPainter* painter, QTextDocument* doc,
+       		     const QRectF& textRect, qreal footerHeight);
+       void printDocument(QPrinter& printer, QTextDocument* doc);
+                        //QWidget* parentWidget);
+       double mmToPixels(QPrinter& printer, int mm);
+  
 	void    write_plot    ( const QString&, const QwtPlot* );
 	bool    mkdir         ( const QString&, const QString& );
 

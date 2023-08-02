@@ -2358,7 +2358,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
       return;
     }
 
-  // // Using .tar (NOT gzip: .tgz or tar.gz !!!)
+  // Using .tar (NOT gzip: .tgz or tar.gz !!!)
   QProcess *process = new QProcess(this);
   process->setWorkingDirectory( dirName );
   process->start("tar", QStringList() << "-xvf" << GMPReportfname );
@@ -3109,7 +3109,7 @@ void US_eSignaturesGMP::esign_report( void )
       << gmpRunID_eSign;
   db.query( qry );
   
-  //merge original && e-Signatures page??:
+  //merge original && e-Signatures page??: *****************************************************/
   /*** 
        do we need to do this at all?
        do we need to do this ONLY when ALL eSignatures collected??
@@ -3117,7 +3117,13 @@ void US_eSignaturesGMP::esign_report( void )
        do we store eSignatures .PDF separately, in autoflowGMPReportEsign table??
    ***/
 
-  //update le_esing_status:
+  qDebug() << "Extracted .PDF of ORIGINAL GMP Report filepath -- " << filePath_db;
+  qDebug() << ".PDF of the current eSign_filepath -- " << filePath_eSign;
+
+  /********* END of merging .PDFs ***************************************************************/
+  
+  
+  //update esing_status GUI elements:
   QString eSign_status = check_eSign_status_for_gmpReport();
   qDebug() << "Current eSigning Status -- " << eSign_status;
 
@@ -3149,13 +3155,13 @@ void US_eSignaturesGMP::esign_report( void )
   
   //concluding msg:
   QString msg_f = QString( tr("<font color='red'><b>SUCCESS:</b> </font><br><br>"
-			      "Operator | Reviewer | Approver, <br>"
-			      "<b>%1,</b><br>"
+			      "Operator | Reviewer | Approver <br><br>"
+			      "<b>%1</b><br><br>"
 			      "successfully e-Signed GMP report.")
 			   .arg( user_esignee ) );
 			
   if ( eSignStatusAll_updated == "YES" )
-    msg_f += tr("<br><br>All parties e-signed the report!");
+    msg_f += tr("<br><br>All parties e-Signed the report!");
   
   QMessageBox::information( this, tr( "Successful e-Signing" ),
 			    msg_f );

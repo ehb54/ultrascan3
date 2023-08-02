@@ -2912,6 +2912,9 @@ void US_ReporterGMP::generate_report( void )
   //here, add Run Details based on timestamp info (OR timestapms of IP+RI?)
   if ( miscMask_edited. ShowMiscParts[ "Run Details" ] ) 
     assemble_run_details_html( ) ;
+
+  //add trailing </body>\n</html> to part 1
+  html_assembled += "</body>\n</html>";
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -6284,6 +6287,7 @@ void  US_ReporterGMP::assemble_distrib_html( QMap < QString, QString> & tripleIn
   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
   html_assembled += distrib_info( tripleInfo );
   html_assembled += "</p>\n";
+  html_assembled += "</body></html>";
 }
 
 
@@ -6294,6 +6298,7 @@ void  US_ReporterGMP::assemble_replicate_av_integration_html( void )
   html_assembled += "<p class=\"pagebreak \">\n";
   html_assembled += calc_replicates_averages();
   html_assembled += "</p>\n";
+  
 }
 
 //output HTML plots for currentTriple
@@ -6321,7 +6326,8 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
 
       if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
 	html_assembled  += "\"height=\"500\" width=\"500";
-
+	
+	
       html_assembled   += "\"/></div>\n\n";
       
       html_assembled   += "<br>";
@@ -8587,9 +8593,20 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   rptpage  += "    {\n";
   rptpage  += "      font-family: monospace;\n";
   rptpage  += "    }\n";
+
+  //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
+  //rptpage  += "   footer { position: absolute; bottom: 0; }";
+  
+  // rptpage  += "  div.footer { display: block; text-align: center;  position: running(footer);";
+  // rptpage  += "  @page { @bottom-center { content: element(footer) }}";
+  
   rptpage  += "  </style>\n";
   rptpage  += "  </head>\n  <body>\n";
-   
+
+  //rptpage  += "  <footer> This is the text that goes at the bottom of every page. </footer>\n";
+  //rptpage  += " <div class='footer'>Footer</div>";
+
+  
   
   //HEADER: begin
   QString html_header = QString("");
@@ -9577,13 +9594,6 @@ void US_ReporterGMP::write_pdf_report( void )
     ;
   
   html_assembled += html_footer;
-   
-  QTextDocument document;
-  document.setHtml( html_assembled );
-  
-  QPrinter printer(QPrinter::PrinterResolution);
-  printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
 
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -9593,11 +9603,42 @@ void US_ReporterGMP::write_pdf_report( void )
   //filePath  = US_Settings::tmpDir() + "/" + fileName;
   filePath  = dirName + "/" + fileName;
   
+  // //Standard way if printing: ******************************/
+  // QTextDocument document;
+  // document.setHtml( html_assembled );
+  
+  // QPrinter printer(QPrinter::PrinterResolution);
+  // printer.setOutputFormat(QPrinter::PdfFormat);
+  // printer.setPaperSize(QPrinter::Letter);
+
+  // printer.setOutputFileName( filePath );
+  // printer.setFullPage(true);
+  // printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+    
+  // document.print(&printer);
+  /** END of standard way of printing *************************/
+
+
+  /** ALT. painting ********************************************/
+
+  QTextDocument textDocument;
+  textDocument.setHtml( html_assembled );
+
+  qDebug() << "Default QtextDoc font: " << textDocument.defaultFont();
+  QFont t_f = textDocument.defaultFont();
+  t_f. setPointSize( 7 );
+  textDocument. setDefaultFont( t_f );
+  
+  QPrinter printer(QPrinter::PrinterResolution);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setPaperSize(QPrinter::Letter);
+
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
-  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
-    
-  document.print(&printer);
+
+  printDocument(printer, &textDocument ); //, 0);
+  
+  /*************************************************************/
 
   qApp->processEvents();
 
@@ -9661,6 +9702,100 @@ void US_ReporterGMP::write_pdf_report( void )
       QFile::remove( tar_path );
     }
 }
+
+
+double US_ReporterGMP::mmToPixels(QPrinter& printer, int mm)
+{
+  return mm * 0.039370147 * printer.resolution();
+}
+
+void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QWidget* parentWidget)
+{
+  int textMargins = 12; // in millimeters
+  
+  QPainter painter( &printer );
+  QSizeF pageSize = printer.pageRect().size(); // page size in pixels
+  // Calculate the rectangle where to lay out the text
+  const double tm = mmToPixels(printer, textMargins);
+  const qreal footerHeight = painter.fontMetrics().height();
+  const QRectF textRect(tm, tm, pageSize.width() - 2 * tm, pageSize.height() - 2 * tm - footerHeight);
+  qDebug() << "textRect=, width, height: " << textRect << textRect.width() << textRect.height();
+  qDebug() << "footerHeigh: " << footerHeight;
+  doc->setPageSize(textRect.size());
+  
+  const int pageCount = doc->pageCount();
+  // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
+  // dialog.setWindowModality( Qt::ApplicationModal );
+  
+  bool firstPage = true;
+  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
+  //   dialog.setValue( pageIndex );
+  //   if (dialog.wasCanceled())
+  //     break;
+    
+    if (!firstPage)
+      printer.newPage();
+    
+    paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
+    firstPage = false;
+  }
+}
+
+
+void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
+			       QPainter* painter, QTextDocument* doc,
+			       const QRectF& textRect, qreal footerHeight )
+{
+  int borderMargins = 10;  // in millimeters
+  qDebug() << "Printing page" << pageNumber;
+  const QSizeF pageSize = printer.paperRect().size();
+  qDebug() << "pageSize=" << pageSize;
+  
+  const double bm = mmToPixels(printer, borderMargins);
+  const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
+  //painter->drawRect(borderRect);
+  
+  painter->save();
+  // textPageRect is the rectangle in the coordinate system of the QTextDocument, in pixels,
+  // and starting at (0,0) for the first page. Second page is at y=doc->pageSize().height().
+  const QRectF textPageRect(0, pageNumber * doc->pageSize().height(), doc->pageSize().width(), doc->pageSize().height());
+  // Clip the drawing so that the text of the other pages doesn't appear in the margins
+  painter->setClipRect(textRect);
+  // Translate so that 0,0 is now the page corner
+  painter->translate(0, -textPageRect.top());
+  // Translate so that 0,0 is the text rect corner
+  painter->translate(textRect.left(), textRect.top());
+
+  // qDebug() << "Painter's settings: font, metrics -- "
+  // 	   << painter->fontMetrics()
+  // 	   << painter->fontInfo()
+  // 	   << painter->font();
+
+  qDebug() << "Painter's settings: font, metrics -- "
+	   << painter->fontInfo().family()
+	   << painter->fontInfo().pointSizeF()
+	   << painter->fontInfo().pointSize();
+  
+  doc->drawContents(painter);
+  painter->restore();
+  
+  // Footer: e-Signer comment && page number
+  QRectF footerRect = textRect;
+  footerRect.setTop(textRect.bottom());
+  footerRect.setHeight( 2*footerHeight);
+
+  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers 1\n"
+							   "Footer to be passed by e-Signers 2"));
+  painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+
+  // Footer: page number or "end"
+  // if (pageNumber == pageCount - 1)
+  //   painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers"));
+  // else
+  //   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+}
+
+
 
 //write GMP report to DB
 void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf )
