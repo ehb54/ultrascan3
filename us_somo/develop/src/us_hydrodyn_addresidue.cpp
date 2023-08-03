@@ -133,7 +133,7 @@ void US_AddResidue::setupGUI()
    lb_residues->setPalette( PALET_NORMAL );
    AUTFBACK( lb_residues );
    lb_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   lb_residues->setMinimumHeight(minHeight1);
+   lb_residues->setMinimumHeight(minHeight1 * 5);
    connect(lb_residues, SIGNAL(itemSelectionChanged()), this, SLOT(residue_selection_changed()));
 
    lbl_residue_name = new QLabel(us_tr(" Residue Name:"), this);
@@ -550,7 +550,7 @@ void US_AddResidue::setupGUI()
    connect(cmb_bead_color, SIGNAL(activated(int)), this, SLOT(select_bead_color(int)));
 
    cb_hydration = new QCheckBox(this);
-   cb_hydration->setText(us_tr(" Override Bead Hydration Value: "));
+   cb_hydration->setText(us_tr(" Assign Bead Hydration Value: "));
    cb_hydration->setChecked(hydration_flag);
    cb_hydration->setEnabled(false);
    cb_hydration->setMinimumHeight(minHeight1);
@@ -559,7 +559,6 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cb_hydration );
    cb_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    connect(cb_hydration, SIGNAL(clicked()), SLOT(set_hydration()));
-   cb_hydration->hide();
 
    cnt_hydration= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hydration );
@@ -573,7 +572,6 @@ void US_AddResidue::setupGUI()
    cnt_hydration->setPalette( PALET_NORMAL );
    AUTFBACK( cnt_hydration );
    connect(cnt_hydration, SIGNAL(valueChanged(double)), SLOT(update_hydration(double)));
-   cnt_hydration->hide();
 
    lbl_placing = new QLabel(us_tr(" Select Positioning Method: "), this);
    Q_CHECK_PTR(lbl_placing);
@@ -847,9 +845,9 @@ void US_AddResidue::setupGUI()
    background->addWidget(le_asa, j, 1);
    j++;
    background->addWidget(lbl_numresidues, j, 0);
-   background->addWidget( lb_residues , j , 1 , 1 + ( j+3 ) - ( j ) , 1 + ( 1 ) - ( 1 ) );
-   background->addWidget(pb_accept_residue, j+1, 0);
-   j+=4;
+   background->addWidget( lb_residues , j , 1 , 7, 1 );
+   background->addWidget(pb_accept_residue, j+6, 0);
+   j+=7;
    //section 2
    background->addWidget( lbl_info2 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -905,7 +903,7 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_select_beadatom, j, 4);
    j++;
    {
-      int rows = 11;
+      int rows = 13;
       background->addWidget( lb_list_beadatom , j , 3 , 1 + ( j + rows ) - ( j ) , 1 + ( 3 ) - ( 3 ) );
       background->addWidget( lb_select_beadatom , j , 4 , 1 + ( j + rows ) - ( j ) , 1 + ( 4 ) - ( 4 ) );
       j+= rows + 1;
@@ -919,11 +917,9 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_bead_hydro_from_atom, j, 3);
    background->addWidget(le_bead_hydro_from_atom, j, 4);
    j++;
-   // currently hidden, complications with pKa
-   // hydration should be defined at the atom level
-   // background->addWidget(cb_hydration, j, 3);
-   // background->addWidget(cnt_hydration, j, 4);
-   // j++;
+   background->addWidget(cb_hydration, j, 3);
+   background->addWidget(cnt_hydration, j, 4);
+   j++;
    background->addWidget(lbl_bead_hydrovol, j, 3);
    background->addWidget(le_bead_hydrovol, j, 4);
    j++;
@@ -1714,19 +1710,22 @@ void US_AddResidue::select_r_bead(int val)
       str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
       le_bead_volume->setText(str);
       calc_bead_mw(&new_residue);
-      if ( new_residue.r_bead[current_bead].atom_hydration == new_residue.r_bead[current_bead].atom_hydration2 &&
-           new_residue.r_bead[current_bead].mw             == new_residue.r_bead[current_bead].mw2
-           ) {
+      if ( enable_assign_hydration ) {
+         // if ( new_residue.r_bead[current_bead].atom_hydration == new_residue.r_bead[current_bead].atom_hydration2 &&
+         //      new_residue.r_bead[current_bead].mw             == new_residue.r_bead[current_bead].mw2
+         // ) {
          str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
          cnt_hydration->setEnabled( true );
          cnt_hydration->setToolTip( "" );
+         cb_hydration->setToolTip( "" );
          str2.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
       } else {
          new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
          cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
          str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
          cnt_hydration->setEnabled( false );
-         cnt_hydration->setToolTip( us_tr( "Disabled because pKa values exist for at least one atom in this bead<br>" ) );
+         cnt_hydration->setToolTip( us_tr( "Disabled because hydration or pKa values exist for at least one atom in this residue<br>" ) );
+         cb_hydration->setToolTip( us_tr( "Disabled because hydration or pKa values exist for at least one atom in this residue<br>" ) );
          str2.sprintf("[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
       }
       le_bead_hydro_from_atom->setText(str);
@@ -1809,8 +1808,9 @@ void US_AddResidue::update_bead_hydrated_info() {
    QString str;
    QString str2;
 
-   if ( h_volume == h_volume2 &&
-        radius == radius2 ) {
+   if ( enable_assign_hydration ||
+        ( h_volume == h_volume2 &&
+          radius == radius2 ) ) {
       str.sprintf("%7.2f A^3", h_volume );
       str2.sprintf("%7.2f A", radius );
    } else {
@@ -2230,6 +2230,33 @@ void US_AddResidue::atom_continue()
    pb_atom_continue->setEnabled(false);
    enable_area_2(false);
    enable_area_3(true);
+
+   // check all atoms for hydration
+   enable_assign_hydration = true;
+   for ( auto & a : new_residue.r_atom ) {
+      // TSO <<
+      // QString(
+      //         "atom name             %1\n"
+      //         "     ionization index %2\n"
+      //         "     hydration        %3\n"
+      //         "     hydration2       %4\n"
+      //         "     pKa              %5\n"
+      //         )
+      // .arg( a.name )
+      // .arg( a.ionization_index )
+      // .arg( a.hydration )
+      // .arg( a.hydration2 )
+      // .arg( a.pKa )
+      // ;
+      if ( a.ionization_index
+           || a.hydration
+           || a.hydration2
+           ) {
+         enable_assign_hydration = false;
+         break;
+      }
+   }
+
    /*
      lb_select_beadatom->setCurrentItem( lb_select_beadatom->item(0) );
 
@@ -2271,6 +2298,7 @@ void US_AddResidue::atom_continue()
    */
       
    // info_residue( "atom_continue()" );
+   select_r_bead(0);
 }
 
 void US_AddResidue::accept_bead()
@@ -2779,8 +2807,55 @@ void US_AddResidue::write_residue_file()
       qDebug() << "write residue file, lb_residues cleared";
       QTextStream ts(&f);
       qDebug() << "write residue file, residue_list.size(): " << residue_list.size();
-      for (unsigned int i=0; i<residue_list.size(); i++)
+
+      // sort residues
+      class sortable_residue {
+      public:
+         int          type;
+         QString      name;
+         QString      comment;
+         unsigned int number;
+
+         bool operator < (const sortable_residue & objIn) const {
+            return
+               type == objIn.type
+               ? ( name == objIn.name
+                   ? comment < objIn.comment
+                   : name < objIn.name )
+               : type < objIn.type
+                        ;
+         }
+      };
+   
+      list < sortable_residue > sort_residues;
+      for ( int i = 0; i < (int) residue_list.size(); ++i ) {
+         sortable_residue r;
+         r.type    = residue_list[i].type;
+         r.name    = residue_list[i].name;
+         r.comment = residue_list[i].comment;
+         r.number  = i;
+         sort_residues.push_back( r );
+      }
+
+      sort_residues.sort();
+
       {
+         vector <residue> sorted_residue_list;
+         for ( auto it = sort_residues.begin();
+               it != sort_residues.end();
+               ++it ) {
+            unsigned int i = it->number;
+            sorted_residue_list.push_back( residue_list[ i ] );
+            // TSO << QString( "%1 %2 %3\n" )
+            //    .arg( residue_list[i].type )
+            //    .arg( residue_list[i].name )
+            //    .arg( residue_list[i].comment )
+            //    ;
+         }
+         residue_list = sorted_residue_list;
+      }
+
+      for (unsigned int i=0; i<residue_list.size(); i++) {
          qDebug() << "write residue file name:" << residue_list[i].name.toUpper();
          ts << residue_list[i].comment << Qt::endl;
          ts << residue_list[i].name.toUpper()
