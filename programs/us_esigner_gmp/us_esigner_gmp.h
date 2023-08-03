@@ -1,6 +1,8 @@
 #ifndef US_ESIGNER_GMP_H
 #define US_ESIGNER_GMP_H
 
+#include <QPrinter>
+
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -46,6 +48,7 @@ class US_eSignaturesGMP : public US_Widgets
      private:
         QMap< QString, QString > gmp_run_details;
         QMap< QString, QString > eSign_details;
+        QMap< QString, QString > eSign_details_auto;
         QMap< QString, QString > protocol_details;
         QList< US_InvestigatorData > investigators;
         QList< US_InvestigatorData > g_reviewers;
@@ -134,7 +137,8 @@ class US_eSignaturesGMP : public US_Widgets
        QHBoxLayout* lowerButtons;
        QVBoxLayout* spacerLayout;
   
-       QString autoflowID_passed; 
+       QString autoflowID_passed;
+       QString autoflowGMPReport_id_selected;			
 			      
      public slots:
 
@@ -192,6 +196,16 @@ class US_eSignaturesGMP : public US_Widgets
        void write_download_eSignatures_DB( QString, QString );
 
        void reset_esign_panel ( void );
+
+       void paintPage(QPrinter& printer, int pageNumber, int pageCount,
+       		     QPainter* painter, QTextDocument* doc,
+		      const QRectF& textRect, qreal footerHeight, QMap< QString, QMap< QString, QString>>);
+       void printDocument(QPrinter& printer, QTextDocument* doc, QMap< QString, QMap< QString, QString>> );
+                        //QWidget* parentWidget);
+       double mmToPixels(QPrinter& printer, int mm);
+
+       QMap< QString, QMap< QString, QString>> json_to_qmap( QString );
+       QString get_role_by_name( QString );
        
   
      signals:  

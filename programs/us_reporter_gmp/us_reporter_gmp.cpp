@@ -9649,9 +9649,20 @@ void US_ReporterGMP::write_pdf_report( void )
   // document.print(&printer);
   /** END of standard way of printing *************************/
 
+  //Write HTML strign to file & later save to DB withing general archive
+  QString html_filePath = dirName + "/" + "html_string.html";
+  QFile file_html_str( html_filePath );
+  if(!file_html_str.open(QIODevice::WriteOnly))
+    file_html_str.close();
+  else
+    {
+      file_html_str.write( html_assembled.toUtf8() );
+      //QTextStream out(&file_html_str); out << html_assembled;
+      file_html_str.close();
+    }
+  
 
   /** ALT. painting ********************************************/
-
   QTextDocument textDocument;
   textDocument.setHtml( html_assembled );
 
@@ -9673,11 +9684,42 @@ void US_ReporterGMP::write_pdf_report( void )
 
   qApp->processEvents();
 
+  // //TEST [FOR SBird-DNA-EcoRI-101322-PD9] ***************************************/
+  // QStringList file_exts;
+  // //file_exts << "*.png" << "*.svgz";
+  // file_exts << "*.svgz";                // retain *pngs for further assembly at e-Signing
+  // remove_files_by_mask( dirName, file_exts );
+
+  // QString tarFilename_t = subDirName + "_GMP_DB.tar";
+  // QProcess *process = new QProcess(this);
+  // process->setWorkingDirectory( US_Settings::reportDir() );
+  // process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+
+  // US_Passwd pw;
+  // US_DB2    db( pw.getPasswd() );
+  
+  // if ( db.lastErrno() != US_DB2::OK )
+  //   {
+  //     QMessageBox::warning( this, tr( "Connection Problem" ),
+  // 			    tr( "Could not connect to database \n" ) +  db.lastError() );
+  //     return;
+  //   }
+
+  
+  // QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
+  // int writeStatus= db.writeBlobToDB(r_filepath,
+  // 				    QString( "upload_gmpReportData" ),
+  // 				    1 );
+
+  /****** END TEST *************************************************************/
+
+  
   //Now delete all .png && .svgz && tar entire directory
   if ( auto_mode )
     {
       QStringList file_exts;
-      file_exts << "*.png" << "*.svgz";
+      //file_exts << "*.png" << "*.svgz";
+      file_exts << "*.svgz";                // retain *pngs for further assembly at e-Signing
       remove_files_by_mask( dirName, file_exts );
 
       
@@ -9814,11 +9856,10 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   // Footer: e-Signer comment && page number
   QRectF footerRect = textRect;
   footerRect.setTop(textRect.bottom());
-  footerRect.setHeight( 2*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+  footerRect.setHeight( 1*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
 
   painter->setPen(Qt::blue);
-  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers 1\n"
-							   "Footer to be passed by e-Signers 2"));
+  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers..." ));
   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
 
   // Footer: page number or "end"

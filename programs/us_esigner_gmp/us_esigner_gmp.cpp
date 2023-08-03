@@ -579,12 +579,13 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   eSignersGrid_auto -> addWidget( lb_status,    row++,    6,  1,  2 );
 
   //read e-Sign record, to check e-Signing status of each reviewer/operator:
-  QMap< QString, QString> eSign_record_auto = read_autoflowGMPReportEsign_record( autoflowID_passed );
+  eSign_details_auto. clear();
+  eSign_details_auto = read_autoflowGMPReportEsign_record( autoflowID_passed );
 
   //&& Set defined Operator/Reviewers (if any)
-  display_reviewers_auto( row, eSign_record_auto, "operatorListJson" );
-  display_reviewers_auto( row, eSign_record_auto, "reviewersListJson" );
-  display_reviewers_auto( row, eSign_record_auto, "approversListJson" ); // Approvers  [TO BE ADDED]
+  display_reviewers_auto( row, eSign_details_auto, "operatorListJson" );
+  display_reviewers_auto( row, eSign_details_auto, "reviewersListJson" );
+  display_reviewers_auto( row, eSign_details_auto, "approversListJson" ); // Approvers  [TO BE ADDED]
 
   //rigth section: actions
   QLabel* bn_act     = us_banner( tr( "e-Sign: Actions:" ), 1 );
@@ -1308,6 +1309,9 @@ void US_eSignaturesGMP::selectGMPRun( void )
 {
   list_all_autoflow_records( autoflowdata  );
 
+  qDebug() << "in selectGMPRun( void ), autoflowdata -- " << autoflowdata;
+  qApp->processEvents();
+
   QString pdtitle( tr( "Select GMP Run" ) );
   QStringList hdrs;
   int         prx;
@@ -1519,7 +1523,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	{
 	  if ( status == "LIVE_UPDATE" )
 	    autoflowentry << QString( tr( "RUNNING" ) );
-	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" )
+	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" || status == "E-SIGNATURES" )
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
 	}
@@ -1550,7 +1554,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	}
       
     }
-
+  qDebug() << "in listallautolfow, autoflowdata -- " << autoflowdata;
   return nrecs;
 }
 
@@ -2325,6 +2329,9 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
 
+  //prescribe global GMP Report ID
+  autoflowGMPReport_id_selected = gmpReport_id_selected;
+  
   //download GMP Report
   QString subDirName = gmpReport_runname_selected + "_GMP_DB_Esign";
   mkdir( US_Settings::reportDir(), subDirName );
@@ -2441,6 +2448,9 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
     }
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
+
+  //prescribe global GMP Report ID
+  autoflowGMPReport_id_selected = gmpReport_id_selected;
   
   QString subDirName = gmpReport_runname_selected + "_GMP_DB_Esign";
   mkdir( US_Settings::reportDir(), subDirName );
@@ -2868,6 +2878,10 @@ bool US_eSignaturesGMP::mkdir( const QString& baseDir, const QString& subdir )
 //eSign GMP Report
 void US_eSignaturesGMP::esign_report( void )
 {
+
+  qDebug() << "Extracted .PDF of ORIGINAL GMP Report filepath -- " << filePath_db;
+  qDebug() << ".PDF of the current eSign_filepath -- " << filePath_eSign;
+  
   //first, check if you (as logged in user) are among listed operators && reviewers
   US_Passwd pw;
   US_DB2 db( pw.getPasswd() );
@@ -3103,12 +3117,6 @@ void US_eSignaturesGMP::esign_report( void )
   //generate .PDF with e-Signatires page && write to Db
   write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson, approversListJson);
 
-  //Revert 'esigning' stage status back to DEFAULT for other reviewers to be able to e-sign:
-  qry. clear();
-  qry << "autoflow_esigning_status_revert"
-      << gmpRunID_eSign;
-  db.query( qry );
-  
   //merge original && e-Signatures page??: *****************************************************/
   /*** 
        do we need to do this at all?
@@ -3116,12 +3124,89 @@ void US_eSignaturesGMP::esign_report( void )
        OR
        do we store eSignatures .PDF separately, in autoflowGMPReportEsign table??
    ***/
+  //We need to paint new .PDF of the GMP report with e-Sigs out of html_string.html file:
+  QString baseDir = filePath_db;
+  baseDir. replace( filePath_db.section('/', -1), "" );
+  QString filePath_to_html = baseDir + "html_string.html";
+  QFile f_html( filePath_to_html );
 
-  qDebug() << "Extracted .PDF of ORIGINAL GMP Report filepath -- " << filePath_db;
-  qDebug() << ".PDF of the current eSign_filepath -- " << filePath_eSign;
-
-  /********* END of merging .PDFs ***************************************************************/
+  if (!f_html.open(QFile::ReadOnly | QFile::Text))
+    return;
   
+  QTextStream in_html(&f_html);
+  QString html_assembled = in_html.readAll();
+  qDebug() << f_html.size() << html_assembled;
+  f_html.close();
+
+  //Extract info on the current e-Sinatures:
+  QMap< QString, QMap< QString, QString>> eSigners_info =  json_to_qmap( eSignStatusJson_updated );
+  
+  QTextDocument textDocument;
+  textDocument.setHtml( html_assembled );
+
+  qDebug() << "Default QtextDoc font: " << textDocument.defaultFont();
+  QFont t_f = textDocument.defaultFont();
+  t_f. setPointSize( 7 );
+  textDocument. setDefaultFont( t_f );
+  
+  QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setPaperSize(QPrinter::Letter);
+
+  printer.setOutputFileName( filePath_db );
+  printer.setFullPage(true);
+
+  printDocument(printer, &textDocument, eSigners_info); //, 0);
+  qApp->processEvents();
+
+  //Finally, re-upload GMP Report with eSigs to DB
+  QString pathToNewTar = baseDir;
+  QString subDirName   = baseDir.section('/', -2);
+  pathToNewTar. replace( subDirName, "" );
+  subDirName.chop(1);
+  QString tarFilename_t = pathToNewTar + "GMP_Report_with_eSigs_goto_DB.tar";
+
+  qDebug() << "Paths: \n" 
+	   << "baseDir: " << baseDir << "\n"
+	   << "tarFilename_t: " << tarFilename_t << "\n"
+	   << "subDirName: " <<  subDirName << "\n"
+	   << "pathToNewTar[workDir]: " << pathToNewTar;
+
+  qDebug() << "ID to be updated GMPReport record: " << autoflowGMPReport_id_selected.toInt();
+  
+  QProcess *process = new QProcess(this);
+  process->setWorkingDirectory( pathToNewTar );
+  process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+
+  int writeStatus= db.writeBlobToDB( tarFilename_t,
+  				     QString( "upload_gmpReportData" ),
+				     autoflowGMPReport_id_selected.toInt() );
+
+  if ( writeStatus == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + tarFilename_t + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+    }
+  
+  else if ( writeStatus != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   tarFilename_t + "\n" + db.lastError() + "\n");
+    }
+
+  qDebug() << "ESign status, upload updated GMP Report -- " << writeStatus; 
+
+   qApp->processEvents();
+  
+  /********* END of merging .PDFs ***************************************************************/
+
+  //Revert 'esigning' stage status back to DEFAULT for other reviewers to be able to e-sign:
+  qry. clear();
+  qry << "autoflow_esigning_status_revert"
+      << gmpRunID_eSign;
+  db.query( qry );
+  /**********************************************************************************************/
   
   //update esing_status GUI elements:
   QString eSign_status = check_eSign_status_for_gmpReport();
@@ -3166,6 +3251,184 @@ void US_eSignaturesGMP::esign_report( void )
   QMessageBox::information( this, tr( "Successful e-Signing" ),
 			    msg_f );
 }
+
+//transform
+QMap< QString, QMap< QString, QString>>  US_eSignaturesGMP::json_to_qmap( QString eSignStatusJson_updated )
+{
+  QMap< QString, QMap< QString, QString>> esigners_info;
+  
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( eSignStatusJson_updated.toUtf8() );
+  if (!jsonDoc.isObject())
+    {
+      qDebug() << "json_to_qmap(): eSignStatusJson: NOT a JSON Doc !!";
+      return esigners_info;
+    }
+  
+  const QJsonValue &to_esign = jsonDoc.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDoc.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+  for (int i=0; i < esigned_array.size(); ++i )
+    {
+      foreach(const QString& key, esigned_array[i].toObject().keys())
+	{
+	  QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+
+	  QString comment  = newObj["Comment"]   .toString();
+	  QString timeDate = newObj["timeDate"]  .toString();
+	  QString role = get_role_by_name( key );
+	  
+	  qDebug() << "E-Signed - " << key << ": Role, Comment, timeDate -- "
+		   << role
+		   << newObj["Comment"]   .toString()
+		   << newObj["timeDate"]  .toString();
+
+	  esigners_info[ key ][ "Role"     ] = role;
+	  esigners_info[ key ][ "Comment"  ] = comment;
+	  esigners_info[ key ][ "timeDate" ] = timeDate;
+	}
+    }
+  
+  return esigners_info;
+}
+
+QString US_eSignaturesGMP::get_role_by_name( QString u_name )
+{
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details_auto[ "operatorListJson" ] .toUtf8() );
+  QString opers_a = get_assigned_oper_revs( jsonDocOperList );
+
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details_auto[ "reviewersListJson" ] .toUtf8() );
+  QString revs_a = get_assigned_oper_revs( jsonDocRevList );
+
+  QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details_auto[ "approversListJson" ] .toUtf8() );
+  QString apprs_a = get_assigned_oper_revs( jsonDocApprList );
+
+  QString role;
+  if ( opers_a. contains( u_name ) )
+    role = "Operator";
+  else if ( revs_a. contains( u_name ) )
+    role = "Reviewer";
+  else if ( apprs_a. contains( u_name ) )
+    role = "Approver";
+
+  return role;
+
+}
+
+double US_eSignaturesGMP::mmToPixels(QPrinter& printer, int mm)
+{
+  return mm * 0.039370147 * printer.resolution();
+}
+
+void US_eSignaturesGMP::printDocument(QPrinter& printer, QTextDocument* doc, QMap< QString,
+				      QMap< QString, QString>> eSigners_info ) //, QWidget* parentWidget)
+{
+  int textMargins = 12; // in millimeters
+  
+  QPainter painter( &printer );
+  QSizeF pageSize = printer.pageRect().size(); // page size in pixels
+  // Calculate the rectangle where to lay out the text
+  const double tm = mmToPixels(printer, textMargins);
+  const qreal footerHeight = painter.fontMetrics().height();
+  const QRectF textRect(tm, tm, pageSize.width() - 2 * tm, pageSize.height() - 2 * tm - footerHeight);
+  qDebug() << "textRect=, width, height: " << textRect << textRect.width() << textRect.height();
+  qDebug() << "footerHeigh: " << footerHeight;
+  doc->setPageSize(textRect.size());
+  
+  const int pageCount = doc->pageCount();
+  // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
+  // dialog.setWindowModality( Qt::ApplicationModal );
+  
+  bool firstPage = true;
+  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
+  //   dialog.setValue( pageIndex );
+  //   if (dialog.wasCanceled())
+  //     break;
+    
+    if (!firstPage)
+      printer.newPage();
+    
+    paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight, eSigners_info );
+    firstPage = false;
+  }
+}
+
+
+void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
+				  QPainter* painter, QTextDocument* doc,
+				  const QRectF& textRect, qreal footerHeight,
+				  QMap< QString, QMap< QString, QString>> eSigners_info )
+{
+  int borderMargins = 10;  // in millimeters
+  qDebug() << "Printing page" << pageNumber;
+  const QSizeF pageSize = printer.paperRect().size();
+  qDebug() << "pageSize=" << pageSize;
+  qDebug() << "printerResolution=" << printer.resolution();
+  
+  const double bm = mmToPixels(printer, borderMargins);
+  const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
+  //painter->drawRect(borderRect);
+  
+  painter->save();
+  // textPageRect is the rectangle in the coordinate system of the QTextDocument, in pixels,
+  // and starting at (0,0) for the first page. Second page is at y=doc->pageSize().height().
+  const QRectF textPageRect(0, pageNumber * doc->pageSize().height(), doc->pageSize().width(), doc->pageSize().height());
+  // Clip the drawing so that the text of the other pages doesn't appear in the margins
+  painter->setClipRect(textRect);
+  // Translate so that 0,0 is now the page corner
+  painter->translate(0, -textPageRect.top());
+  // Translate so that 0,0 is the text rect corner
+  painter->translate(textRect.left(), textRect.top());
+
+  // qDebug() << "Painter's settings: font, metrics -- "
+  // 	   << painter->fontMetrics()
+  // 	   << painter->fontInfo()
+  // 	   << painter->font();
+
+  qDebug() << "Painter's settings: font, metrics -- "
+	   << painter->fontInfo().family()
+	   << painter->fontInfo().pointSizeF()
+	   << painter->fontInfo().pointSize();
+  
+  doc->drawContents(painter);
+  painter->restore();
+
+  //Process eSigners_info QMap:
+  QStringList esigners_footer;
+  QStringList esigner_list = eSigners_info.keys();
+  int eSigners_number = esigner_list.size();
+  for ( int i=0; i< eSigners_number; ++i )
+    {
+      QString esigner  = esigner_list[i];
+      QString role     = eSigners_info[ esigner ][ "Role" ];
+      QString comment  = eSigners_info[ esigner ][ "Comment" ];
+      QString timeDate = eSigners_info[ esigner ][ "timeDate" ];
+
+      QString c_es = esigner.split(".")[1].trimmed() + "; ID: " + esigner.split(".")[0].trimmed()
+	+ "; Role: " + role + "; e-Signed on: " + timeDate; 
+      esigners_footer << c_es;
+    }
+  QString es_footer = esigners_footer.join("\n");
+  
+  // Footer: e-Signer comment && page number
+  QRectF footerRect = textRect;
+  footerRect.setTop(textRect.bottom());
+  footerRect.setHeight( eSigners_number*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+
+  painter->setPen(Qt::blue);
+  painter->drawText(footerRect, Qt::AlignLeft, es_footer );
+  //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr( esigners_footer.join("\n") ) );
+  painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+
+  // Footer: page number or "end"
+  // if (pageNumber == pageCount - 1)
+  //   painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers"));
+  // else
+  //   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+}
+
 
 
 //Compose /Update eSignStatusJson:
@@ -3213,7 +3476,7 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
   
   // "esigned" section":
   QString esigned_str = "\"signed\":[";
-
+    
   //Comment for current e-Signee:
   current_esignee += "{\"Comment\":\"" + comment_esignee + "\",";
 
@@ -3254,7 +3517,7 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
   statusJson += to_sign_str;
   statusJson += esigned_str;
   statusJson += "}";
-  
+
   return statusJson;
 }
 
