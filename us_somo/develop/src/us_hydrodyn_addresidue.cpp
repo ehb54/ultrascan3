@@ -1341,17 +1341,19 @@ void US_AddResidue::read_residue_file(const QString & filename)
                }
             }
             residue_list.push_back(new_residue);
-            str1.sprintf("%d: ", i);
-            str1 += str3 + ", ";
-            if (new_residue.comment.isEmpty())
-            {
-               str1 += new_residue.name;
+            if ( new_residue.type < 10 ) {
+               str1.sprintf("%d: ", i);
+               str1 += str3 + ", ";
+               if (new_residue.comment.isEmpty())
+               {
+                  str1 += new_residue.name;
+               }
+               else
+               {
+                  str1 += new_residue.name + " (" + new_residue.comment + ")";
+               }
+               lb_residues->addItem(str1);
             }
-            else
-            {
-               str1 += new_residue.name + " (" + new_residue.comment + ")";
-            }
-            lb_residues->addItem(str1);
             i++;
          }
       }
