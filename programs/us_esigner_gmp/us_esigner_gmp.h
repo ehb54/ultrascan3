@@ -122,7 +122,9 @@ class US_eSignaturesGMP : public US_Widgets
   
        US_SelectItem* pdiag_autoflow_db;
        QList< QStringList >  gmpReportsDBdata;
+       QString    folderRunName;
        QString    filePath_db;
+       QString    filePath_db_html;
        QString    filePath_eSign;
        QString    gmpRunID_eSign;
        QString    eSignID_global;

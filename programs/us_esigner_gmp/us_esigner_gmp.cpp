@@ -1,6 +1,8 @@
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QPainter>
+//#include <QThread>    
+
 
 #include "us_esigner_gmp.h"
 #include "us_settings.h"
@@ -2333,6 +2335,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
   autoflowGMPReport_id_selected = gmpReport_id_selected;
   
   //download GMP Report
+  folderRunName  = gmpReport_runname_selected;
+  
   QString subDirName = gmpReport_runname_selected + "_GMP_DB_Esign";
   mkdir( US_Settings::reportDir(), subDirName );
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -2369,9 +2373,38 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
   QProcess *process = new QProcess(this);
   process->setWorkingDirectory( dirName );
   process->start("tar", QStringList() << "-xvf" << GMPReportfname );
+  process -> waitForFinished();
+  process -> close();
     
   filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
   qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+
+
+  //download html to the same directory as .PDF of the GMP report
+  QString GMPReportfname_html = "html_string.html";
+  filePath_db_html = dirName + "/" + gmpReport_runname_selected + "/" +  GMPReportfname_html;
+  
+  int db_read_html = db.readBlobFromDB( filePath_db_html,
+					"download_gmpReportData_html",
+					gmpReport_id_selected.toInt() );
+  
+  if ( db_read_html == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing HTML file:\n"
+			   + filePath_db_html + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+      
+      return;
+    }
+  else if ( db_read_html != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing HTML file:\n" +
+			   filePath_db_html + "\n" + db.lastError() + "\n");
+      
+      return;
+    }
+
+  
 
   //Gui fields
   le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
@@ -2451,6 +2484,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 
   //prescribe global GMP Report ID
   autoflowGMPReport_id_selected = gmpReport_id_selected;
+
+  folderRunName  = gmpReport_runname_selected;
   
   QString subDirName = gmpReport_runname_selected + "_GMP_DB_Esign";
   mkdir( US_Settings::reportDir(), subDirName );
@@ -2495,9 +2530,36 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   QProcess *process = new QProcess(this);
   process->setWorkingDirectory( dirName );
   process->start("tar", QStringList() << "-xvf" << GMPReportfname );
-    
+  process -> waitForFinished();
+  process -> close();
+  
   filePath_db = dirName + "/" + gmpReport_runname_selected + "/" + gmpReport_filename_pdf;
   qDebug() << "Extracted .PDF GMP Report filepath -- " << filePath_db;
+
+
+  //download html to the same directory as .PDF of the GMP report
+  QString GMPReportfname_html = "html_string.html";
+  filePath_db_html = dirName + "/" + gmpReport_runname_selected + "/" +  GMPReportfname_html;
+  
+  int db_read_html = db.readBlobFromDB( filePath_db_html,
+					"download_gmpReportData_html",
+					gmpReport_id_selected.toInt() );
+  
+  if ( db_read_html == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing HTML file:\n"
+			   + filePath_db_html + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+      
+      return;
+    }
+  else if ( db_read_html != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing HTML file:\n" +
+			   filePath_db_html + "\n" + db.lastError() + "\n");
+      
+      return;
+    }  
 
   //Gui fields
   le_loaded_run_db  -> setText( gmpReport_runname_selected_c );
@@ -3125,25 +3187,61 @@ void US_eSignaturesGMP::esign_report( void )
        do we store eSignatures .PDF separately, in autoflowGMPReportEsign table??
    ***/
   //We need to paint new .PDF of the GMP report with e-Sigs out of html_string.html file:
-  QString baseDir = filePath_db;
-  baseDir. replace( filePath_db.section('/', -1), "" );
-  QString filePath_to_html = baseDir + "html_string.html";
-  QFile f_html( filePath_to_html );
+  // QString baseDir = filePath_db;
+  // baseDir. replace( filePath_db.section('/', -2), "" );
+  // QString filePath_to_html = baseDir + "html_string.html";
+  //QFile f_html( filePath_to_html );
+  QFile f_html( filePath_db_html );
+  qDebug() << "HTML filepath -- " << filePath_db_html;
 
-  if (!f_html.open(QFile::ReadOnly | QFile::Text))
+  QString errMsg;
+  QFileDevice::FileError err = QFileDevice::NoError;
+  if (!f_html.open(QIODevice::ReadOnly))
+    {
+      errMsg = f_html.errorString();
+      err    = f_html.error();
+    }
+  qDebug() << "HTML opening errors: " << errMsg;
+  qDebug() << QString(" err %1").arg(err) ;
+  
+  
+  if (f_html.open(QFile::ReadOnly | QFile::Text))
     return;
+
+  // if ( f_html.open(QFile::ReadOnly) )
+  //   return;
+  
+  qDebug() << "Painting && uploading updated .tar to DB!!!";
   
   QTextStream in_html(&f_html);
   QString html_assembled = in_html.readAll();
-  qDebug() << f_html.size() << html_assembled;
+  qDebug() << "Size: " << f_html.size() << ", " << html_assembled;
   f_html.close();
 
+  //Process html_assembled string: put correct images' pathnames:
+  QRegExp rx("<img src=\"(.*)png\"");
+  int pos = rx.indexIn( html_assembled );
+  //qDebug() << "Captured regex, size(): " << rx.capturedTexts() << rx.capturedTexts().size();
+  QString path_t = rx.capturedTexts()[0].split(".png\"")[0];//.section('/', -1);
+  path_t. replace( path_t.section('/',-1), "" );
+  QString old_path = path_t. split("src=\"")[1];
+  old_path.chop(1);
+
+  //Paths
+  QString pathToNewTar = filePath_db_html;
+  pathToNewTar. replace( filePath_db_html. section('/', -2), "" );
+  QString tarFilename_t = pathToNewTar  + "GMP_Report_with_eSigs_goto_DB.tar";
+  QString baseDir = pathToNewTar + folderRunName;
+  
+  qDebug() << "Image paths [old, new]: " << old_path << "\n" << baseDir;
+  html_assembled. replace( old_path, baseDir );
+  
   //Extract info on the current e-Sinatures:
   QMap< QString, QMap< QString, QString>> eSigners_info =  json_to_qmap( eSignStatusJson_updated );
   
   QTextDocument textDocument;
   textDocument.setHtml( html_assembled );
-
+  
   qDebug() << "Default QtextDoc font: " << textDocument.defaultFont();
   QFont t_f = textDocument.defaultFont();
   t_f. setPointSize( 7 );
@@ -3152,36 +3250,42 @@ void US_eSignaturesGMP::esign_report( void )
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
   printer.setPaperSize(QPrinter::Letter);
-
+  
   printer.setOutputFileName( filePath_db );
   printer.setFullPage(true);
-
+  
   printDocument(printer, &textDocument, eSigners_info); //, 0);
   qApp->processEvents();
-
+  
   //Finally, re-upload GMP Report with eSigs to DB
-  QString pathToNewTar = baseDir;
-  QString subDirName   = baseDir.section('/', -2);
-  pathToNewTar. replace( subDirName, "" );
-  subDirName.chop(1);
-  QString tarFilename_t = pathToNewTar + "GMP_Report_with_eSigs_goto_DB.tar";
-
-  qDebug() << "Paths: \n" 
+  
+  qDebug() << "Paths: \n"
 	   << "baseDir: " << baseDir << "\n"
 	   << "tarFilename_t: " << tarFilename_t << "\n"
-	   << "subDirName: " <<  subDirName << "\n"
+	   << "subDirName: " <<  folderRunName  << "\n"
 	   << "pathToNewTar[workDir]: " << pathToNewTar;
-
+  
   qDebug() << "ID to be updated GMPReport record: " << autoflowGMPReport_id_selected.toInt();
+  
+  // //Also, remove eSignatures.pdf before archiving...[will be regenerated every time..]
+  QDir w_dir( baseDir );
+  if ( w_dir.remove( "html_string.html" ) )
+    qDebug() << "HMTL removed !!";
+  
+  // qDebug() << "After removing eSignatures.pdf..";
   
   QProcess *process = new QProcess(this);
   process->setWorkingDirectory( pathToNewTar );
-  process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
-
+  process->start("tar", QStringList() << "-cvf" << tarFilename_t << folderRunName );
+  process -> waitForFinished();
+  process -> close();
+  
+  qApp->processEvents();
+    
   int writeStatus= db.writeBlobToDB( tarFilename_t,
-  				     QString( "upload_gmpReportData" ),
+				     QString( "upload_gmpReportData" ),
 				     autoflowGMPReport_id_selected.toInt() );
-
+  
   if ( writeStatus == US_DB2::DBERROR )
     {
       QMessageBox::warning(this, "Error", "Error processing file:\n"
@@ -3194,11 +3298,11 @@ void US_eSignaturesGMP::esign_report( void )
       QMessageBox::warning(this, "Error", "returned processing file:\n" +
 			   tarFilename_t + "\n" + db.lastError() + "\n");
     }
-
-  qDebug() << "ESign status, upload updated GMP Report -- " << writeStatus; 
-
-   qApp->processEvents();
   
+  qDebug() << "ESign status, upload updated GMP Report -- " << writeStatus; 
+  
+  qApp->processEvents();
+        
   /********* END of merging .PDFs ***************************************************************/
 
   //Revert 'esigning' stage status back to DEFAULT for other reviewers to be able to e-sign:
@@ -3406,8 +3510,10 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
       QString comment  = eSigners_info[ esigner ][ "Comment" ];
       QString timeDate = eSigners_info[ esigner ][ "timeDate" ];
 
-      QString c_es = esigner.split(".")[1].trimmed() + "; ID: " + esigner.split(".")[0].trimmed()
-	+ "; Role: " + role + "; e-Signed on: " + timeDate; 
+      // QString c_es = esigner.split(".")[1].trimmed() + "; ID: " + esigner.split(".")[0].trimmed()
+      // 	+ "; Role: " + role + "; e-Signed on: " + timeDate;
+      QString c_es = esigner.split(".")[1].trimmed() + "; Comment: " + comment
+	+ "; Role: " + role + "; e-Signed on: " + timeDate;
       esigners_footer << c_es;
     }
   QString es_footer = esigners_footer.join("\n");
