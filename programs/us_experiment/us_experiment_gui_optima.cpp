@@ -5697,10 +5697,13 @@ bool US_ExperGuiUpload::saveRunProtocol()
 {
   bool save_aborted = false;
 
-  qDebug() << "in saveRunProtoocl(): proto_svd -- " << proto_svd;
-  if ( proto_svd )
-    return save_aborted;
-    
+  qDebug() << "in saveRunProtoocl(): proto_svd, rps_differ -- " << proto_svd << rps_differ;
+  if ( proto_svd && !rps_differ )
+    {
+      qDebug() << "Protocol already saved && not changed since that...";
+      return save_aborted;
+    }
+      
   qDebug() << "Peoceed with Saving protocol!";
   
   if ( mainw->ScanCount_global > 1501 )
