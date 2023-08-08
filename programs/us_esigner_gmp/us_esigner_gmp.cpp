@@ -3177,7 +3177,7 @@ void US_eSignaturesGMP::esign_report( void )
   db.query( qry );
 
   //generate .PDF with e-Signatires page && write to Db
-  write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson, approversListJson);
+  QString html_eSignatures = write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson, approversListJson );
 
   //merge original && e-Signatures page??: *****************************************************/
   /*** 
@@ -3238,6 +3238,9 @@ void US_eSignaturesGMP::esign_report( void )
   
   //Extract info on the current e-Sinatures:
   QMap< QString, QMap< QString, QString>> eSigners_info =  json_to_qmap( eSignStatusJson_updated );
+
+  //append HTML for eSigs:
+  html_assembled += html_eSignatures;
   
   QTextDocument textDocument;
   textDocument.setHtml( html_assembled );
@@ -3648,7 +3651,7 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
 
 
 //write .PDF eSignatures page
-void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignStatusJson_upd,
+QString US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignStatusJson_upd,
 					       QString operList, QString revList, QString apprList )
 {
   QString fpath = filePath;
@@ -3656,14 +3659,16 @@ void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignSt
   qDebug() << "Writing .PDF: basename -- " << fpath;
 
   //html string
-  QString html_assembled = tr( "<h2 align=left>Electronic Signatures:</h2>" );
+  QString html_assembled = tr( "<p class=\"pagebreak \">\n");
+  html_assembled += tr("<h2 align=left>Electronic Signatures:</h2>" );
 
   //Parse JSON
   QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson_upd.toUtf8() );
   if (!jsonDocEsign.isObject())
     {
       qDebug() << "write_pdf_eSigns(): ERROR: eSignStatusJson_upd: NOT a JSON Doc !!";
-      return;
+      html_assembled. clear();
+      return html_assembled;
     }
   
   const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
@@ -3737,6 +3742,8 @@ void US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSignSt
   //Write to autoflowGMPReportEsign table as blob
   write_download_eSignatures_DB( filePath_db, "upload_gmpReportEsignData" );
   qApp->processEvents();
+
+  return html_assembled;
   
 }
 

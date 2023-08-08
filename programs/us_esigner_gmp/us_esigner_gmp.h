@@ -192,7 +192,7 @@ class US_eSignaturesGMP : public US_Widgets
        void esign_report( void );
        QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
 					   QString, QString& );
-       void write_pdf_eSignatures( QString, QString, QString, QString, QString );
+       QString write_pdf_eSignatures( QString, QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
        QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );
