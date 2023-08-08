@@ -3350,10 +3350,29 @@ void US_eSignaturesGMP::esign_report( void )
 			   .arg( user_esignee ) );
 			
   if ( eSignStatusAll_updated == "YES" )
-    msg_f += tr("<br><br>All parties e-Signed the report!");
+    msg_f += tr("<br><br>All parties e-Signed the report!"
+		"<br><br>The e-Sign record will be moved to the history...");
   
   QMessageBox::information( this, tr( "Successful e-Signing" ),
 			    msg_f );
+
+  //Move to history
+  if ( eSignStatusAll_updated == "YES" )
+    {
+      qry. clear();
+      //INSERT INTO autoflowGMPReportEsignHistory SELECT * FROM autoflowGMPReportEsign WHERE ID=${ID}//
+      
+      qry. clear();
+      qry << "new_gmp_review_history_record" << eSignID_global;
+      qDebug() << "Query for new_gmp_review_history_record -- " << qry;
+      db. query( qry );
+
+      //delete autoflowGMPRecordEsign record
+      qry.clear();
+      qry << "delete_gmp_review_record_by_id" << eSignID_global;
+      qDebug() << "Query for delete_gmp_review_record_by_id -- " << qry;
+      db. statusQuery( qry );
+    }
 }
 
 //transform
