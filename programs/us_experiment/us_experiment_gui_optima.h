@@ -200,24 +200,30 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QLabel* lb_choose_oper;
       QLabel* lb_choose_rev;
       QLabel* lb_choose_appr;
+      QLabel* lb_choose_sme;
       QLabel* lb_opers_to_assign;
       QLabel* lb_revs_to_assign;
       QLabel* lb_apprs_to_assign;
-    
+      QLabel* lb_smes_to_assign;
+  
       QPushButton*  pb_add_oper;
       QPushButton*  pb_remove_oper;
       QPushButton*  pb_add_rev;
       QPushButton*  pb_remove_rev;
       QPushButton*  pb_add_appr;
       QPushButton*  pb_remove_appr;
+      QPushButton*  pb_add_sme;
+      QPushButton*  pb_remove_sme;
   
       QTextEdit*    te_opers_to_assign;
       QTextEdit*    te_revs_to_assign;
       QTextEdit*    te_apprs_to_assign;
+      QTextEdit*    te_smes_to_assign;
 
       QComboBox*    cb_choose_operator;
       QComboBox*    cb_choose_rev;
-      QComboBox*    cb_choose_appr;				 
+      QComboBox*    cb_choose_appr;
+      QComboBox*    cb_choose_sme;				  
       
    private slots:
       void changeLab  ( int );     // Slot for change in lab
@@ -237,12 +243,15 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void test_optima_connection( void );
       void init_grevs( void );
       void init_gapprs( void );
+      void init_gsmes( void );
       void addOpertoList( void );
       void removeOperfromList( void );
       void addRevtoList( void );
       void removeRevfromList( void );
       void addApprtoList( void );
       void removeApprfromList( void );
+      void addSmetoList( void );
+      void removeSmefromList( void );
   
 };
 

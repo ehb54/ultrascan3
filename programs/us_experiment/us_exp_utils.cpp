@@ -1011,10 +1011,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    te_opers_to_assign -> setText( rpRotor->operListAssign );
    te_revs_to_assign  -> setText( rpRotor->revListAssign );
    te_apprs_to_assign -> setText( rpRotor->apprListAssign );
+   te_smes_to_assign  -> setText( rpRotor->smeListAssign );
    
    //initiate global reviewers list:
    init_grevs();
    init_gapprs();
+   init_gsmes();
 
    //BAsed on mode [usmode - R&D], hide/show oper/rev section:
       //show Assign oper/rev ONLY for GMP:
@@ -1035,6 +1037,10 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        cb_choose_appr -> hide();
        pb_add_appr    -> hide();
 
+       lb_choose_sme -> hide();
+       cb_choose_sme -> hide();
+       pb_add_sme    -> hide();
+
        lb_opers_to_assign -> hide();
        te_opers_to_assign -> hide();
        pb_remove_oper     -> hide();
@@ -1047,6 +1053,9 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        te_apprs_to_assign -> hide();
        pb_remove_appr     -> hide();
 
+       lb_smes_to_assign -> hide();
+       te_smes_to_assign -> hide();
+       pb_remove_sme     -> hide();
             
      }
  
@@ -1120,6 +1129,41 @@ void US_ExperGuiRotor::init_gapprs( void )
       //populate
       cb_choose_appr->addItem( QString::number( g_invID ) + ". " + 
 			       g_lastName + ", " + g_firstName );
+    }
+}
+
+void US_ExperGuiRotor::init_gsmes( void )
+{
+  cb_choose_sme  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people" << "%" + QString("") + "%";
+  qDebug() << "init_smes(), query --  " << query;
+  db.query( query );
+
+  while ( db.next() )
+    {
+      int g_invID         = db.value( 0 ).toInt();
+      QString g_lastName  = db.value( 1 ).toString();
+      QString g_firstName = db.value( 2 ).toString();
+      
+      //populate
+      cb_choose_sme->addItem( QString::number( g_invID ) + ". " + 
+			      g_lastName + ", " + g_firstName );
     }
 }
 
@@ -1234,6 +1278,45 @@ void US_ExperGuiRotor::removeApprfromList( void )
   te_apprs_to_assign->setTextCursor(storeCursorPos);
 
   qDebug() << "Apprs to ASSIGN: " << te_apprs_to_assign->toPlainText();
+
+  //setUnsetPb_operRev();
+}
+
+//Add approver to list 
+void US_ExperGuiRotor::addSmetoList( void )
+{
+  QString c_sme = cb_choose_sme->currentText();
+
+  //check if selected item already in the list:
+  QString e_smeList = te_smes_to_assign->toPlainText();
+  if ( e_smeList. contains( c_sme ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add SME" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected SME: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of SMEs.<br>"
+				    "Please choose other SME.")
+				.arg( c_sme) );
+      return;
+    }
+  
+  te_smes_to_assign->append( c_sme );
+
+}
+
+//Remove reviewer from list 
+void US_ExperGuiRotor::removeSmefromList( void )
+{
+  te_smes_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_smes_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_smes_to_assign->textCursor().removeSelectedText();
+  te_smes_to_assign->textCursor().deletePreviousChar();
+  te_smes_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "SME to ASSIGN: " << te_smes_to_assign->toPlainText();
 
   //setUnsetPb_operRev();
 }

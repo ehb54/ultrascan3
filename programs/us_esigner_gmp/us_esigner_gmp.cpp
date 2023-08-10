@@ -1711,6 +1711,7 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
 	  eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
 	  eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
 	  eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	  eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
 	                
 	  eSign_record[ "isEsignRecord" ]        = QString("YES");
 	  isEsignRecord = true;
@@ -1925,6 +1926,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
   QString operListJsonArray = "[";
   QString revListJsonArray  = "[";
   QString apprListJsonArray = "[";
+  QString smeListJsonArray  = "[";
   QStringList oper_listList = oper_list.split("\n");
   QStringList rev_listList  = rev_list.split("\n");
   QStringList appr_listList = appr_list.split("\n");
@@ -1955,10 +1957,12 @@ void US_eSignaturesGMP::assignOperRevs( void )
   operListJsonArray += "]";
   revListJsonArray  += "]";
   apprListJsonArray += "]";
-
+  smeListJsonArray  += "]";
+  
   qDebug() << "operListJsonArray -- " << operListJsonArray;
   qDebug() << "revListJsonArray -- "  << revListJsonArray;
   qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+  qDebug() << "smeListJsonArray -- " << apprListJsonArray;   //Empty for now... [to be populated from te_sem...]
 
   //Minimum structure of eSignStatusJson field:
   QString eSignStatusJson = "{\"to_sign\":[";
@@ -2054,6 +2058,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
       	  << operListJsonArray
       	  << revListJsonArray
 	  << apprListJsonArray
+	  << smeListJsonArray
       	  << eSignStatusJson       
       	  << logJsonFirstTime;     
 
@@ -2150,6 +2155,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
 	      << operListJsonArray
 	      << revListJsonArray
 	      << apprListJsonArray
+	      << smeListJsonArray
 	      << eSignStatusJson
 	      << logJsonUpdateTime;
 

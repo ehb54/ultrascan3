@@ -1171,9 +1171,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    lb_choose_oper      = us_label( "Choose Operator:" );
    lb_choose_rev       = us_label( "Choose Reviewer:" );
    lb_choose_appr      = us_label( "Choose Approver:" );
+   lb_choose_sme       = us_label( "Choose SME:" );
    lb_opers_to_assign  = us_label( "Operator List:" );
    lb_revs_to_assign   = us_label( "Reviewer List:" );
    lb_apprs_to_assign  = us_label( "Approver List:" );
+   lb_smes_to_assign   = us_label( "SME List:" );
 
    pb_add_oper      = us_pushbutton( tr( "Add to List" ) );
    pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
@@ -1181,6 +1183,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
    pb_add_appr      = us_pushbutton( tr( "Add to List" ) );
    pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_sme       = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_sme    = us_pushbutton( tr( "Remove Last" ) );
 
    te_opers_to_assign    = us_textedit();
    //te_opers_to_assign    ->setTextColor( Qt::blue );
@@ -1202,10 +1206,18 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
 					 US_GuiSettings::fontSize() - 1) );
    us_setReadOnly( te_apprs_to_assign, true );
+
+   te_smes_to_assign    = us_textedit();
+   //te_smes_to_assign    ->setTextColor( Qt::blue );
+   te_smes_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_smes_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_smes_to_assign, true );
   
    cb_choose_operator   = new QComboBox( this );
    cb_choose_rev        = new QComboBox( this );
    cb_choose_appr       = new QComboBox( this );
+   cb_choose_sme        = new QComboBox( this );
    
    row = 0;
    //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
@@ -1230,11 +1242,20 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    //Appr.
    revOperGMPRunGrid -> addWidget( lb_choose_appr,         row,     0,  1,  2 );
    revOperGMPRunGrid -> addWidget( cb_choose_appr,         row,     2,  1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_add_appr,            row++,   5,  1,  2 );
+   revOperGMPRunGrid -> addWidget( pb_add_appr,            row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_choose_sme,         row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_sme,         row,     10,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_sme,            row++,   13,  1,  2 );
+
 
    revOperGMPRunGrid -> addWidget( lb_apprs_to_assign,     row,     0,  1,  2 );
    revOperGMPRunGrid -> addWidget( te_apprs_to_assign,     row,     2,  1,  3 );
    revOperGMPRunGrid -> addWidget( pb_remove_appr,         row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_smes_to_assign,      row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_smes_to_assign,      row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_sme,          row,     13, 1,  2 );
    
    
    connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
@@ -1243,6 +1264,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
    connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
    connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
+   connect( pb_add_sme, SIGNAL( clicked() ), SLOT ( addSmetoList() ) );
+   connect( pb_remove_sme, SIGNAL( clicked() ), SLOT ( removeSmefromList() ) );
    
    panel->addLayout( genL );
    panel->addLayout( revOperGMPRunGrid ); 
@@ -6264,10 +6287,12 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
   QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
   QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
 
   QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
   QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
   QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
     
   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
   msgBox.setText( message_submission );
@@ -7946,10 +7971,12 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        QStringList oper_listList = rpRotor->operListAssign.split("\n");
        QStringList rev_listList  = rpRotor->revListAssign.split("\n");
        QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
        
        QString operListJsonArray = "[";
        QString revListJsonArray  = "[";
        QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
        QStringList oper_rev_joinedList;
        
        for (int i=0; i<oper_listList.size(); ++i )
@@ -7968,19 +7995,27 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	 {
 	   oper_rev_joinedList << appr_listList[i]; 
 	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
 	 } 
-  
 
        operListJsonArray.chop(1);
        revListJsonArray.chop(1);
        apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
        operListJsonArray += "]";
        revListJsonArray  += "]";
        apprListJsonArray += "]";
+       smeListJsonArray  += "]";
          
        qDebug() << "operListJsonArray -- " << operListJsonArray;
        qDebug() << "revListJsonArray -- "  << revListJsonArray;
        qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
        
        //Minimum structure of eSignStatusJson field:
        QString eSignStatusJson = "{\"to_sign\":[";
@@ -8030,6 +8065,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   << operListJsonArray
 	   << revListJsonArray
 	   << apprListJsonArray
+	   << smeListJsonArray
 	   << eSignStatusJson       
 	   << logJsonFirstTime;     
        
