@@ -393,7 +393,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
     {
       auto_separate_status = true;
 
-      QLabel* bn_loadGMPReport = us_banner( tr( "Select GMP Report to Reveiew:" ), 1 );
+      QLabel* bn_loadGMPReport = us_banner( tr( "Select GMP Report to Review:" ), 1 );
       QFontMetrics m (bn_loadGMPReport -> font()) ;
       int RowHeight = m.lineSpacing() ;
       bn_loadGMPReport -> setFixedHeight  (1.5 * RowHeight);
@@ -402,13 +402,14 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
 
       topLayout_auto -> addWidget(  bn_loadGMPReport );
       topLayout_auto -> addWidget(  pb_loadreport_db );
-      int ihgt        = pb_loadreport_db ->height();
-      QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
-      topLayout_auto->addItem( spacer2 );
+      // int ihgt        = pb_loadreport_db ->height();
+      // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
+      // topLayout_auto->addItem( spacer2 );
       
       connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned_separate() ) );
 
-      resize( 1200, 300 );
+      //resize( 1200, 300 );
+      resize( 600, 500 );
     }
   
   qDebug() << "Alt. constructor SET for [AUTO], within autoflow -- ";
@@ -539,7 +540,8 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   reset_esign_panel();
   
   //Now, initialize main internal layouts:
-  mainLayout_auto     = new QHBoxLayout( this );
+  //mainLayout_auto     = new QHBoxLayout( this );
+  mainLayout_auto     = new QVBoxLayout( this );
   mainLayout_auto ->setSpacing        ( 2 );
   mainLayout_auto ->setContentsMargins( 2, 2, 2, 2 );
 
@@ -646,7 +648,7 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   
   if ( auto_separate_status )
     {
-      spacerLayout     = new QVBoxLayout();
+      //spacerLayout     = new QVBoxLayout();
       lowerButtons     = new QHBoxLayout();
 
       pb_cancel   = us_pushbutton( tr( "Close" ) );
@@ -654,19 +656,19 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   
       connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
       connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
-      int ihgt        = pb_cancel ->height();
-      QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
+      //int ihgt        = pb_cancel ->height();
+      //QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
       
-      spacerLayout -> addItem( spacer2 );
+      //spacerLayout -> addItem( spacer2 );
       
       lowerButtons -> addWidget( pb_help );
       lowerButtons -> addWidget( pb_cancel );
 
-      topLayout_auto -> addLayout( spacerLayout );
+      //topLayout_auto -> addLayout( spacerLayout );
       topLayout_auto -> addLayout( lowerButtons );
     }
   
-  resize( 1200, 300 );
+  resize( 600, 500 );
 }
 
 //display oper/revs/appr.

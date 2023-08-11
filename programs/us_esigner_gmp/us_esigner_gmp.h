@@ -130,7 +130,8 @@ class US_eSignaturesGMP : public US_Widgets
        QString    eSignID_global;
 
        QVBoxLayout* topLayout_auto;
-       QHBoxLayout* mainLayout_auto;
+  //QHBoxLayout* mainLayout_auto;
+  QVBoxLayout* mainLayout_auto;
        QGridLayout* eSignersGrid_auto;
        QGridLayout* eSignActionsGrid_auto;
        QVBoxLayout* leftLayout;				 
