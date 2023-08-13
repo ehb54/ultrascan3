@@ -6433,7 +6433,7 @@ void US_ConvertGui::saveUS3( void )
 	      return;
 	    }
 	}
-
+      ////////////////////////////////////////////////////////////////////////////////////
       
       // First, create a QMap relating excluded triples' tripleDesc and reportIDs:
       qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
@@ -6978,6 +6978,9 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 
       importRI_Json += "\"RefScan\": \"" + refScan + "\"";
 
+      //Now, add comment from SAVING form:
+      importRI_Json += ", \"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\"";      
+      
       //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
       if ( !drop_operations[ runType ]. isEmpty() )
 	{
