@@ -23,6 +23,7 @@
 #include "../include/us_revision.h"
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_best.h"
+#include "../include/us_ffd.h"
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include <qregexp.h>
 #include <qfont.h>
@@ -87,6 +88,39 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
+   // #define FFD_TEST
+
+#if defined( FFD_TEST )
+# define TSO QTextStream(stdout)
+   US_FFD ffd(5);
+   US_Saxs_Util usu;
+   if ( !usu.select_saxs_file( US_Config::get_home_dir() + "etc" + SLASH + "somo.saxs_atoms" ) ) {
+      TSO << usu.errormsg << "\n";
+   } else {
+      TSO << "select_saxs_file OK\n";
+      TSO << "usu.saxs_list.size() " << usu.saxs_list.size() << "\n";
+      if ( !ffd.set_saxs_coeffs( usu.saxs_list ) ) {
+         TSO << ffd.errormsg << "\n";
+      } else {
+         // TSO << ffd.list_saxs_coeffs();
+      }
+      ffd.set_q_grid( 0, 1, .0005 );
+      TSO << "calc_fq()\n";
+      if ( !ffd.calc_fq() ) {
+         TSO << ffd.errormsg << "\n";
+      } else {
+         TSO << "calc_fq() OK\n";
+         if ( !ffd.calc_fifjq() ) {
+            TSO << ffd.errormsg << "\n";
+         } else {
+            TSO << "calc_fifjq() OK\n";
+         }
+      }
+      // ffd.test();
+   }
+   exit(-1);
+#endif
+
 // #define DP_TEST
 
 #if defined( DP_TEST )
@@ -4188,7 +4222,9 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
               !saxs_options.multiply_iq_by_atomic_volume )
          {
             if ( dammix_remember_mw[QFileInfo(filename).fileName()] != 
-                 model_vector[selected_models[0]].mw )
+                 model_vector[selected_models[0]].mw
+                 && ( !batch_widget ||
+                      !batch_window->batch_job_running ) )
             {
                switch ( QMessageBox::question(this, 
                                               us_tr("UltraScan Notice"),

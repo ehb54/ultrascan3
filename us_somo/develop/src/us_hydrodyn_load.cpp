@@ -11,6 +11,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_vvv.h"
 
+#define TSO QTextStream(stdout)
+
 #if defined(Q_OS_WIN)
 // hmm. unicode difference for Windows between QWidgets and QTextStream?
 # undef DEGREE_SYMBOL
@@ -87,7 +89,6 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
 }
 
 void US_Hydrodyn::read_residue_file() {
-
    QString str1, str2;
    unsigned int numatoms, numbeads, /* i, */ j;
    // unsigned int positioner;
@@ -682,6 +683,8 @@ void US_Hydrodyn::read_residue_file() {
    // for ( int i = 0; i < (int) residue_list.size(); ++i ) {
    //    QTextStream( stdout ) << ( i + 1 ) << " " << residue_list[ i ].name << " " << residue_list[ i ].unique_name << " " << residue_list[ i ].comment << Qt::endl;
    // }
+   compute_residues_with_atomic_vs_bead_hydration_differences();
+   QTextStream(stdout) << list_residues_with_atomic_vs_bead_hydration_differences();
 }
 
 // #define DEBUG_VBAR
@@ -928,6 +931,75 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
    qsl.clear();
    delete usl;
 #endif
+}
+
+bool US_Hydrodyn::residue_atomic_vs_bead_hydration_differences( const struct residue & r ) {
+   // for each bead
+
+   // TSO << "residue_atomic_vs_bead_hydration_differences() : name " << r.name << "\n";
+
+   // is there any atomic hydration? if so, then bead hydration should match
+
+   for ( auto & a : r.r_atom ) {
+      if ( a.ionization_index
+           || a.hydration
+           || a.hydration2
+           ) {
+         return false;
+      }
+      
+   }
+
+   // no atomic hydration, any bead hydration?
+   for ( auto & b : r.r_bead ) {
+      if ( b.hydration ) {
+         return true;
+      }
+   }
+
+   return false;
+}
+   
+void US_Hydrodyn::compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl ) {
+   residues_with_atomic_vs_bead_hydration_differences.clear();
+   
+   const vector < struct residue > *use_rl = &rl;
+   
+   if ( !use_rl->size() ) {
+      use_rl = &residue_list;
+   }
+   
+   for ( auto &r : *use_rl ) {
+      if ( residue_atomic_vs_bead_hydration_differences( r ) ) {
+         // {
+         //    struct residue r_tmp = r;
+         //    info_residue( r_tmp, "no atomic hydration but has bead hydration" );
+         // }
+         residues_with_atomic_vs_bead_hydration_differences.insert( r.name );
+      }
+   }
+}
+
+QString US_Hydrodyn::list_residues_with_atomic_vs_bead_hydration_differences() {
+   QStringList qsl;
+
+   for ( auto &n : residues_with_atomic_vs_bead_hydration_differences ) {
+      qsl << n;
+   }
+   return qsl.join( "\n" ) + "\n";
+}
+
+bool US_Hydrodyn::model_vector_has_hydration_differences( const vector < struct PDB_model > & m ) {
+   for ( auto &model : m ) {
+      for ( auto &chain : model.molecule ) {
+         for ( auto &a : chain.atom ) {
+            if ( residues_with_atomic_vs_bead_hydration_differences.count( a.resName ) ) {
+               return true;
+            }
+         }
+      }
+   }
+   return false;
 }
 
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
@@ -1651,6 +1723,9 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    }
    // QTextStream( stdout ) << list_chainIDs(model_vector);
    // QTextStream( stdout ) << list_chainIDs(model_vector_as_loaded);
+   if ( model_vector_has_hydration_differences( model_vector ) ) {
+      editor_msg( "darkred", us_tr( "WARNING: PDB contains residues with bead hydration without atomic hydration,\nvdW models should not be used a they rely on atomic hydration\n\n" ) );
+   }
    return 0;
 }
 

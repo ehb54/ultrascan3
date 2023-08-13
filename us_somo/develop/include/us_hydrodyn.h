@@ -277,6 +277,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
+      set < QString > residues_with_atomic_vs_bead_hydration_differences;
+      void            compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl = {} );
+      bool            residue_atomic_vs_bead_hydration_differences( const struct residue & r );
+      QString         list_residues_with_atomic_vs_bead_hydration_differences();
+      void            info_residue( struct residue & r, const QString & msg = "" );
+      bool            model_vector_has_hydration_differences( const vector < struct PDB_model > & m );
+
       bool     gui_script;
       QString  gui_script_file;
       void     gui_script_msg  ( int line, QString arg, QString msg );
