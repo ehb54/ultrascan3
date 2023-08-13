@@ -6294,13 +6294,101 @@ void US_ConvertGui::saveUS3( void )
     }
   /****/
 
+    
+  qDebug() << "Save INIT 1: ";
+
+  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
+  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
+  dataSavedOtherwise = false;
+
+  pb_saveUS3 -> setEnabled( false );
+
+  // *** CHECK if all Optics types processed **** //
+  bool all_processed = true;
+  QMap<QString, int>::iterator os;
+  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+    {
+      if ( os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+  /////////////////////////////////////////////////////
+
   
+  if ( us_convert_auto_mode )
+    {
+      QMap < QString, QString > autoflow_details;
+      autoflow_details = read_autoflow_record( autoflowID_passed );
+
+      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
+      
+      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
+	{
+	  if ( runType_combined_IP_RI )
+	    {
+	      if ( !all_processed )
+		{
+		  QMessageBox::information( this,
+					    tr( "Data for Current Optical System Already Saved" ),
+					    tr( "It appears that the data for the current optical system are already saved!\n\n"
+						"The program will switch to processing the data for next optical system... " ));
+		  /***/
+		  //set autoflowStages record to "unknown" again !!
+		  revert_autoflow_stages_record( autoflowID_passed );
+		  /***/
+
+		  emit process_next_optics( );
+		  return;
+		}
+	      else
+		{
+		  QMessageBox::information( this,
+					    tr( "The Program State Updated / being Updated" ),
+					    tr( "The program advanced or is advancing to the next stage!\n\n"
+						"This happened because you or different user "
+						"has already saved the data into DB using different program "
+						"session and the program is proceeding to the next stage. \n\n"
+						"The program will return to the autoflow runs dialog where "
+						"you can re-attach to the actual current stage of the run. "
+						"Please allow some time for the status to be updated.") );
+		  
+		  resetAll_auto();
+		  emit saving_complete_back_to_initAutoflow();
+		  return;
+		}
+	    }
+	  else
+	    {
+	      QMessageBox::information( this,
+					tr( "The Program State Updated / being Updated" ),
+					tr( "The program advanced or is advancing to the next stage!\n\n"
+					    "This happened because you or different user "
+					    "has already saved the data into DB using different program "
+					    "session and the program is proceeding to the next stage. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "
+					    "Please allow some time for the status to be updated.") );
+	      
+	      resetAll_auto();
+	      emit saving_complete_back_to_initAutoflow();
+	      return;
+	    }
+	}
+    }
+    
+  /*************************************************************************************************************/
+  // We need to  insert submission form dialog (with password...)
+  //
+  // Then, we need to update autoflowReports' triple status 'DROPPED' to YES (above) here -- AFTER verifying if
+  // current optical system was saved
+  // 
+  /*************************************************************************************************************/
   
   //Now we need to go over dropped triples and/or entire channles & ensure this info is reflected in channels' autoflowReports
   if ( us_convert_auto_mode )
     {
-      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
-
       // Determine if we are using the database
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -6313,7 +6401,42 @@ void US_ConvertGui::saveUS3( void )
 	  return;
 	}
 
+      //Submitter Form with MP:
+      if ( !usmode && gmpRun_bool )
+	{
+	  QStringList qry1;
+	  qry1 <<  QString( "get_user_info" );
+	  dbP. query( qry1 );
+	  dbP. next();
+	  int u_ID        = dbP. value( 0 ).toInt();
+	  QString u_fname = dbP. value( 1 ).toString();
+	  QString u_lname = dbP. value( 2 ).toString();
+	  int u_lev       = dbP. value( 5 ).toInt();
+	  
+	  QString user_submitter = u_lname + ", " + u_fname;
+	  
+	  gmp_submitter_map.clear();
+	  US_Passwd   pw_at;
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Saving Form", "Please fill out GMP run saving form:", user_submitter );
+	  
+	  int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+	  qDebug() << "Submitter map: "
+		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+		   << gmp_submitter_map.keys().isEmpty() 
+		   << gmp_submitter_map[ "User:" ]
+		   << gmp_submitter_map[ "Comment:" ]
+		   << gmp_submitter_map[ "Master Password:" ];
+	  
+	  if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+	    {
+	      revert_autoflow_stages_record( autoflowID_passed );
+	      return;
+	    }
+	}
+
+      
       // First, create a QMap relating excluded triples' tripleDesc and reportIDs:
+      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
       QMap<QString,QString> excluded_triple_to_reportID; 
       QMap<QString, QString>::iterator chan_rep;
       for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
@@ -6475,92 +6598,7 @@ void US_ConvertGui::saveUS3( void )
     }
   /////////////////////////////
   
-  
-
-  
-  qDebug() << "Save INIT 1: ";
-
-  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
-  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
-  dataSavedOtherwise = false;
-
-  pb_saveUS3 -> setEnabled( false );
-
-  // *** CHECK if all Optics types processed **** //
-  bool all_processed = true;
-  QMap<QString, int>::iterator os;
-  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
-    {
-      if ( os.value() )
-	{
-	  all_processed = false;
-	  break;
-	}
-    }
-  /////////////////////////////////////////////////////
-
-  
-  if ( us_convert_auto_mode )
-    {
-      QMap < QString, QString > autoflow_details;
-      autoflow_details = read_autoflow_record( autoflowID_passed );
-
-      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
-      
-      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
-	{
-	  if ( runType_combined_IP_RI )
-	    {
-	      if ( !all_processed )
-		{
-		  QMessageBox::information( this,
-					    tr( "Data for Current Optical System Already Saved" ),
-					    tr( "It appears that the data for the current optical system are already saved!\n\n"
-						"The program will switch to processing the data for next optical system... " ));
-		  /***/
-		  //set autoflowStages record to "unknown" again !!
-		  revert_autoflow_stages_record( autoflowID_passed );
-		  /***/
-
-		  emit process_next_optics( );
-		  return;
-		}
-	      else
-		{
-		  QMessageBox::information( this,
-					    tr( "The Program State Updated / being Updated" ),
-					    tr( "The program advanced or is advancing to the next stage!\n\n"
-						"This happened because you or different user "
-						"has already saved the data into DB using different program "
-						"session and the program is proceeding to the next stage. \n\n"
-						"The program will return to the autoflow runs dialog where "
-						"you can re-attach to the actual current stage of the run. "
-						"Please allow some time for the status to be updated.") );
-		  
-		  resetAll_auto();
-		  emit saving_complete_back_to_initAutoflow();
-		  return;
-		}
-	    }
-	  else
-	    {
-	      QMessageBox::information( this,
-					tr( "The Program State Updated / being Updated" ),
-					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happened because you or different user "
-					    "has already saved the data into DB using different program "
-					    "session and the program is proceeding to the next stage. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "
-					    "Please allow some time for the status to be updated.") );
-	      
-	      resetAll_auto();
-	      emit saving_complete_back_to_initAutoflow();
-	      return;
-	    }
-	}
-    }
-  
+ 
   // qDebug() << "ExpData: ";
 
   qDebug() << "ExpData.invID " << ExpData.invID;             
