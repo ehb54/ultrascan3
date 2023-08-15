@@ -1467,6 +1467,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       return -1;
    }
       
+   if ( model_vector_has_hydration_differences( model_vector ) ) {
+      editor_msg( "darkred", us_tr( "WARNING: PDB contains residues with bead hydration without atomic hydration,\nvdW models should not be used a they rely on atomic hydration\n\n" ) );
+   }
+
    point com;
    com.axis[ 0 ] = 0;
    com.axis[ 1 ] = 0;
@@ -1826,7 +1830,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
 
    {
       QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
-      editor_msg( "black", courier, "Residue\t count\tpercent\t Theo. wat\tExposed\tExp. theo. waters\n" );
+      editor_msg( "black", courier,
+                  "Residue  Count   Percent  Theo.-wat  Exposed  Exp.-theo.-waters\n"
+                  );
+
       summary_info summary_totals;
       for ( auto it = summary_infos.begin();
             it != summary_infos.end();
@@ -1839,22 +1846,24 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       for ( auto it = summary_infos.begin();
             it != summary_infos.end();
             ++it ) {
-         editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\t%5\t%6\n" )
-                     .arg( it->first )
-                     .arg( it->second.count )
-                     .arg( floor( 100 * 100.0 * (double) it->second.count / (double) summary_totals.count ) / 100, 0, 'g', 3 )
-                     .arg( it->second.theo_waters, 0, 'f', 0 )
-                     .arg( it->second.count_exposed )
+         editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5  %6\n" )
+                     .arg( it->first, -7 )
+                     .arg( it->second.count, -6 )
+                     .arg( QString( "%1%" )
+                           .arg( floor( 100 * 100.0 * (double) it->second.count / (double) summary_totals.count ) / 100, 0, 'g', 3 ), -6 )
+                     .arg( it->second.theo_waters, -9, 'f', 0 )
+                     .arg( it->second.count_exposed, -7 )
                      .arg( it->second.theo_waters_exposed, 0, 'f', 0 )
                      );
       }
       
-      editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\t%5\t%6\n" )
-                  .arg( "Total" )
-                  .arg( summary_totals.count )
-                  .arg( floor( 100 * 100.0 * (double) summary_totals.count / (double) summary_totals.count ) / 100, 0, 'g', 3 )
-                  .arg( summary_totals.theo_waters, 0, 'f', 0 )
-                  .arg( summary_totals.count_exposed )
+      editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5  %6\n" )
+                  .arg( "Total", -7 )
+                  .arg( summary_totals.count, -6 )
+                  .arg( QString( "%1%" )
+                        .arg( floor( 100 * 100.0 * (double) summary_totals.count / (double) summary_totals.count ) / 100, 0, 'g', 3 ), -6 )
+                  .arg( summary_totals.theo_waters, -9, 'f', 0 )
+                  .arg( summary_totals.count_exposed, -7 )
                   .arg( summary_totals.theo_waters_exposed, 0, 'f', 0 )
                   );
    }
