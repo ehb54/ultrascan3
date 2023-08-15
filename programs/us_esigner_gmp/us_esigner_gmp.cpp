@@ -2951,6 +2951,7 @@ void US_eSignaturesGMP::esign_report( void )
 
   qDebug() << "Extracted .PDF of ORIGINAL GMP Report filepath -- " << filePath_db;
   qDebug() << ".PDF of the current eSign_filepath -- " << filePath_eSign;
+  qDebug() << "temp debug -- ";
   
   //first, check if you (as logged in user) are among listed operators && reviewers
   US_Passwd pw;
