@@ -395,7 +395,7 @@ void US_Hydrodyn::grpy_process_next() {
       connect( grpy, SIGNAL(started()), this, SLOT(grpy_started()) );
 
       editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
-                  .arg( QFileInfo( grpy_last_processed ).baseName() )
+                  .arg( QFileInfo( grpy_last_processed ).completeBaseName() )
                   .arg( grpy_last_used_beads )
                   );
       grpy->start( grpy_prog, args, QIODevice::ReadOnly );

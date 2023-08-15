@@ -1831,7 +1831,8 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    {
       QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
       editor_msg( "black", courier,
-                  "Residue  Count   Percent  Theo.-wat  Exposed  Exp.-theo.-waters\n"
+                  "Atomic level hydration:\n"
+                  "Residue  Count   Percent  Theo. wat  Exposed  Exp. theo. wat\n"
                   );
 
       summary_info summary_totals;
@@ -1843,6 +1844,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          summary_totals.count_exposed       += it->second.count_exposed;
          summary_totals.theo_waters_exposed += it->second.theo_waters_exposed;
       }
+
       for ( auto it = summary_infos.begin();
             it != summary_infos.end();
             ++it ) {
