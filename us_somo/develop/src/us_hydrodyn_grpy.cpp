@@ -118,6 +118,19 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 #endif      
       ;
 
+   if ( misc.parallel_grpy ) {
+      grpy_prog =
+         USglobal->config_list.system_dir + SLASH +
+#if defined(BIN64)
+         "bin64"
+#else
+         "bin"
+#endif
+         + SLASH
+         + "GRPY_parallel"
+         ;
+   }
+
    QFileInfo qfi( grpy_prog );
    if ( !qfi.exists() ) {
       editor_msg( (QString) "red", QString("GRPY program '%1' does not exist\n").arg(grpy_prog));
@@ -385,10 +398,16 @@ void US_Hydrodyn::grpy_process_next() {
    // us_qdebug( "grpy_last_processed " + grpy_last_processed );
    {
       QStringList args;
+      if ( misc.parallel_grpy ) {
+         args
+            << QString( "%1" ).arg( USglobal->config_list.numThreads )
+            ;
+      }
       args
          << "-e"
-         << grpy_last_processed;
-
+         << grpy_last_processed
+         ;
+      
       connect( grpy, SIGNAL(readyReadStandardOutput()), this, SLOT(grpy_readFromStdout()) );
       connect( grpy, SIGNAL(readyReadStandardError()), this, SLOT(grpy_readFromStderr()) );
       connect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(grpy_finished( int, QProcess::ExitStatus )) );

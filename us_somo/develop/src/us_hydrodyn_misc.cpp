@@ -489,6 +489,15 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_export_ssbond );
    connect(cb_export_ssbond, SIGNAL(clicked()), SLOT(set_export_ssbond()));
 
+   cb_parallel_grpy = new QCheckBox(this);
+   cb_parallel_grpy->setText(us_tr(" Enable Parallel GRPY"));
+   cb_parallel_grpy->setChecked((*misc).parallel_grpy);
+   cb_parallel_grpy->setMinimumHeight(minHeight1);
+   cb_parallel_grpy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_parallel_grpy->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_parallel_grpy );
+   connect(cb_parallel_grpy, SIGNAL(clicked()), SLOT(set_parallel_grpy()));
+
    lbl_vdw_ot_mult = new QLabel(us_tr(" vdW OT multiplier: "), this);
    lbl_vdw_ot_mult->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vdw_ot_mult->setMinimumWidth(220);
@@ -557,6 +566,7 @@ void US_Hydrodyn_Misc::setupGUI()
    
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
       cb_export_ssbond->hide();
+      cb_parallel_grpy->hide();
       lbl_vdw_ot_mult ->hide();
       le_vdw_ot_mult  ->hide();
       lbl_vdw_ot_dpct ->hide();
@@ -643,26 +653,39 @@ void US_Hydrodyn_Misc::setupGUI()
       j++;
       leftside->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
       j++;
-      leftside->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
-      j++;
-      leftside->addWidget( cb_export_ssbond , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+
+
+      // leftside->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      // j++;
+      // leftside->addWidget( cb_export_ssbond , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      // j++;
+
+      {
+         QBoxLayout * hbl = new QHBoxLayout( 0 ); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+         hbl->addWidget( cb_export_msroll );
+         hbl->addWidget( cb_export_ssbond );
+         hbl->addWidget( cb_parallel_grpy );
+         leftside->addLayout( hbl, j, 0, 1, 2 );
+      }
       j++;
 
-      leftside->addWidget(lbl_vdw_ot_mult, j, 0);
-      leftside->addWidget(le_vdw_ot_mult, j, 1);
-      j++;
+      // leftside->addWidget(lbl_vdw_ot_mult, j, 0);
+      // leftside->addWidget(le_vdw_ot_mult, j, 1);
+      // j++;
 
       leftside->addWidget(lbl_vdw_ot_dpct, j, 0);
       leftside->addWidget(le_vdw_ot_dpct, j, 1);
       j++;
 
-      leftside->addWidget( cb_vdw_ot_alt , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
-      j++;
-
-      leftside->addWidget( cb_vdw_saxs_water_beads , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
-      j++;
-
-      leftside->addWidget( cb_vdw_saxs_skip_pr0pair , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      {
+         QBoxLayout * hbl = new QHBoxLayout( 0 ); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+         hbl->addWidget(lbl_vdw_ot_mult );
+         hbl->addWidget(le_vdw_ot_mult );
+         hbl->addWidget( cb_vdw_ot_alt );
+         hbl->addWidget( cb_vdw_saxs_water_beads );
+         hbl->addWidget( cb_vdw_saxs_skip_pr0pair );
+         leftside->addLayout( hbl, j, 0, 1, 2 );
+      }
       j++;
 
 #if !defined( USE_RIGHTSIDE )
@@ -884,6 +907,12 @@ void US_Hydrodyn_Misc::set_export_msroll()
 void US_Hydrodyn_Misc::set_export_ssbond()
 {
    (*misc).export_ssbond = cb_export_ssbond->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_parallel_grpy()
+{
+   (*misc).parallel_grpy = cb_parallel_grpy->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
