@@ -6417,7 +6417,7 @@ void US_ConvertGui::saveUS3( void )
 	  
 	  gmp_submitter_map.clear();
 	  US_Passwd   pw_at;
-	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Saving Form", "Please fill out GMP run saving form:", user_submitter );
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run IMPORT Form", "Please fill out GMP run IMPORT form:", user_submitter );
 	  
 	  int gmp_submitter_map_size = gmp_submitter_map.keys().size();
 	  qDebug() << "Submitter map: "
@@ -7038,6 +7038,9 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       importIP_Json += "}],";
 
       importIP_Json += "\"RefScan\": \"" + refScan + "\"";
+
+      //Now, add comment from SAVING form:
+      importIP_Json += ", \"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\"";  
 
       //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
       if ( !drop_operations[ runType ]. isEmpty() )
