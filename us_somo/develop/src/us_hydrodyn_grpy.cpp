@@ -129,6 +129,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
          + SLASH
          + "GRPY_parallel"
          ;
+
+      editor_msg( "darkblue", QString( us_tr( "\nParallel GRPY enabled with %1 threads\n" ) ).arg( USglobal->config_list.numThreads ) );
    }
 
    QFileInfo qfi( grpy_prog );
