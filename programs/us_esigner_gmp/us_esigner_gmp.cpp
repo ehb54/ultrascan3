@@ -585,7 +585,13 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   //read e-Sign record, to check e-Signing status of each reviewer/operator:
   eSign_details_auto. clear();
   eSign_details_auto = read_autoflowGMPReportEsign_record( autoflowID_passed );
+  // //DEBUG
+  // QMap<QString, QMap< QString, QString>> eSigned_so_fa = json_to_qmap( eSign_details_auto[ "eSignStatusJson" ]); 
+  // QStringList esigner_list = eSigned_so_fa.keys();
+  // qDebug() << "E-Signer's list -- " << esigner_list; 
+  // //DEBUG
 
+  
   //&& Set defined Operator/Reviewers (if any)
   display_reviewers_auto( row, eSign_details_auto, "operatorListJson" );
   display_reviewers_auto( row, eSign_details_auto, "reviewersListJson" );
@@ -3404,7 +3410,8 @@ QMap< QString, QMap< QString, QString>>  US_eSignaturesGMP::json_to_qmap( QStrin
 
   QJsonArray to_esign_array  = to_esign .toArray();
   QJsonArray esigned_array   = esigned  .toArray();
-
+  int r_counter = 0;
+  
   for (int i=0; i < esigned_array.size(); ++i )
     {
       foreach(const QString& key, esigned_array[i].toObject().keys())
@@ -3420,9 +3427,12 @@ QMap< QString, QMap< QString, QString>>  US_eSignaturesGMP::json_to_qmap( QStrin
 		   << newObj["Comment"]   .toString()
 		   << newObj["timeDate"]  .toString();
 
-	  esigners_info[ key ][ "Role"     ] = role;
-	  esigners_info[ key ][ "Comment"  ] = comment;
-	  esigners_info[ key ][ "timeDate" ] = timeDate;
+	  ++r_counter;
+	  QString key1 = "(" + QString::number( r_counter ) + ") " + key;
+
+	  esigners_info[ key1 ][ "Role"     ] = role;
+	  esigners_info[ key1 ][ "Comment"  ] = comment;
+	  esigners_info[ key1 ][ "timeDate" ] = timeDate;
 	}
     }
   
@@ -3532,7 +3542,9 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
 
   //Process eSigners_info QMap:
   QStringList esigners_footer;
+  //NOTE: will be an order sorted by event, NOT alphabetically!!!
   QStringList esigner_list = eSigners_info.keys();
+  
   int eSigners_number = esigner_list.size();
   for ( int i=0; i< eSigners_number; ++i )
     {
@@ -3543,7 +3555,8 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
 
       // QString c_es = esigner.split(".")[1].trimmed() + "; ID: " + esigner.split(".")[0].trimmed()
       // 	+ "; Role: " + role + "; e-Signed on: " + timeDate;
-      QString c_es = esigner.split(".")[1].trimmed() + "; Comment: " + comment
+      QString c_es = esigner.split(".")[1].trimmed()
+	//+ "; Comment: " + comment
 	+ "; Role: " + role + "; e-Signed on: " + timeDate;
       esigners_footer << c_es;
     }
