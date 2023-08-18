@@ -3568,6 +3568,14 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
   footerRect.setHeight( eSigners_number*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
 
   painter->setPen(Qt::blue);
+  QFont pfont = painter -> font();
+  qDebug() << "Paint page: painter: pixelSize(), pointSize() -- "
+	   << pfont. pixelSize()
+	   << pfont. pointSize();
+  int original_pfont_size = pfont. pointSize();
+  pfont. setPointSize( int ( original_pfont_size * 0.8 ) );
+  painter-> setFont(pfont);
+  
   painter->drawText(footerRect, Qt::AlignLeft, es_footer );
   //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr( esigners_footer.join("\n") ) );
   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
@@ -3577,6 +3585,10 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
   //   painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers"));
   // else
   //   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+
+  //and restore painter's font:
+  pfont. setPointSize( original_pfont_size );
+  painter-> setFont(pfont);
 }
 
 
