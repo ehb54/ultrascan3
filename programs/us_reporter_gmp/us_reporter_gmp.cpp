@@ -5220,12 +5220,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       int experimentID = get_expID_by_runID_invID( dbP, fileNameList[ i ] );
 
       if ( experimentID == 0 )
-	{
-	  QMessageBox::warning( this, tr( "ExpID zero, run details" ),
-			    tr( "Experiment ID zero!!!: \n" ) );
-	  return;
-	}
-
+       	{
+       	  QMessageBox::warning( this, tr( "ExpID zero, run details" ),
+				tr( "Experiment ID zero!!!: \n" ) );
+       	  return; 
+       	}
+      
       //4. get timeSateID from expID
       int tmstID     = 0;
       QString tfname = fileNameList[ i ] + ".time_state.tmst";
@@ -5237,15 +5237,15 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
       qDebug() << "Assembling Run Details: expID tmstID tfname cksumd datedt"
 	       << experimentID << tmstID << tfname << cksumd << datedt;
-
+      
       if ( tmstID == 0 )
 	{
 	  QMessageBox::warning( this, tr( "TimeStateID zero, run details" ),
-			    tr( "TimeState ID zero!!!: \n" ) );
-	  return;
-	}
+				tr( "TimeState ID zero!!!: \n" ) );
+       	  return;
+       	}
 
-
+      
       //5. Download the .tmst file
       QDir        readDir( US_Settings::resultDir() );
       QString     dirname = readDir.absolutePath() + "/" +  fileNameList[ i ];
@@ -5445,6 +5445,7 @@ int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filenam
   query << "get_experiment_info_by_runID"
 	<< runID_filename
 	<< QString::number(invID);
+  qDebug() << "get_experiment_info_by_runID: qry -- " << query;
   dbP->query( query );
   
   if ( dbP->lastErrno() == US_DB2::OK )
@@ -9663,10 +9664,11 @@ void US_ReporterGMP::write_pdf_report( void )
   QTextDocument textDocument;
   textDocument.setHtml( html_assembled );
 
-  qDebug() << "Default QtextDoc font: " << textDocument.defaultFont();
+  qDebug() << "Default QtextDoc font1: " << textDocument.defaultFont();
   QFont t_f = textDocument.defaultFont();
   t_f. setPointSize( 7 );
   textDocument. setDefaultFont( t_f );
+  qDebug() << "Default QtextDoc font2: " << textDocument.defaultFont();
   
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
@@ -9682,100 +9684,105 @@ void US_ReporterGMP::write_pdf_report( void )
   qApp->processEvents();
   
 
-
-   // //TEST [FOR SBird-DNA-EcoRI-101322-PD9] ***************************************/
-   // //Write HTML file to BLOB instead SEPARATELY:
-   // US_Passwd pw;
-   // US_DB2    db( pw.getPasswd() );
+   /**************************************************************************************/
+    //TEST !!! Write HTML file to BLOB instead SEPARATELY for hard-coded GMP Report IDs: 
+    //  
+    //
+    // Choose one of the below!
+    //int r_ID = 1;  // < --- [FOR SBird-DNA-EcoRI-101322-PD9 .. autoflowID=838] 
+    int r_ID = 12;   // < --- [FOR OkaK_MW-AAV8_17-19_062823 .. autoflowID=930]
   
-   // if ( db.lastErrno() != US_DB2::OK )
-   //   {
-   //     QMessageBox::warning( this, tr( "Connection Problem" ),
-   // 			    tr( "Could not connect to database \n" ) +  db.lastError() );
-   //     return;
-   //   }
-
-   // //Write HTML strign to file & later save to DB withing general archive
-   // QString html_filePath = dirName + "/" + "html_string.html";
-   // QFile file_html_str( html_filePath );
-   // qDebug() << "HTML to be written: filepath -- " << html_filePath;
-   // if(!file_html_str.open(QIODevice::WriteOnly))
-   //   file_html_str.close();
-   // else
-   //   {
-   //     file_html_str.write( html_assembled.toUtf8() );
-   //     //QTextStream out(&file_html_str); out << html_assembled;
-   //     file_html_str.close();
-   //   }
-
-   // qDebug() << "html_filePath: " << html_filePath;
-   // int writeStatus_html = db.writeBlobToDB(html_filePath,
-   // 					  QString( "upload_gmpReportData_html" ),
-   // 					  1 );
-
-   // qApp->processEvents();
-   // if ( writeStatus_html == US_DB2::DBERROR )
-   //   {
-   //     QMessageBox::warning(this, "Error", "Error processing html file:\n"
-   // 			   + html_filePath + "\n" + db.lastError() +
-   // 			   "\n" + "Could not open file or no data \n");
-   //   }
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
   
-   // else if ( writeStatus_html != US_DB2::OK )
-   //   {
-   //     QMessageBox::warning(this, "Error", "returned processing html file:\n" +
-   // 			   html_filePath + "\n" + db.lastError() + "\n");
-    
-   //   }
+      if ( db.lastErrno() != US_DB2::OK )
+        {
+          QMessageBox::warning( this, tr( "Connection Problem" ),
+      			    tr( "Could not connect to database \n" ) +  db.lastError() );
+          return;
+        }
 
-   // //
+      //Write HTML strign to file & later save to DB withing general archive
+      QString html_filePath = dirName + "/" + "html_string.html";
+      QFile file_html_str( html_filePath );
+      qDebug() << "HTML to be written: filepath -- " << html_filePath;
+      if(!file_html_str.open(QIODevice::WriteOnly))
+        file_html_str.close();
+      else
+        {
+          file_html_str.write( html_assembled.toUtf8() );
+          //QTextStream out(&file_html_str); out << html_assembled;
+          file_html_str.close();
+        }
+
+      qDebug() << "html_filePath: " << html_filePath;
+      int writeStatus_html = db.writeBlobToDB(html_filePath,
+      					  QString( "upload_gmpReportData_html" ),
+      					  r_ID );
+
+      qApp->processEvents();
+      if ( writeStatus_html == US_DB2::DBERROR )
+        {
+          QMessageBox::warning(this, "Error", "Error processing html file:\n"
+      			   + html_filePath + "\n" + db.lastError() +
+      			   "\n" + "Could not open file or no data \n");
+        }
   
-   // QStringList file_exts;
-   // //file_exts << "*.png" << "*.svgz";
-   // file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
-   // remove_files_by_mask( dirName, file_exts );
-
-   // QString tarFilename_t = subDirName + "_GMP_DB.tar";
-   // //QString tarFilename_t = subDirName + "_GMP_DB.rar";
-   
-   // QProcess *process = new QProcess(this);
-   // process->setWorkingDirectory( US_Settings::reportDir() );
-   // process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
-   // //process->start("rar", QStringList() << "a" << tarFilename_t << subDirName );
-   // //sleep( 5 );                     //Maybe implement something like a timer to check on completion!!!
-   // process -> waitForFinished();
-   // process -> close();
-   
-   // qDebug() << "tar command: " << "tar " << "-cvf " << tarFilename_t << ", " << subDirName;
-
-   // QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
-   // qDebug() << "r_filepath: " << r_filepath;
-
-   
-   // qApp->processEvents();
-   
-   // //Like process -> returned signal??
-   
-   // int writeStatus= db.writeBlobToDB(r_filepath,
-   // 				    QString( "upload_gmpReportData" ),
-   // 				    1 );
-   // qApp->processEvents();
+      else if ( writeStatus_html != US_DB2::OK )
+        {
+          QMessageBox::warning(this, "Error", "returned processing html file:\n" +
+      			   html_filePath + "\n" + db.lastError() + "\n");
   
-   // if ( writeStatus == US_DB2::DBERROR )
-   //   {
-   //     QMessageBox::warning(this, "Error", "Error processing file:\n"
-   // 			   + r_filepath + "\n" + db.lastError() +
-   // 			   "\n" + "Could not open file or no data \n");
-   //   }
-  
-   // else if ( writeStatus != US_DB2::OK )
-   //   {
-   //     QMessageBox::warning(this, "Error", "returned processing file:\n" +
-   // 			   r_filepath + "\n" + db.lastError() + "\n");
-    
-   //   }
+        }
 
-   // /****** END TEST *************************************************************/
+      //
+  
+      QStringList file_exts;
+      //file_exts << "*.png" << "*.svgz";
+      file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
+      remove_files_by_mask( dirName, file_exts );
+
+      QString tarFilename_t = subDirName + "_GMP_DB.tar";
+      //QString tarFilename_t = subDirName + "_GMP_DB.rar";
+  
+      QProcess *process = new QProcess(this);
+      process->setWorkingDirectory( US_Settings::reportDir() );
+      process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+      //process->start("rar", QStringList() << "a" << tarFilename_t << subDirName );
+      //sleep( 5 );                     //Maybe implement something like a timer to check on completion!!!
+      process -> waitForFinished();
+      process -> close();
+  
+      qDebug() << "tar command: " << "tar " << "-cvf " << tarFilename_t << ", " << subDirName;
+
+      QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
+      qDebug() << "r_filepath: " << r_filepath;
+
+  
+      qApp->processEvents();
+  
+      //Like process -> returned signal??
+  
+      int writeStatus= db.writeBlobToDB(r_filepath,
+      				    QString( "upload_gmpReportData" ),
+      				    r_ID );
+      qApp->processEvents();
+  
+      if ( writeStatus == US_DB2::DBERROR )
+        {
+          QMessageBox::warning(this, "Error", "Error processing file:\n"
+      			   + r_filepath + "\n" + db.lastError() +
+      			   "\n" + "Could not open file or no data \n");
+        }
+  
+      else if ( writeStatus != US_DB2::OK )
+        {
+          QMessageBox::warning(this, "Error", "returned processing file:\n" +
+      			   r_filepath + "\n" + db.lastError() + "\n");
+  
+        }
+
+    /****** END TEST *************************************************************/
 
   
   //Now delete all .png && .svgz && tar entire directory
@@ -9867,17 +9874,18 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   // dialog.setWindowModality( Qt::ApplicationModal );
   
   bool firstPage = true;
-  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-  //   dialog.setValue( pageIndex );
-  //   if (dialog.wasCanceled())
-  //     break;
-    
-    if (!firstPage)
-      printer.newPage();
-    
-    paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
-    firstPage = false;
-  }
+  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex)
+    {
+      //   dialog.setValue( pageIndex );
+      //   if (dialog.wasCanceled())
+      //     break;
+      
+      if (!firstPage)
+	printer.newPage();
+      
+      paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
+      firstPage = false;
+    }
 }
 
 
@@ -9922,10 +9930,24 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   // Footer: e-Signer comment && page number
   QRectF footerRect = textRect;
   footerRect.setTop(textRect.bottom());
-  footerRect.setHeight( 1*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+  //footerRect.setHeight( 1*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+  //test below
+  footerRect.setHeight( 4*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+  //end test
 
   painter->setPen(Qt::blue);
-  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Reviewed..." ));
+  QFont pfont = painter -> font();
+  qDebug() << "Paint page: painter: pixelSize(), pointSize() -- "
+	   << pfont. pixelSize()
+	   << pfont. pointSize();
+  int original_pfont_size = pfont. pointSize();
+  pfont. setPointSize( int ( original_pfont_size * 0.8 ) );
+  painter-> setFont(pfont);
+
+  //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed..." ));
+  //test below
+  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed..." ));
+  //end test
   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
 
   // Footer: page number or "end"
@@ -9933,6 +9955,10 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   //   painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Footer to be passed by e-Signers"));
   // else
   //   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
+  
+  //and restore painter's font:
+  pfont. setPointSize( original_pfont_size );
+  painter-> setFont(pfont);
 }
 
 
