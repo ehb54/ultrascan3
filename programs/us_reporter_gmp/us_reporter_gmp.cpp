@@ -9930,9 +9930,9 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   // Footer: e-Signer comment && page number
   QRectF footerRect = textRect;
   footerRect.setTop(textRect.bottom());
-  //footerRect.setHeight( 1*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+  footerRect.setHeight( 1*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
   //test below
-  footerRect.setHeight( 4*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
+  //footerRect.setHeight( 4*footerHeight ); //will a parameter on #of lines (footer height, depending on # reviewers...)
   //end test
 
   painter->setPen(Qt::blue);
@@ -9944,9 +9944,9 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   pfont. setPointSize( int ( original_pfont_size * 0.8 ) );
   painter-> setFont(pfont);
 
-  //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed..." ));
+  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed..." ));
   //test below
-  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed..." ));
+  //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed..." ));
   //end test
   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));
 
