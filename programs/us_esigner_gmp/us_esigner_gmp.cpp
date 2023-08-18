@@ -3236,12 +3236,17 @@ void US_eSignaturesGMP::esign_report( void )
   //Process html_assembled string: put correct images' pathnames:
   QRegExp rx("<img src=\"(.*)png\"");
   int pos = rx.indexIn( html_assembled );
-  //qDebug() << "Captured regex, size(): " << rx.capturedTexts() << rx.capturedTexts().size();
-  QString path_t = rx.capturedTexts()[0].split(".png\"")[0];//.section('/', -1);
-  path_t. replace( path_t.section('/',-1), "" );
-  QString old_path = path_t. split("src=\"")[1];
-  old_path.chop(1);
+  qDebug() << "Captured regex, size(): " << rx.capturedTexts() << rx.capturedTexts().size();
 
+  QString old_path = QString("");
+  if ( !rx.capturedTexts()[0].isEmpty() )
+    {
+      QString path_t = rx.capturedTexts()[0].split(".png\"")[0];//.section('/', -1);
+      path_t. replace( path_t.section('/',-1), "" );
+      old_path = path_t. split("src=\"")[1];
+      old_path.chop(1);
+    }
+  
   //Paths
   QString pathToNewTar = filePath_db_html;
   pathToNewTar. replace( filePath_db_html. section('/', -2), "" );
@@ -3249,7 +3254,9 @@ void US_eSignaturesGMP::esign_report( void )
   QString baseDir = pathToNewTar + folderRunName;
   
   qDebug() << "Image paths [old, new]: " << old_path << "\n" << baseDir;
-  html_assembled. replace( old_path, baseDir );
+
+  if ( !old_path.isEmpty() ) 
+    html_assembled. replace( old_path, baseDir );
   
   //Extract info on the current e-Sinatures:
   QMap< QString, QMap< QString, QString>> eSigners_info =  json_to_qmap( eSignStatusJson_updated );
