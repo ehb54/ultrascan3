@@ -1,0 +1,6 @@
+#!/bin/bash
+
+/usr/bin/time -v docker run --rm --cpus=$1 -v`pwd`:/work grpy ${@:2} 2>> $HOME/ultrascan/somo/grpy_mem_time_logs
+
+ 
+
