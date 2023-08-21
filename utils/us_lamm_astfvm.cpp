@@ -932,7 +932,7 @@ int US_LammAstfvm::solve_component(int compx) {
 
    Mesh *msh = new Mesh(param_m, param_b, simparams.simpoints, 0);
 
-   msh->InitMesh(param_s, param_D, param_w2);
+   msh->InitMesh(param_s20w, param_D20w, param_w2);
    int mropt = 0;                   // mesh refine option;
    double dt_old = dt;
    // make settings based on non-ideal case type
