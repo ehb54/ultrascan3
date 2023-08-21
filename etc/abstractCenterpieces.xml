@@ -216,7 +216,7 @@
      channels="1"
      shape="band forming"
      maxRPM="60000"
-     angle="1.64"
+     angle="1.331"
      width="0" >
       <row pathlen="1.2" bottom="7.2" />
    </abstractCenterpiece>
@@ -231,5 +231,44 @@
      angle="1.75"
      width="0" >
       <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+           id="19"
+           guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b419"
+           name="Epon-BF SA2"
+           materialName="Epon-Helmut"
+           channels="1"
+           shape="band forming"
+           maxRPM="60000"
+           angle="1.70"
+           width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="1.331" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="1.679" width="0" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+           id="20"
+           guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b420"
+           name="Epon-BF II"
+           materialName="Epon-Helmut"
+           channels="1"
+           shape="band forming"
+           maxRPM="60000"
+           angle="1.70"
+           width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.47" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.36" width="0" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+           id="21"
+           guid="30a5f2f8-b33a-42b6-a8a2-df077bf1b421"
+           name="Epon-BF E7"
+           materialName="Epon-Helmut"
+           channels="1"
+           shape="band forming"
+           maxRPM="60000"
+           angle="1.70"
+           width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.478" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.474" width="0" />
    </abstractCenterpiece>
 </abstractCenterpieces>
