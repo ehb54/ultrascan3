@@ -1,0 +1,16 @@
+#!/bin/bash
+
+name=`cat /dev/urandom | tr -cd 'a-f0-9' | head -c 64`
+
+function docker_stop_on_trap()
+{
+    echo `date` " : docker stop $name" >> $HOME/ultrascan/somo/grpy_mem_time_logs
+    docker stop $name
+    exit -1;
+}
+
+trap docker_stop_on_trap 0 1 2 3 6 9 14 15
+
+/usr/bin/time -v docker run --rm --cpus=$1 --name $name -v`pwd`:/work grpy ${@:2} 2>> $HOME/ultrascan/somo/grpy_mem_time_logs
+ 
+
