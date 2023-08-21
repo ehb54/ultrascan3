@@ -232,7 +232,7 @@ DbgLv(1) << "WT:CRR  CMULT" << cmult;
       wmodel.components[ ii ].s      = solutes_i[ ii ].s;
       wmodel.components[ ii ].f_f0   = solutes_i[ ii ].k;
       wmodel.components[ ii ].vbar20 = solutes_i[ ii ].v;
-      wmodel.components[ ii ].D      = 0.0;
+      wmodel.components[ ii ].D      = solutes_i[ ii ].d;
       wmodel.components[ ii ].mw     = 0.0;
       wmodel.components[ ii ].f      = 0.0;
 
