@@ -212,7 +212,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
 #if defined( TEST_VDW_GRPY_ASA )
    bool use_threshold = false;
-   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
+   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "-vdw" ) ) {
 
       switch ( QMessageBox::question(this, 
                                      this->windowTitle() + us_tr(": GRPY ASA" ),
@@ -237,7 +237,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    }
 #endif
 
-   if ( !hydro.grpy_bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
+   if ( !hydro.grpy_bead_inclusion && bead_model_suffix.contains( "-vdw" ) ) {
       extension =
          QString( "_R%1PR%2" )
          .arg( asa.vdw_grpy_threshold_percent )
@@ -279,7 +279,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             
             // always run asa
 
-            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
+            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdw" ) ) {
                // expose all
                for ( int i = 0; i < (int) bead_model.size(); ++i ) {
                   bead_model[ i ].exposed_code = 1;
