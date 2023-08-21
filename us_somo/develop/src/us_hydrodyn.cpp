@@ -3122,6 +3122,18 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    {
       return false;
    }
+   if ( batch_widget
+        && batch_window->batch_job_running
+        && model_vector_has_hydration_differences( model_vector ) ) {
+      batch_window->editor_msg( "darkred",
+                                QString(
+                                        us_tr(
+                                              "Screening: %1 : WARNING: PDB contains residues with bead hydration without atomic hydration,\nvdW models should not be used as they rely on atomic hydration\n"
+                                              )
+                                        ).arg( filename )
+                                );
+   }
+
 #if defined( DEBUG_TESTING_JML )
    us_qdebug( "extra reset0" );
    reset_chain_residues( &model_vector[0]);
@@ -4458,22 +4470,24 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
 
    if ( vdw ) {
       result += result.length() ? "-" : "";
+      bead_model_suffix = "";
       {
          double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
          double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
          bool vdw_ot_alt = gparams.count( "vdw_ot_alt" ) && gparams[ "vdw_ot_alt" ] == "true";
          if ( vdw_ot_mult ) {
             if ( vdw_ot_dpct ) {
-               result += QString( "OT%1%2DP%3").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ).replace( ".", "_" );
+               bead_model_suffix += QString( "OT%1%2DP%3_").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ).replace( ".", "_" );
             } else {
-               result += QString( "OT%1%2").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).replace( ".", "_" );
+               bead_model_suffix += QString( "OT%1%2_").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).replace( ".", "_" );
             }
-            result += QString( "_PR%1_TH%2-vdw" ).arg( asa.hydrate_probe_radius ).arg( asa.hydrate_threshold ).replace( ".", "_" );
-         } else {
-            result += bead_model_suffix = "vdw";
          }
+         bead_model_suffix += QString( "PR%1_TH%2_" ).arg( asa.hydrate_probe_radius ).arg( asa.hydrate_threshold ).replace( ".", "_" );
+         bead_model_suffix += QString( "pH%1").arg( hydro.pH ).replace( ".", "_" );
+         bead_model_suffix += "-vdw";
       }
-      result += QString( "pH%1").arg( hydro.pH );
+      result += bead_model_suffix;
+
       return result;
    }
 
