@@ -1650,18 +1650,18 @@ void US_Hydrodyn_Batch::update_enables()
       
    if (
        ( cb_vdw_beads         ->isChecked() ||
-         cb_zeno              ->isChecked() ) &&
+         cb_zeno              ->isChecked() ||
+         cb_grpy              ->isChecked() ) &&
        !cb_somo              ->isChecked() &&
        !cb_somo_o            ->isChecked() &&
        !cb_grid              ->isChecked() &&
        !cb_iqq               ->isChecked() &&
        !cb_prr               ->isChecked() &&
        !cb_hydro             ->isChecked() &&
-       !cb_grpy              ->isChecked() &&
        !cb_hullrad           ->isChecked() &&
        !cb_dmd               ->isChecked() 
        ) {
-      // just zeno for now
+      // zeno & grpy for now
       cb_results_dir       ->setEnabled( true );
       le_results_dir_name  ->setEnabled( true );
    } else {

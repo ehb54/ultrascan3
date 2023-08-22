@@ -206,7 +206,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    grpy_results2                      = grpy_results;
 
-   QDir::setCurrent(somo_dir);
+   QDir::setCurrent(get_somo_dir());
    
    QString extension;
 
@@ -261,7 +261,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             bead_model = bead_models[current_model];
 
             QString fname = 
-               somo_dir + SLASH +
+               get_somo_dir() + SLASH +
                project +
                ( bead_model_from_file ? "" : QString( "_%1" ).arg( model_name( current_model ) ) ) +
                QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
@@ -341,7 +341,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_mm         = grpy_to_process.size() > 1;
    grpy_mm_results = "";
    grpy_mm_name    =
-      somo_dir + SLASH +
+      get_somo_dir() + SLASH +
       project +
       QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
       extension
@@ -395,7 +395,7 @@ void US_Hydrodyn::grpy_process_next() {
    timers.start_timer( "compute grpy this model" );
 
    grpy = new QProcess( this );
-   grpy->setWorkingDirectory( somo_dir );
+   grpy->setWorkingDirectory( get_somo_dir() );
    // us_qdebug( "prog is " + grpy_prog );
    // us_qdebug( "grpy_last_processed " + grpy_last_processed );
    {
@@ -1062,7 +1062,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       if ( saveParams && create_hydro_res && !grpy_mm )
       {
-         QString fname = somo_dir + "/" + this_data.results.name + ".grpy.csv";
+         QString fname = get_somo_dir() + "/" + this_data.results.name + ".grpy.csv";
          if ( !overwrite_hydro ) {
             fname = fileNameCheck( fname, 0, this );
          }
