@@ -275,6 +275,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
 	 QMap< QString, QStringList > CombPlots_Type_to_Models;
+         QMap< QString, QString > eSign_details;
 
          QMap< QString, QStringList >     CombPlotsParmsMap;
          QMap< QString, QList< QColor > > CombPlotsParmsMap_Colors;
@@ -309,6 +310,8 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
+         QMap< QString, QString > read_autoflowGMPReportEsign_record( US_DB2*);
+         QString get_assigned_oper_revs( QJsonDocument );
 	 void parse_gen_mask_json ( const QString  );
 	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
 	 QMap< QString, QString > parse_models_desc_json( const QString, const QString ); 

@@ -558,6 +558,105 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   
 }
 
+
+//read eSign GMP record for assigned oper(s) && rev(s) && status
+QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( US_DB2* db )
+{
+  QMap< QString, QString> eSign_record;
+  
+  QStringList qry;
+  qry << "get_gmp_review_info_by_autoflowID" << AutoflowID_auto;
+  qDebug() << "read eSing rec, qry -- " << qry;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )      // e-Sign record exists
+    {
+      while ( db->next() )
+	{
+	  eSign_record[ "ID" ]                   = db->value( 0 ).toString(); 
+	  eSign_record[ "autoflowID" ]           = db->value( 1 ).toString();
+	  eSign_record[ "autoflowName" ]         = db->value( 2 ).toString();
+	  eSign_record[ "operatorListJson" ]     = db->value( 3 ).toString();
+	  eSign_record[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	  eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	  eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	  eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	  eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	  eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
+	                
+	  eSign_record[ "isEsignRecord" ]        = QString("YES");
+	  eSign_record[ "isHistory" ]            = QString("NO");
+	}
+    }
+  else
+    {
+      //No record, so no oper/revs assigned!
+      qDebug() << "No e-Sign GMP record exists in main table!!";
+      qDebug() << "Checking History...";
+      qry. clear();
+
+      qry << "get_gmp_review_info_by_autoflowID_history" << AutoflowID_auto;
+      qDebug() << "read eSing rec HISTORY, qry -- " << qry;
+      db->query( qry );
+
+      if ( db->lastErrno() == US_DB2::OK )      // e-Sign record exists
+	{
+	  while ( db->next() )
+	    {
+	      eSign_record[ "ID" ]                   = db->value( 0 ).toString(); 
+	      eSign_record[ "autoflowID" ]           = db->value( 1 ).toString();
+	      eSign_record[ "autoflowName" ]         = db->value( 2 ).toString();
+	      eSign_record[ "operatorListJson" ]     = db->value( 3 ).toString();
+	      eSign_record[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	      eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	      eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	      eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	      eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	      eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
+	      
+	      eSign_record[ "isEsignRecord" ]        = QString("YES");
+	      eSign_record[ "isHistory" ]            = QString("YES");
+	    }
+	}
+      else
+	{
+	  eSign_record[ "isEsignRecord" ]        = QString("NO");
+	  eSign_record. clear();
+	}
+    }
+
+  return eSign_record;
+}
+
+
+//form a string of opers/revs out of jsonDoc
+QString US_ReporterGMP::get_assigned_oper_revs( QJsonDocument jsonDoc )
+{
+  QString smry;
+  QStringList assigned_list;
+  
+  if ( !jsonDoc. isArray() )
+    {
+      qDebug() << "jsonDoc not a JSON, and/or not an JSON Array!";
+      return smry;
+    }
+  
+  QJsonArray jsonDoc_array  = jsonDoc.array();
+  for (int i = 0; i < jsonDoc_array.size(); ++i )
+    assigned_list << jsonDoc_array[i].toString();
+  
+  for ( int ii = 0; ii < assigned_list.count(); ii++ )
+    {
+      smry += assigned_list[ ii ];
+      if ( ii != assigned_list.count() -1 )
+	smry += "; ";
+    }
+  
+  return smry;
+}
+
+
 //check for dropped triples (at 3. IMPORT)
 void US_ReporterGMP::check_for_dropped_triples( void )
 {
@@ -1784,6 +1883,11 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   //combined_plots params
   QString combPlots_parms = currAProf.combPlots_parms;
   comboPlotsMap = parse_comb_plots_json( combPlots_parms );
+
+  //read eSign record for opers, revs, apprs.
+  eSign_details. clear();
+  eSign_details = read_autoflowGMPReportEsign_record( &db );
+    
 }
 
 //combPlots parms
@@ -2831,7 +2935,10 @@ void US_ReporterGMP::reset_report_panel ( void )
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
-  currAProf = US_AnaProfile();   
+  currAProf = US_AnaProfile();
+
+  //GMP Esign Map
+  eSign_details. clear();
 
   //reset html assembled strings
   html_assembled.clear();
@@ -8733,23 +8840,37 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     ;
   //ROTOR/LAB: end 	      
   
-  //OPERATOR: begin
+  //OPERATOR | REVIEWERS | APPROVERS: begin
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
+  QString opers_a = get_assigned_oper_revs( jsonDocOperList );
+
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
+  QString revs_a = get_assigned_oper_revs( jsonDocRevList );
+
+  QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
+  QString apprs_a = get_assigned_oper_revs( jsonDocApprList );
+
   html_operator = tr(     
     "<h3 align=left>Optima Machine/Operator </h3>"
       "<table>"
         "<tr><td>Optima: </td>           <td>%1</td></tr>"
         "<tr><td>Optima's RunID: </td>   <td>%2</td></tr>"
-        "<tr><td>Operator: </td>         <td>%3</td></tr>"
-        "<tr><td>Experiment Type:</td>   <td>%4</td></tr>"
+        "<tr><td>Operator(s): </td>      <td>%3</td></tr>"
+        "<tr><td>Reviewer(s): </td>      <td>%4</td></tr>"
+        "<tr><td>Approver(s): </td>      <td>%5</td></tr>"
+        "<tr><td>Experiment Type:</td>   <td>%6</td></tr>"
       "</table>"
     "<hr>"
 				  )
     .arg( currProto. rpRotor.instrname )   //1
     .arg( runID )                          //2
-    .arg( currProto. rpRotor.opername  )   //3
-    .arg( currProto. rpRotor.exptype )     //4
+    //.arg( currProto. rpRotor.opername  )   //3 <-- OLD, incorrect
+    .arg( opers_a  )                       //3
+    .arg( revs_a  )                        //4
+    .arg( apprs_a  )                       //5
+    .arg( currProto. rpRotor.exptype )     //6
     ;
-  //OPERATOR: end 	  
+  //OPERATOR | REVIEWERS | APPROVERS: end 	  
 
   
   //SPEEDS: begin
@@ -9944,8 +10065,11 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   pfont. setPointSize( int ( original_pfont_size * 0.8 ) );
   painter-> setFont(pfont);
 
-  painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed..." ));
-  //test below
+  QString init_footer;
+  init_footer = auto_mode ?  "Not e-Signed/Not Reviewed..." : "Custom Report";
+  //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed..." ));
+  painter->drawText(footerRect, Qt::AlignLeft, init_footer );
+    //test below
   //painter->drawText(footerRect, Qt::AlignLeft, QObject::tr("Not e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed...\nNot e-Signed/Not Reviewed..." ));
   //end test
   painter->drawText(footerRect, Qt::AlignVCenter | Qt::AlignRight, QObject::tr("Page %1/%2").arg(pageNumber+1).arg(pageCount));

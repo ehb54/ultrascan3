@@ -2661,7 +2661,7 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       QJsonDocument jsonDocApprList = QJsonDocument::fromJson( approversListJson .toUtf8() );
   
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
-	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
+      	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
 	  gmpreportentry << id << autoflowHistoryName // << protocolName
 			 << time_created.toString()
@@ -2672,8 +2672,8 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 	  if ( auto_separate_status )
 	    {
 	      if ( operatorListJson.contains( logged_user ) ||
-		   reviewersListJson.contains( logged_user ) ||
-		   approversListJson.contains( logged_user )  )
+	       	   reviewersListJson.contains( logged_user ) ||
+	       	   approversListJson.contains( logged_user )  )
 		gmpReportsDBdata << gmpreportentry;
 	    }
 	  else
