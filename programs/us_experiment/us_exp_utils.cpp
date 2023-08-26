@@ -1452,10 +1452,12 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    QString oper_list = te_opers_to_assign->toPlainText();
    QString rev_list  = te_revs_to_assign->toPlainText();
    QString appr_list = te_apprs_to_assign->toPlainText();
-
+   QString sme_list  = te_smes_to_assign->toPlainText();
+   
    rpRotor->operListAssign = oper_list;
    rpRotor->revListAssign  = rev_list;
    rpRotor->apprListAssign = appr_list;
+   rpRotor->smeListAssign  = sme_list;
    
 }
 
