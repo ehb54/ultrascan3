@@ -111,7 +111,9 @@ public:
                             double angle);
 
       Band_Forming_Gradient();
+      bool operator== (const US_Math_BF::Band_Forming_Gradient&) const;
 
+      inline bool operator!= (const US_Math_BF::Band_Forming_Gradient& bfg) const {return !operator==(bfg);};
       //! \brief Calculate the eigenvalues
       bool get_eigenvalues( );
 

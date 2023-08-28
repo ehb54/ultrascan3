@@ -551,6 +551,19 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient() {
    dbg_level = 1;
 }
 
+bool US_Math_BF::Band_Forming_Gradient::operator==(const US_Math_BF::Band_Forming_Gradient & bfg) const {
+    if (cosed_component != bfg.cosed_component ||
+        meniscus != bfg.meniscus ||
+        bottom != bfg.bottom ||
+        abs(overlay_volume - bfg.overlay_volume) > GSL_ROOT5_DBL_EPSILON ||
+        abs( cp_pathlen - bfg.cp_pathlen) > GSL_ROOT5_DBL_EPSILON ||
+        abs( cp_angle - bfg.cp_angle) > GSL_ROOT5_DBL_EPSILON ||
+        simparms.radial_resolution != bfg.simparms.radial_resolution ||
+        simparms.temperature != bfg.simparms.temperature ||
+        dens_bfg_data.scanData.last().seconds > bfg.dens_bfg_data.scanData.last().seconds)
+        return false;
+    return true;
+}
 
 
 US_Math_BF::Secant_Solver::Secant_Solver(const double &i_min_, const double &i_max_,
