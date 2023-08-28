@@ -471,6 +471,16 @@ US_CosedComponent US_CosedComponent::clone(void) {
    return cloned;
 }
 
+bool US_CosedComponent::operator==(const US_CosedComponent & c) const {
+    if ( dens_coeff != c.dens_coeff ) return false;
+    if ( visc_coeff != c.visc_coeff ) return false;
+    if ( s_coeff    != c.s_coeff )    return false;
+    if ( d_coeff    != c.d_coeff )    return false;
+    if ( vbar       != c.vbar )       return false;
+    if ( abs( conc - c.conc ) > GSL_ROOT5_DBL_EPSILON ) return false;
+    if ( overlaying != c.overlaying ) return false;
+    return true;
+}
 
 
 //-------------  US_Buffer

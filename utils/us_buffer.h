@@ -62,7 +62,9 @@ public:
     double conc;                           //!< The cosed component's concentration in M
     bool overlaying;
 
+    bool operator== ( const US_CosedComponent& ) const;
 
+    inline bool operator!= ( const US_CosedComponent& c) const {return ! operator==(c);};
     //! Get the info for an individual component from the DB.
     //! \param db A \ref US_DB2 structure to an opened connection to the DB.
     void getInfoFromDB( US_DB2* = 0 );
