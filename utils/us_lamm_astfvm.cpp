@@ -766,7 +766,8 @@ int US_LammAstfvm::calculate(US_DataIO::RawData &sim_data) {
          }
          dt = min(dt,dt_temp);
       }
-      bandFormingGradient->calculate_gradient(simparams,auc_data);
+      validate_bfg();
+      validate_csd();
 //       QString visc_data = "visc_data.txt";
 //       QString dens_data = "dens_data.txt";
 //       {
@@ -2528,4 +2529,89 @@ void US_LammAstfvm::setMovieFlag(bool flag) {
    movieFlag = flag;
    qApp->processEvents();
    DbgLv(2) << "setMovieFlag" << movieFlag;
+}
+
+void US_LammAstfvm::validate_bfg() {
+    bool co_diff = false;
+    foreach (US_CosedComponent cosedComponent, cosed_components){
+        if (cosedComponent.overlaying && cosedComponent.s_coeff == 0.0){
+            co_diff = true;
+            break;
+        }
+    }
+    if (!co_diff){
+        bandFormingGradient = nullptr;
+        return;
+    }
+    // check meniscus, bottom, simvalues and components
+    if (cosed_components != bandFormingGradient->cosed_component ||
+    simparams.meniscus != bandFormingGradient->meniscus ||
+    simparams.bottom != bandFormingGradient->bottom ||
+    abs(simparams.band_volume - bandFormingGradient->overlay_volume) > GSL_ROOT5_DBL_EPSILON ||
+    abs( simparams.cp_pathlen - bandFormingGradient->cp_pathlen) > GSL_ROOT5_DBL_EPSILON ||
+    abs( simparams.cp_angle - bandFormingGradient->cp_angle) > GSL_ROOT5_DBL_EPSILON ||
+    simparams.radial_resolution != bandFormingGradient->simparms.radial_resolution ||
+    simparams.temperature != bandFormingGradient->simparms.temperature ||
+    auc_data->scanData.last().seconds > bandFormingGradient->dens_bfg_data.scanData.last().seconds){
+        // recalculation needed
+        bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(simparams.meniscus, simparams.bottom, simparams.band_volume,
+                                                      cosed_components, simparams.cp_pathlen, simparams.cp_angle);
+        bandFormingGradient->get_eigenvalues();
+        bandFormingGradient->calculate_gradient(simparams, auc_data);
+    }
+}
+
+void US_LammAstfvm::validate_csd() {
+    bool co_sed = false;
+    US_Model cosed_model_tmp;
+    US_Model cosed_model;
+    US_Math2::SolutionData sol_data{};
+    sol_data.density = density;
+    sol_data.viscosity = viscosity;
+    sol_data.manual = true;
+
+    foreach(US_CosedComponent cosed_comp,  cosed_components) {
+        // get the excess concentrations
+        if (cosed_comp.s_coeff == 0.0){
+            DbgLv(1) << "pure diffusive";
+            codiff_needed = true;
+            continue;
+        }
+        cosed_needed = true;
+        cosed_model_tmp.components.clear();
+        US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
+        tmp.name = cosed_comp.name;
+        tmp.analyteGUID = cosed_comp.GUID;
+        tmp.molar_concentration = cosed_comp.conc;
+        tmp.signal_concentration = cosed_comp.conc;
+        tmp.vbar20 = cosed_comp.vbar;
+        if (cosed_comp_data.contains(tmp.analyteGUID)){
+            continue;}
+        sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
+        sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
+        US_Math2::data_correction(simparams.temperature, sol_data);
+        tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
+        tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
+        tmp.f_f0 = 0.0;
+        tmp.analyte_type = 4;
+        cosed_model.components << tmp;
+        cosed_model_tmp.components << tmp;
+        cosed_model_tmp.update_coefficients();
+        saltdata = new US_LammAstfvm::CosedData(cosed_model_tmp, simparams, auc_data, &cosed_components,
+                                           density, viscosity);
+        cosed_comp_data[ tmp.analyteGUID ] = saltdata->sa_data;
+        DbgLv(2) << "NonIdeal2: create saltdata";
+        cosed_model.update_coefficients();
+        saltdata->model = cosed_model;
+        saltdata->cosed_comp_data = cosed_comp_data;
+        saltdata->cosed_comp_data.detach();
+        DbgLv(1) << "CosedData: cosed_model comp" << saltdata->model.components.size() << "cosed_comp_data"
+                 << cosed_comp_data.size() << "sa_data.scanCount()" << saltdata->sa_data.scanCount();
+    }
+    if (!cosed_comp_data.isEmpty()){
+        saltdata->sa_data= cosed_comp_data.first();}
+    if (!co_sed) {
+        saltdata = nullptr;
+        return;
+    }
 }

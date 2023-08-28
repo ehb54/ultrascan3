@@ -156,6 +156,12 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param flag    Flag for whether to stop
       void setStopFlag ( bool );
 
+      //! \brief validate band forming gradient and recalculate if needed
+      void validate_bfg( void );
+
+      //! \brief validate cosedimenting components and recalculate if needed
+      void validate_csd( void );
+
       //! \brief Set a flag for whether to emit signals for movie mode.
       //! \param flag    Flag for whether or not to operate in show-movie mode.
       void setMovieFlag( bool );
