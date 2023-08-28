@@ -6289,6 +6289,12 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
   QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
 
+  qDebug() << "oper,rev,appr,sme Lists -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
+ 
   QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
   QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
   QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
