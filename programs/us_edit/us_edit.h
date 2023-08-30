@@ -116,7 +116,8 @@ class US_Edit : public US_Widgets
       
 
       QMap < QString, QString > details_at_editing_local;
-
+      QMap < QString, QString > gmp_submitter_map;
+  
       //2DSA
       bool        job1run;         //!< Run 1 (2dsa) run flag
       bool        job2run;         //!< Run 2 (2dsa_fm) run flag

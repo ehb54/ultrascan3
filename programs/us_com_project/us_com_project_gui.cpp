@@ -473,6 +473,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( switch_to_esign_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
@@ -506,9 +507,21 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
 
    connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
-   
+
+   //E-Signs
+   connect( epanReport, SIGNAL( switch_to_esign( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( pass_to_esign( QMap < QString, QString > & ) ),  epanSign, SLOT( do_esign( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_esigning() ),  epanSign, SLOT( reset_esigning( )  ) );
+
+   //Hide/disable eSigs tab:
+   this->tabWidget->removeTab(7);
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) }");
+   //this->tabWidget->setTabEnabled( 7, false );
+     
    setMinimumSize( QSize( 1350, 850 ) );
    adjustSize();
+
+   
 
  }
 
@@ -619,9 +632,14 @@ void US_ComProjectMain::initPanels( int  panx )
       if ( curr_panx == 6 )
 	{
 	  qDebug() << "Jumping from Report.";
-	  
 	  emit reset_reporting();
-	}      
+	}
+
+      if ( curr_panx == 7 )
+	{
+	  qDebug() << "Jumping from e-Signs.";
+	  emit reset_esigning();
+	}
       
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
@@ -1096,6 +1114,40 @@ void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_d
 
    emit pass_to_report( protocol_details );
 }
+
+// Slot to switch to e-Signtab
+void US_ComProjectMain::switch_to_esign( QMap < QString, QString > & protocol_details )
+{
+  /**  BEFORE going to e-Signatures: Check if user is among operators|reviewers|approvers**/
+
+  /* 
+     Covered in list_all_autoflow_records():
+      -- isOperRev( user_id, autolfowId ): if false, run NOT shown in the GMP run list
+      Do we want to rather show all runs BUT not allow to switch to E-SIGN if ( !isOperRev( user_id, autolfowId )) ??
+  */
+  
+  /****************************************************************************************/
+  
+  tabWidget->setCurrentIndex( 7 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 7;
+  
+  // ALEXEY: Temporariy NOT lock here... Will need later
+  
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 7 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+  
+  
+  qApp->processEvents();
+  // ALEXEY: Make a record to 'autoflow' table: stage# = 4; 
+  
+  emit pass_to_esign( protocol_details );
+}
+
 
 
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
@@ -1790,6 +1842,13 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  
 	}
 
+      if ( stage == "E-SIGNATURES" )
+	{
+	  qDebug() << "To E-SIGNS SWITCH ";
+	  emit switch_to_esign_init( protocol_details );
+	  
+	}
+
       //and so on...
     }
    
@@ -2415,6 +2474,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
   QString autoflow_name ;
   QString operator_list;
   QString reviewers_list;
+  QString approvers_list;
   QString eSignStatusJson;
   QString eSignStatusAll;
   QString createUpdateJsonLog;
@@ -2429,15 +2489,17 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
       eSignStatusJson      = db->value( 5 ).toString();    //json
       eSignStatusAll       = db->value( 6 ).toString();    //ENUM
       createUpdateJsonLog  = db->value( 7 ).toString();    //json
+      approvers_list       = db->value( 8 ).toString();    //json array
     }
 
   //process 'reviewers_list' & 'operList' Json arrays:
   QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewers_list.toUtf8() );
   QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operator_list .toUtf8() );
+  QJsonDocument jsonDocApprList = QJsonDocument::fromJson( approvers_list .toUtf8() );
   
-  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray()  )
+  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray() || !jsonDocApprList. isArray() )
     {
-      qDebug() << "jsonDocRevList OR jsonDocOperList not a JSON Array!";
+      qDebug() << "jsonDocRevList OR jsonDocOperList OR jsonDocApprList not a JSON Array!";
       return yesRev;
     }
   
@@ -2446,12 +2508,11 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
     {
       QString current_reviewer = jsonDocRevList_array[i].toString();
       //uname =  oID + ": " + olname + ", " + ofname;
-      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
 
       if ( uID == current_reviewer_id )
 	{
-	  yesRev = true;
-	  return yesRev;
+	  return true;
 	}
     }
 
@@ -2460,14 +2521,27 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
     {
       QString current_reviewer = jsonDocOperList_array[i].toString();
       //uname =  oID + ": " + olname + ", " + ofname;
-      int current_reviewer_id = current_reviewer. section( ":", 0, 0 ).toInt();
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
 
       if ( uID == current_reviewer_id )
 	{
-	  yesRev = true;
-	  return yesRev;
+	  return true;
 	}
     }
+
+  QJsonArray jsonDocApprList_array  = jsonDocApprList.array();
+  for (int i=0; i < jsonDocApprList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocApprList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  return true;
+	}
+    }
+ 
   
   return yesRev;
 }
@@ -2557,6 +2631,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
 	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
+	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 	 }
      }
    else
@@ -3546,8 +3621,8 @@ US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
    sdiag = new US_eSignaturesGMP( "AUTO" );
    sdiag->setParent(this, Qt::Widget);
    
-   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
+   connect( this, SIGNAL( start_esign( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel_auto ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_esigning_passed( ) ), sdiag, SLOT(  reset_esign_panel (  )  ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3585,4 +3660,14 @@ void US_eSignaturesGui::resizeEvent(QResizeEvent *event)
     }
      
     QWidget::resizeEvent(event);
+}
+
+void US_eSignaturesGui::do_esign( QMap < QString, QString > & protocol_details )
+{
+  emit start_esign( protocol_details );
+}
+
+void US_eSignaturesGui::reset_esigning( void )
+{
+  emit reset_esigning_passed();
 }

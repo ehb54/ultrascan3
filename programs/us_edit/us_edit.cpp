@@ -8394,7 +8394,41 @@ void US_Edit::write_auto( void )
       }
    }
 
-   qDebug() << "START Saving"; 
+   
+   /*************************************************************************************************************/
+   // We need to  insert submission form dialog (with password...)
+   /*************************************************************************************************************/
+   QStringList qry1;
+   qry1 <<  QString( "get_user_info" );
+   dbP-> query( qry1 );
+   dbP-> next();
+   int u_ID        = dbP-> value( 0 ).toInt();
+   QString u_fname = dbP-> value( 1 ).toString();
+   QString u_lname = dbP-> value( 2 ).toString();
+   int u_lev       = dbP-> value( 5 ).toInt();
+   
+   QString user_submitter = u_lname + ", " + u_fname;
+   
+   gmp_submitter_map.clear();
+   US_Passwd   pw_at;
+   gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run EDIT Form", "Please fill out GMP run EDIT form:", user_submitter );
+   
+   int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+   qDebug() << "Submitter map: "
+	    << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+	    << gmp_submitter_map.keys().isEmpty() 
+	    << gmp_submitter_map[ "User:" ]
+	    << gmp_submitter_map[ "Comment:" ]
+	    << gmp_submitter_map[ "Master Password:" ];
+   
+   if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+     {
+       revert_autoflow_stages_record( autoflowID_passed );
+       return;
+     }
+   /*************************************************************************************************************/
+   
+   qDebug() << "NOW, START Saving"; 
 
 
    /* TEMPORARY ***/
@@ -8699,7 +8733,11 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   editRI_IP_Json += "\"email\":\""  + email                     + "\",";
   editRI_IP_Json += "\"level\":\""  + QString::number( level )  + "\"";
   editRI_IP_Json += "}],";
-  
+
+  //Now, add comment from SAVING form:
+  editRI_IP_Json += "\"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\",";      
+
+  //Meniscus
   editRI_IP_Json += "\"Meniscus\": ";
   editRI_IP_Json += "[{";
   

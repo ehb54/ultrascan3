@@ -74,29 +74,59 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     ccw_hbl->addWidget(lw_triple);
     ccw_hbl->addLayout(ccw_vbl);
 
-    QLabel* lb_runInfoAbs  = us_banner(   tr( "Absorbance Data Information" ) );
-    diskDB_ctrl = new US_Disk_DB_Controls();
-    pb_import_refScans = us_pushbutton(tr("Import Reference Data"), true, -1);
-    pb_reset_refData = us_pushbutton(tr("Reset Reference Data"), false, -1);
-    ckb_CAC = new QCheckBox();
-    QGridLayout *us_cac = us_checkbox("Chromatic Aberration Correction", ckb_CAC);
-    QHBoxLayout* rfs_lyt = new QHBoxLayout();
-    rfs_lyt->addWidget(pb_import_refScans);
-    rfs_lyt->addWidget(pb_reset_refData);
+    QLabel* lb_refScan  = us_banner(   tr( "Reference Scan Control" ) );
+    ckb_channelBlanking = new QCheckBox();
+    QGridLayout *chbl_lyt = us_checkbox("Blank by Buffer Channel", ckb_channelBlanking);
 
+    frm_refScan = new QFrame();
+    frm_refScan->setContentsMargins(0, 0, 0, 0);
+    diskDB_ctrl = new US_Disk_DB_Controls();
+    pb_import_refScans = us_pushbutton(tr("Import"), true, 0);
+    pb_reset_refData = us_pushbutton(tr("Reset"), false, 0);
     QString ref_range("%1 Range:");
     QLabel* lb_ref_range = us_label(ref_range.arg(QChar(955)));
+    lb_ref_range->setMaximumWidth(80);
     le_ref_range = us_lineedit("");
+    le_ref_range->setMaximumWidth(140);
     le_ref_range->setReadOnly(true);
-    QLabel *lb_smooth = us_label("Smooth Buffer:");
+    QHBoxLayout* rfs_imp_lyt = new QHBoxLayout();
+    rfs_imp_lyt->addWidget(pb_import_refScans);
+    rfs_imp_lyt->addWidget(pb_reset_refData);
+    rfs_imp_lyt->addWidget(lb_ref_range);
+    rfs_imp_lyt->addWidget(le_ref_range);
+
+    ckb_ChroAberCorr = new QCheckBox();
+    QGridLayout *cac_lyt = us_checkbox("Chromatic Aberration Correction", ckb_ChroAberCorr);
+    QFont font = ckb_ChroAberCorr->font();
+    font.setPointSize(font.pointSize() - 1);
+    ckb_ChroAberCorr->setFont(font);
+
+    QVBoxLayout* rfs_lyt = new QVBoxLayout();
+    rfs_lyt->addLayout(diskDB_ctrl);
+    rfs_lyt->addLayout(rfs_imp_lyt);
+    rfs_lyt->addLayout(cac_lyt);
+    rfs_lyt->setContentsMargins(0, 0, 0, 0);
+    rfs_lyt->setSpacing(1);
+    frm_refScan->setLayout(rfs_lyt);
+
+    QLabel* lb_bufferBanner  = us_banner(   tr( "Buffer Control" ) );
+    QLabel *lb_buffer = us_label("Buffer Triple:");
+    lb_buffer->setMaximumWidth(108);
+    cb_buffer = us_comboBox();
+    QLabel *lb_smooth = us_label("Smooth Level:");
+    lb_smooth->setMaximumWidth(120);
     ct_smooth = us_counter(1, 0, 10, 5);
     ct_smooth->setSingleStep(1);
-    QHBoxLayout *ref_range_lyt = new QHBoxLayout();
-    ref_range_lyt->addWidget(lb_ref_range);
-    ref_range_lyt->addWidget(le_ref_range);
-    ref_range_lyt->addWidget(lb_smooth);
-    ref_range_lyt->addWidget(ct_smooth);
+    ct_smooth->setMaximumWidth(70);
 
+    QHBoxLayout *buffer_lyt = new QHBoxLayout();
+    buffer_lyt->addWidget(lb_buffer);
+    buffer_lyt->addWidget(cb_buffer);
+    buffer_lyt->addWidget(lb_smooth);
+    buffer_lyt->addWidget(ct_smooth);
+
+
+    QLabel* lb_runInfoAbs  = us_banner(   tr( "Absorbance Data Information" ) );
     QLabel* lb_runIdAbs  = us_label(      tr( "Run ID:" ) );
 //    le_runIdAbs          = us_lineedit(   "", 0, false );
     le_runIdAbs = new US_LineEdit_RE("", 0, false );
@@ -105,11 +135,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     abs_info_lyt->addWidget(lb_runIdAbs, 0, 0, 1, 1);
     abs_info_lyt->addWidget(le_runIdAbs, 0, 1, 1, 1);
 
-    QLabel *lb_buffer = us_label("Triple of the Buffer:");
-    cb_buffer = us_comboBox();
-    QHBoxLayout *buffer_lyt = new QHBoxLayout();
-    buffer_lyt->addWidget(lb_buffer);
-    buffer_lyt->addWidget(cb_buffer);
+
 
     ckb_zeroing = new QCheckBox();
     QGridLayout *us_zeroing = us_checkbox("Shift to Zero",
@@ -159,12 +185,12 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     left_lyt->addWidget(lb_mwlctrl);
     left_lyt->addLayout(wvl_rng_lyt);
     left_lyt->addLayout(wvl_plt_lyt);
-    left_lyt->addWidget(lb_runInfoAbs);
-    left_lyt->addLayout(diskDB_ctrl);
-    left_lyt->addLayout(rfs_lyt);
-    left_lyt->addLayout(us_cac);
-    left_lyt->addLayout(ref_range_lyt);
+    left_lyt->addWidget(lb_refScan);
+    left_lyt->addLayout(chbl_lyt);
+    left_lyt->addWidget(frm_refScan);
+    left_lyt->addWidget(lb_bufferBanner);
     left_lyt->addLayout(buffer_lyt);
+    left_lyt->addWidget(lb_runInfoAbs);
     left_lyt->addLayout(ckb_lyt);
     left_lyt->addLayout(xrange_lyt);
     left_lyt->addLayout(abs_info_lyt);
@@ -260,6 +286,9 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     connect(pb_next_id,      SIGNAL(clicked()), this, SLOT(slt_next_id()));
 
     connect(this, SIGNAL(sig_plot()), this, SLOT(slt_plot()));
+
+    connect(ckb_channelBlanking, SIGNAL(stateChanged(int)),
+            this, SLOT(slt_channelBlanking(int)));
     connect(pb_import_refScans, SIGNAL(clicked()), this, SLOT(slt_load_refScans()));
     connect(ckb_zeroing, SIGNAL(stateChanged(int)), this, SLOT(slt_zeroing(int)));
     connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
@@ -603,6 +632,18 @@ void US_ConvertScan::slt_zeroing(int){
     return;
 }
 
+void US_ConvertScan::slt_channelBlanking(int state){
+    if (state == Qt::Checked){
+        frm_refScan->setDisabled(true);
+    }
+    else {
+        frm_refScan->setEnabled(true);
+    }
+    slt_reset_refData();
+    emit sig_save_button();
+    return;
+}
+
 void US_ConvertScan::slt_xrange(int state){
     x_min_picked = -1;
     x_max_picked = -1;
@@ -804,7 +845,7 @@ void US_ConvertScan::slt_load_refScans(void){
                 uncheck_CA_silently();
                 le_status->setText("Error in chromatic aberration correction!");
             } else
-                ckb_CAC->setEnabled(true);
+                ckb_ChroAberCorr->setEnabled(true);
             emit sig_save_button();
         }
         QString text("%1 - %2 nm");
@@ -820,16 +861,28 @@ void US_ConvertScan::slt_load_refScans(void){
 }
 
 void US_ConvertScan::slt_save_avail(void){
-    if (lw_triple->count() > 0 && refData.nWavelength > 0){
-        if (ckb_xrange->isChecked()){
-            if (x_min_picked != -1 && x_max_picked != -1)
-                pb_save->setEnabled(true);
-            else
-                pb_save->setDisabled(true);
-        }else
-            pb_save->setEnabled(true);
-    }else
+    if (lw_triple->count() == 0 ||
+        ( refData.nWavelength == 0 &&
+         !ckb_channelBlanking->isChecked()) )
+    {
         pb_save->setDisabled(true);
+        return;
+    }
+
+    if (ckb_channelBlanking->isChecked() &&
+        cb_buffer->currentIndex() == 0){
+        pb_save->setDisabled(true);
+        return;
+    }
+
+    if (ckb_xrange->isChecked()){
+        if (x_min_picked != -1 && x_max_picked != -1)
+            pb_save->setEnabled(true);
+        else
+            pb_save->setDisabled(true);
+    }else{
+        pb_save->setEnabled(true);
+    }
     return;
 }
 
@@ -856,11 +909,7 @@ void US_ConvertScan::slt_save(void){
     for (int i = 0; i < nrows; ++i)
         nwl_tot += ccwItemList.n_wl.at(i);
 
-    int id_buff = cb_buffer->currentIndex();
-    bool rm_buffer = false;
-    if (id_buff > 0)
-        rm_buffer = true;
-
+    int cb_buffer_row = cb_buffer->currentIndex();
     int n = 1;
     QString status = tr("writting: %1 %2");
     QString percent;
@@ -873,16 +922,24 @@ void US_ConvertScan::slt_save(void){
             n++;
             int dataId = ccwItemList.index.at(i).at(j);
             double wavelength = ccwItemList.wavelength.at(i).at(j);
-            if (! get_refId(wavelength)){
-                qDebug() << tr("Not found corrosponding reference data for: ") <<
-                            allIntDataFiles.at(dataId).fileName();
-                continue;
+
+            int dataId_buff = -1;
+            if (cb_buffer_row > 0){
+                dataId_buff = ccwItemList.index.at(cb_buffer_row - 1).at(j);
             }
 
-            get_absorbance(refId, dataId, false);
-            if (rm_buffer){
-                int dataId_buff = ccwItemList.index.at(id_buff - 1).at(j);
-                get_relative_absorbance(dataId_buff);
+            if (ckb_channelBlanking->isChecked()){
+                get_absorbance(dataId, dataId_buff);
+            } else{
+                if (! get_refId(wavelength)){
+                    qDebug() << tr("Not found corrosponding reference data for: ") <<
+                        allIntDataFiles.at(dataId).fileName();
+                    continue;
+                }
+                get_pseudo_absorbance(refId, dataId, false);
+                if (dataId_buff != -1){
+                    get_relative_absorbance(dataId_buff);
+                }
             }
             trim_absorbance();
             int scan_l1 = scansRange.at(dataId).at(0);
@@ -976,6 +1033,7 @@ void US_ConvertScan::set_buffer_list(){
     absorbanceBuffer.clear();
     connect(cb_buffer, SIGNAL(currentIndexChanged(int)),
             this, SLOT(slt_update_buffer(int)));
+    emit sig_save_button();
     return;
 }
 
@@ -1183,7 +1241,7 @@ void US_ConvertScan::plot_refscan(void){
     }
     le_status->clear();
     const double *xp;
-    if (ckb_CAC->isChecked() && refData.CAState){
+    if (ckb_ChroAberCorr->isChecked() && refData.CAState){
         xp = xvaluesRefCAC.at(refId).data();
     } else {
         xp = refData.xValues.data();
@@ -1207,8 +1265,21 @@ void US_ConvertScan::plot_refscan(void){
 
 void US_ConvertScan::plot_absorbance(void){
     qwtplot_abs->detachItems(QwtPlotItem::Rtti_PlotItem, false);
-    if (refData.xValues.size() == 0 ||
-            lw_triple->count() == 0 || refId == -1){
+    bool quit = false;
+    if (lw_triple->count() == 0){
+        quit = true;
+    }
+    if (ckb_channelBlanking->isChecked()){
+        if (cb_buffer->count() == 0 || cb_buffer->currentIndex() == 0){
+            quit = true;
+        }
+    } else{
+        if (refData.xValues.size() == 0 || refId == -1){
+            quit = true;
+        }
+    }
+
+    if (quit){
         grid = us_grid(qwtplot_abs);
         qwtplot_abs->replot();
         return;
@@ -1222,12 +1293,19 @@ void US_ConvertScan::plot_absorbance(void){
     int row = lw_triple->currentRow();
     int dataId = ccwItemList.index.at(row).at(wavl_id);
 
-    get_absorbance(refId, dataId, false);
+    row = cb_buffer->currentIndex();
+    int dataId_buff = -1;
+    if (row > 0){
+        dataId_buff = ccwItemList.index.at(row - 1).at(wavl_id);
+    }
 
-    int id_buff = cb_buffer->currentIndex();
-    if (id_buff > 0){
-        int dataId_buff = ccwItemList.index.at(id_buff - 1).at(wavl_id);
-        get_relative_absorbance(dataId_buff);
+    if (ckb_channelBlanking->isChecked()){
+        get_absorbance(dataId, dataId_buff);
+    } else{
+        get_pseudo_absorbance(refId, dataId, false);
+        if (dataId_buff != -1){
+            get_relative_absorbance(dataId_buff);
+        }
     }
     trim_absorbance();
 
@@ -1347,13 +1425,13 @@ bool US_ConvertScan::get_refId(double wavelength){
     return flag;
 }
 
-void US_ConvertScan::get_absorbance(int id_ref, int id_data, bool buffer){
+void US_ConvertScan::get_pseudo_absorbance(int id_ref, int id_data, bool buffer){
     if (buffer)
         absorbanceBuffer.clear();
     else
         absorbance.clear();
     const double *xp_ref;
-    if (ckb_CAC->isChecked() && refData.CAState){
+    if (ckb_ChroAberCorr->isChecked() && refData.CAState){
         xp_ref = xvaluesRefCAC.at(id_ref).data();
     } else {
         xp_ref = refData.xValues.data();
@@ -1404,8 +1482,67 @@ void US_ConvertScan::get_absorbance(int id_ref, int id_data, bool buffer){
     return;
 }
 
+void US_ConvertScan::get_absorbance(int id_data, int id_buff){
+    int np = allIntData.at(id_data).xvalues.size();
+    int ns = allIntData.at(id_data).scanData.size();
+    if (ns != allIntData.at(id_buff).scanData.size()){
+        qDebug() << "non identical scan numbers";
+        le_status->setText("non identical scan numbers");
+        absorbance.clear();
+        return;
+    }
+    absorbance.clear();
+
+    int smooth_l = ct_smooth->value();
+
+    QVector< QVector<double>> buffer_rvalues;
+    for (int i = 0; i < ns; i++){
+        if (smooth_l > 0){
+            QVector<double> rval = get_smooth(allIntData.at(id_buff).scanData.at(i).rvalues,
+                                              smooth_l, true, true);
+            buffer_rvalues << rval;
+        } else {
+            buffer_rvalues << allIntData.at(id_buff).scanData.at(i).rvalues;
+        }
+    }
+
+    const double *xp_dta = allIntData.at(id_data).xvalues.data();
+    const double *xp_buf = allIntData.at(id_buff).xvalues.data();
+
+    for (int i = 0; i < ns; ++i){
+        US_DataIO::Scan scan = allIntData.at(id_data).scanData.at(i);
+        const double *rp_dta = scan.rvalues.data();
+        const double *rp_buf = buffer_rvalues.at(i).data();
+//        const double *rp_buf = allIntData.at(id_buff).scanData.at(i).rvalues.data();
+
+        QVector<double> rval_abs(np);
+        double *rp_abs = rval_abs.data();
+        for (int j = 0; j < np; ++j){
+            int xdta = qRound(xp_dta[j] * 1000);
+            int xbuf = qRound(xp_buf[j] * 1000);
+            if (xdta != xbuf){
+                qDebug() << "incompatible radial steps";
+                le_status->setText("incompatible radial steps");
+                absorbance.clear();
+                return ;
+            }
+            double val = rp_buf[j] / rp_dta[j];
+            if (val <= 0)
+                val = 1e-5;
+            rp_abs[j] = std::log10(val);
+        }
+        scan.rvalues.clear();
+        scan.rvalues = rval_abs;
+        scan.stddevs.clear();
+        scan.nz_stddev = false;
+        absorbance << scan;
+        rval_abs.clear();
+    }
+    return;
+}
+
 void US_ConvertScan::get_relative_absorbance(int bufferId){
-    get_absorbance(refId, bufferId, true);
+    get_pseudo_absorbance(refId, bufferId, true);
 
     if (absorbanceBuffer.size() == 0)
         return;
@@ -1419,7 +1556,7 @@ void US_ConvertScan::get_relative_absorbance(int bufferId){
     if (smooth_l > 1){
         for (int i = 0; i < absorbanceBuffer.size(); ++i){
             QVector<double> rval =  absorbanceBuffer.at(i).rvalues;
-            QVector<double> rval_s = get_smooth(rval, smooth_l, true);
+            QVector<double> rval_s = get_smooth(rval, smooth_l, true, false);
             absorbanceBuffer[i].rvalues.clear();
             absorbanceBuffer[i].rvalues << rval_s;
         }
@@ -1512,7 +1649,8 @@ void US_ConvertScan::trim_absorbance(){
     return;
 }
 
-QVector<double> US_ConvertScan::get_smooth(QVector<double> array, int winlen, bool ave){
+QVector<double> US_ConvertScan::get_smooth(QVector<double> array, int winlen,
+                                           bool ave, bool intsy){
     if (ave){
         int np = array.size();
         QVector<double> array_s(np, 0);
@@ -1528,6 +1666,9 @@ QVector<double> US_ConvertScan::get_smooth(QVector<double> array, int winlen, bo
             double yy = 0;
             for (int j = -winlen; j <= winlen; ++j){
                 yy += rp[i + j];
+                if (intsy){
+                    continue;
+                }
                 if (rp[i + j] > (maxAbs - 0.1)){
                     flag = false;
                     rsp[i] = rp[i];
@@ -1546,10 +1687,10 @@ QVector<double> US_ConvertScan::get_smooth(QVector<double> array, int winlen, bo
 }
 
 void US_ConvertScan::uncheck_CA_silently(){
-    ckb_CAC->disconnect();
-    ckb_CAC->setCheckState(Qt::Unchecked);
-    connect(ckb_CAC, SIGNAL(stateChanged(int)), this, SLOT(slt_cac(int)));
-    ckb_CAC->setDisabled(true);
+    ckb_ChroAberCorr->disconnect();
+    ckb_ChroAberCorr->setCheckState(Qt::Unchecked);
+    connect(ckb_ChroAberCorr, SIGNAL(stateChanged(int)), this, SLOT(slt_cac(int)));
+    ckb_ChroAberCorr->setDisabled(true);
 }
 
 ////
