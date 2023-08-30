@@ -2121,6 +2121,7 @@ void US_BufferGuiNew::newAccepted() {
       main->setSpacing(2);
       main->setContentsMargins(2, 2, 2, 2);
 
+
       QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
       pb_accept = us_pushbutton(tr("Accept"));
       QPushButton *pb_spectrum = us_pushbutton(tr("Manage Spectrum"));
@@ -2132,11 +2133,12 @@ void US_BufferGuiNew::newAccepted() {
       le_descrip = us_lineedit(buffer->description);
       le_ph = us_lineedit(QString::number(buffer->pH, 'f', 4));
 
+
       bn_modbuf->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
       pb_accept->setEnabled(false);
-      //us_setReadOnly( le_descrip, true );
-      us_setReadOnly(le_descrip, false);
+      us_setReadOnly( le_descrip, true );
+      //us_setReadOnly(le_descrip, false);
 
       int row = 0;
       main->addWidget(bn_modbuf, row++, 0, 1, 8);

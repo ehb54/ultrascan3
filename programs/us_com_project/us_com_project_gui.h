@@ -142,6 +142,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
      void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
      void switch_to_report_init(  QMap < QString, QString > & protocol_details );
+     void switch_to_esign_init(  QMap < QString, QString > & protocol_details );
      void to_initAutoflow( void );
 
 };
@@ -363,6 +364,7 @@ class US_ReportStageGui : public US_WidgetsDialog
   signals:
     void start_report( QMap < QString, QString > & );
     void reset_reporting_passed ( void );
+    void switch_to_esign( QMap < QString, QString > & );
 };
 
 
@@ -385,12 +387,12 @@ class US_eSignaturesGui: public US_WidgetsDialog
     void resizeEvent(QResizeEvent *event) override;
       
   private slots:
-  //  void do_report( QMap < QString, QString > & );
-  //  void reset_reporting( void );
+    void do_esign( QMap < QString, QString > & );
+    void reset_esigning( void );
 
   signals:
-  // void start_report( QMap < QString, QString > & );
-  //  void reset_reporting_passed ( void );
+    void start_esign( QMap < QString, QString > & );
+    void reset_esigning_passed ( void );
 };
 
 
@@ -478,6 +480,7 @@ private slots:
   void switch_to_editing( QMap < QString, QString > & protocol_details );
   void switch_to_analysis( QMap < QString, QString > & protocol_details );
   void switch_to_report( QMap < QString, QString > & protocol_details );
+  void switch_to_esign( QMap < QString, QString > & ); 
   
     
   //void switch_to_experiment( QString & protocolName );
@@ -505,6 +508,7 @@ signals:
   void pass_to_editing( QMap < QString, QString > & protocol_details );
   void pass_to_analysis( QMap < QString, QString > & protocol_details );
   void pass_to_report( QMap < QString, QString > & protocol_details );
+  void pass_to_esign( QMap < QString, QString > & protocol_details );
   
 
   //void clear_experiment( QString & protocolName);
@@ -514,6 +518,7 @@ signals:
   void reset_data_editing( void );
   void reset_live_update( void );
   void reset_reporting( void );
+  void reset_esigning( void );
 };
 
 

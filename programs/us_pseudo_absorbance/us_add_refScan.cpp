@@ -1353,6 +1353,7 @@ bool US_AddRefScan::parse_files(QStringList files_path){
     xvalues.clear();
     QVector<double> xval;
     int min_x = -1, max_x = -1;
+    bool flag_check_xval = true;
     for (int i = 0; i < n_files; ++i){
         US_DataIO::RawData raw_data;
         US_DataIO::readRawData(files_path.at(i), raw_data);
@@ -1369,21 +1370,35 @@ bool US_AddRefScan::parse_files(QStringList files_path){
             return false;
         }
 
-        int x1 = qRound(raw_data.xvalues.at(0) * 1000);
-        int x2 = qRound(raw_data.xvalues.at(raw_data.pointCount() - 1) * 1000);
-        if (min_x == -1 && max_x == -1){
-            min_x = x1;
-            max_x = x2;
-        }
-        if (min_x != x1 || max_x != x2){
-            QMessageBox::information( this,
-                                      tr( "Error" ),
-                                      tr( "The radial points of all AUC files do not match together. "
-                                          "This might be due to the chromatic aberration correction!\n\n"
-                                          "First file:\nName:%1\n\n"
-                                          "Current file:\nName:%2\n").arg(
-                                          files_path.at(0), files_path.at(i)));
-            return false;
+        if (flag_check_xval){
+            int x1 = qRound(raw_data.xvalues.first() * 1000);
+            int x2 = qRound(raw_data.xvalues.last() * 1000);
+            if (min_x == -1 && max_x == -1){
+                min_x = x1;
+                max_x = x2;
+            }
+            if (min_x != x1 || max_x != x2){
+
+                QMessageBox msgBox;
+                QString text = tr( "Radial point arrays do not match. "
+                                  "This might be due to the chromatic "
+                                  "aberration correction!\n"
+                                  "If \"Yes\" is clicked, the program proceeds "
+                                  "with the radial points of the first parsed file.\n\n"
+                                  "First file:\nName:%1\n\n"
+                                  "Current file:\nName:%2\n").arg(
+                                       files_path.at(0), files_path.at(i));
+                msgBox.setText(text);
+                msgBox.setInformativeText("Do you want to proceed?");
+                msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                msgBox.setDefaultButton(QMessageBox::No);
+                int ret = msgBox.exec();
+                if (ret == QMessageBox::Yes){
+                    flag_check_xval = false;
+                } else {
+                    return false;
+                }
+            }
         }
 
         double *xp = raw_data.xvalues.data();

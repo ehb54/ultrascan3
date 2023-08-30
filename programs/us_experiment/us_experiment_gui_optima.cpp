@@ -420,6 +420,7 @@ void US_ExperimentMain::us_mode_passed( void )
   usmode = true;
   this->tabWidget->removeTab(7);
   this->tabWidget->setTabText( 7, "8: Submit");
+  
 }
 
 void US_ExperimentMain::auto_mode_passed( void )
@@ -837,6 +838,7 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
    DbgLv(1) << "User Level: " << US_Settings::us_inv_level();
    qDebug() << "NEW invID: " << investID;
+   //qDebug() << "InvID from currProto: " << currProto->investigator.split(":")[0];
 
 
    // ALEXEY: Re-read in summary information on all existing run protocols when user changed
@@ -1116,7 +1118,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
 
-   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine, Operator and Experiment Type " ) );
+   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
    QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
@@ -1156,7 +1158,117 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
    genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
 
+   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
+
+   //[NEW] Add gui for assigning operator(s) && reviewer(s)
+   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
+      
+   lb_operator_reviewer_banner    = us_banner( tr( "Assign Operator and Reviewer(s) " ) );
+   QFontMetrics m (lb_operator_reviewer_banner -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   lb_operator_reviewer_banner  -> setFixedHeight  (1.5 * RowHeight);
+   
+   lb_choose_oper      = us_label( "Choose Operator:" );
+   lb_choose_rev       = us_label( "Choose Reviewer:" );
+   lb_choose_appr      = us_label( "Choose Approver:" );
+   lb_choose_sme       = us_label( "Choose SME:" );
+   lb_opers_to_assign  = us_label( "Operator List:" );
+   lb_revs_to_assign   = us_label( "Reviewer List:" );
+   lb_apprs_to_assign  = us_label( "Approver List:" );
+   lb_smes_to_assign   = us_label( "SME List:" );
+
+   pb_add_oper      = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_rev       = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_appr      = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_sme       = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_sme    = us_pushbutton( tr( "Remove Last" ) );
+
+   te_opers_to_assign    = us_textedit();
+   //te_opers_to_assign    ->setTextColor( Qt::blue );
+   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_opers_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_opers_to_assign, true );
+
+   te_revs_to_assign    = us_textedit();
+   //te_revs_to_assign    ->setTextColor( Qt::blue );
+   te_revs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_revs_to_assign, true );
+
+   te_apprs_to_assign    = us_textedit();
+   //te_apprs_to_assign    ->setTextColor( Qt::blue );
+   te_apprs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_apprs_to_assign, true );
+
+   te_smes_to_assign    = us_textedit();
+   //te_smes_to_assign    ->setTextColor( Qt::blue );
+   te_smes_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_smes_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_smes_to_assign, true );
+  
+   cb_choose_operator   = new QComboBox( this );
+   cb_choose_rev        = new QComboBox( this );
+   cb_choose_appr       = new QComboBox( this );
+   cb_choose_sme        = new QComboBox( this );
+   
+   row = 0;
+   //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
+   revOperGMPRunGrid -> addWidget( lb_operator_reviewer_banner,row++, 0, 1, 15 );
+   
+   revOperGMPRunGrid -> addWidget( lb_choose_oper,         row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_operator,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_oper,            row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_choose_rev,          row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_rev,          row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_rev,             row++,   13, 1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_opers_to_assign,     row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_opers_to_assign,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_oper,         row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_revs_to_assign,      row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_revs_to_assign,      row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_rev,          row++,   13, 1,  2 );
+
+   //Appr.
+   revOperGMPRunGrid -> addWidget( lb_choose_appr,         row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_appr,         row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_appr,            row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_choose_sme,         row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_sme,         row,     10,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_sme,            row++,   13,  1,  2 );
+
+
+   revOperGMPRunGrid -> addWidget( lb_apprs_to_assign,     row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_apprs_to_assign,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_appr,         row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_smes_to_assign,      row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_smes_to_assign,      row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_sme,          row,     13, 1,  2 );
+   
+   
+   connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
+   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
+   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
+   connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
+   connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
+   connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
+   connect( pb_add_sme, SIGNAL( clicked() ), SLOT ( addSmetoList() ) );
+   connect( pb_remove_sme, SIGNAL( clicked() ), SLOT ( removeSmefromList() ) );
+   
    panel->addLayout( genL );
+   panel->addLayout( revOperGMPRunGrid ); 
    panel->addStretch();
 
    US_Passwd pw;
@@ -1189,6 +1301,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    savePanel();
    changed         = false;
    message_instr_shown = false;
+
+   //hide Operator Info:
+   lb_operator -> hide();
+   cb_operator -> hide();
 
    initPanel();
 
@@ -1365,29 +1481,39 @@ void US_ExperGuiRotor::changeOptima( int ndx )
    sl_operators.clear();
    int inv_lev    = US_Settings::us_inv_level();
    int inv_id     = US_Settings::us_inv_ID();
+
+   //Clear cb_choose_operator [assign] & rebuild
+   cb_choose_operator -> clear();
+   te_opers_to_assign -> clear();
    
    QList< US_Rotor::Operator > operators = currentInstrument.operators;
    foreach ( US_Rotor::Operator oper, operators )
    {
       qDebug() << "Operator: " << oper.lname;
 
-      //Here: if UL<3, enforce operator to be ONLY the current non-admin user:
-      if ( inv_lev < 3 )
-	{
-	  if ( inv_id == oper.ID )
-	    {
-	      sl_operators << QString::number( oper.ID )
-		+ ": " + oper.fname + " " + oper.lname;
+      // //Here: if UL<3, enforce operator to be ONLY the current non-admin user:
+      // if ( inv_lev < 3 )
+      // 	{
+      // 	  if ( inv_id == oper.ID )
+      // 	    {
+      // 	      sl_operators << QString::number( oper.ID )
+      // 		+ ": " + oper.fname + " " + oper.lname;
 
-	      break;
-	    }
-	}
-      else
-	{
+      // 	      break;
+      // 	    }
+      // 	}
+      // else
+      // 	{
 	  
-	  sl_operators << QString::number( oper.ID )
-	    + ": " + oper.fname + " " + oper.lname;
-	}
+      // 	  sl_operators << QString::number( oper.ID )
+      // 	    + ": " + oper.fname + " " + oper.lname;
+      // 	}
+      
+      sl_operators << QString::number( oper.ID )
+	+ ": " + oper.fname + " " + oper.lname;
+
+      
+      cb_choose_operator ->addItem( QString::number( oper.ID ) + ". " + oper.lname + ", " + oper.fname );
    }
    cb_operator->clear();
    cb_operator->addItems( sl_operators );
@@ -5592,8 +5718,16 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
 // Slot to save the current Run Protocol
 bool US_ExperGuiUpload::saveRunProtocol()
 {
-
   bool save_aborted = false;
+
+  qDebug() << "in saveRunProtoocl(): proto_svd, rps_differ -- " << proto_svd << rps_differ;
+  if ( proto_svd && !rps_differ )
+    {
+      qDebug() << "Protocol already saved && not changed since that...";
+      return save_aborted;
+    }
+      
+  qDebug() << "Peoceed with Saving protocol!";
   
   if ( mainw->ScanCount_global > 1501 )
     {
@@ -6139,29 +6273,126 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   // End of dealing with unchanged protocol /////////////////////////////////////////////////////////////
 
   QMessageBox msgBox;
-  QString message_protocol = tr( "");
-  if ( rps_differ )
-    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
-  
-  QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
-  
-  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
-  msgBox.setText( message_submission );
-  msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
-			     .arg(alias)
-			     .arg(dbhost)
-			     .arg(dbport));
-  msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
   QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
   
+  QString message_protocol = tr( "");
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
+
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+  QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
+
+  qDebug() << "oper,rev,appr,sme Lists -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
+ 
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+  QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
+    
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
+
+  QString info_text = QString( tr ("<b>Run Name:</b> %1 <br> <b>Instrument:</b> %2 <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
+    .arg( currProto->runname )
+    .arg(alias)
+    .arg(dbhost)
+    .arg(dbport);
+  
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2 <br><br>"
+				  "<b>Assigner Approver(s):</b> <br>"
+				  "&emsp; %3"))
+	.arg( o_list )
+	.arg( r_list )
+	.arg( a_list );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING") || a_list. contains( "MISSING") )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Experiment <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s), reviewer(s) and/or approver(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
+    }
+
+  msgBox.setInformativeText( info_text);  
+  msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
+ 
   msgBox.setIcon(QMessageBox::Question);
   msgBox.exec();
   
   if (msgBox.clickedButton() == Accept)
     {
-      qDebug() << "Submitting...";
-      submitExperiment();
+      if ( !mainw->usmode )
+	{
+	  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) || a_list. contains( "MISSING" ) ) 
+	    {
+	      return;
+	    }
+	  else
+	    {
+	      //get user info:
+	      //get info on logged in user [submitter]:
+	      US_Passwd   pw;
+	      QString     masterPW  = pw.getPasswd();
+	      US_DB2      db( masterPW );  // New constructor
+	      QStringList qry;
+	      qry <<  QString( "get_user_info" );
+	      db.  query( qry );
+	      db. next();
+	      int u_ID        = db. value( 0 ).toInt();
+	      QString u_fname = db. value( 1 ).toString();
+	      QString u_lname = db. value( 2 ).toString();
+	      int u_lev       = db. value( 5 ).toInt();
+	      
+	      QString user_submitter = u_lname + ", " + u_fname;
+	      
+	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	      qDebug() << "Checking master password...";
+	      gmp_submitter_map.clear();
+	      US_Passwd   pw_at;
+	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+	      
+	      int submit_map_size = gmp_submitter_map.keys().size();
+	      qDebug() << "Submitter map: "
+		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		       << gmp_submitter_map.keys().isEmpty() 
+		       << gmp_submitter_map[ "User:" ]
+		       << gmp_submitter_map[ "Comment:" ]
+		       << gmp_submitter_map[ "Master Password:" ];
+	      
+	      //Enable GMP run submit ONLY if form was filled && password correct
+	      
+	      if ( submit_map_size > 0 ) 
+		{
+		  qDebug() << "Submitting GMP...";
+		  submitExperiment();
+		}
+	    }
+	}
+      else
+	{
+	  qDebug() << "Submitting R&D...";
+	  submitExperiment();
+	}
     }
   else if (msgBox.clickedButton() == Cancel)
     {
@@ -7553,8 +7784,9 @@ void US_ExperGuiUpload::submitExperiment()
     	   }
 	   
          protocol_details[ "duration" ]       = QString::number(Total_duration);
-         protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
-         protocol_details[ "correctRadii" ]   = QString("YES");
+         //protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID()); 
+	 protocol_details[ "invID_passed" ]   = currProto->investigator.split(":")[0];
+	 protocol_details[ "correctRadii" ]   = QString("YES");
          protocol_details[ "expAborted" ]     = QString("NO");
 
          protocol_details[ "label" ]          = currProto->exp_label;
@@ -7637,51 +7869,11 @@ void US_ExperGuiUpload::submitExperiment()
        add_autoflow_record( protocol_details );
 
        /*** 
-	    Maybe add audit trail who submitted - the owner himself OR an admin on his behalf?
-	***/
-
-       /****
-       //Do we ask if UL>=3 (admin) wants to set operator/reviewers???
-       //Returned autoflowID: protocol_details[ "autoflowID" ]
-       if ( US_Settings::us_inv_level() > 2 )
-	 {
-	   QMessageBox msg_rev;
-	   msg_rev.setWindowTitle(tr("Defining Reviewers for GMP Run"));
-	   msg_rev.setText( QString(tr("As an admin user, you can define operator and reviewer(s) for "
-				       "the currently submitted GMP run, for further review and e-Signing. "
-				       )
-				    ));
-	   msg_rev.setInformativeText( QString( tr( "Do you want to do this now?" )));
-				      
-	   QPushButton *Accept    = msg_rev.addButton(tr("YES"), QMessageBox::YesRole);
-	   QPushButton *Cancel    = msg_rev.addButton(tr("Cancel"), QMessageBox::RejectRole);
-	   
-	   msg_rev.setIcon(QMessageBox::Question);
-	   msg_rev.exec();
-	   
-	   if (msg_rev.clickedButton() == Accept)
-	     {
-	       qDebug() << "Setting up operator, reviewers...";
-
-	       US_eSignaturesGMP* rev_dialog = new US_eSignaturesGMP();
-	       rev_dialog->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-	       rev_dialog->setWindowModality(Qt::ApplicationModal);
-
-	       connect( rev_dialog, SIGNAL( accept_reviewers ( QMap< QString, QString >& ) ),
-			this, SLOT( do_accept_reviewers  ( QMap< QString, QString >& )  ) );
-	       connect( rev_dialog, SIGNAL( cancel_reviewers ( QMap< QString, QString >& ) ),
-			this, SLOT( cancel_reviewers  ( QMap< QString, QString >& )  ) );
-	       
-	       rev_dialog->show();
-	       
-	     }
-	   else if (msg_rev.clickedButton() == Cancel)
-	     {
-	       emit expdef_submitted( protocol_details );
-	       return;
-	     }
-	 }
-       *****/
+	    Add audit trail who submitted - the owner himself OR an admin on his behalf
+       ***/
+       
+       
+ 
      }
       
    //Finish, emit, switch to 2. LIVE_UPDATE
@@ -7717,11 +7909,13 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
                                      + db->lastError() );
       return;
    }
+
+   QStringList qry;
+   int autoflowID_returned = 0;
    
    if ( db != NULL )
    {
-     int autoflowID_returned = 0;
-     QStringList qry;
+     qry. clear();
      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
      //greater of:
      //- max(ID) autoflowHistory
@@ -7754,25 +7948,207 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
      autoflowID_returned = db->lastInsertID();
      //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
      protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
-   
-     
+        
      qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
      
-     if ( autoflowID_returned == 0 )
-       {
-	 QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
-			       tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
-	 return;
-       }
    }
    
-   /***/
-   //Also, create record in autoflowStages table:
-   QStringList qry_stages;
-   qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
-   db->statusQuery( qry_stages );
-   /**/
+   if ( autoflowID_returned == 0 )
+     {
+       QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+			     tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+       return;
+     }
+   /*******************************************************************************/
    
+   
+   /******************************************************************************/
+   //Also, create record in autoflowStages table:
+   qry. clear();
+   qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry );
+   /********************************************************************************/
+
+   
+   /*******************************************************************************/
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+
+       for (int i=0; i<appr_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << appr_listList[i]; 
+	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
+	 } 
+
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       apprListJsonArray += "]";
+       smeListJsonArray  += "]";
+         
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
+       
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int     u_ID    = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << apprListJsonArray
+	   << smeListJsonArray
+	   << eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
+     }
 }
 
 
