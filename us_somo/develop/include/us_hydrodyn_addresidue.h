@@ -150,6 +150,8 @@ class US_AddResidue : public QWidget
       QString atom_filename, residue_filename;
       bool update_pKas( int atomno );
       void info_residue( const QString & msg );
+      void update_bead_hydrated_info();
+      void clear_bead_hydrated_info();
 
    private slots:
       void add();
@@ -159,6 +161,7 @@ class US_AddResidue : public QWidget
       void select_residue_file();
       void read_residue_file(const QString &);
       void select_residue(int);
+      void residue_selection_changed();
       void select_r_atom(int);
       void select_r_bead(int);
       void select_bead_color(int);
