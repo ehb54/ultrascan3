@@ -158,18 +158,16 @@ void US_BufferComponent::putAllToHD(const QMap<QString, US_BufferComponent> &com
 
       xml.writeStartElement("densityCoefficients");
       for (int j = 0; j < 6; j++) {
-         factor.asprintf("c%i", j);
          value = QString::number(componentList[key].dens_coeff[j], 'f', 5);
-         xml.writeAttribute(factor, value);
+         xml.writeAttribute(QString().asprintf("c%i", j), value);
       }
 
       xml.writeEndElement(); // densityCoefficients
 
       xml.writeStartElement("viscosityCoefficients");
       for (int j = 0; j < 6; j++) {
-         factor.asprintf("c%i", j);
          value = QString::number(componentList[key].visc_coeff[j], 'f', 5);
-         xml.writeAttribute(factor, value);
+         xml.writeAttribute(QString().asprintf("c%i", j), value);
       }
 
       xml.writeEndElement(); // viscosityCoefficients
@@ -188,11 +186,11 @@ int US_BufferComponent::saveToDB(US_DB2 * db) {
    // construct density and viscosity
    QString density;
    for (int i = 0; i < 6; i++) {
-      density += QString(i > 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
+      density += QString(i == 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
    }
    QString viscosity;
    for (int i = 0; i < 6; i++) {
-      viscosity += QString(i > 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
+      viscosity += QString(i == 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
    }
 
    q.clear();
@@ -270,7 +268,7 @@ void US_CosedComponent::getInfoFromDB(US_DB2 *db) {
 
    for (int i = 0; i < 6; i++)
       visc_coeff[i] = sl[i].toDouble();
-
+   sl.clear();
    sl = density.split(" ");
 
    for (int i = 0; i < 6; i++)
@@ -384,11 +382,11 @@ int US_CosedComponent::saveToDB(US_DB2 *db, const int buffer_ID) {
       // construct density and viscosity
       QString density;
       for (int i = 0; i < 6; i++) {
-         density += QString(i > 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
+         density += QString(i == 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
       }
       QString viscosity;
       for (int i = 0; i < 6; i++) {
-         viscosity += QString(i > 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
+         viscosity += QString(i == 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
       }
 
       q.clear();
@@ -419,11 +417,11 @@ int US_CosedComponent::saveToDB(US_DB2 *db, const int buffer_ID) {
       qDebug() << "BufferID in saveToDB(): " << cosed_compID;
       QString density;
       for (int i = 0; i < 6; i++) {
-         density += QString(i > 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
+         density += QString(i == 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
       }
       QString viscosity;
       for (int i = 0; i < 6; i++) {
-         viscosity += QString(i > 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
+         viscosity += QString(i == 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
       }
 
       q.clear();
@@ -722,9 +720,9 @@ bool US_Buffer::readFromDB(US_DB2 *db, const QString &bufID) {
       concentration << db->value(4).toString().toDouble();
    }
 
-   for (int i = 0; i < componentIDs.size(); i++) {
+   for (const auto & componentID : componentIDs) {
       US_BufferComponent bc;
-      bc.componentID = componentIDs[i];
+      bc.componentID = componentID;
       bc.getInfoFromDB(db);
       component << bc;
    }
@@ -741,11 +739,13 @@ bool US_Buffer::readFromDB(US_DB2 *db, const QString &bufID) {
    }
 
    while (db->next()) {
-      US_CosedComponent bc;
-      bc.componentID = db->value(0).toString();
-      bc.getInfoFromDB(db);
-      cosed_component << bc;
-      cosed_componentIDs << bc.componentID;
+      cosed_componentIDs << db->value(0).toString();
+   }
+   for (const auto & cosed_componentID : cosed_componentIDs) {
+     US_CosedComponent bc;
+     bc.componentID = cosed_componentID;
+     bc.getInfoFromDB(db);
+     cosed_component << bc;
    }
 
    QString compType("Buffer");

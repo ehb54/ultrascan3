@@ -1434,7 +1434,7 @@ void US_BufferGuiNew::create_new_buffer_component() {
    US_BufferComponentRequerster* bcomp_dialog = new US_BufferComponentRequerster(&bc,component_list);
    bcomp_dialog -> exec();
    qApp->processEvents();
-   if (!bc.name.isEmpty())return;
+   if (bc.name.isEmpty())return;
    bc.saveToDB(&db);
 
    // update component list
@@ -2616,7 +2616,7 @@ void US_BufferComponentRequerster::cancelled(void) {
 
 void US_BufferComponentRequerster::accept(void) {
    comp->name = le_name->text();
-   comp->unit = le_unit->text();
+   comp->unit = QString("M");
    comp->range = QString::number(le_lrange->text().toDouble(),'f',3)+'-'+QString::number(le_urange->text().toDouble(),'f',3)+' M';
    comp->dens_coeff[0] = le_density0->text().toDouble();
    comp->dens_coeff[1] = le_density1->text().toDouble();
@@ -2638,7 +2638,7 @@ void US_BufferComponentRequerster::accept(void) {
       problems << QString(tr("Invalid unit, currently only mM and M are supported."));
       le_unit->setText("");
    }
-   if (le_lrange->text().toDouble() <= le_urange->text().toDouble()){
+   if (le_lrange->text().toDouble() >= le_urange->text().toDouble()){
       problems << QString(tr("Invalid range, the upper limit is smaller or equal the lower limit."));
       le_urange->setText("");
       le_lrange->setText("");
@@ -2662,7 +2662,7 @@ void US_BufferComponentRequerster::accept(void) {
                             tr("A buffer component with the same name and range already exists.\n\n")+msg);
       return;
    }
-   else {
+   else if (!msg.isEmpty()){
       QMessageBox::information(this, tr("Input error"),
                             msg);
       return;
@@ -2671,7 +2671,7 @@ void US_BufferComponentRequerster::accept(void) {
 }
 
 void US_BufferComponentRequerster::edit(void) {
-   if (le_name->text().isEmpty() || le_unit->text().isEmpty() || le_density0->text().isEmpty() || le_density1->text().isEmpty() ||
+   if (le_name->text().isEmpty() || le_density0->text().isEmpty() || le_density1->text().isEmpty() ||
        le_density2->text().isEmpty() || le_density3->text().isEmpty() || le_density4->text().isEmpty() ||
        le_density5->text().isEmpty() || le_viscosity0->text().isEmpty() || le_viscosity1->text().isEmpty() ||
        le_viscosity2->text().isEmpty() || le_viscosity3->text().isEmpty() || le_viscosity4->text().isEmpty() ||
