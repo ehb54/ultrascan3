@@ -1616,7 +1616,7 @@ static int totT8=0;
 
       if ( ! reacting[ cc ] ) // noninteracting
       {
-         bool overlaying;
+         bool overlaying = false;
          foreach (US_CosedComponent i, cosed_comps){
             if (system.components[cc].analyteGUID == i.GUID) { overlaying = i.overlaying; break; }
          }
