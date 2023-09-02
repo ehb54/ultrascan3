@@ -97,6 +97,8 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       QString        cmapMatch;
       QString        cmfpath;
       QToolButton*   btnCMap;
+      QVector<double> yLeftRange;
+      QVector<double> yRightRange;
 
    private slots:
       void zoom    ( bool );
@@ -105,6 +107,11 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       void png     ( void );
       void config  ( void );
       void colorMap( void );
+#if QT_VERSION < 0x050000
+      void scale_yRight ( QwtDoubleRect );
+#else
+      void scale_yRight ( QRectF );
+#endif
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
