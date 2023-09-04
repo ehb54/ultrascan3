@@ -2493,7 +2493,7 @@ for(int jf=0;jf<files.size();jf++)
    {  // Remove the files we just put into the tar archive
 DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
-      foreach( file, files ) odir.remove( file );
+      // foreach( file, files ) odir.remove( file );
    }
 }
 
