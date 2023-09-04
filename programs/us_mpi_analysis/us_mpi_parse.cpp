@@ -470,7 +470,39 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
          dataset->viscosity = a.value( "viscosity" ).toString().toDouble();
          dataset->compress  = a.value( "compress"  ).toString().toDouble();
          dataset->manual    = a.value( "manual"    ).toString().toInt();
+         dataset->solution_rec.buffer.viscosity = dataset->viscosity;
+         dataset->solution_rec.buffer.density = dataset->density;
+         dataset->solution_rec.buffer.cosed_componentIDs.clear();
+         dataset->solution_rec.buffer.cosed_component.clear();
+         while (!xml.atEnd()){
+            if (xml.isEndElement() && xml.name() == "buffer") break;
+            if (xml.isStartElement() && xml.name() == "cosedcomponent") {
+               US_CosedComponent bc;
+
+               QXmlStreamAttributes ab = xml.attributes();
+               bc.id = ab.value("id").toInt();
+               bc.componentID = ab.value("id").toString();
+               bc.name = ab.value("name").toString();
+               bc.overlaying = US_Util::bool_flag(ab.value("overlay").toString());
+               bc.conc = ab.value("conc").toString().toDouble();
+               bc.s_coeff = ab.value("s").toString().toDouble()*1E-13;
+               bc.d_coeff = ab.value("D").toString().toDouble()*1E-6;
+               bc.vbar = ab.value("vbar").toString().toDouble();
+               QStringList dens = ab.value("dens").toString().split(" ");
+               QStringList visc = ab.value("visc").toString().split(" ");
+               for(int i = 0; i < dens.length(); i++ ){
+                  bc.dens_coeff[i] = dens[i].toDouble();
+               }
+               for(int i = 0; i < visc.length(); i++ ){
+                  bc.visc_coeff[i] = visc[i].toDouble();
+               }
+
+               dataset->solution_rec.buffer.cosed_component << bc;
+               dataset->solution_rec.buffer.cosed_componentIDs << bc.componentID;
+            }
+         }
       }
+
 
       if ( xml.isStartElement() && xml.name() == "analyte" )
       {
