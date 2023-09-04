@@ -373,7 +373,8 @@ US_Settings::set_us_debug( dbg_level );
             // Set model with standard space s and k
             if (use_zsol) {
                US_ZSolute::set_mcomp_values(model.components[0], sim_vals.zsolutes[cc], smask);
-            } else {
+            }
+            else {
                model.components[0] = zcomponent;
                set_comp_attr(model.components[0], sim_vals.solutes[cc], attr_x);
                set_comp_attr(model.components[0], sim_vals.solutes[cc], attr_y);
@@ -403,8 +404,8 @@ US_Settings::set_us_debug( dbg_level );
             }
 
             // Check if timestate file exists or not
-            if (dset->simparams.tsobj == NULL ||
-                dset->simparams.sim_speed_prof.count() < 1) {  // Simparms does not yet have a loaded timestate
+            if (dset->simparams.tsobj == NULL || dset->simparams.sim_speed_prof.count() < 1)
+            {  // Simparms does not yet have a loaded timestate
                DbgLv(0) << "solve_sim_calc_residuals_1 : TSOBJ" << dset->simparams.tsobj << "ssprof count"
                         << dset->simparams.sim_speed_prof.count();
                dset->simparams.tsobj = NULL;           // Insure TimeState object and
@@ -434,8 +435,11 @@ US_Settings::set_us_debug( dbg_level );
                } else {  // Timestate file does not exist (will be created in astfem_rsa)
                   DbgLv(0) << "solve_sim_1: timestate file does not exist" << tmst_fpath << dset->tmst_file;
                }
-            } else DbgLv(2) << "solve_sim_1: timestate object exists  sspknt=" << dset->simparams.sim_speed_prof.count()
-                            << " timestateobject=" << dset->simparams.tsobj;
+            }
+            else {
+               DbgLv(2) << "solve_sim_1: timestate object exists  sspknt=" << dset->simparams.sim_speed_prof.count()
+                        << " timestateobject=" << dset->simparams.tsobj;
+            }
 
             //DebugTime("BEG: clcr-NA-astfem");
             DbgLv(2) << "solve_sim_2: smeni sbott" << dset->simparams.meniscus << dset->simparams.bottom;
