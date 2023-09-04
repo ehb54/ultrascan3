@@ -226,8 +226,8 @@ bool US_CosedComponent::readFromDB(US_DB2 *db, const QString &cosed_compID) {
    conc = db->value(1).toDouble();
    overlaying = US_Util::bool_flag(db->value(6).toString());
 
-   s_coeff = db->value(2).toString().toDouble();
-   d_coeff = db->value(3).toString().toDouble();
+   s_coeff = db->value(2).toString().toDouble()*1E-13;
+   d_coeff = db->value(3).toString().toDouble()*1E-6;
    QString density = db->value(4).toString();
    QString viscosity = db->value(5).toString();
 
@@ -257,8 +257,8 @@ void US_CosedComponent::getInfoFromDB(US_DB2 *db) {
    overlaying = US_Util::bool_flag(db->value(6).toString());
    GUID = db->value(7).toString();
 
-   s_coeff = db->value(2).toString().toDouble();
-   d_coeff = db->value(3).toString().toDouble();
+   s_coeff = db->value(2).toString().toDouble()*1E-13;
+   d_coeff = db->value(3).toString().toDouble()*1E-6;
    vbar = db->value(8).toString().toDouble();
    QString density = db->value(4).toString();
    QString viscosity = db->value(5).toString();
