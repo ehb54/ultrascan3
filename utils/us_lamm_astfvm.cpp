@@ -1350,7 +1350,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
        }
       SetNonIdealCase_2();
       DbgLv(1) << "ASTFVM:set_buffer:" << codiff_needed;
-      DbgLv(1) << "ASTFVM:set_buffer:" << bfg;
+      DbgLv(1) << "ASTFVM:set_buffer:" << bfg << nullptr;
       if (codiff_needed){
       if (bfg == nullptr){
          DbgLv(1) << "no bfg, calc new";
