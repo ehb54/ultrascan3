@@ -1078,16 +1078,16 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
                 }
         }
         if (bfg_offset == -1){
-            US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
+           bandFormingGradient =  new US_Math_BF::Band_Forming_Gradient(
                     simulationParameters.meniscus,
                     simulationParameters.bottom,
                     simulationParameters.band_volume,
                     dataSet->solution_rec.buffer.cosed_component,
                     simulationParameters.cp_pathlen,
                     simulationParameters.cp_angle);
-            bandFormingGradient.get_eigenvalues();
-            bandFormingGradient.calculate_gradient(simulationParameters, &edata);
-            data_sets_bfgs << bandFormingGradient;
+            bandFormingGradient->get_eigenvalues();
+            bandFormingGradient->calculate_gradient(simulationParameters, &edata);
+            data_sets_bfgs << *bandFormingGradient;
             bfg_offset = data_sets_bfgs.length() -1;
            DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
         }

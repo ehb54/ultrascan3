@@ -164,9 +164,9 @@ class US_MPI_Analysis : public QObject
     QList< US_LammAstfvm::CosedData *>          data_sets_csDs;
     QList< US_LammAstfvm::CosedData *>          csDs;
     QList<QList<US_CosedComponent>*>            data_sets_cosed_components;
+    US_Math_BF::Band_Forming_Gradient* bandFormingGradient;
     QList<QList<US_CosedComponent>>             cosedcomponents;
     QList<QMap<QString, US_DataIO::RawData>*>   data_sets_cosed_comp_datas;
-    QList<QMap<QString, US_DataIO::RawData>>    cosed_comp_datas;
     QList<bool>                                 data_sets_codiff_needed;
     QList<bool>                                 data_sets_cosed_needed;
 
