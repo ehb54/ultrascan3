@@ -316,7 +316,7 @@ DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
       // Wait for worker to send a message
       int        sizes[ 4 ];
       MPI_Status status;
-
+      DbgLv(1) << "2dsa_master:319";
       MPI_Recv( sizes,
                 4,
                 MPI_INT,
@@ -334,11 +334,13 @@ if ( max_depth > 0 )
       {
          case MPI_Job::READY:   // Ready for work
             worker_status[ worker ] = READY;
+            DbgLv(1) << "2dsa_master:337";
             break;
 
          case MPI_Job::RESULTS: // Return solute data
             process_results( worker, sizes );
             work_rss[ worker ] = sizes[ 3 ];
+            DbgLv(1) << "2dsa_master:343";
             break;
 
          default:  // Should never happen
@@ -347,9 +349,10 @@ if ( max_depth > 0 )
             abort( msg );
             break;
       }
-
+      DbgLv(1) << "2dsa_master:352";
       max_rss();
    }
+   DbgLv(1) << "2dsa_master:355";
 }
 
 // Generate the initial set of solutes
