@@ -484,6 +484,7 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
          dataset->solution_rec.buffer.cosed_componentIDs.clear();
          dataset->solution_rec.buffer.cosed_component.clear();
          while (!xml.atEnd()){
+            xml.readNext();
             if (xml.isEndElement() && xml.name() == "buffer") break;
             if (xml.isStartElement() && xml.name() == "cosedcomponent") {
                US_CosedComponent bc;
