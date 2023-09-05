@@ -1031,7 +1031,7 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
-
+   calculate_cosed();
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -2819,12 +2819,12 @@ void US_MPI_Analysis::calculate_cosed() {
         csD->sa_data= cosed_comp_data.first();
     }
     if (codiff_needed){
-        bfg = new US_Math_BF::Band_Forming_Gradient(data_sets[0]->simparams.meniscus,data_sets[0]->simparams.bottom,
+        bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(data_sets[0]->simparams.meniscus,data_sets[0]->simparams.bottom,
                                                     data_sets[0]->simparams.band_volume,
                                                     data_sets[0]->solution_rec.buffer.cosed_component,
                                                     data_sets[0]->simparams.cp_pathlen,data_sets[0]->simparams.cp_angle);
-        bfg->get_eigenvalues();
-        bfg->calculate_gradient(data_sets[0]->simparams,&auc_data);
+       bandFormingGradient->get_eigenvalues();
+       bandFormingGradient->calculate_gradient(data_sets[0]->simparams,&auc_data);
     }
     data_sets_codiff_needed << codiff_needed;
     data_sets_cosed_needed << cosed_needed;
