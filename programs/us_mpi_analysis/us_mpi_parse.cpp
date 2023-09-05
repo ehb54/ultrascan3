@@ -288,7 +288,7 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
          parameters[ "z_value" ]     = "0.0";
 
       if ( parameters.contains( "debug_level" ) )
-         dbg_level  = parameters[ "debug_level" ].toInt();
+         dbg_level  = parameters[ "debug_level" ].toInt() + 1;
 
       else
          dbg_level  = 0;
