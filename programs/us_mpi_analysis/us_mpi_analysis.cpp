@@ -2825,14 +2825,16 @@ void US_MPI_Analysis::calculate_cosed() {
                                                     data_sets[0]->simparams.cp_pathlen,data_sets[0]->simparams.cp_angle);
        bandFormingGradient->get_eigenvalues();
        bandFormingGradient->calculate_gradient(data_sets[0]->simparams,&auc_data);
+       qDebug() << "bfg calc calculate_cosed";
     }
     data_sets_codiff_needed << codiff_needed;
     data_sets_cosed_needed << cosed_needed;
-    bfgs << bfg;
+    bfgs << bandFormingGradient;
     csDs << csD;
     cosedcomponents << cosed_components;
     // populate datasets list
     data_sets_bfgs << *bfgs[0];
     data_sets_csDs << csDs[0];
     data_sets_cosed_components << &cosedcomponents[0];
+    qDebug() << "finished Calc_cosed";
 }
