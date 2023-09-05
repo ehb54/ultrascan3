@@ -5790,6 +5790,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( status_map[ "RefScan" ][ "type"] )     //1
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+	;
+      
 
       //Add list if dropped triples per optics system:
       if ( !dtype_opt_dropped_triples. isEmpty() )
@@ -5947,6 +5962,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( data_types_edit_ts[ im.key() ] )           //1
 	;
 
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+	;
+      
+      
     }
    
   html_assembled += tr("<hr>");
@@ -6023,6 +6053,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   
   if ( !analysisCancelJson. isEmpty() )
     {
+      qDebug() << "analysisCancelJson QMap NOT empty!";
+      
       QMap < QString, QString >::iterator cj;
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
@@ -6066,7 +6098,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     }
   else
     {
-      html_assembled += tr( "No CANCELLED jobs." );
+      html_assembled += tr( "<tr><td> No CANCELLED jobs. </td></tr>" );
     }
   
   html_assembled += tr( "</table>" );
@@ -6338,6 +6370,13 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	  status_map[ key ][ "type" ] = value.toString();
 	}
 
+      //Comment when SAVED:
+      if ( key == "Comment when SAVED" )    //import || edit
+	{
+	  status_map[ key ][ "comment_when_saved" ] = value.toString();
+	}
+      
+      
       if ( key == "Dropped" )   // import: Dropped triples/channels/select channels operaitons 
 	{	  
 	  QJsonArray json_array = value.toArray();
