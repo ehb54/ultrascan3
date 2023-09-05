@@ -410,7 +410,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
       }
       runtime += (dt + dt_scaling);
       scan_count++;
-      DbgLv(2) << "BFG:CG: scan dt dt_scaling runtime" << scan_count << dt << dt_scaling << runtime;
+      DbgLv(1) << "BFG:CG: scan dt dt_scaling runtime" << scan_count << dt << dt_scaling << runtime;
    }
 
    DbgLv(1) << "Calculated BFG for" << Nx << "radial points and" <<scan_count<<"scans";
