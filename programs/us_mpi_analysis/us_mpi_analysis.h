@@ -159,7 +159,7 @@ class US_MPI_Analysis : public QObject
     QDateTime           startTime;
 
     QList< DATASET* >   data_sets;
-    QList< US_Math_BF::Band_Forming_Gradient* > data_sets_bfgs;
+    QList< US_Math_BF::Band_Forming_Gradient> data_sets_bfgs;
     QList< US_Math_BF::Band_Forming_Gradient* > bfgs;
     QList< US_LammAstfvm::CosedData *>          data_sets_csDs;
     QList< US_LammAstfvm::CosedData *>          csDs;

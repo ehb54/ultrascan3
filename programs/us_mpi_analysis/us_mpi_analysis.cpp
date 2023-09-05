@@ -1442,8 +1442,8 @@ else
 if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
 if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
 //*DEBUG*
-   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?data_sets_bfgs[bfg_offset]: nullptr;
-   DbgLv(1) << bfg_offset << ((bfg_offset!=-1)?data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+   DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
    solvesim.calc_residuals( offset, dataset_count, simu_values, false, nullptr, nullptr, nullptr, bfg);
 
 //*DEBUG*
@@ -2831,7 +2831,7 @@ void US_MPI_Analysis::calculate_cosed() {
     cosedcomponents << cosed_components;
     cosed_comp_datas << cosed_comp_data;
     // populate datasets list
-    data_sets_bfgs << bfgs[0];
+    data_sets_bfgs << *bfgs[0];
     data_sets_csDs << csDs[0];
     data_sets_cosed_comp_datas << &cosed_comp_datas[0];
     data_sets_cosed_components << &cosedcomponents[0];

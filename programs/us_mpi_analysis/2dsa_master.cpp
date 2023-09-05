@@ -183,7 +183,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                     US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
                     // we need a
                     for (int i = 0; i < data_sets_bfgs.length(); i++){
-                        US_Math_BF::Band_Forming_Gradient* bandFormingGradient = data_sets_bfgs[i];
+                        US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
                         if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
                             abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
                             abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
@@ -199,15 +199,15 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                         }
                     }
                     if (bfg_offset == -1){
-                        US_Math_BF::Band_Forming_Gradient* bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(
+                        US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
                                 simulationParameters.meniscus,
                                 simulationParameters.bottom,
                                 simulationParameters.band_volume,
                                 dataSet->solution_rec.buffer.cosed_component,
                                 simulationParameters.cp_pathlen,
                                 simulationParameters.cp_angle);
-                        bandFormingGradient->get_eigenvalues();
-                        bandFormingGradient->calculate_gradient(simulationParameters, &edata);
+                        bandFormingGradient.get_eigenvalues();
+                        bandFormingGradient.calculate_gradient(simulationParameters, &edata);
                         data_sets_bfgs << bandFormingGradient;
                         bfg_offset = data_sets_bfgs.length() -1;
                     }
@@ -821,7 +821,7 @@ void US_MPI_Analysis::set_gaussians( void )
            US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
            // we need a
            for (int i = 0; i < data_sets_bfgs.length(); i++){
-               US_Math_BF::Band_Forming_Gradient* bandFormingGradient = data_sets_bfgs[i];
+               US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
                if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
                    abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
                    abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
@@ -837,15 +837,15 @@ void US_MPI_Analysis::set_gaussians( void )
                }
            }
            if (bfg_offset == -1){
-               US_Math_BF::Band_Forming_Gradient* bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(
+               US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
                        simulationParameters.meniscus,
                        simulationParameters.bottom,
                        simulationParameters.band_volume,
                        dataSet->solution_rec.buffer.cosed_component,
                        simulationParameters.cp_pathlen,
                        simulationParameters.cp_angle);
-               bandFormingGradient->get_eigenvalues();
-               bandFormingGradient->calculate_gradient(simulationParameters, &edata);
+               bandFormingGradient.get_eigenvalues();
+               bandFormingGradient.calculate_gradient(simulationParameters, &edata);
                data_sets_bfgs << bandFormingGradient;
                bfg_offset = data_sets_bfgs.length() -1;
            }
@@ -979,7 +979,7 @@ void US_MPI_Analysis::iterate( void )
         US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
         // we need a
         for (int i = 0; i < data_sets_bfgs.length(); i++){
-            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = data_sets_bfgs[i];
+            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
             if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
                 abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
                 abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
@@ -995,15 +995,15 @@ void US_MPI_Analysis::iterate( void )
             }
         }
         if (bfg_offset == -1){
-            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(
+            US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
                     simulationParameters.meniscus,
                     simulationParameters.bottom,
                     simulationParameters.band_volume,
                     dataSet->solution_rec.buffer.cosed_component,
                     simulationParameters.cp_pathlen,
                     simulationParameters.cp_angle);
-            bandFormingGradient->get_eigenvalues();
-            bandFormingGradient->calculate_gradient(simulationParameters, &edata);
+            bandFormingGradient.get_eigenvalues();
+            bandFormingGradient.calculate_gradient(simulationParameters, &edata);
             data_sets_bfgs << bandFormingGradient;
             bfg_offset = data_sets_bfgs.length() -1;
         }
@@ -1061,7 +1061,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
         US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
         // we need a
         for (int i = 0; i < data_sets_bfgs.length(); i++){
-            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = data_sets_bfgs[i];
+            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
                 if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
                     abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
                     abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
@@ -1078,15 +1078,15 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
                 }
         }
         if (bfg_offset == -1){
-            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(
+            US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
                     simulationParameters.meniscus,
                     simulationParameters.bottom,
                     simulationParameters.band_volume,
                     dataSet->solution_rec.buffer.cosed_component,
                     simulationParameters.cp_pathlen,
                     simulationParameters.cp_angle);
-            bandFormingGradient->get_eigenvalues();
-            bandFormingGradient->calculate_gradient(simulationParameters, &edata);
+            bandFormingGradient.get_eigenvalues();
+            bandFormingGradient.calculate_gradient(simulationParameters, &edata);
             data_sets_bfgs << bandFormingGradient;
             bfg_offset = data_sets_bfgs.length() -1;
            DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
