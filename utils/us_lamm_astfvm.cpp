@@ -1320,6 +1320,7 @@ int US_LammAstfvm::solve_component(int compx) {
 }
 
 void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradient* bfg, CosedData* csD) {
+   DbgLv(0) << "ASTFVM:set_buffer";
    density = buffer.density; // for compressibility
    viscosity = buffer.viscosity;
    compressib = buffer.compressibility;
@@ -1349,6 +1350,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
       SetNonIdealCase_2();
       if (codiff_needed){
       if (bfg == nullptr){
+         DbgLv(1) << "no bfg, calc new";
          bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
                                                                        simparams.band_volume,
                                                                        cosed_components, simparams.cp_pathlen,
@@ -1363,6 +1365,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
          codiff_needed = true;
       }
       else{
+         DbgLv(1) << "bfg, but empty";
       bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
                                                                     simparams.band_volume,
                                                                     cosed_components, simparams.cp_pathlen,
@@ -1371,9 +1374,11 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
             bandFormingGradient->get_eigenvalues();
             codiff_needed = true;
          }
-      }}
+
+      }
+      }
       else{bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient();}
-      DbgLv(1) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
+      DbgLv(0) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
    }
 }
 
