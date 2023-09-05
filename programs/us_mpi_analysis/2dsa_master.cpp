@@ -1049,6 +1049,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
     int bfg_offset = -1;
     int csd_offset = -1;
+    DbgLv(0) << data_sets_bfgs.length();
     if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
         US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
         US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
@@ -1067,6 +1068,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
                     edata.scanData.last().seconds < bandFormingGradient->dens_bfg_data.scanData.last().seconds){
                     // recalculation needed
                     bfg_offset = i;
+                   DbgLv(0) << "bfg found in position " << i;
                     break;
                 }
         }
@@ -1082,6 +1084,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
             bandFormingGradient->calculate_gradient(simulationParameters, &edata);
             data_sets_bfgs << bandFormingGradient;
             bfg_offset = data_sets_bfgs.length() -1;
+           DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
         }
     }
    job.mpi_job.command        = MPI_Job::PROCESS;
