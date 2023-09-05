@@ -391,7 +391,7 @@ int US_CosedComponent::saveToDB(US_DB2 *db, const int buffer_ID) {
 
       q.clear();
       q << "add_cosed_component" << GUID << QString::number(buffer_ID) << name << QString::number(conc, 'f', 5)
-        << QString::number(s_coeff, 'f', 5) << QString::number(d_coeff, 'f', 5)
+        << QString::number(s_coeff*1e13, 'f', 5) << QString::number(d_coeff*1e6, 'f', 5)
         << US_Util::bool_string(overlaying) << density << viscosity << QString::number(vbar, 'f', 4);
 
       db->statusQuery(q);
