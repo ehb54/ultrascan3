@@ -946,6 +946,7 @@ int US_LammAstfvm::solve_component(int compx) {
    {
       SetNonIdealCase_2();
       mropt = 0;
+
       dt = min(bandFormingGradient->dt,dt);
       solut_t = af_data.scan[ nts - 1 ].time;  // true total time
       ntc = (int) (solut_t / dt) + 1;
@@ -1388,6 +1389,7 @@ void US_LammAstfvm::SetNonIdealCase_1(double sigma_k, double delta_k) {
 }
 
 void US_LammAstfvm::SetNonIdealCase_2() {
+   DbgLv(1) << "SetNonIdealCase_2";
    US_Model cosed_model = model;
    cosed_model.coSedSolute = -1;
    cosed_model.components.clear();
@@ -1511,9 +1513,10 @@ void US_LammAstfvm::SetNonIdealCase_2() {
       cosed_model.components << tmp;
       cosed_model_tmp.components << tmp;
       cosed_model_tmp.update_coefficients();
+         DbgLv(1) << "NonIdeal2: calc saltdata";
       saltdata = new CosedData(cosed_model_tmp, simparams, auc_data, &cosed_components, base_density, base_viscosity);
       cosed_comp_data[ tmp.analyteGUID ] = saltdata->sa_data;
-      DbgLv(2) << "NonIdeal2: create saltdata";
+      DbgLv(1) << "NonIdeal2: create saltdata";
       cosed_model.update_coefficients();
       saltdata->model = cosed_model;
       saltdata->cosed_comp_data = cosed_comp_data;
@@ -2544,6 +2547,7 @@ void US_LammAstfvm::validate_bfg() {
             break;
         }
     }
+   DbgLv(1) << "validated bfg" << co_diff;
     if (!co_diff){
         bandFormingGradient = nullptr;
         return;
@@ -2563,7 +2567,9 @@ void US_LammAstfvm::validate_bfg() {
                                                       cosed_components, simparams.cp_pathlen, simparams.cp_angle);
         bandFormingGradient->get_eigenvalues();
         bandFormingGradient->calculate_gradient(simparams, auc_data);
+       DbgLv(1) << "validated bfg recalculated";
     }
+   DbgLv(1) << "validated bfg";
 }
 
 void US_LammAstfvm::validate_csd() {
