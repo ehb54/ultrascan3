@@ -6,7 +6,6 @@
 //  Parse XML routines
 void US_MPI_Analysis::parse( const QString& xmlfile )
 {
-   DbgLv(0) << "parse: started" << my_rank;
    QFile file ( xmlfile );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
@@ -132,12 +131,10 @@ DbgLv(0) << "DBGTXT: dt strlst(2): " << dbgtxt_sls;
 }
 //*DEBUG*
    }
-   DbgLv(0) << "parse: finished" << my_rank;
 }
 
 void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 {
-   DbgLv(0) << "parse_job: started" << my_rank;
    QXmlStreamAttributes attr;
    QString xname;
    QString ytype;
@@ -288,7 +285,7 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
          parameters[ "z_value" ]     = "0.0";
 
       if ( parameters.contains( "debug_level" ) )
-         dbg_level  = parameters[ "debug_level" ].toInt() + 1;
+         dbg_level  = parameters[ "debug_level" ].toInt();
 
       else
          dbg_level  = 0;
@@ -299,12 +296,10 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
       dbg_timing = ( parameters.contains( "debug_timings" )
                  &&  parameters[ "debug_timings" ].toInt() != 0 );
    }
-   DbgLv(-1) << "parse_job: finished" << my_rank;
 }
 
 void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
 {
-   DbgLv(0) << "parse_dataset: started" << my_rank;
    dataset->simparams.speed_step.clear();
 
    QXmlStreamAttributes a;
@@ -431,7 +426,6 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
 
 void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DATASET* dataset )
 {
-   DbgLv(0) << "parse_files: started" << my_rank;
    while ( ! xml.atEnd() )
    {
       xml.readNext();
@@ -460,12 +454,10 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DATASET* dataset )
       dataset->edit_file = fpart1 + "." + clambda + "." + fpart2;
 if (my_rank==0) DbgLv(0) << "PF: MWL edit_file" << dataset->edit_file;
    }
-   DbgLv(0) << "parse_files: finished" << my_rank;
 }
 
 void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
 {
-   DbgLv(0) << "parse_solution: started"  << my_rank;
    while ( ! xml.atEnd() )
    {
       xml.readNext();
@@ -536,6 +528,5 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
    }
 
    dataset->vbar20  = US_Math2::calcCommonVbar( dataset->solution_rec, 20.0 );
-   DbgLv(0) << "parse_solution: finished"  << my_rank;
 }
 
