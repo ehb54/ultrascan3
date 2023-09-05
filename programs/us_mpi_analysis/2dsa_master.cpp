@@ -1089,9 +1089,10 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
             bandFormingGradient->calculate_gradient(simulationParameters, &edata);
             data_sets_bfgs << *bandFormingGradient;
             bfg_offset = data_sets_bfgs.length() -1;
-           DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
+           DbgLv(0) << "bfg calculated and stored in position " << bfg_offset << bandFormingGradient;
         }
     }
+   DbgLv(0) << "bfg calculated and stored in position2 " << bfg_offset << bandFormingGradient;
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
    job.mpi_job.meniscus_value = meniscus_value;
