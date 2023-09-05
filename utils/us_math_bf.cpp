@@ -307,6 +307,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    conc_bfg_data = visc_bfg_data;
    Nx = visc_bfg_data.pointCount();
    double duration = editedData->scanData.last().seconds;
+   qDebug() << duration << simparms.radial_resolution << ( visc_bfg_data.radius( Nx - 1 ) - visc_bfg_data.radius( 0 ) ) / (double)( Nx - 1 );
    simparms.radial_resolution =
          ( visc_bfg_data.radius( Nx - 1 ) - visc_bfg_data.radius( 0 ) ) / (double)( Nx - 1 );
    // Calculate dt
@@ -314,6 +315,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    for (US_CosedComponent &cosed_comp: upper_comps) {
       max_D = max(max_D,cosed_comp.d_coeff);
    }
+   qDebug() << max_D;
    // Declares the scan structure
    US_DataIO::Scan dens_scan;
    US_DataIO::Scan visc_scan;
