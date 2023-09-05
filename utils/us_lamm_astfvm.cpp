@@ -1349,6 +1349,8 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
            cosed_comp_data.clear();
        }
       SetNonIdealCase_2();
+      DbgLv(1) << "ASTFVM:set_buffer:" << codiff_needed;
+      DbgLv(1) << "ASTFVM:set_buffer:" << bfg;
       if (codiff_needed){
       if (bfg == nullptr){
          DbgLv(1) << "no bfg, calc new";

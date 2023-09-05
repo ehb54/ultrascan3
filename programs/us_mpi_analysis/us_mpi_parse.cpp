@@ -496,7 +496,7 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
                bc.overlaying = US_Util::bool_flag(ab.value("overlay").toString());
                bc.conc = ab.value("conc").toString().toDouble();
                bc.s_coeff = ab.value("s").toString().toDouble()*1E-13;
-               bc.d_coeff = ab.value("D").toString().toDouble(); // *1e-6
+               bc.d_coeff = ab.value("D").toString().toDouble()*1e-6;
                bc.vbar = ab.value("vbar").toString().toDouble();
                QStringList dens = ab.value("dens").toString().split(" ");
                QStringList visc = ab.value("visc").toString().split(" ");
