@@ -1331,7 +1331,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
    if ( !buffer.cosed_component.isEmpty()) {
       cosed_components = buffer.cosed_component;
        if (csD == nullptr){
-           DbgLv(1) << "nothing to do";
+           DbgLv(1) << "csD: nothing to do";
            cosed_comp_data.clear();
        }
        else if (!csD->is_empty && csD->cosed_components != nullptr){
@@ -1525,8 +1525,10 @@ void US_LammAstfvm::SetNonIdealCase_2() {
                << cosed_comp_data.size() << "sa_data.scanCount()" << saltdata->sa_data.scanCount();
       DbgLv(2) << "NonIdeal2: initSalt  comp_x" << comp_x;
    }
+   DbgLv(1) << "NonIdeal2: prep saltdata" << cosed_needed << codiff_needed;
    if (!cosed_comp_data.isEmpty()){
-   saltdata->sa_data= cosed_comp_data.first();}
+   saltdata->sa_data = cosed_comp_data.first();}
+   DbgLv(1) << "NonIdeal2: finished";
 }
 
 void US_LammAstfvm::save_xla(const QString &dirname, US_DataIO::RawData sim_data, int i1) {
