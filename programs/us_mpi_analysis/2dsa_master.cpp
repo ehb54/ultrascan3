@@ -45,7 +45,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       menibott_count      = bottom_points;
       meniscus_points     = 1;
    }
-
+   DbgLv(0) << "_2dsa_master:48";
    while ( true )
    {
       int worker;
@@ -460,6 +460,7 @@ DbgLv(0) << "InSol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
 // Fill the job queue, using the list of initial solutes
 void US_MPI_Analysis::fill_queue( void )
 {
+   DbgLv(1) << "start filling queue";
    worker_status.resize( gcores_count );
    worker_depth .resize( gcores_count );
 
@@ -480,6 +481,7 @@ void US_MPI_Analysis::fill_queue( void )
       job.solutes         = orig_solutes[ i ];
       job_queue << job;
    }
+   DbgLv(1) << "queue filled";
 }
 
 //////////////////
