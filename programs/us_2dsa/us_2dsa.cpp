@@ -32,6 +32,7 @@
 
 int main( int argc, char* argv[] )
 {
+   US_GuiSettings::set_gui_env();
    QApplication application( argc, argv );
 
    #include "main1.inc"

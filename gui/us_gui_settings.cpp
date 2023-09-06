@@ -508,3 +508,13 @@ void US_GuiSettings::set_plotPicker( const QColor& color )
     settings.setValue( "palettes/plotPicker", color );
 }
 
+void US_GuiSettings::set_gui_env(void) {
+   QSettings settings(US3, "UltraScan");
+   auto test = Qt::HighDpiScaleFactorRoundingPolicy(settings.value("HDPIP", 5).toInt());
+   QString highDpiscaling = settings.value("HDPIS", "0").toString();
+   QString autoScaling = settings.value("HDPIAS", "0").toString();
+   qputenv("QT_ENABLE_HIGHDPI_SCALING",highDpiscaling.toLatin1());
+   QApplication::setHighDpiScaleFactorRoundingPolicy(test);
+   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, (autoScaling == "0"));
+   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, (autoScaling != "0"));
+}

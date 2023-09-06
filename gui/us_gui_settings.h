@@ -5,6 +5,7 @@
 #include <QtWidgets>
 #else
 #include <QtGui>
+#include <QtWidgets/QApplication>
 #define setSingleStep(a) setStep(a)
 #define setMinorPen(a) setMinPen(a)
 #define setMajorPen(a) setMajPen(a)
@@ -22,6 +23,10 @@ class US_GUI_EXTERN US_GuiSettings
     //! \brief Null destructor.
     ~US_GuiSettings(){};
 
+    // High DPI stuff
+    //! \brief Get
+    static void set_gui_env( void );
+    static void set_gui_env( QApplication* app );
     // Fonts
 
     //! \brief Get font family setting

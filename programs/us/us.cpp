@@ -53,7 +53,7 @@ int main( int argc, char* argv[] )
 
   application.initialize();
 #else
-  qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
+  US_GuiSettings::set_gui_env();
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
 #endif
