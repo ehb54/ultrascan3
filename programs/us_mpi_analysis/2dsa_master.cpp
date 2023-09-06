@@ -45,7 +45,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       menibott_count      = bottom_points;
       meniscus_points     = 1;
    }
-   DbgLv(0) << "_2dsa_master:48";
+
    while ( true )
    {
       int worker;
@@ -314,7 +314,7 @@ DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
       // Wait for worker to send a message
       int        sizes[ 4 ];
       MPI_Status status;
-      DbgLv(1) << "2dsa_master:319";
+
       MPI_Recv( sizes,
                 4,
                 MPI_INT,
@@ -332,13 +332,11 @@ if ( max_depth > 0 )
       {
          case MPI_Job::READY:   // Ready for work
             worker_status[ worker ] = READY;
-            DbgLv(1) << "2dsa_master:337";
             break;
 
          case MPI_Job::RESULTS: // Return solute data
             process_results( worker, sizes );
             work_rss[ worker ] = sizes[ 3 ];
-            DbgLv(1) << "2dsa_master:343";
             break;
 
          default:  // Should never happen
@@ -347,10 +345,8 @@ if ( max_depth > 0 )
             abort( msg );
             break;
       }
-      DbgLv(1) << "2dsa_master:352";
       max_rss();
    }
-   DbgLv(1) << "2dsa_master:355";
 }
 
 // Generate the initial set of solutes
@@ -1052,7 +1048,6 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
    int bfg_offset = -1;
    int csd_offset = -1;
-   DbgLv(0) << data_sets_bfgs.length();
    if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
       US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
       US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
@@ -1071,7 +1066,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
              edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
             // recalculation needed
             bfg_offset = i;
-            DbgLv(0) << "bfg found in position " << i;
+            DbgLv(2) << "bfg found in position " << i;
             break;
          }
       }
@@ -1087,9 +1082,9 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
          bfg->calculate_gradient(simulationParameters, &edata);
          data_sets_bfgs << *bfg;
          bfg_offset = data_sets_bfgs.length() -1;
-         DbgLv(0) << "bfg calculated and stored in position " << bfg_offset << bfg;
+         DbgLv(2) << "bfg calculated and stored in position " << bfg_offset;
       }
-      DbgLv(0) << "bfg calculated and stored in position2 " << bfg_offset << bandFormingGradient;
+      DbgLv(1) << "bfg calculated and stored in position " << bfg_offset;
    }
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
