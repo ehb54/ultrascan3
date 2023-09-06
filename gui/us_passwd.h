@@ -22,6 +22,7 @@ class US_GUI_EXTERN US_Passwd : public US_Widgets
     //!  save it to global memory.
     //!  \retval password The unecrypted master password.
     QString getPasswd( void );
+    QMap < QString, QString > getPasswd_auditTrail( QString, QString, QString );
 };
 #endif
 

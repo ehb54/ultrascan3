@@ -145,6 +145,7 @@ class US_ConvertGui : public US_Widgets
       ProtocolInfo ProtInfo;
 
       bool  us_convert_auto_mode;
+      QMap<QString, QString> gmp_submitter_map;
       
       enum { SPLIT, REFERENCE, NONE } step;
 

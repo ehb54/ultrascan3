@@ -3,6 +3,8 @@
 This is the home of the UltraScan GUI software source code.
 More information is available [here](https://ultrascan.aucsolutions.com)
 
+The UltraScan project is supported by NIH Funding GM120600
+
 ### installation
 
 The simplest way is to download and install a precompiled [binary](https://www.ultrascan3.aucsolutions.com/download.php)

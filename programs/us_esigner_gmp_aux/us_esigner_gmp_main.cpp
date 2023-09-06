@@ -1,6 +1,6 @@
 //! \file us_esigner_gmp_main.cpp
 
-#include "us_esigner_gmp.h"
+#include "../us_esigner_gmp/us_esigner_gmp.h"
 #include "us_license_t.h"
 #include "us_license.h"
 
@@ -16,9 +16,9 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   //US_eSignaturesGMP * w = new US_eSignaturesGMP;
+   US_eSignaturesGMP * w = new US_eSignaturesGMP;
    //US_eSignaturesGMP * w = new US_eSignaturesGMP( "AUTO" );
-   US_eSignaturesGMP * w = new US_eSignaturesGMP( "SEPARATE" );
+   //US_eSignaturesGMP * w = new US_eSignaturesGMP( "SEPARATE" );
    w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }

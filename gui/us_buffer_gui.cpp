@@ -1501,8 +1501,8 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
-   //us_setReadOnly( le_descrip, true );
-   us_setReadOnly( le_descrip, false );
+   us_setReadOnly( le_descrip, true );
+   //us_setReadOnly( le_descrip, false );
 
    int row = 0;
    main->addWidget( bn_modbuf,       row++, 0, 1, 8 );
