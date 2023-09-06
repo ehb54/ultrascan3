@@ -96,8 +96,7 @@ void US_MPI_Analysis::_2dsa_master( void )
                + QString::number( meniscus_value, 'f', 4 )
                + "; Bottom: "
                + QString::number( bottom_value,   'f', 4 )
-               + QString().sprintf( "  ( m%2d b%2d )",
-                    ( meniscus_run + 1 ), ( bottom_run + 1 ) );
+               + tr( "  ( m%1 b%2 )").arg( meniscus_run + 1 ).arg( bottom_run + 1 );
          else if ( fit_meni )
             progress     += "; Meniscus: "
                + QString::number( meniscus_value, 'f', 4 )
@@ -174,42 +173,41 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             wksim_vals           = simulation_values;
             wksim_vals.solutes   = calculated_solutes[ max_depth ];
             int bfg_offset = -1;
+            int csd_offset = -1;
             if (data_sets.size() == 1){
-                int bfg_offset = -1;
-                int csd_offset = -1;
                 if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
                     US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
-                    US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+                    US_DataIO::RawData pedata = data_sets[current_dataset]->run_data.convert_to_raw_data();
                     US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
                     // we need a
                     for (int i = 0; i < data_sets_bfgs.length(); i++){
-                        US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
-                        if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
-                            abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
-                            abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
-                            abs(simulationParameters.band_volume - bandFormingGradient->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
-                            abs( simulationParameters.cp_pathlen - bandFormingGradient->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
-                            abs( simulationParameters.cp_angle - bandFormingGradient->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
-                            simulationParameters.radial_resolution == bandFormingGradient->simparms.radial_resolution ||
-                            simulationParameters.temperature == bandFormingGradient->simparms.temperature ||
-                            edata.scanData.last().seconds < bandFormingGradient->dens_bfg_data.scanData.last().seconds){
+                        US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+                        if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+                            abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+                            abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+                            abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+                            abs( simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+                            abs( simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+                            simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+                            simulationParameters.temperature == bfg->simparms.temperature ||
+                            pedata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
                             // recalculation needed
                             bfg_offset = i;
                             break;
                         }
                     }
                     if (bfg_offset == -1){
-                        US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
+                        US_Math_BF::Band_Forming_Gradient bfg = US_Math_BF::Band_Forming_Gradient(
                                 simulationParameters.meniscus,
                                 simulationParameters.bottom,
                                 simulationParameters.band_volume,
                                 dataSet->solution_rec.buffer.cosed_component,
                                 simulationParameters.cp_pathlen,
                                 simulationParameters.cp_angle);
-                        bandFormingGradient.get_eigenvalues();
-                        bandFormingGradient.calculate_gradient(simulationParameters, &edata);
-                        data_sets_bfgs << bandFormingGradient;
-                        bfg_offset = data_sets_bfgs.length() -1;
+                       bfg.get_eigenvalues();
+                       bfg.calculate_gradient(simulationParameters, &pedata);
+                       data_sets_bfgs << bfg;
+                       bfg_offset = data_sets_bfgs.length() -1;
                     }
                 }
             }
@@ -233,7 +231,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
          if ( is_composite_job )
          {  // Composite job:  update outputs in TAR and bump dataset count
-            QString tripleID = QString( data_sets[ current_dataset ]->model
+            QString ttripleID = QString( data_sets[ current_dataset ]->model
                                .description ).section( ".", -3, -3 );
             current_dataset++;
             dset_calc_solutes << calculated_solutes[ max_depth ];
@@ -243,13 +241,13 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             if ( simulation_values.noisflag == 0 )
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset
-                        << "(" << tripleID << ")"
+                        << "(" << ttripleID << ")"
                         << " :  model was output.";
             }
             else
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset
-                        << "(" << tripleID << ")"
+                        << "(" << ttripleID << ")"
                         << " :  model/noise(s) were output.";
             }
 
@@ -264,15 +262,15 @@ DbgLv(1) << " master loop-BOT:    cds kds" << current_dataset << count_datasets;
 
                if ( menibott_count > 1 )
                {  // Reset the range of fit-meniscus/bottom points for this data set
-                  US_DataIO::EditedData* edata
+                  US_DataIO::EditedData* EditedData
                                   = &data_sets[ current_dataset ]->run_data;
-                  double dat_str  = edata->radius( 0 );
+                  double dat_str  = EditedData->radius( 0 );
                   double men_dpt  = ( meniscus_points > 1 ) ?
                                     (double)( meniscus_points - 1 ) : 1;
                   double bot_dpt  = ( bottom_points > 1 ) ?
                                     (double)( bottom_points   - 1 ) : 1;
-                  double men_str  = edata->meniscus - ( meniscus_range * 0.5 );
-                  double bot_str  = edata->bottom   - ( bottom_range   * 0.5 );
+                  double men_str  = EditedData->meniscus - ( meniscus_range * 0.5 );
+                  double bot_str  = EditedData->bottom   - ( bottom_range   * 0.5 );
                   double men_inc  = meniscus_range / men_dpt;
                   double bot_inc  = bottom_range   / bot_dpt;
                   double men_end  = men_str + meniscus_range - men_inc;
@@ -534,7 +532,7 @@ int ks=scan_count;
 int kp=radius_points;
 DbgLv(1) << ":gf:  ee" << current_dataset << "BB-dset(m)" << edata->value(ks/2,kp/2);
    int index         = 0;
-   QVector< double > scaled_data( scan_count * radius_points  + 1 );
+   QVector< double > pscaled_data(scan_count * radius_points + 1 );
 double isum=0.0;
 double dsum=0.0;
 
@@ -546,19 +544,19 @@ double dsum=0.0;
 double ival=edata->value(ss,rr);
 isum+=ival;
          double scaled_value    = edata->value( ss, rr ) / concentration;
-         scaled_data[ index++ ] = scaled_value;
+         pscaled_data[ index++ ] = scaled_value;
          edata->setValue( ss, rr, scaled_value );
 dsum+=scaled_value;
       }
    }
 
-   scaled_data[ index ] = edata->ODlimit;
+   pscaled_data[ index ] = edata->ODlimit;
 DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
    // Send the scaled version of current data to the workers
    MPI_Job job;
    job.command         = MPI_Job::NEWDATA;
-   job.length          = scaled_data.size();
+   job.length          = pscaled_data.size();
    job.solution        = 1;
    job.meniscus_value  = data_sets[ current_dataset ]->run_data.meniscus;
    job.dataset_offset  = current_dataset;
@@ -581,11 +579,11 @@ DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentrat
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),
-              scaled_data.size(),
-              MPI_DOUBLE,
-              MPI_Job::MASTER,
-              my_communicator );
+   MPI_Bcast(pscaled_data.data(),
+             pscaled_data.size(),
+             MPI_DOUBLE,
+             MPI_Job::MASTER,
+             my_communicator );
 
    // Go to the next dataset
    job_queue.clear();
@@ -687,17 +685,17 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
    }
 
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   int ds_points     = total_points;
+   int dsPoints     = total_points;
    int ds_start      = 0;
    int ds_end        = count_datasets;
 
    if ( is_composite_job )
    {
-      ds_points         = edata->scanCount() * edata->pointCount();
+      dsPoints         = edata->scanCount() * edata->pointCount();
       ds_start          = current_dataset;
       ds_end            = ds_start + datasets_to_process;
    }
-   mc_data.resize( ds_points );
+   mc_data.resize(dsPoints );
 DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
 DbgLv(1) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count()
  << "tot-scans" << sim_data1.scanCount();
@@ -749,7 +747,7 @@ DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(scnx,rr)
    }
 DbgLv(1) << "sMC:   mcdata sum" << datasum;
 
-   varrmsd          = sqrt( varrmsd / (double)( ds_points ) );
+   varrmsd          = sqrt( varrmsd / (double)( dsPoints ) );
    qDebug() << "  Box_Muller Variation RMSD"
             << QString::number( varrmsd, 'f', 7 )
             << "  for MC_Iteration" << mc_iteration + 1;
@@ -760,7 +758,7 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
-   newdata.length         = ds_points;
+   newdata.length         = dsPoints;
    newdata.solution       = mc_iteration + 1;
    newdata.meniscus_value = data_sets[ 0 ]->run_data.meniscus;
    newdata.dataset_offset = ds_start;
@@ -784,11 +782,11 @@ DbgLv(1) << "sMC: MPI Barrier";
    MPI_Barrier( my_communicator );
 
 DbgLv(1) << "sMC: MPI Bcast";
-   MPI_Bcast( mc_data.data(),
-              ds_points,
-              MPI_DOUBLE,
-              MPI_Job::MASTER,
-              my_communicator );
+   MPI_Bcast(mc_data.data(),
+             dsPoints,
+             MPI_DOUBLE,
+             MPI_Job::MASTER,
+             my_communicator );
 
    fill_queue();
 
@@ -807,47 +805,47 @@ void US_MPI_Analysis::set_gaussians( void )
    int ds_end        = count_datasets;
    int ds_count      = count_datasets;
    int bfg_offset    = -1;
+   int csd_offset = -1;
    if ( is_composite_job )
    {
       ds_start          = current_dataset;
       ds_end            = ds_start + datasets_to_process;
       ds_count          = datasets_to_process;
-   } else {
-       int bfg_offset = -1;
-       int csd_offset = -1;
+   }
+   else {
        if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
            US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
-           US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+           US_DataIO::RawData pedata = data_sets[current_dataset]->run_data.convert_to_raw_data();
            US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
            // we need a
            for (int i = 0; i < data_sets_bfgs.length(); i++){
-               US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
-               if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
-                   abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
-                   abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
-                   abs(simulationParameters.band_volume - bandFormingGradient->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
-                   abs( simulationParameters.cp_pathlen - bandFormingGradient->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
-                   abs( simulationParameters.cp_angle - bandFormingGradient->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
-                   simulationParameters.radial_resolution == bandFormingGradient->simparms.radial_resolution ||
-                   simulationParameters.temperature == bandFormingGradient->simparms.temperature ||
-                   edata.scanData.last().seconds < bandFormingGradient->dens_bfg_data.scanData.last().seconds){
+               US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+               if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+                   abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+                   abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+                   abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+                   abs( simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+                   abs( simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+                   simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+                   simulationParameters.temperature == bfg->simparms.temperature ||
+                   pedata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
                    // recalculation needed
                    bfg_offset = i;
                    break;
                }
            }
            if (bfg_offset == -1){
-               US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
+               US_Math_BF::Band_Forming_Gradient bfg = US_Math_BF::Band_Forming_Gradient(
                        simulationParameters.meniscus,
                        simulationParameters.bottom,
                        simulationParameters.band_volume,
                        dataSet->solution_rec.buffer.cosed_component,
                        simulationParameters.cp_pathlen,
                        simulationParameters.cp_angle);
-               bandFormingGradient.get_eigenvalues();
-               bandFormingGradient.calculate_gradient(simulationParameters, &edata);
-               data_sets_bfgs << bandFormingGradient;
-               bfg_offset = data_sets_bfgs.length() -1;
+              bfg.get_eigenvalues();
+              bfg.calculate_gradient(simulationParameters, &pedata);
+              data_sets_bfgs << bfg;
+              bfg_offset = data_sets_bfgs.length() -1;
            }
        }
    }
@@ -857,7 +855,7 @@ DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_dept
 
 int mm=simulation_values.solutes.size()-1;
 DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
- << simulation_values.solutes[mm].s << "  M=" << mm;;
+ << simulation_values.solutes[mm].s << "  M=" << mm;
 DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
 DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
 edata = &data_sets[ds_start]->run_data;
@@ -979,33 +977,33 @@ void US_MPI_Analysis::iterate( void )
         US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
         // we need a
         for (int i = 0; i < data_sets_bfgs.length(); i++){
-            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
-            if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
-                abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
-                abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
-                abs(simulationParameters.band_volume - bandFormingGradient->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
-                abs( simulationParameters.cp_pathlen - bandFormingGradient->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
-                abs( simulationParameters.cp_angle - bandFormingGradient->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
-                simulationParameters.radial_resolution == bandFormingGradient->simparms.radial_resolution ||
-                simulationParameters.temperature == bandFormingGradient->simparms.temperature ||
-                edata.scanData.last().seconds < bandFormingGradient->dens_bfg_data.scanData.last().seconds){
+            US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+            if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+                abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+                abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+                abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+                abs( simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+                abs( simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+                simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+                simulationParameters.temperature == bfg->simparms.temperature ||
+                edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
                 // recalculation needed
                 bfg_offset = i;
                 break;
             }
         }
         if (bfg_offset == -1){
-            US_Math_BF::Band_Forming_Gradient bandFormingGradient = US_Math_BF::Band_Forming_Gradient(
+            US_Math_BF::Band_Forming_Gradient bfg = US_Math_BF::Band_Forming_Gradient(
                     simulationParameters.meniscus,
                     simulationParameters.bottom,
                     simulationParameters.band_volume,
                     dataSet->solution_rec.buffer.cosed_component,
                     simulationParameters.cp_pathlen,
                     simulationParameters.cp_angle);
-            bandFormingGradient.get_eigenvalues();
-            bandFormingGradient.calculate_gradient(simulationParameters, &edata);
-            data_sets_bfgs << bandFormingGradient;
-            bfg_offset = data_sets_bfgs.length() -1;
+           bfg.get_eigenvalues();
+           bfg.calculate_gradient(simulationParameters, &edata);
+           data_sets_bfgs << bfg;
+           bfg_offset = data_sets_bfgs.length() -1;
         }
     }
    // Set up for another round at depth 0
@@ -1052,47 +1050,47 @@ void US_MPI_Analysis::iterate( void )
 // Submit a queued job
 void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
-    int bfg_offset = -1;
-    int csd_offset = -1;
-    DbgLv(0) << data_sets_bfgs.length();
-    if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
-        US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
-        US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
-        US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
-        // we need a
-        for (int i = 0; i < data_sets_bfgs.length(); i++){
-            US_Math_BF::Band_Forming_Gradient* bandFormingGradient = &data_sets_bfgs[i];
-                if (dataSet->solution_rec.buffer.cosed_component == bandFormingGradient->cosed_component ||
-                    abs(simulationParameters.meniscus - bandFormingGradient->meniscus) < GSL_ROOT5_DBL_EPSILON ||
-                    abs(simulationParameters.bottom - bandFormingGradient->bottom) < GSL_ROOT5_DBL_EPSILON ||
-                    abs(simulationParameters.band_volume - bandFormingGradient->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
-                    abs( simulationParameters.cp_pathlen - bandFormingGradient->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
-                    abs( simulationParameters.cp_angle - bandFormingGradient->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
-                    simulationParameters.radial_resolution == bandFormingGradient->simparms.radial_resolution ||
-                    simulationParameters.temperature == bandFormingGradient->simparms.temperature ||
-                    edata.scanData.last().seconds < bandFormingGradient->dens_bfg_data.scanData.last().seconds){
-                    // recalculation needed
-                    bfg_offset = i;
-                   DbgLv(0) << "bfg found in position " << i;
-                    break;
-                }
-        }
-        if (bfg_offset == -1){
-           bandFormingGradient =  new US_Math_BF::Band_Forming_Gradient(
-                    simulationParameters.meniscus,
-                    simulationParameters.bottom,
-                    simulationParameters.band_volume,
-                    dataSet->solution_rec.buffer.cosed_component,
-                    simulationParameters.cp_pathlen,
-                    simulationParameters.cp_angle);
-            bandFormingGradient->get_eigenvalues();
-            bandFormingGradient->calculate_gradient(simulationParameters, &edata);
-            data_sets_bfgs << *bandFormingGradient;
-            bfg_offset = data_sets_bfgs.length() -1;
-           DbgLv(0) << "bfg calculated and stored in position " << bfg_offset << bandFormingGradient;
-        }
-    }
-   DbgLv(0) << "bfg calculated and stored in position2 " << bfg_offset << bandFormingGradient;
+   int bfg_offset = -1;
+   int csd_offset = -1;
+   DbgLv(0) << data_sets_bfgs.length();
+   if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
+      US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
+      US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+      US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
+      // we need a
+      for (int i = 0; i < data_sets_bfgs.length(); i++){
+         US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+         if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+             abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+             simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+             simulationParameters.temperature == bfg->simparms.temperature ||
+             edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
+            // recalculation needed
+            bfg_offset = i;
+            DbgLv(0) << "bfg found in position " << i;
+            break;
+         }
+      }
+      if (bfg_offset == -1){
+         auto bfg =  new US_Math_BF::Band_Forming_Gradient(
+                  simulationParameters.meniscus,
+                  simulationParameters.bottom,
+                  simulationParameters.band_volume,
+                  dataSet->solution_rec.buffer.cosed_component,
+                  simulationParameters.cp_pathlen,
+                  simulationParameters.cp_angle);
+         bfg->get_eigenvalues();
+         bfg->calculate_gradient(simulationParameters, &edata);
+         data_sets_bfgs << *bfg;
+         bfg_offset = data_sets_bfgs.length() -1;
+         DbgLv(0) << "bfg calculated and stored in position " << bfg_offset << bfg;
+      }
+      DbgLv(0) << "bfg calculated and stored in position2 " << bfg_offset << bandFormingGradient;
+   }
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
    job.mpi_job.meniscus_value = meniscus_value;
@@ -1274,7 +1272,7 @@ DbgLv(1) << "Mast:    process_solutes:      worker" << worker
       job.mpi_job.depth          = next_depth;
       job.mpi_job.dataset_offset = current_dataset;
       job.mpi_job.dataset_count  = datasets_to_process;
-      qSort( job.solutes );
+      std::sort( job.solutes.begin(), job.solutes.end() );
       add_to_queue( job );
 
 DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
@@ -1337,7 +1335,7 @@ DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
          job.mpi_job.dataset_offset = current_dataset;
          job.mpi_job.dataset_count  = datasets_to_process;
          max_depth                  = qMax( next_d, max_depth );
-         qSort( job.solutes );
+         std::sort( job.solutes.begin(), job.solutes.end() );
          add_to_queue( job );
 DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
@@ -1376,7 +1374,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
       bottom_value         = ( bottom_points == 1 )
                            ? data_sets[ current_dataset ]->run_data.bottom
                            : bottom_values  [ bottom_run   ];
-      qSort( job.solutes );
+      std::sort( job.solutes.begin(), job.solutes.end() );
 DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
  << max_depth << "  nsvs=" << simulation_values.solutes.size();
 
