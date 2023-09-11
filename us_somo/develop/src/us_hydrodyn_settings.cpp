@@ -1663,6 +1663,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.zeno_surface_thickness" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness );
       parameters[ "misc.hydro_supc" ] = QString( "%1" ).arg( misc.hydro_supc );
       parameters[ "misc.hydro_zeno" ] = QString( "%1" ).arg( misc.hydro_zeno );
+      parameters[ "misc.parallel_grpy" ] = QString( "%1" ).arg( misc.parallel_grpy );
       parameters[ "batch.saxs_search" ] = QString( "%1" ).arg( batch.saxs_search );
       parameters[ "batch.zeno" ] = QString( "%1" ).arg( batch.zeno );
 
@@ -2163,6 +2164,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.zeno_surface_thickness" ) ) hydro.zeno_surface_thickness = parameters[ "hydro.zeno_surface_thickness" ].toFloat();
    if ( parameters.count( "misc.hydro_supc" ) ) misc.hydro_supc = parameters[ "misc.hydro_supc" ] == "1";
    if ( parameters.count( "misc.hydro_zeno" ) ) misc.hydro_zeno = parameters[ "misc.hydro_zeno" ] == "1";
+   if ( parameters.count( "misc.parallel_grpy" ) ) misc.hydro_zeno = parameters[ "misc.parallel_grpy" ] == "1";
    if ( parameters.count( "batch.saxs_search" ) ) batch.saxs_search = parameters[ "batch.saxs_search" ] == "1";
    if ( parameters.count( "batch.zeno" ) ) batch.zeno = parameters[ "batch.zeno" ] == "1";
 
@@ -2342,6 +2344,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    {
       gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
    }
+
+   save_params_force_results_name( save_params );
 
    return true;
 }
@@ -3179,6 +3183,7 @@ void US_Hydrodyn::hard_coded_defaults()
 
    misc.hydro_supc              = true;
    misc.hydro_zeno              = false;
+   misc.parallel_grpy           = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
@@ -3297,6 +3302,7 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "vdw_inflate"                ]         = "false";
    gparams[ "vdw_inflate_mult"           ]         = "1";
 
+   save_params_force_results_name( save_params );
 }
 
 void US_Hydrodyn::set_default()
@@ -3376,6 +3382,8 @@ void US_Hydrodyn::set_default()
    }
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
+
+   save_params_force_results_name( save_params );
 
    default_sidechain_overlap = sidechain_overlap;
    default_mainchain_overlap = mainchain_overlap;
@@ -4340,4 +4348,22 @@ void US_Hydrodyn::config()
       //    run_us_admin();
       // }
    }
+}
+
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn::save_params_force_results_name( save_info & save ) {
+   QStringList qsl;
+   for ( auto field : save.field ) {
+      qsl << field;
+   }
+
+   US_Vector::printvector( "save_info field", save.field );
+
+   if ( qsl.filter( "results.name" ).size() ) {
+      TSO << __func__ << ": found results.name, not inserted\n";
+      return;
+   }
+
+   save.field.insert( save.field.begin(), "results.name" );
 }

@@ -206,6 +206,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    grpy_results2                      = grpy_results;
 
+   grpy_vdw                           = bead_model_suffix.contains( "-vdw" );
+   
    QDir::setCurrent(get_somo_dir());
    
    QString extension;
@@ -237,7 +239,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    }
 #endif
 
-   if ( !hydro.grpy_bead_inclusion && bead_model_suffix.contains( "-vdw" ) ) {
+   if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
+
       extension =
          QString( "_R%1PR%2" )
          .arg( asa.vdw_grpy_threshold_percent )
@@ -279,7 +282,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             
             // always run asa
 
-            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdw" ) ) {
+            if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
                // expose all
                for ( int i = 0; i < (int) bead_model.size(); ++i ) {
                   bead_model[ i ].exposed_code = 1;
@@ -715,6 +718,20 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.rot_diff_coef_x               = grpy_captures[ "rot_diff_coef_x" ][0];
       this_data.rot_diff_coef_y               = grpy_captures[ "rot_diff_coef_y" ][0];
       this_data.rot_diff_coef_z               = grpy_captures[ "rot_diff_coef_z" ][0];
+
+      if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
+         this_data.vdw_grpy_probe_radius      = asa.vdw_grpy_probe_radius;
+         this_data.vdw_grpy_threshold         = asa.vdw_grpy_threshold_percent;
+      }
+
+      if ( bead_models[ grpy_last_model_number ].size() &&
+           bead_models[ grpy_last_model_number ][0].is_vdw == "vdw" ) {
+         this_data.hydrate_probe_radius          = bead_models[ grpy_last_model_number ][0].asa_hydrate_probe_radius;
+         this_data.hydrate_threshold             = bead_models[ grpy_last_model_number ][0].asa_hydrate_threshold;
+         this_data.vdw_theo_waters               = bead_models[ grpy_last_model_number ][0].vdw_theo_waters;
+         this_data.vdw_exposed_residues          = bead_models[ grpy_last_model_number ][0].vdw_count_exposed;
+         this_data.vdw_exposed_waters            = bead_models[ grpy_last_model_number ][0].vdw_theo_waters_exposed;
+      }
 
       // qDebug() << "US_Hydrodyn::grpy_finished() asa rg pos " << this_data.results.asa_rg_pos << " neg " << this_data.results.asa_rg_neg;
       

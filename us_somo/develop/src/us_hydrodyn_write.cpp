@@ -616,6 +616,24 @@ void US_Hydrodyn::write_bead_model( QString fname,
       }
       qDebug() << "write bead model total mw " << summary_mw;
 
+      if ( model->size() && (*model)[0].is_vdw == "vdw" ) {
+         QString qs =
+            QString(
+                    "\nvdW model parameters:\n"
+                    "  Hydrate probe radius   [A] : %1\n"
+                    "  Hydrate threshold    [A^2] : %2\n"
+                    "  Theoretical waters         : %3\n"
+                    "  Exposed residues           : %4\n"
+                    "  Theoretical waters exposed : %5\n"
+                    )
+            .arg( (*model)[0].asa_hydrate_probe_radius )
+            .arg( (*model)[0].asa_hydrate_threshold )
+            .arg( (*model)[0].vdw_theo_waters, 0, 'f', 0 )
+            .arg( (*model)[0].vdw_count_exposed )
+            .arg( (*model)[0].vdw_theo_waters_exposed, 0, 'f', 0 )
+            ;
+         fputs(( qs.toLatin1().data() ), fsomo );
+      }         
       fclose(fsomo);
    }
    if (fbeams) {

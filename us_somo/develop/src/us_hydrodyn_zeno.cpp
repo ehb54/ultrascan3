@@ -14037,6 +14037,15 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.vbar                  = use_vbar( model_vector[ current_model ].vbar );
                   this_data.con_factor                    = pow(10.0, this_data.hydro.unit + 9);
                   
+                  if ( bead_models[ current_model ].size() &&
+                       bead_models[ current_model ][0].is_vdw == "vdw" ) {
+                     this_data.hydrate_probe_radius          = bead_models[ current_model ][0].asa_hydrate_probe_radius;
+                     this_data.hydrate_threshold             = bead_models[ current_model ][0].asa_hydrate_threshold;
+                     this_data.vdw_theo_waters               = bead_models[ current_model ][0].vdw_theo_waters;
+                     this_data.vdw_exposed_residues          = bead_models[ current_model ][0].vdw_count_exposed;
+                     this_data.vdw_exposed_waters            = bead_models[ current_model ][0].vdw_theo_waters_exposed;
+                  }
+
                   bead_model = bead_models[ current_model ];
                   // bead_check( false, true, true );
                   this_data.results.asa_rg_pos            = model_vector[ current_model ].asa_rg_pos;

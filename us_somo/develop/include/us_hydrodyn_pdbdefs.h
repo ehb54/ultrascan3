@@ -52,17 +52,7 @@ struct saxs
    float               b5[5];                // b coefficients 5 term gaussian
    float               c5;                   // c coefficient  5 term gaussian
    float               volume;               // atomic volume
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    vector < double >   vcoeff;               // variable length coefficients, c,a0b0 etc
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
    float               si;                   // q == 0 scattering intensity
 };
 
@@ -167,6 +157,14 @@ struct PDB_atom
    float        saxs_excl_vol;   // SAXS excluded volume value
    double       si;
    double num_elect;  // number of electrons for vdw bead models + saxs pr
+
+   // should be in a separate header, but without a rewrite of bead model functions, we'll kludge into bead0
+   QString      is_vdw;
+   double       vdw_theo_waters;
+   int          vdw_count_exposed;
+   double       vdw_theo_waters_exposed;
+   float        asa_hydrate_probe_radius;
+   float        asa_hydrate_threshold;
 };
 
 struct PDB_chain   // chain in PDB file

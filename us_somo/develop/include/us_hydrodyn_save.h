@@ -113,6 +113,15 @@ struct save_data
    double        zeno_eta_prefactor_sd;
    double        zeno_mep;
    double        zeno_mep_sd;
+
+   double        hydrate_probe_radius;  // "ASA Hydrate probe radius [A]"
+   double        hydrate_threshold;     // "ASA Hydrate Threshold [A^2]"
+   double        vdw_grpy_probe_radius; // "ASA vdW+GRPY Probe Radius [A]"
+   double        vdw_grpy_threshold;    // "ASA vdW+GRPY Threshold [%]"
+   double        vdw_theo_waters;       // "vdW Theoretical waters"
+   double        vdw_exposed_residues;  // "vdW Exposed residues"
+   double        vdw_exposed_waters;    // "vdW Exposed waters"
+
 };
 
 struct save_info 

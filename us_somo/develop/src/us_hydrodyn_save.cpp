@@ -25,6 +25,9 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 {
    this->save = save;
    this->us_hydrodyn = us_hydrodyn;
+
+   ((US_Hydrodyn *)us_hydrodyn)->save_params_force_results_name( *save );
+
    // build vectors, maps
    {
       vector < QString > expert_mode_data =
@@ -199,7 +202,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Corrected Einstein's radius [nm]",
             "Corrected Einstein's radius [nm]",
 
-
             "__SECTION__",
             "Additional ZENO results:",
 
@@ -299,6 +301,21 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
+            "Additional vdW results:",
+
+            "vdw_theo_waters",
+            "vdW Theoretical waters",
+            "vdW Theoretical waters",
+
+            "vdw_exposed_residues",
+            "vdW Exposed residues",
+            "vdW Exposed residues",
+
+            "vdw_exposed_waters",
+            "vdW Exposed waters",
+            "vdW Exposed waters",
+
+            "__SECTION__",
             "Solvent conditions:",
 
             "hydro.solvent_name", 
@@ -328,7 +345,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results:",
+            "ASA results and options:",
 
             "__BREAK__",
 
@@ -339,6 +356,22 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "results.asa_rg_neg", 
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
+
+            "hydrate_probe_radius",
+            "ASA Hydrate probe radius [A]",
+            "ASA Hydrate probe radius [A]",
+
+            "hydrate_threshold",
+            "ASA Hydrate Threshold [A^2]",
+            "ASA Hydrate Threshold [A^2]",
+
+            "vdw_grpy_probe_radius",
+            "ASA vdW+GRPY Probe Radius [A]",
+            "ASA vdW+GRPY Probe Radius [A]",
+
+            "vdw_grpy_threshold",
+            "ASA vdW+GRPY Threshold [%]",
+            "ASA vdW+GRPY Threshold [%]",
 
             "__END__"
          };
@@ -594,6 +627,21 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
+            "Additional vdW results:",
+
+            "vdw_theo_waters",
+            "vdW Theoretical waters",
+            "vdW Theoretical waters",
+
+            "vdw_exposed_residues",
+            "vdW Exposed residues",
+            "vdW Exposed residues",
+
+            "vdw_exposed_waters",
+            "vdW Exposed waters",
+            "vdW Exposed waters",
+
+            "__SECTION__",
             "Solvent conditions:",
 
             "hydro.solvent_name", 
@@ -623,7 +671,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results:",
+            "ASA results and options:",
 
             "__BREAK__",
 
@@ -635,10 +683,30 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
 
+            // "hydrate_probe_radius",
+            // "ASA Hydrate probe radius [A]",
+            // "ASA Hydrate probe radius [A]",
+
+            // "hydrate_threshold",
+            // "ASA Hydrate Threshold [A^2]",
+            // "ASA Hydrate Threshold [A^2]",
+
+            "vdw_grpy_probe_radius",
+            "ASA vdW+GRPY Probe Radius [A]",
+            "ASA vdW+GRPY Probe Radius [A]",
+
+            "vdw_grpy_threshold",
+            "ASA vdW+GRPY Threshold [%]",
+            "ASA vdW+GRPY Threshold [%]",
+
             "__END__"
          };
    
-      vector < QString > data = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ? expert_mode_data : non_expert_mode_data;
+      // vector < QString > data = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ? expert_mode_data : non_expert_mode_data;
+      // always use expert mode ... if expert_mode fields are selected and run in non expert mode, causes issues.
+      // perhaps rethink thin
+#warning expert mode forced to avoid field switch issues
+      vector < QString > data = expert_mode_data;
       
       field.clear( );
       descriptive_name.clear( );
@@ -1305,6 +1373,64 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          field_to_format[field[i]] = 'g';
          continue;
       }
+
+      if ( field[i] == "vdw_theo_waters" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_theo_waters);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "vdw_exposed_residues" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_exposed_residues);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "vdw_exposed_waters" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_exposed_waters);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "hydrate_probe_radius" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydrate_probe_radius);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "hydrate_threshold" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydrate_threshold);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "vdw_grpy_probe_radius" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_grpy_probe_radius);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "vdw_grpy_threshold" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_grpy_threshold);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
    }
 
    this->save_widget = save_widget;
@@ -1844,23 +1970,24 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             tmp_qstring = *((QString *)(field_to_save_data[field[i]]));
 
             save->data = sum;
+            // 2023-08-30 disable name list in average & sd
             if ( j )
             {
-               *((QString *)(field_to_save_data[field[i]])) += ", ";
+               // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
                *((QString *)(field_to_save_data[field[i]])) = us_tr("Average: ");
             }
-            *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
+            // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum = save->data;
 
             save->data = sum2;
             if ( j )
             {
-               *((QString *)(field_to_save_data[field[i]])) += ", ";
+               // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
                *((QString *)(field_to_save_data[field[i]])) = us_tr("Standard deviation: ");
             }
-            *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
+            // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum2 = save->data;
 
             break;
@@ -2677,6 +2804,14 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.zeno_eta_prefactor_sd = 0e0;
    data.zeno_mep              = 0e0;
    data.zeno_mep_sd           = 0e0;
+
+   data.hydrate_probe_radius  = 0e0;
+   data.hydrate_threshold     = 0e0;
+   data.vdw_grpy_probe_radius = -1e0; // default NA
+   data.vdw_grpy_threshold    = -1e0; // default NA
+   data.vdw_theo_waters       = 0e0;
+   data.vdw_exposed_residues  = 0e0;
+   data.vdw_exposed_waters    = 0e0;
 
    return data;
 }

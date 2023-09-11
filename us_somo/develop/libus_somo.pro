@@ -195,6 +195,7 @@ SOURCES *= \
 #  us_fematch.cpp \
 #  us_fematch_ra.cpp \
 #  us_femglobal.cpp \
+        src/us_ffd.cpp \
         src/us_file_util.cpp \
 #  us_finite1.cpp \
 #  us_finite2.cpp \
@@ -615,6 +616,7 @@ HEADERS *= \
 #  us_fematch.h \
 #  us_fematch_ra.h \
 #  us_femglobal.h \
+        include/us_ffd.h \
         include/us_file_util.h \
 #  us_finite1.h \
 #  us_finite2.h \

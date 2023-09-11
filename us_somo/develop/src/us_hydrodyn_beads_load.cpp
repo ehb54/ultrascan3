@@ -31,8 +31,55 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    vector < QString > model_names;
    model_names.push_back( "1" );
 
+   bool         read_vdw                       = false;
+   double       read_vdw_theo_waters           = -1;
+   int          read_vdw_count_exposed         = -1;
+   double       read_vdw_theo_waters_exposed   = -1;
+   float        read_asa_hydrate_probe_radius  = -1;
+   float        read_asa_hydrate_threshold     = -1;
+
    if ( ftype == "bead_model" )
    {
+      // check for vdw data
+      {
+         QStringList qsl;
+         qDebug() << "check for vdw data";
+         US_File_Util ufu;
+         
+         if ( ufu.read( filename, qsl ) && qsl.filter( "vdW model parameters:" ).size() ) {
+            QStringList qsl_check = qsl.filter( QRegularExpression( "^  (Hydrate probe radius|Hydrate threshold|Theoretical waters|Exposed residues|Theoretical waters exposed).*:" ) );
+            if ( qsl_check.size() == 5 ) {
+               double res[qsl_check.size()];
+               for ( int i = 0; i < (int) qsl_check.size(); ++i ) {
+                  res[i] = qsl_check[i].replace( QRegularExpression( "^.*: " ), "" ).toDouble();
+               }
+               read_vdw_theo_waters           = res[0];
+               read_vdw_count_exposed         = (int)res[1];
+               read_vdw_theo_waters_exposed   = res[2];
+               read_asa_hydrate_probe_radius  = (float)res[3];
+               read_asa_hydrate_threshold     = (float)res[4];
+               read_vdw                       = true;
+
+               QTextStream( stdout )
+                  << "vdw data found in bead model\n"
+                  << "-----------\n"
+                  << "read_vdw_theo_waters : " << read_vdw_theo_waters << "\n"
+                  << "read_vdw_count_exposed : " << read_vdw_count_exposed << "\n"
+                  << "read_vdw_theo_waters_exposed : " << read_vdw_theo_waters_exposed << "\n"
+                  << "read_asa_hydrate_probe_radius : " << read_asa_hydrate_probe_radius << "\n"
+                  << "read_asa_hydrate_threshold : " << read_asa_hydrate_threshold << "\n"
+                  << "-----------\n"
+                  ;
+                  
+            } else {
+               qDebug() << "vdw bead model, but missing data\n";
+            } 
+         } else {
+            qDebug() << "not a vdw bead model with generating data\n";
+         }
+      }
+
+
       if ( f.open( QIODevice::ReadOnly ) )
       {
          bool so_ovlp = QFileInfo( f ).completeBaseName().contains( "so_ovlp" );
@@ -169,6 +216,16 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
             bead_model.push_back(tmp_atom);
          }
+         if ( read_vdw && bead_model.size() ) {
+            bead_model[0].is_vdw                   = "vdw";
+            bead_model[0].vdw_theo_waters          = read_vdw_theo_waters;
+            bead_model[0].vdw_count_exposed        = read_vdw_count_exposed;
+            bead_model[0].vdw_theo_waters_exposed  = read_vdw_theo_waters_exposed;
+            bead_model[0].asa_hydrate_probe_radius = read_asa_hydrate_probe_radius;
+            bead_model[0].asa_hydrate_threshold    = read_asa_hydrate_threshold;
+            qDebug() << "loaded vdw parameters";
+         }
+
          QFont save_font = editor->currentFont();
          QFont new_font = QFont("Courier");
          new_font.setStretch(75);

@@ -1023,6 +1023,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       hydro_results grpy_results;
       hydro_results grpy_results2;
+      bool          grpy_vdw;
 
       QProcess *hullrad;
       void hullrad_process_next();
@@ -1075,6 +1076,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void gui_script_run();
       
    public:
+      void save_params_force_results_name( save_info & save );
+
       bool          cli_progress;
       mQProgressBar *progress;
       mQProgressBar *mprogress;

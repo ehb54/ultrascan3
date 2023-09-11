@@ -1868,6 +1868,15 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                   .arg( summary_totals.count_exposed, -7 )
                   .arg( summary_totals.theo_waters_exposed, 0, 'f', 0 )
                   );
+
+      if ( bead_model.size() ) {
+         bead_model[0].is_vdw                   = "vdw";
+         bead_model[0].vdw_theo_waters          = QString( "%1" ).arg( summary_totals.theo_waters, 0, 'f', 0 ).toDouble();
+         bead_model[0].vdw_count_exposed        = summary_totals.count_exposed;
+         bead_model[0].vdw_theo_waters_exposed  = QString( "%1" ).arg( summary_totals.theo_waters_exposed, 0, 'f', 0 ).toDouble();
+         bead_model[0].asa_hydrate_probe_radius = asa.hydrate_probe_radius;
+         bead_model[0].asa_hydrate_threshold    = asa.hydrate_threshold;
+      }
    }
 
    if ( WAT_Tf_used ) {
@@ -1900,6 +1909,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
    
    // qDebug() << "US_Hydrodyn::create_vdw_beads() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
+
 
    bead_models[ current_model ] = bead_model;
    somo_processed[ current_model ] = 1;
