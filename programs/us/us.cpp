@@ -315,6 +315,12 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SOMO,   tr( "S&OMO Bead Modeling"                 ), simulation );
   addMenu(  P_SOMOCONFIG,   tr( "S&OMO Configuration"           ), simulation );
 
+  QMenu* gmp = new QMenu( tr( "&GMP" ),  this );
+  addMenu(  P_GMPACQ,   tr( "&Data Acquisition Routine" ), gmp );
+  addMenu(  P_PROTOCOL, tr( "&Protocol Development" ),     gmp );
+  addMenu(  P_ESIGN,    tr( "&e-Signature Assignment" ),   gmp );
+  addMenu(  P_AUDIT,    tr( "&Audit Trail" ),              gmp );
+
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
   addMenu(  P_RMSD         , tr( "&Query Model RMSDs" ), database );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
@@ -353,6 +359,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( multiwave   );
   menuBar()->addMenu( simulation  );
+  menuBar()->addMenu( gmp         );
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 
