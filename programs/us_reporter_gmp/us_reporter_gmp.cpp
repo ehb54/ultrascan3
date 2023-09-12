@@ -5569,9 +5569,11 @@ int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filenam
 void US_ReporterGMP::assemble_user_inputs_html( void )
 {
   html_assembled += "<p class=\"pagebreak \">\n";
-  html_assembled += "<h2 align=left>User Interactions During Live Update, Data Import, Editing, and Analysis</h2>";
+  html_assembled += "<h2 align=left>User Interactions:\n GMP Run Initiation, Live Update, Data Import, Editing, and Analysis</h2>";
 
   //Maps && timestamps from DB
+  //Create GMP Run
+  QString createdGMPrunJson, createdGMPrunts;
   //LIVE_UPDATE
   QMap < QString, QString > operation_types_live_update;
   QMap < QString, QString > operation_types_live_update_ts;
@@ -5606,12 +5608,66 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
 			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
 			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
-			      analysisCancelJson); 
+			      analysisCancelJson, createdGMPrunJson, createdGMPrunts ); 
   /////////////////////////////
 
-  QMap < QString, QString >::iterator im;
+  //1. GMP run creation
+  html_assembled += tr("<hr>");
+  html_assembled += tr( "<h3 align=left>GMP Run Initiation (1. EXPERIMENT)</h3>" );
+  QMap< QString, QMap < QString, QString > > status_map_c = parse_autoflowStatus_json( createdGMPrunJson, "" );
+
+  //html_assembled += tr("<br>");
+  html_assembled += tr(
+		           "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Initiated by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Person" ][ "ID"] )                       //1
+    .arg( status_map_c[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map_c[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map_c[ "Person" ][ "email" ] )                   //4
+    .arg( status_map_c[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Time of GMP Run Initiation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Initiated at:     %1 </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( createdGMPrunts )     //1
+    ;
+  
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of GMP Run Initiation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    ;
+  html_assembled += tr("<hr>");
+  
 
   //2. LIVE_UPDATE
+  QMap < QString, QString >::iterator im;
   operation_types_live_update[ "STOP" ] = stopOptimaJson;
   operation_types_live_update[ "SKIP" ] = skipOptimaJson;
 
@@ -5619,7 +5675,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   operation_types_live_update_ts[ "SKIP" ] = skipOptimats;
 
   if ( !stopOptimaJson.isEmpty() || !skipOptimaJson.isEmpty() )
-    html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE stage)</h3>" );
+    html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE)</h3>" );
   
   for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
     {
@@ -5701,7 +5757,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( t_comment )                                      //1
 	;
     }
-  html_assembled += tr("<hr>");
+  if ( !stopOptimaJson.isEmpty() || !skipOptimaJson.isEmpty() )
+    html_assembled += tr("<hr>");
 
   
   //3. IMPORT
@@ -5718,7 +5775,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	   <<  dropped_triples_RI
 	   <<  dropped_triples_IP;
   
-  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT stage)</h3>" );
+  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT)</h3>" );
   
   for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
     {
@@ -5741,7 +5798,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	  dtype_opt_dropped_triples = dropped_triples_IP;
 	}
       
-      html_assembled += tr("<br>");
+      //html_assembled += tr("<br>");
 
       html_assembled += tr(
 			   "<table>"		   
@@ -5790,6 +5847,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( status_map[ "RefScan" ][ "type"] )     //1
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+	;
+      
 
       //Add list if dropped triples per optics system:
       if ( !dtype_opt_dropped_triples. isEmpty() )
@@ -5859,7 +5931,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   data_types_edit_ts [ "RI" ] = editRIts;
   data_types_edit_ts [ "IP" ] = editIPts;
 
-  html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING stage)</h3>" );
+  html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING)</h3>" );
   
   for ( im = data_types_edit.begin(); im != data_types_edit.end(); ++im )
     {
@@ -5875,7 +5947,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       if ( im.key() == "IP" )
 	dtype_opt =  "IP (Interf.)";
       
-      html_assembled += tr("<br>");
+      //html_assembled += tr("<br>");
 
       html_assembled += tr(
 			   "<table>"		   
@@ -5947,6 +6019,21 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( data_types_edit_ts[ im.key() ] )           //1
 	;
 
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+	;
+      
+      
     }
    
   html_assembled += tr("<hr>");
@@ -6023,6 +6110,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   
   if ( !analysisCancelJson. isEmpty() )
     {
+      qDebug() << "analysisCancelJson QMap NOT empty!";
+      
       QMap < QString, QString >::iterator cj;
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
@@ -6066,7 +6155,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     }
   else
     {
-      html_assembled += tr( "No CANCELLED jobs." );
+      html_assembled += tr( "<tr><td> No CANCELLED jobs. </td></tr>" );
     }
   
   html_assembled += tr( "</table>" );
@@ -6212,7 +6301,7 @@ bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QSt
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
 						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson,
 						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats,
-						 QString& analysisCancelJson)
+						 QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts  )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -6228,6 +6317,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   skipOptimaJson. clear();
   skipOptimats  . clear();
   analysisCancelJson. clear();
+  createdGMPrunJson .clear();
+  createdGMPrunts   .clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -6267,6 +6358,9 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  skipOptimats   = db.value( 12 ).toString();
 
 	  analysisCancelJson = db.value( 13 ).toString();
+
+	  createdGMPrunJson = db.value( 14 ).toString();
+	  createdGMPrunts   = db.value( 15 ).toString();
 	}
     }
 
@@ -6314,7 +6408,7 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
       
       qDebug() << "statusJson key, value: " << key << value;
       
-      if ( key == "Person" )  //live_update || import || edit
+      if ( key == "Person" )  //GMP init || live_update || import || edit
 	{	  
 	  QJsonArray json_array = value.toArray();
 	  QMap< QString, QString > person_map;
@@ -6338,6 +6432,13 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	  status_map[ key ][ "type" ] = value.toString();
 	}
 
+      //Comment when SAVED:
+      if ( key == "Comment when SAVED" )    //import || edit
+	{
+	  status_map[ key ][ "comment_when_saved" ] = value.toString();
+	}
+      
+      
       if ( key == "Dropped" )   // import: Dropped triples/channels/select channels operaitons 
 	{	  
 	  QJsonArray json_array = value.toArray();
@@ -6381,7 +6482,7 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	{
 	  status_map[ key ][ "type" ] = value.toString();
 	}
-      if ( key == "Comment" )           //Live Update's remote operations [SKIP | STOP]
+      if ( key == "Comment" )           //GMP init || Live Update's remote operations [SKIP | STOP]
 	{
 	  status_map[ key ][ "comment" ] = value.toString();
 	}

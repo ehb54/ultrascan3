@@ -299,7 +299,8 @@ class US_ReporterGMP : public US_Widgets
   
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&,
 					   QString&,  QString&,  QString&,  QString&, QString&,
-					   QString&,  QString&,  QString&,  QString&, QString& );
+					   QString&,  QString&,  QString&,  QString&, QString&,
+					   QString&,  QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
          QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
 
