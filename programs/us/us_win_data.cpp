@@ -35,6 +35,9 @@ namespace US_WinData
     P_SASSOC,       P_MODEL1,       P_MODEL2,
     P_SOMO,         P_SOMOCONFIG,
 
+    P_GMPACQ,       P_PROTOCOL,     P_ESIGN,    // GMP Menu
+    P_AUDIT,
+
     P_RMSD,         P_INVESTIGATOR, P_BUFFER,   // Database Menu
     P_VBAR,         P_MODEL,        P_MANAGEDATA,
     P_MANAGESOLN,   P_MANAGEPROJ,   P_MANAGEROTOR,
@@ -331,7 +334,27 @@ namespace US_WinData
       QObject::tr( "Loading SOMO Bead Modeling Configuration" ),
       QObject::tr( "SOMO Path Configuration" )
     },
-    
+
+    { P_GMPACQ, 0, 0, "us_comproject",
+      QObject::tr( "Loading Data Acquisition Program" ),
+      QObject::tr( "Data Acquisition Routine" )
+    },
+
+    { P_PROTOCOL, 0, 0, "us_protocoldev",
+      QObject::tr( "Loading Protocol Development Program" ),
+      QObject::tr( "Protocol Development System" )
+    },
+
+    { P_ESIGN, 0, 0, "us_esigner_gmp",
+      QObject::tr( "Loading e-Signature Program" ),
+      QObject::tr( "e-Signature Assignment" )
+    },
+
+    { P_AUDIT, 0, 0, "",
+      QObject::tr( "Loading Audit Trail Program" ),
+      QObject::tr( "Audit Trail" )
+    },
+
     { P_RMSD,  1, 0, "us_query_rmsd",
       QObject::tr( "Loading Query Model RMSDs" ),
       QObject::tr( "Query Model RMSDs Program" )
