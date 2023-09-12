@@ -515,6 +515,6 @@ void US_GuiSettings::set_gui_env(void) {
    QString autoScaling = settings.value("HDPIAS", "0").toString();
    qputenv("QT_ENABLE_HIGHDPI_SCALING",highDpiscaling.toLatin1());
    QApplication::setHighDpiScaleFactorRoundingPolicy(test);
-   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, (autoScaling == "0"));
-   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, (autoScaling != "0"));
+   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, (autoScaling == "1"));
+   QApplication::setAttribute(Qt::AA_DisableHighDpiScaling, (autoScaling == "2"));
 }
