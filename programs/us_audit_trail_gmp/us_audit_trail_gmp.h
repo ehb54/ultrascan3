@@ -47,6 +47,7 @@ class US_auditTrailGMP : public US_Widgets
        QList< QStringList >  gmpReportsDBdata;
        bool       isEsignRecord;
        QString    gmpRunID_eSign;
+       QString    AProfileGUID;
        QMap<QString, QString> eSign_details_auto;			
 				
      public slots:
@@ -58,14 +59,18 @@ class US_auditTrailGMP : public US_Widgets
        void initPanel_auto( QMap < QString, QString > &  );
        void reset_panel ( void );
        QGroupBox * createGroup_eSign( QString );
-       QGroupBox * createGroup_stages( QString, QString );
+       QVector<QGroupBox *> createGroup_stages( QString, QString );
        void display_reviewers_auto( int&, QMap< QString, QString>, QString, QGridLayout*);
+       QMap < QString, QString > read_autoflow_record( int );
        QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&,
 					 QString&,  QString&,  QString&,  QString&, QString&,
 					 QString&,  QString&,  QString&,  QString&, QString&,
 					 QString&,  QString& );
        QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
+       void read_reportLists_from_aprofile( QStringList &, QStringList & );
+       bool readReportLists( QXmlStreamReader&, QMap< QString, QString> &, QMap< QString, QString> & );
+       QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
   
      signals:  
   

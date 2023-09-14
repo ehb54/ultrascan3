@@ -110,14 +110,18 @@ void US_auditTrailGMP::loadGMPReport( void )
     gmpReport_runname_selected = gmpReport_runname_selected_c;
 
 
-  QMap< QString, QString> p_details;
+  QMap< QString, QString> p_details = read_autoflow_record( gmpRunID_eSign.toInt() );
   p_details[ "autoflowID" ] = gmpRunID_eSign;
-  QStringList qry;
-  qry << "get_autoflowStatus_id" << gmpRunID_eSign;
-  qDebug() << "In load(), qry -- " << qry;
-  autoflowStatusID = db.functionQuery( qry );
+  // QStringList qry;
+  // qry << "get_autoflowStatus_id" << gmpRunID_eSign;
+  // qDebug() << "In load(), qry -- " << qry;
+  // autoflowStatusID = db.functionQuery( qry );
 
+  autoflowStatusID = p_details[ "statusID" ].toInt();
   qDebug() << "autoflowStatusID: " << autoflowStatusID;
+
+  AProfileGUID = p_details[ "aprofileguid" ];
+  qDebug() << "AProfileGUID: " << AProfileGUID;
   
   p_details[ "gmp_runname" ] = gmpReport_runname_selected_c;
   initPanel_auto( p_details );
@@ -356,16 +360,17 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
       uintsItem -> setFont(0, sfont);
       uInteractionsTree  -> addTopLevelItem( uintsItem );
 
-      QGroupBox *groupBox_stages = createGroup_stages( "", uintsItemName );
-      
-      QTreeWidgetItem* Item_childItem = new QTreeWidgetItem();
-      uintsItem -> addChild( Item_childItem );
-      uInteractionsTree  -> setItemWidget( Item_childItem, 1, groupBox_stages );
+      QVector< QGroupBox *> groupBox_stages = createGroup_stages( "", uintsItemName );
+
+      for ( int j=0; j<groupBox_stages.size(); ++j )
+	{
+	  QTreeWidgetItem* Item_childItem = new QTreeWidgetItem();
+	  uintsItem -> addChild( Item_childItem );
+	  uInteractionsTree  -> setItemWidget( Item_childItem, 1, groupBox_stages[j] );
+	}
     }
   uInteractionsTree->header()->resizeSection(0, max_width );
   
-  
-
   //assemble
   topLayout_auto  -> addLayout( loadedRunGrid );
   topLayout_auto  -> addLayout( eSignersGrid );
@@ -433,19 +438,10 @@ QGroupBox * US_auditTrailGMP::createGroup_eSign( QString name )
 
 
 //create groupBox: autoflow stages
-QGroupBox * US_auditTrailGMP::createGroup_stages( QString name, QString s_name )
+QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QString s_name )
 {
-  QGroupBox *groupBox = new QGroupBox ( name );
-
-  QPalette p = groupBox->palette();
-  p.setColor(QPalette::Dark, Qt::white);
-  groupBox->setPalette(p);
-
-  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
-
+  QVector< QGroupBox * > groupBoxes;
   
-  groupBox->setFlat(true);
-
   //GUI
   QHBoxLayout* genL   = new QHBoxLayout();
   genL->setSpacing        ( 2 );
@@ -510,7 +506,7 @@ QGroupBox * US_auditTrailGMP::createGroup_stages( QString name, QString s_name )
       genL11 -> addStretch();
 
       //TimeStamp
-      QGridLayout* genL2 = new QGridLayout();
+      QGridLayout* genL2  = new QGridLayout();
       QVBoxLayout* genL21 = new QVBoxLayout();
       
       QLabel* lb_time         = us_label( tr("Initiation Time:") );
@@ -528,11 +524,11 @@ QGroupBox * US_auditTrailGMP::createGroup_stages( QString name, QString s_name )
       
       // int ihgt        = lb_time1->height();
       // QSpacerItem* spacer2 = new QSpacerItem( 20, 3*ihgt, QSizePolicy::Expanding);
-      genL2->setRowStretch( 1, 1 );
+      // genL2->setRowStretch( 1, 1 );
       // genL2->addItem( spacer2,  row++,  0, 1, 6 );
 
       //Comment
-      QGridLayout* genL3 = new QGridLayout();
+      QGridLayout* genL3  = new QGridLayout();
       QVBoxLayout* genL31 = new QVBoxLayout();
       
       QLabel* lb_comm         = us_label( tr("Comment at Initiation:") );
@@ -552,16 +548,423 @@ QGroupBox * US_auditTrailGMP::createGroup_stages( QString name, QString s_name )
       genL->addLayout( genL11);
       genL->addLayout( genL21);
       genL->addLayout( genL31);
+
+      //Set GroupBox
+      QGroupBox *groupBox = new QGroupBox ( name );
+      QPalette p = groupBox->palette();
+      p.setColor(QPalette::Dark, Qt::white);
+      groupBox->setPalette(p);
+      
+      groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+      
+      groupBox->setFlat(true);
+      
+      groupBox->setLayout(genL);
+      groupBoxes. push_back( groupBox );
+    }
+  
+  else if ( s_name == "IMPORT" )
+    {
+      data_types_import [ "RI" ] = importRIJson;
+      data_types_import [ "IP" ] = importIPJson;
+      
+      data_types_import_ts [ "RI" ] = importRIts;
+      data_types_import_ts [ "IP" ] = importIPts;
+      
+      //Check for dropped triples for each Optical System:
+      QStringList dropped_triples_RI, dropped_triples_IP;
+      read_reportLists_from_aprofile( dropped_triples_RI, dropped_triples_IP );
+      qDebug() << "List of dropped triples (all OSs): "
+	       <<  dropped_triples_RI
+	       <<  dropped_triples_IP;
+
+      QMap < QString, QString >::iterator im;
+
+      for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
+	{
+	  QString json_str = im.value();
+	  
+	  if ( json_str.isEmpty() )
+	    continue;
+	  
+	  QString      dtype_opt;
+	  QStringList  dtype_opt_dropped_triples;
+	  
+	  if ( im.key() == "RI" )
+	    {
+	      dtype_opt = "RI (UV/vis.)";
+	      dtype_opt_dropped_triples = dropped_triples_RI;
+	    }
+	  if ( im.key() == "IP" )
+	    {
+	      dtype_opt =  "IP (Interf.)";
+	      dtype_opt_dropped_triples = dropped_triples_IP;
+	    }
+
+	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	  //Person
+	  QLabel* lb_init         = us_label( tr("Performed by:") );
+	  QLabel* lb_ID           = us_label( tr("User ID:") );
+	  QLabel* lb_name         = us_label( tr("Name:") );
+	  QLabel* lb_email        = us_label( tr("E-mail:") );
+	  QLabel* lb_level        = us_label( tr("User Level:") );
+	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
+	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
+	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
+	  QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+	  
+	  QGridLayout* genL1  = new QGridLayout();
+	  QVBoxLayout* genL11 = new QVBoxLayout();
+	  
+	  row=0;
+	  genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+	  genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+	  genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+	  genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
+	  genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
+	  genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
+	  
+	  genL11 -> addLayout( genL1);
+	  genL11 -> addStretch();
+
+	  //Ref. Scan | TimeStamp
+	  QGridLayout* genL2  = new QGridLayout();
+	  QVBoxLayout* genL21 = new QVBoxLayout();
+	  
+	  QLabel* lb_time_ref         = us_label( tr("Reference Scan, Data Saving:") );
+	  lb_time_ref->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  QLabel* lb_time_ref1        = us_label( tr("Ref. Scan Method:") );
+	  QLineEdit* le_time_ref1     = us_lineedit( status_map[ "RefScan" ][ "type"], 0, true );
+	  QLabel* lb_time_ref2        = us_label( tr("Data Saved on:") );
+	  QLineEdit* le_time_ref2     = us_lineedit( data_types_import_ts[ im.key() ], 0, true );
+	  
+	  row=0;
+	  genL2 -> addWidget( lb_time_ref,      row++,   0,  1,  6  );
+	  genL2 -> addWidget( lb_time_ref1,     row,     1,  1,  2  );
+	  genL2 -> addWidget( le_time_ref1,     row++,   3,  1,  3  );
+	  genL2 -> addWidget( lb_time_ref2,     row,     1,  1,  2  );
+	  genL2 -> addWidget( le_time_ref2,     row++,   3,  1,  3  );
+	  
+	  genL21 -> addLayout( genL2);
+	  genL21 -> addStretch();
+
+	  //Comment
+	  QGridLayout* genL3  = new QGridLayout();
+	  QVBoxLayout* genL31 = new QVBoxLayout();
+	  
+	  QLabel* lb_comm         = us_label( tr("Comment when Saved:") );
+	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  QLabel* lb_comm1        = us_label( tr("Comment:") );
+	  QLineEdit* le_comm1     = us_lineedit( status_map[ "Comment when SAVED" ][ "comment_when_saved"], 0, true );
+	  
+	  row=0;
+	  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+	  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+	  genL3 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+	  
+	  genL31 -> addLayout( genL3);
+	  genL31 -> addStretch();
+
+	  //Dropped [if any]
+	  QGridLayout* genL4  = NULL;
+	  QVBoxLayout* genL41 = NULL;
+	  if ( !dtype_opt_dropped_triples. isEmpty() )
+	    {
+	      genL4  = new QGridLayout();
+	      genL41 = new QVBoxLayout();
+
+	      QLabel* lb_drop         = us_label( tr("Dropped Triples:") );
+	      lb_drop->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      row=0;
+	      genL4 -> addWidget( lb_drop,      row++,   0,  1,  6  );
+	      
+	      for ( int i=0; i < dtype_opt_dropped_triples.size(); ++i )
+		{
+		  QLabel* lb_drop1        = us_label( tr("Triple:") );
+		  QLineEdit* le_drop1     = us_lineedit( dtype_opt_dropped_triples[ i ], 0, true );
+	      
+		  genL4 -> addWidget( lb_drop1,     row,     1,  1,  2  );
+		  genL4 -> addWidget( le_drop1,     row++,   3,  1,  3  );
+		}
+	      
+	      genL41 -> addLayout( genL4);
+	      genL41 -> addStretch();
+	    }
+
+	  //Comments for Dropped [if any]
+	  QGridLayout* genL5  = NULL;
+	  QVBoxLayout* genL51 = NULL;
+	  if ( status_map. contains("Dropped") )
+	    {
+	      genL5  = new QGridLayout();
+	      genL51 = new QVBoxLayout();
+
+	      QLabel* lb_drop_c         = us_label( tr("Comments [Dropped Triples]:") );
+	      lb_drop_c->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      row=0;
+	      genL5 -> addWidget( lb_drop_c,      row++,   0,  1,  6  );
+	      
+	      QMap < QString, QString >::iterator dr;
+	      for ( dr = status_map[ "Dropped" ].begin(); dr != status_map[ "Dropped" ].end(); ++dr )
+		{
+		  QLabel* lb_drop_c1        = us_label( tr("Dropped:") );
+		  QLineEdit* le_drop_c1     = us_lineedit( dr.key(), 0, true );
+		  QLabel* lb_drop_c2        = us_label( tr("Comment:") );
+		  QLineEdit* le_drop_c2     = us_lineedit( dr.value(), 0, true );
+	      
+		  genL5 -> addWidget( lb_drop_c1,     row,     1,  1,  2  );
+		  genL5 -> addWidget( le_drop_c1,     row++,   3,  1,  3  );
+		  genL5 -> addWidget( lb_drop_c2,     row,     1,  1,  2  );
+		  genL5 -> addWidget( le_drop_c2,     row++,   3,  1,  3  );
+		  
+		}
+	      
+	      genL51 -> addLayout( genL5);
+	      genL51 -> addStretch();
+	    }
+	  
+	  //assemble
+	  genL->addLayout( genL11);
+	  genL->addLayout( genL21);
+	  genL->addLayout( genL31);
+	  if ( genL41 != NULL )
+	    genL->addLayout( genL41);
+	  if ( genL51 != NULL )
+	    genL->addLayout( genL51);
+	  
+	  //Set GroupBox
+	  QString gBox_name = "Data Type, Optics: " + dtype_opt;
+	  QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	  QPalette p = groupBox->palette();
+	  p.setColor(QPalette::Dark, Qt::white);
+	  groupBox->setPalette(p);
+	  
+	  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	  
+	  groupBox->setFlat(true);
+	  
+	  groupBox->setLayout(genL);
+	  groupBoxes. push_back( groupBox );
+	  
+	}
     }
   else
     {
       QLabel* lb_dev         = us_label( tr("Under Development:") );
       genL->addWidget( lb_dev );
+
+      //Set GroupBox
+      QGroupBox *groupBox = new QGroupBox ( name );
+      QPalette p = groupBox->palette();
+      p.setColor(QPalette::Dark, Qt::white);
+      groupBox->setPalette(p);
+      
+      groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+      
+      groupBox->setFlat(true);
+      groupBox->setLayout(genL);
+      groupBoxes. push_back( groupBox );
     }
   
-  groupBox->setLayout(genL);
+  return groupBoxes;
+}
 
-  return groupBox;
+// Query autoflow for # records
+QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> protocol_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return protocol_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_history_record"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   protocol_details[ "protocolName" ]   = db->value( 0 ).toString();
+	   protocol_details[ "CellChNumber" ]   = db->value( 1 ).toString();
+	   protocol_details[ "TripleNumber" ]   = db->value( 2 ).toString();
+	   protocol_details[ "duration" ]       = db->value( 3 ).toString();
+	   protocol_details[ "experimentName" ] = db->value( 4 ).toString();
+	   protocol_details[ "experimentId" ]   = db->value( 5 ).toString();
+	   protocol_details[ "runID" ]          = db->value( 6 ).toString();
+	   protocol_details[ "status" ]         = db->value( 7 ).toString();
+           protocol_details[ "dataPath" ]       = db->value( 8 ).toString();   
+	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
+	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
+	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
+
+	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
+	   protocol_details[ "label" ]          = db->value( 15 ).toString();
+	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
+
+	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
+	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
+	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
+	   protocol_details[ "statusID" ]       = db->value( 21 ).toString();
+	   protocol_details[ "failedID" ]       = db->value( 22 ).toString();
+	   protocol_details[ "operatorID" ]     = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]      = db->value( 24 ).toString();
+	   protocol_details[ "gmpReviewID" ]    = db->value( 25 ).toString();	   
+	 }
+     }
+
+   return protocol_details;
+}
+
+//Read AProfile's reportIDs per channel:
+void US_auditTrailGMP::read_reportLists_from_aprofile( QStringList & dropped_triples_RI, QStringList & dropped_triples_IP )
+{
+  dropped_triples_RI. clear();
+  dropped_triples_IP. clear();
+  QMap< QString, QString> channame_to_reportIDs_RI;
+  QMap< QString, QString> channame_to_reportIDs_IP;
+  QString aprofile_xml;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  qDebug() << "AProfGUID: " << AProfileGUID;
+    
+  QStringList qry;
+  qry << "get_aprofile_info" << AProfileGUID;
+  db.query( qry );
+  
+  while ( db.next() )
+    {
+      aprofile_xml         = db.value( 2 ).toString();
+    }
+
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readReportLists( xmli, channame_to_reportIDs_RI, channame_to_reportIDs_IP );
+    }
+
+  //Now, construct list of dropped triples per optical system used:
+  dropped_triples_RI = buildDroppedTriplesList( &db, channame_to_reportIDs_RI );
+  dropped_triples_IP = buildDroppedTriplesList( &db, channame_to_reportIDs_IP );
+}
+
+//Build list of dropped triples out of channame_to_reportIDs QMap;
+QStringList US_auditTrailGMP::buildDroppedTriplesList ( US_DB2* dbP, QMap <QString, QString> channame_to_reportIDs )
+{
+  QStringList dropped_triples_list;
+  
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channame_to_reportIDs.begin(); chan_rep != channame_to_reportIDs.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  QString rID = reportIDs_list[i];
+	  QString Wavelength;
+	  QString TripleDropped;
+	  
+	  QStringList qry;
+	  qry << "get_report_info_by_id" << rID;
+	  dbP->query( qry );
+	  
+	  if ( dbP->lastErrno() == US_DB2::OK )      
+	    {
+	      while ( dbP->next() )
+		{
+		  Wavelength    = dbP->value( 5 ).toString();
+		  TripleDropped = dbP->value( 9 ).toString();
+		}
+	      
+	      if ( TripleDropped == "YES" )
+		{
+		  QString dropped_triple_name = chan_key + "." + Wavelength;
+		  dropped_triples_list << dropped_triple_name;
+		}
+	    }
+	}
+    }
+	  
+  return dropped_triples_list;
+}
+
+//Read AProfile's reportIDs per channel:
+bool US_auditTrailGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QString> & channame_to_reportIDs_RI,
+					QMap< QString, QString> & channame_to_reportIDs_IP )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "channel_parms" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      
+	      if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+		{
+		  QString channel_name = attr.value( "channel" ).toString();
+		  QString channel_desc = attr.value( "chandesc" ).toString();
+		  
+		  QString opsys = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		  
+		  if ( opsys.contains("UV/vis")  ) //RI
+		    {
+		      //Read what reportID corresponds to channel:
+		      if ( attr.hasAttribute("report_id") )
+			channame_to_reportIDs_RI[ channel_name ] = attr.value( "report_id" ).toString();
+		    }
+		  if ( opsys.contains("Interf") )  //IP
+		    {
+		      //Read what reportID corresponds to channel:
+		      if ( attr.hasAttribute("report_id") )
+			channame_to_reportIDs_IP[ channel_name ] = attr.value( "report_id" ).toString();
+		    }
+		}
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+      
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+	break;
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
 //read autoflowStatus, populate internals
