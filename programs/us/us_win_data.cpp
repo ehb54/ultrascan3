@@ -350,7 +350,7 @@ namespace US_WinData
       QObject::tr( "e-Signature Assignment" )
     },
 
-    { P_AUDIT, 0, 0, "",
+    { P_AUDIT, 0, 0, "us_audit_trail_gmp",
       QObject::tr( "Loading Audit Trail Program" ),
       QObject::tr( "Audit Trail" )
     },
