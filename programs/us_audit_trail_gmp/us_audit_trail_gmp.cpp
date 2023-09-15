@@ -472,6 +472,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 			      analysisCancelJson, createdGMPrunJson, createdGMPrunts ); 
 
   QMap< QString, QMap < QString, QString > > status_map;
+  QMap < QString, QString >::iterator im;
   
   if ( s_name == "GMP Run Initiation" )
     {
@@ -563,6 +564,119 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       groupBoxes. push_back( groupBox );
     }
   
+  else if ( s_name == "LIVE UPDATE" )
+    {
+      operation_types_live_update[ "STOP" ] = stopOptimaJson;
+      operation_types_live_update[ "SKIP" ] = skipOptimaJson;
+      
+      operation_types_live_update_ts[ "STOP" ] = stopOptimats;
+      operation_types_live_update_ts[ "SKIP" ] = skipOptimats;
+
+      for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
+	{
+	  QString json_str = im.value();
+	  
+	  if ( json_str.isEmpty() )
+	    continue;
+	  
+	  QString      dtype_opt;
+	  
+	  if ( im.key() == "STOP" )
+	    dtype_opt    = "Stopping Optima";
+	  
+	  if ( im.key() == "SKIP" )
+	    dtype_opt =  "Skipping Stage";
+      
+	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	  //Person
+	  QLabel* lb_init         = us_label( tr("Performed by:") );
+	  QLabel* lb_ID           = us_label( tr("User ID:") );
+	  QLabel* lb_name         = us_label( tr("Name:") );
+	  QLabel* lb_email        = us_label( tr("E-mail:") );
+	  QLabel* lb_level        = us_label( tr("User Level:") );
+	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
+	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
+	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
+	  QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+	  
+	  QGridLayout* genL1  = new QGridLayout();
+	  QVBoxLayout* genL11 = new QVBoxLayout();
+	  
+	  row=0;
+	  genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+	  genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+	  genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+	  genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
+	  genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
+	  genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
+	  
+	  genL11 -> addLayout( genL1);
+	  genL11 -> addStretch();
+
+	  //Operation Type | TimeStamp
+	  QGridLayout* genL2  = new QGridLayout();
+	  QVBoxLayout* genL21 = new QVBoxLayout();
+	  
+	  QLabel* lb_time_o         = us_label( tr("Operation, TimeStamp:") );
+	  lb_time_o->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  QLabel* lb_time_o1        = us_label( tr("Type:") );
+	  QLineEdit* le_time_o1     = us_lineedit( status_map[ "Remote Operation" ][ "type"], 0, true );
+	  QLabel* lb_time_o2        = us_label( tr("Performed on:") );
+	  QLineEdit* le_time_o2     = us_lineedit( operation_types_live_update_ts[ im.key() ], 0, true );
+	  
+	  row=0;
+	  genL2 -> addWidget( lb_time_o,      row++,   0,  1,  6  );
+	  genL2 -> addWidget( lb_time_o1,     row,     1,  1,  2  );
+	  genL2 -> addWidget( le_time_o1,     row++,   3,  1,  3  );
+	  genL2 -> addWidget( lb_time_o2,     row,     1,  1,  2  );
+	  genL2 -> addWidget( le_time_o2,     row++,   3,  1,  3  );
+	  
+	  genL21 -> addLayout( genL2);
+	  genL21 -> addStretch();
+
+	  //Comment
+	  QGridLayout* genL3  = new QGridLayout();
+	  QVBoxLayout* genL31 = new QVBoxLayout();
+	  
+	  QLabel* lb_comm         = us_label( tr("Reason for Operation:") );
+	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  QLabel* lb_comm1        = us_label( tr("Comment:") );
+	  QString t_comment       = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
+	  QLineEdit* le_comm1     = us_lineedit( t_comment, 0, true );
+	  
+	  row=0;
+	  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+	  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+	  genL3 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+	  
+	  genL31 -> addLayout( genL3);
+	  genL31 -> addStretch();
+
+	  //assemble
+	  genL->addLayout( genL11);
+	  genL->addLayout( genL21);
+	  genL->addLayout( genL31);
+		  
+	  //Set GroupBox
+	  QString gBox_name = "Remote Operation: " + dtype_opt;
+	  QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	  QPalette p = groupBox->palette();
+	  p.setColor(QPalette::Dark, Qt::white);
+	  groupBox->setPalette(p);
+	  
+	  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	  
+	  groupBox->setFlat(true);
+	  
+	  groupBox->setLayout(genL);
+	  groupBoxes. push_back( groupBox );
+	}
+    }
+  
   else if ( s_name == "IMPORT" )
     {
       data_types_import [ "RI" ] = importRIJson;
@@ -577,8 +691,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       qDebug() << "List of dropped triples (all OSs): "
 	       <<  dropped_triples_RI
 	       <<  dropped_triples_IP;
-
-      QMap < QString, QString >::iterator im;
 
       for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
 	{
@@ -752,6 +864,145 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  
 	}
     }
+
+  else if ( s_name == "EDITING" )
+    {
+      data_types_edit [ "RI" ] = editRIJson;
+      data_types_edit [ "IP" ] = editIPJson;
+      
+      data_types_edit_ts [ "RI" ] = editRIts;
+      data_types_edit_ts [ "IP" ] = editIPts;
+      
+      for ( im = data_types_edit.begin(); im != data_types_edit.end(); ++im )
+	{
+	  QString json_str = im.value();
+	  
+	  if ( json_str.isEmpty() )
+	    continue;
+	  
+	  QString dtype_opt;
+	  
+	  if ( im.key() == "RI" )
+	    dtype_opt = "RI (UV/vis.)";
+	  if ( im.key() == "IP" )
+	    dtype_opt =  "IP (Interf.)";
+
+	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	  //Person
+	  QLabel* lb_init         = us_label( tr("Performed by:") );
+	  QLabel* lb_ID           = us_label( tr("User ID:") );
+	  QLabel* lb_name         = us_label( tr("Name:") );
+	  QLabel* lb_email        = us_label( tr("E-mail:") );
+	  QLabel* lb_level        = us_label( tr("User Level:") );
+	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
+	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
+	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
+	  QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+	  
+	  QGridLayout* genL1  = new QGridLayout();
+	  QVBoxLayout* genL11 = new QVBoxLayout();
+	  
+	  row=0;
+	  genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+	  genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+	  genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+	  genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
+	  genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
+	  genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
+	  genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
+	  
+	  genL11 -> addLayout( genL1);
+	  genL11 -> addStretch();
+
+	  //Meniscus Position Determination
+	  QGridLayout* genL2  = new QGridLayout();
+	  QVBoxLayout* genL21 = new QVBoxLayout();
+	  
+	  QLabel* lb_men         = us_label( tr("Meniscus Position Determination:") );
+	  lb_men->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  row=0;
+	  genL2 -> addWidget( lb_men,      row++,   0,  1,  12  );
+
+	  QMap < QString, QString >::iterator mp;
+	  for ( mp = status_map[ "Meniscus" ].begin(); mp != status_map[ "Meniscus" ].end(); ++mp )
+	    {
+	      QLabel* lb_men1             = us_label( tr("Channel:") );
+	      QLineEdit* le_men1          = us_lineedit( mp.key(), 0, true );
+	      QLabel* lb_men2        = us_label( tr("Type:") );
+	      QLineEdit* le_men2     = us_lineedit( mp.value(), 0, true );
+	      
+	      genL2 -> addWidget( lb_men1,     row,     1,  1,  2  );
+	      genL2 -> addWidget( le_men1,     row,     3,  1,  3  );
+	      genL2 -> addWidget( lb_men2,     row,     6,  1,  2  );
+	      genL2 -> addWidget( le_men2,     row++,   8,  1,  3  );
+
+	    }
+	  
+	  genL21 -> addLayout( genL2);
+	  genL21 -> addStretch();
+
+
+	  //TimeStamp
+	  QGridLayout* genL3  = new QGridLayout();
+	  QVBoxLayout* genL31 = new QVBoxLayout();
+	  
+	  QLabel* lb_ts         = us_label( tr("Edit Profiles Saved on:") );
+	  lb_ts->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  QLabel* lb_ts1        = us_label( tr("TimeStamp:") );
+	  QLineEdit* le_ts1     = us_lineedit( data_types_edit_ts[ im.key() ], 0, true );
+	  
+	  row=0;
+	  genL3 -> addWidget( lb_ts,      row++,   0,  1,  6  );
+	  genL3 -> addWidget( lb_ts1,     row,     1,  1,  2  );
+	  genL3 -> addWidget( le_ts1,     row++,   3,  1,  3  );
+	  
+	  genL31 -> addLayout( genL3);
+	  genL31 -> addStretch();
+	  
+	  
+	  //Comment
+	  QGridLayout* genL4  = new QGridLayout();
+	  QVBoxLayout* genL41 = new QVBoxLayout();
+	  
+	  QLabel* lb_comm         = us_label( tr("Comment when Saved:") );
+	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  QLabel* lb_comm1        = us_label( tr("Comment:") );
+	  QLineEdit* le_comm1     = us_lineedit( status_map[ "Comment when SAVED" ][ "comment_when_saved"], 0, true );
+	  
+	  row=0;
+	  genL4 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+	  genL4 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+	  genL4 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+	  
+	  genL41 -> addLayout( genL4);
+	  genL41 -> addStretch();
+
+	  //assemble
+	  genL->addLayout( genL11);
+	  genL->addLayout( genL21);
+	  genL->addLayout( genL31);
+	  genL->addLayout( genL41);
+	  	  
+	  //Set GroupBox
+	  QString gBox_name = "Data Type, Optics: " + dtype_opt;
+	  QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	  QPalette p = groupBox->palette();
+	  p.setColor(QPalette::Dark, Qt::white);
+	  groupBox->setPalette(p);
+	  
+	  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	  
+	  groupBox->setFlat(true);
+	  
+	  groupBox->setLayout(genL);
+	  groupBoxes. push_back( groupBox );
+
+	}
+    }
+  
   else
     {
       QLabel* lb_dev         = us_label( tr("Under Development:") );
