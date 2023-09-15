@@ -35,9 +35,12 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
   userInteractions      = NULL;
   lowerButtons          = NULL;
 
+  p_2dsa_auto_fitmen = false;
+  p_2dsa_run_fitmen  = false;
+
   QLabel* bn_loadGMPReport = us_banner( tr( "Select GMP Report for Audit Trail:" ), 1 );
   QFontMetrics m (bn_loadGMPReport -> font()) ;
-  int RowHeight = m.lineSpacing() ;
+  RowHeight = m.lineSpacing() ;
   bn_loadGMPReport -> setFixedHeight  (1.5 * RowHeight);
   
   pb_loadreport_db  =  us_pushbutton( tr( "Load GMP Run" ) );
@@ -483,7 +486,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       QLabel* lb_ID           = us_label( tr("User ID:") );
       QLabel* lb_name         = us_label( tr("Name:") );
       QLabel* lb_email        = us_label( tr("E-mail:") );
-      QLabel* lb_level        = us_label( tr("User Level:") );
+      QLabel* lb_level        = us_label( tr("Level:") );
       QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
       QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
       QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
@@ -594,7 +597,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_ID           = us_label( tr("User ID:") );
 	  QLabel* lb_name         = us_label( tr("Name:") );
 	  QLabel* lb_email        = us_label( tr("E-mail:") );
-	  QLabel* lb_level        = us_label( tr("User Level:") );
+	  QLabel* lb_level        = us_label( tr("Level:") );
 	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
 	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
 	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
@@ -720,7 +723,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_ID           = us_label( tr("User ID:") );
 	  QLabel* lb_name         = us_label( tr("Name:") );
 	  QLabel* lb_email        = us_label( tr("E-mail:") );
-	  QLabel* lb_level        = us_label( tr("User Level:") );
+	  QLabel* lb_level        = us_label( tr("Level:") );
 	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
 	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
 	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
@@ -894,7 +897,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_ID           = us_label( tr("User ID:") );
 	  QLabel* lb_name         = us_label( tr("Name:") );
 	  QLabel* lb_email        = us_label( tr("E-mail:") );
-	  QLabel* lb_level        = us_label( tr("User Level:") );
+	  QLabel* lb_level        = us_label( tr("Level:") );
 	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
 	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
 	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
@@ -1001,6 +1004,157 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  groupBoxes. push_back( groupBox );
 
 	}
+    }
+
+  else if ( s_name == "ANALYSIS" )
+    {
+      QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
+      QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
+
+      QGridLayout* genL1  = new QGridLayout();
+      QVBoxLayout* genL11 = new QVBoxLayout();
+
+      QLabel* lb_men         = us_label( tr("Meniscus Position Determination at FITMEN Stage:") );
+      lb_men->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+      row=0;
+      genL1-> addWidget( lb_men,      row++,   0,  1,  22  );
+      
+      if ( !p_2dsa_auto_fitmen ) // interactive FITMEN (manual)
+	{
+	  QMap < QString, QString >::iterator mfa;
+	  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+	    {
+	      
+	      QString mfa_value         = mfa.value();
+	      QString pos               = mfa_value.split(", by")[0];
+	      QString performed_by_time = mfa_value.split(", by")[1];
+	      
+	      QString performed_by, when;
+	      if ( performed_by_time.contains(";") )
+		{
+		  performed_by      = performed_by_time.split(";")[0];
+		  when              = performed_by_time.split(";")[1];  
+		}
+	      else
+		{
+		  performed_by = performed_by_time;
+		  when         = "N/A";
+		}
+
+	      QLabel* lb_men1        = us_label( tr("Channel:") );
+	      QLineEdit* le_men1     = us_lineedit( mfa.key(), 0, true );
+	      QLabel* lb_men2        = us_label( tr("Type:") );
+	      QLineEdit* le_men2     = us_lineedit( pos, 0, true );
+	      QLabel* lb_men3        = us_label( tr("Performed by:") );
+	      QLineEdit* le_men3     = us_lineedit( performed_by, 0, true );
+	      QLabel* lb_men4        = us_label( tr("TimeStamp:") );
+	      QLineEdit* le_men4     = us_lineedit( when, 0, true );
+	      
+	      
+	      genL1 -> addWidget( lb_men1,     row,     1,  1,  2  );
+	      genL1 -> addWidget( le_men1,     row,     3,  1,  3  );
+	      genL1 -> addWidget( lb_men2,     row,     6,  1,  2  );
+	      genL1 -> addWidget( le_men2,     row,     8,  1,  3  );
+	      genL1 -> addWidget( lb_men3,     row,     11, 1,  2  );
+	      genL1 -> addWidget( le_men3,     row,     13, 1,  3  );
+	      genL1 -> addWidget( lb_men4,     row,     16, 1,  2  );
+	      genL1 -> addWidget( le_men4,     row++,   18, 1,  3  );
+	      
+	    }
+	}
+      else //automatic mode
+	{
+	  QTextEdit* te_fitmen    = us_textedit();
+	  te_fitmen    -> setFixedHeight  ( RowHeight * 2 );
+	  te_fitmen    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_fitmen, true );
+
+	  te_fitmen -> setText( "Meniscus positions have been determined automatically as best fit values for all channels." );
+
+	  genL1 -> addWidget( te_fitmen,     row++,    1,  1,  21  );
+	}
+
+      //Cancelled Jobs
+      QLabel* lb_canc         = us_label( tr("Information on CANCELED analysis jobs:") );
+      lb_canc->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+      genL1-> addWidget( lb_canc,      row++,   0,  1,  22  );
+
+      if ( !analysisCancelJson. isEmpty() )
+	{
+	  QMap < QString, QString >::iterator cj;
+	  for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
+	    {
+	      
+	      QString cj_value                 = cj.value();
+	      QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
+	      
+	      QString performed_by, reason, when;
+	      if ( performed_by_reason_time.contains(";") )
+		{
+		  performed_by      = performed_by_reason_time.split(";")[0];
+		  reason            = performed_by_reason_time.split(";")[1];
+		  when              = performed_by_reason_time.split(";")[2];  
+		}
+	      else
+		{
+		  performed_by = performed_by_reason_time;
+		  reason       = "N/A";
+		  when         = "N/A";
+		}
+	      
+	      QLabel* lb_canc1        = us_label( tr("Jobs Canceled for:") );
+	      QLineEdit* le_canc1     = us_lineedit( cj.key(), 0, true );
+	      QLabel* lb_canc2        = us_label( tr("Canceled by:") );
+	      QLineEdit* le_canc2     = us_lineedit( performed_by, 0, true );
+	      QLabel* lb_canc3        = us_label( tr("Reason:") );
+	      QLineEdit* le_canc3     = us_lineedit( reason, 0, true );
+	      QLabel* lb_canc4        = us_label( tr("TimeStamp:") );
+	      QLineEdit* le_canc4     = us_lineedit( when, 0, true );
+	      
+	      
+	      genL1 -> addWidget( lb_canc1,     row,     1,  1,  2  );
+	      genL1 -> addWidget( le_canc1,     row,     3,  1,  3  );
+	      genL1 -> addWidget( lb_canc2,     row,     6,  1,  2  );
+	      genL1 -> addWidget( le_canc2,     row,     8,  1,  3  );
+	      genL1 -> addWidget( lb_canc3,     row,     11, 1,  2  );
+	      genL1 -> addWidget( le_canc3,     row,     13, 1,  3  );
+	      genL1 -> addWidget( lb_canc4,     row,     16, 1,  2  );
+	      genL1 -> addWidget( le_canc4,     row++,   18, 1,  3  );
+	    }
+	}
+      else //no cancelled jobs
+	{
+	  QTextEdit* te_canceled    = us_textedit();
+	  te_canceled    -> setFixedHeight  ( RowHeight * 2 );
+	  te_canceled    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_canceled, true );
+
+	  te_canceled -> setText( "No CANCELLED jobs." );
+
+	  genL1 -> addWidget( te_canceled,     row++,    1,  1,  21  );
+	}
+      
+
+      genL11 -> addLayout( genL1);
+      genL11 -> addStretch();
+
+      //assemble
+      genL->addLayout( genL11);
+      	  	  
+      //Set GroupBox
+      QGroupBox *groupBox = new QGroupBox ( name );
+      QPalette p = groupBox->palette();
+      p.setColor(QPalette::Dark, Qt::white);
+      groupBox->setPalette(p);
+      
+      groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+      
+      groupBox->setFlat(true);
+      
+      groupBox->setLayout(genL);
+      groupBoxes. push_back( groupBox );
     }
   
   else
@@ -1206,12 +1360,49 @@ bool US_auditTrailGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, Q
 		    }
 		}
 	    }
+
+	  //2DSA
+	  else if ( ename == "p_2dsa" )
+	    {
+	      read_2dsa_settings( xmli );
+	    }
 	}
       
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
       
       if ( was_end  &&  ename == "p_2dsa" )   // Break 
+	break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+bool US_auditTrailGMP::read_2dsa_settings( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      //qDebug() << "AP:2fX: ename" << ename;
+
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "job_fitmen" || ename == "job_fitmen_auto" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      p_2dsa_run_fitmen     = US_Util::bool_flag( attr.value( "run" ).toString() );
+	      p_2dsa_auto_fitmen    = attr.value( "interactive" ).toString().toInt() == 0;
+
+	      qDebug() << "In 2DSA's Settings run_fitmen, auto_fitmen -- "
+		       << p_2dsa_run_fitmen
+		       << p_2dsa_auto_fitmen;
+	    }
+	}
+
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break after "</p_2dsa>"
 	break;
     }
   
@@ -1391,6 +1582,31 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
   return status_map;
 }
 
+
+//Parse autoflowStatus Analysis Json
+QMap < QString, QString > US_auditTrailGMP::parse_autoflowStatus_analysis_json( QString statusJson )
+{
+  QMap <QString, QString>  status_map;
+
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( statusJson.toUtf8() );
+  //QJsonObject json_obj  = jsonDoc.object();
+
+  QJsonArray json_array  = jsonDoc.array();
+  qDebug() << "IN ANALYSIS_JSON: " << json_array;
+
+  for (int i=0; i < json_array.size(); ++i )
+    {
+      foreach(const QString& key, json_array[ i ].toObject().keys())
+	{
+	  QJsonValue value = json_array[ i ].toObject().value(key);
+      	  qDebug() << "ANALYSIS_JSON: key, value: " << key << value.toString();
+
+	  status_map[ key ] = value.toString();
+	}
+    }
+
+  return status_map;
+}
 
 //display oper/revs/appr.
 void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString> eSign_d, QString JsonListName, QGridLayout* genL )

@@ -48,8 +48,13 @@ class US_auditTrailGMP : public US_Widgets
        bool       isEsignRecord;
        QString    gmpRunID_eSign;
        QString    AProfileGUID;
-       QMap<QString, QString> eSign_details_auto;			
-				
+       QMap<QString, QString> eSign_details_auto;
+       bool p_2dsa_run_fitmen;					
+       bool p_2dsa_auto_fitmen;
+
+       int RowHeight;
+			    
+			   
      public slots:
 
      private slots:
@@ -68,8 +73,11 @@ class US_auditTrailGMP : public US_Widgets
 					 QString&,  QString&,  QString&,  QString&, QString&,
 					 QString&,  QString& );
        QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
+       QMap < QString, QString > parse_autoflowStatus_analysis_json( QString );
        void read_reportLists_from_aprofile( QStringList &, QStringList & );
        bool readReportLists( QXmlStreamReader&, QMap< QString, QString> &, QMap< QString, QString> & );
+       bool read_2dsa_settings( QXmlStreamReader& );
+
        QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
   
      signals:  
