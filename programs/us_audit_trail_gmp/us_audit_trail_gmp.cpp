@@ -388,9 +388,12 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 
   qDebug() << "Resizing trees: ";
   //eSignTree->setMinimumHeight( (eSignTree->height())*0.8 );
-  uInteractionsTree->setMinimumHeight( (uInteractionsTree->height())*1.125 );
+  uInteractionsTree->setMinimumHeight( (uInteractionsTree->height())*1.025 );
+
+  eSignTree         ->expandAll();
+  uInteractionsTree->topLevelItem(0)->setExpanded(true);
   
-  resize( 1200, 1000 );
+  resize( 1400, 1000 );
 }
 
 //create groupBox: eSigners
@@ -449,6 +452,15 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   QHBoxLayout* genL   = new QHBoxLayout();
   genL->setSpacing        ( 2 );
   genL->setContentsMargins( 20, 10, 20, 15 );
+
+  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+  genL_sec_row->setSpacing        ( 2 );
+  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
+
+  QVBoxLayout* genL_v_rows = new QVBoxLayout();
+  genL_v_rows->setSpacing        ( 2 );
+  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
+ 
 
   int row;
  
@@ -538,12 +550,18 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       QLabel* lb_comm         = us_label( tr("Comment at Initiation:") );
       lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
       QLabel* lb_comm1        = us_label( tr("Comment:") );
-      QLineEdit* le_comm1     = us_lineedit( status_map[ "Comment" ][ "comment" ], 0, true );
 
+      QTextEdit* te_comm1    = us_textedit();
+      te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+      te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+				    US_GuiSettings::fontSize() - 1) );
+      us_setReadOnly( te_comm1, true );
+      te_comm1 -> setText( status_map[ "Comment" ][ "comment" ] );
+    
       row=0;
       genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
       genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
-      genL3 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+      genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
 
       genL31 -> addLayout( genL3);
       genL31 -> addStretch();
@@ -649,12 +667,18 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	  QLabel* lb_comm1        = us_label( tr("Comment:") );
 	  QString t_comment       = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
-	  QLineEdit* le_comm1     = us_lineedit( t_comment, 0, true );
-	  
+
+	  QTextEdit* te_comm1    = us_textedit();
+	  te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+	  te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_comm1, true );
+	  te_comm1 -> setText( t_comment );
+	  	  
 	  row=0;
 	  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
 	  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
-	  genL3 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+	  genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
 	  
 	  genL31 -> addLayout( genL3);
 	  genL31 -> addStretch();
@@ -773,13 +797,21 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  
 	  QLabel* lb_comm         = us_label( tr("Comment when Saved:") );
 	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
 	  QLabel* lb_comm1        = us_label( tr("Comment:") );
-	  QLineEdit* le_comm1     = us_lineedit( status_map[ "Comment when SAVED" ][ "comment_when_saved"], 0, true );
-	  
+	  QTextEdit* te_comm1    = us_textedit();
+	  te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+	  te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_comm1, true );
+	  QString t_comment       = status_map[ "Comment when SAVED" ][ "comment_when_saved"].isEmpty() ?
+	    "N/A" : status_map[ "Comment when SAVED" ][ "comment_when_saved"];
+	  te_comm1 -> setText( t_comment );
+	  	  
 	  row=0;
 	  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
 	  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
-	  genL3 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+	  genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
 	  
 	  genL31 -> addLayout( genL3);
 	  genL31 -> addStretch();
@@ -796,15 +828,22 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      lb_drop->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	      row=0;
 	      genL4 -> addWidget( lb_drop,      row++,   0,  1,  6  );
-	      
+
+	      QLabel* lb_drop1        = us_label( tr("Triple List:") );
+	      genL4 -> addWidget( lb_drop1,     row,     1,  1,  2  );
+
+	      QStringList triples_dropped;
 	      for ( int i=0; i < dtype_opt_dropped_triples.size(); ++i )
-		{
-		  QLabel* lb_drop1        = us_label( tr("Triple:") );
-		  QLineEdit* le_drop1     = us_lineedit( dtype_opt_dropped_triples[ i ], 0, true );
+		triples_dropped << dtype_opt_dropped_triples[ i ];
+
+	      QTextEdit* te_dropped_tr    = us_textedit();
+	      te_dropped_tr    -> setFixedHeight  ( RowHeight * 2 );
+	      te_dropped_tr    ->setFont( QFont( US_Widgets::fixedFont().family(),
+						 US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_dropped_tr, true );
 	      
-		  genL4 -> addWidget( lb_drop1,     row,     1,  1,  2  );
-		  genL4 -> addWidget( le_drop1,     row++,   3,  1,  3  );
-		}
+	      te_dropped_tr -> setText( triples_dropped.join(",\n") );
+	      genL4 -> addWidget( te_dropped_tr,     row++,   3,  1,  3  );
 	      
 	      genL41 -> addLayout( genL4);
 	      genL41 -> addStretch();
@@ -818,26 +857,31 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      genL5  = new QGridLayout();
 	      genL51 = new QVBoxLayout();
 
-	      QLabel* lb_drop_c         = us_label( tr("Comments [Dropped Triples]:") );
+	      QLabel* lb_drop_c         = us_label( tr("Comments [Dropped Triple(s) | Channel(s)]:") );
 	      lb_drop_c->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	      row=0;
 	      genL5 -> addWidget( lb_drop_c,      row++,   0,  1,  6  );
-	      
+
+	      QLabel* lb_drop_c1        = us_label( tr("Comment:") );
+	      genL5 -> addWidget( lb_drop_c1,     row,     1,  1,  2  );
+
+	      QStringList comm_list;
 	      QMap < QString, QString >::iterator dr;
 	      for ( dr = status_map[ "Dropped" ].begin(); dr != status_map[ "Dropped" ].end(); ++dr )
 		{
-		  QLabel* lb_drop_c1        = us_label( tr("Dropped:") );
-		  QLineEdit* le_drop_c1     = us_lineedit( dr.key(), 0, true );
-		  QLabel* lb_drop_c2        = us_label( tr("Comment:") );
-		  QLineEdit* le_drop_c2     = us_lineedit( dr.value(), 0, true );
-	      
-		  genL5 -> addWidget( lb_drop_c1,     row,     1,  1,  2  );
-		  genL5 -> addWidget( le_drop_c1,     row++,   3,  1,  3  );
-		  genL5 -> addWidget( lb_drop_c2,     row,     1,  1,  2  );
-		  genL5 -> addWidget( le_drop_c2,     row++,   3,  1,  3  );
-		  
+		  QString comm_curr = dr.key() + ":\n" + dr.value();
+		  comm_list << comm_curr;		  
 		}
+
+	      QTextEdit* te_drop_c1    = us_textedit();
+	      te_drop_c1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_drop_c1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+						 US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_drop_c1, true );
 	      
+	      te_drop_c1 -> setText( comm_list.join(",\n") );
+	      genL5 -> addWidget( te_drop_c1,     row++,   3,  1,  3  );
+	 		  
 	      genL51 -> addLayout( genL5);
 	      genL51 -> addStretch();
 	    }
@@ -846,10 +890,14 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  genL->addLayout( genL11);
 	  genL->addLayout( genL21);
 	  genL->addLayout( genL31);
+
 	  if ( genL41 != NULL )
-	    genL->addLayout( genL41);
+	    genL_sec_row->addLayout( genL41);
 	  if ( genL51 != NULL )
-	    genL->addLayout( genL51);
+	    genL_sec_row->addLayout( genL51);
+
+	  genL_v_rows->addLayout( genL);
+	  genL_v_rows->addLayout( genL_sec_row);
 	  
 	  //Set GroupBox
 	  QString gBox_name = "Data Type, Optics: " + dtype_opt;
@@ -862,7 +910,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  
 	  groupBox->setFlat(true);
 	  
-	  groupBox->setLayout(genL);
+	  groupBox->setLayout(genL_v_rows);
 	  groupBoxes. push_back( groupBox );
 	  
 	}
@@ -961,7 +1009,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  genL3 -> addWidget( lb_ts,      row++,   0,  1,  6  );
 	  genL3 -> addWidget( lb_ts1,     row,     1,  1,  2  );
 	  genL3 -> addWidget( le_ts1,     row++,   3,  1,  3  );
-	  
+
 	  genL31 -> addLayout( genL3);
 	  genL31 -> addStretch();
 	  
@@ -973,12 +1021,21 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_comm         = us_label( tr("Comment when Saved:") );
 	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	  QLabel* lb_comm1        = us_label( tr("Comment:") );
-	  QLineEdit* le_comm1     = us_lineedit( status_map[ "Comment when SAVED" ][ "comment_when_saved"], 0, true );
+
+	  QTextEdit* te_comm1    = us_textedit();
+	  te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+	  te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_comm1, true );
+	  QString t_comment       = status_map[ "Comment when SAVED" ][ "comment_when_saved"].isEmpty() ?
+	    "N/A" : status_map[ "Comment when SAVED" ][ "comment_when_saved"];
 	  
+	  te_comm1 -> setText( t_comment );
+	  	  
 	  row=0;
 	  genL4 -> addWidget( lb_comm,      row++,   0,  1,  6  );
 	  genL4 -> addWidget( lb_comm1,     row,     1,  1,  2  );
-	  genL4 -> addWidget( le_comm1,     row++,   3,  1,  3  );
+	  genL4 -> addWidget( te_comm1,     row++,   3,  1,  3  );
 	  
 	  genL41 -> addLayout( genL4);
 	  genL41 -> addStretch();
@@ -986,8 +1043,11 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  //assemble
 	  genL->addLayout( genL11);
 	  genL->addLayout( genL21);
-	  genL->addLayout( genL31);
-	  genL->addLayout( genL41);
+	  genL_sec_row->addLayout( genL31);
+	  genL_sec_row->addLayout( genL41);
+
+	  genL_v_rows->addLayout( genL);
+	  genL_v_rows->addLayout( genL_sec_row);
 	  	  
 	  //Set GroupBox
 	  QString gBox_name = "Data Type, Optics: " + dtype_opt;
@@ -1000,7 +1060,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  
 	  groupBox->setFlat(true);
 	  
-	  groupBox->setLayout(genL);
+	  groupBox->setLayout(genL_v_rows);
 	  groupBoxes. push_back( groupBox );
 
 	}
@@ -1665,17 +1725,31 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 		}
 	    }
 	  QLineEdit* le_date    = us_lineedit( e_date, 0, true );
-	  QLineEdit* le_comment = us_lineedit( e_comment, 0, true );
+	  
+	  //QLineEdit* le_comment = us_lineedit( e_comment, 0, true );
+	  QTextEdit* te_comment    = us_textedit();
+	  te_comment    -> setFixedHeight  ( RowHeight * 2 );
+	  te_comment    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					  US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_comment, true );
+	  te_comment -> setText( e_comment );
+	  
 	  
 	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d ); 
 	  le_stat -> setObjectName( "status: " + current_reviewer );
 
 	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
+
+	  if( le_stat->text(). contains("NOT") )
+	    {
+	      le_date    -> setText( "N/A" );
+	      te_comment -> setText( "N/A" );
+	    }
 	  
 	  genL -> addWidget( le_name,      row,      0,  1,  3 );
 	  genL -> addWidget( le_role,      row,      3,  1,  2 );
 	  genL -> addWidget( le_date,      row,      5,  1,  2 );
-	  genL -> addWidget( le_comment,   row,      7,  1,  3 );
+	  genL -> addWidget( te_comment,   row,      7,  1,  3 );
 	  genL -> addWidget( le_stat,      row++,    10, 1,  2 );
 	}
     }
