@@ -2060,20 +2060,7 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-int lc=model_used.components.size()-1;
-DbgLv(1) << "SimMdl: 0) s D c"
- << model_used.components[ 0].s << model_used.components[ 0].D
- << model_used.components[ 0].signal_concentration << "  n" << lc;
-DbgLv(1) << "SimMdl: n) s D c"
- << model_used.components[lc].s << model_used.components[lc].D
- << model_used.components[lc].signal_concentration;
-   adjust_model();
-DbgLv(1) << "SimMdl: 0) s D c"
- << model.components[ 0].s << model.components[ 0].D
- << model.components[ 0].signal_concentration;
-DbgLv(1) << "SimMdl: n) s D c"
- << model.components[lc].s << model.components[lc].D
- << model.components[lc].signal_concentration;
+
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -2131,6 +2118,23 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    {
       simparams.band_volume = 0.0;
       simparams.band_forming = false;
+   }
+
+   if (simparams.meshType != US_SimulationParameters::ASTFVM){
+      int lc=model_used.components.size()-1;
+      DbgLv(1) << "SimMdl: 0) s D c"
+               << model_used.components[ 0].s << model_used.components[ 0].D
+               << model_used.components[ 0].signal_concentration << "  n" << lc;
+      DbgLv(1) << "SimMdl: n) s D c"
+               << model_used.components[lc].s << model_used.components[lc].D
+               << model_used.components[lc].signal_concentration;
+      adjust_model();
+      DbgLv(1) << "SimMdl: 0) s D c"
+               << model.components[ 0].s << model.components[ 0].D
+               << model.components[ 0].signal_concentration;
+      DbgLv(1) << "SimMdl: n) s D c"
+               << model.components[lc].s << model.components[lc].D
+               << model.components[lc].signal_concentration;
    }
 
    // Make a simulation copy of the experimental data without actual readings
