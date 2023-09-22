@@ -3700,7 +3700,10 @@ double US_Edit::find_meniscus_auto()
   double meniscus_init = sqrt( bottom_db*bottom_db - ( aprofile_volume*360/(1000*pathlength_db*angle_db*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
   
   qDebug() << "Meniscus_init: " << meniscus_init << ", " << bottom_db << ", " << pathlength_db << ", " << angle_db << ", " << M_PI;
-    
+
+  //HARD CODED [for now?]:
+  meniscus_init = 5.87; //Edge of the cell -- NEEDS TESTING
+  
   double meniscus_av = 0;
 
   // Scan Data Processing...

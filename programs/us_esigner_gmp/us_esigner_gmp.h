@@ -24,6 +24,7 @@ class US_eSignaturesGMP : public US_Widgets
 
          bool auto_mode;
          bool auto_separate_status;
+         bool assign_revs_sep;
 
          class US_InvestigatorData
 	 {
@@ -49,7 +50,7 @@ class US_eSignaturesGMP : public US_Widgets
         QMap< QString, QString > gmp_run_details;
         QMap< QString, QString > eSign_details;
         QMap< QString, QString > eSign_details_auto;
-        QMap< QString, QString > protocol_details;
+        QMap< QString, QString > it_details;
         QList< US_InvestigatorData > investigators;
         QList< US_InvestigatorData > g_reviewers;
         QList< US_InvestigatorData > g_apprs;

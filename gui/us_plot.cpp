@@ -223,9 +223,13 @@ void US_Plot::zoom( bool on )
 #if QT_VERSION < 0x050000
       connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
                        SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
+      connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ),
+              this  , SLOT   ( scale_yRight ( QwtDoubleRect ) ) );
 #else
       connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ), 
                        SIGNAL ( zoomedCorners( QRectF        ) ) );
+      connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ),
+              this  , SLOT   ( scale_yRight ( QRectF        ) ) );
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
@@ -246,6 +250,15 @@ void US_Plot::zoom( bool on )
       picker->setRubberBandPen( QColor( Qt::green ) );
       picker->setRubberBand   ( QwtPicker::CrossRubberBand );
       picker->setTrackerPen   ( QColor( Qt::white ) );
+      plot->setAxisAutoScale(QwtPlot::yRight, true);
+      yLeftRange.fill(0, 2);
+      yLeftRange[0] = plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
+      yLeftRange[1] = plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
+      yRightRange.fill(0, 2);
+      if (plot->axisEnabled(QwtPlot::yRight)){
+         yRightRange[0] = plot->axisScaleDiv(QwtPlot::yRight).lowerBound();
+         yRightRange[1] = plot->axisScaleDiv(QwtPlot::yRight).upperBound();
+      }
    }
    
    panner->setEnabled( on );
@@ -257,6 +270,7 @@ void US_Plot::zoom( bool on )
 
    if ( ! on  &&  zoomer != NULL )
    {
+      zoomer->disconnect();
       delete picker;
       delete panner;
       delete zoomer;
@@ -455,6 +469,24 @@ void US_Plot::quit( void )
    }
 }
 */
+
+#if QT_VERSION < 0x050000
+void US_Plot::scale_yRight ( QwtDoubleRect ){}
+#else
+void US_Plot::scale_yRight ( QRectF rect ){
+   if (! plot->axisEnabled ( QwtPlot::yRight )){
+      return;
+   }
+   double dyL = yLeftRange.at(1) - yLeftRange.at(0);
+   double ys_0 = (rect.top() - yLeftRange.at(0)) / dyL;
+   double ys_1 = (rect.bottom() - yLeftRange.at(0)) / dyL;
+   double dyR = yRightRange.at(1) - yRightRange.at(0);
+   double y_0 = ys_0 * dyR + yRightRange.at(0);
+   double y_1 = ys_1 * dyR + yRightRange.at(0);
+   plot->setAxisScale( QwtPlot::yRight, y_0, y_1 );
+   plot->replot();
+}
+#endif
 
 ////////////////////////////////////////
 

@@ -22,6 +22,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 {
   auto_mode  = false;
   auto_separate_status = false;
+  assign_revs_sep = false;
   
   setWindowTitle( tr( "GMP e-Signatures"));
   //setPalette( US_GuiSettings::frameColor() );
@@ -366,6 +367,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
 {
   auto_mode  = true;
   auto_separate_status = false;
+  assign_revs_sep = false;
     
   setWindowTitle( tr( "GMP e-Signatures"));
   //setPalette( US_GuiSettings::frameColor() );
@@ -714,20 +716,143 @@ void US_eSignaturesGMP::display_reviewers_auto( int& row, QMap< QString, QString
 }
 
 //For the end of 1. EXP: defined by admin
-US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & protocol_details ) : US_Widgets()
+US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & it_details ) : US_Widgets()
 {
-  this->protocol_details = protocol_details;
-  
-  setWindowTitle( tr( "GMP e-Signatures"));
-  setPalette( US_GuiSettings::frameColor() );
+  this->it_details = it_details;
 
-  // primary layouts
-  QHBoxLayout* mainLayout     = new QHBoxLayout( this );
+  auto_mode  = false;
+  auto_separate_status = false;
+  assign_revs_sep = true;
+  
+  setWindowTitle( tr( "GMP: Assign Global Reviewers & Approvers"));
+  //setPalette( US_GuiSettings::frameColor() );
+  setPalette( US_GuiSettings::normalColor() );
+
+  //main V-layout
+  QVBoxLayout* mainLayout     = new QVBoxLayout( this );
   mainLayout->setSpacing        ( 2 );
   mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-  resize( 1000, 700 );
+  //for setting global reviewers: people, permits
+  QGridLayout* revGlobalGrid  = new QGridLayout();
+  revGlobalGrid->setSpacing     ( 2 );
+  revGlobalGrid->setContentsMargins( 2, 2, 2, 2 );
+
+  QLabel* bn_revGlobal     = us_banner( tr( "Create | Edit Global Lists of Reviewers & Approvers:" ), 1 );
+  QFontMetrics m (bn_revGlobal -> font()) ;
+  int RowHeight = m.lineSpacing() ;
+  bn_revGlobal -> setFixedHeight  (1.5 * RowHeight);
+
+  lb_inv_search     = us_label( tr( "Investigator Search:" ) );
+  le_inv_search     = us_lineedit();
+  lw_inv_list       = us_listwidget();
+  lw_inv_list       ->setSelectionMode( QAbstractItemView::ExtendedSelection );
+  
+  QLabel* lb_inv_smry     = us_label( tr( "Investigator Information:" ), 1 );
+  te_inv_smry      = us_textedit();
+  te_inv_smry      ->setTextColor( Qt::blue );
+  te_inv_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
+				     US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_inv_smry, true );
+  
+  lb_grev_search     = us_label( tr( "Global Reviewer Search:" ) );
+  le_grev_search     = us_lineedit();
+  lw_grev_list       = us_listwidget();
+  lw_grev_list       ->setSelectionMode( QAbstractItemView::ExtendedSelection );
+  
+  QLabel* lb_grev_smry     = us_label( tr( "Reviewer Information:" ), 1 );
+  te_grev_smry      = us_textedit();
+  te_grev_smry      ->setTextColor( Qt::blue );
+  te_grev_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
+				      US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_grev_smry, true );
+  
+  lb_gappr_search     = us_label( tr( "Global Approver Search:" ) );
+  le_gappr_search     = us_lineedit();
+  lw_gappr_list       = us_listwidget();
+  lw_gappr_list       ->setSelectionMode( QAbstractItemView::ExtendedSelection );
+  
+  QLabel* lb_gappr_smry     = us_label( tr( "Approver Information:" ), 1 );
+  te_gappr_smry      = us_textedit();
+  te_gappr_smry      ->setTextColor( Qt::blue );
+  te_gappr_smry      ->setFont( QFont( US_Widgets::fixedFont().family(),
+				       US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_gappr_smry, true );
+
+  pb_set_global_rev    = us_pushbutton( tr( "Set Inv. as Global Reviewer" ) );
+  pb_set_global_appr   = us_pushbutton( tr( "Set Inv. as Global Approver" ) );
+  pb_unset_global_rev  = us_pushbutton( tr( "Remove from List of Reviewers" ) );
+  pb_unset_global_appr = us_pushbutton( tr( "Remove from List of Approvers" ) );
+  
+  pb_set_global_rev   ->setEnabled( false );
+  pb_unset_global_rev ->setEnabled( false );
+  pb_set_global_appr  ->setEnabled( false );
+  pb_unset_global_appr->setEnabled( false );
+
+  int row = 0;
+  revGlobalGrid -> addWidget( bn_revGlobal,             row++,    0, 1,  20 );
+
+  //Inv.
+  revGlobalGrid -> addWidget( lb_inv_search,       row,      0,  1,  5   );
+  revGlobalGrid -> addWidget( le_inv_search,       row,      5,  1,  5   );
+  revGlobalGrid -> addWidget( lb_inv_smry,         row++,    10, 1,  10  );
+  revGlobalGrid -> addWidget( lw_inv_list,         row,      0,  3,  10  );
+  revGlobalGrid -> addWidget( te_inv_smry,         row++,    10, 3,  10  );
+  row +=5;
+  revGlobalGrid -> addWidget( pb_set_global_rev,   row,       0, 1,  10  );
+  revGlobalGrid -> addWidget( pb_set_global_appr,  row++,    10, 1,  10  );
+
+  //G.Rev.
+  revGlobalGrid -> addWidget( lb_grev_search,       row,      0,  1,  5   );
+  revGlobalGrid -> addWidget( le_grev_search,       row,      5,  1,  5   );
+  revGlobalGrid -> addWidget( lb_grev_smry,         row++,    10, 1,  10  );
+  revGlobalGrid -> addWidget( lw_grev_list,         row,      0,  3,  10  );
+  revGlobalGrid -> addWidget( te_grev_smry,         row++,    10, 3,  10  );
+  row +=5;
+  revGlobalGrid -> addWidget( pb_unset_global_rev,  row++,     0, 1,  20  );
+
+  //G.Appr.
+  revGlobalGrid -> addWidget( lb_gappr_search,       row,    0,  1,  5   );  
+  revGlobalGrid -> addWidget( le_gappr_search,       row,    5,  1,  5   );  
+  revGlobalGrid -> addWidget( lb_gappr_smry,         row++,  10, 1,  10  );  
+  revGlobalGrid -> addWidget( lw_gappr_list,         row,    0,  3,  10  );  
+  revGlobalGrid -> addWidget( te_gappr_smry,         row++,  10, 3,  10  );
+  row +=5;
+  revGlobalGrid -> addWidget( pb_unset_global_appr,  row++,   0, 1,  20  );
+    
+
+  connect( le_inv_search, SIGNAL( textChanged( const QString& ) ), 
+	   SLOT  ( limit_inv_names( const QString& ) ) );
+  connect( lw_inv_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
+	   SLOT  ( get_inv_data  ( QListWidgetItem* ) ) );
+
+  connect( le_grev_search, SIGNAL( textChanged( const QString& ) ), 
+	   SLOT  ( limit_grev_names( const QString& ) ) );
+  connect( lw_grev_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
+	   SLOT  ( get_grev_data  ( QListWidgetItem* ) ) );
+
+  connect( le_gappr_search, SIGNAL( textChanged( const QString& ) ), 
+	   SLOT  ( limit_gappr_names( const QString& ) ) );
+  connect( lw_gappr_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
+	   SLOT  ( get_gappr_data  ( QListWidgetItem* ) ) );
+
+  connect( pb_set_global_rev,    SIGNAL( clicked() ), SLOT ( set_greviewer() ) );
+  connect( pb_unset_global_rev,  SIGNAL( clicked() ), SLOT ( unset_greviewer() ) );
+  connect( pb_set_global_appr,   SIGNAL( clicked() ), SLOT ( set_gappr() ) );
+  connect( pb_unset_global_appr, SIGNAL( clicked() ), SLOT ( unset_gappr() ) );
+
+  //Setting top-level Layouts:
+  mainLayout -> addLayout( revGlobalGrid );
+  mainLayout -> addStretch();
+
+  //initialize investigators, global reviewers
+  init_invs();
+  init_grevs();
+  init_gapprs();
+
   adjustSize();
+  resize( 700, 800 );
+  
 }
 
 
@@ -760,7 +885,7 @@ void US_eSignaturesGMP::init_invs( void )
   US_InvestigatorData data;
   int inv = US_Settings::us_inv_ID();
   int lev = US_Settings::us_inv_level();
-  
+
   while ( db.next() )
     {
       data.invID     = db.value( 0 ).toInt();
@@ -926,7 +1051,13 @@ void US_eSignaturesGMP::init_grevs( void )
 {
   g_reviewers. clear();
   lw_grev_list   -> clear();
-  cb_choose_rev  -> clear();
+
+  qDebug() << "init_grevs DEB1";
+  
+  if ( !assign_revs_sep )
+    cb_choose_rev  -> clear();
+
+  qDebug() << "init_grevs DEB2";
   
   US_Passwd   pw;
   QString     masterPW  = pw.getPasswd();
@@ -944,7 +1075,7 @@ void US_eSignaturesGMP::init_grevs( void )
   
   QStringList query;
   query << "get_people_grev" << "%" + le_grev_search->text() + "%";
-  qDebug() << "init_invs(), query --  " << query;
+  qDebug() << "init_grevs(), query --  " << query;
   db.query( query );
 
   US_InvestigatorData data;
@@ -965,8 +1096,10 @@ void US_eSignaturesGMP::init_grevs( void )
       lw_grev_list-> addItem( new QListWidgetItem( 
 						  "InvID: (" + QString::number( data.invID ) + "), " + 
 						  data.lastName + ", " + data.firstName ) );
-      cb_choose_rev->addItem( QString::number( data.invID ) + ". " + 
-			      data.lastName + ", " + data.firstName );
+
+      if ( !assign_revs_sep )
+	cb_choose_rev->addItem( QString::number( data.invID ) + ". " + 
+				data.lastName + ", " + data.firstName );
       
     }
 }
@@ -977,7 +1110,13 @@ void US_eSignaturesGMP::init_gapprs( void )
 {
   g_apprs. clear();
   lw_gappr_list   -> clear();
-  cb_choose_appr  -> clear();
+
+  qDebug() << "init_gapprs DEB1";
+
+  if ( !assign_revs_sep )
+    cb_choose_appr  -> clear();
+
+  qDebug() << "init_gapprs DEB2";
   
   US_Passwd   pw;
   QString     masterPW  = pw.getPasswd();
@@ -1016,8 +1155,10 @@ void US_eSignaturesGMP::init_gapprs( void )
       lw_gappr_list-> addItem( new QListWidgetItem( 
 						   "InvID: (" + QString::number( data.invID ) + "), " + 
 						   data.lastName + ", " + data.firstName ) );
-      cb_choose_appr->addItem( QString::number( data.invID ) + ". " + 
-			       data.lastName + ", " + data.firstName );
+
+      if ( !assign_revs_sep )
+	cb_choose_appr->addItem( QString::number( data.invID ) + ". " + 
+				 data.lastName + ", " + data.firstName );
       
     }
 }
@@ -1163,7 +1304,8 @@ void US_eSignaturesGMP::set_greviewer()
    init_grevs();
    init_gapprs();
 
-   setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
+   if ( !assign_revs_sep )
+     setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
    
 }
 
@@ -1209,7 +1351,8 @@ void US_eSignaturesGMP::unset_greviewer()
    init_grevs();
    init_gapprs();
 
-   setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
+   if ( !assign_revs_sep )
+     setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
 
    ///Debug
    for(int i=0; i<investigators.size(); ++i )
@@ -1260,8 +1403,9 @@ void US_eSignaturesGMP::set_gappr()
    init_invs();
    init_grevs();
    init_gapprs();
-
-   setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
+   
+   if ( !assign_revs_sep )
+     setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
 }
 
 void US_eSignaturesGMP::unset_gappr()
@@ -1306,7 +1450,8 @@ void US_eSignaturesGMP::unset_gappr()
    init_grevs();
    init_gapprs();
 
-   setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
+   if ( !assign_revs_sep )
+     setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
 
    ///Debug
    for(int i=0; i<investigators.size(); ++i )

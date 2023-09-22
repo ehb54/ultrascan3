@@ -1039,17 +1039,18 @@ void US_ExperGuiGeneral::changed_protocol( void )
 
    if ( pr_names.contains( protoname )  ||  protoname.trimmed() == "" )
    {
-      QString msg          =
-         tr( "The protocol name given<br/>" )
-         +  "  ( <b>" + protoname + "</b> )<br/>"
-         + tr( "is already being used or empty.  It will need to be<br/>"
-               "changed if/when this protocol is saved.<br/><br/>"
-               "If you plan to make changes to this protocol,<br/>"
-               "it is suggested that you change it's name<br/>"
-               "(description text) at this time." );
-      QMessageBox::information( this,
-                                tr( "Duplicate Run Protocol Name" ),
-                                msg );
+     //The message below does NOT seem to be needed: 
+      // QString msg          =
+      //    tr( "The protocol name given<br/>" )
+      //    +  "  ( <b>" + protoname + "</b> )<br/>"
+      //    + tr( "is already being used or empty.  It will need to be<br/>"
+      //          "changed if/when this protocol is saved.<br/><br/>"
+      //          "If you plan to make changes to this protocol,<br/>"
+      //          "it is suggested that you change it's name<br/>"
+      //          "(description text) at this time." );
+      // QMessageBox::information( this,
+      //                           tr( "Duplicate Run Protocol Name" ),
+      //                           msg );
    }
    else
    {
@@ -5876,9 +5877,14 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
 
    // Update the full list of existing protocols
    QStringList prentry;                       // New protocol summary data
+   // QString pdate       = US_Util::toUTCDatetimeText(
+   //                          QDateTime::currentDateTime().toUTC()
+   //                          .toString( "yyyy/MM/dd HH:mm" ), true );
    QString pdate       = US_Util::toUTCDatetimeText(
-                            QDateTime::currentDateTime().toUTC()
-                            .toString( "yyyy/MM/dd HH:mm" ), true );
+						    QDateTime::currentDateTime().toUTC()
+						    .toString( "yyyy-MM-dd HH:mm" ), true );
+   // small bug fix above (UTC format, to be consistent with the format of existing records)
+
    QString protid      = ( dbP != NULL ) ? QString::number( idProt )
                          : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
    QString pguid       = currProto->protoGUID;
