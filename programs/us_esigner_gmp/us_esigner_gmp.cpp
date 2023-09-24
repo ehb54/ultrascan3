@@ -447,7 +447,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
          
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -2784,7 +2784,12 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       QString autoflowHistoryID      = db->value( 1 ).toString();
       QString autoflowHistoryName    = db->value( 2 ).toString();
       QString protocolName           = db->value( 3 ).toString();
+
       QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
+      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+								   .toString( Qt::ISODate ), true )
+	                                                           .section( ":", 0, 1 ) + " UTC";
+      
       QString filenamePdf            = db->value( 5 ).toString();
 
       //check if report has assigned operator(s) & reviewer(s)
@@ -2809,7 +2814,7 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
 	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << time_created.toString()
+			 << ptime_created //<< time_created.toString()
 			 << filenamePdf
 			 << autoflowHistoryID;
 
