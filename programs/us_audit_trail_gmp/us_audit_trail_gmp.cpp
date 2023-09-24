@@ -244,22 +244,49 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 	  eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
 	                
 	  eSign_record[ "isEsignRecord" ]        = QString("YES");
+	  eSign_record[ "isHistory" ]            = QString("NO");
 	  isEsignRecord = true;
 	}
     }
   else
     {
       //No record, so no oper/revs assigned!
-      qDebug() << "No e-Sign GMP record exists!!";
-
-      eSign_record[ "isEsignRecord" ]        = QString("NO");
-      isEsignRecord = false;
-      eSign_record. clear();
-
-      // //TEST ---------------------------
-      // eSign_record[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
-      // eSign_record[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
-      // //END TEST ------------------------
+      qDebug() << "No e-Sign GMP record exists in main table!!";
+      qDebug() << "Checking History...";
+      qry. clear();
+      
+      qry << "get_gmp_review_info_by_autoflowID_history" << aID;
+      qDebug() << "read eSing rec HISTORY, qry -- " << qry;
+      db->query( qry );
+      
+      if ( db->lastErrno() == US_DB2::OK )      // e-Sign record exists
+	{
+	  while ( db->next() )
+	    {
+	      eSign_record[ "ID" ]                   = db->value( 0 ).toString(); 
+	      eSign_record[ "autoflowID" ]           = db->value( 1 ).toString();
+	      eSign_record[ "autoflowName" ]         = db->value( 2 ).toString();
+	      eSign_record[ "operatorListJson" ]     = db->value( 3 ).toString();
+	      eSign_record[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	      eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	      eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	      eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	      eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	      eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
+	      
+	      eSign_record[ "isEsignRecord" ]        = QString("YES");
+	      eSign_record[ "isHistory" ]            = QString("YES");
+	      isEsignRecord = true;
+	    }
+	}
+      else
+	{
+	  //No record, so no oper/revs assigned!
+	  qDebug() << "No e-Sign GMP record exists!!";
+	  eSign_record[ "isEsignRecord" ]        = QString("NO");
+	  isEsignRecord = false;
+	  eSign_record. clear();
+	}
     }
 
   return eSign_record;
