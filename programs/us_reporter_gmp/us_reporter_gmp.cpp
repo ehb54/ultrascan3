@@ -1220,7 +1220,7 @@ void US_ReporterGMP::load_gmp_report_db ( void )
          
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -1347,10 +1347,17 @@ int US_ReporterGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBd
       QString autoflowHistoryName    = db->value( 2 ).toString();
       QString protocolName           = db->value( 3 ).toString();
       QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
+      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+						     .toString( Qt::ISODate ), true )
+	                                             .section( ":", 0, 1 ) + " UTC";
+      
       QString filenamePdf            = db->value( 5 ).toString();
          
+      // gmpreportentry << id << autoflowHistoryName // << protocolName
+      // 		     << time_created.toString() << filenamePdf;
       gmpreportentry << id << autoflowHistoryName // << protocolName
-		     << time_created.toString() << filenamePdf;
+		     << ptime_created << filenamePdf;
+      
       gmpReportsDBdata << gmpreportentry;
       nrecs++;
     }
@@ -1376,7 +1383,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -4 );
 
   QString autoflow_id_selected("");
   if ( pdiag_autoflow->exec() == QDialog::Accepted )
@@ -1628,6 +1635,14 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       QString invID              = db->value( 12 ).toString();
 
       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
+      //         QString ptime_created  = US_Util::toUTCDatetimeText( time_created
+      //                               .toString( Qt::ISODate ), true )
+      //                               .section( " ", 0, 0 ).simplified();
+      QString ptime_created    = US_Util::toUTCDatetimeText( time_created
+						     .toString( Qt::ISODate ), true )
+	                                             .section( ":", 0, 1 ) + " UTC";
+
+      
       QString gmpRun             = db->value( 14 ).toString();
       QString full_runname       = db->value( 15 ).toString();
 
@@ -1649,7 +1664,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	  runname += " (combined RI+IP) ";
 	}
       
-      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      autoflowentry << id << runname << optimaname  << ptime_created;
+	//time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
