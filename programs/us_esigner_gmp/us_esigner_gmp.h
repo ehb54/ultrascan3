@@ -31,8 +31,7 @@ class US_eSignaturesGMP : public US_Widgets
            public:
 	   int     invID;        //!< The uniqe ID in the DB for the entry.
 	   int     ulev;         //!< User level
-	   int     gmpReviewer;  //!< Is user set a reviewer  (0 | 1 )
-	   int     gmpApprover;  //!< Is user set an approver (0 | 1 )
+	   QString gmpReviewerRole; //!<Reviewer | Approver> 
 	   QString invGuid;      //!< Investigator's global ID
 	   QString lastName;     //!< Last Name
 	   QString firstName;    //!< First Name   

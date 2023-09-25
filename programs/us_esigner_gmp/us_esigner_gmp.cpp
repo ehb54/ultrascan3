@@ -1003,9 +1003,8 @@ void US_eSignaturesGMP::get_inv_data( QListWidgetItem* item )
    info.email        = db.value( 8 ).toString();
    info.invGuid      = db.value( 9 ).toString();
    info.ulev         = db.value( 10 ).toInt();
-   info.gmpReviewer  = db.value( 11 ).toInt();
-   info.gmpApprover  = db.value( 12 ).toInt();
-   
+   info.gmpReviewerRole  = db.value( 11 ).toString();
+      
    te_inv_smry->setText( get_inv_or_grev_smry( info, "Investigator") );
 
 
@@ -1024,10 +1023,7 @@ QString US_eSignaturesGMP::get_inv_or_grev_smry( US_InvestigatorData p_info, QSt
   mlines << "Last Name:\n "       +  p_info.lastName; 
   mlines << "First Name:\n "      +  p_info.firstName;
   mlines << "User Level:\n "      +  QString::number( p_info.ulev ) ;
-  QString grev_set  = (p_info.gmpReviewer) ? "YES" : "NO" ;
-  QString gappr_set = (p_info.gmpApprover) ? "YES" : "NO" ;
-  mlines << "GMP Reviewer:\n "    +  grev_set;
-  mlines << "GMP Approver:\n "    +  gappr_set;
+  mlines << "GMP Reviewer Role:\n " +  p_info.gmpReviewerRole;
   mlines << "Email:\n "           +  p_info.email       ; 
   mlines << "Organization:\n "    +  p_info.organization; 
 
@@ -1204,9 +1200,8 @@ void US_eSignaturesGMP::get_grev_data( QListWidgetItem* item )
    info_grev.email        = db.value( 8 ).toString();
    info_grev.invGuid      = db.value( 9 ).toString();
    info_grev.ulev         = db.value( 10 ).toInt();
-   info_grev.gmpReviewer  = db.value( 11 ).toInt();
-   info_grev.gmpApprover  = db.value( 12 ).toInt();
-
+   info_grev.gmpReviewerRole   = db.value( 11 ).toString();
+ 
    te_grev_smry->setText( get_inv_or_grev_smry( info_grev, "Reviewer") );
 
    pb_unset_global_rev -> setEnabled( true );
@@ -1252,9 +1247,8 @@ void US_eSignaturesGMP::get_gappr_data( QListWidgetItem* item )
    info_gappr.email        = db.value( 8 ).toString();
    info_gappr.invGuid      = db.value( 9 ).toString();
    info_gappr.ulev         = db.value( 10 ).toInt();
-   info_gappr.gmpReviewer  = db.value( 11 ).toInt();
-   info_gappr.gmpApprover  = db.value( 12 ).toInt();
-
+   info_gappr.gmpReviewerRole = db.value( 11 ).toString();
+  
    te_gappr_smry->setText( get_inv_or_grev_smry( info_gappr, "Approver") );
 
    pb_unset_global_appr -> setEnabled( true );
