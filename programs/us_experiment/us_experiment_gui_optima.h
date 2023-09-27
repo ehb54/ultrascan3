@@ -100,6 +100,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList           pr_names;   // List of protocol names
       QStringList           instr_opers;  // Instrument operators
 
+      QMap < QString, bool >  ul2_operator_for_optima; //for UL<3, determine if the user is an operator, for each machine
+
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
@@ -119,6 +121,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
       void  set_tabs_buttons_active  ( void );
+      void  go_back_to_run_manager( void );
+      
 };
 
 //! \brief Experiment Rotor panel
@@ -189,6 +193,37 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList  experimentTypes;
       //int          currentOperator_index;
       QString      currentOperator;
+
+
+      //Assigning oper(s) && rev(s)
+      QLabel*      lb_operator_reviewer_banner;
+      QLabel* lb_choose_oper;
+      QLabel* lb_choose_rev;
+      QLabel* lb_choose_appr;
+      QLabel* lb_choose_sme;
+      QLabel* lb_opers_to_assign;
+      QLabel* lb_revs_to_assign;
+      QLabel* lb_apprs_to_assign;
+      QLabel* lb_smes_to_assign;
+  
+      QPushButton*  pb_add_oper;
+      QPushButton*  pb_remove_oper;
+      QPushButton*  pb_add_rev;
+      QPushButton*  pb_remove_rev;
+      QPushButton*  pb_add_appr;
+      QPushButton*  pb_remove_appr;
+      QPushButton*  pb_add_sme;
+      QPushButton*  pb_remove_sme;
+  
+      QTextEdit*    te_opers_to_assign;
+      QTextEdit*    te_revs_to_assign;
+      QTextEdit*    te_apprs_to_assign;
+      QTextEdit*    te_smes_to_assign;
+
+      QComboBox*    cb_choose_operator;
+      QComboBox*    cb_choose_rev;
+      QComboBox*    cb_choose_appr;
+      QComboBox*    cb_choose_sme;				  
       
    private slots:
       void changeLab  ( int );     // Slot for change in lab
@@ -206,6 +241,18 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       // Get pointer to abstractRotor for named rotor
       US_Rotor::AbstractRotor* abstractRotor( const QString );
       void test_optima_connection( void );
+      void init_grevs( void );
+      void init_gapprs( void );
+      void init_gsmes( void );
+      void addOpertoList( void );
+      void removeOperfromList( void );
+      void addRevtoList( void );
+      void removeRevfromList( void );
+      void addApprtoList( void );
+      void removeApprfromList( void );
+      void addSmetoList( void );
+      void removeSmefromList( void );
+  
 };
 
 //! \brief Experiment Speeds panel
@@ -767,7 +814,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QPushButton* pb_details;
 
       QGridLayout* genL;
-      
+
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
@@ -819,6 +866,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool         connected;   // We are Connected to the Optima
       QString      json_upl;    // JSON to upload
 
+      QMap<QString,QString> gmp_submitter_map;
+
       QJsonObject absorbanceObject;
 
       QSqlDatabase dbxpn;
@@ -849,6 +898,9 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
       void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+
+      void    do_accept_reviewers( QMap< QString, QString >& );
+      void    cancel_reviewers( QMap< QString, QString >& );
   
    signals:
       void expdef_submitted    ( QMap < QString, QString > &protocol_details );
@@ -962,7 +1014,7 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
-  bool    us_prot_dev_mode;
+      bool    us_prot_dev_mode;
       bool    global_reset;
 
   QMap <QString, QString> protocol_details_passed; 
@@ -971,6 +1023,8 @@ class US_ExperimentMain : public US_Widgets
       void    us_mode_passed( void );
 
       QStringList instruments_in_use;
+      QStringList instruments_no_permit;
+  bool isOperatorAny;
 
       int tabHeight;
       int buttLHeight;
@@ -1005,7 +1059,9 @@ class US_ExperimentMain : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
-      void set_tabs_buttons_readonly( void );			     
+      void set_tabs_buttons_readonly( void );
+      void switch_to_run_manager( void );					
+					    
       
     public slots:
       void close_program( void );
@@ -1029,7 +1085,8 @@ class US_ExperimentMain : public US_Widgets
       void to_live_update( QMap < QString, QString > &protocol_details );
       void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
-      void close_expsetup_msg( void ); 
+      void close_expsetup_msg( void );
+  void back_to_initAutoflow( void );
       
       
 };

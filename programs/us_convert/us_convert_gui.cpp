@@ -4918,6 +4918,7 @@ DbgLv(1) << "CGui:pSS: split CALL";
 // User pressed the Define reference button while analyzing intensity data
 void US_ConvertGui::define_reference( void )
 {
+/*
    if ( isMwl )
    {  // First insure that the full range of wavelengths are available
       //  for defining reference scans
@@ -4962,6 +4963,8 @@ DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
          if ( status == 0 ) return;
       }
    }
+*/
+   plot_last_scans();
 
    connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                     SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
@@ -4969,12 +4972,68 @@ DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
    reference_start = 0.0;
    reference_end   = 0.0;
    pb_reference->setEnabled( false );
-   pb_cancelref->setEnabled( true );
+   lw_triple->setEnabled( false );
+   pb_lambnext->setEnabled( false );
+   pb_lambprev->setEnabled( false );
+   cb_lambplot->setEnabled( false );
+   cb_lambstop->setEnabled( false );
+   cb_lambstrt->setEnabled( false );
 
    step = REFERENCE;
+   le_status->setText(tr( "To select a radial point: (ctrl + left click) " ));
+}
+
+// Plot all channel's last scans to pick the reference point
+void US_ConvertGui::plot_last_scans( void )
+{
+   dataPlotClear( data_plot );
+   grid        = us_grid( data_plot );
+   double maxR = -1.0e99;
+   double minR =  1.0e99;
+   double maxV = -1.0e99;
+   double minV =  1.0e99;
+   for (int ii = 0; ii < lw_triple->count(); ii++){
+      int datax = out_chandatx[ ii ];
+      US_DataIO::RawData* currentData = outData.at(datax);
+      int nrpoints = currentData->pointCount();
+      US_DataIO::Scan scan = currentData->scanData.last();
+      DbgLv(1) << "Cell = " << currentData->cell << " , Channel = "
+               << currentData->channel << " , Wavelenght = " << scan.wavelength;
+      QVector< double > rvec( nrpoints );
+      QVector< double > vvec( nrpoints );
+      double* rr  = rvec.data();
+      double* vv  = vvec.data();
+      for ( int jj = 0; jj < nrpoints; jj++ )
+      {
+         rr[ jj ]    = currentData->radius( jj );
+         vv[ jj ]    = scan.rvalues[ jj ];
+         maxR = qMax( maxR, rr[ jj ] );
+         minR = qMin( minR, rr[ jj ] );
+         maxV = qMax( maxV, vv[ jj ] );
+         minV = qMin( minV, vv[ jj ] );
+      }
+      QString title = tr( "Raw Data at %1 / %2 / %3" ).arg(currentData->cell).
+                      arg(currentData->channel).arg(scan.wavelength);
+
+      QwtPlotCurve* curv = us_curve( data_plot, title );
+      curv->setPen(QColor(Qt::yellow));
+      curv->setSamples(rr, vv, nrpoints);
+   }
+
+   data_plot->setTitle( tr ("All Channels - First Wavelength - Last Scan"));
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
+   show_plot_progress = false;
+   data_plot->replot();
+
 }
 
 // Select starting point of reference scan in intensity data
+/*
 void US_ConvertGui::start_reference( const QwtDoublePoint& p )
 {
    reference_start   = p.x();
@@ -4982,6 +5041,7 @@ void US_ConvertGui::start_reference( const QwtDoublePoint& p )
    draw_vline( reference_start );
    data_plot->replot();
 }
+*/
 
 // Select end point of reference scan in intensity data
 void US_ConvertGui::process_reference_auto( const double low, const double high )
@@ -5039,6 +5099,7 @@ void US_ConvertGui::process_reference_auto( const double low, const double high 
 }
 
 // Select end point of reference scan in intensity data
+/*
 void US_ConvertGui::process_reference( const QwtDoublePoint& p )
 {
    // Just in case we get a second click message right away
@@ -5110,6 +5171,73 @@ DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
 
    qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
 }
+*/
+
+void US_ConvertGui::process_reference( const QwtDoublePoint& p )
+{
+  double dr = 0.01;
+  reference_start = p.x() - dr;
+  reference_end = p.x() + dr;
+
+  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+  le_status->setText( tr( "The reference scans are being defined..." ) );
+  qApp->processEvents();
+  draw_vline( reference_end );
+  data_plot->replot();
+  picker        ->disconnect();
+
+  // Calculate the averages for all triples
+  PseudoCalcAvg();
+
+  // Now that we have the averages, let's replot
+  Pseudo_reference_triple = tripListx;
+
+  // Default to displaying the first non-reference triple
+  for ( int trx = 0; trx < outData.size(); trx++ )
+  {
+      if ( trx != Pseudo_reference_triple )
+      {
+     tripListx = trx;
+     DbgLv(1) << "CGui: procref: nonreftripx" << tripListx;
+     break;
+      }
+  }
+
+  DbgLv(1) << "CGui: procref: setrow-tripx" << tripListx;
+  if ( isMwl )
+  {
+      triple_index();
+      DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
+  }
+  lw_triple->setCurrentRow( tripListx );
+  plot_current();
+  DbgLv(1) << "CGui: procref:  plot_current complete";
+  QApplication::restoreOverrideCursor();
+
+  pb_reference  ->setEnabled( false );
+  referenceDefined = true;
+  DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
+
+  // ALEXEY: just enable Save btn for autoflow
+  if ( us_convert_auto_mode )
+  {
+      lw_todoinfo->clear();
+      pb_saveUS3 ->setEnabled( true );
+      show_intensity_auto();
+  }
+  else
+      enableSaveBtn();
+
+  enableRunIDControl( false );
+
+  le_status->setText( tr( "The reference scans have been defined." ) );
+  qApp->processEvents();
+
+  qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
+}
+
+
 
 // Process a control-click on the plot window
 void US_ConvertGui::cClick( const QwtDoublePoint& p )
@@ -5129,6 +5257,8 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 
       case REFERENCE :
          // process reference scan
+         process_reference( p );
+/*
 	if ( reference_start == 0.0 )
 	  start_reference( p );
 	
@@ -5140,6 +5270,7 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 	    // 	show_intensity_auto();
 	    //   }
 	  }
+*/
 
       default :
          break;
@@ -5148,6 +5279,7 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 }
 
 // Reference calculation for pseudo-absorbance
+/*
 void US_ConvertGui::PseudoCalcAvg( void )
 {
    if ( referenceDefined ) return;  // Average calculation has already been done
@@ -5268,6 +5400,88 @@ DbgLv(1) << "CGui:PCA: (7)referDef=" << referenceDefined;
    pb_reference->setEnabled( false );
    pb_cancelref->setEnabled( true );
 }
+*/
+void US_ConvertGui::PseudoCalcAvg( void )
+{
+   if ( referenceDefined ) return;  // Average calculation has already been done
+
+   ExpData.RIProfileMap.clear();
+
+   // SAEED: Loop through all triples
+   US_DataIO::RawData* currentData;
+   for (int trx = 0; trx < outData.size(); trx++){
+         currentData = outData[ trx ];
+         int ref_size = currentData->xvalues.size();
+         int nscan    = currentData->scanData.size();
+
+         // Get the reference value and absorbance profle for the current wavelength
+         for ( int ss = 0; ss < nscan; ss++ )
+         {
+             US_DataIO::Scan* scan = &currentData->scanData[ ss ];
+
+             int    rr    = 0;
+             int    count = 0;
+             double sum   = 0.0;
+
+             while ( currentData->radius( rr ) < reference_start  &&  rr < ref_size )
+            rr++;
+
+             while ( currentData->radius( rr ) < reference_end  &&
+                    rr < ref_size )
+             {
+            sum         += scan->rvalues[ rr ];
+            count++;
+            rr++;
+             }
+
+             //ALEXEY: check for non-positive data (sum):
+             double rip_avg;
+             //double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
+             if ( count > 0 )
+             {
+            if ( sum > 0 )
+               rip_avg =  sum / (double)count;
+            else
+               rip_avg = 1.0;
+             }
+             else
+            rip_avg = 1.0;
+
+             // SAEED: Now calculate the pseudo-absorbance for current CCW
+             for ( int rr = 0; rr < scan->rvalues.size(); rr++ )
+             {
+            // Protect against possible inf's and nan's, if a reading
+            // evaluates to 0 or wherever log function is undefined or -inf
+            double rvalue       = qMax( 1.0, scan->rvalues[ rr ] );
+
+            scan->rvalues[ rr ] = log10( rip_avg / rvalue );
+             } // END: scan loop absorbance conversion
+
+             QString ccws = QString("%1-%2-%3-%4").arg(currentData->cell).
+                            arg(currentData->channel).
+                            arg(static_cast<int>(scan->wavelength * 10)).arg(ss);
+             ExpData.RIProfileMap[ccws] = rip_avg;
+         } // END: triple loop
+
+   } // END: loop over all triples
+
+   isPseudo         = true;
+   referenceDefined = true;
+   DbgLv(1) << "CGui: (9)referDef=" << referenceDefined;
+   pb_intensity->setEnabled( true );
+   pb_reference->setEnabled( false );
+   pb_cancelref->setEnabled( true );
+
+   lw_triple->setEnabled( true );
+   pb_lambnext->setEnabled( true );
+   pb_lambprev->setEnabled( true );
+   cb_lambplot->setEnabled( true );
+   cb_lambstop->setEnabled( true );
+   cb_lambstrt->setEnabled( true );
+
+}
+
+
 
 // Bring up a graph window showing the intensity profile
 void US_ConvertGui::show_intensity( void )
@@ -5401,6 +5615,7 @@ DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
 
 
 // Un-do reference scans apply
+/*
 void US_ConvertGui::cancel_reference( void )
 {
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -5480,6 +5695,73 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
 
    for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
       all_tripinfo[ ii ].excluded = false;
+
+   setTripleInfo();
+
+
+   //ALEXEY: set auto_ref_scan to FALSE
+   auto_ref_scan = false;
+
+   pb_reference  ->setEnabled( true );
+   pb_cancelref  ->setEnabled( false );
+   pb_intensity  ->setEnabled( false );
+   tripListx = 0;
+   lw_triple->setCurrentRow( tripListx );
+
+   plot_current();
+
+   enableSaveBtn();
+
+   le_status->setText( tr( "The reference scans have been canceled." ) );
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
+}
+*/
+void US_ConvertGui::cancel_reference( void )
+{
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   le_status->setText( tr( "The reference scans are being canceled..." ) );
+   qApp->processEvents();
+
+   for ( int ii = 0; ii < outData.size(); ii++) {
+      US_DataIO::RawData* currentData = outData[ ii ];
+      int kpoint = currentData->pointCount();
+      int kscan = currentData->scanCount();
+
+      for ( int jj = 0; jj < kscan; jj++) {
+         US_DataIO::Scan* scan  = &currentData->scanData[ jj ];
+         QString ccws = QString("%1-%2-%3-%4").arg(currentData->cell).
+                        arg(currentData->channel).
+                        arg(static_cast<int>(scan->wavelength * 10)).arg(jj);
+
+         if ( !ExpData.RIProfileMap.contains(ccws) ) {
+            QMessageBox::information( this, tr( "Error" ),
+                                tr( "Triple %1, scan %2 has NO CORRESPONDING RI PROFILE POINT!!!" )
+                                    .arg( out_triples[ ii ], jj + 1 ) );
+            continue;
+         }
+
+         double rppro = ExpData.RIProfileMap.value(ccws);
+
+         for ( int kk = 0; kk < kpoint; kk++ ) {
+            double rvalue = scan->rvalues[ kk ];
+            scan->rvalues[ kk ] = rppro / pow( 10, rvalue );
+         }
+      }
+   }
+
+   qDebug() << "Test 3";
+
+   referenceDefined = false;
+   isPseudo         = false;
+   ExpData.RIProfile.clear();
+   reference_start  = 0.0;
+   reference_end    = 0.0;
+   DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
+
+   for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
+       all_tripinfo[ ii ].excluded = false;
 
    setTripleInfo();
 
@@ -5663,8 +5945,7 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	      drop_operations[ runType ][ "Triples" ] = t_comment;
 	    }
 	}
-      //record_live_update_status( "STOP", comment_text );
-       
+          
       
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
@@ -6295,13 +6576,101 @@ void US_ConvertGui::saveUS3( void )
     }
   /****/
 
+    
+  qDebug() << "Save INIT 1: ";
+
+  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
+  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
+  dataSavedOtherwise = false;
+
+  pb_saveUS3 -> setEnabled( false );
+
+  // *** CHECK if all Optics types processed **** //
+  bool all_processed = true;
+  QMap<QString, int>::iterator os;
+  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+    {
+      if ( os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+  /////////////////////////////////////////////////////
+
   
+  if ( us_convert_auto_mode )
+    {
+      QMap < QString, QString > autoflow_details;
+      autoflow_details = read_autoflow_record( autoflowID_passed );
+
+      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
+      
+      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
+	{
+	  if ( runType_combined_IP_RI )
+	    {
+	      if ( !all_processed )
+		{
+		  QMessageBox::information( this,
+					    tr( "Data for Current Optical System Already Saved" ),
+					    tr( "It appears that the data for the current optical system are already saved!\n\n"
+						"The program will switch to processing the data for next optical system... " ));
+		  /***/
+		  //set autoflowStages record to "unknown" again !!
+		  revert_autoflow_stages_record( autoflowID_passed );
+		  /***/
+
+		  emit process_next_optics( );
+		  return;
+		}
+	      else
+		{
+		  QMessageBox::information( this,
+					    tr( "The Program State Updated / being Updated" ),
+					    tr( "The program advanced or is advancing to the next stage!\n\n"
+						"This happened because you or different user "
+						"has already saved the data into DB using different program "
+						"session and the program is proceeding to the next stage. \n\n"
+						"The program will return to the autoflow runs dialog where "
+						"you can re-attach to the actual current stage of the run. "
+						"Please allow some time for the status to be updated.") );
+		  
+		  resetAll_auto();
+		  emit saving_complete_back_to_initAutoflow();
+		  return;
+		}
+	    }
+	  else
+	    {
+	      QMessageBox::information( this,
+					tr( "The Program State Updated / being Updated" ),
+					tr( "The program advanced or is advancing to the next stage!\n\n"
+					    "This happened because you or different user "
+					    "has already saved the data into DB using different program "
+					    "session and the program is proceeding to the next stage. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "
+					    "Please allow some time for the status to be updated.") );
+	      
+	      resetAll_auto();
+	      emit saving_complete_back_to_initAutoflow();
+	      return;
+	    }
+	}
+    }
+    
+  /*************************************************************************************************************/
+  // We need to  insert submission form dialog (with password...)
+  //
+  // Then, we need to update autoflowReports' triple status 'DROPPED' to YES (above) here -- AFTER verifying if
+  // current optical system was saved
+  // 
+  /*************************************************************************************************************/
   
   //Now we need to go over dropped triples and/or entire channles & ensure this info is reflected in channels' autoflowReports
   if ( us_convert_auto_mode )
     {
-      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
-
       // Determine if we are using the database
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -6314,7 +6683,42 @@ void US_ConvertGui::saveUS3( void )
 	  return;
 	}
 
+      //Submitter Form with MP:
+      if ( !usmode && gmpRun_bool )
+	{
+	  QStringList qry1;
+	  qry1 <<  QString( "get_user_info" );
+	  dbP. query( qry1 );
+	  dbP. next();
+	  int u_ID        = dbP. value( 0 ).toInt();
+	  QString u_fname = dbP. value( 1 ).toString();
+	  QString u_lname = dbP. value( 2 ).toString();
+	  int u_lev       = dbP. value( 5 ).toInt();
+	  
+	  QString user_submitter = u_lname + ", " + u_fname;
+	  
+	  gmp_submitter_map.clear();
+	  US_Passwd   pw_at;
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run IMPORT Form", "Please fill out GMP run IMPORT form:", user_submitter );
+	  
+	  int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+	  qDebug() << "Submitter map: "
+		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+		   << gmp_submitter_map.keys().isEmpty() 
+		   << gmp_submitter_map[ "User:" ]
+		   << gmp_submitter_map[ "Comment:" ]
+		   << gmp_submitter_map[ "Master Password:" ];
+	  
+	  if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+	    {
+	      revert_autoflow_stages_record( autoflowID_passed );
+	      return;
+	    }
+	}
+      ////////////////////////////////////////////////////////////////////////////////////
+      
       // First, create a QMap relating excluded triples' tripleDesc and reportIDs:
+      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
       QMap<QString,QString> excluded_triple_to_reportID; 
       QMap<QString, QString>::iterator chan_rep;
       for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
@@ -6476,92 +6880,7 @@ void US_ConvertGui::saveUS3( void )
     }
   /////////////////////////////
   
-  
-
-  
-  qDebug() << "Save INIT 1: ";
-
-  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
-  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
-  dataSavedOtherwise = false;
-
-  pb_saveUS3 -> setEnabled( false );
-
-  // *** CHECK if all Optics types processed **** //
-  bool all_processed = true;
-  QMap<QString, int>::iterator os;
-  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
-    {
-      if ( os.value() )
-	{
-	  all_processed = false;
-	  break;
-	}
-    }
-  /////////////////////////////////////////////////////
-
-  
-  if ( us_convert_auto_mode )
-    {
-      QMap < QString, QString > autoflow_details;
-      autoflow_details = read_autoflow_record( autoflowID_passed );
-
-      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
-      
-      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
-	{
-	  if ( runType_combined_IP_RI )
-	    {
-	      if ( !all_processed )
-		{
-		  QMessageBox::information( this,
-					    tr( "Data for Current Optical System Already Saved" ),
-					    tr( "It appears that the data for the current optical system are already saved!\n\n"
-						"The program will switch to processing the data for next optical system... " ));
-		  /***/
-		  //set autoflowStages record to "unknown" again !!
-		  revert_autoflow_stages_record( autoflowID_passed );
-		  /***/
-
-		  emit process_next_optics( );
-		  return;
-		}
-	      else
-		{
-		  QMessageBox::information( this,
-					    tr( "The Program State Updated / being Updated" ),
-					    tr( "The program advanced or is advancing to the next stage!\n\n"
-						"This happened because you or different user "
-						"has already saved the data into DB using different program "
-						"session and the program is proceeding to the next stage. \n\n"
-						"The program will return to the autoflow runs dialog where "
-						"you can re-attach to the actual current stage of the run. "
-						"Please allow some time for the status to be updated.") );
-		  
-		  resetAll_auto();
-		  emit saving_complete_back_to_initAutoflow();
-		  return;
-		}
-	    }
-	  else
-	    {
-	      QMessageBox::information( this,
-					tr( "The Program State Updated / being Updated" ),
-					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happened because you or different user "
-					    "has already saved the data into DB using different program "
-					    "session and the program is proceeding to the next stage. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "
-					    "Please allow some time for the status to be updated.") );
-	      
-	      resetAll_auto();
-	      emit saving_complete_back_to_initAutoflow();
-	      return;
-	    }
-	}
-    }
-  
+ 
   // qDebug() << "ExpData: ";
 
   qDebug() << "ExpData.invID " << ExpData.invID;             
@@ -6941,6 +7260,9 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 
       importRI_Json += "\"RefScan\": \"" + refScan + "\"";
 
+      //Now, add comment from SAVING form:
+      importRI_Json += ", \"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\"";      
+      
       //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
       if ( !drop_operations[ runType ]. isEmpty() )
 	{
@@ -6998,6 +7320,9 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       importIP_Json += "}],";
 
       importIP_Json += "\"RefScan\": \"" + refScan + "\"";
+
+      //Now, add comment from SAVING form:
+      importIP_Json += ", \"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\"";  
 
       //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
       if ( !drop_operations[ runType ]. isEmpty() )
@@ -8743,6 +9068,7 @@ DbgLv(1) << "rsL: PlCurr RTN";
 }
 
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
+/*
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
    QVector< double >  ri_prof;      // RI profile for a single wavelength
@@ -8854,6 +9180,7 @@ DbgLv(1) << "CGui: (9)referDef=" << referenceDefined;
    pb_reference->setEnabled( false );
    pb_cancelref->setEnabled( true );
 }
+*/
 
 // Do MWL Gui setup after import or load of MWL data
 void US_ConvertGui::mwl_setup()

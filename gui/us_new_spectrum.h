@@ -75,7 +75,8 @@ class US_ViewSpectrum : public US_Widgets
 	
 	void plot_extinction();
 	
-   private:
+   private slots:
+    void save_csv();
 	
 };
 

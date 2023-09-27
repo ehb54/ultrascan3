@@ -2135,17 +2135,46 @@ void US_XpnDataViewer::stop_optima( void )
   if (msgBox.clickedButton() == Accept)
     {
       //Put a reason for a STOP (comment):
-      bool ok;
-      QString msg = QString(tr("Put a comment describing reason for a STOP:"));
-      QString default_text = QString(tr("Reason for STOP: "));
-      QString comment_text = QInputDialog::getText( this,
-						    tr( "Reason for STOP" ),
-						    msg, QLineEdit::Normal, default_text, &ok );
+      // bool ok;
+      // QString msg = QString(tr("Put a comment describing reason for a STOP:"));
+      // QString default_text = QString(tr("Reason for STOP: "));
+      // QString comment_text = QInputDialog::getText( this,
+      // 						    tr( "Reason for STOP" ),
+      // 						    msg, QLineEdit::Normal, default_text, &ok );
 
-      if ( !ok )
-	{
-	  return;
-	}
+      // if ( !ok )
+      // 	{
+      // 	  return;
+      // 	}
+
+      US_Passwd   pw;
+      QString     masterPW  = pw.getPasswd();
+      US_DB2      db( masterPW );  
+      QStringList qry;
+      qry <<  QString( "get_user_info" );
+      db.  query( qry );
+      db. next();
+      int u_ID        = db. value( 0 ).toInt();
+      QString u_fname = db. value( 1 ).toString();
+      QString u_lname = db. value( 2 ).toString();
+      int u_lev       = db. value( 5 ).toInt();
+      
+      QString user_stop = u_lname + ", " + u_fname;
+      
+      US_Passwd   pw_at;
+      QMap< QString, QString > gmp_stopOptima_map; 
+      gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Stop Optima Form", "Please fill out GMP Stop Optima form:", user_stop );
+      
+      int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
+      qDebug() << "stopOptima map: "
+	       << gmp_stopOptima_map.keys()  << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+	       << gmp_stopOptima_map.keys().isEmpty() 
+	       << gmp_stopOptima_map[ "User:" ]
+	       << gmp_stopOptima_map[ "Comment:" ]
+	       << gmp_stopOptima_map[ "Master Password:" ];
+      
+      if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
+	return;
       ///////////////////////////////////////
       
       qDebug() << "STOPPING Optima...";
@@ -2161,7 +2190,8 @@ void US_XpnDataViewer::stop_optima( void )
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was STOPPED                        */
       experimentAborted_remotely = true;
-      record_live_update_status( "STOP", comment_text );
+      //record_live_update_status( "STOP", comment_text );
+      record_live_update_status( "STOP", gmp_stopOptima_map[ "Comment:" ] );
     }
   else if (msgBox.clickedButton() == Cancel)
     {
@@ -2185,13 +2215,58 @@ void US_XpnDataViewer::skip_optima_stage( void )
   
   if (msgBox.clickedButton() == Accept)
     {
+      // //Put a reason for a SKIP (comment):
+      // bool ok;
+      // QString msg = QString(tr("Put a comment describing reason for a SKIP stage:"));
+      // QString default_text = QString(tr("Reason for SKIP: "));
+      // QString comment_text = QInputDialog::getText( this,
+      // 						    tr( "Reason for SKIP" ),
+      // 						    msg, QLineEdit::Normal, default_text, &ok );
+
+      // if ( !ok )
+      // 	{
+      // 	  return;
+      // 	}
+
+      US_Passwd   pw;
+      QString     masterPW  = pw.getPasswd();
+      US_DB2      db( masterPW );  
+      QStringList qry;
+      qry <<  QString( "get_user_info" );
+      db.  query( qry );
+      db. next();
+      int u_ID        = db. value( 0 ).toInt();
+      QString u_fname = db. value( 1 ).toString();
+      QString u_lname = db. value( 2 ).toString();
+      int u_lev       = db. value( 5 ).toInt();
+      
+      QString user_stop = u_lname + ", " + u_fname;
+      
+      US_Passwd   pw_at;
+      QMap< QString, QString > gmp_stopOptima_map; 
+      gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Skip Stage Optima Form", "Please fill out GMP Skip Stage Optima form:", user_stop );
+      
+      int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
+      qDebug() << "skipOptima map: "
+	       << gmp_stopOptima_map.keys()  << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+	       << gmp_stopOptima_map.keys().isEmpty() 
+	       << gmp_stopOptima_map[ "User:" ]
+	       << gmp_stopOptima_map[ "Comment:" ]
+	       << gmp_stopOptima_map[ "Master Password:" ];
+      
+      if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
+	return;
+      ///////////////////////////////////////
+      
+      
       qDebug() << "SKIPPING EXP. STAGE...";
       link->skipOptimaStage();
       
       //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was SKIPPED                        */
-      record_live_update_status( "SKIP", "" );
+      //record_live_update_status( "SKIP", comment_text );
+      record_live_update_status( "SKIP", gmp_stopOptima_map[ "Comment:" ] );
       
     }
   else if (msgBox.clickedButton() == Cancel)

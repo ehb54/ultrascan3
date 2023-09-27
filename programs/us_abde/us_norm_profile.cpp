@@ -94,8 +94,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     right_lyt->setMargin(1);
     right_lyt->setSpacing(1);
 
-    main_lyt->addLayout(left_lyt);
-    main_lyt->addLayout(right_lyt);
+    main_lyt->addLayout(left_lyt, 1);
+    main_lyt->addLayout(right_lyt, 5);
     main_lyt->setMargin(1);
     main_lyt->setSpacing(0);
 
@@ -365,9 +365,10 @@ void US_Norm_Profile::plotData(void){
 
     const double *xp, *yp;
 
-    double minX = 1e99;
+    double minX =  1e99;
     double maxX = -1e99;
-    bool minmax = false;
+    double minY =  1e99;
+    double maxY = -1e99;
 
     if (ckb_rawData->isChecked()){
         bool norm = ckb_norm->isChecked();
@@ -393,10 +394,16 @@ void US_Norm_Profile::plotData(void){
             for (int j = 0; j < np; j++){
                 minX = qMin(minX, xp[j]);
                 maxX = qMax(maxX, xp[j]);
+                minY = qMin(minY, yp[j]);
+                maxY = qMax(maxY, yp[j]);
             }
         }
-        minmax = true;
+        double dy = (maxY - minY) * 0.05;
+        plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
     }
+
+    minY =  1e99;
+    maxY = -1e99;
 
     if (ckb_integral->isChecked()){
 
@@ -430,15 +437,21 @@ void US_Norm_Profile::plotData(void){
             curve->setPen(pen);
             curve->setSamples(xp, yp, np);
 
-            if (! minmax){
-                for (int j = 0; j < np; j++){
-                    minX = qMin(minX, xp[j]);
-                    maxX = qMax(maxX, xp[j]);
-                }
+            for (int j = 0; j < np; j++){
+                minX = qMin(minX, xp[j]);
+                maxX = qMax(maxX, xp[j]);
+                minY = qMin(minY, yp[j]);
+                maxY = qMax(maxY, yp[j]);
             }
         }
 
-
+        double dy = (maxY - minY) * 0.05;
+        if (ckb_rawData->isChecked()){
+            plot->setAxisScale( QwtPlot::yRight, minY - dy, maxY + dy);
+        }
+        else {
+            plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
+        }
     }
 
     if (ckb_legend->isChecked()) {

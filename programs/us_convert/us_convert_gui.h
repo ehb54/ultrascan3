@@ -145,6 +145,7 @@ class US_ConvertGui : public US_Widgets
       ProtocolInfo ProtInfo;
 
       bool  us_convert_auto_mode;
+      QMap<QString, QString> gmp_submitter_map;
       
       enum { SPLIT, REFERENCE, NONE } step;
 
@@ -326,11 +327,11 @@ class US_ConvertGui : public US_Widgets
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );
-      void start_reference  ( const QwtDoublePoint& );
+//      void start_reference  ( const QwtDoublePoint& );
       void process_reference( const QwtDoublePoint& );
       void process_reference_auto( const double, const double );
       void PseudoCalcAvg   ( void );
-      void PseudoCalcAvgMWL( void );
+//      void PseudoCalcAvgMWL( void );
       bool read            ( void );
       bool read            ( QString dir );
       bool convert         ( void );
@@ -346,6 +347,7 @@ class US_ConvertGui : public US_Widgets
       void draw_vline      ( double );
       void db_error        ( const QString& );
       void triple_index    ( void );
+      void plot_last_scans ( void );
 
       //US_Solution * solution_auto;
 

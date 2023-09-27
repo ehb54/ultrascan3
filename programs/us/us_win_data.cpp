@@ -21,7 +21,7 @@ namespace US_WinData
 
     P_GLOBFITEQ,                                // Global Fit Menu
 
-    P_ABDE_FIT,     P_GETDATA,      P_GMPRPT,       P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
+    P_ABDE_FIT,     P_GETDATA,      P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
@@ -34,6 +34,9 @@ namespace US_WinData
     P_ASTFEM,       P_EQUILTIMESIM,             // Simulation Menu
     P_SASSOC,       P_MODEL1,       P_MODEL2,
     P_SOMO,         P_SOMOCONFIG,
+
+    P_GMPACQ,       P_PROTOCOL,     P_GMPRPT, P_ESIGN,    // GMP Menu
+    P_AUDIT,
 
     P_RMSD,         P_INVESTIGATOR, P_BUFFER,   // Database Menu
     P_VBAR,         P_MODEL,        P_MANAGEDATA,
@@ -171,11 +174,7 @@ namespace US_WinData
       QObject::tr( "Acquisition Experimental Data Program" )
     },
 
-    { P_GMPRPT,    1, 0, "us_reporter_gmp",
-      QObject::tr( "Loading GMP Report Generator and Viewer" ),
-      QObject::tr( "GMP Report Generator and Viewer Program" )
-    },
-            
+    
     { P_CONVERT,  1, 0, "us_convert",
       QObject::tr( "Loading Experimental Data Import Routine" ),
       QObject::tr( "Experimental Data Import Program" )
@@ -331,7 +330,32 @@ namespace US_WinData
       QObject::tr( "Loading SOMO Bead Modeling Configuration" ),
       QObject::tr( "SOMO Path Configuration" )
     },
-    
+
+    { P_GMPACQ, 0, 0, "us_comproject",
+      QObject::tr( "Loading Data Acquisition Program" ),
+      QObject::tr( "Data Acquisition Routine" )
+    },
+
+    { P_PROTOCOL, 0, 0, "us_protocoldev",
+      QObject::tr( "Loading Protocol Development Program" ),
+      QObject::tr( "Protocol Development System" )
+    },
+
+    { P_GMPRPT,    1, 0, "us_reporter_gmp",
+      QObject::tr( "Loading GMP Report Generator and Viewer" ),
+      QObject::tr( "GMP Report Generator and Viewer Program" )
+    },
+
+    { P_ESIGN, 0, 0, "us_esigner_gmp",
+      QObject::tr( "Loading e-Signature Program" ),
+      QObject::tr( "e-Signature Assignment" )
+    },
+
+    { P_AUDIT, 0, 0, "us_audit_trail_gmp",
+      QObject::tr( "Loading Audit Trail Program" ),
+      QObject::tr( "Audit Trail" )
+    },
+
     { P_RMSD,  1, 0, "us_query_rmsd",
       QObject::tr( "Loading Query Model RMSDs" ),
       QObject::tr( "Query Model RMSDs Program" )
