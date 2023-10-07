@@ -705,6 +705,14 @@ pb_plateau->setVisible(false);
    // details[ "statusID" ]     = QString("148");
    // details[ "autoflowID" ]   = QString("866");
 
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("eGFP-DNA-MW-08OCT23-run1981");
+   // details[ "protocolName" ] = QString("eGFP-DNA-MW-08OCT23");
+   // details[ "statusID" ]     = QString("231");
+   // details[ "autoflowID" ]   = QString("1002");
+   // details[ "runID" ]        = QString("1981");
+   // details[ "OptimaName" ]   = QString("Optima 1");
+      
    // load_auto( details );
   
 }
@@ -8198,7 +8206,7 @@ void US_Edit::write_auto( void )
   // record_edit_status( automatic_meniscus, dataType );
   // exit(1);
   
-  /****/
+  /****  TEMP1 **/
   //--- Check if saving already initiated
   int status_edit_unique;
   status_edit_unique = read_autoflow_stages_record( autoflowID_passed );
@@ -8224,7 +8232,7 @@ void US_Edit::write_auto( void )
       return;
     }
     //-------------------------------------------
-  /****/
+  /***/
   
   pb_write       ->setEnabled( false );
 
@@ -8318,7 +8326,8 @@ void US_Edit::write_auto( void )
       channels_all << triple_parts[0] + "." + triple_parts[1];
     }
   //-----------------------------------------------------------------//
-  
+
+  /*** TEMP1 **/
    if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
      {
        if ( runType_combined_IP_RI )
@@ -8332,10 +8341,10 @@ void US_Edit::write_auto( void )
 
    	      cb_triple->disconnect();
 
-   	      /***/
+   	      
    	      //set autoflowStages record to "unknown" again !!
    	      revert_autoflow_stages_record( autoflowID_passed );
-   	      /****/
+   	      
    	      
    	      reset();
    	      emit process_next_optics( );
@@ -8377,7 +8386,7 @@ void US_Edit::write_auto( void )
    	  return;
    	}
      }
-  
+  /***/
   
   /*******************************************************/
   
@@ -10829,7 +10838,7 @@ void US_Edit::write_mwl_auto( int trx )
    QString schan    = celchn.section( "/", 1, 1 ).simplified();
    QString tripbase = scell + " / " + schan + " / ";
    int     idax     = triples.indexOf( tripbase + current_wvlns_list[ 0 ] ); 
-   int     odax     = index_data_auto( trx, 0 );                                
+   int     odax     = index_data_auto( trx, 0 );                             //CORRECT! {first odax in a triple}                                
 
    qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
 
@@ -10847,9 +10856,11 @@ void US_Edit::write_mwl_auto( int trx )
       QString triple   = tripbase + swavl;
       QString filename = filebase + swavl + ".xml";
       idax             = triples.indexOf( triple );
-      odax             = index_data_auto( trx, wvx );                             // Correct ?
+      //odax             = index_data_auto( trx, wvx );                             // Correct ? NOT!!! Got you !!
 
-      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename;
+      
+      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename
+		<< ", trx " << trx << ", wvx " << wvx << ", odax " << odax;
 
       QString editGUID = editGUIDs[ idax ];
 
@@ -10897,6 +10908,9 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
          if ( wrstat != 0 )
             return;
       }  // END:  DB output
+
+      ++odax;      //Got you!!
+      
    }  // END:  wavelength-in-cellchannel loop
 
    // QApplication::restoreOverrideCursor();
