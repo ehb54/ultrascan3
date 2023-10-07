@@ -336,7 +336,7 @@ class US_ConvertGui : public US_Widgets
   void process_reference_auto( const double );
   void PseudoCalcAvg   ( void );
   //void PseudoCalcAvg_av  ( void );
-  //void PseudoCalcAvgMWL( void );
+  void PseudoCalcAvgMWL( void );
       bool read            ( void );
       bool read            ( QString dir );
       bool convert         ( void );
