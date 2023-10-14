@@ -5326,6 +5326,19 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 			    tr( "Could not connect to database: \n" ) + dbP->lastError() );
       return;
     }
+
+
+  //Create dir for plots: (if any)
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), filename_passed );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  
+  QStringList RunDetailsPlotsFileNames;
+
   
   //2. Iterate over runIds
   for ( int i=0; i<fileNameList.size(); ++i )
@@ -5441,20 +5454,22 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
       //7.  access all needed params from the current timestamp
       QStringList dkeys = tsdiag -> timestamp_data_dkeys();
+      QVector< QVector< double > > dvals = tsdiag -> timestamp_data_dvals();
       QMap< QString, double > dmins = tsdiag -> timestamp_data_mins();
       QMap< QString, double > dmaxs = tsdiag -> timestamp_data_maxs();
       QMap< QString, double > davgs = tsdiag -> timestamp_data_avgs();
-      QMap< QString, double > davgs_first_scan = tsdiag -> timestamp_data_avgs_first_scan();
-      
+      //QMap< QString, double > davgs_first_scan = tsdiag -> timestamp_data_avgs_first_scan();
+      QMap < QString, QMap< QString, double > > davgs_stdd_first_scan =  tsdiag ->  timestamp_data_avgs_stdd_first_scan();
       
       html_assembled += tr(
-			   "<table style=\"margin-left:10px\">"
+			     "<table style=\"margin-left:10px\">"
 			   );
 
       html_assembled += table_row( tr( "Parameter: " ),
 				   tr( "Target Value:" ),
 				   tr( "Tolerance:"),
 				   tr( "Measured Value:" ),
+				   tr( "Std. Dev." ),
 				   tr( "PASSED ?" ));
 
       
@@ -5463,12 +5478,14 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	{
 	  qDebug() << "Assembling Run Details: " << dkeys[ i ] << dmins[ dkeys[ i ] ] << " to " << dmaxs[ dkeys[ i ] ]
 		   << "; Avg: " << davgs [ dkeys[ i ] ]
-		   << "; Avg_1st_scan: " << davgs_first_scan [ dkeys[ i ] ];
+		   << "; Avg_1st_scan: " << davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ]
+		   << "; Stdd_1st_scan: " << davgs_stdd_first_scan [ dkeys[ i ] ][ "Stdd" ];
 
 	  double val_tol      = 0;
 	  double val_target   = 0;
 	  double val_measured = 0;
 	  QString val_passed  = "";
+	  double val_measured_stdd  = 0;
 
 	  //Exp. Duration
 	  if ( dkeys[ i ] == "Time" )
@@ -5502,6 +5519,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 					   val_target_hh_mm,
 					   QString::number( val_tol ) + "%",
 					   val_measured_hh_mm,
+					   "",
 					   val_passed ) ;
 	    }
 
@@ -5510,14 +5528,23 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	    {
 	      val_tol    = 0.5;   //plus-minus 0.5 C
 	      val_target = currProto.temperature; 
-	      val_measured = davgs_first_scan [ dkeys[ i ] ];
+	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
 	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO";
+
+	      val_measured_stdd = davgs_stdd_first_scan [ dkeys[ i ] ][ "Stdd" ];
 	  
 	      html_assembled += table_row( dkeys[ i ] + " (&#8451;)",
 					   QString::number( val_target ),
 					   "&#177;" + QString::number( val_tol ),
 					   QString::number( val_measured ),
+					   QString::number( val_measured_stdd ),
 					   val_passed );
+
+	      //Plot Temp. plot
+	      QString img01File = dirName + "/" + "RunDetails_Temperature" + "." + svgext;
+	      write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
+	      img01File.replace( svgext, pngext ); 
+	      RunDetailsPlotsFileNames << img01File;
 	    }
 
 	  //RawSpeed
@@ -5525,13 +5552,14 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	    {
 	      val_tol    = 4; //plus-minus 4 RPM
 	      val_target = currProto. rpSpeed. ssteps[0].speed; 
-	      val_measured = davgs_first_scan [ dkeys[ i ] ];
+	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
 	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO"; 
 	  	  
 	      html_assembled += table_row( dkeys[ i ] + " (RPM)",
 					   QString::number( val_target ),
 					   "&#177;" + QString::number( val_tol ),
 					   QString::number( val_measured ),
+					   "",
 					   val_passed );
 	    }
 	   
@@ -5553,8 +5581,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       //end of the loop over filenames (only one IF not a combined RI+IP run)
     }
   
-  
-  
+  assemble_plots_html( RunDetailsPlotsFileNames );
+    
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
