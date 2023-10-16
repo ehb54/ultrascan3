@@ -6098,7 +6098,7 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
       
       //Add small dialog for reason / comment to triples' drop:
-      if ( us_convert_auto_mode )
+      if ( us_convert_auto_mode && !usmode )
 	{
 	  QString t_comment = comment_for_drop_dialog( "triple(s)" );
 	  if ( t_comment. isEmpty() )
@@ -6415,7 +6415,7 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
    }
 
    //Add small dialog for reason / comment to triples' drop:
-   if ( us_convert_auto_mode )
+   if ( us_convert_auto_mode && !usmode )
      {
        QString t_comment = comment_for_drop_dialog( "channel(s)" );
        if ( t_comment. isEmpty() )
@@ -6531,7 +6531,7 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
    }
 
    //Add small dialog for reason / comment to triples' drop:
-   if ( us_convert_auto_mode )
+   if ( us_convert_auto_mode && !usmode )
      {
        QString t_comment = comment_for_drop_dialog( "selected channel" );
        if ( t_comment. isEmpty() )
