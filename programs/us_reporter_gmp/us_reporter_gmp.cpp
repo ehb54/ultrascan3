@@ -14,6 +14,8 @@
 #include "../us_fematch/us_thread_worker.h"
 #include "us_tmst_plot.h"
 #include "us_tar.h"
+#include "us_defines.h"
+#include "../us/us_revision.h"
 
 #define MIN_NTC   25
 
@@ -8899,16 +8901,19 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   
   
   //HEADER: begin
+  QString us_version = "Version " + US_Version + " ( " REVISION " ) for " OS_TITLE;
   QString html_header = QString("");
   html_header += rptpage;
   html_header += tr( 
     "<div align=left>"
       "Created, %1<br>"
       "with UltraScan-GMP<br>"
+      "%2<br>"
       "by AUC Solutions<br>"
     "</div>"
 		     )
     .arg( current_date )
+    .arg( us_version ) 
     ;
   //HEADER: end
 
