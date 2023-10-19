@@ -1257,7 +1257,7 @@ void US_eSignaturesGMP::get_gappr_data( QListWidgetItem* item )
 
 void US_eSignaturesGMP::set_greviewer()
 {
-
+  qDebug() << "Set gRev: INIT -- ";
   QString entry = lw_inv_list->currentItem()->text();
   qDebug() << "Set gRev: -- " << entry;
 
@@ -1299,8 +1299,10 @@ void US_eSignaturesGMP::set_greviewer()
    init_gapprs();
 
    if ( !assign_revs_sep )
-     setUnset_AddRemove_RevAppr_bttn( "Reviewer" ); 
-   
+     setUnset_AddRemove_RevAppr_bttn( "Reviewer" );
+
+   //Disable all action buttons:
+   disableSetUnsetGButtons();
 }
 
 void US_eSignaturesGMP::unset_greviewer()
@@ -1352,6 +1354,9 @@ void US_eSignaturesGMP::unset_greviewer()
    for(int i=0; i<investigators.size(); ++i )
      qDebug() << "inv after unsetting -- " << investigators[i].lastName;
 
+   //Disable all action buttons:
+   disableSetUnsetGButtons();
+
 }
 
 
@@ -1399,7 +1404,10 @@ void US_eSignaturesGMP::set_gappr()
    init_gapprs();
    
    if ( !assign_revs_sep )
-     setUnset_AddRemove_RevAppr_bttn( "Approver" ); 
+     setUnset_AddRemove_RevAppr_bttn( "Approver" );
+
+   //Disable all action buttons:
+   disableSetUnsetGButtons();
 }
 
 void US_eSignaturesGMP::unset_gappr()
@@ -1451,6 +1459,9 @@ void US_eSignaturesGMP::unset_gappr()
    for(int i=0; i<investigators.size(); ++i )
      qDebug() << "inv after unsetting -- " << investigators[i].lastName;
 
+   //Disable all action buttons:
+   disableSetUnsetGButtons();
+   
 }
 
 
@@ -1880,6 +1891,15 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
     }
 
   return eSign_record;
+}
+
+//Disable all action buttons:
+void US_eSignaturesGMP::disableSetUnsetGButtons( void )
+{
+  pb_set_global_rev    -> setEnabled( false );
+  pb_set_global_appr   -> setEnabled( false );
+  pb_unset_global_rev  -> setEnabled( false );			  
+  pb_unset_global_appr -> setEnabled( false );
 }
 
 //Set/Unset Add/Remove Rev/Appr bttn.

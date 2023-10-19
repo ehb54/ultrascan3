@@ -178,6 +178,7 @@ class US_eSignaturesGMP : public US_Widgets
        void addApprtoList( void );
        void removeApprfromList( void );
        bool is_eSignProcessBegan( void );
+       void disableSetUnsetGButtons( void );
        void setUnsetPb_operRev( void );
        void setUnset_AddRemove_RevAppr_bttn( QString );
        QString compose_updated_admin_logJson( int, QString, QString );
