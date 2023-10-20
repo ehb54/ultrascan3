@@ -3163,8 +3163,38 @@ void US_ReporterGMP::generate_report( void )
 				    + db->lastError() );
 	  	  return;
 	}
+
+      //Compose "{to_sign:["","",...]}" out of operatorListJson, reviewersListJson, approversListJson
+      //&& update 'eSignStatusJson' of the autoflowGMPReportEsign record with it
+      QMap< QString, QString> eSign_details = read_autoflowGMPReportEsign_record( AutoflowID_auto );
+      QStringList oper_rev_joinedList;
+
+      QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
+      get_assigned_oper_revs( jsonDocOperList, oper_rev_joinedList );
       
+      QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
+      get_assigned_oper_revs( jsonDocRevList, oper_rev_joinedList );
+      
+      QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
+      get_assigned_oper_revs( jsonDocApprList, oper_rev_joinedList );
+
+      qDebug() << "OperRevAppr_list -- " << oper_rev_joinedList;
+
+      //Minimum structure of eSignStatusJson field:
+      QString eSignStatusJson = "{\"to_sign\":[";
+      for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	{
+	  eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	}
+      eSignStatusJson. chop(1);
+      eSignStatusJson += "]}";
+       
+      qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+
       QStringList qry;
+            
+      //Update autoflow record with 'E-SIGNATURES'
+      qry. clear();
       qry << "update_autoflow_at_report"
 	  << runID
 	  << optimaName;
@@ -3180,6 +3210,18 @@ void US_ReporterGMP::generate_report( void )
 				    "associated with this experiment." ) );
 	  return;
 	}
+
+      //Update autoflowGMPReportEsign record with eSignStatusJson
+      qry. clear();
+      qry << "update_gmp_review_record_by_esigner"
+	  << eSign_details[ "ID" ]
+	  << AutoflowID_auto
+	  << eSignStatusJson
+	  << "NO";
+      
+      qDebug() << "Update \"to_sign\": qry -- " << qry;
+      db->query( qry );
+
       
       /************************************************************************/
       //copy autoflow record to autoflowHistory table:
@@ -3249,6 +3291,72 @@ void US_ReporterGMP::generate_report( void )
     }
   
 }
+
+
+//read eSign GMP record for assigned oper(s) && rev(s) && status
+QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QString aID)
+{
+  QMap< QString, QString> eSign_record;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+      return eSign_record;
+    }
+
+  QStringList qry;
+  qry << "get_gmp_review_info_by_autoflowID" << aID;
+  qDebug() << "read eSing rec, qry -- " << qry;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )      // e-Sign record exists
+    {
+      while ( db->next() )
+	{
+	  eSign_record[ "ID" ]                   = db->value( 0 ).toString(); 
+	  eSign_record[ "autoflowID" ]           = db->value( 1 ).toString();
+	  eSign_record[ "autoflowName" ]         = db->value( 2 ).toString();
+	  eSign_record[ "operatorListJson" ]     = db->value( 3 ).toString();
+	  eSign_record[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	  eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	  eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	  eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	  eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	  eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
+	                
+	  eSign_record[ "isEsignRecord" ]        = QString("YES");
+	}
+    }
+  else
+    {
+      //No record, so no oper/revs assigned!
+      qDebug() << "No e-Sign GMP record exists!!";
+      eSign_record. clear();
+    }
+
+  return eSign_record;
+}
+
+//form a string of opers/revs out of jsonDoc
+void US_ReporterGMP::get_assigned_oper_revs( QJsonDocument jsonDoc, QStringList& roa_list )
+{
+  if ( !jsonDoc. isArray() )
+    {
+      qDebug() << "jsonDoc not a JSON, and/or not an JSON Array!";
+      return;
+    }
+  
+  QJsonArray jsonDoc_array  = jsonDoc.array();
+  for (int i = 0; i < jsonDoc_array.size(); ++i )
+    roa_list << jsonDoc_array[i].toString();
+}
+
 
 // Scan database for models associated with run sets
 QStringList  US_ReporterGMP::scan_dbase_models( QStringList runIDs )

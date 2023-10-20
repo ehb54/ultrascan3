@@ -8154,7 +8154,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        qDebug() << "revListJsonArray -- "  << revListJsonArray;
        qDebug() << "apprListJsonArray -- " << apprListJsonArray;
        qDebug() << "smeListJsonArray -- " << smeListJsonArray;
-       
+
+       /********** THIS WILL NOT BE USED HERE **********************/
        //Minimum structure of eSignStatusJson field:
        QString eSignStatusJson = "{\"to_sign\":[";
        for (int i=0; i<oper_rev_joinedList.size(); ++i )
@@ -8165,6 +8166,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        eSignStatusJson += "]}";
        
        qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /***************************************************************/
+       
        
        //Minimum structure of logJson when record created from scratch:
        /** 
@@ -8204,7 +8207,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   << revListJsonArray
 	   << apprListJsonArray
 	   << smeListJsonArray
-	   << eSignStatusJson       
+	 // << eSignStatusJson       
 	   << logJsonFirstTime;     
        
        qDebug() << "new_gmp_review_record qry -- " << qry;
@@ -8431,7 +8434,8 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
        qDebug() << "revListJsonArray -- "  << revListJsonArray;
        qDebug() << "apprListJsonArray -- " << apprListJsonArray;
        qDebug() << "smeListJsonArray -- " << smeListJsonArray;
-       
+
+       /********** THIS WILL NOT BE USED HERE **********************/
        //Minimum structure of eSignStatusJson field:
        QString eSignStatusJson = "{\"to_sign\":[";
        for (int i=0; i<oper_rev_joinedList.size(); ++i )
@@ -8442,6 +8446,8 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
        eSignStatusJson += "]}";
        
        qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /****************************************************************/
+
        
        //Minimum structure of logJson when record created from scratch:
        /** 
@@ -8481,7 +8487,7 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	   << revListJsonArray
 	   << apprListJsonArray
 	   << smeListJsonArray
-	   << eSignStatusJson       
+	 //<< eSignStatusJson       
 	   << logJsonFirstTime;     
        
        qDebug() << "new_gmp_review_record qry -- " << qry;

@@ -535,6 +535,9 @@ class US_ReporterGMP : public US_Widgets
 	void plot_pseudo3D( QString, QString );
 	bool modelGuidExistsForStage( QString, QString );
 	void process_combined_plots ( QString );
+
+  QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
+  void get_assigned_oper_revs( QJsonDocument, QStringList& );
 	
 	QString indent    (     int  )  const;
 	QString table_row( const QString&, const QString& ) const;
