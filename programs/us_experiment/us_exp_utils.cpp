@@ -408,7 +408,10 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
          if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
               (allPButtons[i]->text()).contains("View Ranges" ) ||
               (allPButtons[i]->text()).contains("View Experiment Details" ) ||
-              (allPButtons[i]->text()).contains("Test Connection" ) )
+              (allPButtons[i]->text()).contains("Test Connection" ) ||
+	      (allPButtons[i]->text()).contains("Add to List" ) ||
+	      (allPButtons[i]->text()).contains("Remove Last" )
+	      )
             allPButtons[i]->setEnabled(true);
          else
             allPButtons[i]->setEnabled(false);
@@ -422,7 +425,16 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
 	//     allCBoxes[i]->setEnabled(true);
 	//   }
 	// else
-	allCBoxes[i]->setEnabled(false);
+	if ( ( allCBoxes[i]->objectName() == "ChooseOper" ) ||
+	     ( allCBoxes[i]->objectName() == "ChooseRev" )  ||
+	     ( allCBoxes[i]->objectName() == "ChooseAppr" ) ||
+	     ( allCBoxes[i]->objectName() == "ChooseSme" ) 
+	     )
+	  {
+	    allCBoxes[i]->setEnabled(true);
+	  }
+	else
+	  allCBoxes[i]->setEnabled(false);
       }
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(false);

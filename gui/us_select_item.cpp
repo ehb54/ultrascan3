@@ -152,7 +152,8 @@ void US_SelectItem::build_layout( const QString titl )
 	   le_info->setText(tr( "Information on one or more developmental runs based on previously completed experiments is available."
 				"<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Development Run to Follow\"</ul></li>"
 				"<ul><li>Alternatively, you can click \"Setup New Development Run\" to modify an existing analysis protocol and re-analyze data</ul></li>"
-				"<ul><li>Records can be deleted (\"Delete Record\"). NOTE that deleted runs cannot be monitored with this program</ul></li>" ));
+				"<ul><li>Records can be deleted (\"Delete Record\"). NOTE that deleted runs cannot be monitored with this program</ul></li>"
+				"<ul><li>Finally, selected record can be marked as \"Failed\". The program will re-initialize the run from the 3. IMPORT stage</ul></li>"));
 	 }
        else
 	 {
