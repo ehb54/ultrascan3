@@ -8549,19 +8549,27 @@ void US_Edit::write_auto( void )
 
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
-       qDebug() << channels_all[i];
+       qDebug() << "BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i];
        isSet_ref_wvl[ channels_all[i] ] = false;
      }
 
+   //DEBUG
+   for ( int j = 0; j < triples_all_optics.size(); ++j )
+     qDebug() << "BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j];
+   
+   
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
    QStringList AnalysisIDs;
    
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
+       qDebug() << "AUTOFLOW_ANALYSIS: channel name -- " << channels_all[i];
        for ( int j = 0; j < triples_all_optics.size(); ++j )
 	 {
 	   if ( triples_all_optics[j].contains( channels_all[i] ) )
 	     {
+	       qDebug() << "AUTOFLOW_ANALYSIS: triple " << triples_all_optics[j] <<  " ,containing channel " <<  channels_all[i];
+	       
 	       int ID = 0;
 	       QString json_status;
 	       

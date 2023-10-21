@@ -278,6 +278,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
+      qDebug() << "GUI: job1run, job2run, job3run, job4run, job5run -- "
+	       << job1run << job2run << job3run << job4run << job5run;
 
       if ( triple_name_width > max_width )
        	max_width =  triple_name_width; 
