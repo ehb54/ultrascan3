@@ -862,9 +862,52 @@ void US_SelectItem::set_unset_failed_autoflow()
        if ( !isFailed )
 	 {
 	   //Setting as FAILED: additional info (reason, stage) can be specified:
-	   US_FailedRunGui * fdiag = new US_FailedRunGui( protocol_details );
-	   connect( fdiag, SIGNAL( failed_status_set() ), this, SLOT( show_autoflow_run_as_failed() ));
-	   fdiag -> show();
+	   if (  protocol_details[ "gmpRun" ] == "YES " )
+	     {
+	       US_FailedRunGui * fdiag = new US_FailedRunGui( protocol_details );
+	       connect( fdiag, SIGNAL( failed_status_set() ), this, SLOT( show_autoflow_run_as_failed() ));
+	       fdiag -> show();
+	     }
+	   else // For non-GMP: just repeat as for GMP, but create "empty" autoflowFailed record & attach to the autoflow 
+	     {
+	       int autoflowFailedID = 0;
+	       q.clear();
+	       q << "new_autoflow_failed_record"
+		 << AutoflowID
+		 << "N/A"
+		 << "reason: non-GMP";
+	       
+	       autoflowFailedID = db->functionQuery( q );
+	       
+	       if ( !autoflowFailedID )
+		 {
+		   QMessageBox::warning( this, tr( "AutoflowFailed Record Problem" ),
+					 tr( "autoflowFailed: There was a problem with creating a record in autoflowFailed table \n" ) );
+		   
+		   return;
+		 }
+	       
+	       //update 'failed' in autoflow:
+	       q.clear();
+	       q << "update_autoflow_failedID"
+		 << AutoflowID
+		 << QString::number( autoflowFailedID );
+	       
+	       qDebug() << "Query for update_autoflow_failedID -- " << q;
+	       
+	       int status = db->statusQuery( q );
+	       
+	       if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+		 {
+		   QMessageBox::warning( this,
+					 tr( "Autoflow's failedID field Not Updated" ),
+					 tr( "No autoflow record\n"
+					     "associated with this experiment." ) );
+		   return;
+		 }
+	       
+	       show_autoflow_run_as_failed();
+	     }
 	 }
        else
 	 {
