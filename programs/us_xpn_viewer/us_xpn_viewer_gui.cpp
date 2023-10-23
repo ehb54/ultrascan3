@@ -1463,11 +1463,12 @@ bool US_XpnDataViewer::check_sysdata_connection( void )
   //US_Sleep::msleep( 400 );
 
   link1->disconnectFromServer();
-  delete link1;
   
   bool combined_check = status_sys_data & link1->connected_itself;
   
   qDebug() << "status_sys_data & connected_itself = ? " << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+
+  delete link1;
   
   if ( !combined_check )
     {
