@@ -15,7 +15,7 @@
 #include "us_tmst_plot.h"
 #include "us_tar.h"
 #include "us_defines.h"
-#include "../us/us_revision.h"
+#include "us_revision.h"
 
 #define MIN_NTC   25
 
