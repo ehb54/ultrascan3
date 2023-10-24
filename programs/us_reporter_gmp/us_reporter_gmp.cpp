@@ -11,11 +11,11 @@
 #include "us_constants.h"
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
-#include "us_fematch/us_thread_worker.h"
+#include "../us_fematch/us_thread_worker.h"
 #include "us_tmst_plot.h"
 #include "us_tar.h"
 #include "us_defines.h"
-#include "us/us_revision.h"
+#include "../us/us_revision.h"
 
 #define MIN_NTC   25
 
