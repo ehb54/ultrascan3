@@ -561,7 +561,9 @@ for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
 //*DEBUG*
       int kstep      = speed_steps.count();
       int kscan      = speed_steps[ 0 ].scans;
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
+
+      //ALEXEY: #speed steps from TimeStamp can be bigger than what's read from DB?? 
+      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ ) 
       {
          if ( jj < kstep )
          {
