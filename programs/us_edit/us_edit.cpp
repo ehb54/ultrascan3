@@ -8555,7 +8555,7 @@ void US_Edit::write_auto( void )
 
    // Now, remove duplicates from channels array, fill QMap keeping track on if reference wavelength set for each channel (if MWL) 
    channels_all       .removeDuplicates();
-   //triples_all_optics .removeDuplicates(); //Absence of this caused incorrect analyses list: need to test!!!
+   triples_all_optics .removeDuplicates(); //Absence of this caused incorrect analyses list: need to test!!!
    
      
    for ( int i = 0; i < channels_all.size(); ++i  )
