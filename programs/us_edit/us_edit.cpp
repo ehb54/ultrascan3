@@ -8599,7 +8599,7 @@ void US_Edit::write_auto( void )
 		       qDebug() << triples_all_optics[j] << json_status;
 
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
-
+		       
 		       if (ID)
 			 create_autoflowAnalysisStages_record( dbP, ID );
 		     }
@@ -10722,6 +10722,16 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl_auto( int trx )
 {
+  
+  US_Passwd pw;
+  US_DB2* dbP            = new US_DB2( pw.getPasswd() );
+
+  if ( dbP->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + dbP->lastError() );
+      return;
+    }
 
   // triple_index = trx;
 
@@ -10867,8 +10877,10 @@ void US_Edit::write_mwl_auto( int trx )
                     + "." + scell + "." + schan + ".";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
+   QString filebase_qry   = files[ idax ].section( ".",  0, -6 );
+   QString triplename_qry = scell + "." + schan + ".";
+   
    // Loop to output a file/db-record for each wavelength of the cell/channel
-
    for ( int wvx = 0; wvx < current_wvlns_list.size(); wvx++ )           //ALEXEY: needs to be looped over channels, not only current channel
    {
       QString swavl    = current_wvlns_list[ wvx ];
@@ -10889,8 +10901,17 @@ void US_Edit::write_mwl_auto( int trx )
          editGUIDs.replace( idax, editGUID );
       }
 
-      QString rawGUID  = US_Util::uuid_unparse(
-            (unsigned char*)outData[ odax ]->rawGUID );
+
+      //ALEXEY: instead -- get rawDataGUID based on query:
+      // select rawDataGUID from rawData where filename like '%MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985%2.A.260%';
+      // filename: MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985.23102502280.RI.2.A.260.xml
+      triplename_qry += swavl;
+
+      QString rawGUID = get_rawDataGUID( dbP, filebase_qry, triplename_qry );
+
+      qDebug() << "rawGUID -- " <<rawGUID;
+      // QString rawGUID  = US_Util::uuid_unparse(
+      //       (unsigned char*)outData[ odax ]->rawGUID );
 
 
       // Output the edit XML file
@@ -10942,6 +10963,32 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 
    if ( runType_combined_IP_RI ) 
      cb_triple->disconnect();
+}
+
+//get rawDataGUID based on filebase && triple names
+QString US_Edit::get_rawDataGUID( US_DB2* db, QString filebase_qry, QString triplename_qry )
+{
+
+  QString rawID   = QString("");
+  QString rawGUID = QString("");
+  
+  QStringList qry;
+  qry << "get_rawDataGUID_from_filename" << filebase_qry << triplename_qry;
+  qDebug() << "get_rawDataGUID_from_filename QRY -- " << qry;
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      rawID   = db->value( 0 ).toString();
+      rawGUID = db->value( 1 ).toString();
+    }
+
+  if ( rawGUID.isEmpty() )
+    qDebug() << "EMPTY rawID,rawGUID!!";
+
+  qDebug() << "rawDataID, GUID -- " << rawID << ", " << rawGUID;
+
+  return rawGUID;
 }
 
 
