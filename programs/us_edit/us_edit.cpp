@@ -10867,9 +10867,9 @@ void US_Edit::write_mwl_auto( int trx )
    QString schan    = celchn.section( "/", 1, 1 ).simplified();
    QString tripbase = scell + " / " + schan + " / ";
    int     idax     = triples.indexOf( tripbase + current_wvlns_list[ 0 ] ); 
-   int     odax     = index_data_auto( trx, 0 );                             //CORRECT! {first odax in a triple}                                
+   //int     odax     = index_data_auto( trx, 0 );                             //CORRECT! {first odax in a triple}                                
 
-   qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
+   //qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
 
    QString filebase = files[ idax ].section( ".",  0, -6 )
                     + "." + editLabel + "."
@@ -10891,7 +10891,7 @@ void US_Edit::write_mwl_auto( int trx )
 
       
       qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename
-		<< ", trx " << trx << ", wvx " << wvx << ", odax " << odax;
+		<< ", trx " << trx << ", wvx " << wvx; // << ", odax " << odax;
 
       QString editGUID = editGUIDs[ idax ];
 
@@ -10905,9 +10905,9 @@ void US_Edit::write_mwl_auto( int trx )
       //ALEXEY: instead -- get rawDataGUID based on query:
       // select rawDataGUID from rawData where filename like '%MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985%2.A.260%';
       // filename: MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985.23102502280.RI.2.A.260.xml
-      triplename_qry += swavl;
+      QString triplename_qry_wvl = triplename_qry + swavl;
 
-      QString rawGUID = get_rawDataGUID( dbP, filebase_qry, triplename_qry );
+      QString rawGUID = get_rawDataGUID( dbP, filebase_qry, triplename_qry_wvl );
 
       qDebug() << "rawGUID -- " <<rawGUID;
       // QString rawGUID  = US_Util::uuid_unparse(
@@ -10949,7 +10949,7 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
             return;
       }  // END:  DB output
 
-      ++odax;      //Got you!!
+      //++odax;      //Got you!!
       
    }  // END:  wavelength-in-cellchannel loop
 
