@@ -2,12 +2,40 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_norm_profile.h"
+#include "us_load_auc.h"
+#include <QFileInfo>
 
 US_Norm_Profile::US_Norm_Profile(): US_Widgets()
 {
     setWindowTitle("Buoyancy Equilibrium Data Analysis");
     QPalette p = US_GuiSettings::frameColorDefault();
     setPalette( p );
+
+    QLabel* lb_runinfo = us_label("Data Info");
+    le_runinfo = us_lineedit("", 0, true);
+    QHBoxLayout *runinfo_lyt = new QHBoxLayout();
+    runinfo_lyt->addWidget(lb_runinfo);
+    runinfo_lyt->addWidget(le_runinfo);
+
+    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+//    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+//    specs->addWidget( pb_investigator, s_row, 0 );
+
+    if ( US_Settings::us_inv_level() < 1 )
+       pb_investigator->setEnabled( false );
+
+    int id = US_Settings::us_inv_ID();
+    QString number  = ( id > 0 ) ?
+                         QString::number( US_Settings::us_inv_ID() ) + ": "
+                              : "";
+    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), -1, true );
+    le_investigator->setMinimumWidth(150);
+//    specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+    QHBoxLayout *inv_lyt = new QHBoxLayout();
+    inv_lyt->addWidget(pb_investigator);
+    inv_lyt->addWidget(le_investigator);
+
+    disk_controls = new US_Disk_DB_Controls;
 
     pb_load = us_pushbutton("Load Data");
     pb_reset = us_pushbutton("Reset Data");
@@ -73,10 +101,13 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     plot->enableAxis( QwtPlot::yLeft  , true );
     plot->setCanvasBackground(QBrush(Qt::white));
 
-    QHBoxLayout* main_lyt = new QHBoxLayout(this);
+    QVBoxLayout* main_lyt = new QVBoxLayout();
+    QHBoxLayout* body_lyt = new QHBoxLayout();
     QVBoxLayout* left_lyt = new QVBoxLayout();
     QVBoxLayout* right_lyt = new QVBoxLayout();
 
+    left_lyt->addLayout(inv_lyt);
+    left_lyt->addLayout(disk_controls);
     left_lyt->addLayout(load_lyt);
     left_lyt->addWidget(lb_inpList);
     left_lyt->addWidget(lw_inpData);
@@ -94,11 +125,15 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     right_lyt->setMargin(1);
     right_lyt->setSpacing(1);
 
-    main_lyt->addLayout(left_lyt, 1);
-    main_lyt->addLayout(right_lyt, 5);
-    main_lyt->setMargin(1);
-    main_lyt->setSpacing(0);
+    body_lyt->addLayout(left_lyt, 1);
+    body_lyt->addLayout(right_lyt, 3);
+    body_lyt->setMargin(1);
+    body_lyt->setSpacing(0);
 
+    main_lyt->addLayout(runinfo_lyt);
+    main_lyt->addLayout(body_lyt);
+    main_lyt->setMargin(0);
+    main_lyt->setSpacing(0);
     this->setLayout(main_lyt);
 
     picker = new US_PlotPicker(plot);
@@ -113,6 +148,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
     connect(lw_inpData, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
             this, SLOT(slt_addRmItem(QListWidgetItem *)));
+    connect(lw_inpData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_inItemSel(int )));
+    connect(lw_selData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_outItemSel(int )));
     connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
     connect(pb_cleanList, SIGNAL(clicked()), this, SLOT(slt_cleanList()));
 
@@ -181,37 +218,64 @@ void US_Norm_Profile::slt_cleanList(void){
 
 void US_Norm_Profile::slt_loadAUC(){
 
-    QStringList fPath = QFileDialog::getOpenFileNames(this, tr("Open AUC File"),
+   bool isLocal = ! disk_controls->db();
+   if (! isLocal){
+      QVector< US_DataIO::RawData > allData;
+      QStringList triples;
+      QString workingDir;
+      US_LoadAUC* dialog = new US_LoadAUC( isLocal, allData, triples, workingDir );
+
+      if ( dialog->exec() == QDialog::Rejected )  return;
+
+      QFileInfo finfo(workingDir);
+      QString runid = finfo.baseName();
+      QString dirname = finfo.dir().absolutePath();
+
+      for (int i = 0; i < triples.size(); i++){
+         QStringList ccw = triples.at(i).split(u'/');
+         US_DataIO::RawData rawData = allData.at(i);
+         QString fn = tr("%1.%2.%3.%4").arg(runid, ccw.at(0).trimmed(),
+                                            ccw.at(1).trimmed(), ccw.at(2).trimmed());
+         QString fp = tr("%1.%2.auc").arg(dirname, fn);
+         filenames << fn;
+         filePaths << fp;
+         lw_inpData->addItem(fn);
+         xvalues << rawData.xvalues;
+         yvalues << rawData.scanData.last().rvalues;
+      }
+   }else {
+      QStringList fPath = QFileDialog::getOpenFileNames(this, tr("Open AUC File"),
                                                     US_Settings::importDir(),
                                                     tr(".auc (*.auc)"));
-    if (fPath.size() == 0)
-        return;
+      if (fPath.size() == 0)
+         return;
 
-    QStringList badFiles;
-    for (int i = 0; i < fPath.size(); i++){
-        if (filePaths.contains(fPath.at(i)))
+      QStringList badFiles;
+      for (int i = 0; i < fPath.size(); i++){
+         if (filePaths.contains(fPath.at(i)))
             continue;
-        US_DataIO::RawData rawData;
-        int state = US_DataIO::readRawData(fPath.at(i), rawData);
-        QFileInfo finfo = QFileInfo(fPath.at(i));
-        if (state != US_DataIO::OK){
-            badFiles << finfo.fileName();
-            continue;
-        }
+         US_DataIO::RawData rawData;
+         int state = US_DataIO::readRawData(fPath.at(i), rawData);
+         QFileInfo finfo = QFileInfo(fPath.at(i));
+         if (state != US_DataIO::OK){
+           badFiles << finfo.fileName();
+           continue;
+         }
 
-        xvalues << rawData.xvalues;
-        QString fname = finfo.fileName();
-        fname.chop(4);
-        filenames << fname;
-        filePaths << fPath.at(i);
-        lw_inpData->addItem(fname);
-        yvalues << rawData.scanData.last().rvalues;;
-    }
-    if (badFiles.size() != 0){
-        QMessageBox::warning(this, "Error!",
-                             "These files could not be loaded!\n" +
-                             badFiles.join("\n"));
-    }
+         xvalues << rawData.xvalues;
+         QString fname = finfo.fileName();
+         fname.chop(4);
+         filenames << fname;
+         filePaths << fPath.at(i);
+         lw_inpData->addItem(fname);
+         yvalues << rawData.scanData.last().rvalues;
+      }
+      if (badFiles.size() != 0){
+      QMessageBox::warning(this, "Error!",
+                              "These files could not be loaded!\n" +
+                                  badFiles.join("\n"));
+      }
+   }
 }
 
 QMap<QString, QVector<double>> US_Norm_Profile::trapz(
@@ -678,4 +742,22 @@ void US_Norm_Profile::closeEvent(QCloseEvent *event)
 {
     emit widgetClosed();
     event->accept();
+}
+
+void US_Norm_Profile::slt_inItemSel(int row)
+{
+    if (row < 0){
+        return;
+    } else {
+        le_runinfo->setText(lw_inpData->item(row)->text());
+    }
+}
+
+void US_Norm_Profile::slt_outItemSel(int row)
+{
+    if (row < 0){
+        return;
+    } else {
+        le_runinfo->setText(lw_selData->item(row)->text());
+    }
 }
