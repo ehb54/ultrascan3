@@ -548,6 +548,14 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 
    le_label       ->setText ( currProto->exp_label );
 
+   //if PROTO_DEV: populate runName && make it read-only
+   if ( mainw-> us_prot_dev_mode )
+     {
+       le_runid  -> setEnabled( false );
+       le_label  -> setText( currProto->exp_label );
+       le_label  -> setEnabled( false );
+     }
+       
    check_user_level();
 
    //Here, check if UL<3 is set as operator for each Optima:

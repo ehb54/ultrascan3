@@ -394,6 +394,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   epanGeneral -> loaded_proto = 1;
   
   qDebug() << "In load_protocol: currProto.investigator 1 --  " <<  currProto.investigator;
+
+  //set runName && label straight from the autoflow record:
+  currProto.runname   = protocol_details[ "experimentName" ];
+  currProto.exp_label = protocol_details[ "label" ];
   
   initPanels();
   
