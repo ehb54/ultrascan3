@@ -14,14 +14,15 @@ US_ReportGMP::US_ReportGMP()
 
   ReportItem initItem;
   
-  initItem.type             = QString("s");
-  initItem.method           = QString("2DSA-IT");
-  initItem.range_low        = 3.2;
-  initItem.range_high       = 3.7;
-  initItem.integration_val  = 0.57;
-  initItem.tolerance        = 10; 
-  initItem.total_percent    = 95;
-  initItem.combined_plot    = 1;
+  initItem.type              = QString("s");
+  initItem.method            = QString("2DSA-IT");
+  initItem.range_low         = 3.2;
+  initItem.range_high        = 3.7;
+  initItem.integration_val   = 0.57;
+  initItem.tolerance         = 10; 
+  initItem.total_percent     = 95;
+  initItem.combined_plot     = 1;
+  initItem.ind_combined_plot = 1;
 
   initItem.integration_val_sim   = -1;
   initItem.total_percent_sim     = -1;

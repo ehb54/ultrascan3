@@ -179,6 +179,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
+         QMap<QString, QTreeWidgetItem *> tripleMaskIndComboPlotItem;
+         
 
 	 //CombPlots masks
 	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
@@ -274,6 +276,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QString > intensityRIMap;
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
+         QMap< QString, QMap< QString, QMap< QString, bool> > > indComboPlotsMapTripleTypeRangeBool;
 	 QMap< QString, QStringList > CombPlots_Type_to_Models;
          QMap< QString, QString > eSign_details;
 

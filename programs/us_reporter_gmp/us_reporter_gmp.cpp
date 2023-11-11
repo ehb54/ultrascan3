@@ -1862,7 +1862,8 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 	     << cAPp.parms[ 0 ].channel
 	     << reportGMP.rmsd_limit
 	     << reportGMP.wavelength
-	     << reportGMP.reportItems[ 0 ].type;
+	     << reportGMP.reportItems[ 0 ].type
+	     << reportGMP.reportItems[ 0 ].ind_combined_plot;
   else
     qDebug() << "AProfile's && ReportGMP's details: -- "
 	     << currAProf.aprofname
@@ -2360,6 +2361,7 @@ void US_ReporterGMP::build_perChanTree ( void )
   QList< bool > tripleReportMasksPseudoList_vals;
   QStringList tripleReportMasksPlotList;
   QStringList tripleReportMasksPseudoList;
+  QStringList tripleReportMasksIndividualPlotList;
   
   int wiubase = (int)QTreeWidgetItem::UserType;
   
@@ -2431,42 +2433,43 @@ void US_ReporterGMP::build_perChanTree ( void )
 		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
 		  QString type           = curr_item.type;
 		  QString method         = curr_item.method;
+		  if( method.contains ("PCSA") )
+		    method = "PCSA";
 		  int     combPlot       = curr_item.combined_plot;
 
 		  QString t_m = type + "," + method;
 		  if ( combPlot )
 		    comboPlotsMapTypes[ t_m ] = 1;
+
+		  //Use ind_combined_plot here, to mark if ind. plots for triple's reportItem is to be plot
+		  int     ind_combPlot   = curr_item.ind_combined_plot;
+		  QString range_l_h = QString::number( curr_item.range_low ) + ":" + QString::number( curr_item.range_high );
+
+		  if ( Triple_to_Models[ tripleName ].contains( method ))
+		    {
+		      if ( ind_combPlot )
+			{
+			  //QMap< QString (triple), QMap< QString( type_method ), QStringList( ranges ) > >
+			  indComboPlotsMapTripleTypeRangeBool[ tripleName ][ t_m ][range_l_h] = true;
+			}
+		      else
+			indComboPlotsMapTripleTypeRangeBool[ tripleName ][ t_m ][range_l_h] = false;
+		    }
 		}
 	      ////////////////////////////////////////////////////////
 	      
-	      qDebug() << reportGMP. tot_conc_mask
+	      qDebug() << "For triple, " << tripleName << ", and models: " << Triple_to_Models[ tripleName ]
+		       << reportGMP. tot_conc_mask
 		       << reportGMP. rmsd_limit_mask
 		       << reportGMP. av_intensity_mask
 		       << reportGMP. experiment_duration_mask
 		       << reportGMP. integration_results_mask
 		       << reportGMP. plots_mask
 		       << reportGMP. pseudo3d_mask;
-
-	      tripleReportMasksList.clear();
-	      tripleReportMasksList << "Total Concentration"
-				    << "RMSD Limit"
-				    << "Minimum Intensity"
-		//<< "Experiment Duration"
-				    << "Loading Volume"
-				    << "Integration Results"
-				    << "Plots"
-				    << "Pseudo3d Distributions";
 	      
-	      tripleReportMasksList_vals.clear();
-	      tripleReportMasksList_vals << reportGMP. tot_conc_mask
-	      				 << reportGMP. rmsd_limit_mask
-	      				 << reportGMP. av_intensity_mask
-		//<< reportGMP. experiment_duration_mask
-					 << true
-	      				 << reportGMP. integration_results_mask
-					 << reportGMP. plots_mask
-					 << reportGMP. pseudo3d_mask;
 
+
+	  
 	      //define models per triple:
 	      tripleReportModelsList.clear();
 	      tripleReportModelsList = Triple_to_Models[ tripleName ];
@@ -2481,6 +2484,43 @@ void US_ReporterGMP::build_perChanTree ( void )
 		  tripleItemModelNameList.clear();
 		  tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
 		  tripleModelItem [ tripleModelName ] = new QTreeWidgetItem(  tripleItem [ tripleItemName ], tripleItemModelNameList, wiubase);
+
+		  //Populate tripleReportMasksList && values from scratch
+		  tripleReportMasksList.clear();
+		  tripleReportMasksList << "Total Concentration"
+					<< "RMSD Limit"
+					<< "Minimum Intensity"
+		    //<< "Experiment Duration"
+					<< "Loading Volume"
+					<< "Integration Results"
+					<< "Plots"
+					<< "Pseudo3d Distributions";
+		  
+		  tripleReportMasksList_vals.clear();
+		  tripleReportMasksList_vals << reportGMP. tot_conc_mask
+					     << reportGMP. rmsd_limit_mask
+					     << reportGMP. av_intensity_mask
+		    //<< reportGMP. experiment_duration_mask
+					     << true
+					     << reportGMP. integration_results_mask
+					     << reportGMP. plots_mask
+					     << reportGMP. pseudo3d_mask;
+		  
+		  //Here: add "Individual Distributions" to tripleReportMasksList IF there is/are type-method(s) matching current model:
+		  QStringList type_methods_list = indComboPlotsMapTripleTypeRangeBool[ tripleName ].keys();
+		  for ( int tm=0; tm<type_methods_list.size(); tm++ )
+		    {
+		      //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
+		      QString c_method = type_methods_list[ tm ].split(",")[1];
+		      if ( c_method == tripleReportModelsList[ mm ] )
+			{
+			  qDebug() << "In Model, list, ind. : " <<  type_methods_list << tripleReportModelsList[ mm ];
+			  tripleReportMasksList      << "Individual Combined Distributions";
+			  tripleReportMasksList_vals << true;
+
+			  break;
+			}
+		    }
 		  
 		  //start triple's masks
 		  for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
@@ -2584,6 +2624,65 @@ void US_ReporterGMP::build_perChanTree ( void )
 			    }
 			}
 		      //end of pseudo3d distr. masks
+
+		      //Individual Combined Distro
+		      if ( tripleMaskItemName.contains("Individual") )
+			{
+			  tripleReportMasksIndividualPlotList.clear();
+			  //populate tripleReportMasksIndividualPlotList based on type-method entries in the reportItem:
+			  QStringList types_methods_list = indComboPlotsMapTripleTypeRangeBool[ tripleName ].keys();
+			  for ( int tm=0; tm<types_methods_list.size(); tm++ )
+			    {
+			      //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
+			      QString c_method = types_methods_list[ tm ].split(",")[1];
+			      QString c_type   = types_methods_list[ tm ].split(",")[0];
+			      if ( c_method ==  tripleReportModelsList[ mm ] )
+				{
+				  QMap< QString, bool> c_ranges_bool = indComboPlotsMapTripleTypeRangeBool[ tripleName ][ types_methods_list[ tm ] ];
+				  QMap<QString, bool>::iterator r_bool;
+				  for ( r_bool = c_ranges_bool.begin(); r_bool != c_ranges_bool.end(); ++r_bool )
+				    {
+				      QString r_key = r_bool.key();
+				      bool r_value  = r_bool.value();
+				      QString to_show_ind = r_value ? "YES" : "NO";
+				      QString c_type_range = c_type + "[" + r_key + "]" + "--" + to_show_ind;
+				      tripleReportMasksIndividualPlotList << c_type_range;
+				    }
+				}
+			    }
+			  //Now, mark checkboxes
+			  bool top_ind_comboPlot = false;
+			  for ( int icp = 0; icp < tripleReportMasksIndividualPlotList.size(); ++icp )
+			    {
+			      QString individualPlotName = tripleReportMasksIndividualPlotList[ icp ];
+			      QString individualPlotName_name = tripleReportMasksIndividualPlotList[ icp ].split("--")[0];
+			      QString individualPlotName_show = tripleReportMasksIndividualPlotList[ icp ].split("--")[1];
+			      QStringList individualPlotNameList;
+			      individualPlotNameList << "" << indent.repeated( 5 ) + individualPlotName_name;
+
+			      tripleMaskIndComboPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ],
+												    individualPlotNameList, wiubase);
+			      //Checked/no
+			      qDebug() << "To show/no Ind.ComboPlots -- "
+				       << tripleReportMasksList_vals[ kk ]
+				       << individualPlotName_show;
+			      if ( tripleReportMasksList_vals[ kk ] && individualPlotName_show=="YES")
+				{
+				  tripleMaskIndComboPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+				  ++checked_masks;
+				  top_ind_comboPlot = true;
+				}
+			      else
+				tripleMaskIndComboPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
+			    }
+
+			  //Now, set top-level, model-specific Ind. Comboplot item
+			  if ( top_ind_comboPlot )
+			    tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+			  else
+			    tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
+			}
+		      //end of Individual Combined plots
 		    }
 		  
 		  if ( checked_masks )
@@ -2899,6 +2998,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   tripleModelItem    .clear();
   tripleMaskItem     .clear();
   tripleMaskPlotItem .clear();
+  tripleMaskIndComboPlotItem. clear();
 
   //cleaning combPlotsTriple tree & it's objects
   combPlotsTree ->clear();
@@ -2936,6 +3036,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   //clear comboplots Maps
   comboPlotsMap            .clear();
   comboPlotsMapTypes       .clear();
+  indComboPlotsMapTripleTypeRangeBool. clear();
   CombPlots_Type_to_Models .clear();
 
   //

@@ -28,6 +28,7 @@ class US_UTIL_EXTERN US_ReportGMP
 	double  tolerance;
 	double  total_percent;
 	int     combined_plot;
+	int     ind_combined_plot;
 	
 	//Integration results
 	double  integration_val_sim;
@@ -79,8 +80,6 @@ class US_UTIL_EXTERN US_ReportGMP
       bool pseudo3d_pcsa_mw_ff0;
       bool pseudo3d_pcsa_mw_d;
 
-
-      
       
       //Rest of parameters followign from protocol: not used so far
       int     scan_number;
