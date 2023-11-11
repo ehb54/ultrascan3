@@ -1544,6 +1544,8 @@ void US_ReporterGMP::load_gmp_run ( void )
   //Capture tree state:
   JsonMask_gen_loaded     = tree_to_json ( topItem );
   JsonMask_perChan_loaded = tree_to_json ( chanItem );
+  //Debug
+  tree_to_json ( topItemCombPlots );
   GMP_report = true;
 
   //compose a message on missing models
@@ -10812,6 +10814,8 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
     MaskStr.ShowTripleModelPseudo3dParts  .clear();
     MaskStr.has_tripleModelPseudo3d_items .clear();
     
+    MaskStr.ShowTripleTypeModelRangeIndividualCombo. clear();
+    
     foreach(const QString& key, json.keys())                                          //over channels
       {
 	int has_channel_items = 0;
@@ -10862,7 +10866,8 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 			  }
 			else  
 			  {
-			    if ( j_key.contains("Plots") ) //deal with plots: separate QJsonObject
+			    //begin "Plots"
+			    if ( j_key.contains("Plots") ) 
 			      { 
 				QJsonObject plotObj = modelObj.value( j_key ).toObject();
 				
@@ -10891,7 +10896,10 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 					     <<  feature_plot_value;
 				  }
 			      }
-			    else if ( j_key.contains("Pseudo3d") )  // deal with Pseudo3d distributions
+			    //end of "Plots"
+
+			    //begin "Pseudo3D"
+			    else if ( j_key.contains("Pseudo3d") )  
 			      {
 				QJsonObject pseudo3dObj = modelObj.value( j_key ).toObject();
 				
@@ -10921,6 +10929,38 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 					     <<  feature_pseudo3d_value;
 				  }
 			      }
+			    //end of "Pseudo3D"
+
+			    //begin "Individual"
+			    else if ( j_key.contains("Individual") ) 
+			      {
+				QJsonObject indComboObj = modelObj.value( j_key ).toObject();
+				
+				foreach ( const QString& p_key, indComboObj.keys() )           //over type[ranges], per model/per triple/per channel
+				  {
+				    QString feature_indCombo_value = indComboObj.value( p_key ).toString();
+				    
+				    //QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString triple_name = key.split(" ")[1].split("-")[0];
+
+				    if ( key.contains( "Interf" ) )
+				      triple_name += "Interference";
+				    else
+				      triple_name += array_key.split(" ")[0];
+
+				    QString model_name  = n_key.split(" ")[0];
+
+				    MaskStr.ShowTripleTypeModelRangeIndividualCombo[ triple_name ][ model_name ][ p_key ] = feature_indCombo_value;
+
+				    qDebug() << "Parse_editedJsonTriples: triple_name: " <<  triple_name  << ": "
+					     <<  "model_name, j_key, p_key, feature_INDCOMBO_value: "
+					     <<  model_name
+					     <<  j_key
+					     <<  p_key
+					     <<  feature_indCombo_value;
+				  }
+			      }
+			    //end of "Individual"
 			  }
 		      }
 		  }
@@ -10951,7 +10991,7 @@ void US_ReporterGMP::parse_edited_combPlots_mask_json( const QString maskJson, C
       QJsonArray json_array = value.toArray();
       for (int i=0; i < json_array.size(); ++i )  
 	{
-	  foreach(const QString& array_key, json_array[i].toObject().keys())        //over triples
+	  foreach(const QString& array_key, json_array[i].toObject().keys())        //over models (aka methods)
 	    {
 	      QJsonValue show_plot = json_array[i].toObject().value(array_key);
 

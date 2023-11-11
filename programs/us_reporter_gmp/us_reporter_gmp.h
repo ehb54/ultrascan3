@@ -104,6 +104,9 @@ class US_ReporterGMP : public US_Widgets
 	   //     triple_name     model           feature  value  [All types of pseudo distr.] 
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPseudo3dParts;
 	   QMap < QString, QMap < QString, int > >  has_tripleModelPseudo3d_items;
+
+	   //     Individual Combined Plots
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleTypeModelRangeIndividualCombo;
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
