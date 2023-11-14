@@ -107,6 +107,7 @@ class US_ReporterGMP : public US_Widgets
 
 	   //     Individual Combined Plots
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleTypeModelRangeIndividualCombo;
+	   QMap < QString, QMap < QString, int > >  has_tripleModelIndCombo_items;
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
@@ -540,7 +541,9 @@ class US_ReporterGMP : public US_Widgets
 	void plotres( QMap < QString, QString > &   );
 	void plot_pseudo3D( QString, QString );
 	bool modelGuidExistsForStage( QString, QString );
+  bool modelGuidExistsForStage_ind( QString, QString, QString );
 	void process_combined_plots ( QString );
+  void process_combined_plots_individual ( QString, QString );
 
   QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
   void get_assigned_oper_revs( QJsonDocument, QStringList& );

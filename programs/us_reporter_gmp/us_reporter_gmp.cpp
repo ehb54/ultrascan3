@@ -3179,6 +3179,9 @@ void US_ReporterGMP::generate_report( void )
 
 	      //Pseudo3D Distr.
 	      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
+
+	      //Individual Combo plots
+	      process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
 	    }
 	}
 
@@ -3209,12 +3212,19 @@ void US_ReporterGMP::generate_report( void )
 		       << perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ];
 	      
 	      if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
-		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ) 
+		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ||
+		   perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] ) 
 		{
 		  simulate_triple ( currentTripleName, models_to_do[ j ] );
 
 		  //Pseudo3D Distr.
 		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
+
+		  //Individual Combo plots
+		  qDebug() << "INDCOMBO, perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] -- "
+			   << triplename_alt << models_to_do[ j ]
+			   << perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ];
+		  process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
 		}
 	    }
 	}
@@ -5119,6 +5129,8 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    plotres( tripleInfo ); // <------- save plots into files locally
 
    //plot_pseudo3D( tripleInfo );       // <--- psedo3d per triple/model
+
+   
    
    QApplication::restoreOverrideCursor();
 }
@@ -5142,6 +5154,207 @@ bool US_ReporterGMP::modelGuidExistsForStage( QString model, QString mguid)
     }
   
   return isModelGuid;
+}
+
+
+//[IND] Check if model exists for particular stage (2DSA-IT, or 2DSA-MC...) by its modelGUID (for specified triple) 
+bool US_ReporterGMP::modelGuidExistsForStage_ind( QString triple_n, QString model, QString mguid)
+{
+  bool isModelGuid = false;
+
+  for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
+    {
+      QString c_triple_n =  Array_of_tripleNames[ i ];
+      c_triple_n. replace(".","");
+
+      if ( c_triple_n == triple_n )
+	{
+	  QMap< QString, QString > tmapguid =  Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ];
+	  
+	  if ( tmapguid[ model ] == mguid )
+	    {
+	      qDebug() << "For triple, stage: " << triple_n << model << ", there is modelGuid: " << mguid << " (" <<  Array_of_tripleNames[ i ] << ")";
+	      
+	      isModelGuid = true;
+	      break;
+	    }
+	}
+    }
+  
+  return isModelGuid;
+}
+
+
+
+//Individual Combined Plots
+void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, QString stage_model )
+{
+  QString filename_passed = get_filename( triplesname_p );
+  QString triplesname = triplesname_p.replace(".","");
+  
+  sdiag_combplot = new US_DDistr_Combine( "REPORT" );
+  QStringList runIDs_single;
+    
+  runIDs_single << filename_passed;
+  QStringList aDescrs = scan_dbase_models( runIDs_single );
+  //QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+  QList < QStringList > modelDescModifiedList = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+  QStringList modelDescModified     = modelDescModifiedList[ 0 ];
+  QStringList modelDescModifiedGuid = modelDescModifiedList[ 1 ];
+  
+  qDebug() << "[IND] ComboPlots generation: modelDescModified -- "     << modelDescModified;
+  qDebug() << "[IND] ComboPlots generation: modelDescModifiedGuid -- " << modelDescModifiedGuid;
+
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  //mkdir( US_Settings::reportDir(), filename_passed );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename = dirName + "/" + filename_passed + ".";
+
+
+  QStringList CombPlotsFileNames;
+  QStringList plottedIDs_s, plottedIDs_other_type;
+
+  QMap< QStringList, QList< QColor > > plotted_ids_colors_map_s_type;
+  
+  //Choose model from modelDescModifiedGuid matching triplesname && stage_model:
+  bool isModel = false;
+  QString imgComb01File = basename + "Ind_combined" + "." + triplesname + "." + stage_model + ".s20" + svgext;
+  
+  for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+    {
+
+      qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
+      qDebug() << "INDCOMBO_2: " << triplesname << stage_model;
+      //fiter by type|model
+      if ( modelDescModified[ ii ].contains( triplesname ) &&
+	   modelDescModified[ ii ].contains( stage_model ) &&
+	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
+	{
+	  qDebug()  << "INDCOMBO_3: YES ";
+	  
+	  isModel = true;
+	  
+	  //retrieve s,Model combPlot params:
+	  QString t_m = "s," + stage_model;
+	  QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
+	  //qDebug() << "over models: c_params -- " << c_params;
+
+	  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
+	  plotted_ids_colors_map_s_type = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); 
+	}
+    }
+
+  //write plot
+  if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
+    {
+      // Check if to plot individual Combined distributons:
+      // {s,D,f/f0,MW,Radius} {2DSA-IT,2DSA-MC,PCSA,raw} {p_key: {s[3.2:3.7], D[11:15], etc.} }
+      // MaskStr.ShowTripleTypeModelRangeIndividualCombo[ t_name ][ s_name ][ p_key ] = feature_indCombo_value; // 1/0
+      
+      QMap <QString, QStringList> ind_compoplots_type_ranges;
+      
+      QMap < QString, QString > ind_comboplots = perChanMask_edited.ShowTripleTypeModelRangeIndividualCombo[ triplesname ][ stage_model ];
+      QMap<QString, QString >::iterator i_cp;
+      for ( i_cp = ind_comboplots.begin(); i_cp != ind_comboplots.end(); ++i_cp )
+	{
+      	  QString type_range = i_cp.key();
+
+	  QString type  = type_range.split("[")[0];
+	  QString range = type_range.split("[")[1].split("]")[0];
+
+	  if ( i_cp.value().toInt() )
+	    {
+	      ind_compoplots_type_ranges[ type ] << range;
+	    }
+	}
+
+      //plot different types {s,D,MW...}
+      QMap<QString, QStringList >::iterator i_cpt;
+      for ( i_cpt = ind_compoplots_type_ranges.begin(); i_cpt != ind_compoplots_type_ranges.end(); ++i_cpt )
+	{
+	  QString type = i_cpt.key();
+
+	  QMap < QString, QString > c_parms;
+	  QString t_m, c_type;
+	  QString imgComb02File = basename + "Ind_combined" + "." + triplesname + "." + stage_model;
+	  
+	  //types:  0: s20; 1: MW; 2: D; 3: f/f0
+	  if ( type == "s" )
+	    {
+	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      imgComb01File.replace( svgext, pngext ); 
+	      CombPlotsFileNames << imgComb01File;
+
+	      CombPlotsParmsMap       [ imgComb01File ] = plotted_ids_colors_map_s_type. firstKey();
+	      CombPlotsParmsMap_Colors[ imgComb01File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+	    }
+	  //
+	  if ( type == "MW" )
+	    {
+	      imgComb02File += ".MW" + svgext;
+
+	      t_m = "MW," + stage_model;
+	      c_type = "MW";
+	      c_parms = comboPlotsMap[ t_m ];
+	      
+	      plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
+	      
+	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+	      imgComb02File.replace( svgext, pngext );
+	      CombPlotsFileNames << imgComb02File;
+	      
+	      CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+	      CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+	    }
+	  //
+	  if ( type == "D" )
+	    {
+	      imgComb02File += ".D20" + svgext;
+	      	      
+	      t_m = "D," + stage_model;
+	      c_type = "D";
+	      c_parms = comboPlotsMap[ t_m ];
+	      
+	      plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
+	      
+	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+	      imgComb02File.replace( svgext, pngext );
+	      CombPlotsFileNames << imgComb02File;
+	      
+	      CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+	      CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+	    }
+	  //
+	  if ( type == "f/f0" )
+	    {
+	      imgComb02File += ".f_f0" + svgext;
+	      	      
+	      t_m = "f/f0," + stage_model;
+	      c_type = "f/f0";
+	      c_parms = comboPlotsMap[ t_m ];
+	      
+	      plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
+	      
+	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+	      imgComb02File.replace( svgext, pngext );
+	      CombPlotsFileNames << imgComb02File;
+	      
+	      CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+	      CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+	    }
+	  
+	  // reset plot after processign certain type {s,D,MW...}
+	  sdiag_combplot->reset_data_plot1();
+	}
+    }
+
+  //assemble IND combined plots into html
+  assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
+  qApp->processEvents();
 }
 
 
@@ -8436,6 +8649,16 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   bool show_f_mw = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "f/f0-vs-MW 2D Model" ] .toInt() ) ? true : false ;
   bool show_f_s  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "f/f0-vs-s 2D Model" ].toInt() ) ? true : false ;
 
+  // // Check if to plot individual Combined distributons:
+  // // {s,D,f/f0,MW,Radius} {2DSA-IT,2DSA-MC,PCSA,raw} {p_key: {s[3.2:3.7], D[11:15], etc.} }
+  // // MaskStr.ShowTripleTypeModelRangeIndividualCombo[ t_name ][ s_name ][ p_key ] = feature_indCombo_value; // 1/0
+  // bool show_ind_combo_s;
+  // bool show_ind_combo_D;
+  // bool show_ind_combo_f_f0;
+  // bool show_ind_combo_MW;
+  // bool show_ind_combo_Radius;
+
+   
   //Debug
   qDebug() << "triple_name, stage_n: "
 	   << tripleInfo[ "triple_name" ]
@@ -10815,6 +11038,7 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
     MaskStr.has_tripleModelPseudo3d_items .clear();
     
     MaskStr.ShowTripleTypeModelRangeIndividualCombo. clear();
+    MaskStr.has_tripleModelIndCombo_items .clear();
     
     foreach(const QString& key, json.keys())                                          //over channels
       {
@@ -10951,6 +11175,8 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 				    QString model_name  = n_key.split(" ")[0];
 
 				    MaskStr.ShowTripleTypeModelRangeIndividualCombo[ triple_name ][ model_name ][ p_key ] = feature_indCombo_value;
+				    if ( MaskStr.ShowTripleTypeModelRangeIndividualCombo[ triple_name ][ model_name ][ p_key ].toInt() )
+				      ++MaskStr.has_tripleModelIndCombo_items[ triple_name ][ model_name ];
 
 				    qDebug() << "Parse_editedJsonTriples: triple_name: " <<  triple_name  << ": "
 					     <<  "model_name, j_key, p_key, feature_INDCOMBO_value: "
