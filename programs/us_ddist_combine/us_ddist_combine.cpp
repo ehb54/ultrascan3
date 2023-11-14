@@ -1134,6 +1134,10 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
   double sigma_p = 0.01;
   double xmin_p  = 1;
   double xmax_p  = 10;
+  QString ranges_p;
+  
+  qDebug() << "c_ranges, begin -- " <<  c_parms[ "ranges" ];
+  
   QMap<QString, QString >::iterator jj;
   for ( jj = c_parms.begin(); jj != c_parms.end(); ++jj )
     {
@@ -1143,12 +1147,13 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
 	xmin_p = jj.value().toDouble();
       else if ( jj.key().contains( "Maximum" ) )
 	xmax_p = jj.value().toDouble();
+      else if ( jj.key().contains( "ranges" ) )
+	ranges_p = jj.value();
     }
 
-  qDebug() << "In plot_distr_auto(): sigma_p, xmin_p, xmax_p -- " << sigma_p << xmin_p << xmax_p;
-  //Also, include info on vertical lines (integration limits) -- passed also from c_parms[ "integration_limits" ]
-  
-  
+  qDebug() << "In plot_distr_auto(): sigma_p, xmin_p, xmax_p, ranges_p -- "
+	   << sigma_p << xmin_p << xmax_p << ranges_p;
+    
   //////////////////////////////////////////
   
    int  ndispt = ddesc.xvals.size();
@@ -1216,6 +1221,67 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
    data_plot1->setCanvasBackground( QBrush(Qt::white) );
+
+   //add ranges ///////////////////////////////////////////////////////////
+   //Also, include info on vertical lines (integration limits) -- passed also from c_parms[ "integration_limits" ]
+
+   if ( !ranges_p.isEmpty() )
+     {
+       QStringList c_ranges = ranges_p.split(",");
+       qDebug() << "c_ranges, c_ranges.size() --" << c_ranges << c_ranges.size();
+       for (int i=0; i<c_ranges.size(); ++i )
+	 {
+	   double point1 = c_ranges[ i ].split(":")[0].toDouble();
+	   double point2 = c_ranges[ i ].split(":")[1].toDouble();
+	   
+	   qDebug() << "Ranges: " << point1 << point2;
+	   
+	   QwtPlotCurve* v_line_peak1;
+	   double r1[ 2 ];
+	   r1[ 0 ] = point1;
+	   r1[ 1 ] = point1;
+	   
+	   QwtPlotCurve* v_line_peak2;
+	   double r2[ 2 ];
+	   r2[ 0 ] = point2;
+	   r2[ 1 ] = point2;
+	   
+#if QT_VERSION < 0x050000
+	   QwtScaleDiv* y_axis = data_plot1->axisScaleDiv( QwtPlot::yLeft );
+#else
+	   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot1->axisScaleDiv( QwtPlot::yLeft ));
+#endif
+	   
+	   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+	   
+	   double v[ 2 ];
+	   v [ 0 ] = y_axis->upperBound() - padding;
+	   v [ 1 ] = y_axis->lowerBound();// + padding;
+	   
+	   QString vline_name1 = "Low"  + QString::number( i );
+	   QString vline_name2 = "High" + QString::number( i );
+	   
+	   v_line_peak1 = us_curve( data_plot1, vline_name1 );
+	   v_line_peak1 ->setSamples( r1, v, 2 );
+	   
+	   v_line_peak2 = us_curve( data_plot1, vline_name2 );
+	   v_line_peak2 ->setSamples( r2, v, 2 );
+
+	   //set unique color for current range pair
+	   possibleColors();              // Make sure possible colors exist
+
+	   int ncolors     = colors.size();
+	   int color_index = i;
+	   
+	   while ( color_index >= ncolors )
+	     color_index -= ncolors;
+	   
+	   QPen pen = QPen( QBrush( colors[ color_index ] ), 2.0, Qt::DotLine );
+	   v_line_peak1->setPen( pen );
+	   v_line_peak2->setPen( pen );
+	 }
+     }
+   
    data_plot1->replot();
 
 }
