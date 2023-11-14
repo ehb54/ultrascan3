@@ -1146,6 +1146,9 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
     }
 
   qDebug() << "In plot_distr_auto(): sigma_p, xmin_p, xmax_p -- " << sigma_p << xmin_p << xmax_p;
+  //Also, include info on vertical lines (integration limits) -- passed also from c_parms[ "integration_limits" ]
+  
+  
   //////////////////////////////////////////
   
    int  ndispt = ddesc.xvals.size();

@@ -5221,8 +5221,8 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   QMap< QStringList, QList< QColor > > plotted_ids_colors_map_s_type;
   
   //Choose model from modelDescModifiedGuid matching triplesname && stage_model:
-  bool isModel = false;
-  QString imgComb01File = basename + "Ind_combined" + "." + triplesname + "." + stage_model + ".s20" + svgext;
+  //bool isModel = false;
+  //QString imgComb01File = basename + "Ind_combined" + "." + triplesname + "." + stage_model + ".s20" + svgext;
   
   for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
     {
@@ -5235,123 +5235,124 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
-	  
-	  isModel = true;
-	  
-	  //retrieve s,Model combPlot params:
+
 	  QString t_m = "s," + stage_model;
 	  QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	  //qDebug() << "over models: c_params -- " << c_params;
-
-	  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
+	  //ALEXEY: here it plots s20 combPlot (xtype == 0) -- Need to do first thing!!!
 	  plotted_ids_colors_map_s_type = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); 
+	  
+	  // Check if to plot individual Combined distributons:
+	  // {s,D,f/f0,MW,Radius} {2DSA-IT,2DSA-MC,PCSA,raw} {p_key: {s[3.2:3.7], D[11:15], etc.} }
+	  // MaskStr.ShowTripleTypeModelRangeIndividualCombo[ t_name ][ s_name ][ p_key ] = feature_indCombo_value; // 1/0
+	  QMap <QString, QStringList> ind_compoplots_type_ranges;
+	  
+	  QMap < QString, QString > ind_comboplots = perChanMask_edited.ShowTripleTypeModelRangeIndividualCombo[ triplesname ][ stage_model ];
+	  QMap<QString, QString >::iterator i_cp;
+	  for ( i_cp = ind_comboplots.begin(); i_cp != ind_comboplots.end(); ++i_cp )
+	    {
+	      QString type_range = i_cp.key();
+	      
+	      QString type  = type_range.split("[")[0];
+	      QString range = type_range.split("[")[1].split("]")[0];
+	      
+	      if ( i_cp.value().toInt() )
+		{
+		  ind_compoplots_type_ranges[ type ] << range;
+		}
+	    }
+
+	  //plot different types {s,D,MW...} types:  0: s20; 1: MW; 2: D; 3: f/f0
+	  QMap<QString, QStringList >::iterator i_cpt;
+	  for ( i_cpt = ind_compoplots_type_ranges.begin(); i_cpt != ind_compoplots_type_ranges.end(); ++i_cpt )
+	    {
+	      QString     type    = i_cpt.key();
+	      QStringList ranges  = i_cpt.value();
+	      
+	      QMap < QString, QString > c_parms;
+	      QString t_m;
+	      QString imgComb02File = basename + "Ind_combined" + "." + triplesname + "." + stage_model;
+	      
+	      //type: 0:s20
+	      if ( type == "s" )
+		{
+		  imgComb02File += ".s20" + svgext;
+		  
+		  t_m = "s," + stage_model;
+		  c_parms = comboPlotsMap[ t_m ];
+		  
+		  //qDebug() << "over models: c_params -- " << c_params;
+		  
+		  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
+		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 0, c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext ); 
+		  CombPlotsFileNames << imgComb02File;
+		  
+		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+		}
+	      //type: 1:MW
+	      else if ( type == "MW" )
+		{
+		  imgComb02File += ".MW" + svgext;
+		  
+		  t_m = "MW," + stage_model;
+		  c_parms = comboPlotsMap[ t_m ];
+		  
+		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		  
+		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+		}
+	      //type 2:D
+	      else if ( type == "D" )
+		{
+		  imgComb02File += ".D20" + svgext;
+		  
+		  t_m = "D," + stage_model;
+		  c_parms = comboPlotsMap[ t_m ];
+		  
+		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		  
+		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+		}
+	      //type 3:f/f0
+	      else if ( type == "f/f0" )
+		{
+		  imgComb02File += ".f_f0" + svgext;
+		  
+		  t_m = "f/f0," + stage_model;
+		  c_parms = comboPlotsMap[ t_m ];
+		  
+		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		  
+		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+		}
+	      
+	      // reset plot after processign certain type {s,D,MW...}
+	      sdiag_combplot->reset_data_plot1();
+	    }
+	  
+	  
+
 	}
     }
-
-  //write plot
-  if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
-    {
-      // Check if to plot individual Combined distributons:
-      // {s,D,f/f0,MW,Radius} {2DSA-IT,2DSA-MC,PCSA,raw} {p_key: {s[3.2:3.7], D[11:15], etc.} }
-      // MaskStr.ShowTripleTypeModelRangeIndividualCombo[ t_name ][ s_name ][ p_key ] = feature_indCombo_value; // 1/0
-      
-      QMap <QString, QStringList> ind_compoplots_type_ranges;
-      
-      QMap < QString, QString > ind_comboplots = perChanMask_edited.ShowTripleTypeModelRangeIndividualCombo[ triplesname ][ stage_model ];
-      QMap<QString, QString >::iterator i_cp;
-      for ( i_cp = ind_comboplots.begin(); i_cp != ind_comboplots.end(); ++i_cp )
-	{
-      	  QString type_range = i_cp.key();
-
-	  QString type  = type_range.split("[")[0];
-	  QString range = type_range.split("[")[1].split("]")[0];
-
-	  if ( i_cp.value().toInt() )
-	    {
-	      ind_compoplots_type_ranges[ type ] << range;
-	    }
-	}
-
-      //plot different types {s,D,MW...}
-      QMap<QString, QStringList >::iterator i_cpt;
-      for ( i_cpt = ind_compoplots_type_ranges.begin(); i_cpt != ind_compoplots_type_ranges.end(); ++i_cpt )
-	{
-	  QString type = i_cpt.key();
-
-	  QMap < QString, QString > c_parms;
-	  QString t_m, c_type;
-	  QString imgComb02File = basename + "Ind_combined" + "." + triplesname + "." + stage_model;
-	  
-	  //types:  0: s20; 1: MW; 2: D; 3: f/f0
-	  if ( type == "s" )
-	    {
-	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-	      imgComb01File.replace( svgext, pngext ); 
-	      CombPlotsFileNames << imgComb01File;
-
-	      CombPlotsParmsMap       [ imgComb01File ] = plotted_ids_colors_map_s_type. firstKey();
-	      CombPlotsParmsMap_Colors[ imgComb01File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-	    }
-	  //
-	  if ( type == "MW" )
-	    {
-	      imgComb02File += ".MW" + svgext;
-
-	      t_m = "MW," + stage_model;
-	      c_type = "MW";
-	      c_parms = comboPlotsMap[ t_m ];
-	      
-	      plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
-	      
-	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-	      imgComb02File.replace( svgext, pngext );
-	      CombPlotsFileNames << imgComb02File;
-	      
-	      CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-	      CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-	    }
-	  //
-	  if ( type == "D" )
-	    {
-	      imgComb02File += ".D20" + svgext;
-	      	      
-	      t_m = "D," + stage_model;
-	      c_type = "D";
-	      c_parms = comboPlotsMap[ t_m ];
-	      
-	      plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
-	      
-	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-	      imgComb02File.replace( svgext, pngext );
-	      CombPlotsFileNames << imgComb02File;
-	      
-	      CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-	      CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-	    }
-	  //
-	  if ( type == "f/f0" )
-	    {
-	      imgComb02File += ".f_f0" + svgext;
-	      	      
-	      t_m = "f/f0," + stage_model;
-	      c_type = "f/f0";
-	      c_parms = comboPlotsMap[ t_m ];
-	      
-	      plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
-	      
-	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-	      imgComb02File.replace( svgext, pngext );
-	      CombPlotsFileNames << imgComb02File;
-	      
-	      CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-	      CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-	    }
-	  
-	  // reset plot after processign certain type {s,D,MW...}
-	  sdiag_combplot->reset_data_plot1();
-	}
-    }
-
+  
   //assemble IND combined plots into html
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   qApp->processEvents();
