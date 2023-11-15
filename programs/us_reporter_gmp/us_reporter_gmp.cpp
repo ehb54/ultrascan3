@@ -5285,7 +5285,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  t_m = "s," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
-		  c_parms[ "ranges" ] = ranges.join(",");
+		  c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  //qDebug() << "over models: c_params -- " << c_params;
 		  
@@ -5307,7 +5307,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  t_m = "MW," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
-		  c_parms[ "ranges" ] = ranges.join(",");
+		  c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
 		  
@@ -5326,7 +5326,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  t_m = "D," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
-		  c_parms[ "ranges" ] = ranges.join(",");
+		  c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
 		  
@@ -5345,7 +5345,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  t_m = "f/f0," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
-		  c_parms[ "ranges" ] = ranges.join(",");
+		  c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
 		  
