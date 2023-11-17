@@ -394,6 +394,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   epanGeneral -> loaded_proto = 1;
   
   qDebug() << "In load_protocol: currProto.investigator 1 --  " <<  currProto.investigator;
+
+  //set runName && label straight from the autoflow record:
+  currProto.runname   = protocol_details[ "experimentName" ];
+  currProto.exp_label = protocol_details[ "label" ];
   
   initPanels();
   
@@ -5623,7 +5627,8 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
   QString int_value     =  QString::number( reportItem.integration_val ); 
   QString tolerance     =  QString::number( reportItem.tolerance );     
   QString total_percent =  QString::number( reportItem.total_percent );  
-  QString combined_plot =  QString::number( reportItem.combined_plot );  
+  QString combined_plot =  QString::number( reportItem.combined_plot );
+  QString ind_combined_plot =  QString::number( reportItem.ind_combined_plot );  
   
   QStringList qry;
   qry << "new_report_item"
@@ -5637,6 +5642,7 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
       << tolerance
       << total_percent
       << combined_plot
+      << ind_combined_plot
     ;
     
   qDebug() << "Query: new_report_item: " << qry;

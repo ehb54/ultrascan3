@@ -104,6 +104,10 @@ class US_ReporterGMP : public US_Widgets
 	   //     triple_name     model           feature  value  [All types of pseudo distr.] 
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPseudo3dParts;
 	   QMap < QString, QMap < QString, int > >  has_tripleModelPseudo3d_items;
+
+	   //     Individual Combined Plots
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleTypeModelRangeIndividualCombo;
+	   QMap < QString, QMap < QString, int > >  has_tripleModelIndCombo_items;
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
@@ -179,6 +183,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
+         QMap<QString, QTreeWidgetItem *> tripleMaskIndComboPlotItem;
+         
 
 	 //CombPlots masks
 	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
@@ -274,6 +280,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QString > intensityRIMap;
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
+         QMap< QString, QMap< QString, QMap< QString, bool> > > indComboPlotsMapTripleTypeRangeBool;
 	 QMap< QString, QStringList > CombPlots_Type_to_Models;
          QMap< QString, QString > eSign_details;
 
@@ -534,7 +541,9 @@ class US_ReporterGMP : public US_Widgets
 	void plotres( QMap < QString, QString > &   );
 	void plot_pseudo3D( QString, QString );
 	bool modelGuidExistsForStage( QString, QString );
+  bool modelGuidExistsForStage_ind( QString, QString, QString );
 	void process_combined_plots ( QString );
+  void process_combined_plots_individual ( QString, QString );
 
   QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
   void get_assigned_oper_revs( QJsonDocument, QStringList& );

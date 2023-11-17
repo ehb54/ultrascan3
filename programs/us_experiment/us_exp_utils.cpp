@@ -548,6 +548,14 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 
    le_label       ->setText ( currProto->exp_label );
 
+   //if PROTO_DEV: populate runName && make it read-only
+   if ( mainw-> us_prot_dev_mode )
+     {
+       le_runid  -> setEnabled( false );
+       le_label  -> setText( currProto->exp_label );
+       le_label  -> setEnabled( false );
+     }
+       
    check_user_level();
 
    //Here, check if UL<3 is set as operator for each Optima:
@@ -3791,14 +3799,15 @@ bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_Ana
 	      US_ReportGMP::ReportItem curr_reportItem = report_curr.reportItems[ k ];
 	      US_ReportGMP::ReportItem load_reportItem = report_load.reportItems[ k ];
 
-	      if ( curr_reportItem.type             != load_reportItem.type             ||
-		   curr_reportItem.method           != load_reportItem.method           ||
-		   curr_reportItem.range_low        != load_reportItem.range_low        ||
-		   curr_reportItem.range_high       != load_reportItem.range_high       ||
-		   curr_reportItem.integration_val  != load_reportItem.integration_val  ||
-		   curr_reportItem.tolerance        != load_reportItem.tolerance        ||
-		   curr_reportItem.total_percent    != load_reportItem.total_percent    ||
-		   curr_reportItem.combined_plot    != load_reportItem.combined_plot
+	      if ( curr_reportItem.type               != load_reportItem.type             ||
+		   curr_reportItem.method             != load_reportItem.method           ||
+		   curr_reportItem.range_low          != load_reportItem.range_low        ||
+		   curr_reportItem.range_high         != load_reportItem.range_high       ||
+		   curr_reportItem.integration_val    != load_reportItem.integration_val  ||
+		   curr_reportItem.tolerance          != load_reportItem.tolerance        ||
+		   curr_reportItem.total_percent      != load_reportItem.total_percent    ||
+		   curr_reportItem.combined_plot      != load_reportItem.combined_plot    ||
+		   curr_reportItem.ind_combined_plot  != load_reportItem.ind_combined_plot
 		   )
 		{
 		  maps_different = true;
