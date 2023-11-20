@@ -948,14 +948,15 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 
 	  US_ReportGMP::ReportItem reportItem_read;
 	  
-	  reportItem_read.type             =   db->value( 0 ).toString();
-	  reportItem_read.method           =   db->value( 1 ).toString();
-	  reportItem_read.range_low        =   db->value( 2 ).toString().toDouble();	   
-	  reportItem_read.range_high       =   db->value( 3 ).toString().toDouble();
-	  reportItem_read.integration_val  =   db->value( 4 ).toString().toDouble();	   
-	  reportItem_read.tolerance        =   db->value( 5 ).toString().toDouble();
-	  reportItem_read.total_percent    =   db->value( 6 ).toString().toDouble();
-	  reportItem_read.combined_plot    =   db->value( 7 ).toString().toInt();
+	  reportItem_read.type              =   db->value( 0 ).toString();
+	  reportItem_read.method            =   db->value( 1 ).toString();
+	  reportItem_read.range_low         =   db->value( 2 ).toString().toDouble();	   
+	  reportItem_read.range_high        =   db->value( 3 ).toString().toDouble();
+	  reportItem_read.integration_val   =   db->value( 4 ).toString().toDouble();	   
+	  reportItem_read.tolerance         =   db->value( 5 ).toString().toDouble();
+	  reportItem_read.total_percent     =   db->value( 6 ).toString().toDouble();
+	  reportItem_read.combined_plot     =   db->value( 7 ).toString().toInt();
+	  reportItem_read.ind_combined_plot =   db->value( 8 ).toString().toInt();
 
 	  reportItem_read.integration_val_sim   = -1;
 	  reportItem_read.total_percent_sim     = -1;
@@ -979,6 +980,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       initItem.tolerance        = 10; 
       initItem.total_percent    = 0.58;
       initItem.combined_plot    = 1;
+      initItem.ind_combined_plot  = 1;
 
       initItem.integration_val_sim   = -1;
       initItem.total_percent_sim     = -1;

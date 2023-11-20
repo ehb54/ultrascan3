@@ -280,6 +280,7 @@ void US_ReportGui::build_report_layout( void )
   QLabel* lb_total    = us_label( tr( "Fraction of Total (%)" ) );
   QLabel* lb_tol      = us_label( tr( "Tolerance (%)" ) );
   QLabel* lb_combined = us_label( tr( "Combined Plot" ) );
+  QLabel* lb_ind_plot = us_label( tr( "Individual plot" ) );
   
     
   row = 0;
@@ -290,7 +291,9 @@ void US_ReportGui::build_report_layout( void )
   genL->addWidget( lb_intval,   row,    9, 1, 2 );
   genL->addWidget( lb_total,    row,    11, 1, 2 );
   genL->addWidget( lb_tol,      row,    13, 1, 2 );
-  genL->addWidget( lb_combined, row++,  15, 1, 2 );
+  genL->addWidget( lb_combined, row,    15, 1, 2 );
+  genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
+  
   //End of table header
   
   QComboBox* cb_type;  
@@ -307,6 +310,7 @@ void US_ReportGui::build_report_layout( void )
   QLineEdit* le_tol;    
   QLineEdit* le_total;
   QCheckBox* ck_combined_plot;
+  QCheckBox* ck_ind_plot;
     
   for ( int ii = 0; ii < r_item_num; ii++ )
     {
@@ -346,10 +350,17 @@ void US_ReportGui::build_report_layout( void )
       le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, true  );
       le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
 
+      //Combined Plot
       ck_combined_plot     = new QCheckBox( tr( "" ), this );
       ck_combined_plot ->setPalette( US_GuiSettings::normalColor() );
       ck_combined_plot ->setChecked( curr_item.combined_plot );
       ck_combined_plot ->setAutoFillBackground( true  );
+
+      //Individual (comb.) Plot
+      ck_ind_plot     = new QCheckBox( tr( "" ), this );
+      ck_ind_plot ->setPalette( US_GuiSettings::normalColor() );
+      ck_ind_plot ->setChecked( curr_item.ind_combined_plot );
+      ck_ind_plot ->setAutoFillBackground( true  );
       
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
@@ -361,6 +372,7 @@ void US_ReportGui::build_report_layout( void )
       le_total     -> setObjectName( stchan + "total" );
       le_tol       -> setObjectName( stchan + "tol" );
       ck_combined_plot -> setObjectName( stchan + "combined_plot" );
+      ck_ind_plot -> setObjectName( stchan + "ind_combined_plot" );
             
       //set connecitons btw textChanged() and slot
       connect( le_low, SIGNAL( textChanged ( const QString& ) ),
@@ -381,7 +393,8 @@ void US_ReportGui::build_report_layout( void )
       genL->addWidget( le_intval,         row,    9, 1, 2 );
       genL->addWidget( le_total,          row,    11, 1, 2 );
       genL->addWidget( le_tol,            row,    13, 1, 2 );
-      genL->addWidget( ck_combined_plot,  row++,  15, 1, 2, Qt::AlignHCenter );
+      genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
+      genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
 
       //Slots for cb_type | cb_method
       connect( cb_type,    SIGNAL( activated        ( int )  ),
@@ -859,6 +872,11 @@ void US_ReportGui::gui_to_report( void )
       QCheckBox * ck_combinedplot  = containerWidget->findChild<QCheckBox *>( stchan + "combined_plot" );
       qDebug() << "ii, ck_combinedplot->isChecked()" << ii << ck_combinedplot->isChecked();
       report->reportItems[ ii ].combined_plot = ck_combinedplot->isChecked() ? 1 : 0;
+
+      //ind. combined plot
+      QCheckBox * ck_combinedplot_ind  = containerWidget->findChild<QCheckBox *>( stchan + "ind_combined_plot" );
+      qDebug() << "ii, ck_combinedplot_ind->isChecked()" << ii << ck_combinedplot_ind->isChecked();
+      report->reportItems[ ii ].ind_combined_plot = ck_combinedplot_ind->isChecked() ? 1 : 0;
     }
 
   //Report Mask params.
@@ -968,7 +986,8 @@ void US_ReportGui::add_row( void )
       initItem.integration_val  = 0;
       initItem.tolerance        = 0;
       initItem.combined_plot    = 1;
-
+      initItem.ind_combined_plot  = 1;
+      
       report->interf_report_changed = true;
     }
   else
@@ -980,6 +999,7 @@ void US_ReportGui::add_row( void )
       initItem.integration_val  = 0.57;
       initItem.tolerance        = 10;
       initItem.combined_plot    = 1;
+      initItem.ind_combined_plot  = 1;
     }
 
   //Compute 'Fraction of Total' based on tot_conc:

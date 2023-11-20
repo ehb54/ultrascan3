@@ -842,7 +842,7 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -3 );
   
   QString autoflow_id_selected("");
   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
@@ -979,7 +979,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   autoflow_btn = "AUTOFLOW_DEV";
 
-  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
   connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
   pdiag_autoflow->setParent(this, Qt::Widget);
@@ -1724,6 +1724,10 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QString invID              = dbP->value( 12 ).toString();
       
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
+      QString ptime_created       = US_Util::toUTCDatetimeText( time_created
+								.toString( Qt::ISODate ), true )
+	                                                         .section( ":", 0, 1 ) + " UTC";
+      
       QString gmpRun             = dbP->value( 14 ).toString();
       QString full_runname       = dbP->value( 15 ).toString();
       QString operatorID         = dbP->value( 16 ).toString();
@@ -1753,18 +1757,22 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	      //full_runname = full_runname_edited + " (combined RI+IP) ";
 	      history_runname += " (combined RI+IP) ";
 	    }
-	  autoflowentry << id << history_runname << optimaname  << time_created.toString(); 
+	  //autoflowentry << id << history_runname << optimaname  << time_created.toString(); 
+	  autoflowentry << id << history_runname << optimaname  << ptime_created; 
 	}
       if ( type == "DEV" )
-	autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
-
+	{
+	  //autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+	  autoflowentry << id << runname << optimaname  << ptime_created;
+	}
+      
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
       else
 	{
 	  if ( status == "LIVE_UPDATE" )
 	    autoflowentry << QString( tr( "RUNNING" ) );
-	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" )
+	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" || status == "E-SIGNATURES" )
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
 	}

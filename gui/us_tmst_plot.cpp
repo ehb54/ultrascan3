@@ -154,6 +154,11 @@ QStringList US_TmstPlot::timestamp_data_dkeys( )
   return dkeys;
 }
 
+QVector< QVector< double > > US_TmstPlot::timestamp_data_dvals( )
+{
+  return dvals;
+}
+
 QMap< QString, double >  US_TmstPlot::timestamp_data_mins ( )
 {
   return dmins;
@@ -169,9 +174,9 @@ QMap< QString, double >  US_TmstPlot::timestamp_data_avgs ( )
   return davgs;
 }
 
-QMap< QString, double >  US_TmstPlot::timestamp_data_avgs_first_scan ( )
+QMap < QString, QMap< QString, double >>  US_TmstPlot::timestamp_data_avgs_stdd_first_scan ( )
 {
-  QMap < QString, double > davgs_first_scan;
+  QMap < QString, QMap< QString, double > > davgs_stdd_first_scan;
 
   s_start = true;  // X axis starts at scan 1
   
@@ -183,10 +188,10 @@ QMap< QString, double >  US_TmstPlot::timestamp_data_avgs_first_scan ( )
       // Accumulate X,Y points
       nplpts       = point_indexes();
       
+      //Average:
       double y_avg_val = 0;
       double yy_first  = 0;
       double yy_last   = 0;
-      
       for ( int jj = 0; jj < nplpts; jj++ )
 	{
 	  int jt       = pntxs[ jj ];
@@ -209,12 +214,30 @@ QMap< QString, double >  US_TmstPlot::timestamp_data_avgs_first_scan ( )
       qDebug() << "[auto] Plot for: " << pkey  << "; # of points: "      << nplpts;
       qDebug() << "[auto] Plot for: " << pkey  << "; First data index: " << pntxs[ 0 ];
       qDebug() << "[auto] Plot for: " << pkey  << "; Average: "          << y_avg_val;
+
+      //Standard Deviation:
+      double std_dev = 0;
+      double sum_mean_dev_sq = 0;
+      for ( int jj = 0; jj < nplpts; jj++ )
+	{
+	  int jt       = pntxs[ jj ];
+
+	  sum_mean_dev_sq += (dvals[ ky ][ jt ] - y_avg_val) * (dvals[ ky ][ jt ] - y_avg_val); 
+	}
       
-      davgs_first_scan[ pkey ] = y_avg_val;
+      //std_dev = sqrt( sum_mean_dev_sq * scalea_cut );
+      sum_mean_dev_sq *= scalea_cut;
+      std_dev = pow( double(sum_mean_dev_sq), double(0.5) );
+      
+      //Fill the Map:
+      QMap < QString, double > keys_data;
+      keys_data[ "Avg"  ] = y_avg_val;
+      keys_data[ "Stdd" ] = std_dev;
+      davgs_stdd_first_scan[ pkey ] = keys_data;
     }
   
   
-  return davgs_first_scan;
+  return davgs_stdd_first_scan;
 }
 
 
@@ -331,6 +354,16 @@ DbgLv(1) << "TP:plkd   smin smax" << smin << smax << "xkey" << xkey << "kx ks" <
 
    data_plot1->replot();
 }
+
+
+// Return a pointer to the QwtPlot for the upper plot
+QwtPlot* US_TmstPlot::rp_data_plot1( QString p_type )
+{
+  //set to Temp. OR any other type
+  cb_pltkey -> setCurrentIndex(cb_pltkey->findText( p_type ));
+  return data_plot1;
+}
+
 
 // Plot the combined data
 void US_TmstPlot::plot_cdata()

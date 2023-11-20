@@ -164,6 +164,9 @@ class US_ConvertGui : public US_Widgets
 
       bool auto_ref_scan;
       int  autoflowStatusID;
+ 
+      double   centerpoint_ref_def;
+  bool first_time_plot_auto;
       
       QString       runType;
       QString       oldRunType;
@@ -329,9 +332,11 @@ class US_ConvertGui : public US_Widgets
       void init_excludes   ( void );
 //      void start_reference  ( const QwtDoublePoint& );
       void process_reference( const QwtDoublePoint& );
-      void process_reference_auto( const double, const double );
-      void PseudoCalcAvg   ( void );
-//      void PseudoCalcAvgMWL( void );
+  //void process_reference_auto( const double, const double );
+  void process_reference_auto( const double );
+  void PseudoCalcAvg   ( void );
+  //void PseudoCalcAvg_av  ( void );
+  void PseudoCalcAvgMWL( void );
       bool read            ( void );
       bool read            ( QString dir );
       bool convert         ( void );
@@ -347,7 +352,7 @@ class US_ConvertGui : public US_Widgets
       void draw_vline      ( double );
       void db_error        ( const QString& );
       void triple_index    ( void );
-      void plot_last_scans ( void );
+      void plot_last_scans ( double );
 
       //US_Solution * solution_auto;
 
@@ -427,6 +432,7 @@ class US_ConvertGui : public US_Widgets
       void show_intensity_auto ( void );
 
       void cancel_reference  ( void );
+  //void cancel_reference_av  ( void );
       int  check_for_data_left ( QString, QString );
       void drop_reference    ( void );
       void drop_channel      ( void );

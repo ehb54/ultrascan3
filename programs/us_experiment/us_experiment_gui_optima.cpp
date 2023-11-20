@@ -394,6 +394,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   epanGeneral -> loaded_proto = 1;
   
   qDebug() << "In load_protocol: currProto.investigator 1 --  " <<  currProto.investigator;
+
+  //set runName && label straight from the autoflow record:
+  currProto.runname   = protocol_details[ "experimentName" ];
+  currProto.exp_label = protocol_details[ "label" ];
   
   initPanels();
   
@@ -1219,6 +1223,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    cb_choose_rev        = new QComboBox( this );
    cb_choose_appr       = new QComboBox( this );
    cb_choose_sme        = new QComboBox( this );
+
+   cb_choose_operator -> setObjectName("ChooseOper");
+   cb_choose_rev      -> setObjectName("ChooseRev");
+   cb_choose_appr     -> setObjectName("ChooseAppr");
+   cb_choose_sme      -> setObjectName("ChooseSme");
    
    row = 0;
    //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
@@ -5618,7 +5627,8 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
   QString int_value     =  QString::number( reportItem.integration_val ); 
   QString tolerance     =  QString::number( reportItem.tolerance );     
   QString total_percent =  QString::number( reportItem.total_percent );  
-  QString combined_plot =  QString::number( reportItem.combined_plot );  
+  QString combined_plot =  QString::number( reportItem.combined_plot );
+  QString ind_combined_plot =  QString::number( reportItem.ind_combined_plot );  
   
   QStringList qry;
   qry << "new_report_item"
@@ -5632,6 +5642,7 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
       << tolerance
       << total_percent
       << combined_plot
+      << ind_combined_plot
     ;
     
   qDebug() << "Query: new_report_item: " << qry;
@@ -6069,7 +6080,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       }
       
       return;
-    }  
+    } 
   // End checking chromatic aberration
   
   // Check for certificate license key and its expiraiton
@@ -6404,7 +6415,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     {
       return;
     }
-  
+ 
 }
 
 //Read channel-to-ref_wvl info from AProfile
@@ -6453,47 +6464,168 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 	   << mainw->automode <<  have_run <<  rps_differ;
 
   QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+  
+  //Check for assigned revs/oper/appr/sme
+  QMessageBox msgBox;
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  QString message_protocol = tr( "");
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("A new DEVELOPMENT run will be created:");
 
-  //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
-  QMessageBox msgBox_f;
-  msgBox_f.setText(tr( "You are about to reinitialize the run based on the protocol:<br><br>" )
-		   + tr("<b>[OLD] Run Name:&emsp;</b>")  + protocol_details[ "protocolName" ]
-		   + tr("<br>")
-		   + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
-		   + tr("<br>") );
-		     
-  msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
-   			       + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
-  			       + tr("and the processing flow will reinitialize from the EDIT stage. ")
-   			       + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+  QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
+
+  qDebug() << "oper,rev,appr,sme Lists [PROTO-DEV] -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
+ 
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+  QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
+    
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
+
+  QString info_text = QString( tr ("<b>Dev. Run Name:</b> %1 <br> <b>Data Location:</b> %2 ")) // <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
+    .arg( currProto->runname )
+    .arg( protocol_details[ "OptimaName" ] );
+  //.arg(dbhost)
+  // .arg(dbport);
   
-  msgBox_f.setWindowTitle(tr("Run Reinitialization"));
-  QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
-  QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole); 
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2 <br><br>"
+				  "<b>Assigner Approver(s):</b> <br>"
+				  "&emsp; %3"))
+	.arg( o_list )
+	.arg( r_list )
+	.arg( a_list );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING") || a_list. contains( "MISSING") )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Development run <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s), reviewer(s) and/or approver(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
+    }
+
+  msgBox.setInformativeText( info_text);  
+  msgBox.setWindowTitle(tr("Confirm Development Run Submission"));
+ 
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
   
-  msgBox_f.setIcon(QMessageBox::Question);
-  msgBox_f.exec();
-  
-  if (msgBox_f.clickedButton() == Cancel)
+  if (msgBox.clickedButton() == Accept)
+    {
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) || a_list. contains( "MISSING" ) ) 
+	{
+	  return;
+	}
+      else
+	{
+	  //get user info:
+	  //get info on logged in user [submitter]:
+	  US_Passwd   pw;
+	  QString     masterPW  = pw.getPasswd();
+	  US_DB2      db( masterPW );  // New constructor
+	  QStringList qry;
+	  qry <<  QString( "get_user_info" );
+	  db.  query( qry );
+	  db. next();
+	  int u_ID        = db. value( 0 ).toInt();
+	  QString u_fname = db. value( 1 ).toString();
+	  QString u_lname = db. value( 2 ).toString();
+	  int u_lev       = db. value( 5 ).toInt();
+	  
+	  QString user_submitter = u_lname + ", " + u_fname;
+	  
+	  //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	  qDebug() << "Checking master password...";
+	  gmp_submitter_map.clear();
+	  US_Passwd   pw_at;
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+	  
+	  int submit_map_size = gmp_submitter_map.keys().size();
+	  qDebug() << "Submitter map: "
+		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		   << gmp_submitter_map.keys().isEmpty() 
+		   << gmp_submitter_map[ "User:" ]
+		   << gmp_submitter_map[ "Comment:" ]
+		   << gmp_submitter_map[ "Master Password:" ];
+	  
+	  //Enable GMP run submit ONLY if form was filled && password correct
+	  
+	  if ( submit_map_size > 0 ) 
+	    {
+	      qDebug() << "Submitting [DEVELOPMENT] GMP...";
+	      
+	      //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
+	      QMessageBox msgBox_f;
+	      msgBox_f.setText(tr( "You are about to reinitialize the run based on the protocol:<br><br>" )
+			       + tr("<b>[OLD] Run Name:&emsp;</b>")  + protocol_details[ "protocolName" ]
+			       + tr("<br>")
+			       + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
+			       + tr("<br>") );
+	      
+	      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+					   + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
+					   + tr("and the processing flow will reinitialize from the EDIT stage. ")
+					   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+	      
+	      msgBox_f.setWindowTitle(tr("Run Reinitialization"));
+	      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+	      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole); 
+	      
+	      msgBox_f.setIcon(QMessageBox::Question);
+	      msgBox_f.exec();
+	      
+	      if (msgBox_f.clickedButton() == Cancel)
+		{
+		  return;
+		}
+	      else if (msgBox_f.clickedButton() == Confirm)
+		{
+		  //Clear data 
+		  clearData_protDev();
+		  //qApp->processEvents();
+		  
+		  //Now procceed
+		  if ( have_run && rps_differ )
+		    {
+		      if ( saveRunProtocol() )
+			return;
+		      
+		      //Now actually submit: make record in 'autoflow' table with 'DEV' flag
+		      submitExperiment_protDev();
+		    }
+		}
+	    }
+	}
+    }
+  else if (msgBox.clickedButton() == Cancel)
     {
       return;
     }
-  else if (msgBox_f.clickedButton() == Confirm)
-    {
-      //Clear data 
-      clearData_protDev();
-      //qApp->processEvents();
-      
-      //Now procceed
-      if ( have_run && rps_differ )
-	{
-	  if ( saveRunProtocol() )
-	    return;
-	  //Now actually submit: make record in 'autoflow' table with 'DEV' flag
-	  submitExperiment_protDev();
-	}
-    }
 }
+
 
 //  // [OLD - when starting from 4. EDIT ]  clear edit profiles, models noises
 //  void US_ExperGuiUpload::clearData_protDev()
@@ -8028,7 +8160,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        qDebug() << "revListJsonArray -- "  << revListJsonArray;
        qDebug() << "apprListJsonArray -- " << apprListJsonArray;
        qDebug() << "smeListJsonArray -- " << smeListJsonArray;
-       
+
+       /********** THIS WILL NOT BE USED HERE **********************/
        //Minimum structure of eSignStatusJson field:
        QString eSignStatusJson = "{\"to_sign\":[";
        for (int i=0; i<oper_rev_joinedList.size(); ++i )
@@ -8039,6 +8172,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        eSignStatusJson += "]}";
        
        qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /***************************************************************/
+       
        
        //Minimum structure of logJson when record created from scratch:
        /** 
@@ -8078,7 +8213,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   << revListJsonArray
 	   << apprListJsonArray
 	   << smeListJsonArray
-	   << eSignStatusJson       
+	 // << eSignStatusJson       
 	   << logJsonFirstTime;     
        
        qDebug() << "new_gmp_review_record qry -- " << qry;
@@ -8176,11 +8311,15 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
                                      + db->lastError() );
       return;
    }
+
+
+   QStringList qry;
+   int new_autoflowID = 0;
    
    if ( db != NULL )
-   {
-      int new_autoflowID = 0;
-      QStringList qry;
+     {
+
+       qry. clear();
       //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
       //greater of:
       //- max(ID) autoflowHistory
@@ -8238,15 +8377,199 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 
    /***/
    //Also, create record in autoflowStages table:
-   QStringList qry_stages;
-   qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
-   db->statusQuery( qry_stages );
+   qry. clear();
+   qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry );
    /**/
 
    // Also, mark parent autoflowHistroy record as devRecord:Processed
-   QStringList qry_processed;
-   qry_processed << "mark_autoflowHistoryDevRun_Processed" << autoflowHistoryID;
-   db->query( qry_processed );
+   qry. clear();
+   qry << "mark_autoflowHistoryDevRun_Processed" << autoflowHistoryID;
+   db->query( qry );
+
+   //ALL Business for e-Sigs && audit trail && reporting:
+   /*******************************************************************************/
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+
+       for (int i=0; i<appr_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << appr_listList[i]; 
+	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
+	 } 
+
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       apprListJsonArray += "]";
+       smeListJsonArray  += "]";
+         
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
+
+       /********** THIS WILL NOT BE USED HERE **********************/
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /****************************************************************/
+
+       
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int     u_ID    = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << apprListJsonArray
+	   << smeListJsonArray
+	 //<< eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
+     }
    
 }
 
