@@ -5981,7 +5981,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 					   val_passed );
 
 	      //Plot Temp. plot
-	      QString img01File = dirName + "/" + "RunDetails_Temperature" + "." + svgext;
+	      QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
 	      write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
 	      img01File.replace( svgext, pngext ); 
 	      RunDetailsPlotsFileNames << img01File;
