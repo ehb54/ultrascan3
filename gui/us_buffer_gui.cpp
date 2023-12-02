@@ -1071,6 +1071,7 @@ DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
    }
 
    // Check if ingredient already exists
+   bool notfound = true;
    for ( int ii = 0; ii < buffer->component.size(); ii++ )
    {
       if ( bcomp.name == buffer->component[ ii ].name )
@@ -1080,11 +1081,13 @@ DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
                            + QString::number( concen )
                            + " " + bcomp.unit + ")";
          lw_bufcomps->item( ii )->setText( entext );
-
-         return;
+         notfound = false;
+         break;;
       }
    }
 
+   if (notfound)
+   {
 DbgLv(1) << "BufN:SL: adco:  cname" << bcomp.name << "crange" << bcomp.range
  << "cunit" << bcomp.unit;
    QString entext  = bcomp.name + "  ("
@@ -1096,6 +1099,7 @@ DbgLv(1) << "BufN:SL: adco:  cname" << bcomp.name << "crange" << bcomp.range
    buffer->component     << bcomp;
    buffer->componentIDs  << compID;
 DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
+   }
 
    recalc_density();
    recalc_viscosity();
@@ -1315,7 +1319,6 @@ DbgLv(1) << "BufN:SL: recalc_viscosity()" << buffer->component[bcsize-1].name;
       c1        = ( bc->unit == "mM" ) ? ( c1 / 1000.0 ) : c1;
       double c2 = c1 * c1;      // c1^2
       double c3 = c2 * c1;      // c1^3
-      double c4 = c3 * c1;      // c1^4
 
       if ( c1 > 0.0 )
       {
@@ -1324,8 +1327,7 @@ DbgLv(1) << "BufN:SL: recalc_viscosity()" << buffer->component[bcsize-1].name;
                               + bc->visc_coeff[ 2 ] * 1.0e-2 * c1
                               + bc->visc_coeff[ 3 ] * 1.0e-3 * c2
                               + bc->visc_coeff[ 4 ] * 1.0e-4 * c3
-                              + bc->visc_coeff[ 5 ] * 1.0e-6 * c4 
-                              - VISC_20W );
+                              - 1.0 ) * VISC_20W ;
       }
    }
 
