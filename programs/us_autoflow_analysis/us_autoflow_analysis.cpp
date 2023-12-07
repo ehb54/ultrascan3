@@ -3667,7 +3667,7 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   le_runID -> setObjectName("runID");
 
   //Delete button
-  QPushButton* pb_delete = new QPushButton( tr( "Delete" ) );
+  QPushButton* pb_delete = new QPushButton( tr( "Cancel" ) );
   pb_delete-> setObjectName("delete");
 
   //Overlay button
