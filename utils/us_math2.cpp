@@ -658,8 +658,8 @@ void US_Math2::data_correction( double t, SolutionData& d )
    double R = 461.51805;
    double Ta = 593.0;
    double Tb = 232.0;
-   double alpha = 10.0 / (Ta - t - 273.15);
-   double beta = 10.0 / (t + 273.15 - Tb);
+   double alpha = 10.0 / (Ta - t - K0);
+   double beta = 10.0 / (t + K0 - Tb);
    double v0_c = 0;
    for (int ii = 0; ii < 6; ii++){
       v0_c += param[ii][0] * qPow(alpha, param[ii][1]);
@@ -683,7 +683,7 @@ void US_Math2::data_correction( double t, SolutionData& d )
    double b3 = -19.6;
    double a4 = 0.45903;
    double b4 = -40.0;
-   double T = (t + 273.15) / 300.0;
+   double T = (t + K0) / 300.0;
    d.viscosity_wt = 1e-3 * (a1 * qPow(T, b1) + a2 * qPow(T, b2) + a3 * qPow(T, b3) + a4 * qPow(T, b4));
 #endif
 
@@ -704,6 +704,18 @@ void US_Math2::data_correction( double t, SolutionData& d )
    double K          = t + K0;
 
    d.D20w_correction = ( K20 / K ) * ( d.viscosity_tb / VISC_20W );
+
+   qDebug() << "\n";
+   qDebug() << QObject::tr("dataCorr: manual: %1").arg(d.manual) << d.manual;
+   qDebug() << QObject::tr("dataCorr:  water: visc(20)=%1, visc(%2)=%3").arg(VISC_20W).arg(t).arg(d.viscosity_wt);
+   qDebug() << QObject::tr("dataCorr:  water: dens(20)=%1, dens(%2)=%3").arg(DENS_20W).arg(t).arg(d.density_wt);
+   qDebug() << QObject::tr("dataCorr: buffer: visc(20)=%1, visc(%2)=%3").arg(d.viscosity).arg(t).arg(d.viscosity_tb);
+   qDebug() << QObject::tr("dataCorr: buffer: dens(20)=%1, dens(%2)=%3").arg(d.density).arg(t).arg(d.density_tb);
+   qDebug() << QObject::tr("dataCorr: solute: vbar(20)=%1, vbar(%2)=%3").arg(d.vbar20).arg(t).arg(d.vbar);
+   qDebug() << QObject::tr("dataCorr: boyncy: water(20)=%1, buffer(%2)=%3").arg(d.buoyancyw).arg(t).arg(d.buoyancyb);
+   qDebug() << QObject::tr("dataCorr: factor: sed=%1, diff=%2").arg(d.s20w_correction).arg(d.D20w_correction);
+   qDebug() << "\n";
+
 //if ( qAbs(d.vbar-0.72) > 0.001 ) {
 //qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt << "manual" << d.manual;
 //qDebug() << "M2:dacor:  visctb viscwt" << d.viscosity_tb << d.viscosity_wt;
