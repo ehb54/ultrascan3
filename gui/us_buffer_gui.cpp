@@ -829,9 +829,17 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    from_db    = ( (*db_or_disk) == 1 );
    dbg_level  = US_Settings::us_debug();
 
-   // Read all buffer components from the
-   //  $ULTRASCAN3/etc/bufferComponents xml file:
-   US_BufferComponent::getAllFromHD( component_list );
+   if ( from_db ) {
+      US_Passwd pw;
+      QString p = pw.getPasswd();
+      component_list.clear();
+      US_BufferComponent::getAllFromDB( p, component_list );
+      qDebug() << "OK";
+   } else {
+      // Read all buffer components from the
+      //  $ULTRASCAN3/etc/bufferComponents xml file:
+      US_BufferComponent::getAllFromHD( component_list );
+   }
 
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
@@ -941,6 +949,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,        SLOT  ( add_component()   ) );
    connect( lw_allcomps, SIGNAL( itemSelectionChanged() ),
             this,        SLOT  ( select_bcomp()         ) );
+   connect( lw_allcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+           this,        SLOT  ( select_water( QListWidgetItem* ) ) );
    connect( lw_bufcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
             this,        SLOT  ( remove_bcomp(      QListWidgetItem* ) ) );
    connect( le_density,  SIGNAL( editingFinished()   ), 
@@ -1029,20 +1039,29 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
 }
 
 // Slot to select water as buffer
-void US_BufferGuiNew::select_water(){
+void US_BufferGuiNew::select_water(QListWidgetItem* item){
    // Get selected component
-   QListWidgetItem* item    = lw_allcomps->currentItem();
+   // QListWidgetItem* item    = lw_allcomps->currentItem();
    if ( item->type() > 0 ) {
       return;
    }
    if (lw_bufcomps->count() > 0) {
       QMessageBox::warning(this, tr("Warning!"),
-                           tr("If you want to select water, please remove all selected buffer first!"));
+                           tr("Please remove all the selected buffer components before choosing [ Water (H2O) ]!"));
       return;
    }
-   lw_bufcomps->addItem(item->text());
+   new QListWidgetItem(item->text(), lw_bufcomps, -1);
    le_density->setText(QString::number(DENS_20W));
    le_viscos->setText(QString::number(VISC_20W));
+   buffer->component.clear();
+   buffer->componentIDs.clear();
+   buffer->concentration.clear();
+   buffer->density = DENS_20W;
+   buffer->viscosity = VISC_20W;
+   buffer->manual = ck_manual->isChecked();
+   bool can_accept = !le_descrip->text().isEmpty();
+   pb_accept->setEnabled( can_accept );
+   pb_spectrum->setEnabled( can_accept );
 
 }
 
@@ -1050,6 +1069,11 @@ void US_BufferGuiNew::select_water(){
 void US_BufferGuiNew::add_component()
 {
 DbgLv(1) << "BufN:SL: add_component()";
+   if ( lw_bufcomps->count() > 0 && lw_bufcomps->item(0)->type() < 0){
+      QMessageBox::warning(this, tr("Warning!"),
+                        tr("Please remove the water component before choosing any other components!"));
+      return;
+   }
    double concen   = le_concen->text().toDouble();
 
    le_concen->setText( "" );
@@ -1100,7 +1124,12 @@ DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
          QString entext  = bcomp.name + "  ("
                            + QString::number( concen )
                            + " " + bcomp.unit + ")";
-         lw_bufcomps->item( ii )->setText( entext );
+         for (int jj = 0; jj < lw_bufcomps->count(); jj++) {
+            if ( compID.toInt() == lw_bufcomps->item(jj)->type() ){
+               lw_bufcomps->item( jj )->setText( entext );
+               break;
+            }
+         }
          notfound = false;
          break;;
       }
@@ -1113,7 +1142,7 @@ DbgLv(1) << "BufN:SL: adco:  cname" << bcomp.name << "crange" << bcomp.range
    QString entext  = bcomp.name + "  ("
                      + QString::number( concen )
                      + " " + bcomp.unit + ")";
-   lw_bufcomps->addItem( entext );
+   new QListWidgetItem( entext, lw_bufcomps, lw_allcomps->currentItem()->type() );
 
    buffer->concentration << concen;
    buffer->component     << bcomp;
@@ -1230,13 +1259,18 @@ DbgLv(1) << "BufN:SL: remove_bcomp()" << item->text();
    QPushButton *cancelButton = mBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
    
    mBox.exec();
-   
    if (mBox.clickedButton() == cancelButton)
      {
       return;
      }
    if (mBox.clickedButton() == yesButton)
      {
+       if (item->type() < 0) {
+          le_density->clear();
+          le_viscos->clear();
+          delete lw_bufcomps->currentItem();
+          return;
+       }
        // Get selected component
        QListWidgetItem* item    = lw_bufcomps->currentItem();
        QString item_name = item->text().split("(")[0].trimmed();
