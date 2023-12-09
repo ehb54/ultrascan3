@@ -184,6 +184,7 @@ class US_BufferGuiNew : public US_Widgets
       void add_component   ();
       void create_new_buffer_component();
       void select_bcomp    ();
+      void select_water    ();
       void remove_bcomp    ( QListWidgetItem* );
       void recalc_density  ( void );
       void recalc_viscosity( void );

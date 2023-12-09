@@ -933,6 +933,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
       QString sitem = bcomp.name + " (" + bcomp.range + ")";
       new QListWidgetItem( sitem, lw_allcomps, key.toInt() );
    }
+   new QListWidgetItem( "Water (H2O)", lw_allcomps, -1 );
 
    connect( le_descrip,  SIGNAL( editingFinished() ),
             this,        SLOT  ( new_description() ) );
@@ -989,6 +990,7 @@ DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
       // Insert the buffer component with it's key
       new QListWidgetItem( sitem, lw_allcomps, key.toInt() );
    }
+   new QListWidgetItem( "Water (H2O)", lw_allcomps, -1 );
 DbgLv(1) << "BufN:SL: init_buffer   lw_allcomps rebuilt";
 
    // Coming (back) into New panel, all should be cleared
@@ -1024,6 +1026,24 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
                        !le_viscos ->text().isEmpty() );
    pb_accept  ->setEnabled( can_accept );
    pb_spectrum  ->setEnabled( can_accept );
+}
+
+// Slot to select water as buffer
+void US_BufferGuiNew::select_water(){
+   // Get selected component
+   QListWidgetItem* item    = lw_allcomps->currentItem();
+   if ( item->type() > 0 ) {
+      return;
+   }
+   if (lw_bufcomps->count() > 0) {
+      QMessageBox::warning(this, tr("Warning!"),
+                           tr("If you want to select water, please remove all selected buffer first!"));
+      return;
+   }
+   lw_bufcomps->addItem(item->text());
+   le_density->setText(QString::number(DENS_20W));
+   le_viscos->setText(QString::number(VISC_20W));
+
 }
 
 // Slot for entry of concentration to complete add-component
@@ -1174,12 +1194,19 @@ void US_BufferGuiNew::create_new_buffer_component() {
       QString sitem = bcomp.name + " (" + bcomp.range + ")";
       new QListWidgetItem(sitem, lw_allcomps, key.toInt());
    }
+   new QListWidgetItem( "Water (H2O)", lw_allcomps, -1 );
 }
 
 // Slot for select of buffer component
 void US_BufferGuiNew::select_bcomp( )
 {
    QListWidgetItem* item    = lw_allcomps->currentItem();
+   if ( item->type() < 0 ) {
+      lb_bselect->setText( tr( "Water ( H2O )\n double-click to select" ) );
+      le_concen->setDisabled(true);
+      return;
+   }
+   le_concen->setEnabled(true);
    QString compID  = QString::number( item->type() );
    US_BufferComponent bcomp = component_list[ compID ];
    //int bcx         = lw_allcomps->currentRow();
