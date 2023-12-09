@@ -829,18 +829,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    from_db    = ( (*db_or_disk) == 1 );
    dbg_level  = US_Settings::us_debug();
 
-   if ( from_db ) {
-      US_Passwd pw;
-      QString p = pw.getPasswd();
-      component_list.clear();
-      US_BufferComponent::getAllFromDB( p, component_list );
-      qDebug() << "OK";
-   } else {
-      // Read all buffer components from the
-      //  $ULTRASCAN3/etc/bufferComponents xml file:
-      US_BufferComponent::getAllFromHD( component_list );
-   }
-
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
@@ -932,16 +920,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    QStringList keys = component_list.keys();
    qSort( keys );
 
-   for ( int ii = 0; ii < keys.size(); ii++ )
-   {
-      QString key     = keys[ ii ];
-      US_BufferComponent bcomp = component_list[ key ];
-
-      // Insert the buffer component with it's key
-      QString sitem = bcomp.name + " (" + bcomp.range + ")";
-      new QListWidgetItem( sitem, lw_allcomps, key.toInt() );
-   }
-   new QListWidgetItem( "Water (H2O)", lw_allcomps, -1 );
 
    connect( le_descrip,  SIGNAL( editingFinished() ),
             this,        SLOT  ( new_description() ) );
@@ -975,16 +953,39 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,        SLOT  ( newCanceled() ) );
    connect( pb_accept,   SIGNAL( clicked()     ),
             this,        SLOT  ( newAccepted() ) );
+   connect( this,        SIGNAL( use_db( bool )),
+           this,        SLOT  ( update_db_disk ( bool ) ) );
+}
+
+// Slot when the DB-local state is changed from US_BufferGuiSetting
+void US_BufferGuiNew::update_db_disk ( bool state )
+{
+   component_list.clear();
+   from_db = state;
 }
 
 // Slot for change to New panel
 void US_BufferGuiNew::init_buffer( void )
 {
-   from_db    = ( (*db_or_disk) == 1 );
+   if ( !component_list.isEmpty() ) {
+      return;
+   }
+   if ( from_db ) {
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+      US_Passwd pw;
+      QString p = pw.getPasswd();
+      US_BufferComponent::getAllFromDB( p, component_list );
+      QApplication::restoreOverrideCursor();
+   } else {
+      // Read all buffer components from the
+      //  $ULTRASCAN3/etc/bufferComponents xml file:
+      US_BufferComponent::getAllFromHD( component_list );
+
+   }
 
    // In case we just re-synced in Settings panel,
    //   reread components and recompose list widget
-   US_BufferComponent::getAllFromHD( component_list );
+   // US_BufferComponent::getAllFromHD( component_list );
 DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
    QStringList keys = component_list.keys();
    qSort( keys );
@@ -1931,6 +1932,8 @@ void US_BufferGui::checkTab( int currentTab )
 void US_BufferGui::update_disk_or_db( bool choice )
 {
    (choice) ? (disk_or_db = 1 ) : (disk_or_db = 0 );
+   emit newTab->use_db( choice );
+   qApp->processEvents();
 }
 
 // Global person ID after Settings panel change
