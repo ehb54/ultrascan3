@@ -814,8 +814,16 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       US_Math2::SolutionData sol_data;
       sol_data.density   = buffer.density;
       sol_data.viscosity = buffer.viscosity;
-      sol_data.vbar20    = 0.72; //The assumption here is that vbar does not change with
-      sol_data.vbar      = 0.72; //temp, so vbar correction will cancel in s correction
+      // sol_data.vbar20    = 0.72; //The assumption here is that vbar does not change with
+      // sol_data.vbar      = 0.72; //temp, so vbar correction will cancel in s correction
+      double vbar20 = 0;
+      for ( int ii = 0; ii < system.components.size(); ii++) {
+         vbar20 += system.components.at(ii).vbar20;
+      }
+      vbar20 /= system.components.size();
+      sol_data.vbar20    = vbar20;
+      sol_data.vbar      = US_Math2::adjust_vbar20(vbar20, simparams.temperature);
+      qDebug() << sol_data.vbar20 << " , " << sol_data.vbar;
       sol_data.manual    = buffer.manual;
       US_Math2::data_correction( simparams.temperature, sol_data );
 

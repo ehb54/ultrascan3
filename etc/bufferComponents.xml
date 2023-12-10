@@ -3,17 +3,37 @@
 <BufferComponents version="1.0">
     <component id="1" name="1-Propanol" unit="mM" range="0-6.741 M" gradient_forming="0">
         <densityCoefficients c0="0.99820" c1="0.00000" c2="-1.21245" c3="2.81044" c4="-7.63148" c5="53.39717"/>
-        <viscosityCoefficients c0="1.00725" c1="-119.10620" c2="44.35231" c3="7.82088" c4="-31.16201" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00725" c1="-119.10622" c2="44.35231" c3="7.82088" c4="-31.16201" c5="0.00000"/>
     </component>
-    <component id="10" name="Cadmium chloride" unit="mM" range="0-2.367 M" gradient_forming="0">
+    <component id="10" name="Cadmium chloride" unit="mM" range="0-5.539 M" gradient_forming="0">
         <densityCoefficients c0="0.99837" c1="-5.10726" c2="16.26925" c3="-4.81777" c4="7.09219" c5="-50.01997"/>
-        <viscosityCoefficients c0="1.00054" c1="0.00000" c2="24.13067" c3="52.14775" c4="230.58500" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00054" c1="0.00000" c2="24.13067" c3="52.14775" c4="230.58501" c5="0.00000"/>
     </component>
-    <component id="11" name="Cadmium sulfate" unit="mM" range="0-2.531 M" gradient_forming="0">
-        <densityCoefficients c0="0.99794" c1="7.86084" c2="17.75644" c3="16.41838" c4="-108.49390" c5="1884.34500"/>
-        <viscosityCoefficients c0="1.00531" c1="-112.33640" c2="84.95875" c3="-61.84851" c4="1700.26200" c5="0.00000"/>
+    <component id="100" name="L-histidine" unit="mM" range="0-0.306 M" gradient_forming="0">
+        <densityCoefficients c0="0.99831" c1="0.00000" c2="5.63436" c3="-10.45730" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00067" c1="0.00000" c2="9.10400" c3="813.30000" c4="0.00000" c5="0.00000"/>
     </component>
-    <component id="12" name="Calcium chloride" unit="mM" range="0-2.902 M" gradient_forming="0">
+    <component id="101" name="Sodium nitrate" unit="mM" range="0-6.199 M" gradient_forming="0">
+        <densityCoefficients c0="0.99772" c1="2.83480" c2="5.33890" c3="-0.20880" c4="-1.05310" c5="10.06500"/>
+        <viscosityCoefficients c0="0.99943" c1="2.71000" c2="3.45300" c3="19.79000" c4="10.10000" c5="0.00000"/>
+    </component>
+    <component id="102" name="Sodium perchlorate" unit="mM" range="0-1.124 M" gradient_forming="0">
+        <densityCoefficients c0="0.99823" c1="-12.38798" c2="12.42256" c3="-108.30449" c4="1302.91992" c5="-55344.13672"/>
+        <viscosityCoefficients c0="1.00000" c1="0.00000" c2="-5.73697" c3="25.64159" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="103" name="Sorbitol" unit="mM" range="0-0.55 M" gradient_forming="0">
+        <densityCoefficients c0="0.99900" c1="0.00000" c2="6.47000" c3="0.00000" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00000" c1="0.00000" c2="61.50000" c3="0.00000" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="104" name="Tween-80" unit="mM" range="0-0.07635 M" gradient_forming="0">
+        <densityCoefficients c0="0.99870" c1="0.00000" c2="14.23000" c3="0.00000" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99996" c1="0.00000" c2="481.60000" c3="129467.10000" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="11" name="Cadmium sulfate" unit="mM" range="0-2.966 M" gradient_forming="0">
+        <densityCoefficients c0="0.99794" c1="7.86084" c2="17.75644" c3="16.41838" c4="-108.49391" c5="1884.34497"/>
+        <viscosityCoefficients c0="1.00531" c1="-112.33636" c2="84.95875" c3="-61.84851" c4="1700.26196" c5="0.00000"/>
+    </component>
+    <component id="12" name="Calcium chloride" unit="mM" range="0-5.03 M" gradient_forming="0">
         <densityCoefficients c0="0.99816" c1="1.67525" c2="8.78941" c3="-2.37531" c4="1.31831" c5="-7.86843"/>
         <viscosityCoefficients c0="1.00119" c1="-32.31600" c2="34.63914" c3="-26.74770" c4="373.85400" c5="0.00000"/>
     </component>
@@ -22,26 +42,26 @@
         <viscosityCoefficients c0="1.00116" c1="-19.41040" c2="-4.07863" c3="11.54890" c4="-21.77400" c5="0.00000"/>
     </component>
     <component id="14" name="Citric acid" unit="mM" range="0-1.772 M" gradient_forming="0">
-        <densityCoefficients c0="0.99817" c1="0.00000" c2="7.84403" c3="-1.86940" c4="14.69312" c5="-496.34540"/>
-        <viscosityCoefficients c0="0.99972" c1="0.00000" c2="43.29739" c3="104.85900" c4="811.61870" c5="0.00000"/>
+        <densityCoefficients c0="0.99817" c1="0.00000" c2="7.84403" c3="-1.86940" c4="14.69312" c5="-496.34537"/>
+        <viscosityCoefficients c0="0.99972" c1="0.00000" c2="43.29739" c3="104.85898" c4="811.61865" c5="0.00000"/>
     </component>
     <component id="15" name="Cobaltous chloride" unit="mM" range="0-1.856 M" gradient_forming="0">
         <densityCoefficients c0="0.99798" c1="1.47100" c2="11.40900" c3="-2.91650" c4="12.49600" c5="-0.03939"/>
         <viscosityCoefficients c0="0.99200" c1="71.01000" c2="26.93800" c3="116.01000" c4="91.00000" c5="0.00000"/>
     </component>
     <component id="16" name="Creatinine" unit="mM" range="0-721 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99908" c1="-6.55110" c2="4.18240" c3="-21.00700" c4="252.35000" c5="-10365.00000"/>
-        <viscosityCoefficients c0="1.00150" c1="-7.78000" c2="19.06600" c3="411.54000" c4="-4066.80000" c5="0.00000"/>
+        <densityCoefficients c0="0.99908" c1="-6.55110" c2="4.18240" c3="-21.00700" c4="252.35001" c5="-10365.00000"/>
+        <viscosityCoefficients c0="1.00150" c1="-7.78000" c2="19.06600" c3="411.54001" c4="-4066.80005" c5="0.00000"/>
     </component>
     <component id="17" name="Cupric sulfate" unit="mM" range="0-1.36 M" gradient_forming="0">
         <densityCoefficients c0="0.99827" c1="-0.64184" c2="16.59200" c3="-14.69100" c4="33.73500" c5="0.04169"/>
-        <viscosityCoefficients c0="1.02133" c1="-193.07000" c2="100.42000" c3="-258.33000" c4="3007.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.02133" c1="-193.07001" c2="100.42000" c3="-258.32999" c4="3007.00000" c5="0.00000"/>
     </component>
     <component id="18" name="EDTA disodium" unit="mM" range="0-184 mM" gradient_forming="0">
         <densityCoefficients c0="0.99824" c1="0.00000" c2="17.82558" c3="-16.33459" c4="0.00000" c5="0.00000"/>
         <viscosityCoefficients c0="1.00013" c1="0.00000" c2="98.51000" c3="0.00000" c4="21831.00000" c5="0.00000"/>
     </component>
-    <component id="19" name="Ethanol" unit="mM" range="0-4.613 M" gradient_forming="0">
+    <component id="19" name="Ethanol" unit="mM" range="0-8.853 M" gradient_forming="0">
         <densityCoefficients c0="0.99818" c1="0.73133" c2="-1.01406" c3="1.26963" c4="-1.68056" c5="5.42740"/>
         <viscosityCoefficients c0="0.99491" c1="77.68270" c2="7.86154" c3="62.88875" c4="-61.69317" c5="0.00000"/>
     </component>
@@ -55,21 +75,21 @@
     </component>
     <component id="21" name="Ferric chloride" unit="mM" range="0-3.496 M" gradient_forming="0">
         <densityCoefficients c0="0.99900" c1="-3.32050" c2="13.93000" c3="-11.11500" c4="27.99100" c5="-307.16000"/>
-        <viscosityCoefficients c0="1.11373" c1="-705.03000" c2="171.62500" c3="-410.68000" c4="2078.10000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.11373" c1="-705.03003" c2="171.62500" c3="-410.67999" c4="2078.10010" c5="0.00000"/>
     </component>
     <component id="22" name="Formic acid" unit="mM" range="0-17.62 M" gradient_forming="0">
         <densityCoefficients c0="0.99873" c1="-1.81160" c2="1.23500" c3="-0.21354" c4="0.00309" c5="0.15330"/>
         <viscosityCoefficients c0="0.99787" c1="10.30000" c2="2.61700" c3="-0.66707" c4="0.39138" c5="0.00000"/>
     </component>
-    <component id="23" name="Fructose" unit="mM" range="0-1.6 M" gradient_forming="0">
+    <component id="23" name="Fructose" unit="mM" range="0-5.223 M" gradient_forming="0">
         <densityCoefficients c0="0.99822" c1="0.00000" c2="7.04741" c3="-0.92356" c4="0.69111" c5="-8.97227"/>
         <viscosityCoefficients c0="1.00038" c1="0.00000" c2="43.67090" c3="104.02700" c4="916.47900" c5="0.00000"/>
     </component>
-    <component id="24" name="Glucose" unit="mM" range="0-1.007 M" gradient_forming="0">
+    <component id="24" name="Glucose" unit="mM" range="0-4.261 M" gradient_forming="0">
         <densityCoefficients c0="0.99821" c1="0.00000" c2="6.82008" c3="0.19704" c4="-4.13821" c5="57.37880"/>
-        <viscosityCoefficients c0="1.00014" c1="-67.69800" c2="65.23700" c3="-115.74700" c4="2080.65500" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00014" c1="-67.69800" c2="65.23700" c3="-115.74700" c4="2080.65503" c5="0.00000"/>
     </component>
-    <component id="25" name="Glycerol%" unit="%weight/weight" range="0-32 %weight/weight" gradient_forming="0">
+    <component id="25" name="Glycerol%" unit="mM" range="0-32 %weight/weight" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="0.03086" c2="0.22490" c3="0.00633" c4="0.00003" c5="0.00004"/>
         <viscosityCoefficients c0="1.00180" c1="-8.24760" c2="2.67300" c3="0.31090" c4="0.11430" c5="0.12230"/>
     </component>
@@ -77,7 +97,7 @@
         <densityCoefficients c0="0.99824" c1="0.00000" c2="2.08235" c3="0.14172" c4="-0.26453" c5="0.54073"/>
         <viscosityCoefficients c0="1.00176" c1="-37.58040" c2="27.13788" c3="7.64333" c4="112.08260" c5="0.00000"/>
     </component>
-    <component id="27" name="Guanidine hydrochloride" unit="mM" range="0-7.005 M" gradient_forming="0">
+    <component id="27" name="Guanidine hydrochloride" unit="mM" range="0-7.355 M" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="0.00000" c2="2.58870" c3="-0.36684" c4="0.10132" c5="-0.20455"/>
         <viscosityCoefficients c0="1.00053" c1="-47.78951" c2="9.78462" c3="-13.52025" c4="29.72242" c5="0.00000"/>
     </component>
@@ -86,10 +106,10 @@
         <viscosityCoefficients c0="1.00061" c1="-10.08411" c2="6.04543" c3="-0.35769" c4="2.07153" c5="0.00000"/>
     </component>
     <component id="29" name="Inulin" unit="mM" range="0-20 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99867" c1="-25.84300" c2="208.55230" c3="0.00000" c4="0.00000" c5="0.00000"/>
-        <viscosityCoefficients c0="1.01057" c1="0.00000" c2="2177.99000" c3="841199.00000" c4="0.00000" c5="0.00000"/>
+        <densityCoefficients c0="0.99867" c1="-25.84300" c2="208.55231" c3="0.00000" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.01057" c1="0.00000" c2="2177.98999" c3="841199.00000" c4="0.00000" c5="0.00000"/>
     </component>
-    <component id="3" name="Acetic acid" unit="mM" range="0-11.35 M" gradient_forming="0">
+    <component id="3" name="Acetic acid" unit="mM" range="0-14.277 M" gradient_forming="0">
         <densityCoefficients c0="0.99825" c1="-0.30226" c2="0.88890" c3="-0.28098" c4="0.08607" c5="-0.57300"/>
         <viscosityCoefficients c0="0.99997" c1="1.78527" c2="11.71639" c3="2.37500" c4="-0.97284" c5="0.00000"/>
     </component>
@@ -98,43 +118,43 @@
         <viscosityCoefficients c0="1.00482" c1="-26.28000" c2="26.37500" c3="7.46000" c4="62.10000" c5="0.00000"/>
     </component>
     <component id="31" name="Lactose" unit="mM" range="0-565 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99854" c1="-3.99330" c2="14.40200" c3="15.79500" c4="-1454.40000" c5="185350.00000"/>
-        <viscosityCoefficients c0="0.98715" c1="120.60000" c2="56.53600" c3="1613.85000" c4="-2643.20000" c5="0.00000"/>
+        <densityCoefficients c0="0.99854" c1="-3.99330" c2="14.40200" c3="15.79500" c4="-1454.40002" c5="185350.00000"/>
+        <viscosityCoefficients c0="0.98715" c1="120.60000" c2="56.53600" c3="1613.84998" c4="-2643.19995" c5="0.00000"/>
     </component>
     <component id="32" name="Lanthanum nitrate" unit="mM" range="0-2.043 M" gradient_forming="0">
-        <densityCoefficients c0="1.00230" c1="-31.90900" c2="31.95500" c3="-50.50000" c4="200.02000" c5="-3482.80000"/>
-        <viscosityCoefficients c0="1.06922" c1="-503.82000" c2="133.43700" c3="-586.23000" c4="4068.70000" c5="0.00000"/>
+        <densityCoefficients c0="1.00230" c1="-31.90900" c2="31.95500" c3="-50.50000" c4="200.02000" c5="-3482.80005"/>
+        <viscosityCoefficients c0="1.06922" c1="-503.82001" c2="133.43700" c3="-586.22998" c4="4068.69995" c5="0.00000"/>
     </component>
     <component id="33" name="Lead nitrate" unit="mM" range="0-1.432 M" gradient_forming="0">
         <densityCoefficients c0="0.99848" c1="-1.47500" c2="28.36100" c3="-0.33409" c4="-35.33300" c5="694.37000"/>
-        <viscosityCoefficients c0="1.00827" c1="-61.35000" c2="26.06700" c3="25.09000" c4="331.40000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00827" c1="-61.35000" c2="26.06700" c3="25.09000" c4="331.39999" c5="0.00000"/>
     </component>
     <component id="34" name="Lithium chloride" unit="mM" range="0-8.343 M" gradient_forming="0">
         <densityCoefficients c0="0.99820" c1="0.32410" c2="2.44740" c3="-0.75425" c4="0.69894" c5="-2.54060"/>
         <viscosityCoefficients c0="1.06331" c1="-225.64000" c2="33.70100" c3="-33.17000" c4="49.20000" c5="0.00000"/>
     </component>
-    <component id="35" name="Magnesium chloride" unit="mM" range="0-2.184 M" gradient_forming="0">
+    <component id="35" name="Magnesium chloride" unit="mM" range="0-4.021 M" gradient_forming="0">
         <densityCoefficients c0="0.99834" c1="-2.52553" c2="8.09905" c3="-4.67138" c4="7.16941" c5="-51.73290"/>
-        <viscosityCoefficients c0="0.99970" c1="7.40628" c2="39.49600" c3="35.39141" c4="441.97200" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99970" c1="7.40628" c2="39.49600" c3="35.39141" c4="441.97199" c5="0.00000"/>
     </component>
     <component id="36" name="Magnesium sulfate" unit="mM" range="0-2.799 M" gradient_forming="0">
         <densityCoefficients c0="0.99757" c1="4.30570" c2="11.48800" c3="-4.45180" c4="1.44470" c5="0.23960"/>
-        <viscosityCoefficients c0="1.07097" c1="-541.45000" c2="162.02200" c3="-623.45000" c4="3770.70000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.07097" c1="-541.45001" c2="162.02200" c3="-623.45001" c4="3770.69995" c5="0.00000"/>
     </component>
-    <component id="37" name="Maltose" unit="mM" range="0-770 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99626" c1="17.53500" c2="10.05200" c3="23.28300" c4="-108.96000" c5="1730.80000"/>
-        <viscosityCoefficients c0="1.02490" c1="-277.99000" c2="169.59000" c3="-692.77000" c4="16953.00000" c5="0.00000"/>
+    <component id="37" name="Maltose" unit="mM" range="0-2.252 M" gradient_forming="0">
+        <densityCoefficients c0="0.99626" c1="17.53500" c2="10.05200" c3="23.28300" c4="-108.96000" c5="1730.80005"/>
+        <viscosityCoefficients c0="1.02490" c1="-277.98999" c2="169.59000" c3="-692.77002" c4="16953.00000" c5="0.00000"/>
     </component>
     <component id="38" name="Manganous sulfate" unit="mM" range="0-1.616 M" gradient_forming="0">
         <densityCoefficients c0="0.99738" c1="5.92240" c2="13.51600" c3="2.65200" c4="-38.66000" c5="930.13000"/>
-        <viscosityCoefficients c0="0.95546" c1="291.75000" c2="13.35500" c3="534.93000" c4="-15.35500" c5="0.00000"/>
+        <viscosityCoefficients c0="0.95546" c1="291.75000" c2="13.35500" c3="534.92999" c4="-15.35500" c5="0.00000"/>
     </component>
     <component id="39" name="Mannitol" unit="mM" range="0-867 mM" gradient_forming="0">
         <densityCoefficients c0="0.99825" c1="-0.78160" c2="6.70635" c3="-10.13540" c4="74.04750" c5="0.00000"/>
-        <viscosityCoefficients c0="0.99945" c1="51.50960" c2="31.61080" c3="480.64800" c4="-1093.27600" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99945" c1="51.50960" c2="31.61080" c3="480.64801" c4="-1093.27637" c5="0.00000"/>
     </component>
     <component id="4" name="Acetone" unit="mM" range="0-1.697 M" gradient_forming="0">
-        <densityCoefficients c0="0.99797" c1="1.14200" c2="-0.94445" c3="-0.02865" c4="6.56450" c5="-201.00000"/>
+        <densityCoefficients c0="0.99797" c1="1.14200" c2="-0.94445" c3="-0.02865" c4="6.56450" c5="-201.13001"/>
         <viscosityCoefficients c0="1.01832" c1="-95.42000" c2="25.01600" c3="-31.73000" c4="30.00000" c5="0.00000"/>
     </component>
     <component id="40" name="Methanol" unit="mM" range="0-19.901 M" gradient_forming="0">
@@ -142,16 +162,16 @@
         <viscosityCoefficients c0="1.00162" c1="0.00000" c2="10.35988" c3="1.42809" c4="-3.45430" c5="0.00000"/>
     </component>
     <component id="41" name="Nickel sulfate" unit="mM" range="0-412 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99463" c1="40.58500" c2="3.82290" c3="405.58000" c4="-9318.80000" c5="791150.00000"/>
-        <viscosityCoefficients c0="0.99667" c1="50.52000" c2="49.38700" c3="542.37000" c4="-2099.10000" c5="0.00000"/>
+        <densityCoefficients c0="0.99463" c1="40.58500" c2="3.82290" c3="405.57999" c4="-9318.79981" c5="791150.00000"/>
+        <viscosityCoefficients c0="0.99667" c1="50.52000" c2="49.38700" c3="542.37000" c4="-2099.10010" c5="0.00000"/>
     </component>
     <component id="42" name="Nitric acid" unit="mM" range="0-7.913 M" gradient_forming="0">
         <densityCoefficients c0="0.99812" c1="0.51771" c2="3.35830" c3="-0.26251" c4="0.18150" c5="-2.87100"/>
         <viscosityCoefficients c0="0.99847" c1="8.53000" c2="0.43000" c3="9.32000" c4="-1.65908" c5="0.00000"/>
     </component>
     <component id="43" name="Oxalic acid" unit="mM" range="0-920 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99550" c1="17.69700" c2="0.98754" c3="45.77000" c4="-509.55000" c5="20740.00000"/>
-        <viscosityCoefficients c0="1.00379" c1="-22.49000" c2="22.54800" c3="-37.03000" c4="148.60000" c5="0.00000"/>
+        <densityCoefficients c0="0.99550" c1="17.69700" c2="0.98754" c3="45.77000" c4="-509.54999" c5="20740.00000"/>
+        <viscosityCoefficients c0="1.00379" c1="-22.49000" c2="22.54800" c3="-37.03000" c4="148.60001" c5="0.00000"/>
     </component>
     <component id="44" name="Phosphoric acid" unit="mM" range="0-5.117 M" gradient_forming="0">
         <densityCoefficients c0="0.99815" c1="2.34959" c2="4.85108" c3="0.47553" c4="-0.78861" c5="0.00000"/>
@@ -169,9 +189,9 @@
         <densityCoefficients c0="0.99815" c1="0.46447" c2="8.45430" c3="-1.26340" c4="2.01810" c5="-17.79200"/>
         <viscosityCoefficients c0="1.00215" c1="-7.99000" c2="-4.49000" c3="9.55000" c4="2.69668" c5="0.00000"/>
     </component>
-    <component id="48" name="Potassium carbonate" unit="mM" range="0-2.584 M" gradient_forming="0">
+    <component id="48" name="Potassium carbonate" unit="mM" range="0-5.573 M" gradient_forming="0">
         <densityCoefficients c0="0.99732" c1="5.95230" c2="11.48400" c3="-4.75410" c4="2.03380" c5="1.60670"/>
-        <viscosityCoefficients c0="1.00502" c1="-27.95000" c2="34.01000" c3="5.11000" c4="262.70000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00502" c1="-27.95000" c2="34.01000" c3="5.11000" c4="262.70001" c5="0.00000"/>
     </component>
     <component id="49" name="Potassium chloride" unit="mM" range="0-3.742 M" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="0.00000" c2="4.75162" c3="-1.64923" c4="2.56432" c5="-20.90000"/>
@@ -182,26 +202,26 @@
         <viscosityCoefficients c0="1.00142" c1="265.45000" c2="-6.22500" c3="37.27000" c4="0.00000" c5="0.00000"/>
     </component>
     <component id="50" name="Potassium chromate" unit="mM" range="0-1.972 M" gradient_forming="0">
-        <densityCoefficients c0="0.99788" c1="3.90530" c2="14.64400" c3="-3.22440" c4="32.24400" c5="-804.17000"/>
+        <densityCoefficients c0="0.99788" c1="3.90530" c2="14.64400" c3="-3.22440" c4="32.24400" c5="-804.16998"/>
         <viscosityCoefficients c0="0.99631" c1="31.42000" c2="10.30000" c3="58.63000" c4="27.00000" c5="0.00000"/>
     </component>
     <component id="51" name="Potassium dichromate" unit="mM" range="0-364 mM" gradient_forming="0">
         <densityCoefficients c0="0.99827" c1="0.00000" c2="20.35301" c3="-15.29853" c4="0.00000" c5="0.00000"/>
         <viscosityCoefficients c0="0.99990" c1="0.00000" c2="2.89129" c3="0.00000" c4="0.00000" c5="0.00000"/>
     </component>
-    <component id="52" name="Potassium ferricyanide " unit="mM" range="0-1.073 M" gradient_forming="0">
-        <densityCoefficients c0="0.99819" c1="0.81486" c2="16.81400" c3="7.08140" c4="-48.19400" c5="-3250.30000"/>
-        <viscosityCoefficients c0="1.00032" c1="20.96000" c2="6.65000" c3="155.57000" c4="607.40000" c5="0.00000"/>
+    <component id="52" name="Potassium ferricyanide" unit="mM" range="0-1.073 M" gradient_forming="0">
+        <densityCoefficients c0="0.99819" c1="0.81486" c2="16.81400" c3="7.08140" c4="-48.19400" c5="-3250.30005"/>
+        <viscosityCoefficients c0="1.00032" c1="20.96000" c2="6.65000" c3="155.57001" c4="607.40002" c5="0.00000"/>
     </component>
     <component id="53" name="Potassium ferrocyanide" unit="mM" range="0-618 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99719" c1="13.36600" c2="20.21100" c3="65.13500" c4="-1361.30000" c5="93298.00000"/>
+        <densityCoefficients c0="0.99719" c1="13.36600" c2="20.21100" c3="65.13500" c4="-1361.30005" c5="93298.00000"/>
         <viscosityCoefficients c0="0.99835" c1="47.92000" c2="26.18000" c3="321.50000" c4="-37.60000" c5="0.00000"/>
     </component>
     <component id="54" name="Potassium hydroxide" unit="mM" range="0-13.388 M" gradient_forming="0">
         <densityCoefficients c0="0.99838" c1="-1.50366" c2="4.98964" c3="-1.65490" c4="0.84864" c5="-2.03780"/>
         <viscosityCoefficients c0="1.00011" c1="-11.47067" c2="11.74842" c3="1.71339" c4="15.48195" c5="0.00000"/>
     </component>
-    <component id="55" name="Potassium iodide" unit="mM" range="0-2.297 M" gradient_forming="0">
+    <component id="55" name="Potassium iodide" unit="mM" range="0-3.363 M" gradient_forming="0">
         <densityCoefficients c0="0.99809" c1="1.07620" c2="11.98600" c3="-1.25060" c4="3.23420" c5="-42.41500"/>
         <viscosityCoefficients c0="0.99361" c1="46.49000" c2="-16.97100" c3="62.24000" c4="-92.80000" c5="0.00000"/>
     </component>
@@ -210,16 +230,16 @@
         <viscosityCoefficients c0="1.00053" c1="-6.64000" c2="-4.83400" c3="25.16000" c4="-18.80000" c5="0.00000"/>
     </component>
     <component id="57" name="Potassium oxalate" unit="mM" range="0-931 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99892" c1="-5.69140" c2="13.02700" c3="-22.57400" c4="185.27000" c5="-5858.30000"/>
-        <viscosityCoefficients c0="1.00682" c1="-64.49000" c2="31.84600" c3="-91.68000" c4="905.70000" c5="0.00000"/>
+        <densityCoefficients c0="0.99892" c1="-5.69140" c2="13.02700" c3="-22.57400" c4="185.27000" c5="-5858.29980"/>
+        <viscosityCoefficients c0="1.00682" c1="-64.49000" c2="31.84600" c3="-91.68000" c4="905.70001" c5="0.00000"/>
     </component>
     <component id="58" name="Potassium permanganate" unit="mM" range="0-394 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99757" c1="7.94450" c2="8.24800" c3="73.89500" c4="-2002.30000" c5="196460.00000"/>
+        <densityCoefficients c0="0.99757" c1="7.94450" c2="8.24800" c3="73.89500" c4="-2002.30005" c5="196460.00000"/>
         <viscosityCoefficients c0="0.99627" c1="37.23000" c2="-13.00100" c3="201.77000" c4="-2747.00000" c5="0.00000"/>
     </component>
-    <component id="59" name="Potassium phosphate, di-basic " unit="mM" range="0-491 mM" gradient_forming="0">
+    <component id="59" name="Potassium phosphate, di-basic" unit="mM" range="0-491 mM" gradient_forming="0">
         <densityCoefficients c0="0.99826" c1="0.00000" c2="14.74589" c3="-16.32800" c4="112.09800" c5="0.00000"/>
-        <viscosityCoefficients c0="0.99992" c1="-6.68598" c2="39.15859" c3="0.00000" c4="1650.51000" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99992" c1="-6.68598" c2="39.15859" c3="0.00000" c4="1650.51001" c5="0.00000"/>
     </component>
     <component id="6" name="Ammonium chloride" unit="mM" range="0-4.788 M" gradient_forming="0">
         <densityCoefficients c0="0.99824" c1="-0.18982" c2="1.73873" c3="-0.92386" c4="1.03806" c5="-7.39899"/>
@@ -231,30 +251,30 @@
     </component>
     <component id="61" name="Potassium sulfate" unit="mM" range="0-620 mM" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="-1.00036" c2="14.28901" c3="-19.07038" c4="78.09765" c5="0.00000"/>
-        <viscosityCoefficients c0="0.99985" c1="0.00000" c2="14.83249" c3="170.83420" c4="-1156.52400" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99985" c1="0.00000" c2="14.83249" c3="170.83418" c4="-1156.52417" c5="0.00000"/>
     </component>
-    <component id="62" name="Potassium thiocyanate" unit="mM" range="0-5.021 M" gradient_forming="0">
+    <component id="62" name="Potassium thiocyanate" unit="mM" range="0-9.123 M" gradient_forming="0">
         <densityCoefficients c0="0.99778" c1="2.72284" c2="4.41185" c3="0.00000" c4="-0.59769" c5="3.20363"/>
         <viscosityCoefficients c0="1.00307" c1="-12.38000" c2="-4.64700" c3="15.22000" c4="1.77465" c5="0.00000"/>
     </component>
-    <component id="63" name="Procaine hydrochloride" unit="mM" range="0-1.745 M" gradient_forming="0">
-        <densityCoefficients c0="0.99827" c1="-0.05165" c2="4.52160" c3="4.96760" c4="-27.69500" c5="469.02000"/>
-        <viscosityCoefficients c0="1.13444" c1="-1106.50000" c2="287.84500" c3="-1966.53000" c4="13734.20000" c5="0.00000"/>
+    <component id="63" name="Procaine hydrochloride" unit="mM" range="0-2.453 M" gradient_forming="0">
+        <densityCoefficients c0="0.99827" c1="-0.05165" c2="4.52160" c3="4.96760" c4="-27.69500" c5="469.01999"/>
+        <viscosityCoefficients c0="1.13444" c1="-1106.50000" c2="287.84500" c3="-1966.53003" c4="13734.20019" c5="0.00000"/>
     </component>
     <component id="64" name="Propylene glycol" unit="mM" range="0-8.215 M" gradient_forming="0">
         <densityCoefficients c0="0.99794" c1="1.26850" c2="0.29384" c3="1.49960" c4="-2.58140" c5="12.72200"/>
-        <viscosityCoefficients c0="1.00773" c1="-331.18000" c2="56.20500" c3="-24.69000" c4="112.70000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00773" c1="-331.17999" c2="56.20500" c3="-24.69000" c4="112.70000" c5="0.00000"/>
     </component>
     <component id="65" name="Silver nitrate" unit="mM" range="0-3.471 M" gradient_forming="0">
-        <densityCoefficients c0="0.99841" c1="1.19230" c2="13.84300" c3="0.78821" c4="-8.46450" c5="131.37000"/>
+        <densityCoefficients c0="0.99841" c1="1.19230" c2="13.84300" c3="0.78821" c4="-8.46450" c5="131.36999"/>
         <viscosityCoefficients c0="0.99789" c1="13.77000" c2="3.31400" c3="19.13000" c4="-1.52308" c5="0.00000"/>
     </component>
-    <component id="66" name="Sodium acetate" unit="mM" range="0-2.4 M" gradient_forming="0">
-        <densityCoefficients c0="0.99809" c1="4.17494" c2="3.22595" c3="5.42805" c4="-18.29360" c5="180.91580"/>
-        <viscosityCoefficients c0="1.00177" c1="-30.89277" c2="35.99120" c3="44.79418" c4="144.79600" c5="0.00000"/>
+    <component id="66" name="Sodium acetate" unit="mM" range="0-4.243 M" gradient_forming="0">
+        <densityCoefficients c0="0.99809" c1="4.17494" c2="3.22595" c3="5.42805" c4="-18.29360" c5="180.91576"/>
+        <viscosityCoefficients c0="1.00177" c1="-30.89277" c2="35.99120" c3="44.79418" c4="144.79601" c5="0.00000"/>
     </component>
     <component id="67" name="Sodium bicarbonate" unit="mM" range="0-743 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99823" c1="0.00000" c2="5.96817" c3="0.00000" c4="-114.94160" c5="9653.32500"/>
+        <densityCoefficients c0="0.99823" c1="0.00000" c2="5.96817" c3="0.00000" c4="-114.94160" c5="9653.32519"/>
         <viscosityCoefficients c0="0.99968" c1="0.00000" c2="21.85000" c3="38.65000" c4="0.00000" c5="0.00000"/>
     </component>
     <component id="68" name="Sodium bromide" unit="mM" range="0-5.495 M" gradient_forming="0">
@@ -263,7 +283,7 @@
     </component>
     <component id="69" name="Sodium carbonate" unit="mM" range="0-1.638 M" gradient_forming="0">
         <densityCoefficients c0="0.99819" c1="0.21501" c2="11.02600" c3="-13.47700" c4="47.43100" c5="-885.00000"/>
-        <viscosityCoefficients c0="0.98837" c1="58.18000" c2="42.14600" c3="157.31000" c4="851.40000" c5="0.00000"/>
+        <viscosityCoefficients c0="0.98837" c1="58.18000" c2="42.14600" c3="157.31000" c4="851.40002" c5="0.00000"/>
     </component>
     <component id="7" name="Ammonium hydroxide" unit="mM" range="0-13.802 M" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="0.00000" c2="-0.75626" c3="0.05645" c4="0.00566" c5="-0.05782"/>
@@ -273,108 +293,128 @@
         <densityCoefficients c0="0.99823" c1="0.00000" c2="4.14712" c3="-1.23975" c4="1.15528" c5="-5.21415"/>
         <viscosityCoefficients c0="1.00193" c1="-5.05987" c2="9.63862" c3="0.00000" c4="31.65830" c5="0.00000"/>
     </component>
-    <component id="71" name="Sodium citrate" unit="mM" range="0-1.099 M" gradient_forming="0">
-        <densityCoefficients c0="0.99830" c1="-4.20553" c2="18.78849" c3="-16.48328" c4="0.00000" c5="763.06840"/>
-        <viscosityCoefficients c0="0.99969" c1="0.00000" c2="99.98432" c3="93.87350" c4="8944.84000" c5="0.00000"/>
+    <component id="71" name="Sodium citrate" unit="mM" range="0-1.792 M" gradient_forming="0">
+        <densityCoefficients c0="0.99830" c1="-4.20553" c2="18.78849" c3="-16.48328" c4="0.00000" c5="763.06842"/>
+        <viscosityCoefficients c0="0.99969" c1="0.00000" c2="99.98432" c3="93.87350" c4="8944.83984" c5="0.00000"/>
     </component>
     <component id="72" name="Sodium diatrizoate" unit="mM" range="0-836 mM" gradient_forming="0">
-        <densityCoefficients c0="1.00200" c1="-44.59100" c2="50.90300" c3="-247.36000" c4="3568.10000" c5="-190300.00000"/>
-        <viscosityCoefficients c0="1.16872" c1="-1681.93000" c2="539.86900" c3="-5855.61000" c4="74457.50000" c5="0.00000"/>
+        <densityCoefficients c0="1.00200" c1="-44.59100" c2="50.90300" c3="-247.36000" c4="3568.10010" c5="-190300.00000"/>
+        <viscosityCoefficients c0="1.16872" c1="-1681.93005" c2="539.86902" c3="-5855.60986" c4="74457.50000" c5="0.00000"/>
     </component>
-    <component id="73" name="Sodium dichromate" unit="mM" range="0-2.403 M" gradient_forming="0">
+    <component id="73" name="Sodium dichromate" unit="mM" range="0-3.839 M" gradient_forming="0">
         <densityCoefficients c0="0.99852" c1="-0.80676" c2="19.02000" c3="-5.90060" c4="9.35290" c5="-76.75600"/>
-        <viscosityCoefficients c0="1.00177" c1="-9.25000" c2="21.66000" c3="36.37000" c4="672.80000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00177" c1="-9.25000" c2="21.66000" c3="36.37000" c4="672.79999" c5="0.00000"/>
     </component>
     <component id="74" name="Sodium ferrocyanide" unit="mM" range="0-550 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99853" c1="-4.00320" c2="23.68800" c3="-109.19000" c4="2240.10000" c5="-173750.00000"/>
-        <viscosityCoefficients c0="0.98947" c1="134.91000" c2="53.09400" c3="797.61000" c4="4226.50000" c5="0.00000"/>
+        <densityCoefficients c0="0.99853" c1="-4.00320" c2="23.68800" c3="-109.19000" c4="2240.10010" c5="-173750.00000"/>
+        <viscosityCoefficients c0="0.98947" c1="134.91000" c2="53.09400" c3="797.60999" c4="4226.50000" c5="0.00000"/>
     </component>
     <component id="75" name="Sodium hydroxide" unit="mM" range="0-14.295 M" gradient_forming="0">
         <densityCoefficients c0="0.99816" c1="1.54203" c2="4.27533" c3="-1.52100" c4="0.69530" c5="-1.90440"/>
         <viscosityCoefficients c0="1.00071" c1="-27.64113" c2="25.33124" c3="-1.80466" c4="109.27000" c5="0.00000"/>
     </component>
     <component id="76" name="Sodium molybdate" unit="mM" range="0-472 mM" gradient_forming="0">
-        <densityCoefficients c0="0.99808" c1="3.10400" c2="15.80500" c3="86.44700" c4="-2259.30000" c5="183100.00000"/>
-        <viscosityCoefficients c0="0.99661" c1="50.81000" c2="34.14600" c3="268.52000" c4="-430.80000" c5="0.00000"/>
+        <densityCoefficients c0="0.99808" c1="3.10400" c2="15.80500" c3="86.44700" c4="-2259.30005" c5="183100.00000"/>
+        <viscosityCoefficients c0="0.99661" c1="50.81000" c2="34.14600" c3="268.51999" c4="-430.79999" c5="0.00000"/>
     </component>
     <component id="77" name="Sodium phosphate, di-basic" unit="mM" range="0-408 mM" gradient_forming="0">
         <densityCoefficients c0="0.99826" c1="0.00000" c2="14.15826" c3="-28.77017" c4="234.23740" c5="0.00000"/>
-        <viscosityCoefficients c0="1.00015" c1="-26.94314" c2="66.22344" c3="0.00000" c4="4665.33100" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00015" c1="-26.94314" c2="66.22344" c3="0.00000" c4="4665.33105" c5="0.00000"/>
     </component>
-    <component id="78" name="Sodium phosphate, mono-basic" unit="mM" range="0-2.625 M" gradient_forming="0">
+    <component id="78" name="Sodium phosphate, mono-basic" unit="mM" range="0-4.499 M" gradient_forming="0">
         <densityCoefficients c0="0.99826" c1="0.00000" c2="8.83506" c3="-3.85794" c4="5.29888" c5="-40.55664"/>
         <viscosityCoefficients c0="0.99898" c1="0.00000" c2="38.40933" c3="60.61270" c4="433.13300" c5="0.00000"/>
     </component>
     <component id="79" name="Sodium phosphate, tri-basic" unit="mM" range="0-535 mM" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="2.35760" c2="18.00187" c3="6.89182" c4="-136.31100" c5="0.00000"/>
-        <viscosityCoefficients c0="0.99988" c1="49.42915" c2="72.27851" c3="1062.90900" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99988" c1="49.42915" c2="72.27851" c3="1062.90906" c4="0.00000" c5="0.00000"/>
     </component>
     <component id="8" name="Ammonium sulfate" unit="mM" range="0-3.716 M" gradient_forming="0">
         <densityCoefficients c0="0.99822" c1="0.00000" c2="7.87196" c3="-6.46330" c4="6.19284" c5="-29.24905"/>
         <viscosityCoefficients c0="0.99864" c1="0.00000" c2="17.77711" c3="25.79842" c4="100.05050" c5="0.00000"/>
     </component>
-    <component id="80" name="Sodium sulfate" unit="mM" range="0-1.676 M" gradient_forming="0">
-        <densityCoefficients c0="0.99824" c1="0.00000" c2="12.66872" c3="-12.26328" c4="64.65751" c5="-2003.41500"/>
-        <viscosityCoefficients c0="0.99694" c1="0.00000" c2="40.40690" c3="85.31960" c4="660.24700" c5="0.00000"/>
+    <component id="80" name="Sodium sulfate" unit="mM" range="0-1.875 M" gradient_forming="0">
+        <densityCoefficients c0="0.99824" c1="0.00000" c2="12.66872" c3="-12.26328" c4="64.65751" c5="-2003.41504"/>
+        <viscosityCoefficients c0="0.99694" c1="0.00000" c2="40.40690" c3="85.31960" c4="660.24701" c5="0.00000"/>
     </component>
     <component id="81" name="Sodium tartrate" unit="mM" range="0-1.75 M" gradient_forming="0">
-        <densityCoefficients c0="0.99801" c1="0.96317" c2="13.53500" c3="-12.50000" c4="43.61800" c5="-861.03000"/>
-        <viscosityCoefficients c0="0.99371" c1="36.82000" c2="53.73600" c3="74.55000" c4="2470.20000" c5="0.00000"/>
+        <densityCoefficients c0="0.99801" c1="0.96317" c2="13.53500" c3="-12.50000" c4="43.61800" c5="-861.03003"/>
+        <viscosityCoefficients c0="0.99371" c1="36.82000" c2="53.73600" c3="74.55000" c4="2470.19995" c5="0.00000"/>
     </component>
-    <component id="82" name="Sodium thiocyanate" unit="mM" range="0-4.643 M" gradient_forming="0">
+    <component id="82" name="Sodium thiocyanate" unit="mM" range="0-9.248 M" gradient_forming="0">
         <densityCoefficients c0="1.00170" c1="-13.69300" c2="5.17770" c3="-2.64980" c4="2.61630" c5="-11.01200"/>
         <viscosityCoefficients c0="1.00329" c1="-3.99000" c2="3.88300" c3="14.95000" c4="26.40000" c5="0.00000"/>
     </component>
     <component id="83" name="Sodium thiosulfate" unit="mM" range="0-3.498 M" gradient_forming="0">
         <densityCoefficients c0="0.99776" c1="3.55610" c2="12.39300" c3="-6.71550" c4="9.50790" c5="-91.71800"/>
-        <viscosityCoefficients c0="1.07114" c1="-442.34000" c2="95.36200" c3="-264.71000" c4="1266.50000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.07114" c1="-442.34000" c2="95.36200" c3="-264.70999" c4="1266.50000" c5="0.00000"/>
     </component>
     <component id="84" name="Sodium tungstate" unit="mM" range="0-332 mM" gradient_forming="0">
         <densityCoefficients c0="0.99583" c1="36.85600" c2="11.49700" c3="806.13000" c4="-27379.00000" c5="3401600.00000"/>
-        <viscosityCoefficients c0="1.00890" c1="-107.33000" c2="72.68400" c3="-170.16000" c4="323.90000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00890" c1="-107.33000" c2="72.68400" c3="-170.16000" c4="323.89999" c5="0.00000"/>
     </component>
     <component id="85" name="Strontium chloride" unit="mM" range="0-3.205 M" gradient_forming="0">
-        <densityCoefficients c0="0.99827" c1="-0.09032" c2="13.92700" c3="-2.77740" c4="-9.69800" c5="259.85000"/>
-        <viscosityCoefficients c0="1.03852" c1="-227.77000" c2="60.16000" c3="-165.65000" c4="712.30000" c5="0.00000"/>
+        <densityCoefficients c0="0.99827" c1="-0.09032" c2="13.92700" c3="-2.77740" c4="-9.69800" c5="259.85001"/>
+        <viscosityCoefficients c0="1.03852" c1="-227.77000" c2="60.16000" c3="-165.64999" c4="712.29999" c5="0.00000"/>
     </component>
-    <component id="86" name="Sucrose" unit="mM" range="0-914 mM" gradient_forming="0">
+    <component id="86" name="Sucrose" unit="mM" range="0-3.53 M" gradient_forming="0">
         <densityCoefficients c0="0.99827" c1="-0.21963" c2="13.23726" c3="-1.83647" c4="0.00000" c5="-25.13871"/>
-        <viscosityCoefficients c0="1.00110" c1="-52.13491" c2="107.94530" c3="0.00000" c4="11916.34000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00110" c1="-52.13491" c2="107.94530" c3="0.00000" c4="11916.33984" c5="0.00000"/>
     </component>
-    <component id="87" name="Sulfuric acid" unit="mM" range="0-3.435 M" gradient_forming="0">
+    <component id="87" name="Sulfuric acid" unit="mM" range="0-7.502 M" gradient_forming="0">
         <densityCoefficients c0="0.99817" c1="2.05171" c2="6.10052" c3="-0.20639" c4="-2.15038" c5="17.65096"/>
         <viscosityCoefficients c0="0.99646" c1="0.00000" c2="20.88912" c3="0.00000" c4="43.95996" c5="0.00000"/>
     </component>
-    <component id="88" name="Tartaric acid" unit="mM" range="0-2.12 M" gradient_forming="0">
+    <component id="88" name="Tartaric acid" unit="mM" range="0-5.099 M" gradient_forming="0">
         <densityCoefficients c0="0.99815" c1="1.61090" c2="6.41580" c3="0.85463" c4="-4.94310" c5="50.27200"/>
-        <viscosityCoefficients c0="1.02170" c1="-138.46000" c2="54.55300" c3="-82.49000" c4="724.10000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.02170" c1="-138.46001" c2="54.55300" c3="-82.49000" c4="724.09998" c5="0.00000"/>
     </component>
     <component id="89" name="Tetracaine hydrochloride" unit="mM" range="0-404 mM" gradient_forming="0">
         <densityCoefficients c0="0.99820" c1="0.00000" c2="3.88078" c3="-1.06621" c4="0.00000" c5="0.00000"/>
         <viscosityCoefficients c0="0.99958" c1="0.00000" c2="82.78300" c3="1765.25500" c4="0.00000" c5="0.00000"/>
     </component>
     <component id="9" name="Barium chloride" unit="mM" range="0-1.6 M" gradient_forming="0">
-        <densityCoefficients c0="0.99821" c1="0.50414" c2="17.99600" c3="-3.42690" c4="12.89500" c5="-531.23000"/>
+        <densityCoefficients c0="0.99821" c1="0.50414" c2="17.99600" c3="-3.42690" c4="12.89500" c5="-531.22998"/>
         <viscosityCoefficients c0="1.00031" c1="14.91000" c2="19.46300" c3="43.90000" c4="143.00000" c5="0.00000"/>
     </component>
     <component id="90" name="Trichloroacetic acid" unit="mM" range="0-2.984 M" gradient_forming="0">
-        <densityCoefficients c0="0.99763" c1="0.00000" c2="36.11419" c3="95.54537" c4="-285.51150" c5="4695.83900"/>
+        <densityCoefficients c0="0.99763" c1="0.00000" c2="36.11419" c3="95.54537" c4="-285.51154" c5="4695.83887"/>
         <viscosityCoefficients c0="1.00117" c1="-38.08678" c2="43.68669" c3="28.55220" c4="16.73610" c5="0.00000"/>
     </component>
-    <component id="91" name="Trifluoroethanol" unit="mM" range="0-11.276 M" gradient_forming="0">
+    <component id="91" name="Trifluoroethanol" unit="mM" range="0-13.901 M" gradient_forming="0">
         <densityCoefficients c0="0.99812" c1="3.83029" c2="3.29838" c3="-0.41439" c4="0.00000" c5="0.00000"/>
         <viscosityCoefficients c0="0.99907" c1="-80.10114" c2="24.86394" c3="-16.10573" c4="0.00000" c5="0.00000"/>
     </component>
-    <component id="92" name="Tris(hydroxymethyl)aminomethane" unit="mM" range="0-2.289 M" gradient_forming="0">
+    <component id="92" name="Tris(hydroxymethyl)aminomethane" unit="mM" range="0-3.657 M" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="0.00000" c2="2.84717" c3="1.31068" c4="-3.93586" c5="38.96285"/>
-        <viscosityCoefficients c0="0.99846" c1="0.00000" c2="32.16556" c3="59.46483" c4="344.51400" c5="0.00000"/>
+        <viscosityCoefficients c0="0.99846" c1="0.00000" c2="32.16556" c3="59.46483" c4="344.51401" c5="0.00000"/>
     </component>
     <component id="93" name="Urea" unit="mM" range="0-8.665 M" gradient_forming="0">
         <densityCoefficients c0="0.99822" c1="0.00000" c2="1.49081" c3="0.61729" c4="-1.54142" c5="10.26086"/>
         <viscosityCoefficients c0="1.00249" c1="-19.45872" c2="5.59969" c3="-1.35929" c4="6.83825" c5="0.00000"/>
     </component>
     <component id="94" name="Zinc sulfate" unit="mM" range="0-1.17 M" gradient_forming="0">
-        <densityCoefficients c0="0.99825" c1="-0.78088" c2="16.94782" c3="-22.17244" c4="142.70430" c5="-4038.58000"/>
-        <viscosityCoefficients c0="0.99908" c1="0.00000" c2="62.03292" c3="172.71530" c4="1177.89500" c5="0.00000"/>
+        <densityCoefficients c0="0.99825" c1="-0.78088" c2="16.94782" c3="-22.17244" c4="142.70435" c5="-4038.58008"/>
+        <viscosityCoefficients c0="0.99908" c1="0.00000" c2="62.03292" c3="172.71532" c4="1177.89502" c5="0.00000"/>
+    </component>
+    <component id="95" name="DTT" unit="mM" range="0-0.13 M" gradient_forming="0">
+        <densityCoefficients c0="0.99820" c1="0.00000" c2="4.15428" c3="0.00000" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00000" c1="0.00000" c2="28.82400" c3="0.00000" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="96" name="HEPES" unit="mM" range="0-0.08 M" gradient_forming="0">
+        <densityCoefficients c0="0.99823" c1="0.00000" c2="7.76250" c3="0.00000" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00000" c1="40.11701" c2="43.69150" c3="0.00000" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="97" name="L-alanine" unit="mM" range="0-1.02 M" gradient_forming="0">
+        <densityCoefficients c0="0.99831" c1="0.00000" c2="2.81885" c3="-2.17500" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00025" c1="0.00000" c2="17.13400" c3="76.66700" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="98" name="L-arginine" unit="mM" range="0-0.1 M" gradient_forming="0">
+        <densityCoefficients c0="0.99823" c1="0.00000" c2="4.69800" c3="0.00000" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00200" c1="-26.87000" c2="69.38700" c3="-269.30000" c4="0.00000" c5="0.00000"/>
+    </component>
+    <component id="99" name="L-glycine" unit="mM" range="0-1.0 M" gradient_forming="0">
+        <densityCoefficients c0="0.99829" c1="0.00000" c2="3.13131" c3="-0.31289" c4="0.00000" c5="0.00000"/>
+        <viscosityCoefficients c0="1.00200" c1="0.00000" c2="14.58600" c3="1.21400" c4="0.00000" c5="0.00000"/>
     </component>
 </BufferComponents>

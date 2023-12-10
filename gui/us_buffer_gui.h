@@ -146,6 +146,7 @@ class US_BufferGuiNew : public US_Widgets
    signals:
       void newBufAccepted( void );  //! New buffer accepted
       void newBufCanceled( void );
+      void use_db( bool DB ); //! /param DB True if DB is the new selection
 
    private:
 
@@ -184,6 +185,7 @@ class US_BufferGuiNew : public US_Widgets
       void add_component   ();
       void create_new_buffer_component();
       void select_bcomp    ();
+      void select_water    ( QListWidgetItem* );
       void remove_bcomp    ( QListWidgetItem* );
       void recalc_density  ( void );
       void recalc_viscosity( void );
@@ -198,6 +200,7 @@ class US_BufferGuiNew : public US_Widgets
       void newCanceled     ( void );
       void write_db        ( void );
       void write_disk      ( void );
+      void update_db_disk  ( bool );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
    public slots:
