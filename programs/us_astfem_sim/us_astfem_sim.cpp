@@ -816,14 +816,23 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       sol_data.viscosity = buffer.viscosity;
       // sol_data.vbar20    = 0.72; //The assumption here is that vbar does not change with
       // sol_data.vbar      = 0.72; //temp, so vbar correction will cancel in s correction
-      double vbar20 = 0;
+      // weight average vbar20
+      QVector<double> vbar20s;
+      QVector<double> mws;
+      double mw_tot = 0;
       for ( int ii = 0; ii < system.components.size(); ii++) {
-         vbar20 += system.components.at(ii).vbar20;
+         vbar20s << system.components.at(ii).vbar20;
+         mws << system.components.at(ii).mw;
+         mw_tot += system.components.at(ii).mw;
       }
-      vbar20 /= system.components.size();
-      sol_data.vbar20    = vbar20;
-      sol_data.vbar      = US_Math2::adjust_vbar20(vbar20, simparams.temperature);
-      qDebug() << sol_data.vbar20 << " , " << sol_data.vbar;
+      double vbar20_avg = 0;
+      for ( int ii = 0; ii < vbar20s.size(); ii++) {
+         vbar20_avg += vbar20s.at(ii) * (mws.at(ii) / mw_tot);
+      }
+      sol_data.vbar20    = vbar20_avg;
+      // adjust vbar20 to temperature
+      sol_data.vbar      = US_Math2::adjust_vbar20(sol_data.vbar20, simparams.temperature);
+DbgLv(1) << "\nSIM: weight-avg vbar20: " << sol_data.vbar20 << " , vbar(" << simparams.temperature << "): " << sol_data.vbar;
       sol_data.manual    = buffer.manual;
       US_Math2::data_correction( simparams.temperature, sol_data );
 
