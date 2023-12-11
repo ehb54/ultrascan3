@@ -705,16 +705,14 @@ void US_Math2::data_correction( double t, SolutionData& d )
 
    d.D20w_correction = ( K20 / K ) * ( d.viscosity_tb / VISC_20W );
 
-   qDebug() << "\n";
-   qDebug() << QObject::tr("dataCorr: manual: %1").arg(d.manual) << d.manual;
-   qDebug() << QObject::tr("dataCorr:  water: visc(20)=%1, visc(%2)=%3").arg(VISC_20W).arg(t).arg(d.viscosity_wt);
-   qDebug() << QObject::tr("dataCorr:  water: dens(20)=%1, dens(%2)=%3").arg(DENS_20W).arg(t).arg(d.density_wt);
-   qDebug() << QObject::tr("dataCorr: buffer: visc(20)=%1, visc(%2)=%3").arg(d.viscosity).arg(t).arg(d.viscosity_tb);
-   qDebug() << QObject::tr("dataCorr: buffer: dens(20)=%1, dens(%2)=%3").arg(d.density).arg(t).arg(d.density_tb);
-   qDebug() << QObject::tr("dataCorr: solute: vbar(20)=%1, vbar(%2)=%3").arg(d.vbar20).arg(t).arg(d.vbar);
-   qDebug() << QObject::tr("dataCorr: boyncy: water(20)=%1, buffer(%2)=%3").arg(d.buoyancyw).arg(t).arg(d.buoyancyb);
-   qDebug() << QObject::tr("dataCorr: factor: sed=%1, diff=%2").arg(d.s20w_correction).arg(d.D20w_correction);
-   qDebug() << "\n";
+DbgLv(1) << QObject::tr("dataCorr: manual: %1").arg(d.manual) << d.manual;
+DbgLv(1) << QObject::tr("dataCorr:  water: visc(20)=%1, visc(%2)=%3").arg(VISC_20W).arg(t).arg(d.viscosity_wt);
+DbgLv(1) << QObject::tr("dataCorr:  water: dens(20)=%1, dens(%2)=%3").arg(DENS_20W).arg(t).arg(d.density_wt);
+DbgLv(1) << QObject::tr("dataCorr: buffer: visc(20)=%1, visc(%2)=%3").arg(d.viscosity).arg(t).arg(d.viscosity_tb);
+DbgLv(1) << QObject::tr("dataCorr: buffer: dens(20)=%1, dens(%2)=%3").arg(d.density).arg(t).arg(d.density_tb);
+DbgLv(1) << QObject::tr("dataCorr: solute: vbar(20)=%1, vbar(%2)=%3").arg(d.vbar20).arg(t).arg(d.vbar);
+DbgLv(1) << QObject::tr("dataCorr: boyncy: water(20)=%1, buffer(%2)=%3").arg(d.buoyancyw).arg(t).arg(d.buoyancyb);
+DbgLv(1) << QObject::tr("dataCorr: factor: sed=%1, diff=%2").arg(d.s20w_correction).arg(d.D20w_correction) << "\n";
 
 //if ( qAbs(d.vbar-0.72) > 0.001 ) {
 //qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt << "manual" << d.manual;

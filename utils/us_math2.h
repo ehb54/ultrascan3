@@ -21,6 +21,10 @@
    #define swap_double(a,b) {double t = a; a=b; b=t;}
 #endif
 
+#ifndef DbgLv
+#define DbgLv(a) if(0 >= a)qDebug()
+#endif
+
 //! \brief A collecion of methematical routines.  All functions are static.
 class US_UTIL_EXTERN US_Math2
 {
