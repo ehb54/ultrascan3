@@ -2692,7 +2692,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 void US_ConvertGui::runIDChanged( void )
 {
    // See if we need to update the runID
-   if (runID.size() == 0){
+   if (outData.size() == 0){
        le_runID2->clear();
        return;
    }
@@ -4174,7 +4174,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
 void US_ConvertGui::getExpInfo( void )
 {
 DbgLv(1) << "CGui: gExpInf: IN";
-   ExpData.runID = le_runID -> text();
+   ExpData.runID = le_runID2 -> text();
 
    if ( disk_controls->db() )
    {
