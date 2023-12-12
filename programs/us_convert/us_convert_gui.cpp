@@ -4174,7 +4174,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
 void US_ConvertGui::getExpInfo( void )
 {
 DbgLv(1) << "CGui: gExpInf: IN";
-   ExpData.runID = le_runID -> text();
+   ExpData.runID = le_runID2 -> text();
 
    if ( disk_controls->db() )
    {
