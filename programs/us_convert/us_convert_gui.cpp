@@ -2692,7 +2692,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 void US_ConvertGui::runIDChanged( void )
 {
    // See if we need to update the runID
-   if (runID.size() == 0){
+   if (outData.size() == 0){
        le_runID2->clear();
        return;
    }
