@@ -3147,15 +3147,38 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       }
    }
       
+   bool make_ihashq = false;
+
    if ( !use_conc && !mals_param_g_conc ) {
-      QMessageBox::critical( this,
-                             windowTitle() + us_tr( ": Make I*(q)" ),
-                             us_tr(
-                                   "To make I*(q) without a concentration curve,\n"
-                                   "the global concentration must be defined in Options->MALS parameters"
-                                   )
-                             );
-      return false;
+      if ( 1 == QMessageBox::question(this, 
+                                      this->windowTitle() + us_tr( ": Make I*(q)" )
+                                      ,us_tr(
+                                            "Global concentration in Options->MALS parameters is zero\n"
+                                            "Do you wish to make I#(q)?"
+                                            )
+                                      ,us_tr( "&Yes, make I#(q)" )
+                                      ,us_tr( "&No" )
+                                      ,QString()
+                                      ,0
+                                      ,1
+                                      ) ) {
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Make I*(q)" ),
+                                us_tr(
+                                      "To make I*(q) without a concentration curve,\n"
+                                      "the global concentration must be defined in Options->MALS parameters"
+                                      )
+                                );
+         return false;
+      }
+      make_ihashq = true;
+   }
+   if ( !use_conc && !make_ihashq ) {
+      QMessageBox::information( this,
+                                windowTitle() + us_tr( ": Make I*(q)" ),
+                                QString( us_tr( "I*(q) will be created using Global concentration of %1 [mg/mL]\n(set in Options->MALS parameters)" ) )
+                                .arg( mals_param_g_conc )
+                                );
    }      
 
    if ( use_conc && !detector_conv ) {
@@ -3170,7 +3193,11 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
 
    bool mode_testiq = ( current_mode == MODE_TESTIQ );
 
-   editor_msg( "dark blue", us_tr( "Starting: Make I*(q) without Gaussians" ) );
+   editor_msg( "dark blue", us_tr(
+                                  make_ihashq
+                                  ? "Starting: Make I#(q) without Gaussians"
+                                  : "Starting: Make I*(q) without Gaussians"
+                                  ) );
 
    QString head = qstring_common_head( files, true );
 
@@ -3180,7 +3207,11 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    head = head.replace( QRegularExpression( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "_D$" ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
-   head += "_MALS_Istarq_t";
+   head +=
+      make_ihashq
+      ? "_MALS_Ihashq_t"
+      : "_MALS_Istarq_t"
+      ;
    
    // TSO << "create_istar_q_ng()  head: " << head << "\n";
 
@@ -3232,6 +3263,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          editor_msg( "red", QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
+
          return false;
       }
       used_q[ ql.back() ] = true;
@@ -3523,7 +3555,12 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       vector < double > this_used_pcts;
 
       // concentration factor with no conc curve
-      double conc_factor = 1 / (mals_param_g_conc * 1e-3);
+      double conc_factor =
+         make_ihashq
+         ? 1
+         : 1 / (mals_param_g_conc * 1e-3)
+         ;
+      
       if ( use_conc && conc_ok ) {
          if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
             editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
@@ -3535,7 +3572,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          }
       }
 
-      // TSO << QString( "conc factor %1\n" ).arg( conc_factor );
+      TSO << QString( "conc factor %1\n" ).arg( conc_factor );
 
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
