@@ -363,6 +363,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_svd->setPalette( PALET_PUSHB );
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
 
+   pb_create_ihashq = new QPushButton(us_tr("Make I#(q)"), this);
+   pb_create_ihashq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_create_ihashq->setMinimumHeight(minHeight1);
+   pb_create_ihashq->setPalette( PALET_PUSHB );
+   connect(pb_create_ihashq, SIGNAL(clicked()), SLOT(create_ihashq()));
+
    pb_create_i_of_t = new QPushButton(us_tr("Make I(t)"), this);
    pb_create_i_of_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_create_i_of_t->setMinimumHeight(minHeight1);
@@ -3354,6 +3360,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_3->addWidget ( pb_add );
    hbl_file_buttons_3->addWidget ( pb_bin );
    hbl_file_buttons_3->addWidget ( pb_smooth );
+   hbl_file_buttons_3->addWidget ( pb_svd );
 
    // files_widgets.push_back ( pb_conc_avg );
    files_widgets.push_back ( pb_normalize );
@@ -3363,16 +3370,17 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // files_widgets.push_back ( pb_line_width );
    // files_widgets.push_back ( pb_color_rotate );
    files_expert_widgets.push_back ( pb_ag );
+   files_widgets.push_back ( pb_svd );
 
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
+   hbl_file_buttons_4->addWidget ( pb_create_ihashq );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
-   hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
 
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
-   files_widgets.push_back ( pb_svd );
+   files_widgets.push_back ( pb_create_ihashq );
    files_widgets.push_back ( pb_create_i_of_t );
    files_widgets.push_back ( pb_test_i_of_t );
    files_widgets.push_back ( pb_create_i_of_q );
@@ -4445,6 +4453,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
    }
 
+   bool any_ihashq       = selected_files.filter( "_Ihashq_" ).size() > 0;
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
    //   bool one_conc_file    = files_selected_count == 1 && files_are_time && conc_files.count( last_selected_file );
@@ -4540,6 +4549,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
+   pb_create_ihashq      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time & !any_ihashq);
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );

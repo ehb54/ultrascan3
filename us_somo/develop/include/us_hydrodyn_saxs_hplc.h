@@ -335,6 +335,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
+      QPushButton   *pb_create_ihashq;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
@@ -1157,6 +1158,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         create_i_of_q_ng( set < QString > & fileset,
                                                      double t_min = -1e99,
                                                      double t_max = 1e99 );
+      bool                         create_ihashq( QStringList files,
+                                                  double t_min = -1e99,
+                                                  double t_max = 1e99 );
+      bool                         create_ihashq( set < QString > & fileset,
+                                                  double t_min = -1e99,
+                                                  double t_max = 1e99 );
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files, bool quiet = false );
@@ -1525,6 +1532,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void smooth();
       void svd();
       void repeak();
+      void create_ihashq();
       void create_i_of_t();
       void test_i_of_t();
       void create_i_of_q();

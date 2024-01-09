@@ -3288,3 +3288,35 @@ void US_Hydrodyn_Saxs_Hplc::add_oldstyle(
    f_Is_oldstyle[ name ]             = I;
 }
 
+
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( set < QString > & fileset, double t_min, double t_max )
+{
+   QStringList files;
+   for ( set < QString >::iterator it = fileset.begin();
+         it != fileset.end();
+         ++it )
+   {
+      files << *it;
+   }
+   return create_ihashq( files, t_min, t_max );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max )
+{
+   QMessageBox::critical( this,
+                          windowTitle() + us_tr( ": Make I#(q)" ),
+                          us_tr( "Make I#(q) not currently implemented" )
+                          );
+   return false;
+}
+
+void US_Hydrodyn_Saxs_Hplc::create_ihashq()
+{
+   disable_all();
+
+   QStringList files = all_selected_files();
+   create_ihashq( files );
+
+   update_enables();
+}
+
