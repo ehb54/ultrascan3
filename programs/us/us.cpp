@@ -972,6 +972,8 @@ qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
    QString msg_note  = tr( "UltraScan III notices posted  (" ) 
                      + time_d.toString( "yyyy/MM/dd" ) + "):\n\n";
 
+   bool empty_msg    = true;
+
    for ( int ii = 0; ii < nnotice; ii++ )
    {
       // Skip messages for warn/crit same revision or any earlier than current
@@ -983,6 +985,8 @@ qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
                        + revs[ ii ] + ":\n"
                        + msgs[ ii ] + "\n";
 
+      empty_msg        = false;
+      
       // Critical from later revision than current means an abort
       if ( types[ ii ] == "crit" )   do_abort = true;
    }
@@ -990,16 +994,19 @@ qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
    if ( do_abort )
    {  // Append an additional note if an abort is happening
       msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
+      empty_msg        = false;
    }
 
-   // Display notices at level of highest level currently set
-   QWidget* wthis    = (QWidget*)this;
-   if (      level == 0 )
-      QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
-   else if ( level == 1 )
-      QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
-   else if ( level == 2 )
-      QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
+   if ( !empty_msg ) {
+      // Display notices at level of highest level currently set
+      QWidget* wthis    = (QWidget*)this;
+      if (      level == 0 )
+         QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
+      else if ( level == 1 )
+         QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
+      else if ( level == 2 )
+         QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
+   }
 
    // Abort if that is indicated
    if ( do_abort )
