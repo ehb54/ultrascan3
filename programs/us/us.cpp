@@ -974,11 +974,24 @@ qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
 
    bool empty_msg    = true;
 
+   double sys_version  = US_Version.toDouble();
+   int    sys_revision = QString( REVISION ).toInt();
+   
    for ( int ii = 0; ii < nnotice; ii++ )
    {
-      // Skip messages for warn/crit same revision or any earlier than current
-      if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
-           irevs[ ii ] < s_rev )     continue;
+      double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
+      double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
+
+      // // Skip messages for warn/crit same revision or any earlier than current
+      // if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
+      //      irevs[ ii ] < s_rev )     continue;
+
+      // Skip messages where message version.revision is less than our version.revision
+      if ( sys_version > msg_version ||
+           ( sys_version == msg_version &&
+             sys_revision > msg_revision ) ) {
+         continue;
+      }
 
       // Add current message to full text
       msg_note         += typeMap[ types[ ii ] ] + " for release "
