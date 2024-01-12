@@ -5649,3 +5649,20 @@ bool US_Hydrodyn_Mals::mals_angles_save() {
    errormsg = us_tr( "No Angles loaded" );
    return false;
 }
+
+void US_Hydrodyn_Mals::conc_info( const QString & msg ) {
+   TSO
+      << "============================================================\n"
+      << msg << "\n"
+      << "------------------------------------------------------------\n"
+      ;
+   
+   TSO << US_Vector::qs_mapqsdouble( "f_conc",       f_conc );
+   TSO << "------------------------------------------------------------\n";
+   TSO << US_Vector::qs_mapqsqs    ( "f_conc_units", f_conc_units );
+   {
+      map < QString, double > tmpcc = current_concs( true );
+      TSO << US_Vector::qs_mapqsdouble( "current_concs",       tmpcc );
+   }
+   TSO << "============================================================\n";
+}

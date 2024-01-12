@@ -3065,6 +3065,8 @@ void US_Hydrodyn_Mals::create_istar_q() {
    gaussians.size() ? (void) create_istar_q( files ) : (void) create_istar_q_ng( files );
    
    update_enables();
+
+   // conc_info( "after create_istar_q" );
 }
 
 bool US_Hydrodyn_Mals::create_istar_q( QStringList files, double t_min, double t_max ) {
@@ -3425,9 +3427,9 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          parameters[ "gaussians" ] = "1";
          US_Hydrodyn_Mals_Ciq *mals_ciq = 
             new US_Hydrodyn_Mals_Ciq(
-                                          this,
-                                          & parameters,
-                                          this );
+                                     this,
+                                     & parameters,
+                                     this );
          US_Hydrodyn::fixWinButtons( mals_ciq );
          mals_ciq->exec();
          delete mals_ciq;
@@ -3561,6 +3563,8 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          : 1 / (mals_param_g_conc * 1e-3)
          ;
       
+      double store_conc = mals_param_g_conc;
+
       if ( use_conc && conc_ok ) {
          if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
             editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
@@ -3568,11 +3572,12 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          } else {
             // conc_factor will multiply I# intensities
             // mals_param_g_dndc ^2 / dndc ^2 used to correct for K when computing I#
+            store_conc = conc_factor * 1e-3;
             conc_factor = ( use_g_dndc * use_g_dndc ) / ( dndc * dndc * conc_factor );
          }
       }
 
-      TSO << QString( "conc factor %1\n" ).arg( conc_factor );
+      TSO << QString( "conc factor %1  store_conc %2\n" ).arg( conc_factor ).arg( store_conc );
 
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
@@ -3642,7 +3647,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          f_Is        [ name ] = I;
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
-         f_conc      [ name ] = conc_ok ? conc_factor * 1e3 : 0e0;
+         f_conc      [ name ] = conc_ok ? store_conc * 1e3 : 0e0;
          // f_psv       [ name ] = conc_ok ? dndc : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
          f_time      [ name ] = tv[ t ];

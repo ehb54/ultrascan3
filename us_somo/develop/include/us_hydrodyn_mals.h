@@ -427,6 +427,9 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       QBoxLayout    *vbl_plot_group;
       mQwtPlot      *plot_dist;
       US_Plot       *usp_plot_dist;
+
+      void          conc_info( const QString & msg = "" );
+
    private slots:
       void usp_config_plot_dist( const QPoint & );
 
