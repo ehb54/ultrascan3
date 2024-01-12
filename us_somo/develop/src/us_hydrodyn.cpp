@@ -471,6 +471,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
+
    calcAutoHydro = false;
    overwrite = false;
    overwrite_hydro = false;
@@ -1291,7 +1292,7 @@ void US_Hydrodyn::setupGUI()
    connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
 #endif
 
-   pb_pdb_saxs = new QPushButton(us_tr("SAXS/SANS Functions"), this);
+   pb_pdb_saxs = new QPushButton(us_tr("SAXS/SANS/MALS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
    pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1299,7 +1300,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
-   pb_bead_saxs = new QPushButton(us_tr("SAXS/SANS Functions"), this);
+   pb_bead_saxs = new QPushButton(us_tr("SAXS/SANS/MALS Functions"), this);
    Q_CHECK_PTR(pb_bead_saxs);
    pb_bead_saxs->setMinimumHeight(minHeight1);
    pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -4111,7 +4112,7 @@ void US_Hydrodyn::stop_calc()
    if ( grpy_running && grpy && grpy->state() == QProcess::Running )
    {
       grpy->terminate();
-      QTimer::singleShot( 1000, grpy, SLOT( kill() ) );
+      QTimer::singleShot( 10000, grpy, SLOT( kill() ) );
    }
    pb_stop_calc->setEnabled(false);
 }
