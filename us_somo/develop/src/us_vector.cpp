@@ -218,6 +218,19 @@ QString US_Vector::qs_mapqsfloat( QString qs, map < QString, float > & x )
    return result;
 }
 
+QString US_Vector::qs_mapqsdouble( QString qs, map < QString, double > & x ) 
+{
+   QString result;
+   result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( auto it = x.begin();
+         it != x.end();
+         ++it ) {
+      result += QString( "\t%1 %2\n" ).arg( it->first ).arg( it->second );
+   }
+   return result;
+}
+
+
 vector < double > US_Vector::intersection( vector < double > &x,  vector < double > &y )
 {
    map < double, bool > map_x;
