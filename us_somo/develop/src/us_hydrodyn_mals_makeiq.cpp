@@ -3066,7 +3066,7 @@ void US_Hydrodyn_Mals::create_istar_q() {
    
    update_enables();
 
-   // conc_info( "after create_istar_q" );
+   conc_info( "after create_istar_q" );
 }
 
 bool US_Hydrodyn_Mals::create_istar_q( QStringList files, double t_min, double t_max ) {
@@ -3647,7 +3647,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          f_Is        [ name ] = I;
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
-         f_conc      [ name ] = conc_ok ? store_conc * 1e3 : 0e0;
+         f_conc      [ name ] = conc_ok ? store_conc * 1e6 : 0e0;
          // f_psv       [ name ] = conc_ok ? dndc : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
          f_time      [ name ] = tv[ t ];

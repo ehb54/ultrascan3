@@ -1617,6 +1617,12 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_crop_vis->setPalette( PALET_PUSHB );
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
+   pb_crop_to_vis = new QPushButton(us_tr("Crop to Vis"), this);
+   pb_crop_to_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_to_vis->setMinimumHeight(minHeight1);
+   pb_crop_to_vis->setPalette( PALET_PUSHB );
+   connect(pb_crop_to_vis, SIGNAL(clicked()), SLOT(crop_to_vis()));
+
    pb_crop_zero = new QPushButton(us_tr("Crop Zeros"), this);
    pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_zero->setMinimumHeight(minHeight1);
@@ -3327,6 +3333,7 @@ void US_Hydrodyn_Mals::setupGUI()
 
       l_pbmode_crop->addWidget( pb_crop_common );
       l_pbmode_crop->addWidget( pb_crop_vis );
+      l_pbmode_crop->addWidget( pb_crop_to_vis );
       l_pbmode_crop->addWidget( pb_crop_zero );
       l_pbmode_crop->addWidget( pb_crop_left );
       l_pbmode_crop->addWidget( pb_crop_undo );
@@ -3334,6 +3341,7 @@ void US_Hydrodyn_Mals::setupGUI()
 
       pbmode_crop_widgets.push_back( pb_crop_common );
       pbmode_crop_widgets.push_back( pb_crop_vis );
+      pbmode_crop_widgets.push_back( pb_crop_to_vis );
       pbmode_crop_widgets.push_back( pb_crop_zero );
       pbmode_crop_widgets.push_back( pb_crop_left );
       pbmode_crop_widgets.push_back( pb_crop_undo );
@@ -4000,6 +4008,7 @@ void US_Hydrodyn_Mals::mode_setup_widgets()
 //    plot_widgets.push_back( pb_remove_vis );
 //    plot_widgets.push_back( pb_crop_common );
 //    plot_widgets.push_back( pb_crop_vis );
+//    plot_widgets.push_back( pb_crop_to_vis );
 //    plot_widgets.push_back( pb_crop_zero );
 //    plot_widgets.push_back( pb_crop_left );
 //    plot_widgets.push_back( pb_crop_undo );
@@ -4191,6 +4200,7 @@ void US_Hydrodyn_Mals::mode_setup_widgets()
    // timeshift_widgets.push_back( pb_remove_vis );
    // timeshift_widgets.push_back( pb_crop_common );
    // timeshift_widgets.push_back( pb_crop_vis );
+   // timeshift_widgets.push_back( pb_crop_to_vis );
    // timeshift_widgets.push_back( pb_crop_zero );
    // timeshift_widgets.push_back( pb_crop_left );
    // timeshift_widgets.push_back( pb_crop_undo );
@@ -4735,6 +4745,11 @@ void US_Hydrodyn_Mals::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
+   pb_crop_to_vis      ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
    pb_crop_zero         ->setEnabled( 
                                     files_selected_count
                                     );
@@ -4955,6 +4970,7 @@ void US_Hydrodyn_Mals::disable_all()
    pb_remove_vis         ->setEnabled( false ); 
    pb_crop_common        ->setEnabled( false ); 
    pb_crop_vis           ->setEnabled( false ); 
+   pb_crop_to_vis        ->setEnabled( false ); 
    pb_crop_zero          ->setEnabled( false ); 
    pb_crop_left          ->setEnabled( false ); 
    pb_crop_undo          ->setEnabled( false );
