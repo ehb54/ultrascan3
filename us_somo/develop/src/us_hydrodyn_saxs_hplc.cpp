@@ -5515,7 +5515,7 @@ void US_Hydrodyn_Saxs_Hplc::crop_vis()
    
    editor_msg( "black",
                QString( us_tr( "Crop visible:\n"
-                            "Cropping out q-range of (%1:%2)\n" ) )
+                            "Cropping out range of (%1:%2)\n" ) )
                .arg( minx )
                .arg( maxx ) );
 
@@ -5571,6 +5571,113 @@ void US_Hydrodyn_Saxs_Hplc::crop_vis()
    }
    crop_undos.push_back( cud );
    editor_msg( "blue", us_tr( "Crop visible: done" ) );
+
+   update_files();
+
+   if ( plot_dist_zoomer &&
+        plot_dist_zoomer->zoomRectIndex() )
+   {
+      plot_dist_zoomer->zoom( -1 );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::crop_to_vis()
+{
+   // find curves within zoomRect & select only them
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   map < QString, bool > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ )
+   {
+      if ( lb_files->item( i )->isSelected() )
+      {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
+            {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy )
+               {
+                  selected_files[ this_file ] = true;
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() )
+   {
+      editor_msg( "red", us_tr( "Crop to visible: The current visible plot is empty" ) );
+      return;
+   }
+   
+   editor_msg( "black",
+               QString( us_tr( "Crop to visible:\n"
+                            "Cropping to a range of (%1:%2)\n" ) )
+               .arg( minx )
+               .arg( maxx ) );
+
+   crop_undo_data cud;
+   cud.is_left   = false;
+   cud.is_common = true;
+
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      // save undo data
+      cud.f_qs_string[ it->first ] = f_qs_string[ it->first ];
+      cud.f_qs       [ it->first ] = f_qs       [ it->first ];
+      cud.f_Is       [ it->first ] = f_Is       [ it->first ];
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         cud.f_errors   [ it->first ] = f_errors   [ it->first ];
+      }
+
+      vector < QString > new_q_string;
+      vector < double  > new_q;
+      vector < double  > new_I;
+      vector < double  > new_e;
+
+      for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
+      {
+         if ( f_qs[ it->first ][ i ] >= minx &&
+              f_qs[ it->first ][ i ] <= maxx )
+         {
+            new_q_string.push_back( f_qs_string[ it->first ][ i ] );
+            new_q       .push_back( f_qs       [ it->first ][ i ] );
+            new_I       .push_back( f_Is       [ it->first ][ i ] );
+
+            if ( f_errors.count( it->first ) &&
+                 f_errors[ it->first ].size() )
+            {
+               new_e       .push_back( f_errors   [ it->first ][ i ] );
+            }
+         }
+      }
+
+      f_qs_string[ it->first ] = new_q_string;
+      f_qs       [ it->first ] = new_q;
+      f_Is       [ it->first ] = new_I;
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         f_errors[ it->first ] = new_e;
+      }
+      to_created( it->first );
+   }
+   crop_undos.push_back( cud );
+   editor_msg( "blue", us_tr( "Crop to visible: done" ) );
 
    update_files();
 
