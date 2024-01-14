@@ -2358,58 +2358,97 @@ void US_ExperGuiSolutions::savePanel()
    suchans.clear();
    susolus.clear();
 
+   qDebug() << "sol save 1";
+   
    for ( int ii = 0; ii < mxrow; ii++ )
-   {  // Fill panel lists and parameters from GUI elements
-      QString channel     = cc_labls[ ii ]->text();
-DbgLv(1) << "EGSo: svP:  ii" << ii << "channel" << channel;
-
-      if ( channel == chn_none )
+     {  // Fill panel lists and parameters from GUI elements
+       QString channel     = cc_labls[ ii ]->text();
+       DbgLv(1) << "EGSo: svP:  ii" << ii << "channel" << channel;
+       
+       if ( channel == chn_none )
          break;
-
-      nchant++;
-      srchans << channel;
-      QString solution    = cc_solus[ ii ]->currentText();
-DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
-
-      if ( solution == unspec )
+       
+       nchant++;
+       srchans << channel;
+       QString solution    = cc_solus[ ii ]->currentText();
+       DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
+       
+       if ( solution == unspec )
          continue;
+       
+       nchanf++;
+       suchans << channel;
+       susolus << solution;
+       QString sol_id      = solu_ids[ solution ];
+       QString ch_comment;
+       QStringList cs;
+       DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
+       
+       qDebug() << "sol save 2";
+       
+       // //resize here!
+       // rpSolut->chsols.resize( nchanf );
+       
+       
+       qDebug() << "ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
+       
+       QString iistr = QString::number(ii);
+       //if ( pro_comms.keys().contains( solution ) )
+       if ( pro_comms.keys().contains( iistr ) )
+	 {
+	   //ch_comment          = pro_comms[ solution ];
+	   ch_comment          = pro_comms[ iistr ];
+	   //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
+	   
+	   qDebug() << "sol save 2a";
+	   
+	   commentStrings( solution, ch_comment, cs, ii );
+	 }
+       else
+	 {
+	   //commentStrings( solution, ch_comment, cs, ii ); //<-- incorrect as always sets comment to solname!
+	   qDebug() << "sol save 2aB";
+	   
+	   if ( rpSolut->chsols.size() == 0 )
+	     {
+	       qDebug() << "sol save 2aBc";
+	       ch_comment      = QString("");
+	       commentStrings( solution, ch_comment, cs, ii );
+	       qDebug() << "sol save 2aBc_1: went through 1st time zero";
+	     }
+	   else
+	     {
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
+	       ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       if ( solution_comment_init[ ii ] )
+		 commentStrings( solution, ch_comment, cs, ii );
+	       qDebug() << "sol save 2aBd_1: went through 1st time NON-zero";
+	     }
+	   
+	   //ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	   QString ch_comment_tmp = ch_comment;
+	   ch_comment_tmp.replace(solution, "");
+	   ch_comment_tmp.remove( QRegExp("^[,\\s*]+") );
+	   
+	   qDebug() << "SolInit, row: " << ii;
+	   manual_comment[ iistr ]  = ch_comment_tmp.trimmed();
+	 }
+       
+       qDebug() << "sol save 3";
+       
+       US_Solution soludata;
+       solutionData( solution, soludata );
+       solu_ids [ solution ]  = sol_id;
+       solu_data[ solution ]  = soludata;
+       //pro_comms[ solution ]  = ch_comment;
+       pro_comms[ iistr ]  = ch_comment;
+     }
 
-      nchanf++;
-      suchans << channel;
-      susolus << solution;
-      QString sol_id      = solu_ids[ solution ];
-      QString ch_comment;
-      QStringList cs;
-DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
-
-
- QString iistr = QString::number(ii);
-//if ( pro_comms.keys().contains( solution ) )
-    if ( pro_comms.keys().contains( iistr ) )
-      {
-        //ch_comment          = pro_comms[ solution ];
-        ch_comment          = pro_comms[ iistr ];
-         //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
-
-        commentStrings( solution, ch_comment, cs, ii );
-      }
-    else
-      {
-        commentStrings( solution, ch_comment, cs, ii );
-      }
-
-    US_Solution soludata;
-    solutionData( solution, soludata );
-    solu_ids [ solution ]  = sol_id;
-    solu_data[ solution ]  = soludata;
-    //pro_comms[ solution ]  = ch_comment;
-    pro_comms[ iistr ]  = ch_comment;
-   }
-
+   //resize here
    rpSolut->chsols.resize( nchanf );
    QStringList solus;                      // Unique solutions list
    QStringList sids;                       // Corresponding Id list
-DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
+   DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
    for ( int ii = 0; ii < nchanf; ii++ )
    {  // Now fill protocol from internal lists and parameters
@@ -2423,6 +2462,8 @@ DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
       QString iistr = QString::number(ii);
       rpSolut->chsols[ ii ].ch_comment = pro_comms[ iistr ];
+
+      qDebug() << "at saveSolPanel: ch_comment -- " << pro_comms[ iistr ];
 
       if ( !solus.contains( solution ) )
       {

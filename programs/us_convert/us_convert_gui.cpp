@@ -598,6 +598,11 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("eGFP-DNA-MW-AUG2223");
    // QString invid    = QString("165");
    // QString aprofileguid = QString("b31d4669-a9f5-4488-a5e4-567bd0051679");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/11JAN2024-PAPBM1M2-Mabanglo-run1607");
+   // QString protname = QString("11JAN2024-PAPBM1M2-Mabanglo-test");
+   // QString invid    = QString("19");
+   // QString aprofileguid = QString("3fb72b82-6e93-4ecb-9d47-ecbf552f2234");
    
    // QMap < QString, QString > protocol_details;
    // protocol_details[ "dataPath" ]       = curdir;
@@ -609,9 +614,9 @@ DbgLv(1) << "CGui: reset complete";
    // //protocol_details[ "runID" ]          =  ;
    // protocol_details[ "label" ]          = QString("Some label");
    // protocol_details[ "aprofileguid" ]   = aprofileguid;
-   // protocol_details[ "CellChNumber" ]   = QString("2");
+   // protocol_details[ "CellChNumber" ]   = QString("12");
 
-   // /*********************************************************************************/
+   // // /*********************************************************************************/
 
    
    // import_data_auto( protocol_details ); 
@@ -4546,6 +4551,8 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // 	 le_description ->setText( outData[ tripDatax ]->description );
    //   }
    // else
+
+   //ALEXEY: USE ::correct_description() here? plus make sure outData[ tripDatax ]->description IS changed?
    le_description ->setText( outData[ tripDatax ]->description );
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );

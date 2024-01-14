@@ -4282,6 +4282,8 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
       {
          comment       += ", " + mancmt;
          //comstrngs    <<  "," + mancmt;
+
+	 qDebug() << "Updated comment is: " << comment;
       }
    }
 
