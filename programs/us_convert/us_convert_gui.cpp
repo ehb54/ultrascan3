@@ -2127,8 +2127,13 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
       // Give it a new unique GUID, since we are making a copy
       QString uuidst = US_Util::new_guid();
       US_Util::uuid_parse( uuidst, (unsigned char*)&rdata.rawGUID );
-DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
-
+      DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
+      
+      //Correct/parse channels' description:
+      qDebug() << "Description before: " <<  rdata.description;
+      correct_description( rdata.description, QString::number( rdata.cell ), QString( rdata.channel ) );
+      qDebug() << "Description after: " <<  rdata.description;
+ 
       // Save the raw data for this triple
       allData << rdata;
 
@@ -2260,22 +2265,31 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
 
 
 //Correct description for double solution names
-QString US_ConvertGui::correct_description( QString & description )
+QString US_ConvertGui::correct_description( QString & description, QString cell, QString chan )
 {
   QStringList desc_from_allData_A = (description.split(";")[0]).split(":");
   QStringList desc_from_allData_B = (description.split(";")[1]).split(":");
   
-  QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
-  QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
-  QString desc_corrected = desc_from_allData_A[0] + ":"  +
-                           desc_from_allData_A[1] + ": " +
-                           desc_chan_A + ";"             +
-                           desc_from_allData_B[0] + ": " +
-                           desc_chan_B;
+  // QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
+  // QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
+  // QString desc_corrected = desc_from_allData_A[0] + ":"  +
+  //                          desc_from_allData_A[1] + ": " +
+  //                          desc_chan_A + ";"             +
+  //                          desc_from_allData_B[0] + ": " +
+  //                          desc_chan_B;
+
+  QString desc_chan_A = desc_from_allData_A[2].simplified();
+  QString desc_chan_B = desc_from_allData_B[1].simplified();
+  QString desc_corrected = desc_chan_A + " -- " + desc_chan_B;
   
-  // qDebug() << "DESC A: " << desc_chan_A;
-  // qDebug() << "DESC B: " << desc_chan_B;
-  // qDebug() << "DECS_CORRECTED: " << desc_corrected;
+  qDebug() << "DESC A: " << desc_chan_A;
+  qDebug() << "DESC B: " << desc_chan_B;
+  qDebug() << "DESC CORR: " << desc_corrected;
+
+  if ( chan == "A" )
+    description = desc_chan_A;
+  if ( chan == "B" )
+    description = desc_chan_B;
 
   return desc_corrected;
 }

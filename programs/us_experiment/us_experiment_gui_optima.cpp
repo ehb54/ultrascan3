@@ -7604,12 +7604,19 @@ void US_ExperGuiUpload::submitExperiment()
                if ( channel_cell.startsWith(QString::number(j+1)) )
                {
                   if ( channel_cell.contains("sample") )                                                     // <-- Channel A
-                     solname += ": A: " + sol_split[0] + ", "        // <-- solution name
-                        + sol_split[sol_split.size()-1] + "; ";             // <-- solution manual comment
+		    {
+		      // solname += ": A: " + sol_split[0] + ", "        // <-- solution name
+		      // 	+ sol_split[sol_split.size()-1] + "; ";  // <-- solution manual comment
+		      solname += ": A: " + solution + "; ";
+		    }
+		  
                   if ( channel_cell.contains("reference") )                                                  // <-- Channel B
-                     solname += "B: " + sol_split[0] + " "           // <-- solution name
-                        + sol_split[sol_split.size()-1];             // <-- solution manual comment
-               }
+		    {
+		      // solname += "B: " + sol_split[0] + ", "          // <-- solution name
+                      //   + sol_split[sol_split.size()-1];             // <-- solution manual comment
+		      solname += "B: " + solution;
+		    }
+	       }
             }
             solname += "\'";
             ////////////////////////////////

@@ -322,7 +322,7 @@ class US_ConvertGui : public US_Widgets
 
       void update_autoflow_record_atLimsImport( void );
 
-      QString correct_description( QString& );
+  QString correct_description( QString&, QString, QString );
 
       
       void setTripleInfo   ( void );
