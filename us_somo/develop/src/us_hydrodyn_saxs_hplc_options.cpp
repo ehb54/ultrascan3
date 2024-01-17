@@ -40,7 +40,7 @@ US_Hydrodyn_Saxs_Hplc_Options::~US_Hydrodyn_Saxs_Hplc_Options()
 
 void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 {
-   int minHeight1  = 30;
+   int minHeight1  = 28;
 
    lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : Options" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
@@ -286,7 +286,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 #endif
 
    pb_clear_gauss =  new QPushButton ( us_tr( "Clear cached Gaussian values" ), this );
-   pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1) );
    pb_clear_gauss -> setMinimumHeight( minHeight1 );
    pb_clear_gauss -> setPalette      ( PALET_PUSHB );
    connect( pb_clear_gauss, SIGNAL( clicked() ), SLOT( clear_gauss() ) );

@@ -2987,6 +2987,9 @@ void US_Hydrodyn_Mals::create_ihash_t() {
    QStringList files = all_selected_files();
    create_ihash_t( files );
 
+   // dndc_info( "dndc after create_ihash_t" );
+   // extc_info( "extc after create_ihash_t" );
+
    update_enables();
 }
 
@@ -3066,7 +3069,9 @@ void US_Hydrodyn_Mals::create_istar_q() {
    
    update_enables();
 
-   conc_info( "after create_istar_q" );
+   // conc_info( "conc after create_istar_q" );
+   // dndc_info( "dndc after create_istar_q" );
+   // extc_info( "extc after create_istar_q" );
 }
 
 bool US_Hydrodyn_Mals::create_istar_q( QStringList files, double t_min, double t_max ) {
@@ -3647,18 +3652,26 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          f_Is        [ name ] = I;
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
-         f_conc      [ name ] = conc_ok ? store_conc * 1e6 : 0e0;
+         f_conc      [ name ] = store_conc * 1e6;
          // f_psv       [ name ] = conc_ok ? dndc : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
          f_time      [ name ] = tv[ t ];
-         if ( conc_ok && conv ) {
+         // if ( conc_ok && conv ) {
+         if ( conv ) {
             f_extc      [ name ] = conv;
          }
-         if ( conc_ok && dndc ) {
+         // if ( conc_ok && dndc ) {
+         if ( dndc ) {
             f_dndc      [ name ] = dndc;
          }
-         if ( conc_ok ) {
-            f_conc_units[ name ] = "mg/mL";
+         f_conc_units[ name ] = "mg/mL";
+
+         if ( !conc_ok ) { // no uv curve
+#warning what about loaded curve data?
+#warning check if mals_param_g_extinction_coef even used?
+            f_extc      [ name ] = mals_param_g_extinction_coef;
+            f_dndc      [ name ] = mals_param_g_dndc;
+            f_conc      [ name ] = mals_param_g_conc;
          }
       }
    } // for each q value
