@@ -1422,6 +1422,8 @@ DbgLv(1) << "BldRawD        channel" << rdata.channel
       int rdx           = 0;
       //rdata.description = ccdescs.at( ccx );
       rdata.description = cc_description( celchn );
+      qDebug() << "::build_rawData();  rdata.description -- " << rdata.description;
+      
       QString triple    = triples[ trx ].replace( " / ", "/" );
       QString trnode    = trnodes[ trx ];
 DbgLv(1) << "BldRawD         trip" << trnode << "descr" << rdata.description
@@ -3051,6 +3053,7 @@ DbgLv(1) << "XpDa:b_i:   jcell jchan" << jcell << jchan;
                no_desc       = false;
                ccdescs << csdrec.samplName;
 DbgLv(1) << "XpDa:b_i:     samplName" << csdrec.samplName << "ccdescs sz" << ccdescs.count();
+ qDebug() << "::build_internals(); csdrec.samplName -- " << csdrec.samplName;
                break;
             }
          }
