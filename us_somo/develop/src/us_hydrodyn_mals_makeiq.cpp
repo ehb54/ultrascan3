@@ -3431,6 +3431,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          parameters[ "ngmode" ] = "true";
          parameters[ "gaussians" ] = "1";
          parameters[ "default_extc" ] = QString( "%1" ).arg( mals_param_g_extinction_coef );
+         parameters[ "default_dndc" ] = QString( "%1" ).arg( mals_param_g_dndc );
          US_Hydrodyn_Mals_Ciq *mals_ciq = 
             new US_Hydrodyn_Mals_Ciq(
                                      this,

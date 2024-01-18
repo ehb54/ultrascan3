@@ -415,7 +415,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
       le_conv.push_back( le_tmp );
 
       le_tmp = new QLineEdit( this );       le_tmp->setObjectName( "le_tmp Line Edit" );
-      le_tmp->setText( "" );
+      le_tmp->setText( parameters->count( "default_dndc" ) ? (*parameters)[ "default_dndc" ] : "" );
       le_tmp->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       le_tmp->setPalette( PALET_NORMAL );
       AUTFBACK( le_tmp );
