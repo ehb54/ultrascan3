@@ -3647,6 +3647,9 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
       if ( file.contains( "_Istart_" ) ) {
          units += " I*(t) units:g/mol";
       }
+      if ( conc_files.count( file ) ) {
+         units = "";
+      }
       
       ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10\n" ) )
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
@@ -3672,9 +3675,9 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
       if ( conc_files.count( file ) ) {
          if ( use_errors )
          {
-            ts << "t                 \tc(t)         \tsd\n";
+            ts << "t                 \tA(t)         \tsd\n";
          } else {
-            ts << "t                 \tc(t)\n";
+            ts << "t                 \tA(t)\n";
          }
       } else {
          if ( use_errors )
@@ -5723,6 +5726,9 @@ void US_Hydrodyn_Mals::view()
                if ( file.contains( "_Istart_" ) ) {
                   units += " I*(t) units:g/mol";
                }
+               if ( conc_files.count( file ) ) {
+                  units = "";
+               }
 
                text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
@@ -5749,9 +5755,9 @@ void US_Hydrodyn_Mals::view()
             if ( conc_files.count( file ) ) {
                if ( use_errors )
                {
-                  text += "t                 \tc(t)         \tsd\n";
+                  text += "t                 \tA(t)         \tsd\n";
                } else {
-                  text += "t                 \tc(t)\n";
+                  text += "t                 \tA(t)\n";
                }
             } else {
                if ( use_errors )
