@@ -1,6 +1,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_mals.h"
 
+#define TSO QTextStream(stdout)
+
 void US_Hydrodyn_Mals::wheel_dec() 
 {
    pb_wheel_dec->setEnabled( qwtw_wheel->value() > qwtw_wheel->minimum() );
@@ -29,9 +31,8 @@ void US_Hydrodyn_Mals::adjust_wheel( double pos )
 
    wheel_enables();
 
-   // us_qdebug( QString( "adjust_wheel pos %1 focus %2" ).arg( pos ).arg( (unsigned long)le_last_focus ) );
-
-   // cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
+   // TSO << QString( "adjust_wheel pos %1 focus %2 mode %3\n" ).arg( pos ).arg( (unsigned long)le_last_focus ).arg( current_mode );
+   
    switch ( current_mode )
    {
 

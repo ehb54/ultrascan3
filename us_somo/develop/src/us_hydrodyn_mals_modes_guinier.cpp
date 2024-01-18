@@ -5,6 +5,8 @@
 #include "../include/us_pm.h"
 #include <QPixmap>
 
+#define TSO QTextStream(stdout)
+
 // --- guinier ---
 
 void US_Hydrodyn_Mals::guinier()
@@ -323,188 +325,6 @@ void US_Hydrodyn_Mals::guinier_scroll_highlight( int pos )
    lbl_wheel_pos      ->setText( "" );
    lbl_wheel_pos_below->setText( QString( "%1" ).arg( showname ) );
 
-#if QT_VERSION < 0x040000
-   QwtSymbol sym;
-
-   //   guinier_plot->setCurveStyle( guinier_curves[ hidename ], QwtCurve::NoCurve );
-   //   guinier_plot->setCurveStyle( guinier_curves[ showname ], QwtCurve::Lines );
-
-   sym = guinier_plot->curveSymbol( guinier_curves[ hidename ] );
-   sym.setStyle( QwtSymbol::None );
-   guinier_plot->setCurveSymbol( guinier_curves[ hidename ], sym );
-
-   sym = guinier_plot->curveSymbol( guinier_curves[ showname ] );
-   sym.setStyle( QwtSymbol::Diamond );
-   sym.setSize( stdsize );
-   guinier_plot->setCurveSymbol( guinier_curves[ showname ], sym );
-
-   if ( guinier_errorbar_curves.count( hidename ) )
-   {
-      for ( int j = 0; j < (int) guinier_errorbar_curves[ hidename ].size(); ++j )
-      {
-         guinier_plot->setCurveStyle( guinier_errorbar_curves[ hidename ][ j ], QwtCurve::NoCurve );
-      }
-   }
-
-   if ( guinier_errorbar_curves.count( showname ) )
-   {
-      for ( int j = 0; j < (int) guinier_errorbar_curves[ showname ].size(); ++j )
-      {
-         guinier_plot->setCurveStyle( guinier_errorbar_curves[ showname ][ j ], QwtCurve::Lines );
-      }
-   }
-
-   if ( guinier_fit_lines.count( hidename ) ) {
-      guinier_plot->setCurveStyle( guinier_fit_lines[ hidename ], QwtCurve::NoCurve );
-   }
-   
-   if ( guinier_fit_lines.count( showname ) ) {
-      guinier_plot->setCurveStyle( guinier_fit_lines[ showname ], QwtCurve::Lines );
-   }
-
-   if ( guinier_error_curves.count( hidename ) ) {
-      guinier_plot_errors->setCurveStyle( guinier_error_curves[ hidename ], QwtCurve::NoCurve );
-   }
-
-   if ( guinier_error_curves.count( showname ) ) {
-      guinier_plot_errors->setCurveStyle( guinier_error_curves[ showname ], QwtCurve::Sticks );
-   }
-
-   if ( guinier_rg_curves.count( hidename ) )
-   {
-      sym = guinier_plot_rg->curveSymbol( guinier_rg_curves[ hidename ] );
-      sym.setStyle( QwtSymbol::Diamond );
-      sym.setSize( stdsize );
-      guinier_plot_rg->setCurveSymbol( guinier_rg_curves[ hidename ], sym );
-   }
-   if ( guinier_rg_curves.count( showname ) )
-   {
-      sym = guinier_plot_rg->curveSymbol( guinier_rg_curves[ showname ] );
-      sym.setStyle( QwtSymbol::Rect );
-      sym.setSize( bigsize + 2 );
-      guinier_plot_rg->setCurveSymbol( guinier_rg_curves[ showname ], sym );
-   }
-   if ( guinier_mwt_markers.count( hidename ) )
-   {
-      sym = guinier_plot_mw->markerSymbol( guinier_mwt_markers[ hidename ] );
-      sym.setStyle( QwtSymbol::Diamond );
-      sym.setSize( stdsize );
-      guinier_plot_mw->setMarkerSymbol( guinier_mwt_markers[ hidename ], sym );
-   }
-   if ( guinier_mwt_markers.count( showname ) )
-   {
-      sym = guinier_plot_mw->markerSymbol( guinier_mwt_markers[ showname ] );
-      sym.setStyle( QwtSymbol::Rect );
-      sym.setSize( bigsize );
-      guinier_plot_mw->setMarkerSymbol( guinier_mwt_markers[ showname ], sym );
-   }
-   if ( guinier_mwc_markers.count( hidename ) )
-   {
-      sym = guinier_plot_mw->markerSymbol( guinier_mwc_markers[ hidename ] );
-      sym.setStyle( QwtSymbol::Diamond );
-      sym.setSize( stdsize );
-      guinier_plot_mw->setMarkerSymbol( guinier_mwc_markers[ hidename ], sym );
-   }
-   if ( guinier_mwc_markers.count( showname ) )
-   {
-      sym = guinier_plot_mw->markerSymbol( guinier_mwc_markers[ showname ] );
-      sym.setStyle( QwtSymbol::Rect );
-      sym.setSize( bigsize );
-      guinier_plot_mw->setMarkerSymbol( guinier_mwc_markers[ showname ], sym );
-   }
-#else
-# if QT_VERSION < 0x050000
-   QwtSymbol sym;
-   // guinier_curves[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
-   // guinier_curves[ showname ]->setStyle( QwtPlotCurve::Lines );
-
-   sym = guinier_curves[ hidename ]->symbol();
-   sym.setStyle( QwtSymbol::NoSymbol );
-   guinier_curves[ hidename ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-
-   sym = guinier_curves[ showname ]->symbol();
-   sym.setStyle( QwtSymbol::Diamond );
-   sym.setSize( stdsize );
-   guinier_curves[ showname ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-
-   if ( guinier_errorbar_curves.count( hidename ) )
-   {
-      for ( int j = 0; j < (int) guinier_errorbar_curves[ hidename ].size(); ++j )
-      {
-         guinier_errorbar_curves[ hidename ][ j ]->setStyle( QwtPlotCurve::NoCurve );
-      }
-   }
-
-   if ( guinier_errorbar_curves.count( showname ) )
-   {
-      for ( int j = 0; j < (int) guinier_errorbar_curves[ showname ].size(); ++j )
-      {
-         guinier_errorbar_curves[ showname ][ j ]->setStyle( QwtPlotCurve::Lines );
-      }
-   }
-
-   if ( guinier_fit_lines.count( hidename ) ) {
-      guinier_fit_lines[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
-   }
-
-   if ( guinier_fit_lines.count( showname ) ) {
-      guinier_fit_lines[ showname ]->setStyle( QwtPlotCurve::Lines );
-   }
-
-   if ( guinier_error_curves.count( hidename ) )
-   {
-      guinier_error_curves[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
-   }
-   if ( guinier_error_curves.count( showname ) )
-   {
-      guinier_error_curves[ showname ]->setStyle( QwtPlotCurve::Sticks );
-   }
-
-   if ( guinier_rg_curves.count( hidename ) )
-   {
-      sym = guinier_rg_curves[ hidename ]->symbol();
-      sym.setStyle( QwtSymbol::Diamond );
-      sym.setSize( stdsize );
-      guinier_rg_curves[ hidename ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-   }
-   if ( guinier_rg_curves.count( showname ) )
-   {
-      sym = guinier_rg_curves[ showname ]->symbol();
-      sym.setStyle( QwtSymbol::Rect );
-      sym.setSize( bigsize + 2 );
-      guinier_rg_curves[ showname ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-   }
-
-   if ( guinier_mwt_markers.count( hidename ) )
-   {
-      sym = guinier_mwt_markers[ hidename ]->symbol();
-      sym.setStyle( QwtSymbol::Diamond );
-      sym.setSize( stdsize );
-      guinier_mwt_markers[ hidename ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-   }
-   if ( guinier_mwt_markers.count( showname ) )
-   {
-      sym = guinier_mwt_markers[ showname ]->symbol();
-      sym.setStyle( QwtSymbol::Rect );
-      sym.setSize( bigsize );
-      guinier_mwt_markers[ showname ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-   }
-
-   if ( guinier_mwc_markers.count( hidename ) )
-   {
-      sym = guinier_mwc_markers[ hidename ]->symbol();
-      sym.setStyle( QwtSymbol::Diamond );
-      sym.setSize( stdsize );
-      guinier_mwc_markers[ hidename ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-   }
-   if ( guinier_mwc_markers.count( showname ) )
-   {
-      sym = guinier_mwc_markers[ showname ]->symbol();
-      sym.setStyle( QwtSymbol::Rect );
-      sym.setSize( bigsize );
-      guinier_mwc_markers[ showname ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-   }
-# else
    const QwtSymbol * sym;
    // guinier_curves[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
    // guinier_curves[ showname ]->setStyle( QwtPlotCurve::Lines );
@@ -580,8 +400,7 @@ void US_Hydrodyn_Mals::guinier_scroll_highlight( int pos )
       sym = guinier_mwc_markers[ showname ]->symbol();
       guinier_mwc_markers[ showname ]->setSymbol( new QwtSymbol( QwtSymbol::Rect, sym->brush(), sym->pen(), QSize( bigsize, bigsize ) ) );
    }
-# endif
-#endif
+
    guinier_scroll_pos = pos;
    guinier_plot       ->replot();
    guinier_plot_errors->replot();
@@ -598,11 +417,7 @@ void US_Hydrodyn_Mals::guinier_scroll_highlight( int pos )
 void US_Hydrodyn_Mals::guinier_scroll()
 {
    //   us_qdebug( "--- guinier_scroll() ---" );
-#if QT_VERSION < 0x050000
-   QwtSymbol sym;
-#else
    const QwtSymbol * sym;
-#endif
 
    int stdsize = 4 * use_line_width + 1;
 
@@ -623,39 +438,10 @@ void US_Hydrodyn_Mals::guinier_scroll()
       for ( int i = 0; i < (int) guinier_names.size(); ++i )
       {
          QString name = guinier_names[ i ];
-#if QT_VERSION < 0x040000
-         // guinier_plot->setCurveStyle( guinier_curves[ name ], QwtCurve::NoCurve );
-
-         sym = guinier_plot->curveSymbol( guinier_curves[ name ] );
-         sym.setStyle( QwtSymbol::None );
-         guinier_plot->setCurveSymbol( guinier_curves[ name ], sym );
-         if ( guinier_errorbar_curves.count( name ) )
-         {
-            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
-            {
-               guinier_plot->setCurveStyle( guinier_errorbar_curves[ name ][ j ], QwtCurve::NoCurve );
-            }
-         }
-
-         if ( guinier_fit_lines.count( name ) ) {
-            guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::NoCurve );
-         }
-
-         guinier_plot_errors->setCurveStyle( guinier_error_curves[ name ], QwtCurve::NoCurve );
-
-#else
-# if QT_VERSION < 0x050000
-         // guinier_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
-
-         sym = guinier_curves[ name ]->symbol();
-         sym.setStyle( QwtSymbol::NoSymbol );
-         guinier_curves[ name ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-# else
          // guinier_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
 
          sym = guinier_curves[ name ]->symbol();
          guinier_curves[ name ]->setSymbol( new QwtSymbol( QwtSymbol::NoSymbol, sym->brush(), sym->pen(), sym->size() ) );
-# endif
          if ( guinier_errorbar_curves.count( name ) )
          {
             for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
@@ -671,7 +457,6 @@ void US_Hydrodyn_Mals::guinier_scroll()
          if ( guinier_error_curves.count( name ) ) {
             guinier_error_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
          }
-#endif
       }
       if ( guinier_scroll_pos < 0 )
       {
@@ -698,69 +483,6 @@ void US_Hydrodyn_Mals::guinier_scroll()
       for ( int i = 0; i < (int) guinier_names.size(); ++i )
       {
          QString name = guinier_names[ i ];
-#if QT_VERSION < 0x040000
-         // guinier_plot->setCurveStyle( guinier_curves[ name ], QwtCurve::Lines );
-
-         sym = guinier_plot->curveSymbol( guinier_curves[ name ] );
-         sym.setStyle( QwtSymbol::Diamond );
-         sym.setSize( stdsize );
-         guinier_plot->setCurveSymbol( guinier_curves[ name ], sym );
-         if ( guinier_errorbar_curves.count( name ) )
-         {
-            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
-            {
-               guinier_plot->setCurveStyle( guinier_errorbar_curves[ name ][ j ], QwtCurve::Lines );
-            }
-         }
-
-         if ( guinier_fit_lines.count( name ) ) {
-            guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::Lines );
-         }
-         if ( guinier_error_curves.count( name ) )
-         {
-            guinier_plot_errors->setCurveStyle( guinier_error_curves[ name ], QwtCurve::Sticks );
-         }
-
-         if ( guinier_rg_curves.count( name ) )
-         {
-            sym = guinier_plot_rg->curveSymbol( guinier_rg_curves[ name ] );
-            sym.setStyle( QwtSymbol::Diamond );
-            sym.setSize( stdsize );
-            guinier_plot_rg->setCurveSymbol( guinier_rg_curves[ name ], sym );
-         }
-#else
-# if QT_VERSION < 0x050000
-         // guinier_curves[ name ]->setStyle(  QwtPlotCurve::Lines );
-
-         sym = guinier_curves[ name ]->symbol();
-         sym.setStyle( QwtSymbol::Diamond );
-         sym.setSize( stdsize );
-         guinier_curves[ name ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-
-         if ( guinier_errorbar_curves.count( name ) )
-         {
-            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
-            {
-               guinier_errorbar_curves[ name ][ j ]->setStyle( QwtPlotCurve::Lines );
-            }
-         }
-
-         if ( guinier_fit_lines.count( name ) ) {
-            guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::Lines );
-         }
-         if ( guinier_error_curves.count( name ) )
-         {
-             guinier_error_curves[ name ]->setStyle( QwtPlotCurve::Sticks );
-         }
-
-         if ( guinier_rg_curves.count( name ) )
-         {
-             sym = guinier_rg_curves[ name ]->symbol();
-             sym.setStyle( QwtSymbol::Diamond );
-             sym.setSize( stdsize );
-             guinier_rg_curves[ name ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-         }
-#else
          // guinier_curves[ name ]->setStyle(  QwtPlotCurve::Lines );
 
          sym = guinier_curves[ name ]->symbol();
@@ -788,8 +510,6 @@ void US_Hydrodyn_Mals::guinier_scroll()
             sym = guinier_rg_curves[ name ]->symbol();
             guinier_rg_curves[ name ]->setSymbol( new QwtSymbol( QwtSymbol::Diamond, sym->brush(), sym->pen(), QSize( stdsize, stdsize ) ) );
          }
-# endif
-#endif
       }
       guinier_plot       ->replot();
       guinier_plot_errors->replot();
@@ -803,22 +523,9 @@ void US_Hydrodyn_Mals::guinier_add_marker(
                                                double pos, 
                                                QColor color, 
                                                QString text, 
-#if QT_VERSION < 0x040000
-                                               int 
-#else
                                                Qt::Alignment
-#endif
                                                align )
 {
-#if QT_VERSION < 0x040000
-   long marker = plot->insertMarker();
-   plot->setMarkerLineStyle ( marker, QwtMarker::VLine );
-   plot->setMarkerPos       ( marker, pos, 0e0 );
-   plot->setMarkerLabelAlign( marker, align );
-   plot->setMarkerPen       ( marker, QPen( color, 2, DashDotDotLine));
-   plot->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
-   plot->setMarkerLabelText ( marker, text );
-#else
    QwtPlotMarker * marker = new QwtPlotMarker;
    marker->setLineStyle       ( QwtPlotMarker::VLine );
    marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
@@ -831,7 +538,6 @@ void US_Hydrodyn_Mals::guinier_add_marker(
       marker->setLabel           ( qwtt );
    }
    marker->attach             ( plot );
-#endif
    guinier_markers.push_back( marker );
 }   
 
@@ -880,12 +586,8 @@ void US_Hydrodyn_Mals::guinier_residuals( bool reset )
 {
    if ( reset )
    {
-      guinier_plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); guinier_plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-#if QT_VERSION >= 0x040000
+      guinier_plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve );
       guinier_plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );
-#else
-      guinier_plot_errors->removeMarkers();
-#endif
       guinier_error_curves.clear( );
       if ( guinier_markers.size() == 4 )
       {
@@ -1018,34 +720,18 @@ void US_Hydrodyn_Mals::guinier_residuals( bool reset )
       {
          curve = guinier_error_curves[ it->first ];
       } else {
-#if QT_VERSION >= 0x040000
          curve = new QwtPlotCurve( "errors" );
          //         curve->setStyle( QwtPlotCurve::Lines );
          curve->setPen( use_pen );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( guinier_plot_errors );
-#else
-         curve = guinier_plot_errors->insertCurve( "errors" );
-         //         guinier_plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-         guinier_plot_errors->setCurvePen( curve, use_pen );
-         guinier_plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
-#endif
-         guinier_error_curves[ it->first ] = curve;
       }
          
-#if QT_VERSION >= 0x040000
       curve->setSamples(
                      (double *)&it->second[ 0 ],
                      (double *)&e[ 0 ],
                      pts
                      );
-#else
-      guinier_plot_errors->setCurveData( curve,
-                                         (double *)&it->second[ 0 ],
-                                         (double *)&e[ 0 ],
-                                         pts
-                                         );
-#endif
    }
 
    emax = fabs( emin ) > fabs( emax ) ? fabs( emin ) : fabs( emax );
@@ -1087,14 +773,23 @@ void US_Hydrodyn_Mals::guinier_analysis()
    double sRgmin;
    double sRgmax;
 
-   double qstart      = le_guinier_q_start->text().toDouble();
-   double qend        = le_guinier_q_end  ->text().toDouble();
-   double q2end       = le_guinier_q2_end ->text().toDouble();
+   double qstart      = le_guinier_q_start ->text().toDouble();
+   double qend        = le_guinier_q_end   ->text().toDouble();
+   double q2start     = le_guinier_q2_start->text().toDouble();
+   double q2end       = le_guinier_q2_end  ->text().toDouble();
    //   double q2endvis    = le_guinier_q2_end ->text().toDouble() + le_guinier_delta_end->text().toDouble();
    double sRgmaxlimit = le_guinier_qrgmax ->text().toDouble();
    // double use_q2endvis = q2endvis;
    double use_q2endvis = q2end;
    
+   // TSO <<
+   //    QString( "guinier_analysis: qstart %1 q2start^.5 %2 qend %3 q2end^.5 %4\n" )
+   //    .arg( qstart )
+   //    .arg( sqrt( q2start ) )
+   //    .arg( qend )
+   //    .arg( sqrt( q2end ) )
+   //    ;
+
    // int points_min = 2;
 
    // bool any_sd_off = false;
@@ -1593,7 +1288,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
 
          guinier_a[ this_name ] = a;
          guinier_b[ this_name ] = b;
-         guinier_x[ this_name ].push_back( guinier_q2[ this_name ][ 0 ] );
 
          if ( start_do_decrease && Rg )
          {
@@ -1601,8 +1295,10 @@ void US_Hydrodyn_Mals::guinier_analysis()
             use_q2endvis *= use_q2endvis;
          }
          
+         guinier_x[ this_name ].push_back( q2start );
+         guinier_y[ this_name ].push_back( exp( a + b * q2start ) );
+
          guinier_x[ this_name ].push_back( use_q2endvis );
-         guinier_y[ this_name ].push_back( exp( a + b * guinier_q2[ this_name ][ 0 ] ) );
          guinier_y[ this_name ].push_back( exp( a + b * use_q2endvis ) );
 
 
@@ -1610,46 +1306,24 @@ void US_Hydrodyn_Mals::guinier_analysis()
          {
             if ( !guinier_fit_lines.count( this_name ) )
             {
-#if QT_VERSION >= 0x040000
                QwtPlotCurve *curve = new QwtPlotCurve( "fl:" + this_name );
                curve->setStyle ( QwtPlotCurve::Lines );
                curve->setPen( QPen( guinier_colors[ this_name ], use_line_width, Qt::SolidLine ) );
                curve->attach( guinier_plot );
-#else
-               long curve = guinier_plot->insertCurve( "fl:" + this_name );
-               guinier_plot->setCurveStyle ( curve, QwtCurve::Lines );
-               guinier_plot->setCurvePen( curve, QPen( guinier_colors[ this_name ], use_line_width, SolidLine ) );
-#endif
                guinier_fit_lines[ this_name ] = curve;
             }
-#if QT_VERSION >= 0x040000
             guinier_fit_lines[ this_name ]->setSamples(
                                                     (double *)&( guinier_x[ this_name ][ 0 ] ),
                                                     (double *)&( guinier_y[ this_name ][ 0 ] ),
                                                     2
                                                     );
-#else
-            guinier_plot->setCurveData( guinier_fit_lines[ this_name ],
-                                        (double *)&( guinier_x[ this_name ][ 0 ] ),
-                                        (double *)&( guinier_y[ this_name ][ 0 ] ),
-                                        2
-                                        );
-#endif
             {
-#if QT_VERSION >= 0x040000
                rg_sym.setBrush( guinier_colors[ this_name ] );
                QwtPlotCurve *curve = new QwtPlotCurve( this_name );
                curve->setStyle ( QwtPlotCurve::NoCurve );
                curve->setSymbol( new QwtSymbol( rg_sym.style(), rg_sym.brush(), rg_sym.pen(), rg_sym.size() ) );
                curve->setSamples( & pos, & Rg, 1 );
                curve->attach( guinier_plot_rg );
-#else
-               rg_sym.setBrush( guinier_colors[ this_name ] );
-               long curve = guinier_plot_rg->insertCurve( this_name );
-               guinier_plot_rg->setCurveStyle ( curve, QwtCurve::NoCurve );
-               guinier_plot_rg->setCurveSymbol( curve, rg_sym );
-               guinier_plot_rg->setCurveData( curve, & pos, & Rg, 1 );
-#endif
                guinier_rg_curves[ this_name ] = curve;
                rg_x .push_back( pos );
                rg_y .push_back( Rg );
@@ -1664,18 +1338,11 @@ void US_Hydrodyn_Mals::guinier_analysis()
                y[ 1 ] = Rg + sigb;
 
                QPen use_pen = QPen( guinier_colors[ this_name ], use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
                QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_sd" );
                curve->setStyle ( QwtPlotCurve::Lines );
                curve->setSamples( x, y, 2 );
                curve->setPen( use_pen );
                curve->attach( guinier_plot_rg );
-#else
-               long curve = guinier_plot_rg->insertCurve( this_name + "_sd" );
-               guinier_plot_rg->setCurveStyle ( curve, QwtCurve::Lines );
-               guinier_plot_rg->setCurveData( curve, x, y, 2 );
-               guinier_plot_rg->setCurvePen( curve, use_pen );
-#endif
                rg_x .push_back( pos );
                rg_y .push_back( Rg );
             }
@@ -1692,7 +1359,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
 
    // guinier_plot_summary
    {
-#if QT_VERSION >= 0x040000
       if ( ps_x.size() ) {
          {
             QwtPlotCurve *curve = new QwtPlotCurve( "Rg" );
@@ -1755,78 +1421,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
             curve->attach( guinier_plot_summary );
          }
       }
-#else
-      if ( ps_x.size() ) {
-         if ( ps_rg.size() ) {
-            long curve = guinier_plot_summary->insertCurve( "Rg" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(ps_x[0]),
-                                               (double *)&(ps_rg[0]),
-                                               ps_x.size() );
-         }
-         if ( ps_rg_sd.size() ) {
-            long curve = guinier_plot_summary->insertCurve( "Rg sd" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(ps_x[0]),
-                                               (double *)&(ps_rg_sd[0]),
-                                               ps_x.size() );
-         }
-         if ( ps_I0.size() ) {
-            long curve = guinier_plot_summary->insertCurve( "I0" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(ps_x[0]),
-                                               (double *)&(ps_I0[0]),
-                                               ps_x.size() );
-         }
-         if ( ps_I0_sd.size() ) {
-            long curve = guinier_plot_summary->insertCurve( "I0 sd" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(ps_x[0]),
-                                               (double *)&(ps_I0_sd[0]),
-                                               ps_x.size() );
-         }
-      }
-      if ( mwt_x.size() ) {
-         {
-            long curve = guinier_plot_summary->insertCurve( "MW[RT]" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(mwt_x[0]),
-                                               (double *)&(mwt_y[0]),
-                                               mwt_x.size() );
-         }
-         {
-            long curve = guinier_plot_summary->insertCurve( "MW[RT] sd" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(mwt_x[0]),
-                                               (double *)&(mwt_sds[0]),
-                                               mwt_x.size() );
-         }
-      }
-      if ( mwc_x.size() ) {
-         {
-            long curve = guinier_plot_summary->insertCurve( "MW[C]" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(mwc_x[0]),
-                                               (double *)&(mwc_y[0]),
-                                               mwc_x.size() );
-         }
-         {
-            long curve = guinier_plot_summary->insertCurve( "MW[C] sd" );
-            guinier_plot_summary->setCurveData(
-                                               curve,
-                                               (double *)&(mwc_x[0]),
-                                               (double *)&(mwc_sds[0]),
-                                               mwc_x.size() );
-         }
-      }
-#endif
    }
    
    QString msg;
@@ -1954,7 +1548,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
    if ( rg_x.size() > 1 )
    {
       QPen use_pen = QPen( Qt::cyan, use_line_width, Qt::DotLine );
-#if QT_VERSION >= 0x040000
       QwtPlotCurve * curve = new QwtPlotCurve( "rgline" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSamples(
@@ -1963,21 +1556,11 @@ void US_Hydrodyn_Mals::guinier_analysis()
                      rg_x.size() );
       curve->setPen( use_pen );
       curve->attach( guinier_plot_rg );
-#else
-      long curve = guinier_plot_rg->insertCurve( "rgline" );
-      guinier_plot_rg->setCurveStyle( curve, QwtCurve::Lines );
-      guinier_plot_rg->setCurveData( curve,
-                                     (double *)&(rg_x[0]),
-                                     (double *)&(rg_y[0]),
-                                     rg_x.size() );
-      guinier_plot_rg->setCurvePen( curve, use_pen );
-#endif
    }
 
    if ( mwt_x.size() > 1 )
    {
       QPen use_pen = QPen( Qt::green, use_line_width, Qt::DotLine );
-#if QT_VERSION >= 0x040000
       QwtPlotCurve * curve = new QwtPlotCurve( "mwtline" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSamples(
@@ -1987,16 +1570,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
       curve->setPen( use_pen );
       curve->setTitle( "MW[RT]" );
       curve->attach( guinier_plot_mw );
-#else
-      long curve = guinier_plot_mw->insertCurve( "mwtline" );
-      guinier_plot_mw->setCurveStyle( curve, QwtCurve::Lines );
-      guinier_plot_mw->setCurveData( curve,
-                                     (double *)&(mwt_x[0]),
-                                     (double *)&(mwt_y[0]),
-                                     mwt_x.size() );
-      guinier_plot_mw->setCurvePen( curve, use_pen );
-      guinier_plot_mw->setCurveTitle( curve, "MW[RT]" );
-#endif
       // us_qdebug( US_Vector::qs_vector2( "mwt", mwt_x, mwt_y ) );
 
       // as markers
@@ -2010,20 +1583,10 @@ void US_Hydrodyn_Mals::guinier_analysis()
             QColor qc = mwt_qc[ i ];
             sym.setPen  ( qc );
             sym.setBrush( qc );
-#if QT_VERSION >= 0x040000
             QwtPlotMarker* marker = new QwtPlotMarker;
-# if QT_VERSION < 0x050000
             marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-# else
-            marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-# endif
             marker->setValue( mwt_x[ i ], mwt_y[ i ] );
             marker->attach( guinier_plot_mw );
-#else
-            long marker = guinier_plot_mw->insertMarker();
-            guinier_plot_mw->setMarkerSymbol( marker, sym );
-            guinier_plot_mw->setMarkerPos   ( marker, mwt_x[ i ], mwt_y[ i ] );
-#endif
             guinier_mwt_markers[ mwt_names[ i ] ] = marker;
          }
       }
@@ -2032,7 +1595,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
    if ( mwc_x.size() > 1 )
    {
       QPen use_pen = QPen( Qt::cyan, use_line_width, Qt::DotLine );
-#if QT_VERSION >= 0x040000
       QwtPlotCurve * curve = new QwtPlotCurve( "mwcline" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSamples(
@@ -2042,16 +1604,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
       curve->setPen( use_pen );
       curve->setTitle( "MW[C]" );
       curve->attach( guinier_plot_mw );
-#else
-      long curve = guinier_plot_mw->insertCurve( "mwcline" );
-      guinier_plot_mw->setCurveStyle( curve, QwtCurve::Lines );
-      guinier_plot_mw->setCurveData( curve,
-                                     (double *)&(mwc_x[0]),
-                                     (double *)&(mwc_y[0]),
-                                     mwc_x.size() );
-      guinier_plot_mw->setCurvePen( curve, use_pen );
-      guinier_plot_mw->setCurveTitle( curve, "MW[C]" );
-#endif
       // as markers
       {
          QwtSymbol sym;
@@ -2063,20 +1615,10 @@ void US_Hydrodyn_Mals::guinier_analysis()
             QColor qc = mwc_qc[ i ];
             sym.setPen  ( qc );
             sym.setBrush( qc );
-#if QT_VERSION >= 0x040000
             QwtPlotMarker* marker = new QwtPlotMarker;
-# if QT_VERSION < 0x050000
             marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-# else
-            marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-# endif
             marker->setValue( mwc_x[ i ], mwc_y[ i ] );
             marker->attach( guinier_plot_mw );
-#else
-            long marker = guinier_plot_mw->insertMarker();
-            guinier_plot_mw->setMarkerSymbol( marker, sym );
-            guinier_plot_mw->setMarkerPos   ( marker, mwc_x[ i ], mwc_y[ i ] );
-#endif
             guinier_mwc_markers[ mwc_names[ i ] ] = marker;
          }
       }
@@ -2207,7 +1749,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
 
          // QPen use_pen = QPen( plot_colors[ f_pos[ testiq_it_selected ] % plot_colors.size() ], use_line_width, Qt::SolidLine );
          QPen use_pen = QPen( Qt::green, use_line_width, y3.size() ? Qt::DotLine : Qt::SolidLine );
-#if QT_VERSION >= 0x040000
          QwtPlotCurve * curve = new QwtPlotCurve( "refitline" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setSamples(
@@ -2216,18 +1757,8 @@ void US_Hydrodyn_Mals::guinier_analysis()
                         guinier_it_t.size() );
          curve->setPen( use_pen );
          curve->attach( guinier_plot_rg );
-#else
-         long curve = guinier_plot_rg->insertCurve( "refitline" );
-         guinier_plot_rg->setCurveStyle( curve, QwtCurve::Lines );
-         guinier_plot_rg->setCurveData( curve,
-                                        (double *)&(guinier_it_t[0]),
-                                        (double *)&(y2[0]),
-                                        guinier_it_t.size() );
-         guinier_plot_rg->setCurvePen( curve, use_pen );
-#endif
          if ( y3.size() ) {
             QPen use_pen = QPen( Qt::magenta, use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( "refitline" );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setSamples(
@@ -2236,15 +1767,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
                            guinier_it_pg_t.size() );
             curve->setPen( use_pen );
             curve->attach( guinier_plot_rg );
-#else
-            long curve = guinier_plot_rg->insertCurve( "refitlinepeak" );
-            guinier_plot_rg->setCurveStyle( curve, QwtCurve::Lines );
-            guinier_plot_rg->setCurveData( curve,
-                                           (double *)&(guinier_it_pg_t[0]),
-                                           (double *)&(y3[0]),
-                                           guinier_it_pg_t.size() );
-            guinier_plot_rg->setCurvePen( curve, use_pen );
-#endif
          }
       }
    }
@@ -2389,7 +1911,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
 
          // QPen use_pen = QPen( plot_colors[ f_pos[ testiq_it_selected ] % plot_colors.size() ], use_line_width, Qt::SolidLine );
          QPen use_pen = QPen( Qt::green, use_line_width, y3.size() ? Qt::DotLine : Qt::SolidLine );
-#if QT_VERSION >= 0x040000
          QwtPlotCurve * curve = new QwtPlotCurve( "I(t)" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setSamples(
@@ -2398,18 +1919,8 @@ void US_Hydrodyn_Mals::guinier_analysis()
                         guinier_it_t.size() );
          curve->setPen( use_pen );
          curve->attach( guinier_plot_mw );
-#else
-         long curve = guinier_plot_mw->insertCurve( "I(t)" );
-         guinier_plot_mw->setCurveStyle( curve, QwtCurve::Lines );
-         guinier_plot_mw->setCurveData( curve,
-                                        (double *)&(guinier_it_t[0]),
-                                        (double *)&(y2[0]),
-                                        guinier_it_t.size() );
-         guinier_plot_mw->setCurvePen( curve, use_pen );
-#endif
          if ( y3.size() ) {
             QPen use_pen = QPen( Qt::magenta, use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( "refitline" );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setSamples(
@@ -2418,15 +1929,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
                            guinier_it_pg_t.size() );
             curve->setPen( use_pen );
             curve->attach( guinier_plot_mw );
-#else
-            long curve = guinier_plot_mw->insertCurve( "refitlinepeak" );
-            guinier_plot_mw->setCurveStyle( curve, QwtCurve::Lines );
-            guinier_plot_mw->setCurveData( curve,
-                                           (double *)&(guinier_it_pg_t[0]),
-                                           (double *)&(y3[0]),
-                                           guinier_it_pg_t.size() );
-            guinier_plot_mw->setCurvePen( curve, use_pen );
-#endif
          }
       }
    }
@@ -2473,7 +1975,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
          double pos = unified_ggaussian_params[ (vector<double>::size_type) common_size * i  ];
          QString text = QString( "%1" ).arg( i + 1 );
          QColor color = rb_testiq_gaussians[ i ]->isChecked() ? Qt::magenta : Qt::blue;
-#if QT_VERSION >= 0x040000
          QwtPlotMarker * marker = new QwtPlotMarker;
          marker->setLineStyle       ( QwtPlotMarker::VLine );
          marker->setLinePen         ( QPen( color, line_width, Qt::DashDotDotLine ) );
@@ -2486,15 +1987,6 @@ void US_Hydrodyn_Mals::guinier_analysis()
             marker->setLabel           ( qwtt );
          }
          marker->attach             ( guinier_plot_rg );
-#else
-         long marker = guinier_plot_rg->insertMarker();
-         guinier_plot_rg->setMarkerLineStyle ( marker, QwtMarker::VLine );
-         guinier_plot_rg->setMarkerPos       ( marker, pos, 0e0 );
-         guinier_plot_rg->setMarkerLabelAlign( marker,  Qt::AlignRight | Qt::AlignTop );
-         guinier_plot_rg->setMarkerPen       ( marker, QPen( color, line_width, DashDotDotLine));
-         guinier_plot_rg->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
-         guinier_plot_rg->setMarkerLabelText ( marker, text );
-#endif
       }
    }
    guinier_plot    ->replot();
@@ -2505,13 +1997,8 @@ void US_Hydrodyn_Mals::guinier_analysis()
 
 void US_Hydrodyn_Mals::guinier_delete_markers()
 {
-#if QT_VERSION < 0x040000
-   guinier_plot       ->removeMarkers();
-   guinier_plot_errors->removeMarkers();
-#else
    guinier_plot       ->detachItems( QwtPlotItem::Rtti_PlotMarker );
    guinier_plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );
-#endif
 }
 
 void US_Hydrodyn_Mals::guinier_range( 
@@ -2657,21 +2144,10 @@ void US_Hydrodyn_Mals::guinier_replot()
          ++it )
    {
       // plot each curve
-#if QT_VERSION < 0x040000
-      sym.setPen( QPen( guinier_colors[ it->first ] ) );
-      long curve = guinier_plot->insertCurve( it->first );
-      guinier_plot->setCurveStyle ( curve, QwtCurve::NoCurve );
-      guinier_plot->setCurveSymbol( curve, sym );
-#else
       sym.setPen( QPen( guinier_colors[ it->first ] ) );
       QwtPlotCurve *curve = new QwtPlotCurve( it->first );
       curve->setStyle ( QwtPlotCurve::NoCurve );
-# if QT_VERSION < 0x050000
-      curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-# else
       curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), QPen( guinier_colors[ it->first ] ), sym.size() ) );
-# endif
-#endif
       guinier_curves[ it->first ] = curve;
       unsigned int q_points = it->second.size();
 
@@ -2705,14 +2181,6 @@ void US_Hydrodyn_Mals::guinier_replot()
       }
       q_points = ( unsigned int )q.size();
       QColor use_qc = guinier_colors[ it->first ];
-#if QT_VERSION < 0x040000
-      guinier_plot->setCurveData( curve, 
-                                  (double *)&( q[ 0 ] ),
-                                  (double *)&( I[ 0 ] ),
-                                  q_points
-                                  );
-      guinier_plot->setCurvePen( curve, QPen( use_qc, use_line_width, SolidLine));
-#else
       curve->setSamples(
                      (double *)&( q[ 0 ] ),
                      (double *)&( I[ 0 ] ),
@@ -2721,24 +2189,18 @@ void US_Hydrodyn_Mals::guinier_replot()
 
       curve->setPen( QPen( use_qc, use_line_width, Qt::SolidLine ) );
       curve->attach( guinier_plot );
-#endif
 
       if ( do_error_bars && use_error )
       {
          vector < double > x( 2 );
          vector < double > y( 2 );
          QString ebname = "eb:" + it->first;
-#if QT_VERSION >= 0x040000
          QPen use_pen = QPen( use_qc, use_line_width, Qt::SolidLine );
-#else
-         QPen use_pen = QPen( use_qc, use_line_width, Qt::SolidLine );
-#endif
          for ( int i = 0; i < ( int ) q_points; ++i )
          {
             x[ 0 ] = x[ 1 ] = q[ i ];
             y[ 0 ] = I[ i ] - e[ i ];
             y[ 1 ] = I[ i ] + e[ i ];
-#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( ebname );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setSamples(
@@ -2747,15 +2209,6 @@ void US_Hydrodyn_Mals::guinier_replot()
                            2 );
             curve->setPen( use_pen );
             curve->attach( guinier_plot );
-#else
-            long curve = guinier_plot->insertCurve( ebname );
-            guinier_plot->setCurveStyle( curve, QwtCurve::Lines );
-            guinier_plot->setCurveData( curve,
-                                        (double *)&(x[0]),
-                                        (double *)&(y[0]),
-                                        2 );
-            guinier_plot->setCurvePen( curve, use_pen );
-#endif
             guinier_errorbar_curves[ it->first ].push_back( curve );
          }
       }
@@ -3019,6 +2472,7 @@ void US_Hydrodyn_Mals::guinier_q_end_focus( bool hasFocus )
 
 void US_Hydrodyn_Mals::guinier_q2_start_text( const QString & text )
 {
+   // TSO << QString( "guinier_q2_start_text( %1 )\n" ).arg( text );
    if ( current_mode != MODE_GUINIER )
    {
       return;
@@ -3031,18 +2485,20 @@ void US_Hydrodyn_Mals::guinier_q2_start_text( const QString & text )
    guinier_markers[ 0 ]->setXValue( text.toDouble() );
    guinier_markers[ 2 ]->setXValue( text.toDouble() );
 
-   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
-   {
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() ) {
       qwtw_wheel->setValue( text.toDouble() );
-      disconnect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_guinier_q_start->setText( QString( "%1" ).arg( sqrt( text.toDouble() ) ) );
-      connect   ( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
    }
+
+   disconnect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_guinier_q_start->setText( QString( "%1" ).arg( sqrt( text.toDouble() ) ) );
+   connect   ( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
 
    if ( text.toDouble() > le_guinier_q2_end->text().toDouble() )
    {
       le_guinier_q2_end->setText( text );
    } else {
+      // TSO << QString( "guinier_q2_start_text() calls guinier_analysis()\n" );
+      guinier_analysis();
       guinier_residuals();
       guinier_range();
       guinier_plot->replot();
@@ -3053,6 +2509,7 @@ void US_Hydrodyn_Mals::guinier_q2_start_text( const QString & text )
 
 void US_Hydrodyn_Mals::guinier_q2_end_text( const QString & text )
 {
+   // TSO << QString( "guinier_q2_end_text( %1 )\n" ).arg( text );
    if ( current_mode != MODE_GUINIER )
    {
       return;
@@ -3064,18 +2521,20 @@ void US_Hydrodyn_Mals::guinier_q2_end_text( const QString & text )
    }
    guinier_markers[ 1 ]->setXValue( text.toDouble() );
    guinier_markers[ 3 ]->setXValue( text.toDouble() );
-   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
-   {
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() ) {
       qwtw_wheel->setValue( text.toDouble() );
-      disconnect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_guinier_q_end->setText( QString( "%1" ).arg( sqrt( text.toDouble() ) ) );
-      connect   ( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
    }
+
+   disconnect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_guinier_q_end->setText( QString( "%1" ).arg( sqrt( text.toDouble() ) ) );
+   connect   ( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
 
    if ( text.toDouble() < le_guinier_q2_start->text().toDouble() )
    {
       le_guinier_q2_start->setText( text );
    } else {
+      // TSO << QString( "guinier_q2_end_text() calls guinier_analysis()\n" );
+      guinier_analysis();
       guinier_residuals();
       guinier_range();
       guinier_plot->replot();
