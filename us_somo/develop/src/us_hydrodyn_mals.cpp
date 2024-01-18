@@ -1957,7 +1957,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_extc      ( "ExtC_or_DRIinc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_extc      ( "ExtC:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_g_dndc    ( "Global_dndc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_dndc      ( " dndc:\\s*(\\S+)(\\s|$)" );
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
@@ -3655,10 +3655,10 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
          .arg( f_psv .count( file ) && f_psv[ file ] ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
          // .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
          .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
-         .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+         .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
          .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
-         .arg( f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
-         .arg( f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
+         .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+         .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
          .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
          ;
    }
@@ -5724,17 +5724,17 @@ void US_Hydrodyn_Mals::view()
                   units += " I*(t) units:g/mol";
                }
 
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10\n" ) )
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
                   .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
                   // .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
                   .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
-                  .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+                  .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
                   .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
-                  .arg( f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
-                  .arg( f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
+                  .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+                  .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
                   .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                   ;
             }

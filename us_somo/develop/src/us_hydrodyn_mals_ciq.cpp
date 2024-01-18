@@ -399,7 +399,7 @@ void US_Hydrodyn_Mals_Ciq::setupGUI()
       }
 
       QLineEdit * le_tmp = new QLineEdit( this );  le_tmp->setObjectName( "le_tmp Line Edit" );
-      le_tmp->setText( "" );
+      le_tmp->setText( parameters->count( "default_extc" ) ? (*parameters)[ "default_extc" ] : "" );
       le_tmp->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       le_tmp->setPalette( PALET_NORMAL );
       AUTFBACK( le_tmp );

@@ -2052,7 +2052,8 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_guinier_plot_mw->setPalette( PALET_PUSHB );
    pb_guinier_plot_mw->setEnabled( true );
    connect(pb_guinier_plot_mw, SIGNAL(clicked()), SLOT(guinier_plot_mw_toggle()));
-
+   pb_guinier_plot_mw->hide();
+   
    cb_guinier_scroll = new QCheckBox(this);
    cb_guinier_scroll->setText(us_tr("Scroll "));
    cb_guinier_scroll->setChecked( false );
@@ -3572,7 +3573,7 @@ void US_Hydrodyn_Mals::setupGUI()
    hbl_top->addWidget( pb_p3d );
    hbl_top->addWidget( pb_ref );
    hbl_top->addWidget( pb_guinier_plot_rg );
-   hbl_top->addWidget( pb_guinier_plot_mw );
+   // hbl_top->addWidget( pb_guinier_plot_mw );
    hbl_top->addWidget( pb_errors );
    hbl_top->addWidget( pb_cormap );
    // hbl_top->addWidget( pb_pp );
@@ -4252,7 +4253,7 @@ void US_Hydrodyn_Mals::mode_setup_widgets()
    guinier_widgets.push_back( pb_wheel_inc );
    guinier_widgets.push_back( lbl_wheel_pos );
    guinier_widgets.push_back( pb_guinier_plot_rg );
-   guinier_widgets.push_back( pb_guinier_plot_mw );
+   // guinier_widgets.push_back( pb_guinier_plot_mw );
    guinier_widgets.push_back( lbl_guinier_rg_t_range );
    guinier_widgets.push_back( le_guinier_rg_t_start );
    guinier_widgets.push_back( le_guinier_rg_t_end );
@@ -4773,7 +4774,7 @@ void US_Hydrodyn_Mals::update_enables()
    pb_simulate         ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_pm               ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
    pb_testiq           ->setEnabled( files_selected_count > 4 && files_compatible && files_are_time );
-   pb_guinier          ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   pb_guinier          ->setEnabled( files_selected_count && files_compatible && !files_are_time && all_istarq );
 
    // cb_guinier          ->setEnabled( files_selected_count );
    legend_set();

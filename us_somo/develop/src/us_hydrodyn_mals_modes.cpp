@@ -2819,7 +2819,7 @@ void US_Hydrodyn_Mals::guinier_analysis()
          }
          msg += QString( "" )
             .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]  I0 %.2e (%.2e) [%.2e:%.2e]"
+                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]  MW %.2e (%.2e) [%.2e:%.2e]"
                      , qrg_avg
                      , qrg_min
                      , qrg_max
@@ -2836,7 +2836,7 @@ void US_Hydrodyn_Mals::guinier_analysis()
       }
       break;
    }
-   if ( mwt_x.size() || mwc_x.size() )
+   if ( 0 && ( mwt_x.size() || mwc_x.size() ) )
    {
       msg += "\n";
       if ( mwt_x.size() )
@@ -3834,6 +3834,9 @@ bool US_Hydrodyn_Mals::guinier_check_qmax( QString & report,
       return true;
    }
 
+   return true;
+   // for mals i*q not doing MW[RT]
+   
    report = 
       QString( us_tr( 
                   "MW[RT] calculations are calibrated for a qmax of %1\n"

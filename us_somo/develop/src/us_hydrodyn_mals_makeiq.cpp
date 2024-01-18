@@ -3430,6 +3430,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          }
          parameters[ "ngmode" ] = "true";
          parameters[ "gaussians" ] = "1";
+         parameters[ "default_extc" ] = QString( "%1" ).arg( mals_param_g_extinction_coef );
          US_Hydrodyn_Mals_Ciq *mals_ciq = 
             new US_Hydrodyn_Mals_Ciq(
                                      this,
@@ -3669,7 +3670,11 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          if ( !conc_ok ) { // no uv curve
 #warning what about loaded curve data?
 #warning check if mals_param_g_extinction_coef even used?
-            f_extc      [ name ] = mals_param_g_extinction_coef;
+            if ( f_extc.count( name ) ) {
+               f_extc.erase( name );
+            }
+            // f_extc      [ name ] = mals_param_g_extinction_coef;
+            f_g_dndc    [ name ] = mals_param_g_dndc;
             f_dndc      [ name ] = mals_param_g_dndc;
             f_conc      [ name ] = mals_param_g_conc;
          }
