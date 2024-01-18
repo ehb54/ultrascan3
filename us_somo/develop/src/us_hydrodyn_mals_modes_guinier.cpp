@@ -1153,7 +1153,7 @@ void US_Hydrodyn_Mals::guinier_analysis()
             QString("%1:%2 ").arg( pos ).arg( this_name ) +
             QString( "" )
             .sprintf(
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRg [%.3f,%.3f] pts %u chi^2 %.2e r-chi %.2e\n"
+                     "Rg %.1f (%.1f) (A) MW %.2e (%.2e) qRg [%.3f,%.3f] pts %u chi^2 %.2e r-chi %.2e\n"
                      , Rg
                      , sigb
                      , I0
@@ -1169,60 +1169,62 @@ void US_Hydrodyn_Mals::guinier_analysis()
 
 
          // tainer mw method
-         if ( US_Saxs_Util::mwt( 
-                                guinier_q[ this_name ],
-                                guinier_I[ this_name ],
-                                Rg,
-                                sigb,
-                                I0,
-                                siga,
-                                mwt_k,
-                                mwt_c,
-                                mwt_qmax,
-                                Vct,
-                                Qrt,
-                                mwt,
-                                mwt_sd,
-                                messagest,
-                                notest,
-                                warningt
-                                 ) &&
-              !us_isnan( mwt ) )
-         {
-            report += 
-               QString("")
-               .sprintf( 
-                        " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
-                        Vct,
-                        Qrt,
-                        mwt
-                         ) + notest;
-            if ( mw_min > mwt )
+         if ( 0 ) {
+            if ( US_Saxs_Util::mwt( 
+                                   guinier_q[ this_name ],
+                                   guinier_I[ this_name ],
+                                   Rg,
+                                   sigb,
+                                   I0,
+                                   siga,
+                                   mwt_k,
+                                   mwt_c,
+                                   mwt_qmax,
+                                   Vct,
+                                   Qrt,
+                                   mwt,
+                                   mwt_sd,
+                                   messagest,
+                                   notest,
+                                   warningt
+                                    ) &&
+                 !us_isnan( mwt ) )
             {
-               mw_min = mwt;
-            }
-            if ( mw_max < mwt )
-            {
-               mw_max = mwt;
-            }
-            if ( mwt_min > mwt )
-            {
-               mwt_min = mwt;
-            }
-            if ( mwt_max < mwt )
-            {
-               mwt_max = mwt;
-            }
-            mwt_avg  += mwt;
-            mwt_sum2 += mwt * mwt;
+               report += 
+                  QString("")
+                  .sprintf( 
+                           " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
+                           Vct,
+                           Qrt,
+                           mwt
+                            ) + notest;
+               if ( mw_min > mwt )
+               {
+                  mw_min = mwt;
+               }
+               if ( mw_max < mwt )
+               {
+                  mw_max = mwt;
+               }
+               if ( mwt_min > mwt )
+               {
+                  mwt_min = mwt;
+               }
+               if ( mwt_max < mwt )
+               {
+                  mwt_max = mwt;
+               }
+               mwt_avg  += mwt;
+               mwt_sum2 += mwt * mwt;
 
-            mwt_x  .push_back( pos );
-            mwt_y  .push_back( mwt );
-            mwt_sds.push_back( mwt_sd );
-            mwt_qc   .push_back( guinier_colors[ this_name ] );
-            mwt_names.push_back( this_name );
-         } else {
-            report += us_tr( " MW[RT] could not compute " + messagest + " " + notest );
+               mwt_x  .push_back( pos );
+               mwt_y  .push_back( mwt );
+               mwt_sds.push_back( mwt_sd );
+               mwt_qc   .push_back( guinier_colors[ this_name ] );
+               mwt_names.push_back( this_name );
+            } else {
+               report += us_tr( " MW[RT] could not compute " + messagest + " " + notest );
+            }
          }
 
          // curtis mw method
