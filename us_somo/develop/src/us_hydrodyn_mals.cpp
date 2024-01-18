@@ -5724,7 +5724,7 @@ void US_Hydrodyn_Mals::view()
                   units += " I*(t) units:g/mol";
                }
 
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11\n" ) )
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
