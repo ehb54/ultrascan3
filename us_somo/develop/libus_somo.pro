@@ -265,6 +265,7 @@ SOURCES *= \
         src/us_hydrodyn_mals_gui.cpp \
         src/us_hydrodyn_mals_stack.cpp \
         src/us_hydrodyn_mals_modes.cpp \
+        src/us_hydrodyn_mals_modes_guinier.cpp \
         src/us_hydrodyn_mals_modes_bb.cpp \
         src/us_hydrodyn_mals_modes_wheel.cpp \
         src/us_hydrodyn_mals_makeiq.cpp \
