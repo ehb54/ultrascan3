@@ -700,10 +700,20 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( cb_save_bl );
 
    background->addWidget( lbl_gaussian_type );
-   background->addWidget( rb_gauss );
-   background->addWidget( rb_gmg );
-   background->addWidget( rb_emg );
-   background->addWidget( rb_emggmg );
+
+   {
+      QHBoxLayout * hbl = new QHBoxLayout( 0 );
+      hbl->setContentsMargins( 0, 0, 0, 0 );
+      hbl->setSpacing( 0 );
+      
+      hbl->addWidget( rb_gauss );
+      hbl->addWidget( rb_gmg );
+      hbl->addWidget( rb_emg );
+      hbl->addWidget( rb_emggmg );
+
+      background->addLayout( hbl );
+   }
+
    {
       QGridLayout * gl_other = new QGridLayout( 0 ); gl_other->setContentsMargins( 0, 0, 0, 0 ); gl_other->setSpacing( 0 );
       gl_other->addWidget         ( lbl_dist_max , 0, 0 );
@@ -728,8 +738,18 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( pb_clear_gauss );
 
    background->addWidget( lbl_other_options );
-   background->addWidget( pb_detector );
-   background->addWidget( pb_saxs_hplc_parameters );
+
+   {
+      QHBoxLayout * hbl = new QHBoxLayout( 0 );
+      hbl->setContentsMargins( 0, 0, 0, 0 );
+      hbl->setSpacing( 0 );
+      
+      hbl->addWidget( pb_detector );
+      hbl->addWidget( pb_saxs_hplc_parameters );
+      
+      background->addLayout( hbl );
+   }
+
    {
       QBoxLayout * bl_fasta = new QHBoxLayout( 0 );
       bl_fasta->setContentsMargins( 0, 0, 0, 0 );

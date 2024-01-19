@@ -1429,7 +1429,7 @@ void US_Hydrodyn_Mals::guinier_analysis()
    switch ( count )
    {
    case 0 : msg = ""; break;
-   case 1 : msg = QString( "qmax*Rg %1   Rg %2   I0 %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
+   case 1 : msg = QString( "qmax*Rg %1   Rg %2   MW %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
    default :
       {
          double countinv = 1e0 / (double) count;

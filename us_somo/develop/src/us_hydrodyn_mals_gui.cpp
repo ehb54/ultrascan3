@@ -2254,7 +2254,7 @@ void US_Hydrodyn_Mals::setupGUI()
    guinier_plot_grid->attach( guinier_plot );
 #endif
    guinier_plot->setAxisTitle(QwtPlot::xBottom, us_tr( "q^2 [1/Angstrom^2]" ) );
-   guinier_plot->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
+   guinier_plot->setAxisTitle(QwtPlot::yLeft, us_tr("I*(q) [g mol^-1]"));
 #if QT_VERSION < 0x040000
    guinier_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    guinier_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
