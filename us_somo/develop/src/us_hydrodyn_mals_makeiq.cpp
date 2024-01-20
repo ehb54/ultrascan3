@@ -3009,7 +3009,6 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
 
    double Kinv = 1.0 / K;
 
-
    TSO << "create I#(t) : K is " << K << "\n";
 
    for ( const auto & name : files ) {

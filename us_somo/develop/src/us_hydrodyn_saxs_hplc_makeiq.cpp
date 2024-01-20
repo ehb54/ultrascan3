@@ -3301,15 +3301,6 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( set < QString > & fileset, double t_m
    return create_ihashq( files, t_min, t_max );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max )
-{
-   QMessageBox::critical( this,
-                          windowTitle() + us_tr( ": Make I#(q)" ),
-                          us_tr( "Make I#(q) not currently implemented" )
-                          );
-   return false;
-}
-
 void US_Hydrodyn_Saxs_Hplc::create_ihashq()
 {
    disable_all();
@@ -3317,6 +3308,131 @@ void US_Hydrodyn_Saxs_Hplc::create_ihashq()
    QStringList files = all_selected_files();
    create_ihashq( files );
 
+
    update_enables();
+}
+
+#define TSO QTextStream(stdout)
+
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max ) {
+   
+   // "on-the-fly" dialog 
+
+   QString     head   = qstring_common_head( files, true );
+   QString     tail   = qstring_common_tail( files, true );
+   QStringList frames = get_frames( files, head, tail );
+
+   {
+      QDialog dialog(this);
+      dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#(q)" ) );
+      // Use a layout allowing a label next to each field
+      dialog.setMinimumWidth( 200 );
+
+      QFormLayout form(&dialog);
+
+      // Add some text above the fields
+      form.addRow( new QLabel(
+                              us_tr(
+                                    "Convert frames to time\n"
+                                    "Fill out the values below and click OK\n"
+                                    "Click CANCEL to skip frame to time conversion\n"
+                                    )
+                              ) );
+
+      // Add the lineEdits with their respective labels
+      QList<QLineEdit *> fields;
+   
+      vector < QString > labels =
+         {
+            us_tr( "Starting time [s]:" )
+               ,us_tr( "Exposure time [s]:" )
+               ,us_tr( "Frame interval [s]:" )
+               };
+
+
+      for( int i = 0; i < (int) labels.size(); ++i ) {
+         QLineEdit *lineEdit = new QLineEdit( &dialog );
+         lineEdit->setValidator( new QDoubleValidator(this) );
+         form.addRow( labels[i], lineEdit );
+         fields << lineEdit;
+      }
+
+      // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+      QDialogButtonBox buttonBox(
+                                 QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                 ,Qt::Horizontal
+                                 ,&dialog
+                                 );
+      form.addRow(&buttonBox);
+      QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+      QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+      // Show the dialog as modal
+      if (dialog.exec() == QDialog::Accepted) {
+         // If the user didn't dismiss the dialog, do something with the fields
+         double start_time     = fields[0]->text().toDouble();
+         double exposure_time  = fields[1]->text().toDouble();
+         double frame_interval = fields[2]->text().toDouble();
+
+         for ( auto & frame : frames ) {
+            frame = QString( "t%1" ).arg(
+                                         start_time
+                                         + frame.toDouble() * ( exposure_time + frame_interval )
+                                         - exposure_time
+                                         );
+         }
+      }
+   }
+
+   // TSO << "create_ihashq: frames:\n" + frames.join("\n") + "\n";
+
+   reset_saxs_hplc_params();
+
+   double psv = saxs_hplc_param_g_psv;
+
+   double internal_contrast = 
+      saxs_hplc_param_diffusion_len * 
+      ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
+   
+   double conc = 1e3; // to drop out conc below
+   
+   double I0mult = AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast );
+
+   set < QString > hash_names;
+
+   for ( unsigned int i = 0; i < (unsigned int)files.size(); ++i ) {
+      QString name  = files[i];
+      QString frame = frames[i];
+
+      QString hash_name = head +  "_Ihashq_" + frame + tail;
+      
+      if ( !f_Is.count( name ) ) {
+         editor_msg( "red", QString( "Internal error: missing data for %1\n" ).arg( name ) );
+      }
+      
+      vector < double > hash_I = f_Is[ name ];
+      vector < double > hash_e = f_errors[ name ];
+
+      bool use_errors = hash_e.size() == hash_I.size();
+
+      if ( use_errors ) {
+         for ( int i = 0; i < (int) hash_I.size(); ++i ) {
+            hash_I[i] *= I0mult;
+            hash_e[i] *= I0mult;
+         }
+         add_plot( hash_name, f_qs[ name ], hash_I, hash_e, false, false );
+      } else {
+         for ( int i = 0; i < (int) hash_I.size(); ++i ) {
+            hash_I[i] *= I0mult;
+         }
+         add_plot( hash_name, f_qs[ name ], hash_I, false, false );
+      }
+
+      hash_names.insert( last_created_file );
+   }
+
+   set_selected( hash_names );
+         
+   return true;
 }
 

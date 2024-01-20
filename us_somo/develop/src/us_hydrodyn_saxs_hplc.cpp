@@ -565,27 +565,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       QDir::separator() + "somo_saxs_hplc_default_saxs_param.dat" ;
 
    // set defaults always
+
+   reset_saxs_hplc_params();
    
-   saxs_hplc_param_frame_interval                   =
-      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_frame_interval" ) ?
-      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_frame_interval" ].toDouble() : 1
-      ;
-
-   saxs_hplc_param_g_conc                   =
-      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_g_conc" ) ?
-      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ].toDouble() : 0
-      ;
-   saxs_hplc_param_g_psv                    = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv;
-   saxs_hplc_param_I0_exp                   = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp;
-   saxs_hplc_param_I0_theo                  = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo;
-   saxs_hplc_param_diffusion_len            = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.diffusion_len;
-   saxs_hplc_param_electron_nucleon_ratio   =
-      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "guinier_electron_nucleon_ratio" ) ?
-      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0
-      ;
-   saxs_hplc_param_nucleon_mass             = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.nucleon_mass;
-   saxs_hplc_param_solvent_electron_density = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density, 0, 'f', 4 ).toDouble();
-
    // if ( QFile( saxs_hplc_params_file ).exists() ) {
    //    load_file( saxs_hplc_params_file );
    // }
@@ -1160,7 +1142,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       bool reorder = true;
 
       QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
       // rx_cap.setMinimal( true );
 
       list < hplc_sortable_qstring > svals;
@@ -3751,7 +3734,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    list < double >      ql;
 
    QRegExp rx_cap( "(\\d+)_(\\d+)" );
-   QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+   // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
    // rx_cap.setMinimal( true );
 
 #ifdef USHC_TIMERS
@@ -3817,6 +3801,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       map < double , double > * Ivp;
       map < double , double > * evp;
 
+      bool frac_t_not_warned = true;
+
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); ++i )
       {
       
@@ -3827,19 +3813,34 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
             editor_msg( "red", QString( us_tr( "Internal error: request to use %1, but not found in data" ) ).arg( *qs ) );
          } else {
             QString tmp = qs->mid( head.length() );
+            QString tmp_org = tmp;
             tmp = tmp.mid( 0, tmp.length() - tail.length() );
+            QString tmp_mid = tmp;
             if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
             {
                tmp = rx_clear_nonnumeric.cap( 1 );
             }
+            QString tmp_clear = tmp;
 
             if ( rx_cap.indexIn( tmp ) != -1 )
             {
                tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
             }
             double timestamp = tmp.toDouble();
+            if ( frac_t_not_warned && timestamp != (double)((int) timestamp) ) {
+               QMessageBox::warning(
+                                    this,
+                                    this->windowTitle() + us_tr(": Make I(t)" ),
+                                    us_tr(
+                                          "Fractional times found. This has not been fully tested"
+                                          )
+                                    ,QMessageBox::Ok
+                                    );
+               frac_t_not_warned = false;
+            }
+               
 #ifdef DEBUG_LOAD_REORDER
-            us_qdebug( QString( "%1 tmp %2 value %3" ).arg( *qs ).arg( tmp ).arg( timestamp ) );
+            us_qdebug( QString( "%1 tmp %2 value %3 tmp_org %4 tmp_mid %5 tmp_clear %6" ).arg( *qs ).arg( tmp ).arg( timestamp ).arg( tmp_org ).arg( tmp_mid ).arg( tmp_clear ) );
 #endif
 
             Ivp = &(I_values[ timestamp ]);

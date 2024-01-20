@@ -1008,6 +1008,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void usp_config_ggqfit_plot( const QPoint & );
 
    private:
+      void                                reset_saxs_hplc_params();
+
       ScrollZoomer                      * ggqfit_plot_zoomer;
       QwtPlotGrid                       * ggqfit_plot_grid;
 

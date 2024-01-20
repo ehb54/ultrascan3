@@ -5375,3 +5375,25 @@ void US_Hydrodyn_Saxs_Hplc::gauss_mode()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Hplc::reset_saxs_hplc_params() {
+   saxs_hplc_param_frame_interval                   =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_frame_interval" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_frame_interval" ].toDouble() : 1
+      ;
+
+   saxs_hplc_param_g_conc                   =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "saxs_hplc_param_g_conc" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ].toDouble() : 0
+      ;
+   saxs_hplc_param_g_psv                    = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv;
+   saxs_hplc_param_I0_exp                   = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp;
+   saxs_hplc_param_I0_theo                  = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo;
+   saxs_hplc_param_diffusion_len            = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.diffusion_len;
+   saxs_hplc_param_electron_nucleon_ratio   =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "guinier_electron_nucleon_ratio" ) ?
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0
+      ;
+   saxs_hplc_param_nucleon_mass             = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.nucleon_mass;
+   saxs_hplc_param_solvent_electron_density = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density, 0, 'f', 4 ).toDouble();
+}
+   

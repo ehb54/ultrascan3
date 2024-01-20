@@ -4464,6 +4464,11 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    }
 
    bool any_ihashq       = selected_files.filter( "_Ihashq_" ).size() > 0;
+   bool all_rt           = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
+   bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
+   bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
+   bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
+   
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
    //   bool one_conc_file    = files_selected_count == 1 && files_are_time && conc_files.count( last_selected_file );
@@ -4796,11 +4801,22 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       {
          title = us_tr( "Intensity [a.u.]" );
       } else {
-         if ( type_files( selected_files ) )
-         {
-            title = us_tr( "I(t) [a.u.]" );
+         if ( type_files( selected_files ) ) {
+            if ( all_rt ) {
+               title = us_tr( "R(theta, t) [cm^-1]" );
+            } else if ( all_ihasht ) {
+               title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
+            } else {
+               title = us_tr( "I(t) [a.u.]" );
+            }
          } else {
-            title = us_tr( "I(q) [a.u.]" );
+            if ( all_istarq ) {
+               title = us_tr( "I*(q) [g mol^-1]" );
+            } else if ( all_ihashq ) {
+               title = us_tr( "I#(q) [g^2 cm^-3 mol^-1]" );
+            } else {
+               title = us_tr( "I(q) [a.u.]" );
+            }
          }
       }
 
