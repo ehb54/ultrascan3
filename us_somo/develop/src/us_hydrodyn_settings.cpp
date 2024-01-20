@@ -3247,7 +3247,7 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.I0_exp                             = 5.4e-5;
    saxs_options.I0_theo                            = 1.633e-2;
    saxs_options.diffusion_len                      = 2.82e-13;
-   saxs_options.nucleon_mass                       = 1.674e-24;
+   saxs_options.nucleon_mass                       = 1.6606e-24; // update 20 jan 2024 from 1.674e-24;
 
    saxs_options.guinier_outlier_reject             = false;
    saxs_options.guinier_outlier_reject_dist        = 2e0;
