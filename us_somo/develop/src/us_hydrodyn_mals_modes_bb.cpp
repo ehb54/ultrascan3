@@ -171,7 +171,7 @@ void US_Hydrodyn_Mals::blanks_start()
       list < double >      ql;
 
       QRegExp rx_cap( "(\\d+)_(\\d+)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
+      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
 
       {
          QString     * qs;

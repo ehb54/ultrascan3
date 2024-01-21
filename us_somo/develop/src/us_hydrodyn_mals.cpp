@@ -1457,7 +1457,7 @@ void US_Hydrodyn_Mals::add_files( bool load_conc, bool from_dir ) {
       bool reorder = true;
 
       QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
+      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
       // rx_cap.setMinimal( true );
 
       list < mals_sortable_qstring > svals;
@@ -4150,7 +4150,7 @@ void US_Hydrodyn_Mals::create_i_of_t( QStringList files )
    list < double >      ql;
 
    QRegExp rx_cap( "(\\d+)_(\\d+)" );
-   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
+   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
    // rx_cap.setMinimal( true );
 
 #ifdef USHC_TIMERS

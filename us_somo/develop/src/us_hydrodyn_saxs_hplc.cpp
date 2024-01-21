@@ -1143,7 +1143,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
 
       QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
       // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
-      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
+      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
       // rx_cap.setMinimal( true );
 
       list < hplc_sortable_qstring > svals;
@@ -1173,12 +1173,16 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       for ( int i = 0; i < (int) filenames.size(); ++i )
       {
          QString tmp = filenames[ i ].mid( head.length() );
+         QString tmp_org = tmp;
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         QString tmp_mid = tmp;
 
          if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
          {
             tmp = rx_clear_nonnumeric.cap( 1 );
          }
+
+         QString tmp_clear = tmp;
 
          added_dp = false;
 
@@ -1194,6 +1198,22 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
             us_qdebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
 #endif
          }
+
+#ifdef DEBUG_LOAD_REORDER
+         us_qdebug( QString(
+                            "%1 tmp %2\n"
+                            " value %3\n"
+                            " tmp_org %4\n"
+                            " tmp_mid %5\n"
+                            " tmp_clear %6\n"
+                            )
+                    .arg( filenames[i] )
+                    .arg( tmp )
+                    .arg( tmp.toDouble() )
+                    .arg( tmp_org )
+                    .arg( tmp_mid ).arg( tmp_clear )
+                    );
+#endif
 
          if ( do_prepend )
          {
@@ -3735,7 +3755,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
 
    QRegExp rx_cap( "(\\d+)_(\\d+)" );
    // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
-   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)[^0-9_]" );
+   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
    // rx_cap.setMinimal( true );
 
 #ifdef USHC_TIMERS
