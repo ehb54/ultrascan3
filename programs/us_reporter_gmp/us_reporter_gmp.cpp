@@ -4081,6 +4081,9 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 
   qDebug() << "END of loadData(), eID_global: " << eID_global;
 
+  //test:
+  delete db;
+    
   return true;
 }
 
@@ -4217,6 +4220,9 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
+  //test:
+  delete db;
+  
   loadNoises( triple_information );
   
   return true;
@@ -4284,7 +4290,9 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
 	}
     }
 
-
+  //test:
+  delete db;
+  
   //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
   //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
   //void US_FeMatch::load_noise( ) in us_fematch.cpp
