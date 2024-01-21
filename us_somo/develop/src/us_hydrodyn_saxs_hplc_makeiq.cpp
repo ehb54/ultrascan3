@@ -3322,6 +3322,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
    QString     tail   = qstring_common_tail( files, true );
    QStringList frames = get_frames( files, head, tail );
 
+   // TSO << "create_ihashq: get_frames:\n" + frames.join("\n") + "\n";
+
    {
       QDialog dialog(this);
       dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#(q)" ) );

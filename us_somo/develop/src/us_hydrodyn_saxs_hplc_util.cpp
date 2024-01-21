@@ -1466,12 +1466,16 @@ QStringList US_Hydrodyn_Saxs_Hplc::get_frames( QStringList files, QString head, 
       .arg( tail )
       ;
 #endif
-   result = files.replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" ).replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" );
+   result = files
+      .replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" )
+      .replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" )
+      .replaceInStrings( QRegExp( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z]).*$" ), "\\1" )
+      ;
    // us_qdebug( QString( "get frames head %1 tail %2 result %3\n" )
-   //         .arg( head )
-   //         .arg( tail )
-   //         .arg( result.join( "\n" ) )
-   //         );
+   //            .arg( head )
+   //            .arg( tail )
+   //            .arg( result.join( "\n" ) )
+   //            );
    return result;
 }
 
