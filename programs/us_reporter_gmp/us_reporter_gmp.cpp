@@ -1107,7 +1107,9 @@ void US_ReporterGMP::check_models ( int autoflowID )
     }
 
   //DEBUG
-  
+
+  //test
+  delete db;
   
 }
 
@@ -1709,6 +1711,9 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       
     }
 
+  //test
+  delete db;
+  
   return nrecs;
 }
 
@@ -1771,6 +1776,10 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 	 }
      }
 
+
+   //test
+   delete db;
+   
    return protocol_details;
 }
 
@@ -3453,6 +3462,10 @@ QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QStr
       eSign_record. clear();
     }
 
+
+  //test
+  delete db;
+  
   return eSign_record;
 }
 
@@ -3878,6 +3891,10 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   ti_noise.count = 0;
   ri_noise.count = 0;
+
+
+  //test
+  delete dbP;
 
   // Calculate basic parameters for other functions [ from us_fematch's ::update()-> data_plot() ]
   double avgTemp     = edata->average_temperature();
@@ -4816,6 +4833,10 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   
   //sdata.scanData.resize( total_scans );
   //int terpsize    = ( points + 7 ) / 8;
+
+
+  //test
+  delete dbP;
   
   if ( exp_steps )
     simparams.speed_step        = speed_steps;
@@ -6035,6 +6056,9 @@ void  US_ReporterGMP::assemble_run_details_html( void )
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
+
+  //test
+  delete dbP;
 }
 
 //get expID
