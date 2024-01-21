@@ -4290,8 +4290,7 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
 	}
     }
 
-  //test:
-  delete db;
+  
   
   //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
   //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
@@ -4354,6 +4353,8 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
 	QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
       }
 
+  //test:
+  delete db;
   return true;
 }
 
