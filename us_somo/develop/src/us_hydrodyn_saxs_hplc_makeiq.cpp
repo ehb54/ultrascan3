@@ -3324,9 +3324,10 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
 
    // TSO << "create_ihashq: get_frames:\n" + frames.join("\n") + "\n";
 
+   // exposure times
    {
       QDialog dialog(this);
-      dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#(q)" ) );
+      dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#,I*(q)" ) );
       // Use a layout allowing a label next to each field
       dialog.setMinimumWidth( 200 );
 
@@ -3347,15 +3348,23 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       vector < QString > labels =
          {
             us_tr( "Starting time [s]:" )
-               ,us_tr( "Exposure time [s]:" )
-               ,us_tr( "Frame interval [s]:" )
-               };
+            ,us_tr( "Exposure time [s]:" )
+            ,us_tr( "Frame interval [s]:" )
+         };
 
+
+      vector < double > defaults =
+         {
+            0
+            ,0
+            ,1
+         };
 
       for( int i = 0; i < (int) labels.size(); ++i ) {
          QLineEdit *lineEdit = new QLineEdit( &dialog );
          lineEdit->setValidator( new QDoubleValidator(this) );
          form.addRow( labels[i], lineEdit );
+         lineEdit->setText( QString( "%1" ).arg( defaults[i] ) );
          fields << lineEdit;
       }
 
@@ -3386,9 +3395,153 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       }
    }
 
-   // TSO << "create_ihashq: frames:\n" + frames.join("\n") + "\n";
-
    reset_saxs_hplc_params();
+
+   double i0_norm = 1;
+
+   // i0 normalization
+   {
+      bool try_again;
+      do {
+         try_again = false;
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#,I*(q)" ) );
+         // Use a layout allowing a label next to each field
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 us_tr(
+                                       "Use I0 standards for normalization\n"
+                                       "Fill out the values below and click OK\n"
+                                       "Click CANCEL if your data is already normalized\n"
+                                       )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QLineEdit *> fields;
+   
+         vector < QString > labels =
+            {
+               us_tr( "I0 standard experimental [a.u.]:" )
+               ,us_tr( "I0 standard theoretical [a.u.]:" )
+            };
+
+
+         vector < double > defaults =
+            {
+               saxs_hplc_param_I0_exp
+               ,saxs_hplc_param_I0_theo
+            };
+
+         for( int i = 0; i < (int) labels.size(); ++i ) {
+            QLineEdit *lineEdit = new QLineEdit( &dialog );
+            lineEdit->setValidator( new QDoubleValidator(this) );
+            lineEdit->setText( QString( "%1" ).arg( defaults[i] ) );
+            form.addRow( labels[i], lineEdit );
+            fields << lineEdit;
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            // If the user didn't dismiss the dialog, do something with the fields
+
+            if ( fields[2]->text().toDouble() == 0 ) {
+               try_again = true;
+            } else {
+               i0_norm =
+                  fields[1]->text().toDouble()
+                  / fields[2]->text().toDouble()
+                  ;
+            }
+         }
+      } while ( try_again );
+   }
+   
+   // conc
+   double conc_mult = 1e-3;
+
+   bool istarq = false;
+
+   {
+      bool try_again;
+      do {
+         try_again = false;
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#,I*(q)" ) );
+         // Use a layout allowing a label next to each field
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 us_tr(
+                                       "Enter a concentration to produce I*(q)\n"
+                                       "Fill out the concentration below and click OK\n"
+                                       "Click CANCEL to produce I#(q)\n"
+                                       )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QLineEdit *> fields;
+   
+         vector < QString > labels =
+            {
+               us_tr( "Concentration [mg/mL]:" )
+            };
+
+
+         for( int i = 0; i < (int) labels.size(); ++i ) {
+            QLineEdit *lineEdit = new QLineEdit( &dialog );
+            lineEdit->setValidator( new QDoubleValidator(this) );
+            form.addRow( labels[i], lineEdit );
+            fields << lineEdit;
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            // If the user didn't dismiss the dialog, do something with the fields
+
+            if ( fields[0]->text().toDouble() == 0 ) {
+               try_again = true;
+            } else {
+               conc_mult = fields[0]->text().toDouble() * 1e-3;
+               istarq    = true;
+            }
+         }
+      } while ( try_again );
+   }
+   
+   QMessageBox::information( this,
+                             windowTitle() + us_tr( ": Make I#,*(q)" ),
+                             us_tr( QString( istarq ? "I*(q)" : "I#(q)" ) + " will be produced" )
+                             );
+   
+
+   // TSO << "create_ihashq: frames:\n" + frames.join("\n") + "\n";
 
    double psv = saxs_hplc_param_g_psv;
 
@@ -3396,9 +3549,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       saxs_hplc_param_diffusion_len * 
       ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
    
-   double conc = 1e3; // to drop out conc below
-   
-   double I0mult = AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast );
+   double I0mult = i0_norm * AVOGADRO / ( conc_mult * 1e-3 ) / ( internal_contrast * internal_contrast );
 
    set < QString > hash_names;
 
@@ -3406,7 +3557,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       QString name  = files[i];
       QString frame = frames[i];
 
-      QString hash_name = head +  "_Ihashq_" + frame + tail;
+      QString hash_name = head + ( istarq ? "_Istarq_" : "_Ihashq_" ) + frame + tail;
       
       if ( !f_Is.count( name ) ) {
          editor_msg( "red", QString( "Internal error: missing data for %1\n" ).arg( name ) );

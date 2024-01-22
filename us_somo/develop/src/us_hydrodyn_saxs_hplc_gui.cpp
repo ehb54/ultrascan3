@@ -363,7 +363,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_svd->setPalette( PALET_PUSHB );
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
 
-   pb_create_ihashq = new QPushButton(us_tr("Make I#(q)"), this);
+   pb_create_ihashq = new QPushButton(us_tr("Make I#,I*(q)"), this);
    pb_create_ihashq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_create_ihashq->setMinimumHeight(minHeight1);
    pb_create_ihashq->setPalette( PALET_PUSHB );
