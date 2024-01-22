@@ -4463,7 +4463,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
    }
 
-   bool any_ihashq       = selected_files.filter( "_Ihashq_" ).size() > 0;
+   // bool any_ihashq       = selected_files.filter( "_Ihashq_" ).size() > 0;
+   bool any_ihash        = selected_files.filter( "_Ihash" ).size() > 0;
    bool all_rt           = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
    bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
@@ -4564,7 +4565,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
-   pb_create_ihashq      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time & !any_ihashq);
+   pb_create_ihashq      ->setEnabled( files_selected_count && files_compatible && !files_are_time & !any_ihash);
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );

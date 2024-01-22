@@ -3471,7 +3471,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
    }
    
    // conc
-   double conc_mult = 1;
+   double conc_mult = 1e3;
 
    bool istarq = false;
 
@@ -3550,6 +3550,29 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
    
    double I0mult = i0_norm * AVOGADRO / ( conc_mult * 1e-3) / ( internal_contrast * internal_contrast );
+
+   TSO <<
+      QString(
+              "diffusion len     %1\n"
+              "electron nucleon  %2\n"
+              "nucleon mass      %3\n"
+              "psv               %4\n"
+              "solvent e density %5\n"
+              "internal contrast %6\n"
+              "I0_mult           %7\n"
+              "I0_norm           %8\n"
+              "conc_mult         %9\n"
+              )
+      .arg( saxs_hplc_param_diffusion_len )
+      .arg( saxs_hplc_param_electron_nucleon_ratio )
+      .arg( saxs_hplc_param_nucleon_mass )
+      .arg( psv )
+      .arg( saxs_hplc_param_solvent_electron_density )
+      .arg( internal_contrast )
+      .arg( I0mult )
+      .arg( i0_norm )
+      .arg( conc_mult )
+      ;
 
    set < QString > hash_names;
 
