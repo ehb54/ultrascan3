@@ -3462,8 +3462,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
                try_again = true;
             } else {
                i0_norm =
-                  fields[0]->text().toDouble()
-                  / fields[1]->text().toDouble()
+                  fields[1]->text().toDouble()
+                  / fields[0]->text().toDouble()
                   ;
             }
          }
