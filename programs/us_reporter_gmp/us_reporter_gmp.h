@@ -24,6 +24,7 @@ class US_ReporterGMP : public US_Widgets
       public:
          US_ReporterGMP();
 	 US_ReporterGMP( QString );
+  //Tests
          US_ReporterGMP( QMap<QString, QString> );
          void write_gmp_report_DB_test( QString, QString,
 					int, QString, QString );

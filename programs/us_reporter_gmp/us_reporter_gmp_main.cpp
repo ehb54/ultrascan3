@@ -16,9 +16,9 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   QMap<QString,QString> t_c;
-   US_ReporterGMP * w = new US_ReporterGMP( t_c );
-   //US_ReporterGMP * w = new US_ReporterGMP;
+   //QMap<QString,QString> t_c;
+   //US_ReporterGMP * w = new US_ReporterGMP( t_c );
+   US_ReporterGMP * w = new US_ReporterGMP;
    //US_ReporterGMP * w = new US_ReporterGMP( "AUTO" );
    w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
