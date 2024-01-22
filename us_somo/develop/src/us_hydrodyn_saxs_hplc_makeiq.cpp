@@ -3458,12 +3458,12 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
          if (dialog.exec() == QDialog::Accepted) {
             // If the user didn't dismiss the dialog, do something with the fields
 
-            if ( fields[2]->text().toDouble() == 0 ) {
+            if ( fields[1]->text().toDouble() == 0 ) {
                try_again = true;
             } else {
                i0_norm =
-                  fields[1]->text().toDouble()
-                  / fields[2]->text().toDouble()
+                  fields[0]->text().toDouble()
+                  / fields[1]->text().toDouble()
                   ;
             }
          }
@@ -3471,7 +3471,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
    }
    
    // conc
-   double conc_mult = 1e-3;
+   double conc_mult = 1;
 
    bool istarq = false;
 
@@ -3528,7 +3528,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
             if ( fields[0]->text().toDouble() == 0 ) {
                try_again = true;
             } else {
-               conc_mult = fields[0]->text().toDouble() * 1e-3;
+               conc_mult = fields[0]->text().toDouble();
                istarq    = true;
             }
          }
@@ -3549,7 +3549,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       saxs_hplc_param_diffusion_len * 
       ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
    
-   double I0mult = i0_norm * AVOGADRO / ( conc_mult * 1e-3 ) / ( internal_contrast * internal_contrast );
+   double I0mult = i0_norm * AVOGADRO / ( conc_mult * 1e-3) / ( internal_contrast * internal_contrast );
 
    set < QString > hash_names;
 

@@ -2799,7 +2799,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    switch ( count )
    {
    case 0 : msg = ""; break;
-   case 1 : msg = QString( "qmax*Rg %1   Rg %2   I0 %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
+   case 1 : msg = QString( "qmax*Rg %1   Rg %2   I0 %3\n" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
    default :
       {
          double countinv = 1e0 / (double) count;
@@ -2819,7 +2819,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          }
          msg += QString( "" )
             .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]  I0 %.2e (%.2e) [%.2e:%.2e]"
+                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]\nI0 %.2e (%.2e) [%.2e:%.2e]"
                      , qrg_avg
                      , qrg_min
                      , qrg_max
@@ -2838,13 +2838,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    }
    if ( mwt_x.size() || mwc_x.size() )
    {
-      msg += "\n";
+      // msg += "\n";
       if ( mwt_x.size() )
       {
          double count    = (double) mwt_x.size();
          double countinv = 1e0 / count;
          mwt_avg  *= countinv;
-         msg += QString( "MW[RT] " );
+         msg += QString( "  MW[RT] " );
          if ( count != ( int ) guinier_q2.size() )
          {
             msg += QString( "%1 of %2 " ).arg( count ).arg( guinier_q2.size() );
