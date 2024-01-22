@@ -24,6 +24,9 @@ class US_ReporterGMP : public US_Widgets
       public:
          US_ReporterGMP();
 	 US_ReporterGMP( QString );
+         US_ReporterGMP( QMap<QString, QString> );
+         void write_gmp_report_DB_test( QString, QString,
+					int, QString, QString );
 
          // QMap < QString, QString > read_autoflow_record_pub( int );
          // int list_all_autoflow_records_pub( QList< QStringList >& );
