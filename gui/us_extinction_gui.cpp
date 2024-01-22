@@ -509,20 +509,25 @@ bool US_Extinction::loadScan(const QString &fileName)
    QString str1;
    QStringList strl;
    float temp_x, temp_y;
-   //WavelengthScan wls;
    QMap < QString, WavelengthScan >  Wvs_to_descr_map;
-      
-   QFile f(fileName);
-   //wls.v_readings.clear();
-   QFileInfo fi(fileName);
-   //wls.filePath = fi.filePath();
-   //wls.fileName = fi.fileName();
 
-   int nc_loaded = lw_file_names->count();
+   QFile f(fileName);
+   QFileInfo fi(fileName);
+
+   int nc_loaded = 0;
+   if (lw_file_names->count() > 0) {
+      QString text = lw_file_names->item(lw_file_names->count() - 1)->text();
+      re.setPattern("^[(](\\d+)[)].+");
+      match = re.match(text);
+      if (match.hasMatch()) {
+         nc_loaded = match.captured(1).toInt();
+      }
+   }
+
    //reads in files until the end of the file
    if(f.open(QIODevice::ReadOnly | QIODevice::Text))
    {
-      int row = 0;
+      // int row = 0;
       QTextStream ts(&f);
       // QString description_str;
 
@@ -622,7 +627,6 @@ bool US_Extinction::loadScan(const QString &fileName)
                      Wvs_to_descr_map [ key ].filePath = fi.filePath();
                   }
 
-
                   lambda_max = max(temp_x, lambda_max);
                   lambda_min = min (temp_x, lambda_min);
                }
@@ -689,7 +693,8 @@ bool US_Extinction::loadScan(const QString &fileName)
 
          // lw_file_names->insertItem(row, str1);
          // lw_file_names->insertItem(row, wls.description);
-         QListWidgetItem* item = new QListWidgetItem();
+         CustomListWidgetItem* item = new CustomListWidgetItem();
+         // QListWidgetItem* item = new QListWidgetItem();
          item->setText(wls.description);
          item->setData(Qt::UserRole, v_wavelength.size() - 1);
          lw_file_names->addItem(item);
@@ -704,6 +709,8 @@ bool US_Extinction::loadScan(const QString &fileName)
    
    v_wavelength_original = v_wavelength;
    qDebug() << "Size of Wvl in LOAD_SCAN: " << v_wavelength.size();
+
+   lw_file_names->sortItems();
    
    return(true);
    
@@ -755,7 +762,7 @@ void US_Extinction::plot()
       s->setPen(QPen(Qt::blue));
       s->setBrush(QBrush(Qt::yellow));
       s->setSize(10);
-      title = v_wavelength.at(m).fileName;
+      title = v_wavelength.at(m).description;
       c = us_curve(data_plot, title);
       c->setSymbol(s);
       c->setStyle(QwtPlotCurve::NoCurve);
@@ -1458,3 +1465,24 @@ void US_Extinction::help(void)
 
 }
 
+bool CustomListWidgetItem::operator<(const QListWidgetItem& other) const {
+   QRegularExpression re;
+   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+   QRegularExpressionMatch match;
+   re.setPattern("^[(](\\d+)[)].+");
+   match = re.match(this->text());
+   int this_id = -1;
+   int other_id = -1;
+   if (match.hasMatch()) {
+      this_id = match.captured(1).toInt();
+   }
+   match = re.match(other.text());
+   if (match.hasMatch()) {
+      other_id = match.captured(1).toInt();
+   }
+   if (this_id != -1 && other_id != -1) {
+      return this_id < other_id;
+   } else {
+      return this->text().length() < other.text().length();
+   }
+}
