@@ -50,28 +50,7 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
       return;
     }
 
-  //// .Tar Blob
-  int writeStatus= db.writeBlobToDB(report_filepath,
-				    QString( "upload_gmpReportData" ),
-				    autolfowGMPReportID );
-  
-  if ( writeStatus == US_DB2::DBERROR )
-    {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + report_filepath + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
-      clear_GMP_report_record = true;
-    }
-  
-  else if ( writeStatus != US_DB2::OK )
-    {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   report_filepath + "\n" + db.lastError() + "\n");
-      
-      clear_GMP_report_record = true;
-    }
-  
-  /*************************************************************************/
+
   //Write HTML strign to file & later save to DB withing general archive
   qDebug() << "[TEST] Writing HTML Blob of filePath -- " << html_filePath;
   
@@ -94,6 +73,31 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
       
       clear_GMP_report_record = true;
     }
+  
+  /**********************************************************************************/
+  //// .Tar Blob
+  int writeStatus= db.writeBlobToDB(report_filepath,
+				    QString( "upload_gmpReportData" ),
+				    autolfowGMPReportID );
+  
+  if ( writeStatus == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + report_filepath + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+      clear_GMP_report_record = true;
+    }
+  
+  else if ( writeStatus != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   report_filepath + "\n" + db.lastError() + "\n");
+      
+      clear_GMP_report_record = true;
+    }
+  
+  /*************************************************************************/
+
   
   /*************************************************************************/
       
