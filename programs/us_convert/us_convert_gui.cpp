@@ -599,27 +599,27 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("165");
    // QString aprofileguid = QString("b31d4669-a9f5-4488-a5e4-567bd0051679");
 
-   // QString curdir   = QString("/home/alexey/ultrascan/imports/11JAN2024-PAPBM1M2-Mabanglo-run1607");
-   // QString protname = QString("11JAN2024-PAPBM1M2-Mabanglo-test");
-   // QString invid    = QString("19");
-   // QString aprofileguid = QString("3fb72b82-6e93-4ecb-9d47-ecbf552f2234");
+    // QString curdir   = QString("/home/alexey/ultrascan/imports/11JAN2024-PAPBM1M2-Mabanglo-run1607");
+    // QString protname = QString("11JAN2024-PAPBM1M2-Mabanglo-test");
+    // QString invid    = QString("19");
+    // QString aprofileguid = QString("3fb72b82-6e93-4ecb-9d47-ecbf552f2234");
    
-   // QMap < QString, QString > protocol_details;
-   // protocol_details[ "dataPath" ]       = curdir;
-   // protocol_details[ "invID_passed" ]   = invid;
-   // protocol_details[ "protocolName" ]   = protname;
-   // //protocol_details[ "experimentName" ];
-   // protocol_details[ "correctRadii" ]   = QString("YES");
-   // protocol_details[ "expAborted" ]     = QString("NO");
-   // //protocol_details[ "runID" ]          =  ;
-   // protocol_details[ "label" ]          = QString("Some label");
-   // protocol_details[ "aprofileguid" ]   = aprofileguid;
-   // protocol_details[ "CellChNumber" ]   = QString("12");
+    // QMap < QString, QString > protocol_details;
+    // protocol_details[ "dataPath" ]       = curdir;
+    // protocol_details[ "invID_passed" ]   = invid;
+    // protocol_details[ "protocolName" ]   = protname;
+    // //protocol_details[ "experimentName" ];
+    // protocol_details[ "correctRadii" ]   = QString("YES");
+    // protocol_details[ "expAborted" ]     = QString("NO");
+    // //protocol_details[ "runID" ]          =  ;
+    // protocol_details[ "label" ]          = QString("Some label");
+    // protocol_details[ "aprofileguid" ]   = aprofileguid;
+    // protocol_details[ "CellChNumber" ]   = QString("12");
 
-   // // /*********************************************************************************/
+    // // /*********************************************************************************/
 
    
-   // import_data_auto( protocol_details ); 
+    // import_data_auto( protocol_details ); 
    
 
    qDebug() << "US_CONVERT: SET !"; 
@@ -2130,10 +2130,13 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
       DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
       
       //Correct/parse channels' description:
-      qDebug() << "Description before: " <<  rdata.description;
-      correct_description( rdata.description, QString::number( rdata.cell ), QString( rdata.channel ) );
-      qDebug() << "Description after: " <<  rdata.description;
- 
+      if ( !us_convert_auto_mode )
+	{
+	  qDebug() << "Description before: " <<  rdata.description;
+	  correct_description( rdata.description, QString::number( rdata.cell ), QString( rdata.channel ) );
+	  qDebug() << "Description after: " <<  rdata.description;
+	}
+      
       // Save the raw data for this triple
       allData << rdata;
 
@@ -2267,30 +2270,41 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
 //Correct description for double solution names
 QString US_ConvertGui::correct_description( QString & description, QString cell, QString chan )
 {
-  QStringList desc_from_allData_A = (description.split(";")[0]).split(":");
-  QStringList desc_from_allData_B = (description.split(";")[1]).split(":");
+  QString desc_corrected;
+  if ( description.contains(";") && description.contains("A:") && description.contains("B:") )
+    {
+      //Format: "Cell 1: A: solname, comment; B: solname, comment"
+      QStringList desc_all = description.split(";");
+      QString desc_A = desc_all[0];
+      QString desc_B = desc_all[ desc_all.size()-1 ];
+      QStringList desc_from_allData_A = desc_A.split(":");
+      QStringList desc_from_allData_B = desc_B.split(":");
+      
+      // QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
+      // QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
+      // QString desc_corrected = desc_from_allData_A[0] + ":"  +
+      //                          desc_from_allData_A[1] + ": " +
+      //                          desc_chan_A + ";"             +
+      //                          desc_from_allData_B[0] + ": " +
+      //                          desc_chan_B;
+      
+      //QString desc_chan_A = desc_from_allData_A[2].simplified();
+      //QString desc_chan_B = desc_from_allData_B[1].simplified();
+      
+      QString desc_chan_A = desc_from_allData_A[ desc_from_allData_A.size() - 1 ].simplified();
+      QString desc_chan_B = desc_from_allData_B[ desc_from_allData_B.size() - 1 ].simplified();
+      desc_corrected      = desc_chan_A + " -- " + desc_chan_B;
+      
+      qDebug() << "DESC A: " << desc_chan_A;
+      qDebug() << "DESC B: " << desc_chan_B;
+      qDebug() << "DESC CORR: " << desc_corrected;
+      
+      if ( chan == "A" )
+	description = desc_chan_A;
+      if ( chan == "B" )
+	description = desc_chan_B;
+    }
   
-  // QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
-  // QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
-  // QString desc_corrected = desc_from_allData_A[0] + ":"  +
-  //                          desc_from_allData_A[1] + ": " +
-  //                          desc_chan_A + ";"             +
-  //                          desc_from_allData_B[0] + ": " +
-  //                          desc_chan_B;
-
-  QString desc_chan_A = desc_from_allData_A[2].simplified();
-  QString desc_chan_B = desc_from_allData_B[1].simplified();
-  QString desc_corrected = desc_chan_A + " -- " + desc_chan_B;
-  
-  qDebug() << "DESC A: " << desc_chan_A;
-  qDebug() << "DESC B: " << desc_chan_B;
-  qDebug() << "DESC CORR: " << desc_corrected;
-
-  if ( chan == "A" )
-    description = desc_chan_A;
-  if ( chan == "B" )
-    description = desc_chan_B;
-
   return desc_corrected;
 }
   

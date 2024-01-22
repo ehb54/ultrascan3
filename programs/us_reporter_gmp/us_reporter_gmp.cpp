@@ -19,6 +19,141 @@
 
 #define MIN_NTC   25
 
+// Test case(s): Constructor
+US_ReporterGMP::US_ReporterGMP( QMap< QString, QString> t_c ) : US_Widgets()
+{
+  QString report_filepath  = "/home/alexey/ultrascan/reports/eGFP-DNA-MW-08OCT23-run1981_GMP_DB.tar";
+  QString html_filePath    = "/home/alexey/ultrascan/reports/eGFP-DNA-MW-08OCT23-run1981/html_string.html";
+  int autolfowGMPReportID  = 25;
+  QString autoStatusID     = QString::number(231);
+  QString autoID           = QString::number(1002);
+
+  write_gmp_report_DB_test(report_filepath, html_filePath, autolfowGMPReportID,
+			   autoStatusID, autoID);
+}
+
+//write GMP report to DB Test
+void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString html_filePath,
+					       int autolfowGMPReportID, QString autoStatusID, QString autoID )
+{
+  qDebug() << "[TEST] Writing .TAR Blob of filePath -- " << report_filepath;
+
+  bool clear_GMP_report_record = false;
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+
+
+  //Write HTML strign to file & later save to DB withing general archive
+  qDebug() << "[TEST] Writing HTML Blob of filePath -- " << html_filePath;
+  
+  int writeStatus_html = db.writeBlobToDB( html_filePath,
+					   QString( "upload_gmpReportData_html" ),
+					   autolfowGMPReportID );
+  
+  if ( writeStatus_html == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing html file:\n"
+			   + html_filePath + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+      clear_GMP_report_record = true;
+    }
+  
+  else if ( writeStatus_html != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing html file:\n" +
+			   html_filePath + "\n" + db.lastError() + "\n");
+      
+      clear_GMP_report_record = true;
+    }
+  
+  /**********************************************************************************/
+  //// .Tar Blob
+  int writeStatus= db.writeBlobToDB(report_filepath,
+				    QString( "upload_gmpReportData" ),
+				    autolfowGMPReportID );
+  
+  if ( writeStatus == US_DB2::DBERROR )
+    {
+      QMessageBox::warning(this, "Error", "Error processing file:\n"
+			   + report_filepath + "\n" + db.lastError() +
+			   "\n" + "Could not open file or no data \n");
+      clear_GMP_report_record = true;
+    }
+  
+  else if ( writeStatus != US_DB2::OK )
+    {
+      QMessageBox::warning(this, "Error", "returned processing file:\n" +
+			   report_filepath + "\n" + db.lastError() + "\n");
+      
+      clear_GMP_report_record = true;
+    }
+  
+  /*************************************************************************/
+
+  
+  /*************************************************************************/
+      
+  QStringList qry;    
+  if ( clear_GMP_report_record )
+    {
+      qDebug() << "Something went wrong!!";
+      // qry.clear();
+      // qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
+      // db.query( qry );
+      
+      //Maybe revert 'reporting' stage in the autoflowStages??
+    }
+  else
+    {
+      //Report generated && .PDF GMP report saved to autoflowGMPReport:
+      //No, we can write information on who/when generated report: ///////////////////////
+      
+      //get user info
+      qry.clear();
+      qry <<  QString( "get_user_info" );
+      db.query( qry );
+      db.next();
+      
+      int ID        = db.value( 0 ).toInt();
+      QString fname = db.value( 1 ).toString();
+      QString lname = db.value( 2 ).toString();
+      QString email = db.value( 4 ).toString();
+      int     level = db.value( 5 ).toInt();
+      
+      QString reporting_Json;
+      
+      reporting_Json. clear();
+      reporting_Json += "{ \"Person\": ";
+      
+      reporting_Json += "[{";
+      reporting_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      reporting_Json += "\"fname\":\""  + fname                     + "\",";
+      reporting_Json += "\"lname\":\""  + lname                     + "\",";
+      reporting_Json += "\"email\":\""  + email                     + "\",";
+      reporting_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      reporting_Json += "}]}";
+      
+      qry.clear();
+      qry << "update_autoflowStatusReport_record"
+	  << autoStatusID
+	  << autoID
+	  << reporting_Json;
+      
+      db.query( qry );
+    }
+}
+ 
+// END Test Case /////////////////////////////////////////////////////////////////////////////////
+
+
 // Constructor
 US_ReporterGMP::US_ReporterGMP() : US_Widgets()
 {
@@ -1107,7 +1242,9 @@ void US_ReporterGMP::check_models ( int autoflowID )
     }
 
   //DEBUG
-  
+
+  //test
+  delete db;
   
 }
 
@@ -1709,6 +1846,9 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       
     }
 
+  //test
+  delete db;
+  
   return nrecs;
 }
 
@@ -1771,6 +1911,10 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 	 }
      }
 
+
+   //test
+   delete db;
+   
    return protocol_details;
 }
 
@@ -3264,18 +3408,7 @@ void US_ReporterGMP::generate_report( void )
       ************************************************************/
 
       //Update autoflow status to 'E-SIGNATURES':
-      US_Passwd   pw;
-      US_DB2* db = new US_DB2( pw.getPasswd() );
-      
-      if ( db->lastErrno() != US_DB2::OK )
-	{
-	  QApplication::restoreOverrideCursor();
-	  QMessageBox::information( this,
-				    tr( "DB Connection Problem" ),
-				    tr( "AutoflowHistory: there was an error connecting to the database:\n" )
-				    + db->lastError() );
-	  	  return;
-	}
+     
 
       //Compose "{to_sign:["","",...]}" out of operatorListJson, reviewersListJson, approversListJson
       //&& update 'eSignStatusJson' of the autoflowGMPReportEsign record with it
@@ -3304,6 +3437,19 @@ void US_ReporterGMP::generate_report( void )
        
       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
 
+
+      US_Passwd   pw;
+      US_DB2* db = new US_DB2( pw.getPasswd() );
+      
+      if ( db->lastErrno() != US_DB2::OK )
+	{
+	  QApplication::restoreOverrideCursor();
+	  QMessageBox::information( this,
+				    tr( "DB Connection Problem" ),
+				    tr( "AutoflowHistory: there was an error connecting to the database:\n" )
+				    + db->lastError() );
+	  	  return;
+	}
       QStringList qry;
             
       //Update autoflow record with 'E-SIGNATURES'
@@ -3453,6 +3599,10 @@ QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QStr
       eSign_record. clear();
     }
 
+
+  //test
+  delete db;
+  
   return eSign_record;
 }
 
@@ -3879,6 +4029,10 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   ti_noise.count = 0;
   ri_noise.count = 0;
 
+
+  //test
+  delete dbP;
+
   // Calculate basic parameters for other functions [ from us_fematch's ::update()-> data_plot() ]
   double avgTemp     = edata->average_temperature();
   solution.density   = density;
@@ -4081,6 +4235,9 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 
   qDebug() << "END of loadData(), eID_global: " << eID_global;
 
+  //test:
+  delete db;
+    
   return true;
 }
 
@@ -4217,6 +4374,9 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
+  //test:
+  delete db;
+  
   loadNoises( triple_information );
   
   return true;
@@ -4284,7 +4444,8 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
 	}
     }
 
-
+  
+  
   //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
   //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
   //void US_FeMatch::load_noise( ) in us_fematch.cpp
@@ -4346,6 +4507,8 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
 	QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
       }
 
+  //test:
+  delete db;
   return true;
 }
 
@@ -4807,6 +4970,10 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   
   //sdata.scanData.resize( total_scans );
   //int terpsize    = ( points + 7 ) / 8;
+
+
+  //test
+  delete dbP;
   
   if ( exp_steps )
     simparams.speed_step        = speed_steps;
@@ -6026,6 +6193,9 @@ void  US_ReporterGMP::assemble_run_details_html( void )
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
+
+  //test
+  delete dbP;
 }
 
 //get expID
