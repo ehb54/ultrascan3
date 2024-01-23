@@ -502,41 +502,54 @@ bool US_Extinction::isComment(const QString &str)
 }
 bool US_Extinction::loadScan(const QString &fileName)
 {
+   QRegularExpression re;
+   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+   QRegularExpressionMatch match;
+
    QString str1;
    QStringList strl;
    float temp_x, temp_y;
-   //WavelengthScan wls;
    QMap < QString, WavelengthScan >  Wvs_to_descr_map;
-      
+
    QFile f(fileName);
-   //wls.v_readings.clear();
    QFileInfo fi(fileName);
-   //wls.filePath = fi.filePath();
-   //wls.fileName = fi.fileName();
+
+   int nc_loaded = 0;
+   if (lw_file_names->count() > 0) {
+      QString text = lw_file_names->item(lw_file_names->count() - 1)->text();
+      re.setPattern("^[(](\\d+)[)].+");
+      match = re.match(text);
+      if (match.hasMatch()) {
+         nc_loaded = match.captured(1).toInt();
+      }
+   }
 
    //reads in files until the end of the file
    if(f.open(QIODevice::ReadOnly | QIODevice::Text))
    {
-      int row = 0;
+      // int row = 0;
       QTextStream ts(&f);
-      QString description_str;
+      // QString description_str;
 
       if ( fileName.endsWith(".dsp", Qt::CaseInsensitive) ){
-        for(int i = 0; i < 3; i++) ts.readLine();
-        description_str = ts.readLine();
-        ts.readLine();
-        double wl_min = ts.readLine().toDouble();
-        ts.readLine().toDouble();
-        double dwl = ts.readLine().toInt();
-        int np = ts.readLine().toInt();
-        while(!ts.atEnd() && ts.readLine().simplified().compare("#DATA") != 0){}
+         for(int i = 0; i < 3; i++) ts.readLine();
+         QString desc = tr("(%1) %2").arg(nc_loaded + 1).arg(ts.readLine().trimmed());
+         QString key = "Column_1";
+         ts.readLine();
+         double wl_min = ts.readLine().toDouble();
+         ts.readLine().toDouble();
+         double dwl = ts.readLine().toInt();
+         int np = ts.readLine().toInt();
+         while(!ts.atEnd() && ts.readLine().simplified().compare("#DATA") != 0){}
 
-        for (int i = 0; i < np; i++){
+         Wvs_to_descr_map [ key ].description = desc;
+         Wvs_to_descr_map [ key ].fileName = fi.fileName();
+         Wvs_to_descr_map [ key ].filePath = fi.filePath();
+         for (int i = 0; i < np; i++) {
             if (ts.atEnd()){
                 f.close();
                 QMessageBox::warning(this, tr("Error!"),
                                      tr("Error in reading file:\n%1").arg(fileName));
-                Wvs_to_descr_map [ description_str ]. v_readings.clear();
                 return false;
             }
 
@@ -544,29 +557,31 @@ bool US_Extinction::loadScan(const QString &fileName)
             float temp_y = ts.readLine().toDouble();
             Reading r = {temp_x, temp_y};
 
-            Wvs_to_descr_map [ description_str ]. v_readings.push_back(r);
+            Wvs_to_descr_map [ key ]. v_readings.push_back(r);
 
             lambda_max = max(temp_x, lambda_max);
             lambda_min = min (temp_x, lambda_min);
-        }
+         }
 
       } else {
-        //wls.description = ts.readLine();
-        description_str = ts.readLine();
-        //wls.description = description_str;
+         //wls.description = ts.readLine();
+         // description_str = ts.readLine();
+         //wls.description = description_str;
+         QStringList headers = ts.readLine().trimmed().split("\t");
+         bool has_desc = false;
 
-        while(!ts.atEnd())
-        {
+         while(!ts.atEnd())
+         {
             bool flag1 = true;
 
             //true while text information is not a number
             if(flag1 && !ts.atEnd())
             {
-                str1 = ts.readLine();
+               str1 = ts.readLine();
             }
             else
             {
-                flag1 = false;
+               flag1 = false;
             }
             str1 = str1.simplified();
             str1 = str1.replace("\"", " ");
@@ -575,42 +590,48 @@ bool US_Extinction::loadScan(const QString &fileName)
 
             temp_x = strl.at(0).toFloat();
             int strl_size = strl.size();
+            if (strl_size > headers.size()) {
+               QMessageBox::warning(this, "Error!", "Error in parsing the csv file!"
+                                                    "Please make sure the each column is TAB separated!");
+               f.close();
+               return false;
+
+            }
 
             //temp_y = strl.at(1).toFloat();  //ALEXEY: here, reads only first column
 
             /*
-          go for all columns;
-          check if it's a number (regex ?);
-          store y-coor into a temporary array QVector< float > << push( temp_y )
-          store wavelength scans into array
-        */
+            go for all columns;
+            check if it's a number (regex ?);
+            store y-coor into a temporary array QVector< float > << push( temp_y )
+            store wavelength scans into array
+            */
 
             for ( int i=1; i < strl_size; ++i )    //Start from i=1 (all Y's)
             {
-                temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
+               temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
 
-                if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
-                {
-                    qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
-                    Reading r = {temp_x, temp_y};
+               if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
+               {
+                  qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
+                  Reading r = {temp_x, temp_y};
 
-                    //wls.v_readings.push_back(r);
+                  //wls.v_readings.push_back(r);
 
-                    QString Wls_desc_curr;
+                  QString key = tr("Column_%1").arg(i);
+                  Wvs_to_descr_map [ key ].v_readings.push_back(r);
+                  if (! has_desc) {
+                     QString desc = tr("(%1) %2").arg(nc_loaded + i).arg(headers.at(i));
+                     Wvs_to_descr_map [ key ].description = desc;
+                     Wvs_to_descr_map [ key ].fileName = fi.fileName();
+                     Wvs_to_descr_map [ key ].filePath = fi.filePath();
+                  }
 
-                    if ( strl_size > 1 )
-                        Wls_desc_curr = "Column " + QString::number( i );
-                    else
-                        Wls_desc_curr = description_str;
-
-
-                    Wvs_to_descr_map [ Wls_desc_curr ]. v_readings.push_back(r);
-
-                    lambda_max = max(temp_x, lambda_max);
-                    lambda_min = min (temp_x, lambda_min);
-                }
+                  lambda_max = max(temp_x, lambda_max);
+                  lambda_min = min (temp_x, lambda_min);
+               }
             }
-        }
+         }
       }
 
       f.close();
@@ -628,68 +649,68 @@ bool US_Extinction::loadScan(const QString &fileName)
       
       QMap < QString, WavelengthScan >::iterator mm;
       for ( mm =  Wvs_to_descr_map.begin(); mm !=  Wvs_to_descr_map.end(); ++mm )
-	{
-	  WavelengthScan wls = Wvs_to_descr_map[ mm.key() ];
-	  wls.filePath    = fi.filePath();
-	  wls.fileName    = fi.fileName();
-	  if ( Wvs_to_descr_map. keys(). size() == 1 )
-	    wls.description = description_str;
-	  else
-	    {
-	      wls.fileName   += ", " + mm.key();
-	      wls.description = mm.key() + " of " +  description_str;
-	    }
-	      
-	  if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
-	    {//we need to reverse the order of entries
-	      WavelengthScan wls2;
-	      wls2.v_readings.clear();
-	      qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
-	      for(int i=(wls.v_readings.size() - (unsigned int) 1); i >=0; i--)
-		{
-		  qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
-		  Reading temp = {wls.v_readings.at(i).lambda, wls.v_readings.at(i).od};
-		  wls2.v_readings.push_back(temp);
-		}
-	      qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
-	      wls.v_readings.clear();
-	      
-	      for(unsigned int i = 0; i < (unsigned int)wls2.v_readings.size(); i++)
-		{
-		  qDebug() << "i: " << i;
-		  Reading temp2 = {wls2.v_readings.at(i).lambda, wls2.v_readings.at(i).od};
-		  wls.v_readings.push_back(temp2);
-		}
-	      qDebug() << "Inside LAOD 1cc";
-	    }
-	  
-	  qDebug() << "Inside LAOD 2";
-	  
-	  v_wavelength.push_back(wls);
-	  str1.sprintf("Scan %d: ", v_wavelength.size());
-	  QString tmp_filename1 = wls.fileName;
-	  QString tmp_filename;
-	  if ( Wvs_to_descr_map. keys(). size() == 1  )
-	    tmp_filename = tmp_filename1;
-	  else
-	    tmp_filename = tmp_filename1.split(",")[0].simplified();
-	  	    
-	  //str1 += wls.fileName + ", ";
-	  str1 += tmp_filename + ", ";
-	  str1 += wls.description;
-	  
-	  lw_file_names->insertItem(row, str1);
-	  row++;
-	  str1 = "";
-	}
+      {
+         WavelengthScan wls = Wvs_to_descr_map[ mm.key() ];
+
+         if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
+         {//we need to reverse the order of entries
+            WavelengthScan wls2;
+            wls2.v_readings.clear();
+            qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
+            for(int i=(wls.v_readings.size() - (unsigned int) 1); i >=0; i--)
+            {
+               qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
+               Reading temp = {wls.v_readings.at(i).lambda, wls.v_readings.at(i).od};
+               wls2.v_readings.push_back(temp);
+            }
+            qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
+            wls.v_readings.clear();
+
+            for(unsigned int i = 0; i < (unsigned int)wls2.v_readings.size(); i++)
+            {
+               qDebug() << "i: " << i;
+               Reading temp2 = {wls2.v_readings.at(i).lambda, wls2.v_readings.at(i).od};
+               wls.v_readings.push_back(temp2);
+            }
+            qDebug() << "Inside LAOD 1cc";
+         }
+
+         qDebug() << "Inside LAOD 2";
+
+         v_wavelength.push_back(wls);
+         // str1.sprintf("Scan %d: ", v_wavelength.size());
+         // QString tmp_filename1 = wls.fileName;
+         // QString tmp_filename;
+         // if ( Wvs_to_descr_map. keys(). size() == 1  )
+         //    tmp_filename = tmp_filename1;
+         // else
+         //    tmp_filename = tmp_filename1.split(",")[0].simplified();
+
+         //str1 += wls.fileName + ", ";
+
+         // str1 += tmp_filename + ", ";
+         // str1 += wls.description;
+
+         // lw_file_names->insertItem(row, str1);
+         // lw_file_names->insertItem(row, wls.description);
+         CustomListWidgetItem* item = new CustomListWidgetItem();
+         // QListWidgetItem* item = new QListWidgetItem();
+         item->setText(wls.description);
+         item->setData(Qt::UserRole, v_wavelength.size() - 1);
+         lw_file_names->addItem(item);
+         // row++;
+         // str1 = "";
+      }
    }
    else
-     {
-       //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
-     }
+   {
+      //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
+   }
    
    v_wavelength_original = v_wavelength;
    qDebug() << "Size of Wvl in LOAD_SCAN: " << v_wavelength.size();
+
+   lw_file_names->sortItems();
    
    return(true);
    
@@ -741,7 +762,7 @@ void US_Extinction::plot()
       s->setPen(QPen(Qt::blue));
       s->setBrush(QBrush(Qt::yellow));
       s->setSize(10);
-      title = v_wavelength.at(m).fileName;
+      title = v_wavelength.at(m).description;
       c = us_curve(data_plot, title);
       c->setSymbol(s);
       c->setStyle(QwtPlotCurve::NoCurve);
@@ -1444,3 +1465,24 @@ void US_Extinction::help(void)
 
 }
 
+bool CustomListWidgetItem::operator<(const QListWidgetItem& other) const {
+   QRegularExpression re;
+   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+   QRegularExpressionMatch match;
+   re.setPattern("^[(](\\d+)[)].+");
+   match = re.match(this->text());
+   int this_id = -1;
+   int other_id = -1;
+   if (match.hasMatch()) {
+      this_id = match.captured(1).toInt();
+   }
+   match = re.match(other.text());
+   if (match.hasMatch()) {
+      other_id = match.captured(1).toInt();
+   }
+   if (this_id != -1 && other_id != -1) {
+      return this_id < other_id;
+   } else {
+      return this->text().length() < other.text().length();
+   }
+}
