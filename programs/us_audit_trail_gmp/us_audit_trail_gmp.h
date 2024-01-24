@@ -24,6 +24,7 @@ class US_auditTrailGMP : public US_Widgets
      private:
        QVBoxLayout* topLayout_auto;
        QPushButton* pb_loadreport_db;
+       QPushButton* pb_viewAPDF;
   
        QVBoxLayout* mainLayout_auto;
        QGridLayout* loadedRunGrid;
@@ -43,6 +44,7 @@ class US_auditTrailGMP : public US_Widgets
   
        US_SelectItem* pdiag_autoflow_db;
        QString autoflowID_passed;
+  QString gmpRunName_passed;
        int autoflowStatusID;
        QList< QStringList >  gmpReportsDBdata;
        bool       isEsignRecord;
@@ -53,12 +55,17 @@ class US_auditTrailGMP : public US_Widgets
        bool p_2dsa_auto_fitmen;
 
        int RowHeight;
+       QString html_assembled;
+       QString filePath_pdf;
 			    
 			   
      public slots:
 
      private slots:
        void loadGMPReport( void );
+       void printAPDF( void );
+       void viewAPDF( void );
+       bool    mkdir         ( const QString&, const QString& );
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
        void initPanel_auto( QMap < QString, QString > &  );
@@ -79,6 +86,7 @@ class US_auditTrailGMP : public US_Widgets
        bool read_2dsa_settings( QXmlStreamReader& );
 
        QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
+       void assemble_GMP_init( QMap< QString, QMap < QString, QString > >, QString );
   
      signals:  
   

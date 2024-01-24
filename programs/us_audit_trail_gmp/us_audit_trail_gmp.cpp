@@ -47,14 +47,59 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
   
   topLayout_auto -> addWidget(  bn_loadGMPReport );
   topLayout_auto -> addWidget(  pb_loadreport_db );
+  
   // int ihgt        = pb_loadreport_db ->height();
   // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   // topLayout_auto->addItem( spacer2 );
   
   connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReport() ) );
-  
+    
   //resize( 1200, 300 );
   resize( 600, 500 );
+}
+
+void US_auditTrailGMP::printAPDF( void )
+{
+  QString subDirName = gmpRunName_passed + "_AudirTrail";
+  mkdir( US_Settings::reportDir(), subDirName );
+  filePath_pdf = US_Settings::reportDir() + "/" + subDirName + "/" + subDirName + ".pdf";
+  
+  QTextDocument document;
+  document.setHtml( html_assembled );
+  
+  QPrinter printer(QPrinter::PrinterResolution);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setPaperSize(QPrinter::Letter);
+
+  printer.setOutputFileName( filePath_pdf );
+  printer.setFullPage(true);
+  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  
+  document.print(&printer);
+
+  /** END of standard way of printing *************************/
+
+  qDebug() << "HTMP_assembled -- " << html_assembled;
+}
+
+
+//view report
+void US_auditTrailGMP::viewAPDF ( void )
+{
+  qDebug() << "Opening PDF at -- " << filePath_pdf;
+
+  QFileInfo check_file( filePath_pdf );
+  if (check_file.exists() && check_file.isFile())
+    {
+      //Open with OS's applicaiton settings ?
+      QDesktopServices::openUrl(QUrl( filePath_pdf ));
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Error: Cannot Open .PDF File" ),
+			    tr( "%1 \n\n"
+				"No such file or directory...") .arg( filePath_pdf ) );
+    }
 }
 
 //Load GMP Run
@@ -128,6 +173,11 @@ void US_auditTrailGMP::loadGMPReport( void )
   
   p_details[ "gmp_runname" ] = gmpReport_runname_selected_c;
   initPanel_auto( p_details );
+
+  // Print PDF && enable View:
+  
+  printAPDF();
+  pb_viewAPDF -> setEnabled( true );
 }
 
 // Get .pdf GMP reports with assigned reviewers:
@@ -302,6 +352,9 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 {
   //Main ID for parent GMP run:
   autoflowID_passed = protocol_details[ "autoflowID" ];
+
+  //GMP Run Name
+  gmpRunName_passed = protocol_details["gmp_runname"];
   
   //clear all GUI, internals
   reset_panel();
@@ -316,11 +369,17 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   int row = 0;
   QLabel*      lb_runloaded  = us_banner( tr( "Loaded GMP Run:" ), 1 );
   QLabel*      lb_runName    = us_label(  tr( "GMP Run Name:" ), 1  );
-  QLineEdit*   le_runName    = us_lineedit( protocol_details["gmp_runname"], 0, true );
-  
+  QLineEdit*   le_runName    = us_lineedit( gmpRunName_passed, 0, true );
+
+  //QLabel* bn_viewAPDF = us_banner( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ), 1 );
+  pb_viewAPDF  =  us_pushbutton( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ) );
+
   loadedRunGrid  -> addWidget( lb_runloaded,    row++,   0,  1,  10  );
   loadedRunGrid  -> addWidget( lb_runName,      row,     0,  1,  3  );
   loadedRunGrid  -> addWidget( le_runName,      row++,   3,  1,  7  );
+  loadedRunGrid  -> addWidget( pb_viewAPDF,     row++,   0,  1,  10  );
+
+  connect( pb_viewAPDF,  SIGNAL( clicked() ), SLOT ( viewAPDF() ) );
 
   //1. e_signers layout
   eSignersGrid     = new QGridLayout();
@@ -615,6 +674,9 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       
       groupBox->setLayout(genL);
       groupBoxes. push_back( groupBox );
+
+      //assemble html:
+      assemble_GMP_init( status_map, createdGMPrunts );
     }
   
   else if ( s_name == "LIVE UPDATE" )
@@ -1951,4 +2013,80 @@ void US_auditTrailGMP::reset_panel( void )
   	}
     }
 
+  //reset the rest
+  html_assembled. clear();
+  filePath_pdf  . clear();
+
 }
+
+// Create a subdirectory if need be
+bool US_auditTrailGMP::mkdir( const QString& baseDir, const QString& subdir )
+{
+   QDir folder( baseDir );
+
+   if ( folder.exists( subdir ) ) return true;
+
+   if ( folder.mkdir( subdir ) ) return true;
+
+   QMessageBox::warning( this,
+      tr( "File error" ),
+      tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
+
+   return false;
+}
+
+void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString > > status_map_c, QString createdGMPrunts )
+{
+  html_assembled += tr("<hr>");
+  html_assembled += tr( "<h3 align=left>GMP Run Initiation (1. EXPERIMENT)</h3>" );
+  
+  //html_assembled += tr("<br>");
+  html_assembled += tr(
+		           "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Initiated by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Person" ][ "ID"] )                       //1
+    .arg( status_map_c[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map_c[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map_c[ "Person" ][ "email" ] )                   //4
+    .arg( status_map_c[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Time of GMP Run Initiation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Initiated at:     %1 </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( createdGMPrunts )     //1
+    ;
+  
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of GMP Run Initiation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    ;
+  html_assembled += tr("<hr>");
+}
+
