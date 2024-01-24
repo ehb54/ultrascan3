@@ -851,10 +851,13 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      assemble_GMP_live_update( status_map, dtype_opt, oper_ts );
 	    }
 	}
+      html_assembled += tr("<hr>");
     }
   
   else if ( s_name == "IMPORT" )
     {
+      html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT)</h3>" );
+      
       data_types_import [ "RI" ] = importRIJson;
       data_types_import [ "IP" ] = importIPJson;
       
@@ -965,11 +968,23 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  genL31 -> addLayout( genL3);
 	  genL31 -> addStretch();
 
+	  //assemble html
+	  QString oper_ts = data_types_import_ts[ im.key() ];
+	  assemble_GMP_import( status_map, dtype_opt, oper_ts );
+
 	  //Dropped [if any]
 	  QGridLayout* genL4  = NULL;
 	  QVBoxLayout* genL41 = NULL;
 	  if ( !dtype_opt_dropped_triples. isEmpty() )
 	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption style=\"color:red;\" align=left> <b><i>List of Dropped Triples: </i></b> </caption>"
+				   "</table>"
+
+				   "<table style=\"margin-left:25px\">"
+				   );
+	      
 	      genL4  = new QGridLayout();
 	      genL41 = new QVBoxLayout();
 
@@ -983,8 +998,22 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
 	      QStringList triples_dropped;
 	      for ( int i=0; i < dtype_opt_dropped_triples.size(); ++i )
-		triples_dropped << dtype_opt_dropped_triples[ i ];
+		{
+		  triples_dropped << dtype_opt_dropped_triples[ i ];
 
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td> Triple Name: </td> <td style=\"color:red;\"> %1 </td> "
+				       "</tr>"
+				   )
+		    .arg( dtype_opt_dropped_triples[ i ] )
+		    ;
+		}
+
+	      html_assembled += tr(
+				   "</table>"
+				   );
+	      
 	      QTextEdit* te_dropped_tr    = us_textedit();
 	      te_dropped_tr    -> setFixedHeight  ( RowHeight * 2 );
 	      te_dropped_tr    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -1003,6 +1032,15 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QVBoxLayout* genL51 = NULL;
 	  if ( status_map. contains("Dropped") )
 	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption align=left> <b><i>Comments on [triples | channels | select channel] dropped: </i></b> </caption>"
+				   "</table>"
+				   
+				   "<table style=\"margin-left:25px\">"
+				   )
+		;
+	      
 	      genL5  = new QGridLayout();
 	      genL51 = new QVBoxLayout();
 
@@ -1019,8 +1057,19 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      for ( dr = status_map[ "Dropped" ].begin(); dr != status_map[ "Dropped" ].end(); ++dr )
 		{
 		  QString comm_curr = dr.key() + ":\n" + dr.value();
-		  comm_list << comm_curr;		  
+		  comm_list << comm_curr;
+
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td> Dropped:     %1 </td>"
+				       "<td> Comment:     %2 </td>"
+				       "</tr>"
+				       )
+		    .arg( dr.key()   )     //1
+		    .arg( dr.value() )     //2
+		    ;
 		}
+	      html_assembled += tr( "</table>" );
 
 	      QTextEdit* te_drop_c1    = us_textedit();
 	      te_drop_c1    -> setFixedHeight  ( RowHeight * 2 );
@@ -1063,10 +1112,13 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  groupBoxes. push_back( groupBox );
 	  
 	}
+      html_assembled += tr("<hr>");
     }
 
   else if ( s_name == "EDITING" )
     {
+      html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING)</h3>" );
+      
       data_types_edit [ "RI" ] = editRIJson;
       data_types_edit [ "IP" ] = editIPJson;
       
@@ -1212,11 +1264,18 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  groupBox->setLayout(genL_v_rows);
 	  groupBoxes. push_back( groupBox );
 
+	  //assemble html
+	  QString oper_ts = data_types_edit_ts[ im.key() ];
+	  assemble_GMP_editing( status_map, dtype_opt, oper_ts );
+	  
 	}
+      html_assembled += tr("<hr>");
     }
 
   else if ( s_name == "ANALYSIS" )
     {
+      html_assembled += tr( "<h3 align=left>Meniscus Position from FITMEN Stage, Job Cancellation (5. ANALYSIS)</h3>" );
+      
       QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
       QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
 
@@ -1270,6 +1329,9 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      genL1 -> addWidget( le_men4,     row++,   18, 1,  3  );
 	      
 	    }
+
+	  //assemble html
+	  assemble_GMP_analysis_fitmen( analysis_status_map );
 	}
       else //automatic mode
 	{
@@ -1282,6 +1344,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  te_fitmen -> setText( "Meniscus positions have been determined automatically as best fit values for all channels." );
 
 	  genL1 -> addWidget( te_fitmen,     row++,    1,  1,  21  );
+
+	  html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
 	}
 
       //Cancelled Jobs
@@ -1364,6 +1428,9 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       
       groupBox->setLayout(genL);
       groupBoxes. push_back( groupBox );
+
+      //assemble html
+      assemble_GMP_analysis_cancelled( analysisCancel_status_map, analysisCancelJson );
     }
   
   else
@@ -2106,12 +2173,10 @@ void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString
 void US_auditTrailGMP::assemble_GMP_live_update( QMap< QString, QMap < QString, QString > > status_map,
 						 QString dtype_opt, QString oper_ts )
 {
-  html_assembled += tr("<br>");
-
   html_assembled += tr(
 		       "<table>"		   
 		       "<tr>"
-		       "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "<td><b>Operation Type:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
 		       "</tr>"
 		       "</table>"
 		       )
@@ -2167,4 +2232,278 @@ void US_auditTrailGMP::assemble_GMP_live_update( QMap< QString, QMap < QString, 
 		       )
     .arg( t_comment )                                      //1
     ;
+
+   html_assembled += tr("<br>");
+}
+
+
+//IMPORT html
+void US_auditTrailGMP::assemble_GMP_import( QMap< QString, QMap < QString, QString > > status_map,
+					    QString dtype_opt, QString oper_ts )
+{
+  
+  html_assembled += tr(
+		       "<table>"		   
+		       "<tr>"
+		       "<td><b>Data Type, Optics:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( dtype_opt )                       //1
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td>User ID: </td> <td>%1</td></tr>"
+		       "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+		       "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+		       "<tr><td>Level: </td><td> %5 </td></tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Reference Scan, Data Saving: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Ref. Scan Method:  %1 </td> "
+		       "<td> Data Saved at:     %2 </td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "RefScan" ][ "type"] )     //1
+    .arg( oper_ts  )                             //2
+    ;
+  
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Comment:  %1 </td> "
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+    ;
+      
+}
+
+
+//EDITING html
+void US_auditTrailGMP::assemble_GMP_editing( QMap< QString, QMap < QString, QString > > status_map,
+					     QString dtype_opt, QString oper_ts )
+{
+
+  html_assembled += tr(
+		       "<table>"		   
+		       "<tr>"
+		       "<td><b>Data Type, Optics:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( dtype_opt )                       //1
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td>User ID: </td> <td>%1</td>"
+		       "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+		       "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+		       "<tr><td>Level: </td><td> %5 </td></tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+  
+  //iterate over channels for Meniscus type:
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Meniscus Position Determination: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+
+  QMap < QString, QString >::iterator mp;
+  for ( mp = status_map[ "Meniscus" ].begin(); mp != status_map[ "Meniscus" ].end(); ++mp )
+    {
+      html_assembled += tr(
+			   "<tr>"
+			   "<td> Channel:  %1 </td>"
+			   "<td> Type:     %2 </td>"
+			   "</tr>"
+			   )
+	.arg( mp.key()   )     //1
+	.arg( mp.value() )     //2
+	;
+    }
+  html_assembled += tr( "</table>" );
+  
+  //Edit Profiles Saved:
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Edit Profiles Saved at: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td> %1 </td>"
+		       "</table>"
+		       )
+    .arg( oper_ts )           //1
+    ;
+  
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Comment:  %1 </td> "
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+    ;
+  
+}
+
+
+//ANALYSIS-fitmen html
+void US_auditTrailGMP::assemble_GMP_analysis_fitmen( QMap < QString, QString > analysis_status_map )
+{
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Meniscus Position Determination from FITMEN_MANUAL stage: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+  
+  QMap < QString, QString >::iterator mfa;
+  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+    {
+      
+      QString mfa_value         = mfa.value();
+      QString pos               = mfa_value.split(", by")[0];
+      QString performed_by_time = mfa_value.split(", by")[1];
+      
+      QString performed_by, when;
+      if ( performed_by_time.contains(";") )
+	{
+	  performed_by      = performed_by_time.split(";")[0];
+	  when              = performed_by_time.split(";")[1];  
+	}
+      else
+	{
+	  performed_by = performed_by_time;
+	  when         = "N/A";
+	}
+      html_assembled += tr(			       
+			   "<tr>"
+			   "<td> Channel:  %1, </td>"
+			   "<td>           %2, </td>"
+			   "<td> by:       %3, </td>"
+			   "<td> at:       %4  </td>"
+			   "</tr>"
+						       )
+	.arg( mfa.key()   )     //1
+	.arg( pos )             //2
+	.arg( performed_by )    //3
+	.arg( when )            //4
+	;
+    }
+  
+  html_assembled += tr( "</table>" );
+}
+						     
+//ANALYSIS-cancelled html
+void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString > analysisCancel_status_map,
+							QString analysisCancelJson )
+{
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Information on CANCELED analysis jobs: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+  
+  if ( !analysisCancelJson. isEmpty() )
+    {
+      qDebug() << "analysisCancelJson QMap NOT empty!";
+      
+      QMap < QString, QString >::iterator cj;
+      for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
+	{
+	  
+	  QString cj_value                 = cj.value();
+	  QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
+	  
+	  QString performed_by, reason, when;
+	  if ( performed_by_reason_time.contains(";") )
+	    {
+	      performed_by      = performed_by_reason_time.split(";")[0];
+	      reason            = performed_by_reason_time.split(";")[1];
+	      when              = performed_by_reason_time.split(";")[2];  
+	    }
+	  else
+	    {
+	      performed_by = performed_by_reason_time;
+	      reason       = "N/A";
+	      when         = "N/A";
+	    }
+	  html_assembled += tr(			       
+			       "<tr>"
+			       "<td> Jobs Canceled for:  %1, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Jobs Canceled by:   %2, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Reason:             %3, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> When:               %4  </td>"
+			       "</tr>"
+						       )
+	    .arg( cj.key()   )      //1
+	    .arg( performed_by )    //2
+	    .arg( reason )          //3
+	    .arg( when )            //4
+	    ;
+	}
+    }
+  else
+    {
+      html_assembled += tr( "<tr><td> No CANCELLED jobs. </td></tr>" );
+    }
+  html_assembled += tr( "</table>" );
+  
 }
