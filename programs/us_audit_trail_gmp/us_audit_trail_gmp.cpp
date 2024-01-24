@@ -681,6 +681,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   
   else if ( s_name == "LIVE UPDATE" )
     {
+      html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE)</h3>" );
+      
       operation_types_live_update[ "STOP" ] = stopOptimaJson;
       operation_types_live_update[ "SKIP" ] = skipOptimaJson;
       
@@ -689,6 +691,11 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
       if ( stopOptimaJson.isEmpty() && skipOptimaJson.isEmpty() )
 	{
+	  html_assembled += tr( "<table>" );
+	  html_assembled += tr( "<tr><td> There were NO remote operations. </td></tr>" );
+	  html_assembled += tr( "</table>" );
+	  html_assembled += tr("<hr>");
+	  
 	  QGridLayout* genL1  = new QGridLayout();
 	  QVBoxLayout* genL11 = new QVBoxLayout();
 
@@ -838,6 +845,10 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      
 	      groupBox->setLayout(genL);
 	      groupBoxes. push_back( groupBox );
+
+	      //assemble html
+	      QString oper_ts = operation_types_live_update_ts[ im.key() ];
+	      assemble_GMP_live_update( status_map, dtype_opt, oper_ts );
 	    }
 	}
     }
@@ -2035,6 +2046,7 @@ bool US_auditTrailGMP::mkdir( const QString& baseDir, const QString& subdir )
    return false;
 }
 
+//GMP init html
 void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString > > status_map_c, QString createdGMPrunts )
 {
   html_assembled += tr("<hr>");
@@ -2090,3 +2102,69 @@ void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString
   html_assembled += tr("<hr>");
 }
 
+//LIVE UPDATE html
+void US_auditTrailGMP::assemble_GMP_live_update( QMap< QString, QMap < QString, QString > > status_map,
+						 QString dtype_opt, QString oper_ts )
+{
+  html_assembled += tr("<br>");
+
+  html_assembled += tr(
+		       "<table>"		   
+		       "<tr>"
+		       "<td><b>Operation Type::</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( dtype_opt )                       //1
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td>User ID: </td> <td>%1</td></tr>"
+		       "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+		       "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+		       "<tr><td>Level: </td><td> %5 </td></tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+  
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Operation, Timestamp: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Type:             %1 </td> "
+		       "<td> Performed at:     %2 </td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Remote Operation" ][ "type"] )     //1
+    .arg( oper_ts )                                       //2
+    ;
+
+  QString t_comment = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Reason for Operation: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Comment:          %1 </td> "
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( t_comment )                                      //1
+    ;
+}

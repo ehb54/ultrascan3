@@ -87,6 +87,7 @@ class US_auditTrailGMP : public US_Widgets
 
        QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
        void assemble_GMP_init( QMap< QString, QMap < QString, QString > >, QString );
+       void assemble_GMP_live_update( QMap< QString, QMap < QString, QString > >, QString, QString );
   
      signals:  
   
