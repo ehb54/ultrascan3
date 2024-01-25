@@ -10543,7 +10543,7 @@ void US_ReporterGMP::write_pdf_report( void )
   // printer.setOutputFileName( filePath );
   // printer.setFullPage(true);
   // printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
-    
+  
   // document.print(&printer);
   /** END of standard way of printing *************************/
 
@@ -10567,7 +10567,8 @@ void US_ReporterGMP::write_pdf_report( void )
 
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
-
+  //printer.setFullPage(false);
+  
   printDocument(printer, &textDocument ); //, 0);
   
   /*************************************************************/
@@ -10749,6 +10750,7 @@ double US_ReporterGMP::mmToPixels(QPrinter& printer, int mm)
 void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QWidget* parentWidget)
 {
   int textMargins = 12; // in millimeters
+  //int textMargins = 0; // in millimeters
   
   QPainter painter( &printer );
   QSizeF pageSize = printer.pageRect().size(); // page size in pixels
@@ -10772,7 +10774,11 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
       //     break;
       
       if (!firstPage)
-	printer.newPage();
+	{
+	  //immediately before newPage, set new margins:
+	  //printer.setPageMargins(0, -15, 0, -15, QPrinter::Millimeter);
+	  printer.newPage();
+	}
       
       paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
       firstPage = false;
@@ -10790,11 +10796,12 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   qDebug() << "pageSize=" << pageSize;
   qDebug() << "printerResolution=" << printer.resolution();
   
-  const double bm = mmToPixels(printer, borderMargins);
-  const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
+  // const double bm = mmToPixels(printer, borderMargins);
+  // const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
   //painter->drawRect(borderRect);
   
   painter->save();
+  
   // textPageRect is the rectangle in the coordinate system of the QTextDocument, in pixels,
   // and starting at (0,0) for the first page. Second page is at y=doc->pageSize().height().
   const QRectF textPageRect(0, pageNumber * doc->pageSize().height(), doc->pageSize().width(), doc->pageSize().height());
@@ -10815,7 +10822,7 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
 	   << painter->fontInfo().pointSizeF()
 	   << painter->fontInfo().pointSize();
   
-  doc->drawContents(painter);
+  doc->drawContents(painter,textPageRect); //add second params, OR it appears to draw full QTextDoc.... (huge sizes)
   painter->restore();
   
   // Footer: e-Signer comment && page number

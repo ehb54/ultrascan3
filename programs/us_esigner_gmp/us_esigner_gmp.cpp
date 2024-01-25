@@ -3708,7 +3708,7 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
 	   << painter->fontInfo().pointSizeF()
 	   << painter->fontInfo().pointSize();
   
-  doc->drawContents(painter);
+  doc->drawContents(painter,textPageRect); //add second params, OR it appears to draw full QTextDoc.... (huge sizes)
   painter->restore();
 
   //Process eSigners_info QMap:
