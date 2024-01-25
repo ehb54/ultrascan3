@@ -5393,7 +5393,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       
    if (
        !qsl[1].contains( QRegularExpression( "^Rayleigh ratio" ) )
-       || !qsl[2].contains( QRegularExpression( "^time" ) )
+       || !qsl[2].contains( QRegularExpression( "^time \\(min" ) )
        ) {
       errormsg = "incorrect MALS data format";
       return false;
@@ -5442,6 +5442,11 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       detector_index.push_back( data_header[i].toInt() );
    }
 
+   if ( !detector_index.size() ) {
+      errormsg = "No detectors found in MALS data";
+      return false;
+   }
+
    US_Vector::printvector( "detector indices", detector_index );
 
    map < int, vector < double > > t;
@@ -5459,31 +5464,47 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
    int    timedelta_inconsistencies = 0;
    double max_timedelta_diff        = 0;
    int    max_timedelta_frame       = 0;
+   double avg_timedelta_sum         = 0;
+   int    avg_timedelta_count       = 0;
+   double min_timedelta             = DBL_MAX;
+   double max_timedelta             = -DBL_MAX;
 
 #define TIME_DELTA_TOLERANCE  0.0000001 
-   
-#warning seems to be dropping negative time... can we support?
    
    while( data.size() && data.front().contains( QRegularExpression( "^-?[0-9.]+," ) ) ) {
       QStringList data_line = data.front().split( "," );
       data.pop_front();
+      ++frame;
 
-      double time      = data_line.front().toDouble();
-      double timedelta = time - last_time;
-      last_time        = time;
-      // int use_frame    = ++frame;
+      double time       = data_line.front().toDouble();
+      double timedelta  = time - last_time;
+      last_time         = time;
+
+      bool inconsistent = false;
 
       if ( last_timedelta
            && fabs( timedelta - last_timedelta ) > TIME_DELTA_TOLERANCE ) {
          ++timedelta_inconsistencies;
+         inconsistent   = true;
          if ( max_timedelta_diff < fabs( timedelta - last_timedelta ) ) {
             max_timedelta_diff  = fabs( timedelta - last_timedelta );
             max_timedelta_frame = frame;
          }
       }
       if ( frame > 1 ) {
-         last_timedelta = timedelta;
+         last_timedelta     = timedelta;
+         if ( !inconsistent ) {
+            avg_timedelta_sum += timedelta;
+            ++avg_timedelta_count;
+            if ( min_timedelta > timedelta ) {
+               min_timedelta = timedelta;
+            }
+            if ( max_timedelta < timedelta ) {
+               max_timedelta = timedelta;
+            }
+         }
       }
+         
       
       if ( (int)detector_index.size() * 2 + 1 != data_line.size() ) {
          TSO << QString( "detector index size %1 data line size %2\n" ).arg( detector_index.size() ).arg( data_line.size() );
@@ -5513,6 +5534,122 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
                            .arg( max_timedelta_frame )
                            );
    }      
+
+   if ( !avg_timedelta_count || !avg_timedelta_sum ) {
+      errormsg = "Could not determine a collection interval from the MALS data";
+      return false;
+   }
+
+   if ( !t[ detector_index[0] ].size() ) {
+      errormsg = "Could not determine collection times the MALS data";
+      return false;
+   }
+   
+   bool adjust_times = false;
+   double org_start_time_minutes          = t[ detector_index[0] ][ 0 ];
+   double org_collection_interval_minutes = avg_timedelta_sum / avg_timedelta_count;
+   double new_start_time_seconds          = 0e0;
+   double new_collection_interval_seconds = 0e0;
+
+   // adjust_times dialog
+   {
+      bool try_again = false;
+      adjust_times = false;
+
+      do {
+         // US_Vector::printvector( QString( "mals detector %1 times" ).arg( detector_index[0] ), t[detector_index[0]] );
+
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": MALS load : Adjust times" ) );
+         // Use a layout allowing a label next to each field
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 us_tr(
+                                       "Optionally adjust the start time and collection interval\n"
+                                       "Fill out the values below and click OK\n"
+                                       "Click CANCEL to skip this step\n"
+                                       )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QWidget *> fields;
+   
+         vector < QString > labels =
+            {
+               QString ( us_tr( "Original starting time is %1 [m] %2 [s]" ) )
+               .arg( org_start_time_minutes )
+               .arg( 60 * org_start_time_minutes )
+
+               ,QString ( us_tr( "Original collection interval %1 [m] %2 [s]" ) )
+               .arg( org_collection_interval_minutes )
+               .arg( 60 * org_collection_interval_minutes )
+
+               ,us_tr( "Start time [s]:" )
+
+               ,us_tr( "Collection interval [s]:" )
+            };
+      
+         vector < QWidget * > widgets =
+            {
+               (QWidget *)0
+               ,(QWidget *)0
+               ,new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
+            };
+
+         vector < double >  defaults =
+            {
+               0
+               ,0
+               ,60 * org_start_time_minutes
+               ,60 * org_collection_interval_minutes
+            };
+
+         for( int i = 0; i < (int) widgets.size(); ++i ) {
+            form.addRow( labels[i], widgets[i] );
+            if ( widgets[i] ) {
+               // could switch based on widgets[i]->className()
+               // assuming all input fields are doubles for now
+               ((QLineEdit *)widgets[i])->setValidator( new QDoubleValidator(this) );
+               ((QLineEdit *)widgets[i])->setText( QString( "%1" ).arg( defaults[i] ) );
+               fields << widgets[i];
+            }
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            if ( ((QLineEdit *)fields[1])->text().toDouble() == 0 ) {
+               try_again = true;
+            } else {
+               adjust_times = true;
+               // If the user didn't dismiss the dialog, do something with the fields
+               new_start_time_seconds          = ((QLineEdit *)fields[0])->text().toDouble();
+               new_collection_interval_seconds = ((QLineEdit *)fields[1])->text().toDouble();
+            }
+
+            // adjust times accordingly
+         }
+      } while ( try_again );
+   }
+
+   if ( adjust_times ) {
+      errormsg = "Time adjustments not currently implemented";
+      return false;
+   }
 
    // TSO << QString( "data front() failed regex contains: %1\n" ).arg( data.front() );
 
@@ -5581,6 +5718,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
 
       
       if ( load_uv_data ) {
+
          data.pop_front();
          data.pop_front();
          data.pop_front();
@@ -5602,6 +5740,39 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          editor_msg( "block", QString( "UV plot data found and loaded as %1\n" ).arg( name ) );
          add_plot( name, t, I, true, false );
          conc_files.insert( name );
+
+         {
+            double uvtimedelta_min       = DBL_MAX;
+            double uvtimedelta_max       = -DBL_MAX;
+            double uvtimedelta_sum       = 0e0;
+            int    uvtimedelta_count     = 0;
+            int    uvtimedelta_max_frame = 0;
+            int    uvtimedelta_min_frame = 0;
+
+            for ( int i = 1; i < (int) t.size(); ++i ) {
+               double uvtimedelta = t[i] - t[i-1];
+               ++uvtimedelta_count;
+               uvtimedelta_sum += uvtimedelta;
+               if ( uvtimedelta_min > uvtimedelta ) {
+                  uvtimedelta_min = uvtimedelta;
+                  uvtimedelta_min_frame = i;
+               }
+               if ( uvtimedelta_max < uvtimedelta ) {
+                  uvtimedelta_max = uvtimedelta;
+                  uvtimedelta_max_frame = i;
+               }
+            }
+            
+            TSO <<
+               QString( "avg_uvtimedelta %1 --> seconds %2 [%3:%4] frames [%5:%6]\n" )
+               .arg( uvtimedelta_sum / uvtimedelta_count )
+               .arg( 60 * uvtimedelta_sum / uvtimedelta_count )
+               .arg( 60 * uvtimedelta_min )
+               .arg( 60 * uvtimedelta_max )
+               .arg( uvtimedelta_min_frame )
+               .arg( uvtimedelta_max_frame )
+               ;
+         }
       }
    }
 
