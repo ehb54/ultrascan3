@@ -5546,10 +5546,12 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
    }
    
    bool adjust_times = false;
-   double org_start_time_minutes          = t[ detector_index[0] ][ 0 ];
-   double org_collection_interval_minutes = avg_timedelta_sum / avg_timedelta_count;
-   double new_start_time_seconds          = 0e0;
-   double new_collection_interval_seconds = 0e0;
+   double org_start_time_minutes             = t[ detector_index[0] ][ 0 ];
+   double org_collection_interval_minutes    = avg_timedelta_sum / avg_timedelta_count;
+   double new_start_time_seconds             = 0e0;
+   double new_collection_interval_seconds    = 0e0;
+   double adjust_start_time_seconds          = 0e0;
+   double adjust_collection_interval_seconds = 0e0;
 
    // adjust_times dialog
    {
@@ -5637,8 +5639,18 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
             } else {
                adjust_times = true;
                // If the user didn't dismiss the dialog, do something with the fields
-               new_start_time_seconds          = ((QLineEdit *)fields[0])->text().toDouble();
-               new_collection_interval_seconds = ((QLineEdit *)fields[1])->text().toDouble();
+               new_start_time_seconds             = ((QLineEdit *)fields[0])->text().toDouble();
+               new_collection_interval_seconds    = ((QLineEdit *)fields[1])->text().toDouble();
+               adjust_start_time_seconds          = new_start_time_seconds - org_start_time_minutes * 60;
+               adjust_collection_interval_seconds = new_collection_interval_seconds / ( 60 * org_collection_interval_minutes );
+               TSO <<
+                  QString(
+                          "adjust start time seconds          %1\n"
+                          "adjust_collection_interval_seconds %2\n"
+                          )
+                  .arg( adjust_start_time_seconds )
+                  .arg( adjust_collection_interval_seconds )
+                  ;
             }
 
             // adjust times accordingly
@@ -5646,16 +5658,22 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       } while ( try_again );
    }
 
-   if ( adjust_times ) {
-      errormsg = "Time adjustments not currently implemented";
-      return false;
-   }
-
    // TSO << QString( "data front() failed regex contains: %1\n" ).arg( data.front() );
 
    QString use_filename = QFileInfo( filename ).baseName();
    // use_filename.replace( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ), "" );
    
+   if ( adjust_times ) {
+      for ( auto it = t.begin();
+            it != t.end();
+            ++it ) {
+         for ( auto & v : it->second ) {
+            v = (v * 60 + adjust_start_time_seconds );
+            v *= adjust_collection_interval_seconds;
+         }
+      }
+   }
+
    for ( auto it = t.begin();
          it != t.end();
          ++it ) {
@@ -5733,6 +5751,13 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
             if ( data_line.size() > 1 ) {
                t.push_back( data_line.front().toDouble() );
                I.push_back( data_line[1].toDouble() );
+            }
+         }
+
+         if ( adjust_times ) {
+            for ( auto & v : t ) {
+               v = (v * 60 + adjust_start_time_seconds );
+               v *= adjust_collection_interval_seconds;
             }
          }
 
