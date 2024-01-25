@@ -3315,8 +3315,70 @@ void US_Hydrodyn_Saxs_Hplc::create_ihashq()
 #define TSO QTextStream(stdout)
 
 bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max ) {
-   
-   // "on-the-fly" dialog 
+
+   reset_saxs_hplc_params();
+
+   // 1st verify parameters
+   {
+      vector < QString > labels =
+         {
+            "Partial specific volume [mL/g]:"
+            ,"Diffusion length [cm]:"
+            ,"Electron/nucleon ratio Z/A:"
+            ,"Nucleon mass [g]:"
+            ,"Solvent electron density [e A^-3]:"
+         };
+
+      vector < double > values =
+         {
+            saxs_hplc_param_g_psv
+            ,saxs_hplc_param_diffusion_len
+            ,saxs_hplc_param_electron_nucleon_ratio
+            ,saxs_hplc_param_nucleon_mass
+            ,saxs_hplc_param_solvent_electron_density
+         };
+
+      QStringList qsl;
+      qsl <<
+         "<b>SAXS Processing parameters</b>"
+         "<hr>"
+         "<table border=1 bgcolor=#FFF cellpadding=1.5>"
+         ;
+
+      for ( int i = 0; i < (int) labels.size(); ++i ) {
+         qsl <<
+            QString( "<tr><td>%1</td><td>%2</td></tr>" )
+            .arg( us_tr( labels[i] ) )
+            .arg( values[i] )
+            ;
+      }
+
+      qsl <<
+         "</table>"
+         ;
+
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Make I#,I*(q)" )
+                                     ,qsl.join("")
+                                     + QString(
+                                               us_tr( 
+                                                     "<hr>"
+                                                     "Accept these processing parameters?"
+                                                     "<br>"
+                                                     "<hr>"
+                                                     "<i>Adjust values in Options->SAXS Processing Parameters</i>"
+                                                      )
+                                               )
+                                     ) )
+      {
+      case QMessageBox::Yes : 
+         break;
+      default:
+         return false;
+         break;
+      }
+      
+   }
 
    QString     head   = qstring_common_head( files, true );
    QString     tail   = qstring_common_tail( files, true );
@@ -3324,6 +3386,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
 
    // TSO << "create_ihashq: get_frames:\n" + frames.join("\n") + "\n";
 
+   // "on-the-fly" dialogs
+   
    // exposure times
    {
       QDialog dialog(this);
@@ -3394,8 +3458,6 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
          }
       }
    }
-
-   reset_saxs_hplc_params();
 
    double i0_norm = 1;
 
@@ -3611,4 +3673,3 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
          
    return true;
 }
-

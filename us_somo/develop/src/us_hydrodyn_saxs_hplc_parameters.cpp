@@ -171,7 +171,7 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::setupGUI()
    le_saxs_hplc_param_diffusion_len->setMinimumWidth( 200 );
    le_saxs_hplc_param_diffusion_len-> setMinimumHeight( minHeight1 );
 
-   lbl_saxs_hplc_param_electron_nucleon_ratio = new QLabel( us_tr( "Nucleon/electron ratio A/Z :" ), this );
+   lbl_saxs_hplc_param_electron_nucleon_ratio = new QLabel( us_tr( "Electron/nucleon ratio Z/A :" ), this );
    lbl_saxs_hplc_param_electron_nucleon_ratio->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_hplc_param_electron_nucleon_ratio->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_saxs_hplc_param_electron_nucleon_ratio );
