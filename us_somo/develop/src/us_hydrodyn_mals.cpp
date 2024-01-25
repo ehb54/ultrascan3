@@ -5858,19 +5858,13 @@ void US_Hydrodyn_Mals::to_created( QString file )
 void US_Hydrodyn_Mals::crop_vis()
 {
    // find curves within zoomRect & select only them
-#if QT_VERSION < 0x040000
-   double minx = plot_dist_zoomer->zoomRect().x1();
-   double maxx = plot_dist_zoomer->zoomRect().x2();
-   double miny = plot_dist_zoomer->zoomRect().y1();
-   double maxy = plot_dist_zoomer->zoomRect().y2();
-#else
    double minx = plot_dist_zoomer->zoomRect().left();
    double maxx = plot_dist_zoomer->zoomRect().right();
    double miny = plot_dist_zoomer->zoomRect().top();
    double maxy = plot_dist_zoomer->zoomRect().bottom();
-#endif
 
    map < QString, bool > selected_files;
+   QStringList qsl_selected_files;
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
@@ -5888,6 +5882,7 @@ void US_Hydrodyn_Mals::crop_vis()
                     f_Is[ this_file ][ i ] <= maxy )
                {
                   selected_files[ this_file ] = true;
+                  qsl_selected_files << this_file;
                   break;
                }
             }
@@ -5901,9 +5896,10 @@ void US_Hydrodyn_Mals::crop_vis()
       return;
    }
 
-
    // make sure we don't leave a gap
    map < QString, bool > crop_left_side;
+
+   bool all_left_side = true;
 
    for ( map < QString, bool >::iterator it = selected_files.begin();
          it != selected_files.end();
@@ -5918,6 +5914,7 @@ void US_Hydrodyn_Mals::crop_vis()
       if ( f_qs[ it->first ][ 0 ]   < minx )
       {
          crop_left_side[ it->first ] = false;
+         all_left_side               = false;
       }
       if ( f_qs[ it->first ].back() > maxx )
       {
@@ -5925,7 +5922,6 @@ void US_Hydrodyn_Mals::crop_vis()
       }
    }
 
-   
    {
       map < QString, bool >::iterator it = crop_left_side.begin();
       bool last_crop = it->second;
@@ -5950,10 +5946,68 @@ void US_Hydrodyn_Mals::crop_vis()
    cud.is_left   = false;
    cud.is_common = true;
 
+   bool files_are_time_left_crop = all_left_side && compatible_files( qsl_selected_files ) && type_files( qsl_selected_files );
+   bool timeshift_to_zero        = false;
+
+   if ( files_are_time_left_crop ) {
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Crop Vis" )
+                                     ,us_tr( 
+                                            "Timeshift all data to zero after cropping?"
+                                             )
+                                     ) )
+      {
+      case QMessageBox::Yes : 
+         timeshift_to_zero = true;
+         break;
+      default: 
+         break;
+      }
+   }
+      
+   double timeshift_offset = DBL_MAX;
+
+   if ( timeshift_to_zero ) {
+      // need to find minimum left value to become new zero
+      for ( auto it = selected_files.begin();
+            it != selected_files.end();
+            it++ ) {
+         for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ ) {
+            if ( f_qs[ it->first ][ i ] < minx ||
+                 f_qs[ it->first ][ i ] > maxx ) {
+               if ( timeshift_offset > f_qs[ it->first ][ i ] ) {
+                  timeshift_offset = f_qs[ it->first ][ i ];
+               }
+               break;
+            }
+         }
+      }
+
+      if ( timeshift_offset == DBL_MAX ) {
+         timeshift_to_zero = false;
+         QMessageBox::warning( this, 
+                               windowTitle() + us_tr( " : Crop Vis" ),
+                               us_tr(
+                                     "Could not find a minimum value after crop\n"
+                                     "Timeshift disabled"
+                                     )
+                               );
+      } else {
+         QMessageBox::information( this, 
+                                   windowTitle() + us_tr( " : Crop Vis" ),
+                                   QString( 
+                                           us_tr(
+                                                 "Data will be timeshifted by %1 after cropping"
+                                                 )
+                                            )
+                                   .arg( timeshift_offset )
+                                   );
+      }
+   }
+      
    for ( map < QString, bool >::iterator it = selected_files.begin();
          it != selected_files.end();
-         it++ )
-   {
+         it++ ) {
       // save undo data
       cud.f_qs_string[ it->first ] = f_qs_string[ it->first ];
       cud.f_qs       [ it->first ] = f_qs       [ it->first ];
@@ -5969,19 +6023,32 @@ void US_Hydrodyn_Mals::crop_vis()
       vector < double  > new_I;
       vector < double  > new_e;
 
-      for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
-      {
-         if ( f_qs[ it->first ][ i ] < minx ||
-              f_qs[ it->first ][ i ] > maxx )
-         {
-            new_q_string.push_back( f_qs_string[ it->first ][ i ] );
-            new_q       .push_back( f_qs       [ it->first ][ i ] );
-            new_I       .push_back( f_Is       [ it->first ][ i ] );
+      if ( timeshift_to_zero ) {
+         for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ ) {
+            if ( f_qs[ it->first ][ i ] < minx ||
+                 f_qs[ it->first ][ i ] > maxx ) {
+               new_q       .push_back( f_qs       [ it->first ][ i ] - timeshift_offset );
+               new_q_string.push_back( QString( "%1" ).arg( new_q.back() ) );
+               new_I       .push_back( f_Is       [ it->first ][ i ] );
 
-            if ( f_errors.count( it->first ) &&
-                 f_errors[ it->first ].size() )
-            {
-               new_e       .push_back( f_errors   [ it->first ][ i ] );
+               if ( f_errors.count( it->first ) &&
+                    f_errors[ it->first ].size() ) {
+                  new_e       .push_back( f_errors   [ it->first ][ i ] );
+               }
+            }
+         }
+      } else {
+         for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ ) {
+            if ( f_qs[ it->first ][ i ] < minx ||
+                 f_qs[ it->first ][ i ] > maxx ) {
+               new_q_string.push_back( f_qs_string[ it->first ][ i ] );
+               new_q       .push_back( f_qs       [ it->first ][ i ] );
+               new_I       .push_back( f_Is       [ it->first ][ i ] );
+
+               if ( f_errors.count( it->first ) &&
+                    f_errors[ it->first ].size() ) {
+                  new_e       .push_back( f_errors   [ it->first ][ i ] );
+               }
             }
          }
       }
@@ -6007,7 +6074,6 @@ void US_Hydrodyn_Mals::crop_vis()
       plot_dist_zoomer->zoom( -1 );
    }
 }
-
 
 void US_Hydrodyn_Mals::crop_to_vis()
 {

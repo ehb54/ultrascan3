@@ -231,6 +231,16 @@ void US_Hydrodyn_Mals::setupGUI()
    AUTFBACK( cb_eb );
    connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
 
+   cb_dots = new QCheckBox(this);
+   cb_dots->setText(us_tr("Dots "));
+   //width cb_dots->setMaximumWidth ( minHeight1 * 3 );
+   cb_dots->setChecked( false );
+   cb_dots->setMinimumHeight( minHeight1 );
+   cb_dots->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_dots->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_dots );
+   connect( cb_dots, SIGNAL( clicked() ), SLOT( set_eb() ) );
+
    pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
@@ -3204,6 +3214,7 @@ void US_Hydrodyn_Mals::setupGUI()
    files_widgets.push_back ( pb_view );
    // files_widgets.push_back ( pb_movie );
    // files_widgets.push_back ( cb_eb );
+   // files_widgets.push_back ( cb_dots );
    // files_widgets.push_back ( pb_axis_x );
    // files_widgets.push_back ( pb_axis_y );
    // files_widgets.push_back ( pb_rescale );
@@ -3297,6 +3308,7 @@ void US_Hydrodyn_Mals::setupGUI()
       l_pbmode_main->addWidget( pb_axis_x );
       l_pbmode_main->addWidget( pb_axis_y );
       l_pbmode_main->addWidget( cb_eb );
+      l_pbmode_main->addWidget( cb_dots );
       l_pbmode_main->addWidget( pb_line_width );
       l_pbmode_main->addWidget( pb_color_rotate );
       l_pbmode_main->addWidget( pb_legend );
@@ -3306,6 +3318,7 @@ void US_Hydrodyn_Mals::setupGUI()
       pbmode_main_widgets.push_back( pb_axis_x );
       pbmode_main_widgets.push_back( pb_axis_y );
       pbmode_main_widgets.push_back( cb_eb );
+      pbmode_main_widgets.push_back( cb_dots );
       pbmode_main_widgets.push_back( pb_line_width );
       pbmode_main_widgets.push_back( pb_color_rotate );
       pbmode_main_widgets.push_back( pb_legend );
@@ -4652,6 +4665,7 @@ void US_Hydrodyn_Mals::update_enables()
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_movie              ->setEnabled( files_selected_count > 1 );
    cb_eb                 ->setEnabled( files_selected_count > 0 && files_selected_count < 10 );
+   cb_dots               ->setEnabled( files_selected_count > 0 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
    pb_rescale_y          ->setEnabled( files_selected_count > 0 );
    pb_ag                 ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
@@ -4959,6 +4973,7 @@ void US_Hydrodyn_Mals::disable_all()
    pb_movie              ->setEnabled( false );
    pb_ag                 ->setEnabled( false );
    cb_eb                 ->setEnabled( false );
+   cb_dots               ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
    pb_rescale_y          ->setEnabled( false );
    pb_select_all_created ->setEnabled( false );

@@ -863,6 +863,11 @@ void US_Hydrodyn_Mals::errors_multi_file( QStringList files )
 //    }
 // }
 
+
+void US_Hydrodyn_Mals::set_dots() {
+   set_eb();
+}
+
 void US_Hydrodyn_Mals::set_eb()
 {
    if ( current_mode == MODE_GGAUSSIAN ) {
@@ -883,7 +888,6 @@ void US_Hydrodyn_Mals::set_eb()
       }
    }
 }
-
 
 void US_Hydrodyn_Mals::plot_files()
 {
@@ -1190,15 +1194,9 @@ bool US_Hydrodyn_Mals::plot_file( QString file,
 
    get_min_max( file, minx, maxx, miny, maxy );
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_dist->insertCurve( file );
-   plotted_curves[ file ] = Iq;
-   plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( file );
    plotted_curves[ file ] = curve;
-   curve->setStyle( QwtPlotCurve::Lines );
-#endif
+   curve->setStyle( cb_dots->isChecked() ? QwtPlotCurve::Dots : QwtPlotCurve::Lines );
 
    unsigned int q_points = f_qs[ file ].size();
 
