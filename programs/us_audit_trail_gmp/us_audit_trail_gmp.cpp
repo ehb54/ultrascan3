@@ -350,15 +350,18 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 //slot to..
 void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
 {
+  //clear all GUI, internals
+  reset_panel();
+  
   //Main ID for parent GMP run:
   autoflowID_passed = protocol_details[ "autoflowID" ];
 
   //GMP Run Name
   gmpRunName_passed = protocol_details["gmp_runname"];
-  
-  //clear all GUI, internals
-  reset_panel();
 
+  //init HTML
+  initHTML();
+  
   qDebug() << "After reset...";
     
   //0. Loaded Run
@@ -483,6 +486,9 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 
   eSignTree         ->expandAll();
   uInteractionsTree->topLevelItem(0)->setExpanded(true);
+
+  //conclude HTML
+  closeHTML();
   
   resize( 1400, 1000 );
 }
@@ -552,7 +558,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   genL_v_rows->setSpacing        ( 2 );
   genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
  
-
   int row;
  
   //read autoflowStatus record:
@@ -694,8 +699,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  html_assembled += tr( "<table>" );
 	  html_assembled += tr( "<tr><td> There were NO remote operations. </td></tr>" );
 	  html_assembled += tr( "</table>" );
-	  html_assembled += tr("<hr>");
-	  
+	  	  
 	  QGridLayout* genL1  = new QGridLayout();
 	  QVBoxLayout* genL11 = new QVBoxLayout();
 
@@ -2116,7 +2120,7 @@ bool US_auditTrailGMP::mkdir( const QString& baseDir, const QString& subdir )
 //GMP init html
 void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString > > status_map_c, QString createdGMPrunts )
 {
-  html_assembled += tr("<hr>");
+  //html_assembled += tr("<hr>");
   html_assembled += tr( "<h3 align=left>GMP Run Initiation (1. EXPERIMENT)</h3>" );
   
   //html_assembled += tr("<br>");
@@ -2506,4 +2510,66 @@ void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString 
     }
   html_assembled += tr( "</table>" );
   
+}
+
+//initHTML
+void US_auditTrailGMP::initHTML( void )
+{
+    QString rptpage;
+
+  // Compose the report header
+  rptpage   = QString( "<?xml version=\"1.0\"?>\n" );
+  rptpage  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+  rptpage  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+              "/xhtml1-strict.dtd\">\n";
+  rptpage  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+              " xml:lang=\"en\" lang=\"en\">\n";
+  rptpage  += "  <head>\n";
+  rptpage  += "  <title> Ultrascan III Composite Report </title>\n";
+  rptpage  += "  <meta http-equiv=\"Content-Type\" content="
+              "\"text/html; charset=iso-8859-1\"/>\n";
+  rptpage  += "  <style type=\"text/css\" >\n";
+  rptpage  += "    td { padding-right: 0.75em; }\n";
+  rptpage  += "    body { background-color: white; }\n";
+  rptpage  += "    .pagebreak\n";
+  rptpage  += "    {\n";
+  rptpage  += "      page-break-before: always; border: 1px solid; \n";
+  rptpage  += "    }\n";
+  rptpage  += "    .parahead\n";
+  rptpage  += "    {\n";
+  rptpage  += "      font-weight: bold;\n";
+  rptpage  += "      font-style:  italic;\n";
+  rptpage  += "    }\n";
+  rptpage  += "    .datatext\n";
+  rptpage  += "    {\n";
+  rptpage  += "      font-family: monospace;\n";
+  rptpage  += "    }\n";
+
+  //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
+  //rptpage  += "   footer { position: absolute; bottom: 0; }";
+  
+  // rptpage  += "  div.footer { display: block; text-align: center;  position: running(footer);";
+  // rptpage  += "  @page { @bottom-center { content: element(footer) }}";
+  
+  rptpage  += "  </style>\n";
+  rptpage  += "  </head>\n  <body>\n";
+
+  QString html_title = tr(
+			  "<h2 align=center>Audit Trail for GMP Run: <br><i>%1</i></h2>"
+			  "<hr>"
+			  )
+    .arg( gmpRunName_passed )       //1                      
+    ;
+  
+  html_assembled +=
+    rptpage
+    + html_title;
+
+}
+
+//close HTML
+void US_auditTrailGMP::closeHTML( void )
+{
+  //do we need close remark?
+  html_assembled += "</body>\n</html>";
 }
