@@ -3011,6 +3011,8 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
 
    TSO << "create I#(t) : K is " << K << "\n";
 
+   set < QString > hash_names;
+   
    for ( const auto & name : files ) {
       QString hash_name = name;
       hash_name.replace( "_Rt_", "_Ihasht_" );
@@ -3037,9 +3039,11 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
             add_plot( hash_name, f_qs[ name ], hash_I, true, false );
          }
          f_g_dndc[ last_created_file ] = mals_param_g_dndc;
+         hash_names.insert( last_created_file );
       }
    }
 
+   set_selected( hash_names );
    plot_files();
    update_enables();
    return true;
@@ -3516,8 +3520,9 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       }
    }
 
-   for ( unsigned int t = 0; t < tv.size(); t++ )
-   {
+   set < QString > star_names;
+
+   for ( unsigned int t = 0; t < tv.size(); t++ ) {
       progress->setValue( files.size() + t ); progress->setMaximum( files.size() + tv.size() );
       qApp->processEvents();
 
@@ -3678,6 +3683,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             f_dndc      [ name ] = mals_param_g_dndc;
             f_conc      [ name ] = mals_param_g_conc;
          }
+         star_names.insert( name );
       }
    } // for each q value
 
@@ -3687,6 +3693,9 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       running = false;
    }
    progress->reset();
+   if ( star_names.size() ) {
+      set_selected( star_names );
+   }
    update_enables();
    return true;
 }

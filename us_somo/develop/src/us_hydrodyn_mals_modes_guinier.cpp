@@ -1449,7 +1449,7 @@ void US_Hydrodyn_Mals::guinier_analysis()
          }
          msg += QString( "" )
             .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]  MW %.2e (%.2e) [%.2e:%.2e]"
+                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]\n  MW %.2e (%.2e) [%.2e:%.2e]"
                      , qrg_avg
                      , qrg_min
                      , qrg_max
