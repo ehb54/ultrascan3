@@ -488,6 +488,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   uInteractionsTree->topLevelItem(0)->setExpanded(true);
 
   //conclude HTML
+  html_assembled += html_assembled_esigs;
   closeHTML();
   
   resize( 1400, 1000 );
@@ -528,11 +529,17 @@ QGroupBox * US_auditTrailGMP::createGroup_eSign( QString name )
   //read e-Sign record, to check e-Signing status of each reviewer/operator:
   eSign_details_auto. clear();
   eSign_details_auto = read_autoflowGMPReportEsign_record( autoflowID_passed );
+
+  //init eSigs HTML
+  html_assembled_esigs += tr( "<p class=\"pagebreak \">\n");
+  html_assembled_esigs += tr("<h2 align=left>Electronic Signatures:</h2>" );
   
   //&& Set defined Operator/Reviewers (if any)
   display_reviewers_auto( row, eSign_details_auto, "operatorListJson",  genL );
   display_reviewers_auto( row, eSign_details_auto, "reviewersListJson", genL );
-  display_reviewers_auto( row, eSign_details_auto, "approversListJson", genL ); 
+  display_reviewers_auto( row, eSign_details_auto, "approversListJson", genL );
+
+  html_assembled_esigs += tr( "</p>" ); 
   
   groupBox->setLayout(genL);
 
@@ -1893,6 +1900,9 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 {
   if ( eSign_d. contains( JsonListName ) )
     {
+      //for HTML
+      QMap< QString, QString > esigs_html; 
+            
       QJsonDocument jsonDoc_signed = QJsonDocument::fromJson( eSign_d[ "eSignStatusJson" ].toUtf8() );
       if (!jsonDoc_signed.isObject())
 	{
@@ -1971,6 +1981,14 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  genL -> addWidget( le_date,      row,      5,  1,  2 );
 	  genL -> addWidget( te_comment,   row,      7,  1,  3 );
 	  genL -> addWidget( le_stat,      row++,    10, 1,  2 );
+
+	  //assemble eSigs html
+	  esigs_html[ "Name" ] = le_name->text();
+	  esigs_html[ "Role" ] = le_role->text();
+	  esigs_html[ "Date" ] = le_date->text();
+	  esigs_html[ "Comment" ] = te_comment->toPlainText();
+	  esigs_html[ "Status" ] = le_stat->text();
+	  assemble_esigs( esigs_html ); 
 	}
     }
 }
@@ -2097,6 +2115,7 @@ void US_auditTrailGMP::reset_panel( void )
 
   //reset the rest
   html_assembled. clear();
+  html_assembled_esigs. clear();
   filePath_pdf  . clear();
 
 }
@@ -2572,4 +2591,37 @@ void US_auditTrailGMP::closeHTML( void )
 {
   //do we need close remark?
   html_assembled += "</body>\n</html>";
+}
+
+//eSigs HTML
+void US_auditTrailGMP::assemble_esigs( QMap<QString, QString> esigs_html )
+{
+  QString uname = esigs_html[ "Name" ].split(".")[1].simplified();
+  QString uid   = esigs_html[ "Name" ].split(".")[0].simplified();
+
+  QString name_c = uname + " (ID=" + uid + ")";
+  
+  html_assembled_esigs += tr( "<h3 style=\"margin-left:10px\">%1</h3>" )
+    .arg( name_c );
+
+  QString eStatus;
+  if ( esigs_html[ "Status" ].contains("NOT") ) 
+    eStatus = "<td style=\"color:red;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+  else
+    eStatus = "<td style=\"color:green;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+  
+  html_assembled_esigs += tr(
+			     "<table style=\"margin-left:30px\">"
+			     "<tr><td>Role:        </td> <td> %1 </td></tr>"
+			     "<tr><td>Status:      </td>      %2      </tr>"
+			     "<tr><td>Comment:     </td> <td> %3 </td></tr>"
+			     "<tr><td>e-Signed at: </td> <td> %4 </td></tr>"
+			     "</table>"
+			     )
+    .arg( esigs_html[ "Role" ] )                   //1
+    .arg( eStatus )                                //2
+    .arg( esigs_html[ "Comment" ] )                //3
+    .arg( esigs_html[ "Date" ] )                   //4
+    ;
+  
 }
