@@ -3453,7 +3453,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
             frame = QString( "t%1" ).arg(
                                          start_time
                                          + frame.toDouble() * ( exposure_time + frame_interval )
-                                         - exposure_time
+                                         + 0.5 * exposure_time
                                          );
          }
       }
