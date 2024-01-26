@@ -3654,21 +3654,34 @@ void US_eSignaturesGMP::printDocument(QPrinter& printer, QTextDocument* doc, QMa
   doc->setPageSize(textRect.size());
   
   const int pageCount = doc->pageCount();
-  // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
-  // dialog.setWindowModality( Qt::ApplicationModal );
+
+  QProgressDialog * progress_msg = new QProgressDialog ("Preparing .PDF...", QString(), 0, pageCount, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Printing..."));
+  QFont font_d  = progress_msg->property("font").value<QFont>();
+  QFontMetrics fm(font_d);
+  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
+  progress_msg ->setMinimumWidth( pixelsWide*2 );
+  progress_msg->adjustSize();
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
   
   bool firstPage = true;
-  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-  //   dialog.setValue( pageIndex );
-  //   if (dialog.wasCanceled())
-  //     break;
-    
-    if (!firstPage)
-      printer.newPage();
-    
-    paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight, eSigners_info );
-    firstPage = false;
-  }
+  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex)
+    {
+
+      progress_msg->setValue( pageIndex );
+      if (!firstPage)
+	printer.newPage();
+      
+      paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight, eSigners_info );
+      firstPage = false;
+    }
+  progress_msg->close();
 }
 
 

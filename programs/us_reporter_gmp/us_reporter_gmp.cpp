@@ -36,8 +36,7 @@ US_ReporterGMP::US_ReporterGMP( QMap< QString, QString> t_c ) : US_Widgets()
 void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString html_filePath,
 					       int autolfowGMPReportID, QString autoStatusID, QString autoID )
 {
-  qDebug() << "[TEST] Writing .TAR Blob of filePath -- " << report_filepath;
-
+  
   bool clear_GMP_report_record = false;
   
   US_Passwd pw;
@@ -76,6 +75,8 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
   
   /**********************************************************************************/
   //// .Tar Blob
+  qDebug() << "[TEST] Writing .TAR Blob of filePath -- " << report_filepath;
+  
   int writeStatus= db.writeBlobToDB(report_filepath,
 				    QString( "upload_gmpReportData" ),
 				    autolfowGMPReportID );
@@ -10730,6 +10731,7 @@ void US_ReporterGMP::write_pdf_report( void )
       process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
       process -> waitForFinished();
       process -> close();
+      qApp->processEvents();
       
       //Write to autoflowGMPReport table as longblob
       write_gmp_report_DB( tarFilename_t, fileName );
@@ -10905,7 +10907,7 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 
   qDebug() << "status_report_unique -- " << status_report_unique ;
   
-  if ( !status_report_unique )
+  if ( !status_report_unique || status_report_unique < 0 )
     {
       QMessageBox::information( this,
 				tr( "The Program State Updated / Being Updated" ),
