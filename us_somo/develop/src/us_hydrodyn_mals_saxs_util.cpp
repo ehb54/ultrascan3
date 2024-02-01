@@ -6018,11 +6018,11 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
 
    // assume MALS has lower minq
 
-   int mals_set = time_grids[0].front() < time_grids[1].front() ? 0 : 1;
+   int mals_set = f_qs[ qgrid_names[0][0] ].front() < f_qs[ qgrid_names[1][0] ].front() ? 0 : 1;
    int saxs_set = 1 - mals_set;
 
    qDebug() << "mals_set is " << mals_set;
-
+   
    {
       QString msg =
          QString( us_tr(
@@ -6135,15 +6135,15 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
          for ( auto const & t : output_times ) {
             QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
             add_plot( name, output_qs, output_Is[ t ], output_errors[ t ], false, false );
+            plot_names.insert( last_created_file );
          }
       } else {
          for ( auto const & t : output_times ) {
             QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
             add_plot( name, output_qs, output_Is[ t ], false, false );
+            plot_names.insert( last_created_file );
          }
       }
-
-      plot_names.insert( last_created_file );
    }
    
    set_selected( plot_names );
