@@ -5894,6 +5894,13 @@ vector < double > US_Hydrodyn_Mals_Saxs::get_time_grid_from_namelist( const QStr
 
    QString     head   = qstring_common_head( files, true );
    QString     tail   = qstring_common_tail( files, true );
+   
+   // QTextStream(stdout) <<
+   //    "files:\n" << files.join( "\n" ) << "\n--------\n"
+   //    "head: " << head << "   tail: " << tail
+   //    << "\n========\n"
+   //    ;
+
    QStringList frames =
       get_frames( files, head, tail )
       .replaceInStrings( "_", "." )
@@ -6079,8 +6086,14 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
    map < double, vector < double > > output_errors; // time => error values
 
    // q value at a time should lessen memory requirements (but is it faster? does it matter?)
+   progress->reset();
+   progress->setMaximum( output_qs.size() + 1 );
+
    if ( use_errors ) {
       for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+         progress->setValue( i );
+         qApp->processEvents();
+         
          vector < double > yIs;
          vector < double > yIs2;
 
@@ -6107,6 +6120,9 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
       }
    } else {
       for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+         progress->setValue( i );
+         qApp->processEvents();
+
          vector < double > yIs;
          vector < double > yIs2;
 
@@ -6124,6 +6140,8 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
          }
       }
    }
+
+   progress->setValue( output_qs.size() + 1 );
 
    set < QString > plot_names;
    
@@ -6148,6 +6166,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
    
    set_selected( plot_names );
    plot_files();
+   progress->reset();
    update_enables();
 }
 

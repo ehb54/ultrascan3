@@ -3192,7 +3192,7 @@ QString US_Hydrodyn_Mals_Saxs::qstring_common_tail( QStringList qsl, bool strip_
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegExp( "^(_|)\\d+" ), "" );
    }
    return s;
 }
