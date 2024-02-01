@@ -3316,7 +3316,7 @@ void US_Hydrodyn_Saxs_Hplc::create_ihashq()
 
 bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max ) {
 
-   reset_saxs_hplc_params();
+   // reset_saxs_hplc_params();
 
    // 1st verify parameters
    {
@@ -3450,14 +3450,35 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
          double frame_interval = fields[2]->text().toDouble();
 
          for ( auto & frame : frames ) {
-            frame = QString( "t%1" ).arg(
-                                         start_time
-                                         + frame.toDouble() * ( exposure_time + frame_interval )
-                                         + 0.5 * exposure_time
-                                         );
+            frame = QString( "%1" ).arg(
+                                        start_time
+                                        + frame.toDouble() * ( exposure_time + frame_interval )
+                                        + 0.5 * exposure_time
+                                        );
          }
       }
    }
+
+   TSO << "create_ihashq: frames before padding:\n" + frames.join("\n") + "\n";
+
+   // pad frames
+   for ( auto & frame : frames ) {
+      double whole, frac;
+      frac = std::modf( fabs( frame.toDouble() ), &whole );
+      if ( signbit( frame.toDouble() ) ) {
+         frame = QString( "t-%1%2" )
+            .arg( pad_zeros( whole, (int) (frames.back().toDouble() + .5) ) )
+            .arg( QString( "%1" ).arg( frac ).replace( QRegularExpression( "^(-|)0" ), "" ) )
+            ;
+      } else {
+         frame = QString( "t%1%2" )
+            .arg( pad_zeros( whole, (int) (frames.back().toDouble() + .5) * 10 ) )
+            .arg( QString( "%1" ).arg( frac ).replace( QRegularExpression( "^0" ), "" ) )
+            ;
+      }
+   }
+
+   TSO << "create_ihashq: frames after padding:\n" + frames.join("\n") + "\n";
 
    double i0_norm = 1;
 
@@ -3602,14 +3623,9 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
                              us_tr( QString( istarq ? "I*(q)" : "I#(q)" ) + " will be produced" )
                              );
    
-
-   // TSO << "create_ihashq: frames:\n" + frames.join("\n") + "\n";
-
-   double psv = saxs_hplc_param_g_psv;
-
    double internal_contrast = 
       saxs_hplc_param_diffusion_len * 
-      ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
+      ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - saxs_hplc_param_g_psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
    
    double I0mult = i0_norm * AVOGADRO / ( conc_mult * 1e-3) / ( internal_contrast * internal_contrast );
 
@@ -3628,7 +3644,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
       .arg( saxs_hplc_param_diffusion_len )
       .arg( saxs_hplc_param_electron_nucleon_ratio )
       .arg( saxs_hplc_param_nucleon_mass )
-      .arg( psv )
+      .arg( saxs_hplc_param_g_psv )
       .arg( saxs_hplc_param_solvent_electron_density )
       .arg( internal_contrast )
       .arg( I0mult )
