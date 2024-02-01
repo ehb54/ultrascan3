@@ -5917,6 +5917,9 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
 
    vector < QStringList > qgrid_names;
 
+   bool use_errors = true;
+   QString missing_errors_name;
+
    {
       QStringList names = all_selected_files();
 
@@ -5929,6 +5932,15 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                                    QString( us_tr( "Internal error: %1 has no q-grid!" ) ).arg( name )
                                    );
             return update_enables();
+         }
+         if ( use_errors &&
+              (
+               !f_errors.count( name )
+               || f_errors[ name ].size() != f_qs[ name ].size()
+               )
+              ) {
+            use_errors = false;
+            missing_errors_name = name;
          }
          qgrid_to_names[ f_qs[ name ] ].push_back( name );
       }
@@ -5966,6 +5978,18 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
          };
    }
 
+   if ( !use_errors ) {
+      QMessageBox::warning( this,
+                            windowTitle() + us_tr( ": I#,*(q) common time" ),
+                            QString( us_tr(
+                                           "Not all files have associated errors, so the result will not have errors"
+                                           "\n\nFirst discovered in file:\n%1"
+                                           )
+                                     )
+                            .arg( missing_errors_name )
+                            );
+   }      
+
    // now qgrid_names is a vector of size 2 with vector values of the file names of each qgrid with verified f_qs & f_Is
 
    // get time grids for each
@@ -5976,7 +6000,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
          ,get_time_grid_from_namelist( qgrid_names[1] )
       };
 
-   US_Vector::printvector2( "time grids", time_grids[0], time_grids[1] );
+   // US_Vector::printvector2( "time grids", time_grids[0], time_grids[1] );
 
    double start_time_min =
       time_grids[0].front() > time_grids[1].front()
@@ -5991,6 +6015,13 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
       ;
       
    // display info & ask to proceed?
+
+   // assume MALS has lower minq
+
+   int mals_set = time_grids[0].front() < time_grids[1].front() ? 0 : 1;
+   int saxs_set = 1 - mals_set;
+
+   qDebug() << "mals_set is " << mals_set;
 
    {
       QString msg =
@@ -6030,15 +6061,93 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                                 );
    }
    
-   
+   // setup new time grid for created files
+
+   vector < double > output_times;
+
+   for ( auto const & t : time_grids[saxs_set] ) {
+      if ( t >= start_time_min && t <= end_time_max ) {
+         output_times.push_back( t );
+      }
+   }
+
    // setup & apply natural splines for interpolation of I and errors, keep q values
    // to produce new I{star|hash}q's for the interpolated data with new times
 
+   vector < double > output_qs = f_qs[ qgrid_names[ mals_set ][0] ];
+   map < double, vector < double > > output_Is;     // time => I values
+   map < double, vector < double > > output_errors; // time => error values
 
-   QMessageBox::critical( this,
-                          windowTitle() + us_tr( ": I#,*(q) common time" ),
-                          us_tr( "I#,*(q) common time not fully implemented" )
-                          );
+   // q value at a time should lessen memory requirements (but is it faster? does it matter?)
+   if ( use_errors ) {
+      for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+         vector < double > yIs;
+         vector < double > yIs2;
+
+         vector < double > yerrors;
+         vector < double > yerrors2;
+
+         for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+            const QString & name = qgrid_names[ mals_set ][j];
+            yIs    .push_back( f_Is[name][i] );
+            yerrors.push_back( f_errors[name][i] );
+         }
+
+         usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
+         usu->natural_spline( time_grids[ mals_set ], yerrors, yerrors2 );
+
+         for ( auto const & t : output_times ) {
+            double I;
+            double error;
+            usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
+            usu->apply_natural_spline( time_grids[ mals_set ], yerrors, yerrors2, t, error );
+            output_Is[ t ].push_back( I );
+            output_errors[ t ].push_back( error );
+         }
+      }
+   } else {
+      for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+         vector < double > yIs;
+         vector < double > yIs2;
+
+         for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+            const QString & name = qgrid_names[ mals_set ][j];
+            yIs    .push_back( f_Is[name][i] );
+         }
+
+         usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
+
+         for ( auto const & t : output_times ) {
+            double I;
+            usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
+            output_Is[ t ].push_back( I );
+         }
+      }
+   }
+
+   set < QString > plot_names;
+   
+   {
+      QString head = qstring_common_head( qgrid_names[mals_set], true );
+      QString tail = qstring_common_tail( qgrid_names[mals_set], true );
+
+      if ( use_errors ) {
+         for ( auto const & t : output_times ) {
+            QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
+            add_plot( name, output_qs, output_Is[ t ], output_errors[ t ], false, false );
+         }
+      } else {
+         for ( auto const & t : output_times ) {
+            QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
+            add_plot( name, output_qs, output_Is[ t ], false, false );
+         }
+      }
+
+      plot_names.insert( last_created_file );
+   }
+   
+   set_selected( plot_names );
+   plot_files();
    update_enables();
 }
 
