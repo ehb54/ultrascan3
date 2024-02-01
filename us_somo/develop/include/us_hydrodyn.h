@@ -65,6 +65,7 @@
 #include "us_hydrodyn_saxs_buffer.h"
 #include "us_hydrodyn_saxs_hplc.h"
 #include "us_hydrodyn_mals.h"
+#include "us_hydrodyn_mals_saxs.h"
 #include "us_hydrodyn_saxs_1d.h"
 #include "us_hydrodyn_saxs_2d.h"
 #include "us_hydrodyn_advanced_config.h"
@@ -121,6 +122,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Mals_Svd;
       friend class US_Hydrodyn_Mals_Options;
       friend class US_Hydrodyn_Mals_Baseline_Best;
+      friend class US_Hydrodyn_Mals_Saxs;
+      friend class US_Hydrodyn_Mals_Saxs_Svd;
+      friend class US_Hydrodyn_Mals_Saxs_Options;
+      friend class US_Hydrodyn_Mals_Saxs_Baseline_Best;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Hydro;
       friend class US_Hydrodyn_Saxs_Screen;
@@ -938,6 +943,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool                     mals_widget;
       US_Hydrodyn_Mals         *mals_window;
       csv                      last_mals_csv;
+      
+      bool                     mals_saxs_widget;
+      US_Hydrodyn_Mals_Saxs    *mals_saxs_window;
+      csv                      last_mals_saxs_csv;
       
       bool                     saxs_search_widget;
       US_Hydrodyn_Saxs_Search  *saxs_search_window;

@@ -290,6 +290,37 @@ SOURCES *= \
         src/us_hydrodyn_mals_simulate.cpp \
         src/us_hydrodyn_mals_svd.cpp \
         src/us_hydrodyn_mals_scale_trend.cpp \
+        src/us_hydrodyn_mals_saxs.cpp \
+        src/us_hydrodyn_mals_saxs_baseline_best.cpp \
+        src/us_hydrodyn_mals_saxs_conc_csv_frames.cpp \
+        src/us_hydrodyn_mals_saxs_gui.cpp \
+        src/us_hydrodyn_mals_saxs_stack.cpp \
+        src/us_hydrodyn_mals_saxs_modes.cpp \
+        src/us_hydrodyn_mals_saxs_modes_guinier.cpp \
+        src/us_hydrodyn_mals_saxs_modes_bb.cpp \
+        src/us_hydrodyn_mals_saxs_modes_wheel.cpp \
+        src/us_hydrodyn_mals_saxs_makeiq.cpp \
+        src/us_hydrodyn_mals_saxs_plots.cpp \
+        src/us_hydrodyn_mals_saxs_ciq.cpp \
+        src/us_hydrodyn_mals_saxs_cistarq.cpp \
+        src/us_hydrodyn_mals_saxs_dctr.cpp \
+        src/us_hydrodyn_mals_saxs_gg.cpp \
+        src/us_hydrodyn_mals_saxs_p3d.cpp \
+        src/us_hydrodyn_mals_saxs_parameters.cpp \
+        src/us_hydrodyn_mals_saxs_util.cpp \
+        src/us_hydrodyn_mals_saxs_movie.cpp \
+        src/us_hydrodyn_mals_saxs_conc.cpp \
+        src/us_hydrodyn_mals_saxs_conc_load.cpp \
+        src/us_hydrodyn_mals_saxs_fit.cpp \
+        src/us_hydrodyn_mals_saxs_fit_global.cpp \
+        src/us_hydrodyn_mals_saxs_fit_gsm.cpp \
+        src/us_hydrodyn_mals_saxs_fit_ga.cpp \
+        src/us_hydrodyn_mals_saxs_gauss_mode.cpp \
+        src/us_hydrodyn_mals_saxs_nth.cpp \
+        src/us_hydrodyn_mals_saxs_options.cpp \
+        src/us_hydrodyn_mals_saxs_simulate.cpp \
+        src/us_hydrodyn_mals_saxs_svd.cpp \
+        src/us_hydrodyn_mals_saxs_scale_trend.cpp \
         src/us_hydrodyn_misc.cpp \
         src/us_hydrodyn_other.cpp \
         src/us_hydrodyn_overlap.cpp \
@@ -688,6 +719,25 @@ HEADERS *= \
         include/us_hydrodyn_mals_svd.h \
         include/us_hydrodyn_mals_baseline_best.h \
         include/us_hydrodyn_mals_simulate.h \
+        include/us_hydrodyn_mals_saxs.h \
+        include/us_hydrodyn_mals_saxs_ciq.h \
+        include/us_hydrodyn_mals_saxs_cistarq.h \
+        include/us_hydrodyn_mals_saxs_conc_csv_frames.h \
+        include/us_hydrodyn_mals_saxs_dctr.h \
+        include/us_hydrodyn_mals_saxs_p3d.h \
+        include/us_hydrodyn_mals_saxs_parameters.h \
+        include/us_hydrodyn_mals_saxs_conc.h \
+        include/us_hydrodyn_mals_saxs_conc_load.h \
+        include/us_hydrodyn_mals_saxs_fit.h \
+        include/us_hydrodyn_mals_saxs_fit_global.h \
+        include/us_hydrodyn_mals_saxs_gauss_mode.h \
+        include/us_hydrodyn_mals_saxs_movie.h \
+        include/us_hydrodyn_mals_saxs_nth.h \
+        include/us_hydrodyn_mals_saxs_options.h \
+        include/us_hydrodyn_mals_saxs_scale_trend.h \
+        include/us_hydrodyn_mals_saxs_svd.h \
+        include/us_hydrodyn_mals_saxs_baseline_best.h \
+        include/us_hydrodyn_mals_saxs_simulate.h \
         include/us_hydrodyn_misc.h \
         include/us_hydrodyn_overlap.h \
         include/us_hydrodyn_overlap_reduction.h \
