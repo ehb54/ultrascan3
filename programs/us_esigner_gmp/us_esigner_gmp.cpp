@@ -1750,7 +1750,7 @@ void US_eSignaturesGMP::selectGMPRun_sa( void )
   int autoflowID = autoflow_id_selected.toInt();
   gmp_run_details = read_autoflow_record( autoflowID, "HISTORY" );   //<== TODO: autoflowHistory should be read!!
 
-  set_revOper_panel_gui();
+  set_revOper_panel_gui_sa();
 
   //Enable button to change/set assigned oper(s) / rev(s)
   pb_add_oper    -> setEnabled( true );
@@ -1808,18 +1808,12 @@ void US_eSignaturesGMP::set_revOper_panel_gui( void )
   QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
   QString apprs_a = get_assigned_oper_revs( jsonDocApprList );
 
-  /* For reassigning program, check eSigning status of each reviewer */
-  /* parse eSign_details[ "eSignStatusJson" ] */
-  /* signed / NOT signed -- add to respective strings */
-  /* use mod. check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats ) */
-  
   //&& Set defined Operator/Reviewers (if any)
   if ( !eSign_details. contains("operatorListJson")  || opers_a.isEmpty() )
     te_operator_names  -> setText( "NOT SET" );
   else
-    {
-      te_operator_names -> setText( opers_a );
-    }
+    te_operator_names -> setText( opers_a );
+ 
   
   if ( !eSign_details. contains("reviewersListJson") || revs_a.isEmpty() )
     te_reviewer_names  -> setText( "NOT SET" );
@@ -1831,6 +1825,46 @@ void US_eSignaturesGMP::set_revOper_panel_gui( void )
   else
     te_appr_names  -> setText( apprs_a );
 }
+
+//For stand-alone reassign
+void US_eSignaturesGMP::set_revOper_panel_gui_sa( void )
+{
+  QString full_runname = gmp_run_details[ "filename" ];
+  QString FullRunName_auto = gmp_run_details[ "experimentName" ] + "-run" + gmp_run_details[ "runID" ];
+  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+    FullRunName_auto += " (combined RI+IP)";
+    
+  QString OptimaName = gmp_run_details["OptimaName"]; 
+  le_run_name        -> setText( FullRunName_auto );
+  le_optima_name     -> setText( OptimaName );
+
+  //Set Operators for Optima:
+  QStringList sl_operators = read_operators( gmp_run_details[ "OptimaID" ] );
+  cb_choose_operator -> addItems( sl_operators );
+
+  //Read autoflowGMPReportEsign record by autoflowID:
+  eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
+
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
+  QString opers_a = get_assigned_oper_revs_sa( jsonDocOperList, eSign_details );
+
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
+  QString revs_a = get_assigned_oper_revs_sa( jsonDocRevList, eSign_details );
+
+  QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
+  QString apprs_a = get_assigned_oper_revs_sa( jsonDocApprList, eSign_details );
+
+  /* For reassigning program, check eSigning status of each reviewer */
+  /* parse eSign_details[ "eSignStatusJson" ] */
+  /* signed / NOT signed -- add to respective strings */
+  /* use mod. check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats ) */
+  
+  //&& Set defined Operator/Reviewers
+  te_operator_names -> setText( opers_a );
+  te_reviewer_names  -> setText( revs_a );
+  te_appr_names  -> setText( apprs_a );
+}
+
 
 //form a string of opers/revs out of jsonDoc
 QString US_eSignaturesGMP::get_assigned_oper_revs( QJsonDocument jsonDoc )
@@ -1851,6 +1885,35 @@ QString US_eSignaturesGMP::get_assigned_oper_revs( QJsonDocument jsonDoc )
   for ( int ii = 0; ii < assigned_list.count(); ii++ )
     {
       smry += assigned_list[ ii ];
+      if ( ii != assigned_list.count() -1 )
+	smry += "\n";
+    }
+  
+  return smry;
+}
+
+//form a string of opers/revs out of jsonDoc: for SA
+QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QJsonDocument jsonDoc, QMap<QString, QString> esign_det )
+{
+  QString smry;
+  QStringList assigned_list;
+  
+  if ( !jsonDoc. isArray() )
+    {
+      qDebug() << "jsonDoc not a JSON, and/or not an JSON Array!";
+      return smry;
+    }
+  
+  QJsonArray jsonDoc_array  = jsonDoc.array();
+  for (int i = 0; i < jsonDoc_array.size(); ++i )
+    assigned_list << jsonDoc_array[i].toString();
+  
+  for ( int ii = 0; ii < assigned_list.count(); ii++ )
+    {
+      //Check eSign status
+      QString estatus = check_revs_esign_status_sa( assigned_list[ ii ], esign_det );
+      
+      smry += assigned_list[ ii ] + "(" + estatus + ")";
       if ( ii != assigned_list.count() -1 )
 	smry += "\n";
     }
@@ -3129,6 +3192,81 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 
   return nrecs;
 }
+
+
+//Check eSign status for GMP Report fior particular reviewer: SA
+QString US_eSignaturesGMP::check_revs_esign_status_sa( QString u_passed, QMap <QString, QString > eSign_stats )
+{
+  QString eSignStatusJson   = eSign_stats[ "eSignStatusJson" ];
+  QString eSignStatusAll    = eSign_stats[ "eSignStatusAll" ];
+
+  qDebug() << "In check_eSign_status_for_gmpReport_auto(): eSignStatusJson, eSignStatusAll -- "
+	   << eSignStatusJson << eSignStatusAll;
+    
+    
+  QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
+  if (!jsonDocEsign.isObject())
+    {
+      qDebug() << "to_eSign(): ERROR: eSignStatusJson: NOT a JSON Doc !!";
+      return QString("Not JSON");
+    }
+  
+  const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDocEsign.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+
+
+  //to_sign:
+  if ( to_esign.isUndefined() || to_esign_array.size() == 0
+       || !to_esign_array.size() || eSignStatusAll == "YES" )
+    {
+      qDebug() << "check_eSign_status(): All signatures have been collected; none left to e-sign !!";
+      return QString("SIGNED");
+    }
+
+  //signed:
+  if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
+    {
+      qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
+      return QString("NOT SIGNED");
+    }
+  else
+    {
+      qDebug() << "check_eSign_status(): Some parties have e-Signed already !!!";
+      //DEBUG
+      QStringList eSignees_current;
+      for (int i=0; i < esigned_array.size(); ++i )
+	{
+	  foreach(const QString& key, esigned_array[i].toObject().keys())
+	    {
+	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	      
+	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+		       << newObj["Comment"]   .toString()
+		       << newObj["timeDate"]  .toString();
+
+	      QString current_reviewer = key;
+	      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+
+	      eSignees_current << key;
+	      
+	    }
+	}
+      //END DEBUG:
+      qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
+      if ( eSignees_current.contains( u_passed ) )
+	{
+	  return QString("SIGNED");
+	}
+      else
+	{
+	  return  QString("NOT SIGNED");
+	}
+    }
+}
+
 
 //Check eSign status for GMP Report fior particular reviewer:
 QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats )

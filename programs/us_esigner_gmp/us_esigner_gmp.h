@@ -169,12 +169,14 @@ class US_eSignaturesGMP : public US_Widgets
        void selectGMPRun_sa( void );
        void reset_set_revOper_panel( void );
        void set_revOper_panel_gui( void );
+       void set_revOper_panel_gui_sa( void );
        int list_all_autoflow_records( QList< QStringList >& , QString );
        QMap < QString, QString > read_autoflow_record( int, QString );
        QStringList read_operators( QString );
        QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
        QString get_assigned_oper_revs( QJsonDocument );
-       void assignOperRevs( void );
+  QString get_assigned_oper_revs_sa( QJsonDocument, QMap<QString, QString> );
+  void assignOperRevs( void );
        void addOpertoList( void );
        void removeOperfromList( void );
        void addRevtoList( void );
@@ -200,6 +202,7 @@ class US_eSignaturesGMP : public US_Widgets
 					   QString, QString& );
        QString write_pdf_eSignatures( QString, QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
+       QString check_revs_esign_status_sa( QString, QMap< QString, QString> );
        QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );
 
