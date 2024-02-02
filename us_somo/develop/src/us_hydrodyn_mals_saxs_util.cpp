@@ -6144,6 +6144,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
    progress->setValue( output_qs.size() + 1 );
 
    set < QString > plot_names;
+   QStringList     plot_names_qsl;
    
    {
       QString head = qstring_common_head( qgrid_names[mals_set], true );
@@ -6154,15 +6155,39 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
             QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
             add_plot( name, output_qs, output_Is[ t ], output_errors[ t ], false, false );
             plot_names.insert( last_created_file );
+            plot_names_qsl << last_created_file;
          }
       } else {
          for ( auto const & t : output_times ) {
             QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
             add_plot( name, output_qs, output_Is[ t ], false, false );
             plot_names.insert( last_created_file );
+            plot_names_qsl << last_created_file;
          }
       }
    }
+
+   // add corresponding time saxs files
+
+   {
+      map < double, QString > saxs_names_by_time;
+      {
+         vector < double > saxs_times = get_time_grid_from_namelist( qgrid_names[ saxs_set ] );
+         for ( int i = 0; i < (int) saxs_times.size(); ++i ) {
+            saxs_names_by_time[ saxs_times[i] ] = qgrid_names[ saxs_set ][i];
+         }
+      }
+      vector < double > mals_times = get_time_grid_from_namelist( plot_names_qsl );
+      for ( auto const & t : mals_times ) {
+         if ( !saxs_names_by_time.count( t ) ) {
+            qDebug() <<
+               QString( "internal error: common_times() can't find matching saxs mals time %1" )
+               .arg( t );
+         } else {
+            plot_names.insert( saxs_names_by_time[ t ] );
+         }
+      }
+   }      
    
    set_selected( plot_names );
    plot_files();
@@ -6178,4 +6203,3 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
                           );
    update_enables();
 }
-

@@ -373,6 +373,12 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    pb_common_time->setPalette( PALET_PUSHB );
    connect(pb_common_time, SIGNAL(clicked()), SLOT(common_time()));
 
+   pb_scroll_pair = new QPushButton(us_tr("Scroll"), this);
+   pb_scroll_pair->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scroll_pair->setMinimumHeight(minHeight1);
+   pb_scroll_pair->setPalette( PALET_PUSHB );
+   connect(pb_scroll_pair, SIGNAL(clicked()), SLOT(scroll_pair()));
+
    pb_join_by_time = new QPushButton(us_tr("Join I#,*(q) by time"), this);
    pb_join_by_time->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_join_by_time->setMinimumHeight(minHeight1);
@@ -3450,9 +3456,11 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
 
    QBoxLayout * hbl_file_buttons_3a = new QHBoxLayout(); hbl_file_buttons_3a->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3a->setSpacing( 0 );
    hbl_file_buttons_3a->addWidget ( pb_common_time );
+   hbl_file_buttons_3a->addWidget ( pb_scroll_pair );
    hbl_file_buttons_3a->addWidget ( pb_join_by_time );
 
    files_widgets.push_back ( pb_common_time );
+   files_widgets.push_back ( pb_scroll_pair );
    files_widgets.push_back ( pb_join_by_time );
 
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
@@ -4144,6 +4152,12 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    wheel_below_widgets.push_back( lbl_wheel_pos_below );
    wheel_below_widgets.push_back( lbl_wheel_Pcolor );
 
+   // scroll_pair_widgets;
+   scroll_pair_widgets.push_back( pb_wheel_dec );
+   scroll_pair_widgets.push_back( qwtw_wheel );
+   scroll_pair_widgets.push_back( pb_wheel_inc );
+   scroll_pair_widgets.push_back( lbl_wheel_pos );
+
    // wyatt_widgets;
 
    wyatt_widgets.push_back( le_wyatt_start );
@@ -4398,6 +4412,7 @@ void US_Hydrodyn_Mals_Saxs::mode_select()
    ShowHide::hide_widgets( ggaussian_4var_widgets );
    ShowHide::hide_widgets( ggaussian_5var_widgets );
    ShowHide::hide_widgets( wyatt_widgets );
+   ShowHide::hide_widgets( scroll_pair_widgets );
    ShowHide::hide_widgets( blanks_widgets );
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
@@ -4451,15 +4466,16 @@ void US_Hydrodyn_Mals_Saxs::mode_select()
       }
       break;
 
-   case MODE_WYATT     : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_BLANKS    : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_TIMESHIFT : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_TESTIQ    : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_WYATT        : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets      , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
+   case MODE_BLANKS       : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
+   case MODE_BASELINE     : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
+   case MODE_TIMESHIFT    : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
+   case MODE_SCALE        : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets      , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_TESTIQ       : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_GUINIER      : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_RGC          : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_PM           : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets         , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_SCROLL_PAIR  : mode_title( us_tr( "Scroll Pairs" ) );   ShowHide::hide_widgets( scroll_pair_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
    default : us_qdebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -4551,6 +4567,7 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
    bool all_t_           = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_t" ).size();
+   bool half_common      = files_selected_count && files_selected_count == 2 * (unsigned int) selected_files.filter( "_common" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -4647,7 +4664,8 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_common_time        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ );
-   pb_join_by_time       ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ );
+   pb_scroll_pair        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ && half_common );
+   pb_join_by_time       ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ && half_common );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
@@ -4976,6 +4994,7 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    pb_repeak             ->setEnabled( false );
    pb_svd                ->setEnabled( false );
    pb_common_time        ->setEnabled( false );
+   pb_scroll_pair        ->setEnabled( false );
    pb_join_by_time       ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );

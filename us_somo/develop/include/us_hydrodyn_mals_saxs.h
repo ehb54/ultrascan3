@@ -345,6 +345,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
       QPushButton   *pb_common_time;
+      QPushButton   *pb_scroll_pair;
       QPushButton   *pb_join_by_time;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
@@ -645,6 +646,16 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QString                            testiq_it_selected;
       double                             testiq_it_selected_Imin;
       double                             testiq_it_selected_Imax;
+
+      // scroll pair
+      
+      vector < QStringList >             scroll_pair_names;
+      vector < double >                  scroll_pair_times;
+      map < double, vector < QString > > scroll_pair_time_to_names;
+      set < QString >                    scroll_pair_org_selected;
+      int                                scroll_pair_scroll_pos;
+      void                               scroll_pair_scroll_highlight( int pos );
+      void                               scroll_pair_enables();
 
       // Guinier
 
@@ -1051,6 +1062,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       vector < QWidget * >                ggqfit_widgets;
       vector < QWidget * >                wheel_below_widgets;
 
+      vector < QWidget * >                scroll_pair_widgets;
       vector < QWidget * >                wyatt_widgets;
       vector < QWidget * >                blanks_widgets;
       vector < QWidget * >                baseline_widgets;
@@ -1234,6 +1246,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
          ,MODE_GUINIER
          ,MODE_TESTIQ
          ,MODE_WYATT
+         ,MODE_SCROLL_PAIR
       };
 
       modes                        current_mode;
@@ -1568,6 +1581,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void smooth();
       void svd();
       void common_time();
+      void scroll_pair();
       void join_by_time();
       void repeak();
       void create_i_of_t();

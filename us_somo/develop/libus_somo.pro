@@ -298,6 +298,7 @@ SOURCES *= \
         src/us_hydrodyn_mals_saxs_modes.cpp \
         src/us_hydrodyn_mals_saxs_modes_guinier.cpp \
         src/us_hydrodyn_mals_saxs_modes_bb.cpp \
+        src/us_hydrodyn_mals_saxs_modes_scroll.cpp \
         src/us_hydrodyn_mals_saxs_modes_wheel.cpp \
         src/us_hydrodyn_mals_saxs_makeiq.cpp \
         src/us_hydrodyn_mals_saxs_plots.cpp \
