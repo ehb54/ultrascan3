@@ -1750,13 +1750,14 @@ void US_eSignaturesGMP::selectGMPRun_sa( void )
   int autoflowID = autoflow_id_selected.toInt();
   gmp_run_details = read_autoflow_record( autoflowID, "HISTORY" );   //<== TODO: autoflowHistory should be read!!
 
-  set_revOper_panel_gui_sa();
-
   //Enable button to change/set assigned oper(s) / rev(s)
   pb_add_oper    -> setEnabled( true );
   pb_remove_oper -> setEnabled( true );
   setUnset_AddRemove_RevAppr_bttn( "Reviewer" );
   setUnset_AddRemove_RevAppr_bttn( "Approver" );
+
+  //set GUI
+  set_revOper_panel_gui_sa();
 }
 
 
@@ -1845,24 +1846,47 @@ void US_eSignaturesGMP::set_revOper_panel_gui_sa( void )
   //Read autoflowGMPReportEsign record by autoflowID:
   eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
 
+  operators_info. clear();
+  reviewers_info. clear();
+  approvers_info. clear();
+
   QJsonDocument jsonDocOperList = QJsonDocument::fromJson( eSign_details[ "operatorListJson" ] .toUtf8() );
-  QString opers_a = get_assigned_oper_revs_sa( jsonDocOperList, eSign_details );
+  QString opers_a = get_assigned_oper_revs_sa( "operator", jsonDocOperList, eSign_details );
 
   QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( eSign_details[ "reviewersListJson" ] .toUtf8() );
-  QString revs_a = get_assigned_oper_revs_sa( jsonDocRevList, eSign_details );
+  QString revs_a = get_assigned_oper_revs_sa( "reviewer", jsonDocRevList, eSign_details );
 
   QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
-  QString apprs_a = get_assigned_oper_revs_sa( jsonDocApprList, eSign_details );
-
-  /* For reassigning program, check eSigning status of each reviewer */
-  /* parse eSign_details[ "eSignStatusJson" ] */
-  /* signed / NOT signed -- add to respective strings */
-  /* use mod. check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats ) */
+  QString apprs_a = get_assigned_oper_revs_sa( "approver",  jsonDocApprList, eSign_details );
   
   //&& Set defined Operator/Reviewers
   te_operator_names -> setText( opers_a );
   te_reviewer_names  -> setText( revs_a );
   te_appr_names  -> setText( apprs_a );
+
+  //check what role(s) are esigned
+  if ( operators_info. contains("completed") && operators_info["completed"] == "YES" )
+    {
+      te_opers_to_assign -> setText( "<font color=\"Red\">All operators have eSigned, cannot be reassigned!</font>" );
+      pb_add_oper -> setEnabled( false );
+      pb_remove_oper -> setEnabled( false );
+      cb_choose_operator -> setEnabled( false );
+    }
+  if ( reviewers_info. contains("completed") && reviewers_info["completed"] == "YES" )
+    {
+      te_revs_to_assign -> setText( "<font color=\"Red\">All reviewers have eSigned, cannot be reassigned!</font>" );
+      pb_add_rev -> setEnabled( false );
+      pb_remove_rev -> setEnabled( false );
+      cb_choose_rev -> setEnabled( false );
+    }
+  if ( approvers_info. contains("completed") && approvers_info["completed"] == "YES" )
+    {
+      te_apprs_to_assign -> setText( "<font color=\"Red\">All approvers have eSigned, cannot be reassigned!</font>" );
+      pb_add_appr -> setEnabled( false );
+      pb_remove_appr -> setEnabled( false );
+      cb_choose_appr -> setEnabled( false );
+    }  
+  
 }
 
 
@@ -1893,7 +1917,7 @@ QString US_eSignaturesGMP::get_assigned_oper_revs( QJsonDocument jsonDoc )
 }
 
 //form a string of opers/revs out of jsonDoc: for SA
-QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QJsonDocument jsonDoc, QMap<QString, QString> esign_det )
+QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocument jsonDoc, QMap<QString, QString> esign_det )
 {
   QString smry;
   QStringList assigned_list;
@@ -1907,15 +1931,45 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QJsonDocument jsonDoc, QMa
   QJsonArray jsonDoc_array  = jsonDoc.array();
   for (int i = 0; i < jsonDoc_array.size(); ++i )
     assigned_list << jsonDoc_array[i].toString();
-  
+
+  int esigned_all = 0;
   for ( int ii = 0; ii < assigned_list.count(); ii++ )
     {
       //Check eSign status
       QString estatus = check_revs_esign_status_sa( assigned_list[ ii ], esign_det );
+      QString stat_str;
+      estatus.contains("NOT") ? stat_str = "(<b><font color=\"Blue\">" + estatus + "</font><\b>)":
+	stat_str = "(<b><font color=\"Red\">" + estatus + "</font><\b>)";
       
-      smry += assigned_list[ ii ] + "(" + estatus + ")";
+      smry += assigned_list[ ii ] + stat_str;
       if ( ii != assigned_list.count() -1 )
 	smry += "\n";
+
+      if ( !estatus.contains("NOT") )
+	++esigned_all;
+    }
+
+  
+  /// fill main maps
+  if ( role.contains("operator") )
+    {
+      operators_info[ "operators" ] = smry;
+      if ( esigned_all == assigned_list.count() )
+	operators_info[ "completed" ] = "YES";
+    }
+  
+  if ( role.contains("reviewer") )
+    {
+      reviewers_info[ "reviewers" ] = smry; 
+      if ( esigned_all == assigned_list.count() )
+	reviewers_info[ "completed" ] = "YES";
+    }
+
+  if ( role.contains("approver") )
+    {
+      approvers_info[ "approvers" ] = smry;
+      if ( esigned_all == assigned_list.count() )
+	approvers_info[ "completed" ] = "YES";
     }
   
   return smry;

@@ -144,7 +144,10 @@ class US_eSignaturesGMP : public US_Widgets
        QVBoxLayout* spacerLayout;
   
        QString autoflowID_passed;
-       QString autoflowGMPReport_id_selected;			
+       QString autoflowGMPReport_id_selected;
+  QMap<QString, QString> operators_info;
+  QMap<QString, QString> reviewers_info;
+  QMap<QString, QString> approvers_info;				       
 			      
      public slots:
 
@@ -175,7 +178,7 @@ class US_eSignaturesGMP : public US_Widgets
        QStringList read_operators( QString );
        QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
        QString get_assigned_oper_revs( QJsonDocument );
-  QString get_assigned_oper_revs_sa( QJsonDocument, QMap<QString, QString> );
+  QString get_assigned_oper_revs_sa( QString, QJsonDocument, QMap<QString, QString> );
   void assignOperRevs( void );
        void addOpertoList( void );
        void removeOperfromList( void );
