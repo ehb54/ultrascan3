@@ -5,6 +5,7 @@ QT           += xml svg opengl sql printsupport
 TARGET        = us_query_rmsd
 
 HEADERS       =  us_query_rmsd.h \
+                 us_query_rmsd_sim.h \
                  ../us_analysis_profile/us_analysis_profile.h \
                  ../us_autoflow_analysis/us_autoflow_analysis.h \
                  ../us_fit_meniscus/us_fit_meniscus.h  \
@@ -20,9 +21,11 @@ HEADERS       =  us_query_rmsd.h \
                  ../us_ddist_combine/us_select_rundd.h  \
                  ../us_pseudo3d_combine/us_pseudo3d_combine.h \
                  ../us_pseudo3d_combine/us_remove_distros.h   \
-                 ../us_esigner_gmp/us_esigner_gmp.h
+                 ../us_esigner_gmp/us_esigner_gmp.h \
+
 
 SOURCES       =  us_query_rmsd.cpp \
+                 us_query_rmsd_sim.cpp \
                  ../us_analysis_profile/us_analysis_profile.cpp \
                  ../us_analysis_profile/us_anapro_utils.cpp     \
                  ../us_autoflow_analysis/us_autoflow_analysis.cpp \
@@ -39,4 +42,5 @@ SOURCES       =  us_query_rmsd.cpp \
                  ../us_ddist_combine/us_select_rundd.cpp  \
                  ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
                  ../us_pseudo3d_combine/us_remove_distros.cpp  \
-                 ../us_esigner_gmp/us_esigner_gmp.cpp
+                 ../us_esigner_gmp/us_esigner_gmp.cpp \
+

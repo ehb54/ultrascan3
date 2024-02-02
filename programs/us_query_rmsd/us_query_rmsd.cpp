@@ -869,6 +869,9 @@ void US_QueryRmsd::save_data(){
 void US_QueryRmsd::simulate(){
     DbgLv(0) << tw_rmsd->currentColumn();
     DbgLv(0) << tw_rmsd->currentRow();
+    us_query_rmsd_sim *simw = new us_query_rmsd_sim();
+    simw->show();
+
 }
 
 void US_QueryRmsd::highlight(){

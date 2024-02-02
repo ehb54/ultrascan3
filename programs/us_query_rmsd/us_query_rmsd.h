@@ -1,6 +1,7 @@
 #ifndef US_QUERY_RMSD_H
 #define US_QUERY_RMSD_H
 
+#include "us_query_rmsd_sim.h"
 #include "us_widgets.h"
 #include "us_passwd.h"
 #include "us_db2.h"
