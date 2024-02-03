@@ -138,7 +138,6 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     this->setLayout(lyt_main);
     setMinimumSize(QSize(500,400));
 
-    data_sim = new US_QueryRmsdSim();
     fematch = new US_FeMatch();
 
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));

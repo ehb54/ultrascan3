@@ -1,13 +1,13 @@
 #ifndef US_QUERY_RMSD_H
 #define US_QUERY_RMSD_H
 
-#include "us_query_rmsd_sim.h"
 #include "us_widgets.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_model.h"
 #include "us_dataIO.h"
 #include "us_noise.h"
+#include "../us_fematch/us_fematch.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -60,7 +60,6 @@ class US_QueryRmsd : public US_Widgets{
     QComboBox *cb_method;
     QLineEdit *le_threshold;
 
-    US_QueryRmsdSim *data_sim;
     US_FeMatch *fematch;
 
     bool check_connection(void);
