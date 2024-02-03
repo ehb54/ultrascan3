@@ -138,6 +138,9 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
     this->setLayout(lyt_main);
     setMinimumSize(QSize(500,400));
 
+    data_sim = new US_QueryRmsdSim();
+    fematch = new US_FeMatch();
+
     connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
     connect(pb_save, SIGNAL(clicked()), this, SLOT(save_data()));
     connect(pb_simulate, SIGNAL(clicked()), this, SLOT(simulate()));
@@ -869,8 +872,7 @@ void US_QueryRmsd::save_data(){
 void US_QueryRmsd::simulate(){
     DbgLv(0) << tw_rmsd->currentColumn();
     DbgLv(0) << tw_rmsd->currentRow();
-    us_query_rmsd_sim *simw = new us_query_rmsd_sim();
-    simw->show();
+    fematch->show();
 
 }
 

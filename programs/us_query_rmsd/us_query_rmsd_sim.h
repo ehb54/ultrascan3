@@ -3,11 +3,14 @@
 
 #include "../us_fematch/us_fematch.h"
 
-class us_query_rmsd_sim : public US_FeMatch
+class US_QueryRmsdSim : public US_FeMatch
 {
    Q_OBJECT
    public:
-   explicit us_query_rmsd_sim();
+   explicit US_QueryRmsdSim();
+
+   void set_raw_edit_data(US_DataIO::RawData, US_DataIO::EditedData);
+
 
    signals:
 };

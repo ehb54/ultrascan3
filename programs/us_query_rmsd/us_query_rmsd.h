@@ -60,6 +60,9 @@ class US_QueryRmsd : public US_Widgets{
     QComboBox *cb_method;
     QLineEdit *le_threshold;
 
+    US_QueryRmsdSim *data_sim;
+    US_FeMatch *fematch;
+
     bool check_connection(void);
     void clear_data(void);
     bool check_combo_content(QComboBox*, QString&);
