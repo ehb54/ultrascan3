@@ -5,7 +5,6 @@ QT           += xml svg opengl sql printsupport
 TARGET        = us_query_rmsd
 
 HEADERS       =  us_query_rmsd.h \
-                 us_query_rmsd_sim.h \
                  ../us_analysis_profile/us_analysis_profile.h \
                  ../us_autoflow_analysis/us_autoflow_analysis.h \
                  ../us_fit_meniscus/us_fit_meniscus.h  \
@@ -25,7 +24,6 @@ HEADERS       =  us_query_rmsd.h \
 
 
 SOURCES       =  us_query_rmsd.cpp \
-                 us_query_rmsd_sim.cpp \
                  ../us_analysis_profile/us_analysis_profile.cpp \
                  ../us_analysis_profile/us_anapro_utils.cpp     \
                  ../us_autoflow_analysis/us_autoflow_analysis.cpp \
