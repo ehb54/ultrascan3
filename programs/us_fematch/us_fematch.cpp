@@ -4045,3 +4045,332 @@ bool US_FeMatch::has_intensity_profile( const QString& runID, const bool in_db )
    return ! ripxml.isEmpty();
 }
 
+void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
+                                    US_DataIO::EditedData i_edata,
+                                    US_Model i_model,
+                                    int idExp,
+                                    QPoint pos)
+{
+   reset();
+   QString     file;
+   QStringList files;
+   QStringList parts;
+   lw_triples->  disconnect();
+   lw_triples->  clear();
+   dataList.     clear();
+   rawList.      clear();
+   excludedScans.clear();
+   triples.      clear();
+   speed_steps  .clear();
+
+   dataLoaded = false;
+   buffLoaded = false;
+   haveSim    = false;
+//   dataLatest = ck_edit->isChecked();
+//   int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
+//                                 : US_Disk_DB_Controls::Disk;
+//   // US_DataLoader* dialog =
+//   //   new US_DataLoader( dataLatest, local, rawList, dataList,
+//   //          triples, workingDir, QString( "velocity" ) );
+
+//   US_DataLoader* dialog =
+//       new US_DataLoader( dataLatest, local, rawList, dataList,
+//                         triples, workingDir, QString( "none" ) );
+
+//   connect( dialog, SIGNAL( changed(      bool ) ),
+//           this,   SLOT( update_disk_db( bool ) ) );
+//   connect( dialog, SIGNAL( progress(     const QString ) ),
+//           this,   SLOT( set_progress(   const QString ) ) );
+//   DbgLv(1) << "LD: exec dialog";
+
+//   if ( dialog->exec() != QDialog::Accepted )  return;
+
+   rawList << i_rdata;
+   dataList << i_edata;
+   triples << tr("%1 / %2 / %3").arg(i_rdata.cell).arg(i_rdata.channel).
+              arg(i_rdata.scanData.at(0).wavelength);
+
+   edata     = &dataList[ 0 ];
+   runID     = edata->runID;
+//   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+//                        + runID + ".time_state.tmst";
+   QTemporaryFile tempfile;
+   QString tmst_fpath = tempfile.fileName();
+
+
+   qDebug() << "RUNID --- " << runID;
+   // Get speed steps from disk or DB experiment (and maybe timestate)
+
+//   if ( local == US_Disk_DB_Controls::DB )
+//   {  // Fetch the speed steps for the experiment from the database
+//      workingDir = tr( "(database)" );
+
+//      US_Passwd   pw;
+//      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+//      QStringList query;
+//      QString     expID;
+//      int         idExp  = 0;
+//      query << "get_experiment_info_by_runID"
+//            << runID
+//            << QString::number( US_Settings::us_inv_ID() );
+//      dbP->query( query );
+
+//      if ( dbP->lastErrno() == US_DB2::OK )
+//      {
+//         dbP->next();
+//         idExp              = dbP->value( 1 ).toInt();
+//         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+//      }
+//      DbgLv(1)<<"LD: from database";
+
+//      // Check out whether we need to read TimeState from the DB
+
+//      bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+//      DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
+//               << "tmst_fpath" << tmst_fpath;
+//   }
+//   else
+//   {  // Read run experiment file and parse out speed steps
+//      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
+//      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
+//      QString expfpath = workingDir + "/" + runID + "."
+//                         + edata->dataType + ".xml";
+//      QFile xfi( expfpath );
+
+//      if ( xfi.open( QIODevice::ReadOnly ) )
+//      {  // Read and parse "<speedstep>" lines in the XML
+//         QXmlStreamReader xmli( &xfi );
+
+//         while ( ! xmli.atEnd() )
+//         {
+//            xmli.readNext();
+
+//            if ( xmli.isStartElement()  &&  xmli.name() == "speedstep" )
+//            {
+//               SP_SPEEDPROFILE  sp;
+//               US_SimulationParameters::speedstepFromXml( xmli, sp );
+//               speed_steps << sp;
+//            }
+//         }
+
+//         xfi.close();
+//      }
+//   }
+
+   US_Passwd   pw;
+   US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+   if ( US_TimeState::dbDownload(dbP, idExp, tmst_fpath) != US_DB2::OK ) {
+      DbgLv(0) << "error in downloading tmst file";
+      return;
+   }
+   DbgLv(0) << "LD: idExp" << idExp << " tmst_fpath: " << tmst_fpath;
+
+   QFileInfo check_file( tmst_fpath );
+   if ( check_file.exists()  &&  check_file.isFile() )
+   {  // Get speed_steps from an existing timestate file
+      simparams.simSpeedsFromTimeState( tmst_fpath );
+      simparams.speedstepsFromSSprof();
+      //*DEBUG*
+      int essknt=speed_steps.count();
+      int tssknt=simparams.speed_step.count();
+      DbgLv(1) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
+      for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
+      {
+         DbgLv(1) << "LD:  jj" << jj << "(e) tf tl wf wl scns"
+                  << speed_steps[jj].time_first
+                  << speed_steps[jj].time_last
+                  << speed_steps[jj].w2t_first
+                  << speed_steps[jj].w2t_last
+                  << speed_steps[jj].scans;
+         DbgLv(1) << "LD:    (t) tf tl wf wl scns"
+                  << simparams.speed_step[jj].time_first
+                  << simparams.speed_step[jj].time_last
+                  << simparams.speed_step[jj].w2t_first
+                  << simparams.speed_step[jj].w2t_last
+                  << simparams.speed_step[jj].scans;
+      }
+      //*DEBUG*
+      int kstep      = speed_steps.count();
+      int kscan      = speed_steps[ 0 ].scans;
+
+      //ALEXEY: #speed steps from TimeStamp can be bigger than what's read from DB??
+      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
+      {
+         if ( jj < kstep )
+         {
+            kscan          = speed_steps[ jj ].scans;
+            speed_steps[ jj ] = simparams.speed_step[ jj ];
+         }
+         else
+            speed_steps << simparams.speed_step[ jj ];
+
+         speed_steps[ jj ].scans = kscan;
+         simparams.speed_step[ jj ].scans = kscan;
+         DbgLv(1) << "LD:    (s) tf tl wf wl scns"
+                  << speed_steps[jj].time_first
+                  << speed_steps[jj].time_last
+                  << speed_steps[jj].w2t_first
+                  << speed_steps[jj].w2t_last
+                  << speed_steps[jj].scans;
+      }
+   }
+
+   int nssp       = speed_steps.count();
+   int ntriples   = triples.size();
+   DbgLv(1) << "LD: Load: no of speed steps" << nssp;
+
+   if ( nssp > 0 )
+   {
+      for ( int ii = 0; ii < nssp; ii++ )
+      {
+         int stm1   = speed_steps[ ii ].time_first;
+         int stm2   = speed_steps[ ii ].time_last;
+         for ( int ds = 0; ds < ntriples; ds++ )
+         {   // Scan data time ranges and compare to experiment speed steps
+            edata      = &dataList[ ds ];
+            int lesc   = edata->scanCount() - 1;
+            int etm1   = edata->scanData[    0 ].seconds;
+            int etm2   = edata->scanData[ lesc ].seconds;
+            DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
+                     << "etimes" << etm1 << etm2 << "lesc" << lesc;
+
+            if ( etm1 < stm1  ||  etm2 > stm2 )
+            {  // Data times beyond speed step ranges, so flag use of data ranges
+               nssp       = 0;
+               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
+               //speed_steps.clear();
+               break;
+            }
+         }
+      }
+   }
+
+   exp_steps  = ( nssp > 0 );
+   dat_steps  = !exp_steps;
+   DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
+
+   qApp->processEvents();
+
+//   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+//   QFontMetrics fm( font );
+//   int fontHeight = fm.lineSpacing();
+//   lw_triples->setMaximumHeight( fontHeight * min( ntriples, 4 ) + 12 );
+
+   for ( int ii = 0; ii < ntriples; ii++ )
+      lw_triples->addItem( triples.at( ii ) );
+
+   allExcls.fill( excludedScans, ntriples );
+
+//   edata      = &dataList[ 0 ];
+//   scanCount  = edata->scanData.size();
+//   double avgTemp = edata->average_temperature();
+
+//   // set ID, description, and avg temperature text
+//   le_id  ->setText( edata->runID + " / " + edata->editID );
+//   te_desc->setText( edata->description );
+//   le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
+
+   lw_triples->setCurrentRow( 0 );
+   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
+           SLOT(   new_triple(        int ) ) );
+
+   dataLoaded = true;
+   haveSim    = false;
+
+   update( 0 );
+
+   pb_solution ->setEnabled( true );
+   pb_details  ->setEnabled( true );
+   pb_loadmodel->setEnabled( true );
+   pb_exclude  ->setEnabled( true );
+//   mfilter     = QString( "=e" );
+
+//   ct_from->disconnect();
+//   ct_from->setValue( 0 );
+
+//   connect( ct_from, SIGNAL( valueChanged( double ) ),
+//           this,    SLOT(   exclude_from( double ) ) );
+
+   bmd_pos    = pos + QPoint( 100, 100 );
+   epd_pos    = pos + QPoint( 200, 200 );
+   rpd_pos    = pos + QPoint( 300, 300 );
+   DbgLv(1) << "LD: Loading of experimental data is over";
+
+
+
+   //////
+   ///
+//   int      drow    = lw_triples->currentRow();
+//   QString  mdesc;
+//   pb_simumodel->setEnabled( false );
+//   progress->reset();
+
+//   // load model
+//   bool loadDB = dkdb_cntrls->db();
+
+//   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+//   DbgLv(1) << "pre-Load eGUID" << dataList[drow].editGUID << "drow" << drow;
+//   US_ModelLoader dialog( loadDB, mfilter, model,
+//                         mdesc, dataList[ drow ].editGUID );
+
+//   connect( &dialog, SIGNAL( changed(      bool ) ),
+//           this,    SLOT( update_disk_db( bool ) ) );
+
+//   dialog.move( this->pos() + QPoint( 200, 200 ) );
+//   QApplication::restoreOverrideCursor();
+
+//   if ( dialog.exec() != QDialog::Accepted )
+//      return;                     // Cancel:  bail out now
+
+//   qApp->processEvents();
+
+   model = i_model;
+
+   DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
+            << model.requestGUID;
+   DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
+
+   model_loaded = model;   // Save model exactly as loaded
+   model_used   = model;   // Make that the working model
+   is_dmga_mc   = ( model.monteCarlo  &&
+                 model.description.contains( "DMGA" )  &&
+                 model.description.contains( "_mcN" ) );
+   DbgLv(1) << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
+            << "description" << model.description;
+
+   if ( model.components.size() == 0 )
+   {
+      QMessageBox::critical( this, tr( "Empty Model" ),
+                            tr( "Loaded model has ZERO components!" ) );
+      return;
+   }
+
+   ti_noise.count = 0;
+   ri_noise.count = 0;
+   ti_noise.values.clear();
+   ri_noise.values.clear();
+
+   // see if there are any noise files to load
+   if ( ! model_used.editGUID.isEmpty() )
+   {
+      qDebug() << "Loading noises";
+      load_noise();
+   }
+
+   pb_advanced ->setEnabled( true );
+   pb_adv_dmga ->setEnabled( is_dmga_mc );
+   pb_simumodel->setEnabled( true );
+
+   if ( is_dmga_mc )
+   {  // For DMGA-MC loaded model, build the vector of iteration models
+      US_DmgaMcStats::build_imodels( model_loaded, imodels );
+      // Default the used model to a "Mean" model
+      US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+   }
+
+
+   simulate_model( );
+
+}
+
