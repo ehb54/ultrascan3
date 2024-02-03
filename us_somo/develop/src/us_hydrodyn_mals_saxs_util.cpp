@@ -6197,9 +6197,213 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
 
 void US_Hydrodyn_Mals_Saxs::join_by_time() {
    disable_all();
-   QMessageBox::critical( this,
-                          windowTitle() + us_tr( ": Join I#,*(q) by time" ),
-                          us_tr( "Join I#,*(q) by time not currently implemented" )
-                          );
+
+   vector < QStringList > qgrid_names;
+
+   bool use_errors = true;
+   QString missing_errors_name;
+
+   QStringList names = all_selected_files();
+
+   // somewhat duplicated code in ::common_time()
+   {
+
+      map < vector < double >, QStringList > qgrid_to_names;
+
+      for ( auto const & name : names ) {
+         scroll_pair_org_selected.insert( name );
+
+         if ( !f_qs.count( name ) || !f_Is.count( name ) ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                                   QString( us_tr( "Internal error: %1 has no q-values!" ) ).arg( name )
+                                   );
+            return update_enables();
+         }
+         if ( use_errors &&
+              (
+               !f_errors.count( name )
+               || f_errors[ name ].size() != f_qs[ name ].size()
+               )
+              ) {
+            use_errors = false;
+            missing_errors_name = name;
+         }
+         qgrid_to_names[ f_qs[ name ] ].push_back( name );
+      }
+      
+      if ( qgrid_to_names.size() != 2 ) {
+         QString detail = "\n";
+         int pos = 0;
+         for ( auto & it : qgrid_to_names ) {
+            detail +=
+               QString( us_tr( "grid %1 first (of %2) file name: %3\n\n" ) )
+               .arg( ++pos )
+               .arg( it.second.size() )
+               .arg( it.second.front() )
+               ;
+         }         
+         
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                                QString( us_tr(
+                                               "The %1 curves selected do not have exactly 2 unique q-grids\n\n"
+                                               "%2 q-grid(s) found\n"
+                                               )
+                                         )
+                                .arg( names.size() )
+                                .arg( qgrid_to_names.size() )
+                                + detail
+                                );
+         return update_enables();
+      }      
+
+      qgrid_names =
+         {
+            qgrid_to_names.begin()->second
+            ,(--qgrid_to_names.end())->second
+         };
+   }
+   
+   if ( !use_errors ) {
+      QMessageBox::warning( this,
+                            windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                            QString( us_tr(
+                                           "Not all files have associated errors, so the result will not have errors"
+                                           "\n\nFirst discovered in file:\n%1"
+                                           )
+                                     )
+                            .arg( missing_errors_name )
+                            );
+   }      
+
+   // get time grids for each
+
+   vector < double >                  qgrid_times;
+   map < double, vector < QString > > qgrid_time_to_names;
+
+   {
+      vector < vector < double >> time_grids =
+         {
+            get_time_grid_from_namelist( qgrid_names[0] )
+            ,get_time_grid_from_namelist( qgrid_names[1] )
+         };
+
+      if ( time_grids[0] != time_grids[1] ) {
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                                QString( us_tr(
+                                               "The %1 curves selected do not have the same times\n\n"
+                                               )
+                                         )
+                                .arg( names.size() )
+                                );
+         return update_enables();
+      }      
+
+      qgrid_times = time_grids[0];
+   }
+   
+
+   // build qgrid_time_to_names
+
+   // assume MALS has lower minq
+
+   int mals_set = f_qs[ qgrid_names[0][0] ].front() < f_qs[ qgrid_names[1][0] ].front() ? 0 : 1;
+   int saxs_set = 1 - mals_set;
+
+   for ( int i = 0; i < (int) qgrid_times.size(); ++i ) {
+      qgrid_time_to_names[ qgrid_times[i] ].push_back( qgrid_names[mals_set][i] );
+      qgrid_time_to_names[ qgrid_times[i] ].push_back( qgrid_names[saxs_set][i] );
+   }
+
+   vector < double > output_qs = US_Vector::vunion( f_qs[ qgrid_names[ mals_set ][0] ], f_qs[ qgrid_names[ saxs_set ][0] ] );
+   vector < double > common_qs = US_Vector::intersection( f_qs[ qgrid_names[ mals_set ][0] ], f_qs[ qgrid_names[ saxs_set ][0] ] );
+
+   if ( common_qs.size() ) {
+      QMessageBox::warning( this,
+                            windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                            QString( us_tr(
+                                           "The 2 q grids have %1 common point(s)"
+                                           "\n\nFirst example is q-value %2"
+                                           "\n\nThe values from the lower q-value set (typically MALS) will be used"
+                                           )
+                                     )
+                            .arg( common_qs.size() )
+                            .arg( common_qs.front() )
+                            );
+   }
+      
+   set < QString > plot_names;
+
+   {
+
+      vector < double > mals_q = f_qs[ qgrid_names[ mals_set ].front() ];
+      vector < double > saxs_q = f_qs[ qgrid_names[ saxs_set ].front() ];
+
+      int mals_q_size = (int) mals_q.size();
+      int saxs_q_size = (int) saxs_q.size();
+
+      QString head = qstring_common_head( qgrid_names[saxs_set], true );
+      QString tail = qstring_common_tail( qgrid_names[saxs_set], true );
+
+      US_Vector::printvector( "qgrid_time_to_names.front()", qgrid_time_to_names[ qgrid_times[0] ] );
+      
+      for ( auto const & tnames : qgrid_time_to_names ) {
+         map < double, vector < double > > merged;
+
+         QString name = QString( "%1%2%3_joined" ).arg( head ).arg( tnames.first ).arg( tail );
+
+         if ( use_errors ) {
+            for ( int i = 0; i < saxs_q_size; ++i ) {
+               merged[ saxs_q[i] ] =
+                  {
+                     f_Is[ tnames.second[1] ][i]
+                     ,f_errors[ tnames.second[1] ][i]
+                  };
+            }
+            for ( int i = 0; i < mals_q_size; ++i ) {
+               merged[ mals_q[i] ] =
+                  {
+                     f_Is[ tnames.second[0] ][i]
+                     ,f_errors[ tnames.second[0] ][i]
+                  };
+            }
+            vector < double > output_Is;
+            vector < double > output_errors;
+
+            for ( auto const & tIe : merged ) {
+               output_Is.push_back( tIe.second[0] );
+               output_errors.push_back( tIe.second[1] );
+            }
+            add_plot( name, output_qs, output_Is, output_errors, false, false );
+            plot_names.insert( last_created_file );
+         } else {
+            for ( int i = 0; i < saxs_q_size; ++i ) {
+               merged[ saxs_q[i] ] =
+                  {
+                     f_Is[ tnames.second[1] ][i]
+                  };
+            }
+            for ( int i = 0; i < mals_q_size; ++i ) {
+               merged[ mals_q[i] ] =
+                  {
+                     f_Is[ tnames.second[0] ][i]
+                  };
+            }
+            vector < double > output_Is;
+
+            for ( auto const & tIe : merged ) {
+               output_Is.push_back( tIe.second[0] );
+            }
+            
+            add_plot( name, output_qs, output_Is, false, false );
+            plot_names.insert( last_created_file );
+         }            
+      }
+   }
+            
+   set_selected( plot_names );
+   plot_files();
    update_enables();
 }

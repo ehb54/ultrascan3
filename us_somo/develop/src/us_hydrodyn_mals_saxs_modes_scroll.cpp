@@ -27,7 +27,7 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair()
 
    QStringList names = all_selected_files();
 
-   // somewhat duplicated code in ::common_time()
+   // somewhat duplicated code in ::common_time() && ::join_by_time
    {
       map < vector < double >, QStringList > qgrid_to_names;
 
