@@ -178,8 +178,9 @@ class US_eSignaturesGMP : public US_Widgets
        QStringList read_operators( QString );
        QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
        QString get_assigned_oper_revs( QJsonDocument );
-  QString get_assigned_oper_revs_sa( QString, QJsonDocument, QMap<QString, QString> );
-  void assignOperRevs( void );
+       QString get_assigned_oper_revs_sa( QString, QJsonDocument, QMap<QString, QString> );
+       void assignOperRevs( void );
+       void assignOperRevs_sa( void );
        void addOpertoList( void );
        void removeOperfromList( void );
        void addRevtoList( void );
@@ -194,6 +195,7 @@ class US_eSignaturesGMP : public US_Widgets
        void loadGMPReportDB_assigned( void );
        void loadGMPReportDB_assigned_auto( QString );
        void loadGMPReportDB_assigned_separate( void );
+       void compose_updated_ora_list( QString&, QString&, QString, QString );
   
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );

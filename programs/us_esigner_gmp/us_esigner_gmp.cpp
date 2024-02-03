@@ -518,7 +518,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   revOperGMPRunGrid -> addWidget( pb_set_operRev,         row++,    7,  1,  6 );
 
   connect( pb_selRun_operRev_set,   SIGNAL( clicked() ), SLOT ( selectGMPRun_sa() ) );
-  connect( pb_set_operRev, SIGNAL( clicked() ), SLOT ( assignOperRevs() ) );
+  connect( pb_set_operRev, SIGNAL( clicked() ), SLOT ( assignOperRevs_sa() ) );
   connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
@@ -780,7 +780,7 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   //&& Set defined Operator/Reviewers (if any)
   display_reviewers_auto( row, eSign_details_auto, "operatorListJson" );
   display_reviewers_auto( row, eSign_details_auto, "reviewersListJson" );
-  display_reviewers_auto( row, eSign_details_auto, "approversListJson" ); // Approvers  [TO BE ADDED]
+  display_reviewers_auto( row, eSign_details_auto, "approversListJson" ); 
 
   //rigth section: actions
   QLabel* bn_act     = us_banner( tr( "e-Sign: Actions:" ), 1 );
@@ -1758,6 +1758,9 @@ void US_eSignaturesGMP::selectGMPRun_sa( void )
 
   //set GUI
   set_revOper_panel_gui_sa();
+
+  //TEMP!!!
+  //pb_set_operRev -> setEnabled( true );
 }
 
 
@@ -1938,12 +1941,12 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocumen
       //Check eSign status
       QString estatus = check_revs_esign_status_sa( assigned_list[ ii ], esign_det );
       QString stat_str;
-      estatus.contains("NOT") ? stat_str = "(<b><font color=\"Blue\">" + estatus + "</font><\b>)":
-	stat_str = "(<b><font color=\"Red\">" + estatus + "</font><\b>)";
+      estatus.contains("NOT") ? stat_str = "(<font color=\"Blue\"><b>" + estatus + "<\b></font>)":
+	stat_str = "(<font color=\"Red\"><b>" + estatus + "<\b></font>)";
       
       smry += assigned_list[ ii ] + stat_str;
       if ( ii != assigned_list.count() -1 )
-	smry += "\n";
+	smry += "<br>";
 
       if ( !estatus.contains("NOT") )
 	++esigned_all;
@@ -2450,6 +2453,127 @@ void US_eSignaturesGMP::removeApprfromList( void )
   setUnsetPb_operRev();
 }
 
+
+//Assign operators & reviewers for the current GMP run: for SA
+void US_eSignaturesGMP::assignOperRevs_sa( void )
+{
+  //save existign operators && reviewers:
+  QString exsisting_oper_list = te_operator_names->toPlainText();
+  QString exsisting_rev_list  = te_reviewer_names->toPlainText();
+  QString exsisting_appr_list = te_appr_names->toPlainText();
+
+  qDebug() << "exsisting_oper_list, exsisting_rev_list, exsisting_appr_list: "
+	   << exsisting_oper_list
+	   << exsisting_rev_list
+	   << exsisting_appr_list;
+    
+  
+  //Set new opers && revs in the te areas
+  QString oper_list = te_opers_to_assign->toPlainText();
+  QString rev_list  = te_revs_to_assign->toPlainText();
+  QString appr_list = te_apprs_to_assign->toPlainText();
+
+  qDebug() << "new lists: "
+	   << oper_list
+	   << rev_list
+	   << appr_list;
+
+  //Compose JSON arrays: QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
+                                     
+  QString operListJsonArray = "[";
+  QString revListJsonArray  = "[";
+  QString apprListJsonArray = "[";
+
+  /* first check if respective sections are NOT allowed for reassigning */
+  /* if partially signed, insert in respective lists those who already signed, then the rest (new ones) */
+  
+  QString opers_updated, revs_updated, apprs_updated;
+
+  compose_updated_ora_list( operListJsonArray, opers_updated, exsisting_oper_list, oper_list );
+  compose_updated_ora_list( revListJsonArray,  revs_updated, exsisting_rev_list, rev_list );
+  compose_updated_ora_list( apprListJsonArray, apprs_updated, exsisting_appr_list, appr_list );
+
+  operListJsonArray.chop(1);
+  revListJsonArray.chop(1);
+  apprListJsonArray.chop(1);
+  operListJsonArray += "]";
+  revListJsonArray  += "]";
+  apprListJsonArray += "]";
+    
+  qDebug() << "operListJsonArray -- " << operListJsonArray;
+  qDebug() << "revListJsonArray -- "  << revListJsonArray;
+  qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+
+  qDebug() << "opers_updated -- " << opers_updated;
+  qDebug() << "revs_updated -- "  << revs_updated;
+  qDebug() << "apprs_updated -- " << apprs_updated;
+
+  //[TEMP] Update te fileds
+  te_operator_names -> setText( opers_updated );
+  te_reviewer_names -> setText( revs_updated );
+  te_appr_names     -> setText( apprs_updated );
+
+  //check existing EsignStatusJson
+  QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
+  QString eSignStatusAll    = eSign_details[ "eSignStatusAll" ];
+  QString eSignID           = eSign_details[ "ID" ];
+
+  qDebug() << "[OLD] eSignStatusJson, eSignStatusAll, eSignID -- "
+	   <<  eSignStatusJson << eSignStatusAll <<  eSignID;
+
+  QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
+  if (!jsonDocEsign.isObject())
+    {
+      qDebug() << "to_eSign(): ERROR: eSignStatusJson: NOT a JSON Doc !!";
+      return;
+    }
+  
+  const QJsonValue &to_esign = jsonDocEsign.object().value("to_sign");
+  const QJsonValue &esigned  = jsonDocEsign.object().value("signed");
+
+  QJsonArray to_esign_array  = to_esign .toArray();
+  QJsonArray esigned_array   = esigned  .toArray();
+  
+}
+
+//updated lists of o,r,a
+void US_eSignaturesGMP::compose_updated_ora_list( QString& jsonArrayList, QString& updated_list , QString existing_ora, QString new_ora )
+{
+  QStringList existing_listList;
+  existing_listList = existing_ora.split("\n");
+  existing_listList.removeAll(QString(""));
+  if ( !new_ora.contains("cannot be reassigned") ) //Not esigned, or partially esigned
+    {
+      for (int i=0; i<existing_listList.size(); ++i )
+	{
+	  if ( !existing_listList[i]. contains("NOT SIGNED") ) // eSigned already
+	    {
+	      jsonArrayList += "\"" + existing_listList[i].split("(")[0].trimmed() + "\",";
+	      updated_list  += existing_listList[i].split("(")[0].trimmed() + "(<font color=\"Red\"><b>SIGNED<\b></font>)";
+	      updated_list  += "<br>";
+	    }
+	}
+    }
+  else // all esigned: add all existing && quit
+    {
+      for (int i=0; i<existing_listList.size(); ++i )
+	{
+	  jsonArrayList += "\"" + existing_listList[i].split("(")[0].trimmed() + "\",";
+	  updated_list  += existing_listList[i].split("(")[0].trimmed() + "(<font color=\"Red\"<b>SIGNED<\b></font>)";
+	  updated_list  += "<br>";
+	}
+      return;
+    }
+  
+  //add new to the list (if any)
+  QStringList new_listList = new_ora.split("\n");
+  for (int i=0; i<new_listList.size(); ++i )
+    {
+      jsonArrayList += "\"" + new_listList[i] + "\",";
+      updated_list  += new_listList[i] + "(<font color=\"Blue\"><b>NOT SIGNED<\b></font>)";
+      updated_list  += "<br>";
+    }
+}
 
 //Assign operators & reviewers for the current GMP run:
 void US_eSignaturesGMP::assignOperRevs( void )
