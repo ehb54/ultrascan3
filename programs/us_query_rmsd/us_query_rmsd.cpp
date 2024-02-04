@@ -181,16 +181,6 @@ void US_QueryRmsd::clear_data(){
    Models.clear();
    allModelIDs.clear();
 
-   for (auto it = TI_Noise.begin(); it != TI_Noise.end(); ++it) {
-      delete it.value();
-   }
-   TI_Noise.clear();
-
-   for (auto it = RI_Noise.begin(); it != RI_Noise.end(); ++it) {
-      delete it.value();
-   }
-   RI_Noise.clear();
-
    selIndex.clear();
 //   allEditDataMap.clear();
    allEditIds.clear();
@@ -289,8 +279,6 @@ void US_QueryRmsd::load_runid(){
 
    n_data = allRmsd.size();
    loadData();
-   loadNoises();
-
    editList.sort();
 
    le_runid->setText(runId);
@@ -480,136 +468,6 @@ bool US_QueryRmsd::loadData(){
 
     return true;
 }
-
-bool US_QueryRmsd::loadNoises(){
-    if (! check_connection())
-        return false;
-
-    QVector<int> mlist;
-
-    for (int i = 0; i < allModelIDs.size(); i++){
-        int mId = allModelIDs.at(i);
-        if (mlist.contains(mId))
-            continue;
-        mlist << mId;
-
-        // get noiseIDs, types & lastUpd by modelID
-        QStringList query;
-        query << "get_noiseTypesIDs" << QString::number(mId);
-        dbCon->query( query );
-
-        qDebug() << "In loadNoises() Query: " << query;
-
-        int latest_update_time_ti = 1e100;
-        int latest_update_time_ri = 1e100;
-        int nID_ti=0;
-        int nID_ri=0;
-
-        while ( dbCon->next() ){
-            int       noiseID        = dbCon->value( 0 ).toInt();
-            QString   noiseType      = dbCon->value( 1 ).toString();
-            //QString  date                = US_Util::toUTCDatetimeText( db->value( 2 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-            QDateTime date          = dbCon->value( 2 ).toDateTime();
-
-            QDateTime now = QDateTime::currentDateTime();
-
-            qDebug() << "Noises: noiseID, noiseType, date -- " << noiseID << noiseType << date;
-
-            if ( noiseType.contains( "ti_" ) )
-            {
-                int time_to_now = date.secsTo(now);
-                if ( time_to_now < latest_update_time_ti )
-                {
-                    latest_update_time_ti = time_to_now;
-
-                    nID_ti       = noiseID;
-                }
-            }
-            if ( noiseType.contains( "ri_" ) )
-            {
-                int time_to_now = date.secsTo(now);
-                if ( time_to_now < latest_update_time_ri )
-                {
-                    latest_update_time_ri = time_to_now;
-
-                    nID_ri       = noiseID;
-                }
-            }
-        }
-
-        US_Noise *ri_noise = new US_Noise();
-        US_Noise *ti_noise = new US_Noise();
-
-        //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
-        //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
-        //void US_FeMatch::load_noise( ) in us_fematch.cpp
-//        if ( !nID_ti && !nID_ri )
-//            loadNoises_whenAbsent();
-
-        //creare US_noise objects
-        if ( nID_ti )
-        {
-            ti_noise->load( QString::number( nID_ti ), dbCon );
-            qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
-        }
-        if ( nID_ri )
-        {
-            ri_noise->load( QString::number( nID_ri ), dbCon );
-            qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
-        }
-
-        // noise loaded:  insure that counts jive with data
-        int ntinois = ti_noise->values.size();
-        int nrinois = ri_noise->values.size();
-        int nscans  = editData[allEditIds.at(i)].scanCount();
-        int npoints  = editData[allEditIds.at(i)].pointCount();
-        int npadded = 0;
-
-
-        qDebug() << "ti_noise.count, ri_noise.count: " <<  ti_noise->count << ri_noise->count;
-        qDebug() << "ti_noise.values.size(), ri_noise.values.size(): " << ti_noise->values.size() << ri_noise->values.size();
-
-        if ( ntinois > 0  &&  ntinois < npoints )
-        {  // pad out ti noise values to radius count
-            int jj      = ntinois;
-            while ( jj++ < npoints )
-                ti_noise->values << 0.0;
-            ti_noise->count = ti_noise->values.size();
-            npadded++;
-        }
-
-        if ( nrinois > 0  &&  nrinois < nscans )
-        {  // pad out ri noise values to scan count
-            int jj      = nrinois;
-            while ( jj++ < nscans )
-                ri_noise->values << 0.0;
-            ri_noise->count = ri_noise->values.size();
-            npadded++;
-        }
-
-        if ( npadded  > 0 )
-        {  // let user know that padding occurred
-            QString pmsg;
-
-            if ( npadded == 1 )
-                pmsg = tr( "The noise file was padded out with zeroes\n"
-                          "in order to match the data range." );
-            else
-                pmsg = tr( "The noise files were padded out with zeroes\n"
-                          "in order to match the data ranges." );
-
-            QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
-        }
-
-        TI_Noise[mId] = ti_noise;
-        RI_Noise[mId] = ri_noise;
-
-    }
-
-
-    return true;
-}
-
 
 bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
    int cc = combo->count();

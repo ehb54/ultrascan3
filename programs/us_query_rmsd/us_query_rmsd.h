@@ -37,10 +37,8 @@ class US_QueryRmsd : public US_Widgets{
    QVector<int> allModelIDs;
    QVector<int> selIndex;
    QMap<int, US_Model *> Models;  //DB model id -> Model
-   QMap<int, US_Noise *> TI_Noise;  //DB model id -> TI_Noise
-   QMap<int, US_Noise *> RI_Noise;  //DB model id -> RI_Noise
    QMap<int, US_DataIO::EditedData> editData;  //DB edit id -> EditedData
-//   QMap<int, US_DataIO::RawData*> rawData;      //DB edit id -> RawData
+   QMap<int, US_DataIO::RawData*> rawData;      //DB edit id -> RawData
    int n_data;
 
    QStringList methodList;
@@ -68,7 +66,6 @@ class US_QueryRmsd : public US_Widgets{
    void highlight(void);
 //   bool load_model(QString, US_Model*);
    bool loadData(void);
-   bool loadNoises(void);
 
    private slots:
    void load_runid(void);
