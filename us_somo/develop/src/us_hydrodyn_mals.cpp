@@ -1247,6 +1247,8 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
    }
 
    // remove them now
+   lb_created_files->setUpdatesEnabled( false );
+
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_created_files->item( i )->text() ) )
@@ -1255,6 +1257,10 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          delete lb_created_files->takeItem( i );
       }
    }
+
+   lb_created_files->setUpdatesEnabled( true );
+
+   lb_files->setUpdatesEnabled( false );
 
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
@@ -1303,6 +1309,8 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
       }
    }
 
+   lb_files->setUpdatesEnabled( true );
+   
    disable_updates = false;
    plot_files();
    // if ( !lb_files->count() &&

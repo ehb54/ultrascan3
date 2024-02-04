@@ -1246,9 +1246,9 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
 
    }
 
-   // disconnect( lb_created_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
-
    // remove them now
+   lb_created_files->setUpdatesEnabled( false );
+
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_created_files->item( i )->text() ) )
@@ -1258,8 +1258,9 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
       }
    }
 
-   // connect( lb_created_files, SIGNAL( itemSelectionChanged() ), SLOT( update_created_files() ) );
-   // update_created_files();
+   lb_created_files->setUpdatesEnabled( true );
+
+   lb_files->setUpdatesEnabled( false );
 
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
@@ -1307,6 +1308,8 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
          qApp->processEvents();
       }
    }
+
+   lb_files->setUpdatesEnabled( true );
 
    disable_updates = false;
    plot_files();
