@@ -242,6 +242,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
          PBMODE_SD,
          PBMODE_FASTA,
          PBMODE_MALS_SAXS,
+         PBMODE_Q_EXCLUDE,
          PBMODE_NONE
       };
 
@@ -254,6 +255,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QRadioButton          * rb_pbmode_sd;
       QRadioButton          * rb_pbmode_fasta;
       QRadioButton          * rb_pbmode_mals_saxs;
+      QRadioButton          * rb_pbmode_q_exclude;
       QRadioButton          * rb_pbmode_none;
       void                    pbmode_select( pbmodes mode );
 
@@ -266,6 +268,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void set_pbmode_sd( );
       void set_pbmode_fasta( );
       void set_pbmode_mals_saxs( );
+      void set_pbmode_q_exclude( );
       void set_pbmode_none( );
 
  private:
@@ -570,6 +573,19 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       QLabel        *lbl_mode_title;
 
+      // q_exclude
+
+      QPushButton   *pb_q_exclude_vis;
+      QPushButton   *pb_q_exclude_left;
+      QPushButton   *pb_q_exclude_right;
+      QPushButton   *pb_q_exclude_clear;
+      QLabel        *lbl_q_exclude;
+      QLabel        *lbl_q_exclude_detail;
+
+      void          q_exclude_update_lbl();
+      
+      set < double > q_exclude;
+      
       // wyatt errors
 
       QPushButton   *pb_wyatt_start;
@@ -1076,6 +1092,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       vector < QWidget * >                pbmode_sd_widgets;
       vector < QWidget * >                pbmode_fasta_widgets;
       vector < QWidget * >                pbmode_mals_saxs_widgets;
+      vector < QWidget * >                pbmode_q_exclude_widgets;
       vector < QWidget * >                rgc_widgets;
       vector < QWidget * >                pm_widgets;
       vector < QWidget * >                guinier_widgets;
@@ -1849,6 +1866,11 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void model_view               ();
       void model_text               ();
       void model_remove             ();
+
+      void q_exclude_vis            ();
+      void q_exclude_left           ();
+      void q_exclude_right          ();
+      void q_exclude_clear          ();
 
       void artificial_gaussians     ();
 

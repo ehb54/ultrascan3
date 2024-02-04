@@ -1246,6 +1246,8 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
 
    }
 
+   // disconnect( lb_created_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
+
    // remove them now
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
@@ -1255,6 +1257,9 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
          delete lb_created_files->takeItem( i );
       }
    }
+
+   // connect( lb_created_files, SIGNAL( itemSelectionChanged() ), SLOT( update_created_files() ) );
+   // update_created_files();
 
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
@@ -1587,11 +1592,11 @@ void US_Hydrodyn_Mals_Saxs::add_files( bool load_conc, bool from_dir ) {
             add_filenames << basename;
             if ( found_times.count( filenames[ i ] ) ) {
                if ( f_time.count( basename ) &&
-                    f_time[ basename ] != found_times[ filenames[ i ] ] ) {
+                    QString( "%1" ).arg( f_time[ basename ] ) != QString( "%1" ).arg( found_times[ filenames[ i ] ] ) ) {
                   warnings += QString( "File %1 has a conflicting stored time %2 vs the time extracted from the name %3, using the stored time\n" )
                      .arg( basename )
-                     .arg( f_time[ basename ] )
-                     .arg( found_times[ filenames[ i ] ] )
+                     .arg( f_time[ basename ], 0, 'g', 12 )
+                     .arg( found_times[ filenames[ i ] ], 0, 'g', 12 )
                      ;
                } else {
                   f_time[ basename ] = found_times[ filenames[ i ] ];
@@ -3131,6 +3136,7 @@ void US_Hydrodyn_Mals_Saxs::update_created_files()
 {
    if ( !disable_updates )
    {
+      qDebug() << "update_created_files - calls update_enables\n";
       update_enables();
    }
 }
@@ -6181,7 +6187,6 @@ void US_Hydrodyn_Mals_Saxs::crop_to_vis()
       plot_dist_zoomer->zoom( -1 );
    }
 }
-
 
 void US_Hydrodyn_Mals_Saxs::legend()
 {

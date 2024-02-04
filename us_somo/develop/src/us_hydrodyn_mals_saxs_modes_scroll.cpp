@@ -133,6 +133,17 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair_enables()
    // mostly disable except cancel & wheel
    TSO << "scroll_pair_enables()\n";
    pb_wheel_cancel        -> setEnabled( true );
+   pb_axis_x              -> setEnabled( true );
+   pb_axis_y              -> setEnabled( true );
+   cb_eb                  -> setEnabled( true );
+   cb_dots                -> setEnabled( true );
+   pb_color_rotate        -> setEnabled( true );
+   pb_line_width          -> setEnabled( true );
+   pb_q_exclude_vis       -> setEnabled( true );
+   pb_q_exclude_left      -> setEnabled( true );
+   pb_q_exclude_right     -> setEnabled( true );
+   pb_q_exclude_clear     -> setEnabled( q_exclude.size() > 0 );
+   
    wheel_enables( true );
 }
 

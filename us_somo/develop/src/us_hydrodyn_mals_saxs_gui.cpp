@@ -3138,6 +3138,14 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    rb_pbmode_mals_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( rb_pbmode_mals_saxs );
    connect(rb_pbmode_mals_saxs, SIGNAL(clicked( )), SLOT( set_pbmode_mals_saxs( )));
+   rb_pbmode_mals_saxs->hide();
+
+   rb_pbmode_q_exclude = new QRadioButton( "q exclude", this ); 
+   rb_pbmode_q_exclude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_q_exclude->setMinimumHeight(minHeight3);
+   rb_pbmode_q_exclude->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_q_exclude );
+   connect(rb_pbmode_q_exclude, SIGNAL(clicked( )), SLOT( set_pbmode_q_exclude( )));
 
    rb_pbmode_none = new QRadioButton( "None", this ); 
    rb_pbmode_none->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3154,7 +3162,45 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    bg_pbmode->addButton( rb_pbmode_sd );
    bg_pbmode->addButton( rb_pbmode_fasta );
    bg_pbmode->addButton( rb_pbmode_mals_saxs );
+   bg_pbmode->addButton( rb_pbmode_q_exclude );
    bg_pbmode->addButton( rb_pbmode_none );
+
+   // q exclude
+
+   pb_q_exclude_vis = new QPushButton(us_tr("Excl. Vis."), this);
+   pb_q_exclude_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_vis->setMinimumHeight(minHeight1);
+   pb_q_exclude_vis->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_vis, SIGNAL(clicked()), SLOT(q_exclude_vis()));
+
+   pb_q_exclude_left = new QPushButton(us_tr("Excl. Left"), this);
+   pb_q_exclude_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_left->setMinimumHeight(minHeight1);
+   pb_q_exclude_left->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_left, SIGNAL(clicked()), SLOT(q_exclude_left()));
+
+   pb_q_exclude_right = new QPushButton(us_tr("Excl. Right"), this);
+   pb_q_exclude_right->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_right->setMinimumHeight(minHeight1);
+   pb_q_exclude_right->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_right, SIGNAL(clicked()), SLOT(q_exclude_right()));
+
+   pb_q_exclude_clear = new QPushButton(us_tr("Excl. Clear"), this);
+   pb_q_exclude_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_clear->setMinimumHeight(minHeight1);
+   pb_q_exclude_clear->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_clear, SIGNAL(clicked()), SLOT(q_exclude_clear()));
+
+   lbl_q_exclude_detail = new QLabel( this );
+   lbl_q_exclude_detail->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_q_exclude_detail->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_q_exclude_detail );
+   lbl_q_exclude_detail->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_q_exclude_detail->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_q_exclude_detail->setCursor(QCursor(Qt::IBeamCursor));
+
+   q_exclude.clear();
+   q_exclude_update_lbl();
 
    // bottom
 
@@ -3313,6 +3359,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       l_pbmode->addWidget( rb_pbmode_sd );
       l_pbmode->addWidget( rb_pbmode_fasta );
       l_pbmode->addWidget( rb_pbmode_mals_saxs );
+      l_pbmode->addWidget( rb_pbmode_q_exclude );
       l_pbmode->addWidget( rb_pbmode_none );
    }
 
@@ -3430,13 +3477,32 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       l_pbmode_mals_saxs->setSpacing( 0 );
 
       l_pbmode_mals_saxs->addWidget( pb_mals_saxs_angles_save );
+
+      // not in this layout
       // l_pbmode_mals_saxs->addWidget( lbl_mals_saxs_angles_data );
 
       pbmode_mals_saxs_widgets.push_back( pb_mals_saxs_angles_save );
       pbmode_mals_saxs_widgets.push_back( lbl_mals_saxs_angles_data );
    }
 
-   
+   QBoxLayout * l_pbmode_q_exclude = new QHBoxLayout();
+   {
+      l_pbmode_q_exclude->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_q_exclude->setSpacing( 0 );
+
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_vis );
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_left );
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_right );
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_clear );
+
+      for ( auto const & widget : pbmode_q_exclude_widgets ) {
+         l_pbmode_q_exclude->addWidget( widget );
+      }
+
+      // not in this layout
+      pbmode_q_exclude_widgets.push_back( lbl_q_exclude_detail );
+   }
+
    QBoxLayout * hbl_file_buttons_3 = new QHBoxLayout(); hbl_file_buttons_3->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3->setSpacing( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
@@ -3923,8 +3989,10 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    vbl_plot_group->addLayout ( l_pbmode_sd );
    vbl_plot_group->addLayout ( l_pbmode_fasta );
    vbl_plot_group->addLayout ( l_pbmode_mals_saxs );
+   vbl_plot_group->addLayout ( l_pbmode_q_exclude );
    // vbl_plot_group->addWidget ( lbl_mals_saxs_angles_data, 0, Qt::AlignCenter ); // don't like this
    vbl_plot_group->addWidget ( lbl_mals_saxs_angles_data );
+   vbl_plot_group->addWidget ( lbl_q_exclude_detail );
    vbl_plot_group->addWidget ( qs_plots );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
@@ -4519,6 +4587,11 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
       return;
    }
 
+   for ( auto const & widget : pbmode_q_exclude_widgets ) {
+      widget->setEnabled( true );
+   }
+   q_exclude_update_lbl();
+
    // cout << "update_enables\n";
 
    // cout << "US_Hydrodyn_Mals_Saxs::update_enables()\n";
@@ -4583,7 +4656,6 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
    //    }
    // }
          
-
    lbl_selected->setText( QString( us_tr( "%1 of %2 files selected" ) )
                           .arg( files_selected_count )
                           .arg( lb_files->count() ) );
@@ -4721,6 +4793,11 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
    pb_show_created       ->setEnabled( files_created_selected_not_shown_count > 0 );
    pb_show_only_created  ->setEnabled( files_created_selected_count > 0 &&
                                        files_selected_not_created > 0 );
+
+   pb_q_exclude_vis      ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   pb_q_exclude_left     ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   pb_q_exclude_right    ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+
    // #define DEBUG_SCALING
 #if defined( DEBUG_SCALING )
    {
@@ -5034,7 +5111,11 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    pb_crop_zero          ->setEnabled( false ); 
    pb_crop_left          ->setEnabled( false ); 
    pb_crop_undo          ->setEnabled( false );
-   pb_crop_right         ->setEnabled( false ); 
+   pb_crop_right         ->setEnabled( false );
+   for ( auto const & widget : pbmode_q_exclude_widgets ) {
+      widget->setEnabled( false );
+   }
+
    pb_legend             ->setEnabled( false );
    pb_axis_x             ->setEnabled( false );
    pb_axis_y             ->setEnabled( false );
@@ -5635,6 +5716,10 @@ void US_Hydrodyn_Mals_Saxs::set_pbmode_mals_saxs() {
    pbmode_select( PBMODE_MALS_SAXS );
 }
 
+void US_Hydrodyn_Mals_Saxs::set_pbmode_q_exclude() {
+   pbmode_select( PBMODE_Q_EXCLUDE );
+}
+
 void US_Hydrodyn_Mals_Saxs::set_pbmode_none() {
    pbmode_select( PBMODE_NONE );
 }
@@ -5648,6 +5733,7 @@ void US_Hydrodyn_Mals_Saxs::pbmode_select( pbmodes mode ) {
    ShowHide::hide_widgets( pbmode_sd_widgets, true );
    ShowHide::hide_widgets( pbmode_fasta_widgets, true );
    ShowHide::hide_widgets( pbmode_mals_saxs_widgets, true );
+   ShowHide::hide_widgets( pbmode_q_exclude_widgets, true );
 
    switch ( mode ) {
    case PBMODE_MAIN :
@@ -5670,6 +5756,9 @@ void US_Hydrodyn_Mals_Saxs::pbmode_select( pbmodes mode ) {
       break;
    case PBMODE_MALS_SAXS :
       ShowHide::hide_widgets( pbmode_mals_saxs_widgets, false );
+      break;
+   case PBMODE_Q_EXCLUDE :
+      ShowHide::hide_widgets( pbmode_q_exclude_widgets, false );
       break;
    case PBMODE_NONE :
       break;
@@ -5778,3 +5867,235 @@ void US_Hydrodyn_Mals_Saxs::fasta_file() {
    le_fasta_value->setEnabled( true );
    return;
 }
+
+void US_Hydrodyn_Mals_Saxs::q_exclude_update_lbl() {
+   pb_q_exclude_clear->setEnabled( q_exclude.size() > 0 );
+
+   QString msg = "<hr>";
+
+   if ( !q_exclude.size() )  {
+      lbl_q_exclude_detail->setText( msg + us_tr( "<b>Currently no excluded q values</b>" ) + "<br>" );
+      return;
+   }
+
+   msg += QString( us_tr( "<b>%1 Excluded q value%2:</b>" ) )
+      .arg( q_exclude.size() )
+      .arg( q_exclude.size() == 1 ? "" : "s" )
+      + "<br>";
+
+   static int entries_per_row = 5;
+   static int max_rows = 8;
+
+   int entry = 0;
+   int row   = 0;
+
+   msg += "<center><table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr>";
+
+   for ( auto & q : q_exclude ) {
+      msg += QString( "<td>%1</td>" ).arg( q, 0, 'g', 12 );
+      if ( !( ++entry % entries_per_row ) ) {
+         msg += "</tr><tr>";
+         if ( ++row > max_rows ) {
+            msg += "<td>...</td>";
+            break;
+         }
+      }
+   }
+
+   // don't leave an empty row
+   msg = msg.replace( QRegularExpression( "</tr><tr>$" ), "" );
+   
+   msg += "</tr></table></center>";
+   
+   lbl_q_exclude_detail->setText( msg );
+}
+
+void US_Hydrodyn_Mals_Saxs::q_exclude_clear() {
+   q_exclude.clear();
+   q_exclude_update_lbl();
+}
+
+void US_Hydrodyn_Mals_Saxs::q_exclude_vis() {
+   // find curves within zoomRect 
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   set < QString > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) ) {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ ) {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy ) {
+                  selected_files.insert( this_file );
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() )
+   {
+      editor_msg( "red", us_tr( "q exclude visible: The current visible plot is empty" ) );
+      return;
+   }
+   
+   int added       = 0;
+   int preexisting = 0;
+   
+   set < double > this_q_checked;
+      
+   for ( auto const & it : selected_files ) {
+      for ( auto const & q : f_qs[ it ] ) { 
+         if ( q >= minx && q <= maxx ) {
+            if ( !this_q_checked.count( q ) ) {
+               this_q_checked.insert( q );
+               if ( !q_exclude.count( q ) ) {
+                  ++added;
+                  q_exclude.insert( q );
+               } else {
+                  ++preexisting;
+               }
+            }
+         }
+      }
+   }
+
+   QString msg = us_tr( "q exclude visible :" );
+   QString color = "darkblue";
+   
+   if ( added ) {
+      msg += QString( us_tr( " %1 selected q value(s) added to the exclusion list." ) ).arg( added );
+   }
+   if ( preexisting ) {
+      msg += QString( us_tr( " %1 selected q value(s) was(were) already excluded." ) ).arg( preexisting );
+      if ( !added ) {
+         color = "darkred";
+      }
+   }
+   editor_msg( color, msg );
+   q_exclude_update_lbl();
+}
+
+void US_Hydrodyn_Mals_Saxs::q_exclude_left() {
+   // find curves within zoomRect 
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   set < QString > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) ) {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ ) {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy ) {
+                  selected_files.insert( this_file );
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() ) {
+      editor_msg( "red", us_tr( "q exclude left: The current visible plot is empty" ) );
+      return;
+   }
+   
+   set < double > this_q_checked;
+   set < double > this_q_new;
+   
+   for ( auto const & it : selected_files ) {
+      for ( auto const & q : f_qs[ it ] ) { 
+         if ( q >= minx && q <= maxx ) {
+            if ( !this_q_checked.count( q ) ) {
+               this_q_checked.insert( q );
+               if ( !q_exclude.count( q ) ) {
+                  this_q_new.insert( q );
+               }
+            }
+         }
+      }
+   }
+
+   if ( this_q_new.size() ) {
+      q_exclude.insert( *(this_q_new.begin()) );
+      editor_msg( "darkblue", us_tr( "q exclude : 1 new visible left q value was added\n" ) );
+      q_exclude_update_lbl();
+   } else {
+      editor_msg( "darkred", us_tr( "q exclude : no new visible left q values were found\n" ) );
+   }      
+}
+
+void US_Hydrodyn_Mals_Saxs::q_exclude_right() {
+   // find curves within zoomRect 
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   set < QString > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) ) {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ ) {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy ) {
+                  selected_files.insert( this_file );
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() ) {
+      editor_msg( "red", us_tr( "q exclude right: The current visible plot is empty" ) );
+      return;
+   }
+   
+   set < double > this_q_checked;
+   set < double > this_q_new;
+   
+   for ( auto const & it : selected_files ) {
+      for ( auto const & q : f_qs[ it ] ) { 
+         if ( q >= minx && q <= maxx ) {
+            if ( !this_q_checked.count( q ) ) {
+               this_q_checked.insert( q );
+               if ( !q_exclude.count( q ) ) {
+                  this_q_new.insert( q );
+               }
+            }
+         }
+      }
+   }
+
+   if ( this_q_new.size() ) {
+      q_exclude.insert( *(--this_q_new.end()) );
+      editor_msg( "darkblue", us_tr( "q exclude : 1 new visible right q value was added\n" ) );
+      q_exclude_update_lbl();
+   } else {
+      editor_msg( "darkred", us_tr( "q exclude : no new visible right q values were found\n" ) );
+   }      
+}
+

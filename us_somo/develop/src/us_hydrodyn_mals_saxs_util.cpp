@@ -6205,6 +6205,26 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
 
    QStringList names = all_selected_files();
 
+   bool do_q_exclude = false;
+   
+   if ( q_exclude.size() ) {
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Join I#,*(q) by time" )
+                                     ,lbl_q_exclude_detail->text()
+                                     + us_tr( "<br>Exclude these q-values from the join?" )
+                                     ) )
+      {
+      case QMessageBox::Yes : 
+         do_q_exclude = true;
+         break;
+      default: 
+         break;
+      }
+   }
+   if ( do_q_exclude ) {
+      qDebug() << "do_q_exclude true";
+   }
+
    // somewhat duplicated code in ::common_time()
    {
 
@@ -6369,6 +6389,20 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
                      ,f_errors[ tnames.second[0] ][i]
                   };
             }
+
+            if ( do_q_exclude ) {
+               for ( auto const & q : q_exclude ) {
+                  merged.erase( q );
+               }
+               if ( !merged.size() ) {
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                                         us_tr( "no points remain after removing excluded q values!" )
+                                         );
+                  return update_enables();
+               }
+            }
+            
             vector < double > output_Is;
             vector < double > output_errors;
 
@@ -6376,6 +6410,7 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
                output_Is.push_back( tIe.second[0] );
                output_errors.push_back( tIe.second[1] );
             }
+
             add_plot( name, output_qs, output_Is, output_errors, false, false );
             plot_names.insert( last_created_file );
          } else {
@@ -6391,6 +6426,20 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
                      f_Is[ tnames.second[0] ][i]
                   };
             }
+
+            if ( do_q_exclude ) {
+               for ( auto const & q : q_exclude ) {
+                  merged.erase( q );
+               }
+               if ( !merged.size() ) {
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": Join I#,*(q) by time" ),
+                                         us_tr( "no points remain after removing excluded q values!" )
+                                         );
+                  return update_enables();
+               }
+            }
+            
             vector < double > output_Is;
 
             for ( auto const & tIe : merged ) {
