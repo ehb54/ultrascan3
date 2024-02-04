@@ -165,25 +165,16 @@ bool US_QueryRmsd::check_connection(){
 }
 
 void US_QueryRmsd::clear_data(){
-   allRmsd.clear();
-   allEdit.clear();
-   allAnalysis.clear();
-   allMethod.clear();
-   allCell.clear();
-   allChannel.clear();
-   allLambda.clear();
-   n_data = 0;
+   allData.clear();
    threshold = -1;
 
    for (auto it = Models.begin(); it != Models.end(); ++it) {
       delete it.value();
    }
    Models.clear();
-   allModelIDs.clear();
 
    selIndex.clear();
 //   allEditDataMap.clear();
-   allEditIds.clear();
 //   QMapIterator<int, US_DataIO::EditedData*> ite(editData);
 //   while (ite.hasNext()) {
 //      ite.next();
@@ -247,38 +238,42 @@ void US_QueryRmsd::load_runid(){
       int mId = modelIDs_tmp.at(i).toInt();
       int state = model->load(modelIDs_tmp.at(i), dbCon);
       if (state == US_DB2::OK){
+         DataBundle data;
          QStringList list1 = model->description.split(u'.');
-         QString cell = list1.at(1).at(0);
-         QString channel = list1.at(1).at(1);
-         QString lambda = list1.at(1).mid(2);
+         data.cell = list1.at(1).at(0);
+         data.channel = list1.at(1).at(1);
+         data.lamda = list1.at(1).mid(2);
          QStringList list2 = list1.at(2).split(u'_');
-         QString edit = list2.at(0);
-         QString analysis = list2.at(1);
-         QString method = list2.at(2);
+         data.edit = list2.at(0);
+         data.analysis = list2.at(1);
+         data.method = list2.at(2);
 
-         allCell << cell;
-         allChannel << channel;
-         allLambda << lambda;
-         allEdit << edit;
-         allAnalysis << analysis;
-         allMethod << method;
+         int editId = editIDs_tmp.at(i);
+         int rdataId, expId;
+         QString editFile, rdataFile, mesg;
+         if (! info_by_editId(editId, rdataId, expId, editFile, rdataFile, mesg)) {
+            qDebug() << mesg;
+            continue;
+         }
+         data.modelID = mId;
+         data.editID = editId;
+         data.editFile = editFile;
+         data.rdataID = rdataId;
+         data.rdataFile = rdataFile;
+         data.rmsd = qSqrt(model->variance);
 
-         if (! editList.contains(edit))
-            editList << edit;
+         if (! editList.contains(data.edit))
+            editList << data.edit;
 
-         allRmsd << qSqrt(model->variance);
-
-         allModelIDs << mId;
-         Models[mId] = model;
-         allEditIds << editIDs_tmp.at(i);
+         allData << data;
+         Models.insert(mId, model);
       } else {
          delete model;
       }
 
    }
 
-   n_data = allRmsd.size();
-   loadData();
+   // loadData();
    editList.sort();
 
    le_runid->setText(runId);
@@ -293,181 +288,231 @@ void US_QueryRmsd::load_runid(){
    set_analysis(cb_edit->count() - 1);
 }
 
-//bool US_QueryRmsd::load_model(QString mID, US_Model *model){
-//    if (! check_connection())
-//        return false;
-//    int  rc      = 0;
-//    qDebug() << "ModelID to retrieve: -- " << mID;
-//    rc   = model->load( mID , dbCon );
-//    qDebug() << "LdM:  model load rc" << rc;
-////    qApp->processEvents();
-
-////    model_loaded = model;   // Save model exactly as loaded
-////    model_used   = model;   // Make that the working model
-////    is_dmga_mc   = ( model.monteCarlo  &&
-////                  model.description.contains( "DMGA" )  &&
-////                  model.description.contains( "_mcN" ) );
-////    qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
-////             << "description" << model.description;
-
-//    if ( model->components.size() == 0 )
-//    {
-//        QMessageBox::critical( this, tr( "Empty Model" ),
-//                              tr( "Loaded model has ZERO components!" ) );
-//        return false;
-//    }
-
-////    ti_noise.count = 0;
-////    ri_noise.count = 0;
-////    ti_noise.values.clear();
-////    ri_noise.values.clear();
-
-////    //Load noise files
-////    triple_information[ "mID" ] = QString::number( mID );
-
-////    progress_msg->setValue( 4 );
-////    qApp->processEvents();
-
-////    loadNoises( triple_information );
-
-//    return true;
-//}
+bool US_QueryRmsd::info_by_editId(int editId, int& rdataId, int& expId,
+                                  QString& editFile, QString& rdataFile, QString& mesg) {
+   if (! check_connection()){
+      mesg = "Error: DB connection";
+      return false;
+   }
+   QStringList query;
+   query << "get_editedData" << QString::number(editId);
+   dbCon->query(query);
+   if ( dbCon->lastErrno() == US_DB2::OK ){
+      if (dbCon->next()){
+         rdataId = dbCon->value(0).toInt();
+         editFile = dbCon->value(3).toString();
+      }
+   }else{
+      mesg = tr("Error: get_editedData: ID: %1\n%2").
+             arg(editId).arg(dbCon->lastError());
+      return false;
+   }
+   query.clear();
+   query << "get_rawData" << QString::number(rdataId);
+   dbCon->query(query);
+   if ( dbCon->lastErrno() == US_DB2::OK ){
+      if (dbCon->next()){
+         rdataFile = dbCon->value(2).toString();
+         expId = dbCon->value(4).toInt();
+      }
+   }else{
+      mesg = tr("Error: get_rawData: ID: %1\n%2").
+             arg(rdataId).arg(dbCon->lastError());
+      return false;
+   }
+   return true;
+}
 
 
-bool US_QueryRmsd::loadData(){
-
+bool US_QueryRmsd::load_data(int index, QString &mesg) {
    if (! check_connection())
       return false;
 
    QTemporaryDir temp_dir;
    if (! temp_dir.isValid())
       return false;
-   QDir dir(temp_dir.path());
-   QString efn = "sample.000.RI.1.A.280.xml";
-   QString rfn = "sample.RI.1.A.280.auc";
-   QFileInfo efile(dir, efn);
-   QFileInfo rfile(dir, rfn);
-   editData.clear();
-   QVector<int> elist;
-   foreach (int eId, allEditIds) {
-      if (elist.contains(eId))
-         continue;
-      elist << eId;
-      QStringList query;
-      query << "get_editedData" << QString::number(eId);
-      dbCon->query(query);
-      int rId = -1;
-      if ( dbCon->lastErrno() == US_DB2::OK ){
-         if (dbCon->next()) rId = dbCon->value(0).toInt();
-      }else{
-         QMessageBox::warning(this, "Error", dbCon->lastError());
-//         rawData[eId] = NULL;
-         continue;
-      }
-      dbCon->readBlobFromDB(efile.absoluteFilePath(), "download_editData", eId);
-      dbCon->readBlobFromDB(rfile.absoluteFilePath(), "download_aucData", rId);
-//      US_DataIO::RawData* rdata;
-      US_DataIO::EditedData edata;
-      US_DataIO::loadData(dir.absolutePath(), efn, edata);
-      editData[eId] = edata;
+   int state;
+   QString edit_file = allData.at(index).editFile;
+   QString rdata_file = allData.at(index).rdataFile;
+   int editId = allData.at(index).editID;
+   int rdataId = allData.at(index).rdataID;
+
+   US_DataIO::EditedData edata;
+   US_DataIO::RawData    rdata;
+   dbCon->readBlobFromDB(temp_dir.filePath(edit_file), "download_editData", editId);
+   if (dbCon->lastErrno() != US_DB2::OK) {
+      mesg = tr("Error: download_editData: ID: %1\n%2").arg(editId).arg(dbCon->lastError());
+      return false;
    }
 
-   dir.removeRecursively();
+   if (rawData.contains(rdataId)) {
+      rdata = rawData.value(rdataId);
+      state = US_DataIO::writeRawData(temp_dir.filePath(rdata_file), rdata);
+      if (state != US_DataIO::OK) {
+         mesg = tr("Error: writeRawData: ID: %1\n%2").arg(editId).
+                arg(US_DataIO::errorString(state));
+         return false;
+      }
+   } else {
+      dbCon->readBlobFromDB(temp_dir.filePath(rdata_file), "download_aucData", rdataId);
+      if (dbCon->lastErrno() != US_DB2::OK) {
+         mesg = tr("Error: download_aucData: ID: %1\n%2").arg(rdataId).arg(dbCon->lastError());
+         return false;
+      }
+   }
+   QVector< US_DataIO::EditedData > edata_vec;
+   edata_vec << edata;
+   QVector< US_DataIO::RawData > rdata_vec;
+   rdata_vec << rdata;
+   state = US_DataIO::loadData(temp_dir.path(), edit_file, edata_vec, rdata_vec);
+   if (state != US_DataIO::OK) {
+      QMessageBox::warning(this, "Error",
+                           tr("Error in saving the edit data of ID: %1\n%2").arg(editId).
+                           arg(US_DataIO::errorString(state)));
+      mesg = tr("Error: download_editData: ID: %1\n%2").arg(editId).arg(US_DataIO::errorString(state));
+      return false;
+   }
 
-//    int rID=0;
-//    QString rfilename;
-//    int eID=0;
-//    QString efilename;
+   editData.insert(editId, edata);
+   // dir.removeRecursively();
+   return true;
 
-//    //get EditedData filename && editedDataID for current triple, then infer rawDataID
-//    QStringList query;
+}
 
-//    query << "get_editedDataFilenamesIDs" << triple_information["filename"];
-//    db->query( query );
+// bool US_QueryRmsd::load_data(int ) {
 
-//    qDebug() << "In loadData() Query: " << query;
-//    qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+//    if (! check_connection())
+//       return false;
 
-//    int latest_update_time = 1e100;
-
-//    QString triple_name_actual = triple_information[ "triple_name" ];
-
-//    if ( triple_name_actual.contains("Interference") )
-//        triple_name_actual.replace( "Interference", "660" );
-
-//    while ( db->next() )
-//    {
-//        QString  filename            = db->value( 0 ).toString();
-//        int      editedDataID        = db->value( 1 ).toInt();
-//        int      rawDataID           = db->value( 2 ).toInt();
-//        //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-//        QDateTime date               = db->value( 3 ).toDateTime();
-
-//        QDateTime now = QDateTime::currentDateTime();
-
-//        if ( filename.contains( triple_name_actual ) )
-//        {
-//            int time_to_now = date.secsTo(now);
-//            if ( time_to_now < latest_update_time )
-//            {
-//                latest_update_time = time_to_now;
-//                //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-
-//                rID       = rawDataID;
-//                eID       = editedDataID;
-//                efilename = filename;
-//            }
-//        }
+//    QTemporaryDir temp_dir;
+//    if (! temp_dir.isValid())
+//       return false;
+//    QDir dir(temp_dir.path());
+//    QString efn = "sample.000.RI.1.A.280.xml";
+//    QString rfn = "sample.RI.1.A.280.auc";
+//    QFileInfo efile(dir, efn);
+//    QFileInfo rfile(dir, rfn);
+//    editData.clear();
+//    QVector<int> elist;
+//    foreach (int eId, allEditIds) {
+//       if (elist.contains(eId))
+//          continue;
+//       elist << eId;
+//       QStringList query;
+//       query << "get_editedData" << QString::number(eId);
+//       dbCon->query(query);
+//       int rId = -1;
+//       if ( dbCon->lastErrno() == US_DB2::OK ){
+//          if (dbCon->next()) rId = dbCon->value(0).toInt();
+//       }else{
+//          QMessageBox::warning(this, "Error", dbCon->lastError());
+// //         rawData[eId] = NULL;
+//          continue;
+//       }
+//       dbCon->readBlobFromDB(efile.absoluteFilePath(), "download_editData", eId);
+//       dbCon->readBlobFromDB(rfile.absoluteFilePath(), "download_aucData", rId);
+// //      US_DataIO::RawData* rdata;
+//       US_DataIO::EditedData edata;
+//       US_DataIO::loadData(dir.absolutePath(), efn, edata);
+//       editData[eId] = edata;
 //    }
 
-//    qDebug() << "In loadData() after Query ";
+//    dir.removeRecursively();
 
-//    QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
-//    QDir edir( edirpath );
-//    if (!edir.exists())
-//        edir.mkpath( edirpath );
+// //    int rID=0;
+// //    QString rfilename;
+// //    int eID=0;
+// //    QString efilename;
 
-//    QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
+// //    //get EditedData filename && editedDataID for current triple, then infer rawDataID
+// //    QStringList query;
 
-//    qDebug() << "In loadData() efilename: " << efilename;
+// //    query << "get_editedDataFilenamesIDs" << triple_information["filename"];
+// //    db->query( query );
+
+// //    qDebug() << "In loadData() Query: " << query;
+// //    qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+
+// //    int latest_update_time = 1e100;
+
+// //    QString triple_name_actual = triple_information[ "triple_name" ];
+
+// //    if ( triple_name_actual.contains("Interference") )
+// //        triple_name_actual.replace( "Interference", "660" );
+
+// //    while ( db->next() )
+// //    {
+// //        QString  filename            = db->value( 0 ).toString();
+// //        int      editedDataID        = db->value( 1 ).toInt();
+// //        int      rawDataID           = db->value( 2 ).toInt();
+// //        //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+// //        QDateTime date               = db->value( 3 ).toDateTime();
+
+// //        QDateTime now = QDateTime::currentDateTime();
+
+// //        if ( filename.contains( triple_name_actual ) )
+// //        {
+// //            int time_to_now = date.secsTo(now);
+// //            if ( time_to_now < latest_update_time )
+// //            {
+// //                latest_update_time = time_to_now;
+// //                //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+
+// //                rID       = rawDataID;
+// //                eID       = editedDataID;
+// //                efilename = filename;
+// //            }
+// //        }
+// //    }
+
+// //    qDebug() << "In loadData() after Query ";
+
+// //    QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
+// //    QDir edir( edirpath );
+// //    if (!edir.exists())
+// //        edir.mkpath( edirpath );
+
+// //    QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
+
+// //    qDebug() << "In loadData() efilename: " << efilename;
 
 
-    // Can check here if such filename exists
-    // QFileInfo check_file( efilepath );
-    // if ( check_file.exists() && check_file.isFile() )
-    //   qDebug() << "EditProfile file: " << efilepath << " exists";
-    // else
-//    db->readBlobFromDB( efilepath, "download_editData", eID );
+//     // Can check here if such filename exists
+//     // QFileInfo check_file( efilepath );
+//     // if ( check_file.exists() && check_file.isFile() )
+//     //   qDebug() << "EditProfile file: " << efilepath << " exists";
+//     // else
+// //    db->readBlobFromDB( efilepath, "download_editData", eID );
 
-//    qDebug() << "In loadData() after readBlobFromDB ";
+// //    qDebug() << "In loadData() after readBlobFromDB ";
 
-//    //Now download rawData corresponding to rID:
-//    QString efilename_copy = efilename;
-//    QStringList efilename_copy_list = efilename_copy.split(".");
+// //    //Now download rawData corresponding to rID:
+// //    QString efilename_copy = efilename;
+// //    QStringList efilename_copy_list = efilename_copy.split(".");
 
-//    rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
-//                + efilename_copy_list[3] + "."
-//                + efilename_copy_list[4] + "."
-//                + efilename_copy_list[5] + ".auc";
+// //    rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
+// //                + efilename_copy_list[3] + "."
+// //                + efilename_copy_list[4] + "."
+// //                + efilename_copy_list[5] + ".auc";
 
-//    QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
-//    //do we need to check for existance ?
-//    db->readBlobFromDB( rfilepath, "download_aucData", rID );
+// //    QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
+// //    //do we need to check for existance ?
+// //    db->readBlobFromDB( rfilepath, "download_aucData", rID );
 
-//    qApp->processEvents();
+// //    qApp->processEvents();
 
-//    qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
+// //    qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
 
-//    //Put downloaded data in memory:
-//    QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/";
-//    US_DataIO::loadData( uresdir, efilename, editedData, rawData );
+// //    //Put downloaded data in memory:
+// //    QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/";
+// //    US_DataIO::loadData( uresdir, efilename, editedData, rawData );
 
-//    eID_global = eID;
+// //    eID_global = eID;
 
-//    qDebug() << "END of loadData(), eID_global: " << eID_global;
+// //    qDebug() << "END of loadData(), eID_global: " << eID_global;
 
-    return true;
-}
+//     return true;
+// }
 
 bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
    int cc = combo->count();
@@ -494,10 +539,10 @@ void US_QueryRmsd::set_analysis(int){
    QString edit = cb_edit->currentText();
    analysisList.clear();
 
-   for(int i = 0; i < n_data; i++) {
+   for(int i = 0; i < allData.size(); i++) {
       if (! check_combo_content(cb_edit, edit))
          continue;
-      QString analysis = allAnalysis.at(i);
+      QString analysis = allData.at(i).analysis;
       if (! analysisList.contains(analysis))
          analysisList << analysis;
    }
@@ -516,14 +561,14 @@ void US_QueryRmsd::set_analysis(int){
 void US_QueryRmsd:: set_method(int){
    methodList.clear();
 
-   for(int i = 0; i < n_data; i++) {
-      QString edit = allEdit.at(i);
-      QString analysis = allAnalysis.at(i);
+   for(int i = 0; i < allData.size(); i++) {
+      QString edit = allData.at(i).edit;
+      QString analysis = allData.at(i).analysis;
       if (! check_combo_content(cb_edit, edit))
          continue;
       if (! check_combo_content(cb_analysis, analysis))
          continue;
-      QString method = allMethod.at(i);
+      QString method = allData.at(i).method;
       if (! methodList.contains(method))
          methodList << method;
    }
@@ -544,10 +589,10 @@ void US_QueryRmsd::set_triple(int){
    channelList.clear();
    lambdaList.clear();
 
-   for (int i = 0; i < n_data; i++){
-      QString edit = allEdit.at(i);
-      QString analysis = allAnalysis.at(i);
-      QString method = allMethod.at(i);
+   for (int i = 0; i < allData.size(); i++){
+      QString edit = allData.at(i).edit;
+      QString analysis = allData.at(i).analysis;
+      QString method = allData.at(i).method;
       if (! check_combo_content(cb_edit, edit))
          continue;
       if (! check_combo_content(cb_analysis, analysis))
@@ -555,9 +600,9 @@ void US_QueryRmsd::set_triple(int){
       if (! check_combo_content(cb_method, method))
          continue;
 
-      QString cell = allCell.at(i);
-      QString channel = allChannel.at(i);
-      QString lambda = allLambda.at(i);
+      QString cell = allData.at(i).cell;
+      QString channel = allData.at(i).channel;
+      QString lambda = allData.at(i).lamda;
       if (! cellList.contains(cell))
          cellList << cell;
       if (! channelList.contains(channel))
@@ -605,18 +650,18 @@ void US_QueryRmsd::fill_table(int){
    QFontMetrics* fm = new QFontMetrics( tw_font );
    int rowht        = fm->height() + 2;
    tw_rmsd->clearContents();
-   tw_rmsd->setRowCount(allRmsd.size());
+   tw_rmsd->setRowCount(allData.size());
 
    selIndex.clear();
    int n = 0;
-   for (int i = 0; i < n_data; i++){
-      double rmsd = allRmsd.at(i);
-      QString edit = allEdit.at(i);
-      QString analysis = allAnalysis.at(i);
-      QString method = allMethod.at(i);
-      QString cell = allCell.at(i);
-      QString channel = allChannel.at(i);
-      QString lambda = allLambda.at(i);
+   for (int i = 0; i < allData.size(); i++){
+      double rmsd = allData.at(i).rmsd;
+      QString edit = allData.at(i).edit;
+      QString analysis = allData.at(i).analysis;
+      QString method = allData.at(i).method;
+      QString cell = allData.at(i).cell;
+      QString channel = allData.at(i).channel;
+      QString lambda = allData.at(i).lamda;
       QString triple = tr("%1%2%3").arg(cell, channel,lambda);
       if (! check_combo_content(cb_edit, edit))
          continue;
@@ -653,7 +698,7 @@ void US_QueryRmsd::fill_table(int){
       tw_rmsd->setItem(n, 3, twi);
 
       DoubleTableWidgetItem *dtwi = new DoubleTableWidgetItem(rmsd);
-      dtwi->setData(Qt::EditRole, QVariant(rmsd));
+      dtwi->setData(Qt::UserRole, i);
       dtwi->setFlags(twi->flags() & ~Qt::ItemIsEditable);
       dtwi->setFont(tw_font);
       tw_rmsd->setItem(n, 4, dtwi);
@@ -725,9 +770,25 @@ void US_QueryRmsd::save_data(){
 }
 
 void US_QueryRmsd::simulate(){
-   DbgLv(0) << tw_rmsd->currentColumn();
-   DbgLv(0) << tw_rmsd->currentRow();
-   fematch->show();
+   int row = tw_rmsd->currentRow();
+   if (row < 0) return;
+   int index = tw_rmsd->item(row, 4)->data(Qt::UserRole).toInt();
+   int editId = allData.at(index).editID;
+   if (!editData.contains(editId)) {
+      QString mesg;
+      if (! load_data(index, mesg)){
+         qDebug() << mesg;
+         return;
+      }
+   }
+
+
+
+
+   US_Model *model = Models.value(allData.at(index).modelID);
+
+   DbgLv(0) << model->description;
+   // fematch->show();
 
 }
 

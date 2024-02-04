@@ -20,26 +20,46 @@ class US_QueryRmsd : public US_Widgets{
    US_QueryRmsd();
 
    private:
+
+   struct DataBundle
+   {
+      QString cell;
+      QString channel;
+      QString lamda;
+      QString edit;
+      QString analysis;
+      QString method;
+      QString editFile;
+      QString rdataFile;
+      int editID;
+      int rdataID;
+      int modelID;
+      int expID;
+      double rmsd;
+   };
+
    int dbg_level;
    double threshold;
    QTableWidget *tw_rmsd;
    QHeaderView *hheader;
    US_Passwd pw;
    US_DB2* dbCon;
-   QStringList allCell;
-   QStringList allChannel;
-   QStringList allLambda;
-   QStringList allEdit;
-   QVector<int> allEditIds;
-   QStringList allAnalysis;
-   QStringList allMethod;
-   QVector<double> allRmsd;
-   QVector<int> allModelIDs;
+   // QStringList allCell;
+   // QStringList allChannel;
+   // QStringList allLambda;
+   // QStringList allEdit;
+   // QVector<int> allEditIds;
+   // QVector<int> allRawDataIds;
+   // QStringList allAnalysis;
+   // QStringList allMethod;
+   // QVector<double> allRmsd;
+   // QVector<int> allModelIDs;
+   // QVector<int> allExpIDs;
+   QVector<DataBundle> allData;
    QVector<int> selIndex;
    QMap<int, US_Model *> Models;  //DB model id -> Model
    QMap<int, US_DataIO::EditedData> editData;  //DB edit id -> EditedData
-   QMap<int, US_DataIO::RawData*> rawData;      //DB edit id -> RawData
-   int n_data;
+   QMap<int, US_DataIO::RawData> rawData;      //DB edit id -> RawData
 
    QStringList methodList;
    QStringList editList;
@@ -65,7 +85,8 @@ class US_QueryRmsd : public US_Widgets{
    bool check_combo_content(QComboBox*, QString&);
    void highlight(void);
 //   bool load_model(QString, US_Model*);
-   bool loadData(void);
+   bool info_by_editId(int, int&, int&, QString&, QString&, QString&);
+   bool load_data(int, QString&);
 
    private slots:
    void load_runid(void);
