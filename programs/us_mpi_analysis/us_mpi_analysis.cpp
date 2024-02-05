@@ -2711,15 +2711,20 @@ void US_MPI_Analysis::calculate_cosed() {
             // the concentration is higher in upper part, move it completely to the upper part and set the
             // concentration to the excess concentration
             j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
             upper_cosed[ j.name ] = j;
             continue;
          } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
             // the concentration of both components is roughly equal, remove the component from the upper and lower part
             upper_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
             continue;
          } else {
             j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
             lower_cosed[ j.name ] = j;
+            i.concentration_offset = j.conc;
             upper_cosed.remove(j.name);
             continue;
          }
@@ -2732,14 +2737,19 @@ void US_MPI_Analysis::calculate_cosed() {
             // the concentration is higher in lower part, move it completely to the lower part and set the
             // concentration to the excess concentration
             j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
             lower_cosed[ j.name ] = j;
             continue;
          } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
             // the concentration of both components is roughly equal, remove the component from the upper and lower part
             lower_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
             continue;
          } else {
             j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
+            i.concentration_offset = i.conc;
             upper_cosed[ j.name ] = j;
             lower_cosed.remove(j.name);
             continue;
@@ -2761,6 +2771,22 @@ void US_MPI_Analysis::calculate_cosed() {
          base_comps << cosed_comp.GUID + cosed_comp.componentID;
          base_density += cosed_comp.dens_coeff[ 0 ];
          base_viscosity += cosed_comp.visc_coeff[ 0 ];
+      }
+      else if (!lower_cosed.contains(cosed_comp.name)) {
+         // the component is present with the same concentration in both the upper and lower part
+         base_comps << cosed_comp;
+         base_density += cosed_comp.dens_coeff[0] +
+                         cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
+                         cosed_comp.dens_coeff[2] * 1.0e-2 * cosed_comp.conc +
+                         cosed_comp.dens_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
+                         cosed_comp.dens_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
+                         cosed_comp.dens_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
+         base_viscosity += cosed_comp.visc_coeff[0] +
+                           cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
+                           cosed_comp.visc_coeff[2] * 1.0e-2 * cosed_comp.conc +
+                           cosed_comp.visc_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
+                           cosed_comp.visc_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
+                           cosed_comp.visc_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
       }
    }
    // make sure the selected model is adjusted for the selected temperature
