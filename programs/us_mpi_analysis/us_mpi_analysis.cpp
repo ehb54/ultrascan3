@@ -2776,17 +2776,17 @@ void US_MPI_Analysis::calculate_cosed() {
          // the component is present with the same concentration in both the upper and lower part
          base_comps << cosed_comp.GUID + cosed_comp.componentID;
          base_density += cosed_comp.dens_coeff[0] +
-                         cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
-                         cosed_comp.dens_coeff[2] * 1.0e-2 * cosed_comp.conc +
-                         cosed_comp.dens_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
-                         cosed_comp.dens_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
-                         cosed_comp.dens_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
+                         cosed_comp.dens_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                         cosed_comp.dens_coeff[2] * cosed_comp.conc +
+                         cosed_comp.dens_coeff[3] * sq(cosed_comp.conc) +
+                         cosed_comp.dens_coeff[4] * pow(cosed_comp.conc, 3) +
+                         cosed_comp.dens_coeff[5] * pow(cosed_comp.conc, 4);
          base_viscosity += cosed_comp.visc_coeff[0] +
-                           cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
-                           cosed_comp.visc_coeff[2] * 1.0e-2 * cosed_comp.conc +
-                           cosed_comp.visc_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
-                           cosed_comp.visc_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
-                           cosed_comp.visc_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
+                           cosed_comp.visc_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                           cosed_comp.visc_coeff[2] * cosed_comp.conc +
+                           cosed_comp.visc_coeff[3] * sq(cosed_comp.conc) +
+                           cosed_comp.visc_coeff[4] * pow(cosed_comp.conc, 3) +
+                           cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
       }
    }
    // make sure the selected model is adjusted for the selected temperature

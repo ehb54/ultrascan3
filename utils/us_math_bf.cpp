@@ -104,21 +104,21 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
          base_density += cosed_comp.dens_coeff[0];
          base_viscosity += cosed_comp.visc_coeff[0];
       }
-      else if (!lower_cosed.contains(cosed_comp.name)) {
+      else if (!lower_cosed.contains(cosed_comp.name) && !upper_cosed.contains(cosed_comp.name)) {
          // the component is present with the same concentration in both the upper and lower part
          base_comps << cosed_comp;
          base_density += cosed_comp.dens_coeff[0] +
-                         cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
-                         cosed_comp.dens_coeff[2] * 1.0e-2 * cosed_comp.conc +
-                         cosed_comp.dens_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
-                         cosed_comp.dens_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
-                         cosed_comp.dens_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
+                         cosed_comp.dens_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                         cosed_comp.dens_coeff[2] * cosed_comp.conc +
+                         cosed_comp.dens_coeff[3] * sq(cosed_comp.conc) +
+                         cosed_comp.dens_coeff[4] * pow(cosed_comp.conc, 3) +
+                         cosed_comp.dens_coeff[5] * pow(cosed_comp.conc, 4);
          base_viscosity += cosed_comp.visc_coeff[0] +
-                           cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
-                           cosed_comp.visc_coeff[2] * 1.0e-2 * cosed_comp.conc +
-                           cosed_comp.visc_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
-                           cosed_comp.visc_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
-                           cosed_comp.visc_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
+                           cosed_comp.visc_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                           cosed_comp.visc_coeff[2] * cosed_comp.conc +
+                           cosed_comp.visc_coeff[3] * sq(cosed_comp.conc) +
+                           cosed_comp.visc_coeff[4] * pow(cosed_comp.conc, 3) +
+                           cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
       }
    }
    // normalize base density and viscosity
@@ -225,12 +225,12 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const int N, const double
             double c2 = c1 * c1;      // c1^2
             double c3 = c2 * c1;      // c1^3
             double c4 = c3 * c1;      // c1^4
-            tmp_d += (cosed_comp.dens_coeff[ 1 ] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.dens_coeff[ 2 ] * 1.0e-2 * c1 +
-                        cosed_comp.dens_coeff[ 3 ] * 1.0e-3 * c2 + cosed_comp.dens_coeff[ 4 ] * 1.0e-4 * c3 +
-                        cosed_comp.dens_coeff[ 5 ] * 1.0e-6 * c4);
-            tmp_v += (cosed_comp.visc_coeff[ 1 ] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.visc_coeff[ 2 ] * 1.0e-2 * c1 +
-                          cosed_comp.visc_coeff[ 3 ] * 1.0e-3 * c2 + cosed_comp.visc_coeff[ 4 ] * 1.0e-4 * c3 +
-                          cosed_comp.visc_coeff[ 5 ] * 1.0e-6 * c4);
+            tmp_d += (cosed_comp.dens_coeff[ 1 ] * sqrt(fabs(c1)) + cosed_comp.dens_coeff[ 2 ] * c1 +
+                        cosed_comp.dens_coeff[ 3 ] * c2 + cosed_comp.dens_coeff[ 4 ] * c3 +
+                        cosed_comp.dens_coeff[ 5 ] * c4);
+            tmp_v += (cosed_comp.visc_coeff[ 1 ] * sqrt(fabs(c1)) + cosed_comp.visc_coeff[ 2 ] * c1 +
+                          cosed_comp.visc_coeff[ 3 ] * c2 + cosed_comp.visc_coeff[ 4 ] * c3 +
+                          cosed_comp.visc_coeff[ 5 ] * c4);
 
          }
          // cache the value
@@ -264,12 +264,12 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
          double c2 = c1 * c1;      // c1^2
          double c3 = c2 * c1;      // c1^3
          double c4 = c3 * c1;      // c1^4
-         density += (cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.dens_coeff[2] * 1.0e-2 * c1 +
-                     cosed_comp.dens_coeff[3] * 1.0e-3 * c2 + cosed_comp.dens_coeff[4] * 1.0e-4 * c3 +
-                     cosed_comp.dens_coeff[5] * 1.0e-6 * c4);
-         viscosity += (cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.visc_coeff[2] * 1.0e-2 * c1 +
-                       cosed_comp.visc_coeff[3] * 1.0e-3 * c2 + cosed_comp.visc_coeff[4] * 1.0e-4 * c3 +
-                       cosed_comp.visc_coeff[5] * 1.0e-6 * c4);
+         density += (cosed_comp.dens_coeff[1] * sqrt(fabs(c1)) + cosed_comp.dens_coeff[2] * c1 +
+                     cosed_comp.dens_coeff[3] * c2 + cosed_comp.dens_coeff[4] * c3 +
+                     cosed_comp.dens_coeff[5] * c4);
+         viscosity += (cosed_comp.visc_coeff[1] * sqrt(fabs(c1)) + cosed_comp.visc_coeff[2] * c1 +
+                       cosed_comp.visc_coeff[3] * c2 + cosed_comp.visc_coeff[4] * c3 +
+                       cosed_comp.visc_coeff[5] * c4);
       }
       // cache the value
       std::array<double,2> tmp{density,viscosity};
@@ -304,12 +304,12 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
          double c2 = c1 * c1;      // c1^2
          double c3 = c2 * c1;      // c1^3
          double c4 = c3 * c1;      // c1^4
-         density += (cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.dens_coeff[2] * 1.0e-2 * c1 +
-                     cosed_comp.dens_coeff[3] * 1.0e-3 * c2 + cosed_comp.dens_coeff[4] * 1.0e-4 * c3 +
-                     cosed_comp.dens_coeff[5] * 1.0e-6 * c4);
-         viscosity += (cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(c1)) + cosed_comp.visc_coeff[2] * 1.0e-2 * c1 +
-                       cosed_comp.visc_coeff[3] * 1.0e-3 * c2 + cosed_comp.visc_coeff[4] * 1.0e-4 * c3 +
-                       cosed_comp.visc_coeff[5] * 1.0e-6 * c4);
+         density += (cosed_comp.dens_coeff[1] * sqrt(fabs(c1)) + cosed_comp.dens_coeff[2] * c1 +
+                     cosed_comp.dens_coeff[3] * c2 + cosed_comp.dens_coeff[4] * c3 +
+                     cosed_comp.dens_coeff[5] * c4);
+         viscosity += (cosed_comp.visc_coeff[1] * sqrt(fabs(c1)) + cosed_comp.visc_coeff[2] * c1 +
+                       cosed_comp.visc_coeff[3] * c2 + cosed_comp.visc_coeff[4] * c3 +
+                       cosed_comp.visc_coeff[5] * c4);
       }
       // cache the value
       std::array<double,2> tmp{density,viscosity};
