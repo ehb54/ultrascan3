@@ -43,15 +43,20 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
             // the concentration is higher in upper part, move it completely to the upper part and set the
             // concentration to the excess concentration
             j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
             upper_cosed[j.name] = j;
             continue;
          } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
             // the concentration of both components is roughly equal, remove the component from the upper and lower part
             upper_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
             continue;
          } else {
             j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
             lower_cosed[j.name] = j;
+            i.concentration_offset = j.conc;
             upper_cosed.remove(j.name);
             continue;
          }
@@ -64,14 +69,19 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
             // the concentration is higher in lower part, move it completely to the lower part and set the
             // concentration to the excess concentration
             j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
             lower_cosed[j.name] = j;
             continue;
          } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
             // the concentration of both components is roughly equal, remove the component from the upper and lower part
             lower_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
             continue;
          } else {
             j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
+            i.concentration_offset = i.conc;
             upper_cosed[j.name] = j;
             lower_cosed.remove(j.name);
             continue;
@@ -93,7 +103,22 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
          base_comps << cosed_comp;
          base_density += cosed_comp.dens_coeff[0];
          base_viscosity += cosed_comp.visc_coeff[0];
-
+      }
+      else if (!lower_cosed.contains(cosed_comp.name)) {
+         // the component is present with the same concentration in both the upper and lower part
+         base_comps << cosed_comp;
+         base_density += cosed_comp.dens_coeff[0] +
+                         cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
+                         cosed_comp.dens_coeff[2] * 1.0e-2 * cosed_comp.conc +
+                         cosed_comp.dens_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
+                         cosed_comp.dens_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
+                         cosed_comp.dens_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
+         base_viscosity += cosed_comp.visc_coeff[0] +
+                           cosed_comp.visc_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
+                           cosed_comp.visc_coeff[2] * 1.0e-2 * cosed_comp.conc +
+                           cosed_comp.visc_coeff[3] * 1.0e-3 * sq(cosed_comp.conc) +
+                           cosed_comp.visc_coeff[4] * 1.0e-4 * pow(cosed_comp.conc, 3) +
+                           cosed_comp.visc_coeff[5] * 1.0e-6 * pow(cosed_comp.conc, 4);
       }
    }
    // normalize base density and viscosity
@@ -102,8 +127,8 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
    // init upper_comps and lower_comps
    foreach (US_CosedComponent i, upper_cosed) { upper_comps << i; }
    foreach (US_CosedComponent i, lower_cosed) { lower_comps << i; }
-   qDebug() << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
-   qDebug() << "Constructor BFG finished bd bv" << base_density << base_viscosity;
+   DbgLv(1) << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
+   DbgLv(1) << "Constructor BFG finished bd bv" << base_density << base_viscosity;
 
    is_empty = false;
 }
@@ -152,7 +177,7 @@ double US_Math_BF::Band_Forming_Gradient::calc_eq_comp_conc(US_CosedComponent &c
       // calculate the volume of the lower section
       init_volume = M_PI * cp_pathlen * cp_angle / 360 * (sq(bottom) - sq(meniscus + overlay_thickness));
    }
-   return init_volume * cosed_comp.conc / total_volume;
+   return init_volume * cosed_comp.conc / total_volume + cosed_comp.concentration_offset;
 }
 
 double US_Math_BF::Band_Forming_Gradient::calc_comp_conc(const double &x, const double &t, const double &temp,
@@ -161,10 +186,10 @@ double US_Math_BF::Band_Forming_Gradient::calc_comp_conc(const double &x, const 
    double decay = 0.0;
    if (t < 1){
        if (x > meniscus+overlay_thickness){
-           return 0;
+           return cosed_comp.concentration_offset;
        }
        else{
-           return cosed_comp.conc;
+           return cosed_comp.conc + cosed_comp.concentration_offset;
        }
    }
    else {
@@ -255,7 +280,7 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
    return true;
 }
 
-bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const double &t, double &dens, double &visc,const double& T, double& conc) {
+bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const double &t, double &dens, double &visc, const double& T, double& conc) {
    // check if eigenvalues exist already
    if (eigenvalues.isEmpty()) {
       return false;
@@ -307,7 +332,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    conc_bfg_data = visc_bfg_data;
    Nx = visc_bfg_data.pointCount();
    double duration = editedData->scanData.last().seconds;
-   qDebug() << duration << simparms.radial_resolution << ( visc_bfg_data.radius( Nx - 1 ) - visc_bfg_data.radius( 0 ) ) / (double)( Nx - 1 );
+   DbgLv(2) << duration << simparms.radial_resolution << ( visc_bfg_data.radius( Nx - 1 ) - visc_bfg_data.radius( 0 ) ) / (double)( Nx - 1 );
    simparms.radial_resolution =
          ( visc_bfg_data.radius( Nx - 1 ) - visc_bfg_data.radius( 0 ) ) / (double)( Nx - 1 );
    // Calculate dt
@@ -315,14 +340,8 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    for (US_CosedComponent &cosed_comp: upper_comps) {
       max_D = max(max_D,cosed_comp.d_coeff);
    }
-   qDebug() << max_D;
+   DbgLv(2) << max_D;
    // Declares the scan structure
-   US_DataIO::Scan dens_scan;
-   US_DataIO::Scan visc_scan;
-   US_DataIO::Scan conc_scan;
-   visc_scan.rvalues.reserve(Nx);
-   dens_scan.rvalues.reserve(Nx);
-   conc_scan.rvalues.reserve(Nx);
    dt = max(simparms.radial_resolution*simparms.radial_resolution / 6 / max_D, 1.0); // set lower limit for dt to keep workload reasonable
    dens_bfg_data.scanData.clear();
    visc_bfg_data.scanData.clear();
@@ -334,6 +353,12 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    // CALCULATE VALUES
    for ( int ii = 0; ii < nstep; ii++ ) // iterate over all scans
    {
+      US_DataIO::Scan dens_scan;
+      US_DataIO::Scan visc_scan;
+      US_DataIO::Scan conc_scan;
+      visc_scan.rvalues.reserve(Nx);
+      dens_scan.rvalues.reserve(Nx);
+      conc_scan.rvalues.reserve(Nx);
       // interpolate temperature
       while (bfg_idx < editedData->scanCount() - 1 && runtime > editedData->scanData[bfg_idx].seconds){
          bfg_idx ++;
@@ -371,12 +396,12 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
       visc_scan.rpm = rpm;
       visc_scan.seconds = runtime;
       visc_scan.omega2t = omega2t;
-       conc_scan.rvalues.clear();
-       conc_scan.rvalues.reserve(Nx);
-       conc_scan.temperature = temp;
-       conc_scan.rpm = rpm;
-       conc_scan.seconds = runtime;
-       conc_scan.omega2t = omega2t;
+      conc_scan.rvalues.clear();
+      conc_scan.rvalues.reserve(Nx);
+      conc_scan.temperature = temp;
+      conc_scan.rpm = rpm;
+      conc_scan.seconds = runtime;
+      conc_scan.omega2t = omega2t;
       for ( int jj = 0; jj < Nx; jj++ )// iterate over all radial points for each scan
       {
          double dens;
