@@ -498,7 +498,6 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
                for(int i = 0; i < visc.length(); i++ ){
                   bc.visc_coeff[i] = visc[i].toDouble();
                }
-               DbgLv(0)<< bc.name << bc.visc_coeff;
                dataset->solution_rec.buffer.cosed_component << bc;
                dataset->solution_rec.buffer.cosed_componentIDs << bc.componentID;
             }
