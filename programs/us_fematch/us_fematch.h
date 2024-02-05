@@ -46,7 +46,7 @@ class US_FeMatch : public US_Widgets
       US_Noise*                   fem_ti_noise();
       US_Noise*                   fem_ri_noise();
       QPointer< US_ResidsBitmap > fem_resbmap();
-      void    auto_load_simulate( US_DataIO::RawData, US_DataIO::EditedData, US_Model, int, QPoint );
+      void auto_load_simulate( US_DataIO::RawData, US_DataIO::EditedData, US_Model, int, QPoint );
 
    public slots:
       void    thread_progress( int, int );

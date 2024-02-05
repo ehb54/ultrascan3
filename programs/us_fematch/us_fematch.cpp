@@ -4066,24 +4066,9 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
    dataLoaded = false;
    buffLoaded = false;
    haveSim    = false;
-//   dataLatest = ck_edit->isChecked();
-//   int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
-//                                 : US_Disk_DB_Controls::Disk;
-//   // US_DataLoader* dialog =
-//   //   new US_DataLoader( dataLatest, local, rawList, dataList,
-//   //          triples, workingDir, QString( "velocity" ) );
-
-//   US_DataLoader* dialog =
-//       new US_DataLoader( dataLatest, local, rawList, dataList,
-//                         triples, workingDir, QString( "none" ) );
-
-//   connect( dialog, SIGNAL( changed(      bool ) ),
-//           this,   SLOT( update_disk_db( bool ) ) );
-//   connect( dialog, SIGNAL( progress(     const QString ) ),
-//           this,   SLOT( set_progress(   const QString ) ) );
-//   DbgLv(1) << "LD: exec dialog";
-
-//   if ( dialog->exec() != QDialog::Accepted )  return;
+   QTemporaryDir temp_dir;
+   if (! temp_dir.isValid())
+      return;
 
    rawList << i_rdata;
    dataList << i_edata;
@@ -4092,78 +4077,18 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
 
    edata     = &dataList[ 0 ];
    runID     = edata->runID;
-//   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
-//                        + runID + ".time_state.tmst";
-   QTemporaryFile tempfile;
-   QString tmst_fpath = tempfile.fileName();
-
+   QString tmst_fpath = temp_dir.filePath(runID + ".time_state.tmst");
 
    qDebug() << "RUNID --- " << runID;
    // Get speed steps from disk or DB experiment (and maybe timestate)
-
-//   if ( local == US_Disk_DB_Controls::DB )
-//   {  // Fetch the speed steps for the experiment from the database
-//      workingDir = tr( "(database)" );
-
-//      US_Passwd   pw;
-//      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
-//      QStringList query;
-//      QString     expID;
-//      int         idExp  = 0;
-//      query << "get_experiment_info_by_runID"
-//            << runID
-//            << QString::number( US_Settings::us_inv_ID() );
-//      dbP->query( query );
-
-//      if ( dbP->lastErrno() == US_DB2::OK )
-//      {
-//         dbP->next();
-//         idExp              = dbP->value( 1 ).toInt();
-//         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
-//      }
-//      DbgLv(1)<<"LD: from database";
-
-//      // Check out whether we need to read TimeState from the DB
-
-//      bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
-//      DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
-//               << "tmst_fpath" << tmst_fpath;
-//   }
-//   else
-//   {  // Read run experiment file and parse out speed steps
-//      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
-//      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
-//      QString expfpath = workingDir + "/" + runID + "."
-//                         + edata->dataType + ".xml";
-//      QFile xfi( expfpath );
-
-//      if ( xfi.open( QIODevice::ReadOnly ) )
-//      {  // Read and parse "<speedstep>" lines in the XML
-//         QXmlStreamReader xmli( &xfi );
-
-//         while ( ! xmli.atEnd() )
-//         {
-//            xmli.readNext();
-
-//            if ( xmli.isStartElement()  &&  xmli.name() == "speedstep" )
-//            {
-//               SP_SPEEDPROFILE  sp;
-//               US_SimulationParameters::speedstepFromXml( xmli, sp );
-//               speed_steps << sp;
-//            }
-//         }
-
-//         xfi.close();
-//      }
-//   }
-
    US_Passwd   pw;
    US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
-   if ( US_TimeState::dbDownload(dbP, idExp, tmst_fpath) != US_DB2::OK ) {
-      DbgLv(0) << "error in downloading tmst file";
+   US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+   bool newfile = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+   if (! newfile) {
       return;
    }
-   DbgLv(0) << "LD: idExp" << idExp << " tmst_fpath: " << tmst_fpath;
+   DbgLv(0) << "LD: idTmst" << idExp << " tmst_fpath: " << tmst_fpath;
 
    QFileInfo check_file( tmst_fpath );
    if ( check_file.exists()  &&  check_file.isFile() )
@@ -4251,24 +4176,10 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
 
    qApp->processEvents();
 
-//   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
-//   QFontMetrics fm( font );
-//   int fontHeight = fm.lineSpacing();
-//   lw_triples->setMaximumHeight( fontHeight * min( ntriples, 4 ) + 12 );
-
    for ( int ii = 0; ii < ntriples; ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
    allExcls.fill( excludedScans, ntriples );
-
-//   edata      = &dataList[ 0 ];
-//   scanCount  = edata->scanData.size();
-//   double avgTemp = edata->average_temperature();
-
-//   // set ID, description, and avg temperature text
-//   le_id  ->setText( edata->runID + " / " + edata->editID );
-//   te_desc->setText( edata->description );
-//   le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
 
    lw_triples->setCurrentRow( 0 );
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
@@ -4283,47 +4194,10 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
    pb_details  ->setEnabled( true );
    pb_loadmodel->setEnabled( true );
    pb_exclude  ->setEnabled( true );
-//   mfilter     = QString( "=e" );
-
-//   ct_from->disconnect();
-//   ct_from->setValue( 0 );
-
-//   connect( ct_from, SIGNAL( valueChanged( double ) ),
-//           this,    SLOT(   exclude_from( double ) ) );
-
    bmd_pos    = pos + QPoint( 100, 100 );
    epd_pos    = pos + QPoint( 200, 200 );
    rpd_pos    = pos + QPoint( 300, 300 );
    DbgLv(1) << "LD: Loading of experimental data is over";
-
-
-
-   //////
-   ///
-//   int      drow    = lw_triples->currentRow();
-//   QString  mdesc;
-//   pb_simumodel->setEnabled( false );
-//   progress->reset();
-
-//   // load model
-//   bool loadDB = dkdb_cntrls->db();
-
-//   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
-//   DbgLv(1) << "pre-Load eGUID" << dataList[drow].editGUID << "drow" << drow;
-//   US_ModelLoader dialog( loadDB, mfilter, model,
-//                         mdesc, dataList[ drow ].editGUID );
-
-//   connect( &dialog, SIGNAL( changed(      bool ) ),
-//           this,    SLOT( update_disk_db( bool ) ) );
-
-//   dialog.move( this->pos() + QPoint( 200, 200 ) );
-//   QApplication::restoreOverrideCursor();
-
-//   if ( dialog.exec() != QDialog::Accepted )
-//      return;                     // Cancel:  bail out now
-
-//   qApp->processEvents();
 
    model = i_model;
 
@@ -4368,7 +4242,6 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
       // Default the used model to a "Mean" model
       US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
    }
-
 
    simulate_model( );
 
