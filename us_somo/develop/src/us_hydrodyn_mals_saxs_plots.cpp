@@ -513,7 +513,6 @@ void US_Hydrodyn_Mals_Saxs::set_plot_errors_group()
    redo_plot_errors();
 }
 
-
 void US_Hydrodyn_Mals_Saxs::plot_errors_jump_markers()
 {
    if ( !unified_ggaussian_ok || cb_plot_errors_group->isChecked() )
