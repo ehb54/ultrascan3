@@ -395,7 +395,7 @@ US_SimParamsGui::US_SimParamsGui(
    connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
                              SLOT  ( update_temp(  double ) ) );
 
-
+   row++;
 
    // Status box
    le_status       = us_lineedit();
