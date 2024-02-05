@@ -725,6 +725,8 @@ US_LammAstfvm::US_LammAstfvm(US_Model &rmodel, US_SimulationParameters &rsimparm
    vbar_salt = 0.0;
    param_s = 0.0;
    param_D = 0.0;
+   param_D20w = 0.0;
+   param_s20w = 0.0;
    dt = 0.0;
 }
 
@@ -859,7 +861,7 @@ int US_LammAstfvm::solve_component(int compx) {
    {  // if multiple cases, abort
        return 1;
    }
-   qDebug() << "LAV:SC: NonIdealCaseNo" << NonIdealCaseNo;
+   DbgLv(1) << "LAV:SC: NonIdealCaseNo" << NonIdealCaseNo;
    // make sure the selected model is adjusted for the selected temperature
    // and buffer conditions:
    US_Math2::SolutionData sol_data{};
@@ -1321,7 +1323,6 @@ int US_LammAstfvm::solve_component(int compx) {
 }
 
 void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradient* bfg, CosedData* csD) {
-   DbgLv(0) << "ASTFVM:set_buffer";
    density = buffer.density; // for compressibility
    viscosity = buffer.viscosity;
    compressib = buffer.compressibility;
@@ -1381,7 +1382,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
       }
       }
       else{bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient();}
-      DbgLv(0) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
+      DbgLv(2) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
    }
 }
 
