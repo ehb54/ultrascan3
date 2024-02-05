@@ -167,10 +167,6 @@ bool US_QueryRmsd::check_connection(){
 void US_QueryRmsd::clear_data(){
    allData.clear();
    threshold = -1;
-
-   for (auto it = Models.begin(); it != Models.end(); ++it) {
-      delete it.value();
-   }
    Models.clear();
 
    selIndex.clear();
@@ -234,12 +230,12 @@ void US_QueryRmsd::load_runid(){
    clear_data();
 
    for (int i = 0; i < modelIDs_tmp.size(); i++){
-      US_Model *model = new US_Model();
+      US_Model model = US_Model();
       int mId = modelIDs_tmp.at(i).toInt();
-      int state = model->load(modelIDs_tmp.at(i), dbCon);
+      int state = model.load(modelIDs_tmp.at(i), dbCon);
       if (state == US_DB2::OK){
          DataBundle data;
-         QStringList list1 = model->description.split(u'.');
+         QStringList list1 = model.description.split(u'.');
          data.cell = list1.at(1).at(0);
          data.channel = list1.at(1).at(1);
          data.lamda = list1.at(1).mid(2);
@@ -260,17 +256,14 @@ void US_QueryRmsd::load_runid(){
          data.editFile = editFile;
          data.rdataID = rdataId;
          data.rdataFile = rdataFile;
-         data.rmsd = qSqrt(model->variance);
+         data.rmsd = qSqrt(model.variance);
 
          if (! editList.contains(data.edit))
             editList << data.edit;
 
          allData << data;
          Models.insert(mId, model);
-      } else {
-         delete model;
       }
-
    }
 
    // loadData();
@@ -337,8 +330,7 @@ bool US_QueryRmsd::load_data(int index, QString &mesg) {
    int editId = allData.at(index).editID;
    int rdataId = allData.at(index).rdataID;
 
-   US_DataIO::EditedData edata;
-   US_DataIO::RawData    rdata;
+
    dbCon->readBlobFromDB(temp_dir.filePath(edit_file), "download_editData", editId);
    if (dbCon->lastErrno() != US_DB2::OK) {
       mesg = tr("Error: download_editData: ID: %1\n%2").arg(editId).arg(dbCon->lastError());
@@ -346,7 +338,7 @@ bool US_QueryRmsd::load_data(int index, QString &mesg) {
    }
 
    if (rawData.contains(rdataId)) {
-      rdata = rawData.value(rdataId);
+      US_DataIO::RawData rdata = rawData.value(rdataId);
       state = US_DataIO::writeRawData(temp_dir.filePath(rdata_file), rdata);
       if (state != US_DataIO::OK) {
          mesg = tr("Error: writeRawData: ID: %1\n%2").arg(editId).
@@ -360,21 +352,18 @@ bool US_QueryRmsd::load_data(int index, QString &mesg) {
          return false;
       }
    }
-   QVector< US_DataIO::EditedData > edata_vec;
-   edata_vec << edata;
-   QVector< US_DataIO::RawData > rdata_vec;
-   rdata_vec << rdata;
-   state = US_DataIO::loadData(temp_dir.path(), edit_file, edata_vec, rdata_vec);
+   QVector< US_DataIO::EditedData > edata;
+   QVector< US_DataIO::RawData > rdata;
+   state = US_DataIO::loadData(temp_dir.path(), edit_file, edata, rdata);
    if (state != US_DataIO::OK) {
-      QMessageBox::warning(this, "Error",
-                           tr("Error in saving the edit data of ID: %1\n%2").arg(editId).
-                           arg(US_DataIO::errorString(state)));
-      mesg = tr("Error: download_editData: ID: %1\n%2").arg(editId).arg(US_DataIO::errorString(state));
+      mesg = tr("Error: US_DataIO::loadData:%1").arg(US_DataIO::errorString(state));
       return false;
    }
 
-   editData.insert(editId, edata);
-   // dir.removeRecursively();
+   editData.insert(editId, edata.at(0));
+   if (! rawData.contains(rdataId)) {
+      rawData.insert(rdataId, rdata.at(0));
+   }
    return true;
 
 }
@@ -781,13 +770,15 @@ void US_QueryRmsd::simulate(){
          return;
       }
    }
+   US_DataIO::RawData rdata = rawData.value(allData.at(index).rdataID);
+   US_DataIO::EditedData edata = editData.value(allData.at(index).editID);
+   int expId = allData.at(index).expID;
+   QPoint pos = this->pos();
+   US_Model model = Models.value(allData.at(index).modelID);
 
+   fematch->auto_load_simulate(rdata, edata, model, expId, pos);
 
-
-
-   US_Model *model = Models.value(allData.at(index).modelID);
-
-   DbgLv(0) << model->description;
+   DbgLv(0) << model.description;
    // fematch->show();
 
 }

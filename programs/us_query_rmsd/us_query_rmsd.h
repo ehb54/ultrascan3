@@ -57,7 +57,7 @@ class US_QueryRmsd : public US_Widgets{
    // QVector<int> allExpIDs;
    QVector<DataBundle> allData;
    QVector<int> selIndex;
-   QMap<int, US_Model *> Models;  //DB model id -> Model
+   QMap<int, US_Model > Models;  //DB model id -> Model
    QMap<int, US_DataIO::EditedData> editData;  //DB edit id -> EditedData
    QMap<int, US_DataIO::RawData> rawData;      //DB edit id -> RawData
 
