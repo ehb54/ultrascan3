@@ -2774,7 +2774,7 @@ void US_MPI_Analysis::calculate_cosed() {
       }
       else if (!lower_cosed.contains(cosed_comp.name)) {
          // the component is present with the same concentration in both the upper and lower part
-         base_comps << cosed_comp;
+         base_comps << cosed_comp.GUID + cosed_comp.componentID;
          base_density += cosed_comp.dens_coeff[0] +
                          cosed_comp.dens_coeff[1] * 1.0e-3 * sqrt(fabs(cosed_comp.conc)) +
                          cosed_comp.dens_coeff[2] * 1.0e-2 * cosed_comp.conc +
