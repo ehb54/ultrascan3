@@ -5875,6 +5875,7 @@ void US_Hydrodyn_Mals_Saxs::q_exclude_update_lbl() {
 
    if ( !q_exclude.size() )  {
       lbl_q_exclude_detail->setText( msg + us_tr( "<b>Currently no excluded q values</b>" ) + "<br>" );
+      plot_files( true );
       return;
    }
 
@@ -5908,6 +5909,7 @@ void US_Hydrodyn_Mals_Saxs::q_exclude_update_lbl() {
    msg += "</tr></table></center>";
    
    lbl_q_exclude_detail->setText( msg );
+   plot_files( true );
 }
 
 void US_Hydrodyn_Mals_Saxs::q_exclude_clear() {

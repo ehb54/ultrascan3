@@ -841,7 +841,7 @@ void US_Hydrodyn_Mals_Saxs::set_eb()
    }
 }
 
-void US_Hydrodyn_Mals_Saxs::plot_files()
+void US_Hydrodyn_Mals_Saxs::plot_files( bool save_zoom_state )
 {
    // qDebug() << "plot files";
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
@@ -953,7 +953,8 @@ void US_Hydrodyn_Mals_Saxs::plot_files()
 
    // enable zooming
 
-   if ( any_selected ) {
+   if ( any_selected && !save_zoom_state ) {
+      // qDebug() << "plot_files():: zoom enables";
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer->setZoomBase();
@@ -1156,6 +1157,15 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
    double x[ 2 ];
    double y[ 2 ];
 
+   set < double > use_q_exclude = q_exclude;
+   // only set for non time files
+   if ( f_is_time[ file ] ) {
+      use_q_exclude.clear();
+   }
+   
+   vector < double > exclude_x;
+   vector < double > exclude_y;
+   
    if ( use_error )
    {
       QwtSymbol symbol;
@@ -1171,7 +1181,8 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
                         (double *)&( f_qs[ file ][ 0 ] ),
                         (double *)&( f_Is[ file ][ 0 ] ),
                         q_points
-                        );
+
+                           );
 
          curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->setStyle( QwtPlotCurve::NoCurve );
@@ -1179,8 +1190,8 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
          curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
          curve->attach( plot_dist );
 
-         for ( unsigned int i = 0; i < q_points; i++ )
-         {
+         for ( unsigned int i = 0; i < q_points; i++ ) {
+
             QwtPlotCurve *curveeb = new QwtPlotCurve( UPU_EB_PREFIX + file );
             curveeb->setStyle( QwtPlotCurve::Lines );
             x[ 0 ] = f_qs[ file ][ i ];
@@ -1196,8 +1207,12 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
 
             curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
             curveeb->attach( plot_dist );
-         }            
 
+            if ( use_q_exclude.count( x[0] ) ) {
+               exclude_x.push_back( x[0] );
+               exclude_y.push_back( f_Is[ file ][i] );
+            }
+         }            
       } else {
          vector < double > q;
          vector < double > I;
@@ -1209,6 +1224,10 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
                q.push_back( f_qs[ file ][ i ] );
                I.push_back( f_Is[ file ][ i ] );
                e.push_back( f_errors[ file ][ i ] );
+            }
+            if ( use_q_exclude.count( q.back() ) ) {
+               exclude_x.push_back( q.back() );
+               exclude_y.push_back( I.back() );
             }
          }
          q_points = ( unsigned int )q.size();
@@ -1260,6 +1279,14 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
 
          curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->attach( plot_dist );
+         if ( use_q_exclude.size() ) {
+            for ( unsigned int i = 0; i < q_points; i++ ) {
+               if ( use_q_exclude.count( f_qs[file][i] ) ) {
+                  exclude_x.push_back( f_qs[file][i] );
+                  exclude_y.push_back( f_Is[file][i] );
+               }
+            }
+         }
       } else {
          vector < double > q;
          vector < double > I;
@@ -1269,6 +1296,10 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
             {
                q.push_back( f_qs[ file ][ i ] );
                I.push_back( f_Is[ file ][ i ] );
+            }
+            if ( use_q_exclude.count( q.back() ) ) {
+               exclude_x.push_back( q.back() );
+               exclude_y.push_back( I.back() );
             }
          }
          q_points = ( unsigned int )q.size();
@@ -1284,6 +1315,25 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
          curve->attach( plot_dist );
       }
    }            
+   // US_Vector::printvector2( QString( "plot_file( %1 ) exclude points" ).arg( file ), exclude_x, exclude_y );
+
+   if ( exclude_x.size() ) {
+      QwtPlotCurve *curve = new QwtPlotCurve( file + "-excluded" );
+      plotted_curves[ file ] = curve;
+      curve->setStyle( QwtPlotCurve::Dots );
+      QwtSymbol symbol;
+      symbol.setStyle( QwtSymbol::XCross );
+      symbol.setSize( 1 + use_line_width * 6 );
+      symbol.setPen( QPen( QColor( "red" ), use_line_width, Qt::SolidLine ) );
+      // symbol.setBrush( Qt::NoBrush );
+      curve->setSamples(
+                        (double *)&(exclude_x[0])
+                        ,(double *)&(exclude_y[0])
+                        ,exclude_x.size()
+                        );
+      curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
+      curve->attach( plot_dist );
+   }
    return true;
 }
 
