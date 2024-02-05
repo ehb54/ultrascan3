@@ -225,7 +225,7 @@ bool US_CosedComponent::readFromDB(US_DB2 *db, const QString &cosed_compID) {
    name = db->value(0).toString();
    conc = db->value(1).toDouble();
    overlaying = US_Util::bool_flag(db->value(6).toString());
-
+   concentration_offset = 0.0;
    s_coeff = db->value(2).toString().toDouble()*1E-13;
    d_coeff = db->value(3).toString().toDouble()*1E-6;
    QString density = db->value(4).toString();
@@ -260,6 +260,7 @@ void US_CosedComponent::getInfoFromDB(US_DB2 *db) {
    s_coeff = db->value(2).toString().toDouble()*1E-13;
    d_coeff = db->value(3).toString().toDouble()*1E-6;
    vbar = db->value(8).toString().toDouble();
+   concentration_offset = 0.0;
    QString density = db->value(4).toString();
    QString viscosity = db->value(5).toString();
 
@@ -288,6 +289,7 @@ void US_CosedComponent::component(QXmlStreamReader &xml, QMap<QString, US_CosedC
    bc.vbar = a.value("vbar").toString().toDouble();
    bc.s_coeff = a.value("sedimentationCoefficient").toString().toDouble()*1E-13;
    bc.d_coeff = a.value("diffusionCoefficient").toString().toDouble()*1E-6;
+   bc.concentration_offset = 0.0;
 
    while (!xml.atEnd()) {
 
@@ -334,6 +336,7 @@ void US_CosedComponent::component(QXmlStreamReader &xml, QList<US_CosedComponent
    bc.s_coeff = a.value("sedimentationCoefficient").toString().toDouble()*1E-13;
    bc.d_coeff = a.value("diffusionCoefficient").toString().toDouble()*1E-6;
    bc.vbar = a.value("vbar").toString().toDouble();
+   bc.concentration_offset = 0.0;
 
    while (!xml.atEnd()) {
 
@@ -465,6 +468,7 @@ US_CosedComponent US_CosedComponent::clone(void) {
    }
    cloned.s_coeff = s_coeff;
    cloned.d_coeff = d_coeff;
+   cloned.concentration_offset = concentration_offset;
 
    return cloned;
 }
@@ -477,6 +481,7 @@ bool US_CosedComponent::operator==(const US_CosedComponent & c) const {
     if ( vbar       != c.vbar )       return false;
     if ( abs( conc - c.conc ) > GSL_ROOT5_DBL_EPSILON ) return false;
     if ( overlaying != c.overlaying ) return false;
+    if ( concentration_offset != c.concentration_offset ) return false;
     return true;
 }
 

@@ -61,6 +61,7 @@ public:
     double vbar; //!< The cosed component's vbar
     double conc;                           //!< The cosed component's concentration in M
     bool overlaying;
+    double concentration_offset = 0.0;      //!< The cosed component's concentration offset in M
 
     bool operator== ( const US_CosedComponent& ) const;
 
