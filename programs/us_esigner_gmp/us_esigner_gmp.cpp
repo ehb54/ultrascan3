@@ -4454,7 +4454,8 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json_sa( int u_ID, QString u_fn
 	}
     }
   esigned_str += existing_esignees;
-  esigned_str.chop(1);
+  if ( esigned_array.size() > 0 )
+    esigned_str.chop(1);
   esigned_str += "]";
       
   //Compose final statusJson:
