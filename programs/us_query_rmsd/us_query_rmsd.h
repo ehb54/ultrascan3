@@ -38,28 +38,18 @@ class US_QueryRmsd : public US_Widgets{
       double rmsd;
    };
 
+   QPushButton *pb_simulate;
    int dbg_level;
    double threshold;
    QTableWidget *tw_rmsd;
    QHeaderView *hheader;
    US_Passwd pw;
    US_DB2* dbCon;
-   // QStringList allCell;
-   // QStringList allChannel;
-   // QStringList allLambda;
-   // QStringList allEdit;
-   // QVector<int> allEditIds;
-   // QVector<int> allRawDataIds;
-   // QStringList allAnalysis;
-   // QStringList allMethod;
-   // QVector<double> allRmsd;
-   // QVector<int> allModelIDs;
-   // QVector<int> allExpIDs;
    QVector<DataBundle> allData;
    QVector<int> selIndex;
    QMap<int, US_Model > Models;  //DB model id -> Model
    QMap<int, US_DataIO::EditedData> editData;  //DB edit id -> EditedData
-   QMap<int, US_DataIO::RawData> rawData;      //DB edit id -> RawData
+   QMap<int, US_DataIO::RawData> rawData;      //DB RawData id -> RawData
 
    QStringList methodList;
    QStringList editList;
@@ -84,8 +74,7 @@ class US_QueryRmsd : public US_Widgets{
    void clear_data(void);
    bool check_combo_content(QComboBox*, QString&);
    void highlight(void);
-//   bool load_model(QString, US_Model*);
-   bool info_by_editId(int, int&, int&, QString&, QString&, QString&);
+   bool get_metadata(DataBundle&, QString&);
    bool load_data(int, QString&);
 
    private slots:
