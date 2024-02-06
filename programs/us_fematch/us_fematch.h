@@ -290,5 +290,7 @@ class US_FeMatch : public US_Widgets
       // Widgets
       QwtPlot*     data_plot1;
       QwtPlot*     data_plot2;
+
+      void closeEvent(QCloseEvent*) override;
 };
 #endif

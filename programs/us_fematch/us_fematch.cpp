@@ -4242,8 +4242,29 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
       // Default the used model to a "Mean" model
       US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
    }
-
    simulate_model( );
-
 }
 
+void US_FeMatch::closeEvent(QCloseEvent *event) {
+   if ( eplotcd != 0 )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+      eplotcd  = 0;
+   }
+
+   if ( resplotd != 0 )
+   {
+      rpd_pos  = resplotd->pos();
+      resplotd->close();
+      resplotd = 0;
+   }
+
+   if ( rbmapd != 0 )
+   {
+      bmd_pos  = rbmapd->pos();
+      rbmapd->close();
+      rbmapd   = 0;
+   }
+   event->accept();
+}
