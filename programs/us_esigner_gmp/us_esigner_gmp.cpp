@@ -2483,37 +2483,41 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   QString operListJsonArray = "[";
   QString revListJsonArray  = "[";
   QString apprListJsonArray = "[";
+  QString updated_to_sign_list = "[";
 
   /* first check if respective sections are NOT allowed for reassigning */
   /* if partially signed, insert in respective lists those who already signed, then the rest (new ones) */
   
   QString opers_updated, revs_updated, apprs_updated;
 
-  compose_updated_ora_list( operListJsonArray, opers_updated, exsisting_oper_list, oper_list );
-  compose_updated_ora_list( revListJsonArray,  revs_updated, exsisting_rev_list, rev_list );
-  compose_updated_ora_list( apprListJsonArray, apprs_updated, exsisting_appr_list, appr_list );
+  compose_updated_ora_list( operListJsonArray, opers_updated, updated_to_sign_list, exsisting_oper_list, oper_list );
+  compose_updated_ora_list( revListJsonArray,  revs_updated,  updated_to_sign_list, exsisting_rev_list,  rev_list );
+  compose_updated_ora_list( apprListJsonArray, apprs_updated, updated_to_sign_list, exsisting_appr_list, appr_list );
 
   operListJsonArray.chop(1);
   revListJsonArray.chop(1);
   apprListJsonArray.chop(1);
+  updated_to_sign_list.chop(1);
   operListJsonArray += "]";
   revListJsonArray  += "]";
   apprListJsonArray += "]";
+  updated_to_sign_list += "]";
     
   qDebug() << "operListJsonArray -- " << operListJsonArray;
   qDebug() << "revListJsonArray -- "  << revListJsonArray;
   qDebug() << "apprListJsonArray -- " << apprListJsonArray;
-
+  qDebug() << "updated_to_sign_list -- " << updated_to_sign_list;
+  
   qDebug() << "opers_updated -- " << opers_updated;
   qDebug() << "revs_updated -- "  << revs_updated;
   qDebug() << "apprs_updated -- " << apprs_updated;
 
-  //[TEMP] Update te fileds
+  //[TEMP] Update te fileds, move to back later
   te_operator_names -> setText( opers_updated );
   te_reviewer_names -> setText( revs_updated );
   te_appr_names     -> setText( apprs_updated );
 
-  //check existing EsignStatusJson
+  //check existing EsignStatusJson: "to_sign", "signed"
   QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
   QString eSignStatusAll    = eSign_details[ "eSignStatusAll" ];
   QString eSignID           = eSign_details[ "ID" ];
@@ -2533,11 +2537,59 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
 
   QJsonArray to_esign_array  = to_esign .toArray();
   QJsonArray esigned_array   = esigned  .toArray();
+
+  
+  //JSON for logJsonUpdateTime - compose updated;
+  //DB 
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db->lastError() );
+
+      return;
+    }
+  
+  QStringList qry;
+  qry <<  QString( "get_user_info" );
+  db -> query( qry );
+  db -> next();
+  int u_ID        = db->value( 0 ).toInt();
+  QString u_fname = db->value( 1 ).toString();
+  QString u_lname = db->value( 2 ).toString();
+
+  //1: updated eSignStatusJson
+  QString eSignStatusJson_updated = compose_updated_eSign_Json_sa( u_ID, u_fname, u_lname,
+								   updated_to_sign_list, esigned_array );
+  qDebug() << "eSignStatusJson_updated -- " << eSignStatusJson_updated;
+
+  //2: updated admin log
+  QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname );
+  qDebug() << "logJsonUpdateTimeJsonObject -- "  << logJsonUpdateTime;
+
+  
+  qry. clear();
+  qry << "update_gmp_review_record_by_admin"
+      << eSign_details[ "ID" ]
+      << gmp_run_details[ "autoflowID" ]
+      << operListJsonArray
+      << revListJsonArray
+      << apprListJsonArray
+      << eSign_details[ "smeListJson" ]  //do NOT change SME!
+      << eSignStatusJson_updated
+      << logJsonUpdateTime;
+  
+  qDebug() << "update_gmp_review_record_by_admin, qry -- " << qry;
+  //db->query( qry );
   
 }
 
 //updated lists of o,r,a
-void US_eSignaturesGMP::compose_updated_ora_list( QString& jsonArrayList, QString& updated_list , QString existing_ora, QString new_ora )
+void US_eSignaturesGMP::compose_updated_ora_list( QString& jsonArrayList, QString& updated_list,
+						  QString& updated_to_sign_list,
+						  QString existing_ora, QString new_ora )
 {
   QStringList existing_listList;
   existing_listList = existing_ora.split("\n");
@@ -2572,6 +2624,7 @@ void US_eSignaturesGMP::compose_updated_ora_list( QString& jsonArrayList, QStrin
       jsonArrayList += "\"" + new_listList[i] + "\",";
       updated_list  += new_listList[i] + "(<font color=\"Blue\"><b>NOT SIGNED<\b></font>)";
       updated_list  += "<br>";
+      updated_to_sign_list += "\"" + new_listList[i] + "\",";
     }
 }
 
@@ -4371,6 +4424,46 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
   painter-> setFont(pfont);
 }
 
+//Compose /Update eSignStatusJson: for SA
+QString US_eSignaturesGMP::compose_updated_eSign_Json_sa( int u_ID, QString u_fname, QString u_lname,
+							  QString updated_to_sign_list, QJsonArray esigned_array )
+{
+  QString statusJson = "{";
+
+  // "to_sign" section:
+  QString to_sign_str = "\"to_sign\":";
+  to_sign_str += updated_to_sign_list;
+  to_sign_str += ",";
+
+  // "esigned" section":
+  QString esigned_str = "\"signed\":[";
+  QString existing_esignees;
+  for (int i=0; i < esigned_array.size(); ++i )
+    {
+      foreach(const QString& key, esigned_array[i].toObject().keys())
+	{
+	  QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
+	  
+	  qDebug() << "Updating E-Signed section - " << key << ": Comment, timeDate -- "
+		   << newObj["Comment"]   .toString()
+		   << newObj["timeDate"]  .toString();
+	  
+	  
+	  existing_esignees += "{\"" + key + "\":{\"Comment\":\"" + newObj["Comment"]  .toString() + "\",";
+	  existing_esignees +=                  "\"timeDate\":\"" + newObj["timeDate"] .toString() + "\"}},";
+	}
+    }
+  esigned_str += existing_esignees;
+  esigned_str.chop(1);
+  esigned_str += "]";
+      
+  //Compose final statusJson:
+  statusJson += to_sign_str;
+  statusJson += esigned_str;
+  statusJson += "}";
+
+  return statusJson;
+}
 
 
 //Compose /Update eSignStatusJson:

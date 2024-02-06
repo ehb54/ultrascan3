@@ -192,10 +192,11 @@ class US_eSignaturesGMP : public US_Widgets
        void setUnsetPb_operRev( void );
        void setUnset_AddRemove_RevAppr_bttn( QString );
        QString compose_updated_admin_logJson( int, QString, QString );
+       
        void loadGMPReportDB_assigned( void );
        void loadGMPReportDB_assigned_auto( QString );
        void loadGMPReportDB_assigned_separate( void );
-       void compose_updated_ora_list( QString&, QString&, QString, QString );
+       void compose_updated_ora_list( QString&, QString&, QString&, QString, QString );
   
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
@@ -205,6 +206,9 @@ class US_eSignaturesGMP : public US_Widgets
        void esign_report( void );
        QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
 					   QString, QString& );
+       QString compose_updated_eSign_Json_sa( int, QString, QString, QString, QJsonArray);
+					      
+  
        QString write_pdf_eSignatures( QString, QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
        QString check_revs_esign_status_sa( QString, QMap< QString, QString> );
