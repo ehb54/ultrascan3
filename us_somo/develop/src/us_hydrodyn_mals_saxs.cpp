@@ -1329,6 +1329,7 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
          conc_window->cancel();
       }
    }
+   q_exclude_opt_remove_unreferenced();
 }
 
 class mals_saxs_sortable_qstring {

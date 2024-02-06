@@ -583,6 +583,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QLabel        *lbl_q_exclude_detail;
 
       void          q_exclude_update_lbl();
+      void          q_exclude_opt_remove_unreferenced();
       
       set < double > q_exclude;
       

@@ -4736,7 +4736,7 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_common_time        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ );
-   pb_scroll_pair        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ && half_common );
+   pb_scroll_pair        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ );
    pb_join_by_time       ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ && half_common );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
@@ -6101,3 +6101,60 @@ void US_Hydrodyn_Mals_Saxs::q_exclude_right() {
    }      
 }
 
+void US_Hydrodyn_Mals_Saxs::q_exclude_opt_remove_unreferenced() {
+
+   if ( !q_exclude.size() ) {
+      // nothing to check
+      return;
+   }
+
+   // get all qvalues from curves
+
+   set < vector < double > > q_grids;
+   
+   for ( auto const & f_q : f_qs ) {
+      if ( f_is_time.count( f_q.first ) && f_is_time[ f_q.first ] ) {
+         continue;
+      }
+      q_grids.insert( f_q.second );
+   }
+
+   set < double > q_refd;
+
+   for ( auto const & qs : q_grids ) {
+      for ( auto const & q : qs ) {
+         q_refd.insert( q );
+      }
+   }
+
+   set < double > q_not_refd;
+
+   for ( auto const & q : q_exclude ) {
+      if ( !q_refd.count( q ) ) {
+         q_not_refd.insert( q );
+      }
+   }
+
+   if ( !q_not_refd.size() ) {
+      return;
+   }
+
+   switch ( QMessageBox::question(this, 
+                                  windowTitle() + us_tr( " : q excludes" )
+                                  , QString( us_tr(
+                                                   "%1 excluded q values are no longer referenced by any curves\n"
+                                                   "Do you wish to remove the exclusions?"
+                                                   ) )
+                                  .arg( q_not_refd.size() )
+                                  ) )
+   {
+   case QMessageBox::Yes : 
+      for ( auto const & q : q_not_refd ) {
+         q_exclude.erase( q );
+      }
+      q_exclude_update_lbl();
+      break;
+   default: 
+      break;
+   }
+}   

@@ -44,7 +44,7 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair()
          qgrid_to_names[ f_qs[ name ] ].push_back( name );
       }
       
-      if ( qgrid_to_names.size() != 2 ) {
+      if ( qgrid_to_names.size() > 2 || !qgrid_to_names.size()) {
          QString detail = "\n";
          int pos = 0;
          for ( auto & it : qgrid_to_names ) {
@@ -59,7 +59,7 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair()
          QMessageBox::critical( this,
                                 windowTitle() + us_tr( ": Scroll" ),
                                 QString( us_tr(
-                                               "The %1 curves selected do not have exactly 2 unique q-grids\n\n"
+                                               "The %1 curves selected do not have more than two unique q-grids\n\n"
                                                "%2 q-grid(s) found\n"
                                                )
                                          )
@@ -70,48 +70,64 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair()
          return update_enables();
       }      
 
-      scroll_pair_names =
-         {
-            qgrid_to_names.begin()->second
-            ,(--qgrid_to_names.end())->second
-         };
+      if ( qgrid_to_names.size() == 1 ) {
+         scroll_pair_names =
+            {
+               qgrid_to_names.begin()->second
+            };
+      } else {
+         scroll_pair_names =
+            {
+               qgrid_to_names.begin()->second
+               ,(--qgrid_to_names.end())->second
+            };
+      }
    }
    
    // get time grids for each
 
    {
-      vector < vector < double >> time_grids =
-         {
-            get_time_grid_from_namelist( scroll_pair_names[0] )
-            ,get_time_grid_from_namelist( scroll_pair_names[1] )
-         };
+      if ( scroll_pair_names.size() == 2 ) {
+         vector < vector < double >> time_grids =
+            {
+               get_time_grid_from_namelist( scroll_pair_names[0] )
+               ,get_time_grid_from_namelist( scroll_pair_names[1] )
+            };
 
-      if ( time_grids[0] != time_grids[1] ) {
-         QMessageBox::critical( this,
-                                windowTitle() + us_tr( ": Scroll" ),
-                                QString( us_tr(
-                                               "The %1 curves selected do not have the same times\n\n"
-                                               )
-                                         )
-                                .arg( names.size() )
-                                );
-         return update_enables();
-      }      
+         if ( time_grids[0] != time_grids[1] ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Scroll" ),
+                                   QString( us_tr(
+                                                  "The %1 curves selected do not have the same times\n\n"
+                                                  )
+                                            )
+                                   .arg( names.size() )
+                                   );
+            return update_enables();
+         }      
 
-      scroll_pair_times = time_grids[0];
+         scroll_pair_times = time_grids[0];
+      } else {
+         scroll_pair_times = get_time_grid_from_namelist( scroll_pair_names[0] );
+      }
    }
    
-
    // build scroll_pair_time_to_names
 
-   // assume MALS has lower minq
+   if ( scroll_pair_names.size() == 2 ) {
+      // assume MALS has lower minq
 
-   int mals_set = f_qs[ scroll_pair_names[0][0] ].front() < f_qs[ scroll_pair_names[1][0] ].front() ? 0 : 1;
-   int saxs_set = 1 - mals_set;
+      int mals_set = f_qs[ scroll_pair_names[0][0] ].front() < f_qs[ scroll_pair_names[1][0] ].front() ? 0 : 1;
+      int saxs_set = 1 - mals_set;
 
-   for ( int i = 0; i < (int) scroll_pair_times.size(); ++i ) {
-      scroll_pair_time_to_names[ scroll_pair_times[i] ].push_back( scroll_pair_names[mals_set][i] );
-      scroll_pair_time_to_names[ scroll_pair_times[i] ].push_back( scroll_pair_names[saxs_set][i] );
+      for ( int i = 0; i < (int) scroll_pair_times.size(); ++i ) {
+         scroll_pair_time_to_names[ scroll_pair_times[i] ].push_back( scroll_pair_names[mals_set][i] );
+         scroll_pair_time_to_names[ scroll_pair_times[i] ].push_back( scroll_pair_names[saxs_set][i] );
+      }
+   } else {
+      for ( int i = 0; i < (int) scroll_pair_times.size(); ++i ) {
+         scroll_pair_time_to_names[ scroll_pair_times[i] ].push_back( scroll_pair_names[0][i] );
+      }
    }
 
    mode_select( MODE_SCROLL_PAIR );
@@ -158,12 +174,19 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair_scroll_highlight( int pos )
    
    double time = scroll_pair_times[ pos ];
    lbl_wheel_pos->setText( QString( "%1" ).arg( time ) );
-   set < QString > toplot =
-      {
+
+   set < QString > toplot;
+   if ( scroll_pair_names.size() == 2 ) {
+      toplot = {
          scroll_pair_time_to_names[ time ][ 0 ]
          ,scroll_pair_time_to_names[ time ][ 1 ]
       };
-   
+   } else {
+      toplot = {
+         scroll_pair_time_to_names[ time ][ 0 ]
+      };
+   }
+
    set_selected( toplot );
 }
 
