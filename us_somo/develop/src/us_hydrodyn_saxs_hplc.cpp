@@ -955,13 +955,14 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
 
    lb_files->setUpdatesEnabled( false );
 
+   QString msg = "";
+
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_files->item( i )->text() ) )
       {
-         if ( !quiet )
-         {
-            editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
+         if ( !quiet ) {
+            msg += QString( us_tr( "Removed %1\n" ) ).arg( lb_files->item( i )->text() );
          }
          conc_files.erase( lb_files->item( i )->text() );
          if ( lbl_conc_file->text() == lb_files->item( i )->text() )
@@ -999,6 +1000,10 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
    }
 
    lb_files->setUpdatesEnabled( true );
+
+   if ( !quiet && !msg.isEmpty() ) {
+      editor_msg( "black", msg );
+   }
 
    disable_updates = false;
    plot_files();

@@ -1188,6 +1188,15 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
 {
    disable_updates = true;
 
+   // US_Timer           us_timers;
+   // us_timers          .clear_timers();
+   // us_timers.init_timer( "clear_files()" );
+   // us_timers.init_timer( "clear_files() final plot" );
+   // us_timers.init_timer( "clear_files() lb_files" );
+   // us_timers.init_timer( "clear_files() lb_created_files" );
+
+   // us_timers.start_timer( "clear_files()" );
+   
    QStringList           created_not_saved_list;
    map < QString, bool > created_not_saved_map;
    map < QString, bool > selected_map;
@@ -1246,6 +1255,9 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
 
    }
 
+
+   // us_timers.start_timer( "clear_files() lb_created_files" );
+
    // remove them now
    lb_created_files->setUpdatesEnabled( false );
 
@@ -1262,13 +1274,16 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
 
    lb_files->setUpdatesEnabled( false );
 
+   // us_timers.end_timer( "clear_files() lb_created_files" );
+   // us_timers.start_timer( "clear_files() lb_files" );
+
+   QString msg = "";
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_files->item( i )->text() ) )
       {
-         if ( !quiet )
-         {
-            editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
+         if ( !quiet ) {
+            msg += QString( us_tr( "Removed %1\n" ) ).arg( lb_files->item( i )->text() );
          }
          conc_files    .erase( lb_files->item( i )->text() );
          if ( lbl_conc_file->text() == lb_files->item( i )->text() )
@@ -1305,11 +1320,20 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
          f_dndc        .erase( lb_files->item( i )->text() );
          f_conc_units  .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
-         qApp->processEvents();
+         // qApp->processEvents();
       }
    }
 
    lb_files->setUpdatesEnabled( true );
+
+   // us_timers.end_timer( "clear_files() lb_files" );
+
+   if ( !quiet && !msg.isEmpty() ) {
+      editor_msg( "black", msg );
+   }
+
+   // us_timers.start_timer( "clear_files() final plot" );
+
 
    disable_updates = false;
    plot_files();
@@ -1319,7 +1343,13 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
    //    delete plot_dist_zoomer;
    //    plot_dist_zoomer = (ScrollZoomer *) 0;
    // }
+
+   // us_timers.end_timer( "clear_files() final plot" );
+   // us_timers.end_timer( "clear_files()" );
+   // us_qdebug( us_timers.list_times() );
+
    update_csv_conc();
+
    if ( conc_widget )
    {
       if ( lb_files->count() )
@@ -1329,6 +1359,7 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
          conc_window->cancel();
       }
    }
+
    q_exclude_opt_remove_unreferenced();
 }
 
