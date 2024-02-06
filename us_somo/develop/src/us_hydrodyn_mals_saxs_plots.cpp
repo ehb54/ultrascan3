@@ -1224,10 +1224,10 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
                q.push_back( f_qs[ file ][ i ] );
                I.push_back( f_Is[ file ][ i ] );
                e.push_back( f_errors[ file ][ i ] );
-            }
-            if ( use_q_exclude.count( q.back() ) ) {
-               exclude_x.push_back( q.back() );
-               exclude_y.push_back( I.back() );
+               if ( use_q_exclude.count( q.back() ) ) {
+                  exclude_x.push_back( q.back() );
+                  exclude_y.push_back( I.back() );
+               }
             }
          }
          q_points = ( unsigned int )q.size();
@@ -1265,7 +1265,6 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
             curveeb->attach( plot_dist );
          }            
       }
-
    } else {
       if ( !axis_y_log )
       {
@@ -1296,10 +1295,10 @@ bool US_Hydrodyn_Mals_Saxs::plot_file( QString file,
             {
                q.push_back( f_qs[ file ][ i ] );
                I.push_back( f_Is[ file ][ i ] );
-            }
-            if ( use_q_exclude.count( q.back() ) ) {
-               exclude_x.push_back( q.back() );
-               exclude_y.push_back( I.back() );
+               if ( use_q_exclude.count( q.back() ) ) {
+                  exclude_x.push_back( q.back() );
+                  exclude_y.push_back( I.back() );
+               }
             }
          }
          q_points = ( unsigned int )q.size();
