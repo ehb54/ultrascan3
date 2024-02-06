@@ -2512,11 +2512,6 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   qDebug() << "revs_updated -- "  << revs_updated;
   qDebug() << "apprs_updated -- " << apprs_updated;
 
-  //[TEMP] Update te fileds, move to back later
-  te_operator_names -> setText( opers_updated );
-  te_reviewer_names -> setText( revs_updated );
-  te_appr_names     -> setText( apprs_updated );
-
   //check existing EsignStatusJson: "to_sign", "signed"
   QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
   QString eSignStatusAll    = eSign_details[ "eSignStatusAll" ];
@@ -2582,8 +2577,14 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
       << logJsonUpdateTime;
   
   qDebug() << "update_gmp_review_record_by_admin, qry -- " << qry;
-  //db->query( qry );
-  
+  db->query( qry );
+
+  //Update te fileds
+  te_operator_names -> setText( opers_updated );
+  te_reviewer_names -> setText( revs_updated );
+  te_appr_names     -> setText( apprs_updated );
+
+  qApp->processEvents();  
 }
 
 //updated lists of o,r,a
