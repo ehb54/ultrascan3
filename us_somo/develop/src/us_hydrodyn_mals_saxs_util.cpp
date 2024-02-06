@@ -6340,6 +6340,23 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
    vector < double > output_qs = US_Vector::vunion( f_qs[ qgrid_names[ mals_set ][0] ], f_qs[ qgrid_names[ saxs_set ][0] ] );
    vector < double > common_qs = US_Vector::intersection( f_qs[ qgrid_names[ mals_set ][0] ], f_qs[ qgrid_names[ saxs_set ][0] ] );
 
+   if ( do_q_exclude ) {
+      vector < double > trimmed_output_qs;
+      vector < double > trimmed_common_qs;
+      for ( auto const & q : output_qs ) {
+         if ( !q_exclude.count( q ) ) {
+            trimmed_output_qs.push_back( q );
+         }
+      }
+      for ( auto const & q : common_qs ) {
+         if ( !q_exclude.count( q ) ) {
+            trimmed_common_qs.push_back( q );
+         }
+      }
+      output_qs = trimmed_output_qs;
+      common_qs = trimmed_common_qs;
+   }
+
    if ( common_qs.size() ) {
       QMessageBox::warning( this,
                             windowTitle() + us_tr( ": Join I#,*(q) by time" ),
