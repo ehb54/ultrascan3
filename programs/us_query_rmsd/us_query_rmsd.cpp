@@ -661,3 +661,8 @@ void US_QueryRmsd::new_threshold(){
    }
    highlight();
 }
+
+void US_QueryRmsd::closeEvent(QCloseEvent *event) {
+   fematch->close();
+   event->accept();
+}

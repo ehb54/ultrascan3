@@ -77,6 +77,9 @@ class US_QueryRmsd : public US_Widgets{
    bool get_metadata(DataBundle&, QString&);
    bool load_data(int, QString&);
 
+   protected:
+   void closeEvent(QCloseEvent*) override;
+
    private slots:
    void load_runid(void);
    void fill_table(int);
