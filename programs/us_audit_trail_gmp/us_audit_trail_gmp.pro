@@ -6,11 +6,12 @@ QT           += sql
 QT           += svg opengl
 QT           += printsupport
 
-HEADERS       = us_audit_trail_gmp.h                  
+HEADERS       = us_audit_trail_gmp.h
+
 
 SOURCES       = us_audit_trail_gmp_main.cpp       \
-                us_audit_trail_gmp.cpp
-
+                us_audit_trail_gmp.cpp 
+                
 
 
                

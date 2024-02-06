@@ -303,8 +303,8 @@ class US_ReporterGMP : public US_Widgets
          void  remove_files_by_mask( QString, QStringList );
          void write_gmp_report_DB( QString, QString );
   
-	 void  assemble_user_inputs_html( void );
-         void  assemble_run_details_html( void );
+  void  assemble_user_inputs_html( void );
+  void  assemble_run_details_html( void );
          int   get_expID_by_runID_invID( US_DB2*, QString );
          double get_loading_volume( int );
   

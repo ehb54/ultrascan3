@@ -36,8 +36,7 @@ US_ReporterGMP::US_ReporterGMP( QMap< QString, QString> t_c ) : US_Widgets()
 void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString html_filePath,
 					       int autolfowGMPReportID, QString autoStatusID, QString autoID )
 {
-  qDebug() << "[TEST] Writing .TAR Blob of filePath -- " << report_filepath;
-
+  
   bool clear_GMP_report_record = false;
   
   US_Passwd pw;
@@ -76,6 +75,8 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
   
   /**********************************************************************************/
   //// .Tar Blob
+  qDebug() << "[TEST] Writing .TAR Blob of filePath -- " << report_filepath;
+  
   int writeStatus= db.writeBlobToDB(report_filepath,
 				    QString( "upload_gmpReportData" ),
 				    autolfowGMPReportID );
@@ -10543,7 +10544,7 @@ void US_ReporterGMP::write_pdf_report( void )
   // printer.setOutputFileName( filePath );
   // printer.setFullPage(true);
   // printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
-    
+  
   // document.print(&printer);
   /** END of standard way of printing *************************/
 
@@ -10567,7 +10568,8 @@ void US_ReporterGMP::write_pdf_report( void )
 
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
-
+  //printer.setFullPage(false);
+  
   printDocument(printer, &textDocument ); //, 0);
   
   /*************************************************************/
@@ -10729,6 +10731,7 @@ void US_ReporterGMP::write_pdf_report( void )
       process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
       process -> waitForFinished();
       process -> close();
+      qApp->processEvents();
       
       //Write to autoflowGMPReport table as longblob
       write_gmp_report_DB( tarFilename_t, fileName );
@@ -10749,6 +10752,7 @@ double US_ReporterGMP::mmToPixels(QPrinter& printer, int mm)
 void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QWidget* parentWidget)
 {
   int textMargins = 12; // in millimeters
+  //int textMargins = 0; // in millimeters
   
   QPainter painter( &printer );
   QSizeF pageSize = printer.pageRect().size(); // page size in pixels
@@ -10763,20 +10767,38 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   const int pageCount = doc->pageCount();
   // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
   // dialog.setWindowModality( Qt::ApplicationModal );
+  progress_msg = new QProgressDialog ("Preparing .PDF...", QString(), 0, pageCount, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Printing..."));
+  QFont font_d  = progress_msg->property("font").value<QFont>();
+  QFontMetrics fm(font_d);
+  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
+  progress_msg ->setMinimumWidth( pixelsWide*2 );
+  progress_msg->adjustSize();
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
   
   bool firstPage = true;
   for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex)
     {
-      //   dialog.setValue( pageIndex );
-      //   if (dialog.wasCanceled())
-      //     break;
+      progress_msg->setValue( pageIndex );
       
       if (!firstPage)
-	printer.newPage();
+	{
+	  //immediately before newPage, set new margins:
+	  //printer.setPageMargins(0, -15, 0, -15, QPrinter::Millimeter);
+	  printer.newPage();
+	}
       
       paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
       firstPage = false;
     }
+
+  progress_msg->close();
 }
 
 
@@ -10790,16 +10812,17 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   qDebug() << "pageSize=" << pageSize;
   qDebug() << "printerResolution=" << printer.resolution();
   
-  const double bm = mmToPixels(printer, borderMargins);
-  const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
+  // const double bm = mmToPixels(printer, borderMargins);
+  // const QRectF borderRect(bm, bm, pageSize.width() - 2 * bm, pageSize.height() - 2 * bm);
   //painter->drawRect(borderRect);
   
   painter->save();
+  
   // textPageRect is the rectangle in the coordinate system of the QTextDocument, in pixels,
   // and starting at (0,0) for the first page. Second page is at y=doc->pageSize().height().
   const QRectF textPageRect(0, pageNumber * doc->pageSize().height(), doc->pageSize().width(), doc->pageSize().height());
   // Clip the drawing so that the text of the other pages doesn't appear in the margins
-  painter->setClipRect(textRect);
+  //painter->setClipRect(textRect);
   // Translate so that 0,0 is now the page corner
   painter->translate(0, -textPageRect.top());
   // Translate so that 0,0 is the text rect corner
@@ -10815,7 +10838,7 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
 	   << painter->fontInfo().pointSizeF()
 	   << painter->fontInfo().pointSize();
   
-  doc->drawContents(painter);
+  doc->drawContents(painter,textPageRect); //add second params, OR it appears to draw full QTextDoc.... (huge sizes)
   painter->restore();
   
   // Footer: e-Signer comment && page number
@@ -10884,7 +10907,7 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 
   qDebug() << "status_report_unique -- " << status_report_unique ;
   
-  if ( !status_report_unique )
+  if ( !status_report_unique || status_report_unique < 0 )
     {
       QMessageBox::information( this,
 				tr( "The Program State Updated / Being Updated" ),
