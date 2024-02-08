@@ -1875,6 +1875,12 @@ void US_eSignaturesGMP::set_revOper_panel_gui_sa( void )
       pb_remove_oper -> setEnabled( false );
       cb_choose_operator -> setEnabled( false );
     }
+  else
+    {
+      pb_add_oper -> setEnabled( true );
+      pb_remove_oper -> setEnabled( true );
+      cb_choose_operator -> setEnabled( true );
+    }
   if ( reviewers_info. contains("completed") && reviewers_info["completed"] == "YES" )
     {
       te_revs_to_assign -> setText( "<font color=\"Red\">All reviewers have eSigned, cannot be reassigned!</font>" );
@@ -1882,13 +1888,25 @@ void US_eSignaturesGMP::set_revOper_panel_gui_sa( void )
       pb_remove_rev -> setEnabled( false );
       cb_choose_rev -> setEnabled( false );
     }
+  else
+    {
+      pb_add_rev -> setEnabled( true );
+      pb_remove_rev -> setEnabled( true );
+      cb_choose_rev -> setEnabled( true );
+    }
   if ( approvers_info. contains("completed") && approvers_info["completed"] == "YES" )
     {
       te_apprs_to_assign -> setText( "<font color=\"Red\">All approvers have eSigned, cannot be reassigned!</font>" );
       pb_add_appr -> setEnabled( false );
       pb_remove_appr -> setEnabled( false );
       cb_choose_appr -> setEnabled( false );
-    }  
+    }
+  else
+    {
+      pb_add_appr -> setEnabled( true );
+      pb_remove_appr -> setEnabled( true );
+      cb_choose_appr -> setEnabled( true );
+    }
   
 }
 
@@ -2478,8 +2496,7 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
 	   << rev_list
 	   << appr_list;
 
-  //Compose JSON arrays: QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
-                                     
+  //Compose JSON arrays: QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));                                     
   QString operListJsonArray = "[";
   QString revListJsonArray  = "[";
   QString apprListJsonArray = "[";
