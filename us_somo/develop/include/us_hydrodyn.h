@@ -122,6 +122,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Mals_Svd;
       friend class US_Hydrodyn_Mals_Options;
       friend class US_Hydrodyn_Mals_Baseline_Best;
+      friend class US_Hydrodyn_Mals_Parameters;
       friend class US_Hydrodyn_Mals_Saxs;
       friend class US_Hydrodyn_Mals_Saxs_Svd;
       friend class US_Hydrodyn_Mals_Saxs_Options;

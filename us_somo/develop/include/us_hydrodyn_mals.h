@@ -151,6 +151,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       friend class US_Hydrodyn_Mals_Movie;
       friend class US_Hydrodyn_Mals_Baseline_Best;
       friend class US_Hydrodyn_Mals_Simulate;
+      friend class US_Hydrodyn_Mals_Parameters;
 
    public:
       US_Hydrodyn_Mals(
@@ -915,8 +916,9 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       map < QString, double >             f_g_dndc;
       map < QString, double >             f_dndc;
       map < QString, QString >            f_conc_units;
+      map < QString, double >             f_ri_corr;
+      map < QString, QString >            f_ri_corrs;
       map < QString, double >             f_ref_index;
-      map < QString, QString >            f_ref_indices;
       
       // for displaying last smoothing in gg scroll mode
       map < QString, vector < double > >  f_qs_smoothed;

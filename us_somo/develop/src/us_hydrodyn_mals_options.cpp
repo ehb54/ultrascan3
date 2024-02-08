@@ -1108,7 +1108,7 @@ void US_Hydrodyn_Mals_Options::set_mals_parameters()
 
       US_Hydrodyn_Mals_Parameters *mals_parameters = 
          new US_Hydrodyn_Mals_Parameters(
-                                         this,
+                                         us_hydrodyn,
                                          & parameters,
                                          this );
       US_Hydrodyn::fixWinButtons( mals_parameters );

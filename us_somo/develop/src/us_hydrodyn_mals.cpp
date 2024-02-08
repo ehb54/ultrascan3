@@ -1326,8 +1326,9 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          f_g_dndc      .erase( lb_files->item( i )->text() );
          f_dndc        .erase( lb_files->item( i )->text() );
          f_conc_units  .erase( lb_files->item( i )->text() );
+         f_ri_corr     .erase( lb_files->item( i )->text() );
+         f_ri_corrs    .erase( lb_files->item( i )->text() );
          f_ref_index   .erase( lb_files->item( i )->text() );
-         f_ref_indices .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
          // qApp->processEvents();
       }
@@ -1643,6 +1644,51 @@ void US_Hydrodyn_Mals::add_files( bool load_conc, bool from_dir ) {
       } else {
          errors += QString( us_tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
       }
+   }
+
+   {
+      set < double > ref_indices;
+      
+      for ( auto const & name : add_filenames ) {
+         if ( f_ref_index.count( name ) &&
+              f_ref_index[name] != mals_param_n ) {
+            ref_indices.insert( f_ref_index[name] );
+         }
+      }
+
+      if ( ref_indices.size() == 1 ) {
+         QMessageBox::warning( this, 
+                               windowTitle() + us_tr( " : Add files" ),
+                               QString(
+                                       us_tr(
+                                             "Loaded files contain a different solvent refractive index (%1)\n"
+                                             "than set in the Options->MALS parameters->Solvent refractive index (%2)\n"
+                                             "You should remove all files, adjust the parameter value and reload the files"
+                                             )
+                                       )
+                               .arg( *ref_indices.begin() )
+                               .arg( mals_param_n )
+                               );
+      } 
+      if ( ref_indices.size() > 1 ) {
+         QString indices = "";
+         for ( auto const & ref_index : ref_indices ) {
+            indices += QString( "%1 " ).arg( ref_index );
+         }
+         
+         QMessageBox::warning( this, 
+                               windowTitle() + us_tr( " : Add files" ),
+                               QString(
+                                       us_tr(
+                                             "Loaded files contain multiple different solvent refractive index (%1)\n"
+                                             "which do not match the Options->MALS parameters->Solvent refractive index (%2)\n"
+                                             "Proceed with caution!"
+                                             )
+                                       )
+                               .arg( indices )
+                               .arg( mals_param_n )
+                               );
+      } 
    }
 
    if ( errors.isEmpty() )
@@ -1979,6 +2025,8 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    double  this_g_dndc     = 0e0;
    bool    has_dndc        = false;
    double  this_dndc       = 0e0;
+   bool    has_ref_index   = false;
+   double  this_ref_index  = 0e0;
    bool    has_conc_units  = false;
    QString this_conc_units = "";
 
@@ -1996,6 +2044,7 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       QRegExp rx_extc      ( "ExtC:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_g_dndc    ( "Global_dndc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_dndc      ( " dndc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ref_index ( " Solvent refractive index:\\s*(\\S+)(\\s|$)" );
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
       {
          QString unitstr = rx_unit.cap( 1 ).toLower();
@@ -2053,6 +2102,11 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
       {
          has_dndc  = true;
          this_dndc = rx_dndc.cap( 1 ).toDouble();
+      }
+      if ( rx_ref_index.indexIn( qv[ 0 ] ) != -1 )
+      {
+         has_ref_index  = true;
+         this_ref_index = rx_ref_index.cap( 1 ).toDouble();
       }
    }
 
@@ -3055,6 +3109,9 @@ bool US_Hydrodyn_Mals::load_file( QString filename, bool load_conc )
    if ( has_dndc ) {
       f_dndc       [ basename ] = this_dndc;
    }      
+   if ( has_ref_index ) {
+      f_ref_index       [ basename ] = this_ref_index;
+   }      
    return true;
 }
 
@@ -3664,7 +3721,6 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
       }
    }
 
-
    {
       
       QString units = " q units:1/A";
@@ -3687,7 +3743,7 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
          units = "";
       }
       
-      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13\n" ) )
+      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
          .arg( file )
          .arg( units )
@@ -3699,8 +3755,9 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
          .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
          .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
          .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
-         .arg( f_ref_index.count( file ) ? QString( " Refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
-         .arg( f_ref_indices.count( file ) ? QString( " Refractive indices:%1"  ).arg( f_ref_indices[ file ] ) : QString( "" ) )
+         .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
+         .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
+         .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
          .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
          ;
    }
@@ -5769,7 +5826,7 @@ void US_Hydrodyn_Mals::view()
                   units = "";
                }
 
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13\n" ) )
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
@@ -5781,8 +5838,9 @@ void US_Hydrodyn_Mals::view()
                   .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
                   .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
                   .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
-                  .arg( f_ref_index.count( file ) ? QString( " Refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
-                  .arg( f_ref_indices.count( file ) ? QString( " Refractive indices:%1"  ).arg( f_ref_indices[ file ] ) : QString( "" ) )
+                  .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
+                  .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
+                  .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
                   .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                   ;
             }

@@ -5428,6 +5428,39 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
       break;
    }
 
+   {
+      QString msg =
+         QString("")
+         + "<b>Options->MALS Processing Parameters</b><br><table>"
+         + "<hr>"
+         + "<tr>"
+         + "<td>" + us_tr( "Lambda [nm] : " ) + "</td>"
+         + QString( "<td>%1</td>" ).arg( mals_param_lambda )
+         + "</tr><tr>"
+         + "<td>" + us_tr( "Solvent refractive index : " ) + "</td>"
+         + QString( "<td>%1</td>" ).arg( mals_param_n )
+         + "</tr>"
+         + "</table>"
+         + "<hr>"
+         ;
+
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Load MALS Data" )
+                                     ,msg
+                                     + QString(
+                                               us_tr( "Proceed with these parameters?" )
+                                               )
+                                     ) )
+      {
+      case QMessageBox::Yes : 
+         break;
+      default:
+         errormsg = "MALS Parameters need to be adjusted";
+         return false;
+         break;
+      }
+   }
+   
    double wavelength = mals_param_lambda;
    double RI         = mals_param_n;
 
@@ -5684,7 +5717,8 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          double q = RI * 4 * M_PI * sin( mals_angles.mals_angle[ it->first ].angle_ri_corr * M_PI / 360 ) / ( wavelength * 10 );
          QString name = QString( "%1_D%2_Rt_q%3" ).arg( use_filename ).arg( pad_zeros( it->first, t.end()->first ) ).arg( q );
          add_plot( name, t[ it->first ], I[ it->first ], sd[ it->first ], true, false );
-         f_ref_index[ last_created_file ] = mals_angles.mals_angle[ it->first ].angle_ri_corr;
+         f_ri_corr[ last_created_file ] = mals_angles.mals_angle[ it->first ].angle_ri_corr;
+         f_ref_index[ last_created_file ] = RI;
       }
    }
 

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_mals_parameters.h"
 //Added by qt3to4:
 #include <QGridLayout>
@@ -9,13 +10,13 @@
 #include <QCloseEvent>
 
 US_Hydrodyn_Mals_Parameters::US_Hydrodyn_Mals_Parameters(
-                                                       void                     *              us_hydrodyn_mals,
-                                                       map < QString, QString > *              parameters,
-                                                       QWidget *                               p,
-                                                       const char *                            
-                                                       ) : QDialog( p )
+                                                         void                     *              us_hydrodyn,
+                                                         map < QString, QString > *              parameters,
+                                                         QWidget *                               p,
+                                                         const char *                            
+                                                         ) : QDialog( p )
 {
-   this->us_hydrodyn_mals                = us_hydrodyn_mals;
+   this->us_hydrodyn_mals                     = ((US_Hydrodyn *)us_hydrodyn)->mals_window;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
@@ -66,6 +67,11 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
    le_mals_param_lambda->setMinimumWidth( 200 );
    le_mals_param_lambda-> setMinimumHeight( minHeight1 );
 
+   if ( (( US_Hydrodyn_Mals *)us_hydrodyn_mals )->lb_files->count() > 0 ) {
+      le_mals_param_lambda->setEnabled( false );
+      le_mals_param_lambda->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
+      lbl_mals_param_lambda->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
+   }
 
    lbl_mals_param_n = new QLabel( us_tr( "Solvent refractive index : " ), this );
    lbl_mals_param_n->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -88,6 +94,11 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
    le_mals_param_n->setMinimumWidth( 200 );
    le_mals_param_n-> setMinimumHeight( minHeight1 );
 
+   if ( (( US_Hydrodyn_Mals *)us_hydrodyn_mals )->lb_files->count() > 0 ) {
+      le_mals_param_n->setEnabled( false );
+      le_mals_param_n->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
+      lbl_mals_param_n->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
+   }
 
    lbl_mals_param_g_dndc = new QLabel( us_tr( "Global dn/dc [ml/g] : " ), this );
    lbl_mals_param_g_dndc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);

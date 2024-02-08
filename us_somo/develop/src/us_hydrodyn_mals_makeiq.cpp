@@ -3039,6 +3039,9 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
             add_plot( hash_name, f_qs[ name ], hash_I, true, false );
          }
          f_g_dndc   [ last_created_file ] = mals_param_g_dndc;
+         if ( f_ri_corr.count( name ) ) {
+            f_ri_corr[ last_created_file ] = f_ri_corr[ name ];
+         }
          if ( f_ref_index.count( name ) ) {
             f_ref_index[ last_created_file ] = f_ref_index[ name ];
          }
@@ -3367,13 +3370,13 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       qv_string.push_back( QString( "%1" ).arg( *it ) );
    }
 
-   QStringList ref_indices;
+   QStringList ri_corrs;
    // for ( auto const & it : mals_angles.q_to_ri ) {
    //    qDebug() << QString( "checking q_to_ri q %1 -> ri %2" ).arg( it.first ).arg( it.second );
    // }
    for ( auto const & q : qv ) {
       if ( mals_angles.q_to_ri.count( q ) ) {
-         ref_indices << QString( "%1" ).arg( mals_angles.q_to_ri[ q ] );
+         ri_corrs << QString( "%1" ).arg( mals_angles.q_to_ri[ q ] );
          // qDebug() << QString( "q value %1 found in q_to_ri" ).arg( q );
       } else {
          qDebug() << QString( "q value %1 missing from q_to_ri" ).arg( q );
@@ -3699,9 +3702,10 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             f_dndc      [ name ] = mals_param_g_dndc;
             f_conc      [ name ] = mals_param_g_conc;
          }
-         if ( ref_indices.size() ) {
-            f_ref_indices[ name ] = ref_indices.join( "," );
+         if ( ri_corrs.size() ) {
+            f_ri_corrs[ name ] = ri_corrs.join( "," );
          }
+         f_ref_index[ name ] = mals_param_n;
          star_names.insert( name );
       }
    } // for each q value
