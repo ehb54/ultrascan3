@@ -5431,6 +5431,8 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
    double wavelength = mals_param_lambda;
    double RI         = mals_param_n;
 
+   mals_angles.build_q_to_ri( mals_param_lambda, mals_param_n );
+
    // process data and make i(q)
 
    errormsg = "MALS ready to process... to do";
@@ -5682,6 +5684,7 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          double q = RI * 4 * M_PI * sin( mals_angles.mals_angle[ it->first ].angle_ri_corr * M_PI / 360 ) / ( wavelength * 10 );
          QString name = QString( "%1_D%2_Rt_q%3" ).arg( use_filename ).arg( pad_zeros( it->first, t.end()->first ) ).arg( q );
          add_plot( name, t[ it->first ], I[ it->first ], sd[ it->first ], true, false );
+         f_ref_index[ last_created_file ] = mals_angles.mals_angle[ it->first ].angle_ri_corr;
       }
    }
 

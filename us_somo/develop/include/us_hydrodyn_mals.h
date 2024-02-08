@@ -130,6 +130,8 @@ class MALS_Angles {
    bool                    load( const QString & filename, const QStringList & csvlines , QString & errormsg );
    bool                    load( const QString & filename, QString & errormsg );
    bool                    save( const QString & filename, QString & errormsg );
+   map < double, double >  q_to_ri;                  
+   void                    build_q_to_ri( double lambda, double n );
 };
 
 class US_EXTERN US_Hydrodyn_Mals : public QFrame
@@ -913,7 +915,9 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       map < QString, double >             f_g_dndc;
       map < QString, double >             f_dndc;
       map < QString, QString >            f_conc_units;
-
+      map < QString, double >             f_ref_index;
+      map < QString, QString >            f_ref_indices;
+      
       // for displaying last smoothing in gg scroll mode
       map < QString, vector < double > >  f_qs_smoothed;
       map < QString, vector < double > >  f_Is_smoothed;

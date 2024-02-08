@@ -932,7 +932,7 @@ void US_Hydrodyn_Mals_Saxs::help()
 void US_Hydrodyn_Mals_Saxs::closeEvent(QCloseEvent *e)
 {
    QMessageBox mb( this->windowTitle(), 
-                   us_tr("Attention:\nAre you sure you want to exit the MALS_SAXS window?"),
+                   us_tr("Attention:\nAre you sure you want to exit the MALS+SAXS window?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,

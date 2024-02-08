@@ -3038,7 +3038,10 @@ bool US_Hydrodyn_Mals::create_ihash_t( QStringList files ) {
             }
             add_plot( hash_name, f_qs[ name ], hash_I, true, false );
          }
-         f_g_dndc[ last_created_file ] = mals_param_g_dndc;
+         f_g_dndc   [ last_created_file ] = mals_param_g_dndc;
+         if ( f_ref_index.count( name ) ) {
+            f_ref_index[ last_created_file ] = f_ref_index[ name ];
+         }
          hash_names.insert( last_created_file );
       }
    }
@@ -3364,6 +3367,19 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
       qv_string.push_back( QString( "%1" ).arg( *it ) );
    }
 
+   QStringList ref_indices;
+   // for ( auto const & it : mals_angles.q_to_ri ) {
+   //    qDebug() << QString( "checking q_to_ri q %1 -> ri %2" ).arg( it.first ).arg( it.second );
+   // }
+   for ( auto const & q : qv ) {
+      if ( mals_angles.q_to_ri.count( q ) ) {
+         ref_indices << QString( "%1" ).arg( mals_angles.q_to_ri[ q ] );
+         // qDebug() << QString( "q value %1 found in q_to_ri" ).arg( q );
+      } else {
+         qDebug() << QString( "q value %1 missing from q_to_ri" ).arg( q );
+      }
+   }
+
 
    QString qs_no_errors;
    QString qs_zero_points;
@@ -3588,7 +3604,7 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
          }
       }
 
-      TSO << QString( "conc factor %1  store_conc %2\n" ).arg( conc_factor ).arg( store_conc );
+      // TSO << QString( "conc factor %1  store_conc %2\n" ).arg( conc_factor ).arg( store_conc );
 
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
@@ -3682,6 +3698,9 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
             f_g_dndc    [ name ] = mals_param_g_dndc;
             f_dndc      [ name ] = mals_param_g_dndc;
             f_conc      [ name ] = mals_param_g_conc;
+         }
+         if ( ref_indices.size() ) {
+            f_ref_indices[ name ] = ref_indices.join( "," );
          }
          star_names.insert( name );
       }

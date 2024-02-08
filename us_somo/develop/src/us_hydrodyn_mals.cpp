@@ -181,7 +181,28 @@ QString MALS_Angles::list() {
 
 void MALS_Angles::clear() {
    mals_angle.clear();
+   q_to_ri.clear();
    loaded_filename = "";
+}
+
+void MALS_Angles::build_q_to_ri( double lambda, double n ) {
+   // qDebug() << QString( "build_q_to_ri( %1, %2 )" ).arg( lambda ).arg( n );
+   q_to_ri.clear();
+   // qDebug() << "q_to_ri cleared";
+   if ( lambda == 0 || n == 0 ) {
+      qDebug() << "internal error: build_q_to_ri() lambda and/or n 0";
+      return;
+   }
+
+   for ( auto & ma : mals_angle ) {
+      if ( ma.second.has_angle_ri_corr ) {
+         q_to_ri[ QString( "%1" ).arg( n * 4 * M_PI * sin( ma.second.angle_ri_corr * M_PI / 360 ) / ( lambda * 10 ) ).toDouble() ] = ma.second.angle_ri_corr;
+      }
+   }
+   // qDebug() << "q_to_ri after setup";
+   // for ( auto const & it : q_to_ri ) {
+   //    qDebug() << QString( "q_to_ri q %1 -> ri %2" ).arg( it.first ).arg( it.second );
+   // }
 }
 
 QString MALS_Angles::list_rich( double lambda, double n ) {
@@ -1305,6 +1326,8 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          f_g_dndc      .erase( lb_files->item( i )->text() );
          f_dndc        .erase( lb_files->item( i )->text() );
          f_conc_units  .erase( lb_files->item( i )->text() );
+         f_ref_index   .erase( lb_files->item( i )->text() );
+         f_ref_indices .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
          // qApp->processEvents();
       }
@@ -3664,7 +3687,7 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
          units = "";
       }
       
-      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10\n" ) )
+      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13\n" ) )
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
          .arg( file )
          .arg( units )
@@ -3675,6 +3698,9 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
          .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
          .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
          .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
+         .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
+         .arg( f_ref_index.count( file ) ? QString( " Refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
+         .arg( f_ref_indices.count( file ) ? QString( " Refractive indices:%1"  ).arg( f_ref_indices[ file ] ) : QString( "" ) )
          .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
          ;
    }
@@ -5743,7 +5769,7 @@ void US_Hydrodyn_Mals::view()
                   units = "";
                }
 
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10\n" ) )
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
@@ -5754,6 +5780,9 @@ void US_Hydrodyn_Mals::view()
                   .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
                   .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
                   .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
+                  .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
+                  .arg( f_ref_index.count( file ) ? QString( " Refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
+                  .arg( f_ref_indices.count( file ) ? QString( " Refractive indices:%1"  ).arg( f_ref_indices[ file ] ) : QString( "" ) )
                   .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                   ;
             }
