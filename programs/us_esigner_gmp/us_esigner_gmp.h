@@ -197,6 +197,8 @@ class US_eSignaturesGMP : public US_Widgets
        void loadGMPReportDB_assigned_auto( QString );
        void loadGMPReportDB_assigned_separate( void );
        void compose_updated_ora_list( QString&, QString&, QString&, QString, QString );
+       QString parse_old_ora( QString );
+       QString parse_new_ora( QString );
   
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
