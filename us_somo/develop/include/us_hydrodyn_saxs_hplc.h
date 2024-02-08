@@ -110,6 +110,11 @@ struct hplc_stack_data
    map < QString, double >             f_conc;
    map < QString, double >             f_extc;
    map < QString, double >             f_time;
+   map < QString, double >             f_diffusion_len;
+   map < QString, double >             f_e_nucleon_ratio;
+   map < QString, double >             f_nucleon_mass;
+   map < QString, double >             f_solvent_e_dens;
+   map < QString, double >             f_I0st;
 
    map < QString, bool >               created_files_not_saved;
    QStringList                         files;
@@ -889,6 +894,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, double >             f_conc;
       map < QString, double >             f_extc;
       map < QString, double >             f_time;
+      map < QString, double >             f_diffusion_len;
+      map < QString, double >             f_e_nucleon_ratio;
+      map < QString, double >             f_nucleon_mass;
+      map < QString, double >             f_solvent_e_dens;
+      map < QString, double >             f_I0st;
 
       // for displaying last smoothing in gg scroll mode
       map < QString, vector < double > >  f_qs_smoothed;

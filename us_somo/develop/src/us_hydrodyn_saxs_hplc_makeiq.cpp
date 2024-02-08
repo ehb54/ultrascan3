@@ -3481,6 +3481,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
    TSO << "create_ihashq: frames after padding:\n" + frames.join("\n") + "\n";
 
    double i0_norm = 1;
+   double i0se    = 1;
+   double i0st    = 1;
 
    // i0 normalization
    {
@@ -3544,6 +3546,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
             if ( fields[1]->text().toDouble() == 0 ) {
                try_again = true;
             } else {
+               i0se = fields[0]->text().toDouble();
+               i0st = fields[1]->text().toDouble();
                i0_norm =
                   fields[1]->text().toDouble()
                   / fields[0]->text().toDouble()
@@ -3682,6 +3686,18 @@ bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, doub
          add_plot( hash_name, f_qs[ name ], hash_I, false, false );
       }
 
+      if ( istarq ) {
+         f_conc[ last_created_file ] = conc_mult;
+      }
+
+      f_psv            [ last_created_file ] = saxs_hplc_param_g_psv;
+      f_diffusion_len  [ last_created_file ] = saxs_hplc_param_diffusion_len;
+      f_e_nucleon_ratio[ last_created_file ] = saxs_hplc_param_electron_nucleon_ratio;
+      f_nucleon_mass   [ last_created_file ] = saxs_hplc_param_nucleon_mass;
+      f_solvent_e_dens [ last_created_file ] = saxs_hplc_param_solvent_electron_density;
+      f_I0se           [ last_created_file ] = i0se;
+      f_I0st           [ last_created_file ] = i0st;
+      
       hash_names.insert( last_created_file );
    }
 

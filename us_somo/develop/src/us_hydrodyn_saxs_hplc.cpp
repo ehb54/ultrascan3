@@ -981,20 +981,26 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          //          {
          //             lbl_empty->setText( "" );
          //          }
-         f_qs_string.erase( lb_files->item( i )->text() );
-         f_qs       .erase( lb_files->item( i )->text() );
-         f_Is       .erase( lb_files->item( i )->text() );
-         f_errors   .erase( lb_files->item( i )->text() );
-         f_pos      .erase( lb_files->item( i )->text() );
-         f_name     .erase( lb_files->item( i )->text() );
-         f_is_time  .erase( lb_files->item( i )->text() );
-         f_gaussians.erase( lb_files->item( i )->text() );
-         f_psv      .erase( lb_files->item( i )->text() );
-         f_header   .erase( lb_files->item( i )->text() );
-         f_I0se     .erase( lb_files->item( i )->text() );
-         f_conc     .erase( lb_files->item( i )->text() );
-         f_extc     .erase( lb_files->item( i )->text() );
-         f_time     .erase( lb_files->item( i )->text() );
+         f_qs_string      .erase( lb_files->item( i )->text() );
+         f_qs             .erase( lb_files->item( i )->text() );
+         f_Is             .erase( lb_files->item( i )->text() );
+         f_errors         .erase( lb_files->item( i )->text() );
+         f_pos            .erase( lb_files->item( i )->text() );
+         f_name           .erase( lb_files->item( i )->text() );
+         f_is_time        .erase( lb_files->item( i )->text() );
+         f_gaussians      .erase( lb_files->item( i )->text() );
+         f_psv            .erase( lb_files->item( i )->text() );
+         f_header         .erase( lb_files->item( i )->text() );
+         f_I0se           .erase( lb_files->item( i )->text() );
+         f_conc           .erase( lb_files->item( i )->text() );
+         f_extc           .erase( lb_files->item( i )->text() );
+         f_time           .erase( lb_files->item( i )->text() );
+         f_diffusion_len  .erase( lb_files->item( i )->text() );
+         f_e_nucleon_ratio.erase( lb_files->item( i )->text() );
+         f_nucleon_mass   .erase( lb_files->item( i )->text() );
+         f_solvent_e_dens .erase( lb_files->item( i )->text() );
+         f_I0st           .erase( lb_files->item( i )->text() );
+
          delete lb_files->takeItem( i );
       }
    }
@@ -3272,14 +3278,19 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       }
    }
 
-   ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
+   ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8%9%10%11%12%13\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
-      .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
+      .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+      .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
       .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+      .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+      .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+      .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+      .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
       .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
       ;
 
@@ -5332,22 +5343,27 @@ void US_Hydrodyn_Saxs_Hplc::view()
             QString use_conc;
             if ( concs.count( file ) && concs[ file ] != 0e0 )
             {
-               use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+               use_conc = QString( " Conc:%1 [mg/mL]" ).arg( concs[ file ] );
             } else {
                if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
                {
-                  use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+                  use_conc = QString( " Conc:%1 [mg/mL]" ).arg( f_conc[ file ] );
                }
             }
 
-            text += QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
+            text += QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8%9%10%11%12%13\n" ) )
                .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                .arg( file )
-               .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
-               .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
+               .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+               .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+               .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
                .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
                .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
                .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+               .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+               .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+               .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+               .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
                .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                ;
          }            
