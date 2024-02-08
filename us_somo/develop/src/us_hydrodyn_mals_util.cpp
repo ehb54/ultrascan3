@@ -5439,6 +5439,12 @@ bool US_Hydrodyn_Mals::mals_load( const QString & filename, const QStringList & 
          + "</tr><tr>"
          + "<td>" + us_tr( "Solvent refractive index : " ) + "</td>"
          + QString( "<td>%1</td>" ).arg( mals_param_n )
+         + "</tr><tr>"
+         + "<td>" + us_tr( "Global dn/dc [ml/g] : " ) + "</td>"
+         + QString( "<td>%1</td>" ).arg( mals_param_g_dndc )
+         + "</tr><tr>"
+         + "<td>" + us_tr( "Global concentration [mg/mL] : " ) + "</td>"
+         + QString( "<td>%1</td>" ).arg( mals_param_g_conc )
          + "</tr>"
          + "</table>"
          + "<hr>"
