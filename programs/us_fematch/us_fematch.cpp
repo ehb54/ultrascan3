@@ -2282,6 +2282,8 @@ simparams.debug();
 
          connect( astfem_rsa, SIGNAL( current_component( int ) ),
                   this,       SLOT  ( update_progress  ( int ) ) );
+         connect( astfem_rsa, SIGNAL( current_component( int ) ),
+                  this,       SIGNAL( astfem_cmp       ( int ) ) );
          astfem_rsa->set_debug_flag( dbg_level );
          solution_rec.buffer.compressibility = compress;
          solution_rec.buffer.manual          = manual;

@@ -48,6 +48,9 @@ class US_FeMatch : public US_Widgets
       QPointer< US_ResidsBitmap > fem_resbmap();
       void auto_load_simulate( US_DataIO::RawData, US_DataIO::EditedData, US_Model, int, QPoint );
 
+   signals:
+      void astfem_cmp(int);
+
    public slots:
       void    thread_progress( int, int );
       void    thread_complete( int );
