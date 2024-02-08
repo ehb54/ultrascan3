@@ -68,6 +68,8 @@ class US_QueryRmsd : public US_Widgets{
    QComboBox *cb_method;
    QLineEdit *le_threshold;
 
+   QProgressBar *progress;
+
    US_FeMatch *fematch;
 
    bool check_connection(void);
@@ -89,6 +91,7 @@ class US_QueryRmsd : public US_Widgets{
    void save_data(void);
    void simulate(void);
    void new_threshold(void);
+   void update_progress(int);
 };
 
 class DoubleTableWidgetItem : public QTableWidgetItem

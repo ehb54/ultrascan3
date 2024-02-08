@@ -128,12 +128,20 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    lyt_bottom->setMargin(0);
    lyt_bottom->setSpacing(1);
 
+   QLabel* lb_progress = us_label("Progress");
+   lb_progress->setAlignment( Qt::AlignCenter );
+   progress            = us_progressBar( 0, 100, 0 );
+   QHBoxLayout *lyt_progress = new QHBoxLayout();
+   lyt_progress->addWidget(lb_progress);
+   lyt_progress->addWidget(progress);
+
    QVBoxLayout *lyt_main = new QVBoxLayout();
    lyt_main->addLayout(lyt_top);
    lyt_main->addWidget(tw_rmsd);
    lyt_main->addLayout(lyt_bottom);
+   lyt_main->addLayout(lyt_progress);
    lyt_main->setMargin(1);
-   lyt_main->setSpacing(3);
+   lyt_main->setSpacing(2);
 
    this->setLayout(lyt_main);
    setMinimumSize(QSize(600,400));
@@ -144,6 +152,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    connect(pb_save, SIGNAL(clicked()), this, SLOT(save_data()));
    connect(pb_simulate, SIGNAL(clicked()), this, SLOT(simulate()));
    connect(le_threshold, SIGNAL(editingFinished()), this, SLOT(new_threshold()));
+   connect(fematch, SIGNAL(astfem_cmp(int)), SLOT(update_progress(int)));
 }
 
 bool US_QueryRmsd::check_connection(){
@@ -305,7 +314,6 @@ bool US_QueryRmsd::load_data(int index, QString &mesg) {
    QString rdata_file = allData.at(index).rdataFile;
    int editId = allData.at(index).editID;
    int rdataId = allData.at(index).rdataID;
-
 
    dbCon->readBlobFromDB(temp_dir.filePath(edit_file), "download_editData", editId);
    if (dbCon->lastErrno() != US_DB2::OK) {
@@ -605,11 +613,15 @@ void US_QueryRmsd::simulate(){
    pb_simulate->setDisabled(true);
    int index = tw_rmsd->item(row, 4)->data(Qt::UserRole).toInt();
    int editId = allData.at(index).editID;
+   US_Model model = Models.value(allData.at(index).modelID);
+   progress->setRange(1, model.components.size());
+   progress->reset();
    if (!editData.contains(editId)) {
       QString mesg;
       if (! load_data(index, mesg)){
-         qDebug() << mesg;
+         QMessageBox::warning(this, tr("Error!"), mesg);
          pb_simulate->setEnabled(true);
+         progress->reset();
          return;
       }
    }
@@ -617,7 +629,7 @@ void US_QueryRmsd::simulate(){
    US_DataIO::EditedData edata = editData.value(allData.at(index).editID);
    int expId = allData.at(index).expID;
    QPoint pos = this->pos();
-   US_Model model = Models.value(allData.at(index).modelID);
+
    fematch->auto_load_simulate(rdata, edata, model, expId, pos);
    pb_simulate->setEnabled(true);
 }
@@ -660,6 +672,10 @@ void US_QueryRmsd::new_threshold(){
       return;
    }
    highlight();
+}
+
+void US_QueryRmsd::update_progress(int val) {
+   progress->setValue(val);
 }
 
 void US_QueryRmsd::closeEvent(QCloseEvent *event) {
