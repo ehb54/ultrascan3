@@ -1249,7 +1249,7 @@ void US_XpnDataViewer::reset( void )
 
 void US_XpnDataViewer::reset_auto( void )
 {
-  link->disconnectFromServer();
+   link->disconnectFromServer();
 
    le_stage   ->setText("");
    le_omega2T ->setText("");
@@ -2423,11 +2423,23 @@ void US_XpnDataViewer::check_for_sysdata( void )
 {
   qDebug() << "sys_timer IS RUNNING here: ";
   qDebug() << "sys_timer IS RUNNING here: in_reload_check_sysdata " << in_reload_check_sysdata;
-  
+
   if ( in_reload_check_sysdata )           // If already doing a reload,
     return;                                //  skip starting a new one
   
   in_reload_check_sysdata   = true;        // Flag in the midst of a reload
+
+  //check for stable connection
+  qDebug() << "Connection to Optima DROPPED ? " << link-> disconnected_itself;
+  if ( link-> disconnected_itself )
+    {
+      in_reload_check_sysdata = false;
+      reset_liveupdate_panel();
+      qApp->processEvents();
+      
+      return;
+    }
+  //end: check for stable connection
 
   int exp_time = 0;
   double temperature = 0;
@@ -2924,12 +2936,37 @@ void US_XpnDataViewer::end_processes( void )
       //ALEXEY: may not be needed
       qDebug() << "LIVE UPDATE panel has been reset!";
       qDebug() << "AFTER: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+
+      bool optima_connection_dropped = link-> disconnected_itself;
       
-      reset_auto(); 
+      reset_auto(); //disconnects (already?) && resets GUI
       qApp->processEvents();
       
       in_reload_end_processes = false;
       finishing_live_update = false;
+
+      if ( optima_connection_dropped )
+	{
+	  //message informing user before throwing signal!
+	  QMessageBox msgBox_sys_data;
+	  msgBox_sys_data.setIcon(QMessageBox::Critical);
+	  msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+	  
+	  QString msg_sys_text = QString("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1. Please check the following: ").arg(xpndesc);
+	  QString msg_sys_text_info = QString("1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nUse of the UltraScan GMP in conjunction with the %1 machine is suspended until this condition is resolved. \n\nThe program will return to the Optima Run Manager.").arg(xpndesc);
+	  
+	  QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("OK"), QMessageBox::YesRole);
+	  msgBox_sys_data.setText( msg_sys_text );
+	  msgBox_sys_data.setInformativeText( msg_sys_text_info );
+	  msgBox_sys_data.exec();
+	  
+	  if (msgBox_sys_data.clickedButton() == Accept_sys)
+	    qDebug() << "Closing Program...";
+	    
+	  emit aborted_back_to_initAutoflow( );
+
+	  return;
+	}
 
       emit liveupdate_processes_stopped();
      
