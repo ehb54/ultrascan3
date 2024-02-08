@@ -2779,6 +2779,15 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
   link = new Link( OptimaName );
+
+  //check connection to Optima server: if no -- reset all & go back to run manager
+  if ( !check_sysdata_connection( ) )
+    {
+      reset_auto();
+      emit close_program(); 
+      return;
+    }
+  
   //link = new Link();
   
   //ALEXEY: just define all QTimers here for later safe stopping
