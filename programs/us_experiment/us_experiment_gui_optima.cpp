@@ -8207,8 +8207,15 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        
        logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
        logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
-       logJsonFirstTime += "\"Comment\": \"Created first time\"";
-       
+       //logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       logJsonFirstTime += "\"Comment\":\"";
+
+       //oper(s), rev(s), appr(s)
+       logJsonFirstTime += "Operator(s):" + oper_listList.join(",") + ";";
+       logJsonFirstTime += "Reviewer(s):" + rev_listList.join(",") + ";";
+       logJsonFirstTime += "Approver(s):" + appr_listList.join(","); // + ";";
+
+       logJsonFirstTime += "\"";
        logJsonFirstTime += "}]}";
        qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
        

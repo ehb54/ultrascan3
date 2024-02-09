@@ -2533,9 +2533,10 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   QString eSignStatusJson   = eSign_details[ "eSignStatusJson" ];
   QString eSignStatusAll    = eSign_details[ "eSignStatusAll" ];
   QString eSignID           = eSign_details[ "ID" ];
+  QString eSigncreateUpdateLogJson =  eSign_details[ "createUpdateLogJson" ];
 
-  qDebug() << "[OLD] eSignStatusJson, eSignStatusAll, eSignID -- "
-	   <<  eSignStatusJson << eSignStatusAll <<  eSignID;
+  qDebug() << "[OLD] eSignStatusJson, eSignStatusAll, eSignID, eSigncreateUpdateLogJson -- "
+	   <<  eSignStatusJson << eSignStatusAll <<  eSignID << eSigncreateUpdateLogJson;
 
   QJsonDocument jsonDocEsign = QJsonDocument::fromJson( eSignStatusJson.toUtf8() );
   if (!jsonDocEsign.isObject())
@@ -2639,7 +2640,10 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
       qDebug() << "eSignStatusJson_updated -- " << eSignStatusJson_updated;
       
       //2: updated admin log
-      QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname );
+      QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname,
+								 old_opers, new_opers,
+								 old_revs, new_revs,
+								 old_apprs, new_apprs ) ;
       qDebug() << "logJsonUpdateTimeJsonObject -- "  << logJsonUpdateTime;
       
       
@@ -2968,6 +2972,14 @@ void US_eSignaturesGMP::assignOperRevs( void )
       QStringList exsisting_rev_listList  = exsisting_rev_list .split("\n");
       QStringList exsisting_appr_listList = exsisting_appr_list .split("\n");
 
+      QString old_opers = exsisting_oper_listList.join(",");
+      QString new_opers = oper_listList.join(",");
+      QString old_revs  = exsisting_rev_listList.join(",");
+      QString new_revs  = rev_listList.join(",");
+      QString old_apprs = exsisting_appr_listList.join(",");
+      QString new_apprs = appr_listList.join(",");
+      
+
       QMessageBox msg_rev;
       msg_rev.setWindowTitle(tr("Operator(s), Reviewer(s), Approver(s) Change"));
       msg_rev.setText( tr( "<font color='red'><b>ATTENTION:</b> </font><br>"
@@ -2978,12 +2990,12 @@ void US_eSignaturesGMP::assignOperRevs( void )
 			   "New Reviewers: <font ><b>%4</b><br><br>"
 			   "Old Approvers: <font ><b>%5</b><br>"
 			   "New Approvers: <font ><b>%6</b><br><br>" )
-		       .arg( exsisting_oper_listList.join(",") )
-		       .arg( oper_listList.join(",") )
-		       .arg( exsisting_rev_listList.join(",") )
-		       .arg( rev_listList.join(",") )
-		       .arg( exsisting_appr_listList.join(",") )
-		       .arg( appr_listList.join(",") )
+		       .arg( old_opers )
+		       .arg( new_opers )
+		       .arg( old_revs )
+		       .arg( new_revs )
+		       .arg( old_apprs )
+		       .arg( new_apprs )
 		       );
       
       msg_rev.setInformativeText( QString( tr( "Do you want to Proceed?" )));
@@ -3002,7 +3014,10 @@ void US_eSignaturesGMP::assignOperRevs( void )
 	  te_appr_names     -> setText( appr_list );
 	  
 	  //Minimum structure JSON for logJsonUpdateTime:
-	  QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname );
+	  QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname,
+								     old_opers, new_opers,
+								     old_revs, new_revs,
+								     old_apprs, new_apprs ) ;
 	  qDebug() << "logJsonUpdateTimeJsonObject -- "  << logJsonUpdateTime;
 	  
 	  qry. clear();
@@ -3111,7 +3126,10 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 
 
 //append eSign log Json by admin upon opers/rev Update:
-QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fname, QString u_lname )
+QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fname, QString u_lname,
+							  QString old_opers, QString new_opers,
+							  QString old_revs, QString new_revs,
+							  QString old_apprs, QString new_apprs )
 {
   QString e_logJson   = eSign_details[ "createUpdateLogJson" ];
 
@@ -3122,16 +3140,34 @@ QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fn
       return e_logJson;
     }
 
+  //get && count  keys containing "Updated by":
+  int update_count = 0;
+  QStringList createUpdateKeys = jsonDoc.object().keys();
+  qDebug() << "createUpdateKeys: " << createUpdateKeys;
+  for ( const auto& i :  createUpdateKeys )
+    {
+      if ( i.contains("Updated by") )
+	++update_count;
+    }
+  
   //Appended portion
-  QString logJsonUpdateTime = ",\"Updated by\":[{\"Person\":";
+  QString logJsonUpdateTime = ",\"Updated by (" + QString::number(update_count) + ")\":[{\"Person\":";
 
   QDateTime date = QDateTime::currentDateTime();
   QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
 
   logJsonUpdateTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
   logJsonUpdateTime += "\"timeDate\":\"" + current_date +  "\",";
-  logJsonUpdateTime += "\"Comment\": \"Updated Operator, Reviewer lists\"";
+  logJsonUpdateTime += "\"Comment\":\"";
 
+  //opers
+  logJsonUpdateTime += "Operator(s) replacement:" + compare_ora_lists( old_opers, new_opers ) + ";";
+  //revs
+  logJsonUpdateTime += "Reviewer(s) replacement:" + compare_ora_lists( old_revs, new_revs ) + ";";
+  //apprs
+  logJsonUpdateTime += "Approver(s) replacement:" + compare_ora_lists( old_apprs, new_apprs );// + ";";
+
+  logJsonUpdateTime += "\"";
   logJsonUpdateTime += "}]}";
 
   //Combined JSON
@@ -3139,6 +3175,17 @@ QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fn
   QString composedJson = e_logJson + logJsonUpdateTime;
 
   return composedJson;
+}
+
+//check for ora lists
+QString US_eSignaturesGMP::compare_ora_lists( QString old_ora, QString new_ora )
+{
+  QString r_str = "NONE";
+
+  if ( old_ora != new_ora )
+    r_str = "(" + old_ora + ") to (" + new_ora + ")";
+  
+  return r_str;
 }
 
 //For auto: Load GMP Report form Db with assigned operator(s) && reviewer(s)
