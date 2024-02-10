@@ -2218,38 +2218,17 @@ void US_Hydrodyn_Mals::select_nth()
 
 void US_Hydrodyn_Mals::axis_y( bool nochange, bool no_replot )
 {
-   QStringList selected_files;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      if ( lb_files->item( i )->isSelected() )
-      {
-         selected_files << lb_files->item( i )->text();
-      }
-   }
 
-   bool files_compatible = compatible_files( selected_files );
-   QString title;
-   if ( !files_compatible )
-   {
-      title = us_tr( "Intensity [a.u.]" );
-   } else {
-      if ( type_files( selected_files ) )
-      {
-         title = us_tr( "I(t) [a.u.]" );
-      } else {
-         title = us_tr( "I(q) [a.u.]" );
-      }
-   }
-
-   if ( !nochange )
-   {
+   if ( !nochange ) {
       axis_y_log = !axis_y_log;
    }
 
    pb_axis_y->setText( axis_y_log ? "Lin Y" : "Log Y" );
 
-   if ( axis_y_log )
-   {
+   QString title = plot_dist->axisTitle( QwtPlot::yLeft ).text();
+   title = title.replace( " (log scale)", "" );
+
+   if ( axis_y_log ) {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
    } else {
@@ -2257,6 +2236,7 @@ void US_Hydrodyn_Mals::axis_y( bool nochange, bool no_replot )
       // actually need to test this, not sure what the correct version is
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
    }
+
    // if ( plot_dist_zoomer )
    // {
    //    plot_dist_zoomer->zoom ( 0 );
@@ -2322,36 +2302,14 @@ void US_Hydrodyn_Mals::axis_y( bool nochange, bool no_replot )
 
 void US_Hydrodyn_Mals::axis_x( bool nochange, bool no_replot )
 {
-
-   QStringList selected_files;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      if ( lb_files->item( i )->isSelected() )
-      {
-         selected_files << lb_files->item( i )->text();
-      }
-   }
-
-   bool files_compatible = compatible_files( selected_files );
-   QString title;
-   if ( !files_compatible )
-   {
-      title = us_tr( "q [1/Angstrom] or Time [a.u.]" );
-   } else {
-      if ( type_files( selected_files ) )
-      {
-         title = us_tr( "Time [a.u.]" );
-      } else {
-         title = us_tr( "q [1/Angstrom]" );
-      }
-   }
-
-   if ( !nochange )
-   {
+   if ( !nochange ) {
       axis_x_log = !axis_x_log;
    }
 
    pb_axis_x->setText( axis_x_log ? "Lin X" : "Log X" );
+
+   QString title = plot_dist->axisTitle( QwtPlot::xBottom ).text();
+   title = title.replace( " (log scale)", "" );
 
    if ( axis_x_log )
    {
