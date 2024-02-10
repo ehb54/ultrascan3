@@ -816,6 +816,10 @@ void US_Hydrodyn_Saxs_Hplc::errors_multi_file( QStringList files )
 //    }
 // }
 
+void US_Hydrodyn_Saxs_Hplc::set_dots() {
+   set_eb();
+}
+
 void US_Hydrodyn_Saxs_Hplc::set_eb()
 {
    if ( current_mode == MODE_GGAUSSIAN ) {
@@ -1145,7 +1149,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
 
    QwtPlotCurve *curve = new QwtPlotCurve( file );
    plotted_curves[ file ] = curve;
-   curve->setStyle( QwtPlotCurve::Lines );
+   curve->setStyle( cb_dots->isChecked() ? QwtPlotCurve::Dots : QwtPlotCurve::Lines );
 
    unsigned int q_points = f_qs[ file ].size();
 

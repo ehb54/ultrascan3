@@ -313,6 +313,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_movie;
       QPushButton   *pb_ag;
       QCheckBox     *cb_eb;
+      QCheckBox     *cb_dots;
       QPushButton   *pb_rescale;
       QPushButton   *pb_rescale_y;
 
@@ -1534,6 +1535,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void view();
       void movie();
       void set_eb();
+      void set_dots();
       void rescale();
       void rescale_y();
       void rescale_y_plot_errors();
