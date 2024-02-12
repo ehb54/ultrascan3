@@ -387,7 +387,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   revOperGMPRunGrid->setSpacing     ( 2 );
   revOperGMPRunGrid->setContentsMargins( 1, 1, 1, 1 );
 
-  QLabel* bn_revOperGMP     = us_banner( tr( "Assign Operator(s), Reviewer(s), Approver(s) for GMP Report:" ), 1 );
+  QLabel* bn_revOperGMP     = us_banner( tr( "Reassign Operator(s), Reviewer(s), Approver(s) for GMP Report:" ), 1 );
   QFontMetrics m (bn_revOperGMP -> font()) ;
   int RowHeight = m.lineSpacing() ;
   bn_revOperGMP -> setFixedHeight  (1.5 * RowHeight);

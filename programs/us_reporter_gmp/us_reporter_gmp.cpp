@@ -5528,9 +5528,6 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	      // reset plot after processign certain type {s,D,MW...}
 	      sdiag_combplot->reset_data_plot1();
 	    }
-	  
-	  
-
 	}
     }
   
@@ -7862,19 +7859,21 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString model_desc_edited = model.description;
    model_desc_edited. replace(".", "_");
    
-   QString fileName_str      = dirName + "/" + model_desc_edited + "_csv.txt";
-   QString fileName_str_only = model_desc_edited + "_csv.txt";
-   QFile file_model_info(fileName_str);
-   file_model_info.open(QIODevice::WriteOnly | QIODevice::Text);
-   QTextStream out_model_info(&file_model_info);
+   // QString fileName_str      = dirName + "/" + model_desc_edited + "_csv.txt";
+   // QString fileName_str_only = model_desc_edited + "_csv.txt";
+   // QFile file_model_info(fileName_str);
+   // file_model_info.open(QIODevice::WriteOnly | QIODevice::Text);
+   // QTextStream out_model_info(&file_model_info);
    
    QString model_dist_info;
+   QString html_model_s;
    
    if ( cnstvb )
      {  // Normal constant-vbar distribution
       model_dist_info = "Molec. Wt., S Apparent, S 20 (W), D Apparent, D 20 (W), f/f0, Concentration";
 
-      out_model_info << model_dist_info << endl;
+      //out_model_info << model_dist_info << endl;
+      html_model_s += model_dist_info + "<br>";
       
       for ( int ii = 0; ii < ncomp; ii++ )
       {
@@ -7889,7 +7888,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString().sprintf( "%10.4e", model_used.components[ ii ].f_f0 ) + ", " + 
 	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
 
-	 out_model_info << model_dist_info << endl;
+	 //out_model_info << model_dist_info << endl;
+	 html_model_s += model_dist_info + "<br>";
       }
    }
 
@@ -7897,7 +7897,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    {  // Constant-f/f0, varying vbar
      model_dist_info = "Molec. Wt., S Apparent, S 20 (W), D Apparent, D 20 (W), Vbar20, Concentration";
 
-     out_model_info << model_dist_info << endl;
+     //out_model_info << model_dist_info << endl;
+     html_model_s += model_dist_info + "<br>";
 
      for ( int ii = 0; ii < ncomp; ii++ )
        {
@@ -7912,7 +7913,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString().sprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
 	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
 
-	 out_model_info << model_dist_info << endl;
+	 //out_model_info << model_dist_info << endl;
+	 html_model_s += model_dist_info + "<br>";
        }
    }
 
@@ -7921,7 +7923,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
       model_dist_info = "Molec. Wt., S Apparent, S 20 (W), D 20 (W), f/f0, Vbar20, Concentration";
       
-      out_model_info << model_dist_info << endl;
+      //out_model_info << model_dist_info << endl;
+      html_model_s += model_dist_info + "<br>";
 
       for ( int ii = 0; ii < ncomp; ii++ )
       {
@@ -7936,17 +7939,33 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString().sprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
 	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
 	 
-	 out_model_info << model_dist_info << endl;
+	 //out_model_info << model_dist_info << endl;
+	 html_model_s += model_dist_info + "<br>";
       }
    }
    
-   file_model_info.close();
-   
-   QString file_path = "";
+   //file_model_info.close();
 
-   //mstr += "<a href=\"file:///" + fileName_str + "\">View Model Distributions</a>";
-   mstr += "<a href=\"./" + fileName_str_only + "\">View Model Distributions</a>";
+   //also, create a .pdf
+   QString f_model_path = dirName + "/" + model_desc_edited + ".pdf";
+   QString f_model_path_str_only = model_desc_edited + ".pdf";
+   //QString html_model_s = model_dist_info;
+   QTextDocument document;
+   document.setHtml( html_model_s );
+  
+   QPrinter printer(QPrinter::PrinterResolution);
+   printer.setOutputFormat(QPrinter::PdfFormat);
+   printer.setPaperSize(QPrinter::Letter);
    
+   printer.setOutputFileName( f_model_path );
+   printer.setFullPage(true);
+   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  
+   document.print(&printer);
+  
+   //mstr += "<a href=\"./" + fileName_str_only + "\">View Model Distributions</a>";
+   //mstr += "<br>";
+   mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
    
    /*
    mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
@@ -10683,7 +10702,7 @@ void US_ReporterGMP::write_pdf_report( void )
     {
       QStringList file_exts;
       //file_exts << "*.png" << "*.svgz";
-      file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
+      file_exts << "*.svgz" << "*.html" << "*.txt";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
       remove_files_by_mask( dirName, file_exts );
 
       

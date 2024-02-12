@@ -447,7 +447,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 	   << "LIVE UPDATE"
 	   << "IMPORT"
 	   << "EDITING"
-	   << "ANALYSIS";
+	   << "ANALYSIS"
+	   << "E-SIGNATURES";
 
   for ( int i=0; i< stages_i.size(); ++i )
     {
@@ -1344,6 +1345,10 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  //assemble html
 	  assemble_GMP_analysis_fitmen( analysis_status_map );
 	}
+      else if ( s_name == "E-SIGNATURES" )
+	{
+	  
+	}
       else //automatic mode
 	{
 	  QTextEdit* te_fitmen    = us_textedit();
@@ -1443,7 +1448,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       //assemble html
       assemble_GMP_analysis_cancelled( analysisCancel_status_map, analysisCancelJson );
     }
-  
   else
     {
       QLabel* lb_dev         = us_label( tr("Under Development:") );
