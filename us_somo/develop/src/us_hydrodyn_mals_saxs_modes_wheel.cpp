@@ -812,8 +812,9 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
       break;
 
    case MODE_SCALE_PAIR :
-      set_selected( scroll_pair_org_selected );
-
+      scale_pair_created_remove();
+      set_selected( scale_pair_org_selected );
+      // plot_files();
       break;
 
    default : us_qdebug( "wheel cancel called in invalid mode" ); break;

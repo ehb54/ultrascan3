@@ -640,7 +640,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QCheckBox    * cb_testiq_from_gaussian;
 
       QLabel                *    lbl_testiq_gaussians;
-      QButtonGroup         *    bg_testiq_gaussians;
+      QButtonGroup          *    bg_testiq_gaussians;
       QRadioButton          *    rb_testiq_from_i_t;
       QHBoxLayout           *    hbl_testiq_gaussians;
       vector < QRadioButton * >  rb_testiq_gaussians;
@@ -685,6 +685,12 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void                               scale_pair_scroll_highlight( int pos );
       void                               scale_pair_enables();
 
+      set < QString >                    scale_pair_created_names;
+      map < double, QString >            scale_pair_created_time_to_name;
+      map < QString, vector < double > > scale_pair_created_q;
+      map < QString, vector < double > > scale_pair_created_I;
+      map < QString, vector < double > > scale_pair_created_e;
+
       QColor                             scale_pair_color_q1;
       QColor                             scale_pair_color_q2;
 
@@ -704,7 +710,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QLabel                           * lbl_scale_pair_sd_scale;
       QLineEdit                        * le_scale_pair_sd_scale;
       QLabel                           * lbl_scale_pair_scale;
-      QLineEdit                        * le_scale_pair_scale;
+      mQLineEdit                       * le_scale_pair_scale;
       QLabel                           * lbl_scale_pair_time;
       mQLineEdit                       * le_scale_pair_time;
 
@@ -712,12 +718,6 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QPushButton                      * pb_scale_pair_minimize;
       QPushButton                      * pb_scale_pair_reset;
       QPushButton                      * pb_scale_pair_create_scaled_curves;
-
-      vector < QString >                 scale_pair_created_names;
-      map < QString, double >            scale_pair_created_times;
-      map < QString, vector < double > > scale_pair_created_q;
-      map < QString, vector < double > > scale_pair_created_I;
-      map < QString, vector < double > > scale_pair_created_e;
 
       set < QString >                    scale_pair_original_selection;
       double                             scale_pair_original_scale;
@@ -741,6 +741,23 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       int                                scale_pair_time_pos;
 
+      bool                               scale_pair_use_errors;
+
+      enum scale_pair_fit_methods {
+         SCALE_PAIR_FIT_METHOD_P2,
+         SCALE_PAIR_FIT_METHOD_P3,
+         SCALE_PAIR_FIT_METHOD_P4
+      };
+
+      scale_pair_fit_methods             scale_pair_current_fit_method;
+      vector < vector < double > >       scale_pair_qgrids;
+      int                                scale_pair_mals_set;
+      int                                scale_pair_saxs_set;
+
+      void                               scale_pair_created_init();
+      void                               scale_pair_created_update();
+      void                               scale_pair_created_remove();
+      
    private slots:
 
       void scale_pair();
@@ -755,6 +772,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void scale_pair_create_scaled_curves();
       void scale_pair_sd_scale            ( const QString & );
       void scale_pair_scale               ( const QString & );
+      void scale_pair_scale_focus         ( bool );
       
       void scale_pair_q1_start_text       ( const QString & );
       void scale_pair_q1_start_focus      ( bool );

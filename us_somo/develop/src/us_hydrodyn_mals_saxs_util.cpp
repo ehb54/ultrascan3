@@ -2750,6 +2750,7 @@ void US_Hydrodyn_Mals_Saxs::set_selected( set < QString > & to_select, bool do_r
       if ( to_select.count( lb_files->item( i )->text() ) )
       {
          lb_files->item( i)->setSelected( true );
+         // qDebug() << "set_selected() : to plot " << lb_files->item( i )->text();
       }
    }
 

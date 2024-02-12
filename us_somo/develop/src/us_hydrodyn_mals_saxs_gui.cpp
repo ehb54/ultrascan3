@@ -443,7 +443,9 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p4, bg_pos++ );
    }
    rb_scale_pair_fit_method_p3->setChecked(true);
-
+   // shouldn't the below already have been triggered by the above?
+   scale_pair_set_fit_method_p3();
+   
    pb_scale_pair_minimize = new QPushButton(us_tr("Minimize"), this);
    pb_scale_pair_minimize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_scale_pair_minimize->setMinimumHeight(minHeight1);
@@ -502,6 +504,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    le_scale_pair_scale->setMaximumWidth( QFontMetrics(le_scale_pair_scale->font()).averageCharWidth() * le_scale_pair_scale->maxLength() );
    le_scale_pair_scale->hide();
    connect( le_scale_pair_scale, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_scale( const QString & ) ) );
+   connect( le_scale_pair_scale, SIGNAL( focussed ( bool ) )             , SLOT( scale_pair_scale_focus( bool ) ) );
 
    lbl_scale_pair_sd_scale = new QLabel( us_tr( " MALS SD Mult.: " ), this );
    lbl_scale_pair_sd_scale->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
