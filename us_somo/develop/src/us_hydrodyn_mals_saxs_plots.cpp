@@ -231,7 +231,8 @@ void US_Hydrodyn_Mals_Saxs::update_plot_errors( vector < double > &grid,
       return scale_update_plot_errors();
    }
 
-   plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    plot_errors_grid   = grid;
    plot_errors_target = target;
@@ -844,7 +845,10 @@ void US_Hydrodyn_Mals_Saxs::set_eb()
 void US_Hydrodyn_Mals_Saxs::plot_files( bool save_zoom_state )
 {
    // qDebug() << "plot files";
-   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   if ( current_mode != MODE_SCALE_PAIR ) {
+      plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   }
    bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;

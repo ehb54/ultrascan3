@@ -508,6 +508,16 @@ void US_Hydrodyn_Mals_Saxs::adjust_wheel( double pos )
       }
       break;
       
+   case MODE_SCALE_PAIR :
+
+      if ( !le_last_focus ) {
+         // lbl_wheel_pos->setText( "" );
+         scale_pair_scroll_highlight( pos );
+      } else {
+         le_last_focus->setText( QString( "%1" ).arg( pos ) );
+      }
+
+      break;
       
    default : us_qdebug( "adjust wheel called in invalid mode" ); break;
    }
@@ -799,6 +809,11 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
    case MODE_SCROLL_PAIR :
       set_selected( scroll_pair_org_selected );
       // plot_files();
+      break;
+
+   case MODE_SCALE_PAIR :
+      set_selected( scroll_pair_org_selected );
+
       break;
 
    default : us_qdebug( "wheel cancel called in invalid mode" ); break;

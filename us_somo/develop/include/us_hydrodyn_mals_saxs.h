@@ -349,6 +349,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QPushButton   *pb_svd;
       QPushButton   *pb_common_time;
       QPushButton   *pb_scroll_pair;
+      QPushButton   *pb_scale_pair;
       QPushButton   *pb_join_by_time;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
@@ -673,6 +674,100 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       int                                scroll_pair_scroll_pos;
       void                               scroll_pair_scroll_highlight( int pos );
       void                               scroll_pair_enables();
+
+      // scale pair
+      
+      vector < QStringList >             scale_pair_names;
+      vector < double >                  scale_pair_times;
+      map < double, vector < QString > > scale_pair_time_to_names;
+      set < QString >                    scale_pair_org_selected;
+      int                                scale_pair_scroll_pos;
+      void                               scale_pair_scroll_highlight( int pos );
+      void                               scale_pair_enables();
+
+      QColor                             scale_pair_color_q1;
+      QColor                             scale_pair_color_q2;
+
+      QLabel                           * lbl_scale_pair_msg;
+
+      QLabel                           * lbl_scale_pair_q1_range;
+      mQLineEdit                       * le_scale_pair_q1_start;
+      mQLineEdit                       * le_scale_pair_q1_end;
+      QLabel                           * lbl_scale_pair_q2_range;
+      mQLineEdit                       * le_scale_pair_q2_start;
+      mQLineEdit                       * le_scale_pair_q2_end;
+      QLabel                           * lbl_scale_pair_fit_method;
+      QButtonGroup                     * bg_scale_pair_fit_method;
+      QRadioButton                     * rb_scale_pair_fit_method_p2;
+      QRadioButton                     * rb_scale_pair_fit_method_p3;
+      QRadioButton                     * rb_scale_pair_fit_method_p4;
+      QLabel                           * lbl_scale_pair_sd_scale;
+      QLineEdit                        * le_scale_pair_sd_scale;
+      QLabel                           * lbl_scale_pair_scale;
+      QLineEdit                        * le_scale_pair_scale;
+      QLabel                           * lbl_scale_pair_time;
+      mQLineEdit                       * le_scale_pair_time;
+
+      QPushButton                      * pb_scale_pair_fit;
+      QPushButton                      * pb_scale_pair_minimize;
+      QPushButton                      * pb_scale_pair_reset;
+      QPushButton                      * pb_scale_pair_create_scaled_curves;
+
+      vector < QString >                 scale_pair_created_names;
+      map < QString, double >            scale_pair_created_times;
+      map < QString, vector < double > > scale_pair_created_q;
+      map < QString, vector < double > > scale_pair_created_I;
+      map < QString, vector < double > > scale_pair_created_e;
+
+      set < QString >                    scale_pair_original_selection;
+      double                             scale_pair_original_scale;
+      double                             scale_pair_original_sd_scale;
+
+      double                             scale_pair_q1_min;
+      double                             scale_pair_q1_max;
+      double                             scale_pair_q2_min;
+      double                             scale_pair_q2_max;
+
+      vector < QwtPlotMarker * >         scale_pair_markers;
+
+      void                               scale_pair_add_marker  (
+                                                                 QwtPlot * plot,
+                                                                 double pos, 
+                                                                 QColor color, 
+                                                                 QString text, 
+                                                                 Qt::Alignment align = Qt::AlignRight | Qt::AlignTop
+                                                                 );
+      void                               scale_pair_delete_markers();
+
+      int                                scale_pair_time_pos;
+
+   private slots:
+
+      void scale_pair();
+
+      void scale_pair_set_fit_method_p2();
+      void scale_pair_set_fit_method_p3();
+      void scale_pair_set_fit_method_p4();
+
+      void scale_pair_fit();
+      void scale_pair_reset();
+      void scale_pair_minimize();
+      void scale_pair_create_scaled_curves();
+      void scale_pair_sd_scale            ( const QString & );
+      void scale_pair_scale               ( const QString & );
+      
+      void scale_pair_q1_start_text       ( const QString & );
+      void scale_pair_q1_start_focus      ( bool );
+      void scale_pair_q1_end_text         ( const QString & );
+      void scale_pair_q1_end_focus        ( bool );
+      void scale_pair_q2_start_text       ( const QString & );
+      void scale_pair_q2_start_focus      ( bool );
+      void scale_pair_q2_end_text         ( const QString & );
+      void scale_pair_q2_end_focus        ( bool );
+
+      void scale_pair_time_focus          ( bool );
+
+   private:
 
       // Guinier
 
@@ -1080,6 +1175,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       vector < QWidget * >                wheel_below_widgets;
 
       vector < QWidget * >                scroll_pair_widgets;
+      vector < QWidget * >                scale_pair_widgets;
       vector < QWidget * >                wyatt_widgets;
       vector < QWidget * >                blanks_widgets;
       vector < QWidget * >                baseline_widgets;
@@ -1265,6 +1361,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
          ,MODE_TESTIQ
          ,MODE_WYATT
          ,MODE_SCROLL_PAIR
+         ,MODE_SCALE_PAIR
       };
 
       modes                        current_mode;

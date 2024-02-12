@@ -59,7 +59,7 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair()
          QMessageBox::critical( this,
                                 windowTitle() + us_tr( ": Scroll" ),
                                 QString( us_tr(
-                                               "The %1 curves selected do not have more than two unique q-grids\n\n"
+                                               "The %1 curves selected have more than two unique q-grids\n\n"
                                                "%2 q-grid(s) found\n"
                                                )
                                          )

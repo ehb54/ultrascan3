@@ -17,10 +17,16 @@
 
 // #define ALLOW_GUOS_CARUANAS
 
+#define SCALE_PAIR_COLOR_Q1 QColor( 255, 153, 153 )
+#define SCALE_PAIR_COLOR_Q2 QColor( 153, 255, 153 )
+
 void US_Hydrodyn_Mals_Saxs::setupGUI()
 {
    int minHeight1 = 22;
    int minHeight3 = 24;
+
+   scale_pair_color_q1 = SCALE_PAIR_COLOR_Q1;
+   scale_pair_color_q2 = SCALE_PAIR_COLOR_Q2;
 
    QPalette cg_magenta = USglobal->global_colors.cg_normal;
    cg_magenta.setBrush( QPalette::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
@@ -43,6 +49,11 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
 
    QPalette cg_red = cg_magenta;
    cg_red.setBrush( QPalette::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
+
+   QPalette cg_fit_1 = cg_magenta;
+   cg_fit_1.setBrush( QPalette::Base, QBrush( scale_pair_color_q1, Qt::SolidPattern ) );
+   QPalette cg_fit_2 = cg_magenta;
+   cg_fit_2.setBrush( QPalette::Base, QBrush( scale_pair_color_q2, Qt::SolidPattern ) );
 
    lbl_title = new QLabel("Developed by Emre Brookes and Mattia Rocco (see TBD., 2023)", this);
 
@@ -378,6 +389,199 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    pb_scroll_pair->setMinimumHeight(minHeight1);
    pb_scroll_pair->setPalette( PALET_PUSHB );
    connect(pb_scroll_pair, SIGNAL(clicked()), SLOT(scroll_pair()));
+
+   // scale pair start
+
+   lbl_scale_pair_msg = new QLabel( " Chi^2 of this fit: XXX Global Chi^2: YYY", this );
+   lbl_scale_pair_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_scale_pair_msg->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_msg );
+   lbl_scale_pair_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_scale_pair = new QPushButton(us_tr("Scale"), this);
+   pb_scale_pair->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_pair->setMinimumHeight(minHeight1);
+   pb_scale_pair->setPalette( PALET_PUSHB );
+   connect(pb_scale_pair, SIGNAL(clicked()), SLOT(scale_pair()));
+
+   pb_scale_pair_fit = new QPushButton(us_tr("Fit"), this);
+   pb_scale_pair_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_pair_fit->setMinimumHeight(minHeight1);
+   pb_scale_pair_fit->setPalette( PALET_PUSHB );
+   connect(pb_scale_pair_fit, SIGNAL(clicked()), SLOT(scale_pair_fit()));
+
+   lbl_scale_pair_fit_method = new QLabel( "Fitting ", this );
+   lbl_scale_pair_fit_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_scale_pair_fit_method->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_fit_method );
+   lbl_scale_pair_fit_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   rb_scale_pair_fit_method_p2 =  new QRadioButton( us_tr( "2nd Deg. Poly." ), this );
+   rb_scale_pair_fit_method_p2 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p2 );
+   rb_scale_pair_fit_method_p2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p2, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p2() ) );
+
+   rb_scale_pair_fit_method_p3 =  new QRadioButton( us_tr( "3rd Deg. Poly." ), this );
+   rb_scale_pair_fit_method_p3 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p3 );
+   rb_scale_pair_fit_method_p3 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p3, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p3() ) );
+
+   rb_scale_pair_fit_method_p4 =  new QRadioButton( us_tr( "4th Deg. Poly." ), this );
+   rb_scale_pair_fit_method_p4 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p4 );
+   rb_scale_pair_fit_method_p4 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p4, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p4() ) );
+
+   bg_scale_pair_fit_method = new QButtonGroup( this );
+   {
+      int bg_pos = 0;
+      bg_scale_pair_fit_method->setExclusive(true);
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p2, bg_pos++ );
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p3, bg_pos++ );
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p4, bg_pos++ );
+   }
+   rb_scale_pair_fit_method_p3->setChecked(true);
+
+   pb_scale_pair_minimize = new QPushButton(us_tr("Minimize"), this);
+   pb_scale_pair_minimize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_pair_minimize->setMinimumHeight(minHeight1);
+   pb_scale_pair_minimize->setPalette( PALET_PUSHB );
+   connect(pb_scale_pair_minimize, SIGNAL(clicked()), SLOT(scale_pair_minimize()));
+
+   pb_scale_pair_reset = new QPushButton(us_tr("Reset"), this);
+   pb_scale_pair_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_pair_reset->setMinimumHeight(minHeight1);
+   pb_scale_pair_reset->setPalette( PALET_PUSHB );
+   connect(pb_scale_pair_reset, SIGNAL(clicked()), SLOT(scale_pair_reset()));
+
+   pb_scale_pair_create_scaled_curves = new QPushButton(us_tr("Make scaled"), this);
+   pb_scale_pair_create_scaled_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_pair_create_scaled_curves->setMinimumHeight(minHeight1);
+   pb_scale_pair_create_scaled_curves->setPalette( PALET_PUSHB );
+   connect(pb_scale_pair_create_scaled_curves, SIGNAL(clicked()), SLOT(scale_pair_create_scaled_curves()));
+   
+   lbl_scale_pair_time = new QLabel( us_tr( " Time: " ), this );
+   lbl_scale_pair_time->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_scale_pair_time->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_time );
+   lbl_scale_pair_time->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_scale_pair_time->hide();
+
+   le_scale_pair_time = new mQLineEdit( this );    le_scale_pair_time->setObjectName( "le_scale_pair_time Line Edit" );
+   le_scale_pair_time->setText( "" );
+   le_scale_pair_time->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_time->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_time->setPalette( PALET_NORMAL );
+   AUTFBACK( le_scale_pair_time );
+   le_scale_pair_time->setEnabled( false );
+   le_scale_pair_time->setReadOnly( true );
+   le_scale_pair_time->setValidator( new QDoubleValidator( le_scale_pair_time ) );
+   le_scale_pair_time->setMaxLength(10);
+   le_scale_pair_time->setMaximumWidth( QFontMetrics(le_scale_pair_time->font()).averageCharWidth() * le_scale_pair_time->maxLength() );
+   le_scale_pair_time->hide();
+   connect( le_scale_pair_time, SIGNAL( focussed ( bool ) )             , SLOT( scale_pair_time_focus( bool ) ) );
+
+   lbl_scale_pair_scale = new QLabel( us_tr( " Global Scale: " ), this );
+   lbl_scale_pair_scale->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_scale_pair_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_scale );
+   lbl_scale_pair_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_scale_pair_scale->hide();
+
+   le_scale_pair_scale = new mQLineEdit( this );    le_scale_pair_scale->setObjectName( "le_scale_pair_scale Line Edit" );
+   le_scale_pair_scale->setText( "1" );
+   le_scale_pair_scale->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( le_scale_pair_scale );
+   le_scale_pair_scale->setEnabled( false );
+   le_scale_pair_scale->setValidator( new QDoubleValidator( le_scale_pair_scale ) );
+   le_scale_pair_scale->setMaxLength(16);
+   le_scale_pair_scale->setMaximumWidth( QFontMetrics(le_scale_pair_scale->font()).averageCharWidth() * le_scale_pair_scale->maxLength() );
+   le_scale_pair_scale->hide();
+   connect( le_scale_pair_scale, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_scale( const QString & ) ) );
+
+   lbl_scale_pair_sd_scale = new QLabel( us_tr( " MALS SD Mult.: " ), this );
+   lbl_scale_pair_sd_scale->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_scale_pair_sd_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_sd_scale );
+   lbl_scale_pair_sd_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_scale_pair_sd_scale->hide();
+
+   le_scale_pair_sd_scale = new mQLineEdit( this );    le_scale_pair_sd_scale->setObjectName( "le_scale_pair_sd_scale Line Edit" );
+   le_scale_pair_sd_scale->setText( "1" );
+   le_scale_pair_sd_scale->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_sd_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_sd_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( le_scale_pair_sd_scale );
+   le_scale_pair_sd_scale->setEnabled( false );
+   le_scale_pair_sd_scale->setValidator( new QDoubleValidator( le_scale_pair_sd_scale ) );
+   le_scale_pair_sd_scale->setMaxLength(16);
+   le_scale_pair_sd_scale->setMaximumWidth( QFontMetrics(le_scale_pair_sd_scale->font()).averageCharWidth() * le_scale_pair_sd_scale->maxLength() );
+   le_scale_pair_sd_scale->hide();
+   connect( le_scale_pair_sd_scale, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_sd_scale( const QString & ) ) );
+
+   lbl_scale_pair_q1_range = new QLabel( us_tr( " Fit range 1 (scales): " ), this );
+   lbl_scale_pair_q1_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_scale_pair_q1_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_q1_range );
+   lbl_scale_pair_q1_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_scale_pair_q1_range->hide();
+
+   le_scale_pair_q1_start = new mQLineEdit( this );    le_scale_pair_q1_start->setObjectName( "le_scale_pair_q1_start Line Edit" );
+   le_scale_pair_q1_start->setText( "" );
+   le_scale_pair_q1_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_q1_start->setPalette( cg_fit_1 );
+   le_scale_pair_q1_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_q1_start->setEnabled( false );
+   le_scale_pair_q1_start->setValidator( new QDoubleValidator( le_scale_pair_q1_start ) );
+   le_scale_pair_q1_start->hide();
+   connect( le_scale_pair_q1_start, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q1_start_text( const QString & ) ) );
+   connect( le_scale_pair_q1_start, SIGNAL( focussed ( bool ) )             , SLOT( scale_pair_q1_start_focus( bool ) ) );
+
+   le_scale_pair_q1_end = new mQLineEdit( this );    le_scale_pair_q1_end->setObjectName( "le_scale_pair_q1_end Line Edit" );
+   le_scale_pair_q1_end->setText( "" );
+   le_scale_pair_q1_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_q1_end->setPalette( cg_fit_1 );
+   le_scale_pair_q1_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_q1_end->setEnabled( false );
+   le_scale_pair_q1_end->setValidator( new QDoubleValidator( le_scale_pair_q1_end ) );
+   le_scale_pair_q1_end->hide();
+   connect( le_scale_pair_q1_end, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q1_end_text( const QString & ) ) );
+   connect( le_scale_pair_q1_end, SIGNAL( focussed ( bool ) )             , SLOT( scale_pair_q1_end_focus( bool ) ) );
+
+   lbl_scale_pair_q2_range = new QLabel( us_tr( " Fit range 2 (fixed): " ), this );
+   lbl_scale_pair_q2_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_scale_pair_q2_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_q2_range );
+   lbl_scale_pair_q2_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_scale_pair_q2_range->hide();
+
+   le_scale_pair_q2_start = new mQLineEdit( this );    le_scale_pair_q2_start->setObjectName( "le_scale_pair_q2_start Line Edit" );
+   le_scale_pair_q2_start->setText( "" );
+   le_scale_pair_q2_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_q2_start->setPalette( cg_fit_2 );
+   le_scale_pair_q2_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_q2_start->setEnabled( false );
+   le_scale_pair_q2_start->setValidator( new QDoubleValidator( le_scale_pair_q2_start ) );
+   le_scale_pair_q2_start->hide();
+   connect( le_scale_pair_q2_start, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q2_start_text( const QString & ) ) );
+   connect( le_scale_pair_q2_start, SIGNAL( focussed ( bool ) )             , SLOT( scale_pair_q2_start_focus( bool ) ) );
+
+   le_scale_pair_q2_end = new mQLineEdit( this );    le_scale_pair_q2_end->setObjectName( "le_scale_pair_q2_end Line Edit" );
+   le_scale_pair_q2_end->setText( "" );
+   le_scale_pair_q2_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_scale_pair_q2_end->setPalette( cg_fit_2 );
+   le_scale_pair_q2_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_scale_pair_q2_end->setEnabled( false );
+   le_scale_pair_q2_end->setValidator( new QDoubleValidator( le_scale_pair_q2_end ) );
+   le_scale_pair_q2_end->hide();
+   connect( le_scale_pair_q2_end, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q2_end_text( const QString & ) ) );
+   connect( le_scale_pair_q2_end, SIGNAL( focussed ( bool ) )             , SLOT( scale_pair_q2_end_focus( bool ) ) );
+
+   // scale pair end
 
    pb_join_by_time = new QPushButton(us_tr("Join I#,*(q) by time"), this);
    pb_join_by_time->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3523,10 +3727,12 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    QBoxLayout * hbl_file_buttons_3a = new QHBoxLayout(); hbl_file_buttons_3a->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3a->setSpacing( 0 );
    hbl_file_buttons_3a->addWidget ( pb_common_time );
    hbl_file_buttons_3a->addWidget ( pb_scroll_pair );
+   hbl_file_buttons_3a->addWidget ( pb_scale_pair );
    hbl_file_buttons_3a->addWidget ( pb_join_by_time );
 
    files_widgets.push_back ( pb_common_time );
    files_widgets.push_back ( pb_scroll_pair );
+   files_widgets.push_back ( pb_scale_pair );
    files_widgets.push_back ( pb_join_by_time );
 
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
@@ -3661,6 +3867,8 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    gl_wheel->addWidget( qwtw_wheel           , 0 , 2 , 1 + ( 0 ) - ( 0 ) , 1 + ( 8  ) - ( 2 ) );
    gl_wheel->addWidget         ( pb_wheel_inc        , 0, 9 );
    gl_wheel->addWidget         ( lbl_wheel_pos       , 0, 10 );
+   gl_wheel->addWidget         ( lbl_scale_pair_time , 0, 11 );
+   gl_wheel->addWidget         ( le_scale_pair_time  , 0, 12 );
    
    QGridLayout * gl_wheel_extra = new QGridLayout( 0 ); gl_wheel_extra->setContentsMargins( 0, 0, 0, 0 ); gl_wheel_extra->setSpacing( 0 );
 
@@ -3683,6 +3891,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    // hbl_top->addWidget( pb_guinier_plot_mw );
    hbl_top->addWidget( pb_errors );
    hbl_top->addWidget( pb_cormap );
+   hbl_top->addWidget( pb_guinier );
    // hbl_top->addWidget( pb_pp );
    hbl_top->addWidget( pb_ggqfit );
    hbl_top->addWidget( pb_wheel_cancel );
@@ -3724,7 +3933,6 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       hbl_mode->addWidget( pb_pm );
    }
    hbl_mode->addWidget( pb_testiq );
-   hbl_mode->addWidget( pb_guinier );
 
    // scale
 
@@ -3823,6 +4031,42 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    // QBoxLayout * vbl_guinier_plots = new QVBoxLayout( 0 ); vbl_guinier_plots->setContentsMargins( 0, 0, 0, 0 ); vbl_guinier_plots->setSpacing( 0 );
    // vbl_guinier_plots->addWidget( guinier_plot );
    // vbl_guinier_plots->addWidget( guinier_plot_errors );
+
+   // scale pair
+
+   QBoxLayout * vbl_scale_pair = new QVBoxLayout( 0 ); vbl_scale_pair->setContentsMargins( 0, 0, 0, 0 ); vbl_scale_pair->setSpacing( 0 );
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_scale_pair_q1_range );
+      hbl->addWidget( le_scale_pair_q1_start );
+      hbl->addWidget( le_scale_pair_q1_end );
+      hbl->addWidget( lbl_scale_pair_q2_range );
+      hbl->addWidget( le_scale_pair_q2_start );
+      hbl->addWidget( le_scale_pair_q2_end );
+      vbl_scale_pair->addLayout( hbl );
+   }
+
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_scale_pair_fit_method );
+      hbl->addWidget( rb_scale_pair_fit_method_p2 );
+      hbl->addWidget( rb_scale_pair_fit_method_p3 );
+      hbl->addWidget( rb_scale_pair_fit_method_p4 );
+      hbl->addWidget( pb_scale_pair_fit );
+      hbl->addWidget( pb_scale_pair_minimize );
+      hbl->addWidget( pb_scale_pair_reset );
+      hbl->addWidget( pb_scale_pair_create_scaled_curves );
+      vbl_scale_pair->addLayout( hbl );
+   }
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_scale_pair_scale );
+      hbl->addWidget( le_scale_pair_scale );
+      hbl->addWidget( lbl_scale_pair_sd_scale );
+      hbl->addWidget( le_scale_pair_sd_scale );
+      hbl->addWidget( lbl_scale_pair_msg );
+      vbl_scale_pair->addLayout( hbl );
+   }
 
    // pm
    QBoxLayout * vbl_pm = new QVBoxLayout( 0 ); vbl_pm->setContentsMargins( 0, 0, 0, 0 ); vbl_pm->setSpacing( 0 );
@@ -4005,6 +4249,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    vbl_plot_group->addLayout ( hbl_mode0 );
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
+   vbl_plot_group->addLayout ( vbl_scale_pair );
    vbl_plot_group->addLayout ( vbl_testiq );
    vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
@@ -4017,7 +4262,6 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    vbl_plot_group->addLayout ( hbl_wyatt );
 
    vbl_plot_group->addWidget ( le_dummy );
-
 
 //    QBoxLayout * hbl_files_plot = new QHBoxLayout(); hbl_files_plot->setContentsMargins( 0, 0, 0, 0 ); hbl_files_plot->setSpacing( 0 );
 //    // hbl_files_plot->addLayout( vbl_files );
@@ -4105,7 +4349,7 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
          tmp_widgets.push_back( pb_pm );
       }
       tmp_widgets.push_back( pb_testiq );
-      tmp_widgets.push_back( pb_guinier );
+      // tmp_widgets.push_back( pb_guinier );
 
       pb_row_widgets.push_back( tmp_widgets );
    }
@@ -4225,6 +4469,35 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scroll_pair_widgets.push_back( qwtw_wheel );
    scroll_pair_widgets.push_back( pb_wheel_inc );
    scroll_pair_widgets.push_back( lbl_wheel_pos );
+
+   // scale_pair_widgets;
+   scale_pair_widgets.push_back( pb_wheel_dec );
+   scale_pair_widgets.push_back( qwtw_wheel );
+   scale_pair_widgets.push_back( pb_wheel_inc );
+   scale_pair_widgets.push_back( lbl_wheel_pos );
+   scale_pair_widgets.push_back( lbl_scale_pair_time );
+   scale_pair_widgets.push_back( le_scale_pair_time );
+   
+   scale_pair_widgets.push_back( lbl_scale_pair_msg );
+   scale_pair_widgets.push_back( lbl_scale_pair_scale );
+   scale_pair_widgets.push_back( le_scale_pair_scale );
+   scale_pair_widgets.push_back( lbl_scale_pair_sd_scale );
+   scale_pair_widgets.push_back( le_scale_pair_sd_scale );
+   scale_pair_widgets.push_back( lbl_scale_pair_q1_range );
+   scale_pair_widgets.push_back( le_scale_pair_q1_start );
+   scale_pair_widgets.push_back( le_scale_pair_q1_end );
+   scale_pair_widgets.push_back( lbl_scale_pair_q2_range );
+   scale_pair_widgets.push_back( le_scale_pair_q2_start );
+   scale_pair_widgets.push_back( le_scale_pair_q2_end );
+   
+   scale_pair_widgets.push_back( pb_scale_pair_fit );
+   scale_pair_widgets.push_back( pb_scale_pair_minimize );
+   scale_pair_widgets.push_back( pb_scale_pair_reset );
+   scale_pair_widgets.push_back( pb_scale_pair_create_scaled_curves );
+   scale_pair_widgets.push_back( lbl_scale_pair_fit_method );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p2 );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p3 );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p4 );
 
    // wyatt_widgets;
 
@@ -4481,6 +4754,7 @@ void US_Hydrodyn_Mals_Saxs::mode_select()
    ShowHide::hide_widgets( ggaussian_5var_widgets );
    ShowHide::hide_widgets( wyatt_widgets );
    ShowHide::hide_widgets( scroll_pair_widgets );
+   ShowHide::hide_widgets( scale_pair_widgets );
    ShowHide::hide_widgets( blanks_widgets );
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
@@ -4534,6 +4808,9 @@ void US_Hydrodyn_Mals_Saxs::mode_select()
       }
       break;
 
+      // only_widgets note: row 0 currently is blanks analysis, row 1 gauss mode buttons+scale+testiq
+      // could add more rows...
+
    case MODE_WYATT        : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets      , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
    case MODE_BLANKS       : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
    case MODE_BASELINE     : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
@@ -4544,6 +4821,7 @@ void US_Hydrodyn_Mals_Saxs::mode_select()
    case MODE_RGC          : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
    case MODE_PM           : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets         , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
    case MODE_SCROLL_PAIR  : mode_title( us_tr( "Scroll Pairs" ) );   ShowHide::hide_widgets( scroll_pair_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_SCALE_PAIR   : mode_title( pb_scale_pair->text() );     ShowHide::hide_widgets( scale_pair_widgets , false ); ShowHide::only_widgets( pb_row_widgets, 9 );break;
    default : us_qdebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -4569,7 +4847,7 @@ void US_Hydrodyn_Mals_Saxs::mode_title( QString title )
 
 void US_Hydrodyn_Mals_Saxs::update_enables()
 {
-   // qDebug() << "::update_enables()";
+   qDebug() << "::update_enables()";
    resize_plots();
 
    if ( running ) {
@@ -4737,6 +5015,7 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
    pb_smooth             ->setEnabled( files_selected_count );
    pb_common_time        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ );
    pb_scroll_pair        ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ );
+   pb_scale_pair         ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ && half_common );
    pb_join_by_time       ->setEnabled( files_selected_count > 2 && files_compatible && !files_are_time && ( all_istarq || all_ihashq ) && all_t_ && half_common );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
@@ -5072,6 +5351,7 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    pb_svd                ->setEnabled( false );
    pb_common_time        ->setEnabled( false );
    pb_scroll_pair        ->setEnabled( false );
+   pb_scale_pair         ->setEnabled( false );
    pb_join_by_time       ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
@@ -5269,6 +5549,21 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    pb_test_i_of_t        ->setEnabled( false );
    pb_guinier_plot_rg    ->setEnabled( false );
    pb_guinier_plot_mw    ->setEnabled( false );
+
+   // scale pair disables
+   le_scale_pair_time                   ->setEnabled( false );
+   pb_scale_pair_fit                    ->setEnabled( false );
+   pb_scale_pair_minimize               ->setEnabled( false );
+   pb_scale_pair_create_scaled_curves   ->setEnabled( false );
+   rb_scale_pair_fit_method_p2          ->setEnabled( false );
+   rb_scale_pair_fit_method_p3          ->setEnabled( false );
+   rb_scale_pair_fit_method_p4          ->setEnabled( false );
+   le_scale_pair_q1_start               ->setEnabled( false );
+   le_scale_pair_q1_end                 ->setEnabled( false );
+   le_scale_pair_q2_start               ->setEnabled( false );
+   le_scale_pair_q2_end                 ->setEnabled( false );
+   le_scale_pair_scale                  ->setEnabled( false );
+   le_scale_pair_sd_scale               ->setEnabled( false );
 }
 
 void US_Hydrodyn_Mals_Saxs::model_select_all()
