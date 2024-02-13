@@ -93,6 +93,7 @@ class US_auditTrailGMP : public US_Widgets
        void assemble_GMP_editing( QMap< QString, QMap < QString, QString > >, QString, QString );
        void assemble_GMP_analysis_fitmen( QMap < QString, QString > );
        void assemble_GMP_analysis_cancelled( QMap < QString, QString >, QString );
+       void assemble_GMP_esign_reassign( QMap < QString, QMap <QString, QString >> status_map );
   void assemble_esigs( QMap<QString, QString>); 
   void initHTML( void );
   void closeHTML( void );

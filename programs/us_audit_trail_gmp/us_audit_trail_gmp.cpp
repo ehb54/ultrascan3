@@ -553,19 +553,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 {
   QVector< QGroupBox * > groupBoxes;
   
-  //GUI
-  QHBoxLayout* genL   = new QHBoxLayout();
-  genL->setSpacing        ( 2 );
-  genL->setContentsMargins( 20, 10, 20, 15 );
-
-  QHBoxLayout* genL_sec_row = new QHBoxLayout();
-  genL_sec_row->setSpacing        ( 2 );
-  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
-
-  QVBoxLayout* genL_v_rows = new QVBoxLayout();
-  genL_v_rows->setSpacing        ( 2 );
-  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
- 
   int row;
  
   //read autoflowStatus record:
@@ -596,6 +583,11 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   if ( s_name == "GMP Run Initiation" )
     {
       status_map = parse_autoflowStatus_json( createdGMPrunJson, "" );
+
+      //GUI
+      QHBoxLayout* genL   = new QHBoxLayout();
+      genL->setSpacing        ( 2 );
+      genL->setContentsMargins( 20, 10, 20, 15 );
 
       //Person
       QLabel* lb_init         = us_label( tr("Initiated by:") );
@@ -707,7 +699,12 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  html_assembled += tr( "<table>" );
 	  html_assembled += tr( "<tr><td> There were NO remote operations. </td></tr>" );
 	  html_assembled += tr( "</table>" );
-	  	  
+
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+	  
 	  QGridLayout* genL1  = new QGridLayout();
 	  QVBoxLayout* genL11 = new QVBoxLayout();
 
@@ -765,6 +762,11 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 		dtype_opt =  "Skipping Stage";
 	      
 	      status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	      //GUI
+	      QHBoxLayout* genL   = new QHBoxLayout();
+	      genL->setSpacing        ( 2 );
+	      genL->setContentsMargins( 20, 10, 20, 15 );
 	      
 	      //Person
 	      QLabel* lb_init         = us_label( tr("Performed by:") );
@@ -905,6 +907,20 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	    }
 
 	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+	  genL_sec_row->setSpacing        ( 2 );
+	  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QVBoxLayout* genL_v_rows = new QVBoxLayout();
+	  genL_v_rows->setSpacing        ( 2 );
+	  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
+	  
 
 	  //Person
 	  QLabel* lb_init         = us_label( tr("Performed by:") );
@@ -1153,6 +1169,19 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
 	  status_map = parse_autoflowStatus_json( json_str, im.key() );
 
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+	  genL_sec_row->setSpacing        ( 2 );
+	  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QVBoxLayout* genL_v_rows = new QVBoxLayout();
+	  genL_v_rows->setSpacing        ( 2 );
+	  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
+
 	  //Person
 	  QLabel* lb_init         = us_label( tr("Performed by:") );
 	  QLabel* lb_ID           = us_label( tr("User ID:") );
@@ -1291,6 +1320,11 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
       QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
 
+      //GUI
+      QHBoxLayout* genL   = new QHBoxLayout();
+      genL->setSpacing        ( 2 );
+      genL->setContentsMargins( 20, 10, 20, 15 );
+      
       QGridLayout* genL1  = new QGridLayout();
       QVBoxLayout* genL11 = new QVBoxLayout();
 
@@ -1330,7 +1364,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      QLabel* lb_men4        = us_label( tr("TimeStamp:") );
 	      QLineEdit* le_men4     = us_lineedit( when, 0, true );
 	      
-	      
 	      genL1 -> addWidget( lb_men1,     row,     1,  1,  2  );
 	      genL1 -> addWidget( le_men1,     row,     3,  1,  3  );
 	      genL1 -> addWidget( lb_men2,     row,     6,  1,  2  );
@@ -1344,10 +1377,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
 	  //assemble html
 	  assemble_GMP_analysis_fitmen( analysis_status_map );
-	}
-      else if ( s_name == "E-SIGNATURES" )
-	{
-	  
 	}
       else //automatic mode
 	{
@@ -1447,9 +1476,181 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
       //assemble html
       assemble_GMP_analysis_cancelled( analysisCancel_status_map, analysisCancelJson );
+      html_assembled += tr("<hr>");
+    }
+  
+  else if ( s_name == "E-SIGNATURES" )
+    {
+      html_assembled += tr( "<h3 align=left>Information on Reassigning Reviewers (E-SIGNING)</h3>" );
+
+      //take all info from  eSign_details_auto[ "createUpdateLogJson" ];
+      status_map = parse_autoflowStatus_json( eSign_details_auto[ "createUpdateLogJson" ], "" );
+
+      //Gui
+      if ( status_map.isEmpty()  )
+	{
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+      	  
+	  QGridLayout* genL1  = new QGridLayout();
+	  QVBoxLayout* genL11 = new QVBoxLayout();
+
+	  QLabel* lb_remote         = us_label( tr("Reassignments of Operator(s), Reviewer(s), Approver(s):") );
+	  lb_remote->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  row=0;
+	  genL1-> addWidget( lb_remote,      row++,   0,  1,  22  );
+
+	  QTextEdit* te_remote    = us_textedit();
+	  te_remote    -> setFixedHeight  ( RowHeight * 2 );
+	  te_remote    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_remote, true );
+
+	  te_remote -> setText( "There were NO reassignments." );
+
+	  genL1 -> addWidget( te_remote,     row++,    1,  1,  21  );
+
+	  genL11 -> addLayout( genL1);
+	  genL11 -> addStretch();
+	  
+	  //assemble
+	  genL->addLayout( genL11);
+	  
+	  //Set GroupBox
+	  QGroupBox *groupBox = new QGroupBox ( name );
+	  QPalette p = groupBox->palette();
+	  p.setColor(QPalette::Dark, Qt::white);
+	  groupBox->setPalette(p);
+	  
+	  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	  
+	  groupBox->setFlat(true);
+	  
+	  groupBox->setLayout(genL);
+	  groupBoxes. push_back( groupBox );
+	  
+	}
+      else
+	{
+	  QStringList s_map_keys = status_map. keys();
+	  for (int i=0; i < s_map_keys.size(); ++i  )
+	    {
+	      QMap <QString, QString > admin_map = status_map[ s_map_keys [ i ] ]; 
+	      
+	      QString p_id   = admin_map[ "Person" ].split(".")[0].trimmed();
+	      QString p_name = admin_map[ "Person" ].split(".")[1].trimmed();
+	      
+	      //Comment (replacements):
+	      QString c_repls = admin_map[ "Comment" ];
+	      QString c_repls_str;
+	      if ( c_repls. contains("replacement:") )
+		{
+		  QStringList c_repls_list = c_repls. split(";");
+		  for ( int j=0; j<c_repls_list.size(); ++j )
+		    c_repls_str += c_repls_list[j].replace("replacement:",": ") + "<br>";
+		}
+	      else
+		c_repls_str = c_repls;
+
+	      QHBoxLayout* genL_i   = new QHBoxLayout();
+	      genL_i->setSpacing        ( 2 );
+	      genL_i->setContentsMargins( 20, 10, 20, 15 );
+	      
+	      //Person
+	      QLabel* lb_init         = us_label( tr("Performed by:") );
+	      QLabel* lb_ID           = us_label( tr("User ID:") );
+	      QLabel* lb_name         = us_label( tr("Name:") );
+	      QLineEdit* le_ID        = us_lineedit( p_id, 0, true);
+	      QLineEdit* le_name      = us_lineedit( p_name, 0, true);
+	      
+	      QGridLayout* genL1  = new QGridLayout();
+	      QVBoxLayout* genL11 = new QVBoxLayout();
+	      
+	      row=0;
+	      genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+	      genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+	      genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+	      genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+	      genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+	  	      
+	      genL11 -> addLayout( genL1);
+	      genL11 -> addStretch();
+	      
+	      //TimeStamp
+	      QGridLayout* genL2  = new QGridLayout();
+	      QVBoxLayout* genL21 = new QVBoxLayout();
+	      
+	      QLabel* lb_time_o         = us_label( tr("TimeStamp:") );
+	      lb_time_o->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      QLabel* lb_time_o2        = us_label( tr("Performed on:") );
+	      QLineEdit* le_time_o2     = us_lineedit( admin_map["timeDate"], 0, true );
+	      
+	      row=0;
+	      genL2 -> addWidget( lb_time_o,      row++,   0,  1,  6  );
+	      genL2 -> addWidget( lb_time_o2,     row,     1,  1,  2  );
+	      genL2 -> addWidget( le_time_o2,     row++,   3,  1,  3  );
+	      
+	      genL21 -> addLayout( genL2);
+	      genL21 -> addStretch();
+	      
+	      //Comment
+	      QGridLayout* genL3  = new QGridLayout();
+	      QVBoxLayout* genL31 = new QVBoxLayout();
+	      
+	      QLabel* lb_comm         = us_label( tr("Reassignments:") );
+	      lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      QLabel* lb_comm1        = us_label( tr("Actions:") );
+	    	      
+	      QTextEdit* te_comm1    = us_textedit();
+	      te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					    US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_comm1, true );
+	      te_comm1 -> setText( c_repls_str);
+	      
+	      row=0;
+	      genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+	      genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+	      genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
+	      
+	      genL31 -> addLayout( genL3);
+	      genL31 -> addStretch();
+	      
+	      //assemble
+	      genL_i->addLayout( genL11);
+	      genL_i->addLayout( genL21);
+	      genL_i->addLayout( genL31);
+
+	      //Set GroupBox
+	      QString gBox_name = "Reviewers Update: " + QString::number(i+1);
+	      QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	      QPalette p = groupBox->palette();
+	      p.setColor(QPalette::Dark, Qt::white);
+	      groupBox->setPalette(p);
+	      
+	      groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	      
+	      groupBox->setFlat(true);
+	      
+	      groupBox->setLayout(genL_i);
+	      groupBoxes. push_back( groupBox );
+	      
+	    }
+	}
+      
+      //assemble html
+      assemble_GMP_esign_reassign( status_map );
+      
     }
   else
     {
+      //GUI
+      QHBoxLayout* genL   = new QHBoxLayout();
+      genL->setSpacing        ( 2 );
+      genL->setContentsMargins( 20, 10, 20, 15 );
+      
       QLabel* lb_dev         = us_label( tr("Under Development:") );
       genL->addWidget( lb_dev );
 
@@ -1866,6 +2067,26 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
       if ( key == "Comment" )           //GMP init || Live Update's remote operations [SKIP | STOP]
 	{
 	  status_map[ key ][ "comment" ] = value.toString();
+	}
+
+      //For parsing eSignUpdate status (by admin): revs. reassignment
+      if ( key.contains( "Updated by" ) )
+	{	  
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > admin_info_map;
+	  
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  admin_info_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		  qDebug() << "Admin update Map: -- key, value: "
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+
+	  status_map[ key ] = admin_info_map;
 	}
       
     }
@@ -2534,6 +2755,69 @@ void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString 
   html_assembled += tr( "</table>" );
   
 }
+
+//E-SIGS: reviewers change html
+void US_auditTrailGMP::assemble_GMP_esign_reassign( QMap < QString, QMap <QString, QString >> status_map )
+{
+  if ( status_map. isEmpty() )
+    {
+      html_assembled += tr( "<table>" );
+      html_assembled += tr( "<tr><td> There were NO reviewer(s) reassignments. </td></tr>" );
+      html_assembled += tr( "</table>" );
+
+      return;
+    }
+  
+  QStringList s_map_keys = status_map. keys();
+  for (int i=0; i < s_map_keys.size(); ++i  )
+    {
+      QMap <QString, QString > admin_map = status_map[ s_map_keys [ i ] ]; 
+      
+      html_assembled += tr(
+			   "<table>"		   
+			   "<tr>"
+			   "<td><b>Reviewers Update %1:</b></td>"
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( QString::number( i+1 ) )                       //1
+	;
+
+      QString p_id   = admin_map[ "Person" ].split(".")[0].trimmed();
+      QString p_name = admin_map[ "Person" ].split(".")[1].trimmed();
+
+      //Comment (replacements):
+      QString c_repls = admin_map[ "Comment" ];
+      QString c_repls_str;
+      if ( c_repls. contains("replacement:") )
+	{
+	  QStringList c_repls_list = c_repls. split(";");
+	  for ( int j=0; j<c_repls_list.size(); ++j )
+	    c_repls_str += c_repls_list[j].replace("replacement:",": ") + "<br>";
+	}
+      else
+	c_repls_str = c_repls;
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User: </td> <td>%1 (ID: %2)</td>"
+			   "<tr><td>TimeDate: </td><td> %3 </td></tr>"
+			   "<tr><td>Reassingments: </td><td> %4 </td> </tr>"
+			   "</table>"
+			   )
+	.arg( p_name )                            //1
+	.arg( p_id )                              //2
+	.arg( admin_map[ "timeDate" ] )           //3
+	.arg( c_repls_str )                       //4
+	;
+    }
+}
+  
+
 
 //initHTML
 void US_auditTrailGMP::initHTML( void )
