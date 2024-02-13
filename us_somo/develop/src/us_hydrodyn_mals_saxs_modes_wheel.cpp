@@ -814,7 +814,10 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
    case MODE_SCALE_PAIR :
       scale_pair_created_remove();
       set_selected( scale_pair_org_selected );
-      // plot_files();
+      le_scale_pair_scale   ->setText( QString( "%1" ).arg( scale_pair_original_scale ) );
+      le_scale_pair_sd_scale->setText( QString( "%1" ).arg( scale_pair_original_sd_scale ) );
+      scale_pair_delete_markers();
+      mode_select( MODE_NORMAL );
       break;
 
    default : us_qdebug( "wheel cancel called in invalid mode" ); break;
@@ -1129,6 +1132,29 @@ void US_Hydrodyn_Mals_Saxs::wheel_save()
          update_enables();
       }
       break;
+
+   case MODE_SCALE_PAIR :
+      if ( scale_pair_save_names.size() ) {
+         QMessageBox::warning( this,
+                               windowTitle() + us_tr( ": Scale Fit" ),
+                               QString( us_tr( "Be careful!\n"
+                                               "You have saved a scaled and/or SD modified set already\n"
+                                               "If you scale again when you join, you will get double scaling!"
+                                               ) )
+                               );
+      }
+      scale_pair_created_remove();
+      scale_pair_delete_markers();
+      // plot_files();
+      set_selected( scale_pair_org_selected );
+      running = false;
+      wheel_enables( false );
+      pb_wheel_save         ->setEnabled( false );
+      pb_wheel_cancel       ->setEnabled( false );
+      mode_select( MODE_NORMAL );
+      update_enables();
+      break;
+
    default : us_qdebug( "wheel save called in invalid mode" ); break;
    }
 }

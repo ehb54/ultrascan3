@@ -2550,6 +2550,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          conc_window->cancel();
       }
    }
+   qApp->processEvents();
+   repaint();
 }
 
 class hplc_sortable_qstring {

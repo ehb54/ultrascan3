@@ -1025,6 +1025,8 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          conc_window->cancel();
       }
    }
+   qApp->processEvents();
+   repaint();
 }
 
 class hplc_sortable_qstring {

@@ -5558,6 +5558,7 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    pb_scale_pair_fit                    ->setEnabled( false );
    pb_scale_pair_minimize               ->setEnabled( false );
    pb_scale_pair_create_scaled_curves   ->setEnabled( false );
+   pb_scale_pair_reset                  ->setEnabled( false );
    rb_scale_pair_fit_method_p2          ->setEnabled( false );
    rb_scale_pair_fit_method_p3          ->setEnabled( false );
    rb_scale_pair_fit_method_p4          ->setEnabled( false );

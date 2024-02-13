@@ -757,6 +757,8 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void                               scale_pair_created_init();
       void                               scale_pair_created_update();
       void                               scale_pair_created_remove();
+
+      set < QString >                    scale_pair_save_names;
       
    private slots:
 

@@ -25,8 +25,11 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
    scale_pair_time_to_names.clear();
    scale_pair_times        .clear();
    scale_pair_qgrids       .clear();
+   scale_pair_save_names.clear();
 
    QStringList names = all_selected_files();
+   scale_pair_original_scale    = le_scale_pair_scale   ->text().toDouble();
+   scale_pair_original_sd_scale = le_scale_pair_sd_scale->text().toDouble();
 
    // somewhat duplicated code in ::common_time() && ::join_by_time
    {
@@ -196,6 +199,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
    TSO << "scale_pair_enables()\n";
    qwtw_wheel                           ->setEnabled( true );
    pb_wheel_cancel                      ->setEnabled( true );
+   pb_wheel_save                        ->setEnabled( le_scale_pair_scale->text().toDouble() != scale_pair_original_scale ||
+                                                      le_scale_pair_sd_scale->text().toDouble() != scale_pair_original_sd_scale );
    pb_axis_x                            ->setEnabled( true );
    pb_axis_y                            ->setEnabled( true );
    le_scale_pair_time                   ->setEnabled( true );
@@ -210,7 +215,14 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
    
    pb_scale_pair_fit                    ->setEnabled( true );
    pb_scale_pair_minimize               ->setEnabled( true );
-   pb_scale_pair_create_scaled_curves   ->setEnabled( true );
+   pb_scale_pair_create_scaled_curves   ->setEnabled( ( le_scale_pair_scale->text() != "1" ||
+                                                        ( scale_pair_use_errors && le_scale_pair_sd_scale->text() != "1" ) )
+                                                      && le_scale_pair_scale->text().toDouble() > 0
+                                                      && le_scale_pair_sd_scale->text().toDouble() > 0
+                                                      );
+
+   pb_scale_pair_reset                  ->setEnabled( le_scale_pair_scale->text() != "1" ||
+                                                      le_scale_pair_sd_scale->text() != "1" );
    rb_scale_pair_fit_method_p2          ->setEnabled( true );
    rb_scale_pair_fit_method_p3          ->setEnabled( true );
    rb_scale_pair_fit_method_p4          ->setEnabled( true );
@@ -494,10 +506,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_time_focus( bool hasFocus ) {
    }
 }
 
-void US_Hydrodyn_Mals_Saxs::scale_pair_reset() {
-   qDebug() << "scale_pair_reset()";
-}
-
 void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    qDebug() << "scale_pair_minimize()";
 }
@@ -667,6 +675,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
 void US_Hydrodyn_Mals_Saxs::scale_pair_scale( const QString & text ) {
    qDebug() << "scale_pair_scale( " << text << " )";
    scale_pair_created_update();
+   scale_pair_enables();
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_scale_focus( bool hasFocus ) {
@@ -686,6 +695,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scale_focus( bool hasFocus ) {
 void US_Hydrodyn_Mals_Saxs::scale_pair_sd_scale( const QString & text ) {
    qDebug() << "scale_pair_sd_scale( " << text << " )";
    scale_pair_created_update();
+   scale_pair_enables();
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_created_init() {
@@ -767,40 +777,67 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_remove() {
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
+#warning save headers
+
    qDebug() << "scale_pair_create_scaled_curves()";
    disable_all();
 
-   /* not done!
+   scale_pair_save_names.clear();
+
    int qgrid_size             = (int) scale_pair_qgrids[ scale_pair_mals_set ].size();
    double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
    double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
 
    if ( scale_pair_use_errors ) {
       for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
-         double  time        = scaled_time_to_name.first;
-         QString source_name = scaled_time_to_name.second;
+         QString source_name = scaled_time_to_name.second[scale_pair_mals_set];
          QString scaled_name = source_name;
-         scale_name = scaled_name.replace( "_common", "" );
-         scaled_name += QString( "_sc%1_sd%2_common" )
+         scaled_name = scaled_name.replace( "_common", "" );
+         scaled_name += QString( "_Im%1_SDm%2_common" )
             .arg( scale_pair_scale )
             .arg( scale_pair_sd_scale )
             ;
 
-         if ( scale_pair_use_errors ) {
-            vector < double > e = f_errors[ name ];
-            add_plot( scaled_name, q, I, e, false, false );
-         } else {
-            add_plot( scaled_name, q, I, false, false );
-         }
+         vector < double > I = f_Is[ source_name ];
+         vector < double > e = f_errors[ source_name ];
 
          for ( int i = 0; i < qgrid_size; ++i ) {
-            f_Is    [ last_created_file ][ i ] = f_Is    [ source_name ][ i ] * scale_pair_scale;
-            f_errors[ scaled_name ][ i ] = f_errors[ source_name ][ i ] * scale_pair_scale * scale_pair_sd_scale;
+            I[ i ] *= scale_pair_scale;
+            e[ i ] *= scale_pair_scale * scale_pair_sd_scale;
          }
+
+         add_plot( scaled_name, scale_pair_qgrids[ scale_pair_mals_set ], I, e, false, false );
+         scale_pair_save_names.insert( last_created_file );
+         scale_pair_org_selected.erase( source_name );
+         scale_pair_org_selected.insert( last_created_file );
       }
-   }
-   */
-   scale_pair_enables();
+   } else {
+      for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
+         QString source_name = scaled_time_to_name.second[scale_pair_mals_set];
+         QString scaled_name = source_name;
+         scaled_name = scaled_name.replace( "_common", "" );
+         scaled_name += QString( "_Im%1_common" )
+            .arg( scale_pair_scale )
+            ;
+
+         vector < double > I = f_Is[ source_name ];
+
+         for ( int i = 0; i < qgrid_size; ++i ) {
+            I[ i ] *= scale_pair_scale;
+         }
+
+         add_plot( scaled_name, scale_pair_qgrids[ scale_pair_mals_set ], I, false, false );
+         scale_pair_save_names.insert( last_created_file );
+         scale_pair_org_selected.erase( source_name );
+         scale_pair_org_selected.insert( last_created_file );
+      }
+   }      
+
+   return scale_pair_enables();
 }
 
-
+void US_Hydrodyn_Mals_Saxs::scale_pair_reset() {
+   qDebug() << "scale_pair_reset()";
+   le_scale_pair_scale->setText( "1" );
+   le_scale_pair_sd_scale->setText( "1" );
+}

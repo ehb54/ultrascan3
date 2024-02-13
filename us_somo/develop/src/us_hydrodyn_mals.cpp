@@ -1358,6 +1358,8 @@ void US_Hydrodyn_Mals::clear_files( QStringList files, bool quiet )
          conc_window->cancel();
       }
    }
+   qApp->processEvents();
+   repaint();
 }
 
 class mals_sortable_qstring {

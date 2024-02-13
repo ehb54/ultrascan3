@@ -1361,6 +1361,8 @@ void US_Hydrodyn_Mals_Saxs::clear_files( QStringList files, bool quiet )
    }
 
    q_exclude_opt_remove_unreferenced();
+   qApp->processEvents();
+   repaint();
 }
 
 class mals_saxs_sortable_qstring {
