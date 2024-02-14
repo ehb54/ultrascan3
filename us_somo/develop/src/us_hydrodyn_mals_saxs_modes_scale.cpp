@@ -8,6 +8,7 @@
 
 static US_Eigen eigen;
 static US_Eigen::fit_methods current_fit_method;
+static bool minimize_running;
 
 #define TSO QTextStream(stdout)
 
@@ -17,6 +18,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
 {
    TSO << "scale_pairs()\n";
    le_last_focus = (mQLineEdit *) 0;
+   minimize_running = false;
 
    // verify selected files and setup scale_pair_names
    // must match time and one must end in _common
@@ -200,7 +202,12 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
 void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
 {
    // mostly disable except cancel & wheel
+   if ( minimize_running ) {
+      TSO << "scale_pair_enables() disabled!\n";
+      return;
+   }
    TSO << "scale_pair_enables()\n";
+   
    qwtw_wheel                           ->setEnabled( true );
    pb_wheel_cancel                      ->setEnabled( true );
    pb_wheel_save                        ->setEnabled( le_scale_pair_scale->text().toDouble() != scale_pair_original_scale ||
@@ -253,7 +260,10 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
 void US_Hydrodyn_Mals_Saxs::scale_pair_scroll_highlight( int pos )
 {
    // show the plot
-   qDebug() << "scale_pair_scroll_highlight( " <<  pos << " )";
+   if ( !minimize_running ) {
+      qDebug() << "scale_pair_scroll_highlight( " <<  pos << " )";
+   }
+   
    if ( pos >= (int) scale_pair_times.size() ) {
       qDebug() << "error: scale_pair_scroll_highlight( " <<  pos << " ) out of range, ignored!";
       return;
@@ -534,11 +544,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_time_focus( bool hasFocus ) {
       lbl_wheel_pos->setText   ( "" );
    }
 }
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
-   qDebug() << "scale_pair_minimize()";
-}
-
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_scale( const QString & text ) {
    qDebug() << "scale_pair_scale( " << text << " )";
@@ -1001,7 +1006,9 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_normal() {
 };
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_fit_clear( bool replot ) {
-   qDebug() << "scale_pair_fit_clear( " << ( replot ? "true" : "false" ) << " )";
+   if ( !minimize_running ) {
+      qDebug() << "scale_pair_fit_clear( " << ( replot ? "true" : "false" ) << " )";
+   }
    if ( scale_pair_fit_curve ) {
       qDebug() << "scale_pair_fit_clear() scale_pair_fit_curve set";
       scale_pair_fit_curve->detach();
@@ -1024,7 +1031,9 @@ bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
                                                     ,const set < double > & q1
                                                     ,const set < double > & q2
                                                     ,double & chi2 ) {
-   qDebug() << "scale_pair_fit_at_time( " << time << " , &chi2 )";
+   if ( !minimize_running ) {
+      qDebug() << "scale_pair_fit_at_time( " << time << " , &chi2 )";
+   }
    
    QString name1 = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
    QString name2 = scale_pair_time_to_names[ time ][ scale_pair_saxs_set ];
@@ -1080,3 +1089,244 @@ bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
 
    return true;
 }
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
+   qDebug() << "scale_pair_minimize()";
+
+   disable_all();
+   qwtw_wheel            ->setEnabled( false );
+   scale_pair_fit_clear();
+
+   // collect q grid positions
+
+   set < double > q1;
+   set < double > q2;
+   set < double > qs;
+
+   double q1_min = le_scale_pair_q1_start->text().toDouble();
+   double q1_max = le_scale_pair_q1_end  ->text().toDouble();
+   double q2_min = le_scale_pair_q2_start->text().toDouble();
+   double q2_max = le_scale_pair_q2_end  ->text().toDouble();
+
+   for ( auto const & q : scale_pair_qgrids[scale_pair_mals_set] ) {
+      if ( q >= q1_min && q <= q1_max && !q_exclude.count( q ) ) {
+         q1.insert( q );
+         qs.insert( q );
+      }
+   }
+   
+   for ( auto const & q : scale_pair_qgrids[scale_pair_saxs_set] ) {
+      if ( q >= q2_min && q <= q2_max && !q_exclude.count( q ) ) {
+         q2.insert( q );
+         qs.insert( q );
+      }
+   }
+   
+   if ( !qs.size() ) {
+      QMessageBox::critical( this,
+                             windowTitle() + us_tr( ": Scale Fit" ),
+                             us_tr(
+                                   "There are no non-excluded points selected for fitting!"
+                                   )
+                             );
+      return scale_pair_enables();
+   }
+
+   int degree;
+
+   {
+      int minimum_pts_req = 2;
+      switch ( scale_pair_current_fit_method ) {
+      case SCALE_PAIR_FIT_METHOD_P2 :
+         minimum_pts_req = 3;
+         degree          = 2;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P3 :
+         minimum_pts_req = 4;
+         degree          = 3;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P4 :
+         minimum_pts_req = 5;
+         degree          = 4;
+         break;
+      default:
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Scale Fit" ),
+                                us_tr(
+                                      "Internal error : unexpected fit method"
+                                      )
+                                );
+         return scale_pair_enables();
+         break;
+      }
+
+      if ( (int) qs.size() < minimum_pts_req ) {
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Scale Fit" ),
+                                QString( us_tr(
+                                               "There are insufficient (%1) non-excluded points selected.\n"
+                                               "The current fitting method requires a minimum of %2 points."
+                                               )
+                                         )
+                                .arg( qs.size() )
+                                .arg( minimum_pts_req )
+                                );
+         return scale_pair_enables();
+      }
+
+      if ( q1.size() + q2.size() != qs.size() ) {
+         set < double > intersect;
+         set_intersection( q1.begin(), q1.end(), q2.begin(), q2.end(), inserter(intersect, intersect.begin()) );
+
+         QString detail;
+         for ( auto const & q : intersect ) {
+            detail += QString( " %1" ).arg( q );
+         }
+      
+         QMessageBox::warning( this,
+                               windowTitle() + us_tr( ": Scale Fit" ),
+                               us_tr( "The data has duplicate q value(s):\n" )
+                               + detail
+                               + us_tr( "\nThe MALS set values will be used" )
+                               );
+         
+         for ( auto const & q : q2 ) {
+            q1.erase( q );
+         }
+      }
+   }
+
+   // initial grid search
+   // get range, step dialog
+
+   double scale_start;
+   double scale_end;
+   double scale_step;
+
+   {
+      bool try_again;
+      do {
+         try_again = false;
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": Scale Minimize" ) );
+         // Use a layout allowing a label next to each field
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 us_tr(
+                                       "Minimize parameters\n"
+                                       "Fill out the values below and click OK\n"
+                                       )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QLineEdit *> fields;
+   
+         vector < QString > labels =
+            {
+               us_tr( "Global scale start :" )
+               ,us_tr( "Global scale end :" )
+               ,us_tr( "Step size:" )
+            };
+
+
+         vector < double > defaults =
+            {
+               0.5
+               ,1.5
+               ,0.01
+            };
+
+         for( int i = 0; i < (int) labels.size(); ++i ) {
+            QLineEdit *lineEdit = new QLineEdit( &dialog );
+            lineEdit->setValidator( new QDoubleValidator(this) );
+            form.addRow( labels[i], lineEdit );
+            lineEdit->setText( QString( "%1" ).arg( defaults[i] ) );
+            fields << lineEdit;
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            // If the user didn't dismiss the dialog, do something with the fields
+            scale_start  = fields[0]->text().toDouble();
+            scale_end    = fields[1]->text().toDouble();
+            scale_step   = fields[2]->text().toDouble();
+            if ( scale_step <= 0 ||
+                 scale_end <= scale_start ) {
+               try_again = true;
+            }
+         } else {
+            return scale_pair_enables();
+         }
+      } while ( try_again );
+   }
+   
+   progress->reset();
+   progress->setMaximum( 1 + ( (scale_end - scale_start) / scale_step ) );
+   
+   US_Timer           us_timers;
+   us_timers.clear_timers();
+   us_timers.init_timer( "minimize" );
+
+   double best_scale = -DBL_MAX;
+   double best_gchi2 = DBL_MAX;
+
+   minimize_running = true;
+
+   us_timers.start_timer( "minimize" );
+   int pp = 0;
+   for ( double s = scale_start; s <= scale_end; s += scale_step ) {
+      le_scale_pair_scale->setText( QString( "%1" ).arg( s ) );
+      progress->setValue( pp++ );
+      qApp->processEvents();
+      
+      double global_chi2 = 0;
+      {
+         for ( auto const & t : scale_pair_times ) {
+            if ( !scale_pair_time_to_names.count( t ) ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Scale Fit" ),
+                                      QString( us_tr(
+                                                     "Internal error : files for time %1 not found"
+                                                     )
+                                               )
+                                      .arg( t )
+                                      );
+               minimize_running = false;
+               return scale_pair_enables();
+            }
+
+            double chi2;
+            scale_pair_fit_at_time( t, degree, q1, q2, chi2 );
+            global_chi2 += chi2;
+         }
+      }
+      if ( best_gchi2 > global_chi2 ) {
+         best_gchi2 = global_chi2;
+         best_scale = s;
+         qDebug() << QString( "scale %1 gChi2 %2 new best\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
+      } else {
+         qDebug() << QString( "scale %1 gChi2 %2\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
+      }
+   }
+   us_timers.end_timer( "minimize" );
+   us_qdebug( us_timers.list_times() );
+   minimize_running = false;
+   le_scale_pair_scale->setText( QString( "%1" ).arg( best_scale ) );
+   scale_pair_time_focus( true );
+   scale_pair_fit();
+}
+
