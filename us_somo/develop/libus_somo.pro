@@ -178,6 +178,7 @@ SOURCES *= \
 #  us_edvabs.cpp \
 #  us_edvflo.cpp \
 #  us_edvint.cpp \
+        src/us_eigen.cpp \
         src/us_encryption.cpp \
 #  us_enter_dna.cpp \
 #  us_eqfitter.cpp \
@@ -445,6 +446,7 @@ SOURCES *= \
         src/us_pm_ga.cpp \
         src/us_pm_objects.cpp \
         src/us_pm_test.cpp \
+#        src/us_polyfit.cpp \
 #  us_pixmap.cpp \
 #  us_plotdata.cpp \
 #  us_printfilter.cpp \
@@ -860,6 +862,8 @@ HEADERS *= \
         include/us_surfracer.h \
         include/us_svd.h \
         include/us_efa.h \
+        include/us_eigen.h \
+#        include/us_polyfit.h \
         include/us_tar.h \
         include/us_timer.h \
         include/us_thread.h \
