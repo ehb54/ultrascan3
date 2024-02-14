@@ -707,6 +707,10 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QRadioButton                     * rb_scale_pair_fit_method_p2;
       QRadioButton                     * rb_scale_pair_fit_method_p3;
       QRadioButton                     * rb_scale_pair_fit_method_p4;
+      QRadioButton                     * rb_scale_pair_fit_method_p5;
+      QRadioButton                     * rb_scale_pair_fit_method_p6;
+      QRadioButton                     * rb_scale_pair_fit_method_p7;
+      QRadioButton                     * rb_scale_pair_fit_method_p8;
       QLabel                           * lbl_scale_pair_sd_scale;
       QLineEdit                        * le_scale_pair_sd_scale;
       QLabel                           * lbl_scale_pair_scale;
@@ -746,7 +750,11 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       enum scale_pair_fit_methods {
          SCALE_PAIR_FIT_METHOD_P2,
          SCALE_PAIR_FIT_METHOD_P3,
-         SCALE_PAIR_FIT_METHOD_P4
+         SCALE_PAIR_FIT_METHOD_P4,
+         SCALE_PAIR_FIT_METHOD_P5,
+         SCALE_PAIR_FIT_METHOD_P6,
+         SCALE_PAIR_FIT_METHOD_P7,
+         SCALE_PAIR_FIT_METHOD_P8
       };
 
       scale_pair_fit_methods             scale_pair_current_fit_method;
@@ -783,6 +791,10 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void scale_pair_set_fit_method_p2();
       void scale_pair_set_fit_method_p3();
       void scale_pair_set_fit_method_p4();
+      void scale_pair_set_fit_method_p5();
+      void scale_pair_set_fit_method_p6();
+      void scale_pair_set_fit_method_p7();
+      void scale_pair_set_fit_method_p8();
 
       void scale_pair_fit();
       void scale_pair_reset();
