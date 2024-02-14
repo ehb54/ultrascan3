@@ -837,11 +837,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          {
             if ( this_data.results.D20w ) {
                this_data.tra_fric_coef =
-                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.results.D20w );
+                  Rbar * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.results.D20w );
 
                QTextStream( stdout )
                   << "tfc " << this_data.tra_fric_coef << " = " << Qt::endl
-                  << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
+                  << "Rbar * ( K0 + hydro.temperature )" << ( Rbar * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
                   << "AVOGADRO * this_data.results.D20w" << ( AVOGADRO * this_data.results.D20w ) << Qt::endl
                   ;
                
@@ -851,11 +851,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          {
             if ( this_data.rot_diff_coef ) {
                this_data.rot_fric_coef =
-                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.rot_diff_coef );
+                  Rbar * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.rot_diff_coef );
 
                // QTextStream( stdout )
                //    << "rfc " << this_data.rot_fric_coef << " = " << Qt::endl
-               //    << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
+               //    << "Rbar * ( K0 + hydro.temperature )" << ( Rbar * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
                //    << "AVOGADRO * this_data.rot_diff_coef" << ( AVOGADRO * this_data.rot_diff_coef ) << Qt::endl
                //    ;
                
@@ -867,7 +867,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          // {
          //    if ( this_data.results.D20w ) {
          //       this_data.results.rs = 1e1 * ( 1e7 / fconv ) * 
-         //          R * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
+         //          Rbar * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
          //       grpy_results.rs  += this_data.results.rs;
          //       grpy_results2.rs += this_data.results.rs * this_data.results.rs;
          //    }
@@ -921,7 +921,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
          // rot fric and stokes
          {
-            double factor = 1e-2 * (R/AVOGADRO) * ( K0 + hydro.temperature ) / pow( fconv, 2 );
+            double factor = 1e-2 * (Rbar/AVOGADRO) * ( K0 + hydro.temperature ) / pow( fconv, 2 );
             this_data.rot_fric_coef_x =
                factor / this_data.rot_diff_coef_x;
             this_data.rot_fric_coef_y =
