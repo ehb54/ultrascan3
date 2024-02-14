@@ -760,6 +760,22 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       set < QString >                    scale_pair_save_names;
       
+      // testing entries
+
+      QButtonGroup                     * bg_scale_pair_fit_alg;
+      QRadioButton                     * rb_scale_pair_fit_alg_eigen_svd_jacobi;
+      QRadioButton                     * rb_scale_pair_fit_alg_eigen_svd_bdc;
+      QRadioButton                     * rb_scale_pair_fit_alg_eigen_householder_qr;
+      QRadioButton                     * rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col;
+      QRadioButton                     * rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full;
+      QRadioButton                     * rb_scale_pair_fit_alg_eigen_normal;
+
+      QCheckBox                        * cb_scale_pair_fit_alg_use_errors;
+
+      QwtPlotCurve                     * scale_pair_fit_curve;
+
+      void                               scale_pair_fit_clear( bool replot = true );
+
    private slots:
 
       void scale_pair();
@@ -786,6 +802,21 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void scale_pair_q2_end_focus        ( bool );
 
       void scale_pair_time_focus          ( bool );
+
+      void scale_pair_fit_alg_eigen_svd_jacobi();
+      void scale_pair_fit_alg_eigen_svd_bdc();
+      void scale_pair_fit_alg_eigen_householder_qr();
+      void scale_pair_fit_alg_eigen_householder_qr_pivot_col();
+      void scale_pair_fit_alg_eigen_householder_qr_pivot_full();
+      void scale_pair_fit_alg_eigen_normal();
+
+      void scale_pair_fit_alg_use_errors();
+
+      bool scale_pair_fit_at_time( double time
+                                   ,int degree
+                                   ,const set < double > & q1
+                                   ,const set < double > & q2
+                                   ,double & chi2 );
 
    private:
 

@@ -363,6 +363,7 @@ US_Hydrodyn_Mals_Saxs::US_Hydrodyn_Mals_Saxs(
    this->us_hydrodyn = us_hydrodyn;
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
    mals_saxs_options_widget = 0;
+   scale_pair_fit_curve = (QwtPlotCurve *) 0;
 
    gaussian_param_text
       << "amplitude"

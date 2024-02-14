@@ -4,6 +4,10 @@
 #include "../include/us_hydrodyn_mals_saxs_scale_trend.h"
 #include "../include/us_pm.h"
 #include <QPixmap>
+#include "../include/us_eigen.h"
+
+static US_Eigen eigen;
+static US_Eigen::fit_methods current_fit_method;
 
 #define TSO QTextStream(stdout)
 
@@ -233,7 +237,17 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
    le_scale_pair_scale                  ->setEnabled( true );
    le_scale_pair_sd_scale               ->setEnabled( scale_pair_use_errors );
 
+   rb_scale_pair_fit_alg_eigen_svd_bdc                      ->setEnabled( true );
+   rb_scale_pair_fit_alg_eigen_svd_jacobi                   ->setEnabled( true );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full    ->setEnabled( true );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col     ->setEnabled( true );
+   rb_scale_pair_fit_alg_eigen_householder_qr               ->setEnabled( true );
+   rb_scale_pair_fit_alg_eigen_normal                       ->setEnabled( true );
+   cb_scale_pair_fit_alg_use_errors                         ->setEnabled( true );
+
    wheel_enables( true );
+
+   progress->reset();
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_scroll_highlight( int pos )
@@ -257,6 +271,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scroll_highlight( int pos )
       ,scale_pair_time_to_names[ time ][ scale_pair_saxs_set ]
    };
 
+#warning call fit
+   lbl_scale_pair_msg->setText( "" ); 
    set_selected( toplot );
 }
 
@@ -290,16 +306,19 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_delete_markers() {
 void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p2() {
    qDebug() << "scale_pair_set_fit_method_p2()";
    scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P2;
+   scale_pair_fit_clear();
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p3() {
    qDebug() << "scale_pair_set_fit_method_p3()";
    scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P3;
+   scale_pair_fit_clear();
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p4() {
    qDebug() << "scale_pair_set_fit_method_p3()";
    scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P4;
+   scale_pair_fit_clear();
 }
 
 #define UHMS_SCALE_WHEEL_RES 10000
@@ -315,6 +334,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_q1_start_text( const QString & text ) {
       return;
    }
    
+   scale_pair_fit_clear( false );
+
    lbl_wheel_pos->setText( text );
    scale_pair_markers[ 0 ]->setXValue( text.toDouble() );
    plot_dist->replot();
@@ -343,6 +364,9 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_q1_end_text( const QString & text ) {
       editor_msg( "red", QString( "internal error: scale_pair_q1_end_text markers issue size %1" ).arg( scale_pair_markers.size() ) );
       return;
    }
+
+   scale_pair_fit_clear( false );
+
    lbl_wheel_pos->setText( text );
    scale_pair_markers[ 1 ]->setXValue( text.toDouble() );
    plot_dist->replot();
@@ -408,6 +432,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_q2_start_text( const QString & text ) {
       return;
    }
    
+   scale_pair_fit_clear( false );
+
    lbl_wheel_pos->setText( text );
    scale_pair_markers[ 2 ]->setXValue( text.toDouble() );
    plot_dist->replot();
@@ -436,6 +462,9 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_q2_end_text( const QString & text ) {
       editor_msg( "red", QString( "internal error: scale_pair_q2_end_text markers issue size %1" ).arg( scale_pair_markers.size() ) );
       return;
    }
+
+   scale_pair_fit_clear( false );
+   
    lbl_wheel_pos->setText( text );
    scale_pair_markers[ 3 ]->setXValue( text.toDouble() );
    plot_dist->replot();
@@ -510,170 +539,11 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    qDebug() << "scale_pair_minimize()";
 }
 
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
-   qDebug() << "scale_pair_fit()";
-   disable_all();
-#warning probably should be in ::disable_all() but for some reason we commented it out there, probably should check all wheel usage and set as appropriate
-
-   qwtw_wheel            ->setEnabled( false );
-
-   // collect q grid positions
-
-   set < double > q1;
-   set < double > q2;
-   set < double > qs;
-
-   double q1_min = le_scale_pair_q1_start->text().toDouble();
-   double q1_max = le_scale_pair_q1_end  ->text().toDouble();
-   double q2_min = le_scale_pair_q2_start->text().toDouble();
-   double q2_max = le_scale_pair_q2_end  ->text().toDouble();
-
-   for ( auto const & q : scale_pair_qgrids[scale_pair_mals_set] ) {
-      if ( q >= q1_min && q <= q1_max && !q_exclude.count( q ) ) {
-         q1.insert( q );
-         qs.insert( q );
-      }
-   }
-   
-   for ( auto const & q : scale_pair_qgrids[scale_pair_saxs_set] ) {
-      if ( q >= q2_min && q <= q2_max && !q_exclude.count( q ) ) {
-         q2.insert( q );
-         qs.insert( q );
-      }
-   }
-   
-   if ( !qs.size() ) {
-      QMessageBox::critical( this,
-                             windowTitle() + us_tr( ": Scale Fit" ),
-                             us_tr(
-                                   "There are no non-excluded points selected for fitting!"
-                                   )
-                             );
-      return scale_pair_enables();
-   }
-
-   {
-      int minimum_pts_req = 2;
-      switch ( scale_pair_current_fit_method ) {
-      case SCALE_PAIR_FIT_METHOD_P2 :
-         minimum_pts_req = 3;
-         break;
-      case SCALE_PAIR_FIT_METHOD_P3 :
-         minimum_pts_req = 4;
-         break;
-      case SCALE_PAIR_FIT_METHOD_P4 :
-         minimum_pts_req = 5;
-         break;
-      default:
-         QMessageBox::critical( this,
-                                windowTitle() + us_tr( ": Scale Fit" ),
-                                us_tr(
-                                      "Internal error : unexpected fit method"
-                                      )
-                                );
-         return scale_pair_enables();
-         break;
-      }
-
-      if ( (int) qs.size() < minimum_pts_req ) {
-         QMessageBox::critical( this,
-                                windowTitle() + us_tr( ": Scale Fit" ),
-                                QString( us_tr(
-                                               "There are insufficient (%1) non-excluded points selected.\n"
-                                               "The current fitting method requires a minimum of %2 points."
-                                               )
-                                         )
-                                .arg( qs.size() )
-                                .arg( minimum_pts_req )
-                                );
-         return scale_pair_enables();
-      }
-
-      if ( q1.size() + q2.size() != qs.size() ) {
-         set < double > intersect;
-         set_intersection( q1.begin(), q1.end(), q2.begin(), q2.end(), inserter(intersect, intersect.begin()) );
-
-         QString detail;
-         for ( auto const & q : intersect ) {
-            detail += QString( " %1" ).arg( q );
-         }
-      
-         QMessageBox::warning( this,
-                               windowTitle() + us_tr( ": Scale Fit" ),
-                               us_tr( "The data has duplicate q value(s):\n" )
-                               + detail
-                               + us_tr( "\nThe MALS set values will be used" )
-                               );
-         
-         for ( auto const & q : q2 ) {
-            q1.erase( q );
-         }
-      }
-   }
-
-   // get the names
-
-   double time = le_scale_pair_time->text().toDouble();
-   if ( !scale_pair_time_to_names.count( time ) ) {
-      QMessageBox::critical( this,
-                             windowTitle() + us_tr( ": Scale Fit" ),
-                             QString( us_tr(
-                                            "Internal error : files for time %1 not found"
-                                            )
-                                      )
-                             .arg( time )
-                             );
-      return scale_pair_enables();
-   }
-      
-   QString name1 = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
-   QString name2 = scale_pair_time_to_names[ time ][ scale_pair_saxs_set ];
-
-   vector < double > q;
-   vector < double > I;
-   vector < double > e;
-
-   if ( scale_pair_use_errors ) {
-      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
-         if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
-            q.push_back( scale_pair_qgrids[ scale_pair_mals_set ][ i ] );
-            I.push_back( f_Is[ name1 ][ i ] );
-            e.push_back( f_errors[ name1 ][ i ] );
-         }
-      }
-   
-      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_saxs_set ].size(); ++i ) {
-         if ( q2.count( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] ) ) {
-            q.push_back( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] );
-            I.push_back( f_Is[ name2 ][ i ] );
-            e.push_back( f_errors[ name2 ][ i ] );
-         }
-      }
-   
-      US_Vector::printvector3( "data for fitting, q,I,e", q, I, e );
-   } else {
-      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
-         if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
-            q.push_back( scale_pair_qgrids[ scale_pair_mals_set ][ i ] );
-            I.push_back( f_Is[ name1 ][ i ] );
-         }
-      }
-   
-      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_saxs_set ].size(); ++i ) {
-         if ( q2.count( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] ) ) {
-            q.push_back( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] );
-            I.push_back( f_Is[ name2 ][ i ] );
-         }
-      }
-   
-      US_Vector::printvector2( "data for fitting, q,I", q, I );
-   }      
-
-   return scale_pair_enables();
-}
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_scale( const QString & text ) {
    qDebug() << "scale_pair_scale( " << text << " )";
+   lbl_wheel_pos->setText   ( le_scale_pair_scale->text() );
+   scale_pair_fit_clear( false );
    scale_pair_created_update();
    scale_pair_enables();
 }
@@ -684,6 +554,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scale_focus( bool hasFocus ) {
       // do our focus bits
       qDebug() << "scale_pair_time_focus : hasFocus";
       le_last_focus = le_scale_pair_scale;
+      qwtw_wheel->setRange     ( -DBL_MAX, DBL_MAX );
       qwtw_wheel->setValue     ( le_scale_pair_scale->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setRange     ( 0.01, 10 );
@@ -694,6 +565,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scale_focus( bool hasFocus ) {
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_sd_scale( const QString & text ) {
    qDebug() << "scale_pair_sd_scale( " << text << " )";
+   scale_pair_fit_clear( false );
    scale_pair_created_update();
    scale_pair_enables();
 }
@@ -840,4 +712,371 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_reset() {
    qDebug() << "scale_pair_reset()";
    le_scale_pair_scale->setText( "1" );
    le_scale_pair_sd_scale->setText( "1" );
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
+   qDebug() << "scale_pair_fit()";
+   disable_all();
+#warning qwtw_wheel probably should be in ::disable_all() but for some reason we commented it out there, probably should check all wheel usage and set as appropriate
+   qwtw_wheel            ->setEnabled( false );
+   scale_pair_fit_clear();
+
+   // collect q grid positions
+
+   set < double > q1;
+   set < double > q2;
+   set < double > qs;
+
+   double q1_min = le_scale_pair_q1_start->text().toDouble();
+   double q1_max = le_scale_pair_q1_end  ->text().toDouble();
+   double q2_min = le_scale_pair_q2_start->text().toDouble();
+   double q2_max = le_scale_pair_q2_end  ->text().toDouble();
+
+   for ( auto const & q : scale_pair_qgrids[scale_pair_mals_set] ) {
+      if ( q >= q1_min && q <= q1_max && !q_exclude.count( q ) ) {
+         q1.insert( q );
+         qs.insert( q );
+      }
+   }
+   
+   for ( auto const & q : scale_pair_qgrids[scale_pair_saxs_set] ) {
+      if ( q >= q2_min && q <= q2_max && !q_exclude.count( q ) ) {
+         q2.insert( q );
+         qs.insert( q );
+      }
+   }
+   
+   if ( !qs.size() ) {
+      QMessageBox::critical( this,
+                             windowTitle() + us_tr( ": Scale Fit" ),
+                             us_tr(
+                                   "There are no non-excluded points selected for fitting!"
+                                   )
+                             );
+      return scale_pair_enables();
+   }
+
+   int degree;
+
+   {
+      int minimum_pts_req = 2;
+      switch ( scale_pair_current_fit_method ) {
+      case SCALE_PAIR_FIT_METHOD_P2 :
+         minimum_pts_req = 3;
+         degree          = 2;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P3 :
+         minimum_pts_req = 4;
+         degree          = 3;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P4 :
+         minimum_pts_req = 5;
+         degree          = 4;
+         break;
+      default:
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Scale Fit" ),
+                                us_tr(
+                                      "Internal error : unexpected fit method"
+                                      )
+                                );
+         return scale_pair_enables();
+         break;
+      }
+
+      if ( (int) qs.size() < minimum_pts_req ) {
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Scale Fit" ),
+                                QString( us_tr(
+                                               "There are insufficient (%1) non-excluded points selected.\n"
+                                               "The current fitting method requires a minimum of %2 points."
+                                               )
+                                         )
+                                .arg( qs.size() )
+                                .arg( minimum_pts_req )
+                                );
+         return scale_pair_enables();
+      }
+
+      if ( q1.size() + q2.size() != qs.size() ) {
+         set < double > intersect;
+         set_intersection( q1.begin(), q1.end(), q2.begin(), q2.end(), inserter(intersect, intersect.begin()) );
+
+         QString detail;
+         for ( auto const & q : intersect ) {
+            detail += QString( " %1" ).arg( q );
+         }
+      
+         QMessageBox::warning( this,
+                               windowTitle() + us_tr( ": Scale Fit" ),
+                               us_tr( "The data has duplicate q value(s):\n" )
+                               + detail
+                               + us_tr( "\nThe MALS set values will be used" )
+                               );
+         
+         for ( auto const & q : q2 ) {
+            q1.erase( q );
+         }
+      }
+   }
+
+   double time = le_scale_pair_time->text().toDouble();
+
+   // compute globally first
+   // US_Timer           us_timers;
+   // us_timers.clear_timers();
+   // us_timers.init_timer( "polyfit" );
+
+   progress->reset();
+
+   double global_chi2 = 0;
+   {
+      int pp = 0;
+      progress->setMaximum( scale_pair_times.size() + 1 );
+      for ( auto const & t : scale_pair_times ) {
+         if ( !scale_pair_time_to_names.count( t ) ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Scale Fit" ),
+                                   QString( us_tr(
+                                                  "Internal error : files for time %1 not found"
+                                                  )
+                                            )
+                                   .arg( t )
+                                   );
+            return scale_pair_enables();
+         }
+
+         if ( t != time ) {
+            progress->setValue( pp++ );
+            qApp->processEvents();
+            double chi2;
+            scale_pair_fit_at_time( t, degree, q1, q2, chi2 );
+            global_chi2 += chi2;
+         }
+      }
+   }         
+      
+   progress->setValue( scale_pair_times.size() );
+
+   // get the names
+
+      
+   QString name1 = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
+   QString name2 = scale_pair_time_to_names[ time ][ scale_pair_saxs_set ];
+
+   vector < double > q;
+   vector < double > I;
+   vector < double > e;
+
+   vector < double > coeff;
+   vector < double > x;
+   vector < double > y;
+   double            chi2;
+
+   double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
+
+   if ( scale_pair_use_errors && cb_scale_pair_fit_alg_use_errors->isChecked() ) {
+      double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
+         if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_mals_set ][ i ] );
+            I.push_back( f_Is[ name1 ][ i ] * scale_pair_scale );
+            e.push_back( f_errors[ name1 ][ i ] * scale_pair_scale * scale_pair_sd_scale );
+         }
+      }
+   
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_saxs_set ].size(); ++i ) {
+         if ( q2.count( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] );
+            I.push_back( f_Is[ name2 ][ i ] );
+            e.push_back( f_errors[ name2 ][ i ] );
+         }
+      }
+   
+      // US_Vector::printvector3( "data for fitting, q,I,e", q, I, e );
+      // us_timers.start_timer( "polyfit" );
+      eigen.polyfit( q, I, e, degree, coeff, chi2, current_fit_method );
+      // us_timers.end_timer( "polyfit" );
+   } else {
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
+         if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_mals_set ][ i ] );
+            I.push_back( f_Is[ name1 ][ i ] * scale_pair_scale );
+         }
+      }
+   
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_saxs_set ].size(); ++i ) {
+         if ( q2.count( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] );
+            I.push_back( f_Is[ name2 ][ i ] );
+         }
+      }
+   
+      // US_Vector::printvector2( "data for fitting, q,I", q, I );
+      // us_timers.start_timer( "polyfit" );
+      eigen.polyfit( q, I, degree, coeff, chi2, current_fit_method );
+      // us_timers.end_timer( "polyfit" );
+   }      
+
+   global_chi2 += chi2;
+   
+   // us_qdebug( us_timers.list_times() );
+
+   lbl_scale_pair_msg->setText( QString( "nChi^2 %1 average %2 (%3 curves)" )
+                                .arg( chi2 / q.size() )
+                                .arg( global_chi2 / ( q.size() * scale_pair_times.size() ) )
+                                .arg( scale_pair_times.size() )
+                                );
+   eigen.evaluate_polynomial( coeff, q1_min, q2_max, 100, x, y );
+   // US_Vector::printvector( "coefficients", coeff );
+   // US_Vector::printvector2( "fitting curve", x, y );
+
+   {
+      scale_pair_fit_clear( false );
+         
+      if ( axis_y_log ) {
+         vector < double > trimmed_x;
+         vector < double > trimmed_y;
+
+         for ( size_t i = 0; i < x.size(); ++i ) {
+            if ( y[i] > 0 ) {
+               trimmed_x.push_back( x[i] );
+               trimmed_y.push_back( y[i] );
+            }
+         }
+
+         x = trimmed_x;
+         y = trimmed_y;
+      }
+
+      scale_pair_fit_curve = new QwtPlotCurve( "scale_fit" );
+      scale_pair_fit_curve->setStyle( QwtPlotCurve::Lines );
+      scale_pair_fit_curve->setSamples(
+                        (double *)&( x[ 0 ] ),
+                        (double *)&( y[ 0 ] ),
+                        x.size() );
+      scale_pair_fit_curve->setPen( QPen( QColor( Qt::red ), use_line_width, Qt::SolidLine ) );
+      scale_pair_fit_curve->attach( plot_dist );
+      plot_dist->replot();
+   }
+
+   return scale_pair_enables();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_svd_jacobi() {
+   qDebug() << "scale_pair_fit_alg_eigen_svd_jacobi()";
+   current_fit_method = US_Eigen::EIGEN_SVD_JACOBI;
+   scale_pair_fit_clear();
+};
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_svd_bdc() {
+   qDebug() << "scale_pair_fit_alg_eigen_svd_bdc()";
+   current_fit_method = US_Eigen::EIGEN_SVD_BDC;
+   scale_pair_fit_clear();
+};
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr() {
+   qDebug() << "scale_pair_fit_alg_eigen_householder_qr()";
+   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR;
+   scale_pair_fit_clear();
+};
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr_pivot_col() {
+   qDebug() << "scale_pair_fit_alg_eigen_householder_qr_pivot_col()";
+   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL;
+   scale_pair_fit_clear();
+};
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr_pivot_full() {
+   qDebug() << "scale_pair_fit_alg_eigen_householder_qr_pivot_full()";
+   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL;
+   scale_pair_fit_clear();
+};
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_normal() {
+   qDebug() << "scale_pair_fit_alg_eigen_normal()";
+   current_fit_method = US_Eigen::EIGEN_NORMAL;
+   scale_pair_fit_clear();
+};
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_clear( bool replot ) {
+   qDebug() << "scale_pair_fit_clear( " << ( replot ? "true" : "false" ) << " )";
+   if ( scale_pair_fit_curve ) {
+      qDebug() << "scale_pair_fit_clear() scale_pair_fit_curve set";
+      scale_pair_fit_curve->detach();
+      delete scale_pair_fit_curve;
+      lbl_scale_pair_msg->setText("");
+      scale_pair_fit_curve = (QwtPlotCurve *) 0;
+      if ( replot ) {
+         plot_dist->replot();
+      }
+   }
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_use_errors() {
+   qDebug() << "scale_pair_fit_alg_use_errors()";
+   scale_pair_fit_clear();
+}
+
+bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
+                                                    ,int degree
+                                                    ,const set < double > & q1
+                                                    ,const set < double > & q2
+                                                    ,double & chi2 ) {
+   qDebug() << "scale_pair_fit_at_time( " << time << " , &chi2 )";
+   
+   QString name1 = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
+   QString name2 = scale_pair_time_to_names[ time ][ scale_pair_saxs_set ];
+
+   vector < double > q;
+   vector < double > I;
+   vector < double > e;
+
+   vector < double > coeff;
+   vector < double > x;
+   vector < double > y;
+
+   double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
+
+   if ( scale_pair_use_errors && cb_scale_pair_fit_alg_use_errors->isChecked() ) {
+      double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
+         if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_mals_set ][ i ] );
+            I.push_back( f_Is[ name1 ][ i ] * scale_pair_scale );
+            e.push_back( f_errors[ name1 ][ i ] * scale_pair_scale * scale_pair_sd_scale );
+         }
+      }
+   
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_saxs_set ].size(); ++i ) {
+         if ( q2.count( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] );
+            I.push_back( f_Is[ name2 ][ i ] );
+            e.push_back( f_errors[ name2 ][ i ] );
+         }
+      }
+   
+      // US_Vector::printvector3( "data for fitting, q,I,e", q, I, e );
+      eigen.polyfit( q, I, e, degree, coeff, chi2, current_fit_method );
+   } else {
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
+         if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_mals_set ][ i ] );
+            I.push_back( f_Is[ name1 ][ i ] * scale_pair_scale );
+         }
+      }
+   
+      for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_saxs_set ].size(); ++i ) {
+         if ( q2.count( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] ) ) {
+            q.push_back( scale_pair_qgrids[ scale_pair_saxs_set ][ i ] );
+            I.push_back( f_Is[ name2 ][ i ] );
+         }
+      }
+   
+      // US_Vector::printvector2( "data for fitting, q,I", q, I );
+      eigen.polyfit( q, I, degree, coeff, chi2, current_fit_method );
+   }
+
+   return true;
 }

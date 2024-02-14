@@ -446,6 +446,74 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    // shouldn't the below already have been triggered by the above?
    scale_pair_set_fit_method_p3();
    
+   rb_scale_pair_fit_alg_eigen_svd_bdc =  new QRadioButton( us_tr( "SVDB" ), this );
+   rb_scale_pair_fit_alg_eigen_svd_bdc -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_alg_eigen_svd_bdc );
+   rb_scale_pair_fit_alg_eigen_svd_bdc -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_alg_eigen_svd_bdc, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_svd_bdc() ) );
+   rb_scale_pair_fit_alg_eigen_svd_bdc->setToolTip( "SVD BDC method, supposedly most accurate & slowest" );
+
+   rb_scale_pair_fit_alg_eigen_svd_jacobi =  new QRadioButton( us_tr( "SVDJ" ), this );
+   rb_scale_pair_fit_alg_eigen_svd_jacobi -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_alg_eigen_svd_jacobi );
+   rb_scale_pair_fit_alg_eigen_svd_jacobi -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_alg_eigen_svd_jacobi, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_svd_jacobi() ) );
+   rb_scale_pair_fit_alg_eigen_svd_jacobi->setToolTip( "SVD Jacobi method, comparable to BDC method?" );
+
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full =  new QRadioButton( us_tr( "QRF" ), this );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_householder_qr_pivot_full() ) );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full->setToolTip( "QR decomposition with full pivoting, supposedly faster than SVD" );
+
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col =  new QRadioButton( us_tr( "QRC" ), this );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_householder_qr_pivot_col() ) );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col->setToolTip( "QR decomposition with column pivoting" );
+
+   rb_scale_pair_fit_alg_eigen_householder_qr =  new QRadioButton( us_tr( "QR" ), this );
+   rb_scale_pair_fit_alg_eigen_householder_qr -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_alg_eigen_householder_qr );
+   rb_scale_pair_fit_alg_eigen_householder_qr -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_alg_eigen_householder_qr, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_householder_qr() ) );
+   rb_scale_pair_fit_alg_eigen_householder_qr->setToolTip( "QR decomposition with NO column pivoting" );
+
+   rb_scale_pair_fit_alg_eigen_normal =  new QRadioButton( us_tr( "LR" ), this );
+   rb_scale_pair_fit_alg_eigen_normal -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_alg_eigen_normal );
+   rb_scale_pair_fit_alg_eigen_normal -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_alg_eigen_normal, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_normal() ) );
+   rb_scale_pair_fit_alg_eigen_normal->setToolTip( "LR decomposition. Supposedly fastest & least accurate" );
+
+   bg_scale_pair_fit_alg = new QButtonGroup( this );
+   {
+      int bg_pos = 0;
+      bg_scale_pair_fit_alg->setExclusive(true);
+      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_svd_bdc, bg_pos++ );
+      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_svd_jacobi, bg_pos++ );
+      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full, bg_pos++ );
+      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col, bg_pos++ );
+      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_householder_qr, bg_pos++ );
+      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_normal, bg_pos++ );
+   }
+
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full->setChecked(true);
+   scale_pair_fit_alg_eigen_householder_qr_pivot_full();
+
+   cb_scale_pair_fit_alg_use_errors = new QCheckBox(this);
+   cb_scale_pair_fit_alg_use_errors->setText(us_tr("Fit use SD "));
+   //width cb_scale_pair_fit_alg_use_errors->setMaximumWidth ( minHeight1 * 3 );
+   cb_scale_pair_fit_alg_use_errors->setChecked( false );
+   cb_scale_pair_fit_alg_use_errors->setMinimumHeight( minHeight1 );
+   cb_scale_pair_fit_alg_use_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_scale_pair_fit_alg_use_errors->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_pair_fit_alg_use_errors );
+   cb_scale_pair_fit_alg_use_errors->setChecked(true);
+   connect( cb_scale_pair_fit_alg_use_errors, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_use_errors() ) );
+
    pb_scale_pair_minimize = new QPushButton(us_tr("Minimize"), this);
    pb_scale_pair_minimize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_scale_pair_minimize->setMinimumHeight(minHeight1);
@@ -4070,6 +4138,17 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       hbl->addWidget( lbl_scale_pair_msg );
       vbl_scale_pair->addLayout( hbl );
    }
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( rb_scale_pair_fit_alg_eigen_svd_bdc );
+      hbl->addWidget( rb_scale_pair_fit_alg_eigen_svd_jacobi );
+      hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full );
+      hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
+      hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr );
+      hbl->addWidget( rb_scale_pair_fit_alg_eigen_normal );
+      hbl->addWidget( cb_scale_pair_fit_alg_use_errors );
+      vbl_scale_pair->addLayout( hbl );
+   }
 
    // pm
    QBoxLayout * vbl_pm = new QVBoxLayout( 0 ); vbl_pm->setContentsMargins( 0, 0, 0, 0 ); vbl_pm->setSpacing( 0 );
@@ -4501,6 +4580,14 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scale_pair_widgets.push_back( rb_scale_pair_fit_method_p2 );
    scale_pair_widgets.push_back( rb_scale_pair_fit_method_p3 );
    scale_pair_widgets.push_back( rb_scale_pair_fit_method_p4 );
+
+   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_svd_bdc );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_svd_jacobi );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_normal );
+   scale_pair_widgets.push_back( cb_scale_pair_fit_alg_use_errors );
 
    // wyatt_widgets;
 
@@ -5568,6 +5655,14 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    le_scale_pair_q2_end                 ->setEnabled( false );
    le_scale_pair_scale                  ->setEnabled( false );
    le_scale_pair_sd_scale               ->setEnabled( false );
+
+   rb_scale_pair_fit_alg_eigen_svd_bdc      ->setEnabled( false );
+   rb_scale_pair_fit_alg_eigen_svd_jacobi   ->setEnabled( false );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full ->setEnabled( false );
+   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col ->setEnabled( false );
+   rb_scale_pair_fit_alg_eigen_householder_qr ->setEnabled( false );
+   rb_scale_pair_fit_alg_eigen_normal       ->setEnabled( false );
+   cb_scale_pair_fit_alg_use_errors     ->setEnabled( false );
 }
 
 void US_Hydrodyn_Mals_Saxs::model_select_all()
