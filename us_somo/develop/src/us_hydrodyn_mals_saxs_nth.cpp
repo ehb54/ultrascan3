@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
+#define MALS_SAXS ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)
+
 US_Hydrodyn_Mals_Saxs_Nth::US_Hydrodyn_Mals_Saxs_Nth(
                                                      void                     *              us_hydrodyn_mals_saxs,
                                                      map < QString, QString > *              parameters,
@@ -17,11 +19,11 @@ US_Hydrodyn_Mals_Saxs_Nth::US_Hydrodyn_Mals_Saxs_Nth(
 {
    this->us_hydrodyn_mals_saxs                = us_hydrodyn_mals_saxs;
    this->parameters                           = parameters;
-   this->ggaussian_last_pfit_map              = &((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->ggaussian_last_pfit_map;
+   this->ggaussian_last_pfit_map              = &MALS_SAXS->ggaussian_last_pfit_map;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: MALS_SAXS : Select curves" ) );
+   setWindowTitle( us_tr( "US-SOMO: MALS+SAXS : Select curves" ) );
 
    alpha        = parameters->count( "alpha" ) ? (*parameters)[ "alpha" ].toDouble() : 0.05;
    alpha_over_5 = 0.2 * alpha;
@@ -39,6 +41,7 @@ US_Hydrodyn_Mals_Saxs_Nth::US_Hydrodyn_Mals_Saxs_Nth(
 US_Hydrodyn_Mals_Saxs_Nth::~US_Hydrodyn_Mals_Saxs_Nth()
 {
 }
+
 
 void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
 {
@@ -67,16 +70,28 @@ void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
    lb_files -> setSelectionMode( QAbstractItemView::ExtendedSelection );
    lb_files -> setMinimumHeight( minHeight1 * 8 );
 
-   for ( int i = 0; i < ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->count(); ++i )
-   {
-      lb_files->addItem( QString( "%1 : %2" ).arg( i + 1 ).arg( ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->item( i )->text() ) );
-      if ( ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->item( i )->isSelected() )
-      {
+   for ( int i = 0; i < MALS_SAXS->lb_files->count(); ++i ) {
+      lb_files->addItem( QString( "%1 : %2" ).arg( i + 1 ).arg( MALS_SAXS->lb_files->item( i )->text() ) );
+      if ( MALS_SAXS->lb_files->item( i )->isSelected() ) {
+         original_selections.insert( MALS_SAXS->lb_files->item( i )->text() );
          lb_files->item( i )->setSelected( true );
       }
    }
-
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
+
+   if ( MALS_SAXS->check_files_selected_paired() ) {
+      qDebug() << "we have a paired set of files!";
+      paired_store_valid = true;
+      paired_limit_valid = true;
+   } else {
+      paired_store_valid = false;
+      paired_limit_valid = false;
+   }
+      
+   paired_restore_valid = MALS_SAXS->saved_nth_last_paired_valid();
+   if ( paired_restore_valid && original_selections == MALS_SAXS->saved_nth_last_paired_selections ) {
+      paired_store_valid = false;
+   }
 
    lbl_files_sel =  new QLabel      ( us_tr( "Selected data files" ), this );
    lbl_files_sel -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
@@ -97,6 +112,26 @@ void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
    lbl_files_selected -> setPalette      ( PALET_NORMAL );
    AUTFBACK( lbl_files_selected );
    lbl_files_selected -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Normal) );
+
+   pb_paired_store =  new QPushButton ( us_tr( "Save paired selections" ), this );
+   pb_paired_store -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_paired_store -> setMinimumHeight( minHeight1 );
+   pb_paired_store -> setPalette      ( PALET_PUSHB );
+   connect( pb_paired_store, SIGNAL( clicked() ), SLOT( paired_store() ) );
+
+   pb_paired_restore =  new QPushButton ( us_tr( "Restore previously stored paired selections" ), this );
+   pb_paired_restore -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_paired_restore -> setMinimumHeight( minHeight1 );
+   pb_paired_restore -> setPalette      ( PALET_PUSHB );
+   connect( pb_paired_restore, SIGNAL( clicked() ), SLOT( paired_restore() ) );
+
+   cb_paired_limit = new QCheckBox(this);
+   cb_paired_limit->setText( us_tr("Green P values" ) );
+   cb_paired_limit->setChecked( true );
+   cb_paired_limit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_paired_limit->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_paired_limit );
+   connect( cb_paired_limit, SIGNAL( clicked() ), SLOT( paired_limit() ) );
 
    lbl_select_nth = new QLabel ( us_tr( "Select every Nth" ), this);
    lbl_select_nth->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
@@ -300,6 +335,14 @@ void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
    background->addLayout( hbl_files_pane );
    background->addWidget( lbl_files_selected );
 
+   {
+      QHBoxLayout *hbl = new QHBoxLayout( 0 ); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( cb_paired_limit );
+      hbl->addWidget( pb_paired_store );
+      hbl->addWidget( pb_paired_restore );
+      background->addLayout( hbl );
+   }
+      
    background->addWidget( lbl_select_nth );
    {
       QGridLayout * gl_nth = new QGridLayout( 0 ); gl_nth->setContentsMargins( 0, 0, 0, 0 ); gl_nth->setSpacing( 0 );
@@ -544,6 +587,10 @@ void US_Hydrodyn_Mals_Saxs_Nth::update_enables()
    pb_pvalues_add ->setEnabled( any_pvalues_not_selected && any_selected_not_pvalues );
 
    lbl_files_selected->setText( QString( "%1 of %2 selected" ).arg( files_selected ).arg( lb_files->count() ) );
+
+   pb_paired_store->setEnabled( paired_store_valid );
+   pb_paired_restore->setEnabled( paired_restore_valid );
+   cb_paired_limit->setEnabled( paired_limit_valid );
 }
 
 void US_Hydrodyn_Mals_Saxs_Nth::nth_only()
@@ -661,5 +708,31 @@ void US_Hydrodyn_Mals_Saxs_Nth::update_files_selected()
          lb_files_sel->addItem( lb_files->item( i )->text() );
       }
    }
+   update_enables();
+}
+
+void US_Hydrodyn_Mals_Saxs_Nth::paired_store() {
+   // store paired selections
+   qDebug() << "paired_store()";
+   MALS_SAXS->saved_nth_last_paired_selections = original_selections;
+   paired_store_valid = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Mals_Saxs_Nth::paired_restore() {
+   // restore paired selections
+   qDebug() << "paired_restore()";
+   lb_files->clearSelection();
+   for ( int i = 0; i < (int)lb_files->count(); ++i ) {
+      if ( MALS_SAXS->saved_nth_last_paired_selections.count( lb_files->item( i )->text() ) ) {
+         lb_files->item( i )->setSelected( true );
+      }
+   }
+   update_enables();
+}
+
+void US_Hydrodyn_Mals_Saxs_Nth::paired_limit() {
+   // limit selections to the stored paired list
+   qDebug() << "paired_limit()";
    update_enables();
 }

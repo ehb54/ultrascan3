@@ -784,6 +784,10 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       void                               scale_pair_fit_clear( bool replot = true );
 
+      bool                               check_files_selected_paired();
+      set < QString >                    saved_nth_last_paired_selections;
+      bool                               saved_nth_last_paired_valid();
+
    private slots:
 
       void scale_pair();
@@ -1622,8 +1626,9 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       double                       scale_applied_q_max;
 
       set < QString >              scale_last_created;
-      void                         set_selected        ( set < QString > &, bool do_replot = true );
-      void                         set_created_selected( set < QString > &, bool do_replot = true );
+      bool                         set_selected        ( const QStringList &, bool do_replot = true );
+      bool                         set_selected        ( const set < QString > &, bool do_replot = true );
+      bool                         set_created_selected( const set < QString > &, bool do_replot = true );
 
       map < QString, vector <double > > scale_q;
       map < QString, vector <double > > scale_I;

@@ -410,29 +410,54 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    pb_scale_pair_fit->setPalette( PALET_PUSHB );
    connect(pb_scale_pair_fit, SIGNAL(clicked()), SLOT(scale_pair_fit()));
 
-   lbl_scale_pair_fit_method = new QLabel( "Fitting ", this );
+   lbl_scale_pair_fit_method = new QLabel( "Fit Poly. deg. ", this );
    lbl_scale_pair_fit_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_scale_pair_fit_method->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_scale_pair_fit_method );
    lbl_scale_pair_fit_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   rb_scale_pair_fit_method_p2 =  new QRadioButton( us_tr( "2nd Deg. Poly." ), this );
+   rb_scale_pair_fit_method_p2 =  new QRadioButton( us_tr( "2" ), this );
    rb_scale_pair_fit_method_p2 -> setPalette      ( PALET_NORMAL );
    AUTFBACK( rb_scale_pair_fit_method_p2 );
    rb_scale_pair_fit_method_p2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_scale_pair_fit_method_p2, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p2() ) );
 
-   rb_scale_pair_fit_method_p3 =  new QRadioButton( us_tr( "3rd Deg. Poly." ), this );
+   rb_scale_pair_fit_method_p3 =  new QRadioButton( us_tr( "3" ), this );
    rb_scale_pair_fit_method_p3 -> setPalette      ( PALET_NORMAL );
    AUTFBACK( rb_scale_pair_fit_method_p3 );
    rb_scale_pair_fit_method_p3 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_scale_pair_fit_method_p3, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p3() ) );
 
-   rb_scale_pair_fit_method_p4 =  new QRadioButton( us_tr( "4th Deg. Poly." ), this );
+   rb_scale_pair_fit_method_p4 =  new QRadioButton( us_tr( "4" ), this );
    rb_scale_pair_fit_method_p4 -> setPalette      ( PALET_NORMAL );
    AUTFBACK( rb_scale_pair_fit_method_p4 );
    rb_scale_pair_fit_method_p4 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_scale_pair_fit_method_p4, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p4() ) );
+
+   rb_scale_pair_fit_method_p5 =  new QRadioButton( us_tr( "5" ), this );
+   rb_scale_pair_fit_method_p5 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p5 );
+   rb_scale_pair_fit_method_p5 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p5, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p5() ) );
+
+   rb_scale_pair_fit_method_p6 =  new QRadioButton( us_tr( "6" ), this );
+   rb_scale_pair_fit_method_p6 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p6 );
+   rb_scale_pair_fit_method_p6 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p6, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p6() ) );
+
+   rb_scale_pair_fit_method_p7 =  new QRadioButton( us_tr( "7" ), this );
+   rb_scale_pair_fit_method_p7 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p7 );
+   rb_scale_pair_fit_method_p7 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p7, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p7() ) );
+
+   rb_scale_pair_fit_method_p8 =  new QRadioButton( us_tr( "8" ), this );
+   rb_scale_pair_fit_method_p8 -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_scale_pair_fit_method_p8 );
+   rb_scale_pair_fit_method_p8 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_scale_pair_fit_method_p8, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p8() ) );
+
 
    bg_scale_pair_fit_method = new QButtonGroup( this );
    {
@@ -441,6 +466,10 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p2, bg_pos++ );
       bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p3, bg_pos++ );
       bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p4, bg_pos++ );
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p5, bg_pos++ );
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p6, bg_pos++ );
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p7, bg_pos++ );
+      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p8, bg_pos++ );
    }
    rb_scale_pair_fit_method_p3->setChecked(true);
    // shouldn't the below already have been triggered by the above?
@@ -4123,6 +4152,10 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       hbl->addWidget( rb_scale_pair_fit_method_p2 );
       hbl->addWidget( rb_scale_pair_fit_method_p3 );
       hbl->addWidget( rb_scale_pair_fit_method_p4 );
+      hbl->addWidget( rb_scale_pair_fit_method_p5 );
+      hbl->addWidget( rb_scale_pair_fit_method_p6 );
+      hbl->addWidget( rb_scale_pair_fit_method_p7 );
+      hbl->addWidget( rb_scale_pair_fit_method_p8 );
       hbl->addWidget( pb_scale_pair_fit );
       hbl->addWidget( pb_scale_pair_minimize );
       hbl->addWidget( pb_scale_pair_reset );
@@ -4580,6 +4613,11 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scale_pair_widgets.push_back( rb_scale_pair_fit_method_p2 );
    scale_pair_widgets.push_back( rb_scale_pair_fit_method_p3 );
    scale_pair_widgets.push_back( rb_scale_pair_fit_method_p4 );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p5 );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p6 );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p7 );
+   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p8 );
+   
 
    scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_svd_bdc );
    scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_svd_jacobi );
@@ -5649,6 +5687,10 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    rb_scale_pair_fit_method_p2          ->setEnabled( false );
    rb_scale_pair_fit_method_p3          ->setEnabled( false );
    rb_scale_pair_fit_method_p4          ->setEnabled( false );
+   rb_scale_pair_fit_method_p5          ->setEnabled( false );
+   rb_scale_pair_fit_method_p6          ->setEnabled( false );
+   rb_scale_pair_fit_method_p7          ->setEnabled( false );
+   rb_scale_pair_fit_method_p8          ->setEnabled( false );
    le_scale_pair_q1_start               ->setEnabled( false );
    le_scale_pair_q1_end                 ->setEnabled( false );
    le_scale_pair_q2_start               ->setEnabled( false );

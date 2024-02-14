@@ -91,6 +91,16 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Nth : public QDialog
 
       void                                    setupGUI();
 
+      set < QString >                         original_selections;
+
+      QPushButton *                           pb_paired_store;
+      QPushButton *                           pb_paired_restore;
+      QCheckBox *                             cb_paired_limit;
+
+      bool                                    paired_store_valid;
+      bool                                    paired_restore_valid;
+      bool                                    paired_limit_valid;
+      
    private slots:
 
       void                                    nth_only();
@@ -107,6 +117,10 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Nth : public QDialog
       void                                    go();
       void                                    quit();
       void                                    help();
+
+      void                                    paired_store();
+      void                                    paired_restore();
+      void                                    paired_limit();
 
       void                                    update_enables();
 

@@ -2741,42 +2741,49 @@ double US_Hydrodyn_Mals_Saxs::tot_intensity( QString &file, double q_min, double
    return tot_i;
 }
 
-void US_Hydrodyn_Mals_Saxs::set_selected( set < QString > & to_select, bool do_replot )
-{
+bool US_Hydrodyn_Mals_Saxs::set_selected( const QStringList & to_select_qsl, bool do_replot ) {
+   set < QString > to_select;
+   for ( auto name : to_select_qsl ) {
+      to_select.insert( name );
+   }
+   return set_selected( to_select, do_replot );
+}
+
+bool US_Hydrodyn_Mals_Saxs::set_selected( const set < QString > & to_select, bool do_replot ) {
    disable_updates = true;
    lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->count(); i++ )
-   {
-      if ( to_select.count( lb_files->item( i )->text() ) )
-      {
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_files->count(); i++ ) {
+      if ( to_select.count( lb_files->item( i )->text() ) ) {
          lb_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
          // qDebug() << "set_selected() : to plot " << lb_files->item( i )->text();
       }
    }
 
    disable_updates = false;
-   if ( do_replot )
-   {
+   if ( do_replot ) {
       plot_files();
    }
+   return missing.size() == 0;
 }
 
-void US_Hydrodyn_Mals_Saxs::set_created_selected( set < QString > & to_select, bool do_replot )
-{
+bool US_Hydrodyn_Mals_Saxs::set_created_selected( const set < QString > & to_select, bool do_replot ) {
    disable_updates = true;
    lb_created_files->clearSelection();
-   for ( int i = 0; i < (int)lb_created_files->count(); i++ )
-   {
-      if ( to_select.count( lb_created_files->item( i )->text() ) )
-      {
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_created_files->count(); i++ ) {
+
+      if ( to_select.count( lb_created_files->item( i )->text() ) ) {
          lb_created_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
       }
    }
    disable_updates = false;
-   if ( do_replot )
-   {
+   if ( do_replot ) {
       plot_files();
    }
+   return missing.size() == 0;
 }
 
 void US_Hydrodyn_Mals_Saxs::artificial_gaussians()
@@ -6431,3 +6438,60 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
    plot_files();
    update_enables();
 }
+
+bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired() {
+   vector < QStringList > pair_names;
+
+   {
+      map < vector < double >, QStringList > qgrid_to_names;
+
+      for ( auto const & name : all_selected_files() ) {
+         if ( !f_qs.count( name ) || !f_Is.count( name ) ) {
+            qDebug() << QString( "check_selected_paired() : internal error, data missing for %1" ).arg( name );
+            return false;
+         }
+         qgrid_to_names[ f_qs[ name ] ].push_back( name );
+      }
+
+      if ( qgrid_to_names.size() != 2 ) {
+         return false;
+      }      
+
+      pair_names =
+         {
+            qgrid_to_names.begin()->second
+            ,(--qgrid_to_names.end())->second
+         };
+   }
+   
+   // get time grids for each
+
+   {
+      vector < vector < double >> time_grids =
+         {
+            get_time_grid_from_namelist( pair_names[0] )
+            ,get_time_grid_from_namelist( pair_names[1] )
+         };
+
+      if ( time_grids[0] != time_grids[1] ) {
+         return false;
+      }      
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Mals_Saxs::saved_nth_last_paired_valid() {
+   if ( saved_nth_last_paired_selections.size() == 0 ) {
+      return false;
+   }
+
+   set < QString > missing = saved_nth_last_paired_selections;
+   for ( auto const & name : all_files() ) {
+      missing.erase( name );
+   }
+
+   return missing.size() == 0;
+}
+
+      
+      

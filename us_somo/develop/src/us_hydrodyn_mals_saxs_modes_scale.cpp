@@ -237,6 +237,10 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
    rb_scale_pair_fit_method_p2          ->setEnabled( true );
    rb_scale_pair_fit_method_p3          ->setEnabled( true );
    rb_scale_pair_fit_method_p4          ->setEnabled( true );
+   rb_scale_pair_fit_method_p5          ->setEnabled( true );
+   rb_scale_pair_fit_method_p6          ->setEnabled( true );
+   rb_scale_pair_fit_method_p7          ->setEnabled( true );
+   rb_scale_pair_fit_method_p8          ->setEnabled( true );
    le_scale_pair_q1_start               ->setEnabled( true );
    le_scale_pair_q1_end                 ->setEnabled( true );
    le_scale_pair_q2_start               ->setEnabled( true );
@@ -328,6 +332,30 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p3() {
 void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p4() {
    qDebug() << "scale_pair_set_fit_method_p3()";
    scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P4;
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p5() {
+   qDebug() << "scale_pair_set_fit_method_p3()";
+   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P5;
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p6() {
+   qDebug() << "scale_pair_set_fit_method_p3()";
+   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P6;
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p7() {
+   qDebug() << "scale_pair_set_fit_method_p3()";
+   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P7;
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p8() {
+   qDebug() << "scale_pair_set_fit_method_p3()";
+   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P8;
    scale_pair_fit_clear();
 }
 
@@ -779,6 +807,22 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
          minimum_pts_req = 5;
          degree          = 4;
          break;
+      case SCALE_PAIR_FIT_METHOD_P5 :
+         minimum_pts_req = 6;
+         degree          = 5;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P6 :
+         minimum_pts_req = 7;
+         degree          = 6;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P7 :
+         minimum_pts_req = 8;
+         degree          = 7;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P8 :
+         minimum_pts_req = 9;
+         degree          = 8;
+         break;
       default:
          QMessageBox::critical( this,
                                 windowTitle() + us_tr( ": Scale Fit" ),
@@ -934,7 +978,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
                                 .arg( scale_pair_times.size() )
                                 );
    eigen.evaluate_polynomial( coeff, q1_min, q2_max, 100, x, y );
-   // US_Vector::printvector( "coefficients", coeff );
+   US_Vector::printvector( "coefficients", coeff );
    // US_Vector::printvector2( "fitting curve", x, y );
 
    {
@@ -1149,6 +1193,22 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
          minimum_pts_req = 5;
          degree          = 4;
          break;
+      case SCALE_PAIR_FIT_METHOD_P5 :
+         minimum_pts_req = 6;
+         degree          = 5;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P6 :
+         minimum_pts_req = 7;
+         degree          = 6;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P7 :
+         minimum_pts_req = 8;
+         degree          = 7;
+         break;
+      case SCALE_PAIR_FIT_METHOD_P8 :
+         minimum_pts_req = 9;
+         degree          = 8;
+         break;
       default:
          QMessageBox::critical( this,
                                 windowTitle() + us_tr( ": Scale Fit" ),
@@ -1329,4 +1389,5 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    scale_pair_time_focus( true );
    scale_pair_fit();
 }
+
 
