@@ -84,12 +84,13 @@ void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
       paired_store_valid = true;
       paired_limit_valid = true;
    } else {
+      qDebug() << "we do NOT have a paired set of files!";
       paired_store_valid = false;
       paired_limit_valid = false;
    }
       
    paired_restore_valid = MALS_SAXS->saved_nth_last_paired_valid();
-   if ( paired_restore_valid && original_selections == MALS_SAXS->saved_nth_last_paired_selections ) {
+   if ( paired_restore_valid && original_selections == MALS_SAXS->qsl_to_set( MALS_SAXS->saved_nth_last_paired_selections ) ) {
       paired_store_valid = false;
    }
 
@@ -738,7 +739,7 @@ void US_Hydrodyn_Mals_Saxs_Nth::update_files_selected()
 void US_Hydrodyn_Mals_Saxs_Nth::paired_store() {
    // store paired selections
    qDebug() << "paired_store()";
-   MALS_SAXS->saved_nth_last_paired_selections = original_selections;
+   MALS_SAXS->saved_nth_last_paired_selections = MALS_SAXS->set_to_qsl( original_selections );
    paired_store_valid = false;
    update_enables();
 }

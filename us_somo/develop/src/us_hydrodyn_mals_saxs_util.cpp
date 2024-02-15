@@ -6052,7 +6052,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
 
    // q value at a time should lessen memory requirements (but is it faster? does it matter?)
    progress->reset();
-   progress->setMaximum( output_qs.size() + 1 );
+   progress->setMaximum( output_qs.size() + 2 );
 
    if ( use_errors ) {
       for ( int i = 0; i < (int) output_qs.size(); ++i ) {
@@ -6440,11 +6440,12 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
 }
 
 bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired() {
-   return check_files_selected_paired( all_selected_files_set() );
+   return check_files_selected_paired( all_selected_files() );
 }
 
-bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired( const set < QString > & files ) {
+bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired( const QStringList & files ) {
    saved_nth_pair_names.clear();
+   qDebug() << "check_selected_paired()";
    
    {
       map < vector < double >, QStringList > qgrid_to_names;
@@ -6458,6 +6459,7 @@ bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired( const set < QString > &
       }
 
       if ( qgrid_to_names.size() != 2 ) {
+         qDebug() << "check_selected_paired() : qgrid_to_names.size() != 2";
          return false;
       }      
 
@@ -6478,6 +6480,9 @@ bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired( const set < QString > &
          };
 
       if ( time_grids[0] != time_grids[1] ) {
+         US_Vector::printvector2( "check_selected_paired() : time_grids[0] != time_grids[1]", time_grids[0], time_grids[1] );
+           
+         qDebug() << "check_selected_paired() : time_grids[0] != time_grids[1]";
          return false;
       }      
    }
@@ -6489,10 +6494,30 @@ bool US_Hydrodyn_Mals_Saxs::saved_nth_last_paired_valid() {
       return false;
    }
 
-   set < QString > missing = saved_nth_last_paired_selections;
+   set < QString > missing = qsl_to_set( saved_nth_last_paired_selections );
    for ( auto const & name : all_files() ) {
       missing.erase( name );
    }
 
    return missing.size() == 0;
+}
+
+set < QString > US_Hydrodyn_Mals_Saxs::qsl_to_set( const QStringList & qsl ) {
+   set < QString > result;
+      
+   for ( auto const & qs : qsl ) {
+      result.insert( qs );
+   }
+
+   return result;
+}
+      
+QStringList US_Hydrodyn_Mals_Saxs::set_to_qsl( const set < QString > & qsset ) {
+   QStringList result;
+      
+   for ( auto const & qs : qsset ) {
+      result << qs;
+   }
+
+   return result;
 }
