@@ -1039,7 +1039,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr_pivot_col() 
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr_pivot_full() {
    qDebug() << "scale_pair_fit_alg_eigen_householder_qr_pivot_full()";
-   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL;
+   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_FULL;
    scale_pair_fit_clear();
 };
 
