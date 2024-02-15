@@ -126,8 +126,8 @@ void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
    connect( pb_paired_restore, SIGNAL( clicked() ), SLOT( paired_restore() ) );
 
    cb_paired_limit = new QCheckBox(this);
-   cb_paired_limit->setText( us_tr("Green P values" ) );
-   cb_paired_limit->setChecked( true );
+   cb_paired_limit->setText( us_tr("Select paired time curves" ) );
+   cb_paired_limit->setChecked( paired_limit_valid );
    cb_paired_limit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_paired_limit->setPalette( PALET_NORMAL );
    AUTFBACK( cb_paired_limit );
@@ -410,6 +410,10 @@ void US_Hydrodyn_Mals_Saxs_Nth::setupGUI()
       pb_pvalues_only   ->hide();
       pb_pvalues_add    ->hide();
    }
+
+   if ( paired_limit_valid ) {
+      set_paired_ranges();
+   }
 }
 
 void US_Hydrodyn_Mals_Saxs_Nth::quit()
@@ -588,6 +592,8 @@ void US_Hydrodyn_Mals_Saxs_Nth::update_enables()
 
    lbl_files_selected->setText( QString( "%1 of %2 selected" ).arg( files_selected ).arg( lb_files->count() ) );
 
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
+
    pb_paired_store->setEnabled( paired_store_valid );
    pb_paired_restore->setEnabled( paired_restore_valid );
    cb_paired_limit->setEnabled( paired_limit_valid );
@@ -600,13 +606,18 @@ void US_Hydrodyn_Mals_Saxs_Nth::nth_only()
    int ofs = le_start->text().toInt();
    int end = le_end->text().toInt();
    lb_files->clearSelection();
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
    if ( n > 0 )
    {
       for ( int i = ofs - 1; i < end; i += n )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
+         if ( cb_paired_limit->isChecked() && paired_map_to_pos.count( i ) ) {
+            lb_files->item( paired_map_to_pos[ i ] )->setSelected( true );
+         }
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
    update_files_selected();
 }
@@ -617,13 +628,18 @@ void US_Hydrodyn_Mals_Saxs_Nth::nth_add()
    int n   = le_n->text().toInt();
    int ofs = le_start->text().toInt();
    int end = le_end->text().toInt();
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
    if ( n > 0 )
    {
       for ( int i = ofs - 1; i < end; i += n )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
+         if ( cb_paired_limit->isChecked() && paired_map_to_pos.count( i ) ) {
+            lb_files->item( paired_map_to_pos[ i ] )->setSelected( true );
+         }
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
    update_files_selected();
 }
@@ -632,13 +648,15 @@ void US_Hydrodyn_Mals_Saxs_Nth::contains_only()
 {
    disconnect( lb_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
    lb_files->clearSelection();
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
    for ( int i = 0; i < lb_files->count(); ++i )
    {
       if ( ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->item( i )->text().contains( le_contains->text() ) )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
    update_files_selected();
 }
@@ -646,13 +664,15 @@ void US_Hydrodyn_Mals_Saxs_Nth::contains_only()
 void US_Hydrodyn_Mals_Saxs_Nth::contains_add()
 {
    disconnect( lb_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
    for ( int i = 0; i < lb_files->count(); ++i )
    {
       if ( ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->item( i )->text().contains( le_contains->text() ) )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
    update_files_selected();
 }
@@ -661,6 +681,7 @@ void US_Hydrodyn_Mals_Saxs_Nth::pvalues_only()
 {
    disconnect( lb_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
    lb_files->clearSelection();
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
    for ( int i = 0; i < lb_files->count(); ++i )
    {
       QString qs = ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->item( i )->text();
@@ -670,10 +691,11 @@ void US_Hydrodyn_Mals_Saxs_Nth::pvalues_only()
               ( cb_pvalues_yellow->isChecked() && pv >= alpha_over_5 && pv < alpha ) ||
               ( cb_pvalues_red->isChecked() && pv < alpha_over_5 ) )
          {
-            lb_files->item( i)->setSelected( true );
+            lb_files->item( i )->setSelected( true );
          }
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
    update_files_selected();
 }
@@ -681,6 +703,7 @@ void US_Hydrodyn_Mals_Saxs_Nth::pvalues_only()
 void US_Hydrodyn_Mals_Saxs_Nth::pvalues_add()
 {
    disconnect( lb_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
    for ( int i = 0; i < lb_files->count(); ++i )
    {
       QString qs = ((US_Hydrodyn_Mals_Saxs*)us_hydrodyn_mals_saxs)->lb_files->item( i )->text();
@@ -694,6 +717,7 @@ void US_Hydrodyn_Mals_Saxs_Nth::pvalues_add()
          }
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
    connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
    update_files_selected();
 }
@@ -722,17 +746,141 @@ void US_Hydrodyn_Mals_Saxs_Nth::paired_store() {
 void US_Hydrodyn_Mals_Saxs_Nth::paired_restore() {
    // restore paired selections
    qDebug() << "paired_restore()";
+   disconnect( lb_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
+
    lb_files->clearSelection();
+
+   lb_files->setSelectionMode( QListWidget::ExtendedSelection );
+   qDebug() << "lb_files->count() " << lb_files->count();
+   
    for ( int i = 0; i < (int)lb_files->count(); ++i ) {
-      if ( MALS_SAXS->saved_nth_last_paired_selections.count( lb_files->item( i )->text() ) ) {
+      QString tmp = lb_files->item( i )->text();
+      tmp = tmp.replace( QRegularExpression( "^\\d+ : " ),"" );
+      
+      if ( MALS_SAXS->saved_nth_last_paired_selections.count( tmp ) ) {
          lb_files->item( i )->setSelected( true );
       }
    }
+   lb_files->setSelectionMode( cb_paired_limit->isChecked() ? QListWidget::NoSelection : QListWidget::ExtendedSelection );
+   connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files_selected() ) );
+
+   paired_restore_valid = false;
+   paired_limit_valid = true;
+   cb_paired_limit->setChecked(true);
+   MALS_SAXS->check_files_selected_paired( MALS_SAXS->saved_nth_last_paired_selections );
+   set_paired_ranges();
    update_enables();
 }
 
 void US_Hydrodyn_Mals_Saxs_Nth::paired_limit() {
    // limit selections to the stored paired list
+   if ( !cb_paired_limit->isChecked() ) {
+      paired_limit_valid = false;
+      paired_store_valid = false;
+      ((QIntValidator *)le_start->validator())->setRange( 1, lb_files->count() );
+      ((QIntValidator *)le_end  ->validator())->setRange( 1, lb_files->count() );
+   }
    qDebug() << "paired_limit()";
    update_enables();
+}
+
+bool US_Hydrodyn_Mals_Saxs_Nth::set_paired_ranges() {
+   qDebug() << "set_paired_ranges()";
+   if ( MALS_SAXS->saved_nth_pair_names.size() != 2 ) {
+      qDebug() << "set_paired_ranges() :: internal error";
+      return false;
+   }
+
+   set < QString > names1;
+   set < QString > names2;
+
+   for ( auto const & name : MALS_SAXS->saved_nth_pair_names[0] ) {
+      names1.insert( name );
+   }
+   
+   for ( auto const & name : MALS_SAXS->saved_nth_pair_names[1] ) {
+      names2.insert( name );
+   }
+
+   int name1_pos_start = 0;
+   int name1_pos_end   = 0;
+   int name2_pos_start = 0;
+   int name2_pos_end   = 0;
+
+   map < QString, int > names_to_pos;
+
+   for ( int i = 0; i < (int)lb_files->count(); ++i ) {
+      if ( lb_files->item(i)->isSelected() ) {
+         QString tmp = lb_files->item(i)->text();
+         tmp = tmp.replace( QRegularExpression( "^\\d+ : " ),"" );
+         if ( names1.count( tmp ) ) {
+            names_to_pos[ tmp ] = i;
+            name1_pos_end = i + 1;
+            if ( !name1_pos_start ) {
+               name1_pos_start = name1_pos_end;
+            }
+         }
+         if ( names2.count( tmp ) ) {
+            names_to_pos[ tmp ] = i;
+            name2_pos_end = i + 1;
+            if ( !name2_pos_start ) {
+               name2_pos_start = name2_pos_end;
+            }
+         }
+      }
+   }
+            
+   // use MALS_SAXS->saved_nth_pair_names to build paired_map_to_pos
+
+   paired_map_to_pos.clear();
+
+   int use_pos_start;
+   int use_pos_end;
+
+   set < QString > use_names;
+
+   if ( name1_pos_start < name2_pos_start ) {
+      use_pos_start = name1_pos_start;
+      use_pos_end   = name1_pos_end;
+      use_names     = names1;
+   } else {
+      use_pos_start = name2_pos_start;
+      use_pos_end   = name2_pos_end;
+      use_names     = names2;
+   }      
+
+   if ( use_names.count( MALS_SAXS->saved_nth_pair_names[0][0] ) ) {
+      for ( int i = 0; i < (int) MALS_SAXS->saved_nth_pair_names[0].size(); ++i ) {
+         // qDebug() << QString( "pos %1 : curve %2 pos %3 paired to curve %4 pos %5")
+         //    .arg( i )
+         //    .arg( MALS_SAXS->saved_nth_pair_names[0][i] )
+         //    .arg( names_to_pos[ MALS_SAXS->saved_nth_pair_names[0][i] ] )
+         //    .arg( MALS_SAXS->saved_nth_pair_names[1][i] )
+         //    .arg( names_to_pos[ MALS_SAXS->saved_nth_pair_names[1][i] ] )
+         //    ;
+         paired_map_to_pos[ names_to_pos[ MALS_SAXS->saved_nth_pair_names[0][i] ] ] = names_to_pos[ MALS_SAXS->saved_nth_pair_names[1][i] ];
+      }
+   } else {
+      for ( int i = 0; i < (int) MALS_SAXS->saved_nth_pair_names[0].size(); ++i ) {
+         // qDebug() << QString( "pos %1 : curve %2 pos %3 paired to curve %4 pos %5")
+         //    .arg( i )
+         //    .arg( MALS_SAXS->saved_nth_pair_names[1][i] )
+         //    .arg( names_to_pos[ MALS_SAXS->saved_nth_pair_names[1][i] ] )
+         //    .arg( MALS_SAXS->saved_nth_pair_names[0][i] )
+         //    .arg( names_to_pos[ MALS_SAXS->saved_nth_pair_names[0][i] ] )
+         //    ;
+         paired_map_to_pos[ names_to_pos[ MALS_SAXS->saved_nth_pair_names[1][i] ] ] = names_to_pos[ MALS_SAXS->saved_nth_pair_names[0][i] ];
+      }
+   }      
+   
+   le_start->setText( QString( "%1" ).arg( use_pos_start ) );
+   le_end  ->setText( QString( "%1" ).arg( use_pos_end ) );
+
+   // not qintvalidators don't really validate the range, just the number of digits
+
+   ((QIntValidator *)le_start->validator())->setRange( use_pos_start, use_pos_end );
+   ((QIntValidator *)le_end  ->validator())->setRange( use_pos_start, use_pos_end );
+   
+
+   return true;
 }

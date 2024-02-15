@@ -785,6 +785,8 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void                               scale_pair_fit_clear( bool replot = true );
 
       bool                               check_files_selected_paired();
+      bool                               check_files_selected_paired( const set < QString > & files );
+      vector < QStringList >             saved_nth_pair_names;
       set < QString >                    saved_nth_last_paired_selections;
       bool                               saved_nth_last_paired_valid();
 

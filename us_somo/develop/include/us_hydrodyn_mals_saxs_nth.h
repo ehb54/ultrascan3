@@ -100,6 +100,8 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Nth : public QDialog
       bool                                    paired_store_valid;
       bool                                    paired_restore_valid;
       bool                                    paired_limit_valid;
+      bool                                    set_paired_ranges();
+      map < int, int >                        paired_map_to_pos;
       
    private slots:
 

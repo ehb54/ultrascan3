@@ -6440,12 +6440,16 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
 }
 
 bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired() {
-   vector < QStringList > pair_names;
+   return check_files_selected_paired( all_selected_files_set() );
+}
 
+bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired( const set < QString > & files ) {
+   saved_nth_pair_names.clear();
+   
    {
       map < vector < double >, QStringList > qgrid_to_names;
 
-      for ( auto const & name : all_selected_files() ) {
+      for ( auto const & name : files ) {
          if ( !f_qs.count( name ) || !f_Is.count( name ) ) {
             qDebug() << QString( "check_selected_paired() : internal error, data missing for %1" ).arg( name );
             return false;
@@ -6457,7 +6461,7 @@ bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired() {
          return false;
       }      
 
-      pair_names =
+      saved_nth_pair_names =
          {
             qgrid_to_names.begin()->second
             ,(--qgrid_to_names.end())->second
@@ -6469,8 +6473,8 @@ bool US_Hydrodyn_Mals_Saxs::check_files_selected_paired() {
    {
       vector < vector < double >> time_grids =
          {
-            get_time_grid_from_namelist( pair_names[0] )
-            ,get_time_grid_from_namelist( pair_names[1] )
+            get_time_grid_from_namelist( saved_nth_pair_names[0] )
+            ,get_time_grid_from_namelist( saved_nth_pair_names[1] )
          };
 
       if ( time_grids[0] != time_grids[1] ) {
@@ -6492,6 +6496,3 @@ bool US_Hydrodyn_Mals_Saxs::saved_nth_last_paired_valid() {
 
    return missing.size() == 0;
 }
-
-      
-      
