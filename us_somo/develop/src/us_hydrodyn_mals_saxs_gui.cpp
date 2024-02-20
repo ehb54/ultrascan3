@@ -532,16 +532,32 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full->setChecked(true);
    scale_pair_fit_alg_eigen_householder_qr_pivot_full();
 
-   cb_scale_pair_fit_alg_use_errors = new QCheckBox(this);
-   cb_scale_pair_fit_alg_use_errors->setText(us_tr("Fit use SD "));
-   //width cb_scale_pair_fit_alg_use_errors->setMaximumWidth ( minHeight1 * 3 );
-   cb_scale_pair_fit_alg_use_errors->setChecked( false );
-   cb_scale_pair_fit_alg_use_errors->setMinimumHeight( minHeight1 );
-   cb_scale_pair_fit_alg_use_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
-   cb_scale_pair_fit_alg_use_errors->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_scale_pair_fit_alg_use_errors );
-   cb_scale_pair_fit_alg_use_errors->setChecked(true);
-   connect( cb_scale_pair_fit_alg_use_errors, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_use_errors() ) );
+   // cb_scale_pair_fit_alg_use_errors = new QCheckBox(this);
+   // cb_scale_pair_fit_alg_use_errors->setText(us_tr("Fit use SD "));
+   // //width cb_scale_pair_fit_alg_use_errors->setMaximumWidth ( minHeight1 * 3 );
+   // cb_scale_pair_fit_alg_use_errors->setChecked( false );
+   // cb_scale_pair_fit_alg_use_errors->setMinimumHeight( minHeight1 );
+   // cb_scale_pair_fit_alg_use_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   // cb_scale_pair_fit_alg_use_errors->setPalette( PALET_NORMAL );
+   // AUTFBACK( cb_scale_pair_fit_alg_use_errors );
+   // cb_scale_pair_fit_alg_use_errors->setChecked(true);
+   // connect( cb_scale_pair_fit_alg_use_errors, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_use_errors() ) );
+
+   cb_scale_pair_fit_alg_weight = new QComboBox( this );
+   cb_scale_pair_fit_alg_weight->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_pair_fit_alg_weight );
+   cb_scale_pair_fit_alg_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_scale_pair_fit_alg_weight->setEnabled(true);
+   cb_scale_pair_fit_alg_weight->setMinimumHeight( minHeight1 );
+   cb_scale_pair_fit_alg_weight->setMaxVisibleItems( 1 );
+
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "no weighting" ) );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/amount" ) );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/amount^2" ) );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD" ) );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD^2" ) );
+   connect( cb_scale_pair_fit_alg_weight, SIGNAL( currentIndexChanged( int index ) ), SLOT( scale_pair_fit_alg_weight_index( int index ) ) );
+   cb_scale_pair_fit_alg_weight->setCurrentIndex( 0 ); // US_Eigen::EIGEN_NO_WEIGHTS
 
    pb_scale_pair_minimize = new QPushButton(us_tr("Minimize"), this);
    pb_scale_pair_minimize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -4179,7 +4195,8 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
       hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
       hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr );
       hbl->addWidget( rb_scale_pair_fit_alg_eigen_normal );
-      hbl->addWidget( cb_scale_pair_fit_alg_use_errors );
+      // hbl->addWidget( cb_scale_pair_fit_alg_use_errors );
+      hbl->addWidget( cb_scale_pair_fit_alg_weight );
       vbl_scale_pair->addLayout( hbl );
    }
 
@@ -4625,7 +4642,8 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
    scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr );
    scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_normal );
-   scale_pair_widgets.push_back( cb_scale_pair_fit_alg_use_errors );
+   // scale_pair_widgets.push_back( cb_scale_pair_fit_alg_use_errors );
+   scale_pair_widgets.push_back( cb_scale_pair_fit_alg_weight );
 
    // wyatt_widgets;
 
@@ -5704,7 +5722,8 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col ->setEnabled( false );
    rb_scale_pair_fit_alg_eigen_householder_qr ->setEnabled( false );
    rb_scale_pair_fit_alg_eigen_normal       ->setEnabled( false );
-   cb_scale_pair_fit_alg_use_errors     ->setEnabled( false );
+   // cb_scale_pair_fit_alg_use_errors         ->setEnabled( false );
+   cb_scale_pair_fit_alg_weight             ->setEnabled( false );
 }
 
 void US_Hydrodyn_Mals_Saxs::model_select_all()

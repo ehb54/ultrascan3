@@ -6346,15 +6346,19 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
       int mals_q_size = (int) mals_q.size();
       int saxs_q_size = (int) saxs_q.size();
 
-      QString head = qstring_common_head( qgrid_names[saxs_set], true );
-      QString tail = qstring_common_tail( qgrid_names[saxs_set], true );
+      QString head      = qstring_common_head( qgrid_names[saxs_set], true );
+      QString tail      = qstring_common_tail( qgrid_names[saxs_set], true );
+      QString mals_tail = qstring_common_tail( qgrid_names[mals_set], true );
+
+      mals_tail = mals_tail.replace( "_common", "" );
+      // qDebug() << "mals_tail " << mals_tail;
 
       US_Vector::printvector( "qgrid_time_to_names.front()", qgrid_time_to_names[ qgrid_times[0] ] );
       
       for ( auto const & tnames : qgrid_time_to_names ) {
          map < double, vector < double > > merged;
 
-         QString name = QString( "%1%2%3_joined" ).arg( head ).arg( tnames.first ).arg( tail );
+         QString name = QString( "%1%2%3%4_joined" ).arg( head ).arg( tnames.first ).arg( tail ).arg( mals_tail );
 
          if ( use_errors ) {
             for ( int i = 0; i < saxs_q_size; ++i ) {
