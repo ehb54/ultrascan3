@@ -107,11 +107,12 @@ bool US_Eigen::polyfit(
                        ,vector < double > & coeff // the polynomial coefficients
                        ,double & chi2
                        ,fit_methods fit_method
+                       ,weight_methods weight_method
                        ) {
 
    error_text = "";
    vector < double > e(x.size(),1);
-   return polyfit( x, y, e, degree, coeff, chi2, fit_method );
+   return polyfit( x, y, e, degree, coeff, chi2, fit_method, weight_method );
 }
 
 bool US_Eigen::polyfit(
@@ -122,6 +123,7 @@ bool US_Eigen::polyfit(
                        ,vector < double > & coeff // the polynomial coefficients
                        ,double & chi2
                        ,fit_methods fit_method
+                       ,weight_methods weight_method
                        ) {
    error_text = "";
 
@@ -134,12 +136,52 @@ bool US_Eigen::polyfit(
 
    vector < double > weights = e_input;
 
-   for ( auto & w : weights ) {
-      if ( w <= 0 ) {
-         error_text = "zero or negative weights";
-         return false;
+   // probably could swap the for and switch ... does compiler optimization do this?
+   
+   for ( size_t i = 0; i < weights.size(); ++i ) {
+      double & w = weights[i];
+
+      switch ( weight_method ) {
+      case EIGEN_NO_WEIGHTS :
+         w = 1;
+         break;
+
+      case EIGEN_1_OVER_AMOUNT :
+         if ( y_input[i] == 0 ) {
+            error_text = "zero amount";
+            return false;
+         }
+         w = 1. / y_input[i];
+         break;
+         
+      case EIGEN_1_OVER_AMOUNT_SQ :
+         if ( y_input[i] == 0 ) {
+            error_text = "zero amount";
+            return false;
+         }
+         w = 1. / (y_input[i] * y_input[i]);
+         break;
+         
+      case EIGEN_1_OVER_SD :
+         if ( w <= 0 ) {
+            error_text = "zero or negative SD";
+            return false;
+         }
+         w = 1. / w;
+         break;
+         
+      case EIGEN_1_OVER_SD_SQ :
+         if ( w <= 0 ) {
+            error_text = "zero or negative SD";
+            return false;
+         }
+         w = 1. / (w * w);
+         break;
+
+      default :
+         error_text = "unknown or unsupported weight method";
+         break;
       }
-      w = 1/(w*w);
    }
 
    MatrixXf X(nCount, numCoefficients);
@@ -164,26 +206,32 @@ bool US_Eigen::polyfit(
    switch ( fit_method ) {
    case EIGEN_SVD_JACOBI :
       coefficients = X.jacobiSvd(ComputeThinU | ComputeThinV).solve(Y);
+      // qDebug() << "svd_jacobi degree " << degree;
       break;
 
    case EIGEN_SVD_BDC :
       coefficients = X.bdcSvd(ComputeThinU | ComputeThinV).solve(Y);
+      // qDebug() << "svd_bdc " << degree;
       break;
 
    case EIGEN_HOUSEHOLDER_QR :
       coefficients = X.householderQr().solve(Y);
+      // qDebug() << "householder_qr " << degree;
       break;
 
    case EIGEN_HOUSEHOLDER_QR_PIVOT_COL :
       coefficients = X.colPivHouseholderQr().solve(Y);
+      // qDebug() << "householder_qr_pivot_col " << degree;
       break;
 
    case EIGEN_HOUSEHOLDER_QR_PIVOT_FULL :
       coefficients = X.fullPivHouseholderQr().solve(Y);
+      // qDebug() << "householder_qr_pivot_full " << degree;
       break;
 
    case EIGEN_NORMAL :
       coefficients = (X.transpose() * X).ldlt().solve(X.transpose() * Y);
+      // qDebug() << "normal " << degree;
       break;
    }
 

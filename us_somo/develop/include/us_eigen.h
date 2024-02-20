@@ -26,6 +26,24 @@ class US_Eigen {
       ,EIGEN_NORMAL
    };
 
+   // taken from https://www.azdhs.gov/documents/preparedness/state-laboratory/lab-licensure-certification/technical-resources/calibration-training/11-weighted-least-squares-regression-calib.pdf
+   // therein ref "Chromeleon Manual"
+
+   enum weight_methods {
+      EIGEN_NO_WEIGHTS
+      ,EIGEN_1_OVER_AMOUNT
+      ,EIGEN_1_OVER_AMOUNT_SQ
+      // how does a response differ from an amount?
+      // ,EIGEN_1_OVER_RESPONSE
+      // ,EIGEN_1_OVER_RESPONSE_SQ
+      // is RSD (relative SD) different than SD?
+      // The relative standard deviation (RSD) is often times more convenient. It is expressed in percent and is obtained by multiplying the standard deviation by 100 and dividing this product by the average.
+      // ,EIGEN_1_OVER_RSD
+      // ,EIGEN_1_OVER_RSD_SQ
+      ,EIGEN_1_OVER_SD
+      ,EIGEN_1_OVER_SD_SQ
+   };
+   
    bool polyfit(
                 const vector < double > & x
                 ,const vector < double > & y
@@ -34,6 +52,7 @@ class US_Eigen {
                 ,vector < double > & coeff // the polynomial coefficients
                 ,double & chi2
                 ,enum fit_methods fit_method = EIGEN_HOUSEHOLDER_QR_PIVOT_COL
+                ,enum weight_methods weight_method = EIGEN_1_OVER_SD_SQ
             );
 
    bool polyfit(
@@ -43,6 +62,7 @@ class US_Eigen {
                 ,vector < double > & coeff // the polynomial coefficients
                 ,double & chi2
                 ,enum fit_methods fit_method = EIGEN_HOUSEHOLDER_QR_PIVOT_COL
+                ,enum weight_methods weight_method = EIGEN_NO_WEIGHTS
                 );
 
    bool evaluate_polynomial(
