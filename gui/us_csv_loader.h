@@ -2,7 +2,7 @@
 #define US_CSV_LOADER_H
 
 
-// #include "us_widgets.h"
+#include "us_widgets.h"
 #include "us_widgets_dialog.h"
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
@@ -12,6 +12,9 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       US_CSV_Loader(QWidget* parent);
 
    private:
+      enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER};
+      bool loaded;
+      DELIMITER  delimiter;
       QPushButton* pb_open;
       QPushButton* pb_ok;
       QPushButton* pb_cancel;
@@ -27,6 +30,20 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QLineEdit* le_other;
       QLineEdit* le_filename;
       QTableWidget* tw_data;
+      QString str_delimiter;
+      QButtonGroup* bg_delimiter;
+
+      QStringList file_lines;
+      QStringList make_labels(int);
+
+
+
+   private slots:
+      void open();
+      void ok();
+      void cancel();
+      void fill_table(int);
+
 
 
 };
