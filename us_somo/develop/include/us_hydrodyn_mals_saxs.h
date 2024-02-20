@@ -779,6 +779,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QRadioButton                     * rb_scale_pair_fit_alg_eigen_normal;
 
       QCheckBox                        * cb_scale_pair_fit_alg_use_errors;
+      QComboBox                        * cb_scale_pair_fit_alg_weight;
 
       QwtPlotCurve                     * scale_pair_fit_curve;
 
@@ -831,6 +832,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void scale_pair_fit_alg_eigen_normal();
 
       void scale_pair_fit_alg_use_errors();
+      void scale_pair_fit_alg_weight_index( int index );
 
       bool scale_pair_fit_at_time( double time
                                    ,int degree
