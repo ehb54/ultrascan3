@@ -6,6 +6,7 @@
 #include "us_settings.h"
 #include "us_buffer_gui.h"
 #include "us_gui_util.h"
+#include "us_csv_loader.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
@@ -567,6 +568,8 @@ bool US_Extinction::loadScan(const QString &fileName)
          //wls.description = ts.readLine();
          // description_str = ts.readLine();
          //wls.description = description_str;
+         US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
+         csv_loader->exec();
          QStringList headers = ts.readLine().trimmed().split("\t");
          bool has_desc = false;
 
