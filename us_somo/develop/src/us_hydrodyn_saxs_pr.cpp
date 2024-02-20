@@ -365,6 +365,11 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
 
+   if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
+      MW = I0_exp / conc;
+      return true;
+   }
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
@@ -953,6 +958,50 @@ void US_Hydrodyn_Saxs::pr_info( const QString & msg, bool detail ) {
 
 bool US_Hydrodyn_Saxs::pr_to_iq() {
    TSO << "US_Hydrodyn_Saxs::pr_to_iq() slot not yet implemented\n";
+   errormsg = "";
+   if ( qsl_plotted_pr_names.size() == 0 ) {
+      errormsg = us_tr( "No P(r) curves plotted\n" );
+      editor_msg( "red", errormsg );
+      return false;
+   }
+   if ( qsl_plotted_pr_names.size() == 1 ) {
+      return pr_to_iq( 0, qsl_plotted_pr_names[0] );
+   }
+   
+   QString source = "";
+   {
+      bool ok;
+      source = US_Static::getItem(
+                                  us_tr("Compute I(q)")
+                                  ,us_tr("Select the P(r) curve to calculate I(q)" )
+                                  ,qsl_plotted_pr_names, 
+                                  0, 
+                                  false, 
+                                  &ok,
+                                  this );
+      if ( ok ) {
+         // user selected an item and pressed OK
+      } else {
+         return false;
+      }
+   }
+
+   if ( source.isEmpty() ) {
+      return false;
+   }
+
+   for ( int pos = 0; pos < (int)qsl_plotted_pr_names.size(); ++pos ) {
+      if ( source == qsl_plotted_pr_names[pos] ) {
+         return pr_to_iq( pos, source );
+      }
+   }
+
+   errormsg =
+      QString( us_tr( "Internal error, could not find source '%1' in plotted names\n" ) )
+      .arg( source )
+      ;
+      
+   editor_msg( "red", errormsg );
    return false;
 }
 
@@ -969,12 +1018,20 @@ bool US_Hydrodyn_Saxs::pr_to_iq( int pos, QString name ) {
       return false;
    }
    
-   double two_pi2 = 2 * M_PI * M_PI;
-   
    vector < double > *r  = &plotted_r[pos];
    vector < double > *pr = &plotted_pr[pos];
 
    int r_points = (int) r->size();
+
+   if ( r->size() < 2 ) {
+      errormsg = QString( "pr_to_iq:: curve has insufficient points\n" );
+      pr_info( errormsg );
+      return false;
+   }
+      
+   double dr = (*r)[1] - (*r)[0];
+
+   TSO << QString( "pr_to_iq:: dr %1\n" ).arg( dr );
    
    int q_points = 
       (int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
@@ -1013,7 +1070,7 @@ bool US_Hydrodyn_Saxs::pr_to_iq( int pos, QString name ) {
       for ( int j = 0; j < r_points; j++ ) {
          I[i] += (*pr)[j];
       }
-      I[i] *= two_pi2;
+      I[i] *= dr; // no modulation needed..., q[0] == 0
    }
 
    // and then the rest
@@ -1026,23 +1083,16 @@ bool US_Hydrodyn_Saxs::pr_to_iq( int pos, QString name ) {
       double qr;
       for ( int j = 1; j < r_points; j++ ) {
          qr = q[i] * (*r)[j];
-         // if ( j < 2 ) {
-         //    TSO << QString( "q[%1] = %2  (*r)[%3] = %4   qr = %5  sin(qr) = %6  sin(qr)/qr = %7\n" )
-         //       .arg( i )
-         //       .arg( q[i] )
-         //       .arg( j )
-         //       .arg( (*r)[j] )
-         //       .arg( qr )
-         //       .arg( sin(qr) )
-         //       .arg( sin(qr) / qr )
-         //       ;
-         // }
-         I[i] += (*pr)[j] * sin( qr ) / qr;
+         I[i] += (*pr)[j] * (( fabs(qr) < 1e-16 ) ? 1.0 : sin(qr) / qr);
       }
-      I[i] *= two_pi2;
+      I[i] *=
+         dr
+         * exp( - our_saxs_options->fast_modulation * q[i] * q[i] )
+         ;
    }
 
    // US_Vector::printvector2( "source r, pr", *r, *pr );
+
    // US_Vector::printvector2( "computed q, I", q, I );
    
    // setup scaling
@@ -1059,6 +1109,125 @@ bool US_Hydrodyn_Saxs::pr_to_iq( int pos, QString name ) {
       }
    }
    
+   plot_one_iqq( q, I, name );
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs::pr_to_iq( const map < double, double > & pr_exact, QString name ) {
+   errormsg = "";
+   TSO << QString( "pr_to_iq( pr_exact, \"%1\" )\n" ).arg( name );
+
+   if (
+       ! pr_exact.size()
+       ) {
+      errormsg = QString( "pr_to_iq:: empty exact\n" );
+      pr_info( errormsg );
+      return false;
+   }
+
+   int q_points = 
+      (int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+
+   if ( our_saxs_options->iq_exact_q )
+   {
+      editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
+      if ( !exact_q.size() ){
+         editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+         exact_q.resize( q_points );
+         for ( int j = 0; j < q_points; j++ ) {
+            exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+         }
+      } else {
+         q_points = ( int ) exact_q.size();
+      }
+   }
+   
+   vector < double > q( q_points ); 
+   vector < double > I( q_points ); 
+
+   if ( our_saxs_options->iq_exact_q ) {
+      q = exact_q;
+      q_points = q.size();
+   } else {
+      for ( int i = 0; i < q_points; i++ ) {
+         q[i] = our_saxs_options->start_q + i * our_saxs_options->delta_q;
+      }
+   }      
+
+   for ( int i = 0; i < q_points; ++i ) {
+      double qr;
+      for ( auto it = pr_exact.begin();
+            it != pr_exact.end();
+            ++it ) {
+         qr = q[i] * it->first;
+         I[i] += it->second * (( fabs(qr) < 1e-16 ) ? 1.0 : sin(qr) / qr);
+      }
+      I[i] *=
+         exp( - our_saxs_options->fast_modulation * q[i] )
+         ;
+   }
+
+   // US_Vector::printvector2( "source r, pr", *r, *pr );
+
+   // US_Vector::printvector2( "computed q, I", q, I );
+   
+   // setup scaling
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->batch_widget && ((US_Hydrodyn *)us_hydrodyn)->batch_window->batch_job_running ) {
+      if ( plotted_I.size() == 1 && plotted_I[0].size() && I[0] ) {
+         double scale = plotted_I[0][0] / I[0];
+         TSO << "Auto scaling to the one Iq target scale:" << scale << "\n";
+         for ( int i = 0; i < q_points; ++i ) {
+            I[i] *= scale;
+         }
+         if ( plotted_q[0] == q ) {
+            TSO << "Q grids match!\n";
+            // create subtracted curve & save the difference curve
+            vector < double > Idiff = plotted_I[0];
+            QString qsdiff;
+            QString qspct;
+            for ( int i = 0; i < q_points; ++i ) {
+               Idiff[i] -= I[i];
+               qsdiff += QString( "%1 %2\n" ).arg( q[i] ).arg( Idiff[i] );
+               if ( plotted_I[0][i] ) {
+                  Idiff[i] /= plotted_I[0][i];
+               }
+               qspct += QString( "%1 %2\n" ).arg( q[i] ).arg( 100 * Idiff[i] );
+            }
+            QString error;
+            QString diffname = name + "_Idiff.dat";
+            QString pctname = name + "_Idiffpct.dat";
+            if ( !US_File_Util::putcontents( diffname, qsdiff, error ) ) {
+               TSO << "Error: writing " << diffname << "\n";
+            } else {
+               TSO << QString( "wrote diff file: %1%2%3\n").arg( QDir::currentPath() ).arg( QDir::separator() ).arg( diffname );
+            }
+            if ( !US_File_Util::putcontents( pctname, qspct, error ) ) {
+               TSO << "Error: writing " << diffname << "\n";
+            } else {
+               TSO << QString( "wrote diff pct file: %1%2%3\n").arg( QDir::currentPath() ).arg( QDir::separator() ).arg( pctname );
+            }
+         } else {
+            TSO << "Q grids DO NOT match :(\n";
+         }
+      }
+   } else {
+      QString scaling_target = "";
+      set_scaling_target( scaling_target );
+
+      TSO << "Scaling target " << scaling_target << "\n";
+   
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         rescale_iqq_curve( scaling_target, q, I );
+      }
+   }
+   
+   
+
    plot_one_iqq( q, I, name );
 
    return true;
