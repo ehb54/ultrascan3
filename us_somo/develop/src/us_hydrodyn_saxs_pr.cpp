@@ -365,8 +365,14 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
 
+   if ( conc == 0e0 ) {
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
+      MW = 0e0;
+      return false;
+   }
+
    if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
-      MW = I0_exp / conc;
+      MW = I0_exp / (conc * 1e-3);
       return true;
    }
 
@@ -394,12 +400,6 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
       return false;
    }
 
-   if ( conc == 0e0 )
-   {
-      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
-      MW = 0e0;
-      return false;
-   }
 
    double guinier_electron_nucleon_ratio =
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_electron_nucleon_ratio" ) ?
@@ -452,6 +452,11 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    double psv;
    double I0_std_exp;
 
+   if ( name.contains( QRegularExpression( "_Istarq_" ) ) ) {
+      ML = I0_exp / M_PI;
+      return true;
+   }
+
 #if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;
@@ -460,12 +465,23 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
 
+   if ( conc == 0e0 ){
+      errormsg = us_tr( "Error: Concentration is 0, can not compute ML" );
+      ML = 0e0;
+      return false;
+   }
+
+   if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
+      ML = I0_exp / (conc * 1e-3) / M_PI;
+      return true;
+   }
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute ML" );
          ML = 0e0;
          return false;
       }
@@ -476,17 +492,11 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute ML" );
       ML = 0e0;
       return false;
    }
 
-   if ( conc == 0e0 )
-   {
-      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
-      ML = 0e0;
-      return false;
-   }
 
    double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : psv;
 
@@ -545,6 +555,11 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
    double psv;
    double I0_std_exp;
 
+   if ( name.contains( QRegularExpression( "_Istarq_" ) ) ) {
+      MA = I0_exp / (2. * M_PI);
+      return true;
+   }
+
 #if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;
@@ -553,12 +568,23 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
 
+   if ( conc == 0e0 ) {
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MA" );
+      MA = 0e0;
+      return false;
+   }
+
+   if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
+      MA = I0_exp / (conc * 1e-3) / (2. * M_PI);
+      return true;
+   }
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MA" );
          MA = 0e0;
          return false;
       }
@@ -569,14 +595,7 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
-      MA = 0e0;
-      return false;
-   }
-
-   if ( conc == 0e0 )
-   {
-      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MA" );
       MA = 0e0;
       return false;
    }
