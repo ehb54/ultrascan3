@@ -702,15 +702,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       QLabel                           * lbl_scale_pair_q2_range;
       mQLineEdit                       * le_scale_pair_q2_start;
       mQLineEdit                       * le_scale_pair_q2_end;
-      QLabel                           * lbl_scale_pair_fit_method;
-      QButtonGroup                     * bg_scale_pair_fit_method;
-      QRadioButton                     * rb_scale_pair_fit_method_p2;
-      QRadioButton                     * rb_scale_pair_fit_method_p3;
-      QRadioButton                     * rb_scale_pair_fit_method_p4;
-      QRadioButton                     * rb_scale_pair_fit_method_p5;
-      QRadioButton                     * rb_scale_pair_fit_method_p6;
-      QRadioButton                     * rb_scale_pair_fit_method_p7;
-      QRadioButton                     * rb_scale_pair_fit_method_p8;
+      QLabel                           * lbl_scale_pair_fit_curve;
       QLabel                           * lbl_scale_pair_sd_scale;
       QLineEdit                        * le_scale_pair_sd_scale;
       QLabel                           * lbl_scale_pair_scale;
@@ -747,17 +739,16 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       bool                               scale_pair_use_errors;
 
-      enum scale_pair_fit_methods {
-         SCALE_PAIR_FIT_METHOD_P2,
-         SCALE_PAIR_FIT_METHOD_P3,
-         SCALE_PAIR_FIT_METHOD_P4,
-         SCALE_PAIR_FIT_METHOD_P5,
-         SCALE_PAIR_FIT_METHOD_P6,
-         SCALE_PAIR_FIT_METHOD_P7,
-         SCALE_PAIR_FIT_METHOD_P8
+      enum scale_pair_fit_curves : int {
+         SCALE_PAIR_FIT_CURVE_P2 = 2,
+         SCALE_PAIR_FIT_CURVE_P3 = 3,
+         SCALE_PAIR_FIT_CURVE_P4 = 4,
+         SCALE_PAIR_FIT_CURVE_P5 = 5,
+         SCALE_PAIR_FIT_CURVE_P6 = 6,
+         SCALE_PAIR_FIT_CURVE_P7 = 7,
+         SCALE_PAIR_FIT_CURVE_P8 = 8
       };
 
-      scale_pair_fit_methods             scale_pair_current_fit_method;
       vector < vector < double > >       scale_pair_qgrids;
       int                                scale_pair_mals_set;
       int                                scale_pair_saxs_set;
@@ -768,18 +759,11 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       set < QString >                    scale_pair_save_names;
       
-      // testing entries
-
-      QButtonGroup                     * bg_scale_pair_fit_alg;
-      QRadioButton                     * rb_scale_pair_fit_alg_eigen_svd_jacobi;
-      QRadioButton                     * rb_scale_pair_fit_alg_eigen_svd_bdc;
-      QRadioButton                     * rb_scale_pair_fit_alg_eigen_householder_qr;
-      QRadioButton                     * rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col;
-      QRadioButton                     * rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full;
-      QRadioButton                     * rb_scale_pair_fit_alg_eigen_normal;
-
-      QCheckBox                        * cb_scale_pair_fit_alg_use_errors;
+      QComboBox                        * cb_scale_pair_fit_curve;
+      QComboBox                        * cb_scale_pair_fit_alg;
       QComboBox                        * cb_scale_pair_fit_alg_weight;
+
+      QCheckBox                        * cb_scale_pair_scale_saxs;
 
       QwtPlotCurve                     * scale_pair_fit_curve;
 
@@ -795,15 +779,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
    private slots:
 
-      void scale_pair();
-
-      void scale_pair_set_fit_method_p2();
-      void scale_pair_set_fit_method_p3();
-      void scale_pair_set_fit_method_p4();
-      void scale_pair_set_fit_method_p5();
-      void scale_pair_set_fit_method_p6();
-      void scale_pair_set_fit_method_p7();
-      void scale_pair_set_fit_method_p8();
+      void scale_pair                     ( bool no_store_original = false );
 
       void scale_pair_fit();
       void scale_pair_reset();
@@ -824,15 +800,12 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       void scale_pair_time_focus          ( bool );
 
-      void scale_pair_fit_alg_eigen_svd_jacobi();
-      void scale_pair_fit_alg_eigen_svd_bdc();
-      void scale_pair_fit_alg_eigen_householder_qr();
-      void scale_pair_fit_alg_eigen_householder_qr_pivot_col();
-      void scale_pair_fit_alg_eigen_householder_qr_pivot_full();
-      void scale_pair_fit_alg_eigen_normal();
+      // qt doc says int argument for the signal, but actually QString
+      void scale_pair_fit_alg_index       (); // int index );
+      void scale_pair_fit_alg_weight_index(); // int index );
+      void scale_pair_fit_curve_index     (); // int index );
 
-      void scale_pair_fit_alg_use_errors();
-      void scale_pair_fit_alg_weight_index( int index );
+      void scale_pair_scale_saxs          ();
 
       bool scale_pair_fit_at_time( double time
                                    ,int degree
@@ -1614,13 +1587,14 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       unsigned int                 use_line_width;
 
-      QPalette                  cg_red;
+      QPalette                     cg_red;
 
       void                         errors_multi_file( QStringList files );
 
       bool                         compatible_grids( QStringList files );
 
       bool                         suppress_replot;
+      bool                         suppress_plot;
 
       void                         update_ref();
 

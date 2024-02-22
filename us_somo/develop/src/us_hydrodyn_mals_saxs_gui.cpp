@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QFrame>
  //#include <Q3PopupMenu>
+#include "../include/us_eigen.h"
 
 // #define UHSH_VAL_DEC 8
 
@@ -410,127 +411,12 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    pb_scale_pair_fit->setPalette( PALET_PUSHB );
    connect(pb_scale_pair_fit, SIGNAL(clicked()), SLOT(scale_pair_fit()));
 
-   lbl_scale_pair_fit_method = new QLabel( "Fit Poly. deg. ", this );
-   lbl_scale_pair_fit_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_scale_pair_fit_method->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_scale_pair_fit_method );
-   lbl_scale_pair_fit_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   rb_scale_pair_fit_method_p2 =  new QRadioButton( us_tr( "2" ), this );
-   rb_scale_pair_fit_method_p2 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p2 );
-   rb_scale_pair_fit_method_p2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p2, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p2() ) );
-
-   rb_scale_pair_fit_method_p3 =  new QRadioButton( us_tr( "3" ), this );
-   rb_scale_pair_fit_method_p3 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p3 );
-   rb_scale_pair_fit_method_p3 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p3, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p3() ) );
-
-   rb_scale_pair_fit_method_p4 =  new QRadioButton( us_tr( "4" ), this );
-   rb_scale_pair_fit_method_p4 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p4 );
-   rb_scale_pair_fit_method_p4 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p4, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p4() ) );
-
-   rb_scale_pair_fit_method_p5 =  new QRadioButton( us_tr( "5" ), this );
-   rb_scale_pair_fit_method_p5 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p5 );
-   rb_scale_pair_fit_method_p5 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p5, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p5() ) );
-
-   rb_scale_pair_fit_method_p6 =  new QRadioButton( us_tr( "6" ), this );
-   rb_scale_pair_fit_method_p6 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p6 );
-   rb_scale_pair_fit_method_p6 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p6, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p6() ) );
-
-   rb_scale_pair_fit_method_p7 =  new QRadioButton( us_tr( "7" ), this );
-   rb_scale_pair_fit_method_p7 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p7 );
-   rb_scale_pair_fit_method_p7 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p7, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p7() ) );
-
-   rb_scale_pair_fit_method_p8 =  new QRadioButton( us_tr( "8" ), this );
-   rb_scale_pair_fit_method_p8 -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_method_p8 );
-   rb_scale_pair_fit_method_p8 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_method_p8, SIGNAL( clicked() ), SLOT( scale_pair_set_fit_method_p8() ) );
-
-
-   bg_scale_pair_fit_method = new QButtonGroup( this );
-   {
-      int bg_pos = 0;
-      bg_scale_pair_fit_method->setExclusive(true);
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p2, bg_pos++ );
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p3, bg_pos++ );
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p4, bg_pos++ );
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p5, bg_pos++ );
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p6, bg_pos++ );
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p7, bg_pos++ );
-      bg_scale_pair_fit_method->addButton( rb_scale_pair_fit_method_p8, bg_pos++ );
-   }
-   rb_scale_pair_fit_method_p3->setChecked(true);
-   // shouldn't the below already have been triggered by the above?
-   scale_pair_set_fit_method_p3();
-   
-   rb_scale_pair_fit_alg_eigen_svd_bdc =  new QRadioButton( us_tr( "SVDB" ), this );
-   rb_scale_pair_fit_alg_eigen_svd_bdc -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_alg_eigen_svd_bdc );
-   rb_scale_pair_fit_alg_eigen_svd_bdc -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_alg_eigen_svd_bdc, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_svd_bdc() ) );
-   rb_scale_pair_fit_alg_eigen_svd_bdc->setToolTip( "SVD BDC method, supposedly most accurate & slowest" );
-
-   rb_scale_pair_fit_alg_eigen_svd_jacobi =  new QRadioButton( us_tr( "SVDJ" ), this );
-   rb_scale_pair_fit_alg_eigen_svd_jacobi -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_alg_eigen_svd_jacobi );
-   rb_scale_pair_fit_alg_eigen_svd_jacobi -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_alg_eigen_svd_jacobi, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_svd_jacobi() ) );
-   rb_scale_pair_fit_alg_eigen_svd_jacobi->setToolTip( "SVD Jacobi method, comparable to BDC method?" );
-
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full =  new QRadioButton( us_tr( "QRF" ), this );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_householder_qr_pivot_full() ) );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full->setToolTip( "QR decomposition with full pivoting, supposedly faster than SVD" );
-
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col =  new QRadioButton( us_tr( "QRC" ), this );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_householder_qr_pivot_col() ) );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col->setToolTip( "QR decomposition with column pivoting" );
-
-   rb_scale_pair_fit_alg_eigen_householder_qr =  new QRadioButton( us_tr( "QR" ), this );
-   rb_scale_pair_fit_alg_eigen_householder_qr -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_alg_eigen_householder_qr );
-   rb_scale_pair_fit_alg_eigen_householder_qr -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_alg_eigen_householder_qr, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_householder_qr() ) );
-   rb_scale_pair_fit_alg_eigen_householder_qr->setToolTip( "QR decomposition with NO column pivoting" );
-
-   rb_scale_pair_fit_alg_eigen_normal =  new QRadioButton( us_tr( "LR" ), this );
-   rb_scale_pair_fit_alg_eigen_normal -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( rb_scale_pair_fit_alg_eigen_normal );
-   rb_scale_pair_fit_alg_eigen_normal -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( rb_scale_pair_fit_alg_eigen_normal, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_eigen_normal() ) );
-   rb_scale_pair_fit_alg_eigen_normal->setToolTip( "LR decomposition. Supposedly fastest & least accurate" );
-
-   bg_scale_pair_fit_alg = new QButtonGroup( this );
-   {
-      int bg_pos = 0;
-      bg_scale_pair_fit_alg->setExclusive(true);
-      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_svd_bdc, bg_pos++ );
-      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_svd_jacobi, bg_pos++ );
-      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full, bg_pos++ );
-      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col, bg_pos++ );
-      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_householder_qr, bg_pos++ );
-      bg_scale_pair_fit_alg->addButton( rb_scale_pair_fit_alg_eigen_normal, bg_pos++ );
-   }
-
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full->setChecked(true);
-   scale_pair_fit_alg_eigen_householder_qr_pivot_full();
+   // lbl_scale_pair_fit_curve = new QLabel( "Fit curve ", this );
+   lbl_scale_pair_fit_curve = new QLabel( "Fit controls", this );
+   lbl_scale_pair_fit_curve->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_scale_pair_fit_curve->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_scale_pair_fit_curve );
+   lbl_scale_pair_fit_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    // cb_scale_pair_fit_alg_use_errors = new QCheckBox(this);
    // cb_scale_pair_fit_alg_use_errors->setText(us_tr("Fit use SD "));
@@ -543,6 +429,51 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    // cb_scale_pair_fit_alg_use_errors->setChecked(true);
    // connect( cb_scale_pair_fit_alg_use_errors, SIGNAL( clicked() ), SLOT( scale_pair_fit_alg_use_errors() ) );
 
+   cb_scale_pair_scale_saxs = new QCheckBox(this);
+   cb_scale_pair_scale_saxs->setText(us_tr("Scale SAXS "));
+   cb_scale_pair_scale_saxs->setChecked( false );
+   cb_scale_pair_scale_saxs->setMinimumHeight( minHeight1 );
+   cb_scale_pair_scale_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_scale_pair_scale_saxs->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_pair_scale_saxs );
+   cb_scale_pair_scale_saxs->setChecked(false);
+   connect( cb_scale_pair_scale_saxs, SIGNAL( clicked() ), SLOT( scale_pair_scale_saxs() ) );
+
+   cb_scale_pair_fit_curve = new QComboBox( this );
+   cb_scale_pair_fit_curve->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_pair_fit_curve );
+   cb_scale_pair_fit_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_scale_pair_fit_curve->setEnabled(true);
+   cb_scale_pair_fit_curve->setMinimumHeight( minHeight1 );
+   cb_scale_pair_fit_curve->setMaxVisibleItems( 1 );
+
+   cb_scale_pair_fit_curve->addItem( us_tr( "2nd degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P2 );
+   cb_scale_pair_fit_curve->addItem( us_tr( "3rd degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P3 );
+   cb_scale_pair_fit_curve->addItem( us_tr( "4th degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P4 );
+   cb_scale_pair_fit_curve->addItem( us_tr( "5th degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P5 );
+   cb_scale_pair_fit_curve->addItem( us_tr( "6th degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P6 );
+   cb_scale_pair_fit_curve->addItem( us_tr( "7th degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P7 );
+   cb_scale_pair_fit_curve->addItem( us_tr( "8th degree Polynomial" ), SCALE_PAIR_FIT_CURVE_P8 );
+   connect( cb_scale_pair_fit_curve, SIGNAL( currentIndexChanged( QString ) ), SLOT( scale_pair_fit_curve_index( ) ) );
+   cb_scale_pair_fit_curve->setCurrentIndex( 1 );
+
+   cb_scale_pair_fit_alg = new QComboBox( this );
+   cb_scale_pair_fit_alg->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_pair_fit_alg );
+   cb_scale_pair_fit_alg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_scale_pair_fit_alg->setEnabled(true);
+   cb_scale_pair_fit_alg->setMinimumHeight( minHeight1 );
+   cb_scale_pair_fit_alg->setMaxVisibleItems( 1 );
+
+   cb_scale_pair_fit_alg->addItem( us_tr( "SVD BDC" )                       , US_Eigen::EIGEN_SVD_BDC );
+   cb_scale_pair_fit_alg->addItem( us_tr( "SVD Jacobi" )                    , US_Eigen::EIGEN_SVD_JACOBI );
+   cb_scale_pair_fit_alg->addItem( us_tr( "QR Householder full pivoting" )  , US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_FULL );
+   cb_scale_pair_fit_alg->addItem( us_tr( "QR Householder column pivoting" ), US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL);
+   cb_scale_pair_fit_alg->addItem( us_tr( "QR Householder" )                , US_Eigen::EIGEN_HOUSEHOLDER_QR );
+   cb_scale_pair_fit_alg->addItem( us_tr( "LR" )                            , US_Eigen::EIGEN_NORMAL );
+   connect( cb_scale_pair_fit_alg, SIGNAL( currentIndexChanged( QString ) ), SLOT( scale_pair_fit_alg_index( ) ) );
+   cb_scale_pair_fit_alg->setCurrentIndex( 3 );
+
    cb_scale_pair_fit_alg_weight = new QComboBox( this );
    cb_scale_pair_fit_alg_weight->setPalette( PALET_NORMAL );
    AUTFBACK( cb_scale_pair_fit_alg_weight );
@@ -551,12 +482,13 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    cb_scale_pair_fit_alg_weight->setMinimumHeight( minHeight1 );
    cb_scale_pair_fit_alg_weight->setMaxVisibleItems( 1 );
 
-   cb_scale_pair_fit_alg_weight->addItem( us_tr( "no weighting" ) );
-   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/amount" ) );
-   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/amount^2" ) );
-   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD" ) );
-   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD^2" ) );
-   connect( cb_scale_pair_fit_alg_weight, SIGNAL( currentIndexChanged( int index ) ), SLOT( scale_pair_fit_alg_weight_index( int index ) ) );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "no weighting" ), US_Eigen::EIGEN_NO_WEIGHTS );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/amount" )    , US_Eigen::EIGEN_1_OVER_AMOUNT );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/amount^2" )  , US_Eigen::EIGEN_1_OVER_AMOUNT_SQ );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD" )        , US_Eigen::EIGEN_1_OVER_SD );
+   cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD^2" )      , US_Eigen::EIGEN_1_OVER_SD_SQ );
+
+   connect( cb_scale_pair_fit_alg_weight, SIGNAL( currentIndexChanged( QString ) ), SLOT( scale_pair_fit_alg_weight_index( ) ) );
    cb_scale_pair_fit_alg_weight->setCurrentIndex( 0 ); // US_Eigen::EIGEN_NO_WEIGHTS
 
    pb_scale_pair_minimize = new QPushButton(us_tr("Minimize"), this);
@@ -4164,14 +4096,10 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
 
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( lbl_scale_pair_fit_method );
-      hbl->addWidget( rb_scale_pair_fit_method_p2 );
-      hbl->addWidget( rb_scale_pair_fit_method_p3 );
-      hbl->addWidget( rb_scale_pair_fit_method_p4 );
-      hbl->addWidget( rb_scale_pair_fit_method_p5 );
-      hbl->addWidget( rb_scale_pair_fit_method_p6 );
-      hbl->addWidget( rb_scale_pair_fit_method_p7 );
-      hbl->addWidget( rb_scale_pair_fit_method_p8 );
+      hbl->addWidget( lbl_scale_pair_scale );
+      hbl->addWidget( le_scale_pair_scale );
+      hbl->addWidget( lbl_scale_pair_sd_scale );
+      hbl->addWidget( le_scale_pair_sd_scale );
       hbl->addWidget( pb_scale_pair_fit );
       hbl->addWidget( pb_scale_pair_minimize );
       hbl->addWidget( pb_scale_pair_reset );
@@ -4180,23 +4108,16 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    }
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( lbl_scale_pair_scale );
-      hbl->addWidget( le_scale_pair_scale );
-      hbl->addWidget( lbl_scale_pair_sd_scale );
-      hbl->addWidget( le_scale_pair_sd_scale );
-      hbl->addWidget( lbl_scale_pair_msg );
+      hbl->addWidget( lbl_scale_pair_fit_curve );
+      hbl->addWidget( cb_scale_pair_fit_curve );
+      hbl->addWidget( cb_scale_pair_fit_alg );
+      hbl->addWidget( cb_scale_pair_fit_alg_weight );
+      hbl->addWidget( cb_scale_pair_scale_saxs );
       vbl_scale_pair->addLayout( hbl );
    }
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( rb_scale_pair_fit_alg_eigen_svd_bdc );
-      hbl->addWidget( rb_scale_pair_fit_alg_eigen_svd_jacobi );
-      hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full );
-      hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
-      hbl->addWidget( rb_scale_pair_fit_alg_eigen_householder_qr );
-      hbl->addWidget( rb_scale_pair_fit_alg_eigen_normal );
-      // hbl->addWidget( cb_scale_pair_fit_alg_use_errors );
-      hbl->addWidget( cb_scale_pair_fit_alg_weight );
+      hbl->addWidget( lbl_scale_pair_msg );
       vbl_scale_pair->addLayout( hbl );
    }
 
@@ -4626,24 +4547,11 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scale_pair_widgets.push_back( pb_scale_pair_minimize );
    scale_pair_widgets.push_back( pb_scale_pair_reset );
    scale_pair_widgets.push_back( pb_scale_pair_create_scaled_curves );
-   scale_pair_widgets.push_back( lbl_scale_pair_fit_method );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p2 );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p3 );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p4 );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p5 );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p6 );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p7 );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_method_p8 );
-   
-
-   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_svd_bdc );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_svd_jacobi );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_householder_qr );
-   scale_pair_widgets.push_back( rb_scale_pair_fit_alg_eigen_normal );
-   // scale_pair_widgets.push_back( cb_scale_pair_fit_alg_use_errors );
+   scale_pair_widgets.push_back( lbl_scale_pair_fit_curve );
+   scale_pair_widgets.push_back( cb_scale_pair_fit_curve );
+   scale_pair_widgets.push_back( cb_scale_pair_fit_alg );
    scale_pair_widgets.push_back( cb_scale_pair_fit_alg_weight );
+   scale_pair_widgets.push_back( cb_scale_pair_scale_saxs );
 
    // wyatt_widgets;
 
@@ -5702,28 +5610,17 @@ void US_Hydrodyn_Mals_Saxs::disable_all()
    pb_scale_pair_minimize               ->setEnabled( false );
    pb_scale_pair_create_scaled_curves   ->setEnabled( false );
    pb_scale_pair_reset                  ->setEnabled( false );
-   rb_scale_pair_fit_method_p2          ->setEnabled( false );
-   rb_scale_pair_fit_method_p3          ->setEnabled( false );
-   rb_scale_pair_fit_method_p4          ->setEnabled( false );
-   rb_scale_pair_fit_method_p5          ->setEnabled( false );
-   rb_scale_pair_fit_method_p6          ->setEnabled( false );
-   rb_scale_pair_fit_method_p7          ->setEnabled( false );
-   rb_scale_pair_fit_method_p8          ->setEnabled( false );
    le_scale_pair_q1_start               ->setEnabled( false );
    le_scale_pair_q1_end                 ->setEnabled( false );
    le_scale_pair_q2_start               ->setEnabled( false );
    le_scale_pair_q2_end                 ->setEnabled( false );
    le_scale_pair_scale                  ->setEnabled( false );
    le_scale_pair_sd_scale               ->setEnabled( false );
+   cb_scale_pair_scale_saxs             ->setEnabled( false );
 
-   rb_scale_pair_fit_alg_eigen_svd_bdc      ->setEnabled( false );
-   rb_scale_pair_fit_alg_eigen_svd_jacobi   ->setEnabled( false );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full ->setEnabled( false );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col ->setEnabled( false );
-   rb_scale_pair_fit_alg_eigen_householder_qr ->setEnabled( false );
-   rb_scale_pair_fit_alg_eigen_normal       ->setEnabled( false );
-   // cb_scale_pair_fit_alg_use_errors         ->setEnabled( false );
-   cb_scale_pair_fit_alg_weight             ->setEnabled( false );
+   cb_scale_pair_fit_curve              ->setEnabled( false );
+   cb_scale_pair_fit_alg                ->setEnabled( false );
+   cb_scale_pair_fit_alg_weight         ->setEnabled( false );
 }
 
 void US_Hydrodyn_Mals_Saxs::model_select_all()

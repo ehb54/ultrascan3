@@ -7,14 +7,15 @@
 #include "../include/us_eigen.h"
 
 static US_Eigen eigen;
-static US_Eigen::fit_methods current_fit_method;
 static bool minimize_running;
+static int  variable_set;
+static int  fixed_set;
 
 #define TSO QTextStream(stdout)
 
 // --- scale pairs ---
 
-void US_Hydrodyn_Mals_Saxs::scale_pair()
+void US_Hydrodyn_Mals_Saxs::scale_pair( bool no_store_original )
 {
    TSO << "scale_pairs()\n";
    le_last_focus = (mQLineEdit *) 0;
@@ -34,8 +35,10 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
    scale_pair_save_names.clear();
 
    QStringList names = all_selected_files();
-   scale_pair_original_scale    = le_scale_pair_scale   ->text().toDouble();
-   scale_pair_original_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+   if ( !no_store_original ) {
+      scale_pair_original_scale    = le_scale_pair_scale   ->text().toDouble();
+      scale_pair_original_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+   }
 
    // somewhat duplicated code in ::common_time() && ::join_by_time
    {
@@ -118,10 +121,12 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
 
    scale_pair_mals_set = f_qs[ scale_pair_names[0][0] ].front() < f_qs[ scale_pair_names[1][0] ].front() ? 0 : 1;
    scale_pair_saxs_set = 1 - scale_pair_mals_set;
+   variable_set        = cb_scale_pair_scale_saxs->isChecked() ? scale_pair_saxs_set : scale_pair_mals_set;
+   fixed_set           = cb_scale_pair_scale_saxs->isChecked() ? scale_pair_mals_set : scale_pair_saxs_set;
 
    for ( int i = 0; i < (int) scale_pair_times.size(); ++i ) {
-      scale_pair_time_to_names[ scale_pair_times[i] ].push_back( scale_pair_names[scale_pair_mals_set][i] );
-      scale_pair_time_to_names[ scale_pair_times[i] ].push_back( scale_pair_names[scale_pair_saxs_set][i] );
+      scale_pair_time_to_names[ scale_pair_times[i] ].push_back( scale_pair_names[ scale_pair_mals_set ][i] );
+      scale_pair_time_to_names[ scale_pair_times[i] ].push_back( scale_pair_names[ scale_pair_saxs_set ][i] );
    }
 
    // using errors?
@@ -164,6 +169,23 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
 
    scale_pair_created_init();
 
+   lbl_scale_pair_q1_range->setText(
+                                    cb_scale_pair_scale_saxs->isChecked()
+                                    ? us_tr( " Fit range 1 (fixed): " )
+                                    : us_tr( " Fit range 1 (scales): " )
+                                    );
+   lbl_scale_pair_q2_range->setText(
+                                    cb_scale_pair_scale_saxs->isChecked()
+                                    ? us_tr( " Fit range 2 (scales): " )
+                                    : us_tr( " Fit range 2 (fixed): " )
+                                    );
+
+   lbl_scale_pair_sd_scale->setText(
+                                    cb_scale_pair_scale_saxs->isChecked()
+                                    ? us_tr( " MALS SD Mult.: " )
+                                    : us_tr( " SAXS SD Mult.: " )
+                                    );
+   
    mode_select( MODE_SCALE_PAIR );
 
    running       = true;
@@ -179,21 +201,60 @@ void US_Hydrodyn_Mals_Saxs::scale_pair()
    // set le_scale_pair_q1,2 start,end to grid limits
    scale_pair_markers.clear();
 
+
    scale_pair_add_marker( plot_dist, le_scale_pair_q1_start  ->text().toDouble(), scale_pair_color_q1, us_tr( "Start"), Qt::AlignRight | Qt::AlignBottom );
    scale_pair_add_marker( plot_dist, le_scale_pair_q1_end    ->text().toDouble(), scale_pair_color_q1, us_tr( "End"  ), Qt::AlignLeft  | Qt::AlignBottom );
    scale_pair_add_marker( plot_dist, le_scale_pair_q2_start  ->text().toDouble(), scale_pair_color_q2, us_tr( "Start"), Qt::AlignRight | Qt::AlignBottom );
    scale_pair_add_marker( plot_dist, le_scale_pair_q2_end    ->text().toDouble(), scale_pair_color_q2, us_tr( "End"  ), Qt::AlignLeft  | Qt::AlignBottom );
 
-   scale_pair_q1_min = f_qs[ scale_pair_names[scale_pair_mals_set][0] ].front();
-   scale_pair_q1_max = f_qs[ scale_pair_names[scale_pair_mals_set][0] ].back();
-   scale_pair_q2_min = f_qs[ scale_pair_names[scale_pair_saxs_set][0] ].front();
-   scale_pair_q2_max = f_qs[ scale_pair_names[scale_pair_saxs_set][0] ].back();
+   scale_pair_q1_min = f_qs[ scale_pair_names[ scale_pair_mals_set ][0] ].front();
+   scale_pair_q1_max = f_qs[ scale_pair_names[ scale_pair_mals_set ][0] ].back();
+   scale_pair_q2_min = f_qs[ scale_pair_names[ scale_pair_saxs_set ][0] ].front();
+   scale_pair_q2_max = f_qs[ scale_pair_names[ scale_pair_saxs_set ][0] ].back();
 
-   le_scale_pair_q1_start->setText( QString( "%1" ).arg( scale_pair_q1_min ) );
-   le_scale_pair_q1_end  ->setText( QString( "%1" ).arg( scale_pair_q1_max ) );
-   le_scale_pair_q2_start->setText( QString( "%1" ).arg( scale_pair_q2_min ) );
-   le_scale_pair_q2_end  ->setText( QString( "%1" ).arg( scale_pair_q2_max ) );
+   // disconnect( le_scale_pair_q1_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   // disconnect( le_scale_pair_q1_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   if (
+       le_scale_pair_q1_start->text().isEmpty() 
+       || le_scale_pair_q1_start->text().toDouble() < scale_pair_q1_min
+       || le_scale_pair_q1_start->text().toDouble() > scale_pair_q1_max
+        ) {
+      le_scale_pair_q1_start->setText( QString( "%1" ).arg( scale_pair_q1_min ) );
+   }
+   if (
+       le_scale_pair_q1_end->text().isEmpty() 
+       || le_scale_pair_q1_end->text().toDouble() > scale_pair_q1_max
+       || le_scale_pair_q1_end->text().toDouble() < scale_pair_q1_min
+       || le_scale_pair_q1_end->text().toDouble() == scale_pair_q1_min // caused by the slot
+        ) {
+      le_scale_pair_q1_end  ->setText( QString( "%1" ).arg( scale_pair_q1_max ) );
+   }
+   // connect( le_scale_pair_q1_start, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q1_start_text( const QString & ) ) );
+   // connect( le_scale_pair_q1_end, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q1_end_text( const QString & ) ) );
 
+   // disconnect( le_scale_pair_q2_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   // disconnect( le_scale_pair_q2_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   if (
+       le_scale_pair_q2_start->text().isEmpty() 
+       || le_scale_pair_q2_start->text().toDouble() < scale_pair_q2_min
+       || le_scale_pair_q2_start->text().toDouble() > scale_pair_q2_max
+        ) {
+      le_scale_pair_q2_start->setText( QString( "%1" ).arg( scale_pair_q2_min ) );
+   }
+   if (
+       le_scale_pair_q2_end->text().isEmpty() 
+       || le_scale_pair_q2_end->text().toDouble() > scale_pair_q2_max
+       || le_scale_pair_q2_end->text().toDouble() < scale_pair_q2_min
+       || le_scale_pair_q2_end->text().toDouble() == scale_pair_q2_min // caused by the slot
+        ) {
+      le_scale_pair_q2_end  ->setText( QString( "%1" ).arg( scale_pair_q2_max ) );
+   }
+   // connect( le_scale_pair_q2_start, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q2_start_text( const QString & ) ) );
+   // connect( le_scale_pair_q2_end, SIGNAL( textChanged( const QString & ) ), SLOT( scale_pair_q2_end_text( const QString & ) ) );
+
+   suppress_plot = true;
+   scale_pair_created_update();
+   suppress_plot = false;
    scale_pair_scroll_highlight(0);
    lbl_wheel_pos->setText("");
    scale_pair_enables();
@@ -235,13 +296,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
 
    pb_scale_pair_reset                  ->setEnabled( le_scale_pair_scale->text() != "1" ||
                                                       le_scale_pair_sd_scale->text() != "1" );
-   rb_scale_pair_fit_method_p2          ->setEnabled( true );
-   rb_scale_pair_fit_method_p3          ->setEnabled( true );
-   rb_scale_pair_fit_method_p4          ->setEnabled( true );
-   rb_scale_pair_fit_method_p5          ->setEnabled( true );
-   rb_scale_pair_fit_method_p6          ->setEnabled( true );
-   rb_scale_pair_fit_method_p7          ->setEnabled( true );
-   rb_scale_pair_fit_method_p8          ->setEnabled( true );
    le_scale_pair_q1_start               ->setEnabled( true );
    le_scale_pair_q1_end                 ->setEnabled( true );
    le_scale_pair_q2_start               ->setEnabled( true );
@@ -249,14 +303,10 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
    le_scale_pair_scale                  ->setEnabled( true );
    le_scale_pair_sd_scale               ->setEnabled( scale_pair_use_errors );
 
-   rb_scale_pair_fit_alg_eigen_svd_bdc                      ->setEnabled( true );
-   rb_scale_pair_fit_alg_eigen_svd_jacobi                   ->setEnabled( true );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_full    ->setEnabled( true );
-   rb_scale_pair_fit_alg_eigen_householder_qr_pivot_col     ->setEnabled( true );
-   rb_scale_pair_fit_alg_eigen_householder_qr               ->setEnabled( true );
-   rb_scale_pair_fit_alg_eigen_normal                       ->setEnabled( true );
-   // cb_scale_pair_fit_alg_use_errors                         ->setEnabled( true );
-   cb_scale_pair_fit_alg_weight                             ->setEnabled( true );
+   cb_scale_pair_fit_curve              ->setEnabled( true );
+   cb_scale_pair_fit_alg                ->setEnabled( true );
+   cb_scale_pair_fit_alg_weight         ->setEnabled( true );
+   cb_scale_pair_scale_saxs             ->setEnabled( true );
 
    wheel_enables( true );
 
@@ -284,9 +334,9 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scroll_highlight( int pos )
 
    set < QString > toplot;
    toplot = {
-      scale_pair_created_time_to_name[ time ] // always mals_set
-      // scale_pair_time_to_names[ time ][ scale_pair_mals_set ] (previously unscaled)
-      ,scale_pair_time_to_names[ time ][ scale_pair_saxs_set ]
+      scale_pair_created_time_to_name[ time ] // always the scaling
+      // scale_pair_time_to_names[ time ][ variable_set ] (previously unscaled)
+      ,scale_pair_time_to_names[ time ][ fixed_set ]
    };
 
 #warning call fit
@@ -319,48 +369,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_add_marker(
 void US_Hydrodyn_Mals_Saxs::scale_pair_delete_markers() {
    plot_dist   ->detachItems( QwtPlotItem::Rtti_PlotMarker );
    scale_pair_markers.clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p2() {
-   qDebug() << "scale_pair_set_fit_method_p2()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P2;
-   scale_pair_fit_clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p3() {
-   qDebug() << "scale_pair_set_fit_method_p3()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P3;
-   scale_pair_fit_clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p4() {
-   qDebug() << "scale_pair_set_fit_method_p3()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P4;
-   scale_pair_fit_clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p5() {
-   qDebug() << "scale_pair_set_fit_method_p3()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P5;
-   scale_pair_fit_clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p6() {
-   qDebug() << "scale_pair_set_fit_method_p3()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P6;
-   scale_pair_fit_clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p7() {
-   qDebug() << "scale_pair_set_fit_method_p3()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P7;
-   scale_pair_fit_clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_set_fit_method_p8() {
-   qDebug() << "scale_pair_set_fit_method_p3()";
-   scale_pair_current_fit_method = SCALE_PAIR_FIT_METHOD_P8;
-   scale_pair_fit_clear();
 }
 
 #define UHMS_SCALE_WHEEL_RES 10000
@@ -620,7 +628,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_init() {
    
    for ( auto const & time_to_names : scale_pair_time_to_names ) {
       double  time = time_to_names.first;
-      QString name = time_to_names.second[scale_pair_mals_set];
+      QString name = time_to_names.second[ variable_set ];
 
       QString scaled_name = name + "_scaled_temp";
       
@@ -646,7 +654,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_update() {
    // called when scale and/or sd is updated
    // recreate & initially & when scale and/or sd is updated
 
-   int qgrid_size             = (int) scale_pair_qgrids[ scale_pair_mals_set ].size();
+   int qgrid_size             = (int) scale_pair_qgrids[ variable_set ].size();
    double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
       
    if ( scale_pair_use_errors ) {
@@ -654,7 +662,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_update() {
       for ( auto const & scaled_time_to_name : scale_pair_created_time_to_name ) {
          double  time        = scaled_time_to_name.first;
          QString scaled_name = scaled_time_to_name.second;
-         QString source_name = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
+         QString source_name = scale_pair_time_to_names[ time ][ variable_set ];
 
          for ( int i = 0; i < qgrid_size; ++i ) {
             f_Is    [ scaled_name ][ i ] = f_Is    [ source_name ][ i ] * scale_pair_scale;
@@ -665,7 +673,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_update() {
       for ( auto const & scaled_time_to_name : scale_pair_created_time_to_name ) {
          double  time        = scaled_time_to_name.first;
          QString scaled_name = scaled_time_to_name.second;
-         QString source_name = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
+         QString source_name = scale_pair_time_to_names[ time ][ variable_set ];
 
          for ( int i = 0; i < qgrid_size; ++i ) {
             f_Is     [ scaled_name ][ i ] = f_Is    [ source_name ][ i ] * scale_pair_scale;
@@ -694,16 +702,18 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
 
    scale_pair_save_names.clear();
 
-   int qgrid_size             = (int) scale_pair_qgrids[ scale_pair_mals_set ].size();
+   int qgrid_size             = (int) scale_pair_qgrids[ variable_set ].size();
    double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
    double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
 
+
    if ( scale_pair_use_errors ) {
+      const QString & suffix     = cb_scale_pair_scale_saxs->isChecked() ? "_SIm%1_SSDm%2" : "_MIm%1_MSDm%2_common";
       for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
-         QString source_name = scaled_time_to_name.second[scale_pair_mals_set];
+         QString source_name = scaled_time_to_name.second[ variable_set ];
          QString scaled_name = source_name;
          scaled_name = scaled_name.replace( "_common", "" );
-         scaled_name += QString( "_MIm%1_MSDm%2_common" )
+         scaled_name += QString( suffix )
             .arg( scale_pair_scale )
             .arg( scale_pair_sd_scale )
             ;
@@ -716,17 +726,18 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
             e[ i ] *= scale_pair_scale * scale_pair_sd_scale;
          }
 
-         add_plot( scaled_name, scale_pair_qgrids[ scale_pair_mals_set ], I, e, false, false );
+         add_plot( scaled_name, scale_pair_qgrids[ variable_set ], I, e, false, false );
          scale_pair_save_names.insert( last_created_file );
          scale_pair_org_selected.erase( source_name );
          scale_pair_org_selected.insert( last_created_file );
       }
    } else {
+      const QString & suffix     = cb_scale_pair_scale_saxs->isChecked() ? "_SIm%1" : "_MIm%1_common";
       for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
-         QString source_name = scaled_time_to_name.second[scale_pair_mals_set];
+         QString source_name = scaled_time_to_name.second[ variable_set ];
          QString scaled_name = source_name;
          scaled_name = scaled_name.replace( "_common", "" );
-         scaled_name += QString( "_MIm%1_common" )
+         scaled_name += QString( suffix )
             .arg( scale_pair_scale )
             ;
 
@@ -736,7 +747,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
             I[ i ] *= scale_pair_scale;
          }
 
-         add_plot( scaled_name, scale_pair_qgrids[ scale_pair_mals_set ], I, false, false );
+         add_plot( scaled_name, scale_pair_qgrids[ variable_set ], I, false, false );
          scale_pair_save_names.insert( last_created_file );
          scale_pair_org_selected.erase( source_name );
          scale_pair_org_selected.insert( last_created_file );
@@ -771,14 +782,14 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    double q2_min = le_scale_pair_q2_start->text().toDouble();
    double q2_max = le_scale_pair_q2_end  ->text().toDouble();
 
-   for ( auto const & q : scale_pair_qgrids[scale_pair_mals_set] ) {
+   for ( auto const & q : scale_pair_qgrids[ scale_pair_mals_set ] ) {
       if ( q >= q1_min && q <= q1_max && !q_exclude.count( q ) ) {
          q1.insert( q );
          qs.insert( q );
       }
    }
    
-   for ( auto const & q : scale_pair_qgrids[scale_pair_saxs_set] ) {
+   for ( auto const & q : scale_pair_qgrids[ scale_pair_saxs_set ] ) {
       if ( q >= q2_min && q <= q2_max && !q_exclude.count( q ) ) {
          q2.insert( q );
          qs.insert( q );
@@ -799,32 +810,32 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
 
    {
       int minimum_pts_req = 2;
-      switch ( scale_pair_current_fit_method ) {
-      case SCALE_PAIR_FIT_METHOD_P2 :
+      switch ( (scale_pair_fit_curves) cb_scale_pair_fit_curve->currentData().toInt() ) {
+      case SCALE_PAIR_FIT_CURVE_P2 :
          minimum_pts_req = 3;
          degree          = 2;
          break;
-      case SCALE_PAIR_FIT_METHOD_P3 :
+      case SCALE_PAIR_FIT_CURVE_P3 :
          minimum_pts_req = 4;
          degree          = 3;
          break;
-      case SCALE_PAIR_FIT_METHOD_P4 :
+      case SCALE_PAIR_FIT_CURVE_P4 :
          minimum_pts_req = 5;
          degree          = 4;
          break;
-      case SCALE_PAIR_FIT_METHOD_P5 :
+      case SCALE_PAIR_FIT_CURVE_P5 :
          minimum_pts_req = 6;
          degree          = 5;
          break;
-      case SCALE_PAIR_FIT_METHOD_P6 :
+      case SCALE_PAIR_FIT_CURVE_P6 :
          minimum_pts_req = 7;
          degree          = 6;
          break;
-      case SCALE_PAIR_FIT_METHOD_P7 :
+      case SCALE_PAIR_FIT_CURVE_P7 :
          minimum_pts_req = 8;
          degree          = 7;
          break;
-      case SCALE_PAIR_FIT_METHOD_P8 :
+      case SCALE_PAIR_FIT_CURVE_P8 :
          minimum_pts_req = 9;
          degree          = 8;
          break;
@@ -832,7 +843,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
          QMessageBox::critical( this,
                                 windowTitle() + us_tr( ": Scale Fit" ),
                                 us_tr(
-                                      "Internal error : unexpected fit method"
+                                      "Internal error : unexpected fit curve"
                                       )
                                 );
          return scale_pair_enables();
@@ -914,7 +925,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    progress->setValue( scale_pair_times.size() );
 
    // get the names
-
       
    QString name1 = scale_pair_time_to_names[ time ][ scale_pair_mals_set ];
    QString name2 = scale_pair_time_to_names[ time ][ scale_pair_saxs_set ];
@@ -932,7 +942,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
 
    bool use_errors;
 
-   switch( (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentIndex() ) {
+   switch( (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt() ) {
    case US_Eigen::EIGEN_NO_WEIGHTS :
    case US_Eigen::EIGEN_1_OVER_AMOUNT :
    case US_Eigen::EIGEN_1_OVER_AMOUNT_SQ :
@@ -969,7 +979,10 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    
       // US_Vector::printvector3( "data for fitting, q,I,e", q, I, e );
       // us_timers.start_timer( "polyfit" );
-      eigen.polyfit( q, I, e, degree, coeff, chi2, current_fit_method, (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentIndex() );
+      eigen.polyfit( q, I, e, degree, coeff, chi2
+                     ,(US_Eigen::fit_methods)    cb_scale_pair_fit_alg->currentData().toInt() 
+                     ,(US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt()
+                     );
       // us_timers.end_timer( "polyfit" );
    } else {
       for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
@@ -988,7 +1001,10 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    
       // US_Vector::printvector2( "data for fitting, q,I", q, I );
       // us_timers.start_timer( "polyfit" );
-      eigen.polyfit( q, I, degree, coeff, chi2, current_fit_method, (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentIndex() );
+      eigen.polyfit( q, I, degree, coeff, chi2
+                     ,(US_Eigen::fit_methods)    cb_scale_pair_fit_alg->currentData().toInt() 
+                     ,(US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt()
+                     );
       // us_timers.end_timer( "polyfit" );
    }      
 
@@ -1037,42 +1053,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    return scale_pair_enables();
 }
 
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_svd_jacobi() {
-   qDebug() << "scale_pair_fit_alg_eigen_svd_jacobi()";
-   current_fit_method = US_Eigen::EIGEN_SVD_JACOBI;
-   scale_pair_fit_clear();
-};
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_svd_bdc() {
-   qDebug() << "scale_pair_fit_alg_eigen_svd_bdc()";
-   current_fit_method = US_Eigen::EIGEN_SVD_BDC;
-   scale_pair_fit_clear();
-};
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr() {
-   qDebug() << "scale_pair_fit_alg_eigen_householder_qr()";
-   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR;
-   scale_pair_fit_clear();
-};
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr_pivot_col() {
-   qDebug() << "scale_pair_fit_alg_eigen_householder_qr_pivot_col()";
-   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL;
-   scale_pair_fit_clear();
-};
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_householder_qr_pivot_full() {
-   qDebug() << "scale_pair_fit_alg_eigen_householder_qr_pivot_full()";
-   current_fit_method = US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_FULL;
-   scale_pair_fit_clear();
-};
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_eigen_normal() {
-   qDebug() << "scale_pair_fit_alg_eigen_normal()";
-   current_fit_method = US_Eigen::EIGEN_NORMAL;
-   scale_pair_fit_clear();
-};
-
 void US_Hydrodyn_Mals_Saxs::scale_pair_fit_clear( bool replot ) {
    if ( !minimize_running ) {
       qDebug() << "scale_pair_fit_clear( " << ( replot ? "true" : "false" ) << " )";
@@ -1087,11 +1067,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit_clear( bool replot ) {
          plot_dist->replot();
       }
    }
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_use_errors() {
-   qDebug() << "scale_pair_fit_alg_use_errors()";
-   scale_pair_fit_clear();
 }
 
 bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
@@ -1118,7 +1093,7 @@ bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
 
    bool use_errors;
 
-   switch( (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentIndex() ) {
+   switch( (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt() ) {
    case US_Eigen::EIGEN_NO_WEIGHTS :
    case US_Eigen::EIGEN_1_OVER_AMOUNT :
    case US_Eigen::EIGEN_1_OVER_AMOUNT_SQ :
@@ -1154,7 +1129,10 @@ bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
       }
    
       // US_Vector::printvector3( "data for fitting, q,I,e", q, I, e );
-      eigen.polyfit( q, I, e, degree, coeff, chi2, current_fit_method, (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentIndex() );
+      eigen.polyfit( q, I, e, degree, coeff, chi2
+                     ,(US_Eigen::fit_methods)    cb_scale_pair_fit_alg->currentData().toInt() 
+                     ,(US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt()
+                     );
    } else {
       for ( int i = 0; i < (int) scale_pair_qgrids[ scale_pair_mals_set ].size(); ++i ) {
          if ( q1.count( scale_pair_qgrids[ scale_pair_mals_set ][ i ] ) ) {
@@ -1171,7 +1149,10 @@ bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
       }
    
       // US_Vector::printvector2( "data for fitting, q,I", q, I );
-      eigen.polyfit( q, I, degree, coeff, chi2, current_fit_method, (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentIndex() );
+      eigen.polyfit( q, I, degree, coeff, chi2
+                     ,(US_Eigen::fit_methods)    cb_scale_pair_fit_alg->currentData().toInt() 
+                     ,(US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt()
+                     );
    }
 
    return true;
@@ -1195,14 +1176,14 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    double q2_min = le_scale_pair_q2_start->text().toDouble();
    double q2_max = le_scale_pair_q2_end  ->text().toDouble();
 
-   for ( auto const & q : scale_pair_qgrids[scale_pair_mals_set] ) {
+   for ( auto const & q : scale_pair_qgrids[ scale_pair_mals_set ] ) {
       if ( q >= q1_min && q <= q1_max && !q_exclude.count( q ) ) {
          q1.insert( q );
          qs.insert( q );
       }
    }
    
-   for ( auto const & q : scale_pair_qgrids[scale_pair_saxs_set] ) {
+   for ( auto const & q : scale_pair_qgrids[ scale_pair_saxs_set ] ) {
       if ( q >= q2_min && q <= q2_max && !q_exclude.count( q ) ) {
          q2.insert( q );
          qs.insert( q );
@@ -1223,32 +1204,32 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
 
    {
       int minimum_pts_req = 2;
-      switch ( scale_pair_current_fit_method ) {
-      case SCALE_PAIR_FIT_METHOD_P2 :
+      switch ( (scale_pair_fit_curves) cb_scale_pair_fit_curve->currentData().toInt() ) {
+      case SCALE_PAIR_FIT_CURVE_P2 :
          minimum_pts_req = 3;
          degree          = 2;
          break;
-      case SCALE_PAIR_FIT_METHOD_P3 :
+      case SCALE_PAIR_FIT_CURVE_P3 :
          minimum_pts_req = 4;
          degree          = 3;
          break;
-      case SCALE_PAIR_FIT_METHOD_P4 :
+      case SCALE_PAIR_FIT_CURVE_P4 :
          minimum_pts_req = 5;
          degree          = 4;
          break;
-      case SCALE_PAIR_FIT_METHOD_P5 :
+      case SCALE_PAIR_FIT_CURVE_P5 :
          minimum_pts_req = 6;
          degree          = 5;
          break;
-      case SCALE_PAIR_FIT_METHOD_P6 :
+      case SCALE_PAIR_FIT_CURVE_P6 :
          minimum_pts_req = 7;
          degree          = 6;
          break;
-      case SCALE_PAIR_FIT_METHOD_P7 :
+      case SCALE_PAIR_FIT_CURVE_P7 :
          minimum_pts_req = 8;
          degree          = 7;
          break;
-      case SCALE_PAIR_FIT_METHOD_P8 :
+      case SCALE_PAIR_FIT_CURVE_P8 :
          minimum_pts_req = 9;
          degree          = 8;
          break;
@@ -1256,7 +1237,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
          QMessageBox::critical( this,
                                 windowTitle() + us_tr( ": Scale Fit" ),
                                 us_tr(
-                                      "Internal error : unexpected fit method"
+                                      "Internal error : unexpected fit curve"
                                       )
                                 );
          return scale_pair_enables();
@@ -1434,6 +1415,35 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
 }
 
 
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_weight_index( int index ) {
-   qDebug() << "scale_pair_fit_alg_weight_row( " << index << " )";
+// qt doc says int argument for the signal, but actually QString, just dropping it
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_index() {
+   qDebug() << "scale_pair_fit_alg_index()";
+   scale_pair_fit_clear();
+};
+
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_alg_weight_index() {
+   qDebug() << "scale_pair_fit_alg_weight_index()";
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_curve_index() {
+   qDebug() << "scale_pair_fit_curve_index()";
+   scale_pair_fit_clear();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_scale_saxs() {
+   qDebug() << "scale_pair_scale_saxs()";
+   suppress_plot = true;
+   int save_time_pos = scale_pair_time_pos;
+   scale_pair_created_remove();
+   //   scale_pair_created_init();
+   // redisplay
+   scale_pair_created_remove();
+   scale_pair_delete_markers();
+   set_selected( scale_pair_org_selected );
+   scale_pair( true );
+   suppress_plot = false;
+   scale_pair_scroll_highlight( save_time_pos );
 }

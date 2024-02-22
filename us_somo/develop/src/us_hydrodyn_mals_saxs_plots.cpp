@@ -844,7 +844,12 @@ void US_Hydrodyn_Mals_Saxs::set_eb()
 
 void US_Hydrodyn_Mals_Saxs::plot_files( bool save_zoom_state )
 {
-   // qDebug() << "plot files";
+   qDebug() << "plot files";
+   if ( suppress_plot ) {
+      qDebug() << "plot files - supressed";
+      return;
+   }
+      
    scale_pair_fit_clear( false );
 
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
