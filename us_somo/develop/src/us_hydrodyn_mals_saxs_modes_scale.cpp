@@ -182,8 +182,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair( bool no_store_original )
 
    lbl_scale_pair_sd_scale->setText(
                                     cb_scale_pair_scale_saxs->isChecked()
-                                    ? us_tr( " MALS SD Mult.: " )
-                                    : us_tr( " SAXS SD Mult.: " )
+                                    ? us_tr( " SAXS SD Mult.: " )
+                                    : us_tr( " MALS SD Mult.: " )
                                     );
    
    mode_select( MODE_SCALE_PAIR );
@@ -288,14 +288,14 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
    
    pb_scale_pair_fit                    ->setEnabled( true );
    pb_scale_pair_minimize               ->setEnabled( true );
-   pb_scale_pair_create_scaled_curves   ->setEnabled( ( le_scale_pair_scale->text() != "1" ||
-                                                        ( scale_pair_use_errors && le_scale_pair_sd_scale->text() != "1" ) )
+   pb_scale_pair_create_scaled_curves   ->setEnabled( ( le_scale_pair_scale->text().toDouble() != 1 ||
+                                                        ( scale_pair_use_errors && le_scale_pair_sd_scale->text().toDouble() != 1 ) )
                                                       && le_scale_pair_scale->text().toDouble() > 0
                                                       && le_scale_pair_sd_scale->text().toDouble() > 0
                                                       );
 
-   pb_scale_pair_reset                  ->setEnabled( le_scale_pair_scale->text() != "1" ||
-                                                      le_scale_pair_sd_scale->text() != "1" );
+   pb_scale_pair_reset                  ->setEnabled( le_scale_pair_scale->text().toDouble() != 1 ||
+                                                      le_scale_pair_sd_scale->text().toDouble() != 1 );
    le_scale_pair_q1_start               ->setEnabled( true );
    le_scale_pair_q1_end                 ->setEnabled( true );
    le_scale_pair_q2_start               ->setEnabled( true );
@@ -692,69 +692,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_remove() {
    scale_pair_created_q.clear();
    scale_pair_created_I.clear();
    scale_pair_created_e.clear();
-}
-
-void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
-#warning save headers
-
-   qDebug() << "scale_pair_create_scaled_curves()";
-   disable_all();
-
-   scale_pair_save_names.clear();
-
-   int qgrid_size             = (int) scale_pair_qgrids[ variable_set ].size();
-   double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
-   double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
-
-
-   if ( scale_pair_use_errors ) {
-      const QString & suffix     = cb_scale_pair_scale_saxs->isChecked() ? "_SIm%1_SSDm%2" : "_MIm%1_MSDm%2_common";
-      for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
-         QString source_name = scaled_time_to_name.second[ variable_set ];
-         QString scaled_name = source_name;
-         scaled_name = scaled_name.replace( "_common", "" );
-         scaled_name += QString( suffix )
-            .arg( scale_pair_scale )
-            .arg( scale_pair_sd_scale )
-            ;
-
-         vector < double > I = f_Is[ source_name ];
-         vector < double > e = f_errors[ source_name ];
-
-         for ( int i = 0; i < qgrid_size; ++i ) {
-            I[ i ] *= scale_pair_scale;
-            e[ i ] *= scale_pair_scale * scale_pair_sd_scale;
-         }
-
-         add_plot( scaled_name, scale_pair_qgrids[ variable_set ], I, e, false, false );
-         scale_pair_save_names.insert( last_created_file );
-         scale_pair_org_selected.erase( source_name );
-         scale_pair_org_selected.insert( last_created_file );
-      }
-   } else {
-      const QString & suffix     = cb_scale_pair_scale_saxs->isChecked() ? "_SIm%1" : "_MIm%1_common";
-      for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
-         QString source_name = scaled_time_to_name.second[ variable_set ];
-         QString scaled_name = source_name;
-         scaled_name = scaled_name.replace( "_common", "" );
-         scaled_name += QString( suffix )
-            .arg( scale_pair_scale )
-            ;
-
-         vector < double > I = f_Is[ source_name ];
-
-         for ( int i = 0; i < qgrid_size; ++i ) {
-            I[ i ] *= scale_pair_scale;
-         }
-
-         add_plot( scaled_name, scale_pair_qgrids[ variable_set ], I, false, false );
-         scale_pair_save_names.insert( last_created_file );
-         scale_pair_org_selected.erase( source_name );
-         scale_pair_org_selected.insert( last_created_file );
-      }
-   }      
-
-   return scale_pair_enables();
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_reset() {
@@ -1446,4 +1383,152 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scale_saxs() {
    scale_pair( true );
    suppress_plot = false;
    scale_pair_scroll_highlight( save_time_pos );
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
+#warning save headers
+
+   qDebug() << "scale_pair_create_scaled_curves()";
+   disable_all();
+
+   scale_pair_save_names.clear();
+
+   int qgrid_size_mals        = (int) scale_pair_qgrids[ scale_pair_mals_set ].size();
+   double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
+   double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+
+   bool create_saxs = false;
+   if ( scale_pair_scale != 1 ) {
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Scale Make Scaled" )
+                                     ,us_tr( "How do you want to save the scaled curves?" )
+                                     ,us_tr( "Scaled &MALS data" )
+                                     ,us_tr( "Inverse scaled &SAXS data" )
+                                     ) )
+      {
+      case 0 : 
+         break;
+      case 1 : 
+         create_saxs = true;
+         break;
+      default: 
+         break;
+      }
+   }
+
+
+   if ( create_saxs ) {
+      qDebug() << "scale_pair_create_scaled_curves() - will create saxs";
+   }
+
+   // cases
+   // sd mult != 1 .. always SD MALS
+   // create_saxs == false ... just as normal
+   // create_saxs == true ... create MALS without scaling only if sd_mult != 1, create SAXS files with inverse scaling
+
+   // MALS saves
+
+   if ( !create_saxs || scale_pair_sd_scale != 1 ) {
+      double use_scale_pair_scale = create_saxs ? 1. : scale_pair_scale;
+      if ( scale_pair_use_errors ) {
+         const QString & suffix     = "_MIm%1_MSDm%2_common";
+         for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
+            QString source_name = scaled_time_to_name.second[ scale_pair_mals_set ];
+            QString scaled_name = source_name;
+            scaled_name = scaled_name.replace( "_common", "" );
+            scaled_name += QString( suffix )
+               .arg( use_scale_pair_scale )
+               .arg( scale_pair_sd_scale )
+               ;
+
+            vector < double > I = f_Is[ source_name ];
+            vector < double > e = f_errors[ source_name ];
+
+            for ( int i = 0; i < qgrid_size_mals; ++i ) {
+               I[ i ] *= use_scale_pair_scale;
+               e[ i ] *= use_scale_pair_scale * scale_pair_sd_scale;
+            }
+
+            add_plot( scaled_name, scale_pair_qgrids[ scale_pair_mals_set ], I, e, false, false );
+            scale_pair_save_names.insert( last_created_file );
+            scale_pair_org_selected.erase( source_name );
+            scale_pair_org_selected.insert( last_created_file );
+         }
+      } else {
+         const QString & suffix     = "_MIm%1_common";
+         for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
+            QString source_name = scaled_time_to_name.second[ scale_pair_mals_set ];
+            QString scaled_name = source_name;
+            scaled_name = scaled_name.replace( "_common", "" );
+            scaled_name += QString( suffix )
+               .arg( use_scale_pair_scale )
+               ;
+
+            vector < double > I = f_Is[ source_name ];
+
+            for ( int i = 0; i < qgrid_size_mals; ++i ) {
+               I[ i ] *= use_scale_pair_scale;
+            }
+
+            add_plot( scaled_name, scale_pair_qgrids[ scale_pair_mals_set ], I, false, false );
+            scale_pair_save_names.insert( last_created_file );
+            scale_pair_org_selected.erase( source_name );
+            scale_pair_org_selected.insert( last_created_file );
+         }
+      }
+   }
+
+   // SAXS save
+
+   if ( create_saxs ) {
+      qDebug() << "create saxs inverse scaled curves";
+      int qgrid_size_saxs         = (int) scale_pair_qgrids[ scale_pair_saxs_set ].size();
+      double use_scale_pair_scale = 1. / scale_pair_scale;
+      const QString & suffix      = "_SIm%1";
+      if ( scale_pair_use_errors ) {
+         for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
+            QString source_name = scaled_time_to_name.second[ scale_pair_saxs_set ];
+            QString scaled_name = source_name;
+            scaled_name = scaled_name.replace( "_common", "" );
+            scaled_name += QString( suffix )
+               .arg( use_scale_pair_scale )
+               ;
+
+            vector < double > I = f_Is[ source_name ];
+            vector < double > e = f_errors[ source_name ];
+
+            for ( int i = 0; i < qgrid_size_saxs; ++i ) {
+               I[ i ] *= use_scale_pair_scale;
+               e[ i ] *= use_scale_pair_scale;
+            }
+
+            add_plot( scaled_name, scale_pair_qgrids[ scale_pair_saxs_set ], I, e, false, false );
+            scale_pair_save_names.insert( last_created_file );
+            scale_pair_org_selected.erase( source_name );
+            scale_pair_org_selected.insert( last_created_file );
+         }
+      } else {
+         for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
+            QString source_name = scaled_time_to_name.second[ scale_pair_saxs_set ];
+            QString scaled_name = source_name;
+            scaled_name = scaled_name.replace( "_common", "" );
+            scaled_name += QString( suffix )
+               .arg( use_scale_pair_scale )
+               ;
+
+            vector < double > I = f_Is[ source_name ];
+
+            for ( int i = 0; i < qgrid_size_saxs; ++i ) {
+               I[ i ] *= use_scale_pair_scale;
+            }
+
+            add_plot( scaled_name, scale_pair_qgrids[ scale_pair_saxs_set ], I, false, false );
+            scale_pair_save_names.insert( last_created_file );
+            scale_pair_org_selected.erase( source_name );
+            scale_pair_org_selected.insert( last_created_file );
+         }
+      }
+   }
+
+   return scale_pair_enables();
 }

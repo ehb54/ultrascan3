@@ -438,6 +438,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    AUTFBACK( cb_scale_pair_scale_saxs );
    cb_scale_pair_scale_saxs->setChecked(false);
    connect( cb_scale_pair_scale_saxs, SIGNAL( clicked() ), SLOT( scale_pair_scale_saxs() ) );
+   cb_scale_pair_scale_saxs->hide();
 
    cb_scale_pair_fit_curve = new QComboBox( this );
    cb_scale_pair_fit_curve->setPalette( PALET_NORMAL );
@@ -472,7 +473,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    cb_scale_pair_fit_alg->addItem( us_tr( "QR Householder" )                , US_Eigen::EIGEN_HOUSEHOLDER_QR );
    cb_scale_pair_fit_alg->addItem( us_tr( "LR" )                            , US_Eigen::EIGEN_NORMAL );
    connect( cb_scale_pair_fit_alg, SIGNAL( currentIndexChanged( QString ) ), SLOT( scale_pair_fit_alg_index( ) ) );
-   cb_scale_pair_fit_alg->setCurrentIndex( 3 );
+   cb_scale_pair_fit_alg->setCurrentIndex( 5 );
 
    cb_scale_pair_fit_alg_weight = new QComboBox( this );
    cb_scale_pair_fit_alg_weight->setPalette( PALET_NORMAL );
@@ -489,7 +490,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    cb_scale_pair_fit_alg_weight->addItem( us_tr( "1/SD^2" )      , US_Eigen::EIGEN_1_OVER_SD_SQ );
 
    connect( cb_scale_pair_fit_alg_weight, SIGNAL( currentIndexChanged( QString ) ), SLOT( scale_pair_fit_alg_weight_index( ) ) );
-   cb_scale_pair_fit_alg_weight->setCurrentIndex( 0 ); // US_Eigen::EIGEN_NO_WEIGHTS
+   cb_scale_pair_fit_alg_weight->setCurrentIndex( 3 ); // US_Eigen::EIGEN_1_OVER_SD
 
    pb_scale_pair_minimize = new QPushButton(us_tr("Minimize"), this);
    pb_scale_pair_minimize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -4551,7 +4552,7 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scale_pair_widgets.push_back( cb_scale_pair_fit_curve );
    scale_pair_widgets.push_back( cb_scale_pair_fit_alg );
    scale_pair_widgets.push_back( cb_scale_pair_fit_alg_weight );
-   scale_pair_widgets.push_back( cb_scale_pair_scale_saxs );
+   // scale_pair_widgets.push_back( cb_scale_pair_scale_saxs );
 
    // wyatt_widgets;
 
