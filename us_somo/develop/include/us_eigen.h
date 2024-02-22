@@ -17,22 +17,22 @@ using namespace std;
 class US_Eigen {
  public:
 
-   enum fit_methods {
-      EIGEN_SVD_JACOBI
-      ,EIGEN_SVD_BDC
-      ,EIGEN_HOUSEHOLDER_QR
-      ,EIGEN_HOUSEHOLDER_QR_PIVOT_COL
-      ,EIGEN_HOUSEHOLDER_QR_PIVOT_FULL
-      ,EIGEN_NORMAL
+   enum fit_methods : int {
+      EIGEN_SVD_BDC = 0
+      ,EIGEN_SVD_JACOBI = 1
+      ,EIGEN_HOUSEHOLDER_QR_PIVOT_FULL = 2
+      ,EIGEN_HOUSEHOLDER_QR_PIVOT_COL = 3
+      ,EIGEN_HOUSEHOLDER_QR = 4
+      ,EIGEN_NORMAL = 5
    };
 
    // taken from https://www.azdhs.gov/documents/preparedness/state-laboratory/lab-licensure-certification/technical-resources/calibration-training/11-weighted-least-squares-regression-calib.pdf
    // therein ref "Chromeleon Manual"
 
-   enum weight_methods {
-      EIGEN_NO_WEIGHTS
-      ,EIGEN_1_OVER_AMOUNT
-      ,EIGEN_1_OVER_AMOUNT_SQ
+   enum weight_methods : int {
+      EIGEN_NO_WEIGHTS = 0
+      ,EIGEN_1_OVER_AMOUNT = 1
+      ,EIGEN_1_OVER_AMOUNT_SQ = 2
       // how does a response differ from an amount?
       // ,EIGEN_1_OVER_RESPONSE
       // ,EIGEN_1_OVER_RESPONSE_SQ
@@ -40,8 +40,8 @@ class US_Eigen {
       // The relative standard deviation (RSD) is often times more convenient. It is expressed in percent and is obtained by multiplying the standard deviation by 100 and dividing this product by the average.
       // ,EIGEN_1_OVER_RSD
       // ,EIGEN_1_OVER_RSD_SQ
-      ,EIGEN_1_OVER_SD
-      ,EIGEN_1_OVER_SD_SQ
+      ,EIGEN_1_OVER_SD = 3
+      ,EIGEN_1_OVER_SD_SQ = 4
    };
    
    bool polyfit(

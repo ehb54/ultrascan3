@@ -231,7 +231,7 @@ bool US_Eigen::polyfit(
 
    case EIGEN_NORMAL :
       coefficients = (X.transpose() * X).ldlt().solve(X.transpose() * Y);
-      // qDebug() << "normal " << degree;
+      // qDebug() << "LR " << degree;
       break;
    }
 
