@@ -996,6 +996,17 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          f_nucleon_mass   .erase( lb_files->item( i )->text() );
          f_solvent_e_dens .erase( lb_files->item( i )->text() );
          f_I0st           .erase( lb_files->item( i )->text() );
+         f_g_dndc         .erase( lb_files->item( i )->text() );
+         f_dndc           .erase( lb_files->item( i )->text() );
+         f_conc_units     .erase( lb_files->item( i )->text() );
+         f_ri_corr        .erase( lb_files->item( i )->text() );
+         f_ri_corrs       .erase( lb_files->item( i )->text() );
+         f_ref_index      .erase( lb_files->item( i )->text() );
+         f_fit_curve      .erase( lb_files->item( i )->text() );
+         f_fit_method     .erase( lb_files->item( i )->text() );
+         f_fit_q_ranges   .erase( lb_files->item( i )->text() );
+         f_fit_chi2       .erase( lb_files->item( i )->text() );
+         f_fit_sd_scale   .erase( lb_files->item( i )->text() );
 
          delete lb_files->takeItem( i );
       }
@@ -1640,30 +1651,78 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    bool is_time = false;
 
-   bool   has_conc  = false;
-   double this_conc = 0e0;
-   bool   has_psv   = false;
-   double this_psv  = 0e0;
-   bool   has_I0se  = false;
-   double this_I0se = 0e0;
-   bool   has_time  = false;
-   double this_time = 0e0;
-   bool   has_extc  = false;
-   double this_extc = 0e0;
+   bool    has_conc                 = false;
+   double  this_conc                = 0e0;
+   bool    has_psv                  = false;
+   double  this_psv                 = 0e0;
+   bool    has_I0se                 = false;
+   double  this_I0se                = 0e0;
+   bool    has_I0st                 = false;
+   double  this_I0st                = 0e0;
+   bool    has_time                 = false;
+   double  this_time                = 0e0;
+   bool    has_extc                 = false;
+   double  this_extc                = 0e0;
+   bool    has_g_dndc               = false;
+   double  this_g_dndc              = 0e0;
+   bool    has_dndc                 = false;
+   double  this_dndc                = 0e0;
+   bool    has_conc_units           = false;
+   QString this_conc_units          = "";
+   bool    has_ref_index            = false;
+   double  this_ref_index           = 0e0;
+   bool    has_diffusion_len        = false;
+   double  this_diffusion_len       = 0e0;
+   bool    has_e_nucleon_ratio      = false;
+   double  this_e_nucleon_ratio     = 0e0;
+   bool    has_nucleon_mass         = false;
+   double  this_nucleon_mass        = 0e0;
+   bool    has_solvent_e_dens       = false;
+   double  this_solvent_e_dens      = 0e0;
+   bool    has_ri_corr              = false;
+   double  this_ri_corr             = 0e0;
+   bool    has_ri_corrs             = false;
+   QString this_ri_corrs            = "";
+   bool    has_fit_curve            = false;
+   QString this_fit_curve           = "";
+   bool    has_fit_method           = false;
+   QString this_fit_method          = "";
+   bool    has_fit_q_ranges         = false;
+   QString this_fit_q_ranges        = "";
+   bool    has_fit_chi2             = false;
+   double  this_fit_chi2            = 0e0;
+   bool    has_fit_sd_scale         = false;
+   double  this_fit_sd_scale        = 0e0;
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
    if ( ext == "dat" ||
         ext == "sprr" )
    {
-      QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_extc      ( "ExtC_or_DRIinc:\\s*(\\S+)(\\s|$)" );
-      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
-      {
+      QRegExp rx_conc               ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_conc_units         ( "Conc:\\s*\\S+\\s+(\\[\\S+\\])(\\s|$)" );
+      QRegExp rx_psv                ( " PSV:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_I0se               ( " I0se:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_I0st               ( " I0st:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_time               ( " Time:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_unit               ( " Units:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_extc               ( " (?:ExtC_or_DRIinc|ExtC):\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_g_dndc             ( " Global_dndc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_dndc               ( " dndc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ref_index          ( " Solvent refractive index:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_diffusion_len      ( " Diffusion Length:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_e_nucleon_ratio    ( " Electron/nucleon ratio Z/A:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_nucleon_mass       ( " Nucleon mass::\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_solvent_e_dens     ( " Solvent e density:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ri_corr            ( " RI-Corr scatt\\. angle:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ri_corrs           ( " RI-Corr scatt\\. angles:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_curve          ( " Fit curve:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_method         ( " Fit method:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_q_ranges       ( " Fit ranges:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_chi2           ( " Fit chi^2:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_sd_scale       ( " Fit MALS SD mult:\\s*(\\S+)(\\s|$)" );
+      
+      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 ) {
          QString unitstr = rx_unit.cap( 1 ).toLower();
          bool ok = false;
          if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
@@ -1678,31 +1737,63 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
          }
       }
-      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 ) {
          has_conc  = true;
          this_conc = rx_conc.cap( 1 ).toDouble();
-         // cout << QString( "found conc %1\n" ).arg( this_conc );
+         // TSO << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_conc_units.indexIn( qv[ 0 ] ) != -1 ) {
+         has_conc_units  = true;
+         this_conc_units = rx_conc.cap( 1 );
+         // TSO << QString( "found conc %1\n" ).arg( this_conc );
+      }
+      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 ) {
          has_psv  = true;
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 ) {
          has_I0se  = true;
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
-      if ( rx_time.indexIn( qv[ 0 ] ) != -1 )
-      {
-         has_time  = true;
-         this_time = rx_time.cap( 1 ).toDouble();
+      if ( rx_I0st.indexIn( qv[ 0 ] ) != -1 ) {
+         has_I0st  = true;
+         this_I0st = rx_I0st.cap( 1 ).toDouble();
       }
-      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_time.indexIn( qv[ 0 ] ) != -1 ) {
+         has_time  = true;
+         this_time = rx_time.cap( 1 ).replace( "_", "." ).replace( QRegularExpression( "^0+" ), "0" ).toDouble();
+      }
+      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 ) {
          has_extc  = true;
          this_extc = rx_extc.cap( 1 ).toDouble();
+      }
+      if ( rx_g_dndc.indexIn( qv[ 0 ] ) != -1 ) {
+         has_g_dndc  = true;
+         this_g_dndc = rx_g_dndc.cap( 1 ).toDouble();
+      }
+      if ( rx_dndc.indexIn( qv[ 0 ] ) != -1 ) {
+         has_dndc  = true;
+         this_dndc = rx_dndc.cap( 1 ).toDouble();
+      }
+      if ( rx_fit_curve.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_curve  = true;
+         this_fit_curve = rx_fit_curve.cap( 1 );
+      }
+      if ( rx_fit_method.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_method  = true;
+         this_fit_method = rx_fit_method.cap( 1 );
+      }
+      if ( rx_fit_q_ranges.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_q_ranges  = true;
+         this_fit_q_ranges = rx_fit_q_ranges.cap( 1 );
+      }
+      if ( rx_fit_chi2.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_chi2  = true;
+         this_fit_chi2 = rx_fit_chi2.cap( 1 ).toDouble();
+      }
+      if ( rx_fit_sd_scale.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_sd_scale  = true;
+         this_fit_sd_scale = rx_fit_sd_scale.cap( 1 ).toDouble();
       }
    }
 
@@ -2657,19 +2748,67 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       f_gaussians  [ basename ] = tmp;
    }
    if ( has_conc ) {
-      f_conc       [ basename ] = this_conc;
+      f_conc            [ basename ] = this_conc;
+   }
+   if ( has_conc_units ) {
+      f_conc_units      [ basename ] = this_conc_units;
    }
    if ( has_psv ) {
-      f_psv        [ basename ] = this_psv;
+      f_psv             [ basename ] = this_psv;
    }
    if ( has_I0se ) {
-      f_I0se       [ basename ] = this_I0se;
+      f_I0se            [ basename ] = this_I0se;
+   }
+   if ( has_I0st ) {
+      f_I0st            [ basename ] = this_I0st;
    }
    if ( has_time ) {
-      f_time       [ basename ] = this_time;
+      f_time            [ basename ] = this_time;
    }      
    if ( has_extc ) {
-      f_extc       [ basename ] = this_extc;
+      f_extc            [ basename ] = this_extc;
+   }      
+   if ( has_g_dndc ) {
+      f_g_dndc          [ basename ] = this_g_dndc;
+   }      
+   if ( has_dndc ) {
+      f_dndc            [ basename ] = this_dndc;
+   }      
+   if ( has_ref_index ) {
+      f_ref_index       [ basename ] = this_ref_index;
+   }      
+   if ( has_diffusion_len ) {
+      f_diffusion_len   [ basename ] = this_diffusion_len;
+   }      
+   if ( has_e_nucleon_ratio ) {
+      f_e_nucleon_ratio [ basename ] = this_e_nucleon_ratio;
+   }      
+   if ( has_nucleon_mass ) {
+      f_nucleon_mass    [ basename ] = this_nucleon_mass;
+   }      
+   if ( has_solvent_e_dens ) {
+      f_solvent_e_dens  [ basename ] = this_solvent_e_dens;
+   }      
+   if ( has_ri_corr ) {
+      f_ri_corr         [ basename ] = this_ri_corr;
+   }      
+   if ( has_ri_corrs ) {
+      f_ri_corrs        [ basename ] = this_ri_corrs;
+   }      
+   if ( has_fit_curve ) {
+      f_fit_curve       [ basename ] = this_fit_curve;
+   }      
+   if ( has_fit_method ) {
+      f_fit_method      [ basename ] = this_fit_method;
+   }      
+   if ( has_fit_q_ranges ) {
+      f_fit_q_ranges    [ basename ] = this_fit_q_ranges;
+   }      
+   if ( has_fit_chi2 ) {
+      f_fit_chi2        [ basename ] = this_fit_chi2;
+   }      
+   if ( has_fit_sd_scale ) {
+      f_fit_sd_scale    [ basename ] = this_fit_sd_scale;
    }      
    return true;
 }
@@ -3281,7 +3420,23 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
          units = "";
       }
 
-      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
+      // ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
+      //    .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+      //    .arg( file )
+      //    .arg( units )
+      //    .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+      //    .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+      //    .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+      //    .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+      //    .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+      //    .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+      //    .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+      //    .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+      //    .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+      //    .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
+      //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+      //    ;
+      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
          .arg( file )
          .arg( units )
@@ -3289,13 +3444,26 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
          .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
          .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
          .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
-         .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+         .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
+         .arg( !file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
          .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+         .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+         .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
          .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
          .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
          .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
          .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
          .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+         // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
+         .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
+         .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
+         .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
+         .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+         .arg( f_fit_curve.count( file ) ? QString( "Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
+         .arg( f_fit_method.count( file ) ? QString( "Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
+         .arg( f_fit_q_ranges.count( file ) ? QString( "Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
+         .arg( f_fit_chi2.count( file ) ? QString( "Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
+         .arg( f_fit_sd_scale.count( file ) ? QString( "Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
          ;
    }
 
@@ -5291,7 +5459,24 @@ void US_Hydrodyn_Saxs_Hplc::view()
                   units = "";
                }
                
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
+               // text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
+               //    .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+               //    .arg( file )
+               //    .arg( units )
+               //    .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+               //    .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+               //    .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+               //    .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+               //    .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+               //    .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+               //    .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+               //    .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+               //    .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+               //    .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
+               //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+               //    ;
+
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
@@ -5299,13 +5484,26 @@ void US_Hydrodyn_Saxs_Hplc::view()
                   .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
                   .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
                   .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
-                  .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+                  .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
+                  .arg( !file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
                   .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+                  .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+                  .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
                   .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
                   .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
                   .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
                   .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
                   .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+                  // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
+                  .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
+                  .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
+                  .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
+                  .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+                  .arg( f_fit_curve.count( file ) ? QString( "Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
+                  .arg( f_fit_method.count( file ) ? QString( "Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
+                  .arg( f_fit_q_ranges.count( file ) ? QString( "Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
+                  .arg( f_fit_chi2.count( file ) ? QString( "Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
+                  .arg( f_fit_sd_scale.count( file ) ? QString( "Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
                   ;
             }
          }            

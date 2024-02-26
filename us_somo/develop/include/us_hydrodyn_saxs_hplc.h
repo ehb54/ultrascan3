@@ -886,7 +886,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, vector < double > >  f_errors;
       map < QString, vector < double > >  f_gaussians;
       map < QString, unsigned int >       f_pos;
-
       map < QString, QString >            f_name;
       map < QString, QString >            f_header;
       map < QString, bool >               f_is_time;
@@ -900,6 +899,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, double >             f_nucleon_mass;
       map < QString, double >             f_solvent_e_dens;
       map < QString, double >             f_I0st;
+      map < QString, double >             f_g_dndc;
+      map < QString, double >             f_dndc;
+      map < QString, QString >            f_conc_units;
+      map < QString, double >             f_ri_corr;
+      map < QString, QString >            f_ri_corrs;
+      map < QString, double >             f_ref_index;
+      map < QString, QString >            f_fit_curve;
+      map < QString, QString >            f_fit_method;
+      map < QString, QString >            f_fit_q_ranges;
+      map < QString, double >             f_fit_chi2;
+      map < QString, double >             f_fit_sd_scale;
 
       // for displaying last smoothing in gg scroll mode
       map < QString, vector < double > >  f_qs_smoothed;
