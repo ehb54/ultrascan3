@@ -15,6 +15,7 @@ static QString                last_minimize_weight;
 static QString                last_minimize_curve;
 static QString                last_minimize_q_ranges;
 static double                 last_minimize_sd_scale;
+static double                 last_minimize_scale;
 static map < double, double > last_minimize_chi2s;
 
 #define TSO QTextStream(stdout)
@@ -1357,6 +1358,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
          best_gchi2 = global_chi2;
          best_scale = s;
          last_minimize_chi2s = tmp_minimize_chi2s;
+         last_minimize_scale = best_scale;
          qDebug() << QString( "scale %1 gChi2 %2 new best\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
       } else {
          qDebug() << QString( "scale %1 gChi2 %2\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
@@ -1408,12 +1410,31 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
 
    qDebug() << "scale_pair_create_scaled_curves()";
    disable_all();
-
    scale_pair_save_names.clear();
 
    int qgrid_size_mals        = (int) scale_pair_qgrids[ scale_pair_mals_set ].size();
    double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
    double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+
+   if ( scale_pair_scale != last_minimize_scale ) {
+      scale_pair_minimize_clear();
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Scale Make Scaled" )
+                                     ,us_tr( "The scale has changed since the last 'minimize'\n"
+                                             "You must 'minimize' again to keep fitting header information" )
+                                     ,us_tr( "&Continue anyway" )
+                                     ,us_tr( "&Quit" )
+                                     ) )
+      {
+      case 0 : 
+         break;
+      case 1 : 
+         return scale_pair_enables();
+         break;
+      default: 
+         break;
+      }
+   }
 
    bool create_saxs = false;
    if ( scale_pair_scale != 1 ) {
@@ -1662,6 +1683,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize_clear() {
    last_minimize_method   = "";
    last_minimize_weight   = "";
    last_minimize_q_ranges = "";
+   last_minimize_scale    = 1e0;
    last_minimize_sd_scale = 1e0;
    last_minimize_chi2s.clear();
 }   
