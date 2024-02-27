@@ -278,4 +278,53 @@ QString US_Eigen::gnuplot_poly( const vector < double > & coeff, QString fname )
    return out;
 }
 
-   
+QString US_Eigen::qs_fit_method( enum fit_methods fit_method ) {
+   switch( fit_method ) {
+   case US_Eigen::EIGEN_SVD_BDC :
+      return "SVD_BDC";
+      break;
+   case US_Eigen::EIGEN_SVD_JACOBI :
+      return "SVD_Jacobi";
+      break;
+   case US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_FULL :
+      return "QR_Householder_full_pivoting";
+      break;
+   case US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL :
+      return "QR_Householder_column_pivoting";
+      break;
+   case US_Eigen::EIGEN_HOUSEHOLDER_QR :
+      return "QR_Householder";
+      break;
+   case US_Eigen::EIGEN_NORMAL :
+      return "LR";
+      break;
+   default :
+      return "unknown";
+      break;
+   }
+}
+
+QString US_Eigen::qs_weight_method( enum weight_methods weight_method ) {
+   switch( weight_method ) {
+   case US_Eigen::EIGEN_NO_WEIGHTS :
+      return "none";
+      break;
+   case US_Eigen::EIGEN_1_OVER_AMOUNT :
+      return "1/amount";
+      break;
+   case US_Eigen::EIGEN_1_OVER_AMOUNT_SQ :
+      return "1/amount^2";
+      break;
+   case US_Eigen::EIGEN_1_OVER_SD :
+      return "1/SD";
+      break;
+   case US_Eigen::EIGEN_1_OVER_SD_SQ :
+      return "1/SD^2";
+      break;
+   default :
+      return "unknown";
+      break;
+   }
+}
+
+

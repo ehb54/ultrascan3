@@ -78,6 +78,9 @@ class US_Eigen {
    
    static QString gnuplot_poly( const vector < double > & coeff, QString fname = "f" );
 
+   static QString qs_fit_method( enum fit_methods fit_method );
+   static QString qs_weight_method( enum weight_methods weight_method );
+
    int test();
 
  private:
