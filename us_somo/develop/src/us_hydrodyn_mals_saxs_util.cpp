@@ -6399,6 +6399,42 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
 
             add_plot( name, output_qs, output_Is, output_errors, false, false );
             plot_names.insert( last_created_file );
+
+            if ( f_fit_curve.count( tnames.second[0] ) ) {
+               f_fit_curve[ last_created_file ] =  f_fit_curve[ tnames.second[0] ];
+            } else if (  f_fit_curve.count( tnames.second[1] ) ) {
+               f_fit_curve[ last_created_file ] =  f_fit_curve[ tnames.second[1] ];
+            } else {
+               f_fit_curve.erase( last_created_file );
+            }
+            if ( f_fit_method.count( tnames.second[0] ) ) {
+               f_fit_method[ last_created_file ] =  f_fit_method[ tnames.second[0] ];
+            } else if (  f_fit_method.count( tnames.second[1] ) ) {
+               f_fit_method[ last_created_file ] =  f_fit_method[ tnames.second[1] ];
+            } else {
+               f_fit_method.erase( last_created_file );
+            }
+            if ( f_fit_q_ranges.count( tnames.second[0] ) ) {
+               f_fit_q_ranges[ last_created_file ] =  f_fit_q_ranges[ tnames.second[0] ];
+            } else if (  f_fit_q_ranges.count( tnames.second[1] ) ) {
+               f_fit_q_ranges[ last_created_file ] =  f_fit_q_ranges[ tnames.second[1] ];
+            } else {
+               f_fit_q_ranges.erase( last_created_file );
+            }
+            if ( f_fit_chi2.count( tnames.second[0] ) ) {
+               f_fit_chi2[ last_created_file ] =  f_fit_chi2[ tnames.second[0] ];
+            } else if (  f_fit_chi2.count( tnames.second[1] ) ) {
+               f_fit_chi2[ last_created_file ] =  f_fit_chi2[ tnames.second[1] ];
+            } else {
+               f_fit_chi2.erase( last_created_file );
+            }
+            if ( f_fit_sd_scale.count( tnames.second[0] ) ) {
+               f_fit_sd_scale[ last_created_file ] =  f_fit_sd_scale[ tnames.second[0] ];
+            } else if (  f_fit_sd_scale.count( tnames.second[1] ) ) {
+               f_fit_sd_scale[ last_created_file ] =  f_fit_sd_scale[ tnames.second[1] ];
+            } else {
+               f_fit_sd_scale.erase( last_created_file );
+            }
          } else {
             for ( int i = 0; i < saxs_q_size; ++i ) {
                merged[ saxs_q[i] ] =
@@ -6434,6 +6470,42 @@ void US_Hydrodyn_Mals_Saxs::join_by_time() {
             
             add_plot( name, output_qs, output_Is, false, false );
             plot_names.insert( last_created_file );
+
+            if ( f_fit_curve.count( tnames.second[0] ) ) {
+               f_fit_curve[ last_created_file ] =  f_fit_curve[ tnames.second[0] ];
+            } else if (  f_fit_curve.count( tnames.second[1] ) ) {
+               f_fit_curve[ last_created_file ] =  f_fit_curve[ tnames.second[1] ];
+            } else {
+               f_fit_curve.erase( last_created_file );
+            }
+            if ( f_fit_method.count( tnames.second[0] ) ) {
+               f_fit_method[ last_created_file ] =  f_fit_method[ tnames.second[0] ];
+            } else if (  f_fit_method.count( tnames.second[1] ) ) {
+               f_fit_method[ last_created_file ] =  f_fit_method[ tnames.second[1] ];
+            } else {
+               f_fit_method.erase( last_created_file );
+            }
+            if ( f_fit_q_ranges.count( tnames.second[0] ) ) {
+               f_fit_q_ranges[ last_created_file ] =  f_fit_q_ranges[ tnames.second[0] ];
+            } else if (  f_fit_q_ranges.count( tnames.second[1] ) ) {
+               f_fit_q_ranges[ last_created_file ] =  f_fit_q_ranges[ tnames.second[1] ];
+            } else {
+               f_fit_q_ranges.erase( last_created_file );
+            }
+            if ( f_fit_chi2.count( tnames.second[0] ) ) {
+               f_fit_chi2[ last_created_file ] =  f_fit_chi2[ tnames.second[0] ];
+            } else if (  f_fit_chi2.count( tnames.second[1] ) ) {
+               f_fit_chi2[ last_created_file ] =  f_fit_chi2[ tnames.second[1] ];
+            } else {
+               f_fit_chi2.erase( last_created_file );
+            }
+            if ( f_fit_sd_scale.count( tnames.second[0] ) ) {
+               f_fit_sd_scale[ last_created_file ] =  f_fit_sd_scale[ tnames.second[0] ];
+            } else if (  f_fit_sd_scale.count( tnames.second[1] ) ) {
+               f_fit_sd_scale[ last_created_file ] =  f_fit_sd_scale[ tnames.second[1] ];
+            } else {
+               f_fit_sd_scale.erase( last_created_file );
+            }
          }            
       }
    }

@@ -6,10 +6,16 @@
 #include <QPixmap>
 #include "../include/us_eigen.h"
 
-static US_Eigen eigen;
-static bool minimize_running;
-static int  variable_set;
-static int  fixed_set;
+static US_Eigen               eigen;
+static bool                   minimize_running;
+static int                    variable_set;
+static int                    fixed_set;
+static QString                last_minimize_method;
+static QString                last_minimize_weight;
+static QString                last_minimize_curve;
+static QString                last_minimize_q_ranges;
+static double                 last_minimize_sd_scale;
+static map < double, double > last_minimize_chi2s;
 
 #define TSO QTextStream(stdout)
 
@@ -33,6 +39,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair( bool no_store_original )
    scale_pair_times        .clear();
    scale_pair_qgrids       .clear();
    scale_pair_save_names.clear();
+
+   scale_pair_minimize_clear();
 
    QStringList names = all_selected_files();
    if ( !no_store_original ) {
@@ -990,22 +998,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    return scale_pair_enables();
 }
 
-void US_Hydrodyn_Mals_Saxs::scale_pair_fit_clear( bool replot ) {
-   if ( !minimize_running ) {
-      qDebug() << "scale_pair_fit_clear( " << ( replot ? "true" : "false" ) << " )";
-   }
-   if ( scale_pair_fit_curve ) {
-      qDebug() << "scale_pair_fit_clear() scale_pair_fit_curve set";
-      scale_pair_fit_curve->detach();
-      delete scale_pair_fit_curve;
-      lbl_scale_pair_msg->setText("");
-      scale_pair_fit_curve = (QwtPlotCurve *) 0;
-      if ( replot ) {
-         plot_dist->replot();
-      }
-   }
-}
-
 bool US_Hydrodyn_Mals_Saxs::scale_pair_fit_at_time( double time
                                                     ,int degree
                                                     ,const set < double > & q1
@@ -1101,7 +1093,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    disable_all();
    qwtw_wheel            ->setEnabled( false );
    scale_pair_fit_clear();
-
+   scale_pair_minimize_clear();
+   
    // collect q grid positions
 
    set < double > q1;
@@ -1134,41 +1127,51 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
                                    "There are no non-excluded points selected for fitting!"
                                    )
                              );
+      scale_pair_minimize_clear();
       return scale_pair_enables();
    }
 
    int degree;
 
+   last_minimize_sd_scale = le_scale_pair_sd_scale->text().toDouble();
+
    {
       int minimum_pts_req = 2;
       switch ( (scale_pair_fit_curves) cb_scale_pair_fit_curve->currentData().toInt() ) {
       case SCALE_PAIR_FIT_CURVE_P2 :
-         minimum_pts_req = 3;
-         degree          = 2;
+         minimum_pts_req     = 3;
+         degree              = 2;
+         last_minimize_curve = "2nd_degree_Polynomial";
          break;
       case SCALE_PAIR_FIT_CURVE_P3 :
-         minimum_pts_req = 4;
-         degree          = 3;
+         minimum_pts_req     = 4;
+         degree              = 3;
+         last_minimize_curve = "3rd_degree_Polynomial";
          break;
       case SCALE_PAIR_FIT_CURVE_P4 :
-         minimum_pts_req = 5;
-         degree          = 4;
+         minimum_pts_req     = 5;
+         degree              = 4;
+         last_minimize_curve = "4th_degree_Polynomial";
          break;
       case SCALE_PAIR_FIT_CURVE_P5 :
-         minimum_pts_req = 6;
-         degree          = 5;
+         minimum_pts_req     = 6;
+         degree              = 5;
+         last_minimize_curve = "5th_degree_Polynomial";
          break;
       case SCALE_PAIR_FIT_CURVE_P6 :
-         minimum_pts_req = 7;
-         degree          = 6;
+         minimum_pts_req     = 7;
+         degree              = 6;
+         last_minimize_curve = "6th_degree_Polynomial";
          break;
       case SCALE_PAIR_FIT_CURVE_P7 :
-         minimum_pts_req = 8;
-         degree          = 7;
+         minimum_pts_req     = 8;
+         degree              = 7;
+         last_minimize_curve = "7th_degree_Polynomial";
          break;
       case SCALE_PAIR_FIT_CURVE_P8 :
-         minimum_pts_req = 9;
-         degree          = 8;
+         minimum_pts_req     = 9;
+         degree              = 8;
+         last_minimize_curve = "8th_degree_Polynomial";
          break;
       default:
          QMessageBox::critical( this,
@@ -1177,6 +1180,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
                                       "Internal error : unexpected fit curve"
                                       )
                                 );
+         scale_pair_minimize_clear();
          return scale_pair_enables();
          break;
       }
@@ -1192,6 +1196,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
                                 .arg( qs.size() )
                                 .arg( minimum_pts_req )
                                 );
+         scale_pair_minimize_clear();
          return scale_pair_enables();
       }
 
@@ -1290,6 +1295,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
                try_again = true;
             }
          } else {
+            scale_pair_minimize_clear();
             return scale_pair_enables();
          }
       } while ( try_again );
@@ -1298,6 +1304,16 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    progress->reset();
    progress->setMaximum( 1 + ( (scale_end - scale_start) / scale_step ) );
    
+   last_minimize_method = us_tr( US_Eigen::qs_fit_method( (US_Eigen::fit_methods) cb_scale_pair_fit_alg->currentData().toInt() ) );
+   last_minimize_weight = us_tr( US_Eigen::qs_weight_method( (US_Eigen::weight_methods) cb_scale_pair_fit_alg_weight->currentData().toInt() ) );
+   last_minimize_q_ranges =
+      QString( "[%1-%2],[%3,%4]" )
+      .arg( q1_min )
+      .arg( q1_max )
+      .arg( q2_min )
+      .arg( q2_max )
+      ;
+
    US_Timer           us_timers;
    us_timers.clear_timers();
    us_timers.init_timer( "minimize" );
@@ -1315,6 +1331,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
       qApp->processEvents();
       
       double global_chi2 = 0;
+      map < double, double > tmp_minimize_chi2s;
       {
          for ( auto const & t : scale_pair_times ) {
             if ( !scale_pair_time_to_names.count( t ) ) {
@@ -1333,11 +1350,13 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
             double chi2;
             scale_pair_fit_at_time( t, degree, q1, q2, chi2 );
             global_chi2 += chi2;
+            tmp_minimize_chi2s[ t ] = chi2 / qs.size();
          }
       }
       if ( best_gchi2 > global_chi2 ) {
          best_gchi2 = global_chi2;
          best_scale = s;
+         last_minimize_chi2s = tmp_minimize_chi2s;
          qDebug() << QString( "scale %1 gChi2 %2 new best\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
       } else {
          qDebug() << QString( "scale %1 gChi2 %2\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
@@ -1350,7 +1369,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    scale_pair_time_focus( true );
    scale_pair_fit();
 }
-
 
 // qt doc says int argument for the signal, but actually QString, just dropping it
 
@@ -1453,6 +1471,32 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
             scale_pair_save_names.insert( last_created_file );
             scale_pair_org_selected.erase( source_name );
             scale_pair_org_selected.insert( last_created_file );
+            if ( !last_minimize_curve.isEmpty() ) {
+               f_fit_curve[ last_created_file ] = last_minimize_curve;
+            } else {
+               f_fit_curve.erase( last_created_file );
+            }
+            if ( !last_minimize_method.isEmpty() ) {
+               f_fit_method[ last_created_file ] =
+                  QString( "%1:%2" ).arg( last_minimize_method ).arg( last_minimize_weight );
+            } else {
+               f_fit_method.erase( last_created_file );
+            }
+            if ( !last_minimize_q_ranges.isEmpty() ) {
+               f_fit_q_ranges[ last_created_file ] = last_minimize_q_ranges;
+            } else {
+               f_fit_q_ranges.erase( last_created_file );
+            }
+            if ( last_minimize_chi2s.count( scaled_time_to_name.first ) ) {
+               f_fit_chi2[ last_created_file ] = last_minimize_chi2s[ scaled_time_to_name.first ];
+            } else {
+               f_fit_chi2.erase( last_created_file );
+            }
+            if ( last_minimize_sd_scale != 0 ) {
+               f_fit_sd_scale[ last_created_file ] = last_minimize_sd_scale;
+            } else {
+               f_fit_sd_scale.erase( last_created_file );
+            }
          }
       } else {
          const QString & suffix     = "_MIm%1_common";
@@ -1474,6 +1518,33 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
             scale_pair_save_names.insert( last_created_file );
             scale_pair_org_selected.erase( source_name );
             scale_pair_org_selected.insert( last_created_file );
+
+            if ( !last_minimize_curve.isEmpty() ) {
+               f_fit_curve[ last_created_file ] = last_minimize_curve;
+            } else {
+               f_fit_curve.erase( last_created_file );
+            }
+            if ( !last_minimize_method.isEmpty() ) {
+               f_fit_method[ last_created_file ] =
+                  QString( "%1:%2" ).arg( last_minimize_method ).arg( last_minimize_weight );
+            } else {
+               f_fit_method.erase( last_created_file );
+            }
+            if ( !last_minimize_q_ranges.isEmpty() ) {
+               f_fit_q_ranges[ last_created_file ] = last_minimize_q_ranges;
+            } else {
+               f_fit_q_ranges.erase( last_created_file );
+            }
+            if ( last_minimize_chi2s.count( scaled_time_to_name.first ) ) {
+               f_fit_chi2[ last_created_file ] = last_minimize_chi2s[ scaled_time_to_name.first ];
+            } else {
+               f_fit_chi2.erase( last_created_file );
+            }
+            if ( last_minimize_sd_scale != 0 ) {
+               f_fit_sd_scale[ last_created_file ] = last_minimize_sd_scale;
+            } else {
+               f_fit_sd_scale.erase( last_created_file );
+            }
          }
       }
    }
@@ -1506,6 +1577,32 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
             scale_pair_save_names.insert( last_created_file );
             scale_pair_org_selected.erase( source_name );
             scale_pair_org_selected.insert( last_created_file );
+            if ( !last_minimize_curve.isEmpty() ) {
+               f_fit_curve[ last_created_file ] = last_minimize_curve;
+            } else {
+               f_fit_curve.erase( last_created_file );
+            }
+            if ( !last_minimize_method.isEmpty() ) {
+               f_fit_method[ last_created_file ] =
+                  QString( "%1:%2" ).arg( last_minimize_method ).arg( last_minimize_weight );
+            } else {
+               f_fit_method.erase( last_created_file );
+            }
+            if ( !last_minimize_q_ranges.isEmpty() ) {
+               f_fit_q_ranges[ last_created_file ] = last_minimize_q_ranges;
+            } else {
+               f_fit_q_ranges.erase( last_created_file );
+            }
+            if ( last_minimize_chi2s.count( scaled_time_to_name.first ) ) {
+               f_fit_chi2[ last_created_file ] = last_minimize_chi2s[ scaled_time_to_name.first ];
+            } else {
+               f_fit_chi2.erase( last_created_file );
+            }
+            if ( last_minimize_sd_scale != 0 ) {
+               f_fit_sd_scale[ last_created_file ] = last_minimize_sd_scale;
+            } else {
+               f_fit_sd_scale.erase( last_created_file );
+            }
          }
       } else {
          for ( auto const & scaled_time_to_name : scale_pair_time_to_names ) {
@@ -1526,9 +1623,61 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
             scale_pair_save_names.insert( last_created_file );
             scale_pair_org_selected.erase( source_name );
             scale_pair_org_selected.insert( last_created_file );
+            if ( !last_minimize_curve.isEmpty() ) {
+               f_fit_curve[ last_created_file ] = last_minimize_curve;
+            } else {
+               f_fit_curve.erase( last_created_file );
+            }
+            if ( !last_minimize_method.isEmpty() ) {
+               f_fit_method[ last_created_file ] =
+                  QString( "%1:%2" ).arg( last_minimize_method ).arg( last_minimize_weight );
+            } else {
+               f_fit_method.erase( last_created_file );
+            }
+            if ( !last_minimize_q_ranges.isEmpty() ) {
+               f_fit_q_ranges[ last_created_file ] = last_minimize_q_ranges;
+            } else {
+               f_fit_q_ranges.erase( last_created_file );
+            }
+            if ( last_minimize_chi2s.count( scaled_time_to_name.first ) ) {
+               f_fit_chi2[ last_created_file ] = last_minimize_chi2s[ scaled_time_to_name.first ];
+            } else {
+               f_fit_chi2.erase( last_created_file );
+            }
+            if ( last_minimize_sd_scale != 0 ) {
+               f_fit_sd_scale[ last_created_file ] = last_minimize_sd_scale;
+            } else {
+               f_fit_sd_scale.erase( last_created_file );
+            }
          }
       }
    }
 
    return scale_pair_enables();
+}
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_minimize_clear() {
+   qDebug() << "scale_pair_minimize_clear()";
+   last_minimize_curve    = "";
+   last_minimize_method   = "";
+   last_minimize_weight   = "";
+   last_minimize_q_ranges = "";
+   last_minimize_sd_scale = 1e0;
+   last_minimize_chi2s.clear();
+}   
+
+void US_Hydrodyn_Mals_Saxs::scale_pair_fit_clear( bool replot ) {
+   if ( !minimize_running ) {
+      qDebug() << "scale_pair_fit_clear( " << ( replot ? "true" : "false" ) << " )";
+   }
+   if ( scale_pair_fit_curve ) {
+      qDebug() << "scale_pair_fit_clear() scale_pair_fit_curve set";
+      scale_pair_fit_curve->detach();
+      delete scale_pair_fit_curve;
+      lbl_scale_pair_msg->setText("");
+      scale_pair_fit_curve = (QwtPlotCurve *) 0;
+      if ( replot ) {
+         plot_dist->replot();
+      }
+   }
 }

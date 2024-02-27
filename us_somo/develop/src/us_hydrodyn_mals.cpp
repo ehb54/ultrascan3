@@ -3880,11 +3880,11 @@ bool US_Hydrodyn_Mals::save_file( QString file, bool &cancel, bool &overwrite_al
          .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
          .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
          .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
-         .arg( f_fit_curve.count( file ) ? QString( "Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
-         .arg( f_fit_method.count( file ) ? QString( "Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
-         .arg( f_fit_q_ranges.count( file ) ? QString( "Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
-         .arg( f_fit_chi2.count( file ) ? QString( "Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
-         .arg( f_fit_sd_scale.count( file ) ? QString( "Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
+         .arg( f_fit_curve.count( file ) ? QString( " Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
+         .arg( f_fit_method.count( file ) ? QString( " Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
+         .arg( f_fit_q_ranges.count( file ) ? QString( " Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
+         .arg( f_fit_chi2.count( file ) ? QString( " Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
+         .arg( f_fit_sd_scale.count( file ) ? QString( " Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
          ;
    }
 
@@ -5993,11 +5993,11 @@ void US_Hydrodyn_Mals::view()
                   .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
                   .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
                   .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
-                  .arg( f_fit_curve.count( file ) ? QString( "Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
-                  .arg( f_fit_method.count( file ) ? QString( "Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
-                  .arg( f_fit_q_ranges.count( file ) ? QString( "Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
-                  .arg( f_fit_chi2.count( file ) ? QString( "Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
-                  .arg( f_fit_sd_scale.count( file ) ? QString( "Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
+                  .arg( f_fit_curve.count( file ) ? QString( " Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
+                  .arg( f_fit_method.count( file ) ? QString( " Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
+                  .arg( f_fit_q_ranges.count( file ) ? QString( " Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
+                  .arg( f_fit_chi2.count( file ) ? QString( " Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
+                  .arg( f_fit_sd_scale.count( file ) ? QString( " Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
                   ;
             }
          }

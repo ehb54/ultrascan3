@@ -777,6 +777,8 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       set < QString >                    qsl_to_set( const QStringList & qsl );
       QStringList                        set_to_qsl( const set < QString > & qsset );
 
+      void                               scale_pair_minimize_clear();
+
    private slots:
 
       void scale_pair                     ( bool no_store_original = false );
