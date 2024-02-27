@@ -1712,7 +1712,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       QRegExp rx_ref_index          ( " Solvent refractive index:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_diffusion_len      ( " Diffusion Length:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_e_nucleon_ratio    ( " Electron/nucleon ratio Z/A:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_nucleon_mass       ( " Nucleon mass::\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_nucleon_mass       ( " Nucleon mass:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_solvent_e_dens     ( " Solvent e density:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_ri_corr            ( " RI-Corr scatt\\. angle:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_ri_corrs           ( " RI-Corr scatt\\. angles:\\s*(\\S+)(\\s|$)" );
@@ -1794,6 +1794,34 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       if ( rx_fit_sd_scale.indexIn( qv[ 0 ] ) != -1 ) {
          has_fit_sd_scale  = true;
          this_fit_sd_scale = rx_fit_sd_scale.cap( 1 ).toDouble();
+      }
+      if ( rx_diffusion_len.indexIn( qv[ 0 ] ) != -1 ) {
+         has_diffusion_len  = true;
+         this_diffusion_len = rx_diffusion_len.cap( 1 ).toDouble();
+      }
+      if ( rx_e_nucleon_ratio.indexIn( qv[ 0 ] ) != -1 ) {
+         has_e_nucleon_ratio  = true;
+         this_e_nucleon_ratio = rx_e_nucleon_ratio.cap( 1 ).toDouble();
+      }
+      if ( rx_nucleon_mass.indexIn( qv[ 0 ] ) != -1 ) {
+         has_nucleon_mass  = true;
+         this_nucleon_mass = rx_nucleon_mass.cap( 1 ).toDouble();
+      }
+      if ( rx_solvent_e_dens.indexIn( qv[ 0 ] ) != -1 ) {
+         has_solvent_e_dens  = true;
+         this_solvent_e_dens = rx_solvent_e_dens.cap( 1 ).toDouble();
+      }
+      if ( rx_ref_index.indexIn( qv[ 0 ] ) != -1 ) {
+         has_ref_index  = true;
+         this_ref_index = rx_ref_index.cap( 1 ).toDouble();
+      }
+      if ( rx_ri_corr.indexIn( qv[ 0 ] ) != -1 ) {
+         has_ri_corr  = true;
+         this_ri_corr = rx_ri_corr.cap( 1 ).toDouble();
+      }
+      if ( rx_ri_corrs.indexIn( qv[ 0 ] ) != -1 ) {
+         has_ri_corrs  = true;
+         this_ri_corrs = rx_ri_corrs.cap( 1 );
       }
    }
 
