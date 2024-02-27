@@ -1420,7 +1420,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
       scale_pair_minimize_clear();
       switch ( QMessageBox::question(this, 
                                      windowTitle() + us_tr( " : Scale Make Scaled" )
-                                     ,us_tr( "The scale has changed since the last 'minimize'\n"
+                                     ,us_tr( "The scale has changed since the last 'minimize' or you did not 'minimize' at all.\n"
                                              "You must 'minimize' again to keep fitting header information" )
                                      ,us_tr( "&Continue anyway" )
                                      ,us_tr( "&Quit" )
@@ -1683,8 +1683,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize_clear() {
    last_minimize_method   = "";
    last_minimize_weight   = "";
    last_minimize_q_ranges = "";
-   last_minimize_scale    = 1e0;
-   last_minimize_sd_scale = 1e0;
+   last_minimize_scale    = 0e0;
+   last_minimize_sd_scale = 0e0;
    last_minimize_chi2s.clear();
 }   
 
