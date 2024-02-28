@@ -271,6 +271,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair( bool no_store_original )
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_enables()
 {
+   // qDebug() << "scale_pair_enables() last_minimize_scale " << last_minimize_scale << " scale_pair_scale: " << le_scale_pair_scale->text().toDouble();
    // mostly disable except cancel & wheel
    if ( minimize_running ) {
       TSO << "scale_pair_enables() disabled!\n";
@@ -597,6 +598,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_time_focus( bool hasFocus ) {
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_scale( const QString & text ) {
    qDebug() << "scale_pair_scale( " << text << " )";
+   // qDebug() << "scale_pair_scale() last_minimize_scale " << last_minimize_scale << " scale_pair_scale: " << le_scale_pair_scale->text().toDouble();
    lbl_wheel_pos->setText   ( le_scale_pair_scale->text() );
    scale_pair_fit_clear( false );
    scale_pair_created_update();
@@ -1409,6 +1411,8 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
 #warning save headers
 
    qDebug() << "scale_pair_create_scaled_curves()";
+   // qDebug() << "scale_pair_create_scaled_curves() last_minimize_scale " << last_minimize_scale << " scale_pair_scale: " << le_scale_pair_scale->text().toDouble();
+
    disable_all();
    scale_pair_save_names.clear();
 
@@ -1416,7 +1420,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
    double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
    double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
 
-   if ( scale_pair_scale != last_minimize_scale ) {
+   if ( (int)(200*scale_pair_scale) != (int)(200*last_minimize_scale) ) {
       scale_pair_minimize_clear();
       switch ( QMessageBox::question(this, 
                                      windowTitle() + us_tr( " : Scale Make Scaled" )
