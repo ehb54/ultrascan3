@@ -4,6 +4,45 @@
 
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
+#include <QTabWidget>
+
+class CustomTableWidget : public QTableWidget {
+   public:
+   CustomTableWidget(QWidget *parent = nullptr) : QTableWidget(parent) {}
+
+   protected:
+   void contextMenuEvent(QContextMenuEvent *event) override {
+      QMenu contextMenu(this);
+
+      QAction *ins_row_above = contextMenu.addAction("Insert A Row Above");
+      QAction *ins_row_below = contextMenu.addAction("Insert A Row Below");
+      QAction *del_cur_row = contextMenu.addAction("Delete Current Row");
+      QAction *ins_col_left = contextMenu.addAction("Insert A Column Left");
+      QAction *ins_col_right = contextMenu.addAction("Insert A Column Right");
+      QAction *del_cur_col = contextMenu.addAction("Delete Current Column");
+
+      QString styleSheet = "QMenu { background-color: rgb(255, 253, 208); }"
+                           "QMenu::item { background: transparent; }"
+                           "QMenu::item:selected { background-color: transparent; color: red; font-weight: bold; }";
+
+
+      contextMenu.setStyleSheet(styleSheet);
+
+      // connect(action1, &QAction::triggered, this, &CustomTableWidget::handleOption1);
+      // connect(action2, &QAction::triggered, this, &CustomTableWidget::handleOption2);
+
+      contextMenu.exec(event->globalPos());
+   }
+
+   private slots:
+   // void handleOption1() {
+   //    // Implement the action for Option 1
+   // }
+
+   // void handleOption2() {
+   //    // Implement the action for Option 2
+   // }
+};
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
 {
@@ -29,7 +68,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QCheckBox* cb_samesize;
       QLineEdit* le_other;
       QLineEdit* le_filename;
-      QTableWidget* tw_data;
+      CustomTableWidget* tw_data;
       QString str_delimiter;
       QButtonGroup* bg_delimiter;
 

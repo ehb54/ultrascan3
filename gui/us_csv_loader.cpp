@@ -64,7 +64,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    pb_cancel = us_pushbutton("Cancel");
    pb_ok = us_pushbutton("Ok");
 
-   tw_data = new QTableWidget();
+   tw_data = new CustomTableWidget();
    tw_data->setRowCount(20);
    tw_data->setColumnCount(10);
    tw_data-> setHorizontalHeaderLabels(make_labels(10));
