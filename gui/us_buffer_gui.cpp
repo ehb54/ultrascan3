@@ -1470,6 +1470,11 @@ DbgLv(1) << "BufN:SL: newCanceled()";
    buffer->component    .clear();
    buffer->componentIDs .clear();
    buffer->concentration.clear();
+   lw_bufcomps->clear();
+   le_descrip->clear();
+   le_concen->clear();
+   recalc_density();
+   recalc_viscosity();
 
    emit newBufCanceled();
 }
@@ -1493,6 +1498,19 @@ DbgLv(1) << "BufN:SL: newAccepted()";
 DbgLv(1) << "BufN:SL:  newAcc: Disk";
       write_disk();
    }
+
+   buffer->person       = "";
+   buffer->bufferID     = "-1";
+   buffer->GUID         = "";
+   buffer->description  = "";
+   buffer->component    .clear();
+   buffer->componentIDs .clear();
+   buffer->concentration.clear();
+   lw_bufcomps->clear();
+   le_descrip->clear();
+   le_concen->clear();
+   recalc_density();
+   recalc_viscosity();
 
    emit newBufAccepted();
 }
