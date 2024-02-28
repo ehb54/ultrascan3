@@ -4523,6 +4523,7 @@ void US_Hydrodyn_Mals_Saxs::mode_setup_widgets()
    scroll_pair_widgets.push_back( qwtw_wheel );
    scroll_pair_widgets.push_back( pb_wheel_inc );
    scroll_pair_widgets.push_back( lbl_wheel_pos );
+   scroll_pair_widgets.push_back( lbl_wheel_pos_below );
 
    // scale_pair_widgets;
    scale_pair_widgets.push_back( pb_wheel_dec );

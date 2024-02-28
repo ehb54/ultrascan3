@@ -181,12 +181,20 @@ void US_Hydrodyn_Mals_Saxs::scroll_pair_scroll_highlight( int pos )
          scroll_pair_time_to_names[ time ][ 0 ]
          ,scroll_pair_time_to_names[ time ][ 1 ]
       };
+      lbl_wheel_pos_below->setText(
+                                   QString( "<center>%1<br>%2</center>" )
+                                   .arg( scroll_pair_time_to_names[ time ][ 0 ] )
+                                   .arg( scroll_pair_time_to_names[ time ][ 1 ] )
+                                   );
    } else {
       toplot = {
          scroll_pair_time_to_names[ time ][ 0 ]
       };
+      lbl_wheel_pos_below->setText(
+                                   QString( "<center>%1</center>" )
+                                   .arg( scroll_pair_time_to_names[ time ][ 0 ] )
+                                   );
    }
 
    set_selected( toplot );
 }
-
