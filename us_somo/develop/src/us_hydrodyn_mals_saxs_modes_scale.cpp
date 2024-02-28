@@ -1360,7 +1360,6 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
          best_gchi2 = global_chi2;
          best_scale = s;
          last_minimize_chi2s = tmp_minimize_chi2s;
-         last_minimize_scale = best_scale;
          qDebug() << QString( "scale %1 gChi2 %2 new best\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
       } else {
          qDebug() << QString( "scale %1 gChi2 %2\n" ).arg( s ).arg( global_chi2 / ( qs.size() * scale_pair_times.size() ) );
@@ -1370,6 +1369,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_minimize() {
    us_qdebug( us_timers.list_times() );
    minimize_running = false;
    le_scale_pair_scale->setText( QString( "%1" ).arg( best_scale ) );
+   last_minimize_scale = le_scale_pair_scale->text().toDouble();
    scale_pair_time_focus( true );
    scale_pair_fit();
 }
@@ -1420,7 +1420,9 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
    double scale_pair_scale    = le_scale_pair_scale->text().toDouble();
    double scale_pair_sd_scale = le_scale_pair_sd_scale->text().toDouble();
 
-   if ( (int)(200*scale_pair_scale) != (int)(200*last_minimize_scale) ) {
+   // remove rounding check since we now set last_minimize scale from lb_scale_pair_scale->text().toDouble() instead of the loop value
+   // if ( (int)(200*scale_pair_scale) != (int)(200*last_minimize_scale) ) {
+   if ( scale_pair_scale != last_minimize_scale ) {
       scale_pair_minimize_clear();
       switch ( QMessageBox::question(this, 
                                      windowTitle() + us_tr( " : Scale Make Scaled" )
