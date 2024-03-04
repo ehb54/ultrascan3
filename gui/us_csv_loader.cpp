@@ -101,17 +101,19 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    setLayout(main_lyt);
    loaded = false;
 
-   connect(pb_open, SIGNAL(clicked()), this, SLOT(open()));
-//   connect(rb_tab, SIGNAL(clicked()), this, SLOT(fill_table()));
-//   connect(rb_space, SIGNAL(clicked()), this, SLOT(fill_table()));
-//   connect(rb_semicolon, SIGNAL(clicked()), this, SLOT(fill_table()));
-//   connect(rb_comma, SIGNAL(clicked()), this, SLOT(fill_table()));
-//   connect(rb_other, SIGNAL(clicked()), this, SLOT(fill_table()));
-   connect(bg_delimiter, SIGNAL(buttonClicked(int)),
-           this, SLOT(fill_table(int)));
+   connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
+   connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    connect(tw_data, &CustomTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
+   connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
 
+}
+
+void US_CSV_Loader::set_numeric_state(bool state, bool enabled) {
+   if (state) rb_numeric->setChecked(true);
+   else rb_string->setChecked(true);
+   rb_numeric->setEnabled(enabled);
+   rb_string->setEnabled(enabled);
 }
 
 void US_CSV_Loader::add_header() {
@@ -153,7 +155,7 @@ void US_CSV_Loader::cancel() {
 
 void US_CSV_Loader::open() {
    QString fpath = QFileDialog::getOpenFileName(this, "Open File", US_Settings::workBaseDir(),
-                                                   "(DAT, DSP, CSV) (*.dat *.dsp *.csv)");
+                                                   "(DAT, DSP, CSV) (*)");
    if (fpath.isEmpty()) return;
    QFile file(fpath);
    QFileInfo finfo(fpath);
@@ -169,6 +171,8 @@ void US_CSV_Loader::open() {
       }
       loaded = false;
       fill_table(bg_delimiter->checkedId());
+      le_filename->setText(finfo.fileName());
+      column_list.clear();
    } else {
       QMessageBox::warning(this, "Error!", "Please load a text file!");
       return;
@@ -185,17 +189,11 @@ void US_CSV_Loader::fill_table(int id) {
 
    QFont tw_font( US_Widgets::fixedFont().family(),
                  US_GuiSettings::fontSize() );
-   QFontMetrics* fm = new QFontMetrics( tw_font );
-   int rowht = fm->height() + 2;
+   // QFontMetrics* fm = new QFontMetrics( tw_font );
+   // int rowht = fm->height() + 2;
    tw_data->clearContents();
-//   int min_nc =  1e99;
    int n_columns = static_cast<int>(-1e99);
-//   int min_nr =  1e99;
-//   int max_nr = -1e99;
-
    int n_rows = file_lines.size();
-
-
    QVector<QStringList> data_list;
 
    for (int ii = 0; ii < n_rows; ii++ ) {
@@ -217,22 +215,17 @@ void US_CSV_Loader::fill_table(int id) {
    tw_data->setColumnCount(n_columns);
    for (int ii = 0; ii < n_rows; ii++ ) {
       for (int jj = 0; jj < data_list.at(ii).size(); jj++) {
-         QTableWidgetItem *twi = new QTableWidgetItem(data_list.at(ii).at(jj));
+         QTableWidgetItem *twi = new QTableWidgetItem(data_list.at(ii).at(jj).trimmed());
          twi->setFont(tw_font);
          tw_data->setItem(ii, jj, twi);
          //         tw_data->setRowHeight(ii, rowht);
       }
    }
 
-
    tw_data->setHorizontalHeaderLabels(make_labels(n_columns));
    tw_data->setVerticalHeaderLabels(make_labels(n_rows));
    highlight_header();
-
-   qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
-
-
-
+   // qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
 }
 
 void US_CSV_Loader::highlight_header() {
@@ -242,4 +235,46 @@ void US_CSV_Loader::highlight_header() {
          else tw_data->item(ii, jj)->setBackground(QBrush(Qt::white));
       }
    }
+}
+
+bool US_CSV_Loader::check_table_size() {
+   int nrows = tw_data->rowCount();
+   int ncols = tw_data->columnCount();
+   int nc_0 = 0;
+   for (int ii = 0; ii < nrows; ii++) {
+      int nc_r = 0;
+      for (int jj = 0; jj < ncols; jj++) {
+         if (ii == 0 && !tw_data->item(ii, jj)->text().isEmpty()) {
+            nc_0++;
+            nc_r++;
+         } else if (ii > 0 && !tw_data->item(ii, jj)->text().isEmpty()){
+            nc_r++;
+         }
+      }
+      if (nc_0 != nc_r) {
+         QMessageBox::warning(this, "Error!",
+                              tr("The number of cells doesn't match!\nrow %1").arg(ii + 1));
+         return false;
+      }
+   }
+   return true;
+}
+
+bool US_CSV_Loader::check_table_data() {
+   if (rb_string->isChecked()) return true;
+   bool state;
+   int nrows = tw_data->rowCount();
+   int ncols = tw_data->columnCount();
+   for (int ii = 1; ii < nrows; ii++) {
+      for (int jj = 0; jj < ncols; jj++) {
+         tw_data->item(ii, jj)->text().toDouble(&state);
+         if (! state) {
+            QMessageBox::warning(this, "Error!",
+                                 tr("Cell (%1, %2) is not numeric").arg(ii + 1, jj + 1));
+            tw_data->setCurrentCell(ii, jj);
+            return false;
+         }
+      }
+   }
+   return true;
 }

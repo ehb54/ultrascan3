@@ -53,11 +53,13 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
    Q_OBJECT
    public:
       US_CSV_Loader(QWidget* parent);
+      void set_numeric_state(bool, bool);
       void set_msg(QString&);
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER};
       bool loaded;
+      QVector<QStringList> column_list;
       DELIMITER  delimiter;
       QPushButton* pb_open;
       QPushButton* pb_ok;
@@ -79,6 +81,9 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
 
       QStringList file_lines;
       QStringList make_labels(int);
+
+      bool check_table_size();
+      bool check_table_data();
 
    private slots:
       void open();
