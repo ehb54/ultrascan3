@@ -55,12 +55,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    bg_feature->addButton(rb_numeric);
    rb_numeric->setChecked(true);
 
-   cb_header = new QCheckBox();
-   QGridLayout *lyt_header = us_checkbox("Header", cb_header);
-
-   cb_samesize = new QCheckBox();
-   QGridLayout *lyt_samesize = us_checkbox("Same-size Columns", cb_samesize);
-
+   pb_add_header = us_pushbutton("Add Header");
    pb_cancel = us_pushbutton("Cancel");
    pb_ok = us_pushbutton("Ok");
 
@@ -72,6 +67,8 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    tw_data->setStyleSheet("background-color: white");
    QHeaderView *header = tw_data->horizontalHeader();
    header->setSectionResizeMode(QHeaderView::Stretch);
+
+   le_msg = us_lineedit("", 0, true);
 
    QGridLayout* main_lyt = new QGridLayout();
    main_lyt->addWidget(lb_filename,       0, 0, 1, 1);
@@ -91,13 +88,12 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    main_lyt->addLayout(lyt_numeric,       3, 1, 1, 3);
    main_lyt->addLayout(lyt_string,        3, 4, 1, 3);
 
-   main_lyt->addLayout(lyt_header,        4, 1, 1, 3);
-   main_lyt->addLayout(lyt_samesize,      4, 4, 1, 3);
-
+   main_lyt->addWidget(pb_add_header,     5, 0, 1, 1);
    main_lyt->addWidget(pb_cancel,         5, 3, 1, 2);
    main_lyt->addWidget(pb_ok,             5, 5, 1, 2);
 
-   main_lyt->addWidget(tw_data,           6, 0, 5, 7);
+   main_lyt->addWidget(le_msg,            6, 0, 1, 7);
+   main_lyt->addWidget(tw_data,           7, 0, 5, 7);
 
    main_lyt->setSpacing(2);
    main_lyt->setMargin(2);
@@ -113,7 +109,30 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 //   connect(rb_other, SIGNAL(clicked()), this, SLOT(fill_table()));
    connect(bg_delimiter, SIGNAL(buttonClicked(int)),
            this, SLOT(fill_table(int)));
+   connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
+   connect(tw_data, &CustomTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
 
+}
+
+void US_CSV_Loader::add_header() {
+   if (! loaded) {
+      return;
+   }
+   tw_data->add_header();
+   qDebug() << tw_data->rowCount();
+   qDebug() << tw_data->columnCount();
+   QFont tw_font( US_Widgets::fixedFont().family(),
+                 US_GuiSettings::fontSize() );
+   for (int ii = 0; ii < tw_data->columnCount(); ii++) {
+      QTableWidgetItem *twi = new QTableWidgetItem(tr("column %1").arg(ii + 1));
+      twi->setFont(tw_font);
+      tw_data->setItem(0, ii, twi);
+   }
+   highlight_header();
+}
+
+void US_CSV_Loader::set_msg(QString& msg) {
+   le_msg->setText(msg);
 }
 
 QStringList US_CSV_Loader::make_labels(int number) {
@@ -208,9 +227,19 @@ void US_CSV_Loader::fill_table(int id) {
 
    tw_data->setHorizontalHeaderLabels(make_labels(n_columns));
    tw_data->setVerticalHeaderLabels(make_labels(n_rows));
+   highlight_header();
 
    qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
 
 
 
+}
+
+void US_CSV_Loader::highlight_header() {
+   for (int ii = 0; ii < tw_data->rowCount(); ii++) {
+      for (int jj = 0; jj < tw_data->columnCount(); jj++) {
+         if (ii == 0) tw_data->item(ii, jj)->setBackground(QBrush(Qt::yellow));
+         else tw_data->item(ii, jj)->setBackground(QBrush(Qt::white));
+      }
+   }
 }

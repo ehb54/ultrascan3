@@ -7,41 +7,45 @@
 #include <QTabWidget>
 
 class CustomTableWidget : public QTableWidget {
+   Q_OBJECT
    public:
    CustomTableWidget(QWidget *parent = nullptr) : QTableWidget(parent) {}
+   void add_header() {
+      this->insertRow(0);
+   }
+
+   signals:
+   void new_content();
 
    protected:
    void contextMenuEvent(QContextMenuEvent *event) override {
       QMenu contextMenu(this);
 
-      QAction *ins_row_above = contextMenu.addAction("Insert A Row Above");
-      QAction *ins_row_below = contextMenu.addAction("Insert A Row Below");
-      QAction *del_cur_row = contextMenu.addAction("Delete Current Row");
-      QAction *ins_col_left = contextMenu.addAction("Insert A Column Left");
-      QAction *ins_col_right = contextMenu.addAction("Insert A Column Right");
-      QAction *del_cur_col = contextMenu.addAction("Delete Current Column");
+      QAction *del_row = contextMenu.addAction("Delete Row");
+      QAction *del_col = contextMenu.addAction("Delete Column");
 
       QString styleSheet = "QMenu { background-color: rgb(255, 253, 208); }"
                            "QMenu::item { background: transparent; }"
                            "QMenu::item:selected { background-color: transparent; color: red; font-weight: bold; }";
 
-
       contextMenu.setStyleSheet(styleSheet);
 
-      // connect(action1, &QAction::triggered, this, &CustomTableWidget::handleOption1);
-      // connect(action2, &QAction::triggered, this, &CustomTableWidget::handleOption2);
+      connect(del_row, &QAction::triggered, this, &CustomTableWidget::delete_row);
+      connect(del_col, &QAction::triggered, this, &CustomTableWidget::delete_column);
 
       contextMenu.exec(event->globalPos());
    }
 
    private slots:
-   // void handleOption1() {
-   //    // Implement the action for Option 1
-   // }
+   void delete_row() {
+      this->removeRow(this->currentRow());
+      emit new_content();
+   }
 
-   // void handleOption2() {
-   //    // Implement the action for Option 2
-   // }
+   void delete_column() {
+      this->removeColumn(this->currentColumn());
+      emit new_content();
+   }
 };
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
@@ -49,6 +53,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
    Q_OBJECT
    public:
       US_CSV_Loader(QWidget* parent);
+      void set_msg(QString&);
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER};
@@ -57,6 +62,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QPushButton* pb_open;
       QPushButton* pb_ok;
       QPushButton* pb_cancel;
+      QPushButton* pb_add_header;
       QRadioButton* rb_tab;
       QRadioButton* rb_comma;
       QRadioButton* rb_semicolon;
@@ -64,10 +70,9 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QRadioButton* rb_other;
       QRadioButton* rb_string;
       QRadioButton* rb_numeric;
-      QCheckBox* cb_header;
-      QCheckBox* cb_samesize;
       QLineEdit* le_other;
       QLineEdit* le_filename;
+      QLineEdit* le_msg;
       CustomTableWidget* tw_data;
       QString str_delimiter;
       QButtonGroup* bg_delimiter;
@@ -75,13 +80,13 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QStringList file_lines;
       QStringList make_labels(int);
 
-
-
    private slots:
       void open();
       void ok();
       void cancel();
       void fill_table(int);
+      void add_header();
+      void highlight_header();
 
 
 
