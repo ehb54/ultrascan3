@@ -106,6 +106,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    connect(tw_data, &CustomTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
+   connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
 
 }
 
@@ -137,6 +138,10 @@ void US_CSV_Loader::set_msg(QString& msg) {
    le_msg->setText(msg);
 }
 
+QVector<QStringList> US_CSV_Loader::get_data() {
+   return column_list;
+}
+
 QStringList US_CSV_Loader::make_labels(int number) {
    QStringList labels;
    for (int ii = 0; ii < number; ii++) {
@@ -146,11 +151,24 @@ QStringList US_CSV_Loader::make_labels(int number) {
 }
 
 void US_CSV_Loader::ok() {
-
+   if(! check_table_size()) return;
+   if(! check_table_data()) return;
+   column_list.clear();
+   int nrows = tw_data->rowCount();
+   int ncols = tw_data->columnCount();
+   for (int jj = 0; jj < ncols; jj++) {
+      QStringList col;
+      for (int ii = 0 ; ii < nrows; ii++) {
+         col << tw_data->item(ii, jj)->text();
+      }
+      column_list << col;
+   }
+   accept();
 }
 
 void US_CSV_Loader::cancel() {
-
+   column_list.clear();
+   reject();
 }
 
 void US_CSV_Loader::open() {
