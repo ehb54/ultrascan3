@@ -173,26 +173,43 @@ void US_CSV_Loader::cancel() {
 
 void US_CSV_Loader::open() {
    QString fpath = QFileDialog::getOpenFileName(this, "Open File", US_Settings::workBaseDir(),
-                                                   "(DAT, DSP, CSV) (*)");
+                                                   "(TEXT Files) (*)");
    if (fpath.isEmpty()) return;
    QFile file(fpath);
    QFileInfo finfo(fpath);
-   if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+   if(file.open(QIODevice::ReadOnly)) {
       file_lines.clear();
       QTextStream ts(&file);
+      bool isAscii = true;
       while (true) {
          if (ts.atEnd()) {
             file.close();
             break;
          }
-         file_lines.append(ts.readLine());
+         QString line = ts.readLine();
+         QByteArray byte_arr = line.toUtf8();
+         for (char ch : byte_arr) {
+            if (ch < 0 || ch > 127) {
+               qDebug() << "Non-ASCII character detected. Binary file.";
+               file.close();
+               isAscii = false;
+               break;
+            }
+         }
+         if (!isAscii) {
+            file.close();
+            file_lines.clear();
+            QMessageBox::warning(this, "Error!", "Please load a text file!");
+            return;
+         }
+         file_lines.append(line);
       }
       loaded = false;
       fill_table(bg_delimiter->checkedId());
       le_filename->setText(finfo.fileName());
       column_list.clear();
    } else {
-      QMessageBox::warning(this, "Error!", "Please load a text file!");
+      QMessageBox::warning(this, "Error!", "Couldn't open the file!");
       return;
    }
 }
