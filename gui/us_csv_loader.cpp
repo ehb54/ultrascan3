@@ -1,3 +1,4 @@
+#include <QtGlobal>
 #include "us_csv_loader.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
@@ -102,11 +103,15 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    loaded = false;
 
    connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
-   connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    connect(tw_data, &CustomTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
+#if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
+   connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
+#else
+   connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &US_CSV_Loader::fill_table);
+#endif
 
 }
 
