@@ -9,43 +9,18 @@
 class CustomTableWidget : public QTableWidget {
    Q_OBJECT
    public:
-   CustomTableWidget(QWidget *parent = nullptr) : QTableWidget(parent) {}
-   void add_header() {
-      this->insertRow(0);
-   }
+   CustomTableWidget(QWidget *parent=nullptr);
+   void add_header();
 
    signals:
    void new_content();
 
    protected:
-   void contextMenuEvent(QContextMenuEvent *event) override {
-      QMenu contextMenu(this);
-
-      QAction *del_row = contextMenu.addAction("Delete Row");
-      QAction *del_col = contextMenu.addAction("Delete Column");
-
-      QString styleSheet = "QMenu { background-color: rgb(255, 253, 208); }"
-                           "QMenu::item { background: transparent; }"
-                           "QMenu::item:selected { background-color: transparent; color: red; font-weight: bold; }";
-
-      contextMenu.setStyleSheet(styleSheet);
-
-      connect(del_row, &QAction::triggered, this, &CustomTableWidget::delete_row);
-      connect(del_col, &QAction::triggered, this, &CustomTableWidget::delete_column);
-
-      contextMenu.exec(event->globalPos());
-   }
+   void contextMenuEvent(QContextMenuEvent *event) override;
 
    private slots:
-   void delete_row() {
-      this->removeRow(this->currentRow());
-      emit new_content();
-   }
-
-   void delete_column() {
-      this->removeColumn(this->currentColumn());
-      emit new_content();
-   }
+   void delete_row();
+   void delete_column();
 };
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog

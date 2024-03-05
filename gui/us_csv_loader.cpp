@@ -3,6 +3,41 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 
+CustomTableWidget::CustomTableWidget(QWidget *parent) : QTableWidget(parent) {};
+
+void CustomTableWidget::add_header() {
+   this->insertRow(0);
+}
+
+void CustomTableWidget::contextMenuEvent(QContextMenuEvent *event) {
+   QMenu contextMenu(this);
+
+   QAction *del_row = contextMenu.addAction("Delete Row");
+   QAction *del_col = contextMenu.addAction("Delete Column");
+
+   QString styleSheet = "QMenu { background-color: rgb(255, 253, 208); }"
+                        "QMenu::item { background: transparent; }"
+                        "QMenu::item:selected { background-color: transparent; color: red; font-weight: bold; }";
+
+   contextMenu.setStyleSheet(styleSheet);
+
+   connect(del_row, &QAction::triggered, this, &CustomTableWidget::delete_row);
+   connect(del_col, &QAction::triggered, this, &CustomTableWidget::delete_column);
+
+   contextMenu.exec(event->globalPos());
+}
+
+void CustomTableWidget::delete_row() {
+   this->removeRow(this->currentRow());
+   emit new_content();
+}
+
+void CustomTableWidget::delete_column() {
+   this->removeColumn(this->currentColumn());
+   emit new_content();
+}
+
+
 US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
    setWindowTitle( tr( "Load CSV File" ) );
