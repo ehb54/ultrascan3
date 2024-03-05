@@ -1440,6 +1440,24 @@ DbgLv(1) << "BufN:SL: viscosity()" << buffer->viscosity;
 void US_BufferGuiNew::manual_flag( bool is_on )
 {
 DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
+   if (is_on) {
+      if (lw_bufcomps->count() > 0) {
+            int qs = QMessageBox::question(this, "Warning!", "If you continue with YES, all selected buffer "
+                                                 "components will be discarded");
+         if (qs == QMessageBox::Yes) {
+               buffer->component.clear();
+               buffer->componentIDs.clear();
+               buffer->concentration.clear();
+               lw_bufcomps->clear();
+               le_concen->clear();
+         } else {
+            return;
+         }
+      }
+   } else {
+      recalc_density();
+      recalc_viscosity();
+   }
    us_setReadOnly( le_density, ! is_on );
    us_setReadOnly( le_viscos,  ! is_on );
    buffer->manual     = is_on;
