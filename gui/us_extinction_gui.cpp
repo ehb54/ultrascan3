@@ -418,37 +418,91 @@ US_Extinction::US_Extinction() : US_Widgets()
    main->setColumnStretch(1, 5);
 }
 
+// void US_Extinction::add_wavelength(void)
+// {
+//   QStringList files;
+//   QFile f;
+  
+//   QFileDialog dialog (this);
+//   //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
+
+//   dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
+    
+//   dialog.setFileMode(QFileDialog::ExistingFiles);
+//   dialog.setViewMode(QFileDialog::Detail);
+//   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+  
+//   QString work_dir_data  = US_Settings::dataDir();
+//   //qDebug() << work_dir_data;
+//   //dialog.setDirectory(work_dir_data);
+
+//   qDebug() << current_path;
+//   current_path = current_path.isEmpty() ? work_dir_data : current_path;
+
+//   dialog.setDirectory(current_path);
+//   qDebug() << current_path;
+
+//   if(dialog.exec())
+//     {
+//       QDir d = dialog.directory();
+//       current_path = d.absolutePath();
+//       files = dialog.selectedFiles();
+//       reading(files);
+//     }
+// }
+
 void US_Extinction::add_wavelength(void)
 {
-  QStringList files;
-  QFile f;
-  
-  QFileDialog dialog (this);
-  //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
+   csv_loader->set_msg("First Column: Wavelengths");
+   csv_loader->set_numeric_state(true, false);
+   int state = csv_loader->exec();
+   if (state != QDialog::Accepted) return;
+   QVector<QStringList> ldata = csv_loader->get_data();
+   if (ldata.size() == 0 || ldata.size() == 1 ) return;
 
-  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-    
-  dialog.setFileMode(QFileDialog::ExistingFiles);
-  dialog.setViewMode(QFileDialog::Detail);
-  //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
-  
-  QString work_dir_data  = US_Settings::dataDir();
-  //qDebug() << work_dir_data;
-  //dialog.setDirectory(work_dir_data);
 
-  qDebug() << current_path;
-  current_path = current_path.isEmpty() ? work_dir_data : current_path;
+   QRegularExpression re;
+   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+   QRegularExpressionMatch match;
 
-  dialog.setDirectory(current_path);  
-  qDebug() << current_path;
+   QString str1;
+   QStringList strl;
+   float temp_x, temp_y;
+   QMap < QString, WavelengthScan >  Wvs_to_descr_map;
 
-  if(dialog.exec())
-    {
-      QDir d = dialog.directory();
-      current_path = d.absolutePath();
-      files = dialog.selectedFiles();
-      reading(files);
-    }
+   int nc_loaded = 0;
+   if (lw_file_names->count() > 0) {
+      QString text = lw_file_names->item(lw_file_names->count() - 1)->text();
+      re.setPattern("^[(](\\d+)[)].+");
+      match = re.match(text);
+      if (match.hasMatch()) {
+         nc_loaded = match.captured(1).toInt();
+      }
+   }
+
+   QStringList headers;
+   QVector<float> xvals;
+   QVector<QVector<float>> yvals;
+   for (int col = 0; col < ldata.size(); col++) {
+      QVector<float> yv;
+      for (int row = 0; row < ldata.at(col).size(); row++) {
+         if (row == 0) {
+            if (col > 0) headers << ldata.at(col).at(0);
+            continue;
+         }
+         if (col == 0) {
+            xvals << ldata.at(col).at(row).toDouble();
+            continue;
+         }
+         yv << ldata.at(col).at(row).toDouble();
+      }
+      if (yv.size() > 0) {
+         yvals << yv;
+      }
+   }
+
+
 }
 
 void US_Extinction::reading(QStringList sl)
