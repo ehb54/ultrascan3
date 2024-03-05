@@ -54,7 +54,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
    public:
       US_CSV_Loader(QWidget* parent);
       void set_numeric_state(bool, bool);
-      void set_msg(QString&);
+      void set_msg(QString);
       QVector<QStringList> get_data();
 
    private:

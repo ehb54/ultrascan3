@@ -134,7 +134,7 @@ void US_CSV_Loader::add_header() {
    highlight_header();
 }
 
-void US_CSV_Loader::set_msg(QString& msg) {
+void US_CSV_Loader::set_msg(QString msg) {
    le_msg->setText(msg);
 }
 
