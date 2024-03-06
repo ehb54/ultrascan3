@@ -76,6 +76,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    delimiter = TAB;
 
    le_other = us_lineedit("");
+   le_other->setMaxLength(5);
 
    rb_string = new QRadioButton();
    QGridLayout *lyt_string = us_radiobutton("String Data", rb_string);
@@ -135,13 +136,13 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    main_lyt->setMargin(2);
 
    setLayout(main_lyt);
-   loaded = false;
 
    connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    connect(tw_data, &CustomTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
+   connect(le_other, &QLineEdit::textChanged, this, &US_CSV_Loader::new_delimiter);
 #if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
    connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
 #else
@@ -158,7 +159,7 @@ void US_CSV_Loader::set_numeric_state(bool state, bool enabled) {
 }
 
 void US_CSV_Loader::add_header() {
-   if (! loaded) {
+   if (file_lines.size() == 0) {
       return;
    }
    tw_data->add_header();
@@ -245,7 +246,11 @@ void US_CSV_Loader::open() {
          }
          file_lines.append(line);
       }
-      loaded = false;
+      if (file_lines.size() == 0) {
+         QMessageBox::warning(this, "Error!", "Empty file!");
+         return;
+      }
+      delimiter = NONE;
       fill_table(bg_delimiter->checkedId());
       le_filename->setText(infile.fileName());
       column_list.clear();
@@ -255,12 +260,18 @@ void US_CSV_Loader::open() {
    }
 }
 
+void US_CSV_Loader::new_delimiter(const QString &) {
+   if (delimiter == OTHER) {
+      delimiter = NONE;
+      fill_table(OTHER);
+   }
+}
+
 void US_CSV_Loader::fill_table(int id) {
-   if (delimiter == id && loaded) {
+   if (delimiter == id) {
       return;
    } else {
       delimiter = static_cast<DELIMITER>(id);
-      loaded = true;
    }
 
    QFont tw_font( US_Widgets::fixedFont().family(),

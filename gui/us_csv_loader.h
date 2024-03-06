@@ -33,8 +33,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QFileInfo get_file_info();
 
    private:
-      enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER};
-      bool loaded;
+      enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
       QFileInfo infile;
       QVector<QStringList> column_list;
       DELIMITER  delimiter;
@@ -68,6 +67,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       void ok();
       void cancel();
       void fill_table(int);
+      void new_delimiter(const QString &);
       void add_header();
       void highlight_header();
 
