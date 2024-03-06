@@ -41,6 +41,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QPushButton* pb_ok;
       QPushButton* pb_cancel;
       QPushButton* pb_add_header;
+      QPushButton* pb_save_csv;
       QRadioButton* rb_tab;
       QRadioButton* rb_comma;
       QRadioButton* rb_semicolon;
@@ -66,6 +67,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       void open();
       void ok();
       void cancel();
+      void save_csv();
       void fill_table(int);
       void new_delimiter(const QString &);
       void add_header();

@@ -84,7 +84,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    rb_numeric = new QRadioButton();
    QGridLayout *lyt_numeric = us_radiobutton("Numeric Data", rb_numeric);
 
-   QLabel* lb_feature = us_label("Features:");
+   QLabel* lb_feature = us_label("Options:");
    lb_feature->setAlignment(Qt::AlignRight);
 
    QButtonGroup* bg_feature = new QButtonGroup();
@@ -95,6 +95,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    pb_add_header = us_pushbutton("Add Header");
    pb_cancel = us_pushbutton("Cancel");
    pb_ok = us_pushbutton("Ok");
+   pb_save_csv = us_pushbutton("Save CSV");
 
    tw_data = new CustomTableWidget();
    tw_data->setRowCount(20);
@@ -122,15 +123,16 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    main_lyt->addWidget(le_other,          2, 5, 1, 2);
 
    main_lyt->addWidget(lb_feature,        3, 0, 1, 1);
-   main_lyt->addLayout(lyt_numeric,       3, 1, 1, 3);
-   main_lyt->addLayout(lyt_string,        3, 4, 1, 3);
+   main_lyt->addLayout(lyt_numeric,       3, 1, 1, 2);
+   main_lyt->addLayout(lyt_string,        3, 3, 1, 2);
+   main_lyt->addWidget(pb_add_header,     3, 5, 1, 2);
 
-   main_lyt->addWidget(pb_add_header,     5, 0, 1, 1);
-   main_lyt->addWidget(pb_cancel,         5, 3, 1, 2);
-   main_lyt->addWidget(pb_ok,             5, 5, 1, 2);
+   main_lyt->addWidget(pb_save_csv,       4, 1, 1, 2);
+   main_lyt->addWidget(pb_cancel,         4, 3, 1, 2);
+   main_lyt->addWidget(pb_ok,             4, 5, 1, 2);
 
-   main_lyt->addWidget(le_msg,            6, 0, 1, 7);
-   main_lyt->addWidget(tw_data,           7, 0, 5, 7);
+   main_lyt->addWidget(le_msg,            5, 0, 1, 7);
+   main_lyt->addWidget(tw_data,           6, 0, 5, 7);
 
    main_lyt->setSpacing(2);
    main_lyt->setMargin(2);
@@ -143,6 +145,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
    connect(le_other, &QLineEdit::textChanged, this, &US_CSV_Loader::new_delimiter);
+   connect(pb_save_csv, &QPushButton::clicked, this, &US_CSV_Loader::save_csv);
 #if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
    connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
 #else
@@ -159,9 +162,7 @@ void US_CSV_Loader::set_numeric_state(bool state, bool enabled) {
 }
 
 void US_CSV_Loader::add_header() {
-   if (file_lines.size() == 0) {
-      return;
-   }
+   if (file_lines.size() == 0) return;
    tw_data->add_header();
    qDebug() << tw_data->rowCount();
    qDebug() << tw_data->columnCount();
@@ -206,6 +207,78 @@ void US_CSV_Loader::ok() {
       column_list << col;
    }
    accept();
+}
+
+void US_CSV_Loader::save_csv() {
+   if (file_lines.size() == 0) return;
+   if(! check_table_size()) return;
+   // if(! check_table_data()) return;
+
+   QString delimiter_str;
+   QString user_delimiter = le_other->text().trimmed();
+   int state = QMessageBox::question(this, "Set Delimiter", "Do you want to save as different delimiter?");
+   if (state == QMessageBox::Yes) {
+      QComboBox* cb_delimiter = us_comboBox();
+      cb_delimiter->addItem("Tab");
+      cb_delimiter->addItem("Space");
+      cb_delimiter->addItem("Comma");
+      cb_delimiter->addItem("Semicolon");
+      if (! user_delimiter.isEmpty()) {
+         cb_delimiter->addItem(tr("Other: %1").arg(user_delimiter));
+      }
+      QDialog *dialog = new QDialog(this);
+      QDialogButtonBox *buttons = new QDialogButtonBox(Qt::Horizontal);
+      buttons->addButton(QDialogButtonBox::Ok);
+      buttons->addButton(QDialogButtonBox::Cancel);
+      QVBoxLayout* lyt = new QVBoxLayout();
+      lyt->addWidget(cb_delimiter);
+      lyt->addWidget(buttons);
+      dialog->setLayout(lyt);
+      connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+      connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+      state = dialog->exec();
+      if (state == QDialog::Accepted) {
+         int id = cb_delimiter->currentIndex();
+         if (id == 0) delimiter_str = "\t";
+         else if (id == 1) delimiter_str = " ";
+         else if (id == 2) delimiter_str = ",";
+         else if (id == 3) delimiter_str = ";";
+         else if (id == 4) delimiter_str = user_delimiter;
+      } else {
+         QMessageBox::warning(this, "Warning!", "Nothing Saved!");
+         return;
+      }
+   } else {
+      if (rb_tab->isChecked()) delimiter_str = "\t";
+      else if (rb_space->isChecked()) delimiter_str = " ";
+      else if (rb_comma->isChecked()) delimiter_str = ",";
+      else if (rb_semicolon->isChecked()) delimiter_str = ";";
+      else if (rb_other->isChecked()) delimiter_str = user_delimiter;
+   }
+
+   int nrows = tw_data->rowCount();
+   int ncols = tw_data->columnCount();
+   QString filePath = QFileDialog::getSaveFileName(this, "Save CSV File", US_Settings::workBaseDir(), "(CSV)(*.csv)");
+   if (filePath.size() == 0) return;
+   if (! filePath.endsWith(".csv", Qt::CaseInsensitive)) {
+      filePath += ".csv";
+   }
+   QFile file(filePath);
+   if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+      QTextStream ts(&file);
+      for (int ii = 0 ; ii < nrows; ii++) {
+         for (int jj = 0; jj < ncols; jj++) {
+            ts << tw_data->item(ii, jj)->text().trimmed();
+            if (jj < ncols - 1) ts << delimiter_str;
+            else ts << "\n";
+         }
+      }
+      file.close();
+      QMessageBox::warning(this, "", tr("Data Saved!\n\n").arg(filePath));
+   } else {
+      QMessageBox::warning(this, "Error!", "Error: Couldn't open the file for writing.");
+   }
+
 }
 
 void US_CSV_Loader::cancel() {
