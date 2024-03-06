@@ -82,7 +82,7 @@ class US_Spectrum : public US_Widgets
 		void	plot_basis();
 		void	load_target();
 		void	plot_target();
-      bool	load_spectra(struct WavelengthProfile &profile, const QVector<QStringList>&);
+		bool	load_spectra(struct WavelengthProfile &profile, const QVector<QStringList>&);
 		void	new_value(const QwtDoublePoint&);
 		void	findExtinction();
 		//void 	find_amplitude(struct WavelengthProfile&);
