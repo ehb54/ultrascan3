@@ -287,11 +287,15 @@ void US_CSV_Loader::cancel() {
 }
 
 void US_CSV_Loader::open() {
-   QString fpath = QFileDialog::getOpenFileName(this, "Open File", US_Settings::workBaseDir(),
-                                                   "(TEXT Files) (*)");
-   if (fpath.isEmpty()) return;
-   infile = QFileInfo(fpath);
-   QFile file(infile.absoluteFilePath());
+   QString dir = curr_dir.isEmpty() ? US_Settings::workBaseDir() : curr_dir;
+   qDebug() << dir;
+   QString filepath = QFileDialog::getOpenFileName(this, "Open File", dir, "(TEXT Files) (*)");
+   if (filepath.isEmpty()) return;
+   parse_file(filepath);
+}
+
+bool US_CSV_Loader::parse_file(QString& filepath) {
+   QFile file(filepath);
    if(file.open(QIODevice::ReadOnly)) {
       file_lines.clear();
       QTextStream ts(&file);
@@ -305,7 +309,6 @@ void US_CSV_Loader::open() {
          QByteArray byte_arr = line.toUtf8();
          for (char ch : byte_arr) {
             if (ch < 0 || ch > 127) {
-               qDebug() << "Non-ASCII character detected. Binary file.";
                file.close();
                isAscii = false;
                break;
@@ -314,22 +317,34 @@ void US_CSV_Loader::open() {
          if (!isAscii) {
             file.close();
             file_lines.clear();
-            QMessageBox::warning(this, "Error!", "Please load a text file!");
-            return;
+            QMessageBox::warning(this, "Error!", tr("This is not a text file!\n%1").arg(filepath));
+            return false;
          }
          file_lines.append(line);
       }
       if (file_lines.size() == 0) {
-         QMessageBox::warning(this, "Error!", "Empty file!");
-         return;
+         QMessageBox::warning(this, "Error!", tr("This is an empty file!\n%1").arg(filepath));
+         return false;
       }
       delimiter = NONE;
+      infile = QFileInfo(filepath);
+      curr_dir = infile.absoluteDir().absolutePath();
       fill_table(bg_delimiter->checkedId());
       le_filename->setText(infile.fileName());
       column_list.clear();
+      return true;
    } else {
-      QMessageBox::warning(this, "Error!", "Couldn't open the file!");
-      return;
+      QMessageBox::warning(this, "Error!", tr("Couldn't open the file!").arg(filepath));
+      return false;
+   }
+}
+
+bool US_CSV_Loader::set_filepath(QString& filepath, bool openEnabled) {
+   if (parse_file(filepath)) {
+      pb_open->setEnabled(openEnabled);
+      return true;
+   } else {
+      return false;
    }
 }
 
@@ -384,13 +399,15 @@ void US_CSV_Loader::fill_table(int id) {
          }
          twi->setFont(tw_font);
          tw_data->setItem(ii, jj, twi);
-         //         tw_data->setRowHeight(ii, rowht);
+         // tw_data->setRowHeight(ii, rowht);
       }
    }
-
    tw_data->setHorizontalHeaderLabels(make_labels(n_columns));
    tw_data->setVerticalHeaderLabels(make_labels(n_rows));
    highlight_header();
+   // tw_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+   tw_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+   tw_data->resizeColumnsToContents();
    // qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
 }
 

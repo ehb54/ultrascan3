@@ -27,6 +27,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
    Q_OBJECT
    public:
       US_CSV_Loader(QWidget* parent);
+      bool set_filepath(QString&, bool);
       void set_numeric_state(bool, bool);
       void set_msg(QString);
       QVector<QStringList> get_data();
@@ -49,19 +50,20 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QRadioButton* rb_other;
       QRadioButton* rb_string;
       QRadioButton* rb_numeric;
+      QButtonGroup* bg_delimiter;
       QLineEdit* le_other;
       QLineEdit* le_filename;
       QLineEdit* le_msg;
-      CustomTableWidget* tw_data;
       QString str_delimiter;
-      QButtonGroup* bg_delimiter;
-
+      QString curr_dir;
       QStringList file_lines;
-      QStringList make_labels(int);
+      CustomTableWidget* tw_data;
 
       bool check_table_size();
       bool check_table_data();
+      bool parse_file(QString&);
       QStringList gen_alpha_list(int);
+      QStringList make_labels(int);
 
    private slots:
       void open();
@@ -72,9 +74,6 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       void new_delimiter(const QString &);
       void add_header();
       void highlight_header();
-
-
-
 };
 
 #endif // US_CSV_LOADER_H
