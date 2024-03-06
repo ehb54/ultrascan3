@@ -166,8 +166,9 @@ void US_CSV_Loader::add_header() {
    qDebug() << tw_data->columnCount();
    QFont tw_font( US_Widgets::fixedFont().family(),
                  US_GuiSettings::fontSize() );
+   QStringList headers = gen_alpha_list(tw_data->columnCount());
    for (int ii = 0; ii < tw_data->columnCount(); ii++) {
-      QTableWidgetItem *twi = new QTableWidgetItem(tr("column %1").arg(ii + 1));
+      QTableWidgetItem *twi = new QTableWidgetItem(headers.at(ii));
       twi->setFont(tw_font);
       tw_data->setItem(0, ii, twi);
    }
@@ -215,8 +216,8 @@ void US_CSV_Loader::open() {
    QString fpath = QFileDialog::getOpenFileName(this, "Open File", US_Settings::workBaseDir(),
                                                    "(TEXT Files) (*)");
    if (fpath.isEmpty()) return;
-   QFile file(fpath);
-   QFileInfo finfo(fpath);
+   infile = QFileInfo(fpath);
+   QFile file(infile.absoluteFilePath());
    if(file.open(QIODevice::ReadOnly)) {
       file_lines.clear();
       QTextStream ts(&file);
@@ -246,7 +247,7 @@ void US_CSV_Loader::open() {
       }
       loaded = false;
       fill_table(bg_delimiter->checkedId());
-      le_filename->setText(finfo.fileName());
+      le_filename->setText(infile.fileName());
       column_list.clear();
    } else {
       QMessageBox::warning(this, "Error!", "Couldn't open the file!");
@@ -289,8 +290,14 @@ void US_CSV_Loader::fill_table(int id) {
    tw_data->setRowCount(n_rows);
    tw_data->setColumnCount(n_columns);
    for (int ii = 0; ii < n_rows; ii++ ) {
-      for (int jj = 0; jj < data_list.at(ii).size(); jj++) {
-         QTableWidgetItem *twi = new QTableWidgetItem(data_list.at(ii).at(jj).trimmed());
+      int nd = data_list.at(ii).size();
+      for (int jj = 0; jj < n_columns; jj++) {
+         QTableWidgetItem *twi;
+         if (jj < nd){
+            twi = new QTableWidgetItem(data_list.at(ii).at(jj).trimmed());
+         } else {
+            twi = new QTableWidgetItem("");
+         }
          twi->setFont(tw_font);
          tw_data->setItem(ii, jj, twi);
          //         tw_data->setRowHeight(ii, rowht);
@@ -344,12 +351,42 @@ bool US_CSV_Loader::check_table_data() {
       for (int jj = 0; jj < ncols; jj++) {
          tw_data->item(ii, jj)->text().toDouble(&state);
          if (! state) {
-            QMessageBox::warning(this, "Error!",
-                                 tr("Cell (%1, %2) is not numeric").arg(ii + 1, jj + 1));
+            QMessageBox::warning(this, "Error!", tr("Cell (%1, %2) is not numeric").arg(ii + 1).arg(jj + 1));
             tw_data->setCurrentCell(ii, jj);
             return false;
          }
       }
    }
    return true;
+}
+
+QFileInfo US_CSV_Loader::get_file_info() {
+   return infile;
+}
+
+QStringList US_CSV_Loader::gen_alpha_list (int num) {
+   const QString alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+   QStringList outlist;
+   int divisor = alphabet.size();
+   int dividend, quotient, remainder;
+   for (int ii = 0; ii < num; ii++) {
+      QStringList tmplist;
+      dividend = ii;
+      while (true) {
+         quotient = dividend / divisor;
+         remainder = dividend % divisor;
+         tmplist << alphabet.at(remainder);
+         if (quotient == 0) {
+            break;
+         } else {
+            dividend = quotient - 1;
+         }
+      }
+      QString str = "";
+      for (int jj = tmplist.size() - 1; jj >= 0; jj--) {
+         str += tmplist.at(jj);
+      }
+      outlist << str;
+   }
+   return outlist;
 }

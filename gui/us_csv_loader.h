@@ -1,7 +1,6 @@
 #ifndef US_CSV_LOADER_H
 #define US_CSV_LOADER_H
 
-
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
 #include <QTabWidget>
@@ -31,10 +30,12 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       void set_numeric_state(bool, bool);
       void set_msg(QString);
       QVector<QStringList> get_data();
+      QFileInfo get_file_info();
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER};
       bool loaded;
+      QFileInfo infile;
       QVector<QStringList> column_list;
       DELIMITER  delimiter;
       QPushButton* pb_open;
@@ -60,6 +61,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
 
       bool check_table_size();
       bool check_table_data();
+      QStringList gen_alpha_list(int);
 
    private slots:
       void open();
