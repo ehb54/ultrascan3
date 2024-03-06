@@ -458,84 +458,44 @@ void US_Extinction::add_wavelength(void)
    csv_loader->set_numeric_state(true, false);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
-   QVector<QStringList> ldata = csv_loader->get_data();
-   if (ldata.size() == 0 || ldata.size() == 1 ) return;
-
-
-   QRegularExpression re;
-   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
-   QRegularExpressionMatch match;
-
-   QString str1;
-   QStringList strl;
-   float temp_x, temp_y;
-   QMap < QString, WavelengthScan >  Wvs_to_descr_map;
-
-   int nc_loaded = 0;
-   if (lw_file_names->count() > 0) {
-      QString text = lw_file_names->item(lw_file_names->count() - 1)->text();
-      re.setPattern("^[(](\\d+)[)].+");
-      match = re.match(text);
-      if (match.hasMatch()) {
-         nc_loaded = match.captured(1).toInt();
-      }
-   }
-
-   QStringList headers;
-   QVector<float> xvals;
-   QVector<QVector<float>> yvals;
-   for (int col = 0; col < ldata.size(); col++) {
-      QVector<float> yv;
-      for (int row = 0; row < ldata.at(col).size(); row++) {
-         if (row == 0) {
-            if (col > 0) headers << ldata.at(col).at(0);
-            continue;
-         }
-         if (col == 0) {
-            xvals << ldata.at(col).at(row).toDouble();
-            continue;
-         }
-         yv << ldata.at(col).at(row).toDouble();
-      }
-      if (yv.size() > 0) {
-         yvals << yv;
-      }
-   }
-
-
-}
-
-void US_Extinction::reading(QStringList sl)
-{
-   QString fileName, str, str1, extension;
-   int position;
-   for (QStringList::const_iterator  it=sl.begin(); it!=sl.end(); ++it)
-   {
-      fileName = *it;
-      position = fileName.lastIndexOf(".");
-      str = fileName.mid(position+2, 1);
-      if(str.compare ("i") == 0 || str.compare ("I") == 0)
-      {
-         lambdaLimitLeft = 200.0;
-         odCutoff = 1.0e5;
-         le_lambdaLimitLeft->setText(str.sprintf(" %2.3f", lambdaLimitLeft));
-         le_odCutoff->setText(str.sprintf(" %2.3e", odCutoff));
-         data_plot->setTitle(tr("Intensity Profile"));
-      }
-      if(!fileName.isEmpty())
-      {
-         filenames.push_back(fileName);
-	 loadScan(fileName);
-      }
-   } 
-   le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
-   le_lambdaLimitRight->setText(str1.sprintf(" %2.1f", lambda_max));
-   ct_coefficient->setValue(280);
-   ct_coefficient->setRange(lambda_min,lambda_max);
-
+   QVector<QStringList> in_data = csv_loader->get_data();
+   if (in_data.size() == 0 || in_data.size() == 1 ) return;
+   QFileInfo file_info = csv_loader->get_file_info();
+   loadScan(in_data, file_info);
    update_data();
-   //plot();
 }
+
+//void US_Extinction::reading(QStringList sl)
+//{
+//   QString fileName, str, str1, extension;
+//   int position;
+//   for (QStringList::const_iterator  it=sl.begin(); it!=sl.end(); ++it)
+//   {
+//      fileName = *it;
+//      position = fileName.lastIndexOf(".");
+//      str = fileName.mid(position+2, 1);
+//      if(str.compare ("i") == 0 || str.compare ("I") == 0)
+//      {
+//         lambdaLimitLeft = 200.0;
+//         odCutoff = 1.0e5;
+//         le_lambdaLimitLeft->setText(str.sprintf(" %2.3f", lambdaLimitLeft));
+//         le_odCutoff->setText(str.sprintf(" %2.3e", odCutoff));
+//         data_plot->setTitle(tr("Intensity Profile"));
+//      }
+//      if(!fileName.isEmpty())
+//      {
+//         filenames.push_back(fileName);
+////	 loadScan(fileName);
+//      }
+//   }
+//   le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
+//   le_lambdaLimitRight->setText(str1.sprintf(" %2.1f", lambda_max));
+//   ct_coefficient->setValue(280);
+//   ct_coefficient->setRange(lambda_min,lambda_max);
+
+//   update_data();
+//   //plot();
+//}
 bool US_Extinction::isComment(const QString &str)
 {
    QString teststr = str, str1, str2;
@@ -555,7 +515,7 @@ bool US_Extinction::isComment(const QString &str)
       return(true);
    }
 }
-bool US_Extinction::loadScan(const QString &fileName)
+bool US_Extinction::loadScan(const QVector<QStringList>& in_data, const QFileInfo& file_info)
 {
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
@@ -563,11 +523,7 @@ bool US_Extinction::loadScan(const QString &fileName)
 
    QString str1;
    QStringList strl;
-   float temp_x, temp_y;
    QMap < QString, WavelengthScan >  Wvs_to_descr_map;
-
-   QFile f(fileName);
-   QFileInfo fi(fileName);
 
    int nc_loaded = 0;
    if (lw_file_names->count() > 0) {
@@ -579,119 +535,166 @@ bool US_Extinction::loadScan(const QString &fileName)
       }
    }
 
-   //reads in files until the end of the file
-   if(f.open(QIODevice::ReadOnly | QIODevice::Text))
-   {
-      // int row = 0;
-      QTextStream ts(&f);
-      // QString description_str;
-
-      if ( fileName.endsWith(".dsp", Qt::CaseInsensitive) ){
-         for(int i = 0; i < 3; i++) ts.readLine();
-         QString desc = tr("(%1) %2").arg(nc_loaded + 1).arg(ts.readLine().trimmed());
-         QString key = "Column_1";
-         ts.readLine();
-         double wl_min = ts.readLine().toDouble();
-         ts.readLine().toDouble();
-         double dwl = ts.readLine().toInt();
-         int np = ts.readLine().toInt();
-         while(!ts.atEnd() && ts.readLine().simplified().compare("#DATA") != 0){}
-
-         Wvs_to_descr_map [ key ].description = desc;
-         Wvs_to_descr_map [ key ].fileName = fi.fileName();
-         Wvs_to_descr_map [ key ].filePath = fi.filePath();
-         for (int i = 0; i < np; i++) {
-            if (ts.atEnd()){
-                f.close();
-                QMessageBox::warning(this, tr("Error!"),
-                                     tr("Error in reading file:\n%1").arg(fileName));
-                return false;
-            }
-
-            float temp_x = wl_min + i * dwl;
-            float temp_y = ts.readLine().toDouble();
-            Reading r = {temp_x, temp_y};
-
-            Wvs_to_descr_map [ key ]. v_readings.push_back(r);
-
-            lambda_max = max(temp_x, lambda_max);
-            lambda_min = min (temp_x, lambda_min);
+   QStringList headers;
+   QVector<float> xvals;
+   QVector<QVector<float>> yvals;
+   for (int col = 0; col < in_data.size(); col++) {
+      QVector<float> yv;
+      for (int row = 0; row < in_data.at(col).size(); row++) {
+         if (row == 0) {
+            if (col > 0) headers << in_data.at(col).at(0);
+            continue;
          }
+         if (col == 0) {
+            float x = in_data.at(col).at(row).toFloat();
+            xvals << x;
+            continue;
+         }
+         yv << in_data.at(col).at(row).toFloat();
+      }
+      if (yv.size() > 0) {
+         yvals << yv;
+      }
+   }
 
-      } else {
-         //wls.description = ts.readLine();
-         // description_str = ts.readLine();
-         //wls.description = description_str;
-         US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-         csv_loader->exec();
-         QStringList headers = ts.readLine().trimmed().split("\t");
-         bool has_desc = false;
-
-         while(!ts.atEnd())
-         {
-            bool flag1 = true;
-
-            //true while text information is not a number
-            if(flag1 && !ts.atEnd())
-            {
-               str1 = ts.readLine();
-            }
-            else
-            {
-               flag1 = false;
-            }
-            str1 = str1.simplified();
-            str1 = str1.replace("\"", " ");
-            str1 = str1.replace(",", " ");
-            strl = str1.split(" ");
-
-            temp_x = strl.at(0).toFloat();
-            int strl_size = strl.size();
-            if (strl_size > headers.size()) {
-               QMessageBox::warning(this, "Error!", "Error in parsing the csv file!"
-                                                    "Please make sure the each column is TAB separated!");
-               f.close();
-               return false;
-
-            }
-
-            //temp_y = strl.at(1).toFloat();  //ALEXEY: here, reads only first column
-
-            /*
-            go for all columns;
-            check if it's a number (regex ?);
-            store y-coor into a temporary array QVector< float > << push( temp_y )
-            store wavelength scans into array
-            */
-
-            for ( int i=1; i < strl_size; ++i )    //Start from i=1 (all Y's)
-            {
-               temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
-
-               if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
-               {
-                  qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
-                  Reading r = {temp_x, temp_y};
-
-                  //wls.v_readings.push_back(r);
-
-                  QString key = tr("Column_%1").arg(i);
-                  Wvs_to_descr_map [ key ].v_readings.push_back(r);
-                  if (! has_desc) {
-                     QString desc = tr("(%1) %2").arg(nc_loaded + i).arg(headers.at(i));
-                     Wvs_to_descr_map [ key ].description = desc;
-                     Wvs_to_descr_map [ key ].fileName = fi.fileName();
-                     Wvs_to_descr_map [ key ].filePath = fi.filePath();
-                  }
-
-                  lambda_max = max(temp_x, lambda_max);
-                  lambda_min = min (temp_x, lambda_min);
-               }
-            }
+   for (int ii = 0; ii < headers.size(); ii++) {
+      int column = nc_loaded + ii + 1;
+      QString key = tr("Column_%1").arg(column);
+      QString desc = tr("(%1) %2").arg(column).arg(headers.at(ii));
+      Wvs_to_descr_map [ key ].description = desc;
+      Wvs_to_descr_map [ key ].fileName = file_info.fileName();
+      Wvs_to_descr_map [ key ].filePath = file_info.filePath();
+      for (int jj = 0; jj < xvals.size(); jj++) {
+         float xt = xvals.at(jj);
+         float yt = yvals.at(ii).at(jj);
+         if(xt >= lambdaLimitLeft && yt <= odCutoff && xt <= lambdaLimitRight) {
+            Reading r = {xt, yt};
+            Wvs_to_descr_map [ key ].v_readings.push_back(r);
+            lambda_max = max(xt, lambda_max);
+            lambda_min = min (xt, lambda_min);
          }
       }
+   }
 
-      f.close();
+   le_lambdaLimitLeft->setText(str1.asprintf(" %2.1f", lambda_min));
+   le_lambdaLimitRight->setText(str1.asprintf(" %2.1f", lambda_max));
+   ct_coefficient->setValue(280);
+   ct_coefficient->setRange(lambda_min,lambda_max);
+
+
+   //reads in files until the end of the file
+//   if(f.open(QIODevice::ReadOnly | QIODevice::Text))
+//   {
+//      // int row = 0;
+//      QTextStream ts(&f);
+//      // QString description_str;
+
+//      if ( fileName.endsWith(".dsp", Qt::CaseInsensitive) ){
+//         for(int i = 0; i < 3; i++) ts.readLine();
+//         QString desc = tr("(%1) %2").arg(nc_loaded + 1).arg(ts.readLine().trimmed());
+//         QString key = "Column_1";
+//         ts.readLine();
+//         double wl_min = ts.readLine().toDouble();
+//         ts.readLine().toDouble();
+//         double dwl = ts.readLine().toInt();
+//         int np = ts.readLine().toInt();
+//         while(!ts.atEnd() && ts.readLine().simplified().compare("#DATA") != 0){}
+
+//         Wvs_to_descr_map [ key ].description = desc;
+//         Wvs_to_descr_map [ key ].fileName = fi.fileName();
+//         Wvs_to_descr_map [ key ].filePath = fi.filePath();
+//         for (int i = 0; i < np; i++) {
+//            if (ts.atEnd()){
+//                f.close();
+//                QMessageBox::warning(this, tr("Error!"),
+//                                     tr("Error in reading file:\n%1").arg(fileName));
+//                return false;
+//            }
+
+//            float temp_x = wl_min + i * dwl;
+//            float temp_y = ts.readLine().toDouble();
+//            Reading r = {temp_x, temp_y};
+
+//            Wvs_to_descr_map [ key ]. v_readings.push_back(r);
+
+//            lambda_max = max(temp_x, lambda_max);
+//            lambda_min = min (temp_x, lambda_min);
+//         }
+
+//      } else {
+//         //wls.description = ts.readLine();
+//         // description_str = ts.readLine();
+//         //wls.description = description_str;
+//         US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
+//         csv_loader->exec();
+//         QStringList headers = ts.readLine().trimmed().split("\t");
+//         bool has_desc = false;
+
+//         while(!ts.atEnd())
+//         {
+//            bool flag1 = true;
+
+//            //true while text information is not a number
+//            if(flag1 && !ts.atEnd())
+//            {
+//               str1 = ts.readLine();
+//            }
+//            else
+//            {
+//               flag1 = false;
+//            }
+//            str1 = str1.simplified();
+//            str1 = str1.replace("\"", " ");
+//            str1 = str1.replace(",", " ");
+//            strl = str1.split(" ");
+
+//            temp_x = strl.at(0).toFloat();
+//            int strl_size = strl.size();
+//            if (strl_size > headers.size()) {
+//               QMessageBox::warning(this, "Error!", "Error in parsing the csv file!"
+//                                                    "Please make sure the each column is TAB separated!");
+//               f.close();
+//               return false;
+
+//            }
+
+//            //temp_y = strl.at(1).toFloat();  //ALEXEY: here, reads only first column
+
+//            /*
+//            go for all columns;
+//            check if it's a number (regex ?);
+//            store y-coor into a temporary array QVector< float > << push( temp_y )
+//            store wavelength scans into array
+//            */
+
+//            for ( int i=1; i < strl_size; ++i )    //Start from i=1 (all Y's)
+//            {
+//               temp_y = strl.at( i ).toFloat();  //ALEXEY: here, reads only first column
+
+//               if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
+//               {
+//                  qDebug() << "FileName: " << fileName << ", Y-Column #: " << i << ": " << temp_x << ", " << temp_y;
+//                  Reading r = {temp_x, temp_y};
+
+//                  //wls.v_readings.push_back(r);
+
+//                  QString key = tr("Column_%1").arg(i);
+//                  Wvs_to_descr_map [ key ].v_readings.push_back(r);
+//                  if (! has_desc) {
+//                     QString desc = tr("(%1) %2").arg(nc_loaded + i).arg(headers.at(i));
+//                     Wvs_to_descr_map [ key ].description = desc;
+//                     Wvs_to_descr_map [ key ].fileName = fi.fileName();
+//                     Wvs_to_descr_map [ key ].filePath = fi.filePath();
+//                  }
+
+//                  lambda_max = max(temp_x, lambda_max);
+//                  lambda_min = min (temp_x, lambda_min);
+//               }
+//            }
+//         }
+//      }
+
+//      f.close();
       qDebug() << "Inside LOAD 1";
       
       // if(wls.v_readings.size() < 10)
@@ -758,12 +761,7 @@ bool US_Extinction::loadScan(const QString &fileName)
          // row++;
          // str1 = "";
       }
-   }
-   else
-   {
-      //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
-   }
-   
+
    v_wavelength_original = v_wavelength;
    qDebug() << "Size of Wvl in LOAD_SCAN: " << v_wavelength.size();
 
