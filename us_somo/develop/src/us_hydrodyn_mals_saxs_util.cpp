@@ -5776,7 +5776,7 @@ bool US_Hydrodyn_Mals_Saxs::mals_saxs_angles_save() {
    QString errormsg = "";
    if ( mals_saxs_angles.mals_saxs_angle.size() ) {
       QString use_dir = QDir::current().canonicalPath();
-      QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving the MALS_SAXS Angles" ),  use_dir , "*.csv" );
+      QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving the MALS+SAXS Angles" ),  use_dir , "*.csv" );
 
       if ( use_filename.isEmpty() ) {
          return false;
@@ -6041,6 +6041,13 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
       if ( t >= start_time_min && t <= end_time_max ) {
          output_times.push_back( t );
       }
+   }
+
+   if ( !mals_params_interpolate( output_times ) && !errormsg.isEmpty() ) {
+      QMessageBox::information( this,
+                                windowTitle() + us_tr( ": MALS parameters file interpolate" ),
+                                errormsg
+                                );
    }
 
    // setup & apply natural splines for interpolation of I and errors, keep q values
@@ -6596,4 +6603,330 @@ QStringList US_Hydrodyn_Mals_Saxs::set_to_qsl( const set < QString > & qsset ) {
    }
 
    return result;
+}
+
+bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const QStringList & filenames ) {
+   return mals_params_interpolate( get_time_grid_from_namelist( filenames ) );
+}
+
+bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & times ) {
+
+   switch ( QMessageBox::question(this, 
+                                  windowTitle()
+                                  ,us_tr( "Load supplementary MALS parameters file for interpolation?" ) 
+                                  ) ) {
+      case QMessageBox::Yes : 
+         break;
+      default:
+         errormsg = "";
+         return false;
+         break;
+   }
+
+   QString use_dir = QDir::currentPath();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
+
+   QString filename = QFileDialog::getOpenFileName(
+                                                   this
+                                                   ,us_tr( "Select MALS parameters file to interpolate to the target grid" )
+                                                   , use_dir
+                                                   ,
+                                                   "csv & txt files (*.csv *.txt);;"
+                                                   "All files (*);;"
+                                                   );
+   if ( filename.isEmpty() ) {
+      errormsg = us_tr( "MALS parameters file interpolate cancelled" );
+      return false;
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   
+   return mals_params_interpolate( times, filename );
+}
+
+bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & times, const QString & filename ) {
+   QFile f( filename );
+   if ( !f.exists() ) {
+      errormsg = QString("Error: %1 does not exist").arg( filename );
+      return false;
+   }
+   if ( !f.open( QIODevice::ReadOnly ) ) {
+      errormsg = QString("Error: can not open %1, check permissions ").arg( filename );
+      return false;
+   }
+
+   QTextStream ts( &f );
+   QStringList qsl;
+
+   // read in all data & strip empty lines or lines beginning with #
+
+   {
+
+      QRegularExpression rx_comment( "^\\s*#" );
+
+      while ( !ts.atEnd() ) {
+         QString qs = ts.readLine();
+         if ( !qs.isEmpty() && !qs.contains( rx_comment ) ) {
+            qsl << qs;
+         }
+      }
+   }
+   
+   f.close();
+
+   if ( !qsl.size() ) {
+      errormsg = QString( us_tr( "File %1 is empty" ) ).arg( filename );
+      return false;
+   }
+
+   if ( qsl.size() < 3 ) {
+      errormsg = QString( us_tr( "File %1 has insufficient data" ) ).arg( filename );
+      return false;
+   }
+   
+   vector < double >            param_times;
+   vector < vector < double > > data;
+
+   QRegularExpression rx_separator( "(\\t|,)" );
+
+   QStringList headers = qsl[0].split( rx_separator );
+   // qDebug() << "headers : " << headers;
+
+   {
+      set < double > used_times;
+      for ( size_t i = 1; i < (size_t) qsl.size(); ++i ) {
+         QStringList fields = qsl[i].split( rx_separator );
+         if ( fields.size() < 2 ) {
+            errormsg = QString( us_tr( "File %1 has insufficient data on line %2" ) ).arg( filename ).arg( i + 1 );
+            return false;
+         }
+         
+         param_times.push_back( fields[0].toDouble() );
+         if ( used_times.count( param_times.back() ) ) {
+            errormsg = QString( us_tr( "File %1 apparently has a duplicate time %2" ) ).arg( filename ).arg( i + 1 );
+            return false;
+         }
+
+         fields.pop_front();
+
+         {
+            vector < double > field_values;
+            for ( const auto & qs : fields ) {
+               field_values.push_back( qs.toDouble() );
+            }
+            data.push_back( field_values );
+         }
+      }
+   }
+      
+   {
+      set < size_t > field_counts;
+      for ( const auto & data_row : data ) {
+         field_counts.insert( data_row.size() );
+      }
+      if ( field_counts.size() != 1 ) {
+         QString counts_msg;
+         for ( const auto & field_count : field_counts ) {
+            counts_msg += QString( "%1," ).arg( field_count );
+         }
+         counts_msg.chop( 1 );
+
+         errormsg = QString( us_tr( "File %1 has varying data field counts (%2)" ) ).arg( filename ).arg( counts_msg );
+         return false;
+      }
+   }         
+
+   size_t field_count = data[ 0 ].size();
+
+   // check cover, time grids
+
+   double start_time_min =
+      times.front() > param_times.front()
+      ? times.front()
+      : param_times.front()
+      ;
+      
+   double end_time_max =
+      times.back() < param_times.back()
+      ? times.back()
+      : param_times.back()
+      ;
+      
+   // output time grid
+   vector < double > output_times;
+
+   for ( const auto & time : times ) {
+      if ( time >= start_time_min
+           && time <= end_time_max ) {
+         output_times.push_back( time );
+      }
+   }
+
+   // gap analysis
+
+   {
+      double max_gap     = -DBL_MAX;
+      size_t max_gap_pos = -1;
+      double min_gap     = DBL_MAX;
+      size_t min_gap_pos = -1;
+      double gap_sum     = 0;
+      
+      for ( size_t i = 1; i < param_times.size(); ++i ) {
+         double gap = param_times[ i ] - param_times[ i - 1 ];
+         gap_sum    += gap;
+         if ( min_gap > gap ) {
+            min_gap     = gap;
+            min_gap_pos = i;
+         }
+         if ( max_gap < gap ) {
+            max_gap     = gap;
+            max_gap_pos = i;
+         }
+      }
+
+      QString gap_msg =
+         QString( us_tr(
+                        "\n\nMALS parameters time grid time gaps:"
+                        "\n   average %1"
+                        "\n   minimum %2 occured between times %3 and %4"
+                        "\n   maximum %5 occured between times %6 and %7"
+                        ) )
+         .arg( gap_sum / (double)param_times.size() )
+         .arg( min_gap )
+         .arg( param_times[ min_gap_pos - 1 ] )
+         .arg( param_times[ min_gap_pos ] )
+         .arg( max_gap )
+         .arg( param_times[ max_gap_pos - 1 ] )
+         .arg( param_times[ max_gap_pos ] )
+         ;
+
+      QString msg =
+         QString( us_tr(
+                        "%1 MALS parameters were identified"
+                        "\n\nThe MALS parameters time grid has %2 time points covering times [%3:%4]"
+                        "\n\nThe common time grid has %5 time points covering times [%6:%7]"
+                        "\n\nThe resulting time grid has %8 points covering times [%9:%10]"
+                        "\n\nThe common and resulting time grids %11"
+                        ) )
+         .arg( field_count )
+         .arg( param_times.size() )
+         .arg( param_times.front() )
+         .arg( param_times.back() )
+         .arg( times.size() )
+         .arg( times.front() )
+         .arg( times.back() )
+         .arg( output_times.size() )
+         .arg( output_times.front() )
+         .arg( output_times.back() )
+         .arg( output_times == times ? "are identical" : "differ!" )
+         + gap_msg
+         ;
+
+      if ( end_time_max < start_time_min ) {
+         msg += us_tr( "\n\nThere is no common time range!" );
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
+                                msg
+                                );
+         errormsg = "";
+         return false;
+      }
+         
+      QMessageBox::information( this,
+                                windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
+                                msg
+                                );
+   }
+      
+   // ready to interpolate 
+
+   map < double, vector < double > > output_data;
+
+   // build and apply splines for each parameter
+
+   for ( size_t field_pos = 0; field_pos < field_count; ++field_pos ) {
+      vector < double > y;
+      vector < double > y2;
+      for ( size_t time_pos = 0; time_pos < param_times.size(); ++time_pos ) {
+         y.push_back( data[ time_pos ][ field_pos ] );
+      }
+
+      // if ( field_pos == 0 ) {
+      //    US_Vector::printvector2( QString( "setup for spline %1" ).arg( headers[ field_pos + 1 ] ), param_times, y );
+      // }
+
+      usu->natural_spline( param_times, y, y2 );
+
+      for ( auto const & t : output_times ) {
+         double value;
+         usu->apply_natural_spline( param_times, y, y2, t, value );
+         output_data[ t ].push_back( value );
+      }
+
+      // if ( field_pos == 0 ) {
+      //    vector < double > output_y;
+      //    for ( auto const & t : output_times ) {
+      //       output_y.push_back( output_data[ t ][ field_pos ] );
+      //    }
+      //    US_Vector::printvector2( QString( "result for spline %1" ).arg( headers[ field_pos + 1 ] ), output_times, output_y );
+      // }
+   }
+   
+   QString separator = filename.contains( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ) )
+      ? ","
+      : "\t"
+      ;
+
+   QStringList output;
+   output << headers.join( separator );
+
+   for ( auto const & t : output_times ) {
+      QString output_line = QString( "%1" ).arg( t );
+      for ( auto const & v : output_data[ t ] ) {
+         output_line +=  separator + QString( "%1" ).arg( v );
+      }
+      output << output_line;
+   }
+   
+   // QTextStream(stdout) << output.join( "\n" ) << "\n";
+
+   // save the file
+   {
+      QString ext  = filename.contains( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ) )
+         ? "csv"
+         : "txt"
+         ;
+      
+      // getSaveFileName doesn't seem to support a predetermined file name
+      // QString name = QFileInfo( filename ).baseName();
+      // name = name.replace( QRegularExpression( "\\.(csv|txt)$", QRegularExpression::CaseInsensitiveOption ), "" );
+      // name += "_interpolated." + ext;
+
+      QString use_dir = QDir::currentPath();
+      ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+      raise();
+
+      QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving the Interpolated MALS parameters" ),  use_dir , "*." + ext );
+      
+      if ( use_filename.isEmpty() ) {
+         errormsg = us_tr( "MALS parameter interpolation results not saved!" );
+         return false;
+      }
+   
+      use_filename = use_filename.replace( QRegularExpression( "\\.(csv|txt)$", QRegularExpression::CaseInsensitiveOption ), "" );
+      use_filename += "." + ext;
+
+      if ( QFile::exists( use_filename ) ){
+         use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
+         raise();
+      }
+      
+      QString contents = output.join( "\n" ) + "\n";
+      if ( US_File_Util::putcontents( use_filename, contents, errormsg ) ) {
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( use_filename );
+         editor_msg( "darkblue", QString( us_tr( "Interpolated MALS parameters saved as %1" ) ).arg( use_filename ) );
+         return true;
+      }
+   }
+   return false;
 }

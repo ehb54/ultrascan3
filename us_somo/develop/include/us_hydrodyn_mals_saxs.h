@@ -1214,7 +1214,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       void                                plot_debug();
 
    private slots:
-      void usp_config_ggqfit_plot( const QPoint & );
+      void usp_config_ggqfit_plot( const QPoint & );      
 
    private:
       ScrollZoomer                      * ggqfit_plot_zoomer;
@@ -1707,6 +1707,10 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
 
       void                         cormap( map < QString, QString > & parameters );
 
+      // common time
+      bool                         mals_params_interpolate( const vector < double > & times );
+      bool                         mals_params_interpolate( const QStringList & filenames );
+      bool                         mals_params_interpolate( const vector < double > & times, const QString & filename );
 
    signals:
       void do_resize_plots();
