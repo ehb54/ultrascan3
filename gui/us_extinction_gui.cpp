@@ -454,7 +454,7 @@ US_Extinction::US_Extinction() : US_Widgets()
 void US_Extinction::add_wavelength(void)
 {
    US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-   csv_loader->set_msg("First Column: Wavelengths");
+   csv_loader->set_msg("1st column: WAVELENGTH; other columns: OD; 1st row: HEADER");
    csv_loader->set_numeric_state(true, false);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
