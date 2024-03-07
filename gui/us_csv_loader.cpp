@@ -98,10 +98,18 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    pb_save_csv = us_pushbutton("Save CSV");
 
    tw_data = new CustomTableWidget();
-   tw_data->setRowCount(20);
-   tw_data->setColumnCount(10);
-   tw_data-> setHorizontalHeaderLabels(make_labels(10));
-   tw_data-> setHorizontalHeaderLabels(make_labels(20));
+   int nr = 20;
+   int nc = 5;
+   tw_data->setRowCount(nr);
+   tw_data->setColumnCount(nc);
+   tw_data-> setVerticalHeaderLabels(make_labels(nr));
+   tw_data-> setHorizontalHeaderLabels(make_labels(nc));
+   for (int ii = 0; ii < nr; ii++) {
+      for (int jj =0; jj < nc; jj++) {
+         QTableWidgetItem *twi = new QTableWidgetItem("");
+         tw_data->setItem(ii, jj, twi);
+      }
+   }
    tw_data->setStyleSheet("background-color: white");
    QHeaderView *header = tw_data->horizontalHeader();
    header->setSectionResizeMode(QHeaderView::Stretch);
