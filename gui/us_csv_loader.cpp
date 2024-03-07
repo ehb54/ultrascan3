@@ -423,6 +423,7 @@ void US_CSV_Loader::highlight_header() {
 bool US_CSV_Loader::check_table_size() {
    int nrows = tw_data->rowCount();
    int ncols = tw_data->columnCount();
+   if (nrows == 0 || ncols == 0 || file_lines.size() == 0) return false;
    int nc_0 = 0;
    for (int ii = 0; ii < nrows; ii++) {
       int nc_r = 0;
