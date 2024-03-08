@@ -9,7 +9,6 @@ HEADERS       =  us_pseudo_absorbance.h \
                  us_remove_ri.h         \
                  us_refScan_dataIO.h    \
                  us_pabs_common.h       \
-                 ../us_convert/us_select_triples.h
 
 
 SOURCES       =  us_pseudo_absorbance.cpp \
@@ -18,5 +17,4 @@ SOURCES       =  us_pseudo_absorbance.cpp \
                  us_remove_ri.cpp         \
                  us_refScan_dataIO.cpp    \
                  us_pabs_common.cpp       \
-                 ../us_convert/us_select_triples.cpp
 

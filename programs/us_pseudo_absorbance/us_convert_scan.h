@@ -3,7 +3,6 @@
 #include <us_widgets.h>
 #include <us_settings.h>
 #include <us_dataIO.h>
-#include "../us_convert/us_select_triples.h"
 #include "us_refScan_dataIO.h"
 #include "us_plot.h"
 #include "us_pabs_common.h"
@@ -34,7 +33,6 @@ private slots:
     void slt_import(void);
     void slt_set_ccw_default(void);
     void slt_del_item(void);
-    void slt_del_ccws(void);
     void slt_wavl_ctrl(int);
     void slt_reset(void);
     void slt_set_id(int);
@@ -119,6 +117,7 @@ private:
     int wavl_id;
     int n_wavls;
     int refId;
+    QStringList intRunIds;
     QVector<int> intDataId;
     QVector<double> wavelength;
     QVector<double> xvalues;
@@ -140,7 +139,7 @@ private:
     void plot_absorbance(void);
     void set_scan_ct(void);
     void get_pseudo_absorbance(int, int, bool buffer);
-    void get_absorbance(int, int);
+    bool get_absorbance(int, int);
     void get_intensity(int);
     bool get_refId(double);
     void set_buffer_list(void);
