@@ -149,6 +149,8 @@ private:
     QVector<double> get_smooth(QVector<double>, int, bool, bool);
     void load_from_DB(void);
     void uncheck_CA_silently(void);
+    bool linear_interpolation(QVector<double>&, QVector<double>&, QVector<double>&);
+    void select_CCW_save(QVector<int>&);
 };
 
 class LoadDBWidget : public US_WidgetsDialog{
