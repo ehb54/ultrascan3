@@ -306,6 +306,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 void US_ConvertScan::slt_reset(){
     picker_abs->disconnect();
     hasData = false;
+    n_scans = -1;
     intRunIds.clear();
     xvalues.clear();
     intensity.clear();
@@ -371,6 +372,7 @@ void US_ConvertScan::slt_import(void){
     bool runId_changed = false;
     bool multiple_runid = false;
     QString ccw_str("%1 / %2 / %3");
+    bool truncate = false;
     for (int i = 0; i < fileList.size(); ++i){
         QString fname = fileList.at(i).fileName();
         QString rtp = fname.section(".", -5, -5);
@@ -407,13 +409,34 @@ void US_ConvertScan::slt_import(void){
 
         US_DataIO::RawData rdata = US_DataIO::RawData();
         US_DataIO::readRawData(fileList.at(i).absoluteFilePath(), rdata);
-        allIntData << rdata;
-        allIntDataFiles << fileList.at(i);
-
         QVector<int> scl;
         int ns = rdata.scanCount();
-        scl << 0 << ns << ns;
+        if (n_scans == -1) n_scans = ns;
+        if (ns < n_scans) {
+            QMessageBox::warning(this, "Error!", tr("The number of scans in the following run (%1) "
+                                                    "is less than the previously loaded one(s) (%2).\n\n%3")
+                                                    .arg(ns).arg(n_scans).arg(fileList.at(i).fileName()));
+            return;
+        } else if (ns > n_scans && !truncate ) {
+            int chk = QMessageBox::question(this, "Warning!",
+                                            tr("The number of scans in the following runID (%1) "
+                                               "is greater than the previously loaded one(s) (%2)."
+                                               "Do you want to proceed with truncating the last (%2) scans?\n\n%3")
+                                               .arg(ns).arg(n_scans).arg(rid));
+            if (chk == QMessageBox::No) return;
+            truncate = true;
+        }
+        if (truncate) {
+            QVector<US_DataIO::Scan> scans;
+            scans << rdata.scanData;
+            rdata.scanData.clear();
+            rdata.scanData << scans.mid(ns - n_scans);
+        }
+        scl << 0 << n_scans << n_scans;
         scansRange << scl;
+        allIntData << rdata;
+
+        allIntDataFiles << fileList.at(i);
 
         int cell = rdata.cell;
         char channel = rdata.channel;

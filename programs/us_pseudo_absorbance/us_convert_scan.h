@@ -116,6 +116,7 @@ private:
     double x_min_picked, x_max_picked;
     int wavl_id;
     int n_wavls;
+    int n_scans;
     int refId;
     QStringList intRunIds;
     QVector<int> intDataId;
