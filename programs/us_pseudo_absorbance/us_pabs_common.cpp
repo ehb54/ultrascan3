@@ -95,6 +95,7 @@ void CCW::clear(){
     channel.clear();
     wavelength.clear();
     index.clear();
+    rundId.clear();
 }
 
 int CCW::size(){

@@ -469,7 +469,7 @@ void US_ConvertScan::slt_import(void){
 
     intRunIds.clear();
     for (int ii = 0; ii < ccwListMain.size(); ii++){
-        QString rundId = ccwList.rundId.at(ii);
+        QString rundId = ccwListMain.rundId.at(ii);
         if (! intRunIds.contains(rundId)) {
             intRunIds << rundId;
         }
