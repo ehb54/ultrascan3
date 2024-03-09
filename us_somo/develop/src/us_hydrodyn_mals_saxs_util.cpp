@@ -6690,6 +6690,7 @@ bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & t
    QRegularExpression rx_separator( "(\\t|,)" );
 
    QStringList headers = qsl[0].split( rx_separator );
+
    // qDebug() << "headers : " << headers;
 
    {
@@ -6878,6 +6879,14 @@ bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & t
       ;
 
    QStringList output;
+   
+   if ( filename.contains( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ) )
+        && !headers[0].contains( "\"" ) ) {
+      headers
+         .replaceInStrings( QRegularExpression( "^" ), "\"" )
+         .replaceInStrings( QRegularExpression( "$" ), "\"" );
+   }
+                           
    output << headers.join( separator );
 
    for ( auto const & t : output_times ) {
