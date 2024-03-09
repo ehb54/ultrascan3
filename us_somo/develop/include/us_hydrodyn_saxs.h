@@ -252,6 +252,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
       QPushButton *pb_saxs_buffer;
+      QPushButton *pb_dad;
       QPushButton *pb_saxs_hplc;
       QPushButton *pb_mals;
       QPushButton *pb_mals_saxs;
@@ -1080,6 +1081,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
+      void dad();
       void saxs_hplc();
       void mals();
       void mals_saxs();
