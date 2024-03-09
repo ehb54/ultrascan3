@@ -448,13 +448,13 @@ void US_ConvertScan::slt_import(void){
         ccwListMain.cell << cell;
         ccwListMain.channel << channel;
         ccwListMain.wavelength << wl;
-        ccwListMain.rundId << rid;
+        ccwListMain.runId << rid;
 
         ccwList.index << allIntData.size() - 1;
         ccwList.cell << cell;
         ccwList.channel << channel;
         ccwList.wavelength << wl;
-        ccwList.rundId << rid;
+        ccwList.runId << rid;
     }
 
     if ( runId_changed ) {
@@ -469,7 +469,7 @@ void US_ConvertScan::slt_import(void){
 
     intRunIds.clear();
     for (int ii = 0; ii < ccwListMain.size(); ii++){
-        QString rundId = ccwListMain.rundId.at(ii);
+        QString rundId = ccwListMain.runId.at(ii);
         if (! intRunIds.contains(rundId)) {
             intRunIds << rundId;
         }
@@ -1126,7 +1126,7 @@ void US_ConvertScan::make_ccwItemList(){
     QMap<QString, QVector<QPair<double, int>>> wavl_idx_map;
     QString key_str("%1-%2-%3");
     for (int ii = 0; ii < ccwList.size(); ii++){
-        int runId = intRunIds.indexOf(ccwList.rundId.at(ii));
+        int runId = intRunIds.indexOf(ccwList.runId.at(ii));
         int cell = ccwList.cell.at(ii);
         char channel = ccwList.channel.at(ii);
         QString key = key_str.arg(runId).arg(cell).arg(channel);

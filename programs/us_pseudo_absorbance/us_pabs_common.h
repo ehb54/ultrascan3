@@ -48,7 +48,7 @@ public:
     QVector<int> cell;
     QVector<char> channel;
     QVector<double> wavelength;
-    QStringList rundId;
+    QStringList runId;
     void clear(void);
     int size(void);
 };
