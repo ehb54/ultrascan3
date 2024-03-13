@@ -1060,7 +1060,7 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
                                              dbuser, dbpasw );
 
    xpn_data->close();
-   delete xpn_data;
+   //delete xpn_data;
 
    if ( ok )
    {
@@ -1079,6 +1079,7 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
 
       conn_stat[ xpndesc ] = "connect_bad";
    }
+   delete xpn_data;
 
    //pb_save->setEnabled( true );
    return ok;

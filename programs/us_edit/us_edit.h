@@ -459,6 +459,7 @@ class US_Edit : public US_Widgets
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
+  QString get_rawDataGUID( US_DB2*, QString, QString );
       
       void review_edits      ( void );
       

@@ -153,6 +153,7 @@ class US_BufferGuiNew : public US_Widgets
    signals:
       void newBufAccepted( void );  //! New buffer accepted
       void newBufCanceled( void );
+      void use_db( bool DB ); //! /param DB True if DB is the new selection
 
    private:
 
@@ -206,23 +207,25 @@ class US_BufferGuiNew : public US_Widgets
       void select_upper_cosedcomp();
       void select_lower_cosedcomp();
       void edit_cosedcomp      ();
-      void remove_bcomp        ( QListWidgetItem* );
-      void remove_cosedcomp    ( QListWidgetItem* );
-      void recalc_density      ( void );
-      void recalc_viscosity    ( void );
-      void ph                  ( void );
-      void compressibility     ( void );
-      void density             ( void );
-      void viscosity           ( void );
-      void manual_flag         ( bool );
-      void cosed_flag          ( bool );
+      void select_water    ( QListWidgetItem* );
+      void remove_bcomp    ( QListWidgetItem* );
+      void remove_cosedcomp( QListWidgetItem* );
+      void recalc_density  ( void );
+      void recalc_viscosity( void );
+      void ph              ( void );
+      void compressibility ( void );
+      void density         ( void );
+      void viscosity       ( void );
+      void manual_flag     ( bool );
+      void cosed_flag      ( bool );
       //void spectrum        ( void );
-      void spectrum_class      ( void );
-      void newAccepted         ( void );
-      void newCanceled         ( void );
-      void write_db            ( void );
-      void write_disk          ( void );
-      bool can_accept          ( void );
+      void spectrum_class  ( void );
+      void newAccepted     ( void );
+      void newCanceled     ( void );
+      void write_db        ( void );
+      void write_disk      ( void );
+      void update_db_disk  ( bool );
+      bool can_accept      ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
    public slots:

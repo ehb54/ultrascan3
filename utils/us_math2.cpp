@@ -530,6 +530,7 @@ void US_Math2::calc_vbar( Peptide& pep, const QString& sequence,
 
 void US_Math2::data_correction( double t, SolutionData& d )
 {
+#ifdef OLD_WATER_MODEL
    double xi_max =    1.000028e-3  ;
    double c0     =  999.83952      ; 
    double c1     =   16.945176     ;
@@ -633,6 +634,58 @@ void US_Math2::data_correction( double t, SolutionData& d )
       
       d.viscosity_wt = VISC_20W * pow( 10.0, exponent );
    }
+#else
+   /*
+   Reference:
+   Philo, J. S. (2023). SEDNTERP: a calculation and database utility to aid interpretation of
+   analytical ultracentrifugation and light scattering data. European Biophysics Journal, 1-34.
+   Equations 21 and 30
+   */
+
+   const double param[13][4] = {{ 1.93763157e-2, 0,  5.78545292e-3, 1},
+                                { 6.74458446e3 , 4, -1.53195665e-2, 2},
+                                {-2.22521604e5,  5,  3.11337859e-2, 3},
+                                { 1.00231247e8,  7, -4.23546241e-2, 4},
+                                {-1.63552118e9,  8,  3.38713507e-2, 5},
+                                { 8.32299658e9,  9, -1.19946761e-2, 6},
+                                {-7.5245878e-6,  1, -3.1091470e-6,  1},
+                                {-1.3767418e-2,  3,  2.8964919e-5,  3},
+                                { 1.0627293e1,   5, -1.3112763e-4,  4},
+                                {-2.0457795e2,   6,  3.0410453e-4,  5},
+                                { 1.2037414e3,   7, -3.9034594e-4,  6},
+                                { 0,             0,  2.3403117e-4,  7},
+                                { 0,             0, -4.8510101e-5,  9}};
+   double R = 461.51805;
+   double Ta = 593.0;
+   double Tb = 232.0;
+   double alpha = 10.0 / (Ta - t - K0);
+   double beta = 10.0 / (t + K0 - Tb);
+   double v0_c = 0;
+   for (int ii = 0; ii < 6; ii++){
+      v0_c += param[ii][0] * qPow(alpha, param[ii][1]);
+      v0_c += param[ii][2] * qPow(beta, param[ii][3]);
+   }
+
+   double V0 = v0_c * 100.0 * R;
+   v0_c = 0;
+   for (int ii = 6; ii < 13; ii++){
+      v0_c += param[ii][0] * qPow(alpha, param[ii][1]);
+      v0_c += param[ii][2] * qPow(beta, param[ii][3]);
+   }
+   V0 += v0_c * R * 1000.0 * 0.01325;
+   d.density_wt = 1000.0 / V0;
+
+   double a1 = 280.68;
+   double b1 = -1.9;
+   double a2 = 511.45;
+   double b2 = -7.7;
+   double a3 = 61.131;
+   double b3 = -19.6;
+   double a4 = 0.45903;
+   double b4 = -40.0;
+   double T = (t + K0) / 300.0;
+   d.viscosity_wt = 1e-3 * (a1 * qPow(T, b1) + a2 * qPow(T, b2) + a3 * qPow(T, b3) + a4 * qPow(T, b4));
+#endif
 
    if ( d.manual )
    {
@@ -651,6 +704,16 @@ void US_Math2::data_correction( double t, SolutionData& d )
    double K          = t + K0;
 
    d.D20w_correction = ( K20 / K ) * ( d.viscosity_tb / VISC_20W );
+
+DbgLv(1) << QObject::tr("dataCorr: manual: %1").arg(d.manual) << d.manual;
+DbgLv(1) << QObject::tr("dataCorr:  water: visc(20)=%1, visc(%2)=%3").arg(VISC_20W).arg(t).arg(d.viscosity_wt);
+DbgLv(1) << QObject::tr("dataCorr:  water: dens(20)=%1, dens(%2)=%3").arg(DENS_20W).arg(t).arg(d.density_wt);
+DbgLv(1) << QObject::tr("dataCorr: buffer: visc(20)=%1, visc(%2)=%3").arg(d.viscosity).arg(t).arg(d.viscosity_tb);
+DbgLv(1) << QObject::tr("dataCorr: buffer: dens(20)=%1, dens(%2)=%3").arg(d.density).arg(t).arg(d.density_tb);
+DbgLv(1) << QObject::tr("dataCorr: solute: vbar(20)=%1, vbar(%2)=%3").arg(d.vbar20).arg(t).arg(d.vbar);
+DbgLv(1) << QObject::tr("dataCorr: boyncy: water(20)=%1, buffer(%2)=%3").arg(d.buoyancyw).arg(t).arg(d.buoyancyb);
+DbgLv(1) << QObject::tr("dataCorr: factor: sed=%1, diff=%2").arg(d.s20w_correction).arg(d.D20w_correction) << "\n";
+
 //if ( qAbs(d.vbar-0.72) > 0.001 ) {
 //qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt << "manual" << d.manual;
 //qDebug() << "M2:dacor:  visctb viscwt" << d.viscosity_tb << d.viscosity_wt;

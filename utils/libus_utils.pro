@@ -69,6 +69,7 @@ HEADERS      = us_ana_profile.h   \
                us_tar.h           \
                us_time_state.h    \
                us_timer.h         \
+               us_geturl.h        \
                us_util.h          \
                us_vector.h        \
                us_xpn_data.h      \
@@ -120,6 +121,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_tar.cpp           \
                us_time_state.cpp    \
                us_timer.cpp         \
+               us_geturl.cpp        \
                us_util.cpp          \
                us_vector.cpp        \
                us_xpn_data.cpp      \

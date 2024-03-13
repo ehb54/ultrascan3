@@ -266,12 +266,15 @@ bool US_GetRun::check_filename_for_autoflow( QString rFilename )
   US_DB2* db = new US_DB2( pw.getPasswd() );
 
   QStringList q;
-  q  << QString( "check_filename_for_autoflow" ) 
+  q  << QString( "check_filename_for_autoflow" ) //for now, both GMP and R&D
      << rFilename;
 
   autoflowNumber  = db -> functionQuery( q );
 
-  autoflowNumber ? isRequired = true : isRequired = false;
+  (autoflowNumber > 0) ? isRequired = true : isRequired = false;
+
+  qDebug() << "in check_filename_for_autoflow(): autoflowNumber, isRequired -- "
+	   << autoflowNumber << isRequired;
   
   return isRequired;
 }

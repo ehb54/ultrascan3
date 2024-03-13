@@ -20,19 +20,20 @@ class US_eSignaturesGMP : public US_Widgets
       public:
          US_eSignaturesGMP();
 	 US_eSignaturesGMP( QString );
+         US_eSignaturesGMP( QStringList );
          US_eSignaturesGMP( QMap <QString, QString>& );
 
          bool auto_mode;
          bool auto_separate_status;
          bool assign_revs_sep;
+         bool reassign_revs_sep;
 
          class US_InvestigatorData
 	 {
            public:
 	   int     invID;        //!< The uniqe ID in the DB for the entry.
 	   int     ulev;         //!< User level
-	   int     gmpReviewer;  //!< Is user set a reviewer  (0 | 1 )
-	   int     gmpApprover;  //!< Is user set an approver (0 | 1 )
+	   QString gmpReviewerRole; //!<Reviewer | Approver> 
 	   QString invGuid;      //!< Investigator's global ID
 	   QString lastName;     //!< Last Name
 	   QString firstName;    //!< First Name   
@@ -51,6 +52,7 @@ class US_eSignaturesGMP : public US_Widgets
         QMap< QString, QString > eSign_details;
         QMap< QString, QString > eSign_details_auto;
         QMap< QString, QString > it_details;
+        QStringList reassign;
         QList< US_InvestigatorData > investigators;
         QList< US_InvestigatorData > g_reviewers;
         QList< US_InvestigatorData > g_apprs;
@@ -142,7 +144,10 @@ class US_eSignaturesGMP : public US_Widgets
        QVBoxLayout* spacerLayout;
   
        QString autoflowID_passed;
-       QString autoflowGMPReport_id_selected;			
+       QString autoflowGMPReport_id_selected;
+  QMap<QString, QString> operators_info;
+  QMap<QString, QString> reviewers_info;
+  QMap<QString, QString> approvers_info;				       
 			      
      public slots:
 
@@ -164,14 +169,18 @@ class US_eSignaturesGMP : public US_Widgets
        void unset_greviewer( void );
        void unset_gappr( void );
        void selectGMPRun( void );
+       void selectGMPRun_sa( void );
        void reset_set_revOper_panel( void );
        void set_revOper_panel_gui( void );
-       int list_all_autoflow_records( QList< QStringList >&  );
-       QMap < QString, QString > read_autoflow_record( int );
+       void set_revOper_panel_gui_sa( void );
+       int list_all_autoflow_records( QList< QStringList >& , QString );
+       QMap < QString, QString > read_autoflow_record( int, QString );
        QStringList read_operators( QString );
        QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
        QString get_assigned_oper_revs( QJsonDocument );
+       QString get_assigned_oper_revs_sa( QString, QJsonDocument, QMap<QString, QString> );
        void assignOperRevs( void );
+       void assignOperRevs_sa( void );
        void addOpertoList( void );
        void removeOperfromList( void );
        void addRevtoList( void );
@@ -179,12 +188,19 @@ class US_eSignaturesGMP : public US_Widgets
        void addApprtoList( void );
        void removeApprfromList( void );
        bool is_eSignProcessBegan( void );
+       void disableSetUnsetGButtons( void );
        void setUnsetPb_operRev( void );
        void setUnset_AddRemove_RevAppr_bttn( QString );
-       QString compose_updated_admin_logJson( int, QString, QString );
+       QString compose_updated_admin_logJson( int, QString, QString, QString,
+					      QString, QString, QString, QString, QString);
+       
        void loadGMPReportDB_assigned( void );
        void loadGMPReportDB_assigned_auto( QString );
        void loadGMPReportDB_assigned_separate( void );
+       void compose_updated_ora_list( QString&, QString&, QString&, QString, QString );
+       QString parse_old_ora( QString );
+       QString parse_new_ora( QString );
+       QString compare_ora_lists( QString, QString );
   
        int  list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
        void  remove_files_by_mask( QString, QStringList );
@@ -194,8 +210,12 @@ class US_eSignaturesGMP : public US_Widgets
        void esign_report( void );
        QString compose_updated_eSign_Json( int, QString, QString,  QJsonArray, QJsonArray,
 					   QString, QString& );
+       QString compose_updated_eSign_Json_sa( int, QString, QString, QString, QJsonArray);
+					      
+  
        QString write_pdf_eSignatures( QString, QString, QString, QString, QString );
        QString check_eSign_status_for_gmpReport( void );
+       QString check_revs_esign_status_sa( QString, QMap< QString, QString> );
        QLineEdit* check_eSign_status_for_gmpReport_auto( QString, QMap< QString, QString> );
        void write_download_eSignatures_DB( QString, QString );
 

@@ -347,7 +347,7 @@ int US_Convert::saveToDisk(
       }
 
       // Now write altered dataset
-      status = US_DataIO::writeRawData( dirname + filename, currentData );
+      status = US_DataIO::writeRawData( d.absoluteFilePath(filename) , currentData );
 
       if ( status !=  US_DataIO::OK ) break;
    }

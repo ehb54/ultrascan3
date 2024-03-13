@@ -408,7 +408,10 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
          if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
               (allPButtons[i]->text()).contains("View Ranges" ) ||
               (allPButtons[i]->text()).contains("View Experiment Details" ) ||
-              (allPButtons[i]->text()).contains("Test Connection" ) )
+              (allPButtons[i]->text()).contains("Test Connection" ) ||
+	      (allPButtons[i]->text()).contains("Add to List" ) ||
+	      (allPButtons[i]->text()).contains("Remove Last" )
+	      )
             allPButtons[i]->setEnabled(true);
          else
             allPButtons[i]->setEnabled(false);
@@ -422,7 +425,16 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
 	//     allCBoxes[i]->setEnabled(true);
 	//   }
 	// else
-	allCBoxes[i]->setEnabled(false);
+	if ( ( allCBoxes[i]->objectName() == "ChooseOper" ) ||
+	     ( allCBoxes[i]->objectName() == "ChooseRev" )  ||
+	     ( allCBoxes[i]->objectName() == "ChooseAppr" ) ||
+	     ( allCBoxes[i]->objectName() == "ChooseSme" ) 
+	     )
+	  {
+	    allCBoxes[i]->setEnabled(true);
+	  }
+	else
+	  allCBoxes[i]->setEnabled(false);
       }
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(false);
@@ -536,6 +548,14 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 
    le_label       ->setText ( currProto->exp_label );
 
+   //if PROTO_DEV: populate runName && make it read-only
+   if ( mainw-> us_prot_dev_mode )
+     {
+       le_runid  -> setEnabled( false );
+       le_label  -> setText( currProto->exp_label );
+       le_label  -> setEnabled( false );
+     }
+       
    check_user_level();
 
    //Here, check if UL<3 is set as operator for each Optima:
@@ -2338,58 +2358,97 @@ void US_ExperGuiSolutions::savePanel()
    suchans.clear();
    susolus.clear();
 
+   qDebug() << "sol save 1";
+   
    for ( int ii = 0; ii < mxrow; ii++ )
-   {  // Fill panel lists and parameters from GUI elements
-      QString channel     = cc_labls[ ii ]->text();
-DbgLv(1) << "EGSo: svP:  ii" << ii << "channel" << channel;
-
-      if ( channel == chn_none )
+     {  // Fill panel lists and parameters from GUI elements
+       QString channel     = cc_labls[ ii ]->text();
+       DbgLv(1) << "EGSo: svP:  ii" << ii << "channel" << channel;
+       
+       if ( channel == chn_none )
          break;
-
-      nchant++;
-      srchans << channel;
-      QString solution    = cc_solus[ ii ]->currentText();
-DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
-
-      if ( solution == unspec )
+       
+       nchant++;
+       srchans << channel;
+       QString solution    = cc_solus[ ii ]->currentText();
+       DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
+       
+       if ( solution == unspec )
          continue;
+       
+       nchanf++;
+       suchans << channel;
+       susolus << solution;
+       QString sol_id      = solu_ids[ solution ];
+       QString ch_comment;
+       QStringList cs;
+       DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
+       
+       qDebug() << "sol save 2";
+       
+       // //resize here!
+       // rpSolut->chsols.resize( nchanf );
+       
+       
+       qDebug() << "ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
+       
+       QString iistr = QString::number(ii);
+       //if ( pro_comms.keys().contains( solution ) )
+       if ( pro_comms.keys().contains( iistr ) )
+	 {
+	   //ch_comment          = pro_comms[ solution ];
+	   ch_comment          = pro_comms[ iistr ];
+	   //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
+	   
+	   qDebug() << "sol save 2a";
+	   
+	   commentStrings( solution, ch_comment, cs, ii );
+	 }
+       else
+	 {
+	   //commentStrings( solution, ch_comment, cs, ii ); //<-- incorrect as always sets comment to solname!
+	   qDebug() << "sol save 2aB";
+	   
+	   if ( rpSolut->chsols.size() == 0 )
+	     {
+	       qDebug() << "sol save 2aBc";
+	       ch_comment      = QString("");
+	       commentStrings( solution, ch_comment, cs, ii );
+	       qDebug() << "sol save 2aBc_1: went through 1st time zero";
+	     }
+	   else
+	     {
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
+	       ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       if ( solution_comment_init[ ii ] )
+		 commentStrings( solution, ch_comment, cs, ii );
+	       qDebug() << "sol save 2aBd_1: went through 1st time NON-zero";
+	     }
+	   
+	   //ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	   QString ch_comment_tmp = ch_comment;
+	   ch_comment_tmp.replace(solution, "");
+	   ch_comment_tmp.remove( QRegExp("^[,\\s*]+") );
+	   
+	   qDebug() << "SolInit, row: " << ii;
+	   manual_comment[ iistr ]  = ch_comment_tmp.trimmed();
+	 }
+       
+       qDebug() << "sol save 3";
+       
+       US_Solution soludata;
+       solutionData( solution, soludata );
+       solu_ids [ solution ]  = sol_id;
+       solu_data[ solution ]  = soludata;
+       //pro_comms[ solution ]  = ch_comment;
+       pro_comms[ iistr ]  = ch_comment;
+     }
 
-      nchanf++;
-      suchans << channel;
-      susolus << solution;
-      QString sol_id      = solu_ids[ solution ];
-      QString ch_comment;
-      QStringList cs;
-DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
-
-
- QString iistr = QString::number(ii);
-//if ( pro_comms.keys().contains( solution ) )
-    if ( pro_comms.keys().contains( iistr ) )
-      {
-        //ch_comment          = pro_comms[ solution ];
-        ch_comment          = pro_comms[ iistr ];
-         //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
-
-        commentStrings( solution, ch_comment, cs, ii );
-      }
-    else
-      {
-        commentStrings( solution, ch_comment, cs, ii );
-      }
-
-    US_Solution soludata;
-    solutionData( solution, soludata );
-    solu_ids [ solution ]  = sol_id;
-    solu_data[ solution ]  = soludata;
-    //pro_comms[ solution ]  = ch_comment;
-    pro_comms[ iistr ]  = ch_comment;
-   }
-
+   //resize here
    rpSolut->chsols.resize( nchanf );
    QStringList solus;                      // Unique solutions list
    QStringList sids;                       // Corresponding Id list
-DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
+   DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
    for ( int ii = 0; ii < nchanf; ii++ )
    {  // Now fill protocol from internal lists and parameters
@@ -2403,6 +2462,8 @@ DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
       QString iistr = QString::number(ii);
       rpSolut->chsols[ ii ].ch_comment = pro_comms[ iistr ];
+
+      qDebug() << "at saveSolPanel: ch_comment -- " << pro_comms[ iistr ];
 
       if ( !solus.contains( solution ) )
       {
@@ -3779,14 +3840,15 @@ bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_Ana
 	      US_ReportGMP::ReportItem curr_reportItem = report_curr.reportItems[ k ];
 	      US_ReportGMP::ReportItem load_reportItem = report_load.reportItems[ k ];
 
-	      if ( curr_reportItem.type             != load_reportItem.type             ||
-		   curr_reportItem.method           != load_reportItem.method           ||
-		   curr_reportItem.range_low        != load_reportItem.range_low        ||
-		   curr_reportItem.range_high       != load_reportItem.range_high       ||
-		   curr_reportItem.integration_val  != load_reportItem.integration_val  ||
-		   curr_reportItem.tolerance        != load_reportItem.tolerance        ||
-		   curr_reportItem.total_percent    != load_reportItem.total_percent    ||
-		   curr_reportItem.combined_plot    != load_reportItem.combined_plot
+	      if ( curr_reportItem.type               != load_reportItem.type             ||
+		   curr_reportItem.method             != load_reportItem.method           ||
+		   curr_reportItem.range_low          != load_reportItem.range_low        ||
+		   curr_reportItem.range_high         != load_reportItem.range_high       ||
+		   curr_reportItem.integration_val    != load_reportItem.integration_val  ||
+		   curr_reportItem.tolerance          != load_reportItem.tolerance        ||
+		   curr_reportItem.total_percent      != load_reportItem.total_percent    ||
+		   curr_reportItem.combined_plot      != load_reportItem.combined_plot    ||
+		   curr_reportItem.ind_combined_plot  != load_reportItem.ind_combined_plot
 		   )
 		{
 		  maps_different = true;

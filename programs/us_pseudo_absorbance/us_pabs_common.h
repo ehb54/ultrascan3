@@ -33,13 +33,11 @@ private:
 
 class CCW_ITEM{
 public:
+    QList<int> runClass;
     QList<int> cell;
     QList<char> channel;
     QList<QVector<double>> wavelength;
     QList<QVector<int>> index;
-    QList<double> min_wl;
-    QList<double> max_wl;
-    QList<int> n_wl;
     void clear(void);
     int size(void);
 };
@@ -50,6 +48,7 @@ public:
     QVector<int> cell;
     QVector<char> channel;
     QVector<double> wavelength;
+    QStringList rundId;
     void clear(void);
     int size(void);
 };

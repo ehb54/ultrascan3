@@ -47,14 +47,59 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
   
   topLayout_auto -> addWidget(  bn_loadGMPReport );
   topLayout_auto -> addWidget(  pb_loadreport_db );
+  
   // int ihgt        = pb_loadreport_db ->height();
   // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   // topLayout_auto->addItem( spacer2 );
   
   connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReport() ) );
-  
+    
   //resize( 1200, 300 );
   resize( 600, 500 );
+}
+
+void US_auditTrailGMP::printAPDF( void )
+{
+  QString subDirName = gmpRunName_passed + "_AudirTrail";
+  mkdir( US_Settings::reportDir(), subDirName );
+  filePath_pdf = US_Settings::reportDir() + "/" + subDirName + "/" + subDirName + ".pdf";
+  
+  QTextDocument document;
+  document.setHtml( html_assembled );
+  
+  QPrinter printer(QPrinter::PrinterResolution);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setPaperSize(QPrinter::Letter);
+
+  printer.setOutputFileName( filePath_pdf );
+  printer.setFullPage(true);
+  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  
+  document.print(&printer);
+
+  /** END of standard way of printing *************************/
+
+  qDebug() << "HTMP_assembled -- " << html_assembled;
+}
+
+
+//view report
+void US_auditTrailGMP::viewAPDF ( void )
+{
+  qDebug() << "Opening PDF at -- " << filePath_pdf;
+
+  QFileInfo check_file( filePath_pdf );
+  if (check_file.exists() && check_file.isFile())
+    {
+      //Open with OS's applicaiton settings ?
+      QDesktopServices::openUrl(QUrl( filePath_pdf ));
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Error: Cannot Open .PDF File" ),
+			    tr( "%1 \n\n"
+				"No such file or directory...") .arg( filePath_pdf ) );
+    }
 }
 
 //Load GMP Run
@@ -85,7 +130,7 @@ void US_auditTrailGMP::loadGMPReport( void )
          
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -128,6 +173,11 @@ void US_auditTrailGMP::loadGMPReport( void )
   
   p_details[ "gmp_runname" ] = gmpReport_runname_selected_c;
   initPanel_auto( p_details );
+
+  // Print PDF && enable View:
+  
+  printAPDF();
+  pb_viewAPDF -> setEnabled( true );
 }
 
 // Get .pdf GMP reports with assigned reviewers:
@@ -158,7 +208,12 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
       QString autoflowHistoryID      = db->value( 1 ).toString();
       QString autoflowHistoryName    = db->value( 2 ).toString();
       QString protocolName           = db->value( 3 ).toString();
+
       QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
+      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+								   .toString( Qt::ISODate ), true )
+	                                                           .section( ":", 0, 1 ) + " UTC";
+      
       QString filenamePdf            = db->value( 5 ).toString();
 
       //check if report has assigned operator(s) & reviewer(s)
@@ -183,7 +238,7 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
       	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
 	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << time_created.toString()
+			 << ptime_created //<< time_created.toString()
 			 << filenamePdf
 			 << autoflowHistoryID;
 
@@ -244,22 +299,49 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 	  eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
 	                
 	  eSign_record[ "isEsignRecord" ]        = QString("YES");
+	  eSign_record[ "isHistory" ]            = QString("NO");
 	  isEsignRecord = true;
 	}
     }
   else
     {
       //No record, so no oper/revs assigned!
-      qDebug() << "No e-Sign GMP record exists!!";
-
-      eSign_record[ "isEsignRecord" ]        = QString("NO");
-      isEsignRecord = false;
-      eSign_record. clear();
-
-      // //TEST ---------------------------
-      // eSign_record[ "operatorListJson" ]  = QString( tr( "[\"Operator 1\",\"Operator 2\",\"Operator 3\"]" ));
-      // eSign_record[ "reviewersListJson" ] = QString( tr( "[\"Reviewer 1\",\"Reviewer 2\",\"Reviewer 3\"]" ));
-      // //END TEST ------------------------
+      qDebug() << "No e-Sign GMP record exists in main table!!";
+      qDebug() << "Checking History...";
+      qry. clear();
+      
+      qry << "get_gmp_review_info_by_autoflowID_history" << aID;
+      qDebug() << "read eSing rec HISTORY, qry -- " << qry;
+      db->query( qry );
+      
+      if ( db->lastErrno() == US_DB2::OK )      // e-Sign record exists
+	{
+	  while ( db->next() )
+	    {
+	      eSign_record[ "ID" ]                   = db->value( 0 ).toString(); 
+	      eSign_record[ "autoflowID" ]           = db->value( 1 ).toString();
+	      eSign_record[ "autoflowName" ]         = db->value( 2 ).toString();
+	      eSign_record[ "operatorListJson" ]     = db->value( 3 ).toString();
+	      eSign_record[ "reviewersListJson" ]    = db->value( 4 ).toString();
+	      eSign_record[ "eSignStatusJson" ]      = db->value( 5 ).toString();
+	      eSign_record[ "eSignStatusAll" ]       = db->value( 6 ).toString();
+	      eSign_record[ "createUpdateLogJson" ]  = db->value( 7 ).toString();
+	      eSign_record[ "approversListJson" ]    = db->value( 8 ).toString();
+	      eSign_record[ "smeListJson" ]          = db->value( 9 ).toString();
+	      
+	      eSign_record[ "isEsignRecord" ]        = QString("YES");
+	      eSign_record[ "isHistory" ]            = QString("YES");
+	      isEsignRecord = true;
+	    }
+	}
+      else
+	{
+	  //No record, so no oper/revs assigned!
+	  qDebug() << "No e-Sign GMP record exists!!";
+	  eSign_record[ "isEsignRecord" ]        = QString("NO");
+	  isEsignRecord = false;
+	  eSign_record. clear();
+	}
     }
 
   return eSign_record;
@@ -268,12 +350,18 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 //slot to..
 void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_details )
 {
-  //Main ID for parent GMP run:
-  autoflowID_passed = protocol_details[ "autoflowID" ];
-  
   //clear all GUI, internals
   reset_panel();
+  
+  //Main ID for parent GMP run:
+  autoflowID_passed = protocol_details[ "autoflowID" ];
 
+  //GMP Run Name
+  gmpRunName_passed = protocol_details["gmp_runname"];
+
+  //init HTML
+  initHTML();
+  
   qDebug() << "After reset...";
     
   //0. Loaded Run
@@ -284,11 +372,17 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   int row = 0;
   QLabel*      lb_runloaded  = us_banner( tr( "Loaded GMP Run:" ), 1 );
   QLabel*      lb_runName    = us_label(  tr( "GMP Run Name:" ), 1  );
-  QLineEdit*   le_runName    = us_lineedit( protocol_details["gmp_runname"], 0, true );
-  
+  QLineEdit*   le_runName    = us_lineedit( gmpRunName_passed, 0, true );
+
+  //QLabel* bn_viewAPDF = us_banner( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ), 1 );
+  pb_viewAPDF  =  us_pushbutton( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ) );
+
   loadedRunGrid  -> addWidget( lb_runloaded,    row++,   0,  1,  10  );
   loadedRunGrid  -> addWidget( lb_runName,      row,     0,  1,  3  );
   loadedRunGrid  -> addWidget( le_runName,      row++,   3,  1,  7  );
+  loadedRunGrid  -> addWidget( pb_viewAPDF,     row++,   0,  1,  10  );
+
+  connect( pb_viewAPDF,  SIGNAL( clicked() ), SLOT ( viewAPDF() ) );
 
   //1. e_signers layout
   eSignersGrid     = new QGridLayout();
@@ -353,7 +447,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 	   << "LIVE UPDATE"
 	   << "IMPORT"
 	   << "EDITING"
-	   << "ANALYSIS";
+	   << "ANALYSIS"
+	   << "E-SIGNATURES";
 
   for ( int i=0; i< stages_i.size(); ++i )
     {
@@ -392,6 +487,10 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 
   eSignTree         ->expandAll();
   uInteractionsTree->topLevelItem(0)->setExpanded(true);
+
+  //conclude HTML
+  html_assembled += html_assembled_esigs;
+  closeHTML();
   
   resize( 1400, 1000 );
 }
@@ -431,11 +530,17 @@ QGroupBox * US_auditTrailGMP::createGroup_eSign( QString name )
   //read e-Sign record, to check e-Signing status of each reviewer/operator:
   eSign_details_auto. clear();
   eSign_details_auto = read_autoflowGMPReportEsign_record( autoflowID_passed );
+
+  //init eSigs HTML
+  html_assembled_esigs += tr( "<p class=\"pagebreak \">\n");
+  html_assembled_esigs += tr("<h2 align=left>Electronic Signatures:</h2>" );
   
   //&& Set defined Operator/Reviewers (if any)
   display_reviewers_auto( row, eSign_details_auto, "operatorListJson",  genL );
   display_reviewers_auto( row, eSign_details_auto, "reviewersListJson", genL );
-  display_reviewers_auto( row, eSign_details_auto, "approversListJson", genL ); 
+  display_reviewers_auto( row, eSign_details_auto, "approversListJson", genL );
+
+  html_assembled_esigs += tr( "</p>" ); 
   
   groupBox->setLayout(genL);
 
@@ -448,20 +553,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 {
   QVector< QGroupBox * > groupBoxes;
   
-  //GUI
-  QHBoxLayout* genL   = new QHBoxLayout();
-  genL->setSpacing        ( 2 );
-  genL->setContentsMargins( 20, 10, 20, 15 );
-
-  QHBoxLayout* genL_sec_row = new QHBoxLayout();
-  genL_sec_row->setSpacing        ( 2 );
-  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
-
-  QVBoxLayout* genL_v_rows = new QVBoxLayout();
-  genL_v_rows->setSpacing        ( 2 );
-  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
- 
-
   int row;
  
   //read autoflowStatus record:
@@ -492,6 +583,11 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   if ( s_name == "GMP Run Initiation" )
     {
       status_map = parse_autoflowStatus_json( createdGMPrunJson, "" );
+
+      //GUI
+      QHBoxLayout* genL   = new QHBoxLayout();
+      genL->setSpacing        ( 2 );
+      genL->setContentsMargins( 20, 10, 20, 15 );
 
       //Person
       QLabel* lb_init         = us_label( tr("Initiated by:") );
@@ -583,114 +679,58 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       
       groupBox->setLayout(genL);
       groupBoxes. push_back( groupBox );
+
+      //assemble html:
+      assemble_GMP_init( status_map, createdGMPrunts );
     }
   
   else if ( s_name == "LIVE UPDATE" )
     {
+      html_assembled += tr( "<h3 align=left>Remote Stage Skipping, Stopping Machine (2. LIVE_UPDATE)</h3>" );
+      
       operation_types_live_update[ "STOP" ] = stopOptimaJson;
       operation_types_live_update[ "SKIP" ] = skipOptimaJson;
       
       operation_types_live_update_ts[ "STOP" ] = stopOptimats;
       operation_types_live_update_ts[ "SKIP" ] = skipOptimats;
 
-      for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
+      if ( stopOptimaJson.isEmpty() && skipOptimaJson.isEmpty() )
 	{
-	  QString json_str = im.value();
-	  
-	  if ( json_str.isEmpty() )
-	    continue;
-	  
-	  QString      dtype_opt;
-	  
-	  if ( im.key() == "STOP" )
-	    dtype_opt    = "Stopping Optima";
-	  
-	  if ( im.key() == "SKIP" )
-	    dtype_opt =  "Skipping Stage";
-      
-	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+	  html_assembled += tr( "<table>" );
+	  html_assembled += tr( "<tr><td> There were NO remote operations. </td></tr>" );
+	  html_assembled += tr( "</table>" );
 
-	  //Person
-	  QLabel* lb_init         = us_label( tr("Performed by:") );
-	  QLabel* lb_ID           = us_label( tr("User ID:") );
-	  QLabel* lb_name         = us_label( tr("Name:") );
-	  QLabel* lb_email        = us_label( tr("E-mail:") );
-	  QLabel* lb_level        = us_label( tr("Level:") );
-	  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
-	  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
-	  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
-	  QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
 	  
 	  QGridLayout* genL1  = new QGridLayout();
 	  QVBoxLayout* genL11 = new QVBoxLayout();
-	  
+
+	  QLabel* lb_remote         = us_label( tr("Remote Operations on Optima Instrument: SKIP stage, STOP:") );
+	  lb_remote->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	  row=0;
-	  genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
-	  genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
-	  genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
-	  genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
-	  genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
-	  genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
-	  genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
-	  genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
-	  genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
-	  
+	  genL1-> addWidget( lb_remote,      row++,   0,  1,  22  );
+
+	  QTextEdit* te_remote    = us_textedit();
+	  te_remote    -> setFixedHeight  ( RowHeight * 2 );
+	  te_remote    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_remote, true );
+
+	  te_remote -> setText( "There were NO remote operations." );
+
+	  genL1 -> addWidget( te_remote,     row++,    1,  1,  21  );
+
 	  genL11 -> addLayout( genL1);
 	  genL11 -> addStretch();
-
-	  //Operation Type | TimeStamp
-	  QGridLayout* genL2  = new QGridLayout();
-	  QVBoxLayout* genL21 = new QVBoxLayout();
 	  
-	  QLabel* lb_time_o         = us_label( tr("Operation, TimeStamp:") );
-	  lb_time_o->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-	  QLabel* lb_time_o1        = us_label( tr("Type:") );
-	  QLineEdit* le_time_o1     = us_lineedit( status_map[ "Remote Operation" ][ "type"], 0, true );
-	  QLabel* lb_time_o2        = us_label( tr("Performed on:") );
-	  QLineEdit* le_time_o2     = us_lineedit( operation_types_live_update_ts[ im.key() ], 0, true );
-	  
-	  row=0;
-	  genL2 -> addWidget( lb_time_o,      row++,   0,  1,  6  );
-	  genL2 -> addWidget( lb_time_o1,     row,     1,  1,  2  );
-	  genL2 -> addWidget( le_time_o1,     row++,   3,  1,  3  );
-	  genL2 -> addWidget( lb_time_o2,     row,     1,  1,  2  );
-	  genL2 -> addWidget( le_time_o2,     row++,   3,  1,  3  );
-	  
-	  genL21 -> addLayout( genL2);
-	  genL21 -> addStretch();
-
-	  //Comment
-	  QGridLayout* genL3  = new QGridLayout();
-	  QVBoxLayout* genL31 = new QVBoxLayout();
-	  
-	  QLabel* lb_comm         = us_label( tr("Reason for Operation:") );
-	  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-	  QLabel* lb_comm1        = us_label( tr("Comment:") );
-	  QString t_comment       = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
-
-	  QTextEdit* te_comm1    = us_textedit();
-	  te_comm1    -> setFixedHeight  ( RowHeight * 2 );
-	  te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
-					US_GuiSettings::fontSize() - 1) );
-	  us_setReadOnly( te_comm1, true );
-	  te_comm1 -> setText( t_comment );
-	  	  
-	  row=0;
-	  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
-	  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
-	  genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
-	  
-	  genL31 -> addLayout( genL3);
-	  genL31 -> addStretch();
-
 	  //assemble
 	  genL->addLayout( genL11);
-	  genL->addLayout( genL21);
-	  genL->addLayout( genL31);
-		  
+	  
 	  //Set GroupBox
-	  QString gBox_name = "Remote Operation: " + dtype_opt;
-	  QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	  QGroupBox *groupBox = new QGroupBox ( name );
 	  QPalette p = groupBox->palette();
 	  p.setColor(QPalette::Dark, Qt::white);
 	  groupBox->setPalette(p);
@@ -701,11 +741,137 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  
 	  groupBox->setLayout(genL);
 	  groupBoxes. push_back( groupBox );
+	  
 	}
+      else
+	{
+	  //There were one or more remote operations:
+	  for ( im = operation_types_live_update.begin(); im != operation_types_live_update.end(); ++im )
+	    {
+	      QString json_str = im.value();
+	      
+	      if ( json_str.isEmpty() )
+		continue;
+	      
+	      QString      dtype_opt;
+	      
+	      if ( im.key() == "STOP" )
+		dtype_opt    = "Stopping Optima";
+	      
+	      if ( im.key() == "SKIP" )
+		dtype_opt =  "Skipping Stage";
+	      
+	      status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	      //GUI
+	      QHBoxLayout* genL   = new QHBoxLayout();
+	      genL->setSpacing        ( 2 );
+	      genL->setContentsMargins( 20, 10, 20, 15 );
+	      
+	      //Person
+	      QLabel* lb_init         = us_label( tr("Performed by:") );
+	      QLabel* lb_ID           = us_label( tr("User ID:") );
+	      QLabel* lb_name         = us_label( tr("Name:") );
+	      QLabel* lb_email        = us_label( tr("E-mail:") );
+	      QLabel* lb_level        = us_label( tr("Level:") );
+	      QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
+	      QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
+	      QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
+	      QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+	      
+	      QGridLayout* genL1  = new QGridLayout();
+	      QVBoxLayout* genL11 = new QVBoxLayout();
+	      
+	      row=0;
+	      genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+	      genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+	      genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+	      genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+	      genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+	      genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
+	      genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
+	      genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
+	      genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
+	      
+	      genL11 -> addLayout( genL1);
+	      genL11 -> addStretch();
+	      
+	      //Operation Type | TimeStamp
+	      QGridLayout* genL2  = new QGridLayout();
+	      QVBoxLayout* genL21 = new QVBoxLayout();
+	      
+	      QLabel* lb_time_o         = us_label( tr("Operation, TimeStamp:") );
+	      lb_time_o->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      QLabel* lb_time_o1        = us_label( tr("Type:") );
+	      QLineEdit* le_time_o1     = us_lineedit( status_map[ "Remote Operation" ][ "type"], 0, true );
+	      QLabel* lb_time_o2        = us_label( tr("Performed on:") );
+	      QLineEdit* le_time_o2     = us_lineedit( operation_types_live_update_ts[ im.key() ], 0, true );
+	      
+	      row=0;
+	      genL2 -> addWidget( lb_time_o,      row++,   0,  1,  6  );
+	      genL2 -> addWidget( lb_time_o1,     row,     1,  1,  2  );
+	      genL2 -> addWidget( le_time_o1,     row++,   3,  1,  3  );
+	      genL2 -> addWidget( lb_time_o2,     row,     1,  1,  2  );
+	      genL2 -> addWidget( le_time_o2,     row++,   3,  1,  3  );
+	      
+	      genL21 -> addLayout( genL2);
+	      genL21 -> addStretch();
+	      
+	      //Comment
+	      QGridLayout* genL3  = new QGridLayout();
+	      QVBoxLayout* genL31 = new QVBoxLayout();
+	      
+	      QLabel* lb_comm         = us_label( tr("Reason for Operation:") );
+	      lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      QLabel* lb_comm1        = us_label( tr("Comment:") );
+	      QString t_comment       = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
+	      
+	      QTextEdit* te_comm1    = us_textedit();
+	      te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					    US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_comm1, true );
+	      te_comm1 -> setText( t_comment );
+	      
+	      row=0;
+	      genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+	      genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+	      genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
+	      
+	      genL31 -> addLayout( genL3);
+	      genL31 -> addStretch();
+	      
+	      //assemble
+	      genL->addLayout( genL11);
+	      genL->addLayout( genL21);
+	      genL->addLayout( genL31);
+	      
+	      //Set GroupBox
+	      QString gBox_name = "Remote Operation: " + dtype_opt;
+	      QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	      QPalette p = groupBox->palette();
+	      p.setColor(QPalette::Dark, Qt::white);
+	      groupBox->setPalette(p);
+	      
+	      groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	      
+	      groupBox->setFlat(true);
+	      
+	      groupBox->setLayout(genL);
+	      groupBoxes. push_back( groupBox );
+
+	      //assemble html
+	      QString oper_ts = operation_types_live_update_ts[ im.key() ];
+	      assemble_GMP_live_update( status_map, dtype_opt, oper_ts );
+	    }
+	}
+      html_assembled += tr("<hr>");
     }
   
   else if ( s_name == "IMPORT" )
     {
+      html_assembled += tr( "<h3 align=left>Reference Scan Determination, Triples Dropped, Data Saving (3. IMPORT)</h3>" );
+      
       data_types_import [ "RI" ] = importRIJson;
       data_types_import [ "IP" ] = importIPJson;
       
@@ -741,6 +907,20 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	    }
 
 	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+	  genL_sec_row->setSpacing        ( 2 );
+	  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QVBoxLayout* genL_v_rows = new QVBoxLayout();
+	  genL_v_rows->setSpacing        ( 2 );
+	  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
+	  
 
 	  //Person
 	  QLabel* lb_init         = us_label( tr("Performed by:") );
@@ -816,11 +996,23 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  genL31 -> addLayout( genL3);
 	  genL31 -> addStretch();
 
+	  //assemble html
+	  QString oper_ts = data_types_import_ts[ im.key() ];
+	  assemble_GMP_import( status_map, dtype_opt, oper_ts );
+
 	  //Dropped [if any]
 	  QGridLayout* genL4  = NULL;
 	  QVBoxLayout* genL41 = NULL;
 	  if ( !dtype_opt_dropped_triples. isEmpty() )
 	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption style=\"color:red;\" align=left> <b><i>List of Dropped Triples: </i></b> </caption>"
+				   "</table>"
+
+				   "<table style=\"margin-left:25px\">"
+				   );
+	      
 	      genL4  = new QGridLayout();
 	      genL41 = new QVBoxLayout();
 
@@ -834,8 +1026,22 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
 	      QStringList triples_dropped;
 	      for ( int i=0; i < dtype_opt_dropped_triples.size(); ++i )
-		triples_dropped << dtype_opt_dropped_triples[ i ];
+		{
+		  triples_dropped << dtype_opt_dropped_triples[ i ];
 
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td> Triple Name: </td> <td style=\"color:red;\"> %1 </td> "
+				       "</tr>"
+				   )
+		    .arg( dtype_opt_dropped_triples[ i ] )
+		    ;
+		}
+
+	      html_assembled += tr(
+				   "</table>"
+				   );
+	      
 	      QTextEdit* te_dropped_tr    = us_textedit();
 	      te_dropped_tr    -> setFixedHeight  ( RowHeight * 2 );
 	      te_dropped_tr    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -854,6 +1060,15 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QVBoxLayout* genL51 = NULL;
 	  if ( status_map. contains("Dropped") )
 	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption align=left> <b><i>Comments on [triples | channels | select channel] dropped: </i></b> </caption>"
+				   "</table>"
+				   
+				   "<table style=\"margin-left:25px\">"
+				   )
+		;
+	      
 	      genL5  = new QGridLayout();
 	      genL51 = new QVBoxLayout();
 
@@ -870,8 +1085,19 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      for ( dr = status_map[ "Dropped" ].begin(); dr != status_map[ "Dropped" ].end(); ++dr )
 		{
 		  QString comm_curr = dr.key() + ":\n" + dr.value();
-		  comm_list << comm_curr;		  
+		  comm_list << comm_curr;
+
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td> Dropped:     %1 </td>"
+				       "<td> Comment:     %2 </td>"
+				       "</tr>"
+				       )
+		    .arg( dr.key()   )     //1
+		    .arg( dr.value() )     //2
+		    ;
 		}
+	      html_assembled += tr( "</table>" );
 
 	      QTextEdit* te_drop_c1    = us_textedit();
 	      te_drop_c1    -> setFixedHeight  ( RowHeight * 2 );
@@ -914,10 +1140,13 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  groupBoxes. push_back( groupBox );
 	  
 	}
+      html_assembled += tr("<hr>");
     }
 
   else if ( s_name == "EDITING" )
     {
+      html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING)</h3>" );
+      
       data_types_edit [ "RI" ] = editRIJson;
       data_types_edit [ "IP" ] = editIPJson;
       
@@ -939,6 +1168,19 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	    dtype_opt =  "IP (Interf.)";
 
 	  status_map = parse_autoflowStatus_json( json_str, im.key() );
+
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+	  genL_sec_row->setSpacing        ( 2 );
+	  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
+	  
+	  QVBoxLayout* genL_v_rows = new QVBoxLayout();
+	  genL_v_rows->setSpacing        ( 2 );
+	  genL_v_rows->setContentsMargins( 20, 10, 20, 15 );
 
 	  //Person
 	  QLabel* lb_init         = us_label( tr("Performed by:") );
@@ -1063,14 +1305,26 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  groupBox->setLayout(genL_v_rows);
 	  groupBoxes. push_back( groupBox );
 
+	  //assemble html
+	  QString oper_ts = data_types_edit_ts[ im.key() ];
+	  assemble_GMP_editing( status_map, dtype_opt, oper_ts );
+	  
 	}
+      html_assembled += tr("<hr>");
     }
 
   else if ( s_name == "ANALYSIS" )
     {
+      html_assembled += tr( "<h3 align=left>Meniscus Position from FITMEN Stage, Job Cancellation (5. ANALYSIS)</h3>" );
+      
       QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
       QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
 
+      //GUI
+      QHBoxLayout* genL   = new QHBoxLayout();
+      genL->setSpacing        ( 2 );
+      genL->setContentsMargins( 20, 10, 20, 15 );
+      
       QGridLayout* genL1  = new QGridLayout();
       QVBoxLayout* genL11 = new QVBoxLayout();
 
@@ -1110,7 +1364,6 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      QLabel* lb_men4        = us_label( tr("TimeStamp:") );
 	      QLineEdit* le_men4     = us_lineedit( when, 0, true );
 	      
-	      
 	      genL1 -> addWidget( lb_men1,     row,     1,  1,  2  );
 	      genL1 -> addWidget( le_men1,     row,     3,  1,  3  );
 	      genL1 -> addWidget( lb_men2,     row,     6,  1,  2  );
@@ -1121,6 +1374,9 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      genL1 -> addWidget( le_men4,     row++,   18, 1,  3  );
 	      
 	    }
+
+	  //assemble html
+	  assemble_GMP_analysis_fitmen( analysis_status_map );
 	}
       else //automatic mode
 	{
@@ -1133,6 +1389,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  te_fitmen -> setText( "Meniscus positions have been determined automatically as best fit values for all channels." );
 
 	  genL1 -> addWidget( te_fitmen,     row++,    1,  1,  21  );
+
+	  html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
 	}
 
       //Cancelled Jobs
@@ -1215,10 +1473,184 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       
       groupBox->setLayout(genL);
       groupBoxes. push_back( groupBox );
+
+      //assemble html
+      assemble_GMP_analysis_cancelled( analysisCancel_status_map, analysisCancelJson );
+      html_assembled += tr("<hr>");
     }
   
+  else if ( s_name == "E-SIGNATURES" )
+    {
+      html_assembled += tr( "<h3 align=left>Information on Reassigning Reviewers (E-SIGNING)</h3>" );
+
+      //take all info from  eSign_details_auto[ "createUpdateLogJson" ];
+      status_map = parse_autoflowStatus_json( eSign_details_auto[ "createUpdateLogJson" ], "" );
+
+      //Gui
+      if ( status_map.isEmpty()  )
+	{
+	  //GUI
+	  QHBoxLayout* genL   = new QHBoxLayout();
+	  genL->setSpacing        ( 2 );
+	  genL->setContentsMargins( 20, 10, 20, 15 );
+      	  
+	  QGridLayout* genL1  = new QGridLayout();
+	  QVBoxLayout* genL11 = new QVBoxLayout();
+
+	  QLabel* lb_remote         = us_label( tr("Reassignments of Operator(s), Reviewer(s), Approver(s):") );
+	  lb_remote->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	  row=0;
+	  genL1-> addWidget( lb_remote,      row++,   0,  1,  22  );
+
+	  QTextEdit* te_remote    = us_textedit();
+	  te_remote    -> setFixedHeight  ( RowHeight * 2 );
+	  te_remote    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+	  us_setReadOnly( te_remote, true );
+
+	  te_remote -> setText( "There were NO reassignments." );
+
+	  genL1 -> addWidget( te_remote,     row++,    1,  1,  21  );
+
+	  genL11 -> addLayout( genL1);
+	  genL11 -> addStretch();
+	  
+	  //assemble
+	  genL->addLayout( genL11);
+	  
+	  //Set GroupBox
+	  QGroupBox *groupBox = new QGroupBox ( name );
+	  QPalette p = groupBox->palette();
+	  p.setColor(QPalette::Dark, Qt::white);
+	  groupBox->setPalette(p);
+	  
+	  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	  
+	  groupBox->setFlat(true);
+	  
+	  groupBox->setLayout(genL);
+	  groupBoxes. push_back( groupBox );
+	  
+	}
+      else
+	{
+	  QStringList s_map_keys = status_map. keys();
+	  for (int i=0; i < s_map_keys.size(); ++i  )
+	    {
+	      QMap <QString, QString > admin_map = status_map[ s_map_keys [ i ] ]; 
+	      
+	      QString p_id   = admin_map[ "Person" ].split(".")[0].trimmed();
+	      QString p_name = admin_map[ "Person" ].split(".")[1].trimmed();
+	      
+	      //Comment (replacements):
+	      QString c_repls = admin_map[ "Comment" ];
+	      QString c_repls_str;
+	      if ( c_repls. contains("replacement:") )
+		{
+		  QStringList c_repls_list = c_repls. split(";");
+		  for ( int j=0; j<c_repls_list.size(); ++j )
+		    c_repls_str += c_repls_list[j].replace("replacement:",": ") + "<br>";
+		}
+	      else
+		c_repls_str = c_repls;
+
+	      QHBoxLayout* genL_i   = new QHBoxLayout();
+	      genL_i->setSpacing        ( 2 );
+	      genL_i->setContentsMargins( 20, 10, 20, 15 );
+	      
+	      //Person
+	      QLabel* lb_init         = us_label( tr("Performed by:") );
+	      QLabel* lb_ID           = us_label( tr("User ID:") );
+	      QLabel* lb_name         = us_label( tr("Name:") );
+	      QLineEdit* le_ID        = us_lineedit( p_id, 0, true);
+	      QLineEdit* le_name      = us_lineedit( p_name, 0, true);
+	      
+	      QGridLayout* genL1  = new QGridLayout();
+	      QVBoxLayout* genL11 = new QVBoxLayout();
+	      
+	      row=0;
+	      genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+	      genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+	      genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+	      genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+	      genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+	  	      
+	      genL11 -> addLayout( genL1);
+	      genL11 -> addStretch();
+	      
+	      //TimeStamp
+	      QGridLayout* genL2  = new QGridLayout();
+	      QVBoxLayout* genL21 = new QVBoxLayout();
+	      
+	      QLabel* lb_time_o         = us_label( tr("TimeStamp:") );
+	      lb_time_o->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      QLabel* lb_time_o2        = us_label( tr("Performed on:") );
+	      QLineEdit* le_time_o2     = us_lineedit( admin_map["timeDate"], 0, true );
+	      
+	      row=0;
+	      genL2 -> addWidget( lb_time_o,      row++,   0,  1,  6  );
+	      genL2 -> addWidget( lb_time_o2,     row,     1,  1,  2  );
+	      genL2 -> addWidget( le_time_o2,     row++,   3,  1,  3  );
+	      
+	      genL21 -> addLayout( genL2);
+	      genL21 -> addStretch();
+	      
+	      //Comment
+	      QGridLayout* genL3  = new QGridLayout();
+	      QVBoxLayout* genL31 = new QVBoxLayout();
+	      
+	      QLabel* lb_comm         = us_label( tr("Reassignments:") );
+	      lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      QLabel* lb_comm1        = us_label( tr("Actions:") );
+	    	      
+	      QTextEdit* te_comm1    = us_textedit();
+	      te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					    US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_comm1, true );
+	      te_comm1 -> setText( c_repls_str);
+	      
+	      row=0;
+	      genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+	      genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+	      genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
+	      
+	      genL31 -> addLayout( genL3);
+	      genL31 -> addStretch();
+	      
+	      //assemble
+	      genL_i->addLayout( genL11);
+	      genL_i->addLayout( genL21);
+	      genL_i->addLayout( genL31);
+
+	      //Set GroupBox
+	      QString gBox_name = "Reviewers Update: " + QString::number(i+1);
+	      QGroupBox *groupBox = new QGroupBox ( gBox_name );
+	      QPalette p = groupBox->palette();
+	      p.setColor(QPalette::Dark, Qt::white);
+	      groupBox->setPalette(p);
+	      
+	      groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+	      
+	      groupBox->setFlat(true);
+	      
+	      groupBox->setLayout(genL_i);
+	      groupBoxes. push_back( groupBox );
+	      
+	    }
+	}
+      
+      //assemble html
+      assemble_GMP_esign_reassign( status_map );
+      
+    }
   else
     {
+      //GUI
+      QHBoxLayout* genL   = new QHBoxLayout();
+      genL->setSpacing        ( 2 );
+      genL->setContentsMargins( 20, 10, 20, 15 );
+      
       QLabel* lb_dev         = us_label( tr("Under Development:") );
       genL->addWidget( lb_dev );
 
@@ -1636,6 +2068,26 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
 	{
 	  status_map[ key ][ "comment" ] = value.toString();
 	}
+
+      //For parsing eSignUpdate status (by admin): revs. reassignment
+      if ( key.contains( "Updated by" ) )
+	{	  
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > admin_info_map;
+	  
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  admin_info_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		  qDebug() << "Admin update Map: -- key, value: "
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+
+	  status_map[ key ] = admin_info_map;
+	}
       
     }
   
@@ -1673,6 +2125,9 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 {
   if ( eSign_d. contains( JsonListName ) )
     {
+      //for HTML
+      QMap< QString, QString > esigs_html; 
+            
       QJsonDocument jsonDoc_signed = QJsonDocument::fromJson( eSign_d[ "eSignStatusJson" ].toUtf8() );
       if (!jsonDoc_signed.isObject())
 	{
@@ -1751,6 +2206,14 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  genL -> addWidget( le_date,      row,      5,  1,  2 );
 	  genL -> addWidget( te_comment,   row,      7,  1,  3 );
 	  genL -> addWidget( le_stat,      row++,    10, 1,  2 );
+
+	  //assemble eSigs html
+	  esigs_html[ "Name" ] = le_name->text();
+	  esigs_html[ "Role" ] = le_role->text();
+	  esigs_html[ "Date" ] = le_date->text();
+	  esigs_html[ "Comment" ] = te_comment->toPlainText();
+	  esigs_html[ "Status" ] = le_stat->text();
+	  assemble_esigs( esigs_html ); 
 	}
     }
 }
@@ -1875,4 +2338,578 @@ void US_auditTrailGMP::reset_panel( void )
   	}
     }
 
+  //reset the rest
+  html_assembled. clear();
+  html_assembled_esigs. clear();
+  filePath_pdf  . clear();
+
+}
+
+// Create a subdirectory if need be
+bool US_auditTrailGMP::mkdir( const QString& baseDir, const QString& subdir )
+{
+   QDir folder( baseDir );
+
+   if ( folder.exists( subdir ) ) return true;
+
+   if ( folder.mkdir( subdir ) ) return true;
+
+   QMessageBox::warning( this,
+      tr( "File error" ),
+      tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
+
+   return false;
+}
+
+//GMP init html
+void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString > > status_map_c, QString createdGMPrunts )
+{
+  //html_assembled += tr("<hr>");
+  html_assembled += tr( "<h3 align=left>GMP Run Initiation (1. EXPERIMENT)</h3>" );
+  
+  //html_assembled += tr("<br>");
+  html_assembled += tr(
+		           "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Initiated by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Person" ][ "ID"] )                       //1
+    .arg( status_map_c[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map_c[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map_c[ "Person" ][ "email" ] )                   //4
+    .arg( status_map_c[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Time of GMP Run Initiation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Initiated at:     %1 </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( createdGMPrunts )     //1
+    ;
+  
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of GMP Run Initiation: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    ;
+  html_assembled += tr("<hr>");
+}
+
+//LIVE UPDATE html
+void US_auditTrailGMP::assemble_GMP_live_update( QMap< QString, QMap < QString, QString > > status_map,
+						 QString dtype_opt, QString oper_ts )
+{
+  html_assembled += tr(
+		       "<table>"		   
+		       "<tr>"
+		       "<td><b>Operation Type:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( dtype_opt )                       //1
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td>User ID: </td> <td>%1</td></tr>"
+		       "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+		       "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+		       "<tr><td>Level: </td><td> %5 </td></tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+  
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Operation, Timestamp: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Type:             %1 </td> "
+		       "<td> Performed at:     %2 </td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Remote Operation" ][ "type"] )     //1
+    .arg( oper_ts )                                       //2
+    ;
+
+  QString t_comment = status_map[ "Comment" ][ "comment"].isEmpty() ? "N/A" : status_map[ "Comment" ][ "comment"];
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Reason for Operation: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Comment:          %1 </td> "
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( t_comment )                                      //1
+    ;
+
+   html_assembled += tr("<br>");
+}
+
+
+//IMPORT html
+void US_auditTrailGMP::assemble_GMP_import( QMap< QString, QMap < QString, QString > > status_map,
+					    QString dtype_opt, QString oper_ts )
+{
+  
+  html_assembled += tr(
+		       "<table>"		   
+		       "<tr>"
+		       "<td><b>Data Type, Optics:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( dtype_opt )                       //1
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td>User ID: </td> <td>%1</td></tr>"
+		       "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+		       "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+		       "<tr><td>Level: </td><td> %5 </td></tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Reference Scan, Data Saving: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Ref. Scan Method:  %1 </td> "
+		       "<td> Data Saved at:     %2 </td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "RefScan" ][ "type"] )     //1
+    .arg( oper_ts  )                             //2
+    ;
+  
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Comment:  %1 </td> "
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+    ;
+      
+}
+
+
+//EDITING html
+void US_auditTrailGMP::assemble_GMP_editing( QMap< QString, QMap < QString, QString > > status_map,
+					     QString dtype_opt, QString oper_ts )
+{
+
+  html_assembled += tr(
+		       "<table>"		   
+		       "<tr>"
+		       "<td><b>Data Type, Optics:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( dtype_opt )                       //1
+    ;
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td>User ID: </td> <td>%1</td>"
+		       "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+		       "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+		       "<tr><td>Level: </td><td> %5 </td></tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+  
+  //iterate over channels for Meniscus type:
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Meniscus Position Determination: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+
+  QMap < QString, QString >::iterator mp;
+  for ( mp = status_map[ "Meniscus" ].begin(); mp != status_map[ "Meniscus" ].end(); ++mp )
+    {
+      html_assembled += tr(
+			   "<tr>"
+			   "<td> Channel:  %1 </td>"
+			   "<td> Type:     %2 </td>"
+			   "</tr>"
+			   )
+	.arg( mp.key()   )     //1
+	.arg( mp.value() )     //2
+	;
+    }
+  html_assembled += tr( "</table>" );
+  
+  //Edit Profiles Saved:
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Edit Profiles Saved at: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr><td> %1 </td>"
+		       "</table>"
+		       )
+    .arg( oper_ts )           //1
+    ;
+  
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       "<tr>"
+		       "<td> Comment:  %1 </td> "
+		       "</tr>"
+		       "</table>"
+		       )
+    .arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
+    ;
+  
+}
+
+
+//ANALYSIS-fitmen html
+void US_auditTrailGMP::assemble_GMP_analysis_fitmen( QMap < QString, QString > analysis_status_map )
+{
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Meniscus Position Determination from FITMEN_MANUAL stage: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+  
+  QMap < QString, QString >::iterator mfa;
+  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+    {
+      
+      QString mfa_value         = mfa.value();
+      QString pos               = mfa_value.split(", by")[0];
+      QString performed_by_time = mfa_value.split(", by")[1];
+      
+      QString performed_by, when;
+      if ( performed_by_time.contains(";") )
+	{
+	  performed_by      = performed_by_time.split(";")[0];
+	  when              = performed_by_time.split(";")[1];  
+	}
+      else
+	{
+	  performed_by = performed_by_time;
+	  when         = "N/A";
+	}
+      html_assembled += tr(			       
+			   "<tr>"
+			   "<td> Channel:  %1, </td>"
+			   "<td>           %2, </td>"
+			   "<td> by:       %3, </td>"
+			   "<td> at:       %4  </td>"
+			   "</tr>"
+						       )
+	.arg( mfa.key()   )     //1
+	.arg( pos )             //2
+	.arg( performed_by )    //3
+	.arg( when )            //4
+	;
+    }
+  
+  html_assembled += tr( "</table>" );
+}
+						     
+//ANALYSIS-cancelled html
+void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString > analysisCancel_status_map,
+							QString analysisCancelJson )
+{
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Information on CANCELED analysis jobs: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+  
+  if ( !analysisCancelJson. isEmpty() )
+    {
+      qDebug() << "analysisCancelJson QMap NOT empty!";
+      
+      QMap < QString, QString >::iterator cj;
+      for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
+	{
+	  
+	  QString cj_value                 = cj.value();
+	  QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
+	  
+	  QString performed_by, reason, when;
+	  if ( performed_by_reason_time.contains(";") )
+	    {
+	      performed_by      = performed_by_reason_time.split(";")[0];
+	      reason            = performed_by_reason_time.split(";")[1];
+	      when              = performed_by_reason_time.split(";")[2];  
+	    }
+	  else
+	    {
+	      performed_by = performed_by_reason_time;
+	      reason       = "N/A";
+	      when         = "N/A";
+	    }
+	  html_assembled += tr(			       
+			       "<tr>"
+			       "<td> Jobs Canceled for:  %1, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Jobs Canceled by:   %2, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> Reason:             %3, </td>"
+			       "</tr>"
+			       "<tr>"
+			       "<td> When:               %4  </td>"
+			       "</tr>"
+						       )
+	    .arg( cj.key()   )      //1
+	    .arg( performed_by )    //2
+	    .arg( reason )          //3
+	    .arg( when )            //4
+	    ;
+	}
+    }
+  else
+    {
+      html_assembled += tr( "<tr><td> No CANCELLED jobs. </td></tr>" );
+    }
+  html_assembled += tr( "</table>" );
+  
+}
+
+//E-SIGS: reviewers change html
+void US_auditTrailGMP::assemble_GMP_esign_reassign( QMap < QString, QMap <QString, QString >> status_map )
+{
+  if ( status_map. isEmpty() )
+    {
+      html_assembled += tr( "<table>" );
+      html_assembled += tr( "<tr><td> There were NO reviewer(s) reassignments. </td></tr>" );
+      html_assembled += tr( "</table>" );
+
+      return;
+    }
+  
+  QStringList s_map_keys = status_map. keys();
+  for (int i=0; i < s_map_keys.size(); ++i  )
+    {
+      QMap <QString, QString > admin_map = status_map[ s_map_keys [ i ] ]; 
+      
+      html_assembled += tr(
+			   "<table>"		   
+			   "<tr>"
+			   "<td><b>Reviewers Update %1:</b></td>"
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( QString::number( i+1 ) )                       //1
+	;
+
+      QString p_id   = admin_map[ "Person" ].split(".")[0].trimmed();
+      QString p_name = admin_map[ "Person" ].split(".")[1].trimmed();
+
+      //Comment (replacements):
+      QString c_repls = admin_map[ "Comment" ];
+      QString c_repls_str;
+      if ( c_repls. contains("replacement:") )
+	{
+	  QStringList c_repls_list = c_repls. split(";");
+	  for ( int j=0; j<c_repls_list.size(); ++j )
+	    c_repls_str += c_repls_list[j].replace("replacement:",": ") + "<br>";
+	}
+      else
+	c_repls_str = c_repls;
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User: </td> <td>%1 (ID: %2)</td>"
+			   "<tr><td>TimeDate: </td><td> %3 </td></tr>"
+			   "<tr><td>Reassingments: </td><td> %4 </td> </tr>"
+			   "</table>"
+			   )
+	.arg( p_name )                            //1
+	.arg( p_id )                              //2
+	.arg( admin_map[ "timeDate" ] )           //3
+	.arg( c_repls_str )                       //4
+	;
+    }
+}
+  
+
+
+//initHTML
+void US_auditTrailGMP::initHTML( void )
+{
+    QString rptpage;
+
+  // Compose the report header
+  rptpage   = QString( "<?xml version=\"1.0\"?>\n" );
+  rptpage  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+  rptpage  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+              "/xhtml1-strict.dtd\">\n";
+  rptpage  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+              " xml:lang=\"en\" lang=\"en\">\n";
+  rptpage  += "  <head>\n";
+  rptpage  += "  <title> Ultrascan III Composite Report </title>\n";
+  rptpage  += "  <meta http-equiv=\"Content-Type\" content="
+              "\"text/html; charset=iso-8859-1\"/>\n";
+  rptpage  += "  <style type=\"text/css\" >\n";
+  rptpage  += "    td { padding-right: 0.75em; }\n";
+  rptpage  += "    body { background-color: white; }\n";
+  rptpage  += "    .pagebreak\n";
+  rptpage  += "    {\n";
+  rptpage  += "      page-break-before: always; border: 1px solid; \n";
+  rptpage  += "    }\n";
+  rptpage  += "    .parahead\n";
+  rptpage  += "    {\n";
+  rptpage  += "      font-weight: bold;\n";
+  rptpage  += "      font-style:  italic;\n";
+  rptpage  += "    }\n";
+  rptpage  += "    .datatext\n";
+  rptpage  += "    {\n";
+  rptpage  += "      font-family: monospace;\n";
+  rptpage  += "    }\n";
+
+  //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
+  //rptpage  += "   footer { position: absolute; bottom: 0; }";
+  
+  // rptpage  += "  div.footer { display: block; text-align: center;  position: running(footer);";
+  // rptpage  += "  @page { @bottom-center { content: element(footer) }}";
+  
+  rptpage  += "  </style>\n";
+  rptpage  += "  </head>\n  <body>\n";
+
+  QString html_title = tr(
+			  "<h2 align=center>Audit Trail for GMP Run: <br><i>%1</i></h2>"
+			  "<hr>"
+			  )
+    .arg( gmpRunName_passed )       //1                      
+    ;
+  
+  html_assembled +=
+    rptpage
+    + html_title;
+
+}
+
+//close HTML
+void US_auditTrailGMP::closeHTML( void )
+{
+  //do we need close remark?
+  html_assembled += "</body>\n</html>";
+}
+
+//eSigs HTML
+void US_auditTrailGMP::assemble_esigs( QMap<QString, QString> esigs_html )
+{
+  QString uname = esigs_html[ "Name" ].split(".")[1].simplified();
+  QString uid   = esigs_html[ "Name" ].split(".")[0].simplified();
+
+  QString name_c = uname + " (ID=" + uid + ")";
+  
+  html_assembled_esigs += tr( "<h3 style=\"margin-left:10px\">%1</h3>" )
+    .arg( name_c );
+
+  QString eStatus;
+  if ( esigs_html[ "Status" ].contains("NOT") ) 
+    eStatus = "<td style=\"color:red;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+  else
+    eStatus = "<td style=\"color:green;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+  
+  html_assembled_esigs += tr(
+			     "<table style=\"margin-left:30px\">"
+			     "<tr><td>Role:        </td> <td> %1 </td></tr>"
+			     "<tr><td>Status:      </td>      %2      </tr>"
+			     "<tr><td>Comment:     </td> <td> %3 </td></tr>"
+			     "<tr><td>e-Signed at: </td> <td> %4 </td></tr>"
+			     "</table>"
+			     )
+    .arg( esigs_html[ "Role" ] )                   //1
+    .arg( eStatus )                                //2
+    .arg( esigs_html[ "Comment" ] )                //3
+    .arg( esigs_html[ "Date" ] )                   //4
+    ;
+  
 }

@@ -70,6 +70,7 @@ class US_Experiment
       QStringList      experimentTypes;    //!< A list of possible experiment types
       QVector< double > RIProfile;         //!< If RI data, the intensity profile
       QVector< int >    RIwvlns;           //!< For RI+MWL, wavelengths present
+      QMap< QString, double > RIProfileMap; //!< Referecne Profile, cell/chanell/wavelength/scan -> radial intensity
       int               RI_nscans;         //!< RI+MWL scans per profile
       int               RI_nwvlns;         //!< RI+MWL wavelengths (profiles count)
 

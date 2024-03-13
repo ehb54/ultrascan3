@@ -110,8 +110,9 @@ void Link::sslErrors(const QList<QSslError> &errors)
 
 void Link::serverDisconnect(void)
 {
-  qDebug() << "Server disconnected from inside LINK";
+  qDebug() << "Server disconnected from inside LINK -- e.g. [DROPPED CONNECTION]";
   disconnected_itself = true;
+
   //exit(0);
 }
 
