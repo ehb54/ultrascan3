@@ -7,6 +7,7 @@
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_revision.h"
+#include "us_constants.h"
 
 #include <mpi.h>
 #include <sys/user.h>
@@ -1030,7 +1031,7 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
-
+   calculate_cosed();
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -1415,7 +1416,8 @@ DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
 // Calculate residuals (FE Modeling and NNLS)
 void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,
-                                      SIMULATION& simu_values )
+                                      SIMULATION& simu_values,
+                                      int bfg_offset)
 {
    count_calc_residuals++;
 bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == (proc_count/2) ) );
@@ -1440,8 +1442,11 @@ else
 if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
 if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
 //*DEBUG*
-
-   solvesim.calc_residuals( offset, dataset_count, simu_values );
+   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+   DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+   if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
+   DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+   solvesim.calc_residuals( offset, dataset_count, simu_values, false, nullptr, nullptr, nullptr, bfg);
 
 //*DEBUG*
 simu_values.dbg_level=dbglvsv;
@@ -2491,7 +2496,7 @@ for(int jf=0;jf<files.size();jf++)
    {  // Remove the files we just put into the tar archive
 DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
-      foreach( file, files ) odir.remove( file );
+      // foreach( file, files ) odir.remove( file );
    }
 }
 
@@ -2668,3 +2673,201 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    fileo.close();
 }
 
+void US_MPI_Analysis::calculate_cosed() {
+   if (data_sets.isEmpty() || data_sets[0]->solution_rec.buffer.cosed_component.isEmpty() ||
+   data_sets[0]->simparams.meshType != US_SimulationParameters::ASTFVM){
+      return;
+   }
+   US_LammAstfvm::CosedData* csD = nullptr;
+   QList<US_CosedComponent> cosed_components;
+   US_Math_BF::Band_Forming_Gradient* bfg = nullptr;
+   QMap<QString, US_DataIO::RawData> cosed_comp_data;
+   bool codiff_needed = false;
+   bool cosed_needed = false;
+   // emit message_update( pmessage_head() + tr( "Calculating co-sedimenting components" ), false );
+   cosed_components = data_sets[0]->solution_rec.buffer.cosed_component;
+   cosed_components.detach();
+   US_DataIO::RawData auc_data = data_sets[0]->run_data.convert_to_raw_data();
+   US_Model cosed_model = data_sets[0]->model;
+   cosed_model.coSedSolute = -1;
+   cosed_model.components.clear();
+   US_Model cosed_model_tmp = data_sets[0]->model;
+   cosed_model_tmp.coSedSolute = -1;
+   double base_density = 0.0;
+   double base_viscosity = 0.0;
+   QMap<QString, US_CosedComponent> upper_cosed;
+   QMap<QString, US_CosedComponent> lower_cosed;
+   QList<QString> base_comps;
+   foreach (US_CosedComponent i,  cosed_components) {
+      DbgLv(1) << "buff dens_coeff" << i.dens_coeff[ 0 ] << i.dens_coeff[ 1 ] << i.dens_coeff[ 2 ]
+               << i.dens_coeff[ 3 ] << i.dens_coeff[ 4 ] << i.dens_coeff[ 5 ];
+      DbgLv(1) << "buff visc_coeff" << i.visc_coeff[ 0 ] << i.visc_coeff[ 1 ] << i.visc_coeff[ 2 ]
+               << i.visc_coeff[ 3 ] << i.visc_coeff[ 4 ] << i.visc_coeff[ 5 ];
+      if ( !i.overlaying && upper_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = upper_cosed[ i.name ];
+         if ( j.conc > i.conc ) {
+            // the concentration is higher in upper part, move it completely to the upper part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
+            upper_cosed[ j.name ] = j;
+            continue;
+         } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            upper_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
+            lower_cosed[ j.name ] = j;
+            i.concentration_offset = j.conc;
+            upper_cosed.remove(j.name);
+            continue;
+         }
+      }
+      if ( i.overlaying && lower_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = lower_cosed[ i.name ];
+         if ( j.conc > i.conc ) {
+            // the concentration is higher in lower part, move it completely to the lower part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
+            lower_cosed[ j.name ] = j;
+            continue;
+         } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            lower_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
+            i.concentration_offset = i.conc;
+            upper_cosed[ j.name ] = j;
+            lower_cosed.remove(j.name);
+            continue;
+         }
+      }
+      if ( i.overlaying )
+         upper_cosed[ i.name ] = i;
+      else
+         lower_cosed[ i.name ] = i;
+
+   }
+   // Determine the base of the buffer
+   foreach (US_CosedComponent cosed_comp, cosed_components) {
+      if ( cosed_comp.overlaying ) { continue; } // overlaying components can't be part of the base of the buffer
+      if ( lower_cosed.contains(cosed_comp.name) &&
+           (fabs(lower_cosed[ cosed_comp.name ].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON) &&
+           cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
+         // the concentration matches the original one entered. -> part of the buffer base
+         base_comps << cosed_comp.GUID + cosed_comp.componentID;
+         base_density += cosed_comp.dens_coeff[ 0 ];
+         base_viscosity += cosed_comp.visc_coeff[ 0 ];
+      }
+      else if (!lower_cosed.contains(cosed_comp.name)) {
+         // the component is present with the same concentration in both the upper and lower part
+         base_comps << cosed_comp.GUID + cosed_comp.componentID;
+         base_density += cosed_comp.dens_coeff[0] +
+                         cosed_comp.dens_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                         cosed_comp.dens_coeff[2] * cosed_comp.conc +
+                         cosed_comp.dens_coeff[3] * sq(cosed_comp.conc) +
+                         cosed_comp.dens_coeff[4] * pow(cosed_comp.conc, 3) +
+                         cosed_comp.dens_coeff[5] * pow(cosed_comp.conc, 4);
+         base_viscosity += cosed_comp.visc_coeff[0] +
+                           cosed_comp.visc_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                           cosed_comp.visc_coeff[2] * cosed_comp.conc +
+                           cosed_comp.visc_coeff[3] * sq(cosed_comp.conc) +
+                           cosed_comp.visc_coeff[4] * pow(cosed_comp.conc, 3) +
+                           cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
+      }
+   }
+   // make sure the selected model is adjusted for the selected temperature
+   // and buffer conditions:
+   US_Math2::SolutionData sol_data{};
+   sol_data.density = base_density;
+   sol_data.viscosity = base_viscosity;
+   sol_data.manual = true;
+   foreach(US_CosedComponent cosed_comp,  cosed_components) {
+      // get the excess concentrations
+      if ( cosed_comp.overlaying && upper_cosed.contains(cosed_comp.name)) {
+         cosed_comp = upper_cosed.value(cosed_comp.name);
+      } else if ( !cosed_comp.overlaying && lower_cosed.contains(cosed_comp.name)) {
+         cosed_comp = lower_cosed.value(cosed_comp.name);
+      } else {
+         DbgLv(1) << "nothing";
+         continue;
+      }
+      if ( cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
+         DbgLv(1) << "not cosedimenting";
+         continue;
+      }
+      if (cosed_comp.s_coeff == 0.0){
+         DbgLv(1) << "pure diffusive";
+         codiff_needed = true;
+         continue;
+      }
+      cosed_needed = true;
+      cosed_model_tmp.components.clear();
+      US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
+      tmp.name = cosed_comp.name;
+      tmp.analyteGUID = cosed_comp.GUID;
+      tmp.molar_concentration = cosed_comp.conc;
+      tmp.signal_concentration = cosed_comp.conc;
+      tmp.vbar20 = cosed_comp.vbar;
+      if (cosed_comp_data.contains(tmp.analyteGUID)) {
+          continue;
+      }
+      sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
+      sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
+      US_Math2::data_correction(data_sets[0]->simparams.temperature, sol_data);
+      tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
+      tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
+      tmp.f_f0 = 0.0;
+      tmp.analyte_type = 4;
+      cosed_model.components << tmp;
+      cosed_model_tmp.components << tmp;
+      cosed_model_tmp.update_coefficients();
+      csD = new US_LammAstfvm::CosedData(cosed_model_tmp, data_sets[0]->simparams, &auc_data, &cosed_components,
+                                         base_density, base_viscosity);
+      cosed_comp_data[ tmp.analyteGUID ] = csD->sa_data;
+      DbgLv(2) << "NonIdeal2: create saltdata";
+      cosed_model.update_coefficients();
+      csD->model = cosed_model;
+      csD->cosed_comp_data = cosed_comp_data;
+      csD->cosed_comp_data.detach();
+      DbgLv(1) << "CosedData: cosed_model comp" << csD->model.components.size() << "cosed_comp_data"
+               << cosed_comp_data.size() << "sa_data.scanCount()" << csD->sa_data.scanCount();
+   }
+   if (!cosed_comp_data.isEmpty()){
+      csD->sa_data= cosed_comp_data.first();
+   }
+   if (codiff_needed){
+      bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(data_sets[0]->simparams.meniscus,
+                                                                  data_sets[0]->simparams.bottom,
+                                                                  data_sets[0]->simparams.band_volume,
+                                                                  data_sets[0]->solution_rec.buffer.cosed_component,
+                                                                  data_sets[0]->simparams.cp_pathlen,
+                                                                  data_sets[0]->simparams.cp_angle);
+      bandFormingGradient->get_eigenvalues();
+      bandFormingGradient->calculate_gradient(data_sets[0]->simparams,&auc_data);
+      DbgLv(1) << "bfg calc calculate_cosed";
+   }
+   data_sets_codiff_needed << codiff_needed;
+   data_sets_cosed_needed << cosed_needed;
+   bfgs << bandFormingGradient;
+   csDs << csD;
+   cosedcomponents << cosed_components;
+   // populate datasets list
+   data_sets_bfgs << *bfgs[0];
+   data_sets_csDs << csDs[0];
+   data_sets_cosed_components << &cosedcomponents[0];
+   DbgLv(0) << "finished Calc_cosed";
+}

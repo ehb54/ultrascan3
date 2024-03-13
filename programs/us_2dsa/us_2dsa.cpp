@@ -555,6 +555,7 @@ void US_2dsa::view( void )
 
    te_results->e->setHtml( rtext );
    te_results->show();
+   te_results->setFocus();
 }
 
 // Save data (model,noise), report, and PNG image files
@@ -830,7 +831,12 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    analybase         = fitBott ? "2DSA-FB" : analybase;
    analybase         = fitMeBo ? "2DSA-FMB" : analybase;
    QString analynode = "/" + analybase + ".";
-   QString filebase  = reppath  + analybase + dext + ".";
+   QString maDesc("");
+    if ( model.description.startsWith( runID ) )
+    {  // Saved model:  get analysis description from model description
+        maDesc            = model.description.section( ".", -2, -2 ).section( "_", 1, -1 );
+    }
+   QString filebase  = reppath  + analybase + dext + "."+ maDesc + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
@@ -1061,6 +1067,7 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    // Skip adding speed steps if this is multi-speed, initially,
    // but set speed steps to the experiment vector.
    dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+   if (dataLoaded){dset.solution_rec = solution_rec;}
    edata->bottom   = ( edata->bottom > 0.0 ) ?
                      edata->bottom :
                      0.0;
@@ -1229,14 +1236,43 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    mstr += table_row( tr( "Model Analysis:" ),
                       maDesc );
+    mstr += table_row( tr( "Solution:" ),
+                       QString( dset.solution_rec.solutionDesc ) + " " + dset.solution_rec.solutionGUID );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       QString::number( rmsd )  );
+   mstr += table_row( tr( "s20w correction:" ),
+                      QString::number( dset.s20w_correction )  );
+   mstr += table_row( tr( "D20w correction:" ),
+                      QString::number( dset.D20w_correction )  );
+   QStringList meshType;
+   meshType <<"ASTFEM"<< "CLAVERIE"<< "MOVING_HAT"<< "USER"<< "ASTFVM";
+   mstr += table_row( tr( "Mesh Type:" ),
+                      meshType[dset.simparams.meshType] );
+   QStringList gridType;
+   gridType << "FIXED" << "MOVING";
+   mstr += table_row( tr( "Grid Type:" ),
+                      gridType[dset.simparams.gridType] );
+   mstr += table_row( tr( "Simulation points:" ),
+                      QString::number( dset.simparams.simpoints )  );
+    mstr += table_row( tr( "Radial Resolution:" ),
+                       QString::number( dset.simparams.radial_resolution )  );
+    mstr += table_row( tr( "Band forming:" ),
+                       QString( dset.simparams.band_forming?(QString("Yes") + " "+ QString::number(dset.simparams.band_volume) + " mL"):"No" ));
+    mstr += table_row( tr( "Channel angle:" ),
+                       QString::number( dset.simparams.cp_angle )  );
+    mstr += table_row( tr( "Mensicus:" ),
+                       QString::number( dset.simparams.meniscus )  + " cm");
+    mstr += table_row( tr( "Bottom:" ),
+                       QString::number( dset.simparams.bottom )  );
+    mstr += table_row( tr( "Bottom Position" ),
+                       QString::number( dset.simparams.bottom_position )  + " cm");
 
    double sum_mw  = 0.0;
    double sum_s   = 0.0;
    double sum_D   = 0.0;
+   double sum_ff0 = 0.0;
    double sum_c   = 0.0;
    double mink    = 1e+99;
    double maxk    = -1e+99;
@@ -1250,6 +1286,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       sum_mw     += model.components[ ii ].mw * conc;
       sum_s      += model.components[ ii ].s  * conc;
       sum_D      += model.components[ ii ].D  * conc;
+      sum_ff0    += model.components[ ii ].f_f0 * conc;
       mink        = qMin( mink, model.components[ ii ].f_f0   );
       maxk        = qMax( maxk, model.components[ ii ].f_f0   );
       minv        = qMin( minv, model.components[ ii ].vbar20 );
@@ -1265,6 +1302,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                       QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
                       QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+    mstr += table_row( tr( "W.A. frictional ration:" ),
+                       QString().sprintf( "%6.4e", ( sum_ff0 / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString().sprintf( "%6.4e", sum_c ) );
 
