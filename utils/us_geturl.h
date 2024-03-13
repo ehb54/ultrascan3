@@ -1,9 +1,9 @@
 #ifndef US_GETURL_H
 #define US_GETURL_H
 
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
+#include <QtNetwork>
 #include <QtWidgets/QApplication>
+#include "us_extern.h"
 
 // derived from last answer https://stackoverflow.com/questions/46943134/how-do-i-write-a-qt-http-get-request
 
