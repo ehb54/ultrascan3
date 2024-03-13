@@ -1145,6 +1145,7 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
    connect( this,        SIGNAL( use_db( bool )),
            this,        SLOT  ( update_db_disk ( bool ) ) );
    connect(ck_cosed, SIGNAL(toggled(bool)), this, SLOT  (cosed_flag(bool)));
+   }
 }
 
 // Slot when the DB-local state is changed from US_BufferGuiSetting
