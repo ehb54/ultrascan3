@@ -255,7 +255,7 @@ US_SimParamsGui::US_SimParamsGui(
                          SLOT  ( update_lamella( double ) ) );
 
    // Cell angle
-   QLabel* lb_angle = us_label( tr( "Cell angle °:" ) );
+   QLabel* lb_angle = us_label( tr( "Cell angle:" ) );
    main->addWidget( lb_angle, row, 4, 1, 3 );
 
    cnt_angle = us_counter( 3, 0.1, 45, simparams.cp_angle );
