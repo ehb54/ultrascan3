@@ -22,7 +22,7 @@ US_Hydrodyn_Mals_Saxs_Options::US_Hydrodyn_Mals_Saxs_Options(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: MALS_SAXS : Options" ) );
+   setWindowTitle( us_tr( "US-SOMO: MALS+SAXS : Options" ) );
 
    setupGUI();
 
@@ -42,7 +42,7 @@ void US_Hydrodyn_Mals_Saxs_Options::setupGUI()
 {
    int minHeight1  = 28;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: MALS_SAXS : Options" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: MALS+SAXS : Options" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_LABEL );
@@ -297,13 +297,52 @@ void US_Hydrodyn_Mals_Saxs_Options::setupGUI()
    AUTFBACK( lbl_other_options );
    lbl_other_options->setFont     ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
+   lbl_interp_method = new QLabel( us_tr( " Interpolation method:" ) );
+   lbl_interp_method->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_interp_method->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_interp_method );
+   lbl_interp_method-> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   cb_interp_method = new QComboBox( this );
+   cb_interp_method->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_interp_method );
+   cb_interp_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_interp_method->setEnabled(true);
+   cb_interp_method->setMinimumHeight( minHeight1 );
+   cb_interp_method->setMaxVisibleItems( 1 );
+
+   cb_interp_method->addItem( us_tr( "Linear" ), INTERP_METHOD_LINEAR );
+   cb_interp_method->addItem( us_tr( "Quadratic" ), INTERP_METHOD_QUADRATIC );
+   cb_interp_method->addItem( us_tr( "Cubic Spline" ), INTERP_METHOD_CUBIC_SPLINE );
+
+   {
+      int index = 0;
+      if ( parameters->count( "mals_saxs_interp_method" ) ) {
+         switch ( (*parameters)[ "mals_saxs_interp_method" ].toInt() ) {
+         case INTERP_METHOD_LINEAR :
+            index = 0;
+            break;
+         case INTERP_METHOD_QUADRATIC :
+            index = 1;
+            break;
+         case INTERP_METHOD_CUBIC_SPLINE :
+            index = 2;
+            break;
+         default:
+            break;
+         }
+      }
+      
+      cb_interp_method->setCurrentIndex( index );
+   }
+
    pb_detector = new QPushButton(us_tr("Concentration Detector Properties"), this);
    pb_detector->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_detector->setMinimumHeight(minHeight1);
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
 
-   pb_mals_saxs_parameters = new QPushButton(us_tr("MALS_SAXS Processing Parameters"), this);
+   pb_mals_saxs_parameters = new QPushButton(us_tr("MALS+SAXS Processing Parameters"), this);
    pb_mals_saxs_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_mals_saxs_parameters->setMinimumHeight(minHeight1);
    pb_mals_saxs_parameters->setPalette( PALET_PUSHB );
@@ -771,7 +810,10 @@ void US_Hydrodyn_Mals_Saxs_Options::setupGUI()
 
       int row = 0;
 
-      gl_other->addWidget         ( lbl_zi_window , row, 0 );
+      gl_other->addWidget         ( lbl_interp_method , row, 0 );
+      gl_other->addWidget         ( cb_interp_method  , row, 1 );
+
+      gl_other->addWidget         ( lbl_zi_window , ++row, 0 );
       gl_other->addWidget         ( le_zi_window  , row, 1 );
 
       gl_other->addWidget         ( cb_discard_it_sd_mult , ++row, 0 );
@@ -949,13 +991,14 @@ void US_Hydrodyn_Mals_Saxs_Options::ok()
    (*parameters)[ "mals_saxs_cb_gg_cyclic"            ] = cb_gg_cyclic  ->isChecked() ? "true" : "false";
    (*parameters)[ "mals_saxs_cb_gg_oldstyle"          ] = cb_gg_oldstyle  ->isChecked() ? "true" : "false";
    (*parameters)[ "mals_saxs_dist_max"                ] = le_dist_max            ->text();
-   (*parameters)[ "guinier_mwt_k"                ] = le_mwt_k               ->text();
-   (*parameters)[ "guinier_mwt_c"                ] = le_mwt_c               ->text();
-   (*parameters)[ "guinier_mwt_qmax"             ] = le_mwt_qmax            ->text();
+   (*parameters)[ "guinier_mwt_k"                     ] = le_mwt_k               ->text();
+   (*parameters)[ "guinier_mwt_c"                     ] = le_mwt_c               ->text();
+   (*parameters)[ "guinier_mwt_qmax"                  ] = le_mwt_qmax            ->text();
    (*parameters)[ "mals_saxs_cb_makeiq_cutmax_pct"    ] = cb_makeiq_cutmax_pct   ->isChecked() ? "true" : "false";
    (*parameters)[ "mals_saxs_makeiq_cutmax_pct"       ] = le_makeiq_cutmax_pct   ->text();
    (*parameters)[ "mals_saxs_cb_makeiq_avg_peaks"     ] = cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false";
    (*parameters)[ "mals_saxs_makeiq_avg_peaks"        ] = le_makeiq_avg_peaks    ->text();
+   (*parameters)[ "mals_saxs_interp_method"           ] = QString( "%1" ).arg( cb_interp_method->currentData().toInt() );
 
    if ( rb_gauss->isChecked() )
    {

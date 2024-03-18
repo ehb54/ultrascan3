@@ -23,6 +23,12 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Options : public QDialog
                                     );
       ~US_Hydrodyn_Mals_Saxs_Options();
 
+      enum interp_methods : int {
+         INTERP_METHOD_LINEAR       = 1,
+         INTERP_METHOD_QUADRATIC    = 2,
+         INTERP_METHOD_CUBIC_SPLINE = 3
+      };
+
    private:
       void         * mals_saxs_win;
 
@@ -96,6 +102,9 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Options : public QDialog
       QPushButton  *                          pb_clear_gauss;
 
       QLabel       *                          lbl_other_options;
+
+      QLabel       *                          lbl_interp_method;
+      QComboBox    *                          cb_interp_method;
 
       QPushButton  *                          pb_detector;
       QPushButton  *                          pb_mals_saxs_parameters;

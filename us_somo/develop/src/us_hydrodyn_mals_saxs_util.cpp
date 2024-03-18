@@ -13,6 +13,7 @@
 #include "../include/us_hydrodyn_mals_saxs_svd.h"
 #include "../include/us_hydrodyn_mals_saxs_movie.h"
 #include "../include/us_hydrodyn_mals_saxs_simulate.h"
+#include "../include/us_hydrodyn_mals_saxs_options.h"
 #include "../include/us_lm.h"
 #include "../include/us_svd.h"
 #if QT_VERSION >= 0x040000
@@ -2376,6 +2377,8 @@ void US_Hydrodyn_Mals_Saxs::options()
    parameters[ "mals_saxs_cb_makeiq_avg_peaks"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_cb_makeiq_avg_peaks"      ];
    parameters[ "mals_saxs_makeiq_avg_peaks"      ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_makeiq_avg_peaks"         ];
 
+   parameters[ "mals_saxs_interp_method"         ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method"            ];
+
    
    parameters[ "mals_saxs_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_saxs_csv_transposed" ) ?
@@ -2439,6 +2442,8 @@ void US_Hydrodyn_Mals_Saxs::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_cb_makeiq_cutmax_pct"  ] = parameters[ "mals_saxs_cb_makeiq_cutmax_pct"     ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_cb_makeiq_avg_peaks"   ] = parameters[ "mals_saxs_cb_makeiq_avg_peaks"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_makeiq_avg_peaks"      ] = parameters[ "mals_saxs_makeiq_avg_peaks"         ];
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method"         ] = parameters[ "mals_saxs_interp_method"            ];
 
    // maybe ask (warn) here if gaussian data structures have data
 
@@ -6061,54 +6066,245 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
    progress->reset();
    progress->setMaximum( output_qs.size() + 2 );
 
-   if ( use_errors ) {
-      for ( int i = 0; i < (int) output_qs.size(); ++i ) {
-         progress->setValue( i );
-         qApp->processEvents();
+   {
+      size_t output_times_size = output_times.size();
+      if ( use_errors ) {
+         switch( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method" ].toInt() ) {
+         case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_LINEAR : {
+            for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+               progress->setValue( i );
+               qApp->processEvents();
+
+               vector < double > yIs;
+               vector < double > yIs2;
+
+               vector < double > yerrors;
+               vector < double > yerrors2;
+
+               for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+                  const QString & name = qgrid_names[ mals_set ][j];
+                  yIs    .push_back( f_Is[name][i] );
+                  yerrors.push_back( f_errors[name][i] );
+               }
+
+               if ( !usu->linear_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
+                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                         msg
+                                         );
+                  return update_enables();
+               }
+            
+               if ( !usu->linear_interpolate( time_grids[ mals_set ], yerrors, output_times, yerrors2 ) ) {
+                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                         msg
+                                         );
+                  return update_enables();
+               }               
+
+               for ( size_t j = 0; j < output_times_size; ++j ) {
+                  output_Is[ output_times[ j ] ].push_back( yIs2[ j ] );
+                  output_errors[ output_times[ j ] ].push_back( yerrors2[ j ] );
+               }
+            }
+            break;
+         }
+         case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_QUADRATIC : {
+            for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+               progress->setValue( i );
+               qApp->processEvents();
+
+               vector < double > yIs;
+               vector < double > yIs2;
+
+               vector < double > yerrors;
+               vector < double > yerrors2;
+
+               for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+                  const QString & name = qgrid_names[ mals_set ][j];
+                  yIs    .push_back( f_Is[name][i] );
+                  yerrors.push_back( f_errors[name][i] );
+               }
+
+               if ( !usu->quadratic_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
+                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                         msg
+                                         );
+                  return update_enables();
+               }
+            
+               if ( !usu->quadratic_interpolate( time_grids[ mals_set ], yerrors, output_times, yerrors2 ) ) {
+                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                         msg
+                                         );
+                  return update_enables();
+               }               
+
+               for ( size_t j = 0; j < output_times_size; ++j ) {
+                  output_Is[ output_times[ j ] ].push_back( yIs2[ j ] );
+                  output_errors[ output_times[ j ] ].push_back( yerrors2[ j ] );
+               }
+            }
+            break;
+         }
+
+         case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_CUBIC_SPLINE : {
+            for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+               progress->setValue( i );
+               qApp->processEvents();
          
-         vector < double > yIs;
-         vector < double > yIs2;
+               vector < double > yIs;
+               vector < double > yIs2;
 
-         vector < double > yerrors;
-         vector < double > yerrors2;
+               vector < double > yerrors;
+               vector < double > yerrors2;
 
-         for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
-            const QString & name = qgrid_names[ mals_set ][j];
-            yIs    .push_back( f_Is[name][i] );
-            yerrors.push_back( f_errors[name][i] );
+               for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+                  const QString & name = qgrid_names[ mals_set ][j];
+                  yIs    .push_back( f_Is[name][i] );
+                  yerrors.push_back( f_errors[name][i] );
+               }
+
+               usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
+               usu->natural_spline( time_grids[ mals_set ], yerrors, yerrors2 );
+
+               for ( auto const & t : output_times ) {
+                  double I;
+                  double error;
+                  usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
+                  usu->apply_natural_spline( time_grids[ mals_set ], yerrors, yerrors2, t, error );
+                  output_Is[ t ].push_back( I );
+                  output_errors[ t ].push_back( error );
+               }
+            }
+            break;
+         }
+         default : {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                   us_tr( "Internal error: unknown interpolation method!" )
+                                   );
+            return update_enables();
+            break;
+         }
+         }  // end switch
+      } else {
+         switch( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method" ].toInt() ) {
+         case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_LINEAR : {
+            for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+               progress->setValue( i );
+               qApp->processEvents();
+
+               vector < double > yIs;
+               vector < double > yIs2;
+
+               for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+                  const QString & name = qgrid_names[ mals_set ][j];
+                  yIs    .push_back( f_Is[name][i] );
+               }
+
+               if ( !usu->linear_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
+                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                         msg
+                                         );
+                  return update_enables();
+               }
+
+               for ( size_t j = 0; j < output_times_size; ++j ) {
+                  output_Is[ output_times[ j ] ].push_back( yIs2[ j ] );
+               }
+            }
+            break;
+         }
+         case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_QUADRATIC : {
+            for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+               progress->setValue( i );
+               qApp->processEvents();
+
+               vector < double > yIs;
+               vector < double > yIs2;
+
+               for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+                  const QString & name = qgrid_names[ mals_set ][j];
+                  yIs    .push_back( f_Is[name][i] );
+               }
+
+               if ( !usu->quadratic_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
+                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                         msg
+                                         );
+                  return update_enables();
+               }
+            
+               for ( size_t j = 0; j < output_times_size; ++j ) {
+                  output_Is[ output_times[ j ] ].push_back( yIs2[ j ] );
+               }
+            }
+            break;
          }
 
-         usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
-         usu->natural_spline( time_grids[ mals_set ], yerrors, yerrors2 );
+         case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_CUBIC_SPLINE : {
+            for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+               progress->setValue( i );
+               qApp->processEvents();
+         
+               vector < double > yIs;
+               vector < double > yIs2;
 
-         for ( auto const & t : output_times ) {
-            double I;
-            double error;
-            usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
-            usu->apply_natural_spline( time_grids[ mals_set ], yerrors, yerrors2, t, error );
-            output_Is[ t ].push_back( I );
-            output_errors[ t ].push_back( error );
+               for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+                  const QString & name = qgrid_names[ mals_set ][j];
+                  yIs    .push_back( f_Is[name][i] );
+               }
+
+               usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
+
+               for ( auto const & t : output_times ) {
+                  double I;
+                  usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
+                  output_Is[ t ].push_back( I );
+               }
+            }
+            break;
          }
-      }
-   } else {
-      for ( int i = 0; i < (int) output_qs.size(); ++i ) {
-         progress->setValue( i );
-         qApp->processEvents();
-
-         vector < double > yIs;
-         vector < double > yIs2;
-
-         for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
-            const QString & name = qgrid_names[ mals_set ][j];
-            yIs    .push_back( f_Is[name][i] );
+         default : {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": I#,*(q) common time" ),
+                                   us_tr( "Internal error: unknown interpolation method!" )
+                                   );
+            return update_enables();
+            break;
          }
+         }  // end switch
+         for ( int i = 0; i < (int) output_qs.size(); ++i ) {
+            progress->setValue( i );
+            qApp->processEvents();
 
-         usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
+            vector < double > yIs;
+            vector < double > yIs2;
 
-         for ( auto const & t : output_times ) {
-            double I;
-            usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
-            output_Is[ t ].push_back( I );
+            for ( int j = 0; j < (int)qgrid_names[ mals_set ].size(); ++j ) {
+               const QString & name = qgrid_names[ mals_set ][j];
+               yIs    .push_back( f_Is[name][i] );
+            }
+
+            usu->natural_spline( time_grids[ mals_set ], yIs, yIs2 );
+
+            for ( auto const & t : output_times ) {
+               double I;
+               usu->apply_natural_spline( time_grids[ mals_set ], yIs, yIs2, t, I );
+               output_Is[ t ].push_back( I );
+            }
          }
       }
    }
@@ -6122,16 +6318,32 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
       QString head = qstring_common_head( qgrid_names[mals_set], true );
       QString tail = qstring_common_tail( qgrid_names[mals_set], true );
 
+      QString method;
+      switch( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method" ].toInt() ) {
+      case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_LINEAR :
+         method = "_iLin";
+         break;
+      case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_QUADRATIC :
+         method = "_iQuad";
+         break;
+      case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_CUBIC_SPLINE :
+         method = "_iCSpl";
+         break;
+      default :
+         method = "_iUnk";
+         break;
+      }
+
       if ( use_errors ) {
          for ( auto const & t : output_times ) {
-            QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
+            QString name = QString( "%1%2%3%4_common" ).arg( head ).arg( t ).arg( tail ).arg( method );
             add_plot( name, output_qs, output_Is[ t ], output_errors[ t ], false, false );
             plot_names.insert( last_created_file );
             plot_names_qsl << last_created_file;
          }
       } else {
          for ( auto const & t : output_times ) {
-            QString name = QString( "%1%2%3_common" ).arg( head ).arg( t ).arg( tail );
+            QString name = QString( "%1%2%3%4_common" ).arg( head ).arg( t ).arg( tail ).arg( method );
             add_plot( name, output_qs, output_Is[ t ], false, false );
             plot_names.insert( last_created_file );
             plot_names_qsl << last_created_file;
@@ -6845,32 +7057,90 @@ bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & t
 
    // build and apply splines for each parameter
 
-   for ( size_t field_pos = 0; field_pos < field_count; ++field_pos ) {
-      vector < double > y;
-      vector < double > y2;
-      for ( size_t time_pos = 0; time_pos < param_times.size(); ++time_pos ) {
-         y.push_back( data[ time_pos ][ field_pos ] );
+   {
+      size_t output_times_size = output_times.size();
+
+      switch( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method" ].toInt() ) {
+      case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_LINEAR : {
+         for ( size_t field_pos = 0; field_pos < field_count; ++field_pos ) {
+            vector < double > y;
+            vector < double > y2;
+            for ( size_t time_pos = 0; time_pos < param_times.size(); ++time_pos ) {
+               y.push_back( data[ time_pos ][ field_pos ] );
+            }
+
+            if ( !usu->linear_interpolate( param_times, y, output_times, y2 ) ) {
+               QString msg = us_tr( "Interpolation error : " + errormsg );
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
+                                      msg
+                                      );
+               errormsg = "";
+               return false;
+            }
+
+            for ( size_t j = 0; j < output_times_size; ++j ) {
+               output_data[ output_times[ j ] ].push_back( y2[ j ] );
+            }
+         }
+
+         break;
       }
+      case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_QUADRATIC : {
+         for ( size_t field_pos = 0; field_pos < field_count; ++field_pos ) {
+            vector < double > y;
+            vector < double > y2;
+            for ( size_t time_pos = 0; time_pos < param_times.size(); ++time_pos ) {
+               y.push_back( data[ time_pos ][ field_pos ] );
+            }
 
-      // if ( field_pos == 0 ) {
-      //    US_Vector::printvector2( QString( "setup for spline %1" ).arg( headers[ field_pos + 1 ] ), param_times, y );
-      // }
+            if ( !usu->quadratic_interpolate( param_times, y, output_times, y2 ) ) {
+               QString msg = us_tr( "Interpolation error : " + errormsg );
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
+                                      msg
+                                      );
+               errormsg = "";
+               return false;
+            }
 
-      usu->natural_spline( param_times, y, y2 );
+            for ( size_t j = 0; j < output_times_size; ++j ) {
+               output_data[ output_times[ j ] ].push_back( y2[ j ] );
+            }
+         }
 
-      for ( auto const & t : output_times ) {
-         double value;
-         usu->apply_natural_spline( param_times, y, y2, t, value );
-         output_data[ t ].push_back( value );
+         break;
       }
+      
+      case US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_CUBIC_SPLINE : {
+         for ( size_t field_pos = 0; field_pos < field_count; ++field_pos ) {
+            vector < double > y;
+            vector < double > y2;
+            for ( size_t time_pos = 0; time_pos < param_times.size(); ++time_pos ) {
+               y.push_back( data[ time_pos ][ field_pos ] );
+            }
 
-      // if ( field_pos == 0 ) {
-      //    vector < double > output_y;
-      //    for ( auto const & t : output_times ) {
-      //       output_y.push_back( output_data[ t ][ field_pos ] );
-      //    }
-      //    US_Vector::printvector2( QString( "result for spline %1" ).arg( headers[ field_pos + 1 ] ), output_times, output_y );
-      // }
+            usu->natural_spline( param_times, y, y2 );
+
+            for ( auto const & t : output_times ) {
+               double value;
+               usu->apply_natural_spline( param_times, y, y2, t, value );
+               output_data[ t ].push_back( value );
+            }
+
+         }
+         break;
+      }
+      default : {
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
+                                us_tr( "Internal error: unknown interpolation method!" )
+                                );
+         errormsg = "";
+         return false;
+         break;
+      }
+      } // end switch
    }
    
    QString separator = filename.contains( QRegularExpression( "\\.csv$", QRegularExpression::CaseInsensitiveOption ) )

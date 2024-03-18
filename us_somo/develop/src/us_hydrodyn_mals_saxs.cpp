@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_mals_saxs.h"
+#include "../include/us_hydrodyn_mals_saxs_options.h"
 #include "../include/us_hydrodyn_mals_saxs_ciq.h"
 #include "../include/us_hydrodyn_mals_saxs_fit.h"
 #include "../include/us_hydrodyn_mals_saxs_fit_global.h"
@@ -511,6 +512,9 @@ US_Hydrodyn_Mals_Saxs::US_Hydrodyn_Mals_Saxs(
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_saxs_gg_smooth" ) ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_gg_smooth" ] = "3";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_saxs_mals_interp_method" ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_interp_method" ] = QString( "%1" ).arg( US_Hydrodyn_Mals_Saxs_Options::INTERP_METHOD_LINEAR );
    }
 
    baseline_ready_to_apply = false;
