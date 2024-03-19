@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_mals_saxs_dctr.h"
 #include "../include/us_hydrodyn_mals_saxs_parameters.h"
 #include "../include/us_hydrodyn_mals_saxs.h"
+#include "../include/us_mqt.h"
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -909,6 +910,59 @@ void US_Hydrodyn_Mals_Saxs_Options::setupGUI()
    cb_save_bl       ->hide();
    lbl_start_region ->hide();
    le_start_region  ->hide();
+
+   always_hide_widgets.insert(
+                              {
+                                 lbl_baseline
+                                    ,rb_linear
+                                    ,rb_integral
+                                    ,lbl_smooth
+                                    ,le_smooth
+                                    ,lbl_reps
+                                    ,le_reps
+                                    ,lbl_epsilon
+                                    ,le_epsilon
+                                    ,lbl_cormap_maxq
+                                    ,le_cormap_maxq
+                                    ,lbl_cormap_alpha
+                                    ,le_cormap_alpha
+                                    ,lbl_gaussian_type
+                                    ,rb_gauss
+                                    ,rb_gmg
+                                    ,rb_emg
+                                    ,rb_emggmg
+                                    ,lbl_dist_max
+                                    ,le_dist_max
+                                    ,pb_clear_gauss
+                                    ,pb_detector
+                                    ,pb_mals_saxs_parameters
+                                    ,pb_fasta_file
+                                    ,lbl_fasta_pH
+                                    ,le_fasta_pH
+                                    ,lbl_fasta_value
+                                    ,le_fasta_value
+                                    ,lbl_zi_window
+                                    ,le_zi_window
+                                    ,cb_discard_it_sd_mult
+                                    ,le_discard_it_sd_mult
+                                    ,cb_guinier_qrgmax
+                                    ,le_guinier_qrgmax
+                                    ,cb_gg_smooth
+                                    ,le_gg_smooth
+                                    ,cb_gg_cyclic
+                                    ,cb_gg_oldstyle
+                                    ,lbl_mwt_k
+                                    ,le_mwt_k
+                                    ,lbl_mwt_c
+                                    ,le_mwt_c
+                                    ,lbl_mwt_qmax
+                                    ,le_mwt_qmax
+                                    ,cb_makeiq_cutmax_pct
+                                    ,le_makeiq_cutmax_pct
+                                    }
+                              );
+   
+   ShowHide::hide_widgets( always_hide_widgets );
 }
 
 void US_Hydrodyn_Mals_Saxs_Options::quit()

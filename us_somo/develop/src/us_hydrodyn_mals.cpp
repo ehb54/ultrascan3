@@ -9583,11 +9583,9 @@ bool US_Hydrodyn_Mals::check_fit_range()
    return true;
 }
 
-void US_Hydrodyn_Mals::hide_widgets( vector < QWidget *> widgets, bool hide )
-{
-   for ( unsigned int i = 0; i < ( unsigned int ) widgets.size(); i++ )
-   {
-      hide ? widgets[ i ]->hide() : widgets[ i ]->show();
+void US_Hydrodyn_Mals::hide_widgets( vector < QWidget *> widgets, bool hide ) {
+   for ( unsigned int i = 0; i < ( unsigned int ) widgets.size(); i++ ) {
+      hide || always_hide_widgets.count( widgets[ i ] ) ? widgets[ i ]->hide() : widgets[ i ]->show();
    }
 }
 

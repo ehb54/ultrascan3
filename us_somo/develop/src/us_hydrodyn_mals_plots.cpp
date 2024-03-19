@@ -646,7 +646,7 @@ void US_Hydrodyn_Mals::errors()
       connect(((QObject*)guinier_plot       ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_errors , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot        , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
-      ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
+      ShowHide::hide_widgets( guinier_errors_widgets, always_hide_widgets, guinier_plot_errors->isVisible() );
       guinier_plot->enableAxis( QwtPlot::xBottom, !guinier_plot_errors->isVisible() );
 
       resize_guinier_plots();

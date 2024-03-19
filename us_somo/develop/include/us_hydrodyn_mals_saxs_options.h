@@ -156,6 +156,8 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Options : public QDialog
 
       bool                                    any_changes();
 
+      set < QWidget * >                       always_hide_widgets;
+
    private slots:
       void                                    fasta_file();
 

@@ -3976,6 +3976,8 @@ void US_Hydrodyn_Mals::setupGUI()
    //   hide_widgets( created_files_widgets,
    //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_creaded_files_widgets" ] == "false" ? false : true );
 
+   ShowHide::hide_widgets( always_hide_widgets );
+   
    mode_setup_widgets();
 }
 
@@ -4370,24 +4372,24 @@ void US_Hydrodyn_Mals::mode_select()
 {
    // QSize cur_size = plot_dist->size();
 
-   ShowHide::hide_widgets( plot_widgets );
-   ShowHide::hide_widgets( gaussian_widgets );
-   ShowHide::hide_widgets( gaussian_4var_widgets );
-   ShowHide::hide_widgets( gaussian_5var_widgets );
-   ShowHide::hide_widgets( ggaussian_widgets );
-   ShowHide::hide_widgets( ggaussian_4var_widgets );
-   ShowHide::hide_widgets( ggaussian_5var_widgets );
-   ShowHide::hide_widgets( wyatt_widgets );
-   ShowHide::hide_widgets( blanks_widgets );
-   ShowHide::hide_widgets( baseline_widgets );
-   ShowHide::hide_widgets( scale_widgets );
-   ShowHide::hide_widgets( timeshift_widgets );
-   ShowHide::hide_widgets( testiq_widgets );
-   ShowHide::hide_widgets( guinier_widgets );
-   ShowHide::hide_widgets( rgc_widgets );
-   ShowHide::hide_widgets( pm_widgets );
-   ShowHide::hide_widgets( ggqfit_widgets );
-   ShowHide::hide_widgets( wheel_below_widgets );
+   ShowHide::hide_widgets( plot_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( gaussian_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( gaussian_4var_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( gaussian_5var_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( ggaussian_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( ggaussian_4var_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( ggaussian_5var_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( wyatt_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( blanks_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( baseline_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( scale_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( timeshift_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( testiq_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( guinier_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( rgc_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( pm_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( ggqfit_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets  );
 
    switch ( current_mode )
    {
@@ -4395,10 +4397,10 @@ void US_Hydrodyn_Mals::mode_select()
       {
          lbl_wheel_pos->setText( "" ); 
          mode_title( "" ); 
-         ShowHide::hide_widgets( plot_widgets      , false ); 
+         ShowHide::hide_widgets( plot_widgets, always_hide_widgets, false ); 
          for ( int i = 0; i < (int) pb_row_widgets.size(); ++i )
          {
-            ShowHide::hide_widgets( pb_row_widgets[ i ], false );
+            ShowHide::hide_widgets( pb_row_widgets[ i ], always_hide_widgets, false );
          }
       }
       break;
@@ -4406,40 +4408,40 @@ void US_Hydrodyn_Mals::mode_select()
    case MODE_GAUSSIAN  : 
       {
          mode_title( pb_gauss_start->text() );
-         ShowHide::hide_widgets( gaussian_widgets  , false );
+         ShowHide::hide_widgets( gaussian_widgets, always_hide_widgets, false );
          switch ( gaussian_type_size )
          {
-         case 4 : ShowHide::hide_widgets( gaussian_4var_widgets , false ); break;
-         case 5 : ShowHide::hide_widgets( gaussian_5var_widgets , false ); break;
+         case 4 : ShowHide::hide_widgets( gaussian_4var_widgets, always_hide_widgets, false ); break;
+         case 5 : ShowHide::hide_widgets( gaussian_5var_widgets, always_hide_widgets, false ); break;
          default : break;
          }
-         ShowHide::only_widgets( pb_row_widgets, 1 );
+         ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );
       }
       break;
 
    case MODE_GGAUSSIAN : 
       {
          mode_title( pb_ggauss_start->text() );
-         ShowHide::hide_widgets( ggaussian_widgets , false );
+         ShowHide::hide_widgets( ggaussian_widgets, always_hide_widgets, false );
          switch ( gaussian_type_size )
          {
-         case 4 : ShowHide::hide_widgets( ggaussian_4var_widgets , false ); break;
-         case 5 : ShowHide::hide_widgets( ggaussian_5var_widgets , false ); break;
+         case 4 : ShowHide::hide_widgets( ggaussian_4var_widgets, always_hide_widgets, false ); break;
+         case 5 : ShowHide::hide_widgets( ggaussian_5var_widgets, always_hide_widgets, false ); break;
          default : break;
          }            
-         ShowHide::only_widgets( pb_row_widgets, 1 );
+         ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );
       }
       break;
 
-   case MODE_WYATT     : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_BLANKS    : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_TIMESHIFT : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_TESTIQ    : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_WYATT     : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets, always_hide_widgets      , false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets  );break;
+   case MODE_BLANKS    : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets, always_hide_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets  );break;
+   case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets, always_hide_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets  );break;
+   case MODE_TIMESHIFT : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets, always_hide_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets  );break;
+   case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets, always_hide_widgets      , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
+   case MODE_TESTIQ    : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets, always_hide_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
+   case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets, always_hide_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
+   case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets, always_hide_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
+   case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets, always_hide_widgets         , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
    default : us_qdebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -4908,7 +4910,7 @@ void US_Hydrodyn_Mals::model_enables()
 {
    if ( lb_model_files->count() )
    {
-      ShowHide::hide_widgets( model_widgets, false );
+      ShowHide::hide_widgets( model_widgets, always_hide_widgets, false );
       pb_model_select_all->setEnabled( true );
       lb_model_files     ->setEnabled( true );
       bool any_model_selected           = false;
@@ -4930,7 +4932,7 @@ void US_Hydrodyn_Mals::model_enables()
       pb_model_remove->setEnabled( any_model_selected );
       pb_model_save  ->setEnabled( any_model_selected_not_saved );
    } else {
-      ShowHide::hide_widgets( model_widgets, true );
+      ShowHide::hide_widgets( model_widgets, always_hide_widgets, true );
    }      
 }
 
@@ -5597,35 +5599,35 @@ void US_Hydrodyn_Mals::set_pbmode_none() {
 
 void US_Hydrodyn_Mals::pbmode_select( pbmodes mode ) {
 
-   ShowHide::hide_widgets( pbmode_main_widgets, true );
-   ShowHide::hide_widgets( pbmode_sel_widgets, true );
-   ShowHide::hide_widgets( pbmode_crop_widgets, true );
-   ShowHide::hide_widgets( pbmode_conc_widgets, true );
-   ShowHide::hide_widgets( pbmode_sd_widgets, true );
-   ShowHide::hide_widgets( pbmode_fasta_widgets, true );
-   ShowHide::hide_widgets( pbmode_mals_widgets, true );
+   ShowHide::hide_widgets( pbmode_main_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_sel_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_crop_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_conc_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_sd_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_mals_widgets, always_hide_widgets, true );
 
    switch ( mode ) {
    case PBMODE_MAIN :
-      ShowHide::hide_widgets( pbmode_main_widgets, false );
+      ShowHide::hide_widgets( pbmode_main_widgets, always_hide_widgets, false );
       break;
    case PBMODE_SEL :
-      ShowHide::hide_widgets( pbmode_sel_widgets, false );
+      ShowHide::hide_widgets( pbmode_sel_widgets, always_hide_widgets, false );
       break;
    case PBMODE_CROP :
-      ShowHide::hide_widgets( pbmode_crop_widgets, false );
+      ShowHide::hide_widgets( pbmode_crop_widgets, always_hide_widgets, false );
       break;
    case PBMODE_CONC :
-      ShowHide::hide_widgets( pbmode_conc_widgets, false );
+      ShowHide::hide_widgets( pbmode_conc_widgets, always_hide_widgets, false );
       break;
    case PBMODE_SD :
-      ShowHide::hide_widgets( pbmode_sd_widgets, false );
+      ShowHide::hide_widgets( pbmode_sd_widgets, always_hide_widgets, false );
       break;
    case PBMODE_FASTA :
-      ShowHide::hide_widgets( pbmode_fasta_widgets, false );
+      ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, false );
       break;
    case PBMODE_MALS :
-      ShowHide::hide_widgets( pbmode_mals_widgets, false );
+      ShowHide::hide_widgets( pbmode_mals_widgets, always_hide_widgets, false );
       break;
    case PBMODE_NONE :
       break;

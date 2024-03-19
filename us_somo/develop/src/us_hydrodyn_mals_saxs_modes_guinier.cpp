@@ -295,9 +295,9 @@ void US_Hydrodyn_Mals_Saxs::guinier()
    guinier_scroll_pos = -1;
    mode_select( MODE_GUINIER );
    plot_dist->hide();
-   ShowHide::hide_widgets( guinier_errors_widgets );
-   ShowHide::hide_widgets( guinier_rg_widgets );
-   ShowHide::hide_widgets( guinier_mw_widgets );
+   ShowHide::hide_widgets( guinier_errors_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( guinier_rg_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( guinier_mw_widgets, always_hide_widgets );
    
    running       = true;
 
@@ -429,7 +429,7 @@ void US_Hydrodyn_Mals_Saxs::guinier_scroll()
 
    if ( cb_guinier_scroll->isChecked() )
    {
-      ShowHide::hide_widgets( wheel_below_widgets, false );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, false );
       //      us_qdebug( "--- guinier_scroll():isChecked ---" );
       le_last_focus = ( mQLineEdit * )0;
       wheel_enables( false );
@@ -474,7 +474,7 @@ void US_Hydrodyn_Mals_Saxs::guinier_scroll()
       wheel_enables();
       guinier_scroll_highlight( guinier_scroll_pos );
    } else {
-      ShowHide::hide_widgets( wheel_below_widgets );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets );
       // go thru all displayed curves, turn on
       le_last_focus = ( mQLineEdit * )0;
       wheel_enables( false );
@@ -556,13 +556,13 @@ void US_Hydrodyn_Mals_Saxs::guinier_plot_rg_toggle()
 {
    if ( guinier_rg_widgets[ 0 ]->isVisible() )
    {
-      ShowHide::hide_widgets( guinier_rg_widgets );
+      ShowHide::hide_widgets( guinier_rg_widgets, always_hide_widgets );
    } else {
       US_Plot_Util::align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
       connect(((QObject*)guinier_plot_rg->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_mw, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
-      ShowHide::hide_widgets( guinier_rg_widgets, false );
+      ShowHide::hide_widgets( guinier_rg_widgets, always_hide_widgets, false );
       guinier_plot_rg->enableAxis( QwtPlot::xBottom, !guinier_plot_mw->isVisible() );
    }
 }
@@ -571,13 +571,13 @@ void US_Hydrodyn_Mals_Saxs::guinier_plot_mw_toggle()
 {
    if ( guinier_mw_widgets[ 0 ]->isVisible() )
    {
-      ShowHide::hide_widgets( guinier_mw_widgets );
+      ShowHide::hide_widgets( guinier_mw_widgets, always_hide_widgets );
    } else {
       US_Plot_Util::align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
       connect(((QObject*)guinier_plot_rg->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_mw, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
-      ShowHide::hide_widgets( guinier_mw_widgets, false );
+      ShowHide::hide_widgets( guinier_mw_widgets, always_hide_widgets, false );
    }
    guinier_plot_rg->enableAxis( QwtPlot::xBottom, !guinier_plot_mw->isVisible() );
 }
@@ -2251,7 +2251,7 @@ void US_Hydrodyn_Mals_Saxs::guinier_enables()
    pb_rescale             -> setEnabled( true );
    pb_rescale_y           -> setEnabled( true );
 
-   ShowHide::hide_widgets( wheel_below_widgets, !cb_guinier_scroll->isChecked() );
+   ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, !cb_guinier_scroll->isChecked() );
 }
 
 bool US_Hydrodyn_Mals_Saxs::guinier_check_qmax( bool show_message )

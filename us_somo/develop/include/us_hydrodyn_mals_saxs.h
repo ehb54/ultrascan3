@@ -1207,6 +1207,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs : public QFrame
       vector < QWidget * >                created_files_expert_widgets;
       vector < QWidget * >                editor_widgets;
       vector < QWidget * >                model_widgets;
+      set < QWidget * >                   always_hide_widgets;
 
       mQwtPlot                          * ggqfit_plot;
       US_Plot                           * usp_ggqfit_plot;
