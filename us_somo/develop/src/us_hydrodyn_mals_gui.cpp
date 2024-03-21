@@ -3976,6 +3976,12 @@ void US_Hydrodyn_Mals::setupGUI()
    //   hide_widgets( created_files_widgets,
    //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_creaded_files_widgets" ] == "false" ? false : true );
 
+   always_hide_widgets.insert( {
+         pb_create_i_of_t
+            ,pb_test_i_of_t
+            }
+      );
+
    ShowHide::hide_widgets( always_hide_widgets );
    
    mode_setup_widgets();
@@ -4870,7 +4876,7 @@ void US_Hydrodyn_Mals::update_enables()
       } else {
          if ( type_files( selected_files ) ) {
             if ( all_rt ) {
-               title = us_tr( "R(theta, t) [cm^-1]" );
+               title = us_tr( "R(q, t) [cm^-1]" );
             } else if ( all_ihasht ) {
                title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
             } else {
