@@ -247,6 +247,37 @@ SOURCES *= \
         src/us_hydrodyn_core.cpp \
         src/us_hydrodyn_csv_viewer.cpp \
         src/us_hydrodyn_dammin_opts.cpp \
+        src/us_hydrodyn_dad.cpp \
+        src/us_hydrodyn_dad_baseline_best.cpp \
+        src/us_hydrodyn_dad_conc_csv_frames.cpp \
+        src/us_hydrodyn_dad_gui.cpp \
+        src/us_hydrodyn_dad_stack.cpp \
+        src/us_hydrodyn_dad_modes.cpp \
+        src/us_hydrodyn_dad_modes_guinier.cpp \
+        src/us_hydrodyn_dad_modes_bb.cpp \
+        src/us_hydrodyn_dad_modes_wheel.cpp \
+        src/us_hydrodyn_dad_makeiq.cpp \
+        src/us_hydrodyn_dad_plots.cpp \
+        src/us_hydrodyn_dad_ciq.cpp \
+        src/us_hydrodyn_dad_cistarq.cpp \
+        src/us_hydrodyn_dad_dctr.cpp \
+        src/us_hydrodyn_dad_gg.cpp \
+        src/us_hydrodyn_dad_p3d.cpp \
+        src/us_hydrodyn_dad_parameters.cpp \
+        src/us_hydrodyn_dad_util.cpp \
+        src/us_hydrodyn_dad_movie.cpp \
+        src/us_hydrodyn_dad_conc.cpp \
+        src/us_hydrodyn_dad_conc_load.cpp \
+        src/us_hydrodyn_dad_fit.cpp \
+        src/us_hydrodyn_dad_fit_global.cpp \
+        src/us_hydrodyn_dad_fit_gsm.cpp \
+        src/us_hydrodyn_dad_fit_ga.cpp \
+        src/us_hydrodyn_dad_gauss_mode.cpp \
+        src/us_hydrodyn_dad_nth.cpp \
+        src/us_hydrodyn_dad_options.cpp \
+        src/us_hydrodyn_dad_simulate.cpp \
+        src/us_hydrodyn_dad_svd.cpp \
+        src/us_hydrodyn_dad_scale_trend.cpp \
         src/us_hydrodyn_dmd_core.cpp \
         src/us_hydrodyn_dmd_options.cpp \
         src/us_hydrodyn_file.cpp \
@@ -697,6 +728,25 @@ HEADERS *= \
         include/us_hydrodyn_comparative.h \
         include/us_hydrodyn_csv_viewer.h \
         include/us_hydrodyn_dammin_opts.h \
+        include/us_hydrodyn_dad.h \
+        include/us_hydrodyn_dad_ciq.h \
+        include/us_hydrodyn_dad_cistarq.h \
+        include/us_hydrodyn_dad_conc_csv_frames.h \
+        include/us_hydrodyn_dad_dctr.h \
+        include/us_hydrodyn_dad_p3d.h \
+        include/us_hydrodyn_dad_parameters.h \
+        include/us_hydrodyn_dad_conc.h \
+        include/us_hydrodyn_dad_conc_load.h \
+        include/us_hydrodyn_dad_fit.h \
+        include/us_hydrodyn_dad_fit_global.h \
+        include/us_hydrodyn_dad_gauss_mode.h \
+        include/us_hydrodyn_dad_movie.h \
+        include/us_hydrodyn_dad_nth.h \
+        include/us_hydrodyn_dad_options.h \
+        include/us_hydrodyn_dad_scale_trend.h \
+        include/us_hydrodyn_dad_svd.h \
+        include/us_hydrodyn_dad_baseline_best.h \
+        include/us_hydrodyn_dad_simulate.h \
         include/us_hydrodyn_dmd_options.h \
         include/us_hydrodyn_file.h \
         include/us_hydrodyn_file2.h \

@@ -131,6 +131,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Dad;
+      friend class US_Hydrodyn_Dad_Conc;
       friend class US_Hydrodyn_Mals;
       friend class US_Hydrodyn_Mals_Conc;
       friend class US_Hydrodyn_Mals_Saxs;
@@ -790,6 +792,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void reset_buffer_csv();
       csv  hplc_csv;
       void reset_hplc_csv();
+      csv  dad_csv;
+      void reset_dad_csv();
       csv  mals_csv;
       void reset_mals_csv();
       csv  mals_saxs_csv;

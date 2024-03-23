@@ -161,6 +161,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_screen_csv();
    reset_buffer_csv();
    reset_hplc_csv();
+   reset_dad_csv();
    reset_mals_csv();
    reset_mals_saxs_csv();
    setupGUI();
@@ -6588,6 +6589,52 @@ void US_Hydrodyn_Saxs::saxs_hplc()
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();
 }
 
+void US_Hydrodyn_Saxs::dad() {
+   qDebug() << "dad";
+   if ( ((US_Hydrodyn *)us_hydrodyn)->dad_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->dad_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->dad_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->dad_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv.name != "__empty__" )
+      {
+         hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->dad_window = new US_Hydrodyn_Dad( hplc_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->dad_window );
+      ((US_Hydrodyn *)us_hydrodyn)->dad_window->show();
+   }
+
+   ((US_Hydrodyn *)us_hydrodyn)->dad_window->disable_all();
+   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
+   {
+      if ( !( i % 500 ) ) {
+         qDebug() << "dad plotting curve " << i;
+      }
+      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->dad_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                   plotted_q[ i ],
+                                                                   plotted_I[ i ],
+                                                                   plotted_I_error[ i ] );
+      } else {
+         ((US_Hydrodyn *)us_hydrodyn)->dad_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                   plotted_q[ i ],
+                                                                   plotted_I[ i ] );
+      }
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->dad_window->update_enables();
+
+}
+
 void US_Hydrodyn_Saxs::mals()
 {
    // qDebug() << "mals";
@@ -6632,10 +6679,6 @@ void US_Hydrodyn_Saxs::mals()
       }
    }
    ((US_Hydrodyn *)us_hydrodyn)->mals_window->update_enables();
-}
-
-void US_Hydrodyn_Saxs::dad() {
-   qDebug() << "dad";
 }
 
 void US_Hydrodyn_Saxs::mals_saxs()
@@ -6836,6 +6879,83 @@ void US_Hydrodyn_Saxs::reset_hplc_csv()
          tmp_num_data.push_back(hplc_csv.data[i][j].toDouble());
       }
       hplc_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_dad_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv.name != "__empty__" )
+   {
+      hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv;
+      return;
+   } 
+
+   dad_csv.name = "SAXS I(q) DAD";
+
+   dad_csv.header.clear( );
+   dad_csv.header_map.clear( );
+   dad_csv.data.clear( );
+   dad_csv.num_data.clear( );
+   dad_csv.prepended_names.clear( );
+
+   dad_csv.header.push_back("Parameter");
+   dad_csv.header.push_back("Active");
+   dad_csv.header.push_back("Low value");
+   dad_csv.header.push_back("High value");
+   dad_csv.header.push_back("Points");
+   dad_csv.header.push_back("Interval");
+   dad_csv.header.push_back("Current value");
+   dad_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear( );
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   dad_csv.prepended_names.push_back(tmp_data[0]);
+   dad_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   dad_csv.prepended_names.push_back(tmp_data[0]);
+   dad_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
+   tmp_data.push_back("");
+
+   dad_csv.prepended_names.push_back(tmp_data[0]);
+   dad_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < dad_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < dad_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(dad_csv.data[i][j].toDouble());
+      }
+      dad_csv.num_data.push_back(tmp_num_data);
    }
 }
 

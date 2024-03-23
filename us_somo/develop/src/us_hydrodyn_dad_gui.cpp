@@ -1,6 +1,6 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
-#include "../include/us_hydrodyn_mals.h"
+#include "../include/us_hydrodyn_dad.h"
 // #include <qsplitter.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -17,7 +17,7 @@
 
 // #define ALLOW_GUOS_CARUANAS
 
-void US_Hydrodyn_Mals::setupGUI()
+void US_Hydrodyn_Dad::setupGUI()
 {
    int minHeight1 = 22;
    int minHeight3 = 24;
@@ -437,17 +437,17 @@ void US_Hydrodyn_Mals::setupGUI()
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
    pb_detector->hide();
 
-   //    pb_set_mals = new QPushButton(us_tr("Set buffer"), this);
-   //    pb_set_mals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   //    pb_set_mals->setMinimumHeight(minHeight1);
-   //    pb_set_mals->setPalette( PALET_PUSHB );
-   //    connect(pb_set_mals, SIGNAL(clicked()), SLOT(set_mals()));
+   //    pb_set_dad = new QPushButton(us_tr("Set buffer"), this);
+   //    pb_set_dad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   //    pb_set_dad->setMinimumHeight(minHeight1);
+   //    pb_set_dad->setPalette( PALET_PUSHB );
+   //    connect(pb_set_dad, SIGNAL(clicked()), SLOT(set_dad()));
    
-   //    lbl_mals = new QLabel("", this );
-   //    lbl_mals->setMinimumHeight(minHeight1);
-   //    lbl_mals->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_mals->setPalette( PALET_NORMAL );
-   //    lbl_mals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   //    lbl_dad = new QLabel("", this );
+   //    lbl_dad->setMinimumHeight(minHeight1);
+   //    lbl_dad->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   //    lbl_dad->setPalette( PALET_NORMAL );
+   //    lbl_dad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    //    pb_set_empty = new QPushButton(us_tr("Set blank"), this);
    //    pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -550,8 +550,8 @@ void US_Hydrodyn_Mals::setupGUI()
    connect(pb_remove_created, SIGNAL(clicked()), SLOT(remove_created()));
 
    pb_save_created_csv = new QPushButton( "", this);
-   pb_save_created_csv->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_csv_transposed" ) &&
-                                 (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_csv_transposed" ] == "true" ?
+   pb_save_created_csv->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_csv_transposed" ) &&
+                                 (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_csv_transposed" ] == "true" ?
                                  us_tr( "Save CSV Tr" ) : us_tr( " Save CSV " ) );
    pb_save_created_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_save_created_csv->setMinimumHeight(minHeight1);
@@ -2163,15 +2163,15 @@ void US_Hydrodyn_Mals::setupGUI()
    cb_guinier_qrgmax->setText( us_tr( "qmax*Rg limit: " ) );
    cb_guinier_qrgmax->setPalette( PALET_NORMAL );
    AUTFBACK( cb_guinier_qrgmax );
-   cb_guinier_qrgmax->setChecked( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_cb_guinier_qrgmax" ) &&
-                                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_cb_guinier_qrgmax" ] == "true" );
+   cb_guinier_qrgmax->setChecked( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_cb_guinier_qrgmax" ) &&
+                                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_cb_guinier_qrgmax" ] == "true" );
    cb_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_guinier_qrgmax->hide();
    connect( cb_guinier_qrgmax, SIGNAL( clicked() ), SLOT( guinier_qrgmax() ) );
 
    le_guinier_qrgmax = new mQLineEdit( this );    le_guinier_qrgmax->setObjectName( "le_guinier_qrgmax Line Edit" );
-   le_guinier_qrgmax->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_guinier_qrgmax" ) ?
-                               (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_guinier_qrgmax" ] : "1.3" );
+   le_guinier_qrgmax->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_guinier_qrgmax" ) ?
+                               (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_guinier_qrgmax" ] : "1.3" );
    le_guinier_qrgmax->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_guinier_qrgmax->setPalette( PALET_NORMAL );
    AUTFBACK( le_guinier_qrgmax );
@@ -3048,20 +3048,14 @@ void US_Hydrodyn_Mals::setupGUI()
    le_fasta_value->setEnabled( false );
    le_fasta_value->setReadOnly( true );
 
-   // mals
-   pb_mals_angles_save = new QPushButton(us_tr("Save Angles as CSV"), this);
-   pb_mals_angles_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_mals_angles_save->setMinimumHeight(minHeight1);
-   pb_mals_angles_save->setPalette( PALET_PUSHB );
-   connect(pb_mals_angles_save, SIGNAL(clicked()), SLOT(mals_angles_save()));
-
-   lbl_mals_angles_data = new QLabel( mals_angles.list_rich() );
-   lbl_mals_angles_data->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_mals_angles_data->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_mals_angles_data );
-   lbl_mals_angles_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   lbl_mals_angles_data->setTextInteractionFlags(Qt::TextSelectableByMouse);
-   lbl_mals_angles_data->setCursor(QCursor(Qt::IBeamCursor));
+   // dad
+   lbl_dad_lambdas_data = new QLabel( dad_lambdas.summary_rich() );
+   lbl_dad_lambdas_data->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_dad_lambdas_data->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_dad_lambdas_data );
+   lbl_dad_lambdas_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_dad_lambdas_data->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_dad_lambdas_data->setCursor(QCursor(Qt::IBeamCursor));
 
    // pbmodes
 
@@ -3114,12 +3108,12 @@ void US_Hydrodyn_Mals::setupGUI()
    connect(rb_pbmode_fasta, SIGNAL(clicked( )), SLOT( set_pbmode_fasta( )));
    rb_pbmode_fasta->hide();
 
-   rb_pbmode_mals = new QRadioButton( "MALS info.", this ); 
-   rb_pbmode_mals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   rb_pbmode_mals->setMinimumHeight(minHeight3);
-   rb_pbmode_mals->setPalette( PALET_NORMAL );
-   AUTFBACK( rb_pbmode_mals );
-   connect(rb_pbmode_mals, SIGNAL(clicked( )), SLOT( set_pbmode_mals( )));
+   rb_pbmode_dad = new QRadioButton( "DAD info.", this ); 
+   rb_pbmode_dad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_dad->setMinimumHeight(minHeight3);
+   rb_pbmode_dad->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_dad );
+   connect(rb_pbmode_dad, SIGNAL(clicked( )), SLOT( set_pbmode_dad( )));
 
    rb_pbmode_none = new QRadioButton( "None", this ); 
    rb_pbmode_none->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3135,7 +3129,7 @@ void US_Hydrodyn_Mals::setupGUI()
    bg_pbmode->addButton( rb_pbmode_conc );
    bg_pbmode->addButton( rb_pbmode_sd );
    bg_pbmode->addButton( rb_pbmode_fasta );
-   bg_pbmode->addButton( rb_pbmode_mals );
+   bg_pbmode->addButton( rb_pbmode_dad );
    bg_pbmode->addButton( rb_pbmode_none );
 
    // bottom
@@ -3294,7 +3288,7 @@ void US_Hydrodyn_Mals::setupGUI()
       l_pbmode->addWidget( rb_pbmode_conc );
       l_pbmode->addWidget( rb_pbmode_sd );
       l_pbmode->addWidget( rb_pbmode_fasta );
-      l_pbmode->addWidget( rb_pbmode_mals );
+      l_pbmode->addWidget( rb_pbmode_dad );
       l_pbmode->addWidget( rb_pbmode_none );
    }
 
@@ -3406,16 +3400,16 @@ void US_Hydrodyn_Mals::setupGUI()
       pbmode_fasta_widgets.push_back( le_fasta_value );
    }
 
-   QBoxLayout * l_pbmode_mals = new QHBoxLayout();
+   QBoxLayout * l_pbmode_dad = new QHBoxLayout();
    {
-      l_pbmode_mals->setContentsMargins( 0, 0, 0, 0 );
-      l_pbmode_mals->setSpacing( 0 );
+      l_pbmode_dad->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_dad->setSpacing( 0 );
 
-      l_pbmode_mals->addWidget( pb_mals_angles_save );
-      // l_pbmode_mals->addWidget( lbl_mals_angles_data );
+      // l_pbmode_dad->addWidget( pb_dad_lambdas_save );
+      // l_pbmode_dad->addWidget( lbl_dad_lambdas_data );
 
-      pbmode_mals_widgets.push_back( pb_mals_angles_save );
-      pbmode_mals_widgets.push_back( lbl_mals_angles_data );
+      // pbmode_dad_widgets.push_back( pb_dad_lambdas_save );
+      pbmode_dad_widgets.push_back( lbl_dad_lambdas_data );
    }
 
    
@@ -3463,9 +3457,9 @@ void US_Hydrodyn_Mals::setupGUI()
    // files_widgets.push_back ( pb_conc_file );
    // files_widgets.push_back ( pb_detector );
 
-   //    QBoxLayout * hbl_mals = new QHBoxLayout(); hbl_mals->setContentsMargins( 0, 0, 0, 0 ); hbl_mals->setSpacing( 0 );
-   //    hbl_mals->addWidget ( pb_set_mals );
-   //    hbl_mals->addWidget ( lbl_mals );
+   //    QBoxLayout * hbl_dad = new QHBoxLayout(); hbl_dad->setContentsMargins( 0, 0, 0, 0 ); hbl_dad->setSpacing( 0 );
+   //    hbl_dad->addWidget ( pb_set_dad );
+   //    hbl_dad->addWidget ( lbl_dad );
 
    //    QBoxLayout * hbl_empty = new QHBoxLayout(); hbl_empty->setContentsMargins( 0, 0, 0, 0 ); hbl_empty->setSpacing( 0 );
    //    hbl_empty->addWidget ( pb_set_empty );
@@ -3548,7 +3542,7 @@ void US_Hydrodyn_Mals::setupGUI()
       gl_files->addLayout( hbl_file_buttons_4 , j, 0 ); j++;
       gl_files->addLayout( hbl_conc_file, j, 0 ); j++;
       // gl_files->addWidget( lbl_conc_file, j, 0 ); j++;
-      //       gl_files->addLayout( hbl_mals, j, 0 ); j++;
+      //       gl_files->addLayout( hbl_dad, j, 0 ); j++;
       //       gl_files->addLayout( hbl_empty, j, 0 ); j++;
       //       gl_files->addLayout( hbl_signal, j, 0 ); j++;
       gl_files->addWidget( lbl_created_files , j, 0 ); j++;
@@ -3894,9 +3888,9 @@ void US_Hydrodyn_Mals::setupGUI()
    vbl_plot_group->addLayout ( l_pbmode_conc );
    vbl_plot_group->addLayout ( l_pbmode_sd );
    vbl_plot_group->addLayout ( l_pbmode_fasta );
-   vbl_plot_group->addLayout ( l_pbmode_mals );
-   // vbl_plot_group->addWidget ( lbl_mals_angles_data, 0, Qt::AlignCenter ); // don't like this
-   vbl_plot_group->addWidget ( lbl_mals_angles_data );
+   vbl_plot_group->addLayout ( l_pbmode_dad );
+   // vbl_plot_group->addWidget ( lbl_dad_lambdas_data, 0, Qt::AlignCenter ); // don't like this
+   vbl_plot_group->addWidget ( lbl_dad_lambdas_data );
    vbl_plot_group->addWidget ( qs_plots );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
@@ -3970,11 +3964,11 @@ void US_Hydrodyn_Mals::setupGUI()
    background->addSpacing( 1 );
 
    //   hide_widgets( files_widgets, 
-   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_files_widgets" ] == "false" ? false : true );
+   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_files_widgets" ] == "false" ? false : true );
    //   hide_widgets( editor_widgets, 
-   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_editor_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_editor_widgets" ] == "false" ? false : true );
+   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_editor_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_editor_widgets" ] == "false" ? false : true );
    //   hide_widgets( created_files_widgets,
-   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_creaded_files_widgets" ] == "false" ? false : true );
+   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_creaded_files_widgets" ] == "false" ? false : true );
 
    always_hide_widgets.insert( {
          pb_create_i_of_t
@@ -3990,7 +3984,7 @@ void US_Hydrodyn_Mals::setupGUI()
    mode_setup_widgets();
 }
 
-void US_Hydrodyn_Mals::mode_setup_widgets()
+void US_Hydrodyn_Dad::mode_setup_widgets()
 {
 
    // pb_row_widgets;
@@ -4377,7 +4371,7 @@ void US_Hydrodyn_Mals::mode_setup_widgets()
    pm_widgets.push_back( le_dummy );
 }   
 
-void US_Hydrodyn_Mals::mode_select()
+void US_Hydrodyn_Dad::mode_select()
 {
    // QSize cur_size = plot_dist->size();
 
@@ -4457,13 +4451,13 @@ void US_Hydrodyn_Mals::mode_select()
    resize( size() );
 }
 
-void US_Hydrodyn_Mals::mode_select( modes mode )
+void US_Hydrodyn_Dad::mode_select( modes mode )
 {
    current_mode = mode;
    mode_select();
 }
 
-void US_Hydrodyn_Mals::mode_title( QString title )
+void US_Hydrodyn_Dad::mode_title( QString title )
 {
    lbl_mode_title->setText( title );
    if ( title.isEmpty() )
@@ -4474,7 +4468,7 @@ void US_Hydrodyn_Mals::mode_title( QString title )
    }
 }
 
-void US_Hydrodyn_Mals::update_enables()
+void US_Hydrodyn_Dad::update_enables()
 {
    // qDebug() << "::update_enables()";
    resize_plots();
@@ -4496,7 +4490,7 @@ void US_Hydrodyn_Mals::update_enables()
 
    // cout << "update_enables\n";
 
-   // cout << "US_Hydrodyn_Mals::update_enables()\n";
+   // cout << "US_Hydrodyn_Dad::update_enables()\n";
    // cout << QString("saxs_window->qsl_plotted_iq_names.size() %1\n").arg(saxs_window->qsl_plotted_iq_names.size());
 
    pb_add_files          ->setEnabled( true );
@@ -4508,7 +4502,7 @@ void US_Hydrodyn_Mals::update_enables()
    lb_created_files      ->setEnabled( true );
 
    unsigned int files_selected_count                      = 0;
-   // unsigned int non_mals_non_empty_files_selected_count = 0;
+   // unsigned int non_dad_non_empty_files_selected_count = 0;
    // unsigned int last_selected_pos                         = 0;
    unsigned int conc_selected_count                       = 0;
 
@@ -4529,10 +4523,10 @@ void US_Hydrodyn_Mals::update_enables()
          {
             conc_selected_count++;
          }
-         //          if ( lb_files->item( i )->text() != lbl_mals->text() &&
+         //          if ( lb_files->item( i )->text() != lbl_dad->text() &&
          //               lb_files->item( i )->text() != lbl_empty->text() )
          //          {
-         //             non_mals_non_empty_files_selected_count++;
+         //             non_dad_non_empty_files_selected_count++;
          //          }
       }
    }
@@ -4541,6 +4535,7 @@ void US_Hydrodyn_Mals::update_enables()
    bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
+   // bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_t_" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -4601,7 +4596,7 @@ void US_Hydrodyn_Mals::update_enables()
       }
    }
 
-   baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_bl_integral" ] == "true";
+   baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_bl_integral" ] == "true";
 
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_timeshift          ->setEnabled( files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
@@ -4640,7 +4635,7 @@ void US_Hydrodyn_Mals::update_enables()
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
-   pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && mals_param_n && mals_param_lambda && mals_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
+   pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && dad_param_n && dad_param_lambda && dad_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
    pb_create_istar_q     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_ihasht );
    pb_load_conc          ->setEnabled( true );
    // pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
@@ -4652,17 +4647,17 @@ void US_Hydrodyn_Mals::update_enables()
    // pb_detector           ->setEnabled( true );
 
    //                                        );
-   //    pb_set_mals           ->setEnabled( files_selected_count == 1 && 
-   //                                        lb_files->item( last_selected_pos )->text() != lbl_mals->text() &&
+   //    pb_set_dad           ->setEnabled( files_selected_count == 1 && 
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_dad->text() &&
    //                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
    //                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text()
    //                                        );
    //    pb_set_signal         ->setEnabled( files_selected_count == 1 && 
-   //                                        lb_files->item( last_selected_pos )->text() != lbl_mals->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_dad->text() &&
    //                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
    //                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text() );
    //    pb_set_empty          ->setEnabled( files_selected_count == 1 && 
-   //                                        lb_files->item( last_selected_pos )->text() != lbl_mals->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_dad->text() &&
    //                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
    //                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->count() > 0 );
@@ -4845,8 +4840,6 @@ void US_Hydrodyn_Mals::update_enables()
 
    pb_p3d              ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
 
-   pb_mals_angles_save ->setEnabled( mals_angles.mals_angle.size() );
-
    {
       QString title;
       if ( !files_compatible )
@@ -4915,7 +4908,7 @@ void US_Hydrodyn_Mals::update_enables()
    }
 }
 
-void US_Hydrodyn_Mals::model_enables()
+void US_Hydrodyn_Dad::model_enables()
 {
    if ( lb_model_files->count() )
    {
@@ -4945,7 +4938,7 @@ void US_Hydrodyn_Mals::model_enables()
    }      
 }
 
-void US_Hydrodyn_Mals::disable_all()
+void US_Hydrodyn_Dad::disable_all()
 {
    // cout << "disable all\n";
    // qwtw_wheel            ->setEnabled( false );
@@ -4969,7 +4962,7 @@ void US_Hydrodyn_Mals::disable_all()
    pb_load_conc          ->setEnabled( false );
    pb_conc_file          ->setEnabled( false );
    // pb_detector           ->setEnabled( false );
-   //    pb_set_mals           ->setEnabled( false );
+   //    pb_set_dad           ->setEnabled( false );
    //    pb_set_signal         ->setEnabled( false );
    //    pb_set_empty          ->setEnabled( false );
    pb_select_all         ->setEnabled( false );
@@ -5157,7 +5150,7 @@ void US_Hydrodyn_Mals::disable_all()
    pb_guinier_plot_mw    ->setEnabled( false );
 }
 
-void US_Hydrodyn_Mals::model_select_all()
+void US_Hydrodyn_Dad::model_select_all()
 {
    bool all_selected = true;
    for ( int i = 0; i < lb_model_files->count(); i++ )
@@ -5178,35 +5171,35 @@ void US_Hydrodyn_Mals::model_select_all()
    update_enables();
 }
 
-void US_Hydrodyn_Mals::model_save()
+void US_Hydrodyn_Dad::model_save()
 {
    disable_all();
    model_save( MQT::get_lb_qsl( lb_model_files, true ) );
    update_enables();
 }
 
-void US_Hydrodyn_Mals::model_text()
+void US_Hydrodyn_Dad::model_text()
 {
    disable_all();
    model_text( MQT::get_lb_qsl( lb_model_files, true ) );
    update_enables();
 }
 
-void US_Hydrodyn_Mals::model_view()
+void US_Hydrodyn_Dad::model_view()
 {
    disable_all();
    model_view( MQT::get_lb_qsl( lb_model_files, true ) );
    update_enables();
 }
 
-void US_Hydrodyn_Mals::model_remove()
+void US_Hydrodyn_Dad::model_remove()
 {
    disable_all();
    model_remove( MQT::get_lb_qsl( lb_model_files, true ) );
    update_enables();
 }
 
-void US_Hydrodyn_Mals::model_remove( QStringList files )
+void US_Hydrodyn_Dad::model_remove( QStringList files )
 {
    disable_updates = true;
 
@@ -5291,7 +5284,7 @@ void US_Hydrodyn_Mals::model_remove( QStringList files )
 
 }
 
-void US_Hydrodyn_Mals::model_view( QStringList files )
+void US_Hydrodyn_Dad::model_view( QStringList files )
 {
    // run rasmol on models
 
@@ -5394,7 +5387,7 @@ void US_Hydrodyn_Mals::model_view( QStringList files )
    }
 }
 
-void US_Hydrodyn_Mals::model_text( QStringList files )
+void US_Hydrodyn_Dad::model_text( QStringList files )
 {
    
    QString tmpd = USglobal->config_list.root_dir + "/somo/saxs/tmp";
@@ -5432,7 +5425,7 @@ void US_Hydrodyn_Mals::model_text( QStringList files )
    }
 }
 
-bool US_Hydrodyn_Mals::model_save( QStringList files )
+bool US_Hydrodyn_Dad::model_save( QStringList files )
 {
    bool errors = false;
    bool overwrite_all = false;
@@ -5453,7 +5446,7 @@ bool US_Hydrodyn_Mals::model_save( QStringList files )
    return !errors;
 }
 
-bool US_Hydrodyn_Mals::model_save( QString file, bool & cancel, bool & overwrite_all )
+bool US_Hydrodyn_Dad::model_save( QString file, bool & cancel, bool & overwrite_all )
 {
    if ( !models.count( file ) )
    {
@@ -5520,93 +5513,93 @@ bool US_Hydrodyn_Mals::model_save( QString file, bool & cancel, bool & overwrite
    return true;
 }
 
-void US_Hydrodyn_Mals::usp_config_plot_dist( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_plot_dist( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_plot_dist );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_plot_ref( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_plot_ref( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_plot_ref );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_plot_errors( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_plot_errors( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_plot_errors );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_ggqfit_plot( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_ggqfit_plot( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_ggqfit_plot );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_guinier_plot( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_guinier_plot( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_guinier_plot_rg( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_guinier_plot_rg( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_rg );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_guinier_plot_mw( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_guinier_plot_mw( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_mw );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_guinier_plot_summary( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_guinier_plot_summary( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_summary );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::usp_config_guinier_plot_errors( const QPoint & ) {
+void US_Hydrodyn_Dad::usp_config_guinier_plot_errors( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_errors );
    uspc->exec();
    delete uspc;
 }
 
-void US_Hydrodyn_Mals::set_pbmode_main() {
+void US_Hydrodyn_Dad::set_pbmode_main() {
    pbmode_select( PBMODE_MAIN );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_sel() {
+void US_Hydrodyn_Dad::set_pbmode_sel() {
    pbmode_select( PBMODE_SEL );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_crop() {
+void US_Hydrodyn_Dad::set_pbmode_crop() {
    pbmode_select( PBMODE_CROP );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_conc() {
+void US_Hydrodyn_Dad::set_pbmode_conc() {
    pbmode_select( PBMODE_CONC );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_sd() {
+void US_Hydrodyn_Dad::set_pbmode_sd() {
    pbmode_select( PBMODE_SD );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_fasta() {
+void US_Hydrodyn_Dad::set_pbmode_fasta() {
    pbmode_select( PBMODE_FASTA );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_mals() {
-   pbmode_select( PBMODE_MALS );
+void US_Hydrodyn_Dad::set_pbmode_dad() {
+   pbmode_select( PBMODE_DAD );
 }
 
-void US_Hydrodyn_Mals::set_pbmode_none() {
+void US_Hydrodyn_Dad::set_pbmode_none() {
    pbmode_select( PBMODE_NONE );
 }
 
-void US_Hydrodyn_Mals::pbmode_select( pbmodes mode ) {
+void US_Hydrodyn_Dad::pbmode_select( pbmodes mode ) {
 
    ShowHide::hide_widgets( pbmode_main_widgets, always_hide_widgets, true );
    ShowHide::hide_widgets( pbmode_sel_widgets, always_hide_widgets, true );
@@ -5614,7 +5607,7 @@ void US_Hydrodyn_Mals::pbmode_select( pbmodes mode ) {
    ShowHide::hide_widgets( pbmode_conc_widgets, always_hide_widgets, true );
    ShowHide::hide_widgets( pbmode_sd_widgets, always_hide_widgets, true );
    ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, true );
-   ShowHide::hide_widgets( pbmode_mals_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_dad_widgets, always_hide_widgets, true );
 
    switch ( mode ) {
    case PBMODE_MAIN :
@@ -5635,15 +5628,15 @@ void US_Hydrodyn_Mals::pbmode_select( pbmodes mode ) {
    case PBMODE_FASTA :
       ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, false );
       break;
-   case PBMODE_MALS :
-      ShowHide::hide_widgets( pbmode_mals_widgets, always_hide_widgets, false );
+   case PBMODE_DAD :
+      ShowHide::hide_widgets( pbmode_dad_widgets, always_hide_widgets, false );
       break;
    case PBMODE_NONE :
       break;
    }
 }
 
-void US_Hydrodyn_Mals::fasta_file() {
+void US_Hydrodyn_Dad::fasta_file() {
    // load file
 
    QString use_dir = QDir::currentPath();

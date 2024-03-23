@@ -56,7 +56,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    QPalette cg_fit_2 = cg_magenta;
    cg_fit_2.setBrush( QPalette::Base, QBrush( scale_pair_color_q2, Qt::SolidPattern ) );
 
-   lbl_title = new QLabel("Developed by Emre Brookes and Mattia Rocco (see TBD., 2023)", this);
+   lbl_title = new QLabel("Developed by Emre Brookes and Mattia Rocco (see TBD., 2024)", this);
 
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
