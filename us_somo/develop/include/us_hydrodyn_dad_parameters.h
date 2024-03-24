@@ -59,6 +59,8 @@ class US_EXTERN US_Hydrodyn_Dad_Parameters : public QDialog
 
       void                                    setupGUI();
 
+      set < QWidget * >                       always_hide_widgets;
+
    private slots:
 
       void                                    set_dad_param_lambda            ( const QString & );

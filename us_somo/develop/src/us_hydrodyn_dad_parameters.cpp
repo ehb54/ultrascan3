@@ -121,7 +121,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_g_dndc->setMinimumWidth( 200 );
    le_dad_param_g_dndc-> setMinimumHeight( minHeight1 );
 
-   lbl_dad_param_g_extinction_coef = new QLabel( us_tr( "Global extinction coefficient [ml mg^-1 cm^-1]: " ), this );
+   lbl_dad_param_g_extinction_coef = new QLabel( us_tr( "Extinction coefficient [ml mg^-1 cm^-1]: " ), this );
    lbl_dad_param_g_extinction_coef->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_g_extinction_coef->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_g_extinction_coef );
@@ -256,6 +256,22 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    hbl_bottom->addWidget ( pb_keep );
 
    background->addLayout ( hbl_bottom );
+
+   always_hide_widgets.insert(
+                              {
+                                 lbl_dad_param_n
+                                    ,le_dad_param_n
+                                    ,lbl_dad_param_g_dndc
+                                    ,le_dad_param_g_dndc
+                                    ,lbl_dad_param_g_conc
+                                    ,le_dad_param_g_conc
+                                    ,lbl_dad_param_DLS_detector
+                                    ,le_dad_param_DLS_detector
+                                    }
+                              );
+   
+   ShowHide::hide_widgets( always_hide_widgets );
+
 }
 
 void US_Hydrodyn_Dad_Parameters::quit()

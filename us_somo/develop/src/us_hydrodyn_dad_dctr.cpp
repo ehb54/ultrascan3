@@ -165,6 +165,16 @@ void US_Hydrodyn_Dad_Dctr::setupGUI()
    hbl_bottom->addWidget ( pb_keep );
 
    background->addLayout ( hbl_bottom );
+
+   always_hide_widgets.insert(
+                              {
+                                 cb_ri
+                                    ,lbl_ri_conv
+                                    ,le_ri_conv
+                              }
+                              );
+
+   ShowHide::hide_widgets( always_hide_widgets );
 }
 
 void US_Hydrodyn_Dad_Dctr::quit()

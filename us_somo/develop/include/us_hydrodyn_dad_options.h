@@ -147,6 +147,8 @@ class US_EXTERN US_Hydrodyn_Dad_Options : public QDialog
 
       bool                                    any_changes();
 
+      set < QWidget * >                       always_hide_widgets;
+
    private slots:
       void                                    fasta_file();
 

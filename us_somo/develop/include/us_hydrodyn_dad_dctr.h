@@ -48,8 +48,9 @@ class US_EXTERN US_Hydrodyn_Dad_Dctr : public QDialog
       void                     *              us_hydrodyn_dad;
       map < QString, QString > *              parameters;
 
-
       void                                    setupGUI();
+
+      set < QWidget * >                       always_hide_widgets;
 
    private slots:
 
