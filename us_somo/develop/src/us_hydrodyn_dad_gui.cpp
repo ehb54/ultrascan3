@@ -374,7 +374,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
    pb_svd->hide();
 
-   pb_create_i_of_t = new QPushButton(us_tr("Make I(t)"), this);
+   pb_create_i_of_t = new QPushButton(us_tr("Make A(t)"), this);
    pb_create_i_of_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_create_i_of_t->setMinimumHeight(minHeight1);
    pb_create_i_of_t->setPalette( PALET_PUSHB );
@@ -3971,8 +3971,9 @@ void US_Hydrodyn_Dad::setupGUI()
    //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_creaded_files_widgets" ] == "false" ? false : true );
 
    always_hide_widgets.insert( {
-         pb_create_i_of_t
-            ,pb_test_i_of_t
+         pb_test_i_of_t
+            ,pb_create_ihash_t
+            ,pb_create_istar_q
             ,pb_blanks_start
             ,pb_baseline_start
             ,pb_baseline_apply
@@ -4535,7 +4536,7 @@ void US_Hydrodyn_Dad::update_enables()
    bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
-   // bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_t_" ).size();
+   bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_t" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -4848,7 +4849,13 @@ void US_Hydrodyn_Dad::update_enables()
       } else {
          if ( type_files( selected_files ) )
          {
-            title = us_tr( "Time [a.u.]" );
+            if ( all_DAD ) {
+               title = us_tr( "Time [s]" );
+            } else {
+               title = us_tr( "Time [a.u.]" );
+            }
+         } else if ( all_DAD ) {
+            title = us_tr( "lambda [nm]" );
          } else {
             title = us_tr( "q [1/Angstrom]" );
          }
@@ -4875,6 +4882,8 @@ void US_Hydrodyn_Dad::update_enables()
                title = us_tr( "R(q, t) [cm^-1]" );
             } else if ( all_ihasht ) {
                title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
+            } else if ( all_DAD ) {
+               title = us_tr( "A(t) [a.u.]" );
             } else {
                title = us_tr( "I(t) [a.u.]" );
             }
@@ -4883,6 +4892,8 @@ void US_Hydrodyn_Dad::update_enables()
                title = us_tr( "I*(q) [g mol^-1]" );
             } else if ( all_ihashq ) {
                title = us_tr( "I#(q) [g^2 cm^-3 mol^-1]" );
+            } else if ( all_DAD ) {
+               title = us_tr( "A(lambda) [a.u.]" );
             } else {
                title = us_tr( "I(q) [a.u.]" );
             }
