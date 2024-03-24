@@ -4496,6 +4496,8 @@ void US_Hydrodyn_Dad::create_i_of_t()
 {
    disable_all();
 
+   qApp->processEvents();
+
    QStringList files = all_selected_files();
    create_i_of_t( files );
 
@@ -4574,6 +4576,8 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    }
 #endif
 
+   unsigned int files_size = (unsigned int) files.size();
+
    {
       QString     * qs;
       double      * q;
@@ -4585,9 +4589,15 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
       map < double , double > * Ivp;
       map < double , double > * evp;
 
-      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); ++i )
-      {
-      
+      progress->reset();
+      progress->setMaximum( 2 * files_size );
+
+      for ( unsigned int i = 0; i < files_size; ++i ) {
+         progress->setValue( i );
+         if ( !( i % 20 ) ) {
+            qApp->processEvents();
+         }
+
          qs = &( files[ i ] );
 
          if ( !f_qs.count( *qs ) )
@@ -4685,10 +4695,20 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    {
       unsigned int size = ( unsigned int )q.size();
 
+      QString use_head = head;
+      use_head = use_head.replace( "_DAD_AL_t", "_DAD" );
+
+      progress->setMaximum( files_size + size + 1 );
+
       for ( unsigned int i = 0; i < size; ++i )
       {
+         progress->setValue( files_size + i );
+         if ( !( i % 20 ) ) {
+            qApp->processEvents();
+         }
+
          double qv = q[ i ];
-         QString basename = QString( "%1_It_q%2" ).arg( head ).arg( qv );
+         QString basename = QString( "%1_At_L%2" ).arg( use_head ).arg( qv );
          basename.replace( ".", "_" );
       
          unsigned int ext = 0;
@@ -4748,6 +4768,8 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
       lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
       lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    }
+
+   progress->reset();
 
 #ifdef USHC_TIMERS
    us_timers.end_timer        ( "build up q" );

@@ -3975,7 +3975,7 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_create_ihash_t
             ,pb_create_istar_q
             ,pb_blanks_start
-            ,pb_baseline_start
+            // ,pb_baseline_start
             ,pb_baseline_apply
             }
       );
@@ -4536,7 +4536,7 @@ void US_Hydrodyn_Dad::update_enables()
    bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
-   bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_t" ).size();
+   bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -4610,8 +4610,8 @@ void US_Hydrodyn_Dad::update_enables()
    cb_fix_dist1          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
    cb_fix_dist2          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
    pb_blanks_start       ->setEnabled( default_blanks.size() || ( files_selected_count > 1 && !files_are_time && files_compatible ) );
-   pb_baseline_start     ->setEnabled( files_are_time && files_compatible &&
-                                       ( ( baseline_integral && files_selected_count > 1 ) || ( !baseline_integral && files_selected_count == 1 ) ) );
+   pb_baseline_start     ->setEnabled( !files_are_time && files_compatible && files_selected_count == 1 );
+                                       
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 
                                        le_baseline_start->text().toDouble() < le_baseline_end->text().toDouble() &&

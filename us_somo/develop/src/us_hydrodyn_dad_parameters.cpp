@@ -67,11 +67,13 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_lambda->setMinimumWidth( 200 );
    le_dad_param_lambda-> setMinimumHeight( minHeight1 );
 
-   if ( (( US_Hydrodyn_Dad *)us_hydrodyn_dad )->lb_files->count() > 0 ) {
-      le_dad_param_lambda->setEnabled( false );
-      le_dad_param_lambda->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
-      lbl_dad_param_lambda->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
-   }
+#warning might need to bring disable lambda change back
+
+   // if ( (( US_Hydrodyn_Dad *)us_hydrodyn_dad )->lb_files->count() > 0 ) {
+   //    le_dad_param_lambda->setEnabled( false );
+   //    le_dad_param_lambda->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
+   //    lbl_dad_param_lambda->setToolTip( us_tr( "Files are loaded so this value can not be adjusted" ) );
+   // }
 
    lbl_dad_param_n = new QLabel( us_tr( "Solvent refractive index : " ), this );
    lbl_dad_param_n->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);

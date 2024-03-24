@@ -5509,7 +5509,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
             qApp->processEvents();
          }
          double time = start_time_seconds + i * collection_interval_seconds;
-         QString name = QString( "%1_DAD_t%2" ).arg( basename ).arg( time ).replace( QRegularExpression( "[. &]" ), "_" );
+         QString name = QString( "%1_DAD_AL_t%2" ).arg( basename ).arg( time ).replace( QRegularExpression( "[. &]" ), "_" );
          add_plot( name, dad_lambdas.lambdas, absorption_data[ i ], false, false );
       }
    }
