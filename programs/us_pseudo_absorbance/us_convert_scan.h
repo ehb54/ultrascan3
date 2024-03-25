@@ -39,7 +39,7 @@ private slots:
     void slt_prev_id(void);
     void slt_next_id(void);
     void slt_plot(void);
-    void slt_channelBlanking(int);
+    void slt_act_refScans(int);
     void slt_load_refScans(void);
     void slt_update_scrng(double);
     void slt_zeroing(int);
@@ -69,11 +69,10 @@ private:
     QPushButton* pb_save;
     QPushButton* pb_pick_rp;
 
-    QLineEdit* le_lambstrt;
-    QLineEdit* le_lambstop;
+    QLabel* lb_lambstrt;
+    QLabel* lb_lambstop;
     QLineEdit* le_runIdInt;
     US_LineEdit_RE* le_runIdAbs;
-    QLineEdit* le_dir;
     QLineEdit* le_desc;
     QLineEdit* le_status;
     QLineEdit* le_ref_range;
@@ -95,11 +94,12 @@ private:
     QwtCounter* ct_scan_l;
     QwtCounter* ct_scan_u;
     QwtCounter* ct_smooth;
+    QwtCounter* ct_last_scans;
 
     QFrame *frm_refScan;
 
     QListWidget* lw_triple;
-    QCheckBox *ckb_channelBlanking;
+    QCheckBox *ckb_act_refscan;
     QCheckBox *ckb_zeroing;
     QCheckBox *ckb_xrange;
     QCheckBox *ckb_ChroAberCorr;
@@ -116,7 +116,6 @@ private:
     double x_min_picked, x_max_picked;
     int wavl_id;
     int n_wavls;
-    int n_scans;
     int refId;
     QStringList intRunIds;
     QVector<int> intDataId;

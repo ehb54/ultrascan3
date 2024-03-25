@@ -2433,8 +2433,12 @@ void US_XpnDataViewer::check_for_sysdata( void )
   qDebug() << "Connection to Optima DROPPED ? " << link-> disconnected_itself;
   if ( link-> disconnected_itself )
     {
+      qDebug() << "Connection to Optima DROPPED: in check_for_sysdata()";
       in_reload_check_sysdata = false;
-      reset_liveupdate_panel();
+      timer_check_sysdata->stop();
+      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);
+      qDebug() << "in check_for_sysdata(): timer_check_sysdata stopped";
+      //reset_liveupdate_panel();  // <-- redundant ? Cause infinite loop?  
       qApp->processEvents();
       
       return;
@@ -3033,9 +3037,9 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
        Link *link1 = new Link( xpndesc );
        bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
        qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
-       
-       link1->disconnectFromServer();
+              
        bool combined_check = status_sys_data & link1->connected_itself;
+       link1->disconnectFromServer();
        qDebug() << "in [retrieve_xpn_raw_auto()]: status_sys_data & connected_itself = ? "
 		<< status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
        delete link1;
@@ -3043,6 +3047,10 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
        
        if ( !combined_check )
 	 {
+	   
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   qDebug() << "in [retrieve_xpn_raw_auto()]: stop timer_all_data_avail";
 	   qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0 && NO Coneection to Optima!";
 	   in_reload_all_data  = false;
 	   link-> disconnected_itself = true; // do we need to set it explicitly?
@@ -5133,9 +5141,9 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      Link *link1 = new Link( xpndesc );
 	      bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
 	      qDebug() << "in [reloadData_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
-	      
-	      link1->disconnectFromServer();
+	      	      
 	      bool combined_check = status_sys_data & link1->connected_itself;
+	      link1->disconnectFromServer();
 	      qDebug() << "in [reloadData_auto()]: status_sys_data & connected_itself = ? "
 		       << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
 	      delete link1;
@@ -5143,6 +5151,9 @@ DbgLv(1) << "RLd:       NO CHANGE";
 
 	      if ( !combined_check )
 		{
+		  timer_data_reload->stop();
+		  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+		  qDebug() << "in [reloadData_auto()]: Stop auto-reload timer: " ;
 		  qDebug() << "in [reloadData_auto()]: statusExp == 0 && NO Coneection to Optima!";
 		  in_reload_auto   = false;
 		  link-> disconnected_itself = true; // do we need to set it explicitly?
