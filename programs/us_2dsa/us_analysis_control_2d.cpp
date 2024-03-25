@@ -1229,6 +1229,9 @@ DbgLv(1) << "aac2:define_work" << workin.thrn << workin.nthrd;
 void US_AnalysisControl2D::advanced()
 {
    US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   if (!dsets[0]->solution_rec.buffer.cosed_component.isEmpty()){
+       sparms->meshType = US_SimulationParameters::ASTFVM;
+   }
 DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
    US_AdvAnalysis2D* aadiag = new US_AdvAnalysis2D( sparms, loadDB, this );
    if ( aadiag->exec() == QDialog::Accepted )

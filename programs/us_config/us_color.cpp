@@ -89,6 +89,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
   QHBoxLayout* pbLine = new QHBoxLayout();
   
   pb_normal = us_pushbutton( tr( "Pushbutton" ) );
+  pb_normal->setToolTip( tr( "Click on another window for inactive colors" ) );
   pbLine->addWidget( pb_normal );
 
   pb_active = us_pushbutton( tr( "Inactive" ) );

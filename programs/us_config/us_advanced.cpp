@@ -64,7 +64,7 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( lb_threads,  row,   0, 1, 3 );
 
   sb_threads          = new QSpinBox;
-  sb_threads->setRange( 1, 32 );
+  sb_threads->setRange( 1, 64 );
   sb_threads->setValue( 1 );
   sb_threads->setPalette( US_GuiSettings::editColor() );
   sb_threads->setFont( QFont( US_GuiSettings::fontFamily(),

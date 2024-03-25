@@ -2062,20 +2062,7 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-int lc=model_used.components.size()-1;
-DbgLv(1) << "SimMdl: 0) s D c"
- << model_used.components[ 0].s << model_used.components[ 0].D
- << model_used.components[ 0].signal_concentration << "  n" << lc;
-DbgLv(1) << "SimMdl: n) s D c"
- << model_used.components[lc].s << model_used.components[lc].D
- << model_used.components[lc].signal_concentration;
-   adjust_model();
-DbgLv(1) << "SimMdl: 0) s D c"
- << model.components[ 0].s << model.components[ 0].D
- << model.components[ 0].signal_concentration;
-DbgLv(1) << "SimMdl: n) s D c"
- << model.components[lc].s << model.components[lc].D
- << model.components[lc].signal_concentration;
+
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -2104,7 +2091,7 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    QString gtyp = adv_vals[ "gridtype"  ];
    QString bvol = adv_vals[ "bndvolume" ];
 
-#if 0
+
    if ( mtyp.contains( "Claverie" ) )
       simparams.meshType = US_SimulationParameters::CLAVERIE;
    else if ( mtyp.contains( "Moving Hat" ) )
@@ -2116,28 +2103,41 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
       simparams.meshType = US_SimulationParameters::ASTFVM;
       qDebug() << "meshtype= fvm";
    }
-#endif
-   if ( gtyp.contains( "Constant" ) )
+   else if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
-
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0)
-      simparams.meshType = US_SimulationParameters::ASTFEM;
-   else
-      simparams.meshType = US_SimulationParameters::ASTFVM;
 
    simparams.firstScanIsConcentration = false;
 
    double concval1      = 0.0;
 
-   if ( simparams.band_forming )
+   if ( simparams.band_forming && bvol.toDouble() > 0.0005)
    {
       simparams.band_volume = bvol.toDouble();
       //concval1              = 1.0;
       //simparams.firstScanIsConcentration = true;
    }
    else
+   {
       simparams.band_volume = 0.0;
+      simparams.band_forming = false;
+   }
+
+   if (simparams.meshType != US_SimulationParameters::ASTFVM){
+      int lc=model_used.components.size()-1;
+      DbgLv(1) << "SimMdl: 0) s D c"
+               << model_used.components[ 0].s << model_used.components[ 0].D
+               << model_used.components[ 0].signal_concentration << "  n" << lc;
+      DbgLv(1) << "SimMdl: n) s D c"
+               << model_used.components[lc].s << model_used.components[lc].D
+               << model_used.components[lc].signal_concentration;
+      adjust_model();
+      DbgLv(1) << "SimMdl: 0) s D c"
+               << model.components[ 0].s << model.components[ 0].D
+               << model.components[ 0].signal_concentration;
+      DbgLv(1) << "SimMdl: n) s D c"
+               << model.components[lc].s << model.components[lc].D
+               << model.components[lc].signal_concentration;
+   }
 
    // Make a simulation copy of the experimental data without actual readings
 
@@ -2260,10 +2260,7 @@ DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-           model.components[ 0 ].delta == 0.0  &&
-           model.coSedSolute           <  0.0  &&
-           compress                    == 0.0 )
+      if ( simparams.meshType != US_SimulationParameters::ASTFVM )
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
 //*DEBUG*
@@ -2316,10 +2313,10 @@ DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-         //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
+         connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
          //solution_rec.buffer.compressibility = compress;
          //solution_rec.buffer.manual          = manual;
-         //astfvm->set_buffer( solution_rec.buffer );
+         astfvm->set_buffer( solution_rec.buffer );
          astfvm->calculate(     *sdata );
       }
       //-----------------------
