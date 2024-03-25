@@ -160,6 +160,8 @@ class US_BufferGuiNew : public US_Widgets
       QPushButton*  pb_spectrum;
 
       QLabel*       lb_bselect;
+      QLabel*       lb_density;
+      QLabel*       lb_viscos;
 
       QLineEdit*    le_descrip;
       QLineEdit*    le_concen;
@@ -169,6 +171,8 @@ class US_BufferGuiNew : public US_Widgets
       QLineEdit*    le_compress;
 
       QCheckBox*    ck_manual;
+
+      QSlider*      sl_temp;
 
       QListWidget*  lw_allcomps;
       QListWidget*  lw_bufcomps;
@@ -201,6 +205,8 @@ class US_BufferGuiNew : public US_Widgets
       void write_db        ( void );
       void write_disk      ( void );
       void update_db_disk  ( bool );
+      void calc_visc_dent_temp ( void );
+      void set_temp20 ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
    public slots:

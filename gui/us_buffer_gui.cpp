@@ -848,12 +848,25 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
                                        " (component) in mM:" ) );
    QLabel* bn_allcomps = us_banner( tr( "Click on item to select" ), -2 );
    QLabel* bn_bufcomps = us_banner( tr( "Double-click an item to remove" ), -2);
-   QLabel* lb_density  = us_label( tr( "Density (20" ) + DEGC
+   lb_density  = us_label( tr( "Density (20" ) + DEGC
                                  + tr( ", g/cm<sup>3</sup>):" ) );
-   QLabel* lb_viscos   = us_label( tr( "Viscosity (20" ) + DEGC
+   lb_viscos   = us_label( tr( "Viscosity (20" ) + DEGC
                                  + tr( ", cP):" ) );
    QLabel* lb_ph       = us_label( tr( "pH:" ) );
    QLabel* lb_compress = us_label( tr( "Compressibility:" ) );
+
+   QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
+   lb_temperature->setAlignment(Qt::AlignLeft);
+   sl_temp = new QSlider(Qt::Horizontal);
+   sl_temp->setMinimum(1);
+   sl_temp->setMaximum(50);
+   sl_temp->setSingleStep(1);
+   sl_temp->setValue(20);
+   QPushButton* pb_temp20C = us_pushbutton( tr ( "Rest Temperature" ) );
+   QHBoxLayout* lo_temp = new QHBoxLayout();
+   lo_temp->addWidget(lb_temperature);
+   lo_temp->addWidget(sl_temp);
+   lo_temp->addWidget(pb_temp20C);
 
    le_descrip          = us_lineedit( "" );
    le_concen           = us_lineedit( "" );
@@ -907,6 +920,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    main->addWidget( lw_bufcomps,     row,   4, 5, 4 );
    row    += 5;
    main->addLayout( lo_manual,       row++, 0, 1, 8 );
+   main->addLayout( lo_temp,         row++, 0, 1, 8 );
    main->addWidget( lb_density,      row,   0, 1, 2 );
    main->addWidget( le_density,      row,   2, 1, 2 );
    main->addWidget( lb_ph,           row,   4, 1, 2 );
@@ -955,6 +969,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,        SLOT  ( newAccepted() ) );
    connect( this,        SIGNAL( use_db( bool )),
            this,        SLOT  ( update_db_disk ( bool ) ) );
+   connect( sl_temp, SIGNAL( valueChanged( int ) ), this, SLOT( calc_visc_dent_temp() ) );
+   connect( pb_temp20C, SIGNAL( clicked() ), this, SLOT( set_temp20() ) );
 }
 
 // Slot when the DB-local state is changed from US_BufferGuiSetting
@@ -1023,6 +1039,7 @@ DbgLv(1) << "BufN:SL: init_buffer   lw_allcomps rebuilt";
    buffer->componentIDs .clear();
    buffer->concentration.clear();
    buffer->extinction.clear();
+   sl_temp->setValue(20);
 }
 
 // Slot to capture new buffer description
@@ -1063,6 +1080,7 @@ void US_BufferGuiNew::select_water(QListWidgetItem* item){
    bool can_accept = !le_descrip->text().isEmpty();
    pb_accept->setEnabled( can_accept );
    pb_spectrum->setEnabled( can_accept );
+   calc_visc_dent_temp();
 
 }
 
@@ -1159,6 +1177,7 @@ DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
                        !le_viscos ->text().isEmpty() );
    pb_accept->setEnabled( can_accept );
    pb_spectrum->setEnabled( can_accept );
+   calc_visc_dent_temp();
 }
 
 
@@ -1318,7 +1337,7 @@ DbgLv(1) << "BufN:SL: remove_bcomp()" << item->text();
        pb_accept->setEnabled( can_accept );
        pb_spectrum->setEnabled( can_accept );
      }
-
+   calc_visc_dent_temp();
 }
 
 // Slot to recalculate density based on new component
@@ -1394,6 +1413,41 @@ DbgLv(1) << "BufN:SL: recalc_viscosity()" << buffer->component[bcsize-1].name;
    }
 
    le_viscos->setText( QString::number( buffer->viscosity ) );
+}
+
+// Modify Viscosity and Density of Buffer for Temperature
+void US_BufferGuiNew::calc_visc_dent_temp()
+{
+   double temp = sl_temp->value();
+   lb_density->setText(tr( "Density (%1%2, g/cm<sup>3</sup>):" ).arg(temp).arg(DEGC));
+   lb_viscos->setText(tr( "Viscosity (%1%2, cP):" ).arg(temp).arg(DEGC));
+   qApp->processEvents();
+   if (le_density->text().isEmpty()) return;
+   if (le_viscos->text().isEmpty()) return;
+   if (ck_manual->isChecked()) return;
+   double density_tb, viscosity_tb;
+   if (temp == 20) {
+      density_tb = buffer->density;
+      viscosity_tb = buffer->viscosity;
+   } else {
+      US_Math2::SolutionData sol;
+      sol.manual = false;
+      sol.viscosity = buffer->viscosity;
+      sol.density = buffer->density;
+      sol.vbar20 = 0.5;
+      sol.vbar = 0.5;
+      US_Math2::data_correction(temp, sol);
+      density_tb = sol.density_tb;
+      viscosity_tb = sol.viscosity_tb;
+   }
+   le_density->setText( QString::number( density_tb ) );
+   le_viscos->setText( QString::number( viscosity_tb ) );
+   qApp->processEvents();
+}
+
+void US_BufferGuiNew::set_temp20()
+{
+   sl_temp->setValue(20);
 }
 
 // Slot for manually changed density
