@@ -307,9 +307,12 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
          density += (cosed_comp.dens_coeff[1] * sqrt(fabs(c1)) + cosed_comp.dens_coeff[2] * c1 +
                      cosed_comp.dens_coeff[3] * c2 + cosed_comp.dens_coeff[4] * c3 +
                      cosed_comp.dens_coeff[5] * c4);
-         viscosity += (cosed_comp.visc_coeff[1] * sqrt(fabs(c1)) + cosed_comp.visc_coeff[2] * c1 +
-                       cosed_comp.visc_coeff[3] * c2 + cosed_comp.visc_coeff[4] * c3 +
-                       cosed_comp.visc_coeff[5] * c4);
+
+         viscosity += (cosed_comp.visc_coeff[0] +
+                 cosed_comp.visc_coeff[1] * sqrt(fabs(c1)) +
+                 cosed_comp.visc_coeff[2] * c1 +
+                 cosed_comp.visc_coeff[3] * c2 +
+                 cosed_comp.visc_coeff[4] * c3 - 1.0) * base_viscosity;
       }
       // cache the value
       std::array<double,2> tmp{density,viscosity};
