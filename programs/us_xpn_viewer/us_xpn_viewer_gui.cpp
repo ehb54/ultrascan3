@@ -2648,7 +2648,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	  return;
 	}
 
-      if ( exp_status == 0)
+      if ( exp_status == 0 )
 	experimentAborted  = true;
       
       if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
@@ -2951,7 +2951,8 @@ void US_XpnDataViewer::end_processes( void )
       qDebug() << "AFTER: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
 
       bool optima_connection_dropped = link-> disconnected_itself;
-      
+      qDebug() << "[in end_processes()]: optima_connection_dropped -- " << optima_connection_dropped ;
+	
       reset_auto(); //disconnects (already?) && resets GUI
       qApp->processEvents();
       
@@ -3034,7 +3035,8 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
      {
        //check connection to Optima: if at this point statusExp=0 due to lost connection
        //then, stop everything && return to the Run Manager
-       Link *link1 = new Link( xpndesc );
+       
+       Link *link1 = new Link( xpndesc );                                                // THIS DID NOT WORK...
        bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
        qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
               
@@ -3042,7 +3044,20 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
        link1->disconnectFromServer();
        qDebug() << "in [retrieve_xpn_raw_auto()]: status_sys_data & connected_itself = ? "
 		<< status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
-       delete link1;
+       delete link1;                                                                      // THIS DID NOT WORK...
+
+       /*alternative  -- TO BE tested further 
+	 US_XpnData* xpn_data11 = new US_XpnData();
+	 bool o_connected           = xpn_data11->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+	 xpn_data11->close();
+	 delete xpn_data11;
+	 if ( !o_connected )
+	 {
+	 // NOT connected!
+	 }
+	 
+       ****/
+       
        //end of checking connection to Optima sys_data server    
        
        if ( !combined_check )
@@ -5138,7 +5153,8 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	    {
 	      //check connection to Optima: if at this point statusExp=0 due to lost connection
 	      //then, stop everything && return to the Run Manager
-	      Link *link1 = new Link( xpndesc );
+	      
+	      Link *link1 = new Link( xpndesc );                                                    // --- THIS DID NOT WORK ??
 	      bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
 	      qDebug() << "in [reloadData_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
 	      	      
@@ -5146,7 +5162,20 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      link1->disconnectFromServer();
 	      qDebug() << "in [reloadData_auto()]: status_sys_data & connected_itself = ? "
 		       << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
-	      delete link1;
+	      delete link1;                                                                         //  --- THIS DID NOT WORK ??
+
+	      /*alternative  -- TO BE tested further 
+		US_XpnData* xpn_data11 = new US_XpnData();
+		bool o_connected           = xpn_data11->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+		xpn_data11->close();
+		delete xpn_data11;
+		if ( !o_connected )
+		{
+		// NOT connected!
+		}
+
+	      ****/
+	      
 	      //end of checking connection to Optima sys_data server    
 
 	      if ( !combined_check )
