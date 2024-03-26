@@ -542,7 +542,8 @@ void US_Hydrodyn_Dad::baseline_start( bool from_blanks_mode_save )
    baseline_selected     = all_selected_files();
    baseline_selected_set = all_selected_files_set();
    baseline_multi    = baseline_selected.size() > 1;
-   baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_bl_integral" ] == "true";
+   // baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_bl_integral" ] == "true";
+   baseline_integral = false;
    baseline_ready_to_apply = false;
 
    le_last_focus = (mQLineEdit *) 0;

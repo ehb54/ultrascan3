@@ -253,8 +253,9 @@ SOURCES *= \
         src/us_hydrodyn_dad_gui.cpp \
         src/us_hydrodyn_dad_stack.cpp \
         src/us_hydrodyn_dad_modes.cpp \
-        src/us_hydrodyn_dad_modes_guinier.cpp \
         src/us_hydrodyn_dad_modes_bb.cpp \
+        src/us_hydrodyn_dad_modes_guinier.cpp \
+        src/us_hydrodyn_dad_modes_powerfit.cpp \
         src/us_hydrodyn_dad_modes_wheel.cpp \
         src/us_hydrodyn_dad_makeiq.cpp \
         src/us_hydrodyn_dad_plots.cpp \

@@ -258,6 +258,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
          PBMODE_SD,
          PBMODE_FASTA,
          PBMODE_DAD,
+         PBMODE_Q_EXCLUDE,
          PBMODE_NONE
       };
 
@@ -270,6 +271,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QRadioButton          * rb_pbmode_sd;
       QRadioButton          * rb_pbmode_fasta;
       QRadioButton          * rb_pbmode_dad;
+      QRadioButton          * rb_pbmode_q_exclude;
       QRadioButton          * rb_pbmode_none;
       void                    pbmode_select( pbmodes mode );
 
@@ -282,6 +284,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       void set_pbmode_sd( );
       void set_pbmode_fasta( );
       void set_pbmode_dad( );
+      void set_pbmode_q_exclude( );
       void set_pbmode_none( );
 
  private:
@@ -361,6 +364,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
+      QPushButton   *pb_powerfit;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
@@ -580,6 +584,20 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
 
       QLabel        *lbl_mode_title;
 
+      // q_exclude
+
+      QPushButton   *pb_q_exclude_vis;
+      QPushButton   *pb_q_exclude_left;
+      QPushButton   *pb_q_exclude_right;
+      QPushButton   *pb_q_exclude_clear;
+      QLabel        *lbl_q_exclude;
+      QLabel        *lbl_q_exclude_detail;
+
+      void          q_exclude_update_lbl();
+      void          q_exclude_opt_remove_unreferenced();
+      
+      set < double > q_exclude;
+
       // wyatt errors
 
       QPushButton   *pb_wyatt_start;
@@ -656,6 +674,101 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QString                            testiq_it_selected;
       double                             testiq_it_selected_Imin;
       double                             testiq_it_selected_Imax;
+
+      // powerfit
+      
+      vector < QStringList >             powerfit_names;
+      QString                            powerfit_name;
+      set < QString >                    powerfit_org_selected;
+      void                               powerfit_scroll_highlight( int pos );
+      void                               powerfit_enables();
+
+      QColor                             powerfit_color_q;
+
+      QLabel                           * lbl_powerfit_msg;
+
+      QLabel                           * lbl_powerfit_q_range;
+      mQLineEdit                       * le_powerfit_q_start;
+      mQLineEdit                       * le_powerfit_q_end;
+
+      QLabel                           * lbl_powerfit_a;
+      mQLineEdit                       * le_powerfit_a;
+      QLabel                           * lbl_powerfit_b;
+      mQLineEdit                       * le_powerfit_b;
+      QLabel                           * lbl_powerfit_c;
+      mQLineEdit                       * le_powerfit_c;
+
+      QLabel                           * lbl_powerfit_fit_curve;
+
+      QPushButton                      * pb_powerfit_fit;
+      QPushButton                      * pb_powerfit_reset;
+      QPushButton                      * pb_powerfit_create_adjusted_curve;
+
+      set < QString >                    powerfit_original_selection;
+      double                             powerfit_original_scale;
+      double                             powerfit_original_sd_scale;
+
+      double                             powerfit_q_min;
+      double                             powerfit_q_max;
+
+      vector < QwtPlotMarker * >         powerfit_markers;
+
+      void                               powerfit_add_marker  (
+                                                               QwtPlot * plot,
+                                                               double pos, 
+                                                               QColor color, 
+                                                               QString text, 
+                                                               Qt::Alignment align = Qt::AlignRight | Qt::AlignTop
+                                                               );
+      void                               powerfit_delete_markers();
+
+      bool                               powerfit_use_errors;
+
+      enum powerfit_fit_curves : int {
+         POWERFIT_FIT_CURVE_P2 = 2,
+         POWERFIT_FIT_CURVE_P3 = 3,
+         POWERFIT_FIT_CURVE_P4 = 4,
+         POWERFIT_FIT_CURVE_P5 = 5,
+         POWERFIT_FIT_CURVE_P6 = 6,
+         POWERFIT_FIT_CURVE_P7 = 7,
+         POWERFIT_FIT_CURVE_P8 = 8
+      };
+
+      QComboBox                        * cb_powerfit_fit_curve;
+      QComboBox                        * cb_powerfit_fit_alg;
+      QComboBox                        * cb_powerfit_fit_alg_weight;
+
+      QwtPlotCurve                     * powerfit_fit_curve;
+      QwtPlotCurve                     * powerfit_corrected_curve;
+
+      void                               powerfit_fit_clear( bool replot = true );
+
+   private slots:
+
+      void powerfit                     ( bool no_store_original = false );
+
+      void powerfit_fit();
+      void powerfit_reset();
+      void powerfit_create_adjusted_curve();
+      
+      void powerfit_q_start_text       ( const QString & );
+      void powerfit_q_start_focus      ( bool );
+      void powerfit_q_end_text         ( const QString & );
+      void powerfit_q_end_focus        ( bool );
+
+      void powerfit_a_text             ( const QString & );
+      void powerfit_a_focus            ( bool );
+      void powerfit_b_text             ( const QString & );
+      void powerfit_b_focus            ( bool );
+      void powerfit_c_text             ( const QString & );
+      void powerfit_c_focus            ( bool );
+
+      // qt doc says int argument for the signal, but actually QString
+      void powerfit_fit_alg_index       (); // int index );
+      void powerfit_fit_alg_weight_index(); // int index );
+      void powerfit_fit_curve_index     (); // int index );
+
+   private:
 
       // Guinier
 
@@ -1075,6 +1188,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       vector < QWidget * >                ggqfit_widgets;
       vector < QWidget * >                wheel_below_widgets;
 
+      vector < QWidget * >                powerfit_widgets;
       vector < QWidget * >                wyatt_widgets;
       vector < QWidget * >                blanks_widgets;
       vector < QWidget * >                baseline_widgets;
@@ -1088,6 +1202,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       vector < QWidget * >                pbmode_sd_widgets;
       vector < QWidget * >                pbmode_fasta_widgets;
       vector < QWidget * >                pbmode_dad_widgets;
+      vector < QWidget * >                pbmode_q_exclude_widgets;
       vector < QWidget * >                rgc_widgets;
       vector < QWidget * >                pm_widgets;
       vector < QWidget * >                guinier_widgets;
@@ -1152,7 +1267,8 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
 
       bool load_file( QString file, bool load_conc = false );
 
-      void plot_files();
+      void plot_files( bool save_zoom_state = false );
+
       bool plot_file( QString file,
                       double &minx,
                       double &maxx,
@@ -1257,6 +1373,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
          ,MODE_GUINIER
          ,MODE_TESTIQ
          ,MODE_WYATT
+         ,MODE_POWERFIT
       };
 
       modes                        current_mode;
@@ -1443,6 +1560,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       bool                         compatible_grids( QStringList files );
 
       bool                         suppress_replot;
+      bool                         suppress_plot;
 
       void                         update_ref();
 
@@ -1856,6 +1974,11 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       void model_view               ();
       void model_text               ();
       void model_remove             ();
+
+      void q_exclude_vis            ();
+      void q_exclude_left           ();
+      void q_exclude_right          ();
+      void q_exclude_clear          ();
 
       void artificial_gaussians     ();
 

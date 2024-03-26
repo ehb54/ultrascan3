@@ -12,15 +12,20 @@
 #include <QVBoxLayout>
 #include <QFrame>
  //#include <Q3PopupMenu>
+#include "../include/us_eigen.h"
 
 // #define UHSH_VAL_DEC 8
 
 // #define ALLOW_GUOS_CARUANAS
 
+#define POWERFIT_COLOR_Q QColor( 255, 153, 153 )
+
 void US_Hydrodyn_Dad::setupGUI()
 {
    int minHeight1 = 22;
    int minHeight3 = 24;
+
+   powerfit_color_q = POWERFIT_COLOR_Q;
 
    QPalette cg_magenta = USglobal->global_colors.cg_normal;
    cg_magenta.setBrush( QPalette::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
@@ -43,6 +48,9 @@ void US_Hydrodyn_Dad::setupGUI()
 
    QPalette cg_red = cg_magenta;
    cg_red.setBrush( QPalette::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
+
+   QPalette cg_fit_1 = cg_magenta;
+   cg_fit_1.setBrush( QPalette::Base, QBrush( powerfit_color_q, Qt::SolidPattern ) );
 
    lbl_title = new QLabel("Developed by Emre Brookes and Mattia Rocco (see TBD., 2024)", this);
 
@@ -367,6 +375,182 @@ void US_Hydrodyn_Dad::setupGUI()
    pb_smooth->setPalette( PALET_PUSHB );
    connect(pb_smooth, SIGNAL(clicked()), SLOT(smooth()));
 
+   // powerfit start
+
+   pb_powerfit = new QPushButton(us_tr("Baseline correct"), this);
+   pb_powerfit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_powerfit->setMinimumHeight(minHeight1);
+   pb_powerfit->setPalette( PALET_PUSHB );
+   connect(pb_powerfit, SIGNAL(clicked()), SLOT(powerfit()));
+
+   lbl_powerfit_msg = new QLabel( " Chi^2 of this fit: XXX Global Chi^2: YYY", this );
+   lbl_powerfit_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_powerfit_msg->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_msg );
+   lbl_powerfit_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_powerfit_fit = new QPushButton(us_tr("Fit"), this);
+   pb_powerfit_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_powerfit_fit->setMinimumHeight(minHeight1);
+   pb_powerfit_fit->setPalette( PALET_PUSHB );
+   connect(pb_powerfit_fit, SIGNAL(clicked()), SLOT(powerfit_fit()));
+
+   // lbl_powerfit_fit_curve = new QLabel( "Fit curve ", this );
+   lbl_powerfit_fit_curve = new QLabel( "Fit controls", this );
+   lbl_powerfit_fit_curve->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_powerfit_fit_curve->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_fit_curve );
+   lbl_powerfit_fit_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   cb_powerfit_fit_curve = new QComboBox( this );
+   cb_powerfit_fit_curve->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_powerfit_fit_curve );
+   cb_powerfit_fit_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_powerfit_fit_curve->setEnabled(true);
+   cb_powerfit_fit_curve->setMinimumHeight( minHeight1 );
+   cb_powerfit_fit_curve->setMaxVisibleItems( 1 );
+
+   cb_powerfit_fit_curve->addItem( us_tr( "2nd degree Polynomial" ), POWERFIT_FIT_CURVE_P2 );
+   cb_powerfit_fit_curve->addItem( us_tr( "3rd degree Polynomial" ), POWERFIT_FIT_CURVE_P3 );
+   cb_powerfit_fit_curve->addItem( us_tr( "4th degree Polynomial" ), POWERFIT_FIT_CURVE_P4 );
+   cb_powerfit_fit_curve->addItem( us_tr( "5th degree Polynomial" ), POWERFIT_FIT_CURVE_P5 );
+   cb_powerfit_fit_curve->addItem( us_tr( "6th degree Polynomial" ), POWERFIT_FIT_CURVE_P6 );
+   cb_powerfit_fit_curve->addItem( us_tr( "7th degree Polynomial" ), POWERFIT_FIT_CURVE_P7 );
+   cb_powerfit_fit_curve->addItem( us_tr( "8th degree Polynomial" ), POWERFIT_FIT_CURVE_P8 );
+   connect( cb_powerfit_fit_curve, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_curve_index( ) ) );
+   cb_powerfit_fit_curve->setCurrentIndex( 1 );
+
+   cb_powerfit_fit_alg = new QComboBox( this );
+   cb_powerfit_fit_alg->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_powerfit_fit_alg );
+   cb_powerfit_fit_alg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_powerfit_fit_alg->setEnabled(true);
+   cb_powerfit_fit_alg->setMinimumHeight( minHeight1 );
+   cb_powerfit_fit_alg->setMaxVisibleItems( 1 );
+
+   cb_powerfit_fit_alg->addItem( us_tr( "SVD BDC" )                       , US_Eigen::EIGEN_SVD_BDC );
+   cb_powerfit_fit_alg->addItem( us_tr( "SVD Jacobi" )                    , US_Eigen::EIGEN_SVD_JACOBI );
+   cb_powerfit_fit_alg->addItem( us_tr( "QR Householder full pivoting" )  , US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_FULL );
+   cb_powerfit_fit_alg->addItem( us_tr( "QR Householder column pivoting" ), US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL);
+   cb_powerfit_fit_alg->addItem( us_tr( "QR Householder" )                , US_Eigen::EIGEN_HOUSEHOLDER_QR );
+   cb_powerfit_fit_alg->addItem( us_tr( "LR" )                            , US_Eigen::EIGEN_NORMAL );
+   connect( cb_powerfit_fit_alg, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_alg_index( ) ) );
+   cb_powerfit_fit_alg->setCurrentIndex( 5 );
+
+   cb_powerfit_fit_alg_weight = new QComboBox( this );
+   cb_powerfit_fit_alg_weight->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_powerfit_fit_alg_weight );
+   cb_powerfit_fit_alg_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_powerfit_fit_alg_weight->setEnabled(true);
+   cb_powerfit_fit_alg_weight->setMinimumHeight( minHeight1 );
+   cb_powerfit_fit_alg_weight->setMaxVisibleItems( 1 );
+
+   cb_powerfit_fit_alg_weight->addItem( us_tr( "no weighting" ), US_Eigen::EIGEN_NO_WEIGHTS );
+   cb_powerfit_fit_alg_weight->addItem( us_tr( "1/amount" )    , US_Eigen::EIGEN_1_OVER_AMOUNT );
+   cb_powerfit_fit_alg_weight->addItem( us_tr( "1/amount^2" )  , US_Eigen::EIGEN_1_OVER_AMOUNT_SQ );
+   cb_powerfit_fit_alg_weight->addItem( us_tr( "1/SD" )        , US_Eigen::EIGEN_1_OVER_SD );
+   cb_powerfit_fit_alg_weight->addItem( us_tr( "1/SD^2" )      , US_Eigen::EIGEN_1_OVER_SD_SQ );
+
+   connect( cb_powerfit_fit_alg_weight, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_alg_weight_index( ) ) );
+   cb_powerfit_fit_alg_weight->setCurrentIndex( 3 ); // US_Eigen::EIGEN_1_OVER_SD
+
+   pb_powerfit_reset = new QPushButton(us_tr("Reset"), this);
+   pb_powerfit_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_powerfit_reset->setMinimumHeight(minHeight1);
+   pb_powerfit_reset->setPalette( PALET_PUSHB );
+   connect(pb_powerfit_reset, SIGNAL(clicked()), SLOT(powerfit_reset()));
+
+   pb_powerfit_create_adjusted_curve = new QPushButton(us_tr("Create adjusted curve"), this);
+   pb_powerfit_create_adjusted_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_powerfit_create_adjusted_curve->setMinimumHeight(minHeight1);
+   pb_powerfit_create_adjusted_curve->setPalette( PALET_PUSHB );
+   connect(pb_powerfit_create_adjusted_curve, SIGNAL(clicked()), SLOT(powerfit_create_adjusted_curve()));
+   
+   lbl_powerfit_q_range = new QLabel( us_tr( " Fit range: " ), this );
+   lbl_powerfit_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_q_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_q_range );
+   lbl_powerfit_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_q_range->hide();
+
+   le_powerfit_q_start = new mQLineEdit( this );    le_powerfit_q_start->setObjectName( "le_powerfit_q_start Line Edit" );
+   le_powerfit_q_start->setText( "" );
+   le_powerfit_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_q_start->setPalette( cg_fit_1 );
+   le_powerfit_q_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_q_start->setEnabled( false );
+   le_powerfit_q_start->setValidator( new QDoubleValidator( le_powerfit_q_start ) );
+   le_powerfit_q_start->hide();
+   connect( le_powerfit_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_q_start_text( const QString & ) ) );
+   connect( le_powerfit_q_start, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_q_start_focus( bool ) ) );
+
+   le_powerfit_q_end = new mQLineEdit( this );    le_powerfit_q_end->setObjectName( "le_powerfit_q_end Line Edit" );
+   le_powerfit_q_end->setText( "" );
+   le_powerfit_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_q_end->setPalette( cg_fit_1 );
+   le_powerfit_q_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_q_end->setEnabled( false );
+   le_powerfit_q_end->setValidator( new QDoubleValidator( le_powerfit_q_end ) );
+   le_powerfit_q_end->hide();
+   connect( le_powerfit_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_q_end_text( const QString & ) ) );
+   connect( le_powerfit_q_end, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_q_end_focus( bool ) ) );
+
+   lbl_powerfit_a = new QLabel( us_tr( " A: " ), this );
+   lbl_powerfit_a->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_a->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_a );
+   lbl_powerfit_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_a->hide();
+
+   le_powerfit_a = new mQLineEdit( this );    le_powerfit_a->setObjectName( "le_powerfit_a Line Edit" );
+   le_powerfit_a->setText( "" );
+   le_powerfit_a->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_a->setPalette( PALET_NORMAL );
+   le_powerfit_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_a->setEnabled( false );
+   le_powerfit_a->setValidator( new QDoubleValidator( le_powerfit_a ) );
+   le_powerfit_a->hide();
+   connect( le_powerfit_a, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_a_text( const QString & ) ) );
+   connect( le_powerfit_a, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_a_focus( bool ) ) );
+   
+   lbl_powerfit_b = new QLabel( us_tr( " B: " ), this );
+   lbl_powerfit_b->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_b->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_b );
+   lbl_powerfit_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_b->hide();
+
+   le_powerfit_b = new mQLineEdit( this );    le_powerfit_b->setObjectName( "le_powerfit_b Line Edit" );
+   le_powerfit_b->setText( "" );
+   le_powerfit_b->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_b->setPalette( PALET_NORMAL );
+   le_powerfit_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_b->setEnabled( false );
+   le_powerfit_b->setValidator( new QDoubleValidator( le_powerfit_b ) );
+   le_powerfit_b->hide();
+   connect( le_powerfit_b, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_b_text( const QString & ) ) );
+   connect( le_powerfit_b, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_b_focus( bool ) ) );
+   
+   lbl_powerfit_c = new QLabel( us_tr( " C: " ), this );
+   lbl_powerfit_c->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_c->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_c );
+   lbl_powerfit_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_c->hide();
+
+   le_powerfit_c = new mQLineEdit( this );    le_powerfit_c->setObjectName( "le_powerfit_c Line Edit" );
+   le_powerfit_c->setText( "" );
+   le_powerfit_c->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_c->setPalette( PALET_NORMAL );
+   le_powerfit_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_c->setEnabled( false );
+   le_powerfit_c->setValidator( new QDoubleValidator( le_powerfit_c ) );
+   le_powerfit_c->hide();
+   connect( le_powerfit_c, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_c_text( const QString & ) ) );
+   connect( le_powerfit_c, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_c_focus( bool ) ) );
+   
+   // powerfit end
+
    pb_svd = new QPushButton(us_tr("SVD / EFA"), this);
    pb_svd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd->setMinimumHeight(minHeight1);
@@ -661,7 +845,6 @@ void US_Hydrodyn_Dad::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
-
 
 #if QT_VERSION < 0x040000
 # if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
@@ -3115,6 +3298,13 @@ void US_Hydrodyn_Dad::setupGUI()
    AUTFBACK( rb_pbmode_dad );
    connect(rb_pbmode_dad, SIGNAL(clicked( )), SLOT( set_pbmode_dad( )));
 
+   rb_pbmode_q_exclude = new QRadioButton( "q exclude", this ); 
+   rb_pbmode_q_exclude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_q_exclude->setMinimumHeight(minHeight3);
+   rb_pbmode_q_exclude->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_q_exclude );
+   connect(rb_pbmode_q_exclude, SIGNAL(clicked( )), SLOT( set_pbmode_q_exclude( )));
+
    rb_pbmode_none = new QRadioButton( "None", this ); 
    rb_pbmode_none->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    rb_pbmode_none->setMinimumHeight(minHeight3);
@@ -3130,7 +3320,45 @@ void US_Hydrodyn_Dad::setupGUI()
    bg_pbmode->addButton( rb_pbmode_sd );
    bg_pbmode->addButton( rb_pbmode_fasta );
    bg_pbmode->addButton( rb_pbmode_dad );
+   bg_pbmode->addButton( rb_pbmode_q_exclude );
    bg_pbmode->addButton( rb_pbmode_none );
+
+   // q exclude
+
+   pb_q_exclude_vis = new QPushButton(us_tr("Excl. Vis."), this);
+   pb_q_exclude_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_vis->setMinimumHeight(minHeight1);
+   pb_q_exclude_vis->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_vis, SIGNAL(clicked()), SLOT(q_exclude_vis()));
+
+   pb_q_exclude_left = new QPushButton(us_tr("Excl. Left"), this);
+   pb_q_exclude_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_left->setMinimumHeight(minHeight1);
+   pb_q_exclude_left->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_left, SIGNAL(clicked()), SLOT(q_exclude_left()));
+
+   pb_q_exclude_right = new QPushButton(us_tr("Excl. Right"), this);
+   pb_q_exclude_right->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_right->setMinimumHeight(minHeight1);
+   pb_q_exclude_right->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_right, SIGNAL(clicked()), SLOT(q_exclude_right()));
+
+   pb_q_exclude_clear = new QPushButton(us_tr("Excl. Clear"), this);
+   pb_q_exclude_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_q_exclude_clear->setMinimumHeight(minHeight1);
+   pb_q_exclude_clear->setPalette( PALET_PUSHB );
+   connect(pb_q_exclude_clear, SIGNAL(clicked()), SLOT(q_exclude_clear()));
+
+   lbl_q_exclude_detail = new QLabel( this );
+   lbl_q_exclude_detail->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_q_exclude_detail->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_q_exclude_detail );
+   lbl_q_exclude_detail->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_q_exclude_detail->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_q_exclude_detail->setCursor(QCursor(Qt::IBeamCursor));
+
+   q_exclude.clear();
+   q_exclude_update_lbl();
 
    // bottom
 
@@ -3289,6 +3517,7 @@ void US_Hydrodyn_Dad::setupGUI()
       l_pbmode->addWidget( rb_pbmode_sd );
       l_pbmode->addWidget( rb_pbmode_fasta );
       l_pbmode->addWidget( rb_pbmode_dad );
+      l_pbmode->addWidget( rb_pbmode_q_exclude );
       l_pbmode->addWidget( rb_pbmode_none );
    }
 
@@ -3411,8 +3640,25 @@ void US_Hydrodyn_Dad::setupGUI()
       // pbmode_dad_widgets.push_back( pb_dad_lambdas_save );
       pbmode_dad_widgets.push_back( lbl_dad_lambdas_data );
    }
-
    
+   QBoxLayout * l_pbmode_q_exclude = new QHBoxLayout();
+   {
+      l_pbmode_q_exclude->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_q_exclude->setSpacing( 0 );
+
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_vis );
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_left );
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_right );
+      pbmode_q_exclude_widgets.push_back( pb_q_exclude_clear );
+
+      for ( auto const & widget : pbmode_q_exclude_widgets ) {
+         l_pbmode_q_exclude->addWidget( widget );
+      }
+
+      // not in this layout
+      pbmode_q_exclude_widgets.push_back( lbl_q_exclude_detail );
+   }
+
    QBoxLayout * hbl_file_buttons_3 = new QHBoxLayout(); hbl_file_buttons_3->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3->setSpacing( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
@@ -3431,6 +3677,7 @@ void US_Hydrodyn_Dad::setupGUI()
    files_expert_widgets.push_back ( pb_ag );
 
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
+   hbl_file_buttons_4->addWidget ( pb_powerfit );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
@@ -3441,6 +3688,7 @@ void US_Hydrodyn_Dad::setupGUI()
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
    // hidden: files_widgets.push_back ( pb_svd );
+   files_widgets.push_back ( pb_powerfit );
    files_widgets.push_back ( pb_create_i_of_t );
    files_widgets.push_back ( pb_test_i_of_t );
    // hidden: files_widgets.push_back ( pb_create_i_of_q );
@@ -3688,6 +3936,43 @@ void US_Hydrodyn_Dad::setupGUI()
       vbl_guinier->addLayout( hbl );
    }      
 
+   // powerfit
+
+   QBoxLayout * vbl_powerfit = new QVBoxLayout( 0 ); vbl_powerfit->setContentsMargins( 0, 0, 0, 0 ); vbl_powerfit->setSpacing( 0 );
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_q_range );
+      hbl->addWidget( le_powerfit_q_start );
+      hbl->addWidget( le_powerfit_q_end );
+      vbl_powerfit->addLayout( hbl );
+   }
+
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_a );
+      hbl->addWidget( le_powerfit_a );
+      hbl->addWidget( lbl_powerfit_b );
+      hbl->addWidget( le_powerfit_b );
+      hbl->addWidget( lbl_powerfit_c );
+      hbl->addWidget( le_powerfit_c );
+      hbl->addWidget( pb_powerfit_fit );
+      hbl->addWidget( pb_powerfit_reset );
+      hbl->addWidget( pb_powerfit_create_adjusted_curve );
+      vbl_powerfit->addLayout( hbl );
+   }
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_fit_curve );
+      hbl->addWidget( cb_powerfit_fit_curve );
+      hbl->addWidget( cb_powerfit_fit_alg );
+      hbl->addWidget( cb_powerfit_fit_alg_weight );
+      vbl_powerfit->addLayout( hbl );
+   }
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_msg );
+      vbl_powerfit->addLayout( hbl );
+   }
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_guinier_mw_t_range );
@@ -3889,8 +4174,10 @@ void US_Hydrodyn_Dad::setupGUI()
    vbl_plot_group->addLayout ( l_pbmode_sd );
    vbl_plot_group->addLayout ( l_pbmode_fasta );
    vbl_plot_group->addLayout ( l_pbmode_dad );
+   vbl_plot_group->addLayout ( l_pbmode_q_exclude );
    // vbl_plot_group->addWidget ( lbl_dad_lambdas_data, 0, Qt::AlignCenter ); // don't like this
    vbl_plot_group->addWidget ( lbl_dad_lambdas_data );
+   vbl_plot_group->addWidget ( lbl_q_exclude_detail );
    vbl_plot_group->addWidget ( qs_plots );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
@@ -3903,6 +4190,7 @@ void US_Hydrodyn_Dad::setupGUI()
    vbl_plot_group->addLayout ( hbl_mode0 );
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
+   vbl_plot_group->addLayout ( vbl_powerfit );
    vbl_plot_group->addLayout ( vbl_testiq );
    vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
@@ -3975,8 +4263,9 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_create_ihash_t
             ,pb_create_istar_q
             ,pb_blanks_start
-            // ,pb_baseline_start
+            ,pb_baseline_start
             ,pb_baseline_apply
+            ,rb_pbmode_q_exclude
             }
       );
 
@@ -4129,6 +4418,32 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    wheel_below_widgets.push_back( lbl_blank2 );
    wheel_below_widgets.push_back( lbl_wheel_pos_below );
    wheel_below_widgets.push_back( lbl_wheel_Pcolor );
+
+   // powerfit_widgets;
+   powerfit_widgets.push_back( pb_wheel_dec );
+   powerfit_widgets.push_back( qwtw_wheel );
+   powerfit_widgets.push_back( pb_wheel_inc );
+   powerfit_widgets.push_back( lbl_wheel_pos );
+   
+   powerfit_widgets.push_back( lbl_powerfit_msg );
+   powerfit_widgets.push_back( lbl_powerfit_q_range );
+   powerfit_widgets.push_back( le_powerfit_q_start );
+   powerfit_widgets.push_back( le_powerfit_q_end );
+   
+   powerfit_widgets.push_back( lbl_powerfit_a );
+   powerfit_widgets.push_back( le_powerfit_a );
+   powerfit_widgets.push_back( lbl_powerfit_b );
+   powerfit_widgets.push_back( le_powerfit_b );
+   powerfit_widgets.push_back( lbl_powerfit_c );
+   powerfit_widgets.push_back( le_powerfit_c );
+
+   powerfit_widgets.push_back( pb_powerfit_fit );
+   powerfit_widgets.push_back( pb_powerfit_reset );
+   powerfit_widgets.push_back( pb_powerfit_create_adjusted_curve );
+   powerfit_widgets.push_back( lbl_powerfit_fit_curve );
+   powerfit_widgets.push_back( cb_powerfit_fit_curve );
+   powerfit_widgets.push_back( cb_powerfit_fit_alg );
+   powerfit_widgets.push_back( cb_powerfit_fit_alg_weight );
 
    // wyatt_widgets;
 
@@ -4383,6 +4698,7 @@ void US_Hydrodyn_Dad::mode_select()
    ShowHide::hide_widgets( ggaussian_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( ggaussian_4var_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( ggaussian_5var_widgets, always_hide_widgets  );
+   ShowHide::hide_widgets( powerfit_widgets, always_hide_widgets );
    ShowHide::hide_widgets( wyatt_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( blanks_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( baseline_widgets, always_hide_widgets  );
@@ -4446,6 +4762,7 @@ void US_Hydrodyn_Dad::mode_select()
    case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets, always_hide_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
    case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets, always_hide_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
    case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets, always_hide_widgets         , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
+   case MODE_POWERFIT  : mode_title( pb_powerfit->text() );       ShowHide::hide_widgets( powerfit_widgets, always_hide_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 9, always_hide_widgets  );break;
    default : us_qdebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -4488,6 +4805,11 @@ void US_Hydrodyn_Dad::update_enables()
       }
       return;
    }
+
+   for ( auto const & widget : pbmode_q_exclude_widgets ) {
+      widget->setEnabled( true );
+   }
+   q_exclude_update_lbl();
 
    // cout << "update_enables\n";
 
@@ -4632,6 +4954,7 @@ void US_Hydrodyn_Dad::update_enables()
    pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
+   pb_powerfit           ->setEnabled( !files_are_time && files_selected_count == 1 );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
@@ -4687,6 +5010,11 @@ void US_Hydrodyn_Dad::update_enables()
    pb_show_created       ->setEnabled( files_created_selected_not_shown_count > 0 );
    pb_show_only_created  ->setEnabled( files_created_selected_count > 0 &&
                                        files_selected_not_created > 0 );
+
+   pb_q_exclude_vis      ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   pb_q_exclude_left     ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   pb_q_exclude_right    ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   
    // #define DEBUG_SCALING
 #if defined( DEBUG_SCALING )
    {
@@ -4966,6 +5294,7 @@ void US_Hydrodyn_Dad::disable_all()
    pb_bin                ->setEnabled( false );
    pb_smooth             ->setEnabled( false );
    pb_repeak             ->setEnabled( false );
+   pb_powerfit           ->setEnabled( false );
    pb_svd                ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
@@ -5006,6 +5335,10 @@ void US_Hydrodyn_Dad::disable_all()
    pb_crop_left          ->setEnabled( false ); 
    pb_crop_undo          ->setEnabled( false );
    pb_crop_right         ->setEnabled( false ); 
+   for ( auto const & widget : pbmode_q_exclude_widgets ) {
+      widget->setEnabled( false );
+   }
+
    pb_legend             ->setEnabled( false );
    pb_axis_x             ->setEnabled( false );
    pb_axis_y             ->setEnabled( false );
@@ -5159,6 +5492,21 @@ void US_Hydrodyn_Dad::disable_all()
    pb_test_i_of_t        ->setEnabled( false );
    pb_guinier_plot_rg    ->setEnabled( false );
    pb_guinier_plot_mw    ->setEnabled( false );
+
+   // powerfit disables
+   pb_powerfit_fit                    ->setEnabled( false );
+   pb_powerfit_create_adjusted_curve  ->setEnabled( false );
+   pb_powerfit_reset                  ->setEnabled( false );
+   le_powerfit_q_start                ->setEnabled( false );
+   le_powerfit_q_end                  ->setEnabled( false );
+
+   le_powerfit_a                      ->setEnabled( false );
+   le_powerfit_b                      ->setEnabled( false );
+   le_powerfit_c                      ->setEnabled( false );
+
+   cb_powerfit_fit_curve              ->setEnabled( false );
+   cb_powerfit_fit_alg                ->setEnabled( false );
+   cb_powerfit_fit_alg_weight         ->setEnabled( false );
 }
 
 void US_Hydrodyn_Dad::model_select_all()
@@ -5606,6 +5954,10 @@ void US_Hydrodyn_Dad::set_pbmode_dad() {
    pbmode_select( PBMODE_DAD );
 }
 
+void US_Hydrodyn_Dad::set_pbmode_q_exclude() {
+   pbmode_select( PBMODE_Q_EXCLUDE );
+}
+
 void US_Hydrodyn_Dad::set_pbmode_none() {
    pbmode_select( PBMODE_NONE );
 }
@@ -5619,6 +5971,7 @@ void US_Hydrodyn_Dad::pbmode_select( pbmodes mode ) {
    ShowHide::hide_widgets( pbmode_sd_widgets, always_hide_widgets, true );
    ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, true );
    ShowHide::hide_widgets( pbmode_dad_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_q_exclude_widgets, always_hide_widgets, true );
 
    switch ( mode ) {
    case PBMODE_MAIN :
@@ -5641,6 +5994,9 @@ void US_Hydrodyn_Dad::pbmode_select( pbmodes mode ) {
       break;
    case PBMODE_DAD :
       ShowHide::hide_widgets( pbmode_dad_widgets, always_hide_widgets, false );
+      break;
+   case PBMODE_Q_EXCLUDE :
+      ShowHide::hide_widgets( pbmode_q_exclude_widgets, always_hide_widgets, false );
       break;
    case PBMODE_NONE :
       break;
@@ -5749,3 +6105,294 @@ void US_Hydrodyn_Dad::fasta_file() {
    le_fasta_value->setEnabled( true );
    return;
 }
+
+void US_Hydrodyn_Dad::q_exclude_update_lbl() {
+   pb_q_exclude_clear->setEnabled( q_exclude.size() > 0 );
+
+   QString msg = "<hr>";
+
+   if ( !q_exclude.size() )  {
+      lbl_q_exclude_detail->setText( msg + us_tr( "<b>Currently no excluded q values</b>" ) + "<br>" );
+      plot_files( true );
+      return;
+   }
+
+   msg += QString( us_tr( "<b>%1 Excluded q value%2:</b>" ) )
+      .arg( q_exclude.size() )
+      .arg( q_exclude.size() == 1 ? "" : "s" )
+      + "<br>";
+
+   static int entries_per_row = 5;
+   static int max_rows = 8;
+
+   int entry = 0;
+   int row   = 0;
+
+   msg += "<center><table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr>";
+
+   for ( auto & q : q_exclude ) {
+      msg += QString( "<td>%1</td>" ).arg( q, 0, 'g', 12 );
+      if ( !( ++entry % entries_per_row ) ) {
+         msg += "</tr><tr>";
+         if ( ++row > max_rows ) {
+            msg += "<td>...</td>";
+            break;
+         }
+      }
+   }
+
+   // don't leave an empty row
+   msg = msg.replace( QRegularExpression( "</tr><tr>$" ), "" );
+   
+   msg += "</tr></table></center>";
+   
+   lbl_q_exclude_detail->setText( msg );
+   plot_files( true );
+}
+
+void US_Hydrodyn_Dad::q_exclude_clear() {
+   q_exclude.clear();
+   q_exclude_update_lbl();
+}
+
+void US_Hydrodyn_Dad::q_exclude_vis() {
+   // find curves within zoomRect 
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   set < QString > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) ) {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ ) {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy ) {
+                  selected_files.insert( this_file );
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() )
+   {
+      editor_msg( "red", us_tr( "q exclude visible: The current visible plot is empty" ) );
+      return;
+   }
+   
+   int added       = 0;
+   int preexisting = 0;
+   
+   set < double > this_q_checked;
+      
+   for ( auto const & it : selected_files ) {
+      for ( auto const & q : f_qs[ it ] ) { 
+         if ( q >= minx && q <= maxx ) {
+            if ( !this_q_checked.count( q ) ) {
+               this_q_checked.insert( q );
+               if ( !q_exclude.count( q ) ) {
+                  ++added;
+                  q_exclude.insert( q );
+               } else {
+                  ++preexisting;
+               }
+            }
+         }
+      }
+   }
+
+   QString msg = us_tr( "q exclude visible :" );
+   QString color = "darkblue";
+   
+   if ( added ) {
+      msg += QString( us_tr( " %1 selected q value(s) added to the exclusion list." ) ).arg( added );
+   }
+   if ( preexisting ) {
+      msg += QString( us_tr( " %1 selected q value(s) was(were) already excluded." ) ).arg( preexisting );
+      if ( !added ) {
+         color = "darkred";
+      }
+   }
+   editor_msg( color, msg );
+   q_exclude_update_lbl();
+}
+
+void US_Hydrodyn_Dad::q_exclude_left() {
+   // find curves within zoomRect 
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   set < QString > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) ) {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ ) {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy ) {
+                  selected_files.insert( this_file );
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() ) {
+      editor_msg( "red", us_tr( "q exclude left: The current visible plot is empty" ) );
+      return;
+   }
+   
+   set < double > this_q_checked;
+   set < double > this_q_new;
+   
+   for ( auto const & it : selected_files ) {
+      for ( auto const & q : f_qs[ it ] ) { 
+         if ( q >= minx && q <= maxx ) {
+            if ( !this_q_checked.count( q ) ) {
+               this_q_checked.insert( q );
+               if ( !q_exclude.count( q ) ) {
+                  this_q_new.insert( q );
+               }
+            }
+         }
+      }
+   }
+
+   if ( this_q_new.size() ) {
+      q_exclude.insert( *(this_q_new.begin()) );
+      editor_msg( "darkblue", us_tr( "q exclude : 1 new visible left q value was added\n" ) );
+      q_exclude_update_lbl();
+   } else {
+      editor_msg( "darkred", us_tr( "q exclude : no new visible left q values were found\n" ) );
+   }      
+}
+
+void US_Hydrodyn_Dad::q_exclude_right() {
+   // find curves within zoomRect 
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   set < QString > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) ) {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ ) {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy ) {
+                  selected_files.insert( this_file );
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() ) {
+      editor_msg( "red", us_tr( "q exclude right: The current visible plot is empty" ) );
+      return;
+   }
+   
+   set < double > this_q_checked;
+   set < double > this_q_new;
+   
+   for ( auto const & it : selected_files ) {
+      for ( auto const & q : f_qs[ it ] ) { 
+         if ( q >= minx && q <= maxx ) {
+            if ( !this_q_checked.count( q ) ) {
+               this_q_checked.insert( q );
+               if ( !q_exclude.count( q ) ) {
+                  this_q_new.insert( q );
+               }
+            }
+         }
+      }
+   }
+
+   if ( this_q_new.size() ) {
+      q_exclude.insert( *(--this_q_new.end()) );
+      editor_msg( "darkblue", us_tr( "q exclude : 1 new visible right q value was added\n" ) );
+      q_exclude_update_lbl();
+   } else {
+      editor_msg( "darkred", us_tr( "q exclude : no new visible right q values were found\n" ) );
+   }      
+}
+
+void US_Hydrodyn_Dad::q_exclude_opt_remove_unreferenced() {
+
+   if ( !q_exclude.size() ) {
+      // nothing to check
+      return;
+   }
+
+   // get all qvalues from curves
+
+   set < vector < double > > q_grids;
+   
+   for ( auto const & f_q : f_qs ) {
+      if ( f_is_time.count( f_q.first ) && f_is_time[ f_q.first ] ) {
+         continue;
+      }
+      q_grids.insert( f_q.second );
+   }
+
+   set < double > q_refd;
+
+   for ( auto const & qs : q_grids ) {
+      for ( auto const & q : qs ) {
+         q_refd.insert( q );
+      }
+   }
+
+   set < double > q_not_refd;
+
+   for ( auto const & q : q_exclude ) {
+      if ( !q_refd.count( q ) ) {
+         q_not_refd.insert( q );
+      }
+   }
+
+   if ( !q_not_refd.size() ) {
+      return;
+   }
+
+   switch ( QMessageBox::question(this, 
+                                  windowTitle() + us_tr( " : q excludes" )
+                                  , QString( us_tr(
+                                                   "%1 excluded q values are no longer referenced by any curves\n"
+                                                   "Do you wish to remove the exclusions?"
+                                                   ) )
+                                  .arg( q_not_refd.size() )
+                                  ) )
+   {
+   case QMessageBox::Yes : 
+      for ( auto const & q : q_not_refd ) {
+         q_exclude.erase( q );
+      }
+      q_exclude_update_lbl();
+      break;
+   default: 
+      break;
+   }
+}   

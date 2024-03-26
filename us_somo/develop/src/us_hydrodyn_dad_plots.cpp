@@ -210,9 +210,6 @@ void US_Hydrodyn_Dad::update_plot_errors_group()
 
    //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    //       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   // #if QT_VERSION < 0x040000
-   //       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-   // #endif
       // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    // }
 
@@ -229,12 +226,8 @@ void US_Hydrodyn_Dad::update_plot_errors( vector < double > &grid,
                                                 vector < double > &errors,
                                                 QColor             use_color )
 {
-   if ( current_mode == MODE_SCALE )
-   {
-      return scale_update_plot_errors();
-   }
-
-   plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    plot_errors_grid   = grid;
    plot_errors_target = target;
@@ -341,23 +334,9 @@ void US_Hydrodyn_Dad::update_plot_errors( vector < double > &grid,
    // printvector( "e", e );
 
    {
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_errors->insertCurve( "base" );
-      plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "base" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-      plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&x[ 0 ],
-                                 (double *)&y[ 0 ],
-                                 x.size()
-                                 );
-#else
       curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
       curve->setSamples(
                      (double *)&x[ 0 ],
@@ -365,28 +344,12 @@ void US_Hydrodyn_Dad::update_plot_errors( vector < double > &grid,
                      x.size()
                      );
       curve->attach( plot_errors );
-#endif
    }
 
    {
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_errors->insertCurve( "errors" );
-      plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-      plot_errors->setCurvePen( curve, QPen( plot_errors_color, use_line_width, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&x[ 0 ],
-                                 (double *)&e[ 0 ],
-                                 x.size()
-                                 );
-      plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
-#else
       curve->setPen( QPen( plot_errors_color, use_line_width, Qt::SolidLine ) );
       curve->setSamples(
                      (double *)&x[ 0 ],
@@ -395,7 +358,6 @@ void US_Hydrodyn_Dad::update_plot_errors( vector < double > &grid,
                      );
       curve->setStyle( QwtPlotCurve::Sticks );
       curve->attach( plot_errors );
-#endif
    }
 
    // if ( !plot_errors_zoomer )
@@ -462,9 +424,6 @@ void US_Hydrodyn_Dad::update_plot_errors( vector < double > &grid,
 
       //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
       //       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-      // #if QT_VERSION < 0x040000
-      //       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-      // #endif
       //       connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 
@@ -550,7 +509,6 @@ void US_Hydrodyn_Dad::set_plot_errors_group()
    redo_plot_errors();
 }
 
-
 void US_Hydrodyn_Dad::plot_errors_jump_markers()
 {
    if ( !unified_ggaussian_ok || cb_plot_errors_group->isChecked() )
@@ -560,15 +518,6 @@ void US_Hydrodyn_Dad::plot_errors_jump_markers()
 
    for ( unsigned int i = 0; i < unified_ggaussian_curves; i++ )
    {
-#if QT_VERSION < 0x040000
-      long marker = plot_errors->insertMarker();
-      plot_errors->setMarkerLineStyle ( marker, QwtMarker::VLine );
-      plot_errors->setMarkerPos       ( marker, unified_ggaussian_jumps[ i ], 0e0 );
-      plot_errors->setMarkerLabelAlign( marker, Qt::AlignRight | Qt::AlignTop );
-      plot_errors->setMarkerPen       ( marker, QPen( Qt::cyan, 2, DashDotDotLine));
-      plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
-      plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) ); // unified_ggaussian_files[ i ] );
-#else
       QwtPlotMarker * marker = new QwtPlotMarker;
       marker->setLineStyle       ( QwtPlotMarker::VLine );
       marker->setLinePen         ( QPen( Qt::cyan, 2, Qt::DashDotDotLine ) );
@@ -581,7 +530,6 @@ void US_Hydrodyn_Dad::plot_errors_jump_markers()
          marker->setLabel           ( qwtt );
       }
       marker->attach             ( plot_errors );
-#endif
    }
    if ( !suppress_replot )
    {
@@ -658,10 +606,10 @@ void US_Hydrodyn_Dad::errors()
    if ( plot_errors->isVisible() )
    {
       hide_widgets( plot_errors_widgets, true );
-      if ( current_mode == MODE_SCALE ) {
-         // "running" so normal update enables doesn't handle this
-         plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
-      }
+      // if ( current_mode == MODE_SCALE ) {
+      //    // "running" so normal update enables doesn't handle this
+      //    plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
+      // }
       // qDebug() << "::errors() plot_errors isVisible(), no further mode checking";
    } else {
 
@@ -889,10 +837,20 @@ void US_Hydrodyn_Dad::set_eb()
    }
 }
 
-void US_Hydrodyn_Dad::plot_files()
+void US_Hydrodyn_Dad::plot_files( bool save_zoom_state ) 
 {
-   // qDebug() << "plot files";
-   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   qDebug() << "plot files";
+   if ( suppress_plot ) {
+      qDebug() << "plot files - supressed";
+      return;
+   }
+      
+   powerfit_fit_clear( false );
+
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   if ( current_mode != MODE_POWERFIT ) {
+      plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   }
    bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -1001,7 +959,8 @@ void US_Hydrodyn_Dad::plot_files()
 
    // enable zooming
 
-   if ( any_selected ) {
+   if ( any_selected && !save_zoom_state ) {
+      // qDebug() << "plot_files():: zoom enables";
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer->setZoomBase();
@@ -1204,6 +1163,15 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
    double x[ 2 ];
    double y[ 2 ];
 
+   set < double > use_q_exclude = q_exclude;
+   // only set for non time files
+   if ( f_is_time[ file ] ) {
+      use_q_exclude.clear();
+   }
+   
+   vector < double > exclude_x;
+   vector < double > exclude_y;
+   
    if ( use_error )
    {
       QwtSymbol symbol;
@@ -1213,55 +1181,30 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
 
       if ( !axis_y_log )
       {
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveData( Iq, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( f_qs[ file ][ 0 ] ),
-                                  (double *)&( f_Is[ file ][ 0 ] ),
-                                  q_points
-                                  );
-         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-         plot_dist->setCurveStyle( Iq, QwtCurve::NoCurve );
-         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         plot_dist->setCurveSymbol( Iq, symbol );
-#else
          curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
                         (double *)&( f_qs[ file ][ 0 ] ),
                         (double *)&( f_Is[ file ][ 0 ] ),
                         q_points
-                        );
+
+                           );
 
          curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->setStyle( QwtPlotCurve::NoCurve );
          symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
          curve->attach( plot_dist );
-#endif
 
-         for ( unsigned int i = 0; i < q_points; i++ )
-         {
-#if QT_VERSION < 0x040000
-            long Iqeb = plot_dist->insertCurve( file );
-            plot_dist->setCurveStyle( Iqeb, QwtCurve::Lines );
-#else
+         for ( unsigned int i = 0; i < q_points; i++ ) {
+
             QwtPlotCurve *curveeb = new QwtPlotCurve( UPU_EB_PREFIX + file );
             curveeb->setStyle( QwtPlotCurve::Lines );
-#endif
             x[ 0 ] = f_qs[ file ][ i ];
             x[ 1 ] = x[ 0 ];
             y[ 0 ] = f_Is[ file ][ i ] - f_errors[ file ][ i ];
             y[ 1 ] = f_Is[ file ][ i ] + f_errors[ file ][ i ];
 
-#if QT_VERSION < 0x040000
-            plot_dist->setCurveData( Iqeb, 
-                                     (double *)&( x[ 0 ] ),
-                                     (double *)&( y[ 0 ] ),
-                                     2
-                                     );
-            plot_dist->setCurvePen( Iqeb, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
             curveeb->setSamples(
                              (double *)&( x[ 0 ] ),
                              (double *)&( y[ 0 ] ),
@@ -1270,9 +1213,12 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
 
             curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
             curveeb->attach( plot_dist );
-#endif
-         }            
 
+            if ( use_q_exclude.count( x[0] ) ) {
+               exclude_x.push_back( x[0] );
+               exclude_y.push_back( f_Is[ file ][i] );
+            }
+         }            
       } else {
          vector < double > q;
          vector < double > I;
@@ -1284,22 +1230,13 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                q.push_back( f_qs[ file ][ i ] );
                I.push_back( f_Is[ file ][ i ] );
                e.push_back( f_errors[ file ][ i ] );
+               if ( use_q_exclude.count( q.back() ) ) {
+                  exclude_x.push_back( q.back() );
+                  exclude_y.push_back( I.back() );
+               }
             }
          }
          q_points = ( unsigned int )q.size();
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveData( Iq, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( q[ 0 ] ),
-                                  (double *)&( I[ 0 ] ),
-                                  q_points
-                                  );
-         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, Qt::SolidLine));
-         plot_dist->setCurveStyle( Iq, QwtCurve::NoCurve );
-         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         // symbol.setBrush( plot_colors[ f_pos[ file ] % plot_colors.size() ] );
-         plot_dist->setCurveSymbol( Iq, symbol );
-#else
          curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
@@ -1314,30 +1251,16 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
          // symbol.setBrush( plot_colors[ f_pos[ file ] % plot_colors.size() ] );
          curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
          curve->attach( plot_dist );
-#endif
          for ( unsigned int i = 0; i < q_points; i++ )
          {
-#if QT_VERSION < 0x040000
-            long Iqeb = plot_dist->insertCurve( file );
-            plot_dist->setCurveStyle( Iqeb, QwtCurve::Lines );
-#else
             QwtPlotCurve *curveeb = new QwtPlotCurve( file );
             curveeb->setStyle( QwtPlotCurve::Lines );
-#endif
 
             x[ 0 ] = q[ i ];
             x[ 1 ] = x[ 0 ];
             y[ 0 ] = I[ i ] - e[ i ];
             y[ 1 ] = I[ i ] + e[ i ];
 
-#if QT_VERSION < 0x040000
-            plot_dist->setCurveData( Iqeb, 
-                                     (double *)&( x[ 0 ] ),
-                                     (double *)&( y[ 0 ] ),
-                                     2
-                                     );
-            plot_dist->setCurvePen( Iqeb, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
             curveeb->setSamples(
                            (double *)&( x[ 0 ] ),
                            (double *)&( y[ 0 ] ),
@@ -1346,22 +1269,11 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
 
             curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
             curveeb->attach( plot_dist );
-#endif
          }            
       }
-
    } else {
       if ( !axis_y_log )
       {
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveData( Iq, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( f_qs[ file ][ 0 ] ),
-                                  (double *)&( f_Is[ file ][ 0 ] ),
-                                  q_points
-                                  );
-         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
          curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
@@ -1372,7 +1284,14 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
 
          curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->attach( plot_dist );
-#endif
+         if ( use_q_exclude.size() ) {
+            for ( unsigned int i = 0; i < q_points; i++ ) {
+               if ( use_q_exclude.count( f_qs[file][i] ) ) {
+                  exclude_x.push_back( f_qs[file][i] );
+                  exclude_y.push_back( f_Is[file][i] );
+               }
+            }
+         }
       } else {
          vector < double > q;
          vector < double > I;
@@ -1382,18 +1301,13 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
             {
                q.push_back( f_qs[ file ][ i ] );
                I.push_back( f_Is[ file ][ i ] );
+               if ( use_q_exclude.count( q.back() ) ) {
+                  exclude_x.push_back( q.back() );
+                  exclude_y.push_back( I.back() );
+               }
             }
          }
          q_points = ( unsigned int )q.size();
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveData( Iq, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( q[ 0 ] ),
-                                  (double *)&( I[ 0 ] ),
-                                  q_points
-                                  );
-         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
          curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
@@ -1404,9 +1318,27 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
 
          curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->attach( plot_dist );
-#endif
       }
    }            
+   // US_Vector::printvector2( QString( "plot_file( %1 ) exclude points" ).arg( file ), exclude_x, exclude_y );
+
+   if ( exclude_x.size() ) {
+      QwtPlotCurve *curve = new QwtPlotCurve( file + "-excluded" );
+      plotted_curves[ file ] = curve;
+      curve->setStyle( QwtPlotCurve::Dots );
+      QwtSymbol symbol;
+      symbol.setStyle( QwtSymbol::XCross );
+      symbol.setSize( 1 + use_line_width * 6 );
+      symbol.setPen( QPen( QColor( "red" ), use_line_width, Qt::SolidLine ) );
+      // symbol.setBrush( Qt::NoBrush );
+      curve->setSamples(
+                        (double *)&(exclude_x[0])
+                        ,(double *)&(exclude_y[0])
+                        ,exclude_x.size()
+                        );
+      curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
+      curve->attach( plot_dist );
+   }
    return true;
 }
 

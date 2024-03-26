@@ -462,10 +462,10 @@ bool DAD_Angles::save( const QString & filename, QString & errormsg ) {
 // }
 
 US_Hydrodyn_Dad::US_Hydrodyn_Dad(
-                                             csv csv1,
-                                             void *us_hydrodyn, 
-                                             QWidget *p
-                                             ) : QFrame( p )
+                                 csv csv1,
+                                 void *us_hydrodyn, 
+                                 QWidget *p
+                                 ) : QFrame( p )
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
@@ -991,6 +991,7 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    blanks_end_e = 0e0;
 
    rb_pbmode_main->setChecked( true );
+
    pbmode_select( PBMODE_MAIN );
 }
 
