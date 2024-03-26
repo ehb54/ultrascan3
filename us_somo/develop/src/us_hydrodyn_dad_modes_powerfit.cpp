@@ -534,7 +534,7 @@ void US_Hydrodyn_Dad::powerfit_create_adjusted_curve() {
    qDebug() << "powerfit_create_adjusted_curve()";
 }
 
-void US_Hydrodyn_Dad::powerfit_fit_clear( bool /* replot */ ) {
+void US_Hydrodyn_Dad::powerfit_fit_clear( bool replot ) {
    qDebug() << "powerfit_fit_clear()";
    if ( powerfit_fit_curve ) {
       qDebug() << "powerfit_fit_clear() powerfit_fit_curve set";
