@@ -88,6 +88,8 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       void check_db          ( void );
       void new_model         ( void );
       void delete_model      ( void );
+      bool is_modelIDs_from_autoflow  ( QString );
+      bool parse_models_desc_json( QStringList, QString );
       void associations      ( void );
       void update_assoc      ( void );
       void source_changed    ( bool );

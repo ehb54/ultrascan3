@@ -348,7 +348,7 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    working_model = model;
 
    recent_row    = index;
-
+   
    // Populate 
    le_description->setText( model.description );
    le_wavelength ->setText( QString::number( model.wavelength, 'f', 1 ) );
@@ -356,7 +356,83 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    le_guid       ->setText( model.modelGUID );
 
    cb_optics     ->setCurrentIndex( model.optics );
+
+   qDebug() << "Selected ModelID: " << model_descriptions[ modlx ].DB_id;
 }
+
+bool US_ModelGui::is_modelIDs_from_autoflow( QString mID )
+{
+  QStringList modelInfos_autoflow;
+  QStringList modelIDs_autoflow;
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      connect_error( db.lastError() );
+      return false;
+    }
+  
+  QStringList q;
+  q << "get_modelIDs_for_autoflow";
+  db.query( q );
+  
+  while ( db.next() )
+    modelInfos_autoflow << db. value( 0 ).toString();
+
+  return parse_models_desc_json ( modelInfos_autoflow, mID ); 
+}
+
+bool US_ModelGui::parse_models_desc_json( QStringList modelInfos_autoflow, QString mID )
+{
+  qDebug() << "Size of modelInfos_autoflow: " << modelInfos_autoflow.size();
+  for ( int i=0; i<modelInfos_autoflow.size(); ++i )
+    {
+      QString modelDescJson = modelInfos_autoflow[ i ];
+      if ( modelDescJson.isEmpty() )
+	return false;
+
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( modelDescJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  
+	  if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" ) 
+	    {
+	      qDebug() << "ModelsDesc key, value: " << key << value;
+	      
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      //by modelID
+		      if ( array_key == "modelID" )
+			{
+			  QString c_modelID = json_array[i].toObject().value(array_key).toString();
+			  qDebug() << "modelDescJson Map: -- model, property, value: "
+				   << key
+				   << array_key
+				   << c_modelID;
+			  
+			  if ( c_modelID == mID )
+			    {
+			      qDebug() << "Model to delete, ID=" << mID << " IS autoflow produced!!!";
+			      return true;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  return false;
+}
+
 
 void US_ModelGui::delete_model( void )
 {
@@ -368,9 +444,22 @@ void US_ModelGui::delete_model( void )
    ModelDesc md  = model_descriptions.takeAt( modlx );
 
    show_model_desc();
+   
+   //Check if the model was generated via autoflow framework
+   if ( is_modelIDs_from_autoflow( md.DB_id ) )
+     {
+       qDebug() << "Model can NOT be deleted, autolfow-generated!";
+
+       QMessageBox::information( this, tr( "Selected Model Cannot be Deleted" ),
+				 tr( "The Model:\n\n"
+				     "\"%1\"\n\n"
+				     "can NOT be deleted since it was generated within GMP framework!" )
+				 .arg( mdesc ) );
+       return;
+     }
+   //END of checking for autoflow
 
    // Delete from DB or disk
-
    if ( ! dkdb_cntrls->db() )
    {
       QString path;
