@@ -5161,12 +5161,23 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      delete link1;                                                                         //  --- THIS DID NOT WORK ??
 	      */
 
-	      // alternative  -- TO BE tested further 
+	      // alternative  -- TO BE tested further
+	      QString xpndesc11     = currentInstrument[ "name" ];
+	      QString xpnhost11     = currentInstrument[ "optimaHost" ];
+	      QString xpnport11     = currentInstrument[ "optimaPort" ];
+	      QString xpnname11     = currentInstrument[ "optimaDBname" ];
+	      QString xpnuser11     = currentInstrument[ "optimaDBusername" ];
+	      QString xpnpasw11     = currentInstrument[ "optimaDBpassw" ];
+	      QString xpnmsgPort11  = currentInstrument[ "msgPort" ];
+
+	      qDebug() << "DB parms: " << xpndesc11 << xpnhost11 << xpnport11 << xpnname11 << xpnuser11 << xpnpasw11 << xpnmsgPort11;
+	      
 	      US_XpnData* xpn_data11 = new US_XpnData();
-	      bool o_connected           = xpn_data11->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+	      bool o_connected       = xpn_data11->connect_data( xpnhost11, xpnport11.toInt(), xpnname11, xpnuser11,  xpnpasw11 );
 	      xpn_data11->close();
 	      delete xpn_data11;
-	      	      
+
+	      qDebug() << "DB connection, o_connected ?  -- " << o_connected;
 	      //end of checking connection to Optima sys_data server    
 
 	      //if ( !combined_check )
