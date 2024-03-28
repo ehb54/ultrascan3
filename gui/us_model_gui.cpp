@@ -443,8 +443,6 @@ void US_ModelGui::delete_model( void )
    int     modlx = modelIndex( mdesc, model_descriptions );
    ModelDesc md  = model_descriptions.takeAt( modlx );
 
-   show_model_desc();
-   
    //Check if the model was generated via autoflow framework
    if ( is_modelIDs_from_autoflow( md.DB_id ) )
      {
@@ -459,6 +457,8 @@ void US_ModelGui::delete_model( void )
      }
    //END of checking for autoflow
 
+   show_model_desc();
+   
    // Delete from DB or disk
    if ( ! dkdb_cntrls->db() )
    {
@@ -645,6 +645,25 @@ void US_ModelGui::accept_model( void )
 
 void US_ModelGui::save_model( void )
 {
+  //Check is model ganerated with GMP
+  int     row   = lw_models->currentRow();
+  if ( row < 0 ) return;
+
+  QString mdesc = lw_models->item( row )->text();
+  int     modlx = modelIndex( mdesc, model_descriptions );
+  ModelDesc md  = model_descriptions.takeAt( modlx );
+  if ( is_modelIDs_from_autoflow( md.DB_id ) )
+    {
+      qDebug() << "Model can NOT be save/updated, autolfow-generated!";
+
+      QMessageBox::information( this, tr( "Selected Model Cannot be Saved/Updated" ),
+				tr( "The Model:\n\n"
+				    "\"%1\"\n\n"
+				    "can NOT be saved/updated since it was generated within GMP framework!" )
+				 .arg( mdesc ) );
+      return;
+    }
+  
    if ( ! verify_model() ) return;
 
    model.wavelength = le_wavelength->text().toDouble();
