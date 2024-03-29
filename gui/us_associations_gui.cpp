@@ -119,13 +119,20 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    buttonbox->addWidget( pb_close );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
+   //QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
+   pb_accept = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_accept );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( complete()) );
 
    main->addLayout( buttonbox, row++, 0, 1, 2 );
 
    populate();
+}
+
+void US_AssociationsGui::disable_gui( void )
+{
+  pb_accept-> setEnabled(false);
+
 }
 
 void US_AssociationsGui::populate( void )
