@@ -1750,7 +1750,22 @@ void US_Hydrodyn_Dad::avg( QStringList files, QString suffix )
          }
          avg_sd[ i ] = sqrt( sse ) / (double) selected_count;
       }
-   }         
+   } else {
+      // recompute errors as SD
+      editor_msg( "darkblue", "computing standard deviations from the values themselves" );
+      vector < vector < double > > ys;
+      vector < double >            y_avg;
+      vector < double >            y_sd;
+      for ( auto const & I : t_Is ) {
+         ys.push_back( I.second );
+      }
+      QString error_msg;
+      if ( !US_Saxs_Util::average( ys, y_avg, y_sd, error_msg ) ) {
+         editor_msg( "red", error_msg );
+         return;
+      }
+      avg_sd = y_sd;
+   }
 
    avg_conc /= (double) selected_count;
    avg_psv  /= (double) selected_count;
@@ -1850,6 +1865,11 @@ void US_Hydrodyn_Dad::avg( QStringList files, QString suffix )
    {
       conc_window->refresh( csv_conc );
    }
+   {
+      set < QString > to_select = { avg_name };
+      set_selected( to_select );
+   }
+   
    update_enables();
 }
 
@@ -2465,7 +2485,7 @@ void US_Hydrodyn_Dad::options()
 
    check_mwt_constants();
 
-   lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() );
+   lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() + DAD_LAMBDA_EXTC_MSG );
 
    update_enables();
 }

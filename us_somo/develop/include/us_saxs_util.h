@@ -876,8 +876,14 @@ class US_EXTERN US_Saxs_Util
                                                           unsigned int      points
                                                           );
                                                              
-
       bool         align_test();
+
+      static bool                                     average( 
+                                                             const vector < vector < double > > & ys,
+                                                             vector < double > & y_avg,
+                                                             vector < double > & y_sd,
+                                                             QString & error_msg
+                                                              );
 
       static bool  read_sas_data( 
                                  QString             filename,

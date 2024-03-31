@@ -73,6 +73,8 @@ using namespace std;
 # define M_ONE_OVER_SQRT2   7.07106781188e-1
 #endif
 
+#define DAD_LAMBDA_EXTC_MSG QString( "<center>Selected lambda %1, extinction coefficient %2</br></center>" ).arg( dad_param_lambda ).arg( dad_param_g_extinction_coef ) 
+
 struct dad_stack_data
 {
    map < QString, vector < QString > > f_qs_string;
@@ -679,6 +681,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       
       vector < QStringList >             powerfit_names;
       QString                            powerfit_name;
+      set < QString >                    powerfit_created_name;
       set < QString >                    powerfit_org_selected;
       void                               powerfit_scroll_highlight( int pos );
       void                               powerfit_enables();
@@ -697,6 +700,18 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       mQLineEdit                       * le_powerfit_b;
       QLabel                           * lbl_powerfit_c;
       mQLineEdit                       * le_powerfit_c;
+      mQLineEdit                       * le_powerfit_c_min;
+      mQLineEdit                       * le_powerfit_c_max;
+
+      QLabel                           * lbl_powerfit_fit_epsilon;
+      mQLineEdit                       * le_powerfit_fit_epsilon;
+      QLabel                           * lbl_powerfit_fit_iterations;
+      mQLineEdit                       * le_powerfit_fit_iterations;
+      QLabel                           * lbl_powerfit_fit_max_calls;
+      mQLineEdit                       * le_powerfit_fit_max_calls;
+
+      QLabel                           * lbl_powerfit_computed_conc;
+      mQLineEdit                       * le_powerfit_computed_conc;
 
       QLabel                           * lbl_powerfit_fit_curve;
 
@@ -743,30 +758,51 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
 
       void                               powerfit_fit_clear( bool replot = true );
 
+      void                               powerfit_curve_update();
+
+      vector < double >                  powerfit_curve( const vector < double > & x, double A, double B, double C );
+
+      vector < double >                  curve_trim( const vector < double > x, double x_min, double x_max );
+
+      void                               powerfit_compute_conc();
+
    private slots:
 
-      void powerfit                     ( bool no_store_original = false );
+      void powerfit                       ( bool no_store_original = false );
 
-      void powerfit_fit();
-      void powerfit_reset();
-      void powerfit_create_adjusted_curve();
+      void powerfit_fit                   ();
+      void powerfit_reset                 ();
+      void powerfit_create_adjusted_curve ();
       
-      void powerfit_q_start_text       ( const QString & );
-      void powerfit_q_start_focus      ( bool );
-      void powerfit_q_end_text         ( const QString & );
-      void powerfit_q_end_focus        ( bool );
+      void powerfit_q_start_text          ( const QString & );
+      void powerfit_q_start_focus         ( bool );
+      void powerfit_q_end_text            ( const QString & );
+      void powerfit_q_end_focus           ( bool );
 
-      void powerfit_a_text             ( const QString & );
-      void powerfit_a_focus            ( bool );
-      void powerfit_b_text             ( const QString & );
-      void powerfit_b_focus            ( bool );
-      void powerfit_c_text             ( const QString & );
-      void powerfit_c_focus            ( bool );
+      void powerfit_a_text                ( const QString & );
+      void powerfit_a_focus               ( bool );
+      void powerfit_b_text                ( const QString & );
+      void powerfit_b_focus               ( bool );
+      void powerfit_c_text                ( const QString & );
+      void powerfit_c_focus               ( bool );
+      void powerfit_c_min_text            ( const QString & );
+      void powerfit_c_min_focus           ( bool );
+      void powerfit_c_max_text            ( const QString & );
+      void powerfit_c_max_focus           ( bool );
+
+      void powerfit_fit_epsilon_text      ( const QString & );
+      void powerfit_fit_epsilon_focus     ( bool );
+      void powerfit_fit_iterations_text   ( const QString & );
+      void powerfit_fit_iterations_focus  ( bool );
+      void powerfit_fit_max_calls_text    ( const QString & );
+      void powerfit_fit_max_calls_focus   ( bool );
+      void powerfit_computed_conc_text    ( const QString & );
+      void powerfit_computed_conc_focus   ( bool );
 
       // qt doc says int argument for the signal, but actually QString
-      void powerfit_fit_alg_index       (); // int index );
-      void powerfit_fit_alg_weight_index(); // int index );
-      void powerfit_fit_curve_index     (); // int index );
+      void powerfit_fit_alg_index         (); // int index );
+      void powerfit_fit_alg_weight_index  (); // int index );
+      void powerfit_fit_curve_index       (); // int index );
 
    private:
 

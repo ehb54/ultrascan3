@@ -471,6 +471,9 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    this->us_hydrodyn = us_hydrodyn;
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
    dad_options_widget = 0;
+   suppress_plot            = false;
+   powerfit_fit_curve       = (QwtPlotCurve *) 0;
+   powerfit_corrected_curve = (QwtPlotCurve *) 0;
 
    gaussian_param_text
       << "amplitude"
@@ -2555,7 +2558,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       if ( dad_lambdas.load( filename, qsl, errormsg ) ) {
          editor_msg( "black", QString( "%1 DAD lambdas loaded\n" ).arg( filename ) );
          editor_msg( "black", dad_lambdas.summary() );
-         lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() );
+         lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() + DAD_LAMBDA_EXTC_MSG );
          return false;
       }
 

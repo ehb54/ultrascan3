@@ -795,7 +795,11 @@ void US_Hydrodyn_Dad::wheel_cancel( bool from_wheel_save )
       break;
 
    case MODE_POWERFIT :
-      set_selected( powerfit_org_selected );
+      if ( powerfit_created_name.size() ) {
+         set_selected( powerfit_created_name );
+      } else {
+         set_selected( powerfit_org_selected );
+      }
       powerfit_delete_markers();
       mode_select( MODE_NORMAL );
       break;

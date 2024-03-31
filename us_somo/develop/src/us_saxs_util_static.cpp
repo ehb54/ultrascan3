@@ -11565,3 +11565,71 @@ bool US_Saxs_Util::compute_rg_from_pr(
    Rg = sqrt( intgrl_r2_pr / ( 2.0 * intgrl_pr ) );
    return true;
 }
+
+bool US_Saxs_Util::average( 
+                           const vector < vector < double > > & ys,
+                           vector < double > & y_avg,
+                           vector < double > & y_sd,
+                           QString & error_msg
+                            ) {
+   size_t ys_size = ys.size();
+
+   if ( !ys_size ) {
+      error_msg = "average() : no vectors provided";
+      return false;
+   }
+
+   size_t y_size = ys[ 0 ].size();
+
+   vector < double > y_sum( y_size, 0 );
+   vector < double > y_sum2( y_size, 0 );
+
+   for ( auto const & y : ys ) {
+      if ( y.size() != y_size ) {
+         error_msg = "average() : vectors have different lengths";
+         return false;
+      }
+      for ( size_t i = 0; i < y_size; ++i ) {
+         y_sum[ i ]  += y[ i ];
+         y_sum2[ i ] += y[ i ] * y[ i ];
+      }         
+   }
+
+   // calc average
+   
+   y_avg = y_sum;
+   {
+      double ys_size_recip = 1e0 / (double) ys_size;
+      for ( auto & v : y_avg ) {
+         v *= ys_size_recip;
+      }
+   }
+
+   y_sd.resize( y_size );
+
+   // calc sd
+   if ( ys_size > 1 ) {
+      double n = (double) ys_size;
+      double n_m_1 = n - 1;
+      double n_recip = 1/n;
+      double n_m_1_recip = 1/n_m_1;
+      
+      for ( size_t i = 0; i < y_size; ++i ) {
+         // qDebug() << QString( "y_sum2[%1]=%2 y_sum[%1]=%3 n %4 n_m_1 %5 n_recip %6 n_m_1_recip %7" )
+         //    .arg( i )
+         //    .arg( y_sum2[i] )
+         //    .arg( y_sum[i] )
+         //    .arg( n )
+         //    .arg( n_m_1 )
+         //    .arg( n_recip )
+         //    .arg( n_m_1_recip )
+         //    ;
+            
+         y_sd[ i ] = sqrt( n_m_1_recip * ( y_sum2[ i ] - n_recip * ( y_sum[ i ] * y_sum[ i ] ) ) );
+      }
+   } else {
+      y_sd.clear();
+   }
+
+   return true;
+}

@@ -383,11 +383,13 @@ void US_Hydrodyn_Dad::setupGUI()
    pb_powerfit->setPalette( PALET_PUSHB );
    connect(pb_powerfit, SIGNAL(clicked()), SLOT(powerfit()));
 
-   lbl_powerfit_msg = new QLabel( " Chi^2 of this fit: XXX Global Chi^2: YYY", this );
+   lbl_powerfit_msg = new QLabel( "", this );
    lbl_powerfit_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_powerfit_msg->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_msg );
    lbl_powerfit_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_msg->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_powerfit_msg->setCursor(QCursor(Qt::IBeamCursor));
 
    pb_powerfit_fit = new QPushButton(us_tr("Fit"), this);
    pb_powerfit_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -396,7 +398,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect(pb_powerfit_fit, SIGNAL(clicked()), SLOT(powerfit_fit()));
 
    // lbl_powerfit_fit_curve = new QLabel( "Fit curve ", this );
-   lbl_powerfit_fit_curve = new QLabel( "Fit controls", this );
+   lbl_powerfit_fit_curve = new QLabel( "Fit controls: ", this );
    lbl_powerfit_fit_curve->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_powerfit_fit_curve->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_fit_curve );
@@ -417,8 +419,8 @@ void US_Hydrodyn_Dad::setupGUI()
    cb_powerfit_fit_curve->addItem( us_tr( "6th degree Polynomial" ), POWERFIT_FIT_CURVE_P6 );
    cb_powerfit_fit_curve->addItem( us_tr( "7th degree Polynomial" ), POWERFIT_FIT_CURVE_P7 );
    cb_powerfit_fit_curve->addItem( us_tr( "8th degree Polynomial" ), POWERFIT_FIT_CURVE_P8 );
-   connect( cb_powerfit_fit_curve, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_curve_index( ) ) );
    cb_powerfit_fit_curve->setCurrentIndex( 1 );
+   connect( cb_powerfit_fit_curve, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_curve_index( ) ) );
 
    cb_powerfit_fit_alg = new QComboBox( this );
    cb_powerfit_fit_alg->setPalette( PALET_NORMAL );
@@ -434,8 +436,8 @@ void US_Hydrodyn_Dad::setupGUI()
    cb_powerfit_fit_alg->addItem( us_tr( "QR Householder column pivoting" ), US_Eigen::EIGEN_HOUSEHOLDER_QR_PIVOT_COL);
    cb_powerfit_fit_alg->addItem( us_tr( "QR Householder" )                , US_Eigen::EIGEN_HOUSEHOLDER_QR );
    cb_powerfit_fit_alg->addItem( us_tr( "LR" )                            , US_Eigen::EIGEN_NORMAL );
-   connect( cb_powerfit_fit_alg, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_alg_index( ) ) );
    cb_powerfit_fit_alg->setCurrentIndex( 5 );
+   connect( cb_powerfit_fit_alg, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_alg_index( ) ) );
 
    cb_powerfit_fit_alg_weight = new QComboBox( this );
    cb_powerfit_fit_alg_weight->setPalette( PALET_NORMAL );
@@ -451,8 +453,8 @@ void US_Hydrodyn_Dad::setupGUI()
    cb_powerfit_fit_alg_weight->addItem( us_tr( "1/SD" )        , US_Eigen::EIGEN_1_OVER_SD );
    cb_powerfit_fit_alg_weight->addItem( us_tr( "1/SD^2" )      , US_Eigen::EIGEN_1_OVER_SD_SQ );
 
-   connect( cb_powerfit_fit_alg_weight, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_alg_weight_index( ) ) );
    cb_powerfit_fit_alg_weight->setCurrentIndex( 3 ); // US_Eigen::EIGEN_1_OVER_SD
+   connect( cb_powerfit_fit_alg_weight, SIGNAL( currentIndexChanged( QString ) ), SLOT( powerfit_fit_alg_weight_index( ) ) );
 
    pb_powerfit_reset = new QPushButton(us_tr("Reset"), this);
    pb_powerfit_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -503,7 +505,7 @@ void US_Hydrodyn_Dad::setupGUI()
    lbl_powerfit_a->hide();
 
    le_powerfit_a = new mQLineEdit( this );    le_powerfit_a->setObjectName( "le_powerfit_a Line Edit" );
-   le_powerfit_a->setText( "" );
+   le_powerfit_a->setText( "0" );
    le_powerfit_a->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_powerfit_a->setPalette( PALET_NORMAL );
    le_powerfit_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -521,7 +523,7 @@ void US_Hydrodyn_Dad::setupGUI()
    lbl_powerfit_b->hide();
 
    le_powerfit_b = new mQLineEdit( this );    le_powerfit_b->setObjectName( "le_powerfit_b Line Edit" );
-   le_powerfit_b->setText( "" );
+   le_powerfit_b->setText( "1" );
    le_powerfit_b->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_powerfit_b->setPalette( PALET_NORMAL );
    le_powerfit_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -531,7 +533,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_b, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_b_text( const QString & ) ) );
    connect( le_powerfit_b, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_b_focus( bool ) ) );
    
-   lbl_powerfit_c = new QLabel( us_tr( " C: " ), this );
+   lbl_powerfit_c = new QLabel( us_tr( " C,Min.,Max.: " ), this );
    lbl_powerfit_c->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_c->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_c );
@@ -539,7 +541,7 @@ void US_Hydrodyn_Dad::setupGUI()
    lbl_powerfit_c->hide();
 
    le_powerfit_c = new mQLineEdit( this );    le_powerfit_c->setObjectName( "le_powerfit_c Line Edit" );
-   le_powerfit_c->setText( "" );
+   le_powerfit_c->setText( "4" );
    le_powerfit_c->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_powerfit_c->setPalette( PALET_NORMAL );
    le_powerfit_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -548,6 +550,100 @@ void US_Hydrodyn_Dad::setupGUI()
    le_powerfit_c->hide();
    connect( le_powerfit_c, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_c_text( const QString & ) ) );
    connect( le_powerfit_c, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_c_focus( bool ) ) );
+
+   le_powerfit_c_min = new mQLineEdit( this );    le_powerfit_c_min->setObjectName( "le_powerfit_c_min Line Edit" );
+   le_powerfit_c_min->setText( "3.5" );
+   le_powerfit_c_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_c_min->setPalette( PALET_NORMAL );
+   le_powerfit_c_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_c_min->setEnabled( false );
+   le_powerfit_c_min->setValidator( new QDoubleValidator( le_powerfit_c_min ) );
+   le_powerfit_c_min->hide();
+   connect( le_powerfit_c_min, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_c_min_text( const QString & ) ) );
+   connect( le_powerfit_c_min, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_c_min_focus( bool ) ) );
+   
+   le_powerfit_c_max = new mQLineEdit( this );    le_powerfit_c_max->setObjectName( "le_powerfit_c_max Line Edit" );
+   le_powerfit_c_max->setText( "4.5" );
+   le_powerfit_c_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_c_max->setPalette( PALET_NORMAL );
+   le_powerfit_c_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_c_max->setEnabled( false );
+   le_powerfit_c_max->setValidator( new QDoubleValidator( le_powerfit_c_max ) );
+   le_powerfit_c_max->hide();
+   connect( le_powerfit_c_max, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_c_max_text( const QString & ) ) );
+   connect( le_powerfit_c_max, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_c_max_focus( bool ) ) );
+   
+   lbl_powerfit_fit_epsilon = new QLabel( us_tr( " Epsilon: " ), this );
+   lbl_powerfit_fit_epsilon->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_fit_epsilon->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_fit_epsilon );
+   lbl_powerfit_fit_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_fit_epsilon->hide();
+
+   le_powerfit_fit_epsilon = new mQLineEdit( this );    le_powerfit_fit_epsilon->setObjectName( "le_powerfit_fit_epsilon Line Edit" );
+   le_powerfit_fit_epsilon->setText( "1e-7" );
+   le_powerfit_fit_epsilon->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_fit_epsilon->setPalette( PALET_NORMAL );
+   le_powerfit_fit_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_fit_epsilon->setEnabled( false );
+   le_powerfit_fit_epsilon->setValidator( new QDoubleValidator( le_powerfit_fit_epsilon ) );
+   le_powerfit_fit_epsilon->hide();
+   connect( le_powerfit_fit_epsilon, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_epsilon_text( const QString & ) ) );
+   connect( le_powerfit_fit_epsilon, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_epsilon_focus( bool ) ) );
+
+   lbl_powerfit_fit_iterations = new QLabel( us_tr( " Iterations: " ), this );
+   lbl_powerfit_fit_iterations->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_fit_iterations->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_fit_iterations );
+   lbl_powerfit_fit_iterations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_fit_iterations->hide();
+
+   le_powerfit_fit_iterations = new mQLineEdit( this );    le_powerfit_fit_iterations->setObjectName( "le_powerfit_fit_iterations Line Edit" );
+   le_powerfit_fit_iterations->setText( "1000" );
+   le_powerfit_fit_iterations->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_fit_iterations->setPalette( PALET_NORMAL );
+   le_powerfit_fit_iterations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_fit_iterations->setEnabled( false );
+   le_powerfit_fit_iterations->setValidator( new QIntValidator( 2, 1000000, le_powerfit_fit_iterations ) );
+   le_powerfit_fit_iterations->hide();
+   connect( le_powerfit_fit_iterations, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_iterations_text( const QString & ) ) );
+   connect( le_powerfit_fit_iterations, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_iterations_focus( bool ) ) );
+
+   lbl_powerfit_fit_max_calls = new QLabel( us_tr( " Maximum calls: " ), this );
+   lbl_powerfit_fit_max_calls->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_fit_max_calls->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_fit_max_calls );
+   lbl_powerfit_fit_max_calls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_fit_max_calls->hide();
+
+   le_powerfit_fit_max_calls = new mQLineEdit( this );    le_powerfit_fit_max_calls->setObjectName( "le_powerfit_fit_max_calls Line Edit" );
+   le_powerfit_fit_max_calls->setText( "10000" );
+   le_powerfit_fit_max_calls->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_fit_max_calls->setPalette( PALET_NORMAL );
+   le_powerfit_fit_max_calls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_fit_max_calls->setEnabled( false );
+   le_powerfit_fit_max_calls->setValidator( new QIntValidator( 2, 1000000, le_powerfit_fit_max_calls ) );
+   le_powerfit_fit_max_calls->hide();
+   connect( le_powerfit_fit_max_calls, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_max_calls_text( const QString & ) ) );
+   connect( le_powerfit_fit_max_calls, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_max_calls_focus( bool ) ) );
+   
+   lbl_powerfit_computed_conc = new QLabel( us_tr( " Computed concentration [mg/mL]: " ), this );
+   lbl_powerfit_computed_conc->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_computed_conc->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_computed_conc );
+   lbl_powerfit_computed_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_computed_conc->hide();
+
+   le_powerfit_computed_conc = new mQLineEdit( this );    le_powerfit_computed_conc->setObjectName( "le_powerfit_computed_conc Line Edit" );
+   le_powerfit_computed_conc->setText( "" );
+   le_powerfit_computed_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_computed_conc->setPalette( PALET_NORMAL );
+   le_powerfit_computed_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_computed_conc->setEnabled( true );
+   le_powerfit_computed_conc->setReadOnly( true );
+   le_powerfit_computed_conc->hide();
+   connect( le_powerfit_computed_conc, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_computed_conc_text( const QString & ) ) );
+   connect( le_powerfit_computed_conc, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_computed_conc_focus( bool ) ) );
    
    // powerfit end
 
@@ -3941,6 +4037,14 @@ void US_Hydrodyn_Dad::setupGUI()
    QBoxLayout * vbl_powerfit = new QVBoxLayout( 0 ); vbl_powerfit->setContentsMargins( 0, 0, 0, 0 ); vbl_powerfit->setSpacing( 0 );
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_a );
+      hbl->addWidget( le_powerfit_a );
+      hbl->addWidget( lbl_powerfit_b );
+      hbl->addWidget( le_powerfit_b );
+      hbl->addWidget( lbl_powerfit_c );
+      hbl->addWidget( le_powerfit_c );
+      hbl->addWidget( le_powerfit_c_min );
+      hbl->addWidget( le_powerfit_c_max );
       hbl->addWidget( lbl_powerfit_q_range );
       hbl->addWidget( le_powerfit_q_start );
       hbl->addWidget( le_powerfit_q_end );
@@ -3949,12 +4053,8 @@ void US_Hydrodyn_Dad::setupGUI()
 
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( lbl_powerfit_a );
-      hbl->addWidget( le_powerfit_a );
-      hbl->addWidget( lbl_powerfit_b );
-      hbl->addWidget( le_powerfit_b );
-      hbl->addWidget( lbl_powerfit_c );
-      hbl->addWidget( le_powerfit_c );
+      hbl->addWidget( lbl_powerfit_computed_conc );
+      hbl->addWidget( le_powerfit_computed_conc );
       hbl->addWidget( pb_powerfit_fit );
       hbl->addWidget( pb_powerfit_reset );
       hbl->addWidget( pb_powerfit_create_adjusted_curve );
@@ -3963,6 +4063,12 @@ void US_Hydrodyn_Dad::setupGUI()
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_powerfit_fit_curve );
+      hbl->addWidget( lbl_powerfit_fit_epsilon );
+      hbl->addWidget( le_powerfit_fit_epsilon );
+      hbl->addWidget( lbl_powerfit_fit_iterations );
+      hbl->addWidget( le_powerfit_fit_iterations );
+      hbl->addWidget( lbl_powerfit_fit_max_calls );
+      hbl->addWidget( le_powerfit_fit_max_calls );
       hbl->addWidget( cb_powerfit_fit_curve );
       hbl->addWidget( cb_powerfit_fit_alg );
       hbl->addWidget( cb_powerfit_fit_alg_weight );
@@ -4266,6 +4372,8 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_baseline_start
             ,pb_baseline_apply
             ,rb_pbmode_q_exclude
+            ,cb_powerfit_fit_curve
+            ,cb_powerfit_fit_alg
             }
       );
 
@@ -4436,7 +4544,18 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    powerfit_widgets.push_back( le_powerfit_b );
    powerfit_widgets.push_back( lbl_powerfit_c );
    powerfit_widgets.push_back( le_powerfit_c );
+   powerfit_widgets.push_back( le_powerfit_c_min );
+   powerfit_widgets.push_back( le_powerfit_c_max );
 
+   powerfit_widgets.push_back( lbl_powerfit_fit_epsilon );
+   powerfit_widgets.push_back( le_powerfit_fit_epsilon );
+   powerfit_widgets.push_back( lbl_powerfit_fit_iterations );
+   powerfit_widgets.push_back( le_powerfit_fit_iterations );
+   powerfit_widgets.push_back( lbl_powerfit_fit_max_calls );
+   powerfit_widgets.push_back( le_powerfit_fit_max_calls );
+
+   powerfit_widgets.push_back( lbl_powerfit_computed_conc );
+   powerfit_widgets.push_back( le_powerfit_computed_conc );
    powerfit_widgets.push_back( pb_powerfit_fit );
    powerfit_widgets.push_back( pb_powerfit_reset );
    powerfit_widgets.push_back( pb_powerfit_create_adjusted_curve );
@@ -5503,6 +5622,12 @@ void US_Hydrodyn_Dad::disable_all()
    le_powerfit_a                      ->setEnabled( false );
    le_powerfit_b                      ->setEnabled( false );
    le_powerfit_c                      ->setEnabled( false );
+   le_powerfit_c_min                  ->setEnabled( false );
+   le_powerfit_c_max                  ->setEnabled( false );
+
+   le_powerfit_fit_epsilon            ->setEnabled( false );
+   le_powerfit_fit_iterations         ->setEnabled( false );
+   le_powerfit_fit_max_calls          ->setEnabled( false );
 
    cb_powerfit_fit_curve              ->setEnabled( false );
    cb_powerfit_fit_alg                ->setEnabled( false );
