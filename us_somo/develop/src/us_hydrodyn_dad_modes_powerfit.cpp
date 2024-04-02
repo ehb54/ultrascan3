@@ -7,14 +7,17 @@
 #include "../include/us_eigen.h"
 #include "../include/us_lm.h"
 
-static US_Eigen               eigen;
 static bool                   minimize_running;
 static double                 powerfit_c_min;
 static double                 powerfit_c_max;
 static vector < double >      fit_weights;
 static map < double, size_t > fit_weights_index;
 static vector < double >      powerfit_corrected_data;
+static vector < double >      powerfit_corrected_data_errors;
 static double                 powerfit_conc;
+static map < double, double > powerfit_org_I_at_lambda;
+static set < QString >        powerfit_tmp_plotnames;
+static bool                   powerfit_corrected_data_ok;
 
 #define TSO QTextStream(stdout)
 
@@ -32,13 +35,20 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
 
    disable_all();
 
-   powerfit_names        .clear();
-   powerfit_name         = "";
-   powerfit_org_selected .clear();
-   powerfit_created_name .clear();
-   le_powerfit_computed_conc->setText( "" );
+   powerfit_names              .clear();
+   powerfit_name               = "";
+   powerfit_org_selected       .clear();
+   powerfit_org_I_at_lambda    .clear();
+   powerfit_created_name       .clear();
+   powerfit_tmp_plotnames      .clear();
+   le_powerfit_computed_conc   ->setText( "" );
+   powerfit_b_default          = "1";
+   powerfit_corrected_data_ok  = false;
 
-   QStringList names = all_selected_files();
+   le_powerfit_lambda          ->setText( QString( "%1" ).arg( dad_param_lambda ) );
+   le_powerfit_extinction_coef ->setText( QString( "%1" ).arg( dad_param_g_extinction_coef ) );
+
+   QStringList names           = all_selected_files();
 
    if ( names.size() != 1 ) {
       QMessageBox::critical( this,
@@ -54,6 +64,10 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
    
    powerfit_org_selected = all_selected_files_set();
    powerfit_name         = names[0];
+
+   for ( size_t i = 0; i < f_qs[ powerfit_name ].size(); ++i ) {
+      powerfit_org_I_at_lambda[ QString( "%1" ).arg( f_qs[ powerfit_name ][ i ] ).toDouble() ] = f_Is[ powerfit_name ][ i ];
+   }
 
    // using errors?
 
@@ -74,6 +88,8 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
 
    // move to _gui   lbl_powerfit_q_range->setText( us_tr( " Fit range 1 (fixed): " );
    
+   
+
    mode_select( MODE_POWERFIT );
    pb_wheel_save->hide();
 
@@ -115,6 +131,7 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
    }
 
    lbl_wheel_pos->setText("");
+   powerfit_set_b_default();
    powerfit_enables();
 }
 
@@ -137,6 +154,7 @@ void US_Hydrodyn_Dad::powerfit_enables()
    cb_dots                              ->setEnabled( true );
    pb_color_rotate                      ->setEnabled( true );
    pb_line_width                        ->setEnabled( true );
+   pb_legend                            ->setEnabled( true );
    pb_q_exclude_vis                     ->setEnabled( true );
    pb_q_exclude_left                    ->setEnabled( true );
    pb_q_exclude_right                   ->setEnabled( true );
@@ -161,9 +179,9 @@ void US_Hydrodyn_Dad::powerfit_enables()
 
    pb_powerfit_reset                    ->setEnabled(
                                                      le_powerfit_a->text() != "0"
-                                                     || le_powerfit_b->text() != "1"
+                                                     || le_powerfit_b->text() != powerfit_b_default
                                                      || le_powerfit_c->text() != "4"
-                                                     // || le_powerfit_c_min->text() != "3.5"
+                                                     // || le_powerfit_c_min->text() != "3.9"
                                                      // || le_powerfit_c_max->text() != "4.5"
                                                      );
                                                      
@@ -182,6 +200,9 @@ void US_Hydrodyn_Dad::powerfit_enables()
    cb_powerfit_fit_curve                ->setEnabled( true );
    cb_powerfit_fit_alg                  ->setEnabled( true );
    cb_powerfit_fit_alg_weight           ->setEnabled( true );
+
+   le_powerfit_lambda                   ->setEnabled( true );
+   le_powerfit_extinction_coef          ->setEnabled( true );
 
    wheel_enables( true );
 
@@ -220,6 +241,13 @@ void US_Hydrodyn_Dad::powerfit_add_marker(
 void US_Hydrodyn_Dad::powerfit_delete_markers() {
    plot_dist   ->detachItems( QwtPlotItem::Rtti_PlotMarker );
    powerfit_markers.clear();
+   if ( powerfit_tmp_plotnames.size() ) {
+      remove_files( powerfit_tmp_plotnames );
+      powerfit_tmp_plotnames.clear();
+      plot_color.clear();
+      plot_style.clear();
+      plot_width_multiplier.clear();
+   }
 }
 
 #define UHMS_SCALE_WHEEL_RES 10000
@@ -235,7 +263,7 @@ void US_Hydrodyn_Dad::powerfit_q_start_text( const QString & text ) {
       return;
    }
    
-   powerfit_fit_clear( false );
+   powerfit_fit_clear( true );
 
    lbl_wheel_pos->setText( text );
    powerfit_markers[ 0 ]->setXValue( text.toDouble() );
@@ -254,6 +282,7 @@ void US_Hydrodyn_Dad::powerfit_q_start_text( const QString & text ) {
    } else {
       TSO << QString( "powerfit_q_start_text() calls any analysis etc()\n" );
    }
+   powerfit_set_b_default();
 }
 
 void US_Hydrodyn_Dad::powerfit_q_end_text( const QString & text ) {
@@ -282,6 +311,7 @@ void US_Hydrodyn_Dad::powerfit_q_end_text( const QString & text ) {
 
    if ( text.toDouble() < le_powerfit_q_start->text().toDouble() ) {
       le_powerfit_q_start->setText( text );
+      powerfit_set_b_default();
    } else {
       TSO << QString( "powerfit_q_end_text() calls any analysis etc\n" );
    }
@@ -363,6 +393,7 @@ void US_Hydrodyn_Dad::powerfit_c_focus( bool hasFocus ) {
 void US_Hydrodyn_Dad::powerfit_c_min_text( const QString & /* text */ ) {
    qDebug() << "powerfit_c_min_text";
    powerfit_c_min = le_powerfit_c_min->text().toDouble();
+   powerfit_set_b_default();
    powerfit_enables();
 }
 
@@ -410,6 +441,28 @@ void US_Hydrodyn_Dad::powerfit_computed_conc_text( const QString & /* text */ ) 
 
 void US_Hydrodyn_Dad::powerfit_computed_conc_focus( bool /* hasFocus */ ) {
    qDebug() << "powerfit_computed_conc_focus";
+}
+
+void US_Hydrodyn_Dad::powerfit_lambda_text( const QString & text ) {
+   qDebug() << "powerfit_lambda_text";
+   dad_param_lambda = text.toDouble();
+   lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() + DAD_LAMBDA_EXTC_MSG );
+   powerfit_compute_conc();
+}
+
+void US_Hydrodyn_Dad::powerfit_lambda_focus( bool /* hasFocus */ ) {
+   qDebug() << "powerfit_lambda_focus";
+}
+
+void US_Hydrodyn_Dad::powerfit_extinction_coef_text( const QString & text ) {
+   qDebug() << "powerfit_extinction_coef_text";
+   dad_param_g_extinction_coef = text.toDouble();
+   lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() + DAD_LAMBDA_EXTC_MSG );
+   powerfit_compute_conc();
+}
+
+void US_Hydrodyn_Dad::powerfit_extinction_coef_focus( bool /* hasFocus */ ) {
+   qDebug() << "powerfit_extinction_coef_focus";
 }
 
 double compute_powerfit( double t, const double *par ) {
@@ -633,23 +686,30 @@ void US_Hydrodyn_Dad::powerfit_fit_curve_index() {
 void US_Hydrodyn_Dad::powerfit_reset() {
    qDebug() << "powerfit_reset()";
    le_powerfit_a->setText( "0" );
-   le_powerfit_b->setText( "1" );
    le_powerfit_c->setText( "4" );
+   powerfit_set_b_default();
    powerfit_curve_update();
 }
 
 void US_Hydrodyn_Dad::powerfit_fit_clear( bool replot ) {
    qDebug() << "powerfit_fit_clear()";
    le_powerfit_computed_conc->setText( "" );
+   powerfit_corrected_data_ok = false;
+
+   if ( powerfit_tmp_plotnames.size() ) {
+      remove_files( powerfit_tmp_plotnames );
+      powerfit_tmp_plotnames.clear();
+      plot_color.clear();
+      plot_style.clear();
+      plot_width_multiplier.clear();
+   }
+
    if ( powerfit_fit_curve ) {
       qDebug() << "powerfit_fit_clear() powerfit_fit_curve set";
       powerfit_fit_curve->detach();
       delete powerfit_fit_curve;
       lbl_powerfit_msg->setText("");
       powerfit_fit_curve = (QwtPlotCurve *) 0;
-      if ( replot ) {
-         plot_dist->replot();
-      }
    }
    if ( powerfit_corrected_curve ) {
       qDebug() << "powerfit_fit_clear() powerfit_corrected_curve set";
@@ -657,10 +717,11 @@ void US_Hydrodyn_Dad::powerfit_fit_clear( bool replot ) {
       delete powerfit_corrected_curve;
       lbl_powerfit_msg->setText("");
       powerfit_corrected_curve = (QwtPlotCurve *) 0;
-      if ( replot ) {
-         plot_dist->replot();
-      }
    }
+   if ( replot ) {
+      plot_dist->replot();
+   }
+
    powerfit_compute_conc();
 }
 
@@ -685,7 +746,12 @@ vector < double > US_Hydrodyn_Dad::curve_trim( const vector < double > x, double
 }
            
 void US_Hydrodyn_Dad::powerfit_curve_update() {
+   qDebug() << "powerfit_curve_update()";
+
    powerfit_fit_clear( false );
+   plot_color.clear();
+   plot_style.clear();
+   plot_width_multiplier.clear();
 
    vector < double > x = f_qs[ powerfit_name ];
 
@@ -700,84 +766,40 @@ void US_Hydrodyn_Dad::powerfit_curve_update() {
    for ( size_t i = 0; i < x.size(); ++i ) {
       powerfit_corrected_data[ i ] -= y[ i ];
    }
+
+   if ( powerfit_use_errors ) {
+      powerfit_corrected_data_errors = f_errors[ powerfit_name ];
+   }
    
+   set < QString > to_select = { powerfit_name };
+
    // plot fit curve
 
-   {
-      if ( axis_y_log ) {
-         vector < double > trimmed_x;
-         vector < double > trimmed_y;
-
-         for ( size_t i = 0; i < x.size(); ++i ) {
-            if ( y[i] > 0 ) {
-               trimmed_x.push_back( x[i] );
-               trimmed_y.push_back( y[i] );
-            }
-         }
-
-         x = trimmed_x;
-         y = trimmed_y;
-      }
-
-      powerfit_fit_curve = new QwtPlotCurve( "powerfit_fit" );
-      powerfit_fit_curve->setStyle( QwtPlotCurve::Lines );
-      powerfit_fit_curve->setSamples(
-                                     (double *)&( x[ 0 ] ),
-                                     (double *)&( y[ 0 ] ),
-                                     x.size() );
-      powerfit_fit_curve->setPen( QPen( QColor( Qt::green ), use_line_width, Qt::SolidLine ) );
-      powerfit_fit_curve->attach( plot_dist );
-   }
-
+   add_plot( "Fit", x, y, false, false );
+   to_select.insert( last_created_file );
+   powerfit_tmp_plotnames.insert( last_created_file );
+   plot_color[ last_created_file ] = Qt::green;
+   plot_style[ last_created_file ] = Qt::SolidLine;
+   plot_width_multiplier[ last_created_file ] = 2;
 
    // plot corrected curve
-   {
-
-      if ( axis_y_log ) {
-         // might be trimmed, restore
-
-         x = f_qs[ powerfit_name ];
-
-         y = powerfit_curve(
-                            x
-                            ,le_powerfit_a->text().toDouble()
-                            ,le_powerfit_b->text().toDouble()
-                            ,le_powerfit_c->text().toDouble()
-                            );
-
-      }
-
-      for ( size_t i = 0; i < x.size(); ++i ) {
-         y[ i ] = f_Is[ powerfit_name ][ i ] - y[ i ];
-      }
-
-      if ( axis_y_log ) {
-         vector < double > trimmed_x;
-         vector < double > trimmed_y;
-         
-         for ( size_t i = 0; i < x.size(); ++i ) {
-            if ( y[i] > 0 ) {
-               trimmed_x.push_back( x[i] );
-               trimmed_y.push_back( y[i] );
-            }
-         }
-         
-         x = trimmed_x;
-         y = trimmed_y;
-      }
-
-      powerfit_corrected_curve = new QwtPlotCurve( "powerfit_corrected" );
-      powerfit_corrected_curve->setStyle( QwtPlotCurve::Lines );
-      powerfit_corrected_curve->setSamples(
-                                     (double *)&( x[ 0 ] ),
-                                     (double *)&( y[ 0 ] ),
-                                     x.size() );
-      powerfit_corrected_curve->setPen( QPen( QColor( Qt::cyan ), use_line_width, Qt::SolidLine ) );
-      powerfit_corrected_curve->attach( plot_dist );
-
+   for ( size_t i = 0; i < x.size(); ++i ) {
+      y[ i ] = f_Is[ powerfit_name ][ i ] - y[ i ];
    }
 
+   if ( powerfit_use_errors ) {
+      add_plot( "Scattering corrected", x, y, f_errors[ powerfit_name ], false, false );
+   } else {
+      add_plot( "Scattering corrected", x, y, false, false );
+   }         
+
+   to_select.insert( last_created_file );
+   plot_color[ last_created_file ] = Qt::cyan;
+   powerfit_tmp_plotnames.insert( last_created_file );
+
+   set_selected( to_select, true );
    plot_dist->replot();
+   powerfit_corrected_data_ok = true;
    powerfit_compute_conc();
 }
 
@@ -799,14 +821,18 @@ void US_Hydrodyn_Dad::powerfit_create_adjusted_curve() {
       y[ i ] = f_Is[ powerfit_name ][ i ] - y[ i ];
    }
 
-   QString name = powerfit_name + QString( "_bca_%1_bcb_%2_bcc_%3" )
+   QString name = powerfit_name + QString( "_scA_%1_scB_%2_scC_%3" )
       .arg( le_powerfit_a->text() )
       .arg( le_powerfit_b->text() )
       .arg( le_powerfit_c->text() )
       .replace( ".", "_" )
       ;
    
-   add_plot( name, x, y, false, false );
+   if ( powerfit_use_errors ) {
+      add_plot( name, x, y, f_errors[ powerfit_name ], false, false );
+   } else {
+      add_plot( name, x, y, false, false );
+   }
    powerfit_created_name.insert( last_created_file );
 }
 
@@ -827,7 +853,7 @@ void US_Hydrodyn_Dad::powerfit_compute_conc() {
 
    vector < double > x = f_qs[ powerfit_name ];
 
-   bool using_corrected_data =  powerfit_corrected_curve && powerfit_corrected_data.size() == x.size();
+   bool using_corrected_data =  powerfit_corrected_data_ok && powerfit_corrected_data.size() == x.size();
    vector < double > y = using_corrected_data ? powerfit_corrected_data : f_Is[ powerfit_name ];
 
    // created trimmed versions
@@ -868,4 +894,33 @@ void US_Hydrodyn_Dad::powerfit_compute_conc() {
                                              : " *Not from corrected*"
                                              )
                                        );
+}
+
+void US_Hydrodyn_Dad::powerfit_set_b_default() {
+   qDebug() << "powerfit_set_b_default()";
+   double q_start = le_powerfit_q_start->text().toDouble();
+   if ( q_start < 0 ) {
+      q_start = 0;
+   }
+   
+   double val;
+   if ( powerfit_org_I_at_lambda.count( q_start ) ) {
+      val = powerfit_org_I_at_lambda[ q_start ];
+   } else {
+      vector < double > target = { q_start };
+      vector < double > y2;
+   
+      if ( !usu->linear_interpolate( f_qs[ powerfit_name], f_Is[ powerfit_name ], target, y2 ) ) {
+         qDebug() << "could not find I value at lambda for setting b";
+         return;
+      }
+      val = y2[ 0 ];
+   }
+
+   if ( val == 0 ) {
+      return;
+   }
+
+   powerfit_b_default = QString( "%1" ).arg( fabs( pow( q_start, -le_powerfit_c_min->text().toDouble()) / val ) );
+   le_powerfit_b->setText( powerfit_b_default );
 }

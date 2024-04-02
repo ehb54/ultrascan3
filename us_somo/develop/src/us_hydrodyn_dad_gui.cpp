@@ -377,7 +377,7 @@ void US_Hydrodyn_Dad::setupGUI()
 
    // powerfit start
 
-   pb_powerfit = new QPushButton(us_tr("Baseline correct"), this);
+   pb_powerfit = new QPushButton(us_tr("Scattering correction"), this);
    pb_powerfit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_powerfit->setMinimumHeight(minHeight1);
    pb_powerfit->setPalette( PALET_PUSHB );
@@ -476,7 +476,7 @@ void US_Hydrodyn_Dad::setupGUI()
    lbl_powerfit_q_range->hide();
 
    le_powerfit_q_start = new mQLineEdit( this );    le_powerfit_q_start->setObjectName( "le_powerfit_q_start Line Edit" );
-   le_powerfit_q_start->setText( "" );
+   le_powerfit_q_start->setText( "350" );
    le_powerfit_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_powerfit_q_start->setPalette( cg_fit_1 );
    le_powerfit_q_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -552,7 +552,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_c, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_c_focus( bool ) ) );
 
    le_powerfit_c_min = new mQLineEdit( this );    le_powerfit_c_min->setObjectName( "le_powerfit_c_min Line Edit" );
-   le_powerfit_c_min->setText( "3.5" );
+   le_powerfit_c_min->setText( "3.9" );
    le_powerfit_c_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_powerfit_c_min->setPalette( PALET_NORMAL );
    le_powerfit_c_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -644,6 +644,42 @@ void US_Hydrodyn_Dad::setupGUI()
    le_powerfit_computed_conc->hide();
    connect( le_powerfit_computed_conc, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_computed_conc_text( const QString & ) ) );
    connect( le_powerfit_computed_conc, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_computed_conc_focus( bool ) ) );
+   
+   lbl_powerfit_lambda = new QLabel( us_tr( " Lambda [nm]: " ), this );
+   lbl_powerfit_lambda->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_lambda->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_lambda );
+   lbl_powerfit_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_lambda->hide();
+
+   le_powerfit_lambda = new mQLineEdit( this );    le_powerfit_lambda->setObjectName( "le_powerfit_lambda Line Edit" );
+   le_powerfit_lambda->setText( "" );
+   le_powerfit_lambda->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_lambda->setPalette( PALET_NORMAL );
+   le_powerfit_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_lambda->setValidator( new QDoubleValidator( le_powerfit_lambda ) );
+   le_powerfit_lambda->setEnabled( true );
+   le_powerfit_lambda->hide();
+   connect( le_powerfit_lambda, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda_text( const QString & ) ) );
+   connect( le_powerfit_lambda, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda_focus( bool ) ) );
+   
+   lbl_powerfit_extinction_coef = new QLabel( us_tr( " Extinction_Coef [nm]: " ), this );
+   lbl_powerfit_extinction_coef->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_extinction_coef->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_extinction_coef );
+   lbl_powerfit_extinction_coef->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_extinction_coef->hide();
+
+   le_powerfit_extinction_coef = new mQLineEdit( this );    le_powerfit_extinction_coef->setObjectName( "le_powerfit_extinction_coef Line Edit" );
+   le_powerfit_extinction_coef->setText( "" );
+   le_powerfit_extinction_coef->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_extinction_coef->setPalette( PALET_NORMAL );
+   le_powerfit_extinction_coef->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_extinction_coef->setValidator( new QDoubleValidator( le_powerfit_extinction_coef ) );
+   le_powerfit_extinction_coef->setEnabled( true );
+   le_powerfit_extinction_coef->hide();
+   connect( le_powerfit_extinction_coef, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_extinction_coef_text( const QString & ) ) );
+   connect( le_powerfit_extinction_coef, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_extinction_coef_focus( bool ) ) );
    
    // powerfit end
 
@@ -4062,6 +4098,10 @@ void US_Hydrodyn_Dad::setupGUI()
    }
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_lambda );
+      hbl->addWidget( le_powerfit_lambda );
+      hbl->addWidget( lbl_powerfit_extinction_coef );
+      hbl->addWidget( le_powerfit_extinction_coef );
       hbl->addWidget( lbl_powerfit_fit_curve );
       hbl->addWidget( lbl_powerfit_fit_epsilon );
       hbl->addWidget( le_powerfit_fit_epsilon );
@@ -4374,6 +4414,14 @@ void US_Hydrodyn_Dad::setupGUI()
             ,rb_pbmode_q_exclude
             ,cb_powerfit_fit_curve
             ,cb_powerfit_fit_alg
+            ,pb_gauss_mode
+            ,pb_gauss_start
+            ,pb_ggauss_start
+            ,pb_testiq
+            ,pb_guinier
+            ,pb_scale
+            ,pb_load_conc
+            ,pb_conc
             }
       );
 
@@ -4556,6 +4604,12 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
 
    powerfit_widgets.push_back( lbl_powerfit_computed_conc );
    powerfit_widgets.push_back( le_powerfit_computed_conc );
+
+   powerfit_widgets.push_back( lbl_powerfit_lambda );
+   powerfit_widgets.push_back( le_powerfit_lambda );
+   powerfit_widgets.push_back( lbl_powerfit_extinction_coef );
+   powerfit_widgets.push_back( le_powerfit_extinction_coef );
+
    powerfit_widgets.push_back( pb_powerfit_fit );
    powerfit_widgets.push_back( pb_powerfit_reset );
    powerfit_widgets.push_back( pb_powerfit_create_adjusted_curve );
@@ -5628,6 +5682,9 @@ void US_Hydrodyn_Dad::disable_all()
    le_powerfit_fit_epsilon            ->setEnabled( false );
    le_powerfit_fit_iterations         ->setEnabled( false );
    le_powerfit_fit_max_calls          ->setEnabled( false );
+
+   le_powerfit_lambda                 ->setEnabled( false );
+   le_powerfit_extinction_coef        ->setEnabled( false );
 
    cb_powerfit_fit_curve              ->setEnabled( false );
    cb_powerfit_fit_alg                ->setEnabled( false );

@@ -713,6 +713,11 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QLabel                           * lbl_powerfit_computed_conc;
       mQLineEdit                       * le_powerfit_computed_conc;
 
+      QLabel                           * lbl_powerfit_lambda;
+      mQLineEdit                       * le_powerfit_lambda;
+      QLabel                           * lbl_powerfit_extinction_coef;
+      mQLineEdit                       * le_powerfit_extinction_coef;
+
       QLabel                           * lbl_powerfit_fit_curve;
 
       QPushButton                      * pb_powerfit_fit;
@@ -765,6 +770,12 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       vector < double >                  curve_trim( const vector < double > x, double x_min, double x_max );
 
       void                               powerfit_compute_conc();
+      QString                            powerfit_b_default;
+      void                               powerfit_set_b_default();
+
+      map < QString, QColor >            plot_color;
+      map < QString, Qt::PenStyle >      plot_style;
+      map < QString, double >            plot_width_multiplier;
 
    private slots:
 
@@ -798,6 +809,10 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       void powerfit_fit_max_calls_focus   ( bool );
       void powerfit_computed_conc_text    ( const QString & );
       void powerfit_computed_conc_focus   ( bool );
+      void powerfit_lambda_text           ( const QString & );
+      void powerfit_lambda_focus          ( bool );
+      void powerfit_extinction_coef_text  ( const QString & );
+      void powerfit_extinction_coef_focus ( bool );
 
       // qt doc says int argument for the signal, but actually QString
       void powerfit_fit_alg_index         (); // int index );

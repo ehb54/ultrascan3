@@ -841,11 +841,11 @@ void US_Hydrodyn_Dad::plot_files( bool save_zoom_state )
 {
    qDebug() << "plot files";
    if ( suppress_plot ) {
-      qDebug() << "plot files - supressed";
+      qDebug() << "plot files - suppressed";
       return;
    }
       
-   powerfit_fit_clear( false );
+   // powerfit_fit_clear( false );
 
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
    if ( current_mode != MODE_POWERFIT ) {
@@ -869,8 +869,7 @@ void US_Hydrodyn_Dad::plot_files( bool save_zoom_state )
    int asfs = (int) all_selected_files().size();
 
    if ( ( !baseline_test_mode && cb_eb->isChecked() && asfs > 9 ) 
-        || ( baseline_test_mode && cb_eb->isChecked() && asfs > 15 ) )
-   {
+        || ( baseline_test_mode && cb_eb->isChecked() && asfs > 15 ) ) {
       cb_eb->setChecked( false );
    }
 
@@ -878,13 +877,11 @@ void US_Hydrodyn_Dad::plot_files( bool save_zoom_state )
       cb_eb->isChecked() )
       &&
         legend_vis
-        )
-   {
+        ) {
       legend();
    }
 
-   if ( asfs == 1 )
-   {
+   if ( asfs == 1 ) {
       update_ref();
    }
 
@@ -1136,6 +1133,10 @@ bool US_Hydrodyn_Dad::get_min_max( QString file,
    return true;
 }
 
+#define PLOT_COLOR(file) ( plot_color.count( file ) ? plot_color[ file ] : plot_colors[ f_pos[ file ] % plot_colors.size() ] )
+#define PLOT_STYLE(file, default) ( plot_style.count( file ) ? plot_style[ file ] : default )
+#define PLOT_WIDTH(file) ( plot_width_multiplier.count( file ) ? use_line_width * plot_width_multiplier[ file ] : use_line_width )
+
 bool US_Hydrodyn_Dad::plot_file( QString file,
                                        double &minx,
                                        double &maxx,
@@ -1177,7 +1178,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
       QwtSymbol symbol;
       symbol.setStyle( QwtSymbol::Diamond );
       symbol.setSize( 1 + use_line_width * 5 );
-      symbol.setBrush( Qt::NoBrush ); // plot_colors[ f_pos[ file ] % plot_colors.size() ] );
+      symbol.setBrush( Qt::NoBrush ); // PLOT_COLOR( file ) );
 
       if ( !axis_y_log )
       {
@@ -1190,10 +1191,12 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
 
                            );
 
-         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         curve->setStyle( QwtPlotCurve::NoCurve );
-         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
+         curve->setPen( QPen( PLOT_COLOR( file ), PLOT_WIDTH( file ), PLOT_STYLE( file, Qt::SolidLine ) ) );
+         if ( !plot_style.count( file ) ) {
+            curve->setStyle( QwtPlotCurve::NoCurve );
+            symbol.setPen  ( QPen( PLOT_COLOR( file ), PLOT_WIDTH( file ), Qt::SolidLine ) );
+            curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
+         }
          curve->attach( plot_dist );
 
          for ( unsigned int i = 0; i < q_points; i++ ) {
@@ -1211,7 +1214,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                              2
                              );
 
-            curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            curveeb->setPen( QPen( PLOT_COLOR( file ), use_line_width, Qt::SolidLine ) );
             curveeb->attach( plot_dist );
 
             if ( use_q_exclude.count( x[0] ) ) {
@@ -1245,11 +1248,13 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                         q_points
                         );
 
-         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         curve->setStyle( QwtPlotCurve::NoCurve );
-         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         // symbol.setBrush( plot_colors[ f_pos[ file ] % plot_colors.size() ] );
-         curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
+         curve->setPen( QPen( PLOT_COLOR( file ), PLOT_WIDTH( file ), PLOT_STYLE( file, Qt::SolidLine ) ) );
+         if ( !plot_style.count( file ) ) {
+            curve->setStyle( QwtPlotCurve::NoCurve );
+            symbol.setPen  ( QPen( PLOT_COLOR( file ), PLOT_WIDTH( file ), Qt::SolidLine ) );
+            // symbol.setBrush( PLOT_COLOR( file ) );
+            curve->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
+         }
          curve->attach( plot_dist );
          for ( unsigned int i = 0; i < q_points; i++ )
          {
@@ -1267,7 +1272,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                            2
                            );
 
-            curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            curveeb->setPen( QPen( PLOT_COLOR( file ), use_line_width, Qt::SolidLine ) );
             curveeb->attach( plot_dist );
          }            
       }
@@ -1282,7 +1287,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                         q_points
                         );
 
-         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->setPen( QPen( PLOT_COLOR( file ), PLOT_WIDTH( file ), PLOT_STYLE( file, Qt::SolidLine ) ) );
          curve->attach( plot_dist );
          if ( use_q_exclude.size() ) {
             for ( unsigned int i = 0; i < q_points; i++ ) {
@@ -1316,7 +1321,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                         q_points
                         );
 
-         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->setPen( QPen( PLOT_COLOR( file ), PLOT_WIDTH( file ), PLOT_STYLE( file, Qt::SolidLine ) ) );
          curve->attach( plot_dist );
       }
    }            
@@ -1329,7 +1334,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
       QwtSymbol symbol;
       symbol.setStyle( QwtSymbol::XCross );
       symbol.setSize( 1 + use_line_width * 6 );
-      symbol.setPen( QPen( QColor( "red" ), use_line_width, Qt::SolidLine ) );
+      symbol.setPen( QPen( QColor( "red" ), PLOT_WIDTH( file ), Qt::SolidLine ) );
       // symbol.setBrush( Qt::NoBrush );
       curve->setSamples(
                         (double *)&(exclude_x[0])
