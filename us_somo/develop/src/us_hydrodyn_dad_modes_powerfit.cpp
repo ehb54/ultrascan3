@@ -921,6 +921,6 @@ void US_Hydrodyn_Dad::powerfit_set_b_default() {
       return;
    }
 
-   powerfit_b_default = QString( "%1" ).arg( fabs( pow( q_start, -le_powerfit_c_min->text().toDouble()) / val ) );
+   powerfit_b_default = QString( "%1" ).arg( 1e0 / fabs( pow( q_start, -le_powerfit_c_min->text().toDouble()) / val ) );
    le_powerfit_b->setText( powerfit_b_default );
 }
