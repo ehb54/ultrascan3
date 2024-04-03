@@ -4422,6 +4422,8 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_scale
             ,pb_load_conc
             ,pb_conc
+            ,pb_normalize
+            ,pb_to_saxs
             }
       );
 

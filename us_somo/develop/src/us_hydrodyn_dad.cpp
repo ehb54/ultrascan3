@@ -69,11 +69,23 @@ bool DAD_Lambdas::load( const QString & filename, const QStringList & filelines,
       return false;
    }
 
+   QStringList use_filelines;
+
+   for ( auto l1 : filelines ) {
+      QStringList qsl = l1.split( ", " );
+      for ( auto l2 : qsl ) {
+         l2 = l2.trimmed();
+         if ( !l2.isEmpty() ) {
+            use_filelines << l2.trimmed();
+         }
+      }
+   }
+
    vector < double > new_lambdas;
 
    {
       set < double > used;
-      for ( auto const & line : filelines ) {
+      for ( auto const & line : use_filelines ) {
          if ( line.split( QRegularExpression( "[\t ,]" ) ).size() > 1 ) {
             errormsg = QString( us_tr( "multiple tokens found %1 in %2" ) ).arg( line ).arg( filename );
             return false;
