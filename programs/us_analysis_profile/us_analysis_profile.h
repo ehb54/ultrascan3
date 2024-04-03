@@ -69,6 +69,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       QSignalMapper  *signalMapper;
 
+      void set_abde_panel();
+
  
             
    private:
@@ -108,6 +110,11 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       QLineEdit*   le_aproname;
       QLineEdit*   le_protname;
+
+  QLabel* lb_lcrat;
+  QLabel* lb_lctol;
+  QLabel* lb_daend;
+  QLabel* lb_mwvprefs;
 
       QList< QLineEdit* >    le_channs;
       QList< QLineEdit* >    le_lcrats;
@@ -411,6 +418,8 @@ class US_AnalysisProfileGui : public US_Widgets
       int     xpnport;
       
       bool    automode;
+  bool abde_mode_aprofile;
+  
       void    auto_mode_passed( void ); 
       void    auto_name_passed( QString&, QString& ); 
       void    inherit_protocol( US_RunProtocol* );

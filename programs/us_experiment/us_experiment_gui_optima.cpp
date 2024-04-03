@@ -418,6 +418,18 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
 }
 
 
+void US_ExperimentMain::set_abde_mode_aprofile( void )
+{
+  qDebug() << "[SETTING] ABDE MODE: ";
+  epanAProfile->sdiag-> abde_mode_aprofile = true;
+}
+
+void US_ExperimentMain::unset_abde_mode_aprofile( void )
+{
+  qDebug() << "[UNSETTING] ABDE MODE: ";
+  epanAProfile->sdiag-> abde_mode_aprofile = false;
+}
+
 void US_ExperimentMain::us_mode_passed( void )
 {
   qDebug() << "US_MODE SIGNAL: ";
@@ -4692,6 +4704,7 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    qDebug() << "EXP_APROFILE_GUI -- FIRST intitialization: sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
    sdiag->show();
 }
+
 
 //Resize AnalysisProfile properly
 void US_ExperGuiAProfile::resizeEvent( QResizeEvent *event )
