@@ -212,6 +212,11 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< double> lv_tolers;    //!< Load volume tolerances
       QList< double> data_ends;    //!< Load volume tolerances
 
+      //abde
+      QList< double> ld_dens_0s;
+      QList< double> gm_vbars;
+      QList< double> gm_mws;
+
       QList< int > scan_excl_begin;
       QList< int > scan_excl_end;
 
