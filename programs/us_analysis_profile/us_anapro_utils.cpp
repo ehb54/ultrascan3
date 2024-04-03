@@ -284,7 +284,32 @@ DbgLv(1) << "AP:iP: pG return";
 DbgLv(1) << "AP:iP: p2 return";
    apanPCSA     ->initPanel();
 DbgLv(1) << "AP:iP: pP return";
+
+//Hide 2DSA & PCSA if extType == ABDE
+ qDebug() << "AProfile::initPanels(): abde_mode_aprofile ? " << abde_mode_aprofile;
+ if ( abde_mode_aprofile )
+   {
+     this->tabWidget->setTabText( 0, "ABDE Settings");
+     this->tabWidget->setTabVisible(1, false);
+     this->tabWidget->setTabVisible(2, false);
+
+     //General Gui: modify
+     apanGeneral ->set_abde_panel();
+     
+   }
+ else
+   {
+     this->tabWidget->setTabText( 0, "1: General");
+     this->tabWidget->setTabVisible(1, true);
+     this->tabWidget->setTabVisible(2, true);
+
+     //General Gui: restore
+     
+   }
 }
+
+
+
 
 // Save all panels in preparation for leaving an AProfile panel
 void US_AnalysisProfileGui::savePanels()
@@ -577,7 +602,55 @@ else
       check_user_level();
    DbgLv(1) << "APGe: inP:  FROM initAprfile:General - RTN check_user_level()";
 
+
+   //if expTyp "ABDE": modify AProfile's GUI
+   
 }
+
+
+// Modify general setting for ABDE exptype
+void US_AnaprofPanGen::set_abde_panel()
+{
+
+  lb_lcrat -> setVisible( false );
+  lb_lctol -> setVisible( false );
+  lb_daend -> setVisible( false );
+  lb_mwvprefs -> setVisible( false );
+  
+  int nchn        = sl_chnsel.count();
+  qDebug() << "modifying General tab for ABDE: nchn -- " << nchn;
+  for ( int ii = 0; ii < nchn; ii++ )
+    {
+      // QString stchan        = QString::number( ii ) + ": ";
+      // qDebug() << "channel # -- " << stchan;
+      // QLineEdit * lr        = genL->findChild<QLineEdit *>( stchan + "loadconc_ratio");
+      // qDebug() << "lr for # -- " << stchan;
+      // QLineEdit * lr_tol    = genL->findChild<QLineEdit *>( stchan + "loadconc_tolerance");
+      // qDebug() << "lr_tol for # -- " << stchan;
+      // QLineEdit * d_end     = genL->findChild<QLineEdit *>( stchan + "dataend");
+      // qDebug() << "d_end for # -- " << stchan;
+      
+      // QCheckBox * mwl_p     = genL->findChild<QCheckBox *>( stchan + "MWV");
+      // qDebug() << "mwl_p for # -- " << stchan;
+      // //mwl_p -> setChecked( false );
+
+      // lr      ->setVisible( false );
+      // qDebug() << "lr for # -- " << stchan << "set invisible";
+      // lr_tol  ->setVisible( false );
+      // d_end   ->setVisible( false );
+      // mwl_p   ->setVisible( false );
+
+      le_lcrats[ ii ]->setVisible( false );
+      le_lctols[ ii ]->setVisible( false );
+      le_daends[ ii ]->setVisible( false );
+      ck_mwv[ ii ]   ->setChecked( false );
+      ck_mwv[ ii ]   ->setVisible( false );
+
+      panel->addStretch();
+      adjustSize();
+    }
+}
+
 
 // Check the Run name
 void US_AnaprofPanGen::check_runname()
@@ -627,6 +700,10 @@ void US_AnaprofPanGen::update_inv( void )
    US_Settings::set_us_inv_ID   ( ID );
    US_Settings::set_us_inv_level( level );
 }
+
+
+
+
 
 
 // //[OLD WAY] --  IF USER cannot edit anything (low-level user)

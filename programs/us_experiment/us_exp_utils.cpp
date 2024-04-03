@@ -1478,7 +1478,21 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    rpRotor->revListAssign  = rev_list;
    rpRotor->apprListAssign = appr_list;
    rpRotor->smeListAssign  = sme_list;
-   
+
+
+   //if ABDE expType -- translate to 8. AProfie
+   if ( !first_time_init )
+     {
+       if ( exptype == "Buoyancy" )
+	 mainw->set_abde_mode_aprofile();
+       else
+	 mainw->unset_abde_mode_aprofile();
+     }
+   else
+     {
+       if (exptype == "Buoyancy" )
+	 mainw->set_abde_mode_aprofile();
+     }
 }
 
 // Get a specific panel string value

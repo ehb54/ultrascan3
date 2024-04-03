@@ -1021,6 +1021,8 @@ class US_ExperimentMain : public US_Widgets
       
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
+      void    set_abde_mode_aprofile( void );
+      void    unset_abde_mode_aprofile( void );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;

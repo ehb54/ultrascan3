@@ -37,8 +37,9 @@ US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
 
    connection_status   = false;
    automode            = false;
+   abde_mode_aprofile  = false;
 
-      // Create tab and panel widgets
+   // Create tab and panel widgets
    tabWidget           = us_tabwidget();
 
    tabWidget->setTabPosition( QTabWidget::North );
@@ -1245,12 +1246,12 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
                                      "Optics: Solution" ) );
    lb_chann->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
-   QLabel* lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
-   QLabel* lb_lctol  = us_label( tr( "+/- %\nToler." ) );
+   lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
+   lb_lctol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_ldvol  = us_label( tr( "Loading\nVol. (" )
                                  + QString( QChar( 181 ) ) + "l)" );
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
-   QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
+   lb_daend  = us_label( tr( "Data End\n(cm)" ) );
    QLabel* lb_channelana  = us_label( tr( "Run" ) );
    QLabel* lb_runreport  = us_label( tr( "Run\nReport" ) );
    
@@ -1258,8 +1259,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
 
    QLabel* lb_repl_group  = us_label( tr( "Replicate\nGroup" ) );
    
-   QLabel* lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
-           pb_applya = us_pushbutton( tr( "Apply to All" ) );
+   lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
+   pb_applya = us_pushbutton( tr( "Apply to All" ) );
    lb_chann ->setObjectName( "Chann Label" );
    lb_lcrat ->setObjectName( "LcRat Label" );
    lb_lctol ->setObjectName( "LcTol Label" );
