@@ -14,6 +14,7 @@ static vector < double >      fit_weights;
 static map < double, size_t > fit_weights_index;
 static vector < double >      powerfit_corrected_data;
 static vector < double >      powerfit_corrected_data_errors;
+static double                 powerfit_uncorrected_conc;
 static double                 powerfit_conc;
 static map < double, double > powerfit_org_I_at_lambda;
 static set < QString >        powerfit_tmp_plotnames;
@@ -100,8 +101,9 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
    // set le_powerfit_q1,2 start,end to grid limits
    powerfit_markers.clear();
 
-   powerfit_add_marker( plot_dist, le_powerfit_q_start  ->text().toDouble(), powerfit_color_q, us_tr( "Start"), Qt::AlignRight | Qt::AlignBottom );
-   powerfit_add_marker( plot_dist, le_powerfit_q_end    ->text().toDouble(), powerfit_color_q, us_tr( "End"  ), Qt::AlignLeft  | Qt::AlignBottom );
+   powerfit_add_marker( plot_dist, le_powerfit_q_start  ->text().toDouble(), powerfit_color_q, us_tr( "Start")  , Qt::AlignRight | Qt::AlignBottom );
+   powerfit_add_marker( plot_dist, le_powerfit_q_end    ->text().toDouble(), powerfit_color_q, us_tr( "End"  )  , Qt::AlignLeft  | Qt::AlignBottom );
+   powerfit_add_marker( plot_dist, dad_param_lambda                        , Qt::red         , UNICODE_LAMBDA_QS, Qt::AlignRight | Qt::AlignBaseline ); // Qt::AlignVCenter );
 
    powerfit_q_min = f_qs[ powerfit_name ].front();
    powerfit_q_max = f_qs[ powerfit_name ].back();
@@ -204,6 +206,8 @@ void US_Hydrodyn_Dad::powerfit_enables()
    le_powerfit_lambda                   ->setEnabled( true );
    le_powerfit_extinction_coef          ->setEnabled( true );
 
+   le_powerfit_lambda2                  ->setEnabled( true );
+
    wheel_enables( true );
 
    progress->reset();
@@ -258,7 +262,7 @@ void US_Hydrodyn_Dad::powerfit_q_start_text( const QString & text ) {
    if ( current_mode != MODE_POWERFIT ) {
       return;
    }
-   if ( powerfit_markers.size() != 2 ) {
+   if ( powerfit_markers.size() != 3 ) {
       editor_msg( "red", QString( "internal error: powerfit_q_start_text markers issue size %1" ).arg( powerfit_markers.size() ) );
       return;
    }
@@ -290,7 +294,7 @@ void US_Hydrodyn_Dad::powerfit_q_end_text( const QString & text ) {
    if ( current_mode != MODE_POWERFIT ) {
       return;
    }
-   if ( powerfit_markers.size() != 2 ) {
+   if ( powerfit_markers.size() != 3 ) {
       editor_msg( "red", QString( "internal error: powerfit_q_end_text markers issue size %1" ).arg( powerfit_markers.size() ) );
       return;
    }
@@ -443,14 +447,35 @@ void US_Hydrodyn_Dad::powerfit_computed_conc_focus( bool /* hasFocus */ ) {
    qDebug() << "powerfit_computed_conc_focus";
 }
 
+void US_Hydrodyn_Dad::powerfit_uncorrected_conc_text( const QString & /* text */ ) {
+   qDebug() << "powerfit_uncorrected_conc_text";
+}
+
+void US_Hydrodyn_Dad::powerfit_uncorrected_conc_focus( bool /* hasFocus */ ) {
+   qDebug() << "powerfit_uncorrected_conc_focus";
+}
+
 void US_Hydrodyn_Dad::powerfit_lambda_text( const QString & text ) {
    qDebug() << "powerfit_lambda_text";
    dad_param_lambda = text.toDouble();
    lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() + DAD_LAMBDA_EXTC_MSG );
+   if ( powerfit_markers.size() > 2 ) {
+      powerfit_markers[ 2 ]->setXValue( dad_param_lambda );
+      plot_dist->replot();
+   }
    powerfit_compute_conc();
 }
 
 void US_Hydrodyn_Dad::powerfit_lambda_focus( bool /* hasFocus */ ) {
+   qDebug() << "powerfit_lambda_focus";
+}
+
+void US_Hydrodyn_Dad::powerfit_lambda2_text( const QString & /* text */ ) {
+   qDebug() << "powerfit_lambda2_text";
+   powerfit_compute_conc();
+}
+
+void US_Hydrodyn_Dad::powerfit_lambda2_focus( bool /* hasFocus */ ) {
    qDebug() << "powerfit_lambda_focus";
 }
 
@@ -837,13 +862,14 @@ void US_Hydrodyn_Dad::powerfit_create_adjusted_curve() {
 }
 
 void US_Hydrodyn_Dad::powerfit_compute_conc() {
+   le_powerfit_uncorrected_conc->setText( "" );
    le_powerfit_computed_conc->setText( "" );
    if ( powerfit_name.isEmpty() ) {
       return;
    }
 
    if ( dad_param_g_extinction_coef == 0 ) {
-      le_powerfit_computed_conc->setText( us_tr( "Extc. coef. is zero" ) );
+      le_powerfit_uncorrected_conc->setText( us_tr( "Extc. coef. is zero" ) );
       return;
    }
    
@@ -851,49 +877,83 @@ void US_Hydrodyn_Dad::powerfit_compute_conc() {
    // interpolate subtracted curve lambda divide by g_conc
    // populate le_powerfit_computed_conc
 
-   vector < double > x = f_qs[ powerfit_name ];
+   bool using_corrected_data = powerfit_corrected_data_ok && powerfit_corrected_data.size() == f_qs[ powerfit_name ].size();
 
-   bool using_corrected_data =  powerfit_corrected_data_ok && powerfit_corrected_data.size() == x.size();
-   vector < double > y = using_corrected_data ? powerfit_corrected_data : f_Is[ powerfit_name ];
-
-   // created trimmed versions
+   // compute uncorrected
 
    {
-      vector < double > trimmed_x;
-      vector < double > trimmed_y;
+      vector < double > x       = f_qs[ powerfit_name ];
+      vector < double > y       = f_Is[ powerfit_name ];
+
+      // created trimmed versions
+
+      {
+         vector < double > trimmed_x;
+         vector < double > trimmed_y;
          
-      for ( size_t i = 0; i < x.size(); ++i ) {
-         if ( !q_exclude.count( x[ i ] ) ) {
-            trimmed_x.push_back( x[i] );
-            trimmed_y.push_back( y[i] );
+         for ( size_t i = 0; i < x.size(); ++i ) {
+            if ( !q_exclude.count( x[ i ] ) ) {
+               trimmed_x.push_back( x[i] );
+               trimmed_y.push_back( y[i] );
+            }
          }
+
+         x = trimmed_x;
+         y = trimmed_y;
       }
 
-      x = trimmed_x;
-      y = trimmed_y;
+      if ( dad_param_lambda < x.front() || dad_param_lambda > x.back() ) {
+         le_powerfit_uncorrected_conc->setText( us_tr( UNICODE_LAMBDA_QS + " out of range" ) );
+         return;
+      }
+      vector < double > target = { dad_param_lambda };
+      vector < double > y2;
+   
+      if ( !usu->linear_interpolate( x, y, target, y2 ) ) {
+         le_powerfit_uncorrected_conc->setText( usu->errormsg );
+         return;
+      }
+      powerfit_uncorrected_conc = y2.front() / dad_param_g_extinction_coef;
+      le_powerfit_uncorrected_conc->setText( QString( "%1" ).arg( powerfit_uncorrected_conc ) );
    }
 
-   if ( dad_param_lambda < x.front() || dad_param_lambda > x.back() ) {
-      le_powerfit_computed_conc->setText( us_tr( "Lambda out of range" ) );
-      return;
-   }
+   if ( using_corrected_data ) {
+      vector < double > x       = f_qs[ powerfit_name ];
+      vector < double > y       = powerfit_corrected_data;
 
-   vector < double > target = { dad_param_lambda };
-   vector < double > y2;
+      // created trimmed versions
+
+      {
+         vector < double > trimmed_x;
+         vector < double > trimmed_y;
+         
+         for ( size_t i = 0; i < x.size(); ++i ) {
+            if ( !q_exclude.count( x[ i ] ) ) {
+               trimmed_x.push_back( x[i] );
+               trimmed_y.push_back( y[i] );
+            }
+         }
+
+         x = trimmed_x;
+         y = trimmed_y;
+      }
+
+      if ( dad_param_lambda < x.front() || dad_param_lambda > x.back() ) {
+         le_powerfit_computed_conc->setText( us_tr( UNICODE_LAMBDA_QS + " out of range" ) );
+         return;
+      }
+
+      vector < double > target = { dad_param_lambda };
+      vector < double > y2;
    
-   if ( !usu->linear_interpolate( x, y, target, y2 ) ) {
-      le_powerfit_computed_conc->setText( usu->errormsg );
-      return;
+      if ( !usu->linear_interpolate( x, y, target, y2 ) ) {
+         le_powerfit_computed_conc->setText( usu->errormsg );
+         return;
+      }
+   
+      powerfit_conc = y2.front() / dad_param_g_extinction_coef;
+      le_powerfit_computed_conc->setText( QString( "%1" ).arg( powerfit_conc ) );
    }
-   
-   powerfit_conc = y2.front() / dad_param_g_extinction_coef;
-   le_powerfit_computed_conc->setText( QString( "%1%2" )
-                                       .arg( powerfit_conc )
-                                       .arg( using_corrected_data
-                                             ? ""
-                                             : " *Not from corrected*"
-                                             )
-                                       );
 }
 
 void US_Hydrodyn_Dad::powerfit_set_b_default() {

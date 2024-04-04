@@ -11633,3 +11633,32 @@ bool US_Saxs_Util::average(
 
    return true;
 }
+
+bool US_Saxs_Util::crop(
+                        const vector < double >  & x
+                        ,const vector < double > & y
+                        ,double                    x_min
+                        ,double                    x_max
+                        ,vector < double >       & x_cropped
+                        ,vector < double >       & y_cropped
+                        ,QString                 & errormsg
+                        ) {
+   x_cropped.clear();
+   y_cropped.clear();
+
+   size_t size = x.size();
+   if ( y.size() != x.size() ) {
+      errormsg = "crop() x & y have different lengths";
+      return false;
+   }
+
+   for ( size_t i = 0; i < size; ++i ) {
+      if ( x[i] >= x_min && x[i] <= x_max ) {
+         x_cropped.push_back( x[i] );
+         y_cropped.push_back( y[i] );
+      }
+   }
+
+   return true;
+}
+

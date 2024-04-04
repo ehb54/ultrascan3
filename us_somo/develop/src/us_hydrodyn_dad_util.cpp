@@ -5398,12 +5398,12 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
       
    // apparently a valid dad file
    if ( !dad_lambdas.lambdas.size() ) {
-      errormsg = QString( "Lambdas must be loaded prior to loading of DAD absorption data" );
+      errormsg = QString( UNICODE_LAMBDA_QS + "s must be loaded prior to loading of DAD absorption data" );
       return false;
    }
 
    if ( dad_lambdas.lambdas.size() != absorption_row_size ) {
-      errormsg = QString( "DAD absorption column count %1 does not match number of lambdas %2" )
+      errormsg = QString( "DAD absorption column count %1 does not match number of " + UNICODE_LAMBDA_QS + "s %2" )
          .arg( dad_lambdas.lambdas.size() )
          .arg( absorption_row_size )
          ;
@@ -5415,14 +5415,14 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
                                   ,dad_lambdas.summary_rich()
                                   + QString(
                                             "<hr>"
-                                            "Proceed with these DAD Lambdas?"
+                                            "Proceed with these DAD " + UNICODE_LAMBDA_QS + "s?"
                                             )
                                   ) )
    {
    case QMessageBox::Yes : 
       break;
    default:
-      errormsg = "DAD Lambdas need to be loaded";
+      errormsg = "DAD " + UNICODE_LAMBDA_QS + "s need to be loaded";
       return false;
       break;
    }
@@ -5433,6 +5433,105 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
    double start_time_seconds          = 0;
    double collection_interval_seconds = 1;
    
+   double lambda_start = 250; // dad_lambdas.lambdas.front();
+   double lambda_end   = 600; // dad_lambdas.lambdas.back();
+
+   // get lambda range
+   
+   bool lambda_crop;
+
+   {
+      bool try_again = false;
+
+      do {
+         lambda_crop = false;
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": DAD load : subselect " + UNICODE_LAMBDA_QS + " range" ) );
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 QString( us_tr( 
+                                                "Fill out the values below and click OK to subselect\n"
+                                                "or CANCEL to use the full spectrum\n"
+                                                "Full %1 range is [%2:%3] [nm]\n"
+                                                 ) )
+                                 .arg( UNICODE_LAMBDA )
+                                 .arg( dad_lambdas.lambdas.front() )
+                                 .arg( dad_lambdas.lambdas.back() )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QWidget *> fields;
+   
+         vector < QString > labels =
+            {
+               us_tr( "Start " + UNICODE_LAMBDA_QS + " [nm]:" )
+               ,us_tr( "End " + UNICODE_LAMBDA_QS + " [nm]:" )
+            };
+      
+         vector < QWidget * > widgets =
+            {
+               new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
+            };
+
+         vector < double >  defaults =
+            {
+               lambda_start
+               ,lambda_end
+            };
+
+         for( int i = 0; i < (int) widgets.size(); ++i ) {
+            form.addRow( labels[i], widgets[i] );
+            if ( widgets[i] ) {
+               // could switch based on widgets[i]->className()
+               // assuming all input fields are doubles for now
+               ((QLineEdit *)widgets[i])->setValidator( new QDoubleValidator(this) );
+               ((QLineEdit *)widgets[i])->setText( QString( "%1" ).arg( defaults[i] ) );
+               fields << widgets[i];
+            }
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            if ( ((QLineEdit *)fields[0])->text().toDouble() > ((QLineEdit *)fields[1])->text().toDouble() 
+                 ) {
+               try_again = true;
+            } else {
+               // If the user didn't dismiss the dialog, do something with the fields
+               lambda_start  = ((QLineEdit *)fields[0])->text().toDouble();
+               lambda_end    = ((QLineEdit *)fields[1])->text().toDouble();
+               TSO <<
+                  QString(
+                          "lambda_start %1\n"
+                          "lambda_end   %2\n"
+                          )
+                  .arg( lambda_start )
+                  .arg( lambda_end )
+                  ;
+               lambda_crop = true;
+            }
+         } else {
+            lambda_start = dad_lambdas.lambdas.front();
+            lambda_end   = dad_lambdas.lambdas.back();
+         }
+      } while ( try_again );
+   }
+
+   // get times
 
    {
       bool try_again = false;
@@ -5530,7 +5629,37 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
          }
          double time = start_time_seconds + i * collection_interval_seconds;
          QString name = QString( "%1_DAD_AL_t%2" ).arg( basename ).arg( time ).replace( QRegularExpression( "[. &]" ), "_" );
-         add_plot( name, dad_lambdas.lambdas, absorption_data[ i ], false, false );
+         if ( lambda_crop ) {
+            vector < double > x_cropped;
+            vector < double > y_cropped;
+            QString errormsg;
+            if ( US_Saxs_Util::crop(
+                                    dad_lambdas.lambdas
+                                    ,absorption_data[ i ]
+                                    ,lambda_start
+                                    ,lambda_end
+                                    ,x_cropped
+                                    ,y_cropped
+                                    ,errormsg
+                                    ) ) {
+               add_plot( name, x_cropped, y_cropped, false, false );
+            } else {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": " ),
+                                      QString( 
+                                              us_tr(
+                                                    "cropping error " + UNICODE_LAMBDA_QS + " for %1 to [%2,%3]\n%4"
+                                                    )
+                                               )
+                                      .arg( name )
+                                      .arg( lambda_start )
+                                      .arg( lambda_end )
+                                      .arg( errormsg )
+                                      );
+            }               
+         } else {
+            add_plot( name, dad_lambdas.lambdas, absorption_data[ i ], false, false );
+         }
       }
    }
    progress->reset();

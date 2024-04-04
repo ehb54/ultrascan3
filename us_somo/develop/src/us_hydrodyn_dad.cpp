@@ -38,11 +38,11 @@ QString DAD_Lambdas::list() {
 QString DAD_Lambdas::summary() {
    return
       lambdas.size()
-      ? QString( us_tr( "%1 DAD lambdas loaded, range [%2:%3]" ) )
+      ? QString( us_tr( "%1 DAD " + UNICODE_LAMBDA_QS + "s loaded, range [%2:%3]" ) )
       .arg( lambdas.size() )
       .arg( lambdas.front() )
       .arg( lambdas.back() )
-      : QString( us_tr( "No DAD lambdas currently loaded" ) )
+      : QString( us_tr( "No DAD " + UNICODE_LAMBDA_QS + "s currently loaded" ) )
       ;
 }
 
@@ -53,8 +53,8 @@ QString DAD_Lambdas::summary_rich() {
    QStringList qsl;
 
    qsl
-      << QString( us_tr( "<b>DAD Lambdas</b> loaded from %1<hr>" ) ).arg( loaded_filename )
-      << QString( us_tr( "%1 Lambdas present, range [%2:%3]" ) )
+      << QString( us_tr( "<b>DAD " + UNICODE_LAMBDA_QS + "s</b> loaded from %1<hr>" ) ).arg( loaded_filename )
+      << QString( us_tr( "%1 " + UNICODE_LAMBDA_QS + "s present, range [%2:%3]" ) )
       .arg( lambdas.size() )
       .arg( lambdas.front() )
       .arg( lambdas.back() )
@@ -8867,6 +8867,15 @@ void US_Hydrodyn_Dad::gauss_fit()
 
 void US_Hydrodyn_Dad::create_i_of_q()
 {
+   QMessageBox::critical( this,
+                          windowTitle() + us_tr( ":" + pb_create_i_of_q->text() ),
+                          us_tr(
+                                "Not implemented yet"
+                                )
+                          );
+
+   return;
+
    disable_all();
 
    for ( int i = 0; i < lb_files->count(); i++ )

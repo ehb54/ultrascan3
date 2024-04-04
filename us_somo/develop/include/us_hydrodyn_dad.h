@@ -73,6 +73,11 @@ using namespace std;
 # define M_ONE_OVER_SQRT2   7.07106781188e-1
 #endif
 
+#define UNICODE_LAMBDA u8"\u03BB"
+#define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
+#define UNICODE_EPSILON u8"\u03B5"
+#define UNICODE_EPSILON_QS QString( "%1" ).arg( UNICODE_EPSILON )
+
 #define DAD_LAMBDA_EXTC_MSG QString( "<center>Selected lambda %1, extinction coefficient %2</br></center>" ).arg( dad_param_lambda ).arg( dad_param_g_extinction_coef ) 
 
 struct dad_stack_data
@@ -710,11 +715,18 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QLabel                           * lbl_powerfit_fit_max_calls;
       mQLineEdit                       * le_powerfit_fit_max_calls;
 
+      QLabel                           * lbl_powerfit_uncorrected_conc;
+      mQLineEdit                       * le_powerfit_uncorrected_conc;
+
       QLabel                           * lbl_powerfit_computed_conc;
       mQLineEdit                       * le_powerfit_computed_conc;
 
       QLabel                           * lbl_powerfit_lambda;
       mQLineEdit                       * le_powerfit_lambda;
+
+      QLabel                           * lbl_powerfit_lambda2;
+      mQLineEdit                       * le_powerfit_lambda2;
+
       QLabel                           * lbl_powerfit_extinction_coef;
       mQLineEdit                       * le_powerfit_extinction_coef;
 
@@ -809,8 +821,12 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       void powerfit_fit_max_calls_focus   ( bool );
       void powerfit_computed_conc_text    ( const QString & );
       void powerfit_computed_conc_focus   ( bool );
+      void powerfit_uncorrected_conc_text ( const QString & );
+      void powerfit_uncorrected_conc_focus( bool );
       void powerfit_lambda_text           ( const QString & );
       void powerfit_lambda_focus          ( bool );
+      void powerfit_lambda2_text          ( const QString & );
+      void powerfit_lambda2_focus         ( bool );
       void powerfit_extinction_coef_text  ( const QString & );
       void powerfit_extinction_coef_focus ( bool );
 

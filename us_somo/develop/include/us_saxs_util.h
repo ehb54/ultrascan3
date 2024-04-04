@@ -758,6 +758,16 @@ class US_EXTERN US_Saxs_Util
                  vector < double > &to_data,
                  vector < double > &to_errors );
 
+      static bool crop(
+                       const vector < double >  & x
+                       ,const vector < double > & y
+                       ,double                    x_min
+                       ,double                    x_max
+                       ,vector < double >       & x_cropped
+                       ,vector < double >       & y_cropped
+                       ,QString                 & errormsg
+                       );
+
       bool read_control( QString controlfile );
 
 #if defined( USE_MPI )

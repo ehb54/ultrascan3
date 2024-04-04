@@ -14,6 +14,7 @@
  //#include <Q3PopupMenu>
 #include "../include/us_eigen.h"
 
+
 // #define UHSH_VAL_DEC 8
 
 // #define ALLOW_GUOS_CARUANAS
@@ -377,7 +378,7 @@ void US_Hydrodyn_Dad::setupGUI()
 
    // powerfit start
 
-   pb_powerfit = new QPushButton(us_tr("Scattering correction"), this);
+   pb_powerfit = new QPushButton(us_tr("Concentration"), this);
    pb_powerfit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_powerfit->setMinimumHeight(minHeight1);
    pb_powerfit->setPalette( PALET_PUSHB );
@@ -573,7 +574,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_c_max, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_c_max_text( const QString & ) ) );
    connect( le_powerfit_c_max, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_c_max_focus( bool ) ) );
    
-   lbl_powerfit_fit_epsilon = new QLabel( us_tr( " Epsilon: " ), this );
+   lbl_powerfit_fit_epsilon = new QLabel( us_tr( UNICODE_EPSILON_QS + " : " ), this );
    lbl_powerfit_fit_epsilon->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_fit_epsilon->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_fit_epsilon );
@@ -591,7 +592,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_fit_epsilon, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_epsilon_text( const QString & ) ) );
    connect( le_powerfit_fit_epsilon, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_epsilon_focus( bool ) ) );
 
-   lbl_powerfit_fit_iterations = new QLabel( us_tr( " Iterations: " ), this );
+   lbl_powerfit_fit_iterations = new QLabel( us_tr( " Iter.: " ), this );
    lbl_powerfit_fit_iterations->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_fit_iterations->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_fit_iterations );
@@ -609,7 +610,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_fit_iterations, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_iterations_text( const QString & ) ) );
    connect( le_powerfit_fit_iterations, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_iterations_focus( bool ) ) );
 
-   lbl_powerfit_fit_max_calls = new QLabel( us_tr( " Maximum calls: " ), this );
+   lbl_powerfit_fit_max_calls = new QLabel( us_tr( " Max. calls: " ), this );
    lbl_powerfit_fit_max_calls->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_fit_max_calls->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_fit_max_calls );
@@ -627,7 +628,25 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_fit_max_calls, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_max_calls_text( const QString & ) ) );
    connect( le_powerfit_fit_max_calls, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_max_calls_focus( bool ) ) );
    
-   lbl_powerfit_computed_conc = new QLabel( us_tr( " Computed concentration [mg/mL]: " ), this );
+   lbl_powerfit_uncorrected_conc = new QLabel( us_tr( " Uncorr., Full scat. corr. c [mg/mL]: " ), this );
+   lbl_powerfit_uncorrected_conc->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_uncorrected_conc->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_uncorrected_conc );
+   lbl_powerfit_uncorrected_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_uncorrected_conc->hide();
+
+   le_powerfit_uncorrected_conc = new mQLineEdit( this );    le_powerfit_uncorrected_conc->setObjectName( "le_powerfit_uncorrected_conc Line Edit" );
+   le_powerfit_uncorrected_conc->setText( "" );
+   le_powerfit_uncorrected_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_uncorrected_conc->setPalette( PALET_NORMAL );
+   le_powerfit_uncorrected_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_uncorrected_conc->setEnabled( true );
+   le_powerfit_uncorrected_conc->setReadOnly( true );
+   le_powerfit_uncorrected_conc->hide();
+   connect( le_powerfit_uncorrected_conc, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_uncorrected_conc_text( const QString & ) ) );
+   connect( le_powerfit_uncorrected_conc, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_uncorrected_conc_focus( bool ) ) );
+
+   lbl_powerfit_computed_conc = new QLabel( us_tr( "," ), this );
    lbl_powerfit_computed_conc->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_computed_conc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_computed_conc );
@@ -645,7 +664,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_computed_conc, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_computed_conc_text( const QString & ) ) );
    connect( le_powerfit_computed_conc, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_computed_conc_focus( bool ) ) );
    
-   lbl_powerfit_lambda = new QLabel( us_tr( " Lambda [nm]: " ), this );
+   lbl_powerfit_lambda = new QLabel( us_tr( QString( "%1 [nm]:" ).arg( UNICODE_LAMBDA ) ), this );
    lbl_powerfit_lambda->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_lambda->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_lambda );
@@ -663,7 +682,25 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_lambda, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda_text( const QString & ) ) );
    connect( le_powerfit_lambda, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda_focus( bool ) ) );
    
-   lbl_powerfit_extinction_coef = new QLabel( us_tr( " Extinction_Coef [nm]: " ), this );
+   lbl_powerfit_lambda2 = new QLabel( us_tr( " Lambda2 [nm]: " ), this );
+   lbl_powerfit_lambda2->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_lambda2->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_lambda2 );
+   lbl_powerfit_lambda2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_lambda2->hide();
+
+   le_powerfit_lambda2 = new mQLineEdit( this );    le_powerfit_lambda2->setObjectName( "le_powerfit_lambda2 Line Edit" );
+   le_powerfit_lambda2->setText( "" );
+   le_powerfit_lambda2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_lambda2->setPalette( PALET_NORMAL );
+   le_powerfit_lambda2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_lambda2->setValidator( new QDoubleValidator( le_powerfit_lambda2 ) );
+   le_powerfit_lambda2->setEnabled( true );
+   le_powerfit_lambda2->hide();
+   connect( le_powerfit_lambda2, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda2_text( const QString & ) ) );
+   connect( le_powerfit_lambda2, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda2_focus( bool ) ) );
+
+   lbl_powerfit_extinction_coef = new QLabel( us_tr( " Extc. coef. [nm]: " ), this );
    lbl_powerfit_extinction_coef->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_extinction_coef->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_extinction_coef );
@@ -702,12 +739,11 @@ void US_Hydrodyn_Dad::setupGUI()
    pb_test_i_of_t->setPalette( PALET_PUSHB );
    connect(pb_test_i_of_t, SIGNAL(clicked()), SLOT(test_i_of_t()));
 
-   pb_create_i_of_q = new QPushButton(us_tr("Make I(q)"), this);
+   pb_create_i_of_q = new QPushButton(us_tr("Make A(" + UNICODE_LAMBDA_QS + ")"), this);
    pb_create_i_of_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_create_i_of_q->setMinimumHeight(minHeight1);
    pb_create_i_of_q->setPalette( PALET_PUSHB );
    connect(pb_create_i_of_q, SIGNAL(clicked()), SLOT(create_i_of_q()));
-   pb_create_i_of_q->hide();
 
    pb_create_ihash_t = new QPushButton(us_tr("Make I#(t)"), this);
    pb_create_ihash_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3823,7 +3859,7 @@ void US_Hydrodyn_Dad::setupGUI()
    files_widgets.push_back ( pb_powerfit );
    files_widgets.push_back ( pb_create_i_of_t );
    files_widgets.push_back ( pb_test_i_of_t );
-   // hidden: files_widgets.push_back ( pb_create_i_of_q );
+   files_widgets.push_back ( pb_create_i_of_q );
    files_widgets.push_back ( pb_create_ihash_t );
    files_widgets.push_back ( pb_create_istar_q );
 
@@ -4089,19 +4125,6 @@ void US_Hydrodyn_Dad::setupGUI()
 
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( lbl_powerfit_computed_conc );
-      hbl->addWidget( le_powerfit_computed_conc );
-      hbl->addWidget( pb_powerfit_fit );
-      hbl->addWidget( pb_powerfit_reset );
-      hbl->addWidget( pb_powerfit_create_adjusted_curve );
-      vbl_powerfit->addLayout( hbl );
-   }
-   {
-      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( lbl_powerfit_lambda );
-      hbl->addWidget( le_powerfit_lambda );
-      hbl->addWidget( lbl_powerfit_extinction_coef );
-      hbl->addWidget( le_powerfit_extinction_coef );
       hbl->addWidget( lbl_powerfit_fit_curve );
       hbl->addWidget( lbl_powerfit_fit_epsilon );
       hbl->addWidget( le_powerfit_fit_epsilon );
@@ -4112,6 +4135,28 @@ void US_Hydrodyn_Dad::setupGUI()
       hbl->addWidget( cb_powerfit_fit_curve );
       hbl->addWidget( cb_powerfit_fit_alg );
       hbl->addWidget( cb_powerfit_fit_alg_weight );
+      hbl->addWidget( pb_powerfit_fit );
+      hbl->addWidget( pb_powerfit_reset );
+      hbl->addWidget( pb_powerfit_create_adjusted_curve );
+      vbl_powerfit->addLayout( hbl );
+   }
+
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_lambda );
+      hbl->addWidget( le_powerfit_lambda );
+      hbl->addWidget( lbl_powerfit_extinction_coef );
+      hbl->addWidget( le_powerfit_extinction_coef );
+      hbl->addWidget( lbl_powerfit_uncorrected_conc );
+      hbl->addWidget( le_powerfit_uncorrected_conc );
+      hbl->addWidget( lbl_powerfit_computed_conc );
+      hbl->addWidget( le_powerfit_computed_conc );
+      vbl_powerfit->addLayout( hbl );
+   }
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_powerfit_lambda2 );
+      hbl->addWidget( le_powerfit_lambda2 );
       vbl_powerfit->addLayout( hbl );
    }
    {
@@ -4424,6 +4469,10 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_conc
             ,pb_normalize
             ,pb_to_saxs
+            ,lbl_powerfit_lambda2
+            ,le_powerfit_lambda2
+            ,pb_ref
+            ,rb_pbmode_conc
             }
       );
 
@@ -4604,6 +4653,9 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    powerfit_widgets.push_back( lbl_powerfit_fit_max_calls );
    powerfit_widgets.push_back( le_powerfit_fit_max_calls );
 
+   powerfit_widgets.push_back( lbl_powerfit_uncorrected_conc );
+   powerfit_widgets.push_back( le_powerfit_uncorrected_conc );
+
    powerfit_widgets.push_back( lbl_powerfit_computed_conc );
    powerfit_widgets.push_back( le_powerfit_computed_conc );
 
@@ -4611,6 +4663,9 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    powerfit_widgets.push_back( le_powerfit_lambda );
    powerfit_widgets.push_back( lbl_powerfit_extinction_coef );
    powerfit_widgets.push_back( le_powerfit_extinction_coef );
+
+   powerfit_widgets.push_back( lbl_powerfit_lambda2 );
+   powerfit_widgets.push_back( le_powerfit_lambda2 );
 
    powerfit_widgets.push_back( pb_powerfit_fit );
    powerfit_widgets.push_back( pb_powerfit_reset );
@@ -5358,7 +5413,7 @@ void US_Hydrodyn_Dad::update_enables()
                title = us_tr( "Time [a.u.]" );
             }
          } else if ( all_DAD ) {
-            title = us_tr( "lambda [nm]" );
+            title = us_tr( UNICODE_LAMBDA_QS + " [nm]" );
          } else {
             title = us_tr( "q [1/Angstrom]" );
          }
@@ -5396,7 +5451,7 @@ void US_Hydrodyn_Dad::update_enables()
             } else if ( all_ihashq ) {
                title = us_tr( "I#(q) [g^2 cm^-3 mol^-1]" );
             } else if ( all_DAD ) {
-               title = us_tr( "A(lambda) [a.u.]" );
+               title = us_tr( "A(" + UNICODE_LAMBDA_QS + ") [a.u.]" );
             } else {
                title = us_tr( "I(q) [a.u.]" );
             }
@@ -5687,6 +5742,8 @@ void US_Hydrodyn_Dad::disable_all()
 
    le_powerfit_lambda                 ->setEnabled( false );
    le_powerfit_extinction_coef        ->setEnabled( false );
+
+   le_powerfit_lambda2                ->setEnabled( false );
 
    cb_powerfit_fit_curve              ->setEnabled( false );
    cb_powerfit_fit_alg                ->setEnabled( false );
