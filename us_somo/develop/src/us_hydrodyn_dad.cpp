@@ -8867,15 +8867,6 @@ void US_Hydrodyn_Dad::gauss_fit()
 
 void US_Hydrodyn_Dad::create_i_of_q()
 {
-   QMessageBox::critical( this,
-                          windowTitle() + us_tr( ":" + pb_create_i_of_q->text() ),
-                          us_tr(
-                                "Not implemented yet"
-                                )
-                          );
-
-   return;
-
    disable_all();
 
    for ( int i = 0; i < lb_files->count(); i++ )

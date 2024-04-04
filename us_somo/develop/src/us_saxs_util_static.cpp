@@ -11662,3 +11662,40 @@ bool US_Saxs_Util::crop(
    return true;
 }
 
+bool US_Saxs_Util::transpose_vvd(
+                                 const vector < vector < double > > & x
+                                 ,vector < vector < double > >      & y
+                                 ,QString                           & errormsg
+                                 ) {
+   y.clear();
+   size_t rows = x.size();
+
+   if ( !rows ) {
+      errormsg = "transpose() zero rows in data";
+      return false;
+   }
+
+   size_t cols = x[0].size();
+   
+   if ( !cols ) {
+      errormsg = "transpose() empty row 0";
+      return false;
+   }
+
+   for ( const auto & row : x ) {
+      if ( row.size() != cols ) {
+         errormsg = "transpose() varying row length";
+         return false;
+      }
+   }   
+
+   y.resize( cols);
+
+   for ( size_t i = 0; i < rows; ++i ) {
+      for ( size_t j = 0; j < cols; ++j ) {
+         y[ j ].push_back( x[ i ][ j ] );
+      }
+   }
+
+   return true;
+}

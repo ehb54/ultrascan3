@@ -5618,6 +5618,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
    // create files
 
+#if 0 // create A(Lambda)
    {
       QString basename = QFileInfo( filename ).baseName();
       size_t absorption_data_size = absorption_data.size();
@@ -5662,6 +5663,97 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
          }
       }
    }
+#endif
+
+   // create A(t)
+   {
+      QString basename = QFileInfo( filename ).baseName();
+      size_t absorption_data_size = absorption_data.size();
+      
+      // build cropped data
+      
+      vector < double > lambdas = dad_lambdas.lambdas;
+      vector < double > times;
+
+      if ( lambda_crop ) {
+         for ( size_t i = 0; i < absorption_data_size; ++i ) {
+            vector < double > x_cropped;
+            vector < double > y_cropped;
+
+            if ( !US_Saxs_Util::crop(
+                                    dad_lambdas.lambdas
+                                    ,absorption_data[ i ]
+                                    ,lambda_start
+                                    ,lambda_end
+                                    ,x_cropped
+                                    ,y_cropped
+                                    ,errormsg
+                                    ) ) {
+      
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": " ),
+                                      QString( 
+                                              us_tr(
+                                                    "cropping error " + UNICODE_LAMBDA_QS + " for %1 to [%2,%3]\n%4"
+                                                    )
+                                               )
+                                      .arg( basename )
+                                      .arg( lambda_start )
+                                      .arg( lambda_end )
+                                      .arg( errormsg )
+                                      );
+               progress->reset();
+               plot_files();
+               update_enables();
+
+               return false;
+            }
+            if ( !i ) {
+               lambdas = x_cropped;
+            }
+            absorption_data[ i ] = y_cropped;
+            times.push_back( start_time_seconds + i * collection_interval_seconds );
+         }
+      } else {
+         for ( size_t i = 0; i < absorption_data_size; ++i ) {
+            times.push_back( start_time_seconds + i * collection_interval_seconds );
+         }
+      }
+      
+      vector < vector < double > > absorption_data_by_lambda;
+      {
+         QString errormsg;
+         if ( !US_Saxs_Util::transpose_vvd( absorption_data, absorption_data_by_lambda, errormsg ) ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": " ),
+                                   QString( 
+                                           us_tr(
+                                                 "transpose error %1"
+                                                 )
+                                            )
+                                   .arg( errormsg )
+                                   );
+            progress->reset();
+
+            plot_files();
+            update_enables();
+
+            return false;
+         }
+      }
+      
+      size_t lambda_size = lambdas.size();
+
+      for ( size_t i = 0; i < lambda_size; ++i ) {
+         if ( !(i % 20) ) {
+            progress->setValue( i ); progress->setMaximum( lambda_size );
+            qApp->processEvents();
+         }
+         QString name = QString( "%1_DAD_At_L%2" ).arg( basename ).arg( lambdas[ i ] ).replace( QRegularExpression( "[. &]" ), "_" );
+         add_plot( name, times, absorption_data_by_lambda[ i ], true, false );
+      }
+   }
+
    progress->reset();
 
    plot_files();

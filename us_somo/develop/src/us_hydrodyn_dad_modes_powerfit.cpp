@@ -101,9 +101,10 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
    // set le_powerfit_q1,2 start,end to grid limits
    powerfit_markers.clear();
 
-   powerfit_add_marker( plot_dist, le_powerfit_q_start  ->text().toDouble(), powerfit_color_q, us_tr( "Start")  , Qt::AlignRight | Qt::AlignBottom );
-   powerfit_add_marker( plot_dist, le_powerfit_q_end    ->text().toDouble(), powerfit_color_q, us_tr( "End"  )  , Qt::AlignLeft  | Qt::AlignBottom );
-   powerfit_add_marker( plot_dist, dad_param_lambda                        , Qt::red         , UNICODE_LAMBDA_QS, Qt::AlignRight | Qt::AlignBaseline ); // Qt::AlignVCenter );
+   powerfit_add_marker( plot_dist, le_powerfit_q_start->text().toDouble(), powerfit_color_q, us_tr( "Start")             , Qt::AlignRight | Qt::AlignBottom );
+   powerfit_add_marker( plot_dist, le_powerfit_q_end  ->text().toDouble(), powerfit_color_q, us_tr( "End"  )             , Qt::AlignLeft  | Qt::AlignBottom );
+   powerfit_add_marker( plot_dist, dad_param_lambda                      , Qt::red         , UNICODE_LAMBDA_QS + "(abs)" , Qt::AlignRight | Qt::AlignBaseline ); // Qt::AlignVCenter );
+   powerfit_add_marker( plot_dist, le_powerfit_lambda2->text().toDouble(), Qt::magenta     , UNICODE_LAMBDA_QS + "(scat)", Qt::AlignLeft | Qt::AlignBaseline ); // Qt::AlignVCenter );
 
    powerfit_q_min = f_qs[ powerfit_name ].front();
    powerfit_q_max = f_qs[ powerfit_name ].back();
@@ -184,7 +185,7 @@ void US_Hydrodyn_Dad::powerfit_enables()
                                                      || le_powerfit_b->text() != powerfit_b_default
                                                      || le_powerfit_c->text() != "4"
                                                      // || le_powerfit_c_min->text() != "3.9"
-                                                     // || le_powerfit_c_max->text() != "4.5"
+                                                     // || le_powerfit_c_max->text() != "4.1"
                                                      );
                                                      
    pb_powerfit_create_adjusted_curve    ->setEnabled( true );
@@ -262,7 +263,7 @@ void US_Hydrodyn_Dad::powerfit_q_start_text( const QString & text ) {
    if ( current_mode != MODE_POWERFIT ) {
       return;
    }
-   if ( powerfit_markers.size() != 3 ) {
+   if ( powerfit_markers.size() != 4 ) {
       editor_msg( "red", QString( "internal error: powerfit_q_start_text markers issue size %1" ).arg( powerfit_markers.size() ) );
       return;
    }
@@ -294,7 +295,7 @@ void US_Hydrodyn_Dad::powerfit_q_end_text( const QString & text ) {
    if ( current_mode != MODE_POWERFIT ) {
       return;
    }
-   if ( powerfit_markers.size() != 3 ) {
+   if ( powerfit_markers.size() != 4 ) {
       editor_msg( "red", QString( "internal error: powerfit_q_end_text markers issue size %1" ).arg( powerfit_markers.size() ) );
       return;
    }
@@ -470,8 +471,12 @@ void US_Hydrodyn_Dad::powerfit_lambda_focus( bool /* hasFocus */ ) {
    qDebug() << "powerfit_lambda_focus";
 }
 
-void US_Hydrodyn_Dad::powerfit_lambda2_text( const QString & /* text */ ) {
+void US_Hydrodyn_Dad::powerfit_lambda2_text( const QString & text ) {
    qDebug() << "powerfit_lambda2_text";
+   if ( powerfit_markers.size() > 3 ) {
+      powerfit_markers[ 3 ]->setXValue( text.toDouble() );
+      plot_dist->replot();
+   }
    powerfit_compute_conc();
 }
 
@@ -914,7 +919,8 @@ void US_Hydrodyn_Dad::powerfit_compute_conc() {
          return;
       }
       powerfit_uncorrected_conc = y2.front() / dad_param_g_extinction_coef;
-      le_powerfit_uncorrected_conc->setText( QString( "%1" ).arg( powerfit_uncorrected_conc ) );
+      powerfit_uncorrected_conc = QString( "%1" ).arg( powerfit_uncorrected_conc, 0, 'f', 3 ).toDouble();
+      le_powerfit_uncorrected_conc->setText( QString( "%1" ).arg( powerfit_uncorrected_conc, 0, 'f', 3 ) );
    }
 
    if ( using_corrected_data ) {
@@ -952,7 +958,8 @@ void US_Hydrodyn_Dad::powerfit_compute_conc() {
       }
    
       powerfit_conc = y2.front() / dad_param_g_extinction_coef;
-      le_powerfit_computed_conc->setText( QString( "%1" ).arg( powerfit_conc ) );
+      powerfit_conc = QString( "%1" ).arg( powerfit_conc, 0, 'f', 3 ).toDouble();
+      le_powerfit_computed_conc->setText( QString( "%1" ).arg( powerfit_conc, 0, 'f', 3 ) );
    }
 }
 

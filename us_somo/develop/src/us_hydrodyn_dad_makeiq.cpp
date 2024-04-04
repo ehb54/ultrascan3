@@ -38,7 +38,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
 {
    bool mode_testiq = ( current_mode == MODE_TESTIQ );
 
-   if ( !mode_testiq )
+   if ( 0 && !mode_testiq )
    {
       QMessageBox::information( this,
                                 windowTitle() + us_tr( ": Make I(q)" ),
@@ -55,7 +55,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
-   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegExp rx_q     ( "At_L(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
    QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
@@ -93,7 +93,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
       qApp->processEvents();
       if ( rx_q.indexIn( files[ i ] ) == -1 )
       {
-         editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: Can not find " + UNICODE_LAMBDA_QS + " value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
          return false;
@@ -101,7 +101,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
       ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
       {
-         editor_msg( "red", QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: Duplicate " + UNICODE_LAMBDA_QS + " value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
          return false;
@@ -545,7 +545,7 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
       return false;
    }
 
-   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegExp rx_q     ( "At_L(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
    QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 

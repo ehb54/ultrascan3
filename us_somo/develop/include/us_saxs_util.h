@@ -768,6 +768,12 @@ class US_EXTERN US_Saxs_Util
                        ,QString                 & errormsg
                        );
 
+      static bool transpose_vvd(
+                                const vector < vector < double > > & x
+                                ,vector < vector < double > >      & y
+                                ,QString                           & errormsg
+                                );
+
       bool read_control( QString controlfile );
 
 #if defined( USE_MPI )
