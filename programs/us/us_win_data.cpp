@@ -241,7 +241,7 @@ namespace US_WinData
       QObject::tr( "Combine Models into a Global Model"  )
     },
 
-    { P_LEGDATA,   0, 0, "ls",
+    { P_LEGDATA,   0, 0, "us_legacy_converter",
       QObject::tr( "Loading Beckman Legacy File Converter" ),
       QObject::tr( "Beckman Legacy File Converter"  )
     },
