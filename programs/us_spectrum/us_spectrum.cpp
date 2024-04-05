@@ -242,14 +242,14 @@ void US_Spectrum::load_basis()
          if (parsed) {
             int chk_ld = csv_loader->exec();
             if (chk_ld != QDialog::Accepted) {
-               int chk_go = QMessageBox::question(this, "Warning!", "You cancel parsing a file."
-                                                                    "Do you still want to continue processing the file(s)?");
+               int chk_go = QMessageBox::question(this, "Warning!", "You canceled parsing a file."
+                                                                    "Do you still want to continue processing the rest of the files?");
                if (chk_go == QMessageBox::No) return;
             }
             QVector<QStringList> csv_data = csv_loader->get_data();
             if (csv_data.size() < 2 ) {
                int chk_go = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
-                                                                   "\nDo you still want to continue processing the file(s)?");
+                                                                   "\nDo you still want to continue processing the rest of the file?");
                if (chk_go == QMessageBox::No) return;
             } else {
                data_list << csv_data;
@@ -406,6 +406,7 @@ bool US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QVector
    double min_x = 1e99;
    double max_x = -1e99;
    QVector<double> yvals;
+   QVector<int> indexes;
    for (int col = 0; col < 2; col++) {
       for (int row = 0; row < in_data.at(col).size(); row++) {
          if (row == 0) {
@@ -415,6 +416,7 @@ bool US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QVector
          if (col == 0) {
             double x = in_data.at(col).at(row).toDouble();
             xvals << x;
+            indexes << row - 1;
             min_x = qMin(min_x, x);
             max_x = qMax(max_x, x);
             continue;
@@ -426,8 +428,16 @@ bool US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QVector
       QMessageBox::warning(this, "Error!", "No Data Found!");
       return false;
    }
-   profile.wvl << xvals;
-   profile.extinction << yvals;
+   std::sort(indexes.begin(), indexes.end(), [&xvals](int i1, int i2)
+             {return  xvals.at(i1) < xvals.at(i2);});
+   QVector<double> xvals_sorted;
+   QVector<double> yvals_sorted;
+   foreach (int ii, indexes) {
+      xvals_sorted << xvals.at(ii);
+      yvals_sorted << yvals.at(ii);
+   }
+   profile.wvl << xvals_sorted;
+   profile.extinction << yvals_sorted;
    profile.lambda_min = min_x;
    profile.lambda_max = max_x;
    return true;
