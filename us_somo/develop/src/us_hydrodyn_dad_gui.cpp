@@ -390,6 +390,7 @@ void US_Hydrodyn_Dad::setupGUI()
    AUTFBACK( lbl_powerfit_msg );
    lbl_powerfit_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_powerfit_msg->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_powerfit_msg->setMinimumWidth( QFontMetrics(lbl_powerfit_msg->font()).averageCharWidth() * 40 );
    lbl_powerfit_msg->setCursor(QCursor(Qt::IBeamCursor));
 
    pb_powerfit_fit = new QPushButton(us_tr("Fit"), this);
@@ -628,7 +629,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_fit_max_calls, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_fit_max_calls_text( const QString & ) ) );
    connect( le_powerfit_fit_max_calls, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_fit_max_calls_focus( bool ) ) );
    
-   lbl_powerfit_uncorrected_conc = new QLabel( us_tr( " Uncorr., Full scat. corr. c [mg/mL]: " ), this );
+   lbl_powerfit_uncorrected_conc = new QLabel( us_tr( " Uncorr., Scat. corr.,Full corr. c [mg/mL]: " ), this );
    lbl_powerfit_uncorrected_conc->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_uncorrected_conc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_uncorrected_conc );
@@ -645,6 +646,24 @@ void US_Hydrodyn_Dad::setupGUI()
    le_powerfit_uncorrected_conc->hide();
    connect( le_powerfit_uncorrected_conc, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_uncorrected_conc_text( const QString & ) ) );
    connect( le_powerfit_uncorrected_conc, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_uncorrected_conc_focus( bool ) ) );
+
+   lbl_powerfit_scat_conc = new QLabel( us_tr( "," ), this );
+   lbl_powerfit_scat_conc->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_scat_conc->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_scat_conc );
+   lbl_powerfit_scat_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_scat_conc->hide();
+
+   le_powerfit_scat_conc = new mQLineEdit( this );    le_powerfit_scat_conc->setObjectName( "le_powerfit_scat_conc Line Edit" );
+   le_powerfit_scat_conc->setText( "" );
+   le_powerfit_scat_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_scat_conc->setPalette( PALET_NORMAL );
+   le_powerfit_scat_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_scat_conc->setEnabled( true );
+   le_powerfit_scat_conc->setReadOnly( true );
+   le_powerfit_scat_conc->hide();
+   connect( le_powerfit_scat_conc, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_scat_conc_text( const QString & ) ) );
+   connect( le_powerfit_scat_conc, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_scat_conc_focus( bool ) ) );
 
    lbl_powerfit_computed_conc = new QLabel( us_tr( "," ), this );
    lbl_powerfit_computed_conc->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
@@ -684,6 +703,27 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_lambda, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda_text( const QString & ) ) );
    connect( le_powerfit_lambda, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda_focus( bool ) ) );
    
+   lbl_powerfit_lambda_abs = new QLabel( us_tr( QString( "A(%1,abs) [a.u.]:" ).arg( UNICODE_LAMBDA ) ), this );
+   lbl_powerfit_lambda_abs->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_lambda_abs->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_lambda_abs );
+   lbl_powerfit_lambda_abs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_lambda_abs->hide();
+
+   le_powerfit_lambda_abs = new mQLineEdit( this );    le_powerfit_lambda_abs->setObjectName( "le_powerfit_lambda_abs Line Edit" );
+   le_powerfit_lambda_abs->setText( "" );
+   le_powerfit_lambda_abs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_lambda_abs->setPalette( PALET_NORMAL );
+   le_powerfit_lambda_abs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_lambda_abs->setValidator( new QDoubleValidator( le_powerfit_lambda_abs ) );
+   le_powerfit_lambda_abs->setMaxLength(10);
+   le_powerfit_lambda_abs->setMaximumWidth( QFontMetrics(le_powerfit_lambda_abs->font()).averageCharWidth() * le_powerfit_lambda_abs->maxLength() );
+   le_powerfit_lambda_abs->setEnabled( true );
+   le_powerfit_lambda_abs->setReadOnly( true );
+   le_powerfit_lambda_abs->hide();
+   connect( le_powerfit_lambda_abs, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda_abs_text( const QString & ) ) );
+   connect( le_powerfit_lambda_abs, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda_abs_focus( bool ) ) );
+
    lbl_powerfit_lambda2 = new QLabel( us_tr( QString( "%1(scat) [nm]:" ).arg( UNICODE_LAMBDA ) ), this );
    lbl_powerfit_lambda2->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_lambda2->setPalette( PALET_NORMAL );
@@ -704,6 +744,27 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_lambda2, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda2_text( const QString & ) ) );
    connect( le_powerfit_lambda2, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda2_focus( bool ) ) );
 
+   lbl_powerfit_lambda2_abs = new QLabel( us_tr( QString( "A(%1,scat) [a.u.]:" ).arg( UNICODE_LAMBDA ) ), this );
+   lbl_powerfit_lambda2_abs->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_powerfit_lambda2_abs->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_powerfit_lambda2_abs );
+   lbl_powerfit_lambda2_abs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_powerfit_lambda2_abs->hide();
+
+   le_powerfit_lambda2_abs = new mQLineEdit( this );    le_powerfit_lambda2_abs->setObjectName( "le_powerfit_lambda2_abs Line Edit" );
+   le_powerfit_lambda2_abs->setText( "" );
+   le_powerfit_lambda2_abs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_powerfit_lambda2_abs->setPalette( PALET_NORMAL );
+   le_powerfit_lambda2_abs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_powerfit_lambda2_abs->setValidator( new QDoubleValidator( le_powerfit_lambda2_abs ) );
+   le_powerfit_lambda2_abs->setMaxLength(10);
+   le_powerfit_lambda2_abs->setMaximumWidth( QFontMetrics(le_powerfit_lambda2_abs->font()).averageCharWidth() * le_powerfit_lambda2_abs->maxLength() );
+   le_powerfit_lambda2_abs->setReadOnly( true );
+   le_powerfit_lambda2_abs->setEnabled( true );
+   le_powerfit_lambda2_abs->hide();
+   connect( le_powerfit_lambda2_abs, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda2_abs_text( const QString & ) ) );
+   connect( le_powerfit_lambda2_abs, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda2_abs_focus( bool ) ) );
+
    lbl_powerfit_extinction_coef = new QLabel( us_tr( " Extc. coef. [nm]: " ), this );
    lbl_powerfit_extinction_coef->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_extinction_coef->setPalette( PALET_NORMAL );
@@ -717,7 +778,7 @@ void US_Hydrodyn_Dad::setupGUI()
    le_powerfit_extinction_coef->setPalette( PALET_NORMAL );
    le_powerfit_extinction_coef->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_powerfit_extinction_coef->setValidator( new QDoubleValidator( le_powerfit_extinction_coef ) );
-   le_powerfit_extinction_coef->setMaxLength(8);
+   le_powerfit_extinction_coef->setMaxLength(10);
    le_powerfit_extinction_coef->setMaximumWidth( QFontMetrics(le_powerfit_extinction_coef->font()).averageCharWidth() * le_powerfit_extinction_coef->maxLength() );
    le_powerfit_extinction_coef->setEnabled( true );
    le_powerfit_extinction_coef->hide();
@@ -4147,27 +4208,65 @@ void US_Hydrodyn_Dad::setupGUI()
       vbl_powerfit->addLayout( hbl );
    }
 
+
+   // {
+   //    QGridLayout * gl = new QGridLayout(); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
+   //    int row = 0;
+   //    int col = 0;
+      
+   //    gl->addWidget( lbl_powerfit_lambda          , row, col++ );
+   //    gl->addWidget( le_powerfit_lambda           , row, col++ );
+   //    gl->addWidget( lbl_powerfit_lambda2         , row, col++ );
+   //    gl->addWidget( le_powerfit_lambda2          , row, col++ );
+   //    gl->addWidget( lbl_powerfit_extinction_coef , row, col++ );
+   //    gl->addWidget( le_powerfit_extinction_coef  , row, col++ );
+   //    gl->addWidget( lbl_powerfit_msg             , row, row, col, col + 5 ); col += 5 + 1;
+
+   //    ++row;
+   //    col = 0;
+
+   //    gl->addWidget( lbl_powerfit_lambda_abs      , row, col++ );
+   //    gl->addWidget( le_powerfit_lambda_abs       , row, col++ );
+   //    gl->addWidget( lbl_powerfit_lambda2_abs     , row, col++ );
+   //    gl->addWidget( le_powerfit_lambda2_abs      , row, col++ );
+   //    gl->addWidget( lbl_powerfit_uncorrected_conc, row, row, col, col + 3 ); col += 3 + 1;
+   //    {
+   //       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+   //       hbl->addWidget( le_powerfit_uncorrected_conc );
+   //       hbl->addWidget( lbl_powerfit_scat_conc );
+   //       hbl->addWidget( le_powerfit_scat_conc );
+   //       hbl->addWidget( lbl_powerfit_computed_conc );
+   //       hbl->addWidget( le_powerfit_computed_conc );
+
+   //       gl->addLayout( hbl, row, row, col, col + 4 ); col += 4 + 1;
+   //    }
+
+   //    vbl_powerfit->addLayout( gl );
+   // }
+      
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_powerfit_lambda );
       hbl->addWidget( le_powerfit_lambda );
+      hbl->addWidget( lbl_powerfit_lambda_abs );
+      hbl->addWidget( le_powerfit_lambda_abs );
       hbl->addWidget( lbl_powerfit_lambda2 );
       hbl->addWidget( le_powerfit_lambda2 );
+      hbl->addWidget( lbl_powerfit_lambda2_abs );
+      hbl->addWidget( le_powerfit_lambda2_abs );
       hbl->addWidget( lbl_powerfit_extinction_coef );
       hbl->addWidget( le_powerfit_extinction_coef );
-      hbl->addWidget( lbl_powerfit_uncorrected_conc );
-      hbl->addWidget( le_powerfit_uncorrected_conc );
-      hbl->addWidget( lbl_powerfit_computed_conc );
-      hbl->addWidget( le_powerfit_computed_conc );
+      hbl->addWidget( lbl_powerfit_msg );
       vbl_powerfit->addLayout( hbl );
    }
-   // {
-   //    QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-   //    vbl_powerfit->addLayout( hbl );
-   // }
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
-      hbl->addWidget( lbl_powerfit_msg );
+      hbl->addWidget( lbl_powerfit_uncorrected_conc );
+      hbl->addWidget( le_powerfit_uncorrected_conc );
+      hbl->addWidget( lbl_powerfit_scat_conc );
+      hbl->addWidget( le_powerfit_scat_conc );
+      hbl->addWidget( lbl_powerfit_computed_conc );
+      hbl->addWidget( le_powerfit_computed_conc );
       vbl_powerfit->addLayout( hbl );
    }
    {
@@ -4477,6 +4576,8 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_to_saxs
             ,pb_ref
             ,rb_pbmode_conc
+            // ,lbl_powerfit_lambda_abs
+            // ,lbl_powerfit_lambda2_abs
             }
       );
 
@@ -4659,17 +4760,22 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
 
    powerfit_widgets.push_back( lbl_powerfit_uncorrected_conc );
    powerfit_widgets.push_back( le_powerfit_uncorrected_conc );
-
+   powerfit_widgets.push_back( lbl_powerfit_scat_conc );
+   powerfit_widgets.push_back( le_powerfit_scat_conc );
    powerfit_widgets.push_back( lbl_powerfit_computed_conc );
    powerfit_widgets.push_back( le_powerfit_computed_conc );
 
    powerfit_widgets.push_back( lbl_powerfit_lambda );
    powerfit_widgets.push_back( le_powerfit_lambda );
+   powerfit_widgets.push_back( lbl_powerfit_lambda_abs );
+   powerfit_widgets.push_back( le_powerfit_lambda_abs );
    powerfit_widgets.push_back( lbl_powerfit_extinction_coef );
    powerfit_widgets.push_back( le_powerfit_extinction_coef );
 
    powerfit_widgets.push_back( lbl_powerfit_lambda2 );
    powerfit_widgets.push_back( le_powerfit_lambda2 );
+   powerfit_widgets.push_back( lbl_powerfit_lambda2_abs );
+   powerfit_widgets.push_back( le_powerfit_lambda2_abs );
 
    powerfit_widgets.push_back( pb_powerfit_fit );
    powerfit_widgets.push_back( pb_powerfit_reset );

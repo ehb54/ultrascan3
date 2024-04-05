@@ -718,14 +718,22 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QLabel                           * lbl_powerfit_uncorrected_conc;
       mQLineEdit                       * le_powerfit_uncorrected_conc;
 
+      QLabel                           * lbl_powerfit_scat_conc;
+      mQLineEdit                       * le_powerfit_scat_conc;
+
       QLabel                           * lbl_powerfit_computed_conc;
       mQLineEdit                       * le_powerfit_computed_conc;
 
       QLabel                           * lbl_powerfit_lambda;
       mQLineEdit                       * le_powerfit_lambda;
+      QLabel                           * lbl_powerfit_lambda_abs;
+      mQLineEdit                       * le_powerfit_lambda_abs;;
 
       QLabel                           * lbl_powerfit_lambda2;
       mQLineEdit                       * le_powerfit_lambda2;
+
+      QLabel                           * lbl_powerfit_lambda2_abs;
+      mQLineEdit                       * le_powerfit_lambda2_abs;
 
       QLabel                           * lbl_powerfit_extinction_coef;
       mQLineEdit                       * le_powerfit_extinction_coef;
@@ -821,12 +829,18 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       void powerfit_fit_max_calls_focus   ( bool );
       void powerfit_computed_conc_text    ( const QString & );
       void powerfit_computed_conc_focus   ( bool );
+      void powerfit_scat_conc_text        ( const QString & );
+      void powerfit_scat_conc_focus       ( bool );
       void powerfit_uncorrected_conc_text ( const QString & );
       void powerfit_uncorrected_conc_focus( bool );
       void powerfit_lambda_text           ( const QString & );
       void powerfit_lambda_focus          ( bool );
+      void powerfit_lambda_abs_text       ( const QString & );
+      void powerfit_lambda_abs_focus      ( bool );
       void powerfit_lambda2_text          ( const QString & );
       void powerfit_lambda2_focus         ( bool );
+      void powerfit_lambda2_abs_text      ( const QString & );
+      void powerfit_lambda2_abs_focus     ( bool );
       void powerfit_extinction_coef_text  ( const QString & );
       void powerfit_extinction_coef_focus ( bool );
 

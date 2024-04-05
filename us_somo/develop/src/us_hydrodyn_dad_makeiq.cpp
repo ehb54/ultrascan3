@@ -54,6 +54,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
+   head = head.replace( QRegularExpression( "At_L" ), "AL_t" );
 
    QRegExp rx_q     ( "At_L(\\d+(:?|_\\d+))" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
@@ -491,7 +492,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
 
    if ( !mode_testiq )
    {
-      editor_msg( "dark blue", us_tr( "Finished: Make I(q)" ) );
+      editor_msg( "dark blue", us_tr( "Finished: Make A(" + UNICODE_LAMBDA_QS + ")" ) );
       running = false;
    }
    progress->reset();
