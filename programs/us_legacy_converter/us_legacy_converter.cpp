@@ -1,7 +1,7 @@
 #include "us_legacy_converter.h"
 #include "us_license_t.h"
 #include "us_license.h"
-#include "us_extern.h"
+//#include "us_extern.h"
 
 int main(int argc, char *argv[])
 {
@@ -187,16 +187,17 @@ void US_LegacyConverter::load() {
 }
 
 void US_LegacyConverter::reload() {
-   te_info->setText("Parsing Data! Please Wait!");
-   te_info->moveCursor(QTextCursor::End);
-   qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-   qApp->processEvents();
    reset();
    le_load->clear();
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
    QRegularExpressionMatch match;
 
+   te_info->clear();
+   te_info->append("Parsing Data. Please Wait!");
+   te_info->moveCursor(QTextCursor::End);
+   qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+   qApp->processEvents();
    if (tar_fpath.size() == 0) {
       QMessageBox::warning(this, "Warning!", tr("No File Loaded!"));
       qApp->restoreOverrideCursor();
@@ -227,6 +228,8 @@ void US_LegacyConverter::reload() {
       qDebug() << tmpfile;
       if (QFile::copy(tar_finfo.absoluteFilePath(), tmpfile)) {
          if (unzip) {
+            te_info->append("Process: Extracting ZIP File.");
+            qApp->processEvents();
             US_Gzip gzip;
             int state = gzip.gunzip(tmpfile);
             if (state != 0) {
@@ -239,6 +242,8 @@ void US_LegacyConverter::reload() {
             tmpfile.chop(3);
             qDebug() << tmpfile;
          }
+         te_info->append("Process: Extracting TAR data.");
+         qApp->processEvents();
          US_Tar ustar;
          QStringList extlist;
          int state = ustar.extract(tmpfile, tmp_dir.path(), &extlist);
@@ -385,16 +390,15 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    return state;
 }
 
-bool US_LegacyConverter::read_beckman_files(const QString& tmpdir, QString& status){
-   QDir dir = QDir(tmpdir);
-   QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot |
-                                       QDir::NoDotAndDotDot | QDir::NoSymLinks);
+bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status){
+   QDir tmpdir(path);
+   QStringList subdirs = tmpdir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
    int counter = 1;
    double tolerance = static_cast<double>(ct_tolerance->value());
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
-      US_Convert::readLegacyData(dir.absoluteFilePath(path), rawscan, runtype);
+      US_Convert::readLegacyData(tmpdir.absoluteFilePath(path), rawscan, runtype);
       if (rawscan.size() == 0) {
          continue;
       }
@@ -403,12 +407,17 @@ bool US_LegacyConverter::read_beckman_files(const QString& tmpdir, QString& stat
       QList< US_Convert::TripleInfo > triples;
       US_Convert::convertLegacyData(rawscan, rawdata, triples, runtype, tolerance);
 
-      QDir subd = QDir(dir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
+      QDir subd = QDir(tmpdir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
       status += QString::number(counter) + ":\n";
       counter ++;
       status += tr("Run type: %1 (%2)\n").arg(data_types.value(runtype), runtype);
       status += tr("Number of the parsed files: %1\n").arg(subd.count());
       status += tr("Number of the beckman data objects: %1\n").arg(rawscan.count());
+
+      QString msg("Run type: %1 (%2), Number of the processed files: %3");
+      te_info->append(msg.arg(data_types.value(runtype), runtype).arg(subd.count()));
+      te_info->moveCursor(QTextCursor::End);
+      qApp->processEvents();
 
       for (int ii = 0; ii < triples.size(); ii ++) {
          QString tdesc = triples.at(ii).tripleDesc.trimmed();
