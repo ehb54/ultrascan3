@@ -5,6 +5,8 @@
 #include "us_widgets.h"
 #include "us_dataIO.h"
 #include "us_settings.h"
+#include "us_tar.h"
+#include "us_gzip.h"
 #include "../us_convert/us_convert.h"
 
 
@@ -15,8 +17,6 @@ public:
    US_LegacyConverter();
 
 private:
-   QStringList ext_list;
-   QStringList args_list;
    QMap< QString, QString > data_types;
 
    QMap< QString, US_DataIO::RawData > all_data;

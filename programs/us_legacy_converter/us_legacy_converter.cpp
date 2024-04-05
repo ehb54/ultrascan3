@@ -30,10 +30,6 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    data_types.insert("WA", "Absorbance");
    data_types.insert("IP", "Interference");
    data_types.insert("FI", "Fluorensce");
-   // ext_list << "tar" << "tar.gz" << "tar.bz2" << "tar.xz";
-   // args_list << "xf" << "-zxf" << "-jxf" << "-Jxf";
-   ext_list << "tar" << "tar.gz";
-   args_list << "xf" << "-zxf";
 
    pb_load = us_pushbutton("Load Optima File");
    pb_load->setMinimumWidth(150);
@@ -96,7 +92,7 @@ void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(US_Settings::importDir());
    dir.setPath(dir.absoluteFilePath(le_runid->text()));
    if (dir.exists()) {
-      lb_runid->setText("( existent )    Run ID:");
+      lb_runid->setText("( existing )    Run ID:");
       le_runid->setStyleSheet("color: red;");
    } else {
       lb_runid->setText("Run ID:");
@@ -181,14 +177,7 @@ void US_LegacyConverter::reset(void) {
 }
 
 void US_LegacyConverter::load() {
-   //QString ext_str = "(";
-   QString ext_str = "TAR Files (";
-   foreach (QString ext, ext_list) {
-      ext_str += " *." + ext;
-   }
-   ext_str += " )";
-   //ext_str += " )" + ext_str + " )";
-   
+   QString ext_str = "ZIP Files ( *.tar.gz *.tar )";
    QString fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima Tar File"), QDir::homePath(), ext_str);
    if (fpath.size() == 0){
       return;
@@ -220,42 +209,78 @@ void US_LegacyConverter::reload() {
       qApp->restoreOverrideCursor();
       return;
    }
+   QStringList ext_list;
    QString tar_fileName = tar_finfo.fileName();
-   QString tar_fileExt;
-   QString tar_arg;
-   QString pattern = "(.+)[.]%1$";
-   for (int ii = 0; ii < ext_list.size(); ii++) {
-      QString ext = ext_list.at(ii);
-      qDebug() << pattern.arg(ext);
-      re.setPattern(pattern.arg(ext));
-      match = re.match(tar_fileName);
-      if (match.hasMatch()){
-         tar_fileExt = ext;
-         tar_fileName = match.captured(1);
-         tar_arg = args_list.at(ii);
-         break;
-      }
-   }
+   // QString tar_fileExt;
+   // QString pattern = "(.+)[.]%1$";
+   // for (int ii = 0; ii < ext_list.size(); ii++) {
+   //    QString ext = ext_list.at(ii);
+   //    qDebug() << pattern.arg(ext);
+   //    re.setPattern(pattern.arg(ext));
+   //    match = re.match(tar_fileName);
+   //    if (match.hasMatch()){
+   //       tar_fileExt = ext;
+   //       tar_fileName = match.captured(1);
+   //       tar_arg = args_list.at(ii);
+   //       break;
+   //    }
+   // }
+   // bool isTar = false;
+   // bool isGz = false;
+   // // QString tar_fileExt;
+   // if (tar_fileName.endsWith(".tar.gz", Qt::CaseInsensitive)) {
+   //     isTar = true;
+   //     isGz = true;
+   //     tar_fileExt = ".tar.gz";
+   // } else if (tar_fileName.endsWith(".tar", Qt::CaseInsensitive)) {
+   //     isTar = true;
+   //     tar_fileExt = ".tar";
+   // }
    qDebug() << "file path: " << tar_file;
-   qDebug() << "filename, extension: " << tar_fileName << tar_fileExt;
+   qDebug() << "filename, extension: " << tar_fileName;
 
    QTemporaryDir tmp_dir;
    QTemporaryDir tmp_dir_sorted;
+   QString tmpfile = tmp_dir.filePath("data.tar");
+   bool unzip = false;
    if (tmp_dir.isValid()) {
-      qDebug() << tmp_dir.path();
-      QString tmpfile = "data." + tar_fileExt;
-      QFileInfo finfo = QFileInfo(QDir(tmp_dir.path()), tmpfile);
-      if (QFile::copy(tar_file, finfo.absoluteFilePath())) {
-         QStringList args;
-         args << tar_arg << finfo.absoluteFilePath() << "-C" << tmp_dir.path();
-         int state = QProcess::execute("tar", args);
-         qDebug() << state;
+      if (tar_fileName.endsWith(".tar.gz", Qt::CaseInsensitive)) {
+         tmpfile += ".gz";
+         unzip = true;
+      }
+      qDebug() << tmpfile;
+      if (QFile::copy(tar_file, tmpfile)) {
+         if (unzip) {
+            US_Gzip gzip;
+            int state = gzip.gunzip(tmpfile);
+            if (state != 0) {
+               QMessageBox::warning(this, "Error!", "Failed to extract zip file\n" +
+                                                        gzip.explain(state));
+               return;
+            }
+            tmpfile.chop(3);
+            qDebug() << tmpfile;
+         }
+         US_Tar ustar;
+         QStringList extlist;
+         int state = ustar.extract(tmpfile, &extlist);
          if (state != 0) {
-            QMessageBox::warning(this, "Error!", tr("FAILED to uncompress the file!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
-            tar_file.clear();
-            qApp->restoreOverrideCursor();
+            QMessageBox::warning(this, "Error!", "Failed to extract TAR file\n" +
+                                                     ustar.explain(state));
             return;
          }
+
+         // US_Gzip gzip = US_Gzip();
+
+         // args << tar_arg << finfo.absoluteFilePath() << "-C" << tmp_dir.path();
+         // int state = QProcess::execute("tar", args);
+         // qDebug() << state;
+         // if (state != 0) {
+         //    QMessageBox::warning(this, "Error!", tr("FAILED to uncompress the file!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
+         //    tar_file.clear();
+         //    qApp->restoreOverrideCursor();
+         //    return;
+         // }
       } else {
          QMessageBox::warning(this, "Error!", tr("FAILED to copy the file to the /tmp directory!"));
          tar_file.clear();
