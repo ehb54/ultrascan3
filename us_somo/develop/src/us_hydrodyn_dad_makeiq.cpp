@@ -55,7 +55,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
-   QRegExp rx_q     ( "At_L(\\d+_\\d+)" );
+   QRegExp rx_q     ( "At_L(\\d+(:?|_\\d+))" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
    QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
@@ -89,8 +89,11 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
-      progress->setValue( i ); progress->setMaximum( files.size() * 2 );
-      qApp->processEvents();
+      if ( !(i % 20) ) {
+         progress->setValue( i ); progress->setMaximum( files.size() * 2 );
+         qApp->processEvents();
+      }
+
       if ( rx_q.indexIn( files[ i ] ) == -1 )
       {
          editor_msg( "red", QString( us_tr( "Error: Can not find " + UNICODE_LAMBDA_QS + " value in file name for %1" ) ).arg( files[ i ] ) );
