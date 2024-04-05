@@ -83,7 +83,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 
 void US_LegacyConverter::new_tolerance(double){
    reset();
-   if (! tar_file.isEmpty()){
+   if (! tar_fpath.isEmpty()){
       te_info->setText("Reload the current file or load another file!");
    }
 }
@@ -182,7 +182,7 @@ void US_LegacyConverter::load() {
    if (fpath.size() == 0){
       return;
    }
-   tar_file = fpath;
+   tar_fpath = fpath;
    reload();
 }
 
@@ -197,65 +197,43 @@ void US_LegacyConverter::reload() {
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
    QRegularExpressionMatch match;
 
-   if (tar_file.size() == 0) {
+   if (tar_fpath.size() == 0) {
       QMessageBox::warning(this, "Warning!", tr("No File Loaded!"));
       qApp->restoreOverrideCursor();
       return;
    }
-   QFileInfo tar_finfo = QFileInfo(tar_file);
+   QFileInfo tar_finfo = QFileInfo(tar_fpath);
    if (! tar_finfo.exists()) {
       QMessageBox::warning(this, "Error!", tr("File Not Found!\n\n(%1)!").arg(tar_finfo.absoluteFilePath()));
-      tar_file.clear();
+      tar_fpath.clear();
       qApp->restoreOverrideCursor();
       return;
    }
-   QStringList ext_list;
-   QString tar_fileName = tar_finfo.fileName();
-   // QString tar_fileExt;
-   // QString pattern = "(.+)[.]%1$";
-   // for (int ii = 0; ii < ext_list.size(); ii++) {
-   //    QString ext = ext_list.at(ii);
-   //    qDebug() << pattern.arg(ext);
-   //    re.setPattern(pattern.arg(ext));
-   //    match = re.match(tar_fileName);
-   //    if (match.hasMatch()){
-   //       tar_fileExt = ext;
-   //       tar_fileName = match.captured(1);
-   //       tar_arg = args_list.at(ii);
-   //       break;
-   //    }
-   // }
-   // bool isTar = false;
-   // bool isGz = false;
-   // // QString tar_fileExt;
-   // if (tar_fileName.endsWith(".tar.gz", Qt::CaseInsensitive)) {
-   //     isTar = true;
-   //     isGz = true;
-   //     tar_fileExt = ".tar.gz";
-   // } else if (tar_fileName.endsWith(".tar", Qt::CaseInsensitive)) {
-   //     isTar = true;
-   //     tar_fileExt = ".tar";
-   // }
-   qDebug() << "file path: " << tar_file;
-   qDebug() << "filename, extension: " << tar_fileName;
+   qDebug() << "file path: " << tar_fpath;
 
    QTemporaryDir tmp_dir;
    QTemporaryDir tmp_dir_sorted;
    QString tmpfile = tmp_dir.filePath("data.tar");
+   QString runid;
    bool unzip = false;
    if (tmp_dir.isValid()) {
-      if (tar_fileName.endsWith(".tar.gz", Qt::CaseInsensitive)) {
+      if (tar_finfo.absoluteFilePath().endsWith(".tar.gz", Qt::CaseInsensitive)) {
          tmpfile += ".gz";
          unzip = true;
+         runid = tar_finfo.fileName().chopped(7);
+      } else {
+         runid = tar_finfo.fileName().chopped(4);
       }
       qDebug() << tmpfile;
-      if (QFile::copy(tar_file, tmpfile)) {
+      if (QFile::copy(tar_finfo.absoluteFilePath(), tmpfile)) {
          if (unzip) {
             US_Gzip gzip;
             int state = gzip.gunzip(tmpfile);
             if (state != 0) {
-               QMessageBox::warning(this, "Error!", "Failed to extract zip file\n" +
+               QMessageBox::warning(this, "Error!", "Failed to extract the ZIP file!\n" +
                                                         gzip.explain(state));
+               qApp->restoreOverrideCursor();
+               tar_fpath.clear();
                return;
             }
             tmpfile.chop(3);
@@ -263,33 +241,23 @@ void US_LegacyConverter::reload() {
          }
          US_Tar ustar;
          QStringList extlist;
-         int state = ustar.extract(tmpfile, &extlist);
+         int state = ustar.extract(tmpfile, tmp_dir.path(), &extlist);
          if (state != 0) {
-            QMessageBox::warning(this, "Error!", "Failed to extract TAR file\n" +
+            QMessageBox::warning(this, "Error!", "Failed to extract the TAR file!\n" +
                                                      ustar.explain(state));
+            qApp->restoreOverrideCursor();
+            tar_fpath.clear();
             return;
          }
-
-         // US_Gzip gzip = US_Gzip();
-
-         // args << tar_arg << finfo.absoluteFilePath() << "-C" << tmp_dir.path();
-         // int state = QProcess::execute("tar", args);
-         // qDebug() << state;
-         // if (state != 0) {
-         //    QMessageBox::warning(this, "Error!", tr("FAILED to uncompress the file!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
-         //    tar_file.clear();
-         //    qApp->restoreOverrideCursor();
-         //    return;
-         // }
       } else {
          QMessageBox::warning(this, "Error!", tr("FAILED to copy the file to the /tmp directory!"));
-         tar_file.clear();
+         tar_fpath.clear();
          qApp->restoreOverrideCursor();
          return;
       }
    } else {
       QMessageBox::warning(this, "Error!", tr("FAILED to create a /tmp directory!"));
-      tar_file.clear();
+      tar_fpath.clear();
       qApp->restoreOverrideCursor();
       return;
    }
@@ -297,13 +265,13 @@ void US_LegacyConverter::reload() {
    list_files(tmp_dir.path(), filelist);
    if (filelist.size() == 0) {
       QMessageBox::warning(this, "Warning!", tr("Empty File!\n(%1)").arg(tar_finfo.absoluteFilePath()));
-      tar_file.clear();
+      tar_fpath.clear();
       qApp->restoreOverrideCursor();
       return;
    }
    if (! sort_files( filelist, tmp_dir_sorted.path() ) ) {
       QMessageBox::warning(this, "Warning!", tr("No right files found in the TAR file!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
-      tar_file.clear();
+      tar_fpath.clear();
       qApp->restoreOverrideCursor();
       return;
    }
@@ -313,7 +281,7 @@ void US_LegacyConverter::reload() {
       return;
    }
    le_load->setText(tar_finfo.absoluteFilePath());
-   le_runid->setText(tar_fileName);
+   le_runid->setText(runid);
    QStringList loaded_types;
    foreach (QString key, all_triples.keys()) {
       key = key.split(':').at(0).trimmed();

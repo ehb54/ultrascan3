@@ -23,7 +23,7 @@ private:
    QMap< QString, US_Convert::TripleInfo > all_triples;
 
    QLabel *lb_runid;
-   QString tar_file;
+   QString tar_fpath;
    QLineEdit *le_load;
    QTextEdit *te_info;
    QComboBox *cb_runtype;
