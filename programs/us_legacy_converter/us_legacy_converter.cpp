@@ -283,10 +283,12 @@ void US_LegacyConverter::reload() {
    le_load->setText(tar_finfo.absoluteFilePath());
    le_runid->setText(runid);
    QStringList loaded_types;
-   foreach (QString key, all_triples.keys()) {
-      key = key.split(':').at(0).trimmed();
-      if (! loaded_types.contains(key)){
-         loaded_types << key;
+   QMapIterator< QString, US_Convert::TripleInfo > it(all_triples);
+   while (it.hasNext()) {
+      it.next();
+      QString dtype = it.key().split(':').at(0).trimmed();
+      if (! loaded_types.contains(dtype)){
+         loaded_types << dtype;
       }
    }
    foreach (QString key, loaded_types) {
