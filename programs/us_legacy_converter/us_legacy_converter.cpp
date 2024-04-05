@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
 US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 {
-   setWindowTitle( tr( "Beckman to OpenAUC File Converter" ) );
+   setWindowTitle( tr( "Beckman to OpenAUC Data Converter" ) );
    setPalette( US_GuiSettings::frameColor() );
    this->setMinimumSize(600, 500);
    this->setMaximumSize(600, 500);
@@ -31,7 +31,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    data_types.insert("IP", "Interference");
    data_types.insert("FI", "Fluorensce");
 
-   pb_load = us_pushbutton("Load Optima File");
+   pb_load = us_pushbutton("Load Optima File (tar.gz)");
    pb_load->setMinimumWidth(150);
    le_load = us_lineedit("", -1, true);
 
@@ -177,7 +177,7 @@ void US_LegacyConverter::reset(void) {
 }
 
 void US_LegacyConverter::load() {
-   QString ext_str = "ZIP Files ( *.tar.gz *.tar )";
+   QString ext_str = "TAR Files ( *.tar.gz *.tar )";
    QString fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima Tar File"), QDir::homePath(), ext_str);
    if (fpath.size() == 0){
       return;
