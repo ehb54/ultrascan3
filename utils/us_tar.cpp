@@ -505,6 +505,9 @@ int US_Tar::extract( const QString& archive, QStringList* list )
    QStringList dirs;
    vector<int> times;
 
+   QFileInfo archfinfo(archive);
+   QDir archdir = archfinfo.absoluteDir();
+
    try
    {
       while ( true )
@@ -594,7 +597,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          else // It's a file.  Create it.
          {
             int flags = O_WRONLY | O_CREAT | O_BINARY | O_TRUNC;
-            ofd = open( filename.toLatin1().constData(), flags, 0644 );
+            ofd = open( archdir.absoluteFilePath( filename ).toLatin1().constData(), flags, 0644 );
             if ( ofd < 0 ) throw TAR_WRITEERROR;
 
             // Copy from archive to file
