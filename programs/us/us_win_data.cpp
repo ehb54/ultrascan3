@@ -242,8 +242,8 @@ namespace US_WinData
     },
 
     { P_LEGDATA,   0, 0, "us_legacy_converter",
-      QObject::tr( "Loading Beckman Legacy File Converter" ),
-      QObject::tr( "Beckman Legacy File Converter"  )
+      QObject::tr( "Loading Beckman Optima File Converter" ),
+      QObject::tr( "Beckman Optima File Converter"  )
     },
 
     { P_VIEWXPN,   0, 0, "us_xpn_viewer",
