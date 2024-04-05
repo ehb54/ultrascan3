@@ -478,7 +478,7 @@ void US_Tar::flush_buffer( void )
 }
 
 ///////////////////////////
-int US_Tar::extract( const QString& archive, QStringList* list )
+int US_Tar::extract( const QString& archive, const QString& outpath, QStringList* list )
 {
    /* 1. Open the archve
     * 2. while header is not null
@@ -505,8 +505,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
    QStringList dirs;
    vector<int> times;
 
-   QFileInfo archfinfo(archive);
-   QDir archdir = archfinfo.absoluteDir();
+   QDir outdir(outpath);
 
    try
    {
@@ -584,9 +583,9 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          if ( directory )
          {
             QDir f( "." );
-            if ( ! f.exists( filename ) ) 
+            if ( ! f.exists( outdir.absoluteFilePath( filename ) ) )
             {
-               bool success = f.mkdir( filename );
+               bool success = f.mkdir( outdir.absoluteFilePath( filename ) );
                if ( ! success ) throw TAR_MKDIRFAILED;
             }
 
@@ -596,8 +595,14 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          }
          else // It's a file.  Create it.
          {
+            const QString absfpath = outdir.absoluteFilePath( filename );
+            QFileInfo finfo( absfpath );
+            QDir dir = finfo.absoluteDir();
+            if ( ! dir.exists() ) {
+               dir.mkdir( dir.absolutePath() );
+            }
             int flags = O_WRONLY | O_CREAT | O_BINARY | O_TRUNC;
-            ofd = open( archdir.absoluteFilePath( filename ).toLatin1().constData(), flags, 0644 );
+            ofd = open( absfpath.toLatin1().constData(), flags, 0644 );
             if ( ofd < 0 ) throw TAR_WRITEERROR;
 
             // Copy from archive to file
