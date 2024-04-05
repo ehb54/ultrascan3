@@ -18,8 +18,8 @@ class CustomTableWidget : public QTableWidget {
    void contextMenuEvent(QContextMenuEvent *event) override;
 
    private slots:
-   void delete_row();
-   void delete_column();
+   void delete_rows();
+   void delete_columns();
 };
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog

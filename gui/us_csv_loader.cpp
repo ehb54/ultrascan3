@@ -12,8 +12,8 @@ void CustomTableWidget::add_header() {
 void CustomTableWidget::contextMenuEvent(QContextMenuEvent *event) {
    QMenu contextMenu(this);
 
-   QAction *del_row = contextMenu.addAction("Delete Row");
-   QAction *del_col = contextMenu.addAction("Delete Column");
+   QAction *del_rows = contextMenu.addAction("Delete Row(s)");
+   QAction *del_cols = contextMenu.addAction("Delete Column(s)");
 
    QString styleSheet = "QMenu { background-color: rgb(255, 253, 208); }"
                         "QMenu::item { background: transparent; }"
@@ -21,19 +21,37 @@ void CustomTableWidget::contextMenuEvent(QContextMenuEvent *event) {
 
    contextMenu.setStyleSheet(styleSheet);
 
-   connect(del_row, &QAction::triggered, this, &CustomTableWidget::delete_row);
-   connect(del_col, &QAction::triggered, this, &CustomTableWidget::delete_column);
+   connect(del_rows, &QAction::triggered, this, &CustomTableWidget::delete_rows);
+   connect(del_cols, &QAction::triggered, this, &CustomTableWidget::delete_columns);
 
    contextMenu.exec(event->globalPos());
 }
 
-void CustomTableWidget::delete_row() {
-   this->removeRow(this->currentRow());
+void CustomTableWidget::delete_rows() {
+   QVector<int> rows;
+   for (QTableWidgetItem *item : this->selectedItems()) {
+      int r = item->row();
+      if (! rows.contains(r)) rows << r;
+   }
+   std::sort(rows.begin(), rows.end(), [&](auto a, auto b) {return a > b;});
+
+   foreach (int ii, rows) {
+      this->removeRow(ii);
+   }
    emit new_content();
 }
 
-void CustomTableWidget::delete_column() {
-   this->removeColumn(this->currentColumn());
+void CustomTableWidget::delete_columns() {
+   QVector<int> cols;
+   for (QTableWidgetItem *item : this->selectedItems()) {
+      int c = item->column();
+      if (! cols.contains(c)) cols << c;
+   }
+   std::sort(cols.begin(), cols.end(), [&](auto a, auto b) {return a > b;});
+
+   foreach (int ii, cols) {
+      this->removeColumn(ii);
+   }
    emit new_content();
 }
 
@@ -48,7 +66,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    lb_filename->setAlignment(Qt::AlignRight);
    le_filename = us_lineedit("");
    pb_open = us_pushbutton("Open");
-   QLabel *lb_delimiter = us_label("Separated by:");
+   QLabel *lb_delimiter = us_label("Separated By:");
    lb_delimiter->setAlignment(Qt::AlignRight);
 
    rb_tab = new QRadioButton();
