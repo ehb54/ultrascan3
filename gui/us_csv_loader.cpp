@@ -414,12 +414,17 @@ void US_CSV_Loader::fill_table(int id) {
    }
    tw_data->setRowCount(n_rows);
    tw_data->setColumnCount(n_columns);
+   bool droplast = true;
    for (int ii = 0; ii < n_rows; ii++ ) {
       int nd = data_list.at(ii).size();
       for (int jj = 0; jj < n_columns; jj++) {
          QTableWidgetItem *twi;
          if (jj < nd){
-            twi = new QTableWidgetItem(data_list.at(ii).at(jj).trimmed());
+            QString s = data_list.at(ii).at(jj).trimmed();
+            if (jj == n_columns - 1 && !s.isEmpty()) {
+               droplast = false;
+            }
+            twi = new QTableWidgetItem(s);
          } else {
             twi = new QTableWidgetItem("");
          }
@@ -427,6 +432,9 @@ void US_CSV_Loader::fill_table(int id) {
          tw_data->setItem(ii, jj, twi);
          // tw_data->setRowHeight(ii, rowht);
       }
+   }
+   if (droplast) {
+      tw_data->removeColumn(tw_data->columnCount() - 1);
    }
    tw_data->setHorizontalHeaderLabels(make_labels(n_columns));
    tw_data->setVerticalHeaderLabels(make_labels(n_rows));
