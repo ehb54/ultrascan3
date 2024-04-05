@@ -1200,6 +1200,11 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_lvtols.clear();
    le_daends.clear();
 
+   //ABDE
+   le_dens0s.clear();
+   le_vbars .clear();
+   le_MWs   .clear();
+
    ck_runs       .clear();
    ck_report_runs.clear();
    pb_reports    .clear();
@@ -1258,6 +1263,13 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_report  = us_label( tr( "Report" ) );
 
    QLabel* lb_repl_group  = us_label( tr( "Replicate\nGroup" ) );
+
+   //Add new widgets for ABDE case:
+   lbl_dens_0 = us_label( tr( "Loading \n Density (g/ml):" ) );
+   lbl_vbar = us_label( tr( "Gradient Mat. \n vbar (ml/g):" ) );
+   lbl_MW = us_label( tr( "Gradient Mat. \n MW (g/mol):" ) );
+   //END Add new widgets for ABDE case:
+   
    
    lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
    pb_applya = us_pushbutton( tr( "Apply to All" ) );
@@ -1277,6 +1289,10 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    lb_lvtol->setMaximumHeight( lbhgt );
    lb_daend->setMaximumHeight( lbhgt );
 
+   lbl_dens_0->setMaximumHeight( lbhgt );
+   lbl_vbar  ->setMaximumHeight( lbhgt );
+   lbl_MW    ->setMaximumHeight( lbhgt );
+
    // genL->addWidget( lb_chann, row,    0, 2, 5 );
    // genL->addWidget( lb_lcrat, row,    5, 2, 1 );
    // genL->addWidget( lb_lctol, row,    6, 2, 1 );
@@ -1288,21 +1304,48 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    // genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
 
    genL->addWidget( lb_chann, row,    0, 2, 3 );
-   genL->addWidget( lb_lcrat, row,    3, 2, 1 );
-   genL->addWidget( lb_lctol, row,    4, 2, 1 );
-   genL->addWidget( lb_ldvol, row,    5, 2, 1 );
-   genL->addWidget( lb_lvtol, row,    6, 2, 1 );
-   genL->addWidget( lb_daend, row,    7, 2, 1 );
+   if ( !mainw->abde_mode_aprofile )
+     {
+       genL->addWidget( lb_lcrat, row,    3, 2, 1 );
+       genL->addWidget( lb_lctol, row,    4, 2, 1 );
+       genL->addWidget( lb_ldvol, row,    5, 2, 1 );
+       genL->addWidget( lb_lvtol, row,    6, 2, 1 );
+       genL->addWidget( lb_daend, row,    7, 2, 1 );
+
+       lbl_dens_0 -> setVisible( false );
+       lbl_vbar   -> setVisible( false );
+       lbl_MW     -> setVisible( false );
+     }
+   else
+     {
+       genL->addWidget( lbl_dens_0, row,    3, 2, 1 );
+       genL->addWidget( lbl_vbar,   row,    4, 2, 1 );
+       genL->addWidget( lbl_MW,     row,    5, 2, 1 );
+       genL->addWidget( lb_ldvol,   row,    6, 2, 1 );
+       genL->addWidget( lb_lvtol,   row,    7, 2, 1 );
+
+       lb_lcrat -> setVisible( false );
+       lb_lctol -> setVisible( false );
+       lb_daend -> setVisible( false );
+     }
+   
    genL->addWidget( lb_channelana, row,  8, 2, 1 );
    genL->addWidget( lb_runreport, row,  9, 2, 1 );
    genL->addWidget( lb_report, row,  10, 2, 1 );
-   
    genL->addWidget( lb_repl_group, row,  11, 2, 1 );
-   
-   genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
+
+    if ( !mainw->abde_mode_aprofile )
+      {
+	genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
+      }
+    else
+      {
+	lb_mwvprefs -> setVisible( false );
+	row++; row++;
+      }
+
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
-
 
    row_global = row;
    QCheckBox*     ck_analysisrun;
@@ -1357,20 +1400,42 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       le_lvtols << le_lvtol;
       le_daends << le_daend;
 
-      // genL->addWidget( le_chann,  row,    0, 1, 5 );
-      // genL->addWidget( le_lcrat,  row,    5, 1, 1 );
-      // genL->addWidget( le_lctol,  row,    6, 1, 1 );
-      // genL->addWidget( le_ldvol,  row,    7, 1, 1 );
-      // genL->addWidget( le_lvtol,  row,    8, 1, 1 );
-      // genL->addWidget( le_daend,  row,    9, 1, 1 );
+      //Add new widgets for ABDE case:
+      QLineEdit* le_dens_0 = us_lineedit( "1.42",   0, false );
+      QLineEdit* le_vbar   = us_lineedit( "0.2661", 0, false );
+      QLineEdit* le_MW     = us_lineedit( "168.36", 0, false );
 
+      le_dens0s << le_dens_0;
+      le_vbars  << le_vbar;
+      le_MWs    << le_MW;
+      //END Add new widgets for ABDE case:
+      
       genL->addWidget( le_chann,  row,    0, 1, 3 );
-      genL->addWidget( le_lcrat,  row,    3, 1, 1 );
-      genL->addWidget( le_lctol,  row,    4, 1, 1 );
-      genL->addWidget( le_ldvol,  row,    5, 1, 1 );
-      genL->addWidget( le_lvtol,  row,    6, 1, 1 );
-      genL->addWidget( le_daend,  row,    7, 1, 1 );
+      if ( !mainw->abde_mode_aprofile )
+	{
+	  genL->addWidget( le_lcrat,  row,    3, 1, 1 );
+	  genL->addWidget( le_lctol,  row,    4, 1, 1 );
+	  genL->addWidget( le_ldvol,  row,    5, 1, 1 );
+	  genL->addWidget( le_lvtol,  row,    6, 1, 1 );
+	  genL->addWidget( le_daend,  row,    7, 1, 1 );
 
+	  le_dens_0 -> setVisible( false );
+	  le_vbar   -> setVisible( false );
+	  le_MW     -> setVisible( false );
+	}
+      else
+	{
+	  genL->addWidget( le_dens_0, row,    3, 1, 1 );
+	  genL->addWidget( le_vbar,   row,    4, 1, 1 );
+	  genL->addWidget( le_MW,     row,    5, 1, 1 );
+	  genL->addWidget( le_ldvol,  row,    6, 1, 1 );
+	  genL->addWidget( le_lvtol,  row,    7, 1, 1 );
+
+	  le_lcrat -> setVisible( false );
+	  le_lctol -> setVisible( false );
+	  le_daend -> setVisible( false );
+	}
+      
       QFont font   = le_chann->property("font").value<QFont>();
       QFontMetrics fm(font);
       int pixelsWide = fm.width( le_chann->text() );
@@ -1433,11 +1498,21 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
-      genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
+
       connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
                this,        SLOT  ( mwvChecked( bool ) ) );
 
       ck_mwv << ck_mwvprefs;
+      
+      if ( !mainw->abde_mode_aprofile )
+	{
+	  genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
+	}
+      else
+	{
+	  ck_mwvprefs -> setVisible( false );
+	  ck_mwvprefs -> setChecked( false );
+	}
       //END of MWL prefs
       
       if ( ii == 0 )
@@ -1473,8 +1548,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       scrollArea_r     ->setWidget( wvl_box );
       
       gr_mwvbox << scrollArea_r;
-      
       right->addWidget( scrollArea_r  );
+      
       qDebug() << "Right.count(), gr_mwvbox.size() AFTER insert -- " << right->count() << gr_mwvbox.size(); ;
       // //END MWV dialog
       

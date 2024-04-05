@@ -26,6 +26,11 @@ US_AnaProfile::US_AnaProfile()
    lv_tolers << 10.0;
    data_ends << 7.0;
 
+   //abde
+   ld_dens_0s << 1.42;
+   gm_vbars   << 0.2661;
+   gm_mws     << 168.36;
+
    analysis_run << 1;
    report_run   << 1;
 

@@ -473,6 +473,13 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
          le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ kk ] ) );
          kk              = qMin( ii, currProf->data_ends.count() - 1 );
          le_daends[ ii ]->setText( QString::number( currProf->data_ends[ kk ] ) );
+	 //abde
+	 kk              = qMin( ii, currProf->ld_dens_0s.count() - 1 );
+         le_dens0s[ ii ]->setText( QString::number( currProf->ld_dens_0s[ kk ] ) );
+	 kk              = qMin( ii, currProf->gm_vbars.count() - 1 );
+         le_vbars[ ii ]->setText( QString::number( currProf->gm_vbars[ kk ] ) );
+	 kk              = qMin( ii, currProf->gm_mws.count() - 1 );
+         le_MWs[ ii ]->setText( QString::number( currProf->gm_mws[ kk ] ) );
 
 	 kk              = qMin( ii, currProf->analysis_run.count() - 1 );
 
@@ -621,33 +628,11 @@ void US_AnaprofPanGen::set_abde_panel()
   qDebug() << "modifying General tab for ABDE: nchn -- " << nchn;
   for ( int ii = 0; ii < nchn; ii++ )
     {
-      // QString stchan        = QString::number( ii ) + ": ";
-      // qDebug() << "channel # -- " << stchan;
-      // QLineEdit * lr        = genL->findChild<QLineEdit *>( stchan + "loadconc_ratio");
-      // qDebug() << "lr for # -- " << stchan;
-      // QLineEdit * lr_tol    = genL->findChild<QLineEdit *>( stchan + "loadconc_tolerance");
-      // qDebug() << "lr_tol for # -- " << stchan;
-      // QLineEdit * d_end     = genL->findChild<QLineEdit *>( stchan + "dataend");
-      // qDebug() << "d_end for # -- " << stchan;
-      
-      // QCheckBox * mwl_p     = genL->findChild<QCheckBox *>( stchan + "MWV");
-      // qDebug() << "mwl_p for # -- " << stchan;
-      // //mwl_p -> setChecked( false );
-
-      // lr      ->setVisible( false );
-      // qDebug() << "lr for # -- " << stchan << "set invisible";
-      // lr_tol  ->setVisible( false );
-      // d_end   ->setVisible( false );
-      // mwl_p   ->setVisible( false );
-
       le_lcrats[ ii ]->setVisible( false );
       le_lctols[ ii ]->setVisible( false );
       le_daends[ ii ]->setVisible( false );
       ck_mwv[ ii ]   ->setChecked( false );
       ck_mwv[ ii ]   ->setVisible( false );
-
-      panel->addStretch();
-      adjustSize();
     }
 }
 
@@ -776,6 +761,11 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       currProf->l_volumes.clear( );
       currProf->lv_tolers.clear( );
       currProf->data_ends.clear( );
+
+      //abde
+      currProf->ld_dens_0s.clear( );
+      currProf->gm_vbars.clear( );
+      currProf->gm_mws.clear( );
       
       currProf->analysis_run .clear( );
       currProf->report_run   .clear( );
@@ -918,6 +908,12 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
          currProf->l_volumes << le_ldvols[ ii ]->text().toDouble();
          currProf->lv_tolers << le_lvtols[ ii ]->text().toDouble();
          currProf->data_ends << le_daends[ ii ]->text().toDouble();
+
+	 //abde
+	 currProf->ld_dens_0s << le_dens0s[ ii ]->text().toDouble();
+	 currProf->gm_vbars   << le_vbars[ ii ]->text().toDouble();
+	 currProf->gm_mws     << le_MWs[ ii ]->text().toDouble();
+	 
 
 	 //ALEXEY: add additional field for channels to be or not to be analysed
 	 if ( ck_runs[ ii ]->isChecked() ) 
