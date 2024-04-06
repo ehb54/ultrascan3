@@ -20,6 +20,7 @@ static double                 powerfit_conc;
 static map < double, double > powerfit_org_I_at_lambda;
 static set < QString >        powerfit_tmp_plotnames;
 static bool                   powerfit_corrected_data_ok;
+static QString                powerfit_last_used_name;
 
 #define TSO QTextStream(stdout)
 
@@ -140,6 +141,14 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
 
    lbl_wheel_pos->setText("");
    powerfit_set_b_default();
+
+   if ( powerfit_last_used_name != powerfit_name ) {
+      le_powerfit_a->setText( "0" );
+      le_powerfit_c->setText( "4" );
+      powerfit_set_b_default();
+      powerfit_last_used_name = powerfit_name;
+   }
+
    powerfit_enables();
 }
 

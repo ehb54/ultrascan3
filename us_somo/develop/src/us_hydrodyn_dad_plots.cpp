@@ -845,10 +845,18 @@ void US_Hydrodyn_Dad::plot_files( bool save_zoom_state )
       return;
    }
       
+   if ( current_mode == MODE_BASELINE2 ) {
+      baseline2_fit_clear( false );
+      baseline2_enables();
+   }
+   
    // powerfit_fit_clear( false );
 
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
-   if ( current_mode != MODE_POWERFIT ) {
+   if (
+       current_mode != MODE_POWERFIT
+       && current_mode != MODE_BASELINE2
+       ) {
       plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    }
    bool any_selected = false;

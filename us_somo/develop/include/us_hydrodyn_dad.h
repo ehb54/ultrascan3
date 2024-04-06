@@ -372,6 +372,8 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
       QPushButton   *pb_powerfit;
+      QPushButton   *pb_baseline2_start;
+      QPushButton   *pb_baseline2_apply;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
@@ -849,6 +851,62 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       void powerfit_fit_alg_weight_index  (); // int index );
       void powerfit_fit_curve_index       (); // int index );
 
+      // end powerfit
+
+      // baseline2
+
+   private:
+
+      vector < QStringList >              baseline2_names;
+      QString                             baseline2_name;
+      set < QString >                     baseline2_created_name;
+      set < QString >                     baseline2_org_selected;
+      void                                baseline2_scroll_highlight( int pos );
+      void                                baseline2_enables();
+      void                                baseline2_add_marker(
+                                                               QwtPlot * plot,
+                                                               double pos, 
+                                                               QColor color, 
+                                                               QString text, 
+                                                               Qt::Alignment align = Qt::AlignRight | Qt::AlignTop
+                                                               );
+      void                                baseline2_delete_markers();
+
+      bool                                baseline2_use_errors;
+
+      QPushButton                       * pb_baseline2_fit;
+      QPushButton                       * pb_baseline2_fit_clear;
+
+      QLabel                            * lbl_baseline2_q_range;
+      mQLineEdit                        * le_baseline2_q_start;
+      mQLineEdit                        * le_baseline2_q_end;
+
+      double                              baseline2_q_min;
+      double                              baseline2_q_max;
+
+      vector < QwtPlotMarker * >          baseline2_markers;
+
+      QColor                              baseline2_color_q;
+
+      QLabel                            * lbl_baseline2_msg;
+
+      QwtPlotCurve                      * baseline2_fit_curve;
+      void                                baseline2_fit_clear( bool replot = true );
+      void                                baseline2_curve_update();
+
+   private slots:
+
+      void baseline2_start                ();
+      void baseline2_apply                ();
+      void baseline2_fit                  ();
+
+      void baseline2_q_start_text         ( const QString & );
+      void baseline2_q_start_focus        ( bool );
+      void baseline2_q_end_text           ( const QString & );
+      void baseline2_q_end_focus          ( bool );
+
+      // end baseline2
+
    private:
 
       // Guinier
@@ -1270,6 +1328,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       vector < QWidget * >                wheel_below_widgets;
 
       vector < QWidget * >                powerfit_widgets;
+      vector < QWidget * >                baseline2_widgets;
       vector < QWidget * >                wyatt_widgets;
       vector < QWidget * >                blanks_widgets;
       vector < QWidget * >                baseline_widgets;
@@ -1455,6 +1514,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
          ,MODE_TESTIQ
          ,MODE_WYATT
          ,MODE_POWERFIT
+         ,MODE_BASELINE2
       };
 
       modes                        current_mode;
@@ -1653,7 +1713,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       double                       scale_applied_q_max;
 
       set < QString >              scale_last_created;
-      void                         set_selected        ( set < QString > &, bool do_replot = true );
+      void                         set_selected        ( set < QString > &, bool do_replot = true, bool scroll_to_first = true );
       void                         set_created_selected( set < QString > &, bool do_replot = true );
 
       map < QString, vector <double > > scale_q;

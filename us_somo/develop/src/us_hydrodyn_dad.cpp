@@ -486,6 +486,7 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    suppress_plot            = false;
    powerfit_fit_curve       = (QwtPlotCurve *) 0;
    powerfit_corrected_curve = (QwtPlotCurve *) 0;
+   baseline2_fit_curve      = (QwtPlotCurve *) 0;
 
    gaussian_param_text
       << "amplitude"

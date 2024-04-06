@@ -2228,7 +2228,7 @@ void US_Hydrodyn_Dad::select_nth()
    {
       if ( parameters.count( QString( "%1" ).arg( i ) ) )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
       }
    }
    disable_updates = false;
@@ -2762,16 +2762,25 @@ double US_Hydrodyn_Dad::tot_intensity( QString &file, double q_min, double q_max
    return tot_i;
 }
 
-void US_Hydrodyn_Dad::set_selected( set < QString > & to_select, bool do_replot )
+void US_Hydrodyn_Dad::set_selected( set < QString > & to_select, bool do_replot, bool scroll_to_first )
 {
    disable_updates = true;
    lb_files->clearSelection();
+   QListWidgetItem * first_item = (QListWidgetItem *) 0;
+   
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
       if ( to_select.count( lb_files->item( i )->text() ) )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
+         if ( !first_item ) {
+            first_item = lb_files->item( i );
+         }
       }
+   }
+
+   if ( scroll_to_first ) {
+      lb_files->scrollToItem( first_item );
    }
 
    disable_updates = false;
@@ -2789,7 +2798,7 @@ void US_Hydrodyn_Dad::set_created_selected( set < QString > & to_select, bool do
    {
       if ( to_select.count( lb_created_files->item( i )->text() ) )
       {
-         lb_created_files->item( i)->setSelected( true );
+         lb_created_files->item( i )->setSelected( true );
       }
    }
    disable_updates = false;
@@ -5081,7 +5090,7 @@ void US_Hydrodyn_Dad::bin( QStringList files )
    {
       if ( select_files.count( lb_files->item( i )->text() ) )
       {
-         lb_files->item( i)->setSelected( true );
+         lb_files->item( i )->setSelected( true );
       }
    }
 

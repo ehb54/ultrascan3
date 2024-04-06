@@ -507,6 +507,14 @@ void US_Hydrodyn_Dad::adjust_wheel( double pos )
 
       break;
 
+   case MODE_BASELINE2 :
+      if ( le_last_focus ) {
+         le_last_focus->setText( QString( "%1" ).arg( pos ) );
+      }
+
+      break;
+
+
    default : us_qdebug( "adjust wheel called in invalid mode" ); break;
    }
 }
@@ -801,6 +809,16 @@ void US_Hydrodyn_Dad::wheel_cancel( bool from_wheel_save )
          set_selected( powerfit_org_selected );
       }
       powerfit_delete_markers();
+      mode_select( MODE_NORMAL );
+      break;
+
+   case MODE_BASELINE2 :
+      if ( baseline2_created_name.size() ) {
+         set_selected( baseline2_created_name );
+      } else {
+         set_selected( baseline2_org_selected );
+      }
+      baseline2_delete_markers();
       mode_select( MODE_NORMAL );
       break;
 
@@ -1121,6 +1139,18 @@ void US_Hydrodyn_Dad::wheel_save()
       powerfit_delete_markers();
       // plot_files();
       set_selected( powerfit_org_selected );
+      running = false;
+      wheel_enables( false );
+      pb_wheel_save         ->setEnabled( false );
+      pb_wheel_cancel       ->setEnabled( false );
+      mode_select( MODE_NORMAL );
+      update_enables();
+      break;
+
+   case MODE_BASELINE2 :
+      baseline2_delete_markers();
+      // plot_files();
+      set_selected( baseline2_org_selected );
       running = false;
       wheel_enables( false );
       pb_wheel_save         ->setEnabled( false );

@@ -20,13 +20,15 @@
 // #define ALLOW_GUOS_CARUANAS
 
 #define POWERFIT_COLOR_Q QColor( 255, 153, 153 )
+#define BASELINE2_COLOR_Q QColor( 255, 153, 153 )
 
 void US_Hydrodyn_Dad::setupGUI()
 {
    int minHeight1 = 22;
    int minHeight3 = 24;
 
-   powerfit_color_q = POWERFIT_COLOR_Q;
+   powerfit_color_q  = POWERFIT_COLOR_Q;
+   baseline2_color_q = POWERFIT_COLOR_Q;
 
    QPalette cg_magenta = USglobal->global_colors.cg_normal;
    cg_magenta.setBrush( QPalette::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
@@ -786,6 +788,67 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_extinction_coef, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_extinction_coef_focus( bool ) ) );
    
    // powerfit end
+
+   // baseline2 start
+
+   pb_baseline2_start = new QPushButton(us_tr("Baseline"), this);
+   pb_baseline2_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline2_start->setMinimumHeight(minHeight1);
+   pb_baseline2_start->setPalette( PALET_PUSHB );
+   connect(pb_baseline2_start, SIGNAL(clicked()), SLOT(baseline2_start()));
+
+   pb_baseline2_apply = new QPushButton(us_tr("Baseline apply"), this);
+   pb_baseline2_apply->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline2_apply->setMinimumHeight(minHeight1);
+   pb_baseline2_apply->setPalette( PALET_PUSHB );
+   connect(pb_baseline2_apply, SIGNAL(clicked()), SLOT(baseline2_apply()));
+
+   lbl_baseline2_msg = new QLabel( "", this );
+   lbl_baseline2_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_baseline2_msg->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_baseline2_msg );
+   lbl_baseline2_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_baseline2_msg->setTextInteractionFlags(Qt::TextSelectableByMouse);
+   lbl_baseline2_msg->setMinimumWidth( QFontMetrics(lbl_baseline2_msg->font()).averageCharWidth() * 40 );
+   lbl_baseline2_msg->setCursor(QCursor(Qt::IBeamCursor));
+
+   pb_baseline2_fit = new QPushButton(us_tr("Fit"), this);
+   pb_baseline2_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline2_fit->setMinimumHeight(minHeight1);
+   pb_baseline2_fit->setPalette( PALET_PUSHB );
+   connect(pb_baseline2_fit, SIGNAL(clicked()), SLOT(baseline2_fit()));
+
+   lbl_baseline2_q_range = new QLabel( us_tr( " Fit range: " ), this );
+   lbl_baseline2_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_baseline2_q_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_baseline2_q_range );
+   lbl_baseline2_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_baseline2_q_range->hide();
+
+   le_baseline2_q_start = new mQLineEdit( this );    le_baseline2_q_start->setObjectName( "le_baseline2_q_start Line Edit" );
+   le_baseline2_q_start->setText( "" );
+   le_baseline2_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline2_q_start->setPalette( cg_fit_1 );
+   le_baseline2_q_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline2_q_start->setEnabled( false );
+   le_baseline2_q_start->setValidator( new QDoubleValidator( le_baseline2_q_start ) );
+   le_baseline2_q_start->hide();
+   connect( le_baseline2_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( baseline2_q_start_text( const QString & ) ) );
+   connect( le_baseline2_q_start, SIGNAL( focussed ( bool ) )             , SLOT( baseline2_q_start_focus( bool ) ) );
+
+   le_baseline2_q_end = new mQLineEdit( this );    le_baseline2_q_end->setObjectName( "le_baseline2_q_end Line Edit" );
+   le_baseline2_q_end->setText( "" );
+   le_baseline2_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline2_q_end->setPalette( cg_fit_1 );
+   le_baseline2_q_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline2_q_end->setEnabled( false );
+   le_baseline2_q_end->setValidator( new QDoubleValidator( le_baseline2_q_end ) );
+   le_baseline2_q_end->hide();
+   connect( le_baseline2_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( baseline2_q_end_text( const QString & ) ) );
+   connect( le_baseline2_q_end, SIGNAL( focussed ( bool ) )             , SLOT( baseline2_q_end_focus( bool ) ) );
+
+
+   // baseline2 end
 
    pb_svd = new QPushButton(us_tr("SVD / EFA"), this);
    pb_svd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3911,6 +3974,13 @@ void US_Hydrodyn_Dad::setupGUI()
    // files_widgets.push_back ( pb_color_rotate );
    files_expert_widgets.push_back ( pb_ag );
 
+   QBoxLayout * hbl_file_buttons_3b = new QHBoxLayout(); hbl_file_buttons_3b->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3b->setSpacing( 0 );
+   hbl_file_buttons_3b->addWidget ( pb_baseline2_start );
+   hbl_file_buttons_3b->addWidget ( pb_baseline2_apply );
+
+   files_widgets.push_back ( pb_baseline2_start );
+   files_widgets.push_back ( pb_baseline2_apply );
+
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
    hbl_file_buttons_4->addWidget ( pb_powerfit );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
@@ -4022,6 +4092,7 @@ void US_Hydrodyn_Dad::setupGUI()
       gl_files->addLayout( hbl_file_buttons_2 , j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_2b , j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_3 , j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons_3b , j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_4 , j, 0 ); j++;
       gl_files->addLayout( hbl_conc_file, j, 0 ); j++;
       // gl_files->addWidget( lbl_conc_file, j, 0 ); j++;
@@ -4269,6 +4340,27 @@ void US_Hydrodyn_Dad::setupGUI()
       hbl->addWidget( le_powerfit_computed_conc );
       vbl_powerfit->addLayout( hbl );
    }
+   // powerfit end
+   // baseline2 start
+
+   QBoxLayout * vbl_baseline2 = new QVBoxLayout( 0 ); vbl_baseline2->setContentsMargins( 0, 0, 0, 0 ); vbl_baseline2->setSpacing( 0 );
+
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_baseline2_q_range );
+      hbl->addWidget( le_baseline2_q_start );
+      hbl->addWidget( le_baseline2_q_end );
+      hbl->addWidget( pb_baseline2_fit );
+      vbl_baseline2->addLayout( hbl );
+   }
+
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_baseline2_msg );
+      vbl_baseline2->addLayout( hbl );
+   }
+
+   // baseline2 end
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_guinier_mw_t_range );
@@ -4487,6 +4579,7 @@ void US_Hydrodyn_Dad::setupGUI()
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
    vbl_plot_group->addLayout ( vbl_powerfit );
+   vbl_plot_group->addLayout ( vbl_baseline2 );
    vbl_plot_group->addLayout ( vbl_testiq );
    vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
@@ -4785,6 +4878,20 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    powerfit_widgets.push_back( cb_powerfit_fit_alg );
    powerfit_widgets.push_back( cb_powerfit_fit_alg_weight );
 
+   // baseline2_widgets
+
+   baseline2_widgets.push_back( pb_wheel_dec );
+   baseline2_widgets.push_back( qwtw_wheel );
+   baseline2_widgets.push_back( pb_wheel_inc );
+   baseline2_widgets.push_back( lbl_wheel_pos );
+   
+   baseline2_widgets.push_back( lbl_baseline2_msg );
+   baseline2_widgets.push_back( lbl_baseline2_q_range );
+   baseline2_widgets.push_back( le_baseline2_q_start );
+   baseline2_widgets.push_back( le_baseline2_q_end );
+   
+   baseline2_widgets.push_back( pb_baseline2_fit );
+   
    // wyatt_widgets;
 
    wyatt_widgets.push_back( le_wyatt_start );
@@ -5039,6 +5146,7 @@ void US_Hydrodyn_Dad::mode_select()
    ShowHide::hide_widgets( ggaussian_4var_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( ggaussian_5var_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( powerfit_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( baseline2_widgets, always_hide_widgets );
    ShowHide::hide_widgets( wyatt_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( blanks_widgets, always_hide_widgets  );
    ShowHide::hide_widgets( baseline_widgets, always_hide_widgets  );
@@ -5103,6 +5211,7 @@ void US_Hydrodyn_Dad::mode_select()
    case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets, always_hide_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
    case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets, always_hide_widgets         , false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets  );break;
    case MODE_POWERFIT  : mode_title( pb_powerfit->text() );       ShowHide::hide_widgets( powerfit_widgets, always_hide_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 9, always_hide_widgets  );break;
+   case MODE_BASELINE2 : mode_title( pb_baseline2_start->text() );ShowHide::hide_widgets( baseline2_widgets, always_hide_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 9, always_hide_widgets  );break;
    default : us_qdebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -5199,6 +5308,7 @@ void US_Hydrodyn_Dad::update_enables()
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
    bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_" ).size();
+   bool all_atl          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_At_L" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -5295,10 +5405,12 @@ void US_Hydrodyn_Dad::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_powerfit           ->setEnabled( !files_are_time && files_selected_count == 1 );
+   pb_baseline2_start    ->setEnabled( files_are_time && files_selected_count == 1 && all_atl && all_DAD );
+   pb_baseline2_apply    ->setEnabled( files_are_time && files_selected_count && all_atl && all_DAD && false );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
-   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
+   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_atl && all_DAD /* && gaussians.size() */ );
    pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && dad_param_n && dad_param_lambda && dad_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
    pb_create_istar_q     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_ihasht );
    pb_load_conc          ->setEnabled( true );
@@ -5635,6 +5747,8 @@ void US_Hydrodyn_Dad::disable_all()
    pb_smooth             ->setEnabled( false );
    pb_repeak             ->setEnabled( false );
    pb_powerfit           ->setEnabled( false );
+   pb_baseline2_start    ->setEnabled( false );
+   pb_baseline2_apply    ->setEnabled( false );
    pb_svd                ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
@@ -5858,6 +5972,12 @@ void US_Hydrodyn_Dad::disable_all()
    cb_powerfit_fit_curve              ->setEnabled( false );
    cb_powerfit_fit_alg                ->setEnabled( false );
    cb_powerfit_fit_alg_weight         ->setEnabled( false );
+
+   // baseline2 disables
+   pb_baseline2_fit                   ->setEnabled( false );
+   le_baseline2_q_start               ->setEnabled( false );
+   le_baseline2_q_end                 ->setEnabled( false );
+
 }
 
 void US_Hydrodyn_Dad::model_select_all()
