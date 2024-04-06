@@ -47,7 +47,7 @@ class US_UTIL_EXTERN US_Tar
       //! \param path    The path that extracted data is saved.
       //! \param list    The optional output list of extracted files.
       //! \return        An error code. Zero for no error (see explain method).
-      int     extract( const QString&, const QString&, QStringList* = 0 );
+      int     extract( const QString&, QStringList* = 0, const QString& = 0);
       
       //! List the files archived in a tar file.
       //!
