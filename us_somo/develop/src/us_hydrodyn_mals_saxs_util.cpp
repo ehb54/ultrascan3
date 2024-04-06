@@ -6088,7 +6088,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                }
 
                if ( !usu->linear_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
-                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                   QMessageBox::critical( this,
                                          windowTitle() + us_tr( ": I#,*(q) common time" ),
                                          msg
@@ -6097,7 +6097,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                }
             
                if ( !usu->linear_interpolate( time_grids[ mals_set ], yerrors, output_times, yerrors2 ) ) {
-                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                   QMessageBox::critical( this,
                                          windowTitle() + us_tr( ": I#,*(q) common time" ),
                                          msg
@@ -6130,7 +6130,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                }
 
                if ( !usu->quadratic_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
-                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                   QMessageBox::critical( this,
                                          windowTitle() + us_tr( ": I#,*(q) common time" ),
                                          msg
@@ -6139,7 +6139,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                }
             
                if ( !usu->quadratic_interpolate( time_grids[ mals_set ], yerrors, output_times, yerrors2 ) ) {
-                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                   QMessageBox::critical( this,
                                          windowTitle() + us_tr( ": I#,*(q) common time" ),
                                          msg
@@ -6211,7 +6211,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                }
 
                if ( !usu->linear_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
-                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                   QMessageBox::critical( this,
                                          windowTitle() + us_tr( ": I#,*(q) common time" ),
                                          msg
@@ -6239,7 +6239,7 @@ void US_Hydrodyn_Mals_Saxs::common_time() {
                }
 
                if ( !usu->quadratic_interpolate( time_grids[ mals_set ], yIs, output_times, yIs2 ) ) {
-                  QString msg = us_tr( "Interpolation error : " + errormsg );
+                  QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                   QMessageBox::critical( this,
                                          windowTitle() + us_tr( ": I#,*(q) common time" ),
                                          msg
@@ -7070,7 +7070,7 @@ bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & t
             }
 
             if ( !usu->linear_interpolate( param_times, y, output_times, y2 ) ) {
-               QString msg = us_tr( "Interpolation error : " + errormsg );
+               QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                QMessageBox::critical( this,
                                       windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
                                       msg
@@ -7095,7 +7095,7 @@ bool US_Hydrodyn_Mals_Saxs::mals_params_interpolate( const vector < double > & t
             }
 
             if ( !usu->quadratic_interpolate( param_times, y, output_times, y2 ) ) {
-               QString msg = us_tr( "Interpolation error : " + errormsg );
+               QString msg = us_tr( "Interpolation error : " + usu->errormsg );
                QMessageBox::critical( this,
                                       windowTitle() + us_tr( ": Interpolate supplementary MALS parameters" ),
                                       msg
