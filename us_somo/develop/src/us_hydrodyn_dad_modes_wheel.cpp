@@ -818,6 +818,8 @@ void US_Hydrodyn_Dad::wheel_cancel( bool from_wheel_save )
       } else {
          set_selected( baseline2_org_selected );
       }
+      le_baseline2_q_start->setText( baseline2_q_start_save );
+      le_baseline2_q_end  ->setText( baseline2_q_end_save );
       baseline2_delete_markers();
       mode_select( MODE_NORMAL );
       break;
@@ -1151,10 +1153,11 @@ void US_Hydrodyn_Dad::wheel_save()
       baseline2_delete_markers();
       // plot_files();
       set_selected( baseline2_org_selected );
-      running = false;
+      running               = false;
       wheel_enables( false );
       pb_wheel_save         ->setEnabled( false );
       pb_wheel_cancel       ->setEnabled( false );
+      baseline2_fit_ok      = true;
       mode_select( MODE_NORMAL );
       update_enables();
       break;

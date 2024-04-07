@@ -818,6 +818,12 @@ void US_Hydrodyn_Dad::setupGUI()
    pb_baseline2_fit->setPalette( PALET_PUSHB );
    connect(pb_baseline2_fit, SIGNAL(clicked()), SLOT(baseline2_fit()));
 
+   pb_baseline2_create_adjusted_curve = new QPushButton(us_tr("Create baseline subtracted Curve"), this);
+   pb_baseline2_create_adjusted_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline2_create_adjusted_curve->setMinimumHeight(minHeight1);
+   pb_baseline2_create_adjusted_curve->setPalette( PALET_PUSHB );
+   connect(pb_baseline2_create_adjusted_curve, SIGNAL(clicked()), SLOT(baseline2_create_adjusted_curve()));
+
    lbl_baseline2_q_range = new QLabel( us_tr( " Fit range: " ), this );
    lbl_baseline2_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_baseline2_q_range->setPalette( PALET_NORMAL );
@@ -4351,6 +4357,7 @@ void US_Hydrodyn_Dad::setupGUI()
       hbl->addWidget( le_baseline2_q_start );
       hbl->addWidget( le_baseline2_q_end );
       hbl->addWidget( pb_baseline2_fit );
+      hbl->addWidget( pb_baseline2_create_adjusted_curve );
       vbl_baseline2->addLayout( hbl );
    }
 
@@ -4891,6 +4898,7 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    baseline2_widgets.push_back( le_baseline2_q_end );
    
    baseline2_widgets.push_back( pb_baseline2_fit );
+   baseline2_widgets.push_back( pb_baseline2_create_adjusted_curve );
    
    // wyatt_widgets;
 
@@ -5309,6 +5317,7 @@ void US_Hydrodyn_Dad::update_enables()
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
    bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_" ).size();
    bool all_atl          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_At_L" ).size();
+   bool any_blc          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_blc" ).size();
 
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
@@ -5406,7 +5415,7 @@ void US_Hydrodyn_Dad::update_enables()
    pb_smooth             ->setEnabled( files_selected_count );
    pb_powerfit           ->setEnabled( !files_are_time && files_selected_count == 1 );
    pb_baseline2_start    ->setEnabled( files_are_time && files_selected_count == 1 && all_atl && all_DAD );
-   pb_baseline2_apply    ->setEnabled( files_are_time && files_selected_count && all_atl && all_DAD && false );
+   pb_baseline2_apply    ->setEnabled( files_are_time && files_selected_count && all_atl && all_DAD && baseline2_fit_ok && !any_blc );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
@@ -5975,6 +5984,7 @@ void US_Hydrodyn_Dad::disable_all()
 
    // baseline2 disables
    pb_baseline2_fit                   ->setEnabled( false );
+   pb_baseline2_create_adjusted_curve ->setEnabled( false );
    le_baseline2_q_start               ->setEnabled( false );
    le_baseline2_q_end                 ->setEnabled( false );
 

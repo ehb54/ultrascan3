@@ -876,6 +876,7 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
 
       QPushButton                       * pb_baseline2_fit;
       QPushButton                       * pb_baseline2_fit_clear;
+      QPushButton                       * pb_baseline2_create_adjusted_curve;
 
       QLabel                            * lbl_baseline2_q_range;
       mQLineEdit                        * le_baseline2_q_start;
@@ -893,12 +894,19 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QwtPlotCurve                      * baseline2_fit_curve;
       void                                baseline2_fit_clear( bool replot = true );
       void                                baseline2_curve_update();
-
+      void                                baseline2_create_adjusted_curve( const QString & name );
+      QString                             baseline2_q_start_save;
+      QString                             baseline2_q_end_save;
+      double                              baseline2_fit_avg;
+      bool                                baseline2_fit_ok;
+      
    private slots:
 
       void baseline2_start                ();
       void baseline2_apply                ();
       void baseline2_fit                  ();
+      void baseline2_create_adjusted_curve( const set < QString > & names );
+      void baseline2_create_adjusted_curve();
 
       void baseline2_q_start_text         ( const QString & );
       void baseline2_q_start_focus        ( bool );

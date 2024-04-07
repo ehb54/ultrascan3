@@ -6,8 +6,6 @@
 
 #define TSO QTextStream(stdout)
 
-double baseline2_fit_avg;
-
 // --- baseline2 ---
 
 void US_Hydrodyn_Dad::baseline2_start() {
@@ -23,6 +21,8 @@ void US_Hydrodyn_Dad::baseline2_start() {
    baseline2_names              .clear();
    baseline2_name               = "";
    baseline2_org_selected       .clear();
+   baseline2_q_start_save       = le_baseline2_q_start->text();
+   baseline2_q_end_save         = le_baseline2_q_end  ->text();
 
    QStringList names           = all_selected_files();
 
@@ -95,6 +95,7 @@ void US_Hydrodyn_Dad::baseline2_start() {
    }
 
    lbl_wheel_pos->setText("");
+   pb_baseline2_create_adjusted_curve   ->setEnabled( false ); // set in curve_update & curve_clear
    baseline2_enables();
 }
 
@@ -124,12 +125,10 @@ void US_Hydrodyn_Dad::baseline2_enables()
    pb_q_exclude_clear                   ->setEnabled( q_exclude.size() > 0 );
    pb_pp                                ->setEnabled( true );
    
-   pb_baseline2_fit                      ->setEnabled( baseline2_fit_curve == 0 );
+   pb_baseline2_fit                     ->setEnabled( baseline2_fit_curve == 0 );
 
-   le_baseline2_q_start                  ->setEnabled( true );
-   le_baseline2_q_end                    ->setEnabled( true );
-
-   // pb_baseline2_create_adjusted_curve    ->setEnabled( true );
+   le_baseline2_q_start                 ->setEnabled( true );
+   le_baseline2_q_end                   ->setEnabled( true );
 
    wheel_enables( true );
 
@@ -285,6 +284,7 @@ void US_Hydrodyn_Dad::baseline2_fit_clear( bool replot ) {
    qDebug() << "baseline2_fit_clear()";
 
    lbl_baseline2_msg->setText("");
+   pb_baseline2_create_adjusted_curve   ->setEnabled( false );
 
    if ( baseline2_fit_curve ) {
       qDebug() << "baseline2_fit_clear() baseline2_fit_curve set";
@@ -297,15 +297,6 @@ void US_Hydrodyn_Dad::baseline2_fit_clear( bool replot ) {
    if ( replot ) {
       plot_dist->replot();
    }
-}
-
-void US_Hydrodyn_Dad::baseline2_apply() {
-   qDebug() << "baseline2_apply()";
-   QMessageBox::critical( this
-                          ,windowTitle() + us_tr( ": Baseline Apply" )
-                          ,us_tr( "Not yet implemented" )
-                          );
-   update_enables();
 }
 
 void US_Hydrodyn_Dad::baseline2_curve_update() {
@@ -345,6 +336,7 @@ void US_Hydrodyn_Dad::baseline2_curve_update() {
                                       );
       baseline2_fit_curve->attach( plot_dist );
       lbl_baseline2_msg->setText( QString( us_tr( "Fit average value %1" ) ).arg( baseline2_fit_avg ) );
+      pb_baseline2_create_adjusted_curve   ->setEnabled( true );
    } else {
       baseline2_fit_avg = 0;
       lbl_baseline2_msg->setText( us_tr( "No data points found in fit range" ) );
@@ -354,3 +346,66 @@ void US_Hydrodyn_Dad::baseline2_curve_update() {
    
 }
 
+void US_Hydrodyn_Dad::baseline2_apply() {
+   qDebug() << "baseline2_apply()";
+   baseline2_create_adjusted_curve( all_selected_files_set() );
+   update_enables();
+}
+
+void US_Hydrodyn_Dad::baseline2_create_adjusted_curve() {
+   qDebug() << "baseline2_create_adjusted_curve()";
+   baseline2_create_adjusted_curve( baseline2_name );
+}
+
+void US_Hydrodyn_Dad::baseline2_create_adjusted_curve( const set < QString > & names ) {
+   qDebug() << "baseline2_create_adjusted_curve( set < QString > )";
+   set < QString > to_select;
+   for ( auto const & name : names ) {
+      baseline2_create_adjusted_curve( name );
+      to_select.insert( last_created_file );
+   }
+   set_selected( to_select );
+}
+
+void US_Hydrodyn_Dad::baseline2_create_adjusted_curve( const QString & name ) {
+   qDebug() << "baseline2_create_adjusted_curve(  QString )";
+   
+   if ( !f_qs.count( name ) || !f_Is.count( name ) ) {
+      editor_msg( "red", QString( us_tr( "Error: missing data for curve %1" ) ).arg( name ) );
+      return;
+   }
+
+   double q_start = le_baseline2_q_start->text().toDouble();
+   double q_end   = le_baseline2_q_end->text().toDouble();
+
+   double fit_avg = 0;
+   int    points  = 0;
+   
+   for ( size_t i = 0; i < f_qs[ name ].size(); ++i ) {
+      double q = f_qs[ name ][ i ];
+      if ( q >= q_start && q <= q_end && !q_exclude.count( q ) ) {
+         fit_avg += f_Is[ name ][ i ];
+         ++points;
+      }
+   }
+
+   if ( points ) {
+      fit_avg /= (double) points;
+
+      QString newname = name + QString( "_blc%1" ).arg( fit_avg ).replace( ".", "_" );
+
+      vector < double > y = f_Is[ name ];
+      for ( auto & v : y ) {
+         v -= fit_avg;
+      }
+
+      if ( f_errors.count( name ) && f_errors[ name ].size() == f_qs[ name ].size() ) {
+         add_plot( newname, f_qs[ name ], y, f_errors[ name ], true, false );
+      } else {
+         add_plot( newname, f_qs[ name ], y, true, false );
+      }
+   } else {
+      editor_msg( "red", QString( us_tr( "Error: no data points found in baseline range for curve %1" ) ).arg( name ) );
+      return;
+   }
+}
