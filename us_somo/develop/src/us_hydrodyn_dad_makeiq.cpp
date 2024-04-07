@@ -38,6 +38,8 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
 {
    bool mode_testiq = ( current_mode == MODE_TESTIQ );
 
+   set < QString > to_select;
+   
    if ( 0 && !mode_testiq )
    {
       QMessageBox::information( this,
@@ -59,12 +61,14 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    QRegExp rx_q     ( "At_L(\\d+(:?|_\\d+))" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
    QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegExp rx_blc   ( "_blc(.\\d*(:?|_\\d+))" );
 
    vector < QString > q_string;
    vector < double  > q;
 
    bool         any_bl = false;
    bool         any_bi = false;
+   bool         any_blc = false;
 
    // get q 
 
@@ -119,6 +123,10 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
       if ( rx_bi.indexIn( files[ i ] ) != -1 )
       {
          any_bi = true;
+      }
+      if ( rx_blc.indexIn( files[ i ] ) != -1 )
+      {
+         any_blc = true;
       }
 
       if ( !f_qs.count( files[ i ] ) )
@@ -374,7 +382,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
 
 
       QString name = head + QString( "%1%2" )
-         .arg( (any_bl || any_bi) ? "_bs" : "" )
+         .arg( ( any_bl || any_bi || any_blc ) ? "_bs" : "" )
          .arg( pad_zeros( tv[ t ], (int) tv.size() ) )
          .replace( ".", "_" )
          ;
@@ -487,6 +495,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
          if ( conc_ok && conv ) {
             f_extc      [ name ] = conv;
          }
+         to_select.insert( name );
       }
    } // for each q value
 
@@ -494,6 +503,9 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    {
       editor_msg( "dark blue", us_tr( "Finished: Make A(" + UNICODE_LAMBDA_QS + ")" ) );
       running = false;
+      if ( to_select.size() ) {
+         set_selected( to_select );
+      }
    }
    progress->reset();
    update_enables();
