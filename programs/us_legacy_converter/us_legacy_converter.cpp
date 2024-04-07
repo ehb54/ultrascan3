@@ -246,7 +246,7 @@ void US_LegacyConverter::reload() {
          qApp->processEvents();
          US_Tar ustar;
          QStringList extlist;
-         int state = ustar.extract(tmpfile, tmp_dir.path(), &extlist);
+         int state = ustar.extract(tmpfile, &extlist, tmp_dir.path());
          if (state != 0) {
             QMessageBox::warning(this, "Error!", "Failed to extract the TAR file!\n" +
                                                      ustar.explain(state));
