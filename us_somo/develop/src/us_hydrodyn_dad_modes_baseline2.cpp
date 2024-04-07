@@ -59,7 +59,8 @@ void US_Hydrodyn_Dad::baseline2_start() {
    // }
 
    mode_select( MODE_BASELINE2 );
-
+   pb_wheel_save->show();
+   
    running       = true;
 
    // set wheel range etc.
@@ -368,7 +369,7 @@ void US_Hydrodyn_Dad::baseline2_create_adjusted_curve( const set < QString > & n
 }
 
 void US_Hydrodyn_Dad::baseline2_create_adjusted_curve( const QString & name ) {
-   qDebug() << "baseline2_create_adjusted_curve(  QString )";
+   qDebug() << "baseline2_create_adjusted_curve( QString )";
    
    if ( !f_qs.count( name ) || !f_Is.count( name ) ) {
       editor_msg( "red", QString( us_tr( "Error: missing data for curve %1" ) ).arg( name ) );

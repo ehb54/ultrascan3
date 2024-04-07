@@ -1285,6 +1285,9 @@ void US_Hydrodyn_Dad::setupGUI()
       plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
    }
 #endif
+
+   // plot_dist->canvas()->setCursor(QCursor(QPixmap(":/resources/red_cursor.png")));
+
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_dist_zoomer->setTrackerPen(QPen(Qt::red));

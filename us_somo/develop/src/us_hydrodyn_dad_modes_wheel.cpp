@@ -821,6 +821,7 @@ void US_Hydrodyn_Dad::wheel_cancel( bool from_wheel_save )
       le_baseline2_q_start->setText( baseline2_q_start_save );
       le_baseline2_q_end  ->setText( baseline2_q_end_save );
       baseline2_delete_markers();
+      baseline2_fit_clear();
       mode_select( MODE_NORMAL );
       break;
 

@@ -387,6 +387,8 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
          .replace( ".", "_" )
          ;
 
+      name = name.replace( "_DAD_AL_t_bs", "_DAD_bs_AL_t" );
+
       {
          int ext = 0;
          QString use_name = name;
