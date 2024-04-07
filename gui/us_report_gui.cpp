@@ -23,6 +23,7 @@
 //US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
 US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Widgets()
 {
+  abde_mode = false;
   this->report_map           = report_map; 
 
   QList < QString > report_map_keys = report_map.keys();
@@ -228,6 +229,13 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 
 }
 
+//ABDE
+void US_ReportGui::abde_mode_passed( void )
+{
+  abde_mode = true;
+  build_report_layout();
+}
+
 //Exp. Durat. counters
 void US_ReportGui::ssChgDuratTime_dd( int val )
 {
@@ -285,14 +293,29 @@ void US_ReportGui::build_report_layout( void )
     
   row = 0;
   genL->addWidget( lb_type,     row,    0, 1, 2 );
-  genL->addWidget( lb_method,   row,    3, 1, 2 );
-  genL->addWidget( lb_low,      row,    5, 1, 2 );
-  genL->addWidget( lb_high,     row,    7, 1, 2 );
-  genL->addWidget( lb_intval,   row,    9, 1, 2 );
-  genL->addWidget( lb_total,    row,    11, 1, 2 );
-  genL->addWidget( lb_tol,      row,    13, 1, 2 );
-  genL->addWidget( lb_combined, row,    15, 1, 2 );
-  genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
+  if (!abde_mode )
+    {
+      genL->addWidget( lb_method,   row,    3, 1, 2 );
+      genL->addWidget( lb_low,      row,    5, 1, 2 );
+      genL->addWidget( lb_high,     row,    7, 1, 2 );
+      genL->addWidget( lb_intval,   row,    9, 1, 2 );
+      genL->addWidget( lb_total,    row,    11, 1, 2 );
+      genL->addWidget( lb_tol,      row,    13, 1, 2 );
+      genL->addWidget( lb_combined, row,    15, 1, 2 );
+      genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
+    }
+  else
+    {                  
+      genL->addWidget( lb_low,      row,    3, 1, 2 );
+      genL->addWidget( lb_high,     row,    5, 1, 2 );
+      genL->addWidget( lb_total,    row,    7, 1, 2 );
+      genL->addWidget( lb_tol,      row,    9, 1, 2 );
+      genL->addWidget( lb_combined, row,    11, 1, 2 );
+      genL->addWidget( lb_ind_plot, row++,  13, 1, 2 );
+      
+      lb_method  ->setVisible( false );
+      lb_intval  ->setVisible( false );    
+    }
   
   //End of table header
   
@@ -300,8 +323,17 @@ void US_ReportGui::build_report_layout( void )
   QComboBox* cb_method;
   QStringList sl_types;
   QStringList sl_methods;
-  sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW") << QString("Radius");
-  sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC") << QString("raw");
+  if ( !abde_mode )
+    {
+      sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW");
+      sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC");
+    }
+  else
+    {
+      sl_types     << QString("Radius") << QString("vbar") << QString("Density");
+      sl_methods   << QString("raw");
+    }
+  
   qDebug() << "Begin ReportItems iteration -- ";
    
   QLineEdit* le_low;    
@@ -333,15 +365,15 @@ void US_ReportGui::build_report_layout( void )
       cb_method->setCurrentIndex( method_ind );
 
       //Check if the type "Radius": if not, disable method's "raw" item:
-      int raw_ind_method = cb_method->findText("raw");
-      if ( curr_item.type != "Radius" )
-	{
-	  SetComboBoxItemEnabled( cb_method, raw_ind_method, false );
-	}
-      else
-	{
-	  cb_method -> setEnabled( false );
-	}
+      //int raw_ind_method = cb_method->findText("raw");
+      // if ( curr_item.type != "Radius" )
+      // 	{
+      // 	  SetComboBoxItemEnabled( cb_method, raw_ind_method, false );
+      // 	}
+      // else
+      // 	{
+      // 	  cb_method -> setEnabled( false );
+      // 	}
       
       
       le_low        = us_lineedit( QString::number(curr_item.range_low),  0, false  );
@@ -387,15 +419,30 @@ void US_ReportGui::build_report_layout( void )
 	       this,   SLOT  ( verify_text ( const QString& ) ) );
       
       genL->addWidget( cb_type,           row,    0, 1, 2 );
-      genL->addWidget( cb_method,         row,    3, 1, 2 );
-      genL->addWidget( le_low,            row,    5, 1, 2 );
-      genL->addWidget( le_high,           row,    7, 1, 2 );
-      genL->addWidget( le_intval,         row,    9, 1, 2 );
-      genL->addWidget( le_total,          row,    11, 1, 2 );
-      genL->addWidget( le_tol,            row,    13, 1, 2 );
-      genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
-      genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
-
+      if ( !abde_mode )
+	{
+	  genL->addWidget( cb_method,         row,    3, 1, 2 );
+	  genL->addWidget( le_low,            row,    5, 1, 2 );
+	  genL->addWidget( le_high,           row,    7, 1, 2 );
+	  genL->addWidget( le_intval,         row,    9, 1, 2 );
+	  genL->addWidget( le_total,          row,    11, 1, 2 );
+	  genL->addWidget( le_tol,            row,    13, 1, 2 );
+	  genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
+	  genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
+	}
+      else
+	{
+	  genL->addWidget( le_low,            row,    3, 1, 2 );
+	  genL->addWidget( le_high,           row,    5, 1, 2 );
+	  genL->addWidget( le_total,          row,    7, 1, 2 );
+	  genL->addWidget( le_tol,            row,    9, 1, 2 );
+	  genL->addWidget( ck_combined_plot,  row,    11, 1, 2 );
+	  genL->addWidget( ck_ind_plot,       row++,  13, 1, 2 );
+	  
+	  cb_method  ->setVisible( false );
+	  le_intval  ->setVisible( false );    
+	}
+      
       //Slots for cb_type | cb_method
       connect( cb_type,    SIGNAL( activated        ( int )  ),
                this,       SLOT  ( type_changed     ( int )  ) );
@@ -712,6 +759,8 @@ void US_ReportGui::update_report( void )
     close();
     return;
   *****/
+
+  report->report_changed = true;
   
   close();
 }
@@ -839,10 +888,15 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].type = cb_type->currentText();
       
       //method
-      QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
-      qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
-      report->reportItems[ ii ].method = cb_method->currentText();
-      
+      if ( !abde_mode )
+	{
+	  QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
+	  qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
+	  report->reportItems[ ii ].method = cb_method->currentText();
+	}
+      else
+	report->reportItems[ ii ].method = "raw";
+	
       //range_low
       QLineEdit * le_low    = containerWidget->findChild<QLineEdit *>( stchan + "low" );
       qDebug() << "ii, le_low->text()" << ii << le_low->text();
@@ -854,9 +908,13 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].range_high = le_high->text().toDouble();
 
       //integration value
-      QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
-      qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
-      report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
+      if ( !abde_mode )
+	{
+	  QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
+	  qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
+	  report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
+	}
+           
       
       //tolerance
       QLineEdit * le_tol  = containerWidget->findChild<QLineEdit *>( stchan + "tol" );
@@ -979,8 +1037,8 @@ void US_ReportGui::add_row( void )
 
   if ( report-> channel_name . contains("Interf.") )
     {
-      initItem.type             = QString("s");
-      initItem.method           = QString("2DSA-IT");
+      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
       initItem.range_low        = 0;
       initItem.range_high       = 0;
       initItem.integration_val  = 0;
@@ -992,10 +1050,10 @@ void US_ReportGui::add_row( void )
     }
   else
     {
-      initItem.type             = QString("s");
-      initItem.method           = QString("2DSA-IT");
-      initItem.range_low        = 3.2;
-      initItem.range_high       = 3.7;
+      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
+      initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
+      initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
       initItem.integration_val  = 0.57;
       initItem.tolerance        = 10;
       initItem.combined_plot    = 1;
@@ -1321,10 +1379,15 @@ void US_ReportGui::type_changed( int t)
   //high
   QLineEdit * le_high    = containerWidget->findChild<QLineEdit *>( high_oname );
 
+  /*
   cb_method -> setEnabled( true );
+
+  qDebug() << "[in type_changed] 1" ;
   
   QString type   =  cb_type->itemText( t );
   int raw_ind_method = cb_method->findText("raw");
+
+  qDebug() << "[in type_changed] 2" ;
 
   if ( type == "Radius" )
     {
@@ -1348,6 +1411,7 @@ void US_ReportGui::type_changed( int t)
       int it_ind_method = cb_method->findText("2DSA-IT");
       cb_method -> setCurrentIndex( it_ind_method );
     }
+  */
 }
 
 //enable/disable QComboBox Item

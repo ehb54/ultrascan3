@@ -194,6 +194,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       //int          currentOperator_index;
       QString      currentOperator;
 
+      QString expType_old;
 
       //Assigning oper(s) && rev(s)
       QLabel*      lb_operator_reviewer_banner;
@@ -1023,6 +1024,7 @@ class US_ExperimentMain : public US_Widgets
       void    us_mode_passed( void );
       void    set_abde_mode_aprofile( void );
       void    unset_abde_mode_aprofile( void );
+      void    abde_sv_mode_change_reset_reports( QString  );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;

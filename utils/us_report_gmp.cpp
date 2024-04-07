@@ -47,6 +47,7 @@ US_ReportGMP::US_ReportGMP()
   exp_time_changed = false;
   DBread = false;
   interf_report_changed = false;
+  report_changed = false;
 
   //report mask params
   tot_conc_mask             = true;

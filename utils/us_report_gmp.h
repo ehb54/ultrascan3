@@ -56,6 +56,7 @@ class US_UTIL_EXTERN US_ReportGMP
       bool exp_time_changed;
       bool DBread;
       bool interf_report_changed;
+      bool report_changed;
 
       //report mask params
       bool tot_conc_mask;

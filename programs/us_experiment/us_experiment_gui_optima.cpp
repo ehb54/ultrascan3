@@ -422,13 +422,66 @@ void US_ExperimentMain::set_abde_mode_aprofile( void )
 {
   qDebug() << "[SETTING] ABDE MODE: ";
   epanAProfile->sdiag-> abde_mode_aprofile = true;
+  
+  //abde_sv_mode_change_reset_reports( "ABDE" ); 
 }
 
 void US_ExperimentMain::unset_abde_mode_aprofile( void )
 {
   qDebug() << "[UNSETTING] ABDE MODE: ";
   epanAProfile->sdiag-> abde_mode_aprofile = false;
+  
+  //re-initialize respectively AProfile's report/reportItem portions
+  // abde_sv_mode_change_reset_reports( "SV" ); 
+  
 }
+
+//re-initialize respectively AProfile's report/reportItem portions
+void US_ExperimentMain::abde_sv_mode_change_reset_reports( QString exptype )
+{
+  bool abde_mode = ( exptype == "ABDE" ) ? true : false;
+  qDebug() << "in abde_sv_mode_change_reset_reports(): abde_mode ?" << abde_mode;
+  
+  //Aprofile
+  US_AnaProfile* aprof = get_aprofile();
+
+  QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+  
+  for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+            
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString c_wvl = tri.key();
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].report_changed = false;;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].exp_time_changed = false;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].DBread = false;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].interf_report_changed = false;
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].reportItems.clear();
+	  US_ReportGMP::ReportItem initItem;
+	  initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+	  initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
+
+	  qDebug() << "type, method -- " << initItem.type << ", " << initItem.method;
+	  initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
+	  initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
+	  initItem.integration_val  = 0.57;
+	  initItem.tolerance        = 10;
+	  initItem.total_percent    = 95;
+	  initItem.combined_plot    = 1;
+	  initItem.ind_combined_plot  = 1;
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].reportItems.push_back( initItem );
+
+	}
+    }
+}
+
 
 void US_ExperimentMain::us_mode_passed( void )
 {
@@ -438,6 +491,9 @@ void US_ExperimentMain::us_mode_passed( void )
   this->tabWidget->setTabText( 7, "8: Submit");
   
 }
+
+
+	  
 
 void US_ExperimentMain::auto_mode_passed( void )
 {

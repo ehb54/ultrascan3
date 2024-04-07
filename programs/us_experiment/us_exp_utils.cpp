@@ -1078,7 +1078,10 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        pb_remove_sme     -> hide();
             
      }
- 
+
+   expType_old = cb_exptype ->currentText();
+
+   qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
 }
 
 void US_ExperGuiRotor::init_grevs( void )
@@ -1481,17 +1484,33 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
 
 
    //if ABDE expType -- translate to 8. AProfie
+   bool expType_changed = ( exptype == expType_old ) ? false : true;
+   qDebug() << "[in Rotor: savePanel()]: exptype, expType_old,  expType_changed? "
+	    << exptype << ", " << expType_old << ": " << expType_changed;
+   
    if ( !first_time_init )
      {
        if ( exptype == "Buoyancy" )
-	 mainw->set_abde_mode_aprofile();
+	 {
+	   mainw-> set_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+	 }
        else
-	 mainw->unset_abde_mode_aprofile();
+	 {
+	   mainw->unset_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "SV" ); 
+	 }
      }
    else
      {
        if (exptype == "Buoyancy" )
-	 mainw->set_abde_mode_aprofile();
+	 {
+	   mainw->set_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+	 }
      }
 }
 
