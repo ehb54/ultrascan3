@@ -47,6 +47,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QHBoxLayout* lower_buttons;
       QGridLayout* reportmask;
 
+      QLabel* bn_report_t;
+
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_tot_conc_tol;
       QLineEdit*   le_rmsd_limit;
@@ -93,6 +95,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QPushButton*  pb_repmask;
 
       QMap< QString, bool > isErrorField;
+      QStringList wvl_passed;
+      int init_index;
       
       void build_report_layout( void );
       void gui_to_report( void );
