@@ -3,31 +3,19 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 
-CSVTableWidgetItem::CSVTableWidgetItem( QString value, bool numericPriority ) : QTableWidgetItem( value ) {
-   m_num_prio = numericPriority;
-}
-
-void CSVTableWidgetItem::setNumericPriority(bool state) {
-   m_num_prio = state;
-}
-
 bool CSVTableWidgetItem::operator < ( const QTableWidgetItem &other ) const {
    QVariant var1 = this->data( Qt::EditRole );
    QVariant var2 = other.data( Qt::EditRole );
-   bool state = false;
+   bool ok;
    double d1, d2;
-   if ( m_num_prio ) {
-      bool ok;
-      d1 = var1.toDouble( &state );
-      d2 = var2.toDouble( &ok );
-      state = ok && state;
-   }
-   if ( state ) {
+   d1 = var1.toDouble( &ok );
+   if (! ok ) return false;
+   d2 = var2.toDouble( &ok );
+   if ( ok ) {
       return d1 < d2;
    } else {
-      return var1.toString() < var2.toString();
+      return false;
    }
-
 }
 
 CSVTableWidget::CSVTableWidget(QWidget *parent) : QTableWidget(parent) {};

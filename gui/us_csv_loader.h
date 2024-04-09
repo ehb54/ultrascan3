@@ -10,13 +10,8 @@
 class CSVTableWidgetItem : public QTableWidgetItem {
 
    public:
-      CSVTableWidgetItem ( QString value, bool numericPriority );
-      void setNumericPriority( bool );
+      CSVTableWidgetItem ( QString& value ) : QTableWidgetItem( value ) {};
       bool operator < ( const QTableWidgetItem & ) const override;
-
-   private:
-      bool m_num_prio;
-
 };
 
 class CSVTableWidget : public QTableWidget {
@@ -35,6 +30,16 @@ class CSVTableWidget : public QTableWidget {
    private slots:
       void delete_rows();
       void delete_columns();
+};
+
+class CSVSortFilterProxyModel: public QSortFilterProxyModel {
+   public:
+      using QSortFilterProxyModel::QSortFilterProxyModel;
+      bool lessThan(const QModelIndex &left,
+                    const QModelIndex &right) const override {
+         if(left.row() == 0 || right.row() == 0) return false;
+         return QSortFilterProxyModel::lessThan(left, right);
+      }
 };
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
