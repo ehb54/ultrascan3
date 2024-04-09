@@ -635,11 +635,30 @@ void US_ExperGuiRanges::selectWavelengths_manual()
    if ( kswavl == 0 )
       labwlr              = tr( "0 selected" );
    else if ( kswavl == 1 )
-      labwlr              = "1,  " + wlselec[ 0 ];
-   else
-      labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
-                            + tr( " to " ) + wlselec[ lswx ];
+     {
+       labwlr              = "1,  " + wlselec[ 0 ];
 
+       //abde: remove (if any) buff_spetr. widgets
+       if( mainw->us_abde_mode )
+	 {
+	   genL->removeWidget( cc_buff_sp[ chrow ] );
+	   cc_buff_sp[ chrow ]-> setVisible( false );
+	 }
+     }
+   else
+     {
+       labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
+	 + tr( " to " ) + wlselec[ lswx ];
+       
+       //abde: setup buff_spectrum cks
+       if( mainw->us_abde_mode )
+	 {
+	   genL->addWidget( cc_buff_sp[ chrow ], chrow,  16, 1, 2 );
+	   cc_buff_sp[ chrow ]-> setVisible( true );
+	   qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ chrow ]->objectName();
+	 }
+     }
+   
    cc_lrngs[ chrow ]->setText( labwlr );
 
    //ALEXEY
@@ -676,6 +695,22 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       swvlens[ ccrow ].clear();
       for ( int ii = 0; ii < kswavl; ii++ )
          swvlens[ ccrow ] << wlselec[ ii ].toDouble();
+
+      //abde: call buff_spectr. widget
+      if( mainw->us_abde_mode )
+	 {
+	   if ( kswavl > 1 )
+	     {
+	       genL->addWidget( cc_buff_sp[ ccrow ], ccrow,  16, 1, 2 );
+	       cc_buff_sp[ ccrow ]-> setVisible( true );
+	       qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ ccrow ]->objectName();
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ccrow ] );
+	       cc_buff_sp[ ccrow ]-> setVisible( false );
+	     }
+	 }
    }
 
    // Update ScanCount info per stage, per wavelength
@@ -776,9 +811,6 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
 
-      
-
-
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
@@ -859,7 +891,6 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
       cb_scancount_int->addItem( scancount_stage_int );      
-      
    }
 
 }
@@ -933,11 +964,30 @@ DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
    if ( kswavl == 0 )
       labwlr              = tr( "0 selected" );
    else if ( kswavl == 1 )
-      labwlr              = "1,  " + wlselec[ 0 ];
-   else
-      labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
-                            + tr( " to " ) + wlselec[ lswx ];
+     {
+       labwlr              = "1,  " + wlselec[ 0 ];
 
+       //abde: remove (if any) buff_spetr. widgets
+       if( mainw->us_abde_mode )
+	 {
+	   genL->removeWidget( cc_buff_sp[ chrow ] );
+	   cc_buff_sp[ chrow ]-> setVisible( false );
+	 }
+     }
+   else
+     {
+       labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
+	 + tr( " to " ) + wlselec[ lswx ];
+
+       //abde: setup buff_spectrum cks
+       if( mainw->us_abde_mode )
+	 {
+	   genL->addWidget( cc_buff_sp[ chrow ], chrow,  16, 1, 2 );
+	   cc_buff_sp[ chrow ]-> setVisible( true );
+	   qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ chrow ]->objectName();
+	 }
+
+     }
    cc_lrngs[ chrow ]->setText( labwlr );
 DbgLv(1) << "EGRn: sW: labwlr" << labwlr << "swvlens" << swvlens;
 
@@ -975,6 +1025,22 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       swvlens[ ccrow ].clear();
       for ( int ii = 0; ii < kswavl; ii++ )
          swvlens[ ccrow ] << wlselec[ ii ].toDouble();
+
+      //abde: setup buff_spectrum cks
+      if( mainw->us_abde_mode )
+	 {
+	   if ( kswavl > 1 )
+	     {
+	       genL->addWidget( cc_buff_sp[ ccrow ], ccrow,  16, 1, 2 );
+	       cc_buff_sp[ ccrow ]-> setVisible( true );
+	       qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ ccrow ]->objectName();
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ccrow ] );
+	       cc_buff_sp[ ccrow ]-> setVisible( false );
+	     }
+	 }
    }
 
    // Update ScanCount info per stage, per wavelength

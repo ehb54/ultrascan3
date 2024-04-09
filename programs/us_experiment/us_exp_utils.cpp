@@ -3379,11 +3379,22 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
        qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
        for ( int ii = 0; ii < nrnchan; ii++ )
 	 {
-	   genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
-	   cc_buff_sp[ ii ]-> setVisible( true );
-	   //cc_buff_sp_ck[ ii ]->setChecked( false );
+	   //check if channel MWL
+	   int kswavl          = swvlens[ ii ].count();
 
-	   qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+	   if( kswavl > 1 )
+	     {
+	       genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
+	       cc_buff_sp[ ii ]-> setVisible( true );
+	       //cc_buff_sp_ck[ ii ]->setChecked( false );
+
+	       qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ii ] );
+	       cc_buff_sp[ ii ]-> setVisible( false );
+	     }
 	 }
      }
    else
