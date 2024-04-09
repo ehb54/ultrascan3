@@ -50,8 +50,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connection_status = false;
    automode = false;
    usmode = false;
-
    us_prot_dev_mode = false;
+   us_abde_mode = false;
    
    global_reset = false;
    instruments_in_use.clear();
@@ -421,6 +421,7 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
 void US_ExperimentMain::set_abde_mode_aprofile( void )
 {
   qDebug() << "[SETTING] ABDE MODE: ";
+  us_abde_mode = true;
   epanAProfile->sdiag-> abde_mode_aprofile = true;
   
   //abde_sv_mode_change_reset_reports( "ABDE" ); 
@@ -429,6 +430,7 @@ void US_ExperimentMain::set_abde_mode_aprofile( void )
 void US_ExperimentMain::unset_abde_mode_aprofile( void )
 {
   qDebug() << "[UNSETTING] ABDE MODE: ";
+  us_abde_mode = false;
   epanAProfile->sdiag-> abde_mode_aprofile = false;
   
   //re-initialize respectively AProfile's report/reportItem portions

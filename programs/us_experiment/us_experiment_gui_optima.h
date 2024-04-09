@@ -632,6 +632,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
       QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
       QList< QLabel* >         cc_lbtos;   // Pointers to "to" labels
+      QList< QWidget* >        cc_buff_sp;
+      QList< QCheckBox* >      cc_buff_sp_ck;
 
       int          dbg_level;              // Debug level
       int          mxrow;                  // Maximum possible rows (24)
@@ -643,12 +645,14 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel
       QVector< double >          locrads;  // Low radius value, ea. channel
       QVector< double >          hicrads;  // High radius value, ea. channel
+      QVector< bool >            abde_buff;
 
       QComboBox * cb_scancount;
       QComboBox * cb_scancount_int;
       QLineEdit * le_scanint;
       QLineEdit * le_scanint_int;
-      
+
+      QGridLayout* genL;			
    private slots:
       // \brief Manage extinction profiles in a dialog
 //      void manageEProfiles  ( void );
@@ -672,6 +676,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       // \brief Handle a change in the high radius value
       void changedHighRadius( double );
       // \brief Rebuild the Ranges part of the current run protocol
+      void buffer_spectrum_checked( bool );
+  
       void rebuild_Ranges   ( void );
 };
 
@@ -1017,6 +1023,7 @@ class US_ExperimentMain : public US_Widgets
       bool    usmode;
       bool    us_prot_dev_mode;
       bool    global_reset;
+      bool    us_abde_mode;
 
   QMap <QString, QString> protocol_details_passed; 
       

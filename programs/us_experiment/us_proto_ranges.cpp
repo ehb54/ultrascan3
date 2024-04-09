@@ -90,7 +90,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    // banners->addWidget( lb_hdr2,         row,   8,  1, 13 );
    // banners->addWidget( lb_hdr3,         row++, 21, 1, 21 );
 
-   QGridLayout* genL   = new QGridLayout();
+   //QGridLayout* genL   = new QGridLayout();
+   genL   = new QGridLayout();
    genL->setSpacing        ( 2 );
    genL->setContentsMargins( 2, 2, 2, 2 );
 
@@ -102,6 +103,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    QwtCounter*  ctradfr;
    QLabel*      lablto;
    QwtCounter*  ctradto;
+   QCheckBox*   ck_buff_spectrum;
+   
    QString swavln   = tr( "Select Wavelengths" );
    QString srngto   = tr( "to" );
    QFont   ckfont   = QFont( US_GuiSettings::fontFamily(),
@@ -139,7 +142,19 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       genL->addWidget( ctradfr, row,    9, 1, 3 );
       genL->addWidget( lablto,  row,   12, 1, 1 );
       genL->addWidget( ctradto, row++, 13, 1, 3 );
-
+      //genL->addWidget( ctradto, row,   13, 1, 3 );
+      
+      //abde
+      QLayout* lo_buff_spectrum  = us_checkbox( tr( "Buffer Spectrum" ), ck_buff_spectrum, false );
+      QWidget* containerW_buff_sp = new QWidget;
+      containerW_buff_sp->setLayout( lo_buff_spectrum );
+      ck_buff_spectrum   ->setObjectName( strow + ": ck_buff_spectrum" );
+      containerW_buff_sp ->setObjectName( strow + ": ck_buff_spectrum_container" );
+      connect( ck_buff_spectrum, SIGNAL( toggled     ( bool ) ),
+               this,           SLOT  ( buffer_spectrum_checked( bool ) ) );
+      // genL->addWidget( containerW_buff_sp, row++,  16, 1, 2 );
+      // containerW_buff_sp -> setVisible( false );
+      
       cclabl ->setVisible( is_vis );
       pbwavln->setVisible( is_vis );
       lbwlrng->setVisible( is_vis );
@@ -170,6 +185,10 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       cc_lrads << ctradfr;
       cc_hrads << ctradto;
       cc_lbtos << lablto;
+
+      //abde
+      cc_buff_sp_ck << ck_buff_spectrum;
+      cc_buff_sp    << containerW_buff_sp;
    }
 
 #if 0
@@ -188,7 +207,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
 
    panel->addLayout(banners);
    genL->setAlignment(Qt::AlignTop);
-
+         
    QScrollArea *scrollArea = new QScrollArea(this);
    QWidget *containerWidget = new QWidget;
    containerWidget->setLayout(genL);
@@ -197,6 +216,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    scrollArea->verticalScrollBar()->setFixedWidth(50);
 
    panel->addWidget(scrollArea);
+   
 
    //panel->addStretch();
 
@@ -230,6 +250,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
+      abde_buff.resize( nrnchan );
 
       for ( int ii = 0; ii < oprof.count(); ii++ )
       {
@@ -255,6 +276,8 @@ DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
 
             locrads[ kuv ]       = rpRange->chrngs[ kuv ].lo_rad;
             hicrads[ kuv ]       = rpRange->chrngs[ kuv ].hi_rad;
+
+	    abde_buff[ kuv ]     = rpRange->chrngs[ kuv ].abde_buffer_spectrum;
 
             if ( ++kuv >= nuvvis )  break;
          }
@@ -282,6 +305,7 @@ DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
+      abde_buff.resize( nrnchan );
 DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < nrnchan; ii++ )
@@ -299,6 +323,7 @@ DbgLv(1) << "EGRn: rbR:   ii jj " << ii << jj << "wavelen" << wavelen;
 
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+	 abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
 DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
@@ -326,6 +351,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
       swvlens.resize( ntchan );
       locrads.resize( ntchan );
       hicrads.resize( ntchan );
+      abde_buff.resize( ntchan );
       int kk              = nochan;
 
       for ( int ii = 0; ii < nrnchan_sv; ii++ )
@@ -334,6 +360,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
          swvlens[ kk ]    = swvlens[ ii ];
          locrads[ kk ]    = locrads[ ii ];
          hicrads[ kk ]    = hicrads[ ii ];
+	 abde_buff[ kk ]  = abde_buff[ ii ];
          rchans [ ii ]    = "";
       }
    }
@@ -397,6 +424,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             swvlens[ ii ]       = swvlens[ ppx ];
             locrads[ ii ]       = locrads[ ppx ];
             hicrads[ ii ]       = hicrads[ ppx ];
+	    abde_buff[ ii ]     = abde_buff[ ppx ];
          }
          else
          {
@@ -404,6 +432,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
             locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
             hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+	    abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
          }
       }
    }
@@ -414,6 +443,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
      swvlens.resize( nrnchan );
      locrads.resize( nrnchan );
      hicrads.resize( nrnchan );
+     abde_buff.resize( nrnchan );
 
      for ( int ii = 0; ii < nrnchan; ii++ )
       {
@@ -425,6 +455,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
          swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+	 abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
          qDebug() << "Test 1";
       }
    }
@@ -433,6 +464,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    swvlens.resize( nrnchan );
    locrads.resize( nrnchan );
    hicrads.resize( nrnchan );
+   abde_buff.resize( nrnchan );
 }
 
 #if 0
@@ -1304,6 +1336,16 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    }
 }
 
+// Slot to handle a change in the buff_spectrum requirement (abde)
+void US_ExperGuiRanges::buffer_spectrum_checked( bool checked )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString sname       = sobj->objectName();
+   chrow               = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "buffSpec: val" << checked << "row" << chrow;
+   abde_buff[ chrow ]  = ( checked );
+
+}
 
 // Class dialog object for selecting wavelengths
 

@@ -2992,8 +2992,6 @@ DbgLv(1) << "EGRn:inP:  call rbS";
    QString ch_none( "none" );
    DbgLv(1) << "EGRn:inP:  nrnchan" << nrnchan;
    
-
-
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
       QString channel     = rchans[ ii ];
@@ -3015,6 +3013,8 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
 
       cc_lrads[ ii ]->setValue( locrads[ ii ] );
       cc_hrads[ ii ]->setValue( hicrads[ ii ] );
+
+      cc_buff_sp_ck[ ii ]->setChecked( abde_buff[ ii ] );
 
       cc_labls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );
@@ -3102,6 +3102,9 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setVisible( false );
       cc_hrads[ ii ]->setVisible( false );
       cc_lbtos[ ii ]->setVisible( false );
+
+      //abde
+      cc_buff_sp[ ii ]->setVisible( false );
    }
 
 
@@ -3256,9 +3259,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): N/A " ).arg(i+1);
 	  cb_scancount->addItem( scancount_stage );
 	}
-      
-      
-
+     
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
@@ -3371,6 +3372,40 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	   cc_hrads[ ii ]->setEnabled( false );
 	 }
      }
+
+   //For abde only, chow buff_spectra cks
+   if ( mainw->us_abde_mode )
+     {
+       qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
+	   cc_buff_sp[ ii ]-> setVisible( true );
+	   //cc_buff_sp_ck[ ii ]->setChecked( false );
+
+	   qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+	 }
+     }
+   else
+     {
+       qDebug() << "ABDE, removing cks " << mainw->us_abde_mode;
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   // QString o_name = QString::number( ii ) + ": ck_buff_spectrum_container";
+	   qDebug() << "[remove]o_name " << cc_buff_sp[ ii ]->objectName();
+	   
+	   // QWidget* c_w = genL->findChild<QWidget *>( o_name, Qt::FindChildrenRecursively ); //Qt::FindDirectChildrenOnly);
+	   // if ( c_w != NULL )
+	   //   {
+	   //     qDebug() << "Widget found!";
+	   //     genL->removeWidget( c_w );
+	   //     delete c_w;
+	   //  }
+
+	   genL->removeWidget( cc_buff_sp[ ii ] );
+	   cc_buff_sp[ ii ]-> setVisible( false );
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
@@ -3386,6 +3421,9 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       rpRange->chrngs[ ii ].lo_rad  = locrads[ ii ];
       rpRange->chrngs[ ii ].hi_rad  = hicrads[ ii ];
 
+      //abde
+      rpRange->chrngs[ ii ].abde_buffer_spectrum = abde_buff[ ii ];
+
       rpRange->chrngs[ ii ].wvlens.clear();
 
       for ( int jj = 0; jj < swvlens[ ii ].count(); jj++ )
@@ -3393,6 +3431,7 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
          rpRange->chrngs[ ii ].wvlens << swvlens[ ii ][ jj ];
       }
 DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpRange->chrngs[ii].wvlens.count();
+ qDebug() << "Ranges::save, hi, buff_bool -- " << rpRange->chrngs[ ii ].hi_rad << rpRange->chrngs[ ii ].abde_buffer_spectrum;
    }
 }
 
