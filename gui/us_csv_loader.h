@@ -3,30 +3,45 @@
 
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
-#include <QTabWidget>
+#include <QTableWidget>
+#include <QSortFilterProxyModel>
+#include <QTableWidgetItem>
 
-class CustomTableWidget : public QTableWidget {
-   Q_OBJECT
+class CSVTableWidgetItem : public QTableWidgetItem {
+
    public:
-   CustomTableWidget(QWidget *parent=nullptr);
-   void add_header();
+      CSVTableWidgetItem ( QString value, bool numericPriority );
+      void setNumericPriority( bool );
+      bool operator < ( const QTableWidgetItem & ) const override;
 
-   signals:
-   void new_content();
+   private:
+      bool m_num_prio;
 
-   protected:
-   void contextMenuEvent(QContextMenuEvent *event) override;
-
-   private slots:
-   void delete_rows();
-   void delete_columns();
 };
 
-class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
-{
+class CSVTableWidget : public QTableWidget {
+
    Q_OBJECT
    public:
-      US_CSV_Loader(QWidget* parent);
+      CSVTableWidget(QWidget *parent=nullptr);
+      void add_header();
+
+   signals:
+      void new_content();
+
+   protected:
+      void contextMenuEvent(QContextMenuEvent *event) override;
+
+   private slots:
+      void delete_rows();
+      void delete_columns();
+};
+
+class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
+
+   Q_OBJECT
+   public:
+      US_CSV_Loader(QWidget* parent=0);
       bool set_filepath(QString&, bool);
       void set_numeric_state(bool, bool);
       void set_msg(QString);
@@ -57,7 +72,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
       QString str_delimiter;
       QString curr_dir;
       QStringList file_lines;
-      CustomTableWidget* tw_data;
+      CSVTableWidget* tw_data;
 
       bool check_table_size();
       bool check_table_data();

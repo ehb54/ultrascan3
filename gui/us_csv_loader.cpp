@@ -3,13 +3,40 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 
-CustomTableWidget::CustomTableWidget(QWidget *parent) : QTableWidget(parent) {};
+CSVTableWidgetItem::CSVTableWidgetItem( QString value, bool numericPriority ) : QTableWidgetItem( value ) {
+   m_num_prio = numericPriority;
+}
 
-void CustomTableWidget::add_header() {
+void CSVTableWidgetItem::setNumericPriority(bool state) {
+   m_num_prio = state;
+}
+
+bool CSVTableWidgetItem::operator < ( const QTableWidgetItem &other ) const {
+   QVariant var1 = this->data( Qt::EditRole );
+   QVariant var2 = other.data( Qt::EditRole );
+   bool state = false;
+   double d1, d2;
+   if ( m_num_prio ) {
+      bool ok;
+      d1 = var1.toDouble( &state );
+      d2 = var2.toDouble( &ok );
+      state = ok && state;
+   }
+   if ( state ) {
+      return d1 < d2;
+   } else {
+      return var1.toString() < var2.toString();
+   }
+
+}
+
+CSVTableWidget::CSVTableWidget(QWidget *parent) : QTableWidget(parent) {};
+
+void CSVTableWidget::add_header() {
    this->insertRow(0);
 }
 
-void CustomTableWidget::contextMenuEvent(QContextMenuEvent *event) {
+void CSVTableWidget::contextMenuEvent(QContextMenuEvent *event) {
    QMenu contextMenu(this);
 
    QAction *del_rows = contextMenu.addAction("Delete Row(s)");
@@ -21,15 +48,15 @@ void CustomTableWidget::contextMenuEvent(QContextMenuEvent *event) {
 
    contextMenu.setStyleSheet(styleSheet);
 
-   connect(del_rows, &QAction::triggered, this, &CustomTableWidget::delete_rows);
-   connect(del_cols, &QAction::triggered, this, &CustomTableWidget::delete_columns);
+   connect(del_rows, &QAction::triggered, this, &CSVTableWidget::delete_rows);
+   connect(del_cols, &QAction::triggered, this, &CSVTableWidget::delete_columns);
 
    contextMenu.exec(event->globalPos());
 }
 
-void CustomTableWidget::delete_rows() {
+void CSVTableWidget::delete_rows() {
    QVector<int> rows;
-   for (QTableWidgetItem *item : this->selectedItems()) {
+   foreach (QTableWidgetItem *item, this->selectedItems()) {
       int r = item->row();
       if (! rows.contains(r)) rows << r;
    }
@@ -41,9 +68,9 @@ void CustomTableWidget::delete_rows() {
    emit new_content();
 }
 
-void CustomTableWidget::delete_columns() {
+void CSVTableWidget::delete_columns() {
    QVector<int> cols;
-   for (QTableWidgetItem *item : this->selectedItems()) {
+   foreach (QTableWidgetItem *item, this->selectedItems()) {
       int c = item->column();
       if (! cols.contains(c)) cols << c;
    }
@@ -115,7 +142,8 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    pb_ok = us_pushbutton("Ok");
    pb_save_csv = us_pushbutton("Save CSV");
 
-   tw_data = new CustomTableWidget();
+   tw_data = new CSVTableWidget();
+   tw_data->setSortingEnabled(true);
    int nr = 20;
    int nc = 5;
    tw_data->setRowCount(nr);
@@ -167,7 +195,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
    connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
-   connect(tw_data, &CustomTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
+   connect(tw_data, &CSVTableWidget::new_content, this, &US_CSV_Loader::highlight_header);
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
    connect(le_other, &QLineEdit::textChanged, this, &US_CSV_Loader::new_delimiter);
