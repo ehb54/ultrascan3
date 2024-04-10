@@ -256,7 +256,8 @@ void US_Spectrum::load_basis()
                finfo_list << csv_loader->get_file_info();
             }
          } else {
-            int chk_go = QMessageBox::question(this, "Warning!", "Do you still want to continue processing the file(s)?");
+            int chk_go = QMessageBox::question(this, "Warning!", tr("Unable to load\n'%1'!\n").arg(filepath) +
+                                                                     "Do you still want to continue processing the file(s)?");
             if (chk_go == QMessageBox::No) return;
          }
       }
