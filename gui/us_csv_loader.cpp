@@ -4,6 +4,10 @@
 #include "us_settings.h"
 
 bool CSVTableWidgetItem::operator < ( const QTableWidgetItem &other ) const {
+   if (this->row() == 0 ) return false;
+   if (other.row() == 0) {
+      return true;
+   }
    QVariant var1 = this->data( Qt::EditRole );
    QVariant var2 = other.data( Qt::EditRole );
    bool ok;
@@ -111,24 +115,11 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    le_other = us_lineedit("");
    le_other->setMaxLength(5);
 
-   rb_string = new QRadioButton();
-   QGridLayout *lyt_string = us_radiobutton("String Data", rb_string);
-
-   rb_numeric = new QRadioButton();
-   QGridLayout *lyt_numeric = us_radiobutton("Numeric Data", rb_numeric);
-
-   QLabel* lb_feature = us_label("Options:");
-   lb_feature->setAlignment(Qt::AlignRight);
-
-   QButtonGroup* bg_feature = new QButtonGroup();
-   bg_feature->addButton(rb_string);
-   bg_feature->addButton(rb_numeric);
-   rb_numeric->setChecked(true);
-
    pb_add_header = us_pushbutton("Add Header");
    pb_cancel = us_pushbutton("Cancel");
    pb_ok = us_pushbutton("Ok");
    pb_save_csv = us_pushbutton("Save CSV");
+   pb_reset = us_pushbutton("Reset");
 
    tw_data = new CSVTableWidget();
    tw_data->setSortingEnabled(true);
@@ -164,12 +155,11 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    main_lyt->addLayout(lyt_other,         2, 3, 1, 2);
    main_lyt->addWidget(le_other,          2, 5, 1, 2);
 
-   main_lyt->addWidget(lb_feature,        3, 0, 1, 1);
-   main_lyt->addLayout(lyt_numeric,       3, 1, 1, 2);
-   main_lyt->addLayout(lyt_string,        3, 3, 1, 2);
+   main_lyt->addWidget(pb_save_csv,       3, 1, 1, 2);
+   main_lyt->addWidget(pb_reset,          3, 3, 1, 2);
    main_lyt->addWidget(pb_add_header,     3, 5, 1, 2);
 
-   main_lyt->addWidget(pb_save_csv,       4, 1, 1, 2);
+   // main_lyt->addWidget(pb_save_csv,       4, 1, 1, 2);
    main_lyt->addWidget(pb_cancel,         4, 3, 1, 2);
    main_lyt->addWidget(pb_ok,             4, 5, 1, 2);
 
@@ -194,13 +184,6 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &US_CSV_Loader::fill_table);
 #endif
 
-}
-
-void US_CSV_Loader::set_numeric_state(bool state, bool enabled) {
-   if (state) rb_numeric->setChecked(true);
-   else rb_string->setChecked(true);
-   rb_numeric->setEnabled(enabled);
-   rb_string->setEnabled(enabled);
 }
 
 void US_CSV_Loader::add_header() {
@@ -495,7 +478,6 @@ bool US_CSV_Loader::check_table_size() {
 }
 
 bool US_CSV_Loader::check_table_data() {
-   if (rb_string->isChecked()) return true;
    bool state;
    int nrows = tw_data->rowCount();
    int ncols = tw_data->columnCount();
