@@ -22,9 +22,53 @@ static set < QString >        powerfit_tmp_plotnames;
 static bool                   powerfit_corrected_data_ok;
 static QString                powerfit_last_used_name;
 
+static double                 powerfit_dndc2_a = 0.410854315;
+static double                 powerfit_dndc2_b = 2.857579907;
+static double                 powerfit_dndc2_c = -0.81436267;
+
+static double                 powerfit_n2_a    = 1.151964091;
+static double                 powerfit_n2_b    = 4619.756721;
+static double                 powerfit_n2_c    = -2.22444448;
+
+static map < double, double > powerfit_corrected_lambda;
+
 #define TSO QTextStream(stdout)
 
-// --- powerfits ---
+// --- powerfit ---
+
+static void powerfit_corrected_lambda_create( const vector < double > & x ) {
+
+   powerfit_corrected_lambda.clear();
+
+   for ( const auto & v : x ) {
+      double dndc2_correction =
+         powerfit_dndc2_a
+         + powerfit_dndc2_b
+         * pow( v, powerfit_dndc2_c )
+         ;
+      double n2_correction =
+         powerfit_n2_a
+         + powerfit_n2_b
+         * pow( v, powerfit_n2_c )
+         ;
+
+      powerfit_corrected_lambda[ v ] = v * pow( dndc2_correction * n2_correction, -1 );
+
+      TSO <<
+         QString( "lambda %1 --> %2\n" )
+         .arg( v )
+         .arg( powerfit_corrected_lambda[ v ] )
+         ;
+
+      // TSO <<
+      //    QString( "lambda %1 corrected %2 (dndc factor %3, n2 factor %4)\n" )
+      //    .arg( v )
+      //    .arg( v * powerfit_corrected_lambda[ v ] )
+      //    .arg( dndc2_correction )
+      //    .arg( n2_correction )
+      //    ;
+   }
+}   
 
 void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
 {
@@ -96,6 +140,8 @@ void US_Hydrodyn_Dad::powerfit( bool /* no_store_original */ )
    // move to _gui   lbl_powerfit_q_range->setText( us_tr( " Fit range 1 (fixed): " );
    
    
+
+   powerfit_corrected_lambda_create( f_qs[ powerfit_name ] );
 
    mode_select( MODE_POWERFIT );
    pb_wheel_save->hide();
@@ -223,7 +269,9 @@ void US_Hydrodyn_Dad::powerfit_enables()
 
    le_powerfit_lambda2                  ->setEnabled( true );
 
-   wheel_enables( true );
+   cb_powerfit_dispersion_correction    ->setEnabled( true );
+
+   wheel_enables( le_last_focus );
 
    progress->reset();
 
@@ -551,6 +599,24 @@ double compute_powerfit( double t, const double *par ) {
    return fit_weights[ fit_weights_index[ t ] ] * ( par[ 0 ] + par[ 1 ] * pow( t, -c ) );
 }
 
+double compute_powerfit_dispersion_correction( double t, const double *par ) {
+   double c = par[ 2 ];
+
+   if ( c < powerfit_c_min
+        || c > powerfit_c_max ) {
+      return DBL_MAX;
+   }
+
+   // if ( !fit_weights_index.count( t ) ) {
+   //    qDebug() << "compute_powerfit error : fit_weights_index[ " << t << " ] does not exist";
+   // }
+   // if ( fit_weights.size() <= fit_weights_index[ t ] ) {
+   //    qDebug() << "compute_powerfit error : fit_weights[ " << fit_weights_index[ t ] << " ] index out of range";
+   // }
+   
+   return fit_weights[ fit_weights_index[ t ] ] * ( par[ 0 ] + par[ 1 ] * pow( powerfit_corrected_lambda[ t ], -c ) );
+}
+
 void US_Hydrodyn_Dad::powerfit_fit() {
    qDebug() << "powerfit_fit()";
    disable_all();
@@ -684,7 +750,7 @@ void US_Hydrodyn_Dad::powerfit_fit() {
                             ( int )      q.size(),
                             ( double * ) &( q[ 0 ] ),
                             ( double * ) &( I[ 0 ] ),
-                            compute_powerfit,
+                            cb_powerfit_dispersion_correction->isChecked() ? compute_powerfit_dispersion_correction : compute_powerfit,
                             (const LM::lm_control_struct *)&control,
                             &status );
    
@@ -756,7 +822,7 @@ void US_Hydrodyn_Dad::powerfit_reset() {
    le_powerfit_a->setText( "0" );
    le_powerfit_c->setText( "4" );
    powerfit_set_b_default();
-   powerfit_curve_update();
+   powerfit_fit_clear();
 }
 
 void US_Hydrodyn_Dad::powerfit_fit_clear( bool replot ) {
@@ -800,10 +866,18 @@ void US_Hydrodyn_Dad::powerfit_fit_clear( bool replot ) {
 vector < double > US_Hydrodyn_Dad::powerfit_curve( const vector < double > & x, double A, double B, double C ) {
    size_t x_size = x.size();
    vector < double > y( x_size );
-   for ( size_t i = 0; i < x_size; ++i ) {
-      y[i] = A + B * pow( x[ i ], -C );
+
+   if ( cb_powerfit_dispersion_correction->isChecked() ) {
+      for ( size_t i = 0; i < x_size; ++i ) {
+         y[i] = A + B * pow( powerfit_corrected_lambda[ x[ i ] ], -C );
+      }
+   } else {
+      for ( size_t i = 0; i < x_size; ++i ) {
+         y[i] = A + B * pow( x[ i ], -C );
+      }
    }
-   // US_Vector::printvector2( QString( "powerfit_curve %1, %2, %3" ).arg( A ).arg( B ).arg( C ), x, y );
+
+   US_Vector::printvector2( QString( "powerfit_curve %1, %2, %3" ).arg( A ).arg( B ).arg( C ), x, y );
    return y;
 }
 
@@ -1057,3 +1131,9 @@ void US_Hydrodyn_Dad::powerfit_set_b_default() {
    powerfit_b_default = QString( "%1" ).arg( 1e0 / fabs( pow( q_start, -le_powerfit_c_min->text().toDouble()) / val ) );
    le_powerfit_b->setText( powerfit_b_default );
 }
+
+void US_Hydrodyn_Dad::powerfit_dispersion_correction_clicked() {
+   qDebug() << "powerfit_dispersion_correction_clicked()";
+   powerfit_fit_clear( true );
+}
+

@@ -746,6 +746,8 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       QPushButton                      * pb_powerfit_reset;
       QPushButton                      * pb_powerfit_create_adjusted_curve;
 
+      QCheckBox                        * cb_powerfit_dispersion_correction;
+
       set < QString >                    powerfit_original_selection;
       double                             powerfit_original_scale;
       double                             powerfit_original_sd_scale;
@@ -799,57 +801,65 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       map < QString, Qt::PenStyle >      plot_style;
       map < QString, double >            plot_width_multiplier;
 
+      double                             powerfit_dndc2_a;
+      double                             powerfit_dndc2_b;
+      double                             powerfit_dndc2_c;
+      double                             powerfit_n_a;
+      double                             powerfit_n_b;
+      double                             powerfit_n_c;
+      
    private slots:
 
-      void powerfit                       ( bool no_store_original = false );
+      void powerfit                                ( bool no_store_original = false );
 
-      void powerfit_fit                   ();
-      void powerfit_reset                 ();
-      void powerfit_create_adjusted_curve ();
+      void powerfit_fit                            ();
+      void powerfit_reset                          ();
+      void powerfit_create_adjusted_curve          ();
       
-      void powerfit_q_start_text          ( const QString & );
-      void powerfit_q_start_focus         ( bool );
-      void powerfit_q_end_text            ( const QString & );
-      void powerfit_q_end_focus           ( bool );
+      void powerfit_q_start_text                   ( const QString & );
+      void powerfit_q_start_focus                  ( bool );
+      void powerfit_q_end_text                     ( const QString & );
+      void powerfit_q_end_focus                    ( bool );
 
-      void powerfit_a_text                ( const QString & );
-      void powerfit_a_focus               ( bool );
-      void powerfit_b_text                ( const QString & );
-      void powerfit_b_focus               ( bool );
-      void powerfit_c_text                ( const QString & );
-      void powerfit_c_focus               ( bool );
-      void powerfit_c_min_text            ( const QString & );
-      void powerfit_c_min_focus           ( bool );
-      void powerfit_c_max_text            ( const QString & );
-      void powerfit_c_max_focus           ( bool );
+      void powerfit_a_text                         ( const QString & );
+      void powerfit_a_focus                        ( bool );
+      void powerfit_b_text                         ( const QString & );
+      void powerfit_b_focus                        ( bool );
+      void powerfit_c_text                         ( const QString & );
+      void powerfit_c_focus                        ( bool );
+      void powerfit_c_min_text                     ( const QString & );
+      void powerfit_c_min_focus                    ( bool );
+      void powerfit_c_max_text                     ( const QString & );
+      void powerfit_c_max_focus                    ( bool );
 
-      void powerfit_fit_epsilon_text      ( const QString & );
-      void powerfit_fit_epsilon_focus     ( bool );
-      void powerfit_fit_iterations_text   ( const QString & );
-      void powerfit_fit_iterations_focus  ( bool );
-      void powerfit_fit_max_calls_text    ( const QString & );
-      void powerfit_fit_max_calls_focus   ( bool );
-      void powerfit_computed_conc_text    ( const QString & );
-      void powerfit_computed_conc_focus   ( bool );
-      void powerfit_scat_conc_text        ( const QString & );
-      void powerfit_scat_conc_focus       ( bool );
-      void powerfit_uncorrected_conc_text ( const QString & );
-      void powerfit_uncorrected_conc_focus( bool );
-      void powerfit_lambda_text           ( const QString & );
-      void powerfit_lambda_focus          ( bool );
-      void powerfit_lambda_abs_text       ( const QString & );
-      void powerfit_lambda_abs_focus      ( bool );
-      void powerfit_lambda2_text          ( const QString & );
-      void powerfit_lambda2_focus         ( bool );
-      void powerfit_lambda2_abs_text      ( const QString & );
-      void powerfit_lambda2_abs_focus     ( bool );
-      void powerfit_extinction_coef_text  ( const QString & );
-      void powerfit_extinction_coef_focus ( bool );
+      void powerfit_fit_epsilon_text               ( const QString & );
+      void powerfit_fit_epsilon_focus              ( bool );
+      void powerfit_fit_iterations_text            ( const QString & );
+      void powerfit_fit_iterations_focus           ( bool );
+      void powerfit_fit_max_calls_text             ( const QString & );
+      void powerfit_fit_max_calls_focus            ( bool );
+      void powerfit_computed_conc_text             ( const QString & );
+      void powerfit_computed_conc_focus            ( bool );
+      void powerfit_scat_conc_text                 ( const QString & );
+      void powerfit_scat_conc_focus                ( bool );
+      void powerfit_uncorrected_conc_text          ( const QString & );
+      void powerfit_uncorrected_conc_focus         ( bool );
+      void powerfit_lambda_text                    ( const QString & );
+      void powerfit_lambda_focus                   ( bool );
+      void powerfit_lambda_abs_text                ( const QString & );
+      void powerfit_lambda_abs_focus               ( bool );
+      void powerfit_lambda2_text                   ( const QString & );
+      void powerfit_lambda2_focus                  ( bool );
+      void powerfit_lambda2_abs_text               ( const QString & );
+      void powerfit_lambda2_abs_focus              ( bool );
+      void powerfit_extinction_coef_text           ( const QString & );
+      void powerfit_extinction_coef_focus          ( bool );
 
       // qt doc says int argument for the signal, but actually QString
-      void powerfit_fit_alg_index         (); // int index );
-      void powerfit_fit_alg_weight_index  (); // int index );
-      void powerfit_fit_curve_index       (); // int index );
+      void powerfit_fit_alg_index                  (); // int index );
+      void powerfit_fit_alg_weight_index           (); // int index );
+      void powerfit_fit_curve_index                (); // int index );
+      void powerfit_dispersion_correction_clicked  ();
 
       // end powerfit
 
@@ -902,16 +912,16 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       
    private slots:
 
-      void baseline2_start                ();
-      void baseline2_apply                ();
-      void baseline2_fit                  ();
-      void baseline2_create_adjusted_curve( const set < QString > & names );
-      void baseline2_create_adjusted_curve();
+      void baseline2_start                         ();
+      void baseline2_apply                         ();
+      void baseline2_fit                           ();
+      void baseline2_create_adjusted_curve         ( const set < QString > & names );
+      void baseline2_create_adjusted_curve         ();
 
-      void baseline2_q_start_text         ( const QString & );
-      void baseline2_q_start_focus        ( bool );
-      void baseline2_q_end_text           ( const QString & );
-      void baseline2_q_end_focus          ( bool );
+      void baseline2_q_start_text                  ( const QString & );
+      void baseline2_q_start_focus                 ( bool );
+      void baseline2_q_end_text                    ( const QString & );
+      void baseline2_q_end_focus                   ( bool );
 
       // end baseline2
 

@@ -787,6 +787,15 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_extinction_coef, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_extinction_coef_text( const QString & ) ) );
    connect( le_powerfit_extinction_coef, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_extinction_coef_focus( bool ) ) );
    
+   cb_powerfit_dispersion_correction = new QCheckBox(this);
+   cb_powerfit_dispersion_correction->setText(us_tr("Disp. Corr."));
+   cb_powerfit_dispersion_correction->setChecked( false );
+   cb_powerfit_dispersion_correction->setMinimumHeight( minHeight1 );
+   cb_powerfit_dispersion_correction->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_powerfit_dispersion_correction->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_powerfit_dispersion_correction );
+   connect( cb_powerfit_dispersion_correction, SIGNAL( clicked() ), SLOT( powerfit_dispersion_correction_clicked() ) );
+
    // powerfit end
 
    // baseline2 start
@@ -4336,6 +4345,7 @@ void US_Hydrodyn_Dad::setupGUI()
       hbl->addWidget( le_powerfit_lambda2_abs );
       hbl->addWidget( lbl_powerfit_extinction_coef );
       hbl->addWidget( le_powerfit_extinction_coef );
+      hbl->addWidget( cb_powerfit_dispersion_correction );
       hbl->addWidget( lbl_powerfit_msg );
       vbl_powerfit->addLayout( hbl );
    }
@@ -4874,6 +4884,8 @@ void US_Hydrodyn_Dad::mode_setup_widgets()
    powerfit_widgets.push_back( le_powerfit_lambda_abs );
    powerfit_widgets.push_back( lbl_powerfit_extinction_coef );
    powerfit_widgets.push_back( le_powerfit_extinction_coef );
+
+   powerfit_widgets.push_back( cb_powerfit_dispersion_correction );
 
    powerfit_widgets.push_back( lbl_powerfit_lambda2 );
    powerfit_widgets.push_back( le_powerfit_lambda2 );
@@ -5978,6 +5990,8 @@ void US_Hydrodyn_Dad::disable_all()
 
    le_powerfit_lambda                 ->setEnabled( false );
    le_powerfit_extinction_coef        ->setEnabled( false );
+
+   cb_powerfit_dispersion_correction  ->setEnabled( false );
 
    le_powerfit_lambda2                ->setEnabled( false );
 
