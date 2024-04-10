@@ -12,6 +12,7 @@
 #include "us_load_run_noise.h"
 #include "us_passwd.h"
 #include "us_images.h"
+#include "us_csv_loader.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -677,32 +678,94 @@ void US_MwlSpeciesFit::loadSpecs()
 {
    // Get the species (wavelength,extinction) file names
 
-   QString spdir   = US_Settings::resultDir() + "/"
-                     + le_id->text().section( "/", 0, 0 ).simplified();
-   QString spffilt = QString( "Species Files (*.extinction.dat);;"
-                              "Data Files (*.dat);;"
-                              "All Files (*)" );
-   int nspecies_tmp        = 0;
-   QStringList   spfiles_tmp;
+   QStringList spfiles = QFileDialog::getOpenFileNames( this, "Load Species Files", US_Settings::resultDir(),
+                                                       "Data Files (*.dat *.csv *.dsp );; All Files (*)");
+   if (spfiles.size() < 2) {
+      QMessageBox::critical( this, tr( "Multiple Species Needed" ),
+                            tr( "At lease 2 species must be chosen!\n" ) );
+      return;
+   }
 
-   while ( nspecies_tmp < 2 )
-   {
-      spfiles_tmp         = QFileDialog::getOpenFileNames( this,
-                           tr( "Load Species Vector Files" ),
-                           spdir, spffilt );
-
-      nspecies_tmp        = spfiles_tmp.count();
-
-      if ( nspecies_tmp == 0 )
-         break;
-
-      if ( nspecies_tmp == 1 )
-      {
-         QMessageBox::critical( this, tr( "Multiple Species Needed" ),
-                                tr( "You have chosen 1 species file.\n"
-                                    "At lease 2 species must be chosen" ) );
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
+   csv_loader->set_msg("Only two first columns (wavelengths and OD) will be imported. The first row is the HEADER.");
+   csv_loader->set_numeric_state(true, false);
+   QVector<QVector<QStringList>> data_list;
+   QVector<QFileInfo> finfo_list;
+   for ( int ii = 0; ii < spfiles.size(); ii++ ) {
+      QString filepath = spfiles.at(ii);
+      bool parsed = csv_loader->set_filepath(filepath, false);
+      if (parsed) {
+         int chk_ld = csv_loader->exec();
+         if (chk_ld != QDialog::Accepted) {
+            QMessageBox::critical(this, "Warning!", "Loading species is canceled!");
+            return;
+         }
+         QVector<QStringList> csv_data = csv_loader->get_data();
+         if (csv_data.size() < 2 ) {
+            QMessageBox::critical(this, "Warning!", "At least two data columns are needed:\n" + filepath);
+            return;
+         } else {
+            data_list << csv_data;
+            finfo_list << csv_loader->get_file_info();
+         }
+      } else {
+         QMessageBox::critical(this, "Warning!", tr("Unable to load\n'%1'!\n").arg(filepath));
+         return;
       }
    }
+
+
+   QStringList headers;
+   QVector<double> xvals;
+   double min_x = 1e99;
+   double max_x = -1e99;
+   QVector<double> yvals;
+   QVector<int> indexes;
+   for (int col = 0; col < 2; col++) {
+      for (int row = 0; row < in_data.at(col).size(); row++) {
+         if (row == 0) {
+            if (col > 0) headers << in_data.at(col).at(0);
+            continue;
+         }
+         if (col == 0) {
+            double x = in_data.at(col).at(row).toDouble();
+            xvals << x;
+            indexes << row - 1;
+            min_x = qMin(min_x, x);
+            max_x = qMax(max_x, x);
+            continue;
+         }
+         yvals << in_data.at(col).at(row).toDouble();
+      }
+   }
+   if (xvals.size() == 0) {
+      QMessageBox::warning(this, "Error!", "No Data Found!");
+      return false;
+   }
+   std::sort(indexes.begin(), indexes.end(), [&xvals](int i1, int i2)
+             {return  xvals.at(i1) < xvals.at(i2);});
+   QVector<double> xvals_sorted;
+   QVector<double> yvals_sorted;
+   foreach (int ii, indexes) {
+      xvals_sorted << xvals.at(ii);
+      yvals_sorted << yvals.at(ii);
+   }
+   profile.wvl << xvals_sorted;
+   profile.extinction << yvals_sorted;
+   profile.lambda_min = min_x;
+   profile.lambda_max = max_x;
+
+
+
+
+
+
+
+
+
+
+
+
 
    int nsferr      = 0;
 
