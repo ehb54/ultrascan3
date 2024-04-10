@@ -715,45 +715,45 @@ void US_MwlSpeciesFit::loadSpecs()
    }
 
 
-   QStringList headers;
-   QVector<double> xvals;
-   double min_x = 1e99;
-   double max_x = -1e99;
-   QVector<double> yvals;
-   QVector<int> indexes;
-   for (int col = 0; col < 2; col++) {
-      for (int row = 0; row < in_data.at(col).size(); row++) {
-         if (row == 0) {
-            if (col > 0) headers << in_data.at(col).at(0);
-            continue;
-         }
-         if (col == 0) {
-            double x = in_data.at(col).at(row).toDouble();
-            xvals << x;
-            indexes << row - 1;
-            min_x = qMin(min_x, x);
-            max_x = qMax(max_x, x);
-            continue;
-         }
-         yvals << in_data.at(col).at(row).toDouble();
-      }
-   }
-   if (xvals.size() == 0) {
-      QMessageBox::warning(this, "Error!", "No Data Found!");
-      return false;
-   }
-   std::sort(indexes.begin(), indexes.end(), [&xvals](int i1, int i2)
-             {return  xvals.at(i1) < xvals.at(i2);});
-   QVector<double> xvals_sorted;
-   QVector<double> yvals_sorted;
-   foreach (int ii, indexes) {
-      xvals_sorted << xvals.at(ii);
-      yvals_sorted << yvals.at(ii);
-   }
-   profile.wvl << xvals_sorted;
-   profile.extinction << yvals_sorted;
-   profile.lambda_min = min_x;
-   profile.lambda_max = max_x;
+   // QStringList headers;
+   // QVector<double> xvals;
+   // double min_x = 1e99;
+   // double max_x = -1e99;
+   // QVector<double> yvals;
+   // QVector<int> indexes;
+   // for (int col = 0; col < 2; col++) {
+   //    for (int row = 0; row < in_data.at(col).size(); row++) {
+   //       if (row == 0) {
+   //          if (col > 0) headers << in_data.at(col).at(0);
+   //          continue;
+   //       }
+   //       if (col == 0) {
+   //          double x = in_data.at(col).at(row).toDouble();
+   //          xvals << x;
+   //          indexes << row - 1;
+   //          min_x = qMin(min_x, x);
+   //          max_x = qMax(max_x, x);
+   //          continue;
+   //       }
+   //       yvals << in_data.at(col).at(row).toDouble();
+   //    }
+   // }
+   // if (xvals.size() == 0) {
+   //    QMessageBox::warning(this, "Error!", "No Data Found!");
+   //    return false;
+   // }
+   // std::sort(indexes.begin(), indexes.end(), [&xvals](int i1, int i2)
+   //           {return  xvals.at(i1) < xvals.at(i2);});
+   // QVector<double> xvals_sorted;
+   // QVector<double> yvals_sorted;
+   // foreach (int ii, indexes) {
+   //    xvals_sorted << xvals.at(ii);
+   //    yvals_sorted << yvals.at(ii);
+   // }
+   // profile.wvl << xvals_sorted;
+   // profile.extinction << yvals_sorted;
+   // profile.lambda_min = min_x;
+   // profile.lambda_max = max_x;
 
 
 
@@ -767,160 +767,160 @@ void US_MwlSpeciesFit::loadSpecs()
 
 
 
-   int nsferr      = 0;
+//    int nsferr      = 0;
 
-   if ( nspecies_tmp == 0 )
-      return;
+//    if ( nspecies_tmp == 0 )
+//       return;
 
-   // Read in the species "red-line" data
+//    // Read in the species "red-line" data
 
-   int minnw       = 999999;
-   int maxnw       = 0;
-   QVector< QVector< int > >     spwavls_tmp;
-   QVector< QVector< double > >  spconcs_tmp;
-//   QVector< int >     nwavls_tmp;
-DbgLv(1) << "SpFiles:";
-   for ( int ii = 0; ii < nspecies_tmp; ii++ )
-   {
-      QString fname   = spfiles_tmp[ ii ];
-DbgLv(1) << " file name" << fname;
-      QFile filei( fname );
+//    int minnw       = 999999;
+//    int maxnw       = 0;
+//    QVector< QVector< int > >     spwavls_tmp;
+//    QVector< QVector< double > >  spconcs_tmp;
+// //   QVector< int >     nwavls_tmp;
+// DbgLv(1) << "SpFiles:";
+//    for ( int ii = 0; ii < nspecies_tmp; ii++ )
+//    {
+//       QString fname   = spfiles_tmp[ ii ];
+// DbgLv(1) << " file name" << fname;
+//       QFile filei( fname );
 
-      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-      {
-         DbgLv(0) << "*ERROR* Unable to open file" << fname;
-         nsferr++;
-         continue;
-      }
+//       if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+//       {
+//          DbgLv(0) << "*ERROR* Unable to open file" << fname;
+//          nsferr++;
+//          continue;
+//       }
 
-      QTextStream tsi( &filei );
-      QString fline   = tsi.readLine();
-      int nwavl       = 0;
+//       QTextStream tsi( &filei );
+//       QString fline   = tsi.readLine();
+//       int nwavl       = 0;
 
-      if ( ! fline.contains( "Wavelength" ) )
-      {
-         DbgLv(0) << "*ERROR* Format wrong for file" << fname;
-         nsferr++;
-      }
+//       if ( ! fline.contains( "Wavelength" ) )
+//       {
+//          DbgLv(0) << "*ERROR* Format wrong for file" << fname;
+//          nsferr++;
+//       }
 
-      QVector< int >      spwvls;
-      QVector< double >   spcncs;
-      while ( ! tsi.atEnd() )
-      {  // Parse wavelength, concentration from each file line
-         fline           = tsi.readLine().simplified();
-         int lnf1        = fline.indexOf( " " );
-DbgLv(1) << "lnf1:" << lnf1;
-			if (lnf1 == -1) lnf1 = fline.indexOf( "," ); // if there was no space found, try comma
-			if (lnf1 == -1) lnf1 = fline.indexOf( "\t" ); // if still -1, try tab
-			if (lnf1 == -1) 
-			{
-				QMessageBox::warning( this, tr("IO Error"),
-				tr("The file:\n") + fname + tr("\nis not in the correct format.\n") +  
-				tr("The file should have 2 columns that are comma or space separated."));
-				return;
-			}
-         int iwavl       = QString( fline ).left( lnf1 ).toInt();
-         double conc     = QString( fline ).mid( lnf1 + 1 ).toDouble();
+//       QVector< int >      spwvls;
+//       QVector< double >   spcncs;
+//       while ( ! tsi.atEnd() )
+//       {  // Parse wavelength, concentration from each file line
+//          fline           = tsi.readLine().simplified();
+//          int lnf1        = fline.indexOf( " " );
+// DbgLv(1) << "lnf1:" << lnf1;
+// 			if (lnf1 == -1) lnf1 = fline.indexOf( "," ); // if there was no space found, try comma
+// 			if (lnf1 == -1) lnf1 = fline.indexOf( "\t" ); // if still -1, try tab
+// 			if (lnf1 == -1)
+// 			{
+// 				QMessageBox::warning( this, tr("IO Error"),
+// 				tr("The file:\n") + fname + tr("\nis not in the correct format.\n") +
+// 				tr("The file should have 2 columns that are comma or space separated."));
+// 				return;
+// 			}
+//          int iwavl       = QString( fline ).left( lnf1 ).toInt();
+//          double conc     = QString( fline ).mid( lnf1 + 1 ).toDouble();
 
-         if (spwvls.contains(iwavl)){
-             QMessageBox::warning( this, tr("IO Error"),
-             tr("The file:\n") + fname + tr("\nhas got redundant wavelength values.\n") +
-             tr("Please provide the wavelength values without decimals."));
-             return;
-         }
+//          if (spwvls.contains(iwavl)){
+//              QMessageBox::warning( this, tr("IO Error"),
+//              tr("The file:\n") + fname + tr("\nhas got redundant wavelength values.\n") +
+//              tr("Please provide the wavelength values without decimals."));
+//              return;
+//          }
 
-         spwvls << iwavl;
-         spcncs << conc;
-         nwavl++;
-      }
+//          spwvls << iwavl;
+//          spcncs << conc;
+//          nwavl++;
+//       }
 
-      minnw           = qMin( minnw, nwavl );
-      maxnw           = qMax( maxnw, nwavl );
+//       minnw           = qMin( minnw, nwavl );
+//       maxnw           = qMax( maxnw, nwavl );
 
-      spwavls_tmp << spwvls;
-      spconcs_tmp << spcncs;
+//       spwavls_tmp << spwvls;
+//       spconcs_tmp << spcncs;
 
-//      nwavls_tmp << nwavl;
-   }
+// //      nwavls_tmp << nwavl;
+//    }
 
-//*DEBUG*
-DbgLv(1) << "Species file count" << nspecies_tmp << "nsferr" << nsferr;
-DbgLv(1) << "Species min,max wavelengths" << minnw << maxnw;
-//int je=-1;
-//int js=0;
-//for ( int ii = 0; ii < nspecies_tmp; ii++ )
-//{
-//  int nwavl = nwavls_tmp[ii];
-//  js = je + 1;
-//  je = je + nwavl;
-//  DbgLv(1) << " ii" << ii << "nwavl" << nwavl << "w0 wn c0 cn"
-//   << spwavls_tmp[js] << spwavls_tmp[je] << spconcs_tmp[js] << spconcs_tmp[je];
-//}
-for ( int ii = 0; ii < nspecies_tmp; ii++ )
-{
-  int nwavl = spwavls_tmp.at(ii).size();
-  for (int jj = 0; jj < nwavl; jj++){
-DbgLv(0) << " jj" << jj << "nwavl" << nwavl << "wn cn"
-<< spwavls_tmp.at(ii).at(jj) << spconcs_tmp.at(ii).at(jj);
-  }
-}
+// //*DEBUG*
+// DbgLv(1) << "Species file count" << nspecies_tmp << "nsferr" << nsferr;
+// DbgLv(1) << "Species min,max wavelengths" << minnw << maxnw;
+// //int je=-1;
+// //int js=0;
+// //for ( int ii = 0; ii < nspecies_tmp; ii++ )
+// //{
+// //  int nwavl = nwavls_tmp[ii];
+// //  js = je + 1;
+// //  je = je + nwavl;
+// //  DbgLv(1) << " ii" << ii << "nwavl" << nwavl << "w0 wn c0 cn"
+// //   << spwavls_tmp[js] << spwavls_tmp[je] << spconcs_tmp[js] << spconcs_tmp[je];
+// //}
+// for ( int ii = 0; ii < nspecies_tmp; ii++ )
+// {
+//   int nwavl = spwavls_tmp.at(ii).size();
+//   for (int jj = 0; jj < nwavl; jj++){
+// DbgLv(0) << " jj" << jj << "nwavl" << nwavl << "wn cn"
+// << spwavls_tmp.at(ii).at(jj) << spconcs_tmp.at(ii).at(jj);
+//   }
+// }
 
-//*DEBUG*
+// //*DEBUG*
 
-    // checking for the base profile matched to triple wavelengths
-    QVector< int >     spwavls_chk;
-    QVector< double >  spconcs_chk;
-    QVector< int >     nwavls_chk;
-    int ccx = lw_triples->currentRow();
-    QVector< int > curr_celchnwvl = celchn_wvl.at(ccx);
-    int nwls = curr_celchnwvl.size();
-    QStringList bad_files;
-    for (int ii = 0; ii < nspecies_tmp; ii++){
-        QString fname   = spfiles_tmp.at(ii);
-        for (int jj = 0; jj < nwls; jj++){
-            int wavl = curr_celchnwvl.at(jj);
-            int idx = spwavls_tmp.at(ii).indexOf(wavl);
-            if (idx == -1){
-                bad_files << fname;
-                break;
-            }
-            spwavls_chk << wavl;
-            spconcs_chk << spconcs_tmp.at(ii).at(idx);
-        }
-        nwavls_chk << nwls;
-    }
+//     // checking for the base profile matched to triple wavelengths
+//     QVector< int >     spwavls_chk;
+//     QVector< double >  spconcs_chk;
+//     QVector< int >     nwavls_chk;
+//     int ccx = lw_triples->currentRow();
+//     QVector< int > curr_celchnwvl = celchn_wvl.at(ccx);
+//     int nwls = curr_celchnwvl.size();
+//     QStringList bad_files;
+//     for (int ii = 0; ii < nspecies_tmp; ii++){
+//         QString fname   = spfiles_tmp.at(ii);
+//         for (int jj = 0; jj < nwls; jj++){
+//             int wavl = curr_celchnwvl.at(jj);
+//             int idx = spwavls_tmp.at(ii).indexOf(wavl);
+//             if (idx == -1){
+//                 bad_files << fname;
+//                 break;
+//             }
+//             spwavls_chk << wavl;
+//             spconcs_chk << spconcs_tmp.at(ii).at(idx);
+//         }
+//         nwavls_chk << nwls;
+//     }
 
-    if (bad_files.size() > 0){
-        QString fnames("\n");
-        for (int ii = 0; ii < bad_files.size(); ii++)
-            fnames = fnames.append(bad_files.at(ii) + tr("\n"));
-        QMessageBox::warning( this, tr("IO Error"),
-                              tr("The following file(s):\n") + fnames +
-                              tr("\ndo(es) not have the valid data over"
-                                 " the range of %1 to %2 nm. ").
-                              arg(curr_celchnwvl.at(0)).arg(curr_celchnwvl.at(nwls - 1)) +
-                              tr("Please provide the proper spectral profiles."));
-        return;
-    }
+//     if (bad_files.size() > 0){
+//         QString fnames("\n");
+//         for (int ii = 0; ii < bad_files.size(); ii++)
+//             fnames = fnames.append(bad_files.at(ii) + tr("\n"));
+//         QMessageBox::warning( this, tr("IO Error"),
+//                               tr("The following file(s):\n") + fnames +
+//                               tr("\ndo(es) not have the valid data over"
+//                                  " the range of %1 to %2 nm. ").
+//                               arg(curr_celchnwvl.at(0)).arg(curr_celchnwvl.at(nwls - 1)) +
+//                               tr("Please provide the proper spectral profiles."));
+//         return;
+//     }
 
-    spfiles.clear();
-    spwavls.clear();
-    spconcs.clear();
-    nwavls.clear();
-    nspecies = nspecies_tmp;
-    spfiles << spfiles_tmp;
-    spwavls << spwavls_chk;
-    spconcs << spconcs_chk;
-    nwavls << nwavls_chk;
+//     spfiles.clear();
+//     spwavls.clear();
+//     spconcs.clear();
+//     nwavls.clear();
+//     nspecies = nspecies_tmp;
+//     spfiles << spfiles_tmp;
+//     spwavls << spwavls_chk;
+//     spconcs << spconcs_chk;
+//     nwavls << nwavls_chk;
 
-   // Initialize species data
-   int ktspec     = nspecies * celchns.count();
-   synData.fill( rawList[ 0 ], ktspec );
-   have_p1.fill( false,        ktspec );
-DbgLv(1) << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
- << have_p1.size();
+//    // Initialize species data
+//    int ktspec     = nspecies * celchns.count();
+//    synData.fill( rawList[ 0 ], ktspec );
+//    have_p1.fill( false,        ktspec );
+// DbgLv(1) << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
+//  << have_p1.size();
 
-   pb_sfitdata->setEnabled( true );
+//    pb_sfitdata->setEnabled( true );
 }
 
 // Create species-fit synthetic data
