@@ -2575,6 +2575,53 @@ void US_LammAstfvm::validate_bfg() {
        DbgLv(1) << "validated bfg recalculated";
     }
    DbgLv(1) << "validated bfg";
+    if (dbg_level > 0){
+       // save density and viscosity gradient to disk
+         QString dens_file = "density_gradient_" + QString::number(bandFormingGradient->cp_angle)+ "degree.txt";
+         QString visc_file = "viscosity_gradient_" + QString::number(bandFormingGradient->cp_angle)+ "degree.txt";
+         QString conc_file = "concentration_gradient_" + QString::number(bandFormingGradient->cp_angle)+ "degree.txt";
+         QFile dens_out(dens_file);
+         QFile visc_out(visc_file);
+         QFile conc_out(conc_file);
+         if (dens_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+            QTextStream dens_stream(&dens_out);
+            QTextStream visc_stream(&visc_out);
+            QTextStream conc_stream(&conc_out);
+            dens_stream << "radius\t";
+            visc_stream << "radius\t";
+            conc_stream << "radius\t";
+            for (int i = 0; i < bandFormingGradient->dens_bfg_data.scanData.size(); i++){
+               dens_stream << bandFormingGradient->dens_bfg_data.scanData[i].seconds << "\t";
+               dens_stream << bandFormingGradient->dens_bfg_data.scanData[i].seconds << "\t";
+               visc_stream << bandFormingGradient->visc_bfg_data.scanData[i].seconds << "\t";
+               visc_stream << bandFormingGradient->visc_bfg_data.scanData[i].seconds << "\t";
+               conc_stream << bandFormingGradient->conc_bfg_data.scanData[i].seconds << "\t";
+               conc_stream << bandFormingGradient->conc_bfg_data.scanData[i].seconds << "\t";
+            }
+            dens_stream << "\n";
+            visc_stream << "\n";
+            conc_stream << "\n";
+            for (int j = 0; j < bandFormingGradient->dens_bfg_data.pointCount(); j++){
+               dens_stream << QString::number(bandFormingGradient->dens_bfg_data.radius(j)) << "\t";
+               visc_stream << QString::number(bandFormingGradient->visc_bfg_data.radius(j)) << "\t";
+               conc_stream << QString::number(bandFormingGradient->conc_bfg_data.radius(j)) << "\t";
+               for (int i = 0; i < bandFormingGradient->dens_bfg_data.scanData.size(); i++){
+                  dens_stream << bandFormingGradient->dens_bfg_data.scanData[i].seconds << "\t";
+                  visc_stream << bandFormingGradient->visc_bfg_data.scanData[i].seconds << "\t";
+                  conc_stream << bandFormingGradient->conc_bfg_data.scanData[i].seconds << "\t";
+                  dens_stream << QString::number(bandFormingGradient->dens_bfg_data.scanData[i].rvalues[j]) << "\t";
+                  visc_stream << QString::number(bandFormingGradient->visc_bfg_data.scanData[i].rvalues[j]) << "\t";
+                  conc_stream << QString::number(bandFormingGradient->conc_bfg_data.scanData[i].rvalues[j]) << "\t";
+               }
+               dens_stream << "\n";
+               visc_stream << "\n";
+               conc_stream << "\n";
+            }
+            conc_out.close();
+            dens_out.close();
+            visc_out.close();
+         }
+    }
 }
 
 void US_LammAstfvm::validate_csd() {
