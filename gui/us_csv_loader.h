@@ -16,10 +16,9 @@ class CSVTableView : public QTableView {
    Q_OBJECT
    public:
       CSVTableView(QWidget *parent=nullptr);
-      void add_header();
 
    signals:
-      void new_content();
+      void row_column_deleted();
 
    protected:
       void contextMenuEvent(QContextMenuEvent *event) override;
@@ -42,11 +41,13 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       US_CSV_Loader(QWidget* parent=0);
       bool set_filepath(QString&, bool);
       void setMessage(const QString&);
+      void setEditable(bool);
       bool data(QVector<QVector<double>>&, QStringList&);
       bool dataFileInfo(QFileInfo&);
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
+      bool editable;
       QFileInfo infile;
       DELIMITER  delimiter;
       QPushButton* pb_open;
@@ -73,7 +74,6 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
 
       bool parse_file(QString&);
       QStringList gen_alpha_list(int);
-      void relabel();
       bool check_table();
       void get_sorted(QVector<QVector<double>>&, QStringList&);
       bool write_csv(const QString&, const QString&, QString&);
@@ -83,9 +83,13 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       void ok();
       void cancel();
       void save_csv_clicked();
+      void reset();
       void fill_table(int);
       void new_delimiter(const QString &);
       void add_header();
+      void item_changed(QStandardItem *);
+      void relabel();
+      void row_column_deleted();
 };
 
 #endif // US_CSV_LOADER_H

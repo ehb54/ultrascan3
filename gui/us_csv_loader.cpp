@@ -23,11 +23,7 @@ bool CSVSortFilterProxyModel::lessThan(const QModelIndex &left,
 
 }
 
-CSVTableView::CSVTableView(QWidget *parent) : QTableView(parent) {};
-
-void CSVTableView::add_header() {
-   // this->insertRow(0);
-}
+CSVTableView::CSVTableView(QWidget *parent) : QTableView(parent) {}
 
 void CSVTableView::contextMenuEvent(QContextMenuEvent *event) {
    QMenu contextMenu(this);
@@ -59,7 +55,7 @@ void CSVTableView::delete_rows() {
    foreach (int ii, rows) {
       this->model()->removeRow(ii);
    }
-   emit new_content();
+   emit row_column_deleted();
 }
 
 void CSVTableView::delete_columns() {
@@ -74,7 +70,7 @@ void CSVTableView::delete_columns() {
    foreach (int ii, cols) {
       this->model()->removeColumn(ii);
    }
-   emit new_content();
+   emit row_column_deleted();
 }
 
 
@@ -120,10 +116,11 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
    pb_add_header = us_pushbutton("Add Header");
    pb_cancel = us_pushbutton("Cancel");
-   pb_ok = us_pushbutton("Ok");
+   pb_ok = us_pushbutton("Ok", false);
    pb_save_csv = us_pushbutton("Save CSV");
    pb_reset = us_pushbutton("Reset");
 
+   editable = true;
    tv_data = new CSVTableView();
    tv_data->setSortingEnabled(true);
    model = new QStandardItemModel(20, 5);
@@ -135,6 +132,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
       for (int jj =0; jj < model->columnCount(); jj++) {
          QStandardItem *it = new QStandardItem();
          it->setData("", Qt::DisplayRole);
+         it->setEditable(false);
          model->setItem(ii, jj, it);
       }
    }
@@ -177,6 +175,9 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
    connect(le_other, &QLineEdit::textChanged, this, &US_CSV_Loader::new_delimiter);
    connect(pb_save_csv, &QPushButton::clicked, this, &US_CSV_Loader::save_csv_clicked);
+   connect(pb_reset, &QPushButton::clicked, this, &US_CSV_Loader::reset);
+   connect(tv_data, &CSVTableView::row_column_deleted, this, &US_CSV_Loader::row_column_deleted);
+   connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
 #if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
    connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
 #else
@@ -185,12 +186,50 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
 }
 
+void US_CSV_Loader::setEditable(bool state) {
+   editable = state;
+}
+
+void US_CSV_Loader::reset() {
+   delimiter = NONE;
+   fill_table(bg_delimiter->checkedId());
+}
+
+void US_CSV_Loader::row_column_deleted() {
+   check_table();
+   relabel();
+}
+
+void US_CSV_Loader::item_changed(QStandardItem *item) {
+   int row = item->row();
+   if (row == 0) {
+      if (item->data(Qt::DisplayRole).toString().trimmed().isEmpty()) {
+         item->setBackground(Qt::red);
+         item->setData(false, Qt::UserRole);
+      } else {
+         item->setBackground(Qt::green);
+         item->setData(true, Qt::UserRole);
+      }
+   } else {
+      bool ok;
+      item->data(Qt::DisplayRole).toDouble(&ok);
+      if (ok) {
+         item->setBackground(Qt::white);
+         item->setData(true, Qt::UserRole);
+      } else {
+         item->setBackground(Qt::red);
+         item->setData(false, Qt::UserRole);
+      }
+   }
+   check_table();
+}
+
 void US_CSV_Loader::add_header() {
    if (file_lines.size() == 0) return;
-   // tv_data->add_header();
+   model->disconnect(this);
    model->insertRow(0);
-   int nr = tv_data->model()->rowCount();
-   int nc = tv_data->model()->columnCount();
+   int nr = model->rowCount();
+   int nc = model->columnCount();
    qDebug() << nr;
    qDebug() << nc;
    QFont font( US_Widgets::fixedFont().family(),
@@ -202,6 +241,7 @@ void US_CSV_Loader::add_header() {
       it->setData(true, Qt::UserRole);
       it->setData(font, Qt::FontRole);
       it->setBackground(Qt::green);
+      it->setEditable(editable);
       model->setItem(0, ii, it);
 
       bool ok;
@@ -217,6 +257,7 @@ void US_CSV_Loader::add_header() {
    }
    relabel();
    check_table();
+   connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
 }
 
 void US_CSV_Loader::setMessage(const QString& msg) {
@@ -438,6 +479,7 @@ void US_CSV_Loader::fill_table(int id) {
    // QFontMetrics* fm = new QFontMetrics( font );
    // int rowht = fm->height() + 2;
 
+   model->disconnect(this);
    model->clear();
 
    int n_columns = static_cast<int>(-1e99);
@@ -475,6 +517,7 @@ void US_CSV_Loader::fill_table(int id) {
          QStandardItem *it = new QStandardItem();
          it->setData(val, Qt::DisplayRole);
          it->setData(font, Qt::FontRole);
+         it->setEditable(editable);
          if (ii == 0) {
             if (val.toString().isEmpty()) {
                it->setBackground(Qt::red);
@@ -506,24 +549,30 @@ void US_CSV_Loader::fill_table(int id) {
    tv_data->setModel(proxy);
    relabel();
    check_table();
-   tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+   // tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
    tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
    tv_data->resizeColumnsToContents();
    // qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
+   connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
 }
 
 bool US_CSV_Loader::check_table() {
-   if (file_lines.isEmpty()) return false;
+   if (file_lines.isEmpty()) {
+      pb_ok->setEnabled(false);
+      return false;
+   }
    bool ready = true;
-   for (int ii = 0; ii < model->rowCount(); ii++) {
-      for (int jj = 0; jj < model->columnCount(); jj++) {
+   int nrows = model->rowCount();
+   int ncols = model->columnCount();
+   if (nrows == 0 || ncols == 0) ready =  false;
+   for (int ii = 0; ii < nrows; ii++) {
+      for (int jj = 0; jj < ncols; jj++) {
          ready = ready && model->item(ii, jj)->data(Qt::UserRole).toBool();
          if (! ready) break;
       }
       if (! ready) break;
    }
-   if (ready) pb_ok->setEnabled(true);
-   else pb_ok->setEnabled(false);
+   pb_ok->setEnabled(ready);
    return ready;
 }
 
