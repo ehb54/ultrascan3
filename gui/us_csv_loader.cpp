@@ -129,9 +129,6 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    proxy->setSourceModel(model);
    tv_data->setModel(proxy);
 
-   // tv_data-> setVerticalHeaderLabels(make_labels(nr));
-   // tw_data-> setHorizontalHeaderLabels(make_labels(nc));
-
    for (int ii = 0; ii < model->rowCount(); ii++) {
       for (int jj =0; jj < model->columnCount(); jj++) {
          QStandardItem *it = new QStandardItem();
@@ -140,8 +137,6 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
       }
    }
    tv_data->setStyleSheet("background-color: white");
-   // QHeaderView *header = tw_data->horizontalHeader();
-   // header->setSectionResizeMode(QHeaderView::Stretch);
 
    le_msg = us_lineedit("", 0, true);
 
@@ -174,8 +169,6 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
    setLayout(main_lyt);
 
-   hlabel << "Lambda" << "OD";
-
    connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    // connect(tv_data, &CSVTableView::new_content, this, &US_CSV_Loader::highlight_header);
@@ -194,19 +187,35 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 void US_CSV_Loader::add_header() {
    if (file_lines.size() == 0) return;
    // tv_data->add_header();
+   model->insertRow(0);
    int nr = tv_data->model()->rowCount();
    int nc = tv_data->model()->columnCount();
    qDebug() << nr;
    qDebug() << nc;
-   QFont tw_font( US_Widgets::fixedFont().family(),
+   QFont font( US_Widgets::fixedFont().family(),
                  US_GuiSettings::fontSize() );
-   // QStringList headers = gen_alpha_list(tw_data->columnCount());
-   // for (int ii = 0; ii < tw_data->columnCount(); ii++) {
-   //    QTableWidgetItem *twi = new QTableWidgetItem(headers.at(ii));
-   //    twi->setFont(tw_font);
-   //    tw_data->setItem(0, ii, twi);
-   // }
-   highlight_header();
+   QStringList headers = gen_alpha_list(nc);
+   for (int ii = 0; ii < nc; ii++) {
+      QStandardItem *it = new QStandardItem();
+      it->setData(headers.at(ii), Qt::DisplayRole);
+      it->setData(true, Qt::UserRole);
+      it->setData(font, Qt::FontRole);
+      it->setBackground(Qt::green);
+      model->setItem(0, ii, it);
+
+      bool ok;
+      model->item(1, ii)->data(Qt::DisplayRole).toDouble(&ok);
+      if (ok) {
+         model->item(1, ii)->setBackground(Qt::white);
+         model->item(1, ii)->setData(true, Qt::UserRole);
+      }
+      else {
+         model->item(1, ii)->setBackground(Qt::red);
+         model->item(1, ii)->setData(false, Qt::UserRole);
+      }
+   }
+   relabel();
+   check_table();
 }
 
 void US_CSV_Loader::set_msg(QString msg) {
@@ -245,8 +254,6 @@ void US_CSV_Loader::relabel() {
 }
 
 void US_CSV_Loader::ok() {
-   if(! check_table_size()) return;
-   if(! check_table_data()) return;
    data.clear();
    header.clear();
    int nrows = tv_data->model()->rowCount();
@@ -256,8 +263,7 @@ void US_CSV_Loader::ok() {
    for (int jj = 0; jj < ncols; jj++) {
       QVector<double> col;
       for (int ii = 0 ; ii < nrows; ii++) {
-         QModelIndex index = tv_data->model()->index(ii, jj);
-         QVariant cell_v = tv_data->model()->data(index, Qt::DisplayRole);
+         QVariant cell_v = model->item(ii, jj)->data(Qt::DisplayRole);
          if (ii == 0) {
             header << cell_v.toString();
             continue;
@@ -278,7 +284,7 @@ void US_CSV_Loader::ok() {
 
 void US_CSV_Loader::save_csv() {
    if (file_lines.size() == 0) return;
-   if(! check_table_size()) return;
+   if(! check_table()) return;
    // if(! check_table_data()) return;
 
    QString delimiter_str;
@@ -335,8 +341,7 @@ void US_CSV_Loader::save_csv() {
       QTextStream ts(&file);
       for (int ii = 0 ; ii < nrows; ii++) {
          for (int jj = 0; jj < ncols; jj++) {
-            QModelIndex index = tv_data->model()->index(ii, jj);
-            ts << tv_data->model()->data(index, Qt::DisplayRole).toString().trimmed();
+            ts << model->item(ii, jj)->data(Qt::DisplayRole).toString().trimmed();
             if (jj < ncols - 1) ts << delimiter_str;
             else ts << "\n";
          }
@@ -475,13 +480,24 @@ void US_CSV_Loader::fill_table(int id) {
          it->setData(val, Qt::DisplayRole);
          it->setData(font, Qt::FontRole);
          if (ii == 0) {
-            if (val.toString().isEmpty()) it->setBackground(Qt::red);
-            else it->setBackground(Qt::green);
+            if (val.toString().isEmpty()) {
+               it->setBackground(Qt::red);
+               it->setData(false, Qt::UserRole);
+            } else {
+               it->setBackground(Qt::green);
+               it->setData(true, Qt::UserRole);
+            }
          } else {
             bool ok;
             val.toDouble(&ok);
-            if (ok) it->setBackground(Qt::white);
-            else it->setBackground(Qt::red);
+            if (ok) {
+               it->setBackground(Qt::white);
+               it->setData(true, Qt::UserRole);
+            }
+            else {
+               it->setBackground(Qt::red);
+               it->setData(false, Qt::UserRole);
+            }
          }
          model->setItem(ii, jj, it);
       }
@@ -489,67 +505,29 @@ void US_CSV_Loader::fill_table(int id) {
    if (droplast) {
       model->removeColumn(n_columns - 1);
    }
+   // model->sort(0, Qt::DescendingOrder);
    proxy->setSourceModel(model);
    tv_data->setModel(proxy);
    relabel();
-   // tv_data->setModel(&model);
-   // tw_data->setHorizontalHeaderLabels(make_labels(n_columns));
-   // tw_data->setVerticalHeaderLabels(make_labels(n_rows));
-   // highlight_header();
+   check_table();
    tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
    tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
    tv_data->resizeColumnsToContents();
    // qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
 }
 
-void US_CSV_Loader::highlight_header() {
-   // for (int ii = 0; ii < tw_data->rowCount(); ii++) {
-   //    for (int jj = 0; jj < tw_data->columnCount(); jj++) {
-   //       if (ii == 0) tw_data->item(ii, jj)->setBackground(QBrush(Qt::yellow));
-   //       else tw_data->item(ii, jj)->setBackground(QBrush(Qt::white));
-   //    }
-   // }
-}
-
-bool US_CSV_Loader::check_table_size() {
-   // int nrows = tv_data->model()->rowCount();
-   // int ncols = tv_data->model()->columnCount();
-   // if (nrows == 0 || ncols == 0 || file_lines.size() == 0) return false;
-   // int nc_0 = 0;
-   // for (int ii = 0; ii < nrows; ii++) {
-   //    int nc_r = 0;
-   //    for (int jj = 0; jj < ncols; jj++) {
-   //       if (ii == 0 && !tw_data->item(ii, jj)->text().isEmpty()) {
-   //          nc_0++;
-   //          nc_r++;
-   //       } else if (ii > 0 && !tw_data->item(ii, jj)->text().isEmpty()){
-   //          nc_r++;
-   //       }
-   //    }
-   //    if (nc_0 != nc_r) {
-   //       QMessageBox::warning(this, "Error!",
-   //                            tr("The number of cells doesn't match!\nrow %1").arg(ii + 1));
-   //       return false;
-   //    }
-   // }
-   return true;
-}
-
-bool US_CSV_Loader::check_table_data() {
-   // bool state;
-   // int nrows = tw_data->rowCount();
-   // int ncols = tw_data->columnCount();
-   // for (int ii = 1; ii < nrows; ii++) {
-   //    for (int jj = 0; jj < ncols; jj++) {
-   //       tw_data->item(ii, jj)->text().toDouble(&state);
-   //       if (! state) {
-   //          QMessageBox::warning(this, "Error!", tr("Cell (%1, %2) is not numeric").arg(ii + 1).arg(jj + 1));
-   //          tw_data->setCurrentCell(ii, jj);
-   //          return false;
-   //       }
-   //    }
-   // }
-   return true;
+bool US_CSV_Loader::check_table() {
+   bool ready = true;
+   for (int ii = 0; ii < model->rowCount(); ii++) {
+      for (int jj = 0; jj < model->columnCount(); jj++) {
+         ready = ready && model->item(ii, jj)->data(Qt::UserRole).toBool();
+         if (! ready) break;
+      }
+      if (! ready) break;
+   }
+   if (ready) pb_ok->setEnabled(true);
+   else pb_ok->setEnabled(false);
+   return ready;
 }
 
 QFileInfo US_CSV_Loader::get_file_info() {

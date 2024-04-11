@@ -75,11 +75,10 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       QStandardItemModel* model;
       CSVSortFilterProxyModel* proxy;
 
-      bool check_table_size();
-      bool check_table_data();
       bool parse_file(QString&);
       QStringList gen_alpha_list(int);
       void relabel();
+      bool check_table();
 
    private slots:
       void open();
@@ -89,7 +88,6 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       void fill_table(int);
       void new_delimiter(const QString &);
       void add_header();
-      void highlight_header();
 };
 
 #endif // US_CSV_LOADER_H
