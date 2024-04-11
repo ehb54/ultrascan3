@@ -6293,7 +6293,8 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	  
 	  QMessageBox::warning( this,
 				tr( "License Key Nearing Expiraiton" ),
-				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
+				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") )
+				.arg(daysToExpiration));
 	  
 	}
       

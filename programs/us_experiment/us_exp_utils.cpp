@@ -3726,7 +3726,6 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
      subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                            mainw->connection_status );               // ALEXEY: use top-level connection boolean!
 
-
    ck_run     ->setChecked( have_run   );
    ck_project ->setChecked( have_proj  );
    ck_rotor_ok->setChecked( chgd_rotor );
@@ -3778,6 +3777,32 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
 
+   //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
+   //If not, inform user, disable "Submit"/"Save Protocol" buttons
+   if ( mainw->us_abde_mode )
+     {
+       qDebug() << "Submit::init: ABDE_MODE ";
+       QStringList msg_to_user;
+       if ( !extinctionProfilesExist( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+
+	   msg_to_user.removeDuplicates();
+	   
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+				     "\n\"Database:Manage Buffer Data\"\n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
+     }
+
+   
+   
    //DEBUG
    //Opt system check, what cells will be uvvis and/or interference
    QStringList oprof   = sibLValue( "optical", "profiles" );
@@ -3794,7 +3819,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 {
 	   if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
 	     {
-	       qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	       //qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
 	       active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
 	     }
 	   
@@ -3805,11 +3830,168 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 ++nchannels_uvvis;
      }
 
-   qDebug() << "Upload::initPanel(): oprof -- " << oprof;
-   qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
-	    << ncells_interference << ", " << nchannels_uvvis;
+   //qDebug() << "Upload::initPanel(): oprof -- " << oprof;
+   // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
+   // 	    << ncells_interference << ", " << nchannels_uvvis;
    
 }
+
+bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
+{
+  bool all_profiles_exist = true;
+  msg_to_user. clear();
+  qDebug() << "Size rpSolut->nschan, rpRange->nranges -- "
+	   << rpSolut->nschan
+	   << rpRange->nranges;
+
+  //DB
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) +  db.lastError() );
+      
+      return false;
+    }
+
+  //over channels
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel = rpRange->chrngs[ ii ].channel;
+      QList< double > all_wvls = rpRange->chrngs[ ii ].wvlens;
+      int    nwavl    = all_wvls.count();
+      bool   buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+
+      if ( nwavl > 1 )
+	{
+	  QString sol_id = rpSolut->chsols[ii].sol_id;
+	  US_Solution*   solution = new US_Solution;
+	  int solutionID = sol_id.toInt();
+
+	  int status = US_DB2::OK;
+	  status = solution->readFromDB  ( solutionID, &db );
+	  // Error reporting
+	  if ( status == US_DB2::NO_BUFFER )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "The buffer this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status == US_DB2::NO_ANALYTE )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "One of the analytes this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Database Problem" ),
+				    tr( "Database returned the following error: \n" ) +  db.lastError() );
+	      return false;
+	    }
+	  //End of reading Solution:
+
+	  //Reading Analytes
+	  int num_analytes = solution->analyteInfo.size();
+	  for (int i=0; i < num_analytes; ++i )
+	    {
+	      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+	      QString a_name     = analyte.description;
+	      QString a_ID       = analyte.analyteID;
+	      QString a_GUID     = analyte.analyteGUID;
+
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+		       << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+
+	      analyte.extinction.clear();
+	      analyte.load( true, a_GUID, &db );
+
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Analyte]Extinction Profile wvls: " 
+		       << analyte.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString a_desc = "ANALYTE: " + a_name;
+	      if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+	    }
+	  //End of reading Analytes
+
+	  //Reading Buffers
+	  if ( buff_req ) //only if buffer spectrum required
+	    {
+	      US_Buffer buffer = solution->buffer;
+	      QString b_name   = buffer.description;
+	      QString b_ID     = buffer.bufferID;
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+	      
+	      buffer.extinction.clear();
+	      buffer.readFromDB( &db, b_ID );
+	      
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Buffer]Extinction Profile wvls: " 
+		       << buffer.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString b_desc = "BUFFER: " + b_name;
+	      if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+	    }
+	  //End of reading Buffers
+	}
+    }
+  return all_profiles_exist;
+}
+
+bool US_ExperGuiUpload::validExtinctionProfile( QString desc, QList< double > all_wvls,
+						QList< double > ext_prof, QStringList& msg_to_user )
+{
+  bool eprofile_ok;
+  QString msg;
+    
+  //ranges from protocol
+  int    nwavl_p    = all_wvls.count();
+  double lo_wavl_p  = all_wvls[ 0 ];
+  double hi_wavl_p  = all_wvls[ nwavl_p - 1 ];
+
+  //ranges in extinction profile
+  int    nwavl_e    = ext_prof.count();
+  if ( nwavl_e > 0 )
+    {
+      double lo_wavl_e  = ext_prof[ 0 ];
+      double hi_wavl_e  = ext_prof[ nwavl_e - 1 ];
+      
+      eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
+      eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
+
+      msg = "is out of range;";
+    }
+  else //empty ext. profile
+    {
+      eprofile_ok = false;
+      msg = "does not exist;";
+    }
+  
+  if ( !eprofile_ok )
+    msg_to_user << QString(tr("%1: Extinction profile %2"))
+      .arg( desc )
+      .arg( msg );
+  
+  return eprofile_ok;
+}
+
+
 
 bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )
 {

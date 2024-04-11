@@ -901,6 +901,9 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
   
       bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
+      bool    extinctionProfilesExist( QStringList& );
+      bool    validExtinctionProfile( QString, QList< double >,
+				      QList< double >, QStringList& );
 
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
