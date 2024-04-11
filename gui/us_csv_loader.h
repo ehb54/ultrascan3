@@ -6,19 +6,16 @@
 #include <QTableWidget>
 #include <QSortFilterProxyModel>
 #include <QTableWidgetItem>
+#include <QTableView>
+#include <QStandardItem>
+#include <QStandardItemModel>
 
-class CSVTableWidgetItem : public QTableWidgetItem {
 
-   public:
-      CSVTableWidgetItem ( QString& value ) : QTableWidgetItem( value ) {};
-      bool operator < ( const QTableWidgetItem & ) const override;
-};
-
-class CSVTableWidget : public QTableWidget {
+class CSVTableView : public QTableView {
 
    Q_OBJECT
    public:
-      CSVTableWidget(QWidget *parent=nullptr);
+      CSVTableView(QWidget *parent=nullptr);
       void add_header();
 
    signals:
@@ -35,11 +32,7 @@ class CSVTableWidget : public QTableWidget {
 class CSVSortFilterProxyModel: public QSortFilterProxyModel {
    public:
       using QSortFilterProxyModel::QSortFilterProxyModel;
-      bool lessThan(const QModelIndex &left,
-                    const QModelIndex &right) const override {
-         if(left.row() == 0 || right.row() == 0) return false;
-         return QSortFilterProxyModel::lessThan(left, right);
-      }
+      bool lessThan(const QModelIndex &, const QModelIndex &) const override;
 };
 
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
@@ -49,13 +42,16 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       US_CSV_Loader(QWidget* parent=0);
       bool set_filepath(QString&, bool);
       void set_msg(QString);
-      QVector<QStringList> get_data();
+      QVector<QVector<double>> get_data();
+      QStringList get_header();
       QFileInfo get_file_info();
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
       QFileInfo infile;
-      QVector<QStringList> column_list;
+      QVector<QVector<double>> data;
+      QStringList header;
+      QStringList hlabel;
       DELIMITER  delimiter;
       QPushButton* pb_open;
       QPushButton* pb_ok;
@@ -75,13 +71,15 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       QString str_delimiter;
       QString curr_dir;
       QStringList file_lines;
-      CSVTableWidget* tw_data;
+      CSVTableView* tv_data;
+      QStandardItemModel* model;
+      CSVSortFilterProxyModel* proxy;
 
       bool check_table_size();
       bool check_table_data();
       bool parse_file(QString&);
       QStringList gen_alpha_list(int);
-      QStringList make_labels(int);
+      void relabel();
 
    private slots:
       void open();
