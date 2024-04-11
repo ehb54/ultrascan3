@@ -75,6 +75,8 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       QStringList gen_alpha_list(int);
       void relabel();
       bool check_table();
+      void get_sorted(QVector<QVector<double>>&, QStringList&);
+      bool write_csv(const QString&, const QString&, QString&);
 
    private slots:
       void open();

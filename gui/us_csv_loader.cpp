@@ -221,8 +221,9 @@ void US_CSV_Loader::setMessage(const QString& msg) {
    le_msg->setText(msg);
 }
 
-bool US_CSV_Loader::data(QVector<QVector<double>>& cols_rows, QStringList& header) {
+bool US_CSV_Loader::data(QVector<QVector<double>>& cols_rows, QStringList& headers) {
    if (! check_table()) return false;
+   get_sorted(cols_rows, headers);
    return true;
 }
 
@@ -257,7 +258,6 @@ void US_CSV_Loader::ok() {
 void US_CSV_Loader::save_csv_clicked() {
    if (file_lines.size() == 0) return;
    if(! check_table()) return;
-   // if(! check_table_data()) return;
 
    QString delimiter_str;
    QString user_delimiter = le_other->text().trimmed();
@@ -301,29 +301,55 @@ void US_CSV_Loader::save_csv_clicked() {
       else if (rb_other->isChecked()) delimiter_str = user_delimiter;
    }
 
-   int nrows = tv_data->model()->rowCount();
-   int ncols = tv_data->model()->columnCount();
-   QString filePath = QFileDialog::getSaveFileName(this, "Save CSV File", US_Settings::workBaseDir(), "(CSV)(*.csv)");
-   if (filePath.size() == 0) return;
-   if (! filePath.endsWith(".csv", Qt::CaseInsensitive)) {
-      filePath += ".csv";
+   QString file_path = QFileDialog::getSaveFileName(this, "Save CSV File",
+                                                    US_Settings::workBaseDir(), "(CSV)(*.csv)");
+   if (file_path.isEmpty()) return;
+   QString err_msg;
+   bool ok = write_csv(file_path, delimiter_str, err_msg);
+   if (ok) QMessageBox::warning(this, "", tr("Data Saved!\n\n").arg(file_path));
+   else QMessageBox::warning(this, "Error!", err_msg);
+}
+
+bool US_CSV_Loader::write_csv(const QString& fpath,
+                              const QString& delimiter_str, QString& err_msg) {
+
+   QString file_path = fpath;
+   err_msg.clear();
+   if (file_path.size() == 0) {
+      err_msg.append("Filename is empty!");
+      return false;
    }
-   QFile file(filePath);
+   if (! file_path.endsWith(".csv", Qt::CaseInsensitive)) {
+      file_path += ".csv";
+   }
+   QStringList headers;
+   QVector<QVector<double>> data;
+   get_sorted(data, headers);
+   int nrows = data.at(0).size();
+   int ncols = data.size();
+   QFile file(file_path);
    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
       QTextStream ts(&file);
-      for (int ii = 0 ; ii < nrows; ii++) {
+      QString item;
+      for (int ii = -1 ; ii < nrows; ii++) {
          for (int jj = 0; jj < ncols; jj++) {
-            ts << model->item(ii, jj)->data(Qt::DisplayRole).toString().trimmed();
+            if (ii == -1) {
+               item = headers.at(jj);
+            } else {
+               item = QString::number(data.at(jj).at(ii));
+            }
+            ts << item.trimmed();
             if (jj < ncols - 1) ts << delimiter_str;
             else ts << "\n";
          }
       }
       file.close();
-      QMessageBox::warning(this, "", tr("Data Saved!\n\n").arg(filePath));
+      return true;
    } else {
-      QMessageBox::warning(this, "Error!", "Error: Couldn't open the file for writing.");
+      err_msg.append("Error: Couldn't open the file to write!\n");
+      err_msg.append(file_path);
+      return false;
    }
-
 }
 
 void US_CSV_Loader::cancel() {
@@ -497,6 +523,26 @@ bool US_CSV_Loader::check_table() {
    if (ready) pb_ok->setEnabled(true);
    else pb_ok->setEnabled(false);
    return ready;
+}
+
+void US_CSV_Loader::get_sorted(QVector<QVector<double>>& data, QStringList& headers) {
+   headers.clear();
+   data.clear();
+   int nrows = tv_data->model()->rowCount();
+   int ncols = tv_data->model()->columnCount();
+   for (int jj = 0; jj < ncols; jj++) {
+      QVector<double> rows;
+      for (int ii = 0; ii < nrows; ii++) {
+         QModelIndex index = tv_data->model()->index(ii, jj);
+         QVariant item = tv_data->model()->itemData(index).value(Qt::DisplayRole);
+         if (ii == 0) {
+            headers << item.toString();
+         } else {
+            rows << item.toDouble();
+         }
+      }
+      data << rows;
+   }
 }
 
 bool US_CSV_Loader::dataFileInfo(QFileInfo& finfo) {
