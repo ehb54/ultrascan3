@@ -48,31 +48,33 @@ void CSVTableView::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void CSVTableView::delete_rows() {
-   // QVector<int> rows;
-   // foreach (QTableWidgetItem *item, this->selectedItems()) {
-   //    int r = item->row();
-   //    if (! rows.contains(r)) rows << r;
-   // }
-   // std::sort(rows.begin(), rows.end(), [&](auto a, auto b) {return a > b;});
+   QVector<int> rows;
+   QList<QModelIndex> selindex = this->selectedIndexes();
+   foreach (QModelIndex midx, selindex) {
+      int r = midx.row();
+      if (! rows.contains(r)) rows << r;
+   }
+   std::sort(rows.begin(), rows.end(), [&](auto a, auto b) {return a > b;});
 
-   // foreach (int ii, rows) {
-   //    this->removeRow(ii);
-   // }
-   // emit new_content();
+   foreach (int ii, rows) {
+      this->model()->removeRow(ii);
+   }
+   emit new_content();
 }
 
 void CSVTableView::delete_columns() {
-   // QVector<int> cols;
-   // foreach (QTableWidgetItem *item, this->selectedItems()) {
-   //    int c = item->column();
-   //    if (! cols.contains(c)) cols << c;
-   // }
-   // std::sort(cols.begin(), cols.end(), [&](auto a, auto b) {return a > b;});
+   QVector<int> cols;
+   QList<QModelIndex> selindex = this->selectedIndexes();
+   foreach (QModelIndex midx, selindex) {
+      int c = midx.column();
+      if (! cols.contains(c)) cols << c;
+   }
+   std::sort(cols.begin(), cols.end(), [&](auto a, auto b) {return a > b;});
 
-   // foreach (int ii, cols) {
-   //    this->removeColumn(ii);
-   // }
-   // emit new_content();
+   foreach (int ii, cols) {
+      this->model()->removeColumn(ii);
+   }
+   emit new_content();
 }
 
 
