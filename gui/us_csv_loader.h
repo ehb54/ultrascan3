@@ -41,17 +41,13 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
    public:
       US_CSV_Loader(QWidget* parent=0);
       bool set_filepath(QString&, bool);
-      void set_msg(QString);
-      QVector<QVector<double>> get_data();
-      QStringList get_header();
-      QFileInfo get_file_info();
+      void setMessage(const QString&);
+      bool data(QVector<QVector<double>>&, QStringList&);
+      bool dataFileInfo(QFileInfo&);
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
       QFileInfo infile;
-      QVector<QVector<double>> data;
-      QStringList header;
-      QStringList hlabel;
       DELIMITER  delimiter;
       QPushButton* pb_open;
       QPushButton* pb_ok;
@@ -84,7 +80,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       void open();
       void ok();
       void cancel();
-      void save_csv();
+      void save_csv_clicked();
       void fill_table(int);
       void new_delimiter(const QString &);
       void add_header();
