@@ -1034,6 +1034,7 @@ US_RunProtocol::RunProtoRanges::Ranges::Ranges()
    wvlens .clear();
    lo_rad               = 5.75;
    hi_rad               = 7.25;
+   abde_buffer_spectrum = false;
 }
 
 // RunProtoRanges::Ranges subclass Equality operator

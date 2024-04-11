@@ -28,6 +28,7 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       //! \brief A signal that returns the model loaded or created
       //! \param model - The parameters of the model
       void valueChanged( US_Model model );
+      void disable_components_gui( void );
 
    private:
       int       investigator;
@@ -52,7 +53,8 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       };
 
       QList< ModelDesc > model_descriptions;
-
+      QString modelID_global;
+      
       QLineEdit*     le_mlfilt;              
       QLineEdit*     le_nlines;              
       QLineEdit*     le_description;              
@@ -64,6 +66,7 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
 
       QPushButton*   pb_save;
       QPushButton*   pb_delete;
+      QPushButton*   pb_accept;
 
       QComboBox*     cb_optics;
  
@@ -88,6 +91,8 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       void check_db          ( void );
       void new_model         ( void );
       void delete_model      ( void );
+      bool is_modelIDs_from_autoflow  ( QString );
+      bool parse_models_desc_json( QStringList, QString );
       void associations      ( void );
       void update_assoc      ( void );
       void source_changed    ( bool );

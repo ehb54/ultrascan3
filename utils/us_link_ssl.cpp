@@ -54,8 +54,8 @@ bool Link::connectToServer( const QString& host, const int port )
   if (server.waitForEncrypted(15000))
     {
       //server.write("***qsslsocket_client_example sent this nothing command***\n");
-      status_ok = true;
-      server.waitForReadyRead(30000);
+      //status_ok = true;
+      status_ok = server.waitForReadyRead(30000);
     }
   else
     {

@@ -37,8 +37,9 @@ US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
 
    connection_status   = false;
    automode            = false;
+   abde_mode_aprofile  = false;
 
-      // Create tab and panel widgets
+   // Create tab and panel widgets
    tabWidget           = us_tabwidget();
 
    tabWidget->setTabPosition( QTabWidget::North );
@@ -353,11 +354,11 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
 
 	      }
-	    
-            chx             = currProf.lc_ratios.count() - 1;
-            if ( chx < nchn )
-            {
-               currProf.lc_ratios << currProf.lc_ratios[ chx ];
+		
+	    chx             = currProf.lc_ratios.count() - 1;
+	    if ( chx < nchn )
+	      {
+		currProf.lc_ratios << currProf.lc_ratios[ chx ];
                currProf.lc_tolers << currProf.lc_tolers[ chx ];
                currProf.l_volumes << currProf.l_volumes[ chx ];
                currProf.lv_tolers << currProf.lv_tolers[ chx ];
@@ -372,7 +373,7 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 	       currProf.scan_excl_end    << currProf.scan_excl_end[ chx ];
 	       
 	       currProf.replicates << currProf.replicates[ chx ];
-	    }
+	      }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
 	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ]
@@ -441,6 +442,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		  currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
 
 		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
+
 	      }
 	    	    
 	    
@@ -659,6 +661,7 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		 //ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of reportIDs for a given channel
 		 //next will be cycle over this QList... 
 
+		 QString wvl_read_abde;
 		 for (int rid = 0; rid < reportIDs.size(); ++rid )
 		   {
 		     int reportID = reportIDs[ rid ];
@@ -674,12 +677,34 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		     // OR  wvl is returned from get_report_by_ID( reportFromDB, reportID );
 
 		     QString wvl_read = QString::number( reportFromDB->wavelength );
+
+		     if ( reportIDs.size() == 1 )
+		       wvl_read_abde = wvl_read;
 		     
 		     //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
 		     currProf.ch_reports[ channel_alt_desc ][ wvl_read ] = *reportFromDB;
 
 		     qDebug() << "Filling currProf.ch_reports from DB: channel_alt_desc, wvl_read -- " << channel_alt_desc << ", " << wvl_read;
 		   }
+
+		 //In case of ABDE: the above loop would contain only 1 report (in DB: 1 report per channel [1st wvl])
+		 //For internal consistency, we need to populate (COPY) reports for the rest of wvls in the channel (will not be used)
+		 QList< double > ch_wavelengths = currProf.ch_wvls[ channel_alt_desc ];
+		 if ( abde_mode_aprofile
+		      && reportIDs.size() == 1
+		      && ch_wavelengths.size() > 1
+		      && !wvl_read_abde.isEmpty() )
+		   {
+		     for ( int i=0; i<ch_wavelengths.size(); ++i )
+		       {
+			 QString c_wvl = QString::number ( ch_wavelengths[ i ] );
+			 if ( c_wvl == wvl_read_abde )
+			   continue;
+			 
+			 currProf.ch_reports[ channel_alt_desc ][ c_wvl ] = currProf.ch_reports[ channel_alt_desc ][ wvl_read_abde ];
+		       }
+		   }
+		 //END of replicating ch_reports for ABDE
 	       }
 	   }
       }
@@ -971,21 +996,40 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       qDebug() << "Adding plain reportItem to channel -- " ;
       //Add plain ReportItem
       US_ReportGMP::ReportItem initItem;
+
+      if ( !abde_mode_aprofile )
+	{
+	  initItem.type             = QString("s");
+	  initItem.method           = QString("2DSA-IT");
+	  initItem.range_low        = 3.2;
+	  initItem.range_high       = 3.7;
+	  initItem.integration_val  = 0.57;
+	  initItem.tolerance        = 10; 
+	  initItem.total_percent    = 0.58;
+	  initItem.combined_plot    = 1;
+	  initItem.ind_combined_plot  = 1;
+	  
+	  initItem.integration_val_sim   = -1;
+	  initItem.total_percent_sim     = -1;
+	  initItem.passed                = QString("N/A");
+	}
+      else
+	{
+	  initItem.type             = QString("Radius");
+	  initItem.method           = QString("raw");
+	  initItem.range_low        = 5.8;
+	  initItem.range_high       = 7.0;
+	  initItem.integration_val  = 0.57;
+	  initItem.tolerance        = 10; 
+	  initItem.total_percent    = 0.58;
+	  initItem.combined_plot    = 1;
+	  initItem.ind_combined_plot  = 1;
+	  
+	  initItem.integration_val_sim   = -1;
+	  initItem.total_percent_sim     = -1;
+	  initItem.passed                = QString("N/A");
+	}
       
-      initItem.type             = QString("s");
-      initItem.method           = QString("2DSA-IT");
-      initItem.range_low        = 3.2;
-      initItem.range_high       = 3.7;
-      initItem.integration_val  = 0.57;
-      initItem.tolerance        = 10; 
-      initItem.total_percent    = 0.58;
-      initItem.combined_plot    = 1;
-      initItem.ind_combined_plot  = 1;
-
-      initItem.integration_val_sim   = -1;
-      initItem.total_percent_sim     = -1;
-      initItem.passed                = QString("N/A");
-
       if ( !reportFromDB->channel_name.contains("Interf.") ) 
 	reportFromDB->reportItems.push_back( initItem );
     }
@@ -1199,6 +1243,11 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_lvtols.clear();
    le_daends.clear();
 
+   //ABDE
+   le_dens0s.clear();
+   le_vbars .clear();
+   le_MWs   .clear();
+
    ck_runs       .clear();
    ck_report_runs.clear();
    pb_reports    .clear();
@@ -1245,21 +1294,28 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
                                      "Optics: Solution" ) );
    lb_chann->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
-   QLabel* lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
-   QLabel* lb_lctol  = us_label( tr( "+/- %\nToler." ) );
+   lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
+   lb_lctol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_ldvol  = us_label( tr( "Loading\nVol. (" )
                                  + QString( QChar( 181 ) ) + "l)" );
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
-   QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
+   lb_daend  = us_label( tr( "Data End\n(cm)" ) );
    QLabel* lb_channelana  = us_label( tr( "Run" ) );
    QLabel* lb_runreport  = us_label( tr( "Run\nReport" ) );
    
    QLabel* lb_report  = us_label( tr( "Report" ) );
 
    QLabel* lb_repl_group  = us_label( tr( "Replicate\nGroup" ) );
+
+   //Add new widgets for ABDE case:
+   lbl_dens_0 = us_label( tr( "Loading \nDensity (g/ml):" ) );
+   lbl_vbar = us_label( tr( "Gradient Mat. \n vbar (ml/g):" ) );
+   lbl_MW = us_label( tr( "Gradient Mat. \n MW (g/mol):" ) );
+   //END Add new widgets for ABDE case:
    
-   QLabel* lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
-           pb_applya = us_pushbutton( tr( "Apply to All" ) );
+   
+   lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
+   pb_applya = us_pushbutton( tr( "Apply to All" ) );
    lb_chann ->setObjectName( "Chann Label" );
    lb_lcrat ->setObjectName( "LcRat Label" );
    lb_lctol ->setObjectName( "LcTol Label" );
@@ -1276,6 +1332,10 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    lb_lvtol->setMaximumHeight( lbhgt );
    lb_daend->setMaximumHeight( lbhgt );
 
+   lbl_dens_0->setMaximumHeight( lbhgt );
+   lbl_vbar  ->setMaximumHeight( lbhgt );
+   lbl_MW    ->setMaximumHeight( lbhgt );
+
    // genL->addWidget( lb_chann, row,    0, 2, 5 );
    // genL->addWidget( lb_lcrat, row,    5, 2, 1 );
    // genL->addWidget( lb_lctol, row,    6, 2, 1 );
@@ -1287,21 +1347,48 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    // genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
 
    genL->addWidget( lb_chann, row,    0, 2, 3 );
-   genL->addWidget( lb_lcrat, row,    3, 2, 1 );
-   genL->addWidget( lb_lctol, row,    4, 2, 1 );
-   genL->addWidget( lb_ldvol, row,    5, 2, 1 );
-   genL->addWidget( lb_lvtol, row,    6, 2, 1 );
-   genL->addWidget( lb_daend, row,    7, 2, 1 );
+   if ( !mainw->abde_mode_aprofile )
+     {
+       genL->addWidget( lb_lcrat, row,    3, 2, 1 );
+       genL->addWidget( lb_lctol, row,    4, 2, 1 );
+       genL->addWidget( lb_ldvol, row,    5, 2, 1 );
+       genL->addWidget( lb_lvtol, row,    6, 2, 1 );
+       genL->addWidget( lb_daend, row,    7, 2, 1 );
+
+       lbl_dens_0 -> setVisible( false );
+       lbl_vbar   -> setVisible( false );
+       lbl_MW     -> setVisible( false );
+     }
+   else
+     {
+       genL->addWidget( lbl_dens_0, row,    3, 2, 1 );
+       genL->addWidget( lbl_vbar,   row,    4, 2, 1 );
+       genL->addWidget( lbl_MW,     row,    5, 2, 1 );
+       genL->addWidget( lb_ldvol,   row,    6, 2, 1 );
+       genL->addWidget( lb_lvtol,   row,    7, 2, 1 );
+
+       lb_lcrat -> setVisible( false );
+       lb_lctol -> setVisible( false );
+       lb_daend -> setVisible( false );
+     }
+   
    genL->addWidget( lb_channelana, row,  8, 2, 1 );
    genL->addWidget( lb_runreport, row,  9, 2, 1 );
    genL->addWidget( lb_report, row,  10, 2, 1 );
-   
    genL->addWidget( lb_repl_group, row,  11, 2, 1 );
-   
-   genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
+
+    if ( !mainw->abde_mode_aprofile )
+      {
+	genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
+      }
+    else
+      {
+	lb_mwvprefs -> setVisible( false );
+	row++; row++;
+      }
+
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
-
 
    row_global = row;
    QCheckBox*     ck_analysisrun;
@@ -1356,20 +1443,42 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       le_lvtols << le_lvtol;
       le_daends << le_daend;
 
-      // genL->addWidget( le_chann,  row,    0, 1, 5 );
-      // genL->addWidget( le_lcrat,  row,    5, 1, 1 );
-      // genL->addWidget( le_lctol,  row,    6, 1, 1 );
-      // genL->addWidget( le_ldvol,  row,    7, 1, 1 );
-      // genL->addWidget( le_lvtol,  row,    8, 1, 1 );
-      // genL->addWidget( le_daend,  row,    9, 1, 1 );
+      //Add new widgets for ABDE case:
+      QLineEdit* le_dens_0 = us_lineedit( "1.42",   0, false );
+      QLineEdit* le_vbar   = us_lineedit( "0.2661", 0, false );
+      QLineEdit* le_MW     = us_lineedit( "168.36", 0, false );
 
+      le_dens0s << le_dens_0;
+      le_vbars  << le_vbar;
+      le_MWs    << le_MW;
+      //END Add new widgets for ABDE case:
+      
       genL->addWidget( le_chann,  row,    0, 1, 3 );
-      genL->addWidget( le_lcrat,  row,    3, 1, 1 );
-      genL->addWidget( le_lctol,  row,    4, 1, 1 );
-      genL->addWidget( le_ldvol,  row,    5, 1, 1 );
-      genL->addWidget( le_lvtol,  row,    6, 1, 1 );
-      genL->addWidget( le_daend,  row,    7, 1, 1 );
+      if ( !mainw->abde_mode_aprofile )
+	{
+	  genL->addWidget( le_lcrat,  row,    3, 1, 1 );
+	  genL->addWidget( le_lctol,  row,    4, 1, 1 );
+	  genL->addWidget( le_ldvol,  row,    5, 1, 1 );
+	  genL->addWidget( le_lvtol,  row,    6, 1, 1 );
+	  genL->addWidget( le_daend,  row,    7, 1, 1 );
 
+	  le_dens_0 -> setVisible( false );
+	  le_vbar   -> setVisible( false );
+	  le_MW     -> setVisible( false );
+	}
+      else
+	{
+	  genL->addWidget( le_dens_0, row,    3, 1, 1 );
+	  genL->addWidget( le_vbar,   row,    4, 1, 1 );
+	  genL->addWidget( le_MW,     row,    5, 1, 1 );
+	  genL->addWidget( le_ldvol,  row,    6, 1, 1 );
+	  genL->addWidget( le_lvtol,  row,    7, 1, 1 );
+
+	  le_lcrat -> setVisible( false );
+	  le_lctol -> setVisible( false );
+	  le_daend -> setVisible( false );
+	}
+      
       QFont font   = le_chann->property("font").value<QFont>();
       QFontMetrics fm(font);
       int pixelsWide = fm.width( le_chann->text() );
@@ -1410,7 +1519,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       pb_reportprefs ->setObjectName( strow + ": Report --chann_name--" + schan );
       genL->addWidget( pb_reportprefs,  row,  10, 1, 1, Qt::AlignHCenter );
       connect( pb_reportprefs, SIGNAL( clicked     ( ) ),
-               this,        SLOT  ( setReport( ) ) );
+	       this,        SLOT  ( setReport( ) ) );
+
 
       pb_reports << pb_reportprefs;
       //End of Report
@@ -1432,11 +1542,21 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
-      genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
+
       connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
                this,        SLOT  ( mwvChecked( bool ) ) );
 
       ck_mwv << ck_mwvprefs;
+      
+      if ( !mainw->abde_mode_aprofile )
+	{
+	  genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
+	}
+      else
+	{
+	  ck_mwvprefs -> setVisible( false );
+	  ck_mwvprefs -> setChecked( false );
+	}
       //END of MWL prefs
       
       if ( ii == 0 )
@@ -1472,8 +1592,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       scrollArea_r     ->setWidget( wvl_box );
       
       gr_mwvbox << scrollArea_r;
-      
       right->addWidget( scrollArea_r  );
+      
       qDebug() << "Right.count(), gr_mwvbox.size() AFTER insert -- " << right->count() << gr_mwvbox.size(); ;
       // //END MWV dialog
       
@@ -2045,8 +2165,7 @@ void US_AnaprofPanGen::setReport( void )
        //qDebug() << "In setReport: wvl -- " << wvl;
        channel_report_map[ wvl ] = &( internal_reports[ chan_desc ][ wvl] );
      }
-   
-      
+         
    reportGui = new US_ReportGui(  channel_report_map );
    reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    reportGui->setWindowModality(Qt::ApplicationModal);
@@ -2056,6 +2175,10 @@ void US_AnaprofPanGen::setReport( void )
    //ALEXEY_NEW_REPORT: this signals may not be needed...
    // connect( reportGui, SIGNAL( apply_to_all_reports( US_ReportGMP* ) ), this, SLOT( apply_to_other_reports( US_ReportGMP* )  ) );
    // /////////////////////////////////////////////////////
+
+   //abde
+   if ( mainw->abde_mode_aprofile )
+     reportGui->abde_mode_passed();
    
    reportGui->show();
 
@@ -2451,6 +2574,11 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
    QString lvtol  = le_lvtols[ 0 ]->text();
    QString daend  = le_daends[ 0 ]->text();
 
+   //abde
+   QString lddens_c = le_dens0s[ 0 ]->text();
+   QString vbar_c   = le_vbars[ 0 ]->text();
+   QString mw_c     = le_MWs[ 0 ]->text();
+
    for ( int jj = 1; jj < sl_chnsel.count(); jj++ )
    {  // Replace values in all other rows where row 0 changed
       if ( le_lcrats[ jj ]->text() != lcrat )
@@ -2467,6 +2595,16 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
 
       if ( le_daends[ jj ]->text() != daend )
          le_daends[ jj ]->setText( daend );
+
+      //abde
+      if ( le_dens0s[ jj ]->text() != lddens_c )
+	le_dens0s[ jj ]->setText( lddens_c );
+
+      if ( le_vbars[ jj ]->text() != vbar_c )
+	le_vbars[ jj ]->setText( vbar_c );
+
+      if ( le_MWs[ jj ]->text() != mw_c )
+	le_MWs[ jj ]->setText( mw_c );
    }
 }
 

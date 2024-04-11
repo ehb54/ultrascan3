@@ -26,6 +26,10 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       US_ReportGMP*   report;
       US_ReportGMP    report_copy_original;
 
+      //abde
+      bool abde_mode;
+      void abde_mode_passed( void );
+
    signals:
       void  cancel_changes       ( QMap <QString, US_ReportGMP> & );
       void  apply_to_all_reports ( US_ReportGMP* );
@@ -42,6 +46,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QGridLayout* addRem_buttons;
       QHBoxLayout* lower_buttons;
       QGridLayout* reportmask;
+
+      QLabel* bn_report_t;
 
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_tot_conc_tol;
@@ -89,11 +95,14 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QPushButton*  pb_repmask;
 
       QMap< QString, bool > isErrorField;
+      QStringList wvl_passed;
+      int init_index;
       
       void build_report_layout( void );
       void gui_to_report( void );
       int  check_syntax( void );
       void SetComboBoxItemEnabled(QComboBox*, int, bool);
+      
       
    private slots:
      void verify_text ( const QString& );

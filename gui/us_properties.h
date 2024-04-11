@@ -63,6 +63,8 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       QPalette     gray;
       QPalette     normal;
 
+      QPushButton* pb_accept;
+      
       QListWidget* lw_components;
       QPushButton* pb_load_c0;
       QComboBox*   cb_shape;
@@ -104,7 +106,7 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void checkbox      ( void );
       bool keep_standard ( void );
 
-	private slots:
+    private slots:
       void newAnalyte    ( void );
       void update        ( int );
       void update_analyte( US_Analyte );
@@ -121,6 +123,7 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void source_changed( bool );
       void check_molar   ( bool );
       void check_signal  ( bool );
+      void disable_gui   ( void );
            
       void del_component ( void );
       void edit_component( void );

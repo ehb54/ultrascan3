@@ -251,6 +251,8 @@ class US_UTIL_EXTERN US_RunProtocol
                   double           lo_rad;   //!< Low radius for channel
                   double           hi_rad;   //!< High radius for channel
 
+		  bool             abde_buffer_spectrum;
+
                   Ranges();
 
                   bool operator== ( const Ranges& ) const;
