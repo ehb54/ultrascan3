@@ -2453,7 +2453,11 @@ void US_ExperGuiSolutions::savePanel()
 	   else
 	     {
 	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
-	       ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       if ( ii < rpSolut->chsols.size() )
+		 ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       else
+		 ch_comment      = QString("");                                           //are comments saved this way???
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): after reding comment-- ";
 	       if ( solution_comment_init[ ii ] )
 		 commentStrings( solution, ch_comment, cs, ii );
 	       qDebug() << "sol save 2aBd_1: went through 1st time NON-zero";
@@ -2522,7 +2526,6 @@ DbgLv(1) << "EGSo: svP:  sids " << sids;
      cb_solution->disconnect();
       
    }
- 
 }
 
 // Get a specific panel value
