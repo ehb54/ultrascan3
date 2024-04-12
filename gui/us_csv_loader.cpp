@@ -94,13 +94,17 @@ QVector<double> US_CSV_Loader::CSV_Data::columnAt(int id) {
    return col;
 }
 
-bool US_CSV_Loader::CSV_Data::setData(QStringList& header, QVector<QVector<double>>& columns) {
+bool US_CSV_Loader::CSV_Data::setData(const QString &file_path,
+                          const QStringList& header,
+                          const QVector<QVector<double>>& columns) {
    m_columns.clear();
    m_header.clear();
+   m_path.clear();
    int ncols = header.size();
    if (columns.size() != ncols) {
       return false;
    }
+   m_header << header;
    int nrows = -1;
    for (int ii = 0; ii < ncols; ii++) {
       int nr = columns.at(ii).size();
@@ -114,7 +118,18 @@ bool US_CSV_Loader::CSV_Data::setData(QStringList& header, QVector<QVector<doubl
       }
       m_columns << columns.at(ii);
    }
+   m_path = file_path;
    return true;
+}
+
+void US_CSV_Loader::CSV_Data::clear() {
+   m_header.clear();
+   m_columns.clear();
+   m_path.clear();
+}
+
+QString US_CSV_Loader::CSV_Data::filePath() {
+   return m_path;
 }
 
 US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
@@ -332,10 +347,15 @@ void US_CSV_Loader::setMessage(const QString& msg) {
    le_msg->setText(msg);
 }
 
-bool US_CSV_Loader::data(QVector<QVector<double>>& cols_rows, QStringList& headers) {
-   if (! check_table()) return false;
-   get_sorted(cols_rows, headers);
-   return true;
+US_CSV_Loader::CSV_Data US_CSV_Loader::data() {
+   csv_data.clear();
+   if ( check_table()) {
+      QVector<QVector<double>> columns;
+      QStringList header;
+      get_sorted(columns, header);
+      csv_data.setData(infile.absoluteFilePath(), header, columns);
+   }
+   return csv_data;
 }
 
 void US_CSV_Loader::relabel() {
@@ -662,12 +682,6 @@ void US_CSV_Loader::get_sorted(QVector<QVector<double>>& data, QStringList& head
       }
       data << rows;
    }
-}
-
-bool US_CSV_Loader::dataFileInfo(QFileInfo& finfo) {
-   if (!check_table()) return false;
-   finfo = infile;
-   return true;
 }
 
 QStringList US_CSV_Loader::gen_alpha_list (int num) {

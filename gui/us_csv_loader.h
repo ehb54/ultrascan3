@@ -37,25 +37,29 @@ class CSVSortFilterProxyModel: public QSortFilterProxyModel {
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
 
    Q_OBJECT
-   public:
-      US_CSV_Loader(QWidget* parent=0);
-      bool set_filepath(QString&, bool);
-      void setMessage(const QString&);
-      void setEditable(bool);
-      bool data(QVector<QVector<double>>&, QStringList&);
-      bool dataFileInfo(QFileInfo&);
 
+   public:
       class CSV_Data {
          public:
             int columnCount();
             int rowCount();
             QStringList header();
             QVector<double> columnAt(int);
-            bool setData(QStringList&, QVector<QVector<double>>&);
+            bool setData(const QString&, const QStringList&, const QVector<QVector<double>>&);
+            QString filePath();
+            void clear();
          private:
             QStringList m_header;
             QVector<QVector<double>> m_columns;
+            QString m_path;
       };
+
+
+      US_CSV_Loader(QWidget* parent=0);
+      bool set_filepath(QString&, bool);
+      void setMessage(const QString&);
+      void setEditable(bool);
+      CSV_Data data();
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
