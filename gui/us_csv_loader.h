@@ -56,6 +56,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       QPushButton* pb_add_header;
       QPushButton* pb_save_csv;
       QPushButton* pb_reset;
+      QPushButton* pb_show_red;
       QRadioButton* rb_tab;
       QRadioButton* rb_comma;
       QRadioButton* rb_semicolon;
@@ -90,6 +91,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       void item_changed(QStandardItem *);
       void relabel();
       void row_column_deleted();
+      void show_red();
 };
 
 #endif // US_CSV_LOADER_H

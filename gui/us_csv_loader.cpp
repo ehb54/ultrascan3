@@ -119,6 +119,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    pb_ok = us_pushbutton("Ok", false);
    pb_save_csv = us_pushbutton("Save CSV");
    pb_reset = us_pushbutton("Reset");
+   pb_show_red = us_pushbutton("Show Red Cells");
 
    editable = true;
    tv_data = new CSVTableView();
@@ -158,6 +159,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    main_lyt->addWidget(pb_reset,          3, 3, 1, 2);
    main_lyt->addWidget(pb_add_header,     3, 5, 1, 2);
 
+   main_lyt->addWidget(pb_show_red,       4, 1, 1, 2);
    main_lyt->addWidget(pb_cancel,         4, 3, 1, 2);
    main_lyt->addWidget(pb_ok,             4, 5, 1, 2);
 
@@ -178,6 +180,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    connect(pb_reset, &QPushButton::clicked, this, &US_CSV_Loader::reset);
    connect(tv_data, &CSVTableView::row_column_deleted, this, &US_CSV_Loader::row_column_deleted);
    connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
+   connect(pb_show_red, &QPushButton::clicked, this, &US_CSV_Loader::show_red);
 #if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
    connect(bg_delimiter, QOverload<int>::of(&QButtonGroup::idClicked), this, &US_CSV_Loader::fill_table);
 #else
@@ -193,6 +196,28 @@ void US_CSV_Loader::setEditable(bool state) {
 void US_CSV_Loader::reset() {
    delimiter = NONE;
    fill_table(bg_delimiter->checkedId());
+}
+
+void US_CSV_Loader::show_red() {
+   if (file_lines.isEmpty()) return;
+   int nrows = model->rowCount();
+   int ncols = model->columnCount();
+   if (nrows == 0 || ncols == 0) return;
+   int II = -1;
+   int JJ = -1;
+   for (int ii = 0; ii < nrows; ii++) {
+      if (II > -1 && JJ > -1) break;
+      for (int jj = 0; jj < ncols; jj++) {
+         if (! model->item(ii, jj)->data(Qt::UserRole).toBool()) {
+            II = ii;
+            JJ = jj;
+            break;
+         }
+      }
+   }
+   if (II == -1 || JJ == -1) return;
+   QModelIndex index = tv_data->model()->index(II, JJ);
+   tv_data->scrollTo(index);
 }
 
 void US_CSV_Loader::row_column_deleted() {
