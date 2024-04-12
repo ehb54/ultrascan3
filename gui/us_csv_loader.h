@@ -45,11 +45,23 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       bool data(QVector<QVector<double>>&, QStringList&);
       bool dataFileInfo(QFileInfo&);
 
+      class CSV_Data {
+         public:
+            int columnCount();
+            int rowCount();
+            QStringList header();
+            QVector<double> columnAt(int);
+            bool setData(QStringList&, QVector<QVector<double>>&);
+         private:
+            QStringList m_header;
+            QVector<QVector<double>> m_columns;
+      };
+
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
       bool editable;
       QFileInfo infile;
-      DELIMITER  delimiter;
+      DELIMITER delimiter;
       QPushButton* pb_open;
       QPushButton* pb_ok;
       QPushButton* pb_cancel;
@@ -72,6 +84,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       CSVTableView* tv_data;
       QStandardItemModel* model;
       CSVSortFilterProxyModel* proxy;
+      CSV_Data csv_data;
 
       bool parse_file(QString&);
       QStringList gen_alpha_list(int);

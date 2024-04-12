@@ -73,6 +73,49 @@ void CSVTableView::delete_columns() {
    emit row_column_deleted();
 }
 
+int US_CSV_Loader::CSV_Data::columnCount() {
+   return m_header.size();
+}
+
+int US_CSV_Loader::CSV_Data::rowCount() {
+   if (m_columns.size() == 0) return 0;
+   return m_columns.at(0).size();
+}
+
+QStringList US_CSV_Loader::CSV_Data::header() {
+   return m_header;
+}
+
+QVector<double> US_CSV_Loader::CSV_Data::columnAt(int id) {
+   QVector<double> col;
+   if (id >= 0 && id < m_columns.size()) {
+      col = m_columns.at(id);
+   }
+   return col;
+}
+
+bool US_CSV_Loader::CSV_Data::setData(QStringList& header, QVector<QVector<double>>& columns) {
+   m_columns.clear();
+   m_header.clear();
+   int ncols = header.size();
+   if (columns.size() != ncols) {
+      return false;
+   }
+   int nrows = -1;
+   for (int ii = 0; ii < ncols; ii++) {
+      int nr = columns.at(ii).size();
+      if (nrows == -1) {
+         nrows = nr;
+      }
+      if (nr == 0 || nr != nrows) {
+         m_columns.clear();
+         m_header.clear();
+         return false;
+      }
+      m_columns << columns.at(ii);
+   }
+   return true;
+}
 
 US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
