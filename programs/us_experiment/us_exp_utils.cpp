@@ -1507,6 +1507,7 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
      {
        if (exptype == "Buoyancy" )
 	 {
+	   qDebug() << "ABDE set in Rotor 1st time!";
 	   mainw->set_abde_mode_aprofile();
 	   if ( expType_changed )
 	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
@@ -3975,14 +3976,46 @@ bool US_ExperGuiUpload::validExtinctionProfile( QString desc, QList< double > al
       eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
       eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
 
-      msg = "is out of range;";
+      msg = "is out of range; ";
     }
   else //empty ext. profile
     {
       eprofile_ok = false;
-      msg = "does not exist;";
+      msg = "does not exist; ";
+    }
+
+  //check existence of all wavelengths (for non-empty ext.prof.)
+  if ( nwavl_e > 0 )
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls.size(); ++i)
+	{
+	  double p_wvl = all_wvls[i];
+	  wvl_present[ p_wvl ] = false;
+	  for (int j=0; j<ext_prof.size(); j++)
+	    {
+	      double e_wvl = ext_prof[j];
+	      if ( p_wvl == e_wvl )
+		{
+		  wvl_present[ p_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      eprofile_ok = false;
+	      msg += "some wavelegths missing; ";
+	      break; 
+	    }
+	}
     }
   
+  //messages
   if ( !eprofile_ok )
     msg_to_user << QString(tr("%1: Extinction profile %2"))
       .arg( desc )

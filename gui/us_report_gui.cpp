@@ -402,6 +402,9 @@ void US_ReportGui::build_report_layout( void )
       //need to set index corr. to type in ReportItem
       int type_ind = cb_type->findText( curr_item.type );
       cb_type->setCurrentIndex( type_ind );
+
+      qDebug() << "ABDE reportGui replot: curr_item.type, type_ind -- "
+	       << curr_item.type << type_ind;
             
       //method ComboBox
       cb_method = us_comboBox();      

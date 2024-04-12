@@ -339,6 +339,51 @@ void US_AnaprofPanGen::initPanel()
 use_db=false;
 #endif
 
+//DEBUG: check how current ch_reports looks like
+ QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+  
+  for ( ri = currProf->ch_reports.begin(); ri != currProf->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+
+      qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc:::  " << chan_desc;
+      
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString c_wvl = tri.key();
+
+	  // ch_reports[ chan_desc ] [ c_wvl ].report_changed = false;;
+	  // ch_reports[ chan_desc ] [ c_wvl ].exp_time_changed = false;
+	  // ch_reports[ chan_desc ] [ c_wvl ].DBread = false;
+	  // ch_reports[ chan_desc ] [ c_wvl ].interf_report_changed = false;
+
+	  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
+	    {
+	      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
+	      qDebug() << "type, method, lo, hi -- "
+		       << initItem.type
+		       << initItem.method
+		       << initItem.range_low
+		       << initItem.range_high ;
+	      
+	    }
+	}
+    }
+
+  //wvls:
+  //QMap< QString, QList< double > > ch_wvls;
+  QMap< QString, QList < double > >::iterator wi;
+  for ( wi = currProf->ch_wvls.begin(); wi != currProf->ch_wvls.end(); ++wi )
+    {
+      QString chan_desc = wi.key();
+      qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc [ch_wvls]:::  " << chan_desc;
+      qDebug() << "Wvls -- " << wi.value();
+      
+    }
+  //END DEBUG
+ 
 
 //TESTING
    QMap < QString, US_ReportGMP* > ch_report_map;
@@ -454,6 +499,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	qDebug() <<  "currProf->wvl_not_run.size(): "  << currProf->wvl_not_run.count();
 	qDebug() <<  "currProf->ch_wvls.size(): "      << currProf->ch_wvls.count();
 	qDebug() <<  "currProf->ch_reports.size():   "  << currProf->ch_reports.count();
+	
 	qDebug() <<  "currProf->chndescs_alt.size(): " << currProf->chndescs_alt.count();
 	
 	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();

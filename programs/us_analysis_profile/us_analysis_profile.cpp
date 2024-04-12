@@ -194,11 +194,13 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 
 DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
-   currProf.ch_wvls.clear();
+//currProf.ch_wvls.clear();
       
    if ( nchs < 1  ||  ncho < 1 )
      return;
 
+   currProf.ch_wvls.clear();
+   
    int nchn        = 0;
 DbgLv(1) << "APG: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 if(iProto->rpOptic.chopts.count()>0)
@@ -218,8 +220,6 @@ DbgLv(1) << "APG: ipro: 1)ch s1 s2 s3"
    {  // Examine protocol's channel solutions
       QString chname  = iProto->rpSolut.chsols[ ii ].channel;
       QString sodesc  = iProto->rpSolut.chsols[ ii ].solution;
-
-      
       
       chname          = QString( chname ).section( ":", 0, 0 )
                                          .section( ",", 0, 0 )
@@ -293,6 +293,44 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
          if ( nchn < kchn )
          {  // Replace channel and channel description
+
+	   qDebug() << "inheritprotocol, Replacing channel..";
+	   qDebug() << "currProf.chndescs_alt[ nchn ], chentr_wvls -- "
+		    << currProf.chndescs_alt[ nchn ] << chentr_wvls;
+
+	   qDebug() << "Old wvl -- " << currProf.ch_wvls[ currProf.chndescs_alt[ nchn ] ];
+	    QString old_desc = currProf.chndescs_alt[ nchn ];
+	    QString old_wvl;
+	    
+	    //DEBUG: check how current ch_reports looks like
+	    QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+	    for ( ri = currProf.ch_reports.begin(); ri != currProf.ch_reports.end(); ++ri )
+	      {
+		QString chan_desc = ri.key();
+
+		qDebug() << "Old ch_reports: chan_desc:: " << chan_desc;
+		
+		QMap < QString, US_ReportGMP > triple_reports = ri.value();
+		QMap < QString, US_ReportGMP >::iterator tri;
+		for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+		  {
+		    old_wvl = tri.key();
+		    
+		    for(int ii=0; ii< currProf.ch_reports[ chan_desc ] [ old_wvl ].reportItems.size(); ++ii)
+		      {
+			US_ReportGMP::ReportItem initItem = currProf.ch_reports[ chan_desc ] [ old_wvl ].reportItems[ ii ];
+			qDebug() << "wvl: type, method, lo, hi -- "
+				 << old_wvl << ": " 
+				 << initItem.type
+				 << initItem.method
+				 << initItem.range_low
+				 << initItem.range_high ;
+			
+		      }
+		  }
+	      }
+	    //END DEBUG
+	    
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
 	    currProf.chndescs_alt[ nchn ] = chentr_wvls;
@@ -309,7 +347,9 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		QList< double > wvl_interf = { 660 };
 		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
 	      }
-	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
+	    qDebug() << "In inherit_prot: [new] wvl, wvls.size() for channel -- "
+		     << currProf.ch_wvls[ chentr_wvls ]
+		     << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
 
 	    // //ALEXEY: insert ch_reports here
 	    // //currProf.ch_reports[ chentr_wvls ] = reportGMP;
@@ -323,7 +363,9 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 	    for ( int i=0; i<ch_wavelengths.size(); ++i )
 	      {
 		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
+		//currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
+		
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ old_desc ][ old_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
 		qDebug() << "nchn < kchn: Filling currProf.ch_reports -- ";
@@ -384,6 +426,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
          }
          else
          {  // Append channel and channel description
+
+	   qDebug() << "inheritprotocol, Appending channels..";
             currProf.pchans   << chname;
             currProf.chndescs << chentr;
 	    currProf.chndescs_alt << chentr_wvls;
