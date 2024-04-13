@@ -213,11 +213,11 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    main_lyt->addLayout(lyt_other,         2, 3, 1, 2);
    main_lyt->addWidget(le_other,          2, 5, 1, 2);
 
-   main_lyt->addWidget(pb_save_csv,       3, 1, 1, 2);
-   main_lyt->addWidget(pb_reset,          3, 3, 1, 2);
+   main_lyt->addWidget(pb_reset,          3, 1, 1, 2);
+   main_lyt->addWidget(pb_show_red,       3, 3, 1, 2);
    main_lyt->addWidget(pb_add_header,     3, 5, 1, 2);
 
-   main_lyt->addWidget(pb_show_red,       4, 1, 1, 2);
+   main_lyt->addWidget(pb_save_csv,       4, 1, 1, 2);
    main_lyt->addWidget(pb_cancel,         4, 3, 1, 2);
    main_lyt->addWidget(pb_ok,             4, 5, 1, 2);
 
@@ -252,6 +252,7 @@ void US_CSV_Loader::setEditable(bool state) {
 }
 
 void US_CSV_Loader::reset() {
+   if (file_lines.isEmpty()) return;
    delimiter = NONE;
    fill_table(bg_delimiter->checkedId());
 }
@@ -637,8 +638,7 @@ void US_CSV_Loader::fill_table(int id) {
    tv_data->setModel(proxy);
    relabel();
    check_table();
-   // tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-   tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+   tv_data->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
    tv_data->resizeColumnsToContents();
    // qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
    connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
