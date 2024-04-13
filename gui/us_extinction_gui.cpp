@@ -453,12 +453,11 @@ US_Extinction::US_Extinction() : US_Widgets()
 void US_Extinction::add_wavelength(void)
 {
    US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-   csv_loader->setMessage("1st column: WAVELENGTH; other columns: OD; 1st row: HEADER");
+   csv_loader->setMessage("1st Column -> WAVELENGTH ; Others -> OD");
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
    US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
    if (csv_data.columnCount() < 2) return;
-   QFileInfo file_info(csv_data.filePath());
    loadScan(csv_data);
    update_data();
 }
