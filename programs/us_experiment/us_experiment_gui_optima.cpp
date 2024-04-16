@@ -5794,9 +5794,6 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
  << dbP->lastError();
    }
 
-   
-   
-
    return;
 }
 
