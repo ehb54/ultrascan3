@@ -231,46 +231,49 @@ void US_Spectrum::load_basis()
    if(dialog.exec())
    {
       US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-      csv_loader->set_msg("1st column: WAVELENGTH; 2nd column: OD; 1st row: HEADER");
-      csv_loader->set_numeric_state(true, false);
+      csv_loader->setMessage("1st Column -> WAVELENGTH ; 2nd Column -> OD");
       files = dialog.selectedFiles();
-      QVector<QVector<QStringList>> data_list;
-      QVector<QFileInfo> finfo_list;
+      QVector<US_CSV_Loader::CSV_Data> data_list;
       for ( int ii = 0; ii < files.size(); ii++ ) {
          QString filepath = files.at(ii);
          bool parsed = csv_loader->set_filepath(filepath, false);
          if (parsed) {
             int chk_ld = csv_loader->exec();
             if (chk_ld != QDialog::Accepted) {
-               int chk_go = QMessageBox::question(this, "Warning!", "You cancel parsing a file."
-                                                                    "Do you still want to continue processing the file(s)?");
+               int chk_go = QMessageBox::question(this, "Warning!", "You canceled parsing a file."
+                                                                    "Do you still want to continue processing the rest of the files?");
                if (chk_go == QMessageBox::No) return;
             }
-            QVector<QStringList> csv_data = csv_loader->get_data();
-            if (csv_data.size() < 2 ) {
+            US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+            if (csv_data.columnCount() < 2 ) {
                int chk_go = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
-                                                                   "\nDo you still want to continue processing the file(s)?");
+                                                                   "\nDo you still want to continue processing the rest of the file?");
                if (chk_go == QMessageBox::No) return;
             } else {
                data_list << csv_data;
-               finfo_list << csv_loader->get_file_info();
             }
          } else {
-            int chk_go = QMessageBox::question(this, "Warning!", "Do you still want to continue processing the file(s)?");
+            int chk_go = QMessageBox::question(this, "Warning!", tr("Unable to load\n'%1'!\n").arg(filepath) +
+                                                                     "Do you still want to continue processing the file(s)?");
             if (chk_go == QMessageBox::No) return;
          }
       }
 
       for (int ii = 0; ii < data_list.size(); ii++ ) {
-         struct WavelengthProfile temp_wp;
-         if (load_spectra(temp_wp, data_list.at(ii))) {
-            temp_wp.filenameBasis = finfo_list.at(ii).baseName();
-            temp_wp.filename = finfo_list.at(ii).fileName();
-            v_basis.push_back(temp_wp);
-            cb_angle_one->addItem(finfo_list.at(ii).baseName());
-            cb_angle_two->addItem(finfo_list.at(ii).baseName());
-            //basis_names.append(finfo_list.at(ii).baseName());
-         }
+         QFileInfo finfo(data_list[ii].filePath());
+         struct WavelengthProfile wp;
+         QVector<double> xvals = data_list[ii].columnAt(0);
+         wp.wvl << xvals;
+         const auto [min, max] = std::minmax_element(xvals.begin(), xvals.end());
+         wp.extinction << data_list[ii].columnAt(1);
+         wp.lambda_min = *min;
+         wp.lambda_max = *max;
+         wp.filenameBasis = finfo.baseName();
+         wp.filename = finfo.fileName();
+         v_basis.push_back(wp);
+         cb_angle_one->addItem(finfo.baseName());
+         cb_angle_two->addItem(finfo.baseName());
+         //basis_names.append(finfo.baseName());
       }
    }
  
@@ -328,16 +331,15 @@ void US_Spectrum::plot_basis()
 void US_Spectrum::load_target()
 {
    US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-   csv_loader->set_msg("1st column: WAVELENGTH; 2nd column: OD; 1st row: HEADER");
-   csv_loader->set_numeric_state(true, false);
+   csv_loader->setMessage("1st Column -> WAVELENGTH ; 2nd Column -> OD");
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
-   QVector<QStringList> in_data = csv_loader->get_data();
-   if (in_data.size() < 2 ) {
+   US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+   if (csv_data.columnCount() < 2 ) {
       QMessageBox::warning(this, "Error!", "Data files must have two columns of wavelength and OD values!");
       return;
    }
-   QFileInfo file_info = csv_loader->get_file_info();
+   QFileInfo file_info(csv_data.filePath());
 
    us_grid(data_plot);
    
@@ -353,12 +355,17 @@ void US_Spectrum::load_target()
       resetBasis();
    }
    qDebug() << "filename: " << file_info.filePath();
-   if (load_spectra(w_target, in_data)) {
-      w_target.filenameBasis = file_info.baseName();
-      w_target.filename = file_info.fileName();
-      //lw_target->insertItem(0, w_target.filenameBasis);
-   }
 
+   // struct WavelengthProfile wp;
+   QVector<double> xvals = csv_data.columnAt(0);
+   w_target.wvl << xvals;
+   const auto [min, max] = std::minmax_element(xvals.begin(), xvals.end());
+   w_target.extinction << csv_data.columnAt(1);
+   w_target.lambda_min = *min;
+   w_target.lambda_max = *max;
+   w_target.filenameBasis = file_info.baseName();
+   w_target.filename = file_info.fileName();
+      //lw_target->insertItem(0, w_target.filenameBasis);
    plot_target();
    if ( lw_target->count() > 0 )
      pb_load_basis->setEnabled(true);
@@ -396,41 +403,6 @@ void US_Spectrum:: plot_target()
    if( !w_target.filenameBasis.isEmpty() )
      lw_target->insertItem(0, w_target.filenameBasis);
    //pb_load_basis->setEnabled(true);
-}
-
-//read spectrum
-bool US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QVector<QStringList>& in_data)
-{
-   QStringList headers;
-   QVector<double> xvals;
-   double min_x = 1e99;
-   double max_x = -1e99;
-   QVector<double> yvals;
-   for (int col = 0; col < 2; col++) {
-      for (int row = 0; row < in_data.at(col).size(); row++) {
-         if (row == 0) {
-            if (col > 0) headers << in_data.at(col).at(0);
-            continue;
-         }
-         if (col == 0) {
-            double x = in_data.at(col).at(row).toDouble();
-            xvals << x;
-            min_x = qMin(min_x, x);
-            max_x = qMax(max_x, x);
-            continue;
-         }
-         yvals << in_data.at(col).at(row).toDouble();
-      }
-   }
-   if (xvals.size() == 0) {
-      QMessageBox::warning(this, "Error!", "No Data Found!");
-      return false;
-   }
-   profile.wvl << xvals;
-   profile.extinction << yvals;
-   profile.lambda_min = min_x;
-   profile.lambda_max = max_x;
-   return true;
 }
 
 void US_Spectrum::new_value(const QwtDoublePoint& p)

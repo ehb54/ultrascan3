@@ -12,6 +12,7 @@
 #include "us_load_run_noise.h"
 #include "us_passwd.h"
 #include "us_images.h"
+#include "us_csv_loader.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -677,39 +678,45 @@ void US_MwlSpeciesFit::loadSpecs()
 {
    // Get the species (wavelength,extinction) file names
 
-   QString spdir   = US_Settings::resultDir() + "/"
-                     + le_id->text().section( "/", 0, 0 ).simplified();
-   QString spffilt = QString( "Species Files (*.extinction.dat);;"
-                              "Data Files (*.dat);;"
-                              "All Files (*)" );
-   int nspecies_tmp        = 0;
-   QStringList   spfiles_tmp;
+   QStringList flist = QFileDialog::getOpenFileNames( this, "Load Species Files", US_Settings::resultDir(),
+                                                      "Data Files (*.dat *.csv *.dsp );; All Files (*)");
+   if (flist.size() < 2) {
+      QMessageBox::critical( this, tr( "Multiple Species Needed" ),
+                            tr( "At lease 2 species must be chosen!\n" ) );
+      return;
+   }
 
-   while ( nspecies_tmp < 2 )
-   {
-      spfiles_tmp         = QFileDialog::getOpenFileNames( this,
-                           tr( "Load Species Vector Files" ),
-                           spdir, spffilt );
-
-      nspecies_tmp        = spfiles_tmp.count();
-
-      if ( nspecies_tmp == 0 )
-         break;
-
-      if ( nspecies_tmp == 1 )
-      {
-         QMessageBox::critical( this, tr( "Multiple Species Needed" ),
-                                tr( "You have chosen 1 species file.\n"
-                                    "At lease 2 species must be chosen" ) );
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
+   csv_loader->setMessage("1st Column -> WAVELENGTH ; 2nd Column -> OD");
+   QVector<US_CSV_Loader::CSV_Data> data_list;
+   for ( int ii = 0; ii < flist.size(); ii++ ) {
+      QString filepath = flist.at(ii);
+      bool parsed = csv_loader->set_filepath(filepath, false);
+      if (parsed) {
+         int chk_ld = csv_loader->exec();
+         if (chk_ld != QDialog::Accepted) {
+            QMessageBox::critical(this, "Warning!", "Loading species is canceled!");
+            return;
+         }
+         US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+         if (csv_data.columnCount() < 2 ) {
+            QMessageBox::critical(this, "Warning!", "At least two data columns are needed:\n" + filepath);
+            return;
+         } else {
+            data_list << csv_data;
+         }
+      } else {
+         QMessageBox::critical(this, "Warning!", tr("Unable to load\n'%1'!\n").arg(filepath));
+         return;
       }
    }
 
+   QStringList   spfiles_tmp;
+   int nspecies_tmp = data_list.size();
    int nsferr      = 0;
 
-   if ( nspecies_tmp == 0 )
+   if ( nspecies_tmp < 2 )
       return;
-
-   // Read in the species "red-line" data
 
    int minnw       = 999999;
    int maxnw       = 0;
@@ -719,60 +726,27 @@ void US_MwlSpeciesFit::loadSpecs()
 DbgLv(1) << "SpFiles:";
    for ( int ii = 0; ii < nspecies_tmp; ii++ )
    {
-      QString fname   = spfiles_tmp[ ii ];
-DbgLv(1) << " file name" << fname;
-      QFile filei( fname );
-
-      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-      {
-         DbgLv(0) << "*ERROR* Unable to open file" << fname;
-         nsferr++;
-         continue;
-      }
-
-      QTextStream tsi( &filei );
-      QString fline   = tsi.readLine();
-      int nwavl       = 0;
-
-      if ( ! fline.contains( "Wavelength" ) )
-      {
-         DbgLv(0) << "*ERROR* Format wrong for file" << fname;
-         nsferr++;
-      }
+      QFileInfo finfo = data_list[ii].filePath();
+      spfiles_tmp << finfo.filePath();
+      QVector<double> xvals = data_list[ii].columnAt(0);
+      QVector<double> yvals = data_list[ii].columnAt(1);
 
       QVector< int >      spwvls;
       QVector< double >   spcncs;
-      while ( ! tsi.atEnd() )
-      {  // Parse wavelength, concentration from each file line
-         fline           = tsi.readLine().simplified();
-         int lnf1        = fline.indexOf( " " );
-DbgLv(1) << "lnf1:" << lnf1;
-			if (lnf1 == -1) lnf1 = fline.indexOf( "," ); // if there was no space found, try comma
-			if (lnf1 == -1) lnf1 = fline.indexOf( "\t" ); // if still -1, try tab
-			if (lnf1 == -1) 
-			{
-				QMessageBox::warning( this, tr("IO Error"),
-				tr("The file:\n") + fname + tr("\nis not in the correct format.\n") +  
-				tr("The file should have 2 columns that are comma or space separated."));
-				return;
-			}
-         int iwavl       = QString( fline ).left( lnf1 ).toInt();
-         double conc     = QString( fline ).mid( lnf1 + 1 ).toDouble();
-
+      for (int jj = 0; jj < xvals.size(); jj++ ) {
+         int iwavl = static_cast<int> (xvals.at(jj));
          if (spwvls.contains(iwavl)){
-             QMessageBox::warning( this, tr("IO Error"),
-             tr("The file:\n") + fname + tr("\nhas got redundant wavelength values.\n") +
-             tr("Please provide the wavelength values without decimals."));
-             return;
+            QMessageBox::warning( this, tr("IO Error"),
+                                 tr("The file:\n") + finfo.fileName() + tr("\nhas got redundant wavelength values.\n") +
+                                 tr("Please provide the wavelength values without decimals."));
+            return;
          }
-
          spwvls << iwavl;
-         spcncs << conc;
-         nwavl++;
+         spcncs << yvals.at(jj);
       }
 
-      minnw           = qMin( minnw, nwavl );
-      maxnw           = qMax( maxnw, nwavl );
+      minnw           = qMin( minnw, spwvls.size() );
+      maxnw           = qMax( maxnw, spwvls.size() );
 
       spwavls_tmp << spwvls;
       spconcs_tmp << spcncs;
@@ -781,8 +755,8 @@ DbgLv(1) << "lnf1:" << lnf1;
    }
 
 //*DEBUG*
-DbgLv(1) << "Species file count" << nspecies_tmp << "nsferr" << nsferr;
-DbgLv(1) << "Species min,max wavelengths" << minnw << maxnw;
+DbgLv(0) << "Species file count" << nspecies_tmp << "nsferr" << nsferr;
+DbgLv(0) << "Species min,max wavelengths" << minnw << maxnw;
 //int je=-1;
 //int js=0;
 //for ( int ii = 0; ii < nspecies_tmp; ii++ )
