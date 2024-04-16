@@ -49,6 +49,14 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
 
       QLabel* bn_report_t;
 
+      QLabel* lb_tot_conc;    
+      QLabel* lb_tot_conc_tol;  
+      QLabel* lb_rmsd_limit;    
+      QLabel* lb_av_intensity;  
+      QLabel* lb_duration;      
+      QLabel* lb_duration_tol;  
+      QLabel* lb_wvl;           
+      
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_tot_conc_tol;
       QLineEdit*   le_rmsd_limit;

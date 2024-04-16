@@ -1082,6 +1082,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    expType_old = cb_exptype ->currentText();
 
    qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+
 }
 
 void US_ExperGuiRotor::init_grevs( void )

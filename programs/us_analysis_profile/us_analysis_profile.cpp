@@ -277,7 +277,8 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
 
       // //ALEXEY: also US_ReportGMP (blank/default for now)
       // US_ReportGMP reportGMP = US_ReportGMP();
-         
+      
+      
       for ( int jj = 0; jj < ods.count(); jj++ )
       {  // Create a channel entry for each optics type of this channel
          QString opdesc  = ods[ jj ];
@@ -290,7 +291,8 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
         //ALEXEY: chname for currProf.ch_wvls:
         QString sodesc_cut  = QString( chentr ).section( ":", 2, 2 );
         QString chentr_wvls = chname + ":" + opdesc + ":" + sodesc_cut;
-
+	
+	
          if ( nchn < kchn )
          {  // Replace channel and channel description
 
@@ -363,9 +365,9 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 	    for ( int i=0; i<ch_wavelengths.size(); ++i )
 	      {
 		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
-		//currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ old_desc ][ old_wvl ];
+		//currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ old_desc ][ old_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
 		qDebug() << "nchn < kchn: Filling currProf.ch_reports -- ";
@@ -457,6 +459,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	      {
 		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
+		//currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn - 1 ] ][ old_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
 		qDebug() << "nchn > kchn: Filling currProf.ch_reports -- ";

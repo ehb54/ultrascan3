@@ -1074,6 +1074,18 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
       mainw->currProto.runname = rname;
    loaded_proto = 1;
 
+   //if ABDE protocol, or NOT
+   if ( mainw->currProto.rpRotor.exptype == "Buoyancy" )
+     {
+       mainw-> set_abde_mode_aprofile();
+       mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+     }
+   else
+     {
+       mainw->unset_abde_mode_aprofile();
+       mainw-> abde_sv_mode_change_reset_reports( "SV" ); 
+     }
+   
    // Initialize all other panels using the new protocol
 
    qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
@@ -5553,6 +5565,8 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
       
       QMap < QString, US_ReportGMP > triple_reports = ri.value();
       QMap < QString, US_ReportGMP >::iterator tri;
+
+      int triple_count = 0;
       for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
 	{
 	  QString curr_guid = US_Util::new_guid();
@@ -5566,6 +5580,14 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
 		   << ri.key() << ": " << tri.key()
 		   << " -- " << reportID << " / "
 		   << curr_guid;
+
+	  ++triple_count;
+	  //For ABDE case, stop after recording the 1st-in-channel report:
+	  if (  mainw->us_abde_mode && triple_count > 1 )
+	    {
+	      qDebug() << "Exiting GMP Report DB writing after the 1st triple in a channel...";
+	      break;
+	    }
 	}
 
       //now, insert reportIDs && reportGUIDs for current channel:
@@ -5656,6 +5678,10 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   jsonMask += QString("}");
   
   //Save parent Report
+  QString wvl_to_db = QString::number( report.wavelength );
+  if ( mainw->us_abde_mode )
+    wvl_to_db = "-1";
+  
   QStringList qry;
   qry << "new_report"
       << reportGUID
@@ -5741,6 +5767,34 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
    qDebug() << "IN Saving APRofile: aprof  -> report_mask -- " << aprof->report_mask;
+
+   //DEBUG: look at the ch_reports && it's items
+   QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+   for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString wvl_cc         = tri.key();
+	  US_ReportGMP report_cc = tri.value(); 
+	  qDebug() << "In saving: channel, wvl, Report --- "
+		   << chan_desc
+		   << wvl_cc;
+
+	  for ( int ii = 0; ii < report_cc.reportItems.size(); ii++ )
+	    {
+	      US_ReportGMP::ReportItem curr_reportItem = report_cc.reportItems[ ii ];
+	      qDebug() << "ReportItem # " << ii
+		       << "type -- "      << curr_reportItem.type
+		       << "method -- "    << curr_reportItem.method
+		       << "range_low -- " << curr_reportItem.range_low;
+	    }
+	}
+    }
+   //END DEBUG
      
    //save reports BEFORE writng down Aprofile's XML
    saveReports( aprof ); //<-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
