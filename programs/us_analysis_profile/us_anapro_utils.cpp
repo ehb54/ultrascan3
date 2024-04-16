@@ -339,14 +339,30 @@ void US_AnaprofPanGen::initPanel()
 use_db=false;
 #endif
 
-//DEBUG: check how current ch_reports looks like
+//Setting ref report && DEBUG: check how current ch_reports looks like
  QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
-  
+ QMap < QString, US_ReportGMP > triple_reports_ref;
+ QString chan_desc_ref;
+ QString wvl_ref;
+ 
   for ( ri = currProf->ch_reports.begin(); ri != currProf->ch_reports.end(); ++ri )
     {
       QString chan_desc = ri.key();
 
       qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc:::  " << chan_desc;
+
+      //if chan_desc contains "(unspecified)", save this ch_report as the refrence one..
+      //copy it to all other channels
+      
+      if ( chan_desc.contains("(unspecified)") )
+	{
+	  triple_reports_ref = ri.value();
+	  chan_desc_ref      = chan_desc;
+	  wvl_ref            = triple_reports_ref.keys()[ 0 ];
+	  qDebug() << "Reference report name, wvls, #wvl -- "
+		   << chan_desc << triple_reports_ref.keys() << triple_reports_ref.keys().size();
+	  continue;
+	}
       
       QMap < QString, US_ReportGMP > triple_reports = ri.value();
       QMap < QString, US_ReportGMP >::iterator tri;
@@ -354,13 +370,17 @@ use_db=false;
 	{
 	  QString c_wvl = tri.key();
 
-	  // ch_reports[ chan_desc ] [ c_wvl ].report_changed = false;;
-	  // ch_reports[ chan_desc ] [ c_wvl ].exp_time_changed = false;
-	  // ch_reports[ chan_desc ] [ c_wvl ].DBread = false;
-	  // ch_reports[ chan_desc ] [ c_wvl ].interf_report_changed = false;
+	  //if ref_report was not replaced yet, substitute all channels' reports witht he ref. one...
+	  if ( !triple_reports_ref.isEmpty() )
+	    {
+	      currProf->ch_reports[ chan_desc ] [ c_wvl ] = triple_reports_ref[ wvl_ref ];
+		  
+	    }
 
+	  //debug
 	  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
 	    {
+	      
 	      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
 	      qDebug() << "type, method, lo, hi -- "
 		       << initItem.type
