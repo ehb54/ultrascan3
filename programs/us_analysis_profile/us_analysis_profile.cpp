@@ -408,6 +408,11 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
                currProf.lv_tolers << currProf.lv_tolers[ chx ];
                currProf.data_ends << currProf.data_ends[ chx ];
 
+	       //abde
+	       currProf.ld_dens_0s << currProf.ld_dens_0s[ chx ];
+	       currProf.gm_vbars   << currProf.gm_vbars[ chx ];
+	       currProf.gm_mws     << currProf.gm_mws[ chx ];
+
 	       currProf.analysis_run << currProf.analysis_run[ chx ];
 	       currProf.report_run   << currProf.report_run[ chx ];
 	       currProf.wvl_edit     << currProf.wvl_edit[ chx ];
@@ -502,6 +507,11 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.lv_tolers << currProf.lv_tolers[ lch ];
             currProf.data_ends << currProf.data_ends[ lch ];
 
+	    //abde
+	    currProf.ld_dens_0s << currProf.ld_dens_0s[ lch ];
+	    currProf.gm_vbars   << currProf.gm_vbars[ lch ];
+	    currProf.gm_mws     << currProf.gm_mws[ lch ];
+	    
 	    currProf.analysis_run << currProf.analysis_run[ lch ];
 	    currProf.report_run   << currProf.report_run[ lch ];
 	    currProf.wvl_edit     << currProf.wvl_edit[ lch ];
@@ -542,6 +552,11 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
          currProf.l_volumes.removeLast();
          currProf.lv_tolers.removeLast();
          currProf.data_ends.removeLast();
+
+	 //abde
+	 currProf.ld_dens_0s.removeLast();
+	 currProf.gm_vbars.removeLast(); 
+	 currProf.gm_mws .removeLast();
 
 	 currProf.analysis_run .removeLast();
 	 currProf.report_run   .removeLast();
