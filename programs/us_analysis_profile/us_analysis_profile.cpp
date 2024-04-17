@@ -757,12 +757,17 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		      && ch_wavelengths.size() > 1
 		      && !wvl_read_abde.isEmpty() )
 		   {
+		     qDebug() << "AProfile[ABDE]: reading from DB: replicating reports for MWL based on the 1st channel's wvl -- ";
 		     for ( int i=0; i<ch_wavelengths.size(); ++i )
 		       {
 			 QString c_wvl = QString::number ( ch_wavelengths[ i ] );
 			 if ( c_wvl == wvl_read_abde )
-			   continue;
+			   {
+			     qDebug() << "Skipping 1st wvl: wvl = " << wvl_read_abde;
+			     continue;
+			   }
 			 
+			 qDebug() << "Filling wvl = " << c_wvl << ", with ref_wvl = " << wvl_read_abde;
 			 currProf.ch_reports[ channel_alt_desc ][ c_wvl ] = currProf.ch_reports[ channel_alt_desc ][ wvl_read_abde ];
 		       }
 		   }

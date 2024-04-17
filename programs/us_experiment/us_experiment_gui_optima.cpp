@@ -5583,7 +5583,7 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
 
 	  ++triple_count;
 	  //For ABDE case, stop after recording the 1st-in-channel report:
-	  if (  mainw->us_abde_mode && triple_count > 1 )
+	  if (  mainw->us_abde_mode && triple_count == 1 )
 	    {
 	      qDebug() << "Exiting GMP Report DB writing after the 1st triple in a channel...";
 	      break;
