@@ -93,6 +93,11 @@ DbgLv(1) << "XpDa:cnc: qdrvrs|sqtab content error:"
 // Check Experiment status
 int US_XpnData::checkExpStatus( QString runid )
 {
+  if ( ! dbxpn.open() )
+    {
+      qDebug() << "In XPN:checkExpStatus:: ! dbxpn.open() !!! ";
+    }
+  
    QString tabname( "ExperimentRun" );
    QSqlQuery  sqry;
    QString schname( "AUC_schema" );
@@ -602,7 +607,9 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
 
    if ( ! dbxpn.open() )
    {
-      return false;
+     qDebug() << "XPN: reimport_data: !dbxpn.open() !!! runID, scanMask -- "
+	      << runID << scanMask;
+     return false;
    }
 
    int oarows    = tAsdata.count();     // Get old row counts
