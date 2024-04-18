@@ -637,6 +637,7 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
       arows      = update_xpndata( runId, 'A' );
       status     = ( status  ||  arows > oarows );
 DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
+ qDebug() << "XpDa: rei_dat: arows oarows status" << arows << oarows << status; 
    }
 
    if ( fscnf )
@@ -658,6 +659,8 @@ DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
    }
 
 DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+ qDebug() << "XpDa: rei_dat: arows frows irows wrows"
    << arows << frows << irows << wrows << "status" << status;
 //*DEBUG*
 //status=true;
