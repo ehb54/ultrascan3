@@ -3019,7 +3019,9 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setValue( locrads[ ii ] );
       cc_hrads[ ii ]->setValue( hicrads[ ii ] );
 
+      //abde
       cc_buff_sp_ck[ ii ]->setChecked( abde_buff[ ii ] );
+      qDebug() << "Ranges::abde_buffes for chann " << ii << " is -- " << abde_buff[ ii ]; 
 
       cc_labls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );

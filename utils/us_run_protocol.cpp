@@ -972,7 +972,7 @@ bool US_RunProtocol::RunProtoRanges::fromXml( QXmlStreamReader& xmli )
 	    //abde: for backward compatibility:
 	    if (  attr.hasAttribute ("abde_buffer") )
 	      {
-		( attr.value( "replicate_group" ) .toString().toInt() ) ?
+		( attr.value( "abde_buffer" ) .toString().toInt() ) ?
 		  rng.abde_buffer_spectrum = true : rng.abde_buffer_spectrum = false;
 	      }
 	    else
