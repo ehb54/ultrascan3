@@ -1341,7 +1341,11 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    
    genL->addWidget( pb_protname,     row,    0, 1, 3 );
    genL->addWidget( le_protname,     row,    3, 1, 6 );
-   genL->addWidget( pb_scan_excl,    row++,  9, 1, 3 );
+
+   if ( !mainw->abde_mode_aprofile )
+     genL->addWidget( pb_scan_excl,    row++,  9, 1, 3 );
+   else
+     pb_scan_excl -> setVisible( false ); row++;
 
    connect( pb_aproname, SIGNAL( clicked            ( ) ),
             this,        SLOT(   apro_button_clicked( ) ) );
