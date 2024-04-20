@@ -376,13 +376,32 @@ use_db=false;
 	      currProf->ch_reports[ chan_desc ] [ c_wvl ] = triple_reports_ref[ wvl_ref ];
 		  
 	    }
-
-	  //debug
+	  else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
+	    {
+	      if ( mainw->abde_mode_aprofile )
+		{
+		  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
+		    {
+		      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
+		      if ( initItem.type == 's' && initItem.method.contains("2DSA") )
+			{
+			  //if attempts to insert reportItem from Velocity-type, replace with ABDE-type
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].type        = QString("Radius");
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].method      = QString("raw");
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].range_low   = 5.8;
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].range_high  = 7.0;
+			}
+		    }
+		}
+	    }
+	  //&& debug 
 	  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
 	    {
 	      
 	      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
-	      qDebug() << "type, method, lo, hi -- "
+	      
+	      qDebug() << "wvl, type, method, lo, hi -- "
+		       << c_wvl
 		       << initItem.type
 		       << initItem.method
 		       << initItem.range_low

@@ -4015,7 +4015,7 @@ bool US_ExperGuiUpload::validExtinctionProfile( QString desc, QList< double > al
 	  if ( !w_exists )
 	    {
 	      eprofile_ok = false;
-	      msg += "some wavelegths missing; ";
+	      msg += "some wavelengths missing; ";
 	      break; 
 	    }
 	}
