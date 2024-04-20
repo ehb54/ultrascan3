@@ -447,6 +447,10 @@ void US_ExperimentMain::abde_sv_mode_change_reset_reports( QString exptype )
   //Aprofile
   US_AnaProfile* aprof = get_aprofile();
 
+  //deal with general report  sets
+  
+
+  //deal with ch_reports
   QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
   
   for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )

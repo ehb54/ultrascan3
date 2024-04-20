@@ -2406,6 +2406,10 @@ void US_AnaprofPanGen::set_gen_report_settings()
   reportGenGui->setWindowModality(Qt::ApplicationModal);
   
   connect( reportGenGui, SIGNAL(  update_details( QString& ) ), this, SLOT( update_gen_report_settings  ( QString& )  ) );
+
+  //abde
+  if ( mainw->abde_mode_aprofile )
+    reportGenGui->abde_mode_passed();
      
   reportGenGui->show();
 }
