@@ -585,6 +585,9 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 else
 	   ck_report_runs[ ii ] ->setChecked( false  );
 
+	 //ABDE: ref, use_ref
+	 sb_ref_chs[ ii ]     ->setValue( currProf->ref_channels[ kk ] );
+	 sb_use_ref_chs[ ii ] ->setValue( currProf->ref_use_channels[ kk ] );
 	 
 	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
 		  << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
@@ -851,6 +854,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       currProf->ld_dens_0s.clear( );
       currProf->gm_vbars.clear( );
       currProf->gm_mws.clear( );
+      currProf->ref_channels.clear( );
+      currProf->ref_use_channels.clear( );
       
       currProf->analysis_run .clear( );
       currProf->report_run   .clear( );
@@ -998,7 +1003,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 currProf->ld_dens_0s << le_dens0s[ ii ]->text().toDouble();
 	 currProf->gm_vbars   << le_vbars[ ii ]->text().toDouble();
 	 currProf->gm_mws     << le_MWs[ ii ]->text().toDouble();
-	 
+	 currProf->ref_channels << sb_ref_chs[ ii ]->value();
+	 currProf->ref_use_channels << sb_use_ref_chs[ ii ]->value();
 
 	 //ALEXEY: add additional field for channels to be or not to be analysed
 	 if ( ck_runs[ ii ]->isChecked() ) 
@@ -1019,6 +1025,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 else
 	   currProf->report_run << 0;
 
+	 
 	 qDebug() << "APGR: SAVE: run channel report -- " << ii << int(ck_report_runs[ ii ]->isChecked());
 	 
 

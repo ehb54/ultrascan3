@@ -30,6 +30,8 @@ US_AnaProfile::US_AnaProfile()
    ld_dens_0s << 1.42;
    gm_vbars   << 0.2661;
    gm_mws     << 168.36;
+   ref_channels << 0;
+   ref_use_channels << 0;
 
    analysis_run << 1;
    report_run   << 1;
@@ -207,6 +209,8 @@ bool US_AnaProfile::operator== ( const US_AnaProfile& ap ) const
   if ( ld_dens_0s   != ap.ld_dens_0s )  return false;
   if ( gm_vbars     != ap.gm_vbars   )  return false;
   if ( gm_mws       != ap.gm_mws     )  return false;
+  if ( ref_channels != ap.ref_channels  )  return false;
+  if ( ref_use_channels != ap.ref_use_channels  )  return false;
 
   if ( scan_excl_begin  != ap.scan_excl_begin  )  return false;
   if ( scan_excl_end    != ap.scan_excl_end    )  return false;
@@ -340,7 +344,13 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      //ALEXEY: run report ?
      xmlo.writeAttribute    ( "run_report",
    			QString::number( report_run[ kk ] ) );
-    
+
+     //ABDE: reference, use_ref.
+     xmlo.writeAttribute    ( "abde_reference",
+   			QString::number( ref_channels[ kk ] ) );
+     xmlo.writeAttribute    ( "abde_use_reference",
+   			QString::number( ref_use_channels[ kk ] ) );
+
      
      //ALEXEY: wvl to edit
      xmlo.writeAttribute    ( "wvl_edit",
@@ -434,6 +444,8 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    ld_dens_0s. clear();
    gm_vbars.   clear();
    gm_mws .    clear();
+   ref_channels. clear();
+   ref_use_channels. clear();
 
    analysis_run.clear();
    report_run  .clear();
@@ -508,7 +520,18 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 		else
 		  report_run   << 0;
 	      }
-		
+
+	    //abde: for backward compatibility
+	    if ( attr.hasAttribute("abde_reference") )
+	      ref_channels << attr.value( "abde_reference" )  .toString().toInt();
+	    else
+	      ref_channels << 0;
+	      
+	    if ( attr.hasAttribute("abde_use_reference") )
+	      ref_use_channels << attr.value( "abde_use_reference" )  .toString().toInt();
+	    else
+	      ref_use_channels << 0;
+	    
 	    wvl_edit     << attr.value( "wvl_edit" ).toString().toInt();
 	    wvl_not_run  << attr.value( "wvl_not_run" ).toString();
 

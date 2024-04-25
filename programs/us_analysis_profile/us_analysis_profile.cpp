@@ -412,6 +412,8 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 	       currProf.ld_dens_0s << currProf.ld_dens_0s[ chx ];
 	       currProf.gm_vbars   << currProf.gm_vbars[ chx ];
 	       currProf.gm_mws     << currProf.gm_mws[ chx ];
+	       currProf.ref_channels << currProf.ref_channels[ chx ];
+	       currProf.ref_use_channels << currProf.ref_use_channels[ chx ];
 
 	       currProf.analysis_run << currProf.analysis_run[ chx ];
 	       currProf.report_run   << currProf.report_run[ chx ];
@@ -511,6 +513,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	    currProf.ld_dens_0s << currProf.ld_dens_0s[ lch ];
 	    currProf.gm_vbars   << currProf.gm_vbars[ lch ];
 	    currProf.gm_mws     << currProf.gm_mws[ lch ];
+	    currProf.ref_channels << currProf.ref_channels[ lch ];
+	    currProf.ref_use_channels << currProf.ref_use_channels[ lch ];
 	    
 	    currProf.analysis_run << currProf.analysis_run[ lch ];
 	    currProf.report_run   << currProf.report_run[ lch ];
@@ -557,6 +561,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 currProf.ld_dens_0s.removeLast();
 	 currProf.gm_vbars.removeLast(); 
 	 currProf.gm_mws .removeLast();
+	 currProf.ref_channels.removeLast();
+	 currProf.ref_use_channels.removeLast();
 
 	 currProf.analysis_run .removeLast();
 	 currProf.report_run   .removeLast();
@@ -1314,6 +1320,8 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_dens0s.clear();
    le_vbars .clear();
    le_MWs   .clear();
+   sb_ref_chs. clear();
+   sb_use_ref_chs. clear();
 
    ck_runs       .clear();
    ck_report_runs.clear();
@@ -1382,6 +1390,9 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    lbl_dens_0 = us_label( tr( "Loading \nDensity (g/ml):" ) );
    lbl_vbar = us_label( tr( "Gradient Mat. \n vbar (ml/g):" ) );
    lbl_MW = us_label( tr( "Gradient Mat. \n MW (g/mol):" ) );
+   lbl_refc = us_label( tr( "Reference?" ) );
+   lbl_use_refc = us_label( tr( "Use\nReference#:" ) );
+   
    //END Add new widgets for ABDE case:
    
    
@@ -1403,9 +1414,12 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    lb_lvtol->setMaximumHeight( lbhgt );
    lb_daend->setMaximumHeight( lbhgt );
 
+   //ABDE
    lbl_dens_0->setMaximumHeight( lbhgt );
    lbl_vbar  ->setMaximumHeight( lbhgt );
    lbl_MW    ->setMaximumHeight( lbhgt );
+   // lbl_refc  ->setMaximumHeight( lbhgt );
+   // lbl_use_refc  ->setMaximumHeight( lbhgt );
 
    // genL->addWidget( lb_chann, row,    0, 2, 5 );
    // genL->addWidget( lb_lcrat, row,    5, 2, 1 );
@@ -1448,12 +1462,17 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    genL->addWidget( lb_report, row,  10, 2, 1 );
    genL->addWidget( lb_repl_group, row,  11, 2, 1 );
 
-    if ( !mainw->abde_mode_aprofile )
+   if ( !mainw->abde_mode_aprofile )
       {
 	genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
+	lbl_refc     -> setVisible( false );
+	lbl_use_refc -> setVisible( false );
       }
     else
       {
+	genL->addWidget( lbl_refc,      row,  12, 1, 1, Qt::AlignHCenter );
+	genL->addWidget( lbl_use_refc,  row,  13, 1, 1, Qt::AlignHCenter );
+	
 	lb_mwvprefs -> setVisible( false );
 	row++; row++;
       }
@@ -1467,6 +1486,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QPushButton*   pb_reportprefs;
    QCheckBox*     ck_mwvprefs;
    QSpinBox*      sb_repl_group;
+   QSpinBox*      sb_ref_ch;
+   QSpinBox*      sb_use_ref_ch;
 
    // Clear the right layout from QGroupboxes
    qDebug() << "Right.count(), gr_mwvbox.size() BEFORE deletion -- " << right->count() << gr_mwvbox.size();
@@ -1518,10 +1539,24 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QLineEdit* le_dens_0 = us_lineedit( "1.42",   0, false );
       QLineEdit* le_vbar   = us_lineedit( "0.2661", 0, false );
       QLineEdit* le_MW     = us_lineedit( "168.36", 0, false );
+      
+      sb_ref_ch  = us_spinbox();
+      sb_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
+      sb_ref_ch ->setMinimum( 0 );
+      sb_ref_ch ->setMaximum( int(nchn/2.0) );
+      sb_ref_ch-> setEnabled( false );
+      
+      sb_use_ref_ch  = us_spinbox();
+      sb_use_ref_ch ->setObjectName( stchan + "RefUseChan --chann_name--" + schan );
+      sb_use_ref_ch ->setMinimum( 0 );
+      sb_use_ref_ch ->setMaximum( int(nchn/2.0) );
+      sb_use_ref_ch -> setEnabled( false );
 
-      le_dens0s << le_dens_0;
-      le_vbars  << le_vbar;
-      le_MWs    << le_MW;
+      le_dens0s  << le_dens_0;
+      le_vbars   << le_vbar;
+      le_MWs     << le_MW;
+      sb_ref_chs << sb_ref_ch;
+      sb_use_ref_chs << sb_use_ref_ch;
       //END Add new widgets for ABDE case:
       
       genL->addWidget( le_chann,  row,    0, 1, 3 );
@@ -1622,9 +1657,15 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       if ( !mainw->abde_mode_aprofile )
 	{
 	  genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
+
+	  sb_ref_ch     -> setVisible( false );
+	  sb_use_ref_ch -> setVisible( false );
 	}
       else
 	{
+	  genL->addWidget( sb_ref_ch,      row,  12, 1, 1, Qt::AlignHCenter );
+	  genL->addWidget( sb_use_ref_ch,  row,  13, 1, 1, Qt::AlignHCenter );
+	  
 	  ck_mwvprefs -> setVisible( false );
 	  ck_mwvprefs -> setChecked( false );
 	}
@@ -1632,9 +1673,11 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 13, 1, 2 );
-         connect( pb_applya, SIGNAL( clicked       ( ) ),
-                  this,      SLOT(   applied_to_all( ) ) );
+	int appall_pos = ( mainw->abde_mode_aprofile ) ? 14 : 13;
+	genL->addWidget( pb_applya, row++, appall_pos, 1, 2 );
+	//genL->addWidget( pb_applya, row++, 13, 1, 2 );
+	connect( pb_applya, SIGNAL( clicked       ( ) ),
+		 this,      SLOT(   applied_to_all( ) ) );
       }
       else
       {
@@ -2022,8 +2065,14 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 
   QString replicate_oname = QString::number( irow ) + ": Replicate";
   qDebug() << "replicate_oname -- " << replicate_oname;
- 
-  
+
+  QString use_ch_oname = QString::number( irow ) + ": RefChan --chann_name--";
+  qDebug() << "use_ch_oname -- " << use_ch_oname;
+   
+  QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--";
+  qDebug() << "use_ref_ch_oname -- " << use_ref_ch_oname;
+   
+   
   //if not checked, disable Report btn && otherwise:
    if ( !checked )
      {
@@ -2045,6 +2094,33 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       break;
 	     }
 	 }
+
+       //Reference? (set #) enable first...
+       for ( int i=0; i<sb_ref_chs.size(); ++i)
+	 {
+	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+	     {
+	       sb_ref_chs[ i ] -> setEnabled( true );
+	       break;
+	     }
+	 }
+       
+       
+       //Use Reference#
+       for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+	 {
+	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
+	     {
+	       sb_use_ref_chs[ i ] -> setEnabled( false );
+	       //break;
+	     }
+	   else //check the rest of chnns: if runReport unchecked, set false, otherwise true
+	     {
+	       ( ck_report_runs[ i ]->isChecked() ) ?
+		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
+	     }
+	 }
+       
      }
    else
      {
@@ -2065,6 +2141,56 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       sb_repl_groups[ i ] -> setEnabled( true );
 	       break;
 	     }
+	 }
+
+       //Reference? (set #) disable...
+       for ( int i=0; i<sb_ref_chs.size(); ++i)
+	 {
+	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+	     {
+	       sb_ref_chs[ i ] -> setEnabled( false );
+	       sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
+	       break;
+	     }
+	 }
+       
+       
+       //Use Reference?
+       for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+       	 {
+       	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
+       	     {
+       	       sb_use_ref_chs[ i ] -> setEnabled( true );
+       	       //break;
+       	     }
+	   else//check the rest of chnns: if runReport unchecked, set false, otherwise true
+	     {
+	       ( ck_report_runs[ i ]->isChecked() ) ?
+		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
+	     }
+	 }
+     }
+
+   //check if ALL runReport checkboxes ARE checked, then disable ALL "Use Reference?"
+   bool all_reports_run  = true;
+   for ( int ii = 0; ii < sl_chnsel.size(); ii++ )
+     {
+       if ( !ck_report_runs[ ii ]->isChecked() )
+	 {
+	   all_reports_run = false;
+	   break;
+	 }
+     }
+
+   if ( all_reports_run )
+     {
+       for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+       	 {
+	   sb_use_ref_chs[ i ] -> setEnabled( false );
+	   sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]-> minimum() );
+
+	   sb_ref_chs[ i ] -> setEnabled( false );
+	   sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
 	 }
      }
 }
@@ -2090,6 +2216,12 @@ void US_AnaprofPanGen::runChecked( bool checked )
    
    QString replicate_oname = QString::number( irow ) + ": Replicate";
    qDebug() << "replicate_oname -- " << replicate_oname;
+
+   QString use_ch_oname = QString::number( irow ) + ": RefChan --chann_name--";
+   qDebug() << "use_ch_oname -- " << use_ch_oname;
+   
+   QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--";
+   qDebug() << "use_ref_ch_oname -- " << use_ref_ch_oname;
    
    //if not checked, disable Report btn && MWV checkbox, and otherwise:
    if ( !checked )
@@ -2140,6 +2272,27 @@ void US_AnaprofPanGen::runChecked( bool checked )
 	       break;
 	     }
 	 }
+
+       // //Reference? (set #) enable first...
+       // for ( int i=0; i<sb_ref_chs.size(); ++i)
+       // 	 {
+       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+       // 	     {
+       // 	       sb_ref_chs[ i ] -> setEnabled( true );
+       // 	       break;
+       // 	     }
+       // 	 }
+       
+       
+       // //Use Reference#
+       // for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+       // 	 {
+       // 	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
+       // 	     {
+       // 	       sb_use_ref_chs[ i ] -> setEnabled( false );
+       // 	       break;
+       // 	     }
+       // 	 }
      }
    else
      {
@@ -2149,6 +2302,9 @@ void US_AnaprofPanGen::runChecked( bool checked )
 	   if ( ck_report_runs[ i ]->objectName().contains( run_report_oname ) )
 	     {
 	       ck_report_runs[ i ] -> setEnabled( true );
+	       //if abde, also set checked
+	       if ( mainw->abde_mode_aprofile )
+		 ck_report_runs[ i ] -> setChecked( true );
 	       break;
 	     }
 	 }
@@ -2182,6 +2338,27 @@ void US_AnaprofPanGen::runChecked( bool checked )
 	       break;
 	     }
 	 }
+       
+       // //Reference? (set #) disable...
+       // for ( int i=0; i<sb_ref_chs.size(); ++i)
+       // 	 {
+       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+       // 	     {
+       // 	       sb_ref_chs[ i ] -> setEnabled( false );
+       // 	       break;
+       // 	     }
+       // 	 }
+       
+       
+       // //Use Reference?
+       // for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+       // 	 {
+       // 	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
+       // 	     {
+       // 	       sb_use_ref_chs[ i ] -> setEnabled( true );
+       // 	       break;
+       // 	     }
+       // 	 }
      }
 
    //ALEXEY: check what's unselected -- if all triples then disable 2DSA && PCSA tabs
