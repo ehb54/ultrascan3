@@ -2066,10 +2066,10 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
   QString replicate_oname = QString::number( irow ) + ": Replicate";
   qDebug() << "replicate_oname -- " << replicate_oname;
 
-  QString use_ch_oname = QString::number( irow ) + ": RefChan --chann_name--";
+  QString use_ch_oname = QString::number( irow ) + ": RefChan --chann_name--" + channel_name;
   qDebug() << "use_ch_oname -- " << use_ch_oname;
    
-  QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--";
+  QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--" + channel_name;
   qDebug() << "use_ref_ch_oname -- " << use_ref_ch_oname;
    
    
