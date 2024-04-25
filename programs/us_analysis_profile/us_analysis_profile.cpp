@@ -2112,6 +2112,7 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
 	     {
 	       sb_use_ref_chs[ i ] -> setEnabled( false );
+	       sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]-> minimum() );
 	       //break;
 	     }
 	   else //check the rest of chnns: if runReport unchecked, set false, otherwise true
