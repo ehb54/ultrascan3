@@ -39,7 +39,7 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
    Q_OBJECT
 
    public:
-      class CSV_Data {
+      class US_GUI_EXTERN CSV_Data {
          public:
             int columnCount();
             int rowCount();
