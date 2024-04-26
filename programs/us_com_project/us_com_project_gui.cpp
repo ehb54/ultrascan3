@@ -1707,6 +1707,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
   QString failedID     = protocol_details[ "failedID" ];
+
+  QString expType      = protocol_details[ "expType" ];
     
   QDir directory( currDir );
   
@@ -2638,6 +2640,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
 	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	 }
      }
    else

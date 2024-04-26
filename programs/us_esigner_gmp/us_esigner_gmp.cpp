@@ -2189,6 +2189,8 @@ QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID
 	   run_info[ "intensityID" ]    = db->value( 20 ).toString();
 
 	   run_info[ "statusID" ]       = db->value( 21 ).toString();
+
+	   run_info[ "expType" ]        = db->value( 26 ).toString();
 	   	   
 	 }
      }
