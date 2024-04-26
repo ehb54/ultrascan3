@@ -8104,6 +8104,12 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
 	 protocol_details[ "operatorID" ]   = QString::number( rpRotor->operID );
          //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
+
+	 //define exp.Type!!
+	 if ( mainw->us_abde_mode ) 
+	   protocol_details[ "expType" ] = "ABDE";
+	 else
+	   protocol_details[ "expType" ] = "VELOCITY";
       }
       else
       {
@@ -8214,7 +8220,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	 << protocol_details[ "label" ]
 	 << protocol_details[ "gmpRun" ]
 	 << protocol_details[ "aprofileguid" ]
-	 << protocol_details[ "operatorID" ];
+	 << protocol_details[ "operatorID" ]
+         << protocol_details[ "expType" ];
      
      db->statusQuery( qry );
      //db->query( qry );

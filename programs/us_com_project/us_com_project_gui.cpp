@@ -1723,7 +1723,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
   qDebug() << "failedID: str, INT --  "
 	   << protocol_details[ "failedID" ]
-	   << protocol_details[ "failedID" ].toInt();  
+	   << protocol_details[ "failedID" ].toInt();
+
+  qDebug() << "ExpType: " << expType;
 
 
   //Re-attachment to FAILED GMP run
