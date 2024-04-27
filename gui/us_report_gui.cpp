@@ -23,10 +23,11 @@
 //US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
 US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Widgets()
 {
+  abde_mode = false;
   this->report_map           = report_map; 
 
   QList < QString > report_map_keys = report_map.keys();
-  QStringList wvl_passed;
+  wvl_passed. clear();
   for ( int i=0; i < report_map_keys.size(); ++i )
     wvl_passed << report_map_keys[ i ];
 
@@ -36,7 +37,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   if ( wvl_passed.size() == 1 && !wvl_passed[0].toInt() )
     wvl_passed.clear();
   
-  int init_index = 0; // 1st in a QMap;
+  init_index = 0; // 1st in a QMap;
     
   this->report               = report_map[ report_map_keys[ init_index ] ]; 
   this->report_copy_original = *report;
@@ -52,17 +53,219 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   /////////////////////////////////////////////////
 
   setWindowTitle( tr( "Channel Report Editor"));
-  
-  //setPalette( US_GuiSettings::frameColor() );
   setPalette( US_GuiSettings::normalColor() );
+
   main  = new QVBoxLayout( this );
   main->setSpacing( 2 );
   main->setContentsMargins( 2, 2, 2, 2 );
-
+  
   //Top level parameters
   QLabel* bn_report     = us_banner( QString( tr( "Report Parameters for channel: %1" ) ).arg( report->channel_name ), 1 );
   bn_report->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-  main->addWidget( bn_report );
+  main->addWidget( bn_report ); //         row++,  0, 1,-1 );
+
+  params    =  new QGridLayout();
+  params    ->setSpacing         ( 2 );
+  params    ->setContentsMargins ( 2, 2, 2, 2 );
+
+  lb_tot_conc       = us_label( tr( "Total Concentration" ) );
+  lb_tot_conc_tol   = us_label( tr( "Tolerance (+/-%)" ) );
+  lb_rmsd_limit     = us_label( tr( "RMSD (upper limit)" ) );
+  lb_av_intensity   = us_label( tr( "Minimum Intensity" ) );
+  lb_duration       = us_label( tr( "Experiment Duration" ) );
+  lb_duration_tol   = us_label( tr( "Tolerance (+/-%)" ) );
+  lb_wvl            = us_label( tr( "Wavelength" ) );
+  QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm, &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
+
+  le_tot_conc      = us_lineedit( QString::number(report->tot_conc),     0, false  );
+  
+  le_tot_conc_tol  = us_lineedit( QString::number(report->tot_conc_tol),     0, false  );
+  le_duration_tol  = us_lineedit( QString::number(report->experiment_duration_tol),     0, false  );
+  
+  le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit),   0, false  );
+  le_av_intensity  = us_lineedit( QString::number(report->av_intensity), 0, false  );
+  if ( report->channel_name.contains("Interf.") )
+    le_av_intensity->setEnabled( false );
+
+  le_tot_conc      -> setObjectName( "tot_conc" );
+  le_rmsd_limit    -> setObjectName( "rmsd" );
+  le_av_intensity  -> setObjectName( "av_intensity" );
+  
+  le_tot_conc_tol  -> setObjectName( "tot_conc_tol" );
+  le_duration_tol  -> setObjectName( "duration_tol" );
+
+  //set connecitons btw textChanged() and slot
+  connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_rmsd_limit, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );  
+   
+  qDebug() << "Report params on load: tot_conc, conc_tol, duraiton, duration_tol -- "
+	   <<  report->tot_conc
+	   <<  report->tot_conc_tol
+	   <<  report->experiment_duration
+	   <<  report->experiment_duration_tol;
+  
+  QList< int > dhms_dur;
+  double exp_dur = report->experiment_duration;
+  US_RunProtocol::timeToList( exp_dur, dhms_dur );
+  sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
+  sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
+  sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
+  sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+
+  //Connect Exp. Duration counters to changes:
+  connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_dd  ( int ) ) );
+  connect( sb_durat_hh,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_hh ( int ) ) );
+  connect( sb_durat_mm,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_mm ( int ) ) );
+  connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
+
+  //ALEXEY_NEW_REPORT: wvl
+  cb_wvl =  us_comboBox();
+  cb_wvl -> addItems( wvl_passed );
+  cb_wvl -> setCurrentIndex( init_index );
+  connect( cb_wvl,  SIGNAL( currentIndexChanged( int ) ),
+            this,   SLOT  ( changeWvl          ( int ) ) );
+  /////////////////////////////////////////////////////////////////////////////
+
+  pb_prev_wvl     = us_pushbutton(  tr( "previous" ), true, 0 );
+  pb_next_wvl     = us_pushbutton(  tr( "next"     ), true, 0 );
+  pb_prev_wvl     ->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
+  pb_next_wvl     ->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+  connect( pb_prev_wvl, SIGNAL( clicked    () ),
+	   this,        SLOT  ( wvl_prev   () ) );
+  connect( pb_next_wvl, SIGNAL( clicked    () ),
+	   this,        SLOT  ( wvl_next   () ) );
+  ////////////////////////////////////////////////////////////////////////////
+
+  pb_apply_all   = us_pushbutton(  tr( "Apply to all wvls" ), true, 0 );
+  connect( pb_apply_all, SIGNAL( clicked          () ),
+	   this,         SLOT  ( apply_all_wvls   () ) );
+
+  row = 0;
+  
+  params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
+  params->addWidget( le_tot_conc,       row,    2, 1, 2 );
+  
+  params->addWidget( lb_tot_conc_tol,   row,    4, 1, 2 );
+  params->addWidget( le_tot_conc_tol,   row,    6, 1, 2 );
+  
+  params->addWidget( lb_rmsd_limit,     row,    8, 1, 2 );
+  params->addWidget( le_rmsd_limit,     row,    10, 1, 2 );
+  
+  params->addWidget( lb_wvl,            row,    12, 1, 2 );
+  params->addWidget( cb_wvl,            row++,  14, 1, 2 );
+  
+  params->addWidget( lb_duration,       row,    0, 1, 2 );
+  params->addLayout( lo_duratlay,       row,    2, 1, 2 );
+  
+  params->addWidget( lb_duration_tol,   row,    4, 1, 2 );
+  params->addWidget( le_duration_tol,   row,    6, 1, 2 );  
+  
+  params->addWidget( lb_av_intensity,   row,    8, 1, 2 );
+  params->addWidget( le_av_intensity,   row,    10, 1, 2 );
+  
+  params->addWidget( pb_prev_wvl,       row,    12, 1, 2 );
+  params->addWidget( pb_next_wvl,       row++,  14, 1, 2 );
+  params->addWidget( pb_apply_all,      row++,  14, 1, 2 );
+
+  topContainerWidget = new QWidget;
+  topContainerWidget->setLayout( params );
+  main->addWidget( topContainerWidget );
+
+  ////////////////////////////////////////////////////////////////////////////
+  if ( report_map.keys().size() == 1) //single-wvl
+    {
+      pb_prev_wvl  ->setEnabled( false );
+      pb_next_wvl  ->setEnabled( false );
+      pb_apply_all ->setEnabled( false );
+      
+      pb_prev_wvl  ->hide();
+      pb_next_wvl  ->hide();
+      pb_apply_all ->hide();
+
+      cb_wvl ->setEnabled( false );       
+    }
+
+  /////////////////////////////////////////////////////////////////////////////
+  if ( init_index == 0 )
+    pb_prev_wvl  ->setEnabled( false );
+  if ( (init_index + 1 ) == cb_wvl->count() )
+    pb_next_wvl  ->setEnabled( false );
+  
+   
+  bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
+  bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  main->addWidget( bn_report_t );
+  
+  //Main Table
+  // bn_report_t        = NULL;
+  // params             = NULL;
+  genL               = NULL;
+  addRem_buttons     = NULL;
+  reportmask         = NULL;
+  lower_buttons      = NULL;
+
+  build_report_layout();
+
+}
+
+//ABDE
+void US_ReportGui::abde_mode_passed( void )
+{
+  abde_mode = true;
+  build_report_layout();
+}
+
+//Exp. Durat. counters
+void US_ReportGui::ssChgDuratTime_dd( int val )
+{
+  report->exp_time_changed = true;
+}
+void US_ReportGui::ssChgDuratTime_hh( int val )
+{
+  report->exp_time_changed = true;
+}
+void US_ReportGui::ssChgDuratTime_mm( int val )
+{
+  report->exp_time_changed = true;
+}
+void US_ReportGui::ssChgDuratTime_ss( int val )
+{
+  report->exp_time_changed = true;
+}
+
+//Layout build
+void US_ReportGui::build_report_layout( void )
+{
+  qDebug() << "Building Tabular Layout -- ";
+
+  /*
+  //clean params: upper panel
+  if ( params != NULL && params->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = params->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete params;
+      delete topContainerWidget;
+    }
+  qDebug() << "after params deletion";
+  //End cleaning layout
 
   params    =  new QGridLayout();
   params    ->setSpacing         ( 2 );
@@ -153,46 +356,72 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   connect( pb_apply_all, SIGNAL( clicked          () ),
 	   this,         SLOT  ( apply_all_wvls   () ) );
 
-
+  **/
   ////////////////////////////////////////////////////////////////////////////
-  
+  /**
   row = 0;
-  params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
-  params->addWidget( le_tot_conc,       row,    2, 1, 2 );
-  
-  params->addWidget( lb_tot_conc_tol,   row,    4, 1, 2 );
-  params->addWidget( le_tot_conc_tol,   row,    6, 1, 2 );
+  if (!abde_mode )
+    {
+      params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
+      params->addWidget( le_tot_conc,       row,    2, 1, 2 );
+      
+      params->addWidget( lb_tot_conc_tol,   row,    4, 1, 2 );
+      params->addWidget( le_tot_conc_tol,   row,    6, 1, 2 );
+      
+      params->addWidget( lb_rmsd_limit,     row,    8, 1, 2 );
+      params->addWidget( le_rmsd_limit,     row,    10, 1, 2 );
+      
+      params->addWidget( lb_wvl,            row,    12, 1, 2 );
+      params->addWidget( cb_wvl,            row++,  14, 1, 2 );
+      
+      params->addWidget( lb_duration,       row,    0, 1, 2 );
+      params->addLayout( lo_duratlay,       row,    2, 1, 2 );
+      
+      params->addWidget( lb_duration_tol,   row,    4, 1, 2 );
+      params->addWidget( le_duration_tol,   row,    6, 1, 2 );  
+      
+      params->addWidget( lb_av_intensity,   row,    8, 1, 2 );
+      params->addWidget( le_av_intensity,   row,    10, 1, 2 );
+      
+      params->addWidget( pb_prev_wvl,       row,    12, 1, 2 );
+      params->addWidget( pb_next_wvl,       row++,  14, 1, 2 );
+      params->addWidget( pb_apply_all,      row++,  14, 1, 2 );
+    }
+  else
+    {
+      params->addWidget( lb_duration,       row,    0, 1, 2 );
+      params->addLayout( lo_duratlay,       row,    2, 1, 2 );
+      
+      params->addWidget( lb_duration_tol,   row,    4, 1, 2 );
+      params->addWidget( le_duration_tol,   row,    6, 1, 2 );
 
-  params->addWidget( lb_rmsd_limit,     row,    8, 1, 2 );
-  params->addWidget( le_rmsd_limit,     row,    10, 1, 2 );
-
-  params->addWidget( lb_wvl,            row,    12, 1, 2 );
-  params->addWidget( cb_wvl,            row++,  14, 1, 2 );
-
-  params->addWidget( lb_duration,       row,    0, 1, 2 );
-  params->addLayout( lo_duratlay,       row,    2, 1, 2 );
-
-  params->addWidget( lb_duration_tol,   row,    4, 1, 2 );
-  params->addWidget( le_duration_tol,   row,    6, 1, 2 );  
-
-  params->addWidget( lb_av_intensity,   row,    8, 1, 2 );
-  params->addWidget( le_av_intensity,   row,    10, 1, 2 );
-
-  params->addWidget( pb_prev_wvl,       row,    12, 1, 2 );
-  params->addWidget( pb_next_wvl,       row++,  14, 1, 2 );
-  params->addWidget( pb_apply_all,      row++,  14, 1, 2 );
-  
+      lb_tot_conc   -> setVisible( false );
+      le_tot_conc   -> setVisible( false );
+      lb_tot_conc_tol -> setVisible( false );
+      le_tot_conc_tol -> setVisible( false );
+      lb_rmsd_limit -> setVisible( false );
+      le_rmsd_limit -> setVisible( false );
+      lb_wvl        -> setVisible( false );  
+      cb_wvl        -> setVisible( false );
+      lb_av_intensity -> setVisible( false );
+      le_av_intensity -> setVisible( false );
+      pb_prev_wvl  -> setVisible( false );
+      pb_next_wvl  -> setVisible( false );
+      pb_apply_all -> setVisible( false );
+      
+    }
+  **/
   // int ihgt        = le_tot_conc->height();
   // QSpacerItem* spacer1 = new QSpacerItem( 20, 0.75*ihgt, QSizePolicy::Expanding );
   // params->setRowStretch( row, 1 );
   // params->addItem( spacer1,  row++,  0, 1, 1 );
-
+  /***
   topContainerWidget = new QWidget;
   topContainerWidget->setLayout( params );
   main->addWidget( topContainerWidget );
 
   ////////////////////////////////////////////////////////////////////////////
-  if ( report_map_keys.size() == 1) //single-wvl
+  if ( report_map.keys().size() == 1) //single-wvl
     {
       pb_prev_wvl  ->setEnabled( false );
       pb_next_wvl  ->setEnabled( false );
@@ -211,45 +440,35 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   if ( (init_index + 1 ) == cb_wvl->count() )
     pb_next_wvl  ->setEnabled( false );
   
-  //main->addLayout( params );
 
   //Banner for Table
-  QLabel* bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
+  if ( bn_report_t != NULL )
+    delete bn_report_t;
+    
+  bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
   bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_report_t );
+  ***/
 
-  //Main Table
-  genL               = NULL;
-  addRem_buttons     = NULL;
-  reportmask         = NULL;
-  lower_buttons      = NULL;
-
-  build_report_layout();
-
-}
-
-//Exp. Durat. counters
-void US_ReportGui::ssChgDuratTime_dd( int val )
-{
-  report->exp_time_changed = true;
-}
-void US_ReportGui::ssChgDuratTime_hh( int val )
-{
-  report->exp_time_changed = true;
-}
-void US_ReportGui::ssChgDuratTime_mm( int val )
-{
-  report->exp_time_changed = true;
-}
-void US_ReportGui::ssChgDuratTime_ss( int val )
-{
-  report->exp_time_changed = true;
-}
-
-//Layout build
-void US_ReportGui::build_report_layout( void )
-{
-  qDebug() << "Building Tabular Layout -- ";
+  //For param layout
+  if ( abde_mode )
+    {
+      lb_tot_conc   -> setVisible( false );
+      le_tot_conc   -> setVisible( false );
+      lb_tot_conc_tol -> setVisible( false );
+      le_tot_conc_tol -> setVisible( false );
+      lb_rmsd_limit -> setVisible( false );
+      le_rmsd_limit -> setVisible( false );
+      lb_wvl        -> setVisible( false );  
+      cb_wvl        -> setVisible( false );
+      lb_av_intensity -> setVisible( false );
+      le_av_intensity -> setVisible( false );
+      pb_prev_wvl  -> setVisible( false );
+      pb_next_wvl  -> setVisible( false );
+      pb_apply_all -> setVisible( false );
+    }
+  
+  
   //Clean genL layout first:
   if ( genL != NULL && genL->layout() != NULL )
     {
@@ -270,7 +489,7 @@ void US_ReportGui::build_report_layout( void )
   genL        =  new QGridLayout();
   genL        ->setSpacing         ( 2 );
   genL        ->setContentsMargins ( 2, 2, 2, 2 );
-
+  
   //Table Header
   QLabel* lb_type     = us_label( tr( "Type" ) );
   QLabel* lb_method   = us_label( tr( "Method" ) );
@@ -284,15 +503,31 @@ void US_ReportGui::build_report_layout( void )
   
     
   row = 0;
+  //genL->addWidget( bn_report_t, row++,  0, 1,-1 );
   genL->addWidget( lb_type,     row,    0, 1, 2 );
-  genL->addWidget( lb_method,   row,    3, 1, 2 );
-  genL->addWidget( lb_low,      row,    5, 1, 2 );
-  genL->addWidget( lb_high,     row,    7, 1, 2 );
-  genL->addWidget( lb_intval,   row,    9, 1, 2 );
-  genL->addWidget( lb_total,    row,    11, 1, 2 );
-  genL->addWidget( lb_tol,      row,    13, 1, 2 );
-  genL->addWidget( lb_combined, row,    15, 1, 2 );
-  genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
+  if (!abde_mode )
+    {
+      genL->addWidget( lb_method,   row,    3, 1, 2 );
+      genL->addWidget( lb_low,      row,    5, 1, 2 );
+      genL->addWidget( lb_high,     row,    7, 1, 2 );
+      genL->addWidget( lb_intval,   row,    9, 1, 2 );
+      genL->addWidget( lb_total,    row,    11, 1, 2 );
+      genL->addWidget( lb_tol,      row,    13, 1, 2 );
+      genL->addWidget( lb_combined, row,    15, 1, 2 );
+      genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
+    }
+  else
+    {                  
+      genL->addWidget( lb_low,      row,    3, 1, 2 );
+      genL->addWidget( lb_high,     row,    5, 1, 2 );
+      genL->addWidget( lb_total,    row,    7, 1, 2 );
+      genL->addWidget( lb_tol,      row,    9, 1, 2 );
+      genL->addWidget( lb_combined, row,    11, 1, 2 );
+      genL->addWidget( lb_ind_plot, row++,  13, 1, 2 );
+      
+      lb_method  ->setVisible( false );
+      lb_intval  ->setVisible( false );    
+    }
   
   //End of table header
   
@@ -300,8 +535,17 @@ void US_ReportGui::build_report_layout( void )
   QComboBox* cb_method;
   QStringList sl_types;
   QStringList sl_methods;
-  sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW") << QString("Radius");
-  sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC") << QString("raw");
+  if ( !abde_mode )
+    {
+      sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW");
+      sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC");
+    }
+  else
+    {
+      sl_types     << QString("Radius") << QString("vbar") << QString("Density");
+      sl_methods   << QString("raw");
+    }
+  
   qDebug() << "Begin ReportItems iteration -- ";
    
   QLineEdit* le_low;    
@@ -323,6 +567,9 @@ void US_ReportGui::build_report_layout( void )
       //need to set index corr. to type in ReportItem
       int type_ind = cb_type->findText( curr_item.type );
       cb_type->setCurrentIndex( type_ind );
+
+      qDebug() << "ABDE reportGui replot: curr_item.type, type_ind -- "
+	       << curr_item.type << type_ind;
             
       //method ComboBox
       cb_method = us_comboBox();      
@@ -333,15 +580,15 @@ void US_ReportGui::build_report_layout( void )
       cb_method->setCurrentIndex( method_ind );
 
       //Check if the type "Radius": if not, disable method's "raw" item:
-      int raw_ind_method = cb_method->findText("raw");
-      if ( curr_item.type != "Radius" )
-	{
-	  SetComboBoxItemEnabled( cb_method, raw_ind_method, false );
-	}
-      else
-	{
-	  cb_method -> setEnabled( false );
-	}
+      //int raw_ind_method = cb_method->findText("raw");
+      // if ( curr_item.type != "Radius" )
+      // 	{
+      // 	  SetComboBoxItemEnabled( cb_method, raw_ind_method, false );
+      // 	}
+      // else
+      // 	{
+      // 	  cb_method -> setEnabled( false );
+      // 	}
       
       
       le_low        = us_lineedit( QString::number(curr_item.range_low),  0, false  );
@@ -387,15 +634,31 @@ void US_ReportGui::build_report_layout( void )
 	       this,   SLOT  ( verify_text ( const QString& ) ) );
       
       genL->addWidget( cb_type,           row,    0, 1, 2 );
-      genL->addWidget( cb_method,         row,    3, 1, 2 );
-      genL->addWidget( le_low,            row,    5, 1, 2 );
-      genL->addWidget( le_high,           row,    7, 1, 2 );
-      genL->addWidget( le_intval,         row,    9, 1, 2 );
-      genL->addWidget( le_total,          row,    11, 1, 2 );
-      genL->addWidget( le_tol,            row,    13, 1, 2 );
-      genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
-      genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
-
+      if ( !abde_mode )
+	{
+	  genL->addWidget( cb_method,         row,    3, 1, 2 );
+	  genL->addWidget( le_low,            row,    5, 1, 2 );
+	  genL->addWidget( le_high,           row,    7, 1, 2 );
+	  genL->addWidget( le_intval,         row,    9, 1, 2 );
+	  genL->addWidget( le_total,          row,    11, 1, 2 );
+	  genL->addWidget( le_tol,            row,    13, 1, 2 );
+	  genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
+	  genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
+	}
+      else
+	{
+	  genL->addWidget( le_low,            row,    3, 1, 2 );
+	  genL->addWidget( le_high,           row,    5, 1, 2 );
+	  genL->addWidget( le_total,          row,    7, 1, 2 );
+	  genL->addWidget( le_tol,            row,    9, 1, 2 );
+	  genL->addWidget( ck_combined_plot,  row,    11, 1, 2, Qt::AlignHCenter );
+	  genL->addWidget( ck_ind_plot,       row++,  13, 1, 2, Qt::AlignHCenter );
+	  
+	  cb_method  ->setVisible( false );
+	  le_intval  ->setVisible( false );
+	  us_setReadOnly ( le_total, false );
+	}
+      
       //Slots for cb_type | cb_method
       connect( cb_type,    SIGNAL( activated        ( int )  ),
                this,       SLOT  ( type_changed     ( int )  ) );
@@ -620,16 +883,29 @@ void US_ReportGui::build_report_layout( void )
     
   row = 0;
   reportmask->addWidget( bn_repmask_t,     row++,  0, 1, 6 );
-  reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
-  reportmask->addWidget( ck_min_intensity, row,    2, 1, 2 );
-  reportmask->addWidget( pseudo3d_box,     row++,  4, 4, 2 );
+  if( !abde_mode )
+    {
+      reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
+      reportmask->addWidget( ck_min_intensity, row,    2, 1, 2 );
+      reportmask->addWidget( pseudo3d_box,     row++,  4, 4, 2 );
+      
+      reportmask->addWidget( ck_rmsd,          row,    0, 1, 2 );
+      reportmask->addWidget( ck_integration,   row++,  2, 1, 2 );
+      
+      reportmask->addWidget( ck_exp_duration,  row,    0, 1, 2 );
+      reportmask->addWidget( ck_plots,         row++,  2, 1, 2 );
+    }
+  else
+    {
+      reportmask->addWidget( ck_exp_duration,  row++,  0, 1, 2 );
+      reportmask->addWidget( ck_integration,   row++,  0, 1, 2 );
+      reportmask->addWidget( ck_plots,         row++,  0, 1, 2 );
 
-  reportmask->addWidget( ck_rmsd,          row,    0, 1, 2 );
-  reportmask->addWidget( ck_integration,   row++,  2, 1, 2 );
-  
-  reportmask->addWidget( ck_exp_duration,  row,    0, 1, 2 );
-  reportmask->addWidget( ck_plots,         row++,  2, 1, 2 );
-  
+      ck_tot_conc      -> setVisible( false );
+      ck_min_intensity -> setVisible( false );
+      ck_rmsd          -> setVisible( false );
+      pseudo3d_box     -> setVisible( false );
+    }
   main->addLayout( reportmask );
   
   //Build | Re-build Lower buttons layout
@@ -712,6 +988,8 @@ void US_ReportGui::update_report( void )
     close();
     return;
   *****/
+
+  report->report_changed = true;
   
   close();
 }
@@ -761,7 +1039,7 @@ void US_ReportGui::verify_text( const QString& text )
 	  isErrorField[ oname ] = false;
 
 	  //ALEXEY: for a given row, compute 'Fraction of Total' (read-only) as '(Int_Val / Total Conc.) * 100%'
-	  if ( oname.contains(": intval") )
+	  if ( oname.contains(": intval") && !abde_mode )
 	    {
 	      double tot_conc_val = le_tot_conc ->text().toDouble();
 	      if ( text.toDouble() > tot_conc_val ) 
@@ -777,7 +1055,7 @@ void US_ReportGui::verify_text( const QString& text )
 	      fraction_of_total_widget -> setPalette( *palette );
 	    }
 	  //ALEXEY: check the same for tot_conc: apply to all ReportItems' 'Fraction of Total'
-	  if ( oname.contains("tot_conc") )
+	  if ( oname.contains("tot_conc") && !abde_mode )
 	    {
 	      int r_item_num = report->reportItems.size();
 
@@ -839,10 +1117,15 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].type = cb_type->currentText();
       
       //method
-      QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
-      qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
-      report->reportItems[ ii ].method = cb_method->currentText();
-      
+      if ( !abde_mode )
+	{
+	  QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
+	  qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
+	  report->reportItems[ ii ].method = cb_method->currentText();
+	}
+      else
+	report->reportItems[ ii ].method = "raw";
+	
       //range_low
       QLineEdit * le_low    = containerWidget->findChild<QLineEdit *>( stchan + "low" );
       qDebug() << "ii, le_low->text()" << ii << le_low->text();
@@ -854,9 +1137,13 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].range_high = le_high->text().toDouble();
 
       //integration value
-      QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
-      qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
-      report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
+      if ( !abde_mode )
+	{
+	  QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
+	  qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
+	  report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
+	}
+           
       
       //tolerance
       QLineEdit * le_tol  = containerWidget->findChild<QLineEdit *>( stchan + "tol" );
@@ -979,8 +1266,8 @@ void US_ReportGui::add_row( void )
 
   if ( report-> channel_name . contains("Interf.") )
     {
-      initItem.type             = QString("s");
-      initItem.method           = QString("2DSA-IT");
+      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
       initItem.range_low        = 0;
       initItem.range_high       = 0;
       initItem.integration_val  = 0;
@@ -992,10 +1279,10 @@ void US_ReportGui::add_row( void )
     }
   else
     {
-      initItem.type             = QString("s");
-      initItem.method           = QString("2DSA-IT");
-      initItem.range_low        = 3.2;
-      initItem.range_high       = 3.7;
+      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
+      initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
+      initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
       initItem.integration_val  = 0.57;
       initItem.tolerance        = 10;
       initItem.combined_plot    = 1;
@@ -1004,7 +1291,7 @@ void US_ReportGui::add_row( void )
 
   //Compute 'Fraction of Total' based on tot_conc:
   double tot_conc_val = le_tot_conc -> text().toDouble();
-  initItem.total_percent    = ( initItem.integration_val / tot_conc_val) * 100.0;
+  initItem.total_percent    = ( abde_mode ) ? 95 : ( initItem.integration_val / tot_conc_val) * 100.0;
   
   report->reportItems.push_back( initItem );
 
@@ -1116,8 +1403,11 @@ void US_ReportGui::changeWvl( int ndx )
    sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
 
    //re-build genL layout ( lower portion, the reportItems )
+   //init_index = ndx;
    build_report_layout( );
 
+   qDebug() << "in ChangeWvl: after build_report_layout( )1";
+   
    //Reconnect upper-portion Gui elements to ::verify_text()
    connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
 	    this,          SLOT  ( verify_text ( const QString& ) ) );
@@ -1129,7 +1419,8 @@ void US_ReportGui::changeWvl( int ndx )
 	    this,          SLOT  ( verify_text ( const QString& ) ) );
    connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
 	    this,          SLOT  ( verify_text ( const QString& ) ) );  
-   
+
+   qDebug() << "in ChangeWvl: after build_report_layout( )2";
    //Next/Previous wvl btns
    if ( ndx == 0 )
      pb_prev_wvl->setEnabled( false );
@@ -1140,7 +1431,8 @@ void US_ReportGui::changeWvl( int ndx )
      pb_next_wvl->setEnabled( false );
    else
      pb_next_wvl->setEnabled( true );
-    
+
+   qDebug() << "in ChangeWvl: after build_report_layout( )3";
 }
 
 // Slot to select next channel's wavelength     
@@ -1162,12 +1454,16 @@ void US_ReportGui::wvl_next( void )
   pb_prev_wvl ->setEnabled( true );
   int row = cb_wvl->currentIndex() + 1;
 
+  qDebug() << "WVL_NEXT: 1";
   if ( (row + 1 ) <= cb_wvl->count() )
     {
+      qDebug() << "WVL_NEXT: 1A";
       cb_wvl->setCurrentIndex( row );
+      qDebug() << "WVL_NEXT: 2";
       
       if ( (row + 1 ) == cb_wvl->count() )
 	pb_next_wvl ->setEnabled( false );
+      qDebug() << "WVL_NEXT: 3";
     }
   else
     pb_next_wvl->setEnabled( row < cb_wvl->count() );
@@ -1321,10 +1617,15 @@ void US_ReportGui::type_changed( int t)
   //high
   QLineEdit * le_high    = containerWidget->findChild<QLineEdit *>( high_oname );
 
+  /*
   cb_method -> setEnabled( true );
+
+  qDebug() << "[in type_changed] 1" ;
   
   QString type   =  cb_type->itemText( t );
   int raw_ind_method = cb_method->findText("raw");
+
+  qDebug() << "[in type_changed] 2" ;
 
   if ( type == "Radius" )
     {
@@ -1348,6 +1649,7 @@ void US_ReportGui::type_changed( int t)
       int it_ind_method = cb_method->findText("2DSA-IT");
       cb_method -> setCurrentIndex( it_ind_method );
     }
+  */
 }
 
 //enable/disable QComboBox Item

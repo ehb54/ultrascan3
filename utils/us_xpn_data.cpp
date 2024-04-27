@@ -93,6 +93,11 @@ DbgLv(1) << "XpDa:cnc: qdrvrs|sqtab content error:"
 // Check Experiment status
 int US_XpnData::checkExpStatus( QString runid )
 {
+  if ( ! dbxpn.open() )
+    {
+      qDebug() << "In XPN:checkExpStatus:: ! dbxpn.open() !!! ";
+    }
+  
    QString tabname( "ExperimentRun" );
    QSqlQuery  sqry;
    QString schname( "AUC_schema" );
@@ -602,7 +607,9 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
 
    if ( ! dbxpn.open() )
    {
-      return false;
+     qDebug() << "XPN: reimport_data: !dbxpn.open() !!! runID, scanMask -- "
+	      << runID << scanMask;
+     return false;
    }
 
    int oarows    = tAsdata.count();     // Get old row counts
@@ -630,6 +637,7 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
       arows      = update_xpndata( runId, 'A' );
       status     = ( status  ||  arows > oarows );
 DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
+ qDebug() << "XpDa: rei_dat: arows oarows status" << arows << oarows << status; 
    }
 
    if ( fscnf )
@@ -651,6 +659,8 @@ DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
    }
 
 DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+ qDebug() << "XpDa: rei_dat: arows frows irows wrows"
    << arows << frows << irows << wrows << "status" << status;
 //*DEBUG*
 //status=true;

@@ -119,6 +119,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
   QLabel* lbl_dens_0;
   QLabel* lbl_vbar;
   QLabel* lbl_MW;
+  QLabel* lbl_refc;
+  QLabel* lbl_use_refc;
 
       QList< QLineEdit* >    le_channs;
       QList< QLineEdit* >    le_lcrats;
@@ -130,6 +132,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
   QList< QLineEdit* >    le_dens0s;
   QList< QLineEdit* >    le_vbars;
   QList< QLineEdit* >    le_MWs;
+  QList< QSpinBox* >     sb_ref_chs;
+  QList< QSpinBox* >     sb_use_ref_chs;
 
       QList< QCheckBox* >    ck_runs;
       QList< QCheckBox* >    ck_report_runs;

@@ -50,8 +50,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connection_status = false;
    automode = false;
    usmode = false;
-
    us_prot_dev_mode = false;
+   us_abde_mode = false;
    
    global_reset = false;
    instruments_in_use.clear();
@@ -421,14 +421,73 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
 void US_ExperimentMain::set_abde_mode_aprofile( void )
 {
   qDebug() << "[SETTING] ABDE MODE: ";
+  us_abde_mode = true;
   epanAProfile->sdiag-> abde_mode_aprofile = true;
+  
+  //abde_sv_mode_change_reset_reports( "ABDE" ); 
 }
 
 void US_ExperimentMain::unset_abde_mode_aprofile( void )
 {
   qDebug() << "[UNSETTING] ABDE MODE: ";
+  us_abde_mode = false;
   epanAProfile->sdiag-> abde_mode_aprofile = false;
+  
+  //re-initialize respectively AProfile's report/reportItem portions
+  // abde_sv_mode_change_reset_reports( "SV" ); 
+  
 }
+
+//re-initialize respectively AProfile's report/reportItem portions
+void US_ExperimentMain::abde_sv_mode_change_reset_reports( QString exptype )
+{
+  bool abde_mode = ( exptype == "ABDE" ) ? true : false;
+  qDebug() << "in abde_sv_mode_change_reset_reports(): abde_mode ?" << abde_mode;
+  
+  //Aprofile
+  US_AnaProfile* aprof = get_aprofile();
+
+  //deal with general report  sets
+  
+
+  //deal with ch_reports
+  QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+  
+  for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+            
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString c_wvl = tri.key();
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].report_changed = false;;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].exp_time_changed = false;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].DBread = false;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].interf_report_changed = false;
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].reportItems.clear();
+	  US_ReportGMP::ReportItem initItem;
+	  initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+	  initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
+
+	  qDebug() << "type, method -- " << initItem.type << ", " << initItem.method;
+	  initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
+	  initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
+	  initItem.integration_val  = 0.57;
+	  initItem.tolerance        = 10;
+	  initItem.total_percent    = 95;
+	  initItem.combined_plot    = 1;
+	  initItem.ind_combined_plot  = 1;
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].reportItems.push_back( initItem );
+
+	}
+    }
+}
+
 
 void US_ExperimentMain::us_mode_passed( void )
 {
@@ -438,6 +497,9 @@ void US_ExperimentMain::us_mode_passed( void )
   this->tabWidget->setTabText( 7, "8: Submit");
   
 }
+
+
+	  
 
 void US_ExperimentMain::auto_mode_passed( void )
 {
@@ -1016,6 +1078,18 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
       mainw->currProto.runname = rname;
    loaded_proto = 1;
 
+   //if ABDE protocol, or NOT
+   if ( mainw->currProto.rpRotor.exptype == "Buoyancy" )
+     {
+       mainw-> set_abde_mode_aprofile();
+       mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+     }
+   else
+     {
+       mainw->unset_abde_mode_aprofile();
+       mainw-> abde_sv_mode_change_reset_reports( "SV" ); 
+     }
+   
    // Initialize all other panels using the new protocol
 
    qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
@@ -5495,6 +5569,8 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
       
       QMap < QString, US_ReportGMP > triple_reports = ri.value();
       QMap < QString, US_ReportGMP >::iterator tri;
+
+      int triple_count = 0;
       for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
 	{
 	  QString curr_guid = US_Util::new_guid();
@@ -5508,6 +5584,14 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
 		   << ri.key() << ": " << tri.key()
 		   << " -- " << reportID << " / "
 		   << curr_guid;
+
+	  ++triple_count;
+	  //For ABDE case, stop after recording the 1st-in-channel report:
+	  if (  mainw->us_abde_mode && triple_count == 1 )
+	    {
+	      qDebug() << "Exiting GMP Report DB writing after the 1st triple in a channel...";
+	      break;
+	    }
 	}
 
       //now, insert reportIDs && reportGUIDs for current channel:
@@ -5598,6 +5682,10 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   jsonMask += QString("}");
   
   //Save parent Report
+  QString wvl_to_db = QString::number( report.wavelength );
+  if ( mainw->us_abde_mode )
+    wvl_to_db = "-1";
+  
   QStringList qry;
   qry << "new_report"
       << reportGUID
@@ -5683,6 +5771,34 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
    qDebug() << "IN Saving APRofile: aprof  -> report_mask -- " << aprof->report_mask;
+
+   //DEBUG: look at the ch_reports && it's items
+   QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+   for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString wvl_cc         = tri.key();
+	  US_ReportGMP report_cc = tri.value(); 
+	  qDebug() << "In saving: channel, wvl, Report --- "
+		   << chan_desc
+		   << wvl_cc;
+
+	  for ( int ii = 0; ii < report_cc.reportItems.size(); ii++ )
+	    {
+	      US_ReportGMP::ReportItem curr_reportItem = report_cc.reportItems[ ii ];
+	      qDebug() << "ReportItem # " << ii
+		       << "type -- "      << curr_reportItem.type
+		       << "method -- "    << curr_reportItem.method
+		       << "range_low -- " << curr_reportItem.range_low;
+	    }
+	}
+    }
+   //END DEBUG
      
    //save reports BEFORE writng down Aprofile's XML
    saveReports( aprof ); //<-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5735,9 +5851,6 @@ DbgLv(1) << "EGAp:svAP:  qry" << qry;
 DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
  << dbP->lastError();
    }
-
-   
-   
 
    return;
 }
@@ -6235,7 +6348,8 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	  
 	  QMessageBox::warning( this,
 				tr( "License Key Nearing Expiraiton" ),
-				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
+				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") )
+				.arg(daysToExpiration));
 	  
 	}
       
@@ -7990,6 +8104,12 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
 	 protocol_details[ "operatorID" ]   = QString::number( rpRotor->operID );
          //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
+
+	 //define exp.Type!!
+	 if ( mainw->us_abde_mode ) 
+	   protocol_details[ "expType" ] = "ABDE";
+	 else
+	   protocol_details[ "expType" ] = "VELOCITY";
       }
       else
       {
@@ -8100,7 +8220,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	 << protocol_details[ "label" ]
 	 << protocol_details[ "gmpRun" ]
 	 << protocol_details[ "aprofileguid" ]
-	 << protocol_details[ "operatorID" ];
+	 << protocol_details[ "operatorID" ]
+         << protocol_details[ "expType" ];
      
      db->statusQuery( qry );
      //db->query( qry );

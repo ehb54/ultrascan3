@@ -6702,6 +6702,8 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
 	   	   
 	 }
      }

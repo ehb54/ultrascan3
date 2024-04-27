@@ -1078,7 +1078,11 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        pb_remove_sme     -> hide();
             
      }
- 
+
+   expType_old = cb_exptype ->currentText();
+
+   qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+
 }
 
 void US_ExperGuiRotor::init_grevs( void )
@@ -1481,17 +1485,34 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
 
 
    //if ABDE expType -- translate to 8. AProfie
+   bool expType_changed = ( exptype == expType_old ) ? false : true;
+   qDebug() << "[in Rotor: savePanel()]: exptype, expType_old,  expType_changed? "
+	    << exptype << ", " << expType_old << ": " << expType_changed;
+   
    if ( !first_time_init )
      {
        if ( exptype == "Buoyancy" )
-	 mainw->set_abde_mode_aprofile();
+	 {
+	   mainw-> set_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+	 }
        else
-	 mainw->unset_abde_mode_aprofile();
+	 {
+	   mainw->unset_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "SV" ); 
+	 }
      }
    else
      {
        if (exptype == "Buoyancy" )
-	 mainw->set_abde_mode_aprofile();
+	 {
+	   qDebug() << "ABDE set in Rotor 1st time!";
+	   mainw->set_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+	 }
      }
 }
 
@@ -2433,7 +2454,11 @@ void US_ExperGuiSolutions::savePanel()
 	   else
 	     {
 	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
-	       ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       if ( ii < rpSolut->chsols.size() )
+		 ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       else
+		 ch_comment      = QString("");                                           //are comments saved this way???
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): after reding comment-- ";
 	       if ( solution_comment_init[ ii ] )
 		 commentStrings( solution, ch_comment, cs, ii );
 	       qDebug() << "sol save 2aBd_1: went through 1st time NON-zero";
@@ -2502,7 +2527,6 @@ DbgLv(1) << "EGSo: svP:  sids " << sids;
      cb_solution->disconnect();
       
    }
- 
 }
 
 // Get a specific panel value
@@ -2973,8 +2997,6 @@ DbgLv(1) << "EGRn:inP:  call rbS";
    QString ch_none( "none" );
    DbgLv(1) << "EGRn:inP:  nrnchan" << nrnchan;
    
-
-
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
       QString channel     = rchans[ ii ];
@@ -2996,6 +3018,10 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
 
       cc_lrads[ ii ]->setValue( locrads[ ii ] );
       cc_hrads[ ii ]->setValue( hicrads[ ii ] );
+
+      //abde
+      cc_buff_sp_ck[ ii ]->setChecked( abde_buff[ ii ] );
+      qDebug() << "Ranges::abde_buffes for chann " << ii << " is -- " << abde_buff[ ii ]; 
 
       cc_labls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );
@@ -3083,6 +3109,9 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setVisible( false );
       cc_hrads[ ii ]->setVisible( false );
       cc_lbtos[ ii ]->setVisible( false );
+
+      //abde
+      cc_buff_sp[ ii ]->setVisible( false );
    }
 
 
@@ -3237,9 +3266,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): N/A " ).arg(i+1);
 	  cb_scancount->addItem( scancount_stage );
 	}
-      
-      
-
+     
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
@@ -3352,6 +3379,51 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	   cc_hrads[ ii ]->setEnabled( false );
 	 }
      }
+
+   //For abde only, chow buff_spectra cks
+   if ( mainw->us_abde_mode )
+     {
+       qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   //check if channel MWL
+	   int kswavl          = swvlens[ ii ].count();
+
+	   if( kswavl > 1 )
+	     {
+	       genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
+	       cc_buff_sp[ ii ]-> setVisible( true );
+	       //cc_buff_sp_ck[ ii ]->setChecked( false );
+
+	       qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ii ] );
+	       cc_buff_sp[ ii ]-> setVisible( false );
+	     }
+	 }
+     }
+   else
+     {
+       qDebug() << "ABDE, removing cks " << mainw->us_abde_mode;
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   // QString o_name = QString::number( ii ) + ": ck_buff_spectrum_container";
+	   qDebug() << "[remove]o_name " << cc_buff_sp[ ii ]->objectName();
+	   
+	   // QWidget* c_w = genL->findChild<QWidget *>( o_name, Qt::FindChildrenRecursively ); //Qt::FindDirectChildrenOnly);
+	   // if ( c_w != NULL )
+	   //   {
+	   //     qDebug() << "Widget found!";
+	   //     genL->removeWidget( c_w );
+	   //     delete c_w;
+	   //  }
+
+	   genL->removeWidget( cc_buff_sp[ ii ] );
+	   cc_buff_sp[ ii ]-> setVisible( false );
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
@@ -3367,6 +3439,9 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       rpRange->chrngs[ ii ].lo_rad  = locrads[ ii ];
       rpRange->chrngs[ ii ].hi_rad  = hicrads[ ii ];
 
+      //abde
+      rpRange->chrngs[ ii ].abde_buffer_spectrum = abde_buff[ ii ];
+
       rpRange->chrngs[ ii ].wvlens.clear();
 
       for ( int jj = 0; jj < swvlens[ ii ].count(); jj++ )
@@ -3374,6 +3449,7 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
          rpRange->chrngs[ ii ].wvlens << swvlens[ ii ][ jj ];
       }
 DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpRange->chrngs[ii].wvlens.count();
+ qDebug() << "Ranges::save, hi, buff_bool -- " << rpRange->chrngs[ ii ].hi_rad << rpRange->chrngs[ ii ].abde_buffer_spectrum;
    }
 }
 
@@ -3657,7 +3733,6 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
      subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                            mainw->connection_status );               // ALEXEY: use top-level connection boolean!
 
-
    ck_run     ->setChecked( have_run   );
    ck_project ->setChecked( have_proj  );
    ck_rotor_ok->setChecked( chgd_rotor );
@@ -3709,6 +3784,32 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
 
+   //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
+   //If not, inform user, disable "Submit"/"Save Protocol" buttons
+   if ( mainw->us_abde_mode )
+     {
+       qDebug() << "Submit::init: ABDE_MODE ";
+       QStringList msg_to_user;
+       if ( !extinctionProfilesExist( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+
+	   msg_to_user.removeDuplicates();
+	   
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+				     "\n\"Database:Manage Buffer Data\"\n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
+     }
+
+   
+   
    //DEBUG
    //Opt system check, what cells will be uvvis and/or interference
    QStringList oprof   = sibLValue( "optical", "profiles" );
@@ -3725,7 +3826,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 {
 	   if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
 	     {
-	       qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	       //qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
 	       active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
 	     }
 	   
@@ -3736,11 +3837,200 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 ++nchannels_uvvis;
      }
 
-   qDebug() << "Upload::initPanel(): oprof -- " << oprof;
-   qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
-	    << ncells_interference << ", " << nchannels_uvvis;
+   //qDebug() << "Upload::initPanel(): oprof -- " << oprof;
+   // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
+   // 	    << ncells_interference << ", " << nchannels_uvvis;
    
 }
+
+bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
+{
+  bool all_profiles_exist = true;
+  msg_to_user. clear();
+  qDebug() << "Size rpSolut->nschan, rpRange->nranges -- "
+	   << rpSolut->nschan
+	   << rpRange->nranges;
+
+  //DB
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) +  db.lastError() );
+      
+      return false;
+    }
+
+  //over channels
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel = rpRange->chrngs[ ii ].channel;
+      QList< double > all_wvls = rpRange->chrngs[ ii ].wvlens;
+      int    nwavl    = all_wvls.count();
+      bool   buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+
+      if ( nwavl > 1 )
+	{
+	  QString sol_id = rpSolut->chsols[ii].sol_id;
+	  US_Solution*   solution = new US_Solution;
+	  int solutionID = sol_id.toInt();
+
+	  int status = US_DB2::OK;
+	  status = solution->readFromDB  ( solutionID, &db );
+	  // Error reporting
+	  if ( status == US_DB2::NO_BUFFER )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "The buffer this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status == US_DB2::NO_ANALYTE )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "One of the analytes this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Database Problem" ),
+				    tr( "Database returned the following error: \n" ) +  db.lastError() );
+	      return false;
+	    }
+	  //End of reading Solution:
+
+	  //Reading Analytes
+	  int num_analytes = solution->analyteInfo.size();
+	  for (int i=0; i < num_analytes; ++i )
+	    {
+	      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+	      QString a_name     = analyte.description;
+	      QString a_ID       = analyte.analyteID;
+	      QString a_GUID     = analyte.analyteGUID;
+
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+		       << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+
+	      analyte.extinction.clear();
+	      analyte.load( true, a_GUID, &db );
+
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Analyte]Extinction Profile wvls: " 
+		       << analyte.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString a_desc = "ANALYTE: " + a_name;
+	      if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+	    }
+	  //End of reading Analytes
+
+	  //Reading Buffers
+	  if ( buff_req ) //only if buffer spectrum required
+	    {
+	      US_Buffer buffer = solution->buffer;
+	      QString b_name   = buffer.description;
+	      QString b_ID     = buffer.bufferID;
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+	      
+	      buffer.extinction.clear();
+	      buffer.readFromDB( &db, b_ID );
+	      
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Buffer]Extinction Profile wvls: " 
+		       << buffer.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString b_desc = "BUFFER: " + b_name;
+	      if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+	    }
+	  //End of reading Buffers
+	}
+    }
+  return all_profiles_exist;
+}
+
+bool US_ExperGuiUpload::validExtinctionProfile( QString desc, QList< double > all_wvls,
+						QList< double > ext_prof, QStringList& msg_to_user )
+{
+  bool eprofile_ok;
+  QString msg;
+    
+  //ranges from protocol
+  int    nwavl_p    = all_wvls.count();
+  double lo_wavl_p  = all_wvls[ 0 ];
+  double hi_wavl_p  = all_wvls[ nwavl_p - 1 ];
+
+  //ranges in extinction profile
+  int    nwavl_e    = ext_prof.count();
+  if ( nwavl_e > 0 )
+    {
+      double lo_wavl_e  = ext_prof[ 0 ];
+      double hi_wavl_e  = ext_prof[ nwavl_e - 1 ];
+      
+      eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
+      eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
+
+      msg = "is out of range; ";
+    }
+  else //empty ext. profile
+    {
+      eprofile_ok = false;
+      msg = "does not exist; ";
+    }
+
+  //check existence of all wavelengths (for non-empty ext.prof.)
+  if ( nwavl_e > 0 )
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls.size(); ++i)
+	{
+	  double p_wvl = all_wvls[i];
+	  wvl_present[ p_wvl ] = false;
+	  for (int j=0; j<ext_prof.size(); j++)
+	    {
+	      double e_wvl = ext_prof[j];
+	      if ( p_wvl == e_wvl )
+		{
+		  wvl_present[ p_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      eprofile_ok = false;
+	      msg += "some wavelengths missing; ";
+	      break; 
+	    }
+	}
+    }
+  
+  //messages
+  if ( !eprofile_ok )
+    msg_to_user << QString(tr("%1: Extinction profile %2"))
+      .arg( desc )
+      .arg( msg );
+  
+  return eprofile_ok;
+}
+
+
 
 bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )
 {

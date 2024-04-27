@@ -216,6 +216,8 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< double> ld_dens_0s;
       QList< double> gm_vbars;
       QList< double> gm_mws;
+      QList< int > ref_channels;
+      QList< int > ref_use_channels;
 
       QList< int > scan_excl_begin;
       QList< int > scan_excl_end;
