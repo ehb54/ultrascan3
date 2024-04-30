@@ -170,7 +170,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    le_other = us_lineedit("");
    le_other->setMaxLength(3);
    QHBoxLayout* lyt_other = new QHBoxLayout();
-   lyt_other->setSpacing(1);
+   lyt_other->setSpacing(2);
    lyt_other->setMargin(0);
    lyt_other->addLayout(lyt_rb_other);
    lyt_other->addWidget(le_other);
@@ -184,8 +184,73 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    pb_reset = us_pushbutton("Reset");
    pb_show_red = us_pushbutton("Show Bad Data");
 
+   QString vert_sts = "QScrollBar:vertical {"
+                      "border: 2px solid black;"
+                      "background: #DCDCDC;"
+                      "width: 15px;"
+                      "margin: 20px 0px 20px 0;"
+                      "}"
+                      "QScrollBar::handle:vertical {"
+                      "background: black;"
+                      "min-height: 20px;"
+                      "}"
+                      "QScrollBar::add-line:vertical {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "height: 20px;"
+                      "   subcontrol-position: bottom;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::sub-line:vertical {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "height: 20px;"
+                      "   subcontrol-position: top;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {"
+                      "   border: 1px solid #DCDCDC;"
+                      "   width: 3px;"
+                      "   height: 3px;"
+                      "   background: #DCDCDC;"
+                      "}";
+
+   QString horz_sts = "QScrollBar:horizontal {"
+                      "border: 2px solid black;"
+                      "background: #DCDCDC;"
+                      "height: 15px;"
+                      "margin: 0px 20px 0 20px;"
+                      "}"
+                      "QScrollBar::handle:horizontal {"
+                      "background: black;"
+                      "min-width: 20px;"
+                      "}"
+                      "QScrollBar::add-line:horizontal {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "width: 20px;"
+                      "   subcontrol-position: right;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::sub-line:horizontal {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "width: 20px;"
+                      "   subcontrol-position: left;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {"
+                      "   border: 1px solid #DCDCDC;"
+                      "   width: 3px;"
+                      "   height: 3px;"
+                      "   background: #DCDCDC;"
+                      "}";
+
+
    editable = true;
    tv_data = new CSVTableView();
+   tv_data->verticalScrollBar()->setStyleSheet(vert_sts);
+   tv_data->horizontalScrollBar()->setStyleSheet(horz_sts);
    tv_data->setSortingEnabled(true);
    model = new QStandardItemModel(500, 100);
    proxy = new CSVSortFilterProxyModel();
