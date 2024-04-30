@@ -230,32 +230,37 @@ void US_Spectrum::load_basis()
 
    if(dialog.exec())
    {
-      US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-      csv_loader->setMessage("1st Column -> WAVELENGTH ; 2nd Column -> OD");
       files = dialog.selectedFiles();
       QVector<US_CSV_Loader::CSV_Data> data_list;
       for ( int ii = 0; ii < files.size(); ii++ ) {
          QString filepath = files.at(ii);
-         bool parsed = csv_loader->set_filepath(filepath, false);
-         if (parsed) {
-            int chk_ld = csv_loader->exec();
-            if (chk_ld != QDialog::Accepted) {
-               int chk_go = QMessageBox::question(this, "Warning!", "You canceled parsing a file."
-                                                                    "Do you still want to continue processing the rest of the files?");
-               if (chk_go == QMessageBox::No) return;
+         QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
+         bool editing = true;
+         US_CSV_Loader *csv_loader = new US_CSV_Loader(filepath, note, editing, this);
+         int state = csv_loader->exec();
+         if (state == QDialog::Rejected) {
+            int check = QMessageBox::question(this, "Warning!", "You canceled parsing a file.\n" + filepath +
+                                                                "\nDo you want to continue loading the rest of the file(s)?");
+            if (check == QMessageBox::No) {
+               return;
             }
+         } else if (state == QDialog::Accepted) {
             US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
             if (csv_data.columnCount() < 2 ) {
-               int chk_go = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
-                                                                   "\nDo you still want to continue processing the rest of the file?");
-               if (chk_go == QMessageBox::No) return;
+               int check = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
+                                                                   "\nDo you want to continue loading the rest of the file(s)?");
+               if (check == QMessageBox::No) {
+                  return;
+               }
             } else {
                data_list << csv_data;
             }
          } else {
-            int chk_go = QMessageBox::question(this, "Warning!", tr("Unable to load\n'%1'!\n").arg(filepath) +
-                                                                     "Do you still want to continue processing the file(s)?");
-            if (chk_go == QMessageBox::No) return;
+            int check = QMessageBox::question(this, "Warning!", "Unable to load the file!\n" + filepath +
+                                                                "\nDo you want to continue loading the rest of the file(s)?");
+            if (check == QMessageBox::No) {
+               return;
+            }
          }
       }
 
@@ -330,8 +335,15 @@ void US_Spectrum::plot_basis()
 //brings in the target spectrum according to user specification
 void US_Spectrum::load_target()
 {
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-   csv_loader->setMessage("1st Column -> WAVELENGTH ; 2nd Column -> OD");
+   QString filter = "csv files (*.csv);;dat files (*.dat);;"
+                    "text files (*.txt);;dsp files (*.dsp);; wa files (*.wa)";
+   QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
+                                                US_Settings::dataDir(), filter);
+   if (fpath.isEmpty()) {
+      return;
+   }
+   QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
    US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
