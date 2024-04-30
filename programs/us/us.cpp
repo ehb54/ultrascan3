@@ -251,6 +251,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_DCDT     , tr( "&Time Derivative (dC/dt)" ),              velocity );
   addMenu(  P_SECOND   , tr( "Second &Moment" ),                        velocity );
   velocity->addSeparator();
+  addMenu(  P_RMSD     , tr( "&Query Model RMSDs" ),                velocity );
   addMenu(  P_FEMSTAT  , tr( "FE Model &Statistics" ),              velocity );
   addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ),  velocity );
   addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), velocity );
@@ -322,7 +323,6 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_AUDIT,    tr( "&Audit Trail" ),              gmp );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
-  addMenu(  P_RMSD         , tr( "&Query Model RMSDs" ), database );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
   addMenu(  P_BUFFER       , tr( "Manage &Buffer Data"       ), database );
   addMenu(  P_VBAR         , tr( "Manage &Analytes"          ), database );
