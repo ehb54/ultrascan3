@@ -66,7 +66,6 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       bool editable;
       QFileInfo infile;
       DELIMITER delimiter;
-      QPushButton* pb_open;
       QPushButton* pb_ok;
       QPushButton* pb_cancel;
       QPushButton* pb_add_header;
@@ -97,7 +96,6 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       bool write_csv(const QString&, const QString&, QString&);
 
    private slots:
-      void open();
       void ok();
       void cancel();
       void save_csv_clicked();

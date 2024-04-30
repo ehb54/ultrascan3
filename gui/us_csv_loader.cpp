@@ -134,14 +134,14 @@ QString US_CSV_Loader::CSV_Data::filePath() {
 
 US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
-   setWindowTitle( tr( "Load CSV File" ) );
+   setWindowTitle( tr( "Load CSV Files" ) );
    setPalette( US_GuiSettings::frameColor() );
    setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
-   setMinimumSize(QSize(500,600));
+   setMinimumSize(QSize(550,600));
    // setMaximumSize(QSize(800,800));
 
    le_filename = us_lineedit("Filename:", 0, true);
-   pb_open = us_pushbutton("Open File");
+   le_filename->setFrame(false);
 
    rb_tab = new QRadioButton();
    QGridLayout *lyt_tab = us_radiobutton("Tab", rb_tab);
@@ -156,7 +156,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    QGridLayout *lyt_space = us_radiobutton("Space", rb_space);
 
    rb_other = new QRadioButton();
-   QGridLayout *lyt_rb_other = us_radiobutton("Other:", rb_other);
+   QGridLayout *lyt_other = us_radiobutton("Other: ", rb_other);
 
    bg_delimiter = new QButtonGroup();
    bg_delimiter->addButton(rb_tab, TAB);
@@ -169,13 +169,19 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
    le_other = us_lineedit("");
    le_other->setMaxLength(3);
-   QHBoxLayout* lyt_other = new QHBoxLayout();
-   lyt_other->setSpacing(2);
-   lyt_other->setMargin(0);
-   lyt_other->addLayout(lyt_rb_other);
-   lyt_other->addWidget(le_other);
-   rb_other->setFixedWidth(70);
-   le_other->setFixedWidth(30);
+   le_other->setMinimumWidth(10);
+   le_other->setFrame(false);
+
+   QHBoxLayout* lyt_delimiter = new QHBoxLayout();
+   lyt_delimiter->setSpacing(0);
+   lyt_delimiter->setMargin(0);
+   lyt_delimiter->addLayout(lyt_tab);
+   lyt_delimiter->addLayout(lyt_comma);
+   lyt_delimiter->addLayout(lyt_semicolon);
+   lyt_delimiter->addLayout(lyt_space);
+   lyt_delimiter->addLayout(lyt_other);
+   lyt_delimiter->addSpacing(2);
+   lyt_delimiter->addWidget(le_other);
 
    pb_add_header = us_pushbutton("Add Header");
    pb_cancel = us_pushbutton("Cancel");
@@ -246,7 +252,6 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
                       "   background: #DCDCDC;"
                       "}";
 
-
    editable = true;
    tv_data = new CSVTableView();
    tv_data->verticalScrollBar()->setStyleSheet(vert_sts);
@@ -268,50 +273,38 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    tv_data->setStyleSheet("background-color: white");
 
    le_msg = us_lineedit("Note: ", 0, true);
+   le_msg->setFrame(false);
 
-   QGridLayout* pshb_lyt = new QGridLayout();
-   pshb_lyt->addWidget(pb_open,           0, 0, 1, 1);
-   pshb_lyt->addWidget(pb_save_csv,       0, 1, 1, 1);
-   pshb_lyt->addWidget(pb_cancel,         0, 2, 1, 1);
-   pshb_lyt->addWidget(pb_ok,             0, 3, 1, 1);
-   pshb_lyt->addWidget(le_filename,       1, 0, 1, 4);
+   QGridLayout* top_lyt = new QGridLayout();
+   top_lyt->addWidget(le_filename,       0, 0, 1, 3);
+   top_lyt->addLayout(lyt_delimiter,     1, 0, 1, 3);
+   top_lyt->addWidget(pb_reset,          2, 0, 1, 1);
+   top_lyt->addWidget(pb_show_red,       2, 1, 1, 1);
+   top_lyt->addWidget(pb_add_header,     2, 2, 1, 1);
+   top_lyt->addWidget(pb_save_csv,       3, 0, 1, 1);
+   top_lyt->addWidget(pb_cancel,         3, 1, 1, 1);
+   top_lyt->addWidget(pb_ok,             3, 2, 1, 1);
+   top_lyt->addWidget(le_msg,            4, 0, 1, 3);
+   top_lyt->setMargin(0);
+   top_lyt->setHorizontalSpacing(2);
+   top_lyt->setVerticalSpacing(2);
 
-   QGridLayout* dlmt_lyt = new QGridLayout();
-   dlmt_lyt->addLayout(lyt_tab,           0, 0, 1, 1);
-   dlmt_lyt->addLayout(lyt_space,         0, 1, 1, 1);
-   dlmt_lyt->addLayout(lyt_comma,         0, 2, 1, 1);
-   dlmt_lyt->addLayout(lyt_semicolon,     0, 3, 1, 1);
-   dlmt_lyt->addLayout(lyt_other,         0, 4, 1, 1);
-   dlmt_lyt->addWidget(pb_reset,          1, 1, 1, 1);
-   dlmt_lyt->addWidget(pb_show_red,       1, 2, 1, 1);
-   dlmt_lyt->addWidget(pb_add_header,     1, 3, 1, 1);
-
-   for(int ii = 0; ii < 5; ii++) {
-      dlmt_lyt->setColumnMinimumWidth(ii, 100);
-   }
-
-   QVBoxLayout* ctrl_lyt = new QVBoxLayout();
-   ctrl_lyt->addLayout(pshb_lyt);
-   ctrl_lyt->addLayout(dlmt_lyt);
-   ctrl_lyt->addWidget(le_msg);
-   ctrl_lyt->setSpacing(2);
-   ctrl_lyt->setMargin(0);
-
-   QHBoxLayout* top_lyt = new QHBoxLayout();
-   top_lyt->addStretch(1);
-   top_lyt->addLayout(ctrl_lyt);
-   top_lyt->addStretch(1);
-   top_lyt->setMargin(1);
+   QFrame* top_frm = new QFrame();
+   top_frm->setLayout(top_lyt);
+   top_frm->setFrameShape(QFrame::WinPanel);
+   top_frm->setFrameShadow(QFrame::Raised);
+   top_frm->setLineWidth(3);
+   top_frm->setMinimumWidth(550);
+   top_frm->setMaximumWidth(650);
 
    QVBoxLayout* main_lyt = new QVBoxLayout();
-   main_lyt->addLayout(top_lyt, 0);
+   main_lyt->addWidget(top_frm, 0, Qt::AlignCenter);
    main_lyt->addWidget(tv_data, 1);
    main_lyt->setMargin(2);
    main_lyt->setSpacing(1);
 
    setLayout(main_lyt);
 
-   connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
@@ -570,14 +563,6 @@ void US_CSV_Loader::cancel() {
    reject();
 }
 
-void US_CSV_Loader::open() {
-   QString dir = curr_dir.isEmpty() ? US_Settings::workBaseDir() : curr_dir;
-   qDebug() << dir;
-   QString filepath = QFileDialog::getOpenFileName(this, "Open File", dir, "(TEXT Files) (*)");
-   if (filepath.isEmpty()) return;
-   parse_file(filepath);
-}
-
 bool US_CSV_Loader::parse_file(QString& filepath) {
    QFile file(filepath);
    if(file.open(QIODevice::ReadOnly)) {
@@ -624,8 +609,6 @@ bool US_CSV_Loader::parse_file(QString& filepath) {
 
 bool US_CSV_Loader::set_filepath(QString& filepath, bool hideOpen) {
    if (parse_file(filepath)) {
-      if (hideOpen) pb_open->hide();
-      else pb_open->show();
       return true;
    } else {
       return false;
