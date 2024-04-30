@@ -54,16 +54,14 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
             QString m_path;
       };
 
-
-      US_CSV_Loader(QWidget* parent=0);
-      bool set_filepath(QString&, bool);
-      void setMessage(const QString&);
-      void setEditable(bool);
+      US_CSV_Loader(const QString& filePath, const QString& note = "",
+                    bool editable=false, QWidget* parent=0);
       CSV_Data data();
+      QString error_message();
 
    private:
       enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
-      bool editable;
+      bool m_editable;
       QFileInfo infile;
       DELIMITER delimiter;
       QPushButton* pb_ok;
@@ -82,14 +80,15 @@ class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
       QLineEdit* le_filename;
       QLineEdit* le_msg;
       QString str_delimiter;
-      QString curr_dir;
+      QString error_msg;
       QStringList file_lines;
       CSVTableView* tv_data;
       QStandardItemModel* model;
       CSVSortFilterProxyModel* proxy;
       CSV_Data csv_data;
 
-      bool parse_file(QString&);
+      void set_UI();
+      bool parse_file(const QString&);
       QStringList gen_alpha_list(int);
       bool check_table();
       void get_sorted(QVector<QVector<double>>&, QStringList&);

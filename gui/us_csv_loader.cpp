@@ -1,4 +1,5 @@
 #include <QtGlobal>
+#include <QTimer>
 #include "us_csv_loader.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
@@ -132,8 +133,24 @@ QString US_CSV_Loader::CSV_Data::filePath() {
    return m_path;
 }
 
-US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
+US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
+                             bool editable,QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
+
+   if (! parse_file(filePath)) {
+      // QMessageBox::warning(this, "Error!", "Failed to load the file!\n\n" + error_msg);
+      QTimer::singleShot(25, this, [=](){this->done(-2);});
+   } else {
+      set_UI();
+      m_editable = editable;
+      le_msg->setText(note);
+      delimiter = NONE;
+      fill_table(bg_delimiter->checkedId());
+      le_filename->setText("Filename: " + QFileInfo(filePath).fileName());
+   }
+}
+
+void US_CSV_Loader::set_UI() {
    setWindowTitle( tr( "Load CSV Files" ) );
    setPalette( US_GuiSettings::frameColor() );
    setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
@@ -252,24 +269,14 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
                       "   background: #DCDCDC;"
                       "}";
 
-   editable = true;
    tv_data = new CSVTableView();
    tv_data->verticalScrollBar()->setStyleSheet(vert_sts);
    tv_data->horizontalScrollBar()->setStyleSheet(horz_sts);
    tv_data->setSortingEnabled(true);
-   model = new QStandardItemModel(500, 100);
+   model = new QStandardItemModel(1, 1);
    proxy = new CSVSortFilterProxyModel();
    proxy->setSourceModel(model);
    tv_data->setModel(proxy);
-
-   for (int ii = 0; ii < model->rowCount(); ii++) {
-      for (int jj =0; jj < model->columnCount(); jj++) {
-         QStandardItem *it = new QStandardItem();
-         it->setData("", Qt::DisplayRole);
-         it->setEditable(false);
-         model->setItem(ii, jj, it);
-      }
-   }
    tv_data->setStyleSheet("background-color: white");
 
    le_msg = us_lineedit("Note: ", 0, true);
@@ -322,8 +329,8 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
 }
 
-void US_CSV_Loader::setEditable(bool state) {
-   editable = state;
+QString US_CSV_Loader::error_message() {
+   return error_msg;
 }
 
 void US_CSV_Loader::reset() {
@@ -400,7 +407,7 @@ void US_CSV_Loader::add_header() {
       it->setData(true, Qt::UserRole);
       it->setData(font, Qt::FontRole);
       it->setBackground(Qt::green);
-      it->setEditable(editable);
+      it->setEditable(m_editable);
       model->setItem(0, ii, it);
 
       bool ok;
@@ -417,10 +424,6 @@ void US_CSV_Loader::add_header() {
    relabel();
    check_table();
    connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
-}
-
-void US_CSV_Loader::setMessage(const QString& msg) {
-   le_msg->setText("Note: " + msg);
 }
 
 US_CSV_Loader::CSV_Data US_CSV_Loader::data() {
@@ -563,8 +566,9 @@ void US_CSV_Loader::cancel() {
    reject();
 }
 
-bool US_CSV_Loader::parse_file(QString& filepath) {
+bool US_CSV_Loader::parse_file(const QString& filepath) {
    QFile file(filepath);
+   error_msg.clear();
    if(file.open(QIODevice::ReadOnly)) {
       file_lines.clear();
       QTextStream ts(&file);
@@ -586,31 +590,18 @@ bool US_CSV_Loader::parse_file(QString& filepath) {
          if (!isAscii) {
             file.close();
             file_lines.clear();
-            QMessageBox::warning(this, "Error!", tr("This is not a text file!\n%1").arg(filepath));
+            error_msg = tr("The loaded file is not in text format!\n\n%1").arg(filepath);
             return false;
          }
          file_lines.append(line);
       }
       if (file_lines.size() == 0) {
-         QMessageBox::warning(this, "Error!", tr("This is an empty file!\n%1").arg(filepath));
+         error_msg = tr("The loaded file is empty!\n\n%1").arg(filepath);
          return false;
       }
-      delimiter = NONE;
-      infile = QFileInfo(filepath);
-      curr_dir = infile.absoluteDir().absolutePath();
-      fill_table(bg_delimiter->checkedId());
-      le_filename->setText("Filename: " + infile.fileName());
       return true;
    } else {
-      QMessageBox::warning(this, "Error!", tr("Couldn't open the file!").arg(filepath));
-      return false;
-   }
-}
-
-bool US_CSV_Loader::set_filepath(QString& filepath, bool hideOpen) {
-   if (parse_file(filepath)) {
-      return true;
-   } else {
+      error_msg = tr("Couldn't open the file\n\n%1!").arg(filepath);
       return false;
    }
 }
@@ -673,7 +664,7 @@ void US_CSV_Loader::fill_table(int id) {
          QStandardItem *it = new QStandardItem();
          it->setData(val, Qt::DisplayRole);
          it->setData(font, Qt::FontRole);
-         it->setEditable(editable);
+         it->setEditable(m_editable);
          if (ii == 0) {
             if (val.toString().isEmpty()) {
                it->setBackground(Qt::red);
