@@ -305,6 +305,7 @@ void US_LegacyConverter::reload() {
          qApp->restoreOverrideCursor();
          return;
       }
+      runid = tar_finfo.fileName().chopped(7);
    } else {
       QMessageBox::warning(this, "Error!", tr("FAILED to create a /tmp directory!"));
       tar_fpath.clear();
