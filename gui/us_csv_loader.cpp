@@ -146,7 +146,8 @@ US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
       le_msg->setText(note);
       delimiter = NONE;
       fill_table(bg_delimiter->checkedId());
-      le_filename->setText("Filename: " + QFileInfo(filePath).fileName());
+      infile = QFileInfo(filePath);
+      le_filename->setText("Filename: " + infile.fileName());
    }
 }
 
