@@ -36,6 +36,29 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    pb_load->setMinimumWidth(150);
    le_load = us_lineedit("", -1, true);
 
+   pb_choose = us_pushbutton("Choose");
+   QLabel* lb_dir = us_label("Directory:");
+   lb_dir->setAlignment(Qt::AlignRight);
+   le_dir = us_lineedit("", -1, true);
+   QString path = US_Settings::importDir();
+   if (path.isEmpty()) {
+      path = QDir::homePath();
+   }
+   le_dir->setText(path);
+   QDir dir(path);
+   if (! dir.exists()) {
+      bool ok = dir.mkpath(dir.absolutePath());
+      if (!ok) {
+         path = QDir::homePath();
+      }
+   }
+
+   QHBoxLayout* lyt_dir = new QHBoxLayout();
+   lyt_dir->addWidget(pb_choose);
+   lyt_dir->addWidget(lb_dir);
+   lyt_dir->setContentsMargins(1, 0, 1, 0);
+   lyt_dir->setSpacing(2);
+
    lb_runid = us_label("Run ID:");
    lb_runid->setAlignment(Qt::AlignRight);
    le_runid = new US_LineEdit_RE("");
@@ -60,24 +83,28 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    pb_save->setMinimumWidth(lb_tolerance->sizeHint().width());
 
    QGridLayout *layout = new QGridLayout();
-   layout->addWidget(pb_load,  0, 0, 1, 1);
-   layout->addWidget(le_load,  0, 1, 1, 2);
-   layout->addWidget(lb_runid, 1, 0, 1, 1);
-   layout->addWidget(le_runid, 1, 1, 1, 2);
-   layout->addWidget(lb_runtype, 2, 0, 1, 1);
-   layout->addWidget(cb_runtype, 2, 1, 1, 1);
-   layout->addWidget(pb_save,    2, 2, 1, 1);
-   layout->addWidget(lb_tolerance, 3, 0, 1, 1);
-   layout->addWidget(ct_tolerance, 3, 1, 1, 1);
-   layout->addWidget(pb_reload,    3, 2, 1, 1);
-   layout->addWidget(te_info, 4, 0, 4, 3);
-   layout->setMargin(3);
-   layout->setSpacing(3);
+   layout->addWidget(pb_load,      0, 0, 1, 1);
+   layout->addWidget(le_load,      0, 1, 1, 2);
+   layout->addLayout(lyt_dir,      1, 0, 1, 1);
+   layout->addWidget(le_dir,       1, 1, 1, 2);
+   layout->addWidget(lb_runid,     2, 0, 1, 1);
+   layout->addWidget(le_runid,     2, 1, 1, 2);
+   layout->addWidget(lb_runtype,   3, 0, 1, 1);
+   layout->addWidget(cb_runtype,   3, 1, 1, 1);
+   layout->addWidget(pb_save,      3, 2, 1, 1);
+   layout->addWidget(lb_tolerance, 4, 0, 1, 1);
+   layout->addWidget(ct_tolerance, 4, 1, 1, 1);
+   layout->addWidget(pb_reload,    4, 2, 1, 1);
+   layout->addWidget(te_info,      5, 0, 4, 3);
+   layout->setMargin(2);
+   layout->setSpacing(2);
    this->setLayout(layout);
 
    connect(pb_load, &QPushButton::clicked, this, &US_LegacyConverter::load);
    connect(pb_reload, &QPushButton::clicked, this, &US_LegacyConverter::reload);
+   connect(pb_choose, &QPushButton::clicked, this, &US_LegacyConverter::update_directory);
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
+   connect(le_dir, &QLineEdit::textChanged, this, &US_LegacyConverter::runid_updated);
    connect(pb_save, &QPushButton::clicked, this, &US_LegacyConverter::save_auc);
    connect(ct_tolerance, &QwtCounter::valueChanged, this, &US_LegacyConverter::new_tolerance);
 }
@@ -89,8 +116,17 @@ void US_LegacyConverter::new_tolerance(double){
    }
 }
 
+void US_LegacyConverter::update_directory() {
+   QString path = QFileDialog::getExistingDirectory(this, "Choose Output Directory", QDir::homePath());
+   if (path.isEmpty()) {
+      return;
+   }
+   le_dir->setText(path);
+
+}
+
 void US_LegacyConverter::runid_updated() {
-   QDir dir = QDir(US_Settings::importDir());
+   QDir dir = QDir(le_dir->text());
    dir.setPath(dir.absoluteFilePath(le_runid->text()));
    if (dir.exists()) {
       lb_runid->setText("( existing )    Run ID:");
@@ -112,7 +148,7 @@ void US_LegacyConverter::save_auc() {
       QMessageBox::warning(this, "Error!", "No Run ID Set!");
       return;
    }
-   QDir dir = QDir(US_Settings::importDir());
+   QDir dir = QDir(le_dir->text());
    dir.setPath(dir.absoluteFilePath(runid));
    if (dir.exists()) {
       QMessageBox::StandardButton state;
@@ -204,7 +240,7 @@ bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& sa
    QString sys_tar;
    if (ost.compare("WINDOWS") == 0) {
       sys_tar = QDir(QCoreApplication::applicationDirPath()).filePath("tar.exe");
-      if (QFileInfo::exists(sys_tar) && QFileInfo(sys_tar).isExecutable()) {
+      if (! QFileInfo::exists(sys_tar) || ! QFileInfo(sys_tar).isExecutable()) {
          QMessageBox::warning(this, "Error!", "TAR program not found in the following path!\n" + sys_tar);
          sys_tar.clear();
          return false;

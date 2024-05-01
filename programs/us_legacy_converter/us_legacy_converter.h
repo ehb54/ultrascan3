@@ -31,7 +31,9 @@ private:
    QPushButton *pb_load;
    QPushButton *pb_reload;
    QPushButton *pb_save;
+   QPushButton *pb_choose;
    US_LineEdit_RE *le_runid;
+   QLineEdit *le_dir;
 
    void reset(void);
    void parse_all(const QString&);
@@ -44,6 +46,7 @@ private slots:
    void load(void);
    void reload(void);
    void runid_updated(void);
+   void update_directory(void);
    void save_auc(void);
    void new_tolerance(double);
 };
