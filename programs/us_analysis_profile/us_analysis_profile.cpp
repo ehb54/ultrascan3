@@ -1320,7 +1320,8 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_dens0s.clear();
    le_vbars .clear();
    le_MWs   .clear();
-   sb_ref_chs. clear();
+   //sb_ref_chs. clear();
+   le_ref_chs. clear();
    sb_use_ref_chs. clear();
 
    ck_runs       .clear();
@@ -1418,8 +1419,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    lbl_dens_0->setMaximumHeight( lbhgt );
    lbl_vbar  ->setMaximumHeight( lbhgt );
    lbl_MW    ->setMaximumHeight( lbhgt );
-   // lbl_refc  ->setMaximumHeight( lbhgt );
-   // lbl_use_refc  ->setMaximumHeight( lbhgt );
+   lbl_refc  ->setMaximumHeight( lbhgt );
+   lbl_use_refc  ->setMaximumHeight( lbhgt );
 
    // genL->addWidget( lb_chann, row,    0, 2, 5 );
    // genL->addWidget( lb_lcrat, row,    5, 2, 1 );
@@ -1463,22 +1464,22 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    genL->addWidget( lb_repl_group, row,  11, 2, 1 );
 
    if ( !mainw->abde_mode_aprofile )
-      {
-	genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
-	lbl_refc     -> setVisible( false );
-	lbl_use_refc -> setVisible( false );
-      }
-    else
-      {
-	genL->addWidget( lbl_refc,      row,  12, 1, 1, Qt::AlignHCenter );
-	genL->addWidget( lbl_use_refc,  row,  13, 1, 1, Qt::AlignHCenter );
-	
-	lb_mwvprefs -> setVisible( false );
-	row++; row++;
-      }
-
-   genL->setRowStretch( 0, 0 );
-   genL->setRowStretch( 1, 0 );
+     {
+       genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
+       lbl_refc     -> setVisible( false );
+       lbl_use_refc -> setVisible( false );
+     }
+   else
+     {
+       genL->addWidget( lbl_refc,      row,    12, 1, 1);//, Qt::AlignHCenter );
+       genL->addWidget( lbl_use_refc,  row,    13, 1, 1);//, Qt::AlignHCenter );
+       
+       lb_mwvprefs -> setVisible( false );
+       row++; row++;
+     }
+   
+   // genL->setRowStretch( 0, 0 );
+   // genL->setRowStretch( 1, 0 );
 
    row_global = row;
    QCheckBox*     ck_analysisrun;
@@ -1486,7 +1487,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QPushButton*   pb_reportprefs;
    QCheckBox*     ck_mwvprefs;
    QSpinBox*      sb_repl_group;
-   QSpinBox*      sb_ref_ch;
+   //QSpinBox*      sb_ref_ch;
+   //QLineEdit*     le_ref_ch;
    QSpinBox*      sb_use_ref_ch;
 
    // Clear the right layout from QGroupboxes
@@ -1540,11 +1542,14 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QLineEdit* le_vbar   = us_lineedit( "0.2661", 0, false );
       QLineEdit* le_MW     = us_lineedit( "168.36", 0, false );
       
-      sb_ref_ch  = us_spinbox();
-      sb_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
-      sb_ref_ch ->setMinimum( 0 );
-      sb_ref_ch ->setMaximum( int(nchn/2.0) );
-      sb_ref_ch-> setEnabled( false );
+      // sb_ref_ch  = us_spinbox();
+      // sb_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
+      // sb_ref_ch ->setMinimum( 0 );
+      // sb_ref_ch ->setMaximum( int(nchn/2.0) );
+      // sb_ref_ch-> setEnabled( false );
+
+      QLineEdit *le_ref_ch  =  us_lineedit( "", 0, true  );
+      le_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
       
       sb_use_ref_ch  = us_spinbox();
       sb_use_ref_ch ->setObjectName( stchan + "RefUseChan --chann_name--" + schan );
@@ -1555,7 +1560,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       le_dens0s  << le_dens_0;
       le_vbars   << le_vbar;
       le_MWs     << le_MW;
-      sb_ref_chs << sb_ref_ch;
+      //sb_ref_chs << sb_ref_ch;
+      le_ref_chs << le_ref_ch;
       sb_use_ref_chs << sb_use_ref_ch;
       //END Add new widgets for ABDE case:
       
@@ -1658,12 +1664,14 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 	{
 	  genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
 
-	  sb_ref_ch     -> setVisible( false );
+	  //sb_ref_ch     -> setVisible( false );
+	  le_ref_ch     -> setVisible( false );
 	  sb_use_ref_ch -> setVisible( false );
 	}
       else
 	{
-	  genL->addWidget( sb_ref_ch,      row,  12, 1, 1, Qt::AlignHCenter );
+	  //genL->addWidget( sb_ref_ch,      row,  12, 1, 1, Qt::AlignHCenter );
+	  genL->addWidget( le_ref_ch,      row,  12, 1, 1);//, Qt::AlignHCenter );
 	  genL->addWidget( sb_use_ref_ch,  row,  13, 1, 1, Qt::AlignHCenter );
 	  
 	  ck_mwvprefs -> setVisible( false );
@@ -2095,16 +2103,39 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	     }
 	 }
 
-       //Reference? (set #) enable first...
-       for ( int i=0; i<sb_ref_chs.size(); ++i)
-	 {
-	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-	     {
-	       sb_ref_chs[ i ] -> setEnabled( true );
-	       break;
-	     }
-	 }
-       
+       // //Reference? (set #) enable first...
+       // for ( int i=0; i<sb_ref_chs.size(); ++i)
+       // 	 {
+       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+       // 	     {
+       // 	       sb_ref_chs[ i ] -> setEnabled( true );
+       // 	       break;
+       // 	     }
+       // 	 }
+
+       //if runReport unChecked:
+       int ref_number = 0; // will be largest of all in ref_numbers_list;
+       for ( int i=0; i<le_ref_chs.size(); ++i)
+       	 {
+       	   if ( le_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+       	     {
+	       QString ref_text = "Ref:";
+	       	       
+	       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+		 if (ref_numbers_list[rn] > ref_number )
+		   ref_number = ref_numbers_list[rn];
+	       ++ref_number;
+	       // ( ref_numbers_list.size() > 0 ) ?
+	       // 	 ref_number = ref_numbers_list[ ref_numbers_list.size() - 1 ] + 1 :
+	       // 	 ref_number = 1 ;
+
+	       qDebug() << "reportUnChkd: ref_number -- " << ref_number;
+	       ref_numbers_list[ i ] = ref_number;
+	       ref_text += QString::number( ref_number );
+       	       le_ref_chs[ i ] -> setText( ref_text );
+       	       break;
+       	     }
+       	 }
        
        //Use Reference#
        for ( int i=0; i<sb_use_ref_chs.size(); ++i)
@@ -2119,6 +2150,12 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	     {
 	       ( ck_report_runs[ i ]->isChecked() ) ?
 		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
+
+	       // //and re-set maxValue to to the max in ref_numbers_list:
+	       // sb_use_ref_chs[ i ]->setMaximum( ref_number );
+
+	       //finnally, re-set to min (0) if ref_numbers_list.size() > 1
+	       //sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
 	     }
 	 }
        
@@ -2144,17 +2181,36 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	     }
 	 }
 
-       //Reference? (set #) disable...
-       for ( int i=0; i<sb_ref_chs.size(); ++i)
-	 {
-	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-	     {
-	       sb_ref_chs[ i ] -> setEnabled( false );
-	       sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
-	       break;
-	     }
-	 }
-       
+       // //Reference? (set #) disable...
+       // for ( int i=0; i<sb_ref_chs.size(); ++i)
+       // 	 {
+       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+       // 	     {
+       // 	       sb_ref_chs[ i ] -> setEnabled( false );
+       // 	       sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
+       // 	       break;
+       // 	     }
+       // 	 }
+
+       //Reference? (set #) disable...//if runReport Checked back: 
+       for ( int i=0; i<le_ref_chs.size(); ++i)
+       	 {
+       	   if ( le_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
+       	     {
+	       int curr_ref_number = le_ref_chs[ i ] -> text().split(":")[1].toInt();
+	       //reset properly all other ref_numbers
+	       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+		 if ( ref_numbers_list[rn] > curr_ref_number )
+		   {
+		     --ref_numbers_list[ rn ];
+		     le_ref_chs[ rn ] -> setText("Ref:" + QString::number( ref_numbers_list[ rn ] ));
+		   }
+	       
+	       ref_numbers_list[ i ] = 0;
+	       le_ref_chs[ i ] -> setText("");
+       	       break;
+       	     }
+       	 }
        
        //Use Reference?
        for ( int i=0; i<sb_use_ref_chs.size(); ++i)
@@ -2169,6 +2225,13 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       ( ck_report_runs[ i ]->isChecked() ) ?
 		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
 	     }
+
+	   // //and re-set maxValue to to the max in ref_numbers_list:
+	   // int curr_max = sb_use_ref_chs[ i ]-> maximum();
+	   // sb_use_ref_chs[ i ]->setMaximum( --curr_max );
+
+	   //finnally, re-set to min (0) if ref_numbers_list.size() > 1
+	   //sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
 	 }
      }
 
@@ -2190,8 +2253,11 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	   sb_use_ref_chs[ i ] -> setEnabled( false );
 	   sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]-> minimum() );
 
-	   sb_ref_chs[ i ] -> setEnabled( false );
-	   sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
+	   // sb_ref_chs[ i ] -> setEnabled( false );
+	   // sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
+
+	   ref_numbers_list[ i ] = 0;
+	   le_ref_chs[ i ] -> setText("");
 	 }
      }
 }
