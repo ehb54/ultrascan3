@@ -38,6 +38,7 @@ private:
    void list_files(const QString&, QStringList&);
    bool sort_files(const QStringList&, const QString&);
    bool read_beckman_files(const QString&, QString&);
+   bool extract_files(const QString&, const QString&);
 
 private slots:
    void load(void);

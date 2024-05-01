@@ -452,8 +452,14 @@ US_Extinction::US_Extinction() : US_Widgets()
 
 void US_Extinction::add_wavelength(void)
 {
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-   csv_loader->setMessage("1st Column -> WAVELENGTH ; Others -> OD");
+   QString filter = "csv files (*.csv);;dat files (*.dat);;text files (*.txt);;dsp files (*.dsp);; wa files (*.wa)";
+   QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
+                                                US_Settings::dataDir(), filter);
+   if (fpath.isEmpty()) {
+      return;
+   }
+   QString note = "1st Column -> WAVELENGTH ; Others -> OD";
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
    US_CSV_Loader::CSV_Data csv_data = csv_loader->data();

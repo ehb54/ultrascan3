@@ -686,28 +686,26 @@ void US_MwlSpeciesFit::loadSpecs()
       return;
    }
 
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(this);
-   csv_loader->setMessage("1st Column -> WAVELENGTH ; 2nd Column -> OD");
+
    QVector<US_CSV_Loader::CSV_Data> data_list;
    for ( int ii = 0; ii < flist.size(); ii++ ) {
       QString filepath = flist.at(ii);
-      bool parsed = csv_loader->set_filepath(filepath, false);
-      if (parsed) {
-         int chk_ld = csv_loader->exec();
-         if (chk_ld != QDialog::Accepted) {
-            QMessageBox::critical(this, "Warning!", "Loading species is canceled!");
-            return;
-         }
-         US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
-         if (csv_data.columnCount() < 2 ) {
-            QMessageBox::critical(this, "Warning!", "At least two data columns are needed:\n" + filepath);
-            return;
-         } else {
-            data_list << csv_data;
-         }
-      } else {
-         QMessageBox::critical(this, "Warning!", tr("Unable to load\n'%1'!\n").arg(filepath));
+      QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
+      US_CSV_Loader *csv_loader = new US_CSV_Loader(filepath, note, true, this);
+      int check = csv_loader->exec();
+      if (check == QDialog::Rejected) {
+         QMessageBox::critical(this, "Warning!", "Loading species is canceled!");
          return;
+      } else if (check == -2) {
+         QMessageBox::critical(this, "Error!", tr("The loaded file is not in text format!\n\n%1").arg(filepath));
+         return;
+      }
+      US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+      if (csv_data.columnCount() < 2 ) {
+         QMessageBox::critical(this, "Warning!", "At least two data columns are needed:\n" + filepath);
+         return;
+      } else {
+         data_list << csv_data;
       }
    }
 

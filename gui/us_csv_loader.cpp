@@ -1,4 +1,5 @@
 #include <QtGlobal>
+#include <QTimer>
 #include "us_csv_loader.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
@@ -132,18 +133,33 @@ QString US_CSV_Loader::CSV_Data::filePath() {
    return m_path;
 }
 
-US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
+US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
+                             bool editable,QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
-   setWindowTitle( tr( "Load CSV File" ) );
+
+   if (! parse_file(filePath)) {
+      // QMessageBox::warning(this, "Error!", "Failed to load the file!\n\n" + error_msg);
+      QTimer::singleShot(25, this, [=](){this->done(-2);});
+   } else {
+      set_UI();
+      m_editable = editable;
+      le_msg->setText(note);
+      delimiter = NONE;
+      fill_table(bg_delimiter->checkedId());
+      infile = QFileInfo(filePath);
+      le_filename->setText("Filename: " + infile.fileName());
+   }
+}
+
+void US_CSV_Loader::set_UI() {
+   setWindowTitle( tr( "Load CSV Files" ) );
    setPalette( US_GuiSettings::frameColor() );
-   setMinimumSize(QSize(600,600));
-   setMaximumSize(QSize(800,800));
-   QLabel *lb_filename = us_label("Filename:");
-   lb_filename->setAlignment(Qt::AlignRight);
-   le_filename = us_lineedit("");
-   pb_open = us_pushbutton("Open");
-   QLabel *lb_delimiter = us_label("Separated By:");
-   lb_delimiter->setAlignment(Qt::AlignRight);
+   setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
+   setMinimumSize(QSize(550,600));
+   // setMaximumSize(QSize(800,800));
+
+   le_filename = us_lineedit("Filename:", 0, true);
+   le_filename->setFrame(false);
 
    rb_tab = new QRadioButton();
    QGridLayout *lyt_tab = us_radiobutton("Tab", rb_tab);
@@ -158,7 +174,7 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    QGridLayout *lyt_space = us_radiobutton("Space", rb_space);
 
    rb_other = new QRadioButton();
-   QGridLayout *lyt_other = us_radiobutton("Other", rb_other);
+   QGridLayout *lyt_other = us_radiobutton("Other: ", rb_other);
 
    bg_delimiter = new QButtonGroup();
    bg_delimiter->addButton(rb_tab, TAB);
@@ -170,66 +186,133 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
    delimiter = TAB;
 
    le_other = us_lineedit("");
-   le_other->setMaxLength(5);
+   le_other->setMaxLength(3);
+   le_other->setMinimumWidth(10);
+   le_other->setFrame(false);
+
+   QHBoxLayout* lyt_delimiter = new QHBoxLayout();
+   lyt_delimiter->setSpacing(0);
+   lyt_delimiter->setMargin(0);
+   lyt_delimiter->addLayout(lyt_tab);
+   lyt_delimiter->addLayout(lyt_comma);
+   lyt_delimiter->addLayout(lyt_semicolon);
+   lyt_delimiter->addLayout(lyt_space);
+   lyt_delimiter->addLayout(lyt_other);
+   lyt_delimiter->addSpacing(2);
+   lyt_delimiter->addWidget(le_other);
 
    pb_add_header = us_pushbutton("Add Header");
    pb_cancel = us_pushbutton("Cancel");
-   pb_ok = us_pushbutton("Ok", false);
+   pb_ok = us_pushbutton("Apply", false);
    pb_save_csv = us_pushbutton("Save CSV");
    pb_reset = us_pushbutton("Reset");
-   pb_show_red = us_pushbutton("Show Red Cells");
+   pb_show_red = us_pushbutton("Show Bad Data");
 
-   editable = true;
+   QString vert_sts = "QScrollBar:vertical {"
+                      "border: 2px solid black;"
+                      "background: #DCDCDC;"
+                      "width: 15px;"
+                      "margin: 20px 0px 20px 0;"
+                      "}"
+                      "QScrollBar::handle:vertical {"
+                      "background: black;"
+                      "min-height: 20px;"
+                      "}"
+                      "QScrollBar::add-line:vertical {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "height: 20px;"
+                      "   subcontrol-position: bottom;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::sub-line:vertical {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "height: 20px;"
+                      "   subcontrol-position: top;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {"
+                      "   border: 1px solid #DCDCDC;"
+                      "   width: 3px;"
+                      "   height: 3px;"
+                      "   background: #DCDCDC;"
+                      "}";
+
+   QString horz_sts = "QScrollBar:horizontal {"
+                      "border: 2px solid black;"
+                      "background: #DCDCDC;"
+                      "height: 15px;"
+                      "margin: 0px 20px 0 20px;"
+                      "}"
+                      "QScrollBar::handle:horizontal {"
+                      "background: black;"
+                      "min-width: 20px;"
+                      "}"
+                      "QScrollBar::add-line:horizontal {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "width: 20px;"
+                      "   subcontrol-position: right;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::sub-line:horizontal {"
+                      "border: 2px solid black;"
+                      "background: grey;"
+                      "width: 20px;"
+                      "   subcontrol-position: left;"
+                      "   subcontrol-origin: margin;"
+                      "}"
+                      "QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {"
+                      "   border: 1px solid #DCDCDC;"
+                      "   width: 3px;"
+                      "   height: 3px;"
+                      "   background: #DCDCDC;"
+                      "}";
+
    tv_data = new CSVTableView();
+   tv_data->verticalScrollBar()->setStyleSheet(vert_sts);
+   tv_data->horizontalScrollBar()->setStyleSheet(horz_sts);
    tv_data->setSortingEnabled(true);
-   model = new QStandardItemModel(20, 5);
+   model = new QStandardItemModel(1, 1);
    proxy = new CSVSortFilterProxyModel();
    proxy->setSourceModel(model);
    tv_data->setModel(proxy);
-
-   for (int ii = 0; ii < model->rowCount(); ii++) {
-      for (int jj =0; jj < model->columnCount(); jj++) {
-         QStandardItem *it = new QStandardItem();
-         it->setData("", Qt::DisplayRole);
-         it->setEditable(false);
-         model->setItem(ii, jj, it);
-      }
-   }
    tv_data->setStyleSheet("background-color: white");
 
-   le_msg = us_lineedit("", 0, true);
+   le_msg = us_lineedit("Note: ", 0, true);
+   le_msg->setFrame(false);
 
-   QGridLayout* main_lyt = new QGridLayout();
-   main_lyt->addWidget(lb_filename,       0, 0, 1, 1);
-   main_lyt->addWidget(le_filename,       0, 1, 1, 4);
-   main_lyt->addWidget(pb_open,           0, 5, 1, 2);
+   QGridLayout* top_lyt = new QGridLayout();
+   top_lyt->addWidget(le_filename,       0, 0, 1, 3);
+   top_lyt->addLayout(lyt_delimiter,     1, 0, 1, 3);
+   top_lyt->addWidget(pb_reset,          2, 0, 1, 1);
+   top_lyt->addWidget(pb_show_red,       2, 1, 1, 1);
+   top_lyt->addWidget(pb_add_header,     2, 2, 1, 1);
+   top_lyt->addWidget(pb_save_csv,       3, 0, 1, 1);
+   top_lyt->addWidget(pb_cancel,         3, 1, 1, 1);
+   top_lyt->addWidget(pb_ok,             3, 2, 1, 1);
+   top_lyt->addWidget(le_msg,            4, 0, 1, 3);
+   top_lyt->setMargin(0);
+   top_lyt->setHorizontalSpacing(2);
+   top_lyt->setVerticalSpacing(2);
 
-   main_lyt->addWidget(lb_delimiter,      1, 0, 1, 1);
-   main_lyt->addLayout(lyt_tab,           1, 1, 1, 2);
-   main_lyt->addLayout(lyt_space,         1, 3, 1, 2);
-   main_lyt->addLayout(lyt_comma,         1, 5, 1, 2);
+   QFrame* top_frm = new QFrame();
+   top_frm->setLayout(top_lyt);
+   top_frm->setFrameShape(QFrame::WinPanel);
+   top_frm->setFrameShadow(QFrame::Raised);
+   top_frm->setLineWidth(3);
+   top_frm->setMinimumWidth(550);
+   top_frm->setMaximumWidth(650);
 
-   main_lyt->addLayout(lyt_semicolon,     2, 1, 1, 2);
-   main_lyt->addLayout(lyt_other,         2, 3, 1, 2);
-   main_lyt->addWidget(le_other,          2, 5, 1, 2);
-
-   main_lyt->addWidget(pb_reset,          3, 1, 1, 2);
-   main_lyt->addWidget(pb_show_red,       3, 3, 1, 2);
-   main_lyt->addWidget(pb_add_header,     3, 5, 1, 2);
-
-   main_lyt->addWidget(pb_save_csv,       4, 1, 1, 2);
-   main_lyt->addWidget(pb_cancel,         4, 3, 1, 2);
-   main_lyt->addWidget(pb_ok,             4, 5, 1, 2);
-
-   main_lyt->addWidget(le_msg,            5, 0, 1, 7);
-   main_lyt->addWidget(tv_data,           6, 0, 5, 7);
-
-   main_lyt->setSpacing(2);
+   QVBoxLayout* main_lyt = new QVBoxLayout();
+   main_lyt->addWidget(top_frm, 0, Qt::AlignCenter);
+   main_lyt->addWidget(tv_data, 1);
    main_lyt->setMargin(2);
+   main_lyt->setSpacing(1);
 
    setLayout(main_lyt);
 
-   connect(pb_open, &QPushButton::clicked, this, &US_CSV_Loader::open);
    connect(pb_add_header, &QPushButton::clicked, this, &US_CSV_Loader::add_header);
    connect(pb_ok, &QPushButton::clicked, this, &US_CSV_Loader::ok);
    connect(pb_cancel, &QPushButton::clicked, this, &US_CSV_Loader::cancel);
@@ -247,8 +330,8 @@ US_CSV_Loader::US_CSV_Loader(QWidget* parent) : US_WidgetsDialog(parent, 0)
 
 }
 
-void US_CSV_Loader::setEditable(bool state) {
-   editable = state;
+QString US_CSV_Loader::error_message() {
+   return error_msg;
 }
 
 void US_CSV_Loader::reset() {
@@ -325,7 +408,7 @@ void US_CSV_Loader::add_header() {
       it->setData(true, Qt::UserRole);
       it->setData(font, Qt::FontRole);
       it->setBackground(Qt::green);
-      it->setEditable(editable);
+      it->setEditable(m_editable);
       model->setItem(0, ii, it);
 
       bool ok;
@@ -342,10 +425,6 @@ void US_CSV_Loader::add_header() {
    relabel();
    check_table();
    connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
-}
-
-void US_CSV_Loader::setMessage(const QString& msg) {
-   le_msg->setText(msg);
 }
 
 US_CSV_Loader::CSV_Data US_CSV_Loader::data() {
@@ -488,16 +567,9 @@ void US_CSV_Loader::cancel() {
    reject();
 }
 
-void US_CSV_Loader::open() {
-   QString dir = curr_dir.isEmpty() ? US_Settings::workBaseDir() : curr_dir;
-   qDebug() << dir;
-   QString filepath = QFileDialog::getOpenFileName(this, "Open File", dir, "(TEXT Files) (*)");
-   if (filepath.isEmpty()) return;
-   parse_file(filepath);
-}
-
-bool US_CSV_Loader::parse_file(QString& filepath) {
+bool US_CSV_Loader::parse_file(const QString& filepath) {
    QFile file(filepath);
+   error_msg.clear();
    if(file.open(QIODevice::ReadOnly)) {
       file_lines.clear();
       QTextStream ts(&file);
@@ -519,32 +591,18 @@ bool US_CSV_Loader::parse_file(QString& filepath) {
          if (!isAscii) {
             file.close();
             file_lines.clear();
-            QMessageBox::warning(this, "Error!", tr("This is not a text file!\n%1").arg(filepath));
+            error_msg = tr("The loaded file is not in text format!\n\n%1").arg(filepath);
             return false;
          }
          file_lines.append(line);
       }
       if (file_lines.size() == 0) {
-         QMessageBox::warning(this, "Error!", tr("This is an empty file!\n%1").arg(filepath));
+         error_msg = tr("The loaded file is empty!\n\n%1").arg(filepath);
          return false;
       }
-      delimiter = NONE;
-      infile = QFileInfo(filepath);
-      curr_dir = infile.absoluteDir().absolutePath();
-      fill_table(bg_delimiter->checkedId());
-      le_filename->setText(infile.fileName());
       return true;
    } else {
-      QMessageBox::warning(this, "Error!", tr("Couldn't open the file!").arg(filepath));
-      return false;
-   }
-}
-
-bool US_CSV_Loader::set_filepath(QString& filepath, bool openEnabled) {
-   if (parse_file(filepath)) {
-      pb_open->setEnabled(openEnabled);
-      return true;
-   } else {
+      error_msg = tr("Couldn't open the file\n\n%1!").arg(filepath);
       return false;
    }
 }
@@ -562,6 +620,7 @@ void US_CSV_Loader::fill_table(int id) {
    } else {
       delimiter = static_cast<DELIMITER>(id);
    }
+   if (file_lines.size() == 0) return;
 
    QFont font( US_Widgets::fixedFont().family(),
                  US_GuiSettings::fontSize() );
@@ -606,7 +665,7 @@ void US_CSV_Loader::fill_table(int id) {
          QStandardItem *it = new QStandardItem();
          it->setData(val, Qt::DisplayRole);
          it->setData(font, Qt::FontRole);
-         it->setEditable(editable);
+         it->setEditable(m_editable);
          if (ii == 0) {
             if (val.toString().isEmpty()) {
                it->setBackground(Qt::red);
