@@ -42,8 +42,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    le_dir = us_lineedit(path, 0, true);
    QDir dir(path);
    if (! dir.exists()) {
-      QMessageBox::warning(this, "Warning!", "The \"imports\" directory does NOT exist!\n\n" + path);
-      le_dir->setStyleSheet("color: red;");
+      dir.mkpath(dir.absolutePath());
    }
 
    lb_runid = us_label("Run ID:");
