@@ -32,6 +32,7 @@ private:
    QPushButton *pb_reload;
    QPushButton *pb_save;
    US_LineEdit_RE *le_runid;
+   QLineEdit *le_dir;
 
    void reset(void);
    void parse_all(const QString&);

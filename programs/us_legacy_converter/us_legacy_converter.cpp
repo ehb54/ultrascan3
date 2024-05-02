@@ -22,8 +22,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 {
    setWindowTitle( tr( "Beckman to OpenAUC Data Converter" ) );
    setPalette( US_GuiSettings::frameColor() );
-   this->setMinimumSize(600, 500);
-   this->setMaximumSize(600, 500);
+   this->setFixedSize(525, 525);
 
    data_types.insert("RI", "Intensity");
    data_types.insert("RA", "Absorbance");
@@ -32,13 +31,24 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    data_types.insert("IP", "Interference");
    data_types.insert("FI", "Fluorensce");
 
-   pb_load = us_pushbutton("Load Optima File (tar.gz)");
-   pb_load->setMinimumWidth(150);
-   le_load = us_lineedit("", -1, true);
+   pb_load = us_pushbutton("Load File (tar.gz)");
+   pb_load->setMinimumWidth(100);
+   le_load = us_lineedit("", 0, true);
+
+   QLabel* lb_dir = us_label("Directory:");
+
+   QString path = US_Settings::importDir();
+   lb_dir->setAlignment(Qt::AlignRight);
+   le_dir = us_lineedit(path, 0, true);
+   QDir dir(path);
+   if (! dir.exists()) {
+      QMessageBox::warning(this, "Warning!", "The \"imports\" directory does NOT exist!\n\n" + path);
+      le_dir->setStyleSheet("color: red;");
+   }
 
    lb_runid = us_label("Run ID:");
    lb_runid->setAlignment(Qt::AlignRight);
-   le_runid = new US_LineEdit_RE("");
+   le_runid = new US_LineEdit_RE("", 0);
 
    QLabel *lb_runtype = us_label("Run Type:");
    lb_runtype->setAlignment(Qt::AlignRight);
@@ -60,24 +70,27 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    pb_save->setMinimumWidth(lb_tolerance->sizeHint().width());
 
    QGridLayout *layout = new QGridLayout();
-   layout->addWidget(pb_load,  0, 0, 1, 1);
-   layout->addWidget(le_load,  0, 1, 1, 2);
-   layout->addWidget(lb_runid, 1, 0, 1, 1);
-   layout->addWidget(le_runid, 1, 1, 1, 2);
-   layout->addWidget(lb_runtype, 2, 0, 1, 1);
-   layout->addWidget(cb_runtype, 2, 1, 1, 1);
-   layout->addWidget(pb_save,    2, 2, 1, 1);
-   layout->addWidget(lb_tolerance, 3, 0, 1, 1);
-   layout->addWidget(ct_tolerance, 3, 1, 1, 1);
-   layout->addWidget(pb_reload,    3, 2, 1, 1);
-   layout->addWidget(te_info, 4, 0, 4, 3);
-   layout->setMargin(3);
-   layout->setSpacing(3);
+   layout->addWidget(pb_load,      0, 0, 1, 1);
+   layout->addWidget(le_load,      0, 1, 1, 2);
+   layout->addWidget(lb_dir,       1, 0, 1, 1);
+   layout->addWidget(le_dir,       1, 1, 1, 2);
+   layout->addWidget(lb_runid,     2, 0, 1, 1);
+   layout->addWidget(le_runid,     2, 1, 1, 2);
+   layout->addWidget(lb_runtype,   3, 0, 1, 1);
+   layout->addWidget(cb_runtype,   3, 1, 1, 1);
+   layout->addWidget(pb_save,      3, 2, 1, 1);
+   layout->addWidget(lb_tolerance, 4, 0, 1, 1);
+   layout->addWidget(ct_tolerance, 4, 1, 1, 1);
+   layout->addWidget(pb_reload,    4, 2, 1, 1);
+   layout->addWidget(te_info,      5, 0, 4, 3);
+   layout->setMargin(2);
+   layout->setSpacing(2);
    this->setLayout(layout);
 
    connect(pb_load, &QPushButton::clicked, this, &US_LegacyConverter::load);
    connect(pb_reload, &QPushButton::clicked, this, &US_LegacyConverter::reload);
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
+   connect(le_dir, &QLineEdit::textChanged, this, &US_LegacyConverter::runid_updated);
    connect(pb_save, &QPushButton::clicked, this, &US_LegacyConverter::save_auc);
    connect(ct_tolerance, &QwtCounter::valueChanged, this, &US_LegacyConverter::new_tolerance);
 }
@@ -90,7 +103,7 @@ void US_LegacyConverter::new_tolerance(double){
 }
 
 void US_LegacyConverter::runid_updated() {
-   QDir dir = QDir(US_Settings::importDir());
+   QDir dir = QDir(le_dir->text());
    dir.setPath(dir.absoluteFilePath(le_runid->text()));
    if (dir.exists()) {
       lb_runid->setText("( existing )    Run ID:");
@@ -112,13 +125,13 @@ void US_LegacyConverter::save_auc() {
       QMessageBox::warning(this, "Error!", "No Run ID Set!");
       return;
    }
-   QDir dir = QDir(US_Settings::importDir());
+   QDir dir = QDir(le_dir->text());
    dir.setPath(dir.absoluteFilePath(runid));
    if (dir.exists()) {
       QMessageBox::StandardButton state;
-      state = QMessageBox::question(this, "Directory Exists!", "The output directory exists!\n"
-                            + dir.absolutePath() + "\nBy clicking on 'YES', all data will be overwritten!"
-                                                           + "\nDo you want to proceed?");
+      state = QMessageBox::question(this, "Warning!", "The output directory exists!\n\n"
+                            + dir.absolutePath() + "\n\nBy clicking on 'YES', all data will be overwritten! "
+                                                           + "Do you want to proceed?");
       if (state == QMessageBox::No) {
          return;
       } else {
@@ -162,7 +175,7 @@ void US_LegacyConverter::save_auc() {
       QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
                                " data saved in \n\n" + dir.absolutePath());
    } else {
-      QMessageBox::warning(this, "Error!", "Data wasn't saved! Try again!");
+      QMessageBox::warning(this, "Error!", "Data cannot be saved! Check the output directory!");
    }
    runid_updated();
 }
@@ -204,18 +217,18 @@ bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& sa
    QString sys_tar;
    if (ost.compare("WINDOWS") == 0) {
       sys_tar = QDir(QCoreApplication::applicationDirPath()).filePath("tar.exe");
-      if (QFileInfo::exists(sys_tar) && QFileInfo(sys_tar).isExecutable()) {
-         QMessageBox::warning(this, "Error!", "TAR program not found in the following path!\n" + sys_tar);
+      if (! QFileInfo::exists(sys_tar) || ! QFileInfo(sys_tar).isExecutable()) {
+         QMessageBox::warning(this, "Error!", "TAR program is not found in the following path!\n" + sys_tar);
          sys_tar.clear();
          return false;
       }
    } else if (ost.compare("MACOS") == 0 || ost.compare("LINUX") == 0){
       sys_tar = "tar";
    } else {
-      QMessageBox::warning(this, "Error!", "Only MS Windows, macOS, and Linux are supported");
+      QMessageBox::warning(this, "Error!", "This program only supports the MS Windows, macOS, and Linux!");
       return false;
    }
-   te_info->append("Process: extracting the file using the 'tar' program ...");
+   te_info->append("Process: starting to extract the loaded file using the system tar program ...");
    qApp->processEvents();
    QStringList tarr_args;
    tarr_args << "-zxf" << finfo.absoluteFilePath() << "-C" << savepath;
@@ -231,7 +244,7 @@ bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& sa
    } else if (state == 0) {
       return true;
    } else {
-      QString mesg = tr("Extracting the tar failed with the return value %1!\n%2%3\n\n"
+      QString mesg = tr("Extracting the tar file failed with the return value of %1!\n%2%3\n\n"
                         "Starting to use the internal methods!");
       QMessageBox::warning(this, "Warning!", mesg.arg(state).arg(sys_tar, tarr_args.join(" ")));
    }
@@ -240,24 +253,24 @@ bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& sa
 
    if (QFile::copy(tarfile, tmpfile)) {
       US_Gzip gzip;
-      te_info->append("Process: unzipping the file using US_Gzip program ...");
+      te_info->append("Process: starting to unzip the file using the US_Gzip program ...");
       qApp->processEvents();
 
       state = gzip.gunzip(tmpfile);
       if (state != 0) {
-         QMessageBox::warning(this, "Error!", "Failed to extract the ZIP file!\n" +
+         QMessageBox::warning(this, "Error!", "Failed to unzip the file!\n" +
                                                   gzip.explain(state));
          return false;
       }
       tmpfile.chop(3);
       // qDebug() << tmpfile;
-      te_info->append("Process: extracting the tar file using US_Tar program ...");
+      te_info->append("Process: starting to extract the tar file using the US_Tar program ...");
       qApp->processEvents();
       US_Tar ustar;
       QStringList extlist;
       state = ustar.extract(tmpfile, &extlist, savepath);
       if (state != 0) {
-         QMessageBox::warning(this, "Error!", "Failed to extract the TAR file!\n" +
+         QMessageBox::warning(this, "Error!", "FAILED to extract the file!\n" +
                                                   ustar.explain(state));
          return false;
       }
