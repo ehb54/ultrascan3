@@ -695,6 +695,29 @@ else
    else
      ck_mwv[ 0 ] ->setChecked( false  );
 
+   //ABDE: for ref./use ref fields, set the 1st B-chann, to a reference
+   //ABDE: IF NO refs. set at all
+   if ( mainw->abde_mode_aprofile )
+     {
+       bool all_reps_run = true;
+       for( int rr=0; rr<currProf->report_run.size(); ++rr)
+	 if ( currProf->report_run[rr] == 0  )
+	   all_reps_run = false;
+
+       if ( all_reps_run )
+	 {
+	   for( int rr=0; rr<currProf->chndescs_alt.size(); ++rr )
+	     {
+	       QString ch_name = currProf->chndescs_alt[rr];
+	       if( ch_name.split(":")[0].contains("B") )
+		 {
+		   ck_runs[ rr ] -> setChecked( false );
+		   break;
+		 }
+	     }
+	 }
+     }
+
    // Save to update Gui
    qDebug() << "US_AnaprofPanGen::initPanel(): before save: currProf->chndescs_alt, size() -- " << currProf->chndescs_alt << currProf->chndescs_alt.size();
    savePanel();

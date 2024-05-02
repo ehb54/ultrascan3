@@ -2079,7 +2079,10 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
    
   QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--" + channel_name;
   qDebug() << "use_ref_ch_oname -- " << use_ref_ch_oname;
-   
+
+  //old ref_numbers_list
+  QList<int> ref_numbers_list_old = ref_numbers_list;
+  
    
   //if not checked, disable Report btn && otherwise:
    if ( !checked )
@@ -2136,6 +2139,11 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
        	       break;
        	     }
        	 }
+
+       
+       qDebug() << "Old/Updated ref_numbers_list_old,  ref_numbers_list -- "
+		<< ref_numbers_list_old << ref_numbers_list
+		<< ", SAME? " << ( ref_numbers_list_old == ref_numbers_list );
        
        //Use Reference#
        for ( int i=0; i<sb_use_ref_chs.size(); ++i)
@@ -2154,8 +2162,16 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       // //and re-set maxValue to to the max in ref_numbers_list:
 	       // sb_use_ref_chs[ i ]->setMaximum( ref_number );
 
-	       //finnally, re-set to min (0) if ref_numbers_list.size() > 1
-	       //sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
+	       //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
+	       //&& ref_numbers_list changed
+	       int ref_chann_number = 0;
+	       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+		 if ( ref_numbers_list[rn] > 0 )
+		   ++ref_chann_number;
+	       if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
+		 sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
+	       else if ( ref_chann_number == 1 )
+		 sb_use_ref_chs[ i ] -> setValue( 1 );
 	     }
 	 }
        
@@ -2224,14 +2240,20 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	     {
 	       ( ck_report_runs[ i ]->isChecked() ) ?
 		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
+	     
 	     }
 
-	   // //and re-set maxValue to to the max in ref_numbers_list:
-	   // int curr_max = sb_use_ref_chs[ i ]-> maximum();
-	   // sb_use_ref_chs[ i ]->setMaximum( --curr_max );
-
-	   //finnally, re-set to min (0) if ref_numbers_list.size() > 1
-	   //sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
+	   //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
+	   //&& ref_numbers_list changed
+	   int ref_chann_number = 0;
+	   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+	     if ( ref_numbers_list[rn] > 0 )
+	       ++ref_chann_number;
+	   if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
+	     sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
+	   else if ( ref_chann_number == 1 && ck_report_runs[ i ]->isChecked() )
+	     sb_use_ref_chs[ i ] -> setValue( 1 );
+	
 	 }
      }
 

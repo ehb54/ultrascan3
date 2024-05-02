@@ -3806,10 +3806,27 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 				     "Saving protocol or run submission to the Optima are not possible "
 				     "until this problem is resolved."));
 	 }
+
+       //Check for the correct settings in AProfile for 'Use Reference#'
+       if ( !useReferenceNumbersSet( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+	   
+	   msg_to_user.removeDuplicates();
+	   
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Reference Channels NOT set Properly (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease define references for all sample channels "
+				     "in the tab 8. AProfile: ABDE Settings. \n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
+       
      }
 
-   
-   
+     
    //DEBUG
    //Opt system check, what cells will be uvvis and/or interference
    QStringList oprof   = sibLValue( "optical", "profiles" );
@@ -3841,6 +3858,53 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
    // 	    << ncells_interference << ", " << nchannels_uvvis;
    
+}
+
+bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
+{
+  bool all_refs_set = true;
+  msg_to_user. clear();
+
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+  
+  qDebug() << "in useReferenceNumbersSet(): chnns_names.size(), ref_chnns.size(), ref_use_chnns.size() -- "
+	   << chnns_names.size() << ref_chnns.size() << ref_use_chnns.size();
+
+  int ref_chnn_max = 0;
+  int ref_chnn_min = 1000;
+  for (int rn=0; rn<ref_chnns.size(); ++rn)
+    {
+      if ( ref_chnns[rn] > ref_chnn_max )
+	ref_chnn_max = ref_chnns[rn];
+      if ( ref_chnns[rn] < ref_chnn_min )
+	ref_chnn_min = ref_chnns[rn];
+    }
+
+  qDebug() << "min, max -- " << ref_chnn_min << ref_chnn_max;
+  for (int rn=0; rn<ref_use_chnns.size(); ++rn)
+    {
+      //skip if it's a ref chann
+      if ( ref_chnns[rn] > 0 )
+	continue;
+      
+      if ( ref_use_chnns[rn] < ref_chnn_min ||
+	   ref_use_chnns[rn] > ref_chnn_max ||
+	   ref_use_chnns[rn] == 0 )
+	{
+	  QString chnn_name = chnns_names[ rn ];
+	  msg_to_user << QString(tr("%1: \"Use Reference#\" field is %2"))
+	    .arg( chnn_name )
+	    .arg( "not set, or out of range" );
+
+	  all_refs_set = false;
+	}
+    }
+  
+  return all_refs_set;
 }
 
 bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
