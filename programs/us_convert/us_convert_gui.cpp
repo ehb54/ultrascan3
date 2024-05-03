@@ -603,23 +603,28 @@ DbgLv(1) << "CGui: reset complete";
     // QString protname = QString("11JAN2024-PAPBM1M2-Mabanglo-test");
     // QString invid    = QString("19");
     // QString aprofileguid = QString("3fb72b82-6e93-4ecb-9d47-ecbf552f2234");
-   
-    // QMap < QString, QString > protocol_details;
-    // protocol_details[ "dataPath" ]       = curdir;
-    // protocol_details[ "invID_passed" ]   = invid;
-    // protocol_details[ "protocolName" ]   = protname;
-    // //protocol_details[ "experimentName" ];
-    // protocol_details[ "correctRadii" ]   = QString("YES");
-    // protocol_details[ "expAborted" ]     = QString("NO");
-    // //protocol_details[ "runID" ]          =  ;
-    // protocol_details[ "label" ]          = QString("Some label");
-    // protocol_details[ "aprofileguid" ]   = aprofileguid;
-    // protocol_details[ "CellChNumber" ]   = QString("12");
 
-    // // /*********************************************************************************/
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE_DemoData-Optima2-1209");
+   // QString protname = QString("ABDE_DemoAAV_1");
+   // QString invid    = QString("12");
+   // QString aprofileguid = QString("be10df3c-a567-4335-af26-59cb182c79b6");
+   
+   //  QMap < QString, QString > protocol_details;
+   //  protocol_details[ "dataPath" ]       = curdir;
+   //  protocol_details[ "invID_passed" ]   = invid;
+   //  protocol_details[ "protocolName" ]   = protname;
+   //  //protocol_details[ "experimentName" ];
+   //  protocol_details[ "correctRadii" ]   = QString("YES");
+   //  protocol_details[ "expAborted" ]     = QString("NO");
+   //  //protocol_details[ "runID" ]          =  ;
+   //  protocol_details[ "label" ]          = QString("Some label");
+   //  protocol_details[ "aprofileguid" ]   = aprofileguid;
+   //  protocol_details[ "CellChNumber" ]   = QString("6");
+
+   //  // /*********************************************************************************/
 
    
-    // import_data_auto( protocol_details ); 
+   //  import_data_auto( protocol_details ); 
    
 
    qDebug() << "US_CONVERT: SET !"; 
@@ -1423,11 +1428,13 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   Exp_label         = details_at_live_update[ "label" ];
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
+  expType           = details_at_live_update[ "expType" ];
 
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
 
   qDebug() << "Exp_label: " << Exp_label;
+  qDebug() << "ExpType: "   << expType;
 
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
@@ -1616,7 +1623,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" )
+     if ( dataType == "RI" && expType != "ABDE" )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1653,6 +1660,12 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      	 // }
        }
      //end of auto-processing reference range
+
+     //ABDE case
+     if ( expType == "ABDE ")
+       {
+	 
+       }
 
      return;
    }
@@ -1757,7 +1770,7 @@ void US_ConvertGui::process_optics()
      if ( dataType == "IP" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" )
+     if ( dataType == "RI" && expType != "ABDE" )
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -1789,6 +1802,11 @@ void US_ConvertGui::process_optics()
 	 // }
        } 
      //end of auto-processing reference range
+
+     if ( expType == "ABDE" )
+       {
+	 
+       }
      
      return;
    }
@@ -2096,7 +2114,6 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 
    qDebug() << "DEBUG for HEXAL: type_to_process: " << type_to_process;
    //*****************************************************//
-
 
    //Read AProfile here: IMPORTANT -- read only channels corresponding to current runType:
    read_aprofile_data_from_aprofile();
@@ -6222,6 +6239,10 @@ void US_ConvertGui::read_aprofile_data_from_aprofile()
   triple_to_edit     .clear();
   channels_to_drop   .clear();
   channels_report    .clear();
+
+  //ABDE
+  channels_abde_refs     .clear();
+  channels_abde_use_refs .clear();
   
   QString aprofile_xml;
   
@@ -6279,7 +6300,8 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		QString channel_name = attr.value( "channel" ).toString();
 		QString channel_desc = attr.value( "chandesc" ).toString();
 
-		QString opsys = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		QString opsys    = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		QString chcell   = channel_desc.split(":")[0]; // 1A, 1B...
 
 		if ( runType_combined_IP_RI ) //combined run !
 		  {
@@ -6296,6 +6318,13 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 			//Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
 			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+
+			//ABDE
+			if ( attr.hasAttribute("abde_reference") )
+			  channels_abde_refs[ chcell ] = attr.value("abde_reference").toInt();
+			if ( attr.hasAttribute("abde_use_reference") )
+			  channels_abde_use_refs[ chcell ] = attr.value("abde_use_reference").toInt();
+			  
 		      }
 		    if ( opsys.contains("Interf") &&  type_to_process == "IP" )
 		      {
@@ -6310,6 +6339,12 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 			//Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
 			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+
+			//ABDE
+			if ( attr.hasAttribute("abde_reference") )
+			  channels_abde_refs[ chcell ] = attr.value("abde_reference").toInt();
+			if ( attr.hasAttribute("abde_use_reference") )
+			  channels_abde_use_refs[ chcell ] = attr.value("abde_use_reference").toInt();
 		      }
 		  }
 		else //1-type optics
@@ -6325,6 +6360,12 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		    //Read what triple selected for editing:
 		    if ( attr.hasAttribute("wvl_edit") )
 		      triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+
+		    //ABDE
+		    if ( attr.hasAttribute("abde_reference") )
+		      channels_abde_refs[ chcell ] = attr.value("abde_reference").toInt();
+		    if ( attr.hasAttribute("abde_use_reference") )
+		      channels_abde_use_refs[ chcell ] = attr.value("abde_use_reference").toInt();
 		  }
 		  
 	      }
