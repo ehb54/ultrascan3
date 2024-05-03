@@ -198,6 +198,7 @@ SOURCES *= \
 #  us_femglobal.cpp \
         src/us_ffd.cpp \
         src/us_file_util.cpp \
+        src/us_fractal_dimension.cpp \
 #  us_finite1.cpp \
 #  us_finite2.cpp \
         src/us_font.cpp \
@@ -284,6 +285,7 @@ SOURCES *= \
         src/us_hydrodyn_dmd_options.cpp \
         src/us_hydrodyn_file.cpp \
         src/us_hydrodyn_file2.cpp \
+        src/us_hydrodyn_fractal_dimension.cpp \
         src/us_hydrodyn_grid.cpp \
         src/us_hydrodyn_grid_atob.cpp \
         src/us_hydrodyn_grpy.cpp \
@@ -752,6 +754,7 @@ HEADERS *= \
         include/us_hydrodyn_dmd_options.h \
         include/us_hydrodyn_file.h \
         include/us_hydrodyn_file2.h \
+        include/us_fractal_dimension.h \
         include/us_hydrodyn_grid.h \
         include/us_hydrodyn_grid_atob.h \
         include/us_hydrodyn_hydro.h \

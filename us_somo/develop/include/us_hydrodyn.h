@@ -563,6 +563,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QPushButton *pb_bd;
 
+      QPushButton *pb_fractal_dimension;
+      
       //      QPushButton *pb_bd_prepare;
       //      QPushButton *pb_bd_load;
       //      QPushButton *pb_bd_edit;
@@ -1094,6 +1096,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
       void gui_script_run();
+      void fractal_dimension();
       
    public:
       void save_params_force_results_name( save_info & save );

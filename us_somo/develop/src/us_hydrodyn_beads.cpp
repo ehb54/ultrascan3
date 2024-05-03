@@ -878,7 +878,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                   le_bead_model_file->setText( filename );
 
                   write_bead_model( 
-                                   somo_dir + SLASH + filename +
+                                   get_somo_dir() + SLASH + filename +
                                    QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                                    DOTSOMO, 
                                    &bead_model,
@@ -1233,7 +1233,7 @@ int US_Hydrodyn::calc_grid()
 
             le_bead_model_file->setText( filename );
 
-            write_bead_model(somo_dir + SLASH +
+            write_bead_model(get_somo_dir() + SLASH +
                              filename +
                              QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                              DOTSOMO, &bead_model);
@@ -1831,8 +1831,8 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    {
       QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
       editor_msg( "black", courier,
-                  "Atomic level hydration:\n"
-                  "Residue  Count   Percent  Theo. wat  Exposed  Exp. theo. wat\n"
+                  "Atomic level pH dependent hydration:\n"
+                  "Residue  Count   Percent  Theo. wat  Exp. sites  Exp. theo. wat\n"
                   );
 
       summary_info summary_totals;
@@ -1848,7 +1848,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       for ( auto it = summary_infos.begin();
             it != summary_infos.end();
             ++it ) {
-         editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5  %6\n" )
+         editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5     %6\n" )
                      .arg( it->first, -7 )
                      .arg( it->second.count, -6 )
                      .arg( QString( "%1%" )
@@ -1859,7 +1859,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                      );
       }
       
-      editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5  %6\n" )
+      editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5     %6\n" )
                   .arg( "Total", -7 )
                   .arg( summary_totals.count, -6 )
                   .arg( QString( "%1%" )

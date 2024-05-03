@@ -81,6 +81,12 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 // #define GRID_HYDRATE_DEBUG
 
 // static bool no_rr;
+// #define EIGEN_TEST
+#if defined( EIGEN_TEST )
+# include "../include/us_eigen.h"
+#endif
+
+// #define AVGSD_TEST
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QString gui_script_file,
@@ -88,6 +94,147 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
+
+#if defined( AVGSD_TEST )
+   {
+      vector < vector < double > > ys =
+         {
+            { 1 }
+            ,{ 2 }
+            ,{ 3 }
+            ,{ 4 }
+            ,{ 5 }
+         };
+      vector < double > y_avg;
+      vector < double > y_sd;
+      QString error_msg;
+
+      for ( auto const & y : ys ) {
+         US_Vector::printvector( "y", y );
+      }
+      US_Saxs_Util::average( ys, y_avg, y_sd, error_msg );
+      US_Vector::printvector2( "avg, sd", y_avg, y_sd );
+      qDebug() << error_msg;
+   }
+   exit(-1);
+#endif
+      
+
+#if defined( EIGEN_TEST )
+   {
+      US_Eigen eigen;
+      eigen.test();
+      /*
+      vector < double > x =
+         {
+            0.00228835,
+            0.00236877,
+            0.00242899,
+            0.00247294,
+            0.00228047,
+            0.00250852,
+            0.00273657,
+            0.00296461
+         };
+
+      vector < double > y = {
+         473426.37,
+         469031.56,
+         457997.95,
+         460234.26,
+         1112054,
+         1167329,
+         930548.5,
+         850115
+      };
+
+      vector < double > e = {
+         50.64054,
+         90.27224,
+         156.1049,
+         251.0008,
+         967975.4,
+         418368.3,
+         257145.3,
+         188731.4
+      };
+      */
+
+      vector < double > x =
+         {
+      1, 2, 3, 4, 5, 6, 7
+         };
+
+      // 1.37, .254, 3.26, .55
+      vector < double > y = {
+      5.434
+         ,19.318
+         ,46.322
+         ,89.746
+         ,152.89
+         ,239.054
+         ,351.538
+      };
+
+      vector < double > e = {
+      1,1,1,1,1,1,1
+      };
+      
+      vector < double > coeff;
+      double            chi2;
+      int               degree = 5;
+   
+      US_Vector::printvector3( "data for fitting, q,I,e", x, y, e );
+
+# define TSO QTextStream(stdout)
+      
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_SVD_JACOBI );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_JACOBI chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "g" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_SVD_BDC );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_BDC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "h" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "i" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_COL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_COL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "j" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_FULL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_FULL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "k" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_NORMAL);
+      US_Vector::printvector( QString( "coefficients EIGEN_NORMALC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "l" );
+
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_SVD_JACOBI );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_JACOBI chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "gp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_SVD_BDC );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_BDC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "hp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "ip" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_COL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_COL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "jp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_FULL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_FULL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "kp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_NORMAL);
+      US_Vector::printvector( QString( "coefficients EIGEN_NORMALC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "lp" );
+      
+      // if ( eigen.evaluate_polynomial( coeff, 0.002, 0.003, 100, x, y ) ) {
+      //    US_Vector::printvector2( "fitting curve", x, y );
+      // } else {
+      //    qDebug() << eigen.errors();
+      // }
+   }
+   exit(-1);
+#endif
+
    // #define FFD_TEST
 
 #if defined( FFD_TEST )
@@ -1489,6 +1636,13 @@ void US_Hydrodyn::setupGUI()
    pb_bd->setPalette( PALET_PUSHB );
    connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
 
+   pb_fractal_dimension = new QPushButton(us_tr("FD"), this);
+   Q_CHECK_PTR(pb_fractal_dimension);
+   pb_fractal_dimension->setMinimumHeight(minHeight1);
+   pb_fractal_dimension->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_fractal_dimension->setPalette( PALET_PUSHB );
+   connect(pb_fractal_dimension, SIGNAL(clicked()), SLOT(fractal_dimension()));
+   
    // ***** bd *******
    //   pb_bd_prepare = new QPushButton(us_tr("Create Browflex files"), this);
    //   pb_bd_prepare->setMinimumHeight(minHeight1);
@@ -1706,7 +1860,13 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_dmd_run, j, 0);
    j++;
-   background->addWidget(pb_bd, j, 0);
+   {
+      QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_fractal_dimension );
+      hbl->addWidget( pb_bd );
+      background->addLayout(hbl, j, 0);
+   }
+   // background->addWidget(pb_bd, j, 0);
    j++;
    background->addWidget( lbl_info2 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
