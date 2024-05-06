@@ -387,5 +387,19 @@ class US_EXTERN US_PlotChoices : public QDialog
       void svg();
       void png();
 };
+
+#include <vector>
+
+class US_Plot_Colors {
+ public:
+   US_Plot_Colors( const QColor & background_color ); // background_color to try and avoid low contrast
+   QColor color( size_t i );
+   void rotate();
+
+ private:
+   void                   push_back_color_if_ok( QColor bg, QColor set );
+   std::vector < QColor > plot_colors;
+};
+
 #endif
 
