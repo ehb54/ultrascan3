@@ -7,6 +7,7 @@
 
 void US_Hydrodyn::fractal_dimension() {
    qDebug() << "US_Hydrodyn::fractal_dimension()";
+   stopFlag = false;
 
    // for each selected model
 
