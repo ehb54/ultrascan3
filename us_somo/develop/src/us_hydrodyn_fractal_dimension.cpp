@@ -30,9 +30,9 @@ void US_Hydrodyn::fractal_dimension() {
       
    double sas_asa_threshold    = asa.threshold;
    double sas_asa_probe_radius = 1.5;
-   double box_angstrom_start   = 0;
-   double box_angstrom_end     = 0;
-   double box_angstrom_steps   = 0;
+   double angstrom_start       = 0;
+   double angstrom_end         = 0;
+   double angstrom_steps       = 0;
    
    // box model parameters dialog
    {
@@ -62,8 +62,8 @@ void US_Hydrodyn::fractal_dimension() {
             {
                QString( us_tr( "SAS ASA threshold [%1^2]   :" ) ).arg( UNICODE_ANGSTROM )
                ,QString( us_tr( "SAS ASA probe radius [%1] :" ) ).arg( UNICODE_ANGSTROM )
-               ,QString( us_tr( "Start box edge size [%1]  :" ) ).arg( UNICODE_ANGSTROM )
-               ,QString( us_tr( "Ending box edge size [%1] :" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "Start [%1]                :" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "End [%1]                  :" ) ).arg( UNICODE_ANGSTROM )
                ,us_tr( "Number of steps           :" )
                
             };
@@ -79,11 +79,11 @@ void US_Hydrodyn::fractal_dimension() {
 
          vector < double >  defaults =
             {
-               1
+               0
                ,sas_asa_probe_radius
-               ,.5
                ,5
-               ,100
+               ,20
+               ,10
             };
 
          vector < bool >  intvalidator =
@@ -133,9 +133,9 @@ void US_Hydrodyn::fractal_dimension() {
                // If the user didn't dismiss the dialog, do something with the fields
                sas_asa_threshold    = ((QLineEdit *)fields[0])->text().toDouble();
                sas_asa_probe_radius = ((QLineEdit *)fields[1])->text().toDouble();
-               box_angstrom_start   = ((QLineEdit *)fields[2])->text().toDouble();
-               box_angstrom_end     = ((QLineEdit *)fields[3])->text().toDouble();
-               box_angstrom_steps   = ((QLineEdit *)fields[4])->text().toDouble();
+               angstrom_start   = ((QLineEdit *)fields[2])->text().toDouble();
+               angstrom_end     = ((QLineEdit *)fields[3])->text().toDouble();
+               angstrom_steps   = ((QLineEdit *)fields[4])->text().toDouble();
             }
          } else {
             return;
@@ -146,14 +146,14 @@ void US_Hydrodyn::fractal_dimension() {
    QTextStream( stdout ) << QString( "US_Hydrodyn::fractal_dimension()\n"
                                      "sas_asa_threshold    %1\n"
                                      "sas_asa_probe_radius %2\n"
-                                     "box_angstrom_start   %3\n"
-                                     "box_angstrom_end     %4\n"
-                                     "box_angstrom_steps   %5\n" )
+                                     "angstrom_start   %3\n"
+                                     "angstrom_end     %4\n"
+                                     "angstrom_steps   %5\n" )
       .arg( sas_asa_threshold )
       .arg( sas_asa_probe_radius )
-      .arg( box_angstrom_start )
-      .arg( box_angstrom_end )
-      .arg( box_angstrom_steps )
+      .arg( angstrom_start )
+      .arg( angstrom_end )
+      .arg( angstrom_steps )
       ;
 
    bool do_display_bead_models =
@@ -233,7 +233,7 @@ void US_Hydrodyn::fractal_dimension() {
       
       // find SAS points, build set
 
-      vector < point > sas;
+      vector < pointmass > sas;
 
       size_t total_atoms = 0;
 
@@ -254,8 +254,7 @@ void US_Hydrodyn::fractal_dimension() {
 
 
             if ( this_atom->asa >= sas_asa_threshold ) {
-               sas.push_back( this_atom->coordinate );
-               if ( do_display_bead_models ) {
+               {
                   QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
                   QString use_atom_name = this_atom->p_residue->name == "N1" ? "N1" : this_atom->name;
 
@@ -349,7 +348,19 @@ void US_Hydrodyn::fractal_dimension() {
                         .arg( this_atom->resSeq )
                         ;
 
-                     bead_model.push_back(tmp_atom);
+                     {
+                        pointmass tmpsas;
+                        tmpsas.axis[0]    = this_atom->coordinate.axis[0];
+                        tmpsas.axis[1]    = this_atom->coordinate.axis[1];
+                        tmpsas.axis[2]    = this_atom->coordinate.axis[2];
+                        tmpsas.mass       = tmp_atom.mw + tmp_atom.ionized_mw_delta;
+                        tmpsas.name       = tmp_atom.name;
+                        // tmpsas.radius     = tmp_atom.radius;
+                        sas.push_back( tmpsas );
+                     }
+                     if ( do_display_bead_models ) {
+                        bead_model.push_back(tmp_atom);
+                     }
                   } else {
                      editor_msg( "red", QString( "Residue atom pair %1 unknown in vdwf.json" ).arg( res_idx ) );
                      return;
@@ -376,24 +387,33 @@ void US_Hydrodyn::fractal_dimension() {
                      );
       }
 
-      // call US_Hydrodyn_Fractal_Dimension::compute_box_counting();
-      {
-         US_Fractal_Dimension ufd;
-         QString              errormsg;
-         double               fd = 0;
-         vector < double >    x;
-         vector < double >    y;
+      // call US_Hydrodyn_Fractal_Dimension::compute_counting();
 
-         if ( !ufd.compute_box_counting(
-                                        sas
-                                        ,box_angstrom_start
-                                        ,box_angstrom_end
-                                        ,box_angstrom_steps
-                                        ,fd
-                                        ,errormsg
-                                        ,x
-                                        ,y
-                                         ) ) {
+      {
+         US_Fractal_Dimension::methods method = US_Fractal_Dimension::USFD_ENRIGHT;
+         QString                       type;
+         US_Fractal_Dimension          ufd;
+         double                        fd = 0;
+         vector < vector < double > >  x;
+         vector < vector < double > >  y;
+         QString                       x_title;
+         QString                       y_title;
+         QString                       errormsg;
+
+         if ( !ufd.compute(
+                           method
+                           ,sas
+                           ,angstrom_start
+                           ,angstrom_end
+                           ,angstrom_steps
+                           ,fd
+                           ,x
+                           ,y
+                           ,x_title
+                           ,y_title
+                           ,type
+                           ,errormsg
+                                        ) ) {
             QMessageBox::critical( this,
                                    windowTitle() + us_tr( ": Fractal Dimension" ),
                                    QString( us_tr( "Error computing for model %1 : %2" ) )
@@ -414,19 +434,33 @@ void US_Hydrodyn::fractal_dimension() {
             QFormLayout form(&dialog);
 
             mQwtPlot    * plot;
-            US_Plot       usp_plot( plot, "", "log(volume of each box [" + UNICODE_ANGSTROM_QS + "^3])", "log(number of boxes)", &dialog );
+            US_Plot       usp_plot(
+                                   plot
+                                   , ""
+                                   , x_title
+                                   , y_title
+                                   , &dialog
+                                   );
 
-            form.addRow( new QLabel( us_tr( "Fractal Dimension plot" ) ) );
+            US_Plot_Colors upc( plot->canvasBackground().color() );
+
+            form.addRow( new QLabel( QString( us_tr( "Fractal Dimension %1 plot"  ) )
+                                     .arg( type ) ) );
             form.addRow( &usp_plot );
 
-            QwtPlotCurve curve( "fd_calc" );
-            curve.setStyle( QwtPlotCurve::Dots );
-            curve.setSamples(
-                              (double *)&( x[ 0 ] ),
-                              (double *)&( y[ 0 ] ),
-                              x.size() );
-            curve.setPen( QPen( QColor( Qt::cyan ), 3, Qt::SolidLine ) );
-            curve.attach( plot );
+            for ( size_t i = 0; i < x.size(); ++i ) {
+               // US_Vector::printvector2( QString( "in plot enright %1, x,y" ).arg( i ), x[ i ], y[ i ] );
+
+               QwtPlotCurve * curve = new QwtPlotCurve( QString( "fd_calc-%1" ).arg( i + 1 ) );
+               curve->setStyle( QwtPlotCurve::Dots );
+               curve->setSamples(
+                                (double *)&( x[ i ][ 0 ] ),
+                                (double *)&( y[ i ][ 0 ] ),
+                                x[ i ].size() );
+               // curve->setPen( QPen( Qt::cyan, 3, Qt::SolidLine ) );
+               curve->setPen( QPen( upc.color( i ), 3, Qt::SolidLine ) );
+               curve->attach( plot );
+            }
       
             plot->replot();
 
@@ -445,20 +479,21 @@ void US_Hydrodyn::fractal_dimension() {
                map < QString, QwtPlot *> plots =
                   {
                      {
-                        QString("_%1_%2_FD_box_pr%3_thr%4_start%5_end%6_steps%7")
+                        QString("_%1_%2_FD_%3_pr%4_thr%5_start%6_end%7_steps%8" )
                         .arg( project )
                         .arg( current_model + 1 )
+                        .arg( type )
                         .arg( sas_asa_probe_radius )
                         .arg( sas_asa_threshold )
-                        .arg( box_angstrom_start )
-                        .arg( box_angstrom_end )
-                        .arg( box_angstrom_steps )
+                        .arg( angstrom_start )
+                        .arg( angstrom_end )
+                        .arg( angstrom_steps )
                         ,plot
                      }
                   };
                QString errors;
                QString messages;
-               if ( !upu.printtofile( "Fractal Dimension Box"
+               if ( !upu.printtofile( "Fractal Dimension " + type
                                       ,plots
                                       ,errors
                                       ,messages ) ) {
