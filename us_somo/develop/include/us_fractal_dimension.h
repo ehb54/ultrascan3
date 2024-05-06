@@ -35,6 +35,8 @@ class pointmass
 
 #define UNICODE_ANGSTROM u8"\u212B"
 #define UNICODE_ANGSTROM_QS QString( "%1" ).arg( UNICODE_ANGSTROM )
+#define UNICODE_PLUSMINUS u8"\u00B1"
+#define UNICODE_PLUSMINUS_QS QString( "%1" ).arg( UNICODE_PLUSMINUS )
 
 using namespace std;
 
@@ -45,7 +47,9 @@ class US_Fractal_Dimension {
 
    enum methods : int {
       USFD_BOX_MODEL = 0
-     ,USFD_ENRIGHT = 1
+      ,USFD_BOX_ALT  = 1
+      ,USFD_BOX_MASS = 2
+      ,USFD_ENRIGHT  = 3
    };
 
    bool compute(
@@ -63,8 +67,20 @@ class US_Fractal_Dimension {
                 ,QString                           & errormsg           // errormsg is set if false returned
                 );
 
+   static QString method_name( enum US_Fractal_Dimension::methods method ) {
+      switch ( method ) {
+      case USFD_BOX_MODEL : return "Box"; break;
+      case USFD_BOX_ALT   : return "Box Alternate"; break;
+      case USFD_BOX_MASS  : return "Box Mass"; break;
+      case USFD_ENRIGHT   : return "Enright"; break;
+      default             : return "Error - unknown method"; break;
+      }
+   };
+
    // list points for debugging
    QStringList list_points( const vector < pointmass > & points );
+
+
 
  private:
 
@@ -80,6 +96,35 @@ class US_Fractal_Dimension {
                              ,QString                      & y_title            // title of y axis
                              ,QString                      & errormsg           // errormsg is set if false returned
                              );
+
+   // as compute_box_counting() using size vs volume
+   bool compute_box_alternate(
+                              const vector < pointmass >    & points
+                              ,double                         angstrom_start
+                              ,double                         angstrom_end
+                              ,double                         angstrom_steps
+                              ,double                       & fd                 // computed fractal dimension
+                              ,vector < vector < double > > & x                  // x coordinate of plots
+                              ,vector < vector < double > > & y                  // y coordinate of plots
+                              ,QString                      & x_title            // title of x axis
+                              ,QString                      & y_title            // title of y axis
+                              ,QString                      & errormsg           // errormsg is set if false returned
+                              );
+
+
+   // as compute_box_counting() adding mass effects
+   bool compute_box_mass(
+                         const vector < pointmass >    & points
+                         ,double                         angstrom_start
+                         ,double                         angstrom_end
+                         ,double                         angstrom_steps
+                         ,double                       & fd                 // computed fractal dimension
+                         ,vector < vector < double > > & x                  // x coordinate of plots
+                         ,vector < vector < double > > & y                  // y coordinate of plots
+                         ,QString                      & x_title            // title of x axis
+                         ,QString                      & y_title            // title of y axis
+                         ,QString                      & errormsg           // errormsg is set if false returned
+                         );
 
    // as per Enright & Leitner Phys. Rev. E 71, 011912 (2005)
 

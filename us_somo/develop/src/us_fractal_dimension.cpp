@@ -29,9 +29,9 @@ bool US_Fractal_Dimension::compute(
                                    ,QString                           & type               // string type
                                    ,QString                           & errormsg           // errormsg is set if false returned
                                    ) {
+   type = method_name( method );
    switch ( method ) {
    case USFD_BOX_MODEL :
-      type = "Box";
       return compute_box_counting(
                                   points
                                   ,angstrom_start
@@ -46,8 +46,37 @@ bool US_Fractal_Dimension::compute(
                                   );
       break;
 
+   case USFD_BOX_ALT :
+      return compute_box_alternate(
+                                  points
+                                  ,angstrom_start
+                                  ,angstrom_end
+                                  ,angstrom_steps
+                                  ,fd
+                                  ,x
+                                  ,y
+                                  ,x_title
+                                  ,y_title
+                                  ,errormsg
+                                  );
+      break;
+
+   case USFD_BOX_MASS :
+      return compute_box_mass(
+                              points
+                              ,angstrom_start
+                              ,angstrom_end
+                              ,angstrom_steps
+                              ,fd
+                              ,x
+                              ,y
+                              ,x_title
+                              ,y_title
+                              ,errormsg
+                              );
+      break;
+
    case USFD_ENRIGHT :
-      type = "Enright";
       return compute_enright(
                              points
                              ,angstrom_start
@@ -113,29 +142,29 @@ bool US_Fractal_Dimension::compute_box_counting(
    x.resize( 1 );
    y.resize( 1 );
 
-   for ( double box_edge_size = angstrom_start; box_edge_size <= angstrom_end; box_edge_size += stepsize ) {
-      // qDebug() << QString( "US_Fractal_Dimension::compute_box_counting() : processing box_edge_size %1" ).arg( box_edge_size );
+   for ( double edge_size = angstrom_start; edge_size <= angstrom_end; edge_size += stepsize ) {
+      // qDebug() << QString( "US_Fractal_Dimension::compute_box_counting() : processing edge_size %1" ).arg( edge_size );
       set < vector < int > > occupied;
 
-      double box_edge_inverse = 1e0 / box_edge_size;
+      double edge_inverse = 1e0 / edge_size;
       
       for ( auto const & p : points ) {
          occupied.insert( {
-               (int) ( p.axis[ 0 ] * box_edge_inverse )
-                  ,(int) ( p.axis[ 1 ] * box_edge_inverse )
-                  ,(int) ( p.axis[ 2 ] * box_edge_inverse )
+               (int) ( p.axis[ 0 ] * edge_inverse )
+                  ,(int) ( p.axis[ 1 ] * edge_inverse )
+                  ,(int) ( p.axis[ 2 ] * edge_inverse )
                   }
             );
       }
 
-      x[0].push_back( log( pow( box_edge_size, 3 ) ) );
+      x[0].push_back( log( pow( edge_size, 3 ) ) );
       y[0].push_back( log( occupied.size() ) );
                    
       QTextStream( stdout ) << QString( "box edge size %1 [%2], number of occupied boxes %3, volume of one box %4 [%5^3] ln(vol) %6 ln(number of occupied boxes) %7\n" )
-         .arg( box_edge_size )
+         .arg( edge_size )
          .arg( UNICODE_ANGSTROM )
          .arg( occupied.size() )
-         .arg( pow( box_edge_size, 3 ) )
+         .arg( pow( edge_size, 3 ) )
          .arg( UNICODE_ANGSTROM )
          .arg( x[0].back() )
          .arg( y[0].back() )
@@ -145,6 +174,86 @@ bool US_Fractal_Dimension::compute_box_counting(
    errormsg = "US_Fractal_Dimension::compute_box_counting() - not fully implemented";
 
    x_title = "log(volume of each box [" + UNICODE_ANGSTROM_QS + "^3])";
+   y_title = "log(number of boxes)";
+
+   return true;
+}
+
+bool US_Fractal_Dimension::compute_box_alternate(
+                                                 const vector < pointmass >    & points
+                                                 ,double                         angstrom_start
+                                                 ,double                         angstrom_end
+                                                 ,double                         angstrom_steps
+                                                 ,double                       & fd                 // computed fractal dimension
+                                                 ,vector < vector < double > > & x                  // x coordinate of plots
+                                                 ,vector < vector < double > > & y                  // y coordinate of plots
+                                                 ,QString                      & x_title            // title of x axis
+                                                 ,QString                      & y_title            // title of y axis
+                                                 ,QString                      & errormsg           // errormsg is set if false returned
+                                                 ) {
+
+   qDebug() << "US_Fractal_Dimension::compute_box_alternate()";
+
+   if ( points.size() < USFD_MIN_POINTS ) {
+      errormsg =
+         QString( "Invalid number of points for box counting %1 (minimum %2)" )
+         .arg( points.size() )
+         .arg( USFD_MIN_POINTS )
+         ;
+      return false;
+   }
+
+   if ( angstrom_steps <= 0 ) {
+      errormsg = QString( "Invalid number of steps (%1)" ).arg( angstrom_steps );
+      return false;
+   }
+
+   double stepsize = ( angstrom_end - angstrom_start ) / angstrom_steps;
+   
+   if ( stepsize <= 0 ) {
+      errormsg = QString( "Invalid computed stepsize  (%1)" ).arg( stepsize );
+      return false;
+   }
+
+   qDebug() << QString( "stepsize %1" ).arg( stepsize );
+
+   x.clear();
+   y.clear();
+   x.resize( 1 );
+   y.resize( 1 );
+
+   for ( double edge_size = angstrom_start; edge_size <= angstrom_end; edge_size += stepsize ) {
+      // qDebug() << QString( "US_Fractal_Dimension::compute_box_counting() : processing edge_size %1" ).arg( edge_size );
+      set < vector < int > > occupied;
+
+      double edge_inverse = 1e0 / edge_size;
+      
+      for ( auto const & p : points ) {
+         occupied.insert( {
+               (int) ( p.axis[ 0 ] * edge_inverse )
+                  ,(int) ( p.axis[ 1 ] * edge_inverse )
+                  ,(int) ( p.axis[ 2 ] * edge_inverse )
+                  }
+            );
+      }
+
+      x[0].push_back( log( edge_size ) );
+      y[0].push_back( log( occupied.size() ) );
+                   
+      QTextStream( stdout ) << QString( "box edge size %1 [%2], number of occupied boxes %3, volume of one box %4 [%5^3] ln(vol) %6 ln(number of occupied boxes) %7\n" )
+         .arg( edge_size )
+         .arg( UNICODE_ANGSTROM )
+         .arg( occupied.size() )
+         .arg( pow( edge_size, 3 ) )
+         .arg( UNICODE_ANGSTROM )
+         .arg( x[0].back() )
+         .arg( y[0].back() )
+         ;
+   }
+
+   errormsg = "US_Fractal_Dimension::compute_box_alternate() - not fully implemented";
+
+   x_title = "log(size of each box [" + UNICODE_ANGSTROM_QS + "])";
    y_title = "log(number of boxes)";
 
    return true;
@@ -310,3 +419,87 @@ bool US_Fractal_Dimension::compute_enright(
    return true;
 }
 
+
+bool US_Fractal_Dimension::compute_box_mass(
+                                            const vector < pointmass >    & points
+                                            ,double                         angstrom_start
+                                            ,double                         angstrom_end
+                                            ,double                         angstrom_steps
+                                            ,double                       & fd                 // computed fractal dimension
+                                            ,vector < vector < double > > & x                  // x coordinate of plots
+                                            ,vector < vector < double > > & y                  // y coordinate of plots
+                                            ,QString                      & x_title            // title of x axis
+                                            ,QString                      & y_title            // title of y axis
+                                            ,QString                      & errormsg           // errormsg is set if false returned
+                                            ) {
+
+   qDebug() << "US_Fractal_Dimension::compute_box_mass()";
+
+   if ( points.size() < USFD_MIN_POINTS ) {
+      errormsg =
+         QString( "Invalid number of points for box counting %1 (minimum %2)" )
+         .arg( points.size() )
+         .arg( USFD_MIN_POINTS )
+         ;
+      return false;
+   }
+
+   if ( angstrom_steps <= 0 ) {
+      errormsg = QString( "Invalid number of steps (%1)" ).arg( angstrom_steps );
+      return false;
+   }
+
+   double stepsize = ( angstrom_end - angstrom_start ) / angstrom_steps;
+   
+   if ( stepsize <= 0 ) {
+      errormsg = QString( "Invalid computed stepsize  (%1)" ).arg( stepsize );
+      return false;
+   }
+
+   qDebug() << QString( "stepsize %1" ).arg( stepsize );
+
+   x.clear();
+   y.clear();
+   x.resize( 1 );
+   y.resize( 1 );
+
+   double mass = 0;
+   for ( auto const & p : points ) {
+      mass += p.mass;
+   }
+
+   for ( double edge_size = angstrom_start; edge_size <= angstrom_end; edge_size += stepsize ) {
+      // qDebug() << QString( "US_Fractal_Dimension::compute_box_counting() : processing edge_size %1" ).arg( edge_size );
+      set < vector < int > > occupied;
+
+      double edge_inverse = 1e0 / edge_size;
+      
+      for ( auto const & p : points ) {
+         occupied.insert( {
+               (int) ( p.axis[ 0 ] * edge_inverse )
+                  ,(int) ( p.axis[ 1 ] * edge_inverse )
+                  ,(int) ( p.axis[ 2 ] * edge_inverse )
+                  } );
+      }
+
+      x[0].push_back( log( edge_size ) );
+      y[0].push_back( log( mass / (double)occupied.size() ) );
+                   
+      QTextStream( stdout ) << QString( "box edge size %1 [%2], number of occupied boxes %3, volume of one box %4 [%5^3] ln(vol) %6 ln(number of occupied boxes) %7\n" )
+         .arg( edge_size )
+         .arg( UNICODE_ANGSTROM )
+         .arg( occupied.size() )
+         .arg( pow( edge_size, 3 ) )
+         .arg( UNICODE_ANGSTROM )
+         .arg( x[0].back() )
+         .arg( y[0].back() )
+         ;
+   }
+
+   errormsg = "US_Fractal_Dimension::compute_box_mass() - not fully implemented";
+
+   x_title = "log(size of each box [" + UNICODE_ANGSTROM_QS + "])";
+   y_title = "log(average mass per box)";
+
+   return true;
+}

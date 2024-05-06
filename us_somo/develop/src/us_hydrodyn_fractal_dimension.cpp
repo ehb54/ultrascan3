@@ -5,6 +5,103 @@
 #include <qmessagebox.h>
 #include "../include/us_plot_util.h"
 
+#define UHFD_PLOT_EPSILON 2e-3
+
+static bool linear_fit(
+                       const double                         & xmin
+                       ,const double                        & xmax
+                       ,const vector < vector < double > >    x
+                       ,const vector < vector < double > >    y
+                       ,mQwtPlot                            * plot
+                       ,vector < QwtPlotCurve * >           & fitcurves
+                       ,QLineEdit                           * msgbox
+                       ) {
+   qDebug() << QString( "linear_fit(); xmin is %1, xmax is %2" ).arg( xmin ).arg( xmax );
+
+   if ( x.size() != fitcurves.size() ) {
+      msgbox->setText( us_tr( "Internal error: fitcurves x size mismatch" ) );
+      return false;
+   }
+
+   double a_sum    = 0;
+   double b_sum    = 0;
+   double siga_sum = 0;
+   double sigb_sum = 0;
+
+   for ( size_t i = 0; i < x.size(); ++i ) {
+
+      vector < double > use_x;
+      vector < double > use_y;
+
+      for ( size_t j = 0; j < x[ i ].size(); ++j ) {
+         if ( x[ i ][ j ] >= xmin - UHFD_PLOT_EPSILON && x[ i ][ j ] <= xmax + UHFD_PLOT_EPSILON ) {
+            use_x.push_back( x[ i ][ j ] );
+            use_y.push_back( y[ i ][ j ] );
+         }
+      }
+
+      if ( !use_x.size() ) {
+         msgbox->setText( us_tr( "Empty fit range" ) );
+         vector < double > fitx;
+         vector < double > fity;
+         if ( fitcurves[ i ] ) {
+            fitcurves[ i ]->setSamples(
+                                       (double *)&( fitx[ 0 ] )
+                                       ,(double *)&( fity[ 0 ] )
+                                       ,0
+                                       );
+            plot->replot();
+         }
+         return false;
+      }
+
+      double a;
+      double b;
+      double siga;
+      double sigb;
+      double chi2;
+   
+      US_Saxs_Util::linear_fit( use_x, use_y, a, b, siga, sigb, chi2 );
+
+      a_sum    += a;
+      b_sum    += b;
+      siga_sum += siga;
+      sigb_sum += sigb;
+      
+      qDebug() << QString( "a is %1, b is %2" ).arg( a ).arg( b );
+
+      // plot line
+
+      if ( fitcurves[ i ] ) {
+         vector < double > fitx = { xmin, xmax };
+         vector < double > fity = { a + b * xmin, a + b * xmax };
+         fitcurves[ i ]->setSamples(
+                                    (double *)&( fitx[ 0 ] )
+                                    ,(double *)&( fity[ 0 ] )
+                                    ,2
+                                    );
+      }
+   }
+
+   {
+      double xsizeinv = 1e0 / (double) x.size();
+
+      msgbox->setText(
+                      QString( "a = %1 (%2%3)  b = %4 (%5%6)" )
+                      .arg( a_sum * xsizeinv, 0, 'f', 3 )
+                      .arg( UNICODE_PLUSMINUS )
+                      .arg( siga_sum * xsizeinv, 0, 'f', 3 )
+                      .arg( b_sum * xsizeinv, 0, 'f', 3 )
+                      .arg( UNICODE_PLUSMINUS )
+                      .arg( sigb_sum * xsizeinv, 0, 'f', 3 )
+                      );
+   }
+   
+   plot->replot();
+
+   return true;
+}
+
 void US_Hydrodyn::fractal_dimension() {
    qDebug() << "US_Hydrodyn::fractal_dimension()";
    stopFlag = false;
@@ -29,11 +126,12 @@ void US_Hydrodyn::fractal_dimension() {
       return;
    }
       
-   double sas_asa_threshold    = asa.threshold;
-   double sas_asa_probe_radius = 1.5;
-   double angstrom_start       = 0;
-   double angstrom_end         = 0;
-   double angstrom_steps       = 0;
+   double sas_asa_threshold             = asa.threshold;
+   double sas_asa_probe_radius          = 1.5;
+   double angstrom_start                = 0;
+   double angstrom_end                  = 0;
+   double angstrom_steps                = 0;
+   US_Fractal_Dimension::methods method = US_Fractal_Dimension::USFD_BOX_MODEL;
    
    // box model parameters dialog
    {
@@ -59,7 +157,7 @@ void US_Hydrodyn::fractal_dimension() {
          // Add the lineEdits with their respective labels
          QList<QWidget *> fields;
    
-          vector < QString > labels =
+         vector < QString > labels =
             {
                QString( us_tr( "SAS ASA threshold [%1^2]   :" ) ).arg( UNICODE_ANGSTROM )
                ,QString( us_tr( "SAS ASA probe radius [%1] :" ) ).arg( UNICODE_ANGSTROM )
@@ -100,7 +198,6 @@ void US_Hydrodyn::fractal_dimension() {
             form.addRow( labels[i], widgets[i] );
             if ( widgets[i] ) {
                // could switch based on widgets[i]->className()
-               // assuming all input fields are doubles for now
                if ( intvalidator[ i ] ) {
                   ((QLineEdit *)widgets[i])->setValidator( new QIntValidator(this) );
                } else {
@@ -111,6 +208,23 @@ void US_Hydrodyn::fractal_dimension() {
             }
          }
 
+         // add out-of-band a qcombobox
+         // could integrate to the above generalization
+         
+         QComboBox * cmb_method = new QComboBox( this );
+         cmb_method->setPalette( PALET_NORMAL );
+         AUTFBACK( cmb_method );
+         cmb_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+         cmb_method->setEnabled(true);
+         cmb_method->setMaxVisibleItems( 1 );
+
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL ), US_Fractal_Dimension::USFD_BOX_MODEL );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT   ), US_Fractal_Dimension::USFD_BOX_ALT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS  ), US_Fractal_Dimension::USFD_BOX_MASS );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT   ), US_Fractal_Dimension::USFD_ENRIGHT );
+         
+         form.addRow( us_tr( "Method                    :" ), cmb_method );
+         
          // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
          QDialogButtonBox buttonBox(
                                     QDialogButtonBox::Ok | QDialogButtonBox::Cancel
@@ -134,9 +248,11 @@ void US_Hydrodyn::fractal_dimension() {
                // If the user didn't dismiss the dialog, do something with the fields
                sas_asa_threshold    = ((QLineEdit *)fields[0])->text().toDouble();
                sas_asa_probe_radius = ((QLineEdit *)fields[1])->text().toDouble();
-               angstrom_start   = ((QLineEdit *)fields[2])->text().toDouble();
-               angstrom_end     = ((QLineEdit *)fields[3])->text().toDouble();
-               angstrom_steps   = ((QLineEdit *)fields[4])->text().toDouble();
+               angstrom_start       = ((QLineEdit *)fields[2])->text().toDouble();
+               angstrom_end         = ((QLineEdit *)fields[3])->text().toDouble();
+               angstrom_steps       = ((QLineEdit *)fields[4])->text().toDouble();
+               method               = (US_Fractal_Dimension::methods)cmb_method->currentData().toInt();
+               qDebug() << QString( "selected method %1" ).arg( (int) method );
             }
          } else {
             return;
@@ -391,7 +507,6 @@ void US_Hydrodyn::fractal_dimension() {
       // call US_Hydrodyn_Fractal_Dimension::compute_counting();
 
       {
-         US_Fractal_Dimension::methods method = US_Fractal_Dimension::USFD_ENRIGHT;
          QString                       type;
          US_Fractal_Dimension          ufd;
          double                        fd = 0;
@@ -414,7 +529,7 @@ void US_Hydrodyn::fractal_dimension() {
                            ,y_title
                            ,type
                            ,errormsg
-                                        ) ) {
+                           ) ) {
             QMessageBox::critical( this,
                                    windowTitle() + us_tr( ": Fractal Dimension" ),
                                    QString( us_tr( "Error computing for model %1 : %2" ) )
@@ -426,91 +541,202 @@ void US_Hydrodyn::fractal_dimension() {
 
          // setup a dialog to show the plot
 
-         {
-            QDialog dialog(this);
-            dialog.setWindowTitle( windowTitle() + us_tr( ": Fractal Dimension" ) );
-            // Use a layout allowing a label next to each field
-            dialog.setMinimumWidth( 600 );
-
-            QFormLayout form(&dialog);
-
-            mQwtPlot    * plot;
-            US_Plot       usp_plot(
-                                   plot
-                                   , ""
-                                   , x_title
-                                   , y_title
-                                   , &dialog
+         if ( !x.size() ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Fractal Dimension" ),
+                                   QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
+                                   .arg( current_model + 1 )
+                                   .arg( errormsg )
                                    );
+            return;
+         }
+            
 
-            US_Plot_Colors upc( plot->canvasBackground().color() );
+         {
+            double xmin = x[0].front();
+            double xmax = x[0].back();
 
-            form.addRow( new QLabel( QString( us_tr( "Fractal Dimension %1 plot"  ) )
-                                     .arg( type ) ) );
-            form.addRow( &usp_plot );
-
-            for ( size_t i = 0; i < x.size(); ++i ) {
-               // US_Vector::printvector2( QString( "in plot enright %1, x,y" ).arg( i ), x[ i ], y[ i ] );
-
-               QwtPlotCurve * curve = new QwtPlotCurve( QString( "fd_calc-%1" ).arg( i + 1 ) );
-               curve->setStyle( QwtPlotCurve::Dots );
-               curve->setSamples(
-                                (double *)&( x[ i ][ 0 ] ),
-                                (double *)&( y[ i ][ 0 ] ),
-                                x[ i ].size() );
-               // curve->setPen( QPen( Qt::cyan, 3, Qt::SolidLine ) );
-               curve->setPen( QPen( upc.color( i ), 3, Qt::SolidLine ) );
-               curve->attach( plot );
+            // quicker if we just check the ends, but this was ensures against out-of-data in US_Fractal_Dimension::compute*()
+            for ( auto const & v : x ) {
+               for ( auto const & vv : v ) {
+                  if ( xmin > vv ) {
+                     xmin = vv;
+                  }
+                  if ( xmax < vv ) {
+                     xmax = vv;
+                  }
+               }
             }
-      
-            plot->replot();
+               
+            double use_xmin = xmin;
+            double use_xmax = xmax;
+            
+            {
+               QDialog dialog(this);
+               dialog.setWindowTitle( windowTitle() + us_tr( ": Fractal Dimension" ) );
+               // Use a layout allowing a label next to each field
+               dialog.setMinimumWidth( 600 );
 
-            QDialogButtonBox *buttonBox = new QDialogButtonBox( Qt::Horizontal, &dialog );
+               QFormLayout form(&dialog);
 
-            buttonBox->addButton( QDialogButtonBox::Cancel );
-            buttonBox->addButton( us_tr( "Export plot data to CSV" ), QDialogButtonBox::AcceptRole );
+               mQwtPlot    * plot;
+               US_Plot       usp_plot(
+                                      plot
+                                      , ""
+                                      , x_title
+                                      , y_title
+                                      , &dialog
+                                      );
 
-            form.addRow( buttonBox );
+               US_Plot_Colors upc( plot->canvasBackground().color() );
 
-            QObject::connect( buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
-            QObject::connect( buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
-            if ( dialog.exec() == QDialog::Accepted ) {
-               qDebug() << "export csv!";
-               US_Plot_Util upu;
-               map < QString, QwtPlot *> plots =
+               form.addRow( new QLabel( QString( us_tr( "Fractal Dimension %1 plot"  ) )
+                                        .arg( type ) ) );
+               form.addRow( &usp_plot );
+
+               vector < QwtPlotCurve * > fitcurves;
+               
+               for ( size_t i = 0; i < x.size(); ++i ) {
+                  QwtPlotCurve * curve = new QwtPlotCurve( QString( "fd_calc-%1" ).arg( i + 1 ) );
+                  curve->setStyle( QwtPlotCurve::Dots );
+                  curve->setSamples(
+                                    (double *)&( x[ i ][ 0 ] ),
+                                    (double *)&( y[ i ][ 0 ] ),
+                                    x[ i ].size() );
+                  // curve->setPen( QPen( Qt::cyan, 3, Qt::SolidLine ) );
+                  curve->setPen( QPen( upc.color( i ), 3, Qt::SolidLine ) );
+                  curve->attach( plot );
+
                   {
-                     {
-                        QString("_%1_%2_FD_%3_pr%4_thr%5_start%6_end%7_steps%8" )
-                        .arg( project )
-                        .arg( current_model + 1 )
-                        .arg( type )
-                        .arg( sas_asa_probe_radius )
-                        .arg( sas_asa_threshold )
-                        .arg( angstrom_start )
-                        .arg( angstrom_end )
-                        .arg( angstrom_steps )
-                        ,plot
-                     }
+                     QwtPlotCurve * fitcurve = new QwtPlotCurve( QString( "fd_fit_%1" ).arg( i + 1 ) );
+                     fitcurve->setStyle( QwtPlotCurve::Lines );
+                     fitcurve->setPen( Qt::green, 2, Qt::DashDotLine );
+                     fitcurve->attach( plot );
+                     fitcurves.push_back( fitcurve );
+                  }
+               }
+      
+               QList<QWidget *> fields;
+
+               vector < QString > labels =
+                  {
+                     us_tr( "Fit start x value :" )
+                     ,us_tr( "Fit end x value   :" )
+                     ,us_tr( "Messages          :" )
                   };
-               QString errors;
-               QString messages;
-               if ( !upu.printtofile( "Fractal Dimension " + type
-                                      ,plots
-                                      ,errors
-                                      ,messages ) ) {
-                  QMessageBox::warning( this,
-                                        windowTitle() + us_tr( ": Fractal Dimension" ),
-                                        QString( us_tr( "Errors saving plots\n:%1" ) )
-                                        .arg( errors )
-                                        );
-               } else {
-                  QMessageBox::information( this,
-                                            windowTitle() + us_tr( ": Fractal Dimension" ),
-                                            QString( "Plots saved in directory <i>%1</i><br><br>%2" )
-                                            .arg( somo_tmp_dir.replace( "//", "/" ) )
-                                            .arg( messages )
-                                            );
-               }                  
+      
+               vector < QWidget * > widgets =
+                  {
+                     new QLineEdit( &dialog )
+                     ,new QLineEdit( &dialog )
+                     ,new QLineEdit( &dialog )
+                  };
+
+               vector < double >  defaults =
+                  {
+                     use_xmin
+                     ,use_xmax
+                     ,0
+                  };
+
+               vector < bool >  isinput  =
+                  {
+                     true
+                     ,true
+                     ,false
+                  };
+
+               for( int i = 0; i < (int) widgets.size(); ++i ) {
+                  form.addRow( labels[ i ], widgets[ i ] );
+                  if ( widgets[ i ] ) {
+                     // could switch based on widgets[ i ]->className()
+                     // assuming all input fields are doubles for now
+                     if ( isinput[ i ] ) {
+                        ((QLineEdit *)widgets[ i ])->setValidator( new QDoubleValidator(this) );
+                        ((QLineEdit *)widgets[ i ])->setText( QString( "%1" ).arg( defaults[ i ] ) );
+                     } else {
+                        ((QLineEdit *)widgets[ i ])->setReadOnly( true );
+                     }
+                     fields << widgets[ i ];
+                  }
+               }
+
+
+               QDialogButtonBox *buttonBox = new QDialogButtonBox( Qt::Horizontal, &dialog );
+
+               buttonBox->addButton( QDialogButtonBox::Cancel );
+               QPushButton * pb_replot = new QPushButton( us_tr( "Replot" ), &dialog );
+               buttonBox->addButton( pb_replot, QDialogButtonBox::ActionRole );
+               
+               // buttonBox->addButton( us_tr( "Replot" ), QDialogButtonBox::RejectRole );
+               buttonBox->addButton( us_tr( "Export plot data to CSV" ), QDialogButtonBox::AcceptRole );
+
+               form.addRow( buttonBox );
+               QObject::connect( pb_replot
+                                 , &QPushButton::clicked
+                                 , [&](){
+                                    use_xmin = ((QLineEdit *)fields[0])->text().toDouble();
+                                    use_xmax = ((QLineEdit *)fields[1])->text().toDouble();
+                                    linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QLineEdit *)widgets[ 2 ] );
+                                 } );
+
+               QObject::connect( buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+               QObject::connect( buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+               linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QLineEdit *)widgets[ 2 ] );
+
+               plot->replot();
+               
+               switch ( dialog.exec() ) {
+               case QDialog::Accepted :
+                  {
+                     qDebug() << "export csv!";
+                     US_Plot_Util upu;
+                     map < QString, QwtPlot *> plots =
+                        {
+                           {
+                              QString("_%1_%2_FD_%3_pr%4_thr%5_start%6_end%7_steps%8" )
+                              .arg( project )
+                              .arg( current_model + 1 )
+                              .arg( type )
+                              .arg( sas_asa_probe_radius )
+                              .arg( sas_asa_threshold )
+                              .arg( angstrom_start )
+                              .arg( angstrom_end )
+                              .arg( angstrom_steps )
+                              ,plot
+                           }
+                        };
+                     QString errors;
+                     QString messages;
+                     if ( !upu.printtofile( "Fractal Dimension " + type
+                                            ,plots
+                                            ,errors
+                                            ,messages ) ) {
+                        QMessageBox::warning( this,
+                                              windowTitle() + us_tr( ": Fractal Dimension" ),
+                                              QString( us_tr( "Errors saving plots\n:%1" ) )
+                                              .arg( errors )
+                                              );
+                     } else {
+                        QMessageBox::information( this,
+                                                  windowTitle() + us_tr( ": Fractal Dimension" ),
+                                                  QString( "Plots saved in directory <i>%1</i><br><br>%2" )
+                                                  .arg( somo_tmp_dir.replace( "//", "/" ) )
+                                                  .arg( messages )
+                                                  );
+                     }
+                  }
+                  break;
+
+               case QDialog::Rejected :
+                  qDebug() << "rejected - replot";
+                  break;
+
+               default :
+                  qDebug() << "unknown exec response";
+                  break;
+               }
             }
          }
 
