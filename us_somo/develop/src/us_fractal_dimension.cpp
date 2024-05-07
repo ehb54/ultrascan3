@@ -1,10 +1,10 @@
 #include "../include/us_fractal_dimension.h"
 #include "../include/us_vector.h"
+#include "../include/us_unicode.h"
 
 #include <qtextstream.h>
 
 #define USFD_MIN_POINTS       10
-#define USFD_ENRIGHT_CA_COUNT 10
 
 US_Fractal_Dimension::US_Fractal_Dimension() {
    qDebug() << "US_Fractal_Dimension() constructor";
@@ -21,6 +21,8 @@ bool US_Fractal_Dimension::compute(
                                    ,double                              angstrom_start
                                    ,double                              angstrom_end
                                    ,double                              angstrom_steps
+                                   ,double                              enright_ca_pct_start
+                                   ,double                              enright_ca_pct_end
                                    ,double                            & fd                 // computed fractal dimension
                                    ,vector < vector < double > >      & x                  // x coordinate of plots
                                    ,vector < vector < double > >      & y                  // y coordinate of plots
@@ -82,6 +84,8 @@ bool US_Fractal_Dimension::compute(
                              ,angstrom_start
                              ,angstrom_end
                              ,angstrom_steps
+                             ,enright_ca_pct_start
+                             ,enright_ca_pct_end
                              ,fd
                              ,x
                              ,y
@@ -280,6 +284,8 @@ bool US_Fractal_Dimension::compute_enright(
                                            ,double                         angstrom_start
                                            ,double                         angstrom_end
                                            ,double                         angstrom_steps
+                                           ,double                         enright_ca_pct_start
+                                           ,double                         enright_ca_pct_end
                                            ,double                       & fd                 // computed fractal dimension
                                            ,vector < vector < double > > & x                  // x coordinate of plots
                                            ,vector < vector < double > > & y                  // y coordinate of plots
@@ -369,15 +375,19 @@ bool US_Fractal_Dimension::compute_enright(
       }
    }
 
+   if ( !ca_ordered_by_dist2.size() ) {
+      errormsg = "No C%1 atoms found";
+      return false;
+   }
+
    // global limits
-   size_t max_ca = ca_ordered_by_dist2.size() < USFD_ENRIGHT_CA_COUNT ? ca_ordered_by_dist2.size() : USFD_ENRIGHT_CA_COUNT;
+   size_t ca_index_start = (size_t) ( (double) ca_ordered_by_dist2.size() * enright_ca_pct_start / 100.0 );
+   size_t ca_index_end   = (size_t) ( (double) ca_ordered_by_dist2.size() * enright_ca_pct_end / 100.0 );
    
    x.clear();
    y.clear();
-   x.resize( max_ca );
-   y.resize( max_ca );
 
-   for ( size_t i = 0; i < max_ca; ++i ) {
+   for ( size_t i = ca_index_start; i < ca_index_end; ++i ) {
 
       vector < double > ca_com  = {
          points[ ca_ordered_by_dist2[ i ] ].axis[ 0 ]
@@ -386,6 +396,9 @@ bool US_Fractal_Dimension::compute_enright(
       };
 
       qDebug() << QString( "ca_com %1 [%2 %3 %4]" ).arg( i ).arg( ca_com[0] ).arg( ca_com[1] ).arg( ca_com[2] );
+
+      vector < double > tmp_x;
+      vector < double > tmp_y;
 
       for ( double radius = angstrom_start; radius <= angstrom_end; radius += stepsize ) {
          // qDebug() << QString( "US_Fractal_Dimension::compute_enright() : processing size %1" ).arg( radius );
@@ -403,14 +416,19 @@ bool US_Fractal_Dimension::compute_enright(
             }
          }
          
-         x[ i ].push_back( log10( radius ) );
-         y[ i ].push_back( log10( mass ) );
-
+         tmp_x.push_back( log10( radius ) );
+         tmp_y.push_back( log10( mass ) );
       }
+      x.push_back( tmp_x );
+      y.push_back( tmp_y );
 
       // US_Vector::printvector2( QString( "enright %1, x,y" ).arg( i ), x[ i ], y[ i ] );
    }
 
+   if ( !x.size() ) {
+      errormsg = "No C%1 atoms found in percent slice";
+      return false;
+   }
    errormsg = "US_Fractal_Dimension::compute_enright() - not fully implemented";
 
    x_title = "log10( R [" + UNICODE_ANGSTROM_QS + "] )";

@@ -4,6 +4,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include <qmessagebox.h>
 #include "../include/us_plot_util.h"
+#include "../include/us_unicode.h"
 
 #define UHFD_PLOT_EPSILON 2e-3
 
@@ -131,6 +132,11 @@ void US_Hydrodyn::fractal_dimension() {
    double angstrom_start                = 0;
    double angstrom_end                  = 0;
    double angstrom_steps                = 0;
+   double enright_ca_pct_start          = 0;
+   double enright_ca_pct_end            = 0;
+   double roll_sphere_start             = 0;
+   double roll_sphere_end               = 0;
+   double roll_sphere_steps             = 0;
    US_Fractal_Dimension::methods method = US_Fractal_Dimension::USFD_BOX_MODEL;
    
    // box model parameters dialog
@@ -159,17 +165,27 @@ void US_Hydrodyn::fractal_dimension() {
    
          vector < QString > labels =
             {
-               QString( us_tr( "SAS ASA threshold [%1^2]   :" ) ).arg( UNICODE_ANGSTROM )
-               ,QString( us_tr( "SAS ASA probe radius [%1] :" ) ).arg( UNICODE_ANGSTROM )
-               ,QString( us_tr( "Start [%1]                :" ) ).arg( UNICODE_ANGSTROM )
-               ,QString( us_tr( "End [%1]                  :" ) ).arg( UNICODE_ANGSTROM )
-               ,us_tr( "Number of steps           :" )
+               QString( us_tr( "SAS ASA threshold [%1^2]                      :" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "SAS ASA probe radius [%1]                     :" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "Start [%1]                                    :" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "End [%1]                                      :" ) ).arg( UNICODE_ANGSTROM )
+               ,us_tr( "Number of steps                               :" )
+               ,QString( us_tr( "Start C%1 dist. % (Enright only)              :" ) ).arg( UNICODE_ALPHA )
+               ,QString( us_tr( "End C%1 dist. % (Enright only)                :" ) ).arg( UNICODE_ALPHA )
+               ,QString( us_tr( "Probe radius start [%1] (Rolling sphere only) :" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "Probe radius end [%1] (Rolling sphere only)   :" ) ).arg( UNICODE_ANGSTROM )
+               ,us_tr( "Probe radius steps (Rolling sphere only)      :" )
                
             };
       
          vector < QWidget * > widgets =
             {
                new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
+               ,new QLineEdit( &dialog )
                ,new QLineEdit( &dialog )
                ,new QLineEdit( &dialog )
                ,new QLineEdit( &dialog )
@@ -182,12 +198,22 @@ void US_Hydrodyn::fractal_dimension() {
                ,sas_asa_probe_radius
                ,5
                ,20
+               ,20
+               ,0
                ,10
+               ,1
+               ,2
+               ,5
             };
 
          vector < bool >  intvalidator =
             {
                false
+               ,false
+               ,false
+               ,false
+               ,true
+               ,false
                ,false
                ,false
                ,false
@@ -218,10 +244,11 @@ void US_Hydrodyn::fractal_dimension() {
          cmb_method->setEnabled(true);
          cmb_method->setMaxVisibleItems( 1 );
 
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL ), US_Fractal_Dimension::USFD_BOX_MODEL );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT   ), US_Fractal_Dimension::USFD_BOX_ALT );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS  ), US_Fractal_Dimension::USFD_BOX_MASS );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT   ), US_Fractal_Dimension::USFD_ENRIGHT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL   ), US_Fractal_Dimension::USFD_BOX_MODEL );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT     ), US_Fractal_Dimension::USFD_BOX_ALT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS    ), US_Fractal_Dimension::USFD_BOX_MASS );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT     ), US_Fractal_Dimension::USFD_ENRIGHT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ROLL_SPHERE ), US_Fractal_Dimension::USFD_ROLL_SPHERE );
          
          form.addRow( us_tr( "Method                    :" ), cmb_method );
          
@@ -238,10 +265,23 @@ void US_Hydrodyn::fractal_dimension() {
          // Show the dialog as modal
          if (dialog.exec() == QDialog::Accepted) {
             if ( ((QLineEdit *)fields[0])->text().toDouble() < 0
+                 || ((QLineEdit *)fields[1])->text().toDouble() <= 0
                  || ((QLineEdit *)fields[2])->text().toDouble() <= 0
                  || ((QLineEdit *)fields[3])->text().toDouble() <= 0
-                 || ((QLineEdit *)fields[4])->text().toDouble() <= 0
                  || ((QLineEdit *)fields[2])->text().toDouble() >= ((QLineEdit *)fields[3])->text().toDouble()
+                 || ((QLineEdit *)fields[4])->text().toDouble() <= 1
+
+                 // enright
+                 || ((QLineEdit *)fields[5])->text().toDouble() < 0
+                 || ((QLineEdit *)fields[6])->text().toDouble() < 0
+                 || ((QLineEdit *)fields[6])->text().toDouble() > 100
+                 || ((QLineEdit *)fields[5])->text().toDouble() >= ((QLineEdit *)fields[6])->text().toDouble()
+
+                 // roll sphere
+                 || ((QLineEdit *)fields[7])->text().toDouble() <= 0
+                 || ((QLineEdit *)fields[8])->text().toDouble() <= 0
+                 || ((QLineEdit *)fields[7])->text().toDouble() >= ((QLineEdit *)fields[8])->text().toDouble()
+                 || ((QLineEdit *)fields[9])->text().toDouble() < 1
                  ) {
                try_again = true;
             } else {
@@ -251,6 +291,11 @@ void US_Hydrodyn::fractal_dimension() {
                angstrom_start       = ((QLineEdit *)fields[2])->text().toDouble();
                angstrom_end         = ((QLineEdit *)fields[3])->text().toDouble();
                angstrom_steps       = ((QLineEdit *)fields[4])->text().toDouble();
+               enright_ca_pct_start = ((QLineEdit *)fields[5])->text().toDouble();
+               enright_ca_pct_end   = ((QLineEdit *)fields[6])->text().toDouble();
+               roll_sphere_start    = ((QLineEdit *)fields[7])->text().toDouble();
+               roll_sphere_end      = ((QLineEdit *)fields[8])->text().toDouble();
+               roll_sphere_steps    = ((QLineEdit *)fields[9])->text().toDouble();
                method               = (US_Fractal_Dimension::methods)cmb_method->currentData().toInt();
                qDebug() << QString( "selected method %1" ).arg( (int) method );
             }
@@ -260,283 +305,401 @@ void US_Hydrodyn::fractal_dimension() {
       } while ( try_again );
    }
 
-   QTextStream( stdout ) << QString( "US_Hydrodyn::fractal_dimension()\n"
-                                     "sas_asa_threshold    %1\n"
-                                     "sas_asa_probe_radius %2\n"
-                                     "angstrom_start   %3\n"
-                                     "angstrom_end     %4\n"
-                                     "angstrom_steps   %5\n" )
+   QTextStream( stdout ) << QString(
+                                    "US_Hydrodyn::fractal_dimension()\n"
+                                    "sas_asa_threshold    %1\n"
+                                    "sas_asa_probe_radius %2\n"
+                                    "angstrom_start       %3\n"
+                                    "angstrom_end         %4\n"
+                                    "angstrom_steps       %5\n"
+                                    "enright_ca_pct_start %6\n"
+                                    "enright_ca_pct_end   %7\n"
+                                    "roll_sphere_start    %8\n"
+                                    "roll_sphere_end      %9\n"
+                                    "roll_sphere_steps    %10\n"
+                                    )
       .arg( sas_asa_threshold )
       .arg( sas_asa_probe_radius )
       .arg( angstrom_start )
       .arg( angstrom_end )
       .arg( angstrom_steps )
+      .arg( enright_ca_pct_start )
+      .arg( enright_ca_pct_end )
+      .arg( roll_sphere_start )
+      .arg( roll_sphere_end )
+      .arg( roll_sphere_steps )
       ;
 
    bool do_display_bead_models =
-      QMessageBox::Yes == QMessageBox::question(
-                                                this,
-                                                windowTitle() + us_tr( ": Fractal Dimension" ),
-                                                us_tr("Display bead models of SAS ?" ),
-                                                QMessageBox::Yes, 
-                                                QMessageBox::No | QMessageBox::Default
-                                                );
+      method == US_Fractal_Dimension::USFD_ROLL_SPHERE
+      ? false
+      : QMessageBox::Yes == QMessageBox::question(
+                                                  this,
+                                                  windowTitle() + us_tr( ": Fractal Dimension" ),
+                                                  us_tr("Display bead models of SAS ?" ),
+                                                  QMessageBox::Yes, 
+                                                  QMessageBox::No | QMessageBox::Default
+                                                  );
    
    for ( auto const current_model : selected_models ) {
+      vector < vector < double > >  x;
+      vector < vector < double > >  y;
+      QString                       type;
+      QString                       x_title;
+      QString                       y_title;
+      vector < pointmass >          sas;
+
       editor_msg( "darkblue", QString( us_tr( "Fractal dimension processing model %1\n" ) ).arg( current_model + 1 ) );
 
       if ( do_display_bead_models ) {
          bead_model.clear( );
       }
 
-      // compute ASA
+      if ( method == US_Fractal_Dimension::USFD_ROLL_SPHERE ) {
 
-      {
-         vector < PDB_atom * > active_atoms;
-         for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j) {
-            for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); ++k) {
-               PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
-               active_atoms.push_back( this_atom );
-            }
+         x.resize( 1 );
+         y.resize( 1 );
+         
+         double stepsize = ( roll_sphere_end - roll_sphere_start ) / roll_sphere_steps;
+         if ( stepsize <= 0 ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Fractal Dimension - rolling sphere" ),
+                                   QString( us_tr( "Invalid computed stepsize  (%1)" ) ).arg( stepsize )
+                                   );
+                                                     
+            return;
          }
-         progress->reset();
-         qApp->processEvents();
-         int retval;
-         {
-            float save_radius = asa.probe_radius;
-            asa.probe_radius  = sas_asa_probe_radius; 
-
-            retval = us_hydrodyn_asab1_main(
-                                            active_atoms,
-                                            &asa,
-                                            &results,
-                                            false,
-                                            progress,
-                                            editor,
-                                            this
-                                            );
-            asa.probe_radius  = save_radius;
-         }         
-
-         if ( retval ) {
-            editor->append("Errors found during ASA calculation\n");
+         
+         for ( double radius = roll_sphere_start; radius <= roll_sphere_end; radius += stepsize ) {
+            vector < PDB_atom * > active_atoms;
+            for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j) {
+               for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); ++k) {
+                  PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                  active_atoms.push_back( this_atom );
+               }
+            }
+            editor_msg( "darkblue", QString( us_tr( "Computing ASA for probe radius %1 [%2]" ) ).arg( radius, 0, 'f', 3 ).arg( UNICODE_ANGSTROM ) );
             progress->reset();
             qApp->processEvents();
-            if (stopFlag) {
+            int retval;
+            {
+               float save_radius = asa.probe_radius;
+               asa.probe_radius  = radius;
+
+               retval = us_hydrodyn_asab1_main(
+                                               active_atoms,
+                                               &asa,
+                                               &results,
+                                               false,
+                                               progress,
+                                               editor,
+                                               this
+                                               );
+               asa.probe_radius  = save_radius;
+            }         
+
+            if ( retval ) {
+               editor->append("Errors found during ASA calculation\n");
+               progress->reset();
+               qApp->processEvents();
+               if (stopFlag) {
+                  return;
+               }
+               switch ( retval )
+               {
+               case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
+                  {
+                     QMessageBox::critical( this,
+                                            windowTitle() + us_tr( ": Fractal Dimension" ),
+                                            us_tr( "US_HYDRODYN_ASAB1 encountered a memory allocation error") );
+                     return;
+                     break;
+                  }
+               default:
+                  {
+                     QMessageBox::critical( this,
+                                            windowTitle() + us_tr( ": Fractal Dimension" ),
+                                            us_tr( "US_HYDRODYN_ASAB1 encountered an unknown error") );
+                     return;
+                     break;
+                  }
+               }
+            }
+
+            double asa_total = 0;
+
+            for ( auto const & atom : active_atoms ) {
+               asa_total += atom->asa;
+            }
+
+            if ( asa_total <= 0 ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Fractal Dimension - rolling sphere" ),
+                                      QString( us_tr( "ASA total %1 for radius %2 [%3] invalid" ) )
+                                      .arg( asa_total )
+                                      .arg( radius )
+                                      .arg( UNICODE_ANGSTROM )
+                                      );
                return;
             }
-            switch ( retval )
-            {
-            case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
-               {
-                  QMessageBox::critical( this,
-                                         windowTitle() + us_tr( ": Fractal Dimension" ),
-                                         us_tr( "US_HYDRODYN_ASAB1 encountered a memory allocation error") );
-                  return;
-                  break;
+
+            x[0].push_back( log10( radius ) );
+            y[0].push_back( log10( asa_total ) );
+         }
+         x_title = "log10( Probe radius [" + UNICODE_ANGSTROM_QS + "] )";
+         y_title = "log10( ASA [" + UNICODE_ANGSTROM_QS + "^2] )";
+         type    = US_Fractal_Dimension::method_name( method );
+         // US_Vector::printvector2( "rolling sphere, log ASA, log probe radius", x[0], y[0] );
+         // return;
+      } else {      
+         // compute ASA
+
+         {
+            vector < PDB_atom * > active_atoms;
+            for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j) {
+               for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); ++k) {
+                  PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                  active_atoms.push_back( this_atom );
                }
-            default:
-               {
-                  QMessageBox::critical( this,
-                                         windowTitle() + us_tr( ": Fractal Dimension" ),
-                                         us_tr( "US_HYDRODYN_ASAB1 encountered an unknown error") );
+            }
+            progress->reset();
+            qApp->processEvents();
+            int retval;
+            {
+               float save_radius = asa.probe_radius;
+               asa.probe_radius  = sas_asa_probe_radius; 
+
+               retval = us_hydrodyn_asab1_main(
+                                               active_atoms,
+                                               &asa,
+                                               &results,
+                                               false,
+                                               progress,
+                                               editor,
+                                               this
+                                               );
+               asa.probe_radius  = save_radius;
+            }         
+
+            if ( retval ) {
+               editor->append("Errors found during ASA calculation\n");
+               progress->reset();
+               qApp->processEvents();
+               if (stopFlag) {
                   return;
-                  break;
+               }
+               switch ( retval )
+               {
+               case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
+                  {
+                     QMessageBox::critical( this,
+                                            windowTitle() + us_tr( ": Fractal Dimension" ),
+                                            us_tr( "US_HYDRODYN_ASAB1 encountered a memory allocation error") );
+                     return;
+                     break;
+                  }
+               default:
+                  {
+                     QMessageBox::critical( this,
+                                            windowTitle() + us_tr( ": Fractal Dimension" ),
+                                            us_tr( "US_HYDRODYN_ASAB1 encountered an unknown error") );
+                     return;
+                     break;
+                  }
                }
             }
          }
-      }
       
-      
-      // find SAS points, build set
+         // find SAS points, build set
 
-      vector < pointmass > sas;
+         size_t total_atoms = 0;
+         double asa_total   = 0;
 
-      size_t total_atoms = 0;
+         for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j) {
+            for ( unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); ++k ) {
+               PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
-      for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j) {
-         for ( unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); ++k ) {
-            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
-
-            ++total_atoms;
+               ++total_atoms;
             
-            if ( !this_atom->p_residue ) {
-               editor_msg( "red", QString( us_tr( "Internal error: p_residue not set!, contact the developers" ) ) );
-               return;
-            }
-            if ( !this_atom->p_atom ) {
-               editor_msg( "red", QString( us_tr( "Internal error: p_atom not set!, contact the developers" ) ) );
-               return;
-            }
+               if ( !this_atom->p_residue ) {
+                  editor_msg( "red", QString( us_tr( "Internal error: p_residue not set!, contact the developers" ) ) );
+                  return;
+               }
+               if ( !this_atom->p_atom ) {
+                  editor_msg( "red", QString( us_tr( "Internal error: p_atom not set!, contact the developers" ) ) );
+                  return;
+               }
 
+               asa_total += this_atom->asa;
 
-            if ( this_atom->asa >= sas_asa_threshold ) {
-               {
-                  QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
-                  QString use_atom_name = this_atom->p_residue->name == "N1" ? "N1" : this_atom->name;
-
-                  if ( !k &&
-                       this_atom->name == "N" ) {
-                     if ( use_res_name == "PRO" ) {
-                        use_res_name = "N1-";
-                     } else {
-                        use_res_name = "N1";
-                     }
-                     use_atom_name = use_res_name;
-                  }
-              
-                  QString res_idx =
-                     QString("%1|%2")
-                     .arg( use_res_name )
-                     .arg( use_atom_name )
-                     ;
-
-                  double saxs_excl_vol;
+               if ( this_atom->asa >= sas_asa_threshold ) {
                   {
-                     QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
-                     if ( this_atom->name == "OXT" ) {
-                        mapkey = "OXT|OXT";
-                     }
-                     if ( !residue_atom_hybrid_map.count( mapkey ) ) {
-                        editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
-                        return;
-                     }
-                     QString hybrid_name = residue_atom_hybrid_map[mapkey];
-                     QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
-                     if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) ) {
-                        editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
-                        return;
-                     }
-                     saxs_excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
-                  }
+                     QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
+                     QString use_atom_name = this_atom->p_residue->name == "N1" ? "N1" : this_atom->name;
 
-                  // QTextStream( stdout ) << "vdwf: res_idx is " << res_idx << " " << endl;
-         
-                  if ( vdwf.count( res_idx ) ) {
-                     // QTextStream( stdout ) << "found ionized_mw_delta " << vdwf[ res_idx ].ionized_mw_delta << endl;
-                     PDB_atom tmp_atom;
-                     _vdwf this_vdwf            = vdwf[ res_idx ];
-                     // overwrite from p_atom
-                     this_vdwf.mw               = this_atom->p_atom->hybrid.mw;
-                     this_vdwf.ionized_mw_delta = this_atom->p_atom->hybrid.ionized_mw_delta;
-                     this_vdwf.r                = this_atom->p_atom->hybrid.radius;
-                     this_vdwf.w                = this_atom->p_atom->hydration;
-                     this_vdwf.e                = this_atom->p_atom->hybrid.num_elect;
-
-                     if ( this_atom->resName == "WAT" ) {
-                        this_vdwf.mw = 0.0;
+                     if ( !k &&
+                          this_atom->name == "N" ) {
+                        if ( use_res_name == "PRO" ) {
+                           use_res_name = "N1-";
+                        } else {
+                           use_res_name = "N1";
+                        }
+                        use_atom_name = use_res_name;
                      }
-                     tmp_atom.bead_coordinate = this_atom->coordinate;
-                     tmp_atom.bead_computed_radius = this_vdwf.r;
-
-                     tmp_atom.radius                    = tmp_atom.bead_computed_radius;
-                     tmp_atom.bead_ref_mw               = this_vdwf.mw;
-                     tmp_atom.bead_ref_ionized_mw_delta = this_vdwf.ionized_mw_delta;
-                     tmp_atom.mw                        = this_vdwf.mw;
-                     tmp_atom.ionized_mw_delta          = this_vdwf.ionized_mw_delta;
-                     tmp_atom.bead_mw                   = this_vdwf.mw;
-                     tmp_atom.bead_ionized_mw_delta     = this_vdwf.ionized_mw_delta;
-                     tmp_atom.bead_color                = this_vdwf.color;
-                     // #warning recolored for hydration
-                     // tmp_atom.bead_color = hydrate && this_vdwf.w ? 1 : 6;
-                     // #warning recolored for ASA testing
-                     // tmp_atom.bead_color                = this_atom->asa >= asa.hydrate_threshold ? 6 : 8;
-                     tmp_atom.bead_recheck_asa          = this_atom->asa;
-                     tmp_atom.num_elect                 = this_vdwf.e;
-                     tmp_atom.exposed_code              = 1;
-                     tmp_atom.all_beads                 .clear( );
-                     tmp_atom.active                    = true;
-                     tmp_atom.name                      = this_atom->name;
-                     tmp_atom.resName                   = this_atom->resName;
-                     tmp_atom.iCode                     = this_atom->iCode;
-                     tmp_atom.chainID                   = this_atom->chainID;
-                     tmp_atom.saxs_excl_vol             = saxs_excl_vol;
-                     if ( this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
-                        tmp_atom.bead_hydration            = this_vdwf.w;
-                     } else {
-                        tmp_atom.bead_hydration            = 0;
-                     }
-                     tmp_atom.saxs_data.saxs_name       = "";
-                     tmp_atom.bead_model_code = QString( "%1.%2.%3.%4.%5" )
-                        .arg( this_atom->serial )
-                        .arg( this_atom->name )
-                        .arg( this_atom->resName )
-                        .arg( this_atom->chainID )
-                        .arg( this_atom->resSeq )
+              
+                     QString res_idx =
+                        QString("%1|%2")
+                        .arg( use_res_name )
+                        .arg( use_atom_name )
                         ;
 
+                     double saxs_excl_vol;
                      {
-                        pointmass tmpsas;
-                        tmpsas.axis[0]    = this_atom->coordinate.axis[0];
-                        tmpsas.axis[1]    = this_atom->coordinate.axis[1];
-                        tmpsas.axis[2]    = this_atom->coordinate.axis[2];
-                        tmpsas.mass       = tmp_atom.mw + tmp_atom.ionized_mw_delta;
-                        tmpsas.name       = tmp_atom.name;
-                        // tmpsas.radius     = tmp_atom.radius;
-                        sas.push_back( tmpsas );
+                        QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+                        if ( this_atom->name == "OXT" ) {
+                           mapkey = "OXT|OXT";
+                        }
+                        if ( !residue_atom_hybrid_map.count( mapkey ) ) {
+                           editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
+                           return;
+                        }
+                        QString hybrid_name = residue_atom_hybrid_map[mapkey];
+                        QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+                        if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) ) {
+                           editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
+                           return;
+                        }
+                        saxs_excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                      }
-                     if ( do_display_bead_models ) {
-                        bead_model.push_back(tmp_atom);
+
+                     // QTextStream( stdout ) << "vdwf: res_idx is " << res_idx << " " << endl;
+         
+                     if ( vdwf.count( res_idx ) ) {
+                        // QTextStream( stdout ) << "found ionized_mw_delta " << vdwf[ res_idx ].ionized_mw_delta << endl;
+                        PDB_atom tmp_atom;
+                        _vdwf this_vdwf            = vdwf[ res_idx ];
+                        // overwrite from p_atom
+                        this_vdwf.mw               = this_atom->p_atom->hybrid.mw;
+                        this_vdwf.ionized_mw_delta = this_atom->p_atom->hybrid.ionized_mw_delta;
+                        this_vdwf.r                = this_atom->p_atom->hybrid.radius;
+                        this_vdwf.w                = this_atom->p_atom->hydration;
+                        this_vdwf.e                = this_atom->p_atom->hybrid.num_elect;
+
+                        if ( this_atom->resName == "WAT" ) {
+                           this_vdwf.mw = 0.0;
+                        }
+                        tmp_atom.bead_coordinate = this_atom->coordinate;
+                        tmp_atom.bead_computed_radius = this_vdwf.r;
+
+                        tmp_atom.radius                    = tmp_atom.bead_computed_radius;
+                        tmp_atom.bead_ref_mw               = this_vdwf.mw;
+                        tmp_atom.bead_ref_ionized_mw_delta = this_vdwf.ionized_mw_delta;
+                        tmp_atom.mw                        = this_vdwf.mw;
+                        tmp_atom.ionized_mw_delta          = this_vdwf.ionized_mw_delta;
+                        tmp_atom.bead_mw                   = this_vdwf.mw;
+                        tmp_atom.bead_ionized_mw_delta     = this_vdwf.ionized_mw_delta;
+                        tmp_atom.bead_color                = this_vdwf.color;
+                        // #warning recolored for hydration
+                        // tmp_atom.bead_color = hydrate && this_vdwf.w ? 1 : 6;
+                        // #warning recolored for ASA testing
+                        // tmp_atom.bead_color                = this_atom->asa >= asa.hydrate_threshold ? 6 : 8;
+                        tmp_atom.bead_recheck_asa          = this_atom->asa;
+                        tmp_atom.num_elect                 = this_vdwf.e;
+                        tmp_atom.exposed_code              = 1;
+                        tmp_atom.all_beads                 .clear( );
+                        tmp_atom.active                    = true;
+                        tmp_atom.name                      = this_atom->name;
+                        tmp_atom.resName                   = this_atom->resName;
+                        tmp_atom.iCode                     = this_atom->iCode;
+                        tmp_atom.chainID                   = this_atom->chainID;
+                        tmp_atom.saxs_excl_vol             = saxs_excl_vol;
+                        if ( this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
+                           tmp_atom.bead_hydration            = this_vdwf.w;
+                        } else {
+                           tmp_atom.bead_hydration            = 0;
+                        }
+                        tmp_atom.saxs_data.saxs_name       = "";
+                        tmp_atom.bead_model_code = QString( "%1.%2.%3.%4.%5" )
+                           .arg( this_atom->serial )
+                           .arg( this_atom->name )
+                           .arg( this_atom->resName )
+                           .arg( this_atom->chainID )
+                           .arg( this_atom->resSeq )
+                           ;
+
+                        {
+                           pointmass tmpsas;
+                           tmpsas.axis[0]    = this_atom->coordinate.axis[0];
+                           tmpsas.axis[1]    = this_atom->coordinate.axis[1];
+                           tmpsas.axis[2]    = this_atom->coordinate.axis[2];
+                           tmpsas.mass       = tmp_atom.mw + tmp_atom.ionized_mw_delta;
+                           tmpsas.name       = tmp_atom.name;
+                           // tmpsas.radius     = tmp_atom.radius;
+                           sas.push_back( tmpsas );
+                        }
+                        if ( do_display_bead_models ) {
+                           bead_model.push_back(tmp_atom);
+                        }
+                     } else {
+                        editor_msg( "red", QString( "Residue atom pair %1 unknown in vdwf.json" ).arg( res_idx ) );
+                        return;
                      }
-                  } else {
-                     editor_msg( "red", QString( "Residue atom pair %1 unknown in vdwf.json" ).arg( res_idx ) );
-                     return;
                   }
                }
             }
          }
+         if ( do_display_bead_models ) {
+            QString use_dir = somo_dir;
+            QString spt_name = QString("%1_%2-SAS").arg( project ).arg( current_model + 1 );
+            spt_name = spt_name.left( 30 );
+            write_bead_spt( use_dir + QDir::separator() + spt_name, & bead_model );
+            model_viewer( use_dir + QDir::separator() + spt_name + ".spt", "-script" );
+         }
+
+         if ( total_atoms ) {
+            editor_msg( "black",
+                        QString( us_tr( "SAS atoms: %1 (%2%) of total %3 atoms" ) )
+                        .arg( sas.size() )
+                        .arg( 100.0 * (double) sas.size() / total_atoms, 0, 'f', 1 )
+                        .arg( total_atoms )
+                        );
+         }
       }
 
-      if ( do_display_bead_models ) {
-         QString use_dir = somo_dir;
-         QString spt_name = QString("%1_%2-SAS").arg( project ).arg( current_model + 1 );
-         spt_name = spt_name.left( 30 );
-         write_bead_spt( use_dir + QDir::separator() + spt_name, & bead_model );
-         model_viewer( use_dir + QDir::separator() + spt_name + ".spt", "-script" );
-      }
-
-      if ( total_atoms ) {
-         editor_msg( "black",
-                     QString( us_tr( "SAS atoms: %1 (%2%) of total %3 atoms" ) )
-                     .arg( sas.size() )
-                     .arg( 100.0 * (double) sas.size() / total_atoms, 0, 'f', 1 )
-                     .arg( total_atoms )
-                     );
-      }
 
       // call US_Hydrodyn_Fractal_Dimension::compute_counting();
 
       {
-         QString                       type;
          US_Fractal_Dimension          ufd;
          double                        fd = 0;
-         vector < vector < double > >  x;
-         vector < vector < double > >  y;
-         QString                       x_title;
-         QString                       y_title;
          QString                       errormsg;
 
-         if ( !ufd.compute(
-                           method
-                           ,sas
-                           ,angstrom_start
-                           ,angstrom_end
-                           ,angstrom_steps
-                           ,fd
-                           ,x
-                           ,y
-                           ,x_title
-                           ,y_title
-                           ,type
-                           ,errormsg
-                           ) ) {
-            QMessageBox::critical( this,
-                                   windowTitle() + us_tr( ": Fractal Dimension" ),
-                                   QString( us_tr( "Error computing for model %1 : %2" ) )
-                                   .arg( current_model + 1 )
-                                   .arg( errormsg )
-                                   );
-            return;
+         if ( method != US_Fractal_Dimension::USFD_ROLL_SPHERE ) {
+
+            if ( !ufd.compute(
+                              method
+                              ,sas
+                              ,angstrom_start
+                              ,angstrom_end
+                              ,angstrom_steps
+                              ,enright_ca_pct_start
+                              ,enright_ca_pct_end
+                              ,fd
+                              ,x
+                              ,y
+                              ,x_title
+                              ,y_title
+                              ,type
+                              ,errormsg
+                              ) ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Fractal Dimension" ),
+                                      QString( us_tr( "Error computing for model %1 : %2" ) )
+                                      .arg( current_model + 1 )
+                                      .arg( errormsg )
+                                      );
+               return;
+            }
          }
 
          // setup a dialog to show the plot

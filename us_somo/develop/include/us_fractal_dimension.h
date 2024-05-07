@@ -32,12 +32,6 @@ class pointmass
    }
 };
 
-
-#define UNICODE_ANGSTROM u8"\u212B"
-#define UNICODE_ANGSTROM_QS QString( "%1" ).arg( UNICODE_ANGSTROM )
-#define UNICODE_PLUSMINUS u8"\u00B1"
-#define UNICODE_PLUSMINUS_QS QString( "%1" ).arg( UNICODE_PLUSMINUS )
-
 using namespace std;
 
 class US_Fractal_Dimension {
@@ -46,10 +40,11 @@ class US_Fractal_Dimension {
    ~US_Fractal_Dimension();
 
    enum methods : int {
-      USFD_BOX_MODEL = 0
-      ,USFD_BOX_ALT  = 1
-      ,USFD_BOX_MASS = 2
-      ,USFD_ENRIGHT  = 3
+      USFD_BOX_MODEL   = 0
+      ,USFD_BOX_ALT     = 1
+      ,USFD_BOX_MASS    = 2
+      ,USFD_ENRIGHT     = 3
+      ,USFD_ROLL_SPHERE = 4
    };
 
    bool compute(
@@ -58,6 +53,8 @@ class US_Fractal_Dimension {
                 ,double                              angstrom_start
                 ,double                              angstrom_end
                 ,double                              angstrom_steps
+                ,double                              enright_ca_pct_start
+                ,double                              enright_ca_pct_end
                 ,double                            & fd                 // computed fractal dimension
                 ,vector < vector < double > >      & x                  // x coordinate of plots
                 ,vector < vector < double > >      & y                  // y coordinate of plots
@@ -69,11 +66,12 @@ class US_Fractal_Dimension {
 
    static QString method_name( enum US_Fractal_Dimension::methods method ) {
       switch ( method ) {
-      case USFD_BOX_MODEL : return "Box"; break;
-      case USFD_BOX_ALT   : return "Box Alternate"; break;
-      case USFD_BOX_MASS  : return "Box Mass"; break;
-      case USFD_ENRIGHT   : return "Enright"; break;
-      default             : return "Error - unknown method"; break;
+      case USFD_BOX_MODEL   : return "Box"; break;
+      case USFD_BOX_ALT     : return "Box Alternate"; break;
+      case USFD_BOX_MASS    : return "Box Mass"; break;
+      case USFD_ENRIGHT     : return "Enright"; break;
+      case USFD_ROLL_SPHERE : return "Rolling sphere"; break;
+      default               : return "Error - unknown method"; break;
       }
    };
 
@@ -133,6 +131,8 @@ class US_Fractal_Dimension {
                         ,double                         angstrom_start
                         ,double                         angstrom_end
                         ,double                         angstrom_steps
+                        ,double                         enright_ca_pct_start
+                        ,double                         enright_ca_pct_end
                         ,double                       & fd                 // computed fractal dimension
                         ,vector < vector < double > > & x                  // x coordinate of plots
                         ,vector < vector < double > > & y                  // y coordinate of plots
