@@ -1,0 +1,11 @@
+#ifndef US_UNICODE_H
+#define US_UNICODE_H
+
+#define UNICODE_ANGSTROM u8"\u212B"
+#define UNICODE_ANGSTROM_QS QString( "%1" ).arg( UNICODE_ANGSTROM )
+#define UNICODE_PLUSMINUS u8"\u00B1"
+#define UNICODE_PLUSMINUS_QS QString( "%1" ).arg( UNICODE_PLUSMINUS )
+#define UNICODE_ALPHA u8"\u03B1"
+#define UNICODE_ALPHA_QS QString( "%1" ).arg( UNICODE_ALPHA )
+
+#endif 

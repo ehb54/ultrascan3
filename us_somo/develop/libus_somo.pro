@@ -923,6 +923,7 @@ HEADERS *= \
         include/us_timer.h \
         include/us_thread.h \
         include/us_tnt_jama.h \
+        include/us_unicode.h \
         include/us_util.h \
 #  us_vbar.h \
         include/us_vector.h \
