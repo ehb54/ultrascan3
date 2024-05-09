@@ -829,10 +829,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    from_db    = ( (*db_or_disk) == 1 );
    dbg_level  = US_Settings::us_debug();
 
-   // Read all buffer components from the
-   //  $ULTRASCAN3/etc/bufferComponents xml file:
-   US_BufferComponent::getAllFromHD( component_list );
-
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
@@ -852,12 +848,25 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
                                        " (component) in mM:" ) );
    QLabel* bn_allcomps = us_banner( tr( "Click on item to select" ), -2 );
    QLabel* bn_bufcomps = us_banner( tr( "Double-click an item to remove" ), -2);
-   QLabel* lb_density  = us_label( tr( "Density (20" ) + DEGC
+   lb_density  = us_label( tr( "Density (20" ) + DEGC
                                  + tr( ", g/cm<sup>3</sup>):" ) );
-   QLabel* lb_viscos   = us_label( tr( "Viscosity (20" ) + DEGC
+   lb_viscos   = us_label( tr( "Viscosity (20" ) + DEGC
                                  + tr( ", cP):" ) );
    QLabel* lb_ph       = us_label( tr( "pH:" ) );
    QLabel* lb_compress = us_label( tr( "Compressibility:" ) );
+
+   QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
+   lb_temperature->setAlignment(Qt::AlignLeft);
+   sl_temp = new QSlider(Qt::Horizontal);
+   sl_temp->setMinimum(1);
+   sl_temp->setMaximum(50);
+   sl_temp->setSingleStep(1);
+   sl_temp->setValue(20);
+   QPushButton* pb_temp20C = us_pushbutton( tr ( "Rest Temperature" ) );
+   QHBoxLayout* lo_temp = new QHBoxLayout();
+   lo_temp->addWidget(lb_temperature);
+   lo_temp->addWidget(sl_temp);
+   lo_temp->addWidget(pb_temp20C);
 
    le_descrip          = us_lineedit( "" );
    le_concen           = us_lineedit( "" );
@@ -911,6 +920,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    main->addWidget( lw_bufcomps,     row,   4, 5, 4 );
    row    += 5;
    main->addLayout( lo_manual,       row++, 0, 1, 8 );
+   main->addLayout( lo_temp,         row++, 0, 1, 8 );
    main->addWidget( lb_density,      row,   0, 1, 2 );
    main->addWidget( le_density,      row,   2, 1, 2 );
    main->addWidget( lb_ph,           row,   4, 1, 2 );
@@ -924,15 +934,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    QStringList keys = component_list.keys();
    qSort( keys );
 
-   for ( int ii = 0; ii < keys.size(); ii++ )
-   {
-      QString key     = keys[ ii ];
-      US_BufferComponent bcomp = component_list[ key ];
-
-      // Insert the buffer component with it's key
-      QString sitem = bcomp.name + " (" + bcomp.range + ")";
-      new QListWidgetItem( sitem, lw_allcomps, key.toInt() );
-   }
 
    connect( le_descrip,  SIGNAL( editingFinished() ),
             this,        SLOT  ( new_description() ) );
@@ -940,6 +941,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,        SLOT  ( add_component()   ) );
    connect( lw_allcomps, SIGNAL( itemSelectionChanged() ),
             this,        SLOT  ( select_bcomp()         ) );
+   connect( lw_allcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+           this,        SLOT  ( select_water( QListWidgetItem* ) ) );
    connect( lw_bufcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
             this,        SLOT  ( remove_bcomp(      QListWidgetItem* ) ) );
    connect( le_density,  SIGNAL( editingFinished()   ), 
@@ -964,16 +967,41 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,        SLOT  ( newCanceled() ) );
    connect( pb_accept,   SIGNAL( clicked()     ),
             this,        SLOT  ( newAccepted() ) );
+   connect( this,        SIGNAL( use_db( bool )),
+           this,        SLOT  ( update_db_disk ( bool ) ) );
+   connect( sl_temp, SIGNAL( valueChanged( int ) ), this, SLOT( calc_visc_dent_temp() ) );
+   connect( pb_temp20C, SIGNAL( clicked() ), this, SLOT( set_temp20() ) );
+}
+
+// Slot when the DB-local state is changed from US_BufferGuiSetting
+void US_BufferGuiNew::update_db_disk ( bool state )
+{
+   component_list.clear();
+   from_db = state;
 }
 
 // Slot for change to New panel
 void US_BufferGuiNew::init_buffer( void )
 {
-   from_db    = ( (*db_or_disk) == 1 );
+   if ( !component_list.isEmpty() ) {
+      return;
+   }
+   if ( from_db ) {
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+      US_Passwd pw;
+      QString p = pw.getPasswd();
+      US_BufferComponent::getAllFromDB( p, component_list );
+      QApplication::restoreOverrideCursor();
+   } else {
+      // Read all buffer components from the
+      //  $ULTRASCAN3/etc/bufferComponents xml file:
+      US_BufferComponent::getAllFromHD( component_list );
+
+   }
 
    // In case we just re-synced in Settings panel,
    //   reread components and recompose list widget
-   US_BufferComponent::getAllFromHD( component_list );
+   // US_BufferComponent::getAllFromHD( component_list );
 DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
    QStringList keys = component_list.keys();
    qSort( keys );
@@ -989,6 +1017,7 @@ DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
       // Insert the buffer component with it's key
       new QListWidgetItem( sitem, lw_allcomps, key.toInt() );
    }
+   new QListWidgetItem( "Water (H2O)", lw_allcomps, -1 );
 DbgLv(1) << "BufN:SL: init_buffer   lw_allcomps rebuilt";
 
    // Coming (back) into New panel, all should be cleared
@@ -1010,6 +1039,7 @@ DbgLv(1) << "BufN:SL: init_buffer   lw_allcomps rebuilt";
    buffer->componentIDs .clear();
    buffer->concentration.clear();
    buffer->extinction.clear();
+   sl_temp->setValue(20);
 }
 
 // Slot to capture new buffer description
@@ -1026,10 +1056,43 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
    pb_spectrum  ->setEnabled( can_accept );
 }
 
+// Slot to select water as buffer
+void US_BufferGuiNew::select_water(QListWidgetItem* item){
+   // Get selected component
+   // QListWidgetItem* item    = lw_allcomps->currentItem();
+   if ( item->type() > 0 ) {
+      return;
+   }
+   if (lw_bufcomps->count() > 0) {
+      QMessageBox::warning(this, tr("Warning!"),
+                           tr("Please remove all the selected buffer components before choosing [ Water (H2O) ]!"));
+      return;
+   }
+   new QListWidgetItem(item->text(), lw_bufcomps, -1);
+   le_density->setText(QString::number(DENS_20W));
+   le_viscos->setText(QString::number(VISC_20W));
+   buffer->component.clear();
+   buffer->componentIDs.clear();
+   buffer->concentration.clear();
+   buffer->density = DENS_20W;
+   buffer->viscosity = VISC_20W;
+   buffer->manual = ck_manual->isChecked();
+   bool can_accept = !le_descrip->text().isEmpty();
+   pb_accept->setEnabled( can_accept );
+   pb_spectrum->setEnabled( can_accept );
+   calc_visc_dent_temp();
+
+}
+
 // Slot for entry of concentration to complete add-component
 void US_BufferGuiNew::add_component()
 {
 DbgLv(1) << "BufN:SL: add_component()";
+   if ( lw_bufcomps->count() > 0 && lw_bufcomps->item(0)->type() < 0){
+      QMessageBox::warning(this, tr("Warning!"),
+                        tr("Please remove the water component before choosing any other components!"));
+      return;
+   }
    double concen   = le_concen->text().toDouble();
 
    le_concen->setText( "" );
@@ -1071,6 +1134,7 @@ DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
    }
 
    // Check if ingredient already exists
+   bool notfound = true;
    for ( int ii = 0; ii < buffer->component.size(); ii++ )
    {
       if ( bcomp.name == buffer->component[ ii ].name )
@@ -1079,23 +1143,31 @@ DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
          QString entext  = bcomp.name + "  ("
                            + QString::number( concen )
                            + " " + bcomp.unit + ")";
-         lw_bufcomps->item( ii )->setText( entext );
-
-         return;
+         for (int jj = 0; jj < lw_bufcomps->count(); jj++) {
+            if ( compID.toInt() == lw_bufcomps->item(jj)->type() ){
+               lw_bufcomps->item( jj )->setText( entext );
+               break;
+            }
+         }
+         notfound = false;
+         break;;
       }
    }
 
+   if (notfound)
+   {
 DbgLv(1) << "BufN:SL: adco:  cname" << bcomp.name << "crange" << bcomp.range
  << "cunit" << bcomp.unit;
    QString entext  = bcomp.name + "  ("
                      + QString::number( concen )
                      + " " + bcomp.unit + ")";
-   lw_bufcomps->addItem( entext );
+   new QListWidgetItem( entext, lw_bufcomps, lw_allcomps->currentItem()->type() );
 
    buffer->concentration << concen;
    buffer->component     << bcomp;
    buffer->componentIDs  << compID;
 DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
+   }
 
    recalc_density();
    recalc_viscosity();
@@ -1105,6 +1177,7 @@ DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
                        !le_viscos ->text().isEmpty() );
    pb_accept->setEnabled( can_accept );
    pb_spectrum->setEnabled( can_accept );
+   calc_visc_dent_temp();
 }
 
 
@@ -1170,12 +1243,19 @@ void US_BufferGuiNew::create_new_buffer_component() {
       QString sitem = bcomp.name + " (" + bcomp.range + ")";
       new QListWidgetItem(sitem, lw_allcomps, key.toInt());
    }
+   new QListWidgetItem( "Water (H2O)", lw_allcomps, -1 );
 }
 
 // Slot for select of buffer component
 void US_BufferGuiNew::select_bcomp( )
 {
    QListWidgetItem* item    = lw_allcomps->currentItem();
+   if ( item->type() < 0 ) {
+      lb_bselect->setText( tr( "Water ( H2O )\n double-click to select" ) );
+      le_concen->setDisabled(true);
+      return;
+   }
+   le_concen->setEnabled(true);
    QString compID  = QString::number( item->type() );
    US_BufferComponent bcomp = component_list[ compID ];
    //int bcx         = lw_allcomps->currentRow();
@@ -1199,13 +1279,18 @@ DbgLv(1) << "BufN:SL: remove_bcomp()" << item->text();
    QPushButton *cancelButton = mBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
    
    mBox.exec();
-   
    if (mBox.clickedButton() == cancelButton)
      {
       return;
      }
    if (mBox.clickedButton() == yesButton)
      {
+       if (item->type() < 0) {
+          le_density->clear();
+          le_viscos->clear();
+          delete lw_bufcomps->currentItem();
+          return;
+       }
        // Get selected component
        QListWidgetItem* item    = lw_bufcomps->currentItem();
        QString item_name = item->text().split("(")[0].trimmed();
@@ -1252,7 +1337,7 @@ DbgLv(1) << "BufN:SL: remove_bcomp()" << item->text();
        pb_accept->setEnabled( can_accept );
        pb_spectrum->setEnabled( can_accept );
      }
-
+   calc_visc_dent_temp();
 }
 
 // Slot to recalculate density based on new component
@@ -1315,7 +1400,6 @@ DbgLv(1) << "BufN:SL: recalc_viscosity()" << buffer->component[bcsize-1].name;
       c1        = ( bc->unit == "mM" ) ? ( c1 / 1000.0 ) : c1;
       double c2 = c1 * c1;      // c1^2
       double c3 = c2 * c1;      // c1^3
-      double c4 = c3 * c1;      // c1^4
 
       if ( c1 > 0.0 )
       {
@@ -1324,12 +1408,46 @@ DbgLv(1) << "BufN:SL: recalc_viscosity()" << buffer->component[bcsize-1].name;
                               + bc->visc_coeff[ 2 ] * 1.0e-2 * c1
                               + bc->visc_coeff[ 3 ] * 1.0e-3 * c2
                               + bc->visc_coeff[ 4 ] * 1.0e-4 * c3
-                              + bc->visc_coeff[ 5 ] * 1.0e-6 * c4 
-                              - VISC_20W );
+                              - 1.0 ) * VISC_20W ;
       }
    }
 
    le_viscos->setText( QString::number( buffer->viscosity ) );
+}
+
+// Modify Viscosity and Density of Buffer for Temperature
+void US_BufferGuiNew::calc_visc_dent_temp()
+{
+   double temp = sl_temp->value();
+   lb_density->setText(tr( "Density (%1%2, g/cm<sup>3</sup>):" ).arg(temp).arg(DEGC));
+   lb_viscos->setText(tr( "Viscosity (%1%2, cP):" ).arg(temp).arg(DEGC));
+   qApp->processEvents();
+   if (le_density->text().isEmpty()) return;
+   if (le_viscos->text().isEmpty()) return;
+   if (ck_manual->isChecked()) return;
+   double density_tb, viscosity_tb;
+   if (temp == 20) {
+      density_tb = buffer->density;
+      viscosity_tb = buffer->viscosity;
+   } else {
+      US_Math2::SolutionData sol;
+      sol.manual = false;
+      sol.viscosity = buffer->viscosity;
+      sol.density = buffer->density;
+      sol.vbar20 = 0.5;
+      sol.vbar = 0.5;
+      US_Math2::data_correction(temp, sol);
+      density_tb = sol.density_tb;
+      viscosity_tb = sol.viscosity_tb;
+   }
+   le_density->setText( QString::number( density_tb ) );
+   le_viscos->setText( QString::number( viscosity_tb ) );
+   qApp->processEvents();
+}
+
+void US_BufferGuiNew::set_temp20()
+{
+   sl_temp->setValue(20);
 }
 
 // Slot for manually changed density
@@ -1376,6 +1494,24 @@ DbgLv(1) << "BufN:SL: viscosity()" << buffer->viscosity;
 void US_BufferGuiNew::manual_flag( bool is_on )
 {
 DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
+   if (is_on) {
+      if (lw_bufcomps->count() > 0) {
+            int qs = QMessageBox::question(this, "Warning!", "If you continue with YES, all selected buffer "
+                                                 "components will be discarded");
+         if (qs == QMessageBox::Yes) {
+               buffer->component.clear();
+               buffer->componentIDs.clear();
+               buffer->concentration.clear();
+               lw_bufcomps->clear();
+               le_concen->clear();
+         } else {
+            return;
+         }
+      }
+   } else {
+      recalc_density();
+      recalc_viscosity();
+   }
    us_setReadOnly( le_density, ! is_on );
    us_setReadOnly( le_viscos,  ! is_on );
    buffer->manual     = is_on;
@@ -1406,6 +1542,11 @@ DbgLv(1) << "BufN:SL: newCanceled()";
    buffer->component    .clear();
    buffer->componentIDs .clear();
    buffer->concentration.clear();
+   lw_bufcomps->clear();
+   le_descrip->clear();
+   le_concen->clear();
+   recalc_density();
+   recalc_viscosity();
 
    emit newBufCanceled();
 }
@@ -1429,6 +1570,19 @@ DbgLv(1) << "BufN:SL: newAccepted()";
 DbgLv(1) << "BufN:SL:  newAcc: Disk";
       write_disk();
    }
+
+   buffer->person       = "";
+   buffer->bufferID     = "-1";
+   buffer->GUID         = "";
+   buffer->description  = "";
+   buffer->component    .clear();
+   buffer->componentIDs .clear();
+   buffer->concentration.clear();
+   lw_bufcomps->clear();
+   le_descrip->clear();
+   le_concen->clear();
+   recalc_density();
+   recalc_viscosity();
 
    emit newBufAccepted();
 }
@@ -1501,8 +1655,8 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
-   //us_setReadOnly( le_descrip, true );
-   us_setReadOnly( le_descrip, false );
+   us_setReadOnly( le_descrip, true );
+   //us_setReadOnly( le_descrip, false );
 
    int row = 0;
    main->addWidget( bn_modbuf,       row++, 0, 1, 8 );
@@ -1868,6 +2022,8 @@ void US_BufferGui::checkTab( int currentTab )
 void US_BufferGui::update_disk_or_db( bool choice )
 {
    (choice) ? (disk_or_db = 1 ) : (disk_or_db = 0 );
+   emit newTab->use_db( choice );
+   qApp->processEvents();
 }
 
 // Global person ID after Settings panel change

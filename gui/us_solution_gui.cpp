@@ -1456,7 +1456,8 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
    le_descrip    = us_lineedit( solution-> solutionDesc );
-   us_setReadOnly( le_descrip, false );
+   //us_setReadOnly( le_descrip, false );
+   us_setReadOnly( le_descrip, true );
 
    QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
    le_storageTemp = us_lineedit();

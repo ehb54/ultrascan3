@@ -398,7 +398,7 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
                                              dbuser, dbpasw );
 
    xpn_data->close();
-   delete xpn_data;
+   //delete xpn_data;
 
    if ( ok )
      {
@@ -416,6 +416,7 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
        
        //pb_save->setEnabled( true );
      }
+   delete xpn_data;
    
    return ok;
    

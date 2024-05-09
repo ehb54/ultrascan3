@@ -7,6 +7,7 @@
 
 #include "us_global.h"
 #include "us_help.h"
+#include "us_geturl.h"
 
 //! \brief UltraScan initial screen
 
@@ -42,7 +43,6 @@ private:
   void help   ( int );
   void launch ( int );
   void apply_prefs ( void );
-  bool notice_check( void );
 
   struct procData
   {
@@ -53,12 +53,15 @@ private:
 
   QList<procData*> procs;
 
+  US_GetUrl notices_get_url;
+
 private slots:
   void onIndexTriggered( int index );
   void closeSplash     ( void );
   void terminated      ( int, QProcess::ExitStatus );
   void closeEvent      ( QCloseEvent* );
   void closeProcs      ( void );
+  void notices_ready   ();
 };
 
 //////////////

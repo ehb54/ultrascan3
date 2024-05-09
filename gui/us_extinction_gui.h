@@ -8,6 +8,16 @@
 #include "us_minimize.h"
 #include "us_extinctfitter_gui.h"
 #include "us_analyte_gui.h"
+#include "us_csv_loader.h"
+
+
+class CustomListWidgetItem : public QListWidgetItem {
+   public:
+   CustomListWidgetItem(QListWidget* parent = nullptr)
+       : QListWidgetItem(parent) {}
+
+   bool operator<(const QListWidgetItem& other) const;
+};
 
 class US_GUI_EXTERN US_Extinction : public US_Widgets
 {
@@ -90,10 +100,9 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
       QWidget*      p;
 
    private slots:
-      bool    loadScan ( const QString& );
+      bool    loadScan ( US_CSV_Loader::CSV_Data& );
       bool    isComment( const QString& );
       void    add_wavelength( void );
-      void    reading( QStringList );
       void    reset_scanlist( void );
       void    update_data( void );
 

@@ -16,6 +16,10 @@ class US_GUI_EXTERN US_ReportGenGui: public US_Widgets
       US_ReportGenGui( QString );
       ~US_ReportGenGui() {};
 
+      //abde
+      bool abde_mode;
+      void abde_mode_passed( void );
+
    signals:
       void update_details( QString& );
       

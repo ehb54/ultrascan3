@@ -68,15 +68,15 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // // // // ---- Testing ----
+  // // // // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
 
 
-  // protocol_details[ "invID_passed" ] = QString("165");
-  // protocol_details[ "protocolName" ] = QString("SBird-DNA-EcoRI-101322-PD5");
-  // protocol_details[ "aprofileguid" ] = QString("a350f5ea-305e-4e72-8500-ccf198c98b62");
-  // protocol_details[ "filename" ]     = QString("SBird-DNA-EcoRI-101322-run1843");
-  // protocol_details[ "analysisIDs"  ] = QString( "3109,3110,3111,3112");
+  // protocol_details[ "invID_passed" ] = QString("95");
+  // protocol_details[ "protocolName" ] = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3");
+  // protocol_details[ "aprofileguid" ] = QString("19a5ef33-0a1e-499e-95ef-45daac7bdcb7");
+  // protocol_details[ "filename" ]     = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3-run1963");
+  // protocol_details[ "analysisIDs"  ] = QString( "3657,3658");
 
   // // //What's needed ////////////////////////////////////////////////////////
   // AProfileGUID       = protocol_details[ "aprofileguid" ];
@@ -278,6 +278,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
+      qDebug() << "GUI: job1run, job2run, job3run, job4run, job5run -- "
+	       << job1run << job2run << job3run << job4run << job5run;
 
       if ( triple_name_width > max_width )
        	max_width =  triple_name_width; 
@@ -1053,7 +1055,9 @@ void US_Analysis_auto::gui_update( )
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
 
-		  Completed_triples[ triple_curr_key ] = true;
+		  /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+		  //Completed_triples[ triple_curr_key ] = true;
+		  /*******************************************************************************************/
 
 		  if ( status == "FAILED" || status == "failed" )
 		    {
@@ -3189,7 +3193,7 @@ void US_Analysis_auto::delete_job( QString triple_stage )
 	    other_chan_triples = triple_list_affected.join(",");
 	}
       
-      //Also update autoflowStatus's "analysis" JSON:
+      //Also update autoflowStatus's "analysisCancel" JSON:
       record_or_update_analysis_cancel_status( &db, triple_n, other_chan_triples, comment_t );
            
     }
@@ -3663,7 +3667,7 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   le_runID -> setObjectName("runID");
 
   //Delete button
-  QPushButton* pb_delete = new QPushButton( tr( "Delete" ) );
+  QPushButton* pb_delete = new QPushButton( tr( "Cancel" ) );
   pb_delete-> setObjectName("delete");
 
   //Overlay button

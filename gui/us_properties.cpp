@@ -153,8 +153,9 @@ US_Properties::US_Properties( US_Model& mod, int access )
    // Pushbuttons
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Cancel" ) );
-   QPushButton* pb_accept   = us_pushbutton( tr( "Accept" ) );
-
+   //QPushButton* pb_accept   = us_pushbutton( tr( "Accept" ) );
+   pb_accept   = us_pushbutton( tr( "Accept" ) );
+   
    // Main layout
    int row = 0;
    main->addWidget( pb_new,         row,   0, 1, 2 );
@@ -261,6 +262,12 @@ US_Properties::US_Properties( US_Model& mod, int access )
    clear_entries();
    update_lw();
    checkbox();
+}
+
+void US_Properties::disable_gui( void )
+{
+  pb_accept-> setEnabled(false);
+
 }
 
 void US_Properties::clear_entries( void )

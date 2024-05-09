@@ -61,6 +61,7 @@ class US_GetRun : public US_WidgetsDialog
       void assign_investigator( int  );
       void select        ( void );
       void deleteRun     ( void );
+      bool check_filename_for_autoflow( QString );
       void populate_list ( void );
       void update_disk_db( bool );
       void limit_data    ( const QString& );

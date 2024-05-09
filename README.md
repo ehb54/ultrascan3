@@ -3,6 +3,8 @@
 This is the home of the UltraScan GUI software source code.
 More information is available [here](https://ultrascan.aucsolutions.com)
 
+The UltraScan project is supported by NIH Funding GM120600
+
 ### installation
 
 The simplest way is to download and install a precompiled [binary](https://www.ultrascan3.aucsolutions.com/download.php)
@@ -39,5 +41,5 @@ Compile both `us` and `us3_somo` ```cd /ultrascan3 && ./makeall.sh && ./makesomo
 
 Run the compiled application ```LD_LIBRARY_PATH=/ultrascan3/lib:/qwt-6.1.5/lib /ultrascan3/bin/us```
 
-Note - subprocesses do not currently run, so you must run any compiled application individually, e.g. `us_fematch`
+Note - subprocesses do not currently run in the container, so you must run any compiled application individually, e.g. `us_fematch`
 

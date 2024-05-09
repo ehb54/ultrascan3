@@ -312,7 +312,7 @@ pb_plateau->setVisible(false);
 
    //pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    pb_write       = us_pushbutton( tr( "Save Edit Profiles" ), false );
-   pb_emanual     = us_pushbutton( tr( "Edit Profiles Manually" ), false );
+   pb_emanual     = us_pushbutton( tr( "Edit Currently Selected Profile Manually" ), false );
    
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
@@ -698,6 +698,20 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("HuberS_bCAll-DNSA_012623");
    // details[ "statusID" ]     = QString("116");
    // details[ "autoflowID" ]   = QString("814");
+
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("AAV396_CsCl-46kRpm_21APRIL23-run1916");
+   // details[ "protocolName" ] = QString("AAV396_CsCl-46kRpm_21APRIL23");
+   // details[ "statusID" ]     = QString("148");
+   // details[ "autoflowID" ]   = QString("866");
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("eGFP-DNA-MW-08OCT23-run1981");
+   // details[ "protocolName" ] = QString("eGFP-DNA-MW-08OCT23");
+   // details[ "statusID" ]     = QString("231");
+   // details[ "autoflowID" ]   = QString("1002");
+   // details[ "runID" ]        = QString("1981");
+   // details[ "OptimaName" ]   = QString("Optima 1");
    
    // load_auto( details );
   
@@ -705,7 +719,7 @@ pb_plateau->setVisible(false);
 
 
 // AUTO: Constructor for manual processing 
-US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir  ) : US_Widgets()
+US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir, int currenChtInd ) : US_Widgets()
 {
  
    check        = US_Images::getIcon( US_Images::CHECK );
@@ -884,6 +898,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
+
+
 
    // Edit controls 
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
@@ -1094,7 +1110,7 @@ pb_plateau->setVisible(false);
    // buttons->addWidget( pb_accept );
 
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
-   pb_pass    = us_pushbutton( tr( "Accept" ), false );
+   pb_pass    = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
    
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( close()  ) );
    connect( pb_pass,   SIGNAL( clicked()    ),
@@ -1105,8 +1121,9 @@ pb_plateau->setVisible(false);
 
 
 
-   // -- Hide some buttons ----
-      
+   // -- Hide && || disable some buttons ----
+
+   cb_triple      -> setEnabled( false );
    pb_investigator->hide();
    le_investigator->hide();
    pb_load        ->hide(); 
@@ -1114,7 +1131,7 @@ pb_plateau->setVisible(false);
    pb_report      ->hide();
    lb_gaps        ->hide();
    ct_gaps        ->hide();
-
+   pb_nextChan    ->hide();
    
    lb_scan        ->hide();
    lb_from        ->hide();
@@ -1143,31 +1160,6 @@ pb_plateau->setVisible(false);
    // pb_reset       ->hide();
    // pb_help        ->hide();
    // pb_accept      ->hide();
-
-   //MWL
-   lb_mwlctl      ->hide();
-   lb_ldelta      ->hide();
-   ct_ldelta      ->hide();
-   lb_lstart      ->hide();
-   lb_lend        ->hide();
-   lb_lplot       ->hide();
-   cb_lplot       ->hide();
-   cb_lstart      ->hide();
-   cb_lend        ->hide();
-   le_ltrng       ->hide();
-   le_lxrng       ->hide();
-   pb_custom      ->hide();
-   pb_incall      ->hide();
-   pb_larrow      ->hide();
-   pb_rarrow      ->hide();
-   //lo_writemwl    ->hide();
-   ck_writemwl    ->hide();
-   	 
-   rb_lrange      ->hide();
-   rb_custom      ->hide();
-   rb_radius      ->hide();
-   rb_waveln      ->hide();
-   
    
    //---------------------
    
@@ -1208,6 +1200,12 @@ pb_plateau->setVisible(false);
    this->triples    = triples;
    this->workingDir = workingDir;
    load_manual_auto();
+
+   //pre-select channel passed from main window:
+   cb_triple->setCurrentIndex( currenChtInd );
+   new_triple( currenChtInd );
+
+   show_mwl_controls( false );
 }
 
 
@@ -2100,6 +2098,7 @@ void US_Edit::process_optics_auto( )
   editProfile.clear();
   editProfile_scans_excl.clear();
   automatic_meniscus.clear();
+  manual_edit_comments. clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
@@ -3709,7 +3708,10 @@ double US_Edit::find_meniscus_auto()
   double meniscus_init = sqrt( bottom_db*bottom_db - ( aprofile_volume*360/(1000*pathlength_db*angle_db*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
   
   qDebug() << "Meniscus_init: " << meniscus_init << ", " << bottom_db << ", " << pathlength_db << ", " << angle_db << ", " << M_PI;
-    
+
+  //HARD CODED [for now?]:
+  meniscus_init = 5.87; //Edge of the cell -- NEEDS TESTING
+  
   double meniscus_av = 0;
 
   // Scan Data Processing...
@@ -8143,6 +8145,8 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	   	   
 	 }
      }
@@ -8153,7 +8157,8 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 // Call manuall editor
 void US_Edit::manual_edit_auto( void )
 {
-  sdiag = new US_Edit( allData, triples, workingDir );
+  int currChIndex = cb_triple->currentIndex();
+  sdiag = new US_Edit( allData, triples, workingDir, currChIndex );
   /** The following will block parent windows from closing BUT not from continuing timer execution ***/
   sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   sdiag->setWindowModality(Qt::ApplicationModal);
@@ -8161,7 +8166,7 @@ void US_Edit::manual_edit_auto( void )
 
   connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
 	   this,  SLOT( update_triple_edit_params (  QMap < QString, QStringList > &) ) );
-  
+
   sdiag->show();
 }
 
@@ -8177,6 +8182,22 @@ void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edi
 
   automatic_meniscus[ t_name ] = false;
 
+  //Put a comment, why this triple was processed manually
+  bool ok;
+  QString msg = QString(tr("Put a comment on MANUAL editing :"));
+  QString default_text = QString(tr("Reason for MANUAL editing: "));
+  QString comment_t    = QInputDialog::getText( this,
+						tr( "Reason for MANUAL editing" ),
+						msg, QLineEdit::Normal, default_text, &ok );
+  
+  if ( !ok )
+    {
+      return;
+    }
+
+  manual_edit_comments[ t_name ] = comment_t;
+  ///////////////////////////////////////////////////////
+
   new_triple_auto( 0 ); 
 }
 
@@ -8187,7 +8208,7 @@ void US_Edit::write_auto( void )
   // record_edit_status( automatic_meniscus, dataType );
   // exit(1);
   
-  /****/
+  /****  TEMP1 **/
   //--- Check if saving already initiated
   int status_edit_unique;
   status_edit_unique = read_autoflow_stages_record( autoflowID_passed );
@@ -8213,7 +8234,7 @@ void US_Edit::write_auto( void )
       return;
     }
     //-------------------------------------------
-  /****/
+  /***/
   
   pb_write       ->setEnabled( false );
 
@@ -8307,7 +8328,8 @@ void US_Edit::write_auto( void )
       channels_all << triple_parts[0] + "." + triple_parts[1];
     }
   //-----------------------------------------------------------------//
-  
+
+  /*** TEMP1 **/
    if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
      {
        if ( runType_combined_IP_RI )
@@ -8321,10 +8343,10 @@ void US_Edit::write_auto( void )
 
    	      cb_triple->disconnect();
 
-   	      /***/
+   	      
    	      //set autoflowStages record to "unknown" again !!
    	      revert_autoflow_stages_record( autoflowID_passed );
-   	      /****/
+   	      
    	      
    	      reset();
    	      emit process_next_optics( );
@@ -8366,7 +8388,7 @@ void US_Edit::write_auto( void )
    	  return;
    	}
      }
-  
+  /***/
   
   /*******************************************************/
   
@@ -8386,7 +8408,50 @@ void US_Edit::write_auto( void )
       }
    }
 
-   qDebug() << "START Saving"; 
+   
+   /*************************************************************************************************************/
+   // We need to  insert submission form dialog (with password...)
+   /*************************************************************************************************************/
+   QStringList qry1;
+   qry1 <<  QString( "get_user_info" );
+   dbP-> query( qry1 );
+   dbP-> next();
+   int u_ID        = dbP-> value( 0 ).toInt();
+   QString u_fname = dbP-> value( 1 ).toString();
+   QString u_lname = dbP-> value( 2 ).toString();
+   int u_lev       = dbP-> value( 5 ).toInt();
+   
+   QString user_submitter = u_lname + ", " + u_fname;
+   
+   gmp_submitter_map.clear();
+   US_Passwd   pw_at;
+   gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run EDIT Form", "Please fill out GMP run EDIT form:", user_submitter );
+   
+   int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+   qDebug() << "Submitter map: "
+	    << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+	    << gmp_submitter_map.keys().isEmpty() 
+	    << gmp_submitter_map[ "User:" ]
+	    << gmp_submitter_map[ "Comment:" ]
+	    << gmp_submitter_map[ "Master Password:" ];
+   
+   if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+     {
+       revert_autoflow_stages_record( autoflowID_passed );
+       pb_write       ->setEnabled( true );
+
+       //DEBUG 
+       for ( int i = 0; i < channels_all.size(); ++i  )
+	 qDebug() << "[NO COMMMENT] BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i];
+       for ( int j = 0; j < triples_all_optics.size(); ++j )
+	 qDebug() << "[NO COMMNET] BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j];
+       //END DEBUG
+       
+       return;
+     }
+   /*************************************************************************************************************/
+   
+   qDebug() << "NOW, START Saving"; 
 
 
    /* TEMPORARY ***/
@@ -8491,23 +8556,33 @@ void US_Edit::write_auto( void )
    ////////////////////////////////////////////////////////////////////
 
    // Now, remove duplicates from channels array, fill QMap keeping track on if reference wavelength set for each channel (if MWL) 
-   channels_all.removeDuplicates();
-
+   channels_all       .removeDuplicates();
+   triples_all_optics .removeDuplicates(); //Absence of this caused incorrect analyses list: need to test!!!
+   
+     
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
-       qDebug() << channels_all[i];
+       qDebug() << "BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i];
        isSet_ref_wvl[ channels_all[i] ] = false;
      }
 
+   //DEBUG
+   for ( int j = 0; j < triples_all_optics.size(); ++j )
+     qDebug() << "BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j];
+   
+   
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
    QStringList AnalysisIDs;
    
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
+       qDebug() << "AUTOFLOW_ANALYSIS: channel name -- " << channels_all[i];
        for ( int j = 0; j < triples_all_optics.size(); ++j )
 	 {
 	   if ( triples_all_optics[j].contains( channels_all[i] ) )
 	     {
+	       qDebug() << "AUTOFLOW_ANALYSIS: triple " << triples_all_optics[j] <<  " ,containing channel " <<  channels_all[i];
+	       
 	       int ID = 0;
 	       QString json_status;
 	       
@@ -8526,7 +8601,7 @@ void US_Edit::write_auto( void )
 		       qDebug() << triples_all_optics[j] << json_status;
 
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
-
+		       
 		       if (ID)
 			 create_autoflowAnalysisStages_record( dbP, ID );
 		     }
@@ -8691,7 +8766,11 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   editRI_IP_Json += "\"email\":\""  + email                     + "\",";
   editRI_IP_Json += "\"level\":\""  + QString::number( level )  + "\"";
   editRI_IP_Json += "}],";
-  
+
+  //Now, add comment from SAVING form:
+  editRI_IP_Json += "\"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\",";      
+
+  //Meniscus
   editRI_IP_Json += "\"Meniscus\": ";
   editRI_IP_Json += "[{";
   
@@ -8699,7 +8778,14 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
     {
       QString meniscus_method = os.value() ? QString("automated") : QString("manual");
       
-      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method     + "\",";
+      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method;
+
+      if ( !os.value() )
+	{
+	  editRI_IP_Json += ", Comment: " + manual_edit_comments[ os.key() ] + "\",";
+	}
+      else
+	editRI_IP_Json += "\",";
     }
   
   editRI_IP_Json.chop(1);
@@ -10638,6 +10724,16 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl_auto( int trx )
 {
+  
+  US_Passwd pw;
+  US_DB2* dbP            = new US_DB2( pw.getPasswd() );
+
+  if ( dbP->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + dbP->lastError() );
+      return;
+    }
 
   // triple_index = trx;
 
@@ -10773,9 +10869,9 @@ void US_Edit::write_mwl_auto( int trx )
    QString schan    = celchn.section( "/", 1, 1 ).simplified();
    QString tripbase = scell + " / " + schan + " / ";
    int     idax     = triples.indexOf( tripbase + current_wvlns_list[ 0 ] ); 
-   int     odax     = index_data_auto( trx, 0 );                                
+   //int     odax     = index_data_auto( trx, 0 );                             //CORRECT! {first odax in a triple}                                
 
-   qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
+   //qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
 
    QString filebase = files[ idax ].section( ".",  0, -6 )
                     + "." + editLabel + "."
@@ -10783,17 +10879,21 @@ void US_Edit::write_mwl_auto( int trx )
                     + "." + scell + "." + schan + ".";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
+   QString filebase_qry   = files[ idax ].section( ".",  0, -6 );
+   QString triplename_qry = scell + "." + schan + ".";
+   
    // Loop to output a file/db-record for each wavelength of the cell/channel
-
    for ( int wvx = 0; wvx < current_wvlns_list.size(); wvx++ )           //ALEXEY: needs to be looped over channels, not only current channel
    {
       QString swavl    = current_wvlns_list[ wvx ];
       QString triple   = tripbase + swavl;
       QString filename = filebase + swavl + ".xml";
       idax             = triples.indexOf( triple );
-      odax             = index_data_auto( trx, wvx );                             // Correct ?
+      //odax             = index_data_auto( trx, wvx );                             // Correct ? NOT!!! Got you !!
 
-      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename;
+      
+      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename
+		<< ", trx " << trx << ", wvx " << wvx; // << ", odax " << odax;
 
       QString editGUID = editGUIDs[ idax ];
 
@@ -10803,8 +10903,17 @@ void US_Edit::write_mwl_auto( int trx )
          editGUIDs.replace( idax, editGUID );
       }
 
-      QString rawGUID  = US_Util::uuid_unparse(
-            (unsigned char*)outData[ odax ]->rawGUID );
+
+      //ALEXEY: instead -- get rawDataGUID based on query:
+      // select rawDataGUID from rawData where filename like '%MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985%2.A.260%';
+      // filename: MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985.23102502280.RI.2.A.260.xml
+      QString triplename_qry_wvl = triplename_qry + swavl;
+
+      QString rawGUID = get_rawDataGUID( dbP, filebase_qry, triplename_qry_wvl );
+
+      qDebug() << "rawGUID -- " <<rawGUID;
+      // QString rawGUID  = US_Util::uuid_unparse(
+      //       (unsigned char*)outData[ odax ]->rawGUID );
 
 
       // Output the edit XML file
@@ -10841,6 +10950,9 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
          if ( wrstat != 0 )
             return;
       }  // END:  DB output
+
+      //++odax;      //Got you!!
+      
    }  // END:  wavelength-in-cellchannel loop
 
    // QApplication::restoreOverrideCursor();
@@ -10853,6 +10965,32 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 
    if ( runType_combined_IP_RI ) 
      cb_triple->disconnect();
+}
+
+//get rawDataGUID based on filebase && triple names
+QString US_Edit::get_rawDataGUID( US_DB2* db, QString filebase_qry, QString triplename_qry )
+{
+
+  QString rawID   = QString("");
+  QString rawGUID = QString("");
+  
+  QStringList qry;
+  qry << "get_rawDataGUID_from_filename" << filebase_qry << triplename_qry;
+  qDebug() << "get_rawDataGUID_from_filename QRY -- " << qry;
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      rawID   = db->value( 0 ).toString();
+      rawGUID = db->value( 1 ).toString();
+    }
+
+  if ( rawGUID.isEmpty() )
+    qDebug() << "EMPTY rawID,rawGUID!!";
+
+  qDebug() << "rawDataID, GUID -- " << rawID << ", " << rawGUID;
+
+  return rawGUID;
 }
 
 

@@ -408,7 +408,10 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
          if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
               (allPButtons[i]->text()).contains("View Ranges" ) ||
               (allPButtons[i]->text()).contains("View Experiment Details" ) ||
-              (allPButtons[i]->text()).contains("Test Connection" ) )
+              (allPButtons[i]->text()).contains("Test Connection" ) ||
+	      (allPButtons[i]->text()).contains("Add to List" ) ||
+	      (allPButtons[i]->text()).contains("Remove Last" )
+	      )
             allPButtons[i]->setEnabled(true);
          else
             allPButtons[i]->setEnabled(false);
@@ -422,7 +425,16 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
 	//     allCBoxes[i]->setEnabled(true);
 	//   }
 	// else
-	allCBoxes[i]->setEnabled(false);
+	if ( ( allCBoxes[i]->objectName() == "ChooseOper" ) ||
+	     ( allCBoxes[i]->objectName() == "ChooseRev" )  ||
+	     ( allCBoxes[i]->objectName() == "ChooseAppr" ) ||
+	     ( allCBoxes[i]->objectName() == "ChooseSme" ) 
+	     )
+	  {
+	    allCBoxes[i]->setEnabled(true);
+	  }
+	else
+	  allCBoxes[i]->setEnabled(false);
       }
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(false);
@@ -536,6 +548,14 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 
    le_label       ->setText ( currProto->exp_label );
 
+   //if PROTO_DEV: populate runName && make it read-only
+   if ( mainw-> us_prot_dev_mode )
+     {
+       le_runid  -> setEnabled( false );
+       le_label  -> setText( currProto->exp_label );
+       le_label  -> setEnabled( false );
+     }
+       
    check_user_level();
 
    //Here, check if UL<3 is set as operator for each Optima:
@@ -1003,10 +1023,326 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
    changed              = was_changed;   // Restore changed state
-DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
- << "cb_rotor text" << cb_rotor->currentText();
-DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
+   DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
+	    << "cb_rotor text" << cb_rotor->currentText();
+   DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
 
+   //Show current oper(s) & rev(s)
+   te_opers_to_assign -> setText( rpRotor->operListAssign );
+   te_revs_to_assign  -> setText( rpRotor->revListAssign );
+   te_apprs_to_assign -> setText( rpRotor->apprListAssign );
+   te_smes_to_assign  -> setText( rpRotor->smeListAssign );
+   
+   //initiate global reviewers list:
+   init_grevs();
+   init_gapprs();
+   init_gsmes();
+
+   //BAsed on mode [usmode - R&D], hide/show oper/rev section:
+      //show Assign oper/rev ONLY for GMP:
+   qDebug() << "In Rotor: mainw->automode, mainw->usmode -- "
+	    <<  mainw->automode << ", " <<  mainw->usmode;
+   if ( mainw->usmode )
+     {
+       lb_operator_reviewer_banner -> hide();
+       lb_choose_oper -> hide();
+       cb_choose_operator -> hide();
+       pb_add_oper        -> hide();
+
+       lb_choose_rev -> hide();
+       cb_choose_rev -> hide();
+       pb_add_rev    -> hide();
+
+       lb_choose_appr -> hide();
+       cb_choose_appr -> hide();
+       pb_add_appr    -> hide();
+
+       lb_choose_sme -> hide();
+       cb_choose_sme -> hide();
+       pb_add_sme    -> hide();
+
+       lb_opers_to_assign -> hide();
+       te_opers_to_assign -> hide();
+       pb_remove_oper     -> hide();
+
+       lb_revs_to_assign -> hide();
+       te_revs_to_assign -> hide();
+       pb_remove_rev     -> hide();
+
+       lb_apprs_to_assign -> hide();
+       te_apprs_to_assign -> hide();
+       pb_remove_appr     -> hide();
+
+       lb_smes_to_assign -> hide();
+       te_smes_to_assign -> hide();
+       pb_remove_sme     -> hide();
+            
+     }
+
+   expType_old = cb_exptype ->currentText();
+
+   qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+
+}
+
+void US_ExperGuiRotor::init_grevs( void )
+{
+  cb_choose_rev  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people_grev" << "%" + QString("") + "%";
+  qDebug() << "init_invs(), query --  " << query;
+  db.query( query );
+
+  while ( db.next() )
+    {
+      int g_invID         = db.value( 0 ).toInt();
+      QString g_lastName  = db.value( 1 ).toString();
+      QString g_firstName = db.value( 2 ).toString();
+      
+      //populate 
+      cb_choose_rev->addItem( QString::number( g_invID ) + ". " + 
+			      g_lastName + ", " + g_firstName );
+      
+    }
+}
+
+void US_ExperGuiRotor::init_gapprs( void )
+{
+  cb_choose_appr  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people_gappr" << "%" + QString("") + "%";
+  qDebug() << "init_apprs(), query --  " << query;
+  db.query( query );
+
+  while ( db.next() )
+    {
+      int g_invID         = db.value( 0 ).toInt();
+      QString g_lastName  = db.value( 1 ).toString();
+      QString g_firstName = db.value( 2 ).toString();
+      
+      //populate
+      cb_choose_appr->addItem( QString::number( g_invID ) + ". " + 
+			       g_lastName + ", " + g_firstName );
+    }
+}
+
+void US_ExperGuiRotor::init_gsmes( void )
+{
+  cb_choose_sme  -> clear();
+  
+  US_Passwd   pw;
+  QString     masterPW  = pw.getPasswd();
+  US_DB2      db( masterPW );  // New constructor
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      // Error message here
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" ) 
+				+ db.lastError() );
+      return;
+    }
+  
+  QStringList query;
+  query << "get_people" << "%" + QString("") + "%";
+  qDebug() << "init_smes(), query --  " << query;
+  db.query( query );
+
+  while ( db.next() )
+    {
+      int g_invID         = db.value( 0 ).toInt();
+      QString g_lastName  = db.value( 1 ).toString();
+      QString g_firstName = db.value( 2 ).toString();
+      
+      //populate
+      cb_choose_sme->addItem( QString::number( g_invID ) + ". " + 
+			      g_lastName + ", " + g_firstName );
+    }
+}
+
+
+//Add operator to list 
+void US_ExperGuiRotor::addOpertoList( void )
+{
+  QString c_oper = cb_choose_operator->currentText();
+  
+  //check if selected item already in the list:
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_oper ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Operator" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of operators.<br>"
+				    "Please choose other operator.")
+				.arg( c_oper ) );
+      return;
+    }
+  
+  te_opers_to_assign->append( c_oper );
+}
+
+//Remove operator from list 
+void US_ExperGuiRotor::removeOperfromList( void )
+{
+  te_opers_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_opers_to_assign->textCursor();
+  te_opers_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_opers_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_opers_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_opers_to_assign->textCursor().removeSelectedText();
+  te_opers_to_assign->textCursor().deletePreviousChar();
+  te_opers_to_assign->setTextCursor(storeCursorPos);
+
+}
+
+//Add reviewer to list 
+void US_ExperGuiRotor::addRevtoList( void )
+{
+  QString c_rev = cb_choose_rev->currentText();
+
+  //check if selected item already in the list:
+  QString e_revList = te_revs_to_assign->toPlainText();
+  if ( e_revList. contains( c_rev ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Reviewer" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of reviewers.<br>"
+				    "Please choose other reviewer.")
+				.arg( c_rev ) );
+      return;
+    }
+  
+  te_revs_to_assign->append( c_rev );
+
+}
+
+//Remove reviewer from list 
+void US_ExperGuiRotor::removeRevfromList( void )
+{
+  te_revs_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_revs_to_assign->textCursor();
+  te_revs_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_revs_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_revs_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_revs_to_assign->textCursor().removeSelectedText();
+  te_revs_to_assign->textCursor().deletePreviousChar();
+  te_revs_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "Revs to ASSIGN: " << te_revs_to_assign->toPlainText();
+
+}
+
+
+
+//Add approver to list 
+void US_ExperGuiRotor::addApprtoList( void )
+{
+  QString c_appr = cb_choose_appr->currentText();
+
+  //check if selected item already in the list:
+  QString e_apprList = te_apprs_to_assign->toPlainText();
+  if ( e_apprList. contains( c_appr ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Approver" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of approvers.<br>"
+				    "Please choose other approver.")
+				.arg( c_appr) );
+      return;
+    }
+  
+  te_apprs_to_assign->append( c_appr );
+
+}
+
+//Remove reviewer from list 
+void US_ExperGuiRotor::removeApprfromList( void )
+{
+  te_apprs_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  te_apprs_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_apprs_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_apprs_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_apprs_to_assign->textCursor().removeSelectedText();
+  te_apprs_to_assign->textCursor().deletePreviousChar();
+  te_apprs_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "Apprs to ASSIGN: " << te_apprs_to_assign->toPlainText();
+
+  //setUnsetPb_operRev();
+}
+
+//Add approver to list 
+void US_ExperGuiRotor::addSmetoList( void )
+{
+  QString c_sme = cb_choose_sme->currentText();
+
+  //check if selected item already in the list:
+  QString e_smeList = te_smes_to_assign->toPlainText();
+  if ( e_smeList. contains( c_sme ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add SME" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected SME: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already in the list of SMEs.<br>"
+				    "Please choose other SME.")
+				.arg( c_sme) );
+      return;
+    }
+  
+  te_smes_to_assign->append( c_sme );
+
+}
+
+//Remove reviewer from list 
+void US_ExperGuiRotor::removeSmefromList( void )
+{
+  te_smes_to_assign->setFocus();
+  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+  te_smes_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+  te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
+  te_smes_to_assign->textCursor().removeSelectedText();
+  te_smes_to_assign->textCursor().deletePreviousChar();
+  te_smes_to_assign->setTextCursor(storeCursorPos);
+
+  qDebug() << "SME to ASSIGN: " << te_smes_to_assign->toPlainText();
+
+  //setUnsetPb_operRev();
 }
 
 
@@ -1135,6 +1471,49 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    }
 
    qDebug() << "Rotor Save panel Done: " ;
+
+   //And save info on selected assigned oper(s) & rev(s)
+   QString oper_list = te_opers_to_assign->toPlainText();
+   QString rev_list  = te_revs_to_assign->toPlainText();
+   QString appr_list = te_apprs_to_assign->toPlainText();
+   QString sme_list  = te_smes_to_assign->toPlainText();
+   
+   rpRotor->operListAssign = oper_list;
+   rpRotor->revListAssign  = rev_list;
+   rpRotor->apprListAssign = appr_list;
+   rpRotor->smeListAssign  = sme_list;
+
+
+   //if ABDE expType -- translate to 8. AProfie
+   bool expType_changed = ( exptype == expType_old ) ? false : true;
+   qDebug() << "[in Rotor: savePanel()]: exptype, expType_old,  expType_changed? "
+	    << exptype << ", " << expType_old << ": " << expType_changed;
+   
+   if ( !first_time_init )
+     {
+       if ( exptype == "Buoyancy" )
+	 {
+	   mainw-> set_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+	 }
+       else
+	 {
+	   mainw->unset_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "SV" ); 
+	 }
+     }
+   else
+     {
+       if (exptype == "Buoyancy" )
+	 {
+	   qDebug() << "ABDE set in Rotor 1st time!";
+	   mainw->set_abde_mode_aprofile();
+	   if ( expType_changed )
+	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+	 }
+     }
 }
 
 // Get a specific panel string value
@@ -2014,58 +2393,101 @@ void US_ExperGuiSolutions::savePanel()
    suchans.clear();
    susolus.clear();
 
+   qDebug() << "sol save 1";
+   
    for ( int ii = 0; ii < mxrow; ii++ )
-   {  // Fill panel lists and parameters from GUI elements
-      QString channel     = cc_labls[ ii ]->text();
-DbgLv(1) << "EGSo: svP:  ii" << ii << "channel" << channel;
-
-      if ( channel == chn_none )
+     {  // Fill panel lists and parameters from GUI elements
+       QString channel     = cc_labls[ ii ]->text();
+       DbgLv(1) << "EGSo: svP:  ii" << ii << "channel" << channel;
+       
+       if ( channel == chn_none )
          break;
-
-      nchant++;
-      srchans << channel;
-      QString solution    = cc_solus[ ii ]->currentText();
-DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
-
-      if ( solution == unspec )
+       
+       nchant++;
+       srchans << channel;
+       QString solution    = cc_solus[ ii ]->currentText();
+       DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
+       
+       if ( solution == unspec )
          continue;
+       
+       nchanf++;
+       suchans << channel;
+       susolus << solution;
+       QString sol_id      = solu_ids[ solution ];
+       QString ch_comment;
+       QStringList cs;
+       DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
+       
+       qDebug() << "sol save 2";
+       
+       // //resize here!
+       // rpSolut->chsols.resize( nchanf );
+       
+       
+       qDebug() << "ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
+       
+       QString iistr = QString::number(ii);
+       //if ( pro_comms.keys().contains( solution ) )
+       if ( pro_comms.keys().contains( iistr ) )
+	 {
+	   //ch_comment          = pro_comms[ solution ];
+	   ch_comment          = pro_comms[ iistr ];
+	   //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
+	   
+	   qDebug() << "sol save 2a";
+	   
+	   commentStrings( solution, ch_comment, cs, ii );
+	 }
+       else
+	 {
+	   //commentStrings( solution, ch_comment, cs, ii ); //<-- incorrect as always sets comment to solname!
+	   qDebug() << "sol save 2aB";
+	   
+	   if ( rpSolut->chsols.size() == 0 )
+	     {
+	       qDebug() << "sol save 2aBc";
+	       ch_comment      = QString("");
+	       commentStrings( solution, ch_comment, cs, ii );
+	       qDebug() << "sol save 2aBc_1: went through 1st time zero";
+	     }
+	   else
+	     {
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
+	       if ( ii < rpSolut->chsols.size() )
+		 ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       else
+		 ch_comment      = QString("");                                           //are comments saved this way???
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): after reding comment-- ";
+	       if ( solution_comment_init[ ii ] )
+		 commentStrings( solution, ch_comment, cs, ii );
+	       qDebug() << "sol save 2aBd_1: went through 1st time NON-zero";
+	     }
+	   
+	   //ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	   QString ch_comment_tmp = ch_comment;
+	   ch_comment_tmp.replace(solution, "");
+	   ch_comment_tmp.remove( QRegExp("^[,\\s*]+") );
+	   
+	   qDebug() << "SolInit, row: " << ii;
+	   manual_comment[ iistr ]  = ch_comment_tmp.trimmed();
+	 }
+       
+       qDebug() << "sol save 3";
+       
+       US_Solution soludata;
+       solutionData( solution, soludata );
+       solu_ids [ solution ]  = sol_id;
+       solu_data[ solution ]  = soludata;
+       //pro_comms[ solution ]  = ch_comment;
+       pro_comms[ iistr ]  = ch_comment;
+     }
 
-      nchanf++;
-      suchans << channel;
-      susolus << solution;
-      QString sol_id      = solu_ids[ solution ];
-      QString ch_comment;
-      QStringList cs;
-DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
-
-
- QString iistr = QString::number(ii);
-//if ( pro_comms.keys().contains( solution ) )
-    if ( pro_comms.keys().contains( iistr ) )
-      {
-        //ch_comment          = pro_comms[ solution ];
-        ch_comment          = pro_comms[ iistr ];
-         //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
-
-        commentStrings( solution, ch_comment, cs, ii );
-      }
-    else
-      {
-        commentStrings( solution, ch_comment, cs, ii );
-      }
-
-    US_Solution soludata;
-    solutionData( solution, soludata );
-    solu_ids [ solution ]  = sol_id;
-    solu_data[ solution ]  = soludata;
-    //pro_comms[ solution ]  = ch_comment;
-    pro_comms[ iistr ]  = ch_comment;
-   }
-
+   //resize here
    rpSolut->chsols.resize( nchanf );
    QStringList solus;                      // Unique solutions list
    QStringList sids;                       // Corresponding Id list
-DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
+   DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
    for ( int ii = 0; ii < nchanf; ii++ )
    {  // Now fill protocol from internal lists and parameters
@@ -2079,6 +2501,8 @@ DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
       QString iistr = QString::number(ii);
       rpSolut->chsols[ ii ].ch_comment = pro_comms[ iistr ];
+
+      qDebug() << "at saveSolPanel: ch_comment -- " << pro_comms[ iistr ];
 
       if ( !solus.contains( solution ) )
       {
@@ -2103,7 +2527,6 @@ DbgLv(1) << "EGSo: svP:  sids " << sids;
      cb_solution->disconnect();
       
    }
- 
 }
 
 // Get a specific panel value
@@ -2574,8 +2997,6 @@ DbgLv(1) << "EGRn:inP:  call rbS";
    QString ch_none( "none" );
    DbgLv(1) << "EGRn:inP:  nrnchan" << nrnchan;
    
-
-
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
       QString channel     = rchans[ ii ];
@@ -2597,6 +3018,10 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
 
       cc_lrads[ ii ]->setValue( locrads[ ii ] );
       cc_hrads[ ii ]->setValue( hicrads[ ii ] );
+
+      //abde
+      cc_buff_sp_ck[ ii ]->setChecked( abde_buff[ ii ] );
+      qDebug() << "Ranges::abde_buffes for chann " << ii << " is -- " << abde_buff[ ii ]; 
 
       cc_labls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );
@@ -2684,6 +3109,9 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setVisible( false );
       cc_hrads[ ii ]->setVisible( false );
       cc_lbtos[ ii ]->setVisible( false );
+
+      //abde
+      cc_buff_sp[ ii ]->setVisible( false );
    }
 
 
@@ -2838,9 +3266,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): N/A " ).arg(i+1);
 	  cb_scancount->addItem( scancount_stage );
 	}
-      
-      
-
+     
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
@@ -2953,6 +3379,51 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	   cc_hrads[ ii ]->setEnabled( false );
 	 }
      }
+
+   //For abde only, chow buff_spectra cks
+   if ( mainw->us_abde_mode )
+     {
+       qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   //check if channel MWL
+	   int kswavl          = swvlens[ ii ].count();
+
+	   if( kswavl > 1 )
+	     {
+	       genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
+	       cc_buff_sp[ ii ]-> setVisible( true );
+	       //cc_buff_sp_ck[ ii ]->setChecked( false );
+
+	       qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ii ] );
+	       cc_buff_sp[ ii ]-> setVisible( false );
+	     }
+	 }
+     }
+   else
+     {
+       qDebug() << "ABDE, removing cks " << mainw->us_abde_mode;
+       for ( int ii = 0; ii < nrnchan; ii++ )
+	 {
+	   // QString o_name = QString::number( ii ) + ": ck_buff_spectrum_container";
+	   qDebug() << "[remove]o_name " << cc_buff_sp[ ii ]->objectName();
+	   
+	   // QWidget* c_w = genL->findChild<QWidget *>( o_name, Qt::FindChildrenRecursively ); //Qt::FindDirectChildrenOnly);
+	   // if ( c_w != NULL )
+	   //   {
+	   //     qDebug() << "Widget found!";
+	   //     genL->removeWidget( c_w );
+	   //     delete c_w;
+	   //  }
+
+	   genL->removeWidget( cc_buff_sp[ ii ] );
+	   cc_buff_sp[ ii ]-> setVisible( false );
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
@@ -2968,6 +3439,9 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       rpRange->chrngs[ ii ].lo_rad  = locrads[ ii ];
       rpRange->chrngs[ ii ].hi_rad  = hicrads[ ii ];
 
+      //abde
+      rpRange->chrngs[ ii ].abde_buffer_spectrum = abde_buff[ ii ];
+
       rpRange->chrngs[ ii ].wvlens.clear();
 
       for ( int jj = 0; jj < swvlens[ ii ].count(); jj++ )
@@ -2975,6 +3449,7 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
          rpRange->chrngs[ ii ].wvlens << swvlens[ ii ][ jj ];
       }
 DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpRange->chrngs[ii].wvlens.count();
+ qDebug() << "Ranges::save, hi, buff_bool -- " << rpRange->chrngs[ ii ].hi_rad << rpRange->chrngs[ ii ].abde_buffer_spectrum;
    }
 }
 
@@ -3258,7 +3733,6 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
      subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                            mainw->connection_status );               // ALEXEY: use top-level connection boolean!
 
-
    ck_run     ->setChecked( have_run   );
    ck_project ->setChecked( have_proj  );
    ck_rotor_ok->setChecked( chgd_rotor );
@@ -3310,6 +3784,49 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
 
+   //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
+   //If not, inform user, disable "Submit"/"Save Protocol" buttons
+   if ( mainw->us_abde_mode )
+     {
+       qDebug() << "Submit::init: ABDE_MODE ";
+       QStringList msg_to_user;
+       if ( !extinctionProfilesExist( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+
+	   msg_to_user.removeDuplicates();
+	   
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+				     "\n\"Database:Manage Buffer Data\"\n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
+
+       //Check for the correct settings in AProfile for 'Use Reference#'
+       if ( !useReferenceNumbersSet( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+	   
+	   msg_to_user.removeDuplicates();
+	   
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Reference Channels NOT set Properly (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease define references for all sample channels "
+				     "in the tab 8. AProfile: ABDE Settings. \n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
+       
+     }
+
+     
    //DEBUG
    //Opt system check, what cells will be uvvis and/or interference
    QStringList oprof   = sibLValue( "optical", "profiles" );
@@ -3326,7 +3843,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 {
 	   if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
 	     {
-	       qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	       //qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
 	       active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
 	     }
 	   
@@ -3337,11 +3854,247 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 ++nchannels_uvvis;
      }
 
-   qDebug() << "Upload::initPanel(): oprof -- " << oprof;
-   qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
-	    << ncells_interference << ", " << nchannels_uvvis;
+   //qDebug() << "Upload::initPanel(): oprof -- " << oprof;
+   // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
+   // 	    << ncells_interference << ", " << nchannels_uvvis;
    
 }
+
+bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
+{
+  bool all_refs_set = true;
+  msg_to_user. clear();
+
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+  
+  qDebug() << "in useReferenceNumbersSet(): chnns_names.size(), ref_chnns.size(), ref_use_chnns.size() -- "
+	   << chnns_names.size() << ref_chnns.size() << ref_use_chnns.size();
+
+  int ref_chnn_max = 0;
+  int ref_chnn_min = 1000;
+  for (int rn=0; rn<ref_chnns.size(); ++rn)
+    {
+      if ( ref_chnns[rn] > ref_chnn_max )
+	ref_chnn_max = ref_chnns[rn];
+      if ( ref_chnns[rn] < ref_chnn_min )
+	ref_chnn_min = ref_chnns[rn];
+    }
+
+  qDebug() << "min, max -- " << ref_chnn_min << ref_chnn_max;
+  for (int rn=0; rn<ref_use_chnns.size(); ++rn)
+    {
+      //skip if it's a ref chann
+      if ( ref_chnns[rn] > 0 )
+	continue;
+      
+      if ( ref_use_chnns[rn] < ref_chnn_min ||
+	   ref_use_chnns[rn] > ref_chnn_max ||
+	   ref_use_chnns[rn] == 0 )
+	{
+	  QString chnn_name = chnns_names[ rn ];
+	  msg_to_user << QString(tr("%1: \"Use Reference#\" field is %2"))
+	    .arg( chnn_name )
+	    .arg( "not set, or out of range" );
+
+	  all_refs_set = false;
+	}
+    }
+  
+  return all_refs_set;
+}
+
+bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
+{
+  bool all_profiles_exist = true;
+  msg_to_user. clear();
+  qDebug() << "Size rpSolut->nschan, rpRange->nranges -- "
+	   << rpSolut->nschan
+	   << rpRange->nranges;
+
+  //DB
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) +  db.lastError() );
+      
+      return false;
+    }
+
+  //over channels
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel = rpRange->chrngs[ ii ].channel;
+      QList< double > all_wvls = rpRange->chrngs[ ii ].wvlens;
+      int    nwavl    = all_wvls.count();
+      bool   buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+
+      if ( nwavl > 1 )
+	{
+	  QString sol_id = rpSolut->chsols[ii].sol_id;
+	  US_Solution*   solution = new US_Solution;
+	  int solutionID = sol_id.toInt();
+
+	  int status = US_DB2::OK;
+	  status = solution->readFromDB  ( solutionID, &db );
+	  // Error reporting
+	  if ( status == US_DB2::NO_BUFFER )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "The buffer this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status == US_DB2::NO_ANALYTE )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "One of the analytes this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Database Problem" ),
+				    tr( "Database returned the following error: \n" ) +  db.lastError() );
+	      return false;
+	    }
+	  //End of reading Solution:
+
+	  //Reading Analytes
+	  int num_analytes = solution->analyteInfo.size();
+	  for (int i=0; i < num_analytes; ++i )
+	    {
+	      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+	      QString a_name     = analyte.description;
+	      QString a_ID       = analyte.analyteID;
+	      QString a_GUID     = analyte.analyteGUID;
+
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+		       << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+
+	      analyte.extinction.clear();
+	      analyte.load( true, a_GUID, &db );
+
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Analyte]Extinction Profile wvls: " 
+		       << analyte.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString a_desc = "ANALYTE: " + a_name;
+	      if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+	    }
+	  //End of reading Analytes
+
+	  //Reading Buffers
+	  if ( buff_req ) //only if buffer spectrum required
+	    {
+	      US_Buffer buffer = solution->buffer;
+	      QString b_name   = buffer.description;
+	      QString b_ID     = buffer.bufferID;
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+	      
+	      buffer.extinction.clear();
+	      buffer.readFromDB( &db, b_ID );
+	      
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Buffer]Extinction Profile wvls: " 
+		       << buffer.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString b_desc = "BUFFER: " + b_name;
+	      if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+	    }
+	  //End of reading Buffers
+	}
+    }
+  return all_profiles_exist;
+}
+
+bool US_ExperGuiUpload::validExtinctionProfile( QString desc, QList< double > all_wvls,
+						QList< double > ext_prof, QStringList& msg_to_user )
+{
+  bool eprofile_ok;
+  QString msg;
+    
+  //ranges from protocol
+  int    nwavl_p    = all_wvls.count();
+  double lo_wavl_p  = all_wvls[ 0 ];
+  double hi_wavl_p  = all_wvls[ nwavl_p - 1 ];
+
+  //ranges in extinction profile
+  int    nwavl_e    = ext_prof.count();
+  if ( nwavl_e > 0 )
+    {
+      double lo_wavl_e  = ext_prof[ 0 ];
+      double hi_wavl_e  = ext_prof[ nwavl_e - 1 ];
+      
+      eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
+      eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
+
+      msg = "is out of range; ";
+    }
+  else //empty ext. profile
+    {
+      eprofile_ok = false;
+      msg = "does not exist; ";
+    }
+
+  //check existence of all wavelengths (for non-empty ext.prof.)
+  if ( nwavl_e > 0 )
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls.size(); ++i)
+	{
+	  double p_wvl = all_wvls[i];
+	  wvl_present[ p_wvl ] = false;
+	  for (int j=0; j<ext_prof.size(); j++)
+	    {
+	      double e_wvl = ext_prof[j];
+	      if ( p_wvl == e_wvl )
+		{
+		  wvl_present[ p_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      eprofile_ok = false;
+	      msg += "some wavelengths missing; ";
+	      break; 
+	    }
+	}
+    }
+  
+  //messages
+  if ( !eprofile_ok )
+    msg_to_user << QString(tr("%1: Extinction profile %2"))
+      .arg( desc )
+      .arg( msg );
+  
+  return eprofile_ok;
+}
+
+
 
 bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_AnaProfile aprof_load )
 {
@@ -3455,14 +4208,15 @@ bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_Ana
 	      US_ReportGMP::ReportItem curr_reportItem = report_curr.reportItems[ k ];
 	      US_ReportGMP::ReportItem load_reportItem = report_load.reportItems[ k ];
 
-	      if ( curr_reportItem.type             != load_reportItem.type             ||
-		   curr_reportItem.method           != load_reportItem.method           ||
-		   curr_reportItem.range_low        != load_reportItem.range_low        ||
-		   curr_reportItem.range_high       != load_reportItem.range_high       ||
-		   curr_reportItem.integration_val  != load_reportItem.integration_val  ||
-		   curr_reportItem.tolerance        != load_reportItem.tolerance        ||
-		   curr_reportItem.total_percent    != load_reportItem.total_percent    ||
-		   curr_reportItem.combined_plot    != load_reportItem.combined_plot
+	      if ( curr_reportItem.type               != load_reportItem.type             ||
+		   curr_reportItem.method             != load_reportItem.method           ||
+		   curr_reportItem.range_low          != load_reportItem.range_low        ||
+		   curr_reportItem.range_high         != load_reportItem.range_high       ||
+		   curr_reportItem.integration_val    != load_reportItem.integration_val  ||
+		   curr_reportItem.tolerance          != load_reportItem.tolerance        ||
+		   curr_reportItem.total_percent      != load_reportItem.total_percent    ||
+		   curr_reportItem.combined_plot      != load_reportItem.combined_plot    ||
+		   curr_reportItem.ind_combined_plot  != load_reportItem.ind_combined_plot
 		   )
 		{
 		  maps_different = true;

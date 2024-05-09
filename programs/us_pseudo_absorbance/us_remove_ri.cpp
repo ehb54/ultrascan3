@@ -457,7 +457,7 @@ void US_RemoveRI::slt_new_ccw(int id){
     n_wavls = 0;
 
     int ccw_id = id;
-    n_wavls = ccwItemList.n_wl.at(ccw_id);
+    n_wavls = ccwItemList.wavelength.at(ccw_id).size();
     intDataId = ccwItemList.index.at(ccw_id);
     wavelength = ccwItemList.wavelength.at(ccw_id);
     le_lambstrt->setText(QString::number(wavelength.at(0)));
@@ -598,15 +598,16 @@ void US_RemoveRI::slt_save(void){
     dir.makeAbsolute();
     qDebug() << dir.path();
     int nwl_tot = 0;
-    for (int i = 0; i < n_ccw; ++i)
-        nwl_tot += ccwItemList.n_wl.at(i);
+    for (int i = 0; i < n_ccw; ++i) {
+        nwl_tot += ccwItemList.wavelength.at(i).size();
+    }
 
     int n = 1;
     QString status = tr("writting: %1 %2");
     QString percent;
     QString fileName("%1.RA.%2.%3.%4.auc");
     for (int i = 0; i < n_ccw; ++i){
-        for (int j = 0; j < ccwItemList.n_wl.at(i); ++j){
+        for (int j = 0; j < ccwItemList.wavelength.at(i).size(); ++j){
             percent = QString::number(100.0 * n / nwl_tot, 'f', 1);
             le_status->setText(status.arg(percent).arg(QChar(37)));
             qApp->processEvents();
@@ -679,12 +680,8 @@ void US_RemoveRI::set_cb_triples(){
                 }
             }
             std::sort(wl_list.begin(), wl_list.end());
-            int n_wl = wl_list.size();
             ccwItemList.index << index;
-            ccwItemList.min_wl << wl_list.at(0);
-            ccwItemList.max_wl << wl_list.at(n_wl - 1);
             ccwItemList.wavelength << wl_list;
-            ccwItemList.n_wl << n_wl;
         }
     }
 
@@ -697,9 +694,9 @@ void US_RemoveRI::set_cb_triples(){
     for (int i = 0; i < n_ccw; ++i){
         int cell = ccwItemList.cell.at(i);
         char channel = ccwItemList.channel.at(i);
-        double min_wl = ccwItemList.min_wl.at(i);
-        double max_wl = ccwItemList.max_wl.at(i);
-        int nwl = ccwItemList.n_wl.at(i);
+        double min_wl = ccwItemList.wavelength.at(i).first();
+        double max_wl = ccwItemList.wavelength.at(i).last();
+        int nwl = ccwItemList.wavelength.at(i).size();
         QString item_i = item.arg(cell).arg(channel)
                 .arg(min_wl).arg(max_wl).arg(nwl);
         cb_triples->addItem(item_i);

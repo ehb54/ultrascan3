@@ -619,7 +619,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
 
    if ( mysql_query( db, sqlQuery.data() ) != 0 )
    {
-      error = QString( "MySQL error: " ) + mysql_error( db );
+     error = QString( "MySQL error: " ) + mysql_error( db ); // ALEXEY: writing huge blob, MySql server has gone away...
   
       db_errno = DBERROR;
       return DBERROR;

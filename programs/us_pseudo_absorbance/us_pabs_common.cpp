@@ -95,6 +95,7 @@ void CCW::clear(){
     channel.clear();
     wavelength.clear();
     index.clear();
+    runId.clear();
 }
 
 int CCW::size(){
@@ -102,13 +103,11 @@ int CCW::size(){
 }
 
 void CCW_ITEM::clear(void){
+    runClass.clear();
     cell.clear();
     channel.clear();
     wavelength.clear();
     index.clear();
-    min_wl.clear();
-    max_wl.clear();
-    n_wl.clear();
 }
 
 int CCW_ITEM::size(void){

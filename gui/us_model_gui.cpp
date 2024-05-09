@@ -38,6 +38,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    
    le_investigator   = us_lineedit( "", 0, true );
    
+
    dkdb_cntrls       = new US_Disk_DB_Controls;
 
    QLabel* lb_mlfilt = us_label( tr( "List Filter:" ) );
@@ -85,7 +86,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    QBoxLayout* buttonbox   = new QHBoxLayout;
    QPushButton* pb_help    = us_pushbutton( tr( "Help") );
    QPushButton* pb_close   = us_pushbutton( tr( "Cancel") );
-   QPushButton* pb_accept  = us_pushbutton( tr( "Accept") );
+   //QPushButton* pb_accept  = us_pushbutton( tr( "Accept") );
+                pb_accept  = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_help );
    buttonbox->addWidget( pb_close );
    buttonbox->addWidget( pb_accept );
@@ -237,6 +239,13 @@ bool US_ModelGui::ignore_changes( void )
 {
    if ( working_model == model ) return true;
 
+   //check if leaving GMP produced model after potential changes in Components..
+   qDebug() << "In ignore changes(): modelID_global -- " << modelID_global;
+   if ( is_modelIDs_from_autoflow( modelID_global ) )
+     {
+       return true;
+     }
+
    int response = QMessageBox::question( this,
       tr( "Model Changed" ),
       tr( "The model has changed.  Do you want to ignore the changes?" ),
@@ -324,6 +333,7 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
       }
 
       QString modelID = model_descriptions[ modlx ].DB_id;
+      modelID_global = modelID;
       model.load( modelID, &db );
    }
 
@@ -341,6 +351,7 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    {
       pb_save  ->setEnabled( true );
       pb_delete->setEnabled( true );
+      pb_accept->setEnabled( true );
    }
 
    model_descriptions[ modlx ].editGUID = model.editGUID;
@@ -348,7 +359,7 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    working_model = model;
 
    recent_row    = index;
-
+   
    // Populate 
    le_description->setText( model.description );
    le_wavelength ->setText( QString::number( model.wavelength, 'f', 1 ) );
@@ -356,7 +367,100 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    le_guid       ->setText( model.modelGUID );
 
    cb_optics     ->setCurrentIndex( model.optics );
+
+   qDebug() << "Selected ModelID: " << model_descriptions[ modlx ].DB_id;
+
+   //Check if the model was generated via autoflow framework
+   if ( is_modelIDs_from_autoflow( model_descriptions[ modlx ].DB_id  ) )
+     {
+       qDebug() << "Select:: Model GMP/autolfow-generated!";
+
+       QMessageBox::information( this, tr( "Selected Model GMP produced!" ),
+       				 tr( "Selected Model:\n\n"
+       				     "\"%1\"\n\n"
+       				     "was generated within GMP framework!\n\n"
+				     "It can NOT be deleted or altered...")
+       				 .arg( mdesc ) );
+
+       pb_save  ->setEnabled( false );
+       pb_delete->setEnabled( false );
+       pb_accept->setEnabled( false );
+     }
 }
+
+bool US_ModelGui::is_modelIDs_from_autoflow( QString mID )
+{
+  QStringList modelInfos_autoflow;
+  QStringList modelIDs_autoflow;
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      connect_error( db.lastError() );
+      return false;
+    }
+  
+  QStringList q;
+  q << "get_modelIDs_for_autoflow";
+  db.query( q );
+  
+  while ( db.next() )
+    modelInfos_autoflow << db. value( 0 ).toString();
+
+  return parse_models_desc_json ( modelInfos_autoflow, mID ); 
+}
+
+bool US_ModelGui::parse_models_desc_json( QStringList modelInfos_autoflow, QString mID )
+{
+  qDebug() << "Size of modelInfos_autoflow: " << modelInfos_autoflow.size();
+  for ( int i=0; i<modelInfos_autoflow.size(); ++i )
+    {
+      QString modelDescJson = modelInfos_autoflow[ i ];
+      if ( modelDescJson.isEmpty() )
+	return false;
+
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( modelDescJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  
+	  if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" ) 
+	    {
+	      //qDebug() << "ModelsDesc key, value: " << key << value;
+	      
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      //by modelID
+		      if ( array_key == "modelID" )
+			{
+			  QString c_modelID = json_array[i].toObject().value(array_key).toString();
+			  // qDebug() << "modelDescJson Map: -- model, property, value: "
+			  // 	   << key
+			  // 	   << array_key
+			  // 	   << c_modelID;
+			  
+			  if ( c_modelID == mID )
+			    {
+			      qDebug() << "Model to affect [delete:update], ID=" << mID << " IS autoflow produced!!!";
+			      return true;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  return false;
+}
+
 
 void US_ModelGui::delete_model( void )
 {
@@ -366,11 +470,26 @@ void US_ModelGui::delete_model( void )
    QString mdesc = lw_models->item( row )->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
    ModelDesc md  = model_descriptions.takeAt( modlx );
+   
+   // //Check if the model was generated via autoflow framework
+   // qDebug() << "in delete_model(): modelID -- " << md.DB_id;
+   // if ( is_modelIDs_from_autoflow( md.DB_id ) )
+   //   {
+   //     qDebug() << "Model can NOT be deleted, autolfow-generated!";
 
-   show_model_desc();
+   //     QMessageBox::information( this, tr( "Selected Model Cannot be Deleted" ),
+   // 				 tr( "The Model:\n\n"
+   // 				     "\"%1\"\n\n"
+   // 				     "can NOT be deleted since it was generated within GMP framework!" )
+   // 				 .arg( mdesc ) );
 
+   //     return;
+   //   }
+   // //END of checking for autoflow
+   
+   show_model_desc();  // must be AFTER check!!!
+     
    // Delete from DB or disk
-
    if ( ! dkdb_cntrls->db() )
    {
       QString path;
@@ -480,6 +599,7 @@ qDebug() << "MngCmp: index" << index;
       return;
    }
 
+
    int dbdisk  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
                                    : US_Disk_DB_Controls::Disk;
    working_model = model;
@@ -488,6 +608,17 @@ qDebug() << "MngCmp: index" << index;
    
    connect( dialog, SIGNAL( done  ( void ) ), SLOT( update_sim    ( void ) ) );
    connect( dialog, SIGNAL( use_db( bool ) ), SLOT( source_changed( bool ) ) );
+
+   connect( this, SIGNAL( disable_components_gui( ) ), dialog, SLOT( disable_gui( ) ) );
+   
+   //Check if the model was generated via autoflow framework
+   
+   if ( is_modelIDs_from_autoflow( modelID_global ) )
+     {
+       qDebug() << "Manage Components: GMP model!";
+       emit disable_components_gui( );
+     }
+
    dialog->exec();
 }
 
@@ -523,6 +654,15 @@ void US_ModelGui::associations( void )
 
    US_AssociationsGui* dialog = new US_AssociationsGui( working_model );
    connect( dialog, SIGNAL( done() ), SLOT( update_assoc() ) );
+   
+   //Check if the model was generated via autoflow framework
+   connect( this, SIGNAL( disable_components_gui( ) ), dialog, SLOT( disable_gui( ) ) );
+   if ( is_modelIDs_from_autoflow( modelID_global ) )
+     {
+       qDebug() << "Manage Associationss: GMP model!";
+       emit disable_components_gui( );
+     }
+   
    dialog->exec();
 }
 
@@ -556,6 +696,25 @@ void US_ModelGui::accept_model( void )
 
 void US_ModelGui::save_model( void )
 {
+  //Check is model ganerated with GMP
+  int     row   = lw_models->currentRow();
+  if ( row < 0 ) return;
+
+  // QString mdesc = lw_models->item( row )->text();
+  // int     modlx = modelIndex( mdesc, model_descriptions );
+  // ModelDesc md  = model_descriptions.takeAt( modlx );
+  // if ( is_modelIDs_from_autoflow( md.DB_id ) )
+  //   {
+  //     qDebug() << "Model can NOT be save/updated, autolfow-generated!";
+
+  //     QMessageBox::information( this, tr( "Selected Model Cannot be Saved/Updated" ),
+  // 				tr( "The Model:\n\n"
+  // 				    "\"%1\"\n\n"
+  // 				    "can NOT be saved/updated since it was generated within GMP framework!" )
+  // 				 .arg( mdesc ) );
+  //     return;
+  //   }
+  
    if ( ! verify_model() ) return;
 
    model.wavelength = le_wavelength->text().toDouble();

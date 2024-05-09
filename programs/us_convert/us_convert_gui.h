@@ -145,6 +145,7 @@ class US_ConvertGui : public US_Widgets
       ProtocolInfo ProtInfo;
 
       bool  us_convert_auto_mode;
+      QMap<QString, QString> gmp_submitter_map;
       
       enum { SPLIT, REFERENCE, NONE } step;
 
@@ -163,6 +164,9 @@ class US_ConvertGui : public US_Widgets
 
       bool auto_ref_scan;
       int  autoflowStatusID;
+ 
+      double   centerpoint_ref_def;
+  bool first_time_plot_auto;
       
       QString       runType;
       QString       oldRunType;
@@ -311,6 +315,7 @@ class US_ConvertGui : public US_Widgets
       bool    gmpRun_bool;
       bool    protDev_bool;
       bool dataSavedOtherwise;
+      QString expType;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -318,7 +323,7 @@ class US_ConvertGui : public US_Widgets
 
       void update_autoflow_record_atLimsImport( void );
 
-      QString correct_description( QString& );
+  QString correct_description( QString&, QString, QString );
 
       
       void setTripleInfo   ( void );
@@ -326,11 +331,13 @@ class US_ConvertGui : public US_Widgets
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );
-      void start_reference  ( const QwtDoublePoint& );
+//      void start_reference  ( const QwtDoublePoint& );
       void process_reference( const QwtDoublePoint& );
-      void process_reference_auto( const double, const double );
-      void PseudoCalcAvg   ( void );
-      void PseudoCalcAvgMWL( void );
+  //void process_reference_auto( const double, const double );
+  void process_reference_auto( const double );
+  void PseudoCalcAvg   ( void );
+  //void PseudoCalcAvg_av  ( void );
+  void PseudoCalcAvgMWL( void );
       bool read            ( void );
       bool read            ( QString dir );
       bool convert         ( void );
@@ -346,6 +353,7 @@ class US_ConvertGui : public US_Widgets
       void draw_vline      ( double );
       void db_error        ( const QString& );
       void triple_index    ( void );
+      void plot_last_scans ( double );
 
       //US_Solution * solution_auto;
 
@@ -356,7 +364,11 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, bool >    channels_to_drop;
       QMap < QString, QString > channels_report;
       QMap < QString, QStringList >    triples_dropped_from_channel;
-  QMap < QString, QMap <QString, QString> > drop_operations;								   
+  QMap < QString, QMap <QString, QString> > drop_operations;
+  //ABDE
+  QMap < QString, int >  channels_abde_refs;
+  QMap < QString, int >  channels_abde_use_refs;					   
+							   
 
   private slots:
       //! \brief Select the current investigator
@@ -425,6 +437,7 @@ class US_ConvertGui : public US_Widgets
       void show_intensity_auto ( void );
 
       void cancel_reference  ( void );
+  //void cancel_reference_av  ( void );
       int  check_for_data_left ( QString, QString );
       void drop_reference    ( void );
       void drop_channel      ( void );

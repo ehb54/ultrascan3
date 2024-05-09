@@ -18,6 +18,7 @@
 US_ReportGenGui::US_ReportGenGui( QString reportMask ) : US_Widgets()
 {
   this->reportMask = reportMask;
+  abde_mode = false;
   
   QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMask.toUtf8() );
   json = jsonDoc.object();
@@ -103,6 +104,14 @@ US_ReportGenGui::US_ReportGenGui( QString reportMask ) : US_Widgets()
   genL           = NULL;
   lower_buttons  = NULL;
 
+  build_layout();
+}
+
+
+//ABDE
+void US_ReportGenGui::abde_mode_passed( void )
+{
+  abde_mode = true;
   build_layout();
 }
 
@@ -218,7 +227,7 @@ void US_ReportGenGui::build_layout( void )
 		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
 		}
 	      //2DSA analysis
-	      if( analysisItemName.contains("2DSA") )
+	      if( analysisItemName.contains("2DSA")  )
 		{
 		  int checked_2dsa = 0;
 		  for ( int ia2=0; ia2 < analysis2DSAItems.size(); ++ia2 )
@@ -247,7 +256,7 @@ void US_ReportGenGui::build_layout( void )
 		}
 
 	      //PCSA analysis
-	      if( analysisItemName.contains("PCSA") )
+	      if( analysisItemName.contains("PCSA")  )
 		{
 		  int checked_pcsa = 0;
 		  for ( int iap=0; iap < analysisPCSAItems.size(); ++iap )
@@ -273,6 +282,7 @@ void US_ReportGenGui::build_layout( void )
 		    }
 		  else
 		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
+
 		}
 	    }
 	  if ( checked_childs )
@@ -291,6 +301,25 @@ void US_ReportGenGui::build_layout( void )
 	}
     }
 
+  //ABDE
+  if ( abde_mode )
+    {
+      for ( const auto& i : analysisItem.keys() )
+	{
+	  if ( i.contains("2DSA") ||i.contains("PCSA")  )
+	    analysisItem[ i ]-> setHidden( true );
+	}
+      
+      //2DSA
+      for ( const auto& i : analysis2DSAItem.keys() )
+	analysis2DSAItem [ i ]-> setHidden( true );
+      
+      //PCSA
+      for ( const auto& i : analysisPCSAItem.keys() )
+	analysisPCSAItem [ i ]-> setHidden( true );
+    }
+		  
+  
   
   treeWidget->expandAll();    
   treeWidget->resizeColumnToContents( 0 );

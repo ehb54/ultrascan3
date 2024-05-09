@@ -1249,7 +1249,7 @@ void US_XpnDataViewer::reset( void )
 
 void US_XpnDataViewer::reset_auto( void )
 {
-  link->disconnectFromServer();
+   link->disconnectFromServer();
 
    le_stage   ->setText("");
    le_omega2T ->setText("");
@@ -1463,11 +1463,12 @@ bool US_XpnDataViewer::check_sysdata_connection( void )
   //US_Sleep::msleep( 400 );
 
   link1->disconnectFromServer();
-  delete link1;
   
   bool combined_check = status_sys_data & link1->connected_itself;
   
   qDebug() << "status_sys_data & connected_itself = ? " << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+
+  delete link1;
   
   if ( !combined_check )
     {
@@ -1805,7 +1806,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       qDebug() << "RunID_to_retrieve 2: " << RunID_to_retrieve;
 
       runInfo.clear();
-      xpn_data->scan_runs_auto( runInfo, RunID_to_retrieve );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      xpn_data->scan_runs_auto( runInfo, RunID_to_retrieve );           // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
       
       for ( int ii = 0; ii < runInfo.count(); ii++ )
 	{
@@ -2135,17 +2136,46 @@ void US_XpnDataViewer::stop_optima( void )
   if (msgBox.clickedButton() == Accept)
     {
       //Put a reason for a STOP (comment):
-      bool ok;
-      QString msg = QString(tr("Put a comment describing reason for a STOP:"));
-      QString default_text = QString(tr("Reason for STOP: "));
-      QString comment_text = QInputDialog::getText( this,
-						    tr( "Reason for STOP" ),
-						    msg, QLineEdit::Normal, default_text, &ok );
+      // bool ok;
+      // QString msg = QString(tr("Put a comment describing reason for a STOP:"));
+      // QString default_text = QString(tr("Reason for STOP: "));
+      // QString comment_text = QInputDialog::getText( this,
+      // 						    tr( "Reason for STOP" ),
+      // 						    msg, QLineEdit::Normal, default_text, &ok );
 
-      if ( !ok )
-	{
-	  return;
-	}
+      // if ( !ok )
+      // 	{
+      // 	  return;
+      // 	}
+
+      US_Passwd   pw;
+      QString     masterPW  = pw.getPasswd();
+      US_DB2      db( masterPW );  
+      QStringList qry;
+      qry <<  QString( "get_user_info" );
+      db.  query( qry );
+      db. next();
+      int u_ID        = db. value( 0 ).toInt();
+      QString u_fname = db. value( 1 ).toString();
+      QString u_lname = db. value( 2 ).toString();
+      int u_lev       = db. value( 5 ).toInt();
+      
+      QString user_stop = u_lname + ", " + u_fname;
+      
+      US_Passwd   pw_at;
+      QMap< QString, QString > gmp_stopOptima_map; 
+      gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Stop Optima Form", "Please fill out GMP Stop Optima form:", user_stop );
+      
+      int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
+      qDebug() << "stopOptima map: "
+	       << gmp_stopOptima_map.keys()  << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+	       << gmp_stopOptima_map.keys().isEmpty() 
+	       << gmp_stopOptima_map[ "User:" ]
+	       << gmp_stopOptima_map[ "Comment:" ]
+	       << gmp_stopOptima_map[ "Master Password:" ];
+      
+      if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
+	return;
       ///////////////////////////////////////
       
       qDebug() << "STOPPING Optima...";
@@ -2161,7 +2191,8 @@ void US_XpnDataViewer::stop_optima( void )
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was STOPPED                        */
       experimentAborted_remotely = true;
-      record_live_update_status( "STOP", comment_text );
+      //record_live_update_status( "STOP", comment_text );
+      record_live_update_status( "STOP", gmp_stopOptima_map[ "Comment:" ] );
     }
   else if (msgBox.clickedButton() == Cancel)
     {
@@ -2185,13 +2216,58 @@ void US_XpnDataViewer::skip_optima_stage( void )
   
   if (msgBox.clickedButton() == Accept)
     {
+      // //Put a reason for a SKIP (comment):
+      // bool ok;
+      // QString msg = QString(tr("Put a comment describing reason for a SKIP stage:"));
+      // QString default_text = QString(tr("Reason for SKIP: "));
+      // QString comment_text = QInputDialog::getText( this,
+      // 						    tr( "Reason for SKIP" ),
+      // 						    msg, QLineEdit::Normal, default_text, &ok );
+
+      // if ( !ok )
+      // 	{
+      // 	  return;
+      // 	}
+
+      US_Passwd   pw;
+      QString     masterPW  = pw.getPasswd();
+      US_DB2      db( masterPW );  
+      QStringList qry;
+      qry <<  QString( "get_user_info" );
+      db.  query( qry );
+      db. next();
+      int u_ID        = db. value( 0 ).toInt();
+      QString u_fname = db. value( 1 ).toString();
+      QString u_lname = db. value( 2 ).toString();
+      int u_lev       = db. value( 5 ).toInt();
+      
+      QString user_stop = u_lname + ", " + u_fname;
+      
+      US_Passwd   pw_at;
+      QMap< QString, QString > gmp_stopOptima_map; 
+      gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Skip Stage Optima Form", "Please fill out GMP Skip Stage Optima form:", user_stop );
+      
+      int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
+      qDebug() << "skipOptima map: "
+	       << gmp_stopOptima_map.keys()  << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+	       << gmp_stopOptima_map.keys().isEmpty() 
+	       << gmp_stopOptima_map[ "User:" ]
+	       << gmp_stopOptima_map[ "Comment:" ]
+	       << gmp_stopOptima_map[ "Master Password:" ];
+      
+      if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
+	return;
+      ///////////////////////////////////////
+      
+      
       qDebug() << "SKIPPING EXP. STAGE...";
       link->skipOptimaStage();
       
       //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
       /* since this will accurately reflect time when it was SKIPPED                        */
-      record_live_update_status( "SKIP", "" );
+      //record_live_update_status( "SKIP", comment_text );
+      record_live_update_status( "SKIP", gmp_stopOptima_map[ "Comment:" ] );
       
     }
   else if (msgBox.clickedButton() == Cancel)
@@ -2347,11 +2423,27 @@ void US_XpnDataViewer::check_for_sysdata( void )
 {
   qDebug() << "sys_timer IS RUNNING here: ";
   qDebug() << "sys_timer IS RUNNING here: in_reload_check_sysdata " << in_reload_check_sysdata;
-  
+
   if ( in_reload_check_sysdata )           // If already doing a reload,
     return;                                //  skip starting a new one
   
   in_reload_check_sysdata   = true;        // Flag in the midst of a reload
+
+  //check for stable connection
+  qDebug() << "Connection to Optima DROPPED ? " << link-> disconnected_itself;
+  if ( link-> disconnected_itself )
+    {
+      qDebug() << "Connection to Optima DROPPED: in check_for_sysdata()";
+      in_reload_check_sysdata = false;
+      timer_check_sysdata->stop();
+      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);
+      qDebug() << "in check_for_sysdata(): timer_check_sysdata stopped";
+      //reset_liveupdate_panel();  // <-- redundant ? Cause infinite loop?  
+      qApp->processEvents();
+      
+      return;
+    }
+  //end: check for stable connection
 
   int exp_time = 0;
   double temperature = 0;
@@ -2556,7 +2648,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	  return;
 	}
 
-      if ( exp_status == 0)
+      if ( exp_status == 0 )
 	experimentAborted  = true;
       
       if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
@@ -2691,6 +2783,15 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
   link = new Link( OptimaName );
+
+  //check connection to Optima server: if no -- reset all & go back to run manager
+  if ( !check_sysdata_connection( ) )
+    {
+      reset_auto();
+      emit close_program(); 
+      return;
+    }
+  
   //link = new Link();
   
   //ALEXEY: just define all QTimers here for later safe stopping
@@ -2848,12 +2949,38 @@ void US_XpnDataViewer::end_processes( void )
       //ALEXEY: may not be needed
       qDebug() << "LIVE UPDATE panel has been reset!";
       qDebug() << "AFTER: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
-      
-      reset_auto(); 
+
+      bool optima_connection_dropped = link-> disconnected_itself;
+      qDebug() << "[in end_processes()]: optima_connection_dropped -- " << optima_connection_dropped ;
+	
+      reset_auto(); //disconnects (already?) && resets GUI
       qApp->processEvents();
       
       in_reload_end_processes = false;
       finishing_live_update = false;
+
+      if ( optima_connection_dropped )
+	{
+	  //message informing user before throwing signal!
+	  QMessageBox msgBox_sys_data;
+	  msgBox_sys_data.setIcon(QMessageBox::Critical);
+	  msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+	  
+	  QString msg_sys_text = QString("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1. Please check the following: ").arg(xpndesc);
+	  QString msg_sys_text_info = QString("1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nUse of the UltraScan GMP in conjunction with the %1 machine is suspended until this condition is resolved. \n\nThe program will return to the Optima Run Manager.").arg(xpndesc);
+	  
+	  QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("OK"), QMessageBox::YesRole);
+	  msgBox_sys_data.setText( msg_sys_text );
+	  msgBox_sys_data.setInformativeText( msg_sys_text_info );
+	  msgBox_sys_data.exec();
+	  
+	  if (msgBox_sys_data.clickedButton() == Accept_sys)
+	    qDebug() << "Closing Program...";
+	    
+	  emit aborted_back_to_initAutoflow( );
+
+	  return;
+	}
 
       emit liveupdate_processes_stopped();
      
@@ -2902,6 +3029,49 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
      return;                            //  skip starting a new one
   
    in_reload_all_data   = true;          // Flag in the midst of a reload
+
+   //Here, check if connection to Optima possibly broken:
+   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0  )
+     {
+       //check connection to Optima: if at this point statusExp=0 due to lost connection
+       //then, stop everything && return to the Run Manager
+
+       /*
+       Link *link1 = new Link( xpndesc );                                                // THIS DID NOT WORK...
+       bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
+       qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
+              
+       bool combined_check = status_sys_data & link1->connected_itself;
+       link1->disconnectFromServer();
+       qDebug() << "in [retrieve_xpn_raw_auto()]: status_sys_data & connected_itself = ? "
+		<< status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+       delete link1;                                                                      // THIS DID NOT WORK...
+       */
+       
+       //alternative  -- TO BE tested further 
+       US_XpnData* xpn_data11 = new US_XpnData();
+       bool o_connected           = xpn_data11->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+       xpn_data11->close();
+       delete xpn_data11;
+       //end of checking connection to Optima sys_data server    
+       
+       //if ( !combined_check )
+       if ( !o_connected )
+	 {
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   qDebug() << "in [retrieve_xpn_raw_auto()]: stop timer_all_data_avail";
+	   qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0 && NO Coneection to Optima!";
+	   in_reload_all_data  = false;
+	   link-> disconnected_itself = true; // do we need to set it explicitly?
+	   reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
+	   qApp->processEvents();
+	   
+	   return;
+	 }
+     }
+   // end checking connection to Optima lost
+   
   
    QString drDesc    = "";
    QString delim       = ( runInfo.count() > 0 ) ?
@@ -4937,9 +5107,13 @@ QDateTime sttime=QDateTime::currentDateTime();
 
    // Import any newly added Scan Data records
    bool upd_ok        =  xpn_data->reimport_data( iRunId, scanmask );
-
-   if ( ! upd_ok )
+   /* udp_ok -> false when ALSO conneciton to PostgresSql lost !!!********************/
+   
+   if ( ! upd_ok )                               
    {  // No change in data scans:  report inability to update
+
+     qDebug() << "in reloadData_auto(): udp_ok -> false: (1) no changes in # scans, OR no Optima connection!!!"; 
+     
       nscan       = allData[ trpxs ].scanCount();
 
       //ALEXEY: also compute total # of collected scans so far
@@ -4970,8 +5144,60 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      return;
 	    }
 	  
-	  if ( statusExp == 0 )
-	    experimentAborted  = true;
+	  if ( statusExp == 0 ) // If there is still connection, then exp. is truly aborted!!
+	    {
+	      //check connection to Optima: if at this point statusExp=0 due to lost connection
+	      //then, stop everything && return to the Run Manager
+
+	      /*
+	      Link *link1 = new Link( xpndesc );                                                    // --- THIS DID NOT WORK ??
+	      bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
+	      qDebug() << "in [reloadData_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
+	      	      
+	      bool combined_check = status_sys_data & link1->connected_itself;
+	      link1->disconnectFromServer();
+	      qDebug() << "in [reloadData_auto()]: status_sys_data & connected_itself = ? "
+		       << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+	      delete link1;                                                                         //  --- THIS DID NOT WORK ??
+	      */
+
+	      // alternative  -- TO BE tested further
+	      QString xpndesc11     = currentInstrument[ "name" ];
+	      QString xpnhost11     = currentInstrument[ "optimaHost" ];
+	      QString xpnport11     = currentInstrument[ "optimaPort" ];
+	      QString xpnname11     = currentInstrument[ "optimaDBname" ];
+	      QString xpnuser11     = currentInstrument[ "optimaDBusername" ];
+	      QString xpnpasw11     = currentInstrument[ "optimaDBpassw" ];
+	      QString xpnmsgPort11  = currentInstrument[ "msgPort" ];
+
+	      qDebug() << "DB parms: " << xpndesc11 << xpnhost11 << xpnport11 << xpnname11 << xpnuser11 << xpnpasw11 << xpnmsgPort11;
+	      
+	      US_XpnData* xpn_data11 = new US_XpnData();
+	      bool o_connected       = xpn_data11->connect_data( xpnhost11, xpnport11.toInt(), xpnname11, xpnuser11,  xpnpasw11 );
+	      xpn_data11->close();
+	      delete xpn_data11;
+
+	      qDebug() << "DB connection, o_connected ?  -- " << o_connected;
+	      //end of checking connection to Optima sys_data server    
+
+	      //if ( !combined_check )
+	      if ( !o_connected )
+		{
+		  timer_data_reload->stop();
+		  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+		  qDebug() << "in [reloadData_auto()]: Stop auto-reload timer: " ;
+		  qDebug() << "in [reloadData_auto()]: statusExp == 0 && NO Coneection to Optima!";
+		  in_reload_auto   = false;
+		  link-> disconnected_itself = true; // do we need to set it explicitly?
+		  reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
+		  qApp->processEvents();
+		  
+		  return;
+		}
+	      else
+		experimentAborted  = true;
+	    }
+
 	  
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything

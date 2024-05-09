@@ -29,6 +29,11 @@ private:
     QPushButton* pb_close;
     QPushButton* pb_save;
 
+    QLineEdit* le_investigator;
+    QLineEdit* le_runinfo;
+
+    US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+
     US_Plot* usplot;
     QwtPlot* plot;
     QwtPlotGrid* grid;
@@ -73,6 +78,8 @@ private slots:
     void slt_loadAUC(void);
     void slt_addRmItem(QListWidgetItem *);
     void slt_rmItem(void);
+    void slt_inItemSel(int);
+    void slt_outItemSel(int);
     void slt_cleanList(void);
     void slt_pickPoint(void);
     void slt_mouse(const QwtDoublePoint& point);

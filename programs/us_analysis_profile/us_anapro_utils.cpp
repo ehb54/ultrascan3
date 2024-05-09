@@ -284,7 +284,32 @@ DbgLv(1) << "AP:iP: pG return";
 DbgLv(1) << "AP:iP: p2 return";
    apanPCSA     ->initPanel();
 DbgLv(1) << "AP:iP: pP return";
+
+//Hide 2DSA & PCSA if extType == ABDE
+ qDebug() << "AProfile::initPanels(): abde_mode_aprofile ? " << abde_mode_aprofile;
+ if ( abde_mode_aprofile )
+   {
+     this->tabWidget->setTabText( 0, "ABDE Settings");
+     this->tabWidget->setTabVisible(1, false);
+     this->tabWidget->setTabVisible(2, false);
+
+     //General Gui: modify
+     apanGeneral ->set_abde_panel();
+     
+   }
+ else
+   {
+     this->tabWidget->setTabText( 0, "1: General");
+     this->tabWidget->setTabVisible(1, true);
+     this->tabWidget->setTabVisible(2, true);
+
+     //General Gui: restore
+     
+   }
 }
+
+
+
 
 // Save all panels in preparation for leaving an AProfile panel
 void US_AnalysisProfileGui::savePanels()
@@ -314,6 +339,90 @@ void US_AnaprofPanGen::initPanel()
 use_db=false;
 #endif
 
+//Setting ref report && DEBUG: check how current ch_reports looks like
+ QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+ QMap < QString, US_ReportGMP > triple_reports_ref;
+ QString chan_desc_ref;
+ QString wvl_ref;
+ 
+  for ( ri = currProf->ch_reports.begin(); ri != currProf->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+
+      qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc:::  " << chan_desc;
+
+      //if chan_desc contains "(unspecified)", save this ch_report as the refrence one..
+      //copy it to all other channels
+      
+      if ( chan_desc.contains("(unspecified)") )
+	{
+	  triple_reports_ref = ri.value();
+	  chan_desc_ref      = chan_desc;
+	  wvl_ref            = triple_reports_ref.keys()[ 0 ];
+	  qDebug() << "Reference report name, wvls, #wvl -- "
+		   << chan_desc << triple_reports_ref.keys() << triple_reports_ref.keys().size();
+	  continue;
+	}
+      
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString c_wvl = tri.key();
+
+	  //if ref_report was not replaced yet, substitute all channels' reports witht he ref. one...
+	  if ( !triple_reports_ref.isEmpty() )
+	    {
+	      currProf->ch_reports[ chan_desc ] [ c_wvl ] = triple_reports_ref[ wvl_ref ];
+		  
+	    }
+	  else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
+	    {
+	      if ( mainw->abde_mode_aprofile )
+		{
+		  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
+		    {
+		      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
+		      if ( initItem.type == 's' && initItem.method.contains("2DSA") )
+			{
+			  //if attempts to insert reportItem from Velocity-type, replace with ABDE-type
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].type        = QString("Radius");
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].method      = QString("raw");
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].range_low   = 5.8;
+			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].range_high  = 7.0;
+			}
+		    }
+		}
+	    }
+	  //&& debug 
+	  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
+	    {
+	      
+	      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
+	      
+	      qDebug() << "wvl, type, method, lo, hi -- "
+		       << c_wvl
+		       << initItem.type
+		       << initItem.method
+		       << initItem.range_low
+		       << initItem.range_high ;
+	      
+	    }
+	}
+    }
+
+  //wvls:
+  //QMap< QString, QList< double > > ch_wvls;
+  QMap< QString, QList < double > >::iterator wi;
+  for ( wi = currProf->ch_wvls.begin(); wi != currProf->ch_wvls.end(); ++wi )
+    {
+      QString chan_desc = wi.key();
+      qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc [ch_wvls]:::  " << chan_desc;
+      qDebug() << "Wvls -- " << wi.value();
+      
+    }
+  //END DEBUG
+ 
 
 //TESTING
    QMap < QString, US_ReportGMP* > ch_report_map;
@@ -414,7 +523,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 
    //Clear internal_reports QMap
    internal_reports.clear();
-   
+   ref_numbers_list. clear();
  
    if ( le_lcrats.count() == nchan )
    { // Reset General channel parameter gui elements
@@ -429,6 +538,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	qDebug() <<  "currProf->wvl_not_run.size(): "  << currProf->wvl_not_run.count();
 	qDebug() <<  "currProf->ch_wvls.size(): "      << currProf->ch_wvls.count();
 	qDebug() <<  "currProf->ch_reports.size():   "  << currProf->ch_reports.count();
+	
 	qDebug() <<  "currProf->chndescs_alt.size(): " << currProf->chndescs_alt.count();
 	
 	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
@@ -448,6 +558,13 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
          le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ kk ] ) );
          kk              = qMin( ii, currProf->data_ends.count() - 1 );
          le_daends[ ii ]->setText( QString::number( currProf->data_ends[ kk ] ) );
+	 //abde
+	 kk              = qMin( ii, currProf->ld_dens_0s.count() - 1 );
+         le_dens0s[ ii ]->setText( QString::number( currProf->ld_dens_0s[ kk ] ) );
+	 kk              = qMin( ii, currProf->gm_vbars.count() - 1 );
+         le_vbars[ ii ]->setText( QString::number( currProf->gm_vbars[ kk ] ) );
+	 kk              = qMin( ii, currProf->gm_mws.count() - 1 );
+         le_MWs[ ii ]->setText( QString::number( currProf->gm_mws[ kk ] ) );
 
 	 kk              = qMin( ii, currProf->analysis_run.count() - 1 );
 
@@ -468,6 +585,15 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 else
 	   ck_report_runs[ ii ] ->setChecked( false  );
 
+	 //ABDE: ref, use_ref
+	 //sb_ref_chs[ ii ]     ->setValue( currProf->ref_channels[ kk ] );
+	 ( currProf->ref_channels[ kk ] > 0 ) ?
+	   le_ref_chs[ ii ]     ->setText( "Ref:" + QString::number( currProf->ref_channels[ kk ]) ) :
+	   le_ref_chs[ ii ]     ->setText( "" );
+	 ref_numbers_list << currProf->ref_channels[ kk ];
+	 sb_use_ref_chs[ ii ] ->setValue( currProf->ref_use_channels[ kk ] );
+
+	 qDebug() << "Init APfor::Gen: ref_numbers_list -- " <<  ref_numbers_list;
 	 
 	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
 		  << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
@@ -569,6 +695,29 @@ else
    else
      ck_mwv[ 0 ] ->setChecked( false  );
 
+   //ABDE: for ref./use ref fields, set the 1st B-chann, to a reference
+   //ABDE: IF NO refs. set at all
+   if ( mainw->abde_mode_aprofile )
+     {
+       bool all_reps_run = true;
+       for( int rr=0; rr<currProf->report_run.size(); ++rr)
+	 if ( currProf->report_run[rr] == 0  )
+	   all_reps_run = false;
+
+       if ( all_reps_run )
+	 {
+	   for( int rr=0; rr<currProf->chndescs_alt.size(); ++rr )
+	     {
+	       QString ch_name = currProf->chndescs_alt[rr];
+	       if( ch_name.split(":")[0].contains("B") )
+		 {
+		   ck_runs[ rr ] -> setChecked( false );
+		   break;
+		 }
+	     }
+	 }
+     }
+
    // Save to update Gui
    qDebug() << "US_AnaprofPanGen::initPanel(): before save: currProf->chndescs_alt, size() -- " << currProf->chndescs_alt << currProf->chndescs_alt.size();
    savePanel();
@@ -577,7 +726,33 @@ else
       check_user_level();
    DbgLv(1) << "APGe: inP:  FROM initAprfile:General - RTN check_user_level()";
 
+
+   //if expTyp "ABDE": modify AProfile's GUI
+   
 }
+
+
+// Modify general setting for ABDE exptype
+void US_AnaprofPanGen::set_abde_panel()
+{
+
+  lb_lcrat -> setVisible( false );
+  lb_lctol -> setVisible( false );
+  lb_daend -> setVisible( false );
+  lb_mwvprefs -> setVisible( false );
+  
+  int nchn        = sl_chnsel.count();
+  qDebug() << "modifying General tab for ABDE: nchn -- " << nchn;
+  for ( int ii = 0; ii < nchn; ii++ )
+    {
+      le_lcrats[ ii ]->setVisible( false );
+      le_lctols[ ii ]->setVisible( false );
+      le_daends[ ii ]->setVisible( false );
+      ck_mwv[ ii ]   ->setChecked( false );
+      ck_mwv[ ii ]   ->setVisible( false );
+    }
+}
+
 
 // Check the Run name
 void US_AnaprofPanGen::check_runname()
@@ -627,6 +802,10 @@ void US_AnaprofPanGen::update_inv( void )
    US_Settings::set_us_inv_ID   ( ID );
    US_Settings::set_us_inv_level( level );
 }
+
+
+
+
 
 
 // //[OLD WAY] --  IF USER cannot edit anything (low-level user)
@@ -699,6 +878,13 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       currProf->l_volumes.clear( );
       currProf->lv_tolers.clear( );
       currProf->data_ends.clear( );
+
+      //abde
+      currProf->ld_dens_0s.clear( );
+      currProf->gm_vbars.clear( );
+      currProf->gm_mws.clear( );
+      currProf->ref_channels.clear( );
+      currProf->ref_use_channels.clear( );
       
       currProf->analysis_run .clear( );
       currProf->report_run   .clear( );
@@ -842,6 +1028,15 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
          currProf->lv_tolers << le_lvtols[ ii ]->text().toDouble();
          currProf->data_ends << le_daends[ ii ]->text().toDouble();
 
+	 //abde
+	 currProf->ld_dens_0s << le_dens0s[ ii ]->text().toDouble();
+	 currProf->gm_vbars   << le_vbars[ ii ]->text().toDouble();
+	 currProf->gm_mws     << le_MWs[ ii ]->text().toDouble();
+	 //currProf->ref_channels << sb_ref_chs[ ii ]->value();
+	 ( le_ref_chs[ ii ]->text().isEmpty() ) ?
+	   currProf->ref_channels << 0 : currProf->ref_channels << le_ref_chs[ ii ]->text().split(":")[1].toInt();
+	 currProf->ref_use_channels << sb_use_ref_chs[ ii ]->value();
+
 	 //ALEXEY: add additional field for channels to be or not to be analysed
 	 if ( ck_runs[ ii ]->isChecked() ) 
 	   currProf->analysis_run << 1;
@@ -861,6 +1056,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 else
 	   currProf->report_run << 0;
 
+	 
 	 qDebug() << "APGR: SAVE: run channel report -- " << ii << int(ck_report_runs[ ii ]->isChecked());
 	 
 

@@ -34,6 +34,7 @@ void SFData::computeMSE(){
 
 US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_WidgetsDialog(w)
 {
+    this->setWindowFlags(Qt::Window);
     setWindowTitle("Spectral Decomposition Residual Plot");
     setPalette( US_GuiSettings::frameColorDefault() );
     nScans = spFitData.includedScans.size();
@@ -416,7 +417,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     US_Plot* us_dataPlot = new US_Plot(dataPlot, tr(""),
                                       tr( "Wavelength (nm)" ), tr( "Absorbance" ));
 //    tab0_plotLD->setMinimumSize( 600, 400 );
-    dataPlot->setMaximumHeight(250);
+//    dataPlot->setMaximumHeight(250);
     dataPlot->enableAxis( QwtPlot::xBottom, true );
     dataPlot->enableAxis( QwtPlot::yLeft, true );
     dataPlot->setCanvasBackground(QBrush(Qt::black));
@@ -427,7 +428,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     US_Plot* us_devPlot = new US_Plot(errorPlot, tr(""),
                                       tr( "Wavelength (nm)" ), tr( "Residual" ));
 //    tab0_plotRD->setMinimumSize( 600, 400 );
-    errorPlot->setMaximumHeight(250);
+//    errorPlot->setMaximumHeight(250);
     errorPlot->enableAxis( QwtPlot::xBottom, true );
     errorPlot->enableAxis( QwtPlot::yLeft, true );
     errorPlot->setCanvasBackground(QBrush(Qt::black));
@@ -525,14 +526,15 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     QVBoxLayout* tab1_lyt = new QVBoxLayout(tab1);
     tab1_lyt->setMargin(0);
     tab1_lyt->setSpacing(1);
-    tab1_lyt->addLayout(us_dataPlot);
-    tab1_lyt->addLayout(us_devPlot);
+    tab1_lyt->addLayout(us_dataPlot, 1);
+    tab1_lyt->addLayout(us_devPlot, 1);
     tab1_lyt->addSpacing(10);
-    tab1_lyt->addLayout(radial_lyt);
-    tab1_lyt->addWidget(lb_runs_test);
-    tab1_lyt->addLayout(lyt_zstat);
-    tab1_lyt->addLayout(lyt_rstate);
-    tab1_lyt->addStretch(1);
+//    tab1_lyt->addStretch(1);
+    tab1_lyt->addLayout(radial_lyt, 0);
+    tab1_lyt->addWidget(lb_runs_test, 0);
+    tab1_lyt->addLayout(lyt_zstat, 0);
+    tab1_lyt->addLayout(lyt_rstate, 0);
+//    tab1_lyt->addStretch(1);
 
     tabs = new QTabWidget();
 //    tabs->setAutoFillBackground(true);
@@ -575,16 +577,16 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     left_lyt->setMargin(1);
 
     QHBoxLayout* main_lyt = new QHBoxLayout();
-    main_lyt->addLayout(left_lyt);
-    main_lyt->addWidget(tabs);
+    main_lyt->addLayout(left_lyt, 0);
+    main_lyt->addWidget(tabs, 1);
     main_lyt->setSpacing(2);
     main_lyt->setMargin(1);
-    main_lyt->setSizeConstraint(QLayout::SetFixedSize);
+//    main_lyt->setSizeConstraint(QLayout::SetFixedSize);
 
     this->setLayout(main_lyt);
 
     if (!graph->hasContext()) {
-        QMessageBox::warning(this, "Error!", "Couldn't initialize tnew_rpidhe OpenGL context.");
+        QMessageBox::warning(this, "Error!", "Couldn't initialize the OpenGL context.");
         this->close();
     }
 

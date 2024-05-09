@@ -54,8 +54,8 @@ bool Link::connectToServer( const QString& host, const int port )
   if (server.waitForEncrypted(15000))
     {
       //server.write("***qsslsocket_client_example sent this nothing command***\n");
-      status_ok = true;
-      server.waitForReadyRead(30000);
+      //status_ok = true;
+      status_ok = server.waitForReadyRead(30000);
     }
   else
     {
@@ -110,8 +110,9 @@ void Link::sslErrors(const QList<QSslError> &errors)
 
 void Link::serverDisconnect(void)
 {
-  qDebug() << "Server disconnected from inside LINK";
+  qDebug() << "Server disconnected from inside LINK -- e.g. [DROPPED CONNECTION]";
   disconnected_itself = true;
+
   //exit(0);
 }
 

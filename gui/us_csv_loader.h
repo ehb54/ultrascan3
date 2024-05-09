@@ -1,0 +1,111 @@
+#ifndef US_CSV_LOADER_H
+#define US_CSV_LOADER_H
+
+#include "us_widgets.h"
+#include "us_widgets_dialog.h"
+#include <QTableWidget>
+#include <QSortFilterProxyModel>
+#include <QTableWidgetItem>
+#include <QTableView>
+#include <QStandardItem>
+#include <QStandardItemModel>
+
+
+class CSVTableView : public QTableView {
+
+   Q_OBJECT
+   public:
+      CSVTableView(QWidget *parent=nullptr);
+
+   signals:
+      void row_column_deleted();
+
+   protected:
+      void contextMenuEvent(QContextMenuEvent *event) override;
+
+   private slots:
+      void delete_rows();
+      void delete_columns();
+};
+
+class CSVSortFilterProxyModel: public QSortFilterProxyModel {
+   public:
+      using QSortFilterProxyModel::QSortFilterProxyModel;
+      bool lessThan(const QModelIndex &, const QModelIndex &) const override;
+};
+
+class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
+
+   Q_OBJECT
+
+   public:
+      class US_GUI_EXTERN CSV_Data {
+         public:
+            int columnCount();
+            int rowCount();
+            QStringList header();
+            QVector<double> columnAt(int);
+            bool setData(const QString&, const QStringList&, const QVector<QVector<double>>&);
+            QString filePath();
+            void clear();
+         private:
+            QStringList m_header;
+            QVector<QVector<double>> m_columns;
+            QString m_path;
+      };
+
+      US_CSV_Loader(const QString& filePath, const QString& note = "",
+                    bool editable=false, QWidget* parent=0);
+      CSV_Data data();
+      QString error_message();
+
+   private:
+      enum DELIMITER {TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE};
+      bool m_editable;
+      QFileInfo infile;
+      DELIMITER delimiter;
+      QPushButton* pb_ok;
+      QPushButton* pb_cancel;
+      QPushButton* pb_add_header;
+      QPushButton* pb_save_csv;
+      QPushButton* pb_reset;
+      QPushButton* pb_show_red;
+      QRadioButton* rb_tab;
+      QRadioButton* rb_comma;
+      QRadioButton* rb_semicolon;
+      QRadioButton* rb_space;
+      QRadioButton* rb_other;
+      QButtonGroup* bg_delimiter;
+      QLineEdit* le_other;
+      QLineEdit* le_filename;
+      QLineEdit* le_msg;
+      QString str_delimiter;
+      QString error_msg;
+      QStringList file_lines;
+      CSVTableView* tv_data;
+      QStandardItemModel* model;
+      CSVSortFilterProxyModel* proxy;
+      CSV_Data csv_data;
+
+      void set_UI();
+      bool parse_file(const QString&);
+      QStringList gen_alpha_list(int);
+      bool check_table();
+      void get_sorted(QVector<QVector<double>>&, QStringList&);
+      bool write_csv(const QString&, const QString&, QString&);
+
+   private slots:
+      void ok();
+      void cancel();
+      void save_csv_clicked();
+      void reset();
+      void fill_table(int);
+      void new_delimiter(const QString &);
+      void add_header();
+      void item_changed(QStandardItem *);
+      void relabel();
+      void row_column_deleted();
+      void show_red();
+};
+
+#endif // US_CSV_LOADER_H

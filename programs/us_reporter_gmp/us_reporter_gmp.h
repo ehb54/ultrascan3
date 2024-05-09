@@ -1,6 +1,8 @@
 #ifndef US_REPORTER_GMP_H
 #define US_REPORTER_GMP_H
 
+#include <QPrinter>
+
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -22,7 +24,14 @@ class US_ReporterGMP : public US_Widgets
       public:
          US_ReporterGMP();
 	 US_ReporterGMP( QString );
-	 
+  //Tests
+         US_ReporterGMP( QMap<QString, QString> );
+         void write_gmp_report_DB_test( QString, QString,
+					int, QString, QString );
+
+         // QMap < QString, QString > read_autoflow_record_pub( int );
+         // int list_all_autoflow_records_pub( QList< QStringList >& );
+  
 	 QTreeWidget     * genTree;
          QTreeWidget     * miscTree;
 	 QTreeWidget     * perChanTree;
@@ -99,6 +108,10 @@ class US_ReporterGMP : public US_Widgets
 	   //     triple_name     model           feature  value  [All types of pseudo distr.] 
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPseudo3dParts;
 	   QMap < QString, QMap < QString, int > >  has_tripleModelPseudo3d_items;
+
+	   //     Individual Combined Plots
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleTypeModelRangeIndividualCombo;
+	   QMap < QString, QMap < QString, int > >  has_tripleModelIndCombo_items;
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
@@ -174,6 +187,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
+         QMap<QString, QTreeWidgetItem *> tripleMaskIndComboPlotItem;
+         
 
 	 //CombPlots masks
 	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
@@ -231,7 +246,8 @@ class US_ReporterGMP : public US_Widgets
 	 QString    intensityID;
 	 QString    analysisIDs;
 	 QString    autoflowStatusID;
-	 
+         QString    optimaName;
+  
 	 QString    current_date;
 	 
 	 QString    duration_str;
@@ -268,7 +284,9 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QString > intensityRIMap;
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
+         QMap< QString, QMap< QString, QMap< QString, bool> > > indComboPlotsMapTripleTypeRangeBool;
 	 QMap< QString, QStringList > CombPlots_Type_to_Models;
+         QMap< QString, QString > eSign_details;
 
          QMap< QString, QStringList >     CombPlotsParmsMap;
          QMap< QString, QList< QColor > > CombPlotsParmsMap_Colors;
@@ -285,14 +303,15 @@ class US_ReporterGMP : public US_Widgets
          void  remove_files_by_mask( QString, QStringList );
          void write_gmp_report_DB( QString, QString );
   
-	 void  assemble_user_inputs_html( void );
-         void  assemble_run_details_html( void );
+  void  assemble_user_inputs_html( void );
+  void  assemble_run_details_html( void );
          int   get_expID_by_runID_invID( US_DB2*, QString );
          double get_loading_volume( int );
   
          void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&,
 					   QString&,  QString&,  QString&,  QString&, QString&,
-					   QString&,  QString&,  QString&,  QString&, QString& );
+					   QString&,  QString&,  QString&,  QString&, QString&,
+					   QString&,  QString& );
 	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
          QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
 
@@ -303,6 +322,8 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
+         QMap< QString, QString > read_autoflowGMPReportEsign_record( US_DB2*);
+         QString get_assigned_oper_revs( QJsonDocument );
 	 void parse_gen_mask_json ( const QString  );
 	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
 	 QMap< QString, QString > parse_models_desc_json( const QString, const QString ); 
@@ -524,7 +545,12 @@ class US_ReporterGMP : public US_Widgets
 	void plotres( QMap < QString, QString > &   );
 	void plot_pseudo3D( QString, QString );
 	bool modelGuidExistsForStage( QString, QString );
+  bool modelGuidExistsForStage_ind( QString, QString, QString );
 	void process_combined_plots ( QString );
+  void process_combined_plots_individual ( QString, QString );
+
+  QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
+  void get_assigned_oper_revs( QJsonDocument, QStringList& );
 	
 	QString indent    (     int  )  const;
 	QString table_row( const QString&, const QString& ) const;
@@ -551,7 +577,14 @@ class US_ReporterGMP : public US_Widgets
 			   const QString&, const QString&,
 			   const QString&, const QString&,
 			   const QString& ) const;
-	
+
+       void paintPage(QPrinter& printer, int pageNumber, int pageCount,
+       		     QPainter* painter, QTextDocument* doc,
+       		     const QRectF& textRect, qreal footerHeight);
+       void printDocument(QPrinter& printer, QTextDocument* doc);
+                        //QWidget* parentWidget);
+       double mmToPixels(QPrinter& printer, int mm);
+  
 	void    write_plot    ( const QString&, const QwtPlot* );
 	bool    mkdir         ( const QString&, const QString& );
 
