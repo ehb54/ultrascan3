@@ -712,6 +712,14 @@ pb_plateau->setVisible(false);
    // details[ "autoflowID" ]   = QString("1002");
    // details[ "runID" ]        = QString("1981");
    // details[ "OptimaName" ]   = QString("Optima 1");
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("GMPMeniscusFitTest_6MAY24-run2023");
+   // details[ "protocolName" ] = QString("GMPMeniscusFitTest_6MAY24v2");
+   // details[ "statusID" ]     = QString("334");
+   // details[ "autoflowID" ]   = QString("1140");
+   // details[ "runID" ]        = QString("2023");
+   // details[ "OptimaName" ]   = QString("Optima 1");
    
    // load_auto( details );
   
@@ -3738,8 +3746,9 @@ double US_Edit::find_meniscus_auto()
 
       //int indexRight  = data.xindex( range_right );
       //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
-      int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
-      
+      //int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
+
+      int indexRight  = data.xindex( range_right );   
       // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
 	
       for ( int j = indexLeft; j <= indexRight; j++ )
