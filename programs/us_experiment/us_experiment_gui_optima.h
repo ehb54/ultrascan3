@@ -901,6 +901,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
   
       bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
+      bool    samplesReferencesWvlsMatch( QStringList& );
+      bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
       bool    extinctionProfilesExist( QStringList& );
       bool    validExtinctionProfile( QString, QList< double >,

@@ -3823,7 +3823,23 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 				     "Saving protocol or run submission to the Optima are not possible "
 				     "until this problem is resolved."));
 	 }
-       
+
+       //Check for Matching Wvls in Refs. && Samples:
+       if ( !samplesReferencesWvlsMatch( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+	   
+	   msg_to_user.removeDuplicates();
+
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Ranges Settings for Refs./Samples are Incorrect (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease revise wavelengths settings "
+				     "in the tab 7:Ranges to correct the above error(s). \n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
      }
 
      
@@ -3858,6 +3874,147 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
    // 	    << ncells_interference << ", " << nchannels_uvvis;
    
+}
+
+bool US_ExperGuiUpload::samplesReferencesWvlsMatch( QStringList& msg_to_user )
+{
+  bool all_matches = true;
+  msg_to_user. clear();
+
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+
+  qDebug() << "in samplesReferencesWvlsMatch(): chnns_names.size(), ref_chnns.size(), ref_use_chnns.size(), rpRange->nranges -- "
+	   << chnns_names.size() << ref_chnns.size() << ref_use_chnns.size() << rpRange->nranges;
+
+  //Create a QMap< QString(Reference), QStringList(Samples)>, to match Sample channs to each Reference chan.
+  QMap< QString, QStringList > ref_to_samples;
+  for (int rn=0; rn<ref_chnns.size(); ++rn) //over refs
+    {
+      if ( ref_chnns[rn] > 0 )
+	{
+	  QString ref_chnn_name  = chnns_names[ rn ];
+	  int      ref_number    = ref_chnns[ rn ];
+	  QStringList samples_for_ref;  
+	  for (int rnu=0; rnu<ref_use_chnns.size(); ++rnu) //over samples
+	    {
+	      if ( ref_use_chnns[rnu] == ref_number )
+		{
+		  QString sample_chnn_name  = chnns_names[ rnu ];
+		  samples_for_ref << sample_chnn_name;
+		}
+	    }
+	  //put into QMap: ref-to-samples:
+	  ref_to_samples[ ref_chnn_name ] = samples_for_ref;
+	}
+    }
+
+  //iterate over ref_to_samples:
+  QMap<QString, QStringList>::iterator rts;
+  for ( rts = ref_to_samples.begin(); rts != ref_to_samples.end(); ++rts )
+    {
+      QString ref_chn_name         = rts.key();
+      QStringList sample_chn_names = rts.value();
+
+      qDebug() << "in samplesReferencesWvlsMatch(): ref_chn_name, sample_chn_names -- "
+	       << ref_chn_name << sample_chn_names;
+      
+      for ( const auto& sn : sample_chn_names )
+	if ( !matchRefSampleWvls( ref_chn_name, sn, msg_to_user ) )
+	  all_matches = false;
+    }
+
+  return all_matches;
+}
+
+bool US_ExperGuiUpload::matchRefSampleWvls( QString ref_chn_name, QString sn, QStringList&msg_to_user )
+{
+  bool matchedOK = true;
+  QList< double > all_wvls_ref, all_wvls_sample;
+  int    nwavl_ref, nwavl_sample;
+  QString msg;
+  
+  //
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel = rpRange->chrngs[ ii ].channel;
+
+      QString chan_red            = channel.split(",")[0].replace(" / ","").trimmed();
+      QString ref_chn_name_red    = ref_chn_name.split(":")[0].trimmed();
+      QString sample_chn_name_red = sn.split(":")[0].trimmed();
+
+      qDebug() << "in matchRefSampleWvls(): over ranges: channel name, ref_chn_name, sample_chn_name  -- "
+	       << channel << ref_chn_name << sn;
+      qDebug() << "in matchRefSampleWvls(): over ranges: channel name, ref_chn_name_red, sample_chn_name_red -- "
+	       << channel << ref_chn_name_red  << sample_chn_name_red;
+      
+      if ( chan_red == ref_chn_name_red )
+	{
+	  all_wvls_ref = rpRange->chrngs[ ii ].wvlens;
+	  nwavl_ref    = all_wvls_ref.count();
+	}
+
+      if ( chan_red == sample_chn_name_red )
+	{
+	  all_wvls_sample = rpRange->chrngs[ ii ].wvlens;
+	  nwavl_sample    = all_wvls_sample.count();
+	}
+    }
+
+  qDebug() << "in matchRefSampleWvls(): REF_chn_name, all_wvls_ref, nwavl_ref -- "
+	   << ref_chn_name << all_wvls_ref << nwavl_ref;
+  qDebug() << "in matchRefSampleWvls(): SAMPLE_chn_name, all_wvls_sample, nwavl_sample -- "
+	   << sn << all_wvls_sample << nwavl_sample;
+
+  
+  //1: # wvls NOT equal:
+  if ( nwavl_ref < nwavl_sample )
+    {
+      msg += "Less wavelengths than in a SAMPLE -- ";
+      matchedOK = false;
+    }
+  //2: mismatched wvls:
+  else
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls_sample.size(); ++i)
+	{
+	  double s_wvl = all_wvls_sample[i];
+	  wvl_present[ s_wvl ] = false;
+	  for (int j=0; j<all_wvls_ref.size(); j++)
+	    {
+	      double ref_wvl = all_wvls_ref[j];
+	      if ( s_wvl == ref_wvl )
+		{
+		  wvl_present[ s_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      matchedOK = false;
+	      msg += "Some wavelengths in REF missing required by SAMPLE -- ; ";
+	      break; 
+	    }
+	}
+    }
+ 
+  //messages
+  if ( !matchedOK )
+    msg_to_user << QString(tr("REF channel: %1: Ranges: %2%3"))
+      .arg( ref_chn_name )
+      .arg( msg )
+      .arg( sn );
+  
+  return matchedOK;
 }
 
 bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
