@@ -1,0 +1,44 @@
+#%Module 1.0
+#
+#  ultrascan/build module for use with 'environment-modules' package:
+#
+##
+## N.B. this file has qt & qwt version specfic information
+## typically placed in /etc/modulefiles/ultrascan/home-gui-build
+##
+  
+proc ModulesHelp { } {
+   puts stderr "This module switches ultrascan to the one in your home directory\nUse for building and running\n"
+}
+
+module-whatis "This module switches ultrascan to the one in your home directory\nUse for building and running\n"
+
+
+# Only allow one ultrascan/* module to be loaded at a time
+conflict ultrascan
+
+# Define prefix so PATH and MANPATH can be updated.
+
+setenv        US_GUI        $::env(HOME)/ultrascan3
+setenv        ULTRASCAN     $::env(HOME)/ultrascan3
+setenv        QTDIR         /opt/qt-5.15.13
+setenv        QWTDIR        /opt/qt-5.15.13-qwt-6.1.6
+setenv        US3DIR	    $::env(HOME)/ultrascan3
+setenv        QTBIN	    /opt/qt-5.15.13/bin
+setenv        QTLIB	    /opt/qt-5.15.13/lib
+setenv        QTINC	    /opt/qt-5.15.13/include
+setenv        US3BIN	    $::env(HOME)/ultrascan3/bin
+setenv        US3LIB	    $::env(HOME)/ultrascan3/lib
+setenv        us3	    $::env(HOME)/ultrascan3
+
+prepend-path  PATH          $::env(HOME)/ultrascan3/bin:/opt/qt-5.15.13/bin
+prepend-path  LD_LIBRARY_PATH $::env(HOME)/ultrascan3/lib:/opt/qt-5.15.13/lib:/opt/qt-5.15.13-qwt-6.1.6/lib
+
+# gcc-toolset-9 addendum
+prepend-path    INFOPATH        /opt/rh/gcc-toolset-9/root/usr/share/info
+prepend-path    LD_LIBRARY_PATH /opt/rh/gcc-toolset-9/root/usr/lib64:/opt/rh/gcc-toolset-9/root/usr/lib:/opt/rh/gcc-toolset-9/root/usr/lib64/dyninst:/opt/rh/gcc-toolset-9/root/usr/lib/dyninst
+prepend-path    MANPATH /opt/rh/gcc-toolset-9/root/usr/share/man
+prepend-path    PATH    /opt/rh/gcc-toolset-9/root/usr/bin
+prepend-path    PKG_CONFIG_PATH /opt/rh/gcc-toolset-9/root/usr/lib64/pkgconfig
+setenv          PCP_DIR /opt/rh/gcc-toolset-9/root
+  
