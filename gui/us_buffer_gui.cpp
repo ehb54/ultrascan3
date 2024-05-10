@@ -839,6 +839,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    //QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton *pb_new_bcomp = us_pushbutton("Create new");
+   pb_new_bcomp -> hide(); // disabled - see issue # 275
+   
    QGridLayout* lo_manual   = us_checkbox(
          tr( "Manual unadjusted Density and Viscosity" ), ck_manual );
 
@@ -907,7 +909,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    main->addWidget( pb_spectrum,     row,   4, 1, 2 );
    main->addWidget( pb_help,         row++, 6, 1, 2 );
    main->addWidget( le_concen,       row++, 4, 1, 4 );
-   if (US_Settings::us_inv_level()>1){
+
+   if ( false && US_Settings::us_inv_level()>1){ // "create new" disabled - see issue #275
          main->addWidget(bn_allcomps, row, 0, 1, 3);
          main->addWidget(pb_new_bcomp,row, 3,1,1);
          connect(pb_new_bcomp, SIGNAL(clicked()), this, SLOT(create_new_buffer_component()));
