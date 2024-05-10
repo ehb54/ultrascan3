@@ -1808,6 +1808,7 @@ void US_ConvertGui::process_optics()
      if ( expType == "ABDE" )
        {
 	 absorbance_conversion_abde();
+	 return;
        }
      
      return;
@@ -5718,28 +5719,29 @@ void US_ConvertGui::absorbance_conversion_abde( void )
 	      buffer_rvalues << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.at( nsc ).rvalues;
 	      //qDebug() << "Buffer vals [in Correction] " << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.at( nsc ).rvalues;
 	    }
-	}
+	  //	}
       //2. Refrence itself
-      else
-       	{
-       	  for (int nsc = 0; nsc < ns; nsc++)
-       	    buffer_rvalues << outData.at(ii)->scanData.at( nsc ).rvalues;
-       	}
+      // else
+      //  	{
+      //  	  for (int nsc = 0; nsc < ns; nsc++)
+      //  	    buffer_rvalues << outData.at(ii)->scanData.at( nsc ).rvalues;
+      //  	}
 
-      for ( int ss = 0; ss < currentData->scanCount(); ss++ )
-	{
-	  US_DataIO::Scan* scan = &currentData->scanData[ ss ];
-
-	  //qDebug() << "buffer_rvalues at log : " << buffer_rvalues.at( ss );
-	  
-	  for ( int rr = 0; rr < kcpoint; rr++ )
+	  for ( int ss = 0; ss < currentData->scanCount(); ss++ )
 	    {
-	      double rvalue = scan->rvalues[ rr ];
-	      double val = buffer_rvalues.at(ss).at(rr) / rvalue;
-	      if (val <= 0)
-		val = 1e-5;
+	      US_DataIO::Scan* scan = &currentData->scanData[ ss ];
 	      
-	      scan->rvalues[ rr ] = std::log10(val);
+	      //qDebug() << "buffer_rvalues at log : " << buffer_rvalues.at( ss );
+	      
+	      for ( int rr = 0; rr < kcpoint; rr++ )
+		{
+		  double rvalue = scan->rvalues[ rr ];
+		  double val = buffer_rvalues.at(ss).at(rr) / rvalue;
+		  if (val <= 0)
+		    val = 1e-5;
+		  
+		  scan->rvalues[ rr ] = std::log10(val);
+		}
 	    }
 	}
     }
