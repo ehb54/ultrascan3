@@ -9,95 +9,146 @@
 #define UHFD_PLOT_EPSILON 2e-3
 
 static bool linear_fit(
-                       const double                         & xmin
-                       ,const double                        & xmax
-                       ,const vector < vector < double > >    x
-                       ,const vector < vector < double > >    y
-                       ,mQwtPlot                            * plot
-                       ,vector < QwtPlotCurve * >           & fitcurves
-                       ,QLineEdit                           * msgbox
+                       const double                                   & xmin
+                       ,const double                                  & xmax
+                       ,const vector < vector < vector < double > > >   x
+                       ,const vector < vector < vector < double > > >   y
+                       ,mQwtPlot                                      * plot
+                       ,vector < vector < QwtPlotCurve * > >          & fitcurves
+                       ,QTextEdit                                     * msgbox
                        ) {
    qDebug() << QString( "linear_fit(); xmin is %1, xmax is %2" ).arg( xmin ).arg( xmax );
+
+   if ( !x.size() ) {
+      msgbox->setText( us_tr( "Internal error: linear_fit, no curves!" ) );
+      return false;
+   }      
 
    if ( x.size() != fitcurves.size() ) {
       msgbox->setText( us_tr( "Internal error: fitcurves x size mismatch" ) );
       return false;
    }
 
-   double a_sum    = 0;
-   double b_sum    = 0;
-   double siga_sum = 0;
-   double sigb_sum = 0;
+   double global_a_sum    = 0;
+   double global_b_sum    = 0;
+   double global_siga_sum = 0;
+   double global_sigb_sum = 0;
+   int    global_count    = 0;
 
-   for ( size_t i = 0; i < x.size(); ++i ) {
+   msgbox->setText( "" );
 
-      vector < double > use_x;
-      vector < double > use_y;
-
-      for ( size_t j = 0; j < x[ i ].size(); ++j ) {
-         if ( x[ i ][ j ] >= xmin - UHFD_PLOT_EPSILON && x[ i ][ j ] <= xmax + UHFD_PLOT_EPSILON ) {
-            use_x.push_back( x[ i ][ j ] );
-            use_y.push_back( y[ i ][ j ] );
-         }
-      }
-
-      if ( !use_x.size() ) {
-         msgbox->setText( us_tr( "Empty fit range" ) );
-         vector < double > fitx;
-         vector < double > fity;
-         if ( fitcurves[ i ] ) {
-            fitcurves[ i ]->setSamples(
-                                       (double *)&( fitx[ 0 ] )
-                                       ,(double *)&( fity[ 0 ] )
-                                       ,0
-                                       );
-            plot->replot();
-         }
+   for ( size_t g = 0; g < x.size(); ++g ) {
+      if ( x[ g ].size() != fitcurves[ g ].size() ) {
+         msgbox->setText( us_tr( "Internal error: fitcurves x size mismatch" ) );
          return false;
       }
+      double a_sum    = 0;
+      double b_sum    = 0;
+      double siga_sum = 0;
+      double sigb_sum = 0;
 
-      double a;
-      double b;
-      double siga;
-      double sigb;
-      double chi2;
+      for ( size_t i = 0; i < x[ g ].size(); ++i ) {
+
+         vector < double > use_x;
+         vector < double > use_y;
+
+         for ( size_t j = 0; j < x[ g ][ i ].size(); ++j ) {
+            if ( x[ g ][ i ][ j ] >= xmin - UHFD_PLOT_EPSILON && x[ g ][ i ][ j ] <= xmax + UHFD_PLOT_EPSILON ) {
+               use_x.push_back( x[ g ][ i ][ j ] );
+               use_y.push_back( y[ g ][ i ][ j ] );
+            }
+         }
+
+         if ( !use_x.size() ) {
+            msgbox->setText( us_tr( "Empty fit range" ) );
+            vector < double > fitx;
+            vector < double > fity;
+            if ( fitcurves[ g ][ i ] ) {
+               fitcurves[ g ][ i ]->setSamples(
+                                               (double *)&( fitx[ 0 ] )
+                                               ,(double *)&( fity[ 0 ] )
+                                               ,0
+                                               );
+               plot->replot();
+            }
+            return false;
+         }
+
+         double a;
+         double b;
+         double siga;
+         double sigb;
+         double chi2;
    
-      US_Saxs_Util::linear_fit( use_x, use_y, a, b, siga, sigb, chi2 );
+         US_Saxs_Util::linear_fit( use_x, use_y, a, b, siga, sigb, chi2 );
 
-      a_sum    += a;
-      b_sum    += b;
-      siga_sum += siga;
-      sigb_sum += sigb;
+         a_sum    += a;
+         b_sum    += b;
+         siga_sum += siga;
+         sigb_sum += sigb;
       
-      qDebug() << QString( "a is %1, b is %2" ).arg( a ).arg( b );
+         global_a_sum    += a;
+         global_b_sum    += b;
+         global_siga_sum += siga;
+         global_sigb_sum += sigb;
+         ++global_count;
 
-      // plot line
+         // qDebug() << QString( "a is %1, b is %2" ).arg( a ).arg( b );
 
-      if ( fitcurves[ i ] ) {
-         vector < double > fitx = { xmin, xmax };
-         vector < double > fity = { a + b * xmin, a + b * xmax };
-         fitcurves[ i ]->setSamples(
-                                    (double *)&( fitx[ 0 ] )
-                                    ,(double *)&( fity[ 0 ] )
-                                    ,2
-                                    );
+         // plot line
+
+         if ( fitcurves[ g ][ i ] ) {
+            vector < double > fitx = { xmin, xmax };
+            vector < double > fity = { a + b * xmin, a + b * xmax };
+            fitcurves[ g ][ i ]->setSamples(
+                                            (double *)&( fitx[ 0 ] )
+                                            ,(double *)&( fity[ 0 ] )
+                                            ,2
+                                            );
+         }
+      }
+      {
+         double xsizeinv = 1e0 / (double) x[ g ].size();
+         msgbox->setText(
+                         msgbox->toPlainText()
+                         + QString( "%1" ).arg(
+                                               x.size() > 1
+                                               ? QString( "Group %1 (size %2): " ).arg( g + 1 ).arg( x[ g ].size() )
+                                               : QString( "" )
+                                               )
+                         + QString( "a = %1 (%2%3)  b = %4 (%5%6)\n" )
+                         .arg( a_sum * xsizeinv, 0, 'f', 3 )
+                         .arg( UNICODE_PLUSMINUS )
+                         .arg( siga_sum * xsizeinv, 0, 'f', 3 )
+                         .arg( b_sum * xsizeinv, 0, 'f', 3 )
+                         .arg( UNICODE_PLUSMINUS )
+                         .arg( sigb_sum * xsizeinv, 0, 'f', 3 )
+                         );
       }
    }
 
-   {
-      double xsizeinv = 1e0 / (double) x.size();
+   // compute global averages if needed
 
+   if ( x.size() > 1
+        && global_count ) {
+      double globalcountinv = 1e0 / (double) global_count;
       msgbox->setText(
-                      QString( "a = %1 (%2%3)  b = %4 (%5%6)" )
-                      .arg( a_sum * xsizeinv, 0, 'f', 3 )
+                      msgbox->toPlainText()
+                      + QString( "%1" ).arg(
+                                            x.size() > 1
+                                            ? "Global average : "
+                                            : ""
+                                            )
+                      + QString( "a = %1 (%2%3)  b = %4 (%5%6)" )
+                      .arg( global_a_sum * globalcountinv, 0, 'f', 3 )
                       .arg( UNICODE_PLUSMINUS )
-                      .arg( siga_sum * xsizeinv, 0, 'f', 3 )
-                      .arg( b_sum * xsizeinv, 0, 'f', 3 )
+                      .arg( global_siga_sum * globalcountinv, 0, 'f', 3 )
+                      .arg( global_b_sum * globalcountinv, 0, 'f', 3 )
                       .arg( UNICODE_PLUSMINUS )
-                      .arg( sigb_sum * xsizeinv, 0, 'f', 3 )
+                      .arg( global_sigb_sum * globalcountinv, 0, 'f', 3 )
                       );
    }
-   
+
    plot->replot();
 
    return true;
@@ -408,11 +459,12 @@ void US_Hydrodyn::fractal_dimension() {
          cmb_method->setEnabled(true);
          cmb_method->setMaxVisibleItems( 1 );
 
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL   ), US_Fractal_Dimension::USFD_BOX_MODEL );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT     ), US_Fractal_Dimension::USFD_BOX_ALT );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS    ), US_Fractal_Dimension::USFD_BOX_MASS );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT     ), US_Fractal_Dimension::USFD_ENRIGHT );
-         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ROLL_SPHERE ), US_Fractal_Dimension::USFD_ROLL_SPHERE );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL    ), US_Fractal_Dimension::USFD_BOX_MODEL );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT      ), US_Fractal_Dimension::USFD_BOX_ALT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS     ), US_Fractal_Dimension::USFD_BOX_MASS );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT      ), US_Fractal_Dimension::USFD_ENRIGHT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ), US_Fractal_Dimension::USFD_ENRIGHT_FULL );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ROLL_SPHERE  ), US_Fractal_Dimension::USFD_ROLL_SPHERE );
          
          form.addRow( us_tr( "Method" ), cmb_method );
          
@@ -506,12 +558,12 @@ void US_Hydrodyn::fractal_dimension() {
                                                   );
    
    for ( auto const current_model : selected_models ) {
-      vector < vector < double > >  x;
-      vector < vector < double > >  y;
-      QString                       type;
-      QString                       x_title;
-      QString                       y_title;
-      vector < pointmass >          sas;
+      vector < vector < vector < double > > > x;
+      vector < vector < vector < double > > > y;
+      QString                                 type;
+      QString                                 x_title;
+      QString                                 y_title;
+      vector < pointmass >                    sas;
 
       editor_msg( "darkblue", QString( us_tr( "Fractal dimension processing model %1\n" ) ).arg( current_model + 1 ) );
 
@@ -523,6 +575,8 @@ void US_Hydrodyn::fractal_dimension() {
 
          x.resize( 1 );
          y.resize( 1 );
+         x[ 0 ].resize( 1 );
+         y[ 0 ].resize( 1 );
          
          double stepsize = ( roll_sphere_end - roll_sphere_start ) / roll_sphere_steps;
          if ( stepsize <= 0 ) {
@@ -607,8 +661,8 @@ void US_Hydrodyn::fractal_dimension() {
                return;
             }
 
-            x[0].push_back( log10( radius ) );
-            y[0].push_back( log10( asa_total ) );
+            x[ 0 ][ 0 ].push_back( log10( radius ) );
+            y[ 0 ][ 0 ].push_back( log10( asa_total ) );
          }
          x_title = "log10( Probe radius [" + UNICODE_ANGSTROM_QS + "] )";
          y_title = "log10( ASA [" + UNICODE_ANGSTROM_QS + "^2] )";
@@ -878,19 +932,40 @@ void US_Hydrodyn::fractal_dimension() {
             return;
          }
             
+         if ( !x[ 0 ].size() ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Fractal Dimension" ),
+                                   QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
+                                   .arg( current_model + 1 )
+                                   .arg( errormsg )
+                                   );
+            return;
+         }
 
+         if ( !x[ 0 ][ 0 ].size() ) {
+            QMessageBox::critical( this,
+                                   windowTitle() + us_tr( ": Fractal Dimension" ),
+                                   QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
+                                   .arg( current_model + 1 )
+                                   .arg( errormsg )
+                                   );
+            return;
+         }
+            
          {
-            double xmin = x[0].front();
-            double xmax = x[0].back();
+            double xmin = x[ 0 ][ 0 ].front();
+            double xmax = x[ 0 ][ 0 ].back();
 
             // quicker if we just check the ends, but this was ensures against out-of-data in US_Fractal_Dimension::compute*()
             for ( auto const & v : x ) {
                for ( auto const & vv : v ) {
-                  if ( xmin > vv ) {
-                     xmin = vv;
-                  }
-                  if ( xmax < vv ) {
-                     xmax = vv;
+                  for ( auto const & vvv : vv ) {
+                     if ( xmin > vvv ) {
+                        xmin = vvv;
+                     }
+                     if ( xmax < vvv ) {
+                        xmax = vvv;
+                     }
                   }
                }
             }
@@ -921,26 +996,30 @@ void US_Hydrodyn::fractal_dimension() {
                                         .arg( type ) ) );
                form.addRow( &usp_plot );
 
-               vector < QwtPlotCurve * > fitcurves;
+               vector < vector < QwtPlotCurve * > > fitcurves;
                
-               for ( size_t i = 0; i < x.size(); ++i ) {
-                  QwtPlotCurve * curve = new QwtPlotCurve( QString( "fd_calc-%1" ).arg( i + 1 ) );
-                  curve->setStyle( QwtPlotCurve::Dots );
-                  curve->setSamples(
-                                    (double *)&( x[ i ][ 0 ] ),
-                                    (double *)&( y[ i ][ 0 ] ),
-                                    x[ i ].size() );
-                  // curve->setPen( QPen( Qt::cyan, 3, Qt::SolidLine ) );
-                  curve->setPen( QPen( upc.color( i ), 3, Qt::SolidLine ) );
-                  curve->attach( plot );
+               for ( size_t g = 0; g < x.size(); ++g ) {
+                  vector < QwtPlotCurve * > this_fitcurves;
+                  for ( size_t i = 0; i < x[ g ].size(); ++i ) {
+                     QwtPlotCurve * curve = new QwtPlotCurve( QString( "fd_calc-%1" ).arg( i + 1 ) );
+                     curve->setStyle( QwtPlotCurve::Dots );
+                     curve->setSamples(
+                                       (double *)&( x[ g ][ i ][ 0 ] ),
+                                       (double *)&( y[ g ][ i ][ 0 ] ),
+                                       x[ g ][ i ].size() );
+                     // curve->setPen( QPen( Qt::cyan, 3, Qt::SolidLine ) );
+                     curve->setPen( QPen( upc.color( i ), 3, Qt::SolidLine ) );
+                     curve->attach( plot );
 
-                  {
-                     QwtPlotCurve * fitcurve = new QwtPlotCurve( QString( "fd_fit_%1" ).arg( i + 1 ) );
-                     fitcurve->setStyle( QwtPlotCurve::Lines );
-                     fitcurve->setPen( Qt::green, 2, Qt::DashDotLine );
-                     fitcurve->attach( plot );
-                     fitcurves.push_back( fitcurve );
+                     {
+                        QwtPlotCurve * fitcurve = new QwtPlotCurve( QString( "fd_fit_%1" ).arg( i + 1 ) );
+                        fitcurve->setStyle( QwtPlotCurve::Lines );
+                        fitcurve->setPen( Qt::green, 2, Qt::DashDotLine );
+                        fitcurve->attach( plot );
+                        this_fitcurves.push_back( fitcurve );
+                     }
                   }
+                  fitcurves.push_back( this_fitcurves );
                }
       
                QList<QWidget *> fields;
@@ -956,7 +1035,7 @@ void US_Hydrodyn::fractal_dimension() {
                   {
                      new QLineEdit( &dialog )
                      ,new QLineEdit( &dialog )
-                     ,new QLineEdit( &dialog )
+                     ,new QTextEdit( &dialog )
                   };
 
                vector < double >  defaults =
@@ -982,12 +1061,13 @@ void US_Hydrodyn::fractal_dimension() {
                         ((QLineEdit *)widgets[ i ])->setValidator( new QDoubleValidator(this) );
                         ((QLineEdit *)widgets[ i ])->setText( QString( "%1" ).arg( defaults[ i ] ) );
                      } else {
-                        ((QLineEdit *)widgets[ i ])->setReadOnly( true );
+                        ((QTextEdit *)widgets[ i ])->setReadOnly( true );
+                        QFontMetrics m( ((QTextEdit *)widgets[ i ])->font() );
+                        ((QTextEdit *)widgets[ i ])->setFixedHeight( 11 * m.lineSpacing() + 5 );
                      }
                      fields << widgets[ i ];
                   }
                }
-
 
                QDialogButtonBox *buttonBox = new QDialogButtonBox( Qt::Horizontal, &dialog );
 
@@ -995,7 +1075,6 @@ void US_Hydrodyn::fractal_dimension() {
                QPushButton * pb_replot = new QPushButton( us_tr( "Replot" ), &dialog );
                buttonBox->addButton( pb_replot, QDialogButtonBox::ActionRole );
                
-               // buttonBox->addButton( us_tr( "Replot" ), QDialogButtonBox::RejectRole );
                buttonBox->addButton( us_tr( "Export plot data to CSV" ), QDialogButtonBox::AcceptRole );
 
                form.addRow( buttonBox );
@@ -1004,13 +1083,13 @@ void US_Hydrodyn::fractal_dimension() {
                                  , [&](){
                                     use_xmin = ((QLineEdit *)fields[0])->text().toDouble();
                                     use_xmax = ((QLineEdit *)fields[1])->text().toDouble();
-                                    linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QLineEdit *)widgets[ 2 ] );
+                                    linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QTextEdit *)widgets[ 2 ] );
                                  } );
 
                QObject::connect( buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
                QObject::connect( buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
-               linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QLineEdit *)widgets[ 2 ] );
+               linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QTextEdit *)widgets[ 2 ] );
 
                plot->replot();
                
@@ -1057,7 +1136,7 @@ void US_Hydrodyn::fractal_dimension() {
                   break;
 
                case QDialog::Rejected :
-                  qDebug() << "rejected - replot";
+                  qDebug() << "rejected";
                   break;
 
                default :
