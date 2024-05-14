@@ -2210,7 +2210,9 @@ DbgLv(1) << "Ld: runtype" << runtype;
    }
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
-   rawc_wvlns.sort();
+   QMap<int, QString> m;
+   for (const auto& s : rawc_wvlns) m[s.toInt()] = s;
+   rawc_wvlns = QStringList(m.values());
    rawi_wvlns.clear();
    toti_wvlns.clear();
 
@@ -2482,6 +2484,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       {  // Save lambdas for each cell; flag if any cell-to-cell differences
          QVector< int > wvs;
          nwavelo      = mwl_data.lambdas( wvs, ccx );
+         std::sort( wvs.begin(), wvs.end());
          wavelns_i << wvs;
 
          if ( nwavelo != maxwavl )
@@ -2518,6 +2521,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       expd_radii .clear();
       expc_wvlns .clear();
       nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+      std::sort(expi_wvlns.begin(), expi_wvlns.end());
 DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
 
       // Initialize export wavelength lists for first channel
@@ -2753,7 +2757,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ trx ].size();
 
 	   mwl_data.lambdas( expi_wvlns, trx );
-	   
+	   std::sort(expi_wvlns.begin(), expi_wvlns.end());
 	   //Debug
 	   for ( int g=0; g < expi_wvlns.size(); ++g )
 	     qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
@@ -2819,6 +2823,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
 	   QVector< int > wvs_temp;
 	   int num_wvls =  mwl_data.lambdas( wvs_temp, trx );
+      std::sort(wvs_temp.begin(), wvs_temp.end());
 	   qDebug() << "#Wvls for " << triple_name << trx << ": " << num_wvls;
 	   for (int rr=0; rr<wvs_temp.size(); ++rr )
 	     qDebug() << "wvls ARE -- "  << wvs_temp[ rr ];
@@ -4097,7 +4102,9 @@ DbgLv(1) << "Ld: runtype" << runtype;
    }
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
-   rawc_wvlns.sort();
+   QMap<int, QString> m;
+   for (const auto& s : rawc_wvlns) m[s.toInt()] = s;
+   rawc_wvlns = QStringList(m.values());
    rawi_wvlns.clear();
    toti_wvlns.clear();
 
@@ -4363,6 +4370,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       {  // Save lambdas for each cell; flag if any cell-to-cell differences
          QVector< int > wvs;
          nwavelo      = mwl_data.lambdas( wvs, ccx );
+         std::sort( wvs.begin(), wvs.end() );
          wavelns_i << wvs;
 
          if ( nwavelo != maxwavl )
@@ -4399,6 +4407,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       expd_radii .clear();
       expc_wvlns .clear();
       nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+      std::sort( expi_wvlns.begin(), expi_wvlns.end() );
 DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
 
       // Initialize export wavelength lists for first channel
@@ -4643,7 +4652,9 @@ DbgLv(1) << "Ld: runtype" << runtype;
    }
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
-   rawc_wvlns.sort();
+   QMap<int, QString> m;
+   for (const auto& s : rawc_wvlns) m[s.toInt()] = s;
+   rawc_wvlns = QStringList(m.values());
    rawi_wvlns.clear();
    toti_wvlns.clear();
 
@@ -4909,6 +4920,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       {  // Save lambdas for each cell; flag if any cell-to-cell differences
          QVector< int > wvs;
          nwavelo      = mwl_data.lambdas( wvs, ccx );
+         std::sort( wvs.begin(), wvs.end() );
          wavelns_i << wvs;
 
          if ( nwavelo != maxwavl )
@@ -4945,6 +4957,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       expd_radii .clear();
       expc_wvlns .clear();
       nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+      std::sort( expi_wvlns.begin(), expi_wvlns.end() );
 DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
 
       // Initialize export wavelength lists for first channel
@@ -7344,6 +7357,7 @@ DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
 
       QVector< int > wvs;
       mwl_data.lambdas( wvs, triple_index );
+      std::sort( wvs.begin(), wvs.end() );
       lambda_new_list ( wvs );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
                               " raw index increment %5" )
@@ -7712,6 +7726,7 @@ DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
 
       QVector< int > wvs;
       mwl_data.lambdas( wvs, triple_index );
+      std::sort( wvs.begin(), wvs.end() );
       lambda_new_list ( wvs );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
                               " raw index increment %5" )
@@ -10493,6 +10508,7 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
                      : tr( " from custom selections." ) ) );
 
    mwl_data.set_lambdas( expi_wvlns, triple_index );
+   std::sort( expi_wvlns.begin(), expi_wvlns.end() );
 DbgLv(1) << "rpl: set_lambdas() complete.  trx" << triple_index;
 
    reset_outData();
@@ -10857,7 +10873,7 @@ void US_Edit::write_mwl_auto( int trx )
    QVector< int > current_wvlns;
    QStringList current_wvlns_list;
    int curr_wvls_count = mwl_data.lambdas( current_wvlns, trx );
-
+   std::sort(current_wvlns.begin(), current_wvlns.end());
    //wvlns to list
    for ( int wvx = 0; wvx < curr_wvls_count; wvx++ )
      {
@@ -11082,6 +11098,7 @@ void US_Edit::write_mwl()
 
    QVector< int > oldi_wvlns;
    int     kwavelo  = mwl_data.lambdas( oldi_wvlns );
+   std::sort(oldi_wvlns.begin(), oldi_wvlns.end());
    int     nwavelo  = expi_wvlns.count();
    int     wvx;
    bool    chg_lamb = ( kwavelo != nwavelo );
@@ -11101,7 +11118,7 @@ void US_Edit::write_mwl()
    if ( chg_lamb )
    {  // If wavelengths have changed, save new list and rebuild some vectors
       mwl_data.set_lambdas( expi_wvlns );  // Save new lambdas for channel
-
+      std::sort( expi_wvlns.begin(), expi_wvlns.end() );
       reset_outData();
    }
 
@@ -11867,6 +11884,7 @@ DbgLv(1) << "rsoD: aDa size" << allData.size() << "ncelchn" << ncelchn;
       lambdas_by_cell( ccx );
        
       int kwvln   = mwl_data.lambdas( ex_wvlns, ccx );
+      std::sort(ex_wvlns.begin(), ex_wvlns.end());
 DbgLv(1) << "rsoD: ccx kwv" << ccx << kwvln << ex_wvlns.size()
  << "nwv ccoff" << nwaveln << ccoff;
 
@@ -11894,6 +11912,8 @@ int US_Edit::lambdas_by_cell( int trx )
    if ( lrng_bycell )
    {
       rawi_wvlns = wavelns_i[ ccx ];
+      // sort rawi_wvlns
+      std::sort( rawi_wvlns.begin(), rawi_wvlns.end() );
       nwaveln    = rawi_wvlns.count();
       rawc_wvlns.clear();
 
