@@ -167,9 +167,19 @@ public:
       //! \param ViscCosed The pointer to the start of the Viscosity array
       void interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed);
 
+      //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
+      //! at time t
+      //! \param N The number of elements in the arrays
+      //! \param x The pointer to start of radial position array
+      //! \param t The double value representing the point of time
+      //! \param DensCosed The pointer to the start of the Density array
+      //! \param ViscCosed The pointer to the start of the Viscosity array
+      //! \param ConcCosed The pointer to the start of the Concentration array
+      void interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed, double *ConcCosed);
+
        double dt;
    private:
-      QMap<QString, std::array<double,2>> value_cache;
+      QMap<QString, std::array<double,3>> value_cache;
 
 
 
