@@ -384,18 +384,20 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
    QRegularExpressionMatch match;
+   // RunId1991-s0001-c2-s0009-w260-r_-n1.ri2
+   // RunId1991-s0002-c1-s0001-n1.ip1
+   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})-(?:w(\\d{3})-)?(.+?)[.](?:RA|RI|IP|FI|WA|WI)\\d$";
+   re.setPattern(pattern);
 
    QString runid;
    QString runtype;
    QMap<QString, QString> file_map;
    QMap<QString, QVector<int>> tcws_map;
+
    foreach (QString fpath, flist) {
       QFileInfo finfo = QFileInfo(fpath);
       QFile file(fpath);
       QString fname = finfo.fileName();
-
-      // RunId1991-s0001-c2-s0009-w260-r_-n1.ri2
-      re.setPattern("^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})-w(\\d{3})-(.+?)[.](?:RA|RI|IP|FI|WA|WI)\\d$");
       match = re.match(fname);
       if (match.hasMatch()) {
          if (runid.size() == 0) {
