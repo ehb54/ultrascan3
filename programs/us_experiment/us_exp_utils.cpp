@@ -2990,6 +2990,7 @@ DbgLv(1) << "EGOp:st: nochan nuchan done" << nochan << nuchan << is_done;
 void US_ExperGuiRanges::initPanel()
 {
    rpRange             = &(mainw->currProto.rpRange);
+   rpSolut             = &(mainw->currProto.rpSolut);
 
 DbgLv(1) << "EGRn:inP:  call rbS";
    rebuild_Ranges();
@@ -3387,9 +3388,11 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
        for ( int ii = 0; ii < nrnchan; ii++ )
 	 {
 	   //check if channel MWL
-	   int kswavl          = swvlens[ ii ].count();
-
-	   if( kswavl > 1 )
+	   int kswavl       = swvlens[ ii ].count();
+	   QString chanName = rchans[ ii ];;
+	   QStringList msg_to_user;     
+	   
+	   if( kswavl > 1 && iStwoOrMoreAnalytesSpectra_forChannel( chanName, msg_to_user, "INIT", -1 ) ) 
 	     {
 	       genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
 	       cc_buff_sp[ ii ]-> setVisible( true );
@@ -3401,6 +3404,9 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	     {
 	       genL->removeWidget( cc_buff_sp[ ii ] );
 	       cc_buff_sp[ ii ]-> setVisible( false );
+
+	       //also, reset abde_buff[ ii ]
+	       abde_buff[ ii ] = false;
 	     }
 	 }
      }
@@ -3791,21 +3797,21 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        qDebug() << "Submit::init: ABDE_MODE ";
        QStringList msg_to_user;
        if ( !extinctionProfilesExist( msg_to_user ) )
-	 {
-	   pb_submit->setEnabled( false );
-	   pb_saverp->setEnabled( false );
+       	 {
+       	   pb_submit->setEnabled( false );
+       	   pb_saverp->setEnabled( false );
 
-	   msg_to_user.removeDuplicates();
-	   
-	   QMessageBox::critical( this,
-				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
-				  msg_to_user.join("\n") +
-				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
-				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
-				     "\n\"Database:Manage Buffer Data\"\n\n"
-				     "Saving protocol or run submission to the Optima are not possible "
-				     "until this problem is resolved."));
-	 }
+       	   msg_to_user.removeDuplicates();
+        
+       	   QMessageBox::critical( this,
+       				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+       				  msg_to_user.join("\n") +
+       				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+       				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+       				     "\n\"Database:Manage Buffer Data\"\n\n"
+       				     "Saving protocol or run submission to the Optima are not possible "
+       				     "until this problem is resolved."));
+       	 }
 
        //Check for the correct settings in AProfile for 'Use Reference#'
        if ( !useReferenceNumbersSet( msg_to_user ) )

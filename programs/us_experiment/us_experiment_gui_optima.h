@@ -625,6 +625,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRanges*  rpRange;
       US_RunProtocol::RunProtoSpeed*   rpSpeed;  //!< Speed controls
+      US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
+  
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
@@ -662,7 +664,10 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       void detailRanges     ( void );
       // \brief Select the wavelengths to scan for a channel
       void selectWavelengths( void );
-
+  bool    iStwoOrMoreAnalytesSpectra_forChannel( QString, QStringList&, QString, int );
+      bool    validExtinctionProfile( QString, QList< double >,
+				      QList< double >, QStringList& );
+  
       void selectWavelengths_manual( void );
       void Wavelengths_class( void );
       // \brief Handle (un)check of Auto in Optima box
