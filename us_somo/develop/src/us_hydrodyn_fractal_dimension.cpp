@@ -5,6 +5,7 @@
 #include <qmessagebox.h>
 #include "../include/us_plot_util.h"
 #include "../include/us_unicode.h"
+#include "../include/us_average.h"
 
 #define UHFD_PLOT_EPSILON 2e-3
 
@@ -35,6 +36,13 @@ static bool linear_fit(
    double global_sigb_sum = 0;
    int    global_count    = 0;
 
+   vector < double > global_no_weights_a_v;
+   vector < double > global_no_weights_siga_v;
+   vector < double > global_no_weights_b_v;
+   vector < double > global_no_weights_sigb_v;
+   vector < double > global_weighted_b_v;
+   vector < double > global_weighted_sigb_v;
+
    msgbox->setText( "" );
 
    for ( size_t g = 0; g < x.size(); ++g ) {
@@ -46,6 +54,11 @@ static bool linear_fit(
       double b_sum    = 0;
       double siga_sum = 0;
       double sigb_sum = 0;
+
+      vector < double > a_v;
+      vector < double > siga_v;
+      vector < double > b_v;
+      vector < double > sigb_v;
 
       for ( size_t i = 0; i < x[ g ].size(); ++i ) {
 
@@ -93,6 +106,11 @@ static bool linear_fit(
          global_sigb_sum += sigb;
          ++global_count;
 
+         a_v.push_back( a );
+         siga_v.push_back( siga );
+         b_v.push_back( b );
+         sigb_v.push_back( sigb );
+
          // qDebug() << QString( "a is %1, b is %2" ).arg( a ).arg( b );
 
          // plot line
@@ -108,7 +126,32 @@ static bool linear_fit(
          }
       }
       {
-         double xsizeinv = 1e0 / (double) x[ g ].size();
+         double a_avg_no_weights;
+         double a_sd_no_weights;
+         double b_avg_no_weights;
+         double b_sd_no_weights;
+         double b_avg_weighted;
+         double b_sd_weighted;
+         QString errorsfull;
+         QString errors;
+
+         if ( !US_Average::compute( US_Average::NO_WEIGHTS, a_v, siga_v, a_avg_no_weights, a_sd_no_weights, errors ) ) {
+            errorsfull += errors;
+         }
+         if ( !US_Average::compute( US_Average::NO_WEIGHTS, b_v, sigb_v, b_avg_no_weights, b_sd_no_weights, errors ) ) {
+            errorsfull += errors;
+         }
+         if ( !US_Average::compute( US_Average::ONE_OVER_SD_SQ, b_v, sigb_v, b_avg_weighted, b_sd_weighted, errors ) ) {
+            errorsfull += errors;
+         }
+
+         global_no_weights_a_v.push_back( a_avg_no_weights );
+         global_no_weights_siga_v.push_back( a_sd_no_weights );
+         global_no_weights_b_v.push_back( b_avg_no_weights );
+         global_no_weights_sigb_v.push_back( b_sd_no_weights );
+         global_weighted_b_v.push_back( b_avg_weighted );
+         global_weighted_sigb_v.push_back( b_sd_weighted );
+
          msgbox->setText(
                          msgbox->toPlainText()
                          + QString( "%1" ).arg(
@@ -116,22 +159,50 @@ static bool linear_fit(
                                                ? QString( "Group %1 (size %2): " ).arg( g + 1 ).arg( x[ g ].size() )
                                                : QString( "" )
                                                )
-                         + QString( "a = %1 (%2%3)  b = %4 (%5%6)\n" )
-                         .arg( a_sum * xsizeinv, 0, 'f', 3 )
+                         + QString( "a = %1 (%2%3)  b = %4 (%5%6), wtd. b = %7 (%8%9) %10\n" )
+                         .arg( a_avg_no_weights, 0, 'f', 3 )
                          .arg( UNICODE_PLUSMINUS )
-                         .arg( siga_sum * xsizeinv, 0, 'f', 3 )
-                         .arg( b_sum * xsizeinv, 0, 'f', 3 )
+                         .arg( a_sd_no_weights, 0, 'f', 3 )
+                         .arg( b_avg_no_weights, 0, 'f', 3 )
                          .arg( UNICODE_PLUSMINUS )
-                         .arg( sigb_sum * xsizeinv, 0, 'f', 3 )
+                         .arg( b_sd_no_weights, 0, 'f', 3 )
+                         .arg( b_avg_weighted, 0, 'f', 3 )
+                         .arg( UNICODE_PLUSMINUS )
+                         .arg( b_sd_weighted, 0, 'f', 3 )
+                         .arg( errors )
                          );
+
       }
    }
 
    // compute global averages if needed
 
-   if ( x.size() > 1
+   if ( global_no_weights_a_v.size() > 1
         && global_count ) {
-      double globalcountinv = 1e0 / (double) global_count;
+      double a_avg_no_weights;
+      double a_sd_no_weights;
+      double b_avg_no_weights;
+      double b_sd_no_weights;
+      double b_avg_weighted;
+      double b_sd_weighted;
+      double b_avg_no_weights_from_weighted;
+      double b_sd_no_weights_from_weighted;
+      QString errorsfull;
+      QString errors;
+
+      if ( !US_Average::compute( US_Average::NO_WEIGHTS, global_no_weights_a_v, global_no_weights_siga_v, a_avg_no_weights, a_sd_no_weights, errors ) ) {
+         errorsfull += errors;
+      }
+      if ( !US_Average::compute( US_Average::NO_WEIGHTS, global_no_weights_b_v, global_no_weights_sigb_v, b_avg_no_weights, b_sd_no_weights, errors ) ) {
+         errorsfull += errors;
+      }
+      if ( !US_Average::compute( US_Average::ONE_OVER_SD_SQ, global_weighted_b_v, global_weighted_sigb_v, b_avg_weighted, b_sd_weighted, errors ) ) {
+         errorsfull += errors;
+      }
+      if ( !US_Average::compute( US_Average::NO_WEIGHTS, global_no_weights_b_v, global_no_weights_sigb_v, b_avg_no_weights_from_weighted, b_sd_no_weights_from_weighted, errors ) ) {
+         errorsfull += errors;
+      }
+
       msgbox->setText(
                       msgbox->toPlainText()
                       + QString( "%1" ).arg(
@@ -139,14 +210,22 @@ static bool linear_fit(
                                             ? "Global average : "
                                             : ""
                                             )
-                      + QString( "a = %1 (%2%3)  b = %4 (%5%6)" )
-                      .arg( global_a_sum * globalcountinv, 0, 'f', 3 )
+                      + QString( "a = %1 (%2%3)  b = %4 (%5%6), avg of wtd. b = %7 (%8%9), wtd. of wtd. b = %10 (%11%12) %13\n" )
+                      .arg( a_avg_no_weights, 0, 'f', 3 )
                       .arg( UNICODE_PLUSMINUS )
-                      .arg( global_siga_sum * globalcountinv, 0, 'f', 3 )
-                      .arg( global_b_sum * globalcountinv, 0, 'f', 3 )
+                      .arg( a_sd_no_weights, 0, 'f', 3 )
+                      .arg( b_avg_no_weights, 0, 'f', 3 )
                       .arg( UNICODE_PLUSMINUS )
-                      .arg( global_sigb_sum * globalcountinv, 0, 'f', 3 )
+                      .arg( b_sd_no_weights, 0, 'f', 3 )
+                      .arg( b_avg_weighted, 0, 'f', 3 )
+                      .arg( UNICODE_PLUSMINUS )
+                      .arg( b_sd_weighted, 0, 'f', 3 )
+                      .arg( b_avg_no_weights_from_weighted, 0, 'f', 3 )
+                      .arg( UNICODE_PLUSMINUS )
+                      .arg( b_sd_no_weights_from_weighted, 0, 'f', 3 )
+                      .arg( errors )
                       );
+      
    }
 
    plot->replot();
@@ -977,7 +1056,7 @@ void US_Hydrodyn::fractal_dimension() {
                QDialog dialog(this);
                dialog.setWindowTitle( windowTitle() + us_tr( ": Fractal Dimension" ) );
                // Use a layout allowing a label next to each field
-               dialog.setMinimumWidth( 600 );
+               dialog.setMinimumWidth( 900 );
 
                QFormLayout form(&dialog);
 
