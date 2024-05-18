@@ -106,6 +106,7 @@ macx {
 
 SOURCES *= \
         src/us_admin.cpp \
+        src/us_average.cpp \
 #  3dplot/mesh2mainwindowbase.cpp \
 #  3dplot/mesh2mainwindow.cpp \
 #  3dplot/colormapreader.cpp \
@@ -607,6 +608,7 @@ HEADERS *= \
 #  us_2dplot.h \
 #  us_3dsolutes.h \
         include/us_admin.h \
+        include/us_average.h \
 #  us_archive.h \
 #  us_astfem_math.h \
 #  us_astfem_rsa.h \
