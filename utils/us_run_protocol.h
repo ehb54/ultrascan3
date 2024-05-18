@@ -252,6 +252,7 @@ class US_UTIL_EXTERN US_RunProtocol
                   double           hi_rad;   //!< High radius for channel
 
 		  bool             abde_buffer_spectrum;
+		  bool             abde_mwl_deconvolution;
 
                   Ranges();
 

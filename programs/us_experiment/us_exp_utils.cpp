@@ -3399,14 +3399,18 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	       //cc_buff_sp_ck[ ii ]->setChecked( false );
 
 	       qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+
+	       //define channel as MWL-deconv.
+	       abde_mwl_deconv[ ii ] = true;
 	     }
 	   else
 	     {
 	       genL->removeWidget( cc_buff_sp[ ii ] );
 	       cc_buff_sp[ ii ]-> setVisible( false );
 
-	       //also, reset abde_buff[ ii ]
-	       abde_buff[ ii ] = false;
+	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ii ]
+	       abde_buff[ ii ]       = false;
+	       abde_mwl_deconv[ ii ] = false;
 	     }
 	 }
      }
@@ -3428,6 +3432,10 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 
 	   genL->removeWidget( cc_buff_sp[ ii ] );
 	   cc_buff_sp[ ii ]-> setVisible( false );
+
+	   //also, reset abde_buff[ ii ]
+	   abde_buff[ ii ]       = false;
+	   abde_mwl_deconv[ ii ] = false;
 	 }
      }
 }
@@ -3446,7 +3454,8 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       rpRange->chrngs[ ii ].hi_rad  = hicrads[ ii ];
 
       //abde
-      rpRange->chrngs[ ii ].abde_buffer_spectrum = abde_buff[ ii ];
+      rpRange->chrngs[ ii ].abde_buffer_spectrum   = abde_buff[ ii ];
+      rpRange->chrngs[ ii ].abde_mwl_deconvolution = abde_mwl_deconv[ ii ];
 
       rpRange->chrngs[ ii ].wvlens.clear();
 
@@ -4094,12 +4103,13 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
   //over channels
   for ( int ii = 0; ii < rpRange->nranges; ii++ )
     {
-      QString channel = rpRange->chrngs[ ii ].channel;
+      QString channel   = rpRange->chrngs[ ii ].channel;
       QList< double > all_wvls = rpRange->chrngs[ ii ].wvlens;
-      int    nwavl    = all_wvls.count();
-      bool   buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+      int    nwavl      = all_wvls.count();
+      bool   buff_req   = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+      bool   mwl_deconv = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
 
-      if ( nwavl > 1 )
+      if ( nwavl > 1 && mwl_deconv )
 	{
 	  QString sol_id = rpSolut->chsols[ii].sol_id;
 	  US_Solution*   solution = new US_Solution;

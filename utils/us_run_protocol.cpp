@@ -977,6 +977,16 @@ bool US_RunProtocol::RunProtoRanges::fromXml( QXmlStreamReader& xmli )
 	      }
 	    else
 	      rng.abde_buffer_spectrum = false;
+
+	    if (  attr.hasAttribute ("abde_mwl_deconv") )
+	      {
+		( attr.value( "abde_mwl_deconv" ) .toString().toInt() ) ?
+		  rng.abde_mwl_deconvolution = true : rng.abde_mwl_deconvolution = false;
+	      }
+	    else
+	      rng.abde_mwl_deconvolution = false;
+	    
+	    //end of abde
 	    
             rng.wvlens.clear();
          }
@@ -1025,6 +1035,8 @@ bool US_RunProtocol::RunProtoRanges::toXml( QXmlStreamWriter& xmlo )
       //abde
       xmlo.writeAttribute   ( "abde_buffer",
                               QString::number( int(chrngs[ ii ].abde_buffer_spectrum )) );
+      xmlo.writeAttribute   ( "abde_mwl_deconv",
+                              QString::number( int(chrngs[ ii ].abde_mwl_deconvolution )) );
       
       for ( int jj = 0; jj < chrngs[ ii ].wvlens.count(); jj++ )
       {
@@ -1048,6 +1060,7 @@ US_RunProtocol::RunProtoRanges::Ranges::Ranges()
    lo_rad               = 5.75;
    hi_rad               = 7.25;
    abde_buffer_spectrum = false;
+   abde_mwl_deconvolution = false;
 }
 
 // RunProtoRanges::Ranges subclass Equality operator
@@ -1063,6 +1076,9 @@ bool US_RunProtocol::RunProtoRanges::Ranges::operator==
    int abde_buff1 = int( abde_buffer_spectrum );
    int abde_buff2 = int( s.abde_buffer_spectrum );
    if (abde_buff1 != abde_buff2) return false;
+
+   //as for 'abde_mwl_deconvolution':
+   //do not compare as this can change on fly && will be checked differently
 
    return true;
 }

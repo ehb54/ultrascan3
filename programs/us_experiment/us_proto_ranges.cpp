@@ -253,6 +253,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
       abde_buff.resize( nrnchan );
+      abde_mwl_deconv.resize( nrnchan );
 
       for ( int ii = 0; ii < oprof.count(); ii++ )
       {
@@ -276,10 +277,11 @@ DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ ku
 DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
             }
 
-            locrads[ kuv ]       = rpRange->chrngs[ kuv ].lo_rad;
-            hicrads[ kuv ]       = rpRange->chrngs[ kuv ].hi_rad;
+            locrads[ kuv ]             = rpRange->chrngs[ kuv ].lo_rad;
+            hicrads[ kuv ]             = rpRange->chrngs[ kuv ].hi_rad;
 
-	    abde_buff[ kuv ]     = rpRange->chrngs[ kuv ].abde_buffer_spectrum;
+	    abde_buff[ kuv ]           = rpRange->chrngs[ kuv ].abde_buffer_spectrum;
+	    abde_mwl_deconv[ kuv ]     = rpRange->chrngs[ kuv ].abde_mwl_deconvolution;
 
             if ( ++kuv >= nuvvis )  break;
          }
@@ -308,6 +310,7 @@ DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
       abde_buff.resize( nrnchan );
+      abde_mwl_deconv.resize( nrnchan );
 DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < nrnchan; ii++ )
@@ -323,9 +326,11 @@ DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 DbgLv(1) << "EGRn: rbR:   ii jj " << ii << jj << "wavelen" << wavelen;
          }
 
-         locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
-         hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
-	 abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+         locrads[ ii ]        = rpRange->chrngs[ ii ].lo_rad;
+         hicrads[ ii ]        = rpRange->chrngs[ ii ].hi_rad;
+	 abde_buff[ ii ]      = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	 abde_mwl_deconv[ ii] = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+	 
 DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
@@ -354,15 +359,17 @@ DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
       locrads.resize( ntchan );
       hicrads.resize( ntchan );
       abde_buff.resize( ntchan );
+      abde_mwl_deconv.resize( ntchan );
       int kk              = nochan;
 
       for ( int ii = 0; ii < nrnchan_sv; ii++ )
       {
-         rchans [ kk ]    = rchans [ ii ];
-         swvlens[ kk ]    = swvlens[ ii ];
-         locrads[ kk ]    = locrads[ ii ];
-         hicrads[ kk ]    = hicrads[ ii ];
-	 abde_buff[ kk ]  = abde_buff[ ii ];
+         rchans [ kk ]         = rchans [ ii ];
+         swvlens[ kk ]         = swvlens[ ii ];
+         locrads[ kk ]         = locrads[ ii ];
+         hicrads[ kk ]         = hicrads[ ii ];
+	 abde_buff[ kk ]       = abde_buff[ ii ];
+	 abde_mwl_deconv[ kk ] = abde_mwl_deconv[ ii ];
          rchans [ ii ]    = "";
       }
    }
@@ -427,6 +434,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             locrads[ ii ]       = locrads[ ppx ];
             hicrads[ ii ]       = hicrads[ ppx ];
 	    abde_buff[ ii ]     = abde_buff[ ppx ];
+	    abde_mwl_deconv[ ii ] = abde_mwl_deconv[ ppx ];
          }
          else
          {
@@ -435,6 +443,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
             hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
 	    abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	    abde_mwl_deconv[ ii ] =  rpRange->chrngs[ ii ].abde_mwl_deconvolution;
          }
       }
    }
@@ -446,6 +455,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
      locrads.resize( nrnchan );
      hicrads.resize( nrnchan );
      abde_buff.resize( nrnchan );
+     abde_mwl_deconv.resize( nrnchan );
 
      for ( int ii = 0; ii < nrnchan; ii++ )
       {
@@ -458,6 +468,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
 	 abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	 abde_mwl_deconv[ ii ] =  rpRange->chrngs[ ii ].abde_mwl_deconvolution;
          qDebug() << "Test 1";
       }
    }
@@ -467,6 +478,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    locrads.resize( nrnchan );
    hicrads.resize( nrnchan );
    abde_buff.resize( nrnchan );
+   abde_mwl_deconv.resize( nrnchan );
 }
 
 #if 0
@@ -869,8 +881,9 @@ void US_ExperGuiRanges::selectWavelengths_manual()
 	   genL->removeWidget( cc_buff_sp[ chrow ] );
 	   cc_buff_sp[ chrow ]-> setVisible( false );
 
-	   //also, reset abde_buff[ ii ]
-	   abde_buff[ chrow ] = false;
+	   //also, reset abde_buff[ ii ], abde_mwl_deconv[ chrow ]
+	   abde_buff[ chrow ]       = false;
+	   abde_mwl_deconv[ chrow ] = false;
 	 }
      }
    else
@@ -885,6 +898,9 @@ void US_ExperGuiRanges::selectWavelengths_manual()
 	   genL->addWidget( cc_buff_sp[ chrow ], chrow,  16, 1, 2 );
 	   cc_buff_sp[ chrow ]-> setVisible( true );
 	   qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ chrow ]->objectName();
+
+	   //set channel as MWL-deconvolution:
+	   abde_mwl_deconv[ chrow ] = true;
 	 }
      }
    
@@ -936,14 +952,18 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	       genL->addWidget( cc_buff_sp[ ccrow ], ccrow,  16, 1, 2 );
 	       cc_buff_sp[ ccrow ]-> setVisible( true );
 	       qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ ccrow ]->objectName();
+
+	       //set channel as MWL-deconvolution:
+	       abde_mwl_deconv[ ccrow ] = true;
 	     }
 	   else
 	     {
 	       genL->removeWidget( cc_buff_sp[ ccrow ] );
 	       cc_buff_sp[ ccrow ]-> setVisible( false );
 
-	       //also, reset abde_buff[ ii ]
-	       abde_buff[ ccrow ] = false;
+	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ccrow ]
+	       abde_buff[ ccrow ]       = false;
+	       abde_mwl_deconv[ ccrow ] = false;
 	     }
 	 }
    }
@@ -1208,8 +1228,9 @@ DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
 	   genL->removeWidget( cc_buff_sp[ chrow ] );
 	   cc_buff_sp[ chrow ]-> setVisible( false );
 
-	   //also, reset abde_buff[ ii ]
-	   abde_buff[ chrow ] = false;
+	   //also, reset abde_buff[ ii ], abde_mwl_deconv[ chrow ]
+	   abde_buff[ chrow ]       = false;
+	   abde_mwl_deconv[ chrow ] = false;
 	 }
      }
    else
@@ -1224,6 +1245,9 @@ DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
 	   genL->addWidget( cc_buff_sp[ chrow ], chrow,  16, 1, 2 );
 	   cc_buff_sp[ chrow ]-> setVisible( true );
 	   qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ chrow ]->objectName();
+
+	   //set channel as MWL-deconvolution:
+	   abde_mwl_deconv[ chrow ] = true;
 	 }
 
      }
@@ -1276,14 +1300,18 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	       genL->addWidget( cc_buff_sp[ ccrow ], ccrow,  16, 1, 2 );
 	       cc_buff_sp[ ccrow ]-> setVisible( true );
 	       qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ ccrow ]->objectName();
+
+	       //set channel as MWL-deconvolution:
+	       abde_mwl_deconv[ ccrow ] = true;
 	     }
 	   else
 	     {
 	       genL->removeWidget( cc_buff_sp[ ccrow ] );
 	       cc_buff_sp[ ccrow ]-> setVisible( false );
 
-	       //also, reset abde_buff[ ii ]
-	       abde_buff[ ccrow ] = false;
+	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ccrow ]
+	       abde_buff[ ccrow ]       = false;
+	       abde_mwl_deconv[ ccrow ] = false;
 	     }
 	 }
    }

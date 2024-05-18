@@ -648,6 +648,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< double >          locrads;  // Low radius value, ea. channel
       QVector< double >          hicrads;  // High radius value, ea. channel
       QVector< bool >            abde_buff;
+      QVector< bool >            abde_mwl_deconv;
 
       QComboBox * cb_scancount;
       QComboBox * cb_scancount_int;
