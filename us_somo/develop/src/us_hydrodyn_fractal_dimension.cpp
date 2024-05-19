@@ -196,10 +196,10 @@ static bool linear_fit(
       if ( !US_Average::compute( US_Average::NO_WEIGHTS, global_no_weights_b_v, global_no_weights_sigb_v, b_avg_no_weights, b_sd_no_weights, errors ) ) {
          errorsfull += errors;
       }
-      if ( !US_Average::compute( US_Average::ONE_OVER_SD_SQ, global_weighted_b_v, global_weighted_sigb_v, b_avg_weighted, b_sd_weighted, errors ) ) {
+      if ( !US_Average::compute( US_Average::NO_WEIGHTS, global_weighted_b_v, global_weighted_sigb_v, b_avg_no_weights_from_weighted, b_sd_no_weights_from_weighted, errors ) ) {
          errorsfull += errors;
       }
-      if ( !US_Average::compute( US_Average::NO_WEIGHTS, global_no_weights_b_v, global_no_weights_sigb_v, b_avg_no_weights_from_weighted, b_sd_no_weights_from_weighted, errors ) ) {
+      if ( !US_Average::compute( US_Average::ONE_OVER_SD_SQ, global_weighted_b_v, global_weighted_sigb_v, b_avg_weighted, b_sd_weighted, errors ) ) {
          errorsfull += errors;
       }
 
@@ -217,12 +217,12 @@ static bool linear_fit(
                       .arg( b_avg_no_weights, 0, 'f', 3 )
                       .arg( UNICODE_PLUSMINUS )
                       .arg( b_sd_no_weights, 0, 'f', 3 )
-                      .arg( b_avg_weighted, 0, 'f', 3 )
-                      .arg( UNICODE_PLUSMINUS )
-                      .arg( b_sd_weighted, 0, 'f', 3 )
                       .arg( b_avg_no_weights_from_weighted, 0, 'f', 3 )
                       .arg( UNICODE_PLUSMINUS )
                       .arg( b_sd_no_weights_from_weighted, 0, 'f', 3 )
+                      .arg( b_avg_weighted, 0, 'f', 3 )
+                      .arg( UNICODE_PLUSMINUS )
+                      .arg( b_sd_weighted, 0, 'f', 3 )
                       .arg( errors )
                       );
       
