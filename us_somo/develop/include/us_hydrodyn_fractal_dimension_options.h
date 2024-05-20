@@ -83,8 +83,6 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
       void                                    help();
       void                                    ok();
 
-      void                                    update_enables();
-
    protected slots:
 
       void closeEvent(QCloseEvent *);
