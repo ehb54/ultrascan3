@@ -373,6 +373,29 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "ASA vdW+GRPY Threshold [%]",
             "ASA vdW+GRPY Threshold [%]",
 
+            "__SECTION__",
+            "Fractal Dimension:",
+
+            "fractal_dimension_parameters",
+            "Fractal dimension parameters",
+            "Fractal dimension parameters",
+
+            "fractal_dimension",
+            "Fractal dimension",
+            "Fractal dimension",
+
+            "fractal_dimension_sd",
+            "Fractal dimension s.d.",
+            "Fractal dimension s.d.",
+
+            "rg_over_fractal_dimension",
+            "Rg / Fractal dimension",
+            "Rg / Fractal dimension",
+
+            "rg_over_fractal_dimension_sd",
+            "Rg / Fractal dimension s.d.",
+            "Rg / Fractal dimension s.d.",
+
             "__END__"
          };
 
@@ -698,6 +721,29 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "vdw_grpy_threshold",
             "ASA vdW+GRPY Threshold [%]",
             "ASA vdW+GRPY Threshold [%]",
+
+            "__SECTION__",
+            "Fractal Dimension:",
+
+            "fractal_dimension_parameters",
+            "Fractal dimension parameters",
+            "Fractal dimension parameters",
+
+            "fractal_dimension",
+            "Fractal dimension",
+            "Fractal dimension",
+
+            "fractal_dimension_sd",
+            "Fractal dimension s.d.",
+            "Fractal dimension s.d.",
+
+            "rg_over_fractal_dimension",
+            "Rg / Fractal dimension",
+            "Rg / Fractal dimension",
+
+            "rg_over_fractal_dimension_sd",
+            "Rg / Fractal dimension s.d.",
+            "Rg / Fractal dimension s.d.",
 
             "__END__"
          };
@@ -1431,6 +1477,41 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          field_to_format[field[i]] = 'g';
          continue;
       }
+
+      if ( field[i] == "fractal_dimension_parameters" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_parameters);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
+         continue;
+      }
+      if ( field[i] == "fractal_dimension" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+
    }
 
    this->save_widget = save_widget;
@@ -2812,6 +2893,12 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.vdw_theo_waters       = 0e0;
    data.vdw_exposed_residues  = 0e0;
    data.vdw_exposed_waters    = 0e0;
+
+   data.fractal_dimension_parameters = "";
+   data.fractal_dimension            = 0;
+   data.fractal_dimension_sd         = 0;
+   data.rg_over_fractal_dimension    = 0;
+   data.rg_over_fractal_dimension_sd = 0;
 
    return data;
 }

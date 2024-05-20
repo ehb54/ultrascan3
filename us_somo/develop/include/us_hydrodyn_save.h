@@ -122,6 +122,11 @@ struct save_data
    double        vdw_exposed_residues;  // "vdW Exposed residues"
    double        vdw_exposed_waters;    // "vdW Exposed waters"
 
+   QString       fractal_dimension_parameters;
+   double        fractal_dimension;
+   double        fractal_dimension_sd;
+   double        rg_over_fractal_dimension;
+   double        rg_over_fractal_dimension_sd;
 };
 
 struct save_info 
