@@ -43,13 +43,17 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
             ,ENABLED                  = 11
             ,PLOTS                    = 12
             ,SAVE_PLOT_DATA           = 13
+            ,HEADER_LABEL             = 14
+            ,MASS_LABEL               = 15
+            ,SURFACE_LABEL            = 16
             };
 
       enum WidgetType : int {
          QLINEEDIT                = 0
          ,QCOMBOBOX                = 1
          ,QCHECKBOX                = 2
-         ,WT_UNKNOWN               = 3
+         ,QLABEL                   = 3
+         ,WT_UNKNOWN               = 4
             };
 
       vector < enum WidgetId >                validWidgets;

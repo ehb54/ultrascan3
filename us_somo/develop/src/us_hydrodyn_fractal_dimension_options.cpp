@@ -45,39 +45,49 @@ void US_Hydrodyn_Fractal_Dimension_Options::setupGUI() {
 
    validWidgets = 
       {
-         ASA_THRESHOLD
+         HEADER_LABEL
+         ,METHOD
+         ,ENABLED
+         ,PLOTS
+         ,SAVE_PLOT_DATA
+         ,MASS_LABEL
+         ,ASA_THRESHOLD
          ,ASA_PROBE_RADIUS
          ,ANGSTROM_START
          ,ANGSTROM_END
          ,ANGSTROM_STEPS
          ,ENRIGHT_CA_PCT_START
          ,ENRIGHT_CA_PCT_END
+         ,SURFACE_LABEL
          ,ROLL_SPHERE_START
          ,ROLL_SPHERE_END
          ,ROLL_SPHERE_STEPS
-         ,METHOD
-         ,ENABLED
-         ,PLOTS
-         ,SAVE_PLOT_DATA
       };
          
    int row = 0;
 
    for ( auto const w : validWidgets ) {
-      QWidget * widget = setup( w );
-      widgets.push_back( widget );
-      AUTFBACK( widget );
-      widget->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-      widget->setToolTip( tooltip( w ) );
-
       QLabel * label = new QLabel( name( w ) );
       label->setPalette( PALET_LABEL );
       AUTFBACK( label );
       label->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       label->setToolTip( tooltip( w ) );
 
-      background->addWidget( label, row, 0 );
-      background->addWidget( widget, row, 1 );
+      QWidget * widget = setup( w );
+      widgets.push_back( widget );
+      if ( widget ) {
+         AUTFBACK( widget );
+         widget->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+         widget->setToolTip( tooltip( w ) );
+         background->addWidget( label, row, 0 );
+         background->addWidget( widget, row, 1 );
+      } else {
+         // if widget == 0, i.e. a widget not created, take up the whole row
+         label->setPalette( PALET_NORMAL );
+         label->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+         background->addWidget( label, row, 0, 1, 2 );
+      }
+         
       ++row;
 
       if ( hide( w ) ) {
@@ -130,6 +140,9 @@ QWidget * US_Hydrodyn_Fractal_Dimension_Options::setup( WidgetId widget_id ) {
       widget->setPalette( PALET_NORMAL );
       ((QCheckBox *)widget)->setChecked( paramvalue( widget_id ).toBool() );
       break;
+   case QLABEL :
+      widget = (QWidget *)0;
+      break;
    default :
       qDebug() << "US_Hydrodyn_Fractal_Dimension_Options()::setup() invalid widget type()";
       exit(-1);
@@ -181,6 +194,9 @@ QWidget * US_Hydrodyn_Fractal_Dimension_Options::setup( WidgetId widget_id ) {
    case ENABLED :
    case PLOTS :
    case SAVE_PLOT_DATA :
+   case HEADER_LABEL :
+   case MASS_LABEL :
+   case SURFACE_LABEL :
       break;
    }
    return widget;
@@ -198,11 +214,14 @@ QString US_Hydrodyn_Fractal_Dimension_Options::name( WidgetId widget_id ) {
    case ENRIGHT_CA_PCT_END   : return QString( us_tr( "End %1, dist. %" ) ).arg( ufd.mass_atoms_qstringlist().join( "," ) ); 
    case ROLL_SPHERE_START    : return QString( us_tr( "Probe radius start [%1]" ) ).arg( UNICODE_ANGSTROM );
    case ROLL_SPHERE_END      : return QString( us_tr( "Probe radius end [%1]" ) ).arg( UNICODE_ANGSTROM );
-   case ROLL_SPHERE_STEPS    : return us_tr( "Probe radius steps (Rolling sphere only)" );
+   case ROLL_SPHERE_STEPS    : return us_tr( "Probe radius steps" );
    case METHOD               : return us_tr( "Method" );
    case ENABLED              : return us_tr( "Enabled" );
    case PLOTS                : return us_tr( "Show plots" );
    case SAVE_PLOT_DATA       : return us_tr( "Save plot data as CSV" );
+   case HEADER_LABEL         : return us_tr( "Fractal Dimension options" );
+   case MASS_LABEL           : return us_tr( "Mass fractal D parameters" );
+   case SURFACE_LABEL        : return us_tr( "Surface fractal D parameters" );
    default                   : break;
    }
 
@@ -237,7 +256,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::tooltip( WidgetId widget_id ) {
    default                   : break;
    }
 
-   return us_tr( "Unknown widget" );
+   return "";
 }
 
 bool US_Hydrodyn_Fractal_Dimension_Options::hide( WidgetId widget_id ) {
@@ -261,6 +280,11 @@ bool US_Hydrodyn_Fractal_Dimension_Options::hide( WidgetId widget_id ) {
    case ENABLED              : 
    case PLOTS                : 
    case SAVE_PLOT_DATA       : return false;
+
+   case HEADER_LABEL         :
+   case MASS_LABEL           :
+   case SURFACE_LABEL        : return false;
+
    default                   : break;
    }
 
@@ -342,6 +366,9 @@ US_Hydrodyn_Fractal_Dimension_Options::WidgetType US_Hydrodyn_Fractal_Dimension_
    case ENABLED              : return QCHECKBOX;
    case PLOTS                : return QCHECKBOX;
    case SAVE_PLOT_DATA       : return QCHECKBOX;
+   case HEADER_LABEL         : return QLABEL;
+   case MASS_LABEL           : return QLABEL;
+   case SURFACE_LABEL        : return QLABEL;
    default                   : break;
    }
 
@@ -379,6 +406,8 @@ void US_Hydrodyn_Fractal_Dimension_Options::ok() {
          break;
       case QCHECKBOX :
          (*parameters)[ paramname( w ) ] = ((QCheckBox *)widgets[ w ])->isChecked() ? "true" : "false";
+         break;
+      case QLABEL :
          break;
       default :
          qDebug() << "US_Hydrodyn_Fractal_Dimension_Options()::ok() invalid widget type()";
