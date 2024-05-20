@@ -70,9 +70,9 @@ class US_Fractal_Dimension {
       case USFD_BOX_MODEL    : return "Box"; break;
       case USFD_BOX_ALT      : return "Box Alternate"; break;
       case USFD_BOX_MASS     : return "Box Mass"; break;
-      case USFD_ENRIGHT      : return "Internal mass"; break;
-      case USFD_ENRIGHT_FULL : return "Full Internal mass"; break;
-      case USFD_ROLL_SPHERE  : return "Surface mass"; break;
+      case USFD_ENRIGHT      : return "Mass fractal D (slice)"; break;
+      case USFD_ENRIGHT_FULL : return "Mass fractal D (full)"; break;
+      case USFD_ROLL_SPHERE  : return "Surface fractal D"; break;
       default                : return "Error - unknown method"; break;
       }
    };
@@ -80,9 +80,11 @@ class US_Fractal_Dimension {
    // list points for debugging
    QStringList list_points( const vector < pointmass > & points );
 
-
+   set < QString > mass_atoms_set();
+   QStringList mass_atoms_qstringlist();
 
  private:
+   set < QString > mass_atoms;
 
    bool compute_box_counting(
                              const vector < pointmass >               & points

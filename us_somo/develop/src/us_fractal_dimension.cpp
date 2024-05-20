@@ -6,9 +6,10 @@
 
 #define USFD_MIN_POINTS       10
 
+
 US_Fractal_Dimension::US_Fractal_Dimension() {
    qDebug() << "US_Fractal_Dimension() constructor";
-
+   mass_atoms = { "CA", "O5", "O5*", "O5'" };
 }
 
 US_Fractal_Dimension::~US_Fractal_Dimension() {
@@ -394,7 +395,7 @@ bool US_Fractal_Dimension::compute_enright(
    {
       map < double, size_t > ca_dist2_to_center;
       for ( size_t i = 0; i < points.size(); ++i ) {
-         if ( points[ i ].name == "CA" ) {
+         if ( mass_atoms.count( points[ i ].name ) ) {
             ca_dist2_to_center[
                                pow( points[ i ].axis[ 0 ] - com[ 0 ], 2 )
                                + pow( points[ i ].axis[ 1 ] - com[ 1 ], 2 )
@@ -574,3 +575,18 @@ bool US_Fractal_Dimension::compute_box_mass(
 
    return true;
 }
+
+
+set < QString > US_Fractal_Dimension::mass_atoms_set() {
+   return mass_atoms;
+}
+
+QStringList US_Fractal_Dimension::mass_atoms_qstringlist() {
+   QStringList result;
+   for ( auto const & e : mass_atoms ) {
+      result << e;
+   }
+   return result;
+}
+
+   

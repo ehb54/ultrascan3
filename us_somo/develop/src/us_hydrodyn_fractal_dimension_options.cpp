@@ -166,7 +166,7 @@ QWidget * US_Hydrodyn_Fractal_Dimension_Options::setup( WidgetId widget_id ) {
          // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL    ), US_Fractal_Dimension::USFD_BOX_MODEL );
          // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT      ), US_Fractal_Dimension::USFD_BOX_ALT );
          // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS     ), US_Fractal_Dimension::USFD_BOX_MASS );
-         // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT      ), US_Fractal_Dimension::USFD_ENRIGHT );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT      ), US_Fractal_Dimension::USFD_ENRIGHT );
          cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ), US_Fractal_Dimension::USFD_ENRIGHT_FULL );
          cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ROLL_SPHERE  ), US_Fractal_Dimension::USFD_ROLL_SPHERE );
 
@@ -194,8 +194,8 @@ QString US_Hydrodyn_Fractal_Dimension_Options::name( WidgetId widget_id ) {
    case ANGSTROM_START       : return QString( us_tr( "Start [%1]" ) ).arg( UNICODE_ANGSTROM );
    case ANGSTROM_END         : return QString( us_tr( "End [%1]" ) ).arg( UNICODE_ANGSTROM );
    case ANGSTROM_STEPS       : return us_tr( "Number of steps" );
-   case ENRIGHT_CA_PCT_START : return QString( us_tr( "Start C%1 dist. %" ) ).arg( UNICODE_ALPHA );
-   case ENRIGHT_CA_PCT_END   : return QString( us_tr( "End C%1 dist. %" ) ).arg( UNICODE_ALPHA );
+   case ENRIGHT_CA_PCT_START : return QString( us_tr( "Start %1, dist. %" ) ).arg( ufd.mass_atoms_qstringlist().join( "," ) ); 
+   case ENRIGHT_CA_PCT_END   : return QString( us_tr( "End %1, dist. %" ) ).arg( ufd.mass_atoms_qstringlist().join( "," ) ); 
    case ROLL_SPHERE_START    : return QString( us_tr( "Probe radius start [%1]" ) ).arg( UNICODE_ANGSTROM );
    case ROLL_SPHERE_END      : return QString( us_tr( "Probe radius end [%1]" ) ).arg( UNICODE_ANGSTROM );
    case ROLL_SPHERE_STEPS    : return us_tr( "Probe radius steps (Rolling sphere only)" );
@@ -213,14 +213,18 @@ QString US_Hydrodyn_Fractal_Dimension_Options::tooltip( WidgetId widget_id ) {
 
    switch( widget_id ) {
    case ASA_THRESHOLD        : 
-   case ASA_PROBE_RADIUS     :
-   case ENRIGHT_CA_PCT_START : 
-   case ENRIGHT_CA_PCT_END   : return us_tr( "not currently used" );
+   case ASA_PROBE_RADIUS     : return us_tr( "not currently used" );
+
+   case ENRIGHT_CA_PCT_START :
+   case ENRIGHT_CA_PCT_END   : return QString( us_tr( "Only for the %1 method" ) ).arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT ) );
 
    case ANGSTROM_START       : 
    case ANGSTROM_END         : 
-   case ANGSTROM_STEPS       : return QString( us_tr( "Only for the %1 method" ) ).arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ) );
-
+   case ANGSTROM_STEPS       : return
+         QString( us_tr( "Only for the %1 and %2 methods" ) )
+         .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT ) )
+         .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ) )
+         ;
 
    case ROLL_SPHERE_START    : 
    case ROLL_SPHERE_END      : 
@@ -240,13 +244,15 @@ bool US_Hydrodyn_Fractal_Dimension_Options::hide( WidgetId widget_id ) {
 
    switch( widget_id ) {
    case ASA_THRESHOLD        : 
-   case ASA_PROBE_RADIUS     :
+   case ASA_PROBE_RADIUS     : return true;
+
    case ENRIGHT_CA_PCT_START : 
-   case ENRIGHT_CA_PCT_END   : return true;
+   case ENRIGHT_CA_PCT_END   : return false;
 
    case ANGSTROM_START       : 
    case ANGSTROM_END         : 
    case ANGSTROM_STEPS       : return false;
+
    case ROLL_SPHERE_START    : 
    case ROLL_SPHERE_END      : 
    case ROLL_SPHERE_STEPS    : return false;
@@ -394,9 +400,21 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
    result += US_Fractal_Dimension::method_name( method );
 
    switch ( method ) {
+   case US_Fractal_Dimension::USFD_ENRIGHT :
+      result +=
+         QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4 ; Slice %5 - %6 %" )
+         .arg( paramvalue( ANGSTROM_START, parameters ).toDouble() )
+         .arg( paramvalue( ANGSTROM_END, parameters ).toDouble() )
+         .arg( UNICODE_ANGSTROM )
+         .arg( paramvalue( ANGSTROM_STEPS, parameters ).toInt() )
+         .arg( paramvalue( ENRIGHT_CA_PCT_START, parameters ).toInt() )
+         .arg( paramvalue( ENRIGHT_CA_PCT_END, parameters ).toInt() )
+         ;
+      break;
+
    case US_Fractal_Dimension::USFD_ENRIGHT_FULL :
       result +=
-         QString( "; Start/End %1 - %2 [%3] Steps %4" )
+         QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4" )
          .arg( paramvalue( ANGSTROM_START, parameters ).toDouble() )
          .arg( paramvalue( ANGSTROM_END, parameters ).toDouble() )
          .arg( UNICODE_ANGSTROM )
@@ -406,7 +424,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
 
    case US_Fractal_Dimension::USFD_ROLL_SPHERE :
       result +=
-         QString( "; Start/End %1 - %2 [%3] Steps %4" )
+         QString( " ; D(s) ; Start/End %1 - %2 [%3] Steps %4" )
          .arg( paramvalue( ROLL_SPHERE_START, parameters ).toDouble() )
          .arg( paramvalue( ROLL_SPHERE_END, parameters ).toDouble() )
          .arg( UNICODE_ANGSTROM )

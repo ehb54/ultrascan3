@@ -26,6 +26,8 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
       static QString options( map < QString, QString > & parameters ); // returns current options in a string format
 
    private:
+      US_Fractal_Dimension ufd;
+
       enum WidgetId : int {
          ASA_THRESHOLD            = 0
             ,ASA_PROBE_RADIUS         = 1
