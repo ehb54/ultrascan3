@@ -6,6 +6,7 @@
 #include "../include/us_plot_util.h"
 #include "../include/us_unicode.h"
 #include "../include/us_average.h"
+#include "../include/us_hydrodyn_fractal_dimension_options.h"
 
 #define UHFD_PLOT_EPSILON 2e-3
 
@@ -460,8 +461,8 @@ void US_Hydrodyn::fractal_dimension() {
    
          vector < QString > labels =
             {
-               QString( us_tr( "SAS ASA threshold [%1^2]" ) ).arg( UNICODE_ANGSTROM )
-               ,QString( us_tr( "SAS ASA probe radius [%1]" ) ).arg( UNICODE_ANGSTROM )
+               QString( us_tr( "ASA threshold [%1^2]" ) ).arg( UNICODE_ANGSTROM )
+               ,QString( us_tr( "ASA probe radius [%1]" ) ).arg( UNICODE_ANGSTROM )
                ,QString( us_tr( "Start [%1]" ) ).arg( UNICODE_ANGSTROM )
                ,QString( us_tr( "End [%1]" ) ).arg( UNICODE_ANGSTROM )
                ,us_tr( "Number of steps" )
@@ -1229,5 +1230,25 @@ void US_Hydrodyn::fractal_dimension() {
                                        .arg( current_model + 1 )
                                        .arg( fd ) ) );
       }
+   }
+}
+
+void US_Hydrodyn::show_fractal_dimension_options() {
+   if ( fractal_dimension_options_widget ) {
+      if ( fractal_dimension_options_window->isVisible() ) {
+         fractal_dimension_options_window->raise();
+      } else {
+         fractal_dimension_options_window->show();
+      }
+      return;
+   } else {
+      fractal_dimension_options_window =
+         new US_Hydrodyn_Fractal_Dimension_Options(
+                                                   &gparams
+                                                   ,&fractal_dimension_options_widget
+                                                   ,this
+                                                   );
+      fixWinButtons( fractal_dimension_options_window );
+      fractal_dimension_options_window->show();
    }
 }

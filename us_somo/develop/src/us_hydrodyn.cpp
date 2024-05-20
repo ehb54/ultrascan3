@@ -62,6 +62,11 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
+// #define AVG_TEST
+#if defined( AVG_TEST )
+# include "../include/us_average.h"
+#endif
+
 // #define PINV_TEST
 #if defined( PINV_TEST )
 #include "../include/us_svd.h"
@@ -94,6 +99,12 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
+
+#if defined( AVG_TEST )
+   US_Average avg;
+   avg.test();
+   // exit(-1);
+#endif
 
 #if defined( AVGSD_TEST )
    {
@@ -587,6 +598,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    sas_options_misc_widget         = false;
    sas_options_experimental_widget = false;
    saxs_plot_widget                = false;
+   fractal_dimension_options_widget = false;
    asa_widget = false;
    misc_widget = false;
    grid_widget = false;
@@ -998,6 +1010,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(us_tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(us_tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
    somo_options->insertItem(us_tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
+   somo_options->insertItem(us_tr("&Fractal Dimension Options"), this, SLOT(show_fractal_dimension_options()));
 
  //   md_options = new Q3PopupMenu;
    // md_options->insertItem(us_tr("&DMD Options"), this, SLOT(show_dmd_options()));
@@ -1114,6 +1127,10 @@ void US_Hydrodyn::setupGUI()
       {
          QAction *qa = submenu->addAction( us_tr("SA&XS/SANS Options") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(show_saxs_options()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Fractal Dimension Options" ) );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_fractal_dimension_options()));
       }
       menu->addMenu( submenu );
    }

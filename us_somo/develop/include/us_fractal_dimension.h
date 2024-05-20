@@ -70,9 +70,9 @@ class US_Fractal_Dimension {
       case USFD_BOX_MODEL    : return "Box"; break;
       case USFD_BOX_ALT      : return "Box Alternate"; break;
       case USFD_BOX_MASS     : return "Box Mass"; break;
-      case USFD_ENRIGHT      : return "Enright"; break;
-      case USFD_ENRIGHT_FULL : return "Full Enright"; break;
-      case USFD_ROLL_SPHERE  : return "Rolling sphere"; break;
+      case USFD_ENRIGHT      : return "Internal mass"; break;
+      case USFD_ENRIGHT_FULL : return "Full Internal mass"; break;
+      case USFD_ROLL_SPHERE  : return "Surface mass"; break;
       default                : return "Error - unknown method"; break;
       }
    };

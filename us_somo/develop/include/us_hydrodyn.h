@@ -82,6 +82,8 @@
 #include "us_hydrodyn_pdb_tool.h"
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
+// #include "us_hydrodyn_fractal_dimension_options.h"
+
 // #include "us_hydrodyn_pat.h"
 
 #include "us3i_gui_settings.h"
@@ -434,6 +436,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
       bool saxs_widget;
+      bool fractal_dimension_options_widget;
 
       bool saxs_options_widget;
       bool sas_options_saxs_widget;
@@ -602,6 +605,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
+      QFrame * fractal_dimension_options_window;
 
       US_Hydrodyn_SasOptionsSaxs         * sas_options_saxs_window;
       US_Hydrodyn_SasOptionsSans         * sas_options_sans_window;
@@ -1150,6 +1154,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_prr( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute prr curve
       void select_save_params();
       void show_saxs_options();
+      void show_fractal_dimension_options();
       void show_bd_options();
       void show_anaflex_options();
       void show_dmd_options();
