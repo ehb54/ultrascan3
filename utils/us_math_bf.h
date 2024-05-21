@@ -85,7 +85,7 @@ public:
       double cp_angle;          //!< Angle of centerpiece sector
       QList<US_CosedComponent> cosed_component; //!< Cosedimenting components
       bool is_empty;
-
+      QString key;
 
       QList<US_CosedComponent> base_comps; //!< The cosedimenting components, which form the base of the buffer
       QList<US_CosedComponent> upper_comps; //!< The relative cosedimenting components in the upper part
@@ -116,6 +116,14 @@ public:
       inline bool operator!= (const US_Math_BF::Band_Forming_Gradient& bfg) const {return !operator==(bfg);};
       //! \brief Calculate the eigenvalues
       bool get_eigenvalues( );
+
+      void load_data(US_DataIO::RawData* dens, US_DataIO::RawData* visc, US_DataIO::RawData* conc);
+
+      bool save_data(QString folder, QString key, US_DB2* db);
+
+      QString readGradientDataFromDB(QString load_key, QString &dir, US_DB2 *db);
+
+      Band_Forming_Gradient(US_SimulationParameters asparms, US_DataIO::EditedData* editedData, US_Buffer* buffer);
 
 
       //! \brief Given an Vector of eigenvalues the norm is calculated for a given internal radius meniscus and
@@ -185,6 +193,7 @@ public:
 
       int     Nx;       // number of points in radial direction
       int     dbg_level;          // debug level
+
    };
 
 

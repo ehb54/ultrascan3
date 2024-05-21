@@ -133,6 +133,235 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
    is_empty = false;
 }
 
+US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(US_SimulationParameters asparms,
+                                                         US_DataIO::EditedData *editedData, US_Buffer *buffer): meniscus(asparms.meniscus), bottom(asparms.bottom),
+overlay_volume(asparms.band_volume),
+cp_pathlen(asparms.cp_pathlen), cp_angle(asparms.cp_angle),
+cosed_component(buffer->cosed_component) {
+   eigenvalues.clear();
+   base_comps.clear();
+   upper_comps.clear();
+   lower_comps.clear();
+   value_cache.clear();
+   dbg_level = US_Settings::us_debug();
+   base_density = 0.0;
+   base_viscosity = 0.0;
+   double base = sq(meniscus) + overlay_volume * 360.0 / (cp_angle * cp_pathlen * M_PI);
+   overlay_thickness = sqrt(base) - meniscus;
+   Nx = 0;
+   dt = 0.0;
+   QList<US_CosedComponent> comps = buffer->cosed_component;
+   QMap<QString, US_CosedComponent> upper_cosed;
+   QMap<QString, US_CosedComponent> lower_cosed;
+   foreach (US_CosedComponent i, comps) {
+         if (i.s_coeff != 0.0)continue;
+         if (!i.overlaying && upper_cosed.contains(i.name)) {
+            // the current component is in the lower part, but there is another component with the same name in the
+            // overlaying section of the band forming gradient
+            US_CosedComponent j = upper_cosed[i.name];
+            if (j.conc > i.conc) {
+               // the concentration is higher in upper part, move it completely to the upper part and set the
+               // concentration to the excess concentration
+               j.conc = j.conc - i.conc;
+               j.concentration_offset = i.conc;
+               i.concentration_offset = i.conc;
+               upper_cosed[j.name] = j;
+               continue;
+            } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
+               // the concentration of both components is roughly equal, remove the component from the upper and lower part
+               upper_cosed.remove(j.name);
+               i.concentration_offset = i.conc;
+               continue;
+            } else {
+               j.conc = i.conc - j.conc;
+               j.concentration_offset = j.conc;
+               lower_cosed[j.name] = j;
+               i.concentration_offset = j.conc;
+               upper_cosed.remove(j.name);
+               continue;
+            }
+         }
+         if (i.overlaying && lower_cosed.contains(i.name)) {
+            // the current component is in the lower part, but there is another component with the same name in the
+            // overlaying section of the band forming gradient
+            US_CosedComponent j = lower_cosed[i.name];
+            if (j.conc > i.conc) {
+               // the concentration is higher in lower part, move it completely to the lower part and set the
+               // concentration to the excess concentration
+               j.conc = j.conc - i.conc;
+               j.concentration_offset = i.conc;
+               i.concentration_offset = i.conc;
+               lower_cosed[j.name] = j;
+               continue;
+            } else if (fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON) {
+               // the concentration of both components is roughly equal, remove the component from the upper and lower part
+               lower_cosed.remove(j.name);
+               i.concentration_offset = i.conc;
+               continue;
+            } else {
+               j.conc = i.conc - j.conc;
+               j.concentration_offset = j.conc;
+               i.concentration_offset = i.conc;
+               upper_cosed[j.name] = j;
+               lower_cosed.remove(j.name);
+               continue;
+            }
+         }
+         if (i.overlaying)
+            upper_cosed[i.name] = i;
+         else
+            lower_cosed[i.name] = i;
+
+      }
+   // Determine the base of the buffer
+   foreach (US_CosedComponent cosed_comp, comps) {
+         if (cosed_comp.s_coeff != 0.0)continue;
+         if (cosed_comp.overlaying) { continue; } // overlaying components can't be part of the base of the buffer
+         if (lower_cosed.contains(cosed_comp.name) &&
+             (fabs(lower_cosed[cosed_comp.name].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON)) {
+            // the concentration matches the original one entered. -> part of the buffer base
+            base_comps << cosed_comp;
+            base_density += cosed_comp.dens_coeff[0];
+            base_viscosity += cosed_comp.visc_coeff[0];
+         }
+         else if (!lower_cosed.contains(cosed_comp.name) && !upper_cosed.contains(cosed_comp.name)) {
+            // the component is present with the same concentration in both the upper and lower part
+            base_comps << cosed_comp;
+            base_density += cosed_comp.dens_coeff[0] +
+                            cosed_comp.dens_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                            cosed_comp.dens_coeff[2] * cosed_comp.conc +
+                            cosed_comp.dens_coeff[3] * sq(cosed_comp.conc) +
+                            cosed_comp.dens_coeff[4] * pow(cosed_comp.conc, 3) +
+                            cosed_comp.dens_coeff[5] * pow(cosed_comp.conc, 4);
+            base_viscosity += cosed_comp.visc_coeff[0] +
+                              cosed_comp.visc_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                              cosed_comp.visc_coeff[2] * cosed_comp.conc +
+                              cosed_comp.visc_coeff[3] * sq(cosed_comp.conc) +
+                              cosed_comp.visc_coeff[4] * pow(cosed_comp.conc, 3) +
+                              cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
+         }
+      }
+   // normalize base density and viscosity
+   base_density = base_density / base_comps.count();
+   base_viscosity = base_viscosity / base_comps.count();
+   // init upper_comps and lower_comps
+   foreach (US_CosedComponent i, upper_cosed) { upper_comps << i; }
+   foreach (US_CosedComponent i, lower_cosed) { lower_comps << i; }
+   DbgLv(1) << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
+   DbgLv(1) << "Constructor BFG finished bd bv" << base_density << base_viscosity;
+
+   is_empty = false;
+   simparms = asparms;
+   // try to load the gradient data from disk
+   key = editedData->runID
+           + "." + editedData->cell + "." + editedData->channel + "."
+           +  QString::number(simparms.band_volume) + "." + buffer->bufferID +
+           "." + QString::number(simparms.meniscus) + "." + QString::number(simparms.bottom);
+   QDir        resultDir( US_Settings::resultDir() );
+   QString dens_file = resultDir.filePath( key + ".dens.auc" );
+   US_DataIO::RawData dens;
+   US_DataIO::readRawData(dens_file, dens );
+   QString visc_file = resultDir.filePath( key + ".visc.auc" );
+   US_DataIO::RawData visc;
+   US_DataIO::readRawData(dens_file, visc );
+   QString conc_file = resultDir.filePath( key + ".conc.auc" );
+   US_DataIO::RawData conc;
+   US_DataIO::readRawData(dens_file, conc );
+   if (dens.pointCount() == 0 || visc.pointCount() == 0 || conc.pointCount() == 0){
+      is_empty = true;
+   }
+   else{
+      load_data(&dens, &visc, &conc);
+   }
+}
+
+QString US_Math_BF::Band_Forming_Gradient::readGradientDataFromDB(QString load_key,
+                                         QString& dir,
+                                         US_DB2* db )
+{
+   QString runID = load_key.split('.')[0];
+   QString p_cell = load_key.split('.')[1];
+   QString channel = load_key.split('.')[2];
+   QString experimentID;
+   QString bandVolume = load_key.split('.')[3];
+   QString bufferID = load_key.split('.')[4];
+   QString p_meniscus = load_key.split('.')[5];
+   QString p_bottom = load_key.split('.')[6];
+
+   if (db != nullptr){
+      QStringList q;
+      q << "get_experiment_info_by_runID" << runID;
+      db->query(q);
+      if (db->next()){
+         experimentID = QString::number(db->value(1).toInt());
+      }
+   }
+   QStringList gradient_types = {"dens", "visc", "conc"};
+   foreach (QString type, gradient_types) {
+         QString filename = dir + "/" + key + "." + type + ".auc";
+         // Get the rawDataID's that correspond to this experiment
+         qDebug() << " rRDD: build raw list";
+         QStringList q("get_gradientDataID_from_expcellchannelbuffer");
+         q << experimentID << p_cell << channel << bandVolume << bufferID << p_meniscus << p_bottom << "0" << type;
+         db->query(q);
+
+         QStringList rawDataIDs;
+         QStringList filenames;
+
+         while (db->next()) {
+            rawDataIDs << db->value(0).toString();
+            filenames << db->value(2).toString();
+         }
+
+         if (rawDataIDs.size() < 1)
+            return ("There were no auc files found in the database.");
+
+         // Set working directory and create it if necessary
+         dir = US_Settings::resultDir() + "/" + runID;
+
+         QDir work(US_Settings::resultDir());
+         work.mkdir(runID);
+
+         // Read the auc files to disk
+         qDebug() << " rRDD: read BlobFromDB (loop)";
+         QString error = QString("");
+         for (int i = 0; i < rawDataIDs.size(); i++) {
+            QString f = dir + "/" + filenames[i];
+            int readStatus = db->readBlobFromDB(f, QString("download_gradientData"),
+                                                rawDataIDs[i].toInt());
+
+            if (readStatus == US_DB2::DBERROR) {
+               error += "Error processing file: " + f + "\n" +
+                        "Could not open file or no data \n";
+            } else if (readStatus != US_DB2::OK) {
+               error += "Error returned processing file: " + f + "\n" +
+                        db->lastError() + "\n";
+            }
+         }
+
+         // If we can't even read the files we should just stop here
+         if (error != QString(""))
+            return (error);
+
+
+         if (error != QString(""))
+            return (error);
+
+         return (QString(""));
+      }
+}
+
+void US_Math_BF::Band_Forming_Gradient::load_data(US_DataIO::RawData *dens, US_DataIO::RawData *visc,
+                                                  US_DataIO::RawData *conc) {
+   dens_bfg_data = *dens;
+   visc_bfg_data = *visc;
+   conc_bfg_data = *conc;
+   is_empty = false;
+   Nx = dens_bfg_data.pointCount();
+}
+
+
+
 bool US_Math_BF::Band_Forming_Gradient::get_eigenvalues( ) {
    double men = meniscus;
    double bot = bottom;
@@ -682,6 +911,156 @@ bool US_Math_BF::Band_Forming_Gradient::operator==(const US_Math_BF::Band_Formin
         dens_bfg_data.scanData.last().seconds > bfg.dens_bfg_data.scanData.last().seconds)
         return false;
     return true;
+}
+
+bool US_Math_BF::Band_Forming_Gradient::save_data(QString folder, QString key, US_DB2* db ) {
+   // first save local
+   QStringList file_types;
+   QDir d( folder );
+   QString runID = key.split('.')[0];
+   QString cell = key.split('.')[1];
+   QString channel = key.split('.')[2];
+   QString experimentID;
+   QString bandVolume = key.split('.')[3];
+   QString bufferID = key.split('.')[4];
+   QString p_meniscus = key.split('.')[5];
+   QString p_bottom = key.split('.')[6];
+
+   if (db != nullptr){
+      QStringList q;
+      q << "get_experiment_info_by_runID" << runID;
+      db->query(q);
+      if (db->next()){
+         experimentID = QString::number(db->value(1).toInt());
+      }
+   }
+
+   file_types << "dens" << "visc" << "conc";
+   foreach(QString type, file_types) {
+      QString filename = key + "." + type + ".auc";
+      US_DataIO::RawData* data;
+      if (type == "dens") {
+         data = &dens_bfg_data;
+      } else if (type == "visc") {
+         data = &visc_bfg_data;
+      } else {
+         data = &conc_bfg_data;
+      }
+         if ( data->scanData.empty() )
+            continue;
+
+         // Write the data
+         int status;
+
+         QString wavelnp = "";
+
+
+         // Let's see if there is a triple guid already (from a previous save)
+         // Otherwise the rawGUID characters should already be initialized to 0
+         QString uuidc = US_Util::uuid_unparse(
+                 (unsigned char*) data->rawGUID );
+
+         if ( uuidc == "00000000-0000-0000-0000-000000000000" )
+         {
+            // Calculate and save the guid for this triple
+            uchar uuid[ 16 ];
+            QString uuid_string = US_Util::new_guid();
+            US_Util::uuid_parse( uuid_string, uuid );
+            memcpy( data->rawGUID,   (char*) uuid, 16 );
+         }
+
+            // Create a copy of the current dataset so we can alter it
+            US_DataIO::RawData  currentData     = *data;
+
+            // Now recopy scans, except for excluded ones
+            currentData.scanData.clear();
+            QVector< US_DataIO::Scan > sourceScans = data->scanData;
+            for ( int j = 0; j < sourceScans.size(); j++ )
+            {
+               currentData.scanData << sourceScans[ j ];  // copy this scan
+            }
+
+            // Now write altered dataset
+            status = US_DataIO::writeRawData( d.absoluteFilePath(filename) , currentData );
+
+            if ( status !=  US_DataIO::OK ) break;
+            if (db != nullptr)  {
+               QString error = QString( "" );
+               QString triple_uuidc = US_Util::uuid_unparse(
+                       (unsigned char*) data->rawGUID );
+
+               // We assume there are files, because calling program checked
+
+               // Read all data
+
+                  QStringList q;
+                  q.clear();
+                  q  << "new_gradientData"
+                     << triple_uuidc
+                     << ""
+                     << type
+                     << filename      // needs to be base name only
+                     << ""
+                     << experimentID
+                     << bufferID
+                     << cell
+                     << channel
+                     << bandVolume
+                     << p_meniscus
+                     << p_bottom
+                     << QString::number( data->scanData.last().seconds )
+                     ;
+
+                  status = db->statusQuery( q );
+                  QString staterr = db->lastError();
+                  int rawDataID = db->lastInsertID();
+//qDebug() << "cvio:WrRDB:  rawDataID" << rawDataID << "status" << status
+// << "===" << staterr << "===";
+
+                  if ( status == US_DB2::OK )
+                  {
+
+
+                     // We can also upload the auc data
+                     int writeStatus = db->writeBlobToDB( folder + filename,
+                                                          QString( "upload_gradientData" ), rawDataID );
+//qDebug() << "cvio:WrRDB:   wrStat" << writeStatus;
+
+                     if ( writeStatus == US_DB2::DBERROR )
+                     {
+                        error += "Error processing file:\n" +
+                                folder + filename + "\n" +
+                                 db->lastError() + "\n" +
+                                 "Could not open file or no data \n";
+                     }
+
+                     else if ( writeStatus != US_DB2::OK )
+                     {
+                        error += "Error returned processing file:\n" +
+                                folder + filename + "\n" +
+                                 db->lastError() + "\n";
+                     }
+                  }
+
+                  else
+                  {
+                     error += "Error returned processing file:\n" +
+                             folder + filename + "\n" +
+                              db->lastError() + "\n";
+//qDebug() << "cvio:WrRDB:  new_raw ERR" << error;
+                  }
+
+
+
+
+//qDebug() << "cvio:WrRDB: OUT";
+
+               return false;
+            }
+   }
+
+
+   return true;
 }
 
 
