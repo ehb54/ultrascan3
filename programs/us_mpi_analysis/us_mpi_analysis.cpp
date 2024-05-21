@@ -2850,14 +2850,39 @@ void US_MPI_Analysis::calculate_cosed() {
       csD->sa_data= cosed_comp_data.first();
    }
    if (codiff_needed){
-      bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(data_sets[0]->simparams.meniscus,
-                                                                  data_sets[0]->simparams.bottom,
-                                                                  data_sets[0]->simparams.band_volume,
-                                                                  data_sets[0]->solution_rec.buffer.cosed_component,
-                                                                  data_sets[0]->simparams.cp_pathlen,
-                                                                  data_sets[0]->simparams.cp_angle);
-      bandFormingGradient->get_eigenvalues();
-      bandFormingGradient->calculate_gradient(data_sets[0]->simparams,&auc_data);
+      bool recalc = true;
+      if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
+            (bandFormingGradient == nullptr || bandFormigGradient->is_empty)){
+         delete bandFormingGradient;
+         bandFormingGradient = bfgs.first();
+      }
+      if ( bandFormingGradient != nullptr ){
+         // check if the band forming gradient is already calculated and fits the requirements
+         if ( bandFormingGradient->is_suitable( data_sets[0]->simparams.meniscus,
+                                                data_sets[0]->simparams.bottom,
+                                                data_sets[0]->simparams.band_volume,
+                                                data_sets[0]->simparams.cp_pathlen,
+                                                data_sets[0]->simparams.cp_angle
+                                                data_sets[0]->solution_rec.buffer.cosed_component,
+                                                (int)auc_data->scanData.last().seconds) ){
+            recalc = false;
+         }
+         if ( recalc ){
+            delete bandFormingGradient;
+            bandFormingGradient = nullptr;
+         }
+      }
+      if ( recalc ){
+         bandFormingGradient = new US_Math_BF::Band_Forming_Gradient( data_sets[0]->simparams.meniscus,
+                                                                      data_sets[0]->simparams.bottom,
+                                                                      data_sets[0]->simparams.band_volume,
+                                                                      data_sets[0]->solution_rec.buffer.cosed_component,
+                                                                      data_sets[0]->simparams.cp_pathlen,
+                                                                      data_sets[0]->simparams.cp_angle );
+         bandFormingGradient->get_eigenvalues( );
+         bandFormingGradient->calculate_gradient( data_sets[0]->simparams,&auc_data );
+      }
+
       DbgLv(1) << "bfg calc calculate_cosed";
    }
    data_sets_codiff_needed << codiff_needed;
