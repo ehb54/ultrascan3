@@ -455,12 +455,28 @@ DbgLv(1) << "2P:SF: orig_sols: "
          emit message_update( pmessage_head() +
                               tr( "Calculating co-diffusing components ..." )
                                     , false );
-         bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
-                                                      simparms->band_volume,
-                                                      dsets[0]->solution_rec.buffer.cosed_component,
-                                                      simparms->cp_pathlen,simparms->cp_angle);
-         bfg->get_eigenvalues();
-         bfg->calculate_gradient(*simparms,&auc_data);
+         bool recalc = true;
+         if ( bfg != nullptr ){
+            // check if the band forming gradient is already calculated and fits the requirements
+            if (bfg->is_suitable(simparms->meniscus, simparms->bottom, simparms->band_volume,
+                                 simparms->cp_pathlen, simparms->cp_angle,
+                                 dsets[0]->solution_rec.buffer.cosed_component,
+                                 (int)edata->scanData.last().seconds)){
+               recalc = false;
+            }
+            if ( recalc ){
+               delete bfg;
+               bfg = nullptr;
+            }
+         }
+         if ( recalc ){
+            bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
+                                                        simparms->band_volume,
+                                                        dsets[0]->solution_rec.buffer.cosed_component,
+                                                        simparms->cp_pathlen,simparms->cp_angle);
+            bfg->get_eigenvalues();
+            bfg->calculate_gradient(*simparms,&auc_data);
+         }
       }
 
    }
@@ -1303,12 +1319,28 @@ if(mtiters>50)
                   emit message_update( pmessage_head() +
                                        tr( "Calculating co-diffusing components ..." )
                           , false );
-                  bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
-                                                              simparms->band_volume,
-                                                              dsets[0]->solution_rec.buffer.cosed_component,
-                                                              simparms->cp_pathlen,simparms->cp_angle);
-                  bfg->get_eigenvalues();
-                  bfg->calculate_gradient(*simparms,&auc_data);
+                 bool recalc = true;
+                 if ( bfg != nullptr ){
+                    // check if the band forming gradient is already calculated and fits the requirements
+                    if (bfg->is_suitable(simparms->meniscus, simparms->bottom, simparms->band_volume,
+                                         simparms->cp_pathlen, simparms->cp_angle,
+                                         dsets[0]->solution_rec.buffer.cosed_component,
+                                         (int)edata->scanData.last().seconds)){
+                       recalc = false;
+                    }
+                    if ( recalc ){
+                       delete bfg;
+                       bfg = nullptr;
+                    }
+                 }
+                 if ( recalc ){
+                    bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
+                                                                simparms->band_volume,
+                                                                dsets[0]->solution_rec.buffer.cosed_component,
+                                                                simparms->cp_pathlen,simparms->cp_angle);
+                    bfg->get_eigenvalues();
+                    bfg->calculate_gradient(*simparms,&auc_data);
+                 }
               }
 
           }
@@ -1488,12 +1520,28 @@ if(mtiters>50)
                   emit message_update( pmessage_head() +
                                        tr( "Calculating co-diffusing components ..." )
                           , false );
-                  bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
-                                                              simparms->band_volume,
-                                                              dsets[0]->solution_rec.buffer.cosed_component,
-                                                              simparms->cp_pathlen,simparms->cp_angle);
-                  bfg->get_eigenvalues();
-                  bfg->calculate_gradient(*simparms, &auc_data);
+                 bool recalc = true;
+                 if ( bfg != nullptr ){
+                    // check if the band forming gradient is already calculated and fits the requirements
+                    if (bfg->is_suitable(simparms->meniscus, simparms->bottom, simparms->band_volume,
+                                         simparms->cp_pathlen, simparms->cp_angle,
+                                         dsets[0]->solution_rec.buffer.cosed_component,
+                                         (int)edata->scanData.last().seconds)){
+                       recalc = false;
+                    }
+                    if ( recalc ){
+                       delete bfg;
+                       bfg = nullptr;
+                    }
+                 }
+                 if ( recalc ){
+                    bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
+                                                                simparms->band_volume,
+                                                                dsets[0]->solution_rec.buffer.cosed_component,
+                                                                simparms->cp_pathlen,simparms->cp_angle);
+                    bfg->get_eigenvalues();
+                    bfg->calculate_gradient(*simparms,&auc_data);
+                 }
               }
 
          }
