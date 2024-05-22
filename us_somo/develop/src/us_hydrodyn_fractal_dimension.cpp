@@ -1487,6 +1487,43 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
                                    )
                            );
             }
+            if ( from_parameters ) {
+               model_vector[ current_model ].fractal_dimension_parameters         = US_Hydrodyn_Fractal_Dimension_Options::options( gparams );
+               model_vector[ current_model ].fractal_dimension                    = fd;
+               model_vector[ current_model ].fractal_dimension_sd                 = fd_sd;
+               model_vector[ current_model ].fractal_dimension_wtd                = fd_wtd;
+               model_vector[ current_model ].fractal_dimension_wtd_sd             = fd_wtd_sd;
+               model_vector[ current_model ].fractal_dimension_wtd_wtd            = fd_wtd_wtd;
+               model_vector[ current_model ].fractal_dimension_wtd_wtd_sd         = fd_wtd_wtd_sd;
+               model_vector[ current_model ].rg_over_fractal_dimension            = rg_over_fd;
+               model_vector[ current_model ].rg_over_fractal_dimension_sd         = rg_over_fd_sd;
+               model_vector[ current_model ].rg_over_fractal_dimension_wtd        = rg_over_fd_wtd;
+               model_vector[ current_model ].rg_over_fractal_dimension_wtd_sd     = rg_over_fd_wtd_sd;
+               model_vector[ current_model ].rg_over_fractal_dimension_wtd_wtd    = rg_over_fd_wtd_wtd;
+               model_vector[ current_model ].rg_over_fractal_dimension_wtd_wtd_sd = rg_over_fd_wtd_wtd_sd;
+
+               model_vector_as_loaded[ current_model ].fractal_dimension_parameters         = US_Hydrodyn_Fractal_Dimension_Options::options( gparams );
+               model_vector_as_loaded[ current_model ].fractal_dimension                    = fd;
+               model_vector_as_loaded[ current_model ].fractal_dimension_sd                 = fd_sd;
+               model_vector_as_loaded[ current_model ].fractal_dimension_wtd                = fd_wtd;
+               model_vector_as_loaded[ current_model ].fractal_dimension_wtd_sd             = fd_wtd_sd;
+               model_vector_as_loaded[ current_model ].fractal_dimension_wtd_wtd            = fd_wtd_wtd;
+               model_vector_as_loaded[ current_model ].fractal_dimension_wtd_wtd_sd         = fd_wtd_wtd_sd;
+               model_vector_as_loaded[ current_model ].rg_over_fractal_dimension            = rg_over_fd;
+               model_vector_as_loaded[ current_model ].rg_over_fractal_dimension_sd         = rg_over_fd_sd;
+               model_vector_as_loaded[ current_model ].rg_over_fractal_dimension_wtd        = rg_over_fd_wtd;
+               model_vector_as_loaded[ current_model ].rg_over_fractal_dimension_wtd_sd     = rg_over_fd_wtd_sd;
+               model_vector_as_loaded[ current_model ].rg_over_fractal_dimension_wtd_wtd    = rg_over_fd_wtd_wtd;
+               model_vector_as_loaded[ current_model ].rg_over_fractal_dimension_wtd_wtd_sd = rg_over_fd_wtd_wtd_sd;
+
+               qDebug() <<
+                  QString( "US_Hydrodyn::fractal_dimension() set model_vector[ %1 ], FD %2 +/- %3 ; %4\n" )
+                  .arg( current_model )
+                  .arg( model_vector[ current_model ].fractal_dimension )
+                  .arg( model_vector[ current_model ].fractal_dimension_sd )
+                  .arg( model_vector[ current_model ].fractal_dimension_parameters )
+                  ;
+            }
          }
       }
    }

@@ -148,7 +148,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
             model_vector[ current_model ].asa_rg_pos = results.asa_rg_pos;
             model_vector[ current_model ].asa_rg_neg = results.asa_rg_neg;
             // qDebug() << "us_hydrodyn::calc_somo() current_model " << current_model << " asa_rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
-            
+
             somo_processed[current_model] = 1;
             if ( asa.recheck_beads ) // && !no_ovlp_removal )
             {

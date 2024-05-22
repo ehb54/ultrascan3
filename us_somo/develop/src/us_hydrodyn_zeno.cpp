@@ -14046,6 +14046,20 @@ bool US_Hydrodyn::calc_zeno()
                      this_data.vdw_exposed_waters            = bead_models[ current_model ][0].vdw_theo_waters_exposed;
                   }
 
+                  this_data.fractal_dimension_parameters         = model_vector[ current_model ].fractal_dimension_parameters;
+                  this_data.fractal_dimension                    = model_vector[ current_model ].fractal_dimension;
+                  this_data.fractal_dimension_sd                 = model_vector[ current_model ].fractal_dimension_sd;
+                  this_data.fractal_dimension_wtd                = model_vector[ current_model ].fractal_dimension_wtd;
+                  this_data.fractal_dimension_wtd_sd             = model_vector[ current_model ].fractal_dimension_wtd_sd;
+                  this_data.fractal_dimension_wtd_wtd            = model_vector[ current_model ].fractal_dimension_wtd_wtd;
+                  this_data.fractal_dimension_wtd_wtd_sd         = model_vector[ current_model ].fractal_dimension_wtd_wtd_sd;
+                  this_data.rg_over_fractal_dimension            = model_vector[ current_model ].rg_over_fractal_dimension;
+                  this_data.rg_over_fractal_dimension_sd         = model_vector[ current_model ].rg_over_fractal_dimension_sd;
+                  this_data.rg_over_fractal_dimension_wtd        = model_vector[ current_model ].rg_over_fractal_dimension_wtd;
+                  this_data.rg_over_fractal_dimension_wtd_sd     = model_vector[ current_model ].rg_over_fractal_dimension_wtd_sd;
+                  this_data.rg_over_fractal_dimension_wtd_wtd    = model_vector[ current_model ].rg_over_fractal_dimension_wtd_wtd;
+                  this_data.rg_over_fractal_dimension_wtd_wtd_sd = model_vector[ current_model ].rg_over_fractal_dimension_wtd_wtd_sd;
+
                   bead_model = bead_models[ current_model ];
                   // bead_check( false, true, true );
                   this_data.results.asa_rg_pos            = model_vector[ current_model ].asa_rg_pos;
@@ -14431,7 +14445,7 @@ bool US_Hydrodyn::calc_zeno()
                         // double alt_s20w = 
                         //    1e13 * ( this_data.results.mass * this_data.results.D20w * 
                         //             ( 1e0 - ( this_data.results.vbar * use_solvent_dens() ) ) ) /
-                        //    ( R * ( this_data.hydro.temperature + K0 ) );
+                        //    ( Rbar * ( this_data.hydro.temperature + K0 ) );
                         // us_qdebug( QString( "s20w old way %1, dt way %2\n" ).arg( this_data.results.s20w ).arg( alt_s20w ) );
                      }
                   

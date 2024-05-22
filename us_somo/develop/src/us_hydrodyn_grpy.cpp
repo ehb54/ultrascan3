@@ -719,6 +719,20 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.rot_diff_coef_y               = grpy_captures[ "rot_diff_coef_y" ][0];
       this_data.rot_diff_coef_z               = grpy_captures[ "rot_diff_coef_z" ][0];
 
+      this_data.fractal_dimension_parameters         = model_vector[ grpy_last_model_number ].fractal_dimension_parameters;
+      this_data.fractal_dimension                    = model_vector[ grpy_last_model_number ].fractal_dimension;
+      this_data.fractal_dimension_sd                 = model_vector[ grpy_last_model_number ].fractal_dimension_sd;
+      this_data.fractal_dimension_wtd                = model_vector[ grpy_last_model_number ].fractal_dimension_wtd;
+      this_data.fractal_dimension_wtd_sd             = model_vector[ grpy_last_model_number ].fractal_dimension_wtd_sd;
+      this_data.fractal_dimension_wtd_wtd            = model_vector[ grpy_last_model_number ].fractal_dimension_wtd_wtd;
+      this_data.fractal_dimension_wtd_wtd_sd         = model_vector[ grpy_last_model_number ].fractal_dimension_wtd_wtd_sd;
+      this_data.rg_over_fractal_dimension            = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension;
+      this_data.rg_over_fractal_dimension_sd         = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_sd;
+      this_data.rg_over_fractal_dimension_wtd        = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd;
+      this_data.rg_over_fractal_dimension_wtd_sd     = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd_sd;
+      this_data.rg_over_fractal_dimension_wtd_wtd    = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd_wtd;
+      this_data.rg_over_fractal_dimension_wtd_wtd_sd = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd_wtd_sd;
+
       if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
          this_data.vdw_grpy_probe_radius      = asa.vdw_grpy_probe_radius;
          this_data.vdw_grpy_threshold         = asa.vdw_grpy_threshold_percent;
