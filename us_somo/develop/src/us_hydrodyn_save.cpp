@@ -388,6 +388,22 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Fractal dimension s.d.",
             "Fractal dimension s.d.",
 
+            "fractal_dimension_wtd",
+            "Fractal dimension weighted average",
+            "Fractal dimension weighted average",
+
+            "fractal_dimension_wtd_sd",
+            "Fractal dimension weighted average s.d.",
+            "Fractal dimension weighted average s.d.",
+
+            "fractal_dimension_wtd_wtd",
+            "Fractal dimension weighted weighted average",
+            "Fractal dimension weighted weighted average",
+
+            "fractal_dimension_wtd_wtd_sd",
+            "Fractal dimension weighted weighted average s.d.",
+            "Fractal dimension weighted weighted average s.d.",
+
             "rg_over_fractal_dimension",
             "Rg / Fractal dimension",
             "Rg / Fractal dimension",
@@ -395,6 +411,22 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "rg_over_fractal_dimension_sd",
             "Rg / Fractal dimension s.d.",
             "Rg / Fractal dimension s.d.",
+
+            "rg_over_fractal_dimension_wtd",
+            "Rg / Fractal dimension weighted average",
+            "Rg / Fractal dimension weighted average",
+
+            "rg_over_fractal_dimension_wtd_sd",
+            "Rg / Fractal dimension weighted average s.d.",
+            "Rg / Fractal dimension weighted average s.d.",
+
+            "rg_over_fractal_dimension_wtd_wtd",
+            "Rg / Fractal dimension weighted weighted average",
+            "Rg / Fractal dimension weighted weighted average",
+
+            "rg_over_fractal_dimension_wtd_wtd_sd",
+            "Rg / Fractal dimension weighted weighted average s.d.",
+            "Rg / Fractal dimension weighted weighted average s.d.",
 
             "__END__"
          };
@@ -737,6 +769,22 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Fractal dimension s.d.",
             "Fractal dimension s.d.",
 
+            "fractal_dimension_wtd",
+            "Fractal dimension weighted average",
+            "Fractal dimension weighted average",
+
+            "fractal_dimension_wtd_sd",
+            "Fractal dimension weighted average s.d.",
+            "Fractal dimension weighted average s.d.",
+
+            "fractal_dimension_wtd_wtd",
+            "Fractal dimension weighted weighted average",
+            "Fractal dimension weighted weighted average",
+
+            "fractal_dimension_wtd_wtd_sd",
+            "Fractal dimension weighted weighted average s.d.",
+            "Fractal dimension weighted weighted average s.d.",
+
             "rg_over_fractal_dimension",
             "Rg / Fractal dimension",
             "Rg / Fractal dimension",
@@ -744,6 +792,22 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "rg_over_fractal_dimension_sd",
             "Rg / Fractal dimension s.d.",
             "Rg / Fractal dimension s.d.",
+
+            "rg_over_fractal_dimension_wtd",
+            "Rg / Fractal dimension weighted average",
+            "Rg / Fractal dimension weighted average",
+
+            "rg_over_fractal_dimension_wtd_sd",
+            "Rg / Fractal dimension weighted average s.d.",
+            "Rg / Fractal dimension weighted average s.d.",
+
+            "rg_over_fractal_dimension_wtd_wtd",
+            "Rg / Fractal dimension weighted weighted average",
+            "Rg / Fractal dimension weighted weighted average",
+
+            "rg_over_fractal_dimension_wtd_wtd_sd",
+            "Rg / Fractal dimension weighted weighted average s.d.",
+            "Rg / Fractal dimension weighted weighted average s.d.",
 
             "__END__"
          };
@@ -1485,28 +1549,84 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       }
       if ( field[i] == "fractal_dimension" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension);
-         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
          field_to_precision[field[i]] = 3;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "fractal_dimension_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_sd);
-         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
          field_to_precision[field[i]] = 3;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension);
-         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
          field_to_precision[field[i]] = 3;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_sd);
-         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
          field_to_precision[field[i]] = 3;
          field_to_format[field[i]] = 'f';
          continue;
@@ -2894,11 +3014,19 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.vdw_exposed_residues  = 0e0;
    data.vdw_exposed_waters    = 0e0;
 
-   data.fractal_dimension_parameters = "";
-   data.fractal_dimension            = 0;
-   data.fractal_dimension_sd         = 0;
-   data.rg_over_fractal_dimension    = 0;
-   data.rg_over_fractal_dimension_sd = 0;
+   data.fractal_dimension_parameters         = "";
+   data.fractal_dimension                    = 0;
+   data.fractal_dimension_sd                 = 0;
+   data.fractal_dimension_wtd                = 0;
+   data.fractal_dimension_wtd_sd             = 0;
+   data.fractal_dimension_wtd_wtd            = 0;
+   data.fractal_dimension_wtd_wtd_sd         = 0;
+   data.rg_over_fractal_dimension            = 0;
+   data.rg_over_fractal_dimension_sd         = 0;
+   data.rg_over_fractal_dimension_wtd        = 0;
+   data.rg_over_fractal_dimension_wtd_sd     = 0;
+   data.rg_over_fractal_dimension_wtd_wtd    = 0;
+   data.rg_over_fractal_dimension_wtd_wtd_sd = 0;
 
    return data;
 }

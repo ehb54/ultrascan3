@@ -10,6 +10,7 @@
 
 #include "../include/us_hydrodyn.h"
 #include "../include/us_vvv.h"
+#include "../include/us_unicode.h"
 
 #define TSO QTextStream(stdout)
 
@@ -1715,6 +1716,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
 
    // info_model_vector( QString( "source: model_vector" ), model_vector, { "GLU", "HIS", "CGU", "ALA" } );
    // info_model_vector_mw( QString( "read_pdb() : model_vector" ), model_vector, true );
+   QTextStream(stdout) << "end of read_pdb()\n";
+   info_residue_protons_electrons_at_pH( 7, model_vector[0] );
 
    model_vector_as_loaded = model_vector;
    if ( advanced_config.debug_2 )
@@ -2142,17 +2145,18 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs += 
       QString(
               us_tr(
-                    "SAXS excluded volume (anhydrous) : %1 [A^3]\n"
+                    "SAXS excluded volume (anhydrous) : %1 [%2^3]\n"
                     )
               )
       .arg( model->volume )
+      .arg( UNICODE_ANGSTROM )
       ;
    
    if ( hydro.temperature != 20 ) {
       qs +=
          QString(
                  us_tr(
-                       "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
+                       "Anh. Molecular vol. (from vbar)  : %1 [" + UNICODE_ANGSTROM_QS + "^3] @ %2%3C\n"
                        )
                  )
          .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
@@ -2164,9 +2168,9 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
-                    "Hyd. Molecular vol. (from vbar)  : %4 [A^3] @ %5%6C\n"
-                    "Radius of gyration               : %7 [A]\n"
+                    "Anh. Molecular vol. (from vbar)  : %1 [%12^3] @ %2%3C\n"
+                    "Hyd. Molecular vol. (from vbar)  : %4 [%13^3] @ %5%6C\n"
+                    "Radius of gyration               : %7 [%14]\n"
                     "Number of electrons              : %8\n"
                     "Number of protons                : %9\n"
                     "Net charge                       : %10\n"
@@ -2184,16 +2188,20 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( model->protons, 0, 'f', 1 )
       .arg( model->protons - model->num_elect, 0, 'f', 1 )
       .arg( model->isoelectric_point, 0, 'f', 2 )
+      .arg( UNICODE_ANGSTROM )
+      .arg( UNICODE_ANGSTROM )
+      .arg( UNICODE_ANGSTROM )
       ;
 
    if ( model->volume ) {
       qs +=
          QString(
                  us_tr(
-                       "Average electron density         : %1 [A^-3]\n"
+                       "Average electron density         : %1 [%2^-3]\n"
                        )
                  )
          .arg( model->num_elect / model->volume, 0, 'f', 3 )
+         .arg( UNICODE_ANGSTROM )
       ;
    }
 
@@ -2606,6 +2614,8 @@ void US_Hydrodyn::calc_mw()
    // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
    // info_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_residue_protons_electrons_at_pH( le_pH->text().toDouble(),  model_vector[ 0 ] );
+   QTextStream(stdout) << "end of calc_mw()\n";
+   info_residue_protons_electrons_at_pH( 7, model_vector[0] );
 }
 
 void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {
@@ -3252,7 +3262,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 
    // tbd. qs += vbar_msg( model->vbar );
 
-   header << "SAXS excluded volume (anhydrous) [A^3]";
+   header << "SAXS excluded volume (anhydrous) [" << UNICODE_ANGSTROM << "^3]";
    data   << QString( "%1" ).arg( model->volume );
    
    
@@ -3270,9 +3280,9 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
    // }
 
    header
-      << "Anh. Molecular vol. (from vbar) [A^3]"
-      << "Hyd. Molecular vol. (from vbar) [A^3]"
-      << "Radius of gyration [A]"
+      << "Anh. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
+      << "Hyd. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
+      << "Radius of gyration [" << UNICODE_ANGSTROM << "]"
       << "Number of electrons"
       << "Number of protons"
       << "Net charge"
@@ -3292,7 +3302,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
       ;      
       
    if ( model->volume ) {
-      header << "Average electron density [A^-3]";
+      header << "Average electron density [" << UNICODE_ANGSTROM << "^-3]";
       data   << QString( "%1" ).arg( model->num_elect / model->volume, 0, 'f', 3 );
    }
 

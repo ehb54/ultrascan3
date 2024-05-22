@@ -2699,6 +2699,7 @@ void US_Hydrodyn::reload_pdb()
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
+   fractal_dimension( true );
 }
 
 void US_Hydrodyn::clear_pdb_info( QString /* msg */ ) {
@@ -3222,6 +3223,8 @@ void US_Hydrodyn::load_pdb()
    // {
    //    select_model(0);
    // }
+
+   fractal_dimension( true );
 
    if ( dmd_options.pdb_static_pairs )
    {

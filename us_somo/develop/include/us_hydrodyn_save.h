@@ -125,8 +125,16 @@ struct save_data
    QString       fractal_dimension_parameters;
    double        fractal_dimension;
    double        fractal_dimension_sd;
+   double        fractal_dimension_wtd;
+   double        fractal_dimension_wtd_sd;
+   double        fractal_dimension_wtd_wtd;
+   double        fractal_dimension_wtd_wtd_sd;
    double        rg_over_fractal_dimension;
    double        rg_over_fractal_dimension_sd;
+   double        rg_over_fractal_dimension_wtd;
+   double        rg_over_fractal_dimension_wtd_sd;
+   double        rg_over_fractal_dimension_wtd_wtd;
+   double        rg_over_fractal_dimension_wtd_wtd_sd;
 };
 
 struct save_info 

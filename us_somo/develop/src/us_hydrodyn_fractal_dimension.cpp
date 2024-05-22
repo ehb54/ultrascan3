@@ -18,7 +18,21 @@ static bool linear_fit(
                        ,mQwtPlot                                      * plot
                        ,vector < vector < QwtPlotCurve * > >          & fitcurves
                        ,QTextEdit                                     * msgbox
+                       ,double                                        & fd
+                       ,double                                        & fd_sd
+                       ,double                                        & fd_wtd
+                       ,double                                        & fd_wtd_sd
+                       ,double                                        & fd_wtd_wtd
+                       ,double                                        & fd_wtd_wtd_sd
                        ) {
+
+   fd            = -1;
+   fd_sd         = -1;
+   fd_wtd        = -1;
+   fd_wtd_sd     = -1;
+   fd_wtd_wtd    = -1;
+   fd_wtd_wtd_sd = -1;
+   
    qDebug() << QString( "linear_fit(); xmin is %1, xmax is %2" ).arg( xmin ).arg( xmax );
 
    if ( !x.size() ) {
@@ -153,6 +167,11 @@ static bool linear_fit(
          global_weighted_b_v.push_back( b_avg_weighted );
          global_weighted_sigb_v.push_back( b_sd_weighted );
 
+         fd        = b_avg_no_weights;
+         fd_sd     = b_sd_no_weights;
+         fd_wtd    = b_avg_weighted;
+         fd_wtd_sd = b_sd_weighted;
+
          msgbox->setText(
                          msgbox->toPlainText()
                          + QString( "%1" ).arg(
@@ -204,6 +223,13 @@ static bool linear_fit(
          errorsfull += errors;
       }
 
+      fd            = b_avg_no_weights;
+      fd_sd         = b_sd_no_weights;
+      fd_wtd        = b_avg_no_weights_from_weighted;
+      fd_wtd_sd     = b_sd_no_weights_from_weighted;
+      fd_wtd_wtd    = b_avg_weighted;
+      fd_wtd_wtd_sd = b_sd_weighted;
+
       msgbox->setText(
                       msgbox->toPlainText()
                       + QString( "%1" ).arg(
@@ -235,7 +261,6 @@ static bool linear_fit(
 }
 
 void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
-   from_parameters = true;
    qDebug() << "US_Hydrodyn::fractal_dimension()";
    stopFlag = false;
    bool quiet = false;
@@ -282,6 +307,13 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
    bool show_plots                      = true;
    bool save_plot_data                  = false; // chosen in the show plots window
    bool show_bead_models                = false;
+
+   double fd                            = -1;
+   double fd_sd                         = -1;
+   double fd_wtd                        = -1;
+   double fd_wtd_sd                     = -1;
+   double fd_wtd_wtd                    = -1;
+   double fd_wtd_wtd_sd                 = -1;
 
    // pat 1st model for extents
    point extents;
@@ -1017,7 +1049,6 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
 
       {
          US_Fractal_Dimension          ufd;
-         double                        fd = 0;
          QString                       errormsg;
 
          if ( method != US_Fractal_Dimension::USFD_ROLL_SPHERE ) {
@@ -1219,13 +1250,41 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
                                  , [&](){
                                     use_xmin = ((QLineEdit *)fields[0])->text().toDouble();
                                     use_xmax = ((QLineEdit *)fields[1])->text().toDouble();
-                                    linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QTextEdit *)widgets[ 2 ] );
+                                    linear_fit(
+                                               use_xmin
+                                               ,use_xmax
+                                               ,x
+                                               ,y
+                                               ,plot
+                                               ,fitcurves
+                                               ,(QTextEdit *)widgets[ 2 ]
+                                               ,fd
+                                               ,fd_sd
+                                               ,fd_wtd
+                                               ,fd_wtd_sd
+                                               ,fd_wtd_wtd
+                                               ,fd_wtd_wtd_sd
+                                               );
                                  } );
 
                QObject::connect( buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
                QObject::connect( buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
-               linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QTextEdit *)widgets[ 2 ] );
+               linear_fit(
+                          use_xmin
+                          ,use_xmax
+                          ,x
+                          ,y
+                          ,plot
+                          ,fitcurves
+                          ,(QTextEdit *)widgets[ 2 ]
+                          ,fd
+                          ,fd_sd
+                          ,fd_wtd
+                          ,fd_wtd_sd
+                          ,fd_wtd_wtd
+                          ,fd_wtd_wtd_sd
+                          );
 
                plot->replot();
 
@@ -1323,9 +1382,112 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
             }
          }
 
-         editor_msg( "black", QString( us_tr( "Fractal dimension for model %1 : %2\n" )
-                                       .arg( current_model + 1 )
-                                       .arg( fd ) ) );
+
+         if ( method == US_Fractal_Dimension::USFD_ROLL_SPHERE ) {
+            fd     = 3.0 + fd;
+            fd_wtd = 3.0 + fd_wtd;
+         }
+
+         double rg_over_fd            = fd == 0 || fd == -1 ? -1 : model_vector[ current_model ].Rg / fd;
+         double rg_over_fd_sd         = fd == 0 || fd == -1 ? -1 : fd_sd / fd;
+
+         double rg_over_fd_wtd        = fd_wtd == 0 || fd_wtd == -1 ? -1 : model_vector[ current_model ].Rg / fd_wtd;
+         double rg_over_fd_wtd_sd     = fd_wtd == 0 || fd_wtd == -1 ? -1 : fd_wtd_sd / fd_wtd;
+
+         double rg_over_fd_wtd_wtd    = fd_wtd_wtd == 0 || fd_wtd_wtd == -1 ? -1 : model_vector[ current_model ].Rg / fd_wtd_wtd;
+         double rg_over_fd_wtd_wtd_sd = fd_wtd_wtd == 0 || fd_wtd_wtd == -1 ? -1 : fd_wtd_wtd_sd / fd_wtd_wtd;
+
+         editor_msg( "black",
+                     QString(
+                             us_tr( "Fractal dimension for model %1 : %2 %3 %4\n" )
+                             .arg( current_model + 1 )
+                             .arg( fd, 0, 'f', 3 )
+                             .arg( UNICODE_PLUSMINUS )
+                             .arg( fd_sd, 0, 'f', 3 )
+                             )
+                     );
+         if ( rg_over_fd != -1 ) {
+            editor_msg( "black",
+                        QString(
+                                us_tr( "Rg / Fractal dimension for model %1.: %2 %3 %4 [%5]\n" )
+                                .arg( current_model + 1 )
+                                .arg( rg_over_fd, 0, 'f', 3 )
+                                .arg( UNICODE_PLUSMINUS )
+                                .arg( rg_over_fd_sd, 0, 'f', 3 )
+                                .arg( UNICODE_ANGSTROM )
+                                )
+                        );
+         }
+
+         if ( fd_wtd_wtd == -1 ) {
+            editor_msg( "black",
+                        QString(
+                                us_tr( "Fractal dimension for model %1 wtd.: %2 %3 %4\n" )
+                                .arg( current_model + 1 )
+                                .arg( fd_wtd, 0, 'f', 3 )
+                                .arg( UNICODE_PLUSMINUS )
+                                .arg( fd_wtd_sd, 0, 'f', 3 )
+                                )
+                        );
+            if ( rg_over_fd_wtd != -1 ) {
+               editor_msg( "black",
+                           QString(
+                                   us_tr( "Rg / Fractal dimension for model %1 wtd.: %2 %3 %4 [%5]\n" )
+                                   .arg( current_model + 1 )
+                                   .arg( rg_over_fd_wtd, 0, 'f', 3 )
+                                   .arg( UNICODE_PLUSMINUS )
+                                   .arg( rg_over_fd_wtd_sd, 0, 'f', 3 )
+                                   .arg( UNICODE_ANGSTROM )                                   
+                                   )
+                           );
+            }
+               
+         } else {
+            editor_msg( "black",
+                        QString(
+                                us_tr( "Fractal dimension for model %1 avg. of wtd.: %2 %3 %4\n" )
+                                .arg( current_model + 1 )
+                                .arg( fd_wtd, 0, 'f', 3 )
+                                .arg( UNICODE_PLUSMINUS )
+                                .arg( fd_wtd_sd, 0, 'f', 3 )
+                                )
+                        );
+            if ( rg_over_fd_wtd != -1 ) {
+               editor_msg( "black",
+                           QString(
+                                   us_tr( "Rg / Fractal dimension for model %1 avg. of wtd.: %2 %3 %4 [%5]\n" )
+                                   .arg( current_model + 1 )
+                                   .arg( rg_over_fd_wtd, 0, 'f', 3 )
+                                   .arg( UNICODE_PLUSMINUS )
+                                   .arg( rg_over_fd_wtd_sd, 0, 'f', 3 )
+                                   .arg( UNICODE_ANGSTROM )                                   
+                                   )
+                           );
+            }
+
+            editor_msg( "black",
+                        QString(
+                                us_tr( "Fractal dimension for model %1 wtd. of wtd.: %2 %3 %4\n" )
+                                .arg( current_model + 1 )
+                                .arg( fd_wtd_wtd, 0, 'f', 3 )
+                                .arg( UNICODE_PLUSMINUS )
+                                .arg( fd_wtd_wtd_sd, 0, 'f', 3 )
+                                )
+                        );
+
+            if ( rg_over_fd_wtd_wtd != -1 ) {
+               editor_msg( "black",
+                           QString(
+                                   us_tr( "Rg / Fractal dimension for model %1 wtd. of wtd.: %2 %3 %4 [%5]\n" )
+                                   .arg( current_model + 1 )
+                                   .arg( rg_over_fd_wtd_wtd, 0, 'f', 3 )
+                                   .arg( UNICODE_PLUSMINUS )
+                                   .arg( rg_over_fd_wtd_wtd_sd, 0, 'f', 3 )
+                                   .arg( UNICODE_ANGSTROM )                                   
+                                   )
+                           );
+            }
+         }
       }
    }
 }
