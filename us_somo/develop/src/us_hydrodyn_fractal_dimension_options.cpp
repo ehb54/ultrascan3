@@ -74,7 +74,7 @@ void US_Hydrodyn_Fractal_Dimension_Options::setupGUI() {
       label->setToolTip( tooltip( w ) );
 
       QWidget * widget = setup( w );
-      widgets.push_back( widget );
+      widgets[ (int) w ] = widget;
       if ( widget ) {
          AUTFBACK( widget );
          widget->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -394,7 +394,7 @@ void US_Hydrodyn_Fractal_Dimension_Options::closeEvent(QCloseEvent *e) {
 }
 
 void US_Hydrodyn_Fractal_Dimension_Options::ok() {
-   qDebug() << "US_Hydrodyn_Fractal_Dimension_Options::ok()";
+   qDebug() << "US_Hydrodyn_Fractal_Dimension_Options()::ok()";
 
    for ( auto const w : validWidgets ) {
       switch( type( w ) ) {

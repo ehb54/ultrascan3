@@ -234,9 +234,17 @@ static bool linear_fit(
    return true;
 }
 
-void US_Hydrodyn::fractal_dimension() {
+void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
+   from_parameters = true;
    qDebug() << "US_Hydrodyn::fractal_dimension()";
    stopFlag = false;
+   bool quiet = false;
+
+   if ( from_parameters
+        && gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ENABLED ) ) != "true" ) {
+      qDebug() << "US_Hydrodyn::fractal_dimension() - not enabled";
+      return;
+   }
 
    // for each selected model
 
@@ -251,10 +259,12 @@ void US_Hydrodyn::fractal_dimension() {
    }
    
    if ( !selected_models.size() ) {
-      QMessageBox::critical( this,
-                             windowTitle() + us_tr( ": Fractal Dimension" ),
-                             us_tr( "No models selected" )
-                             );
+      if ( !quiet ) {
+         QMessageBox::critical( this,
+                                windowTitle() + us_tr( ": Fractal Dimension" ),
+                                us_tr( "No models selected" )
+                                );
+      }
       return;
    }
       
@@ -269,10 +279,13 @@ void US_Hydrodyn::fractal_dimension() {
    double roll_sphere_end               = 0;
    double roll_sphere_steps             = 0;
    US_Fractal_Dimension::methods method = US_Fractal_Dimension::USFD_BOX_MODEL;
-   
+   bool show_plots                      = true;
+   bool save_plot_data                  = false; // chosen in the show plots window
+   bool show_bead_models                = false;
+
    // pat 1st model for extents
    point extents;
-   {
+   if ( !from_parameters ) {
       vector < PDB_atom > model;
       current_model = *(selected_models.begin());
       for ( size_t j = 0; j < model_vector[current_model].molecule.size(); ++j ) {
@@ -425,7 +438,7 @@ void US_Hydrodyn::fractal_dimension() {
    }
 
    // box model parameters dialog
-   {
+   if ( !from_parameters ) {
       bool try_again = false;
 
       do {
@@ -599,8 +612,41 @@ void US_Hydrodyn::fractal_dimension() {
             return;
          }
       } while ( try_again );
-   }
+   } else {
+      // from_parameters
 
+      sas_asa_threshold =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ASA_THRESHOLD ) ).toDouble();
+      sas_asa_probe_radius =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ASA_PROBE_RADIUS ) ).toDouble();
+      angstrom_start =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ANGSTROM_START ) ).toDouble();
+      angstrom_end =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ANGSTROM_END ) ).toDouble();
+      angstrom_steps =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ANGSTROM_END ) ).toInt();
+      enright_ca_pct_start =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ENRIGHT_CA_PCT_START ) ).toDouble();
+      enright_ca_pct_end =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ENRIGHT_CA_PCT_END ) ).toDouble();
+      roll_sphere_start =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ROLL_SPHERE_START ) ).toDouble();
+      roll_sphere_end =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ROLL_SPHERE_END ) ).toDouble();
+      roll_sphere_steps =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ROLL_SPHERE_STEPS ) ).toInt();
+      method = (US_Fractal_Dimension::methods)
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::METHOD ) ).toInt();
+      show_plots =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::PLOTS ) ) == "true";
+      save_plot_data =
+         gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::SAVE_PLOT_DATA ) ) == "true";
+
+      // could add it if we need to
+      // show_bead_models =
+      //    gparam_value( US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::SHOW_BEAD_MODELS ) ) == "true";
+   }
+      
    QTextStream( stdout ) << QString(
                                     "US_Hydrodyn::fractal_dimension()\n"
                                     "sas_asa_threshold    %1\n"
@@ -626,16 +672,18 @@ void US_Hydrodyn::fractal_dimension() {
       .arg( roll_sphere_steps )
       ;
 
-   bool do_display_bead_models =
-      method == US_Fractal_Dimension::USFD_ROLL_SPHERE
-      ? false
-      : QMessageBox::Yes == QMessageBox::question(
-                                                  this,
-                                                  windowTitle() + us_tr( ": Fractal Dimension" ),
-                                                  us_tr("Display bead models of SAS ?" ),
-                                                  QMessageBox::Yes, 
-                                                  QMessageBox::No | QMessageBox::Default
-                                                  );
+   if ( !from_parameters ) {
+      show_bead_models =
+         method == US_Fractal_Dimension::USFD_ROLL_SPHERE
+         ? false
+         : QMessageBox::Yes == QMessageBox::question(
+                                                     this,
+                                                     windowTitle() + us_tr( ": Fractal Dimension" ),
+                                                     us_tr("Display bead models of SAS ?" ),
+                                                     QMessageBox::Yes, 
+                                                     QMessageBox::No | QMessageBox::Default
+                                                     );
+   }
    
    for ( auto const current_model : selected_models ) {
       vector < vector < vector < double > > > x;
@@ -647,7 +695,7 @@ void US_Hydrodyn::fractal_dimension() {
 
       editor_msg( "darkblue", QString( us_tr( "Fractal dimension processing model %1\n" ) ).arg( current_model + 1 ) );
 
-      if ( do_display_bead_models ) {
+      if ( show_bead_models ) {
          bead_model.clear( );
       }
 
@@ -935,7 +983,7 @@ void US_Hydrodyn::fractal_dimension() {
                            // tmpsas.radius     = tmp_atom.radius;
                            sas.push_back( tmpsas );
                         }
-                        if ( do_display_bead_models ) {
+                        if ( show_bead_models ) {
                            bead_model.push_back(tmp_atom);
                         }
                      } else {
@@ -946,7 +994,7 @@ void US_Hydrodyn::fractal_dimension() {
                }
             }
          }
-         if ( do_display_bead_models ) {
+         if ( show_bead_models ) {
             QString use_dir = somo_dir;
             QString spt_name = QString("%1_%2-SAS").arg( project ).arg( current_model + 1 );
             spt_name = spt_name.left( 30 );
@@ -990,12 +1038,14 @@ void US_Hydrodyn::fractal_dimension() {
                               ,type
                               ,errormsg
                               ) ) {
-               QMessageBox::critical( this,
-                                      windowTitle() + us_tr( ": Fractal Dimension" ),
-                                      QString( us_tr( "Error computing for model %1 : %2" ) )
-                                      .arg( current_model + 1 )
-                                      .arg( errormsg )
-                                      );
+               if ( !quiet ) {
+                  QMessageBox::critical( this,
+                                         windowTitle() + us_tr( ": Fractal Dimension" ),
+                                         QString( us_tr( "Error computing for model %1 : %2" ) )
+                                         .arg( current_model + 1 )
+                                         .arg( errormsg )
+                                         );
+               }
                return;
             }
          }
@@ -1003,32 +1053,38 @@ void US_Hydrodyn::fractal_dimension() {
          // setup a dialog to show the plot
 
          if ( !x.size() ) {
-            QMessageBox::critical( this,
-                                   windowTitle() + us_tr( ": Fractal Dimension" ),
-                                   QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
-                                   .arg( current_model + 1 )
-                                   .arg( errormsg )
-                                   );
+            if ( !quiet ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Fractal Dimension" ),
+                                      QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
+                                      .arg( current_model + 1 )
+                                      .arg( errormsg )
+                                      );
+            }
             return;
          }
             
          if ( !x[ 0 ].size() ) {
-            QMessageBox::critical( this,
-                                   windowTitle() + us_tr( ": Fractal Dimension" ),
-                                   QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
-                                   .arg( current_model + 1 )
-                                   .arg( errormsg )
-                                   );
+            if ( !quiet ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Fractal Dimension" ),
+                                      QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
+                                      .arg( current_model + 1 )
+                                      .arg( errormsg )
+                                      );
+            }
             return;
          }
 
          if ( !x[ 0 ][ 0 ].size() ) {
-            QMessageBox::critical( this,
-                                   windowTitle() + us_tr( ": Fractal Dimension" ),
-                                   QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
-                                   .arg( current_model + 1 )
-                                   .arg( errormsg )
-                                   );
+            if ( !quiet ) {
+               QMessageBox::critical( this,
+                                      windowTitle() + us_tr( ": Fractal Dimension" ),
+                                      QString( us_tr( "Error computing for model %1 : %2 - no points" ) )
+                                      .arg( current_model + 1 )
+                                      .arg( errormsg )
+                                      );
+            }
             return;
          }
             
@@ -1172,10 +1228,9 @@ void US_Hydrodyn::fractal_dimension() {
                linear_fit( use_xmin, use_xmax, x, y, plot, fitcurves, (QTextEdit *)widgets[ 2 ] );
 
                plot->replot();
-               
-               switch ( dialog.exec() ) {
-               case QDialog::Accepted :
-                  {
+
+               if ( !show_plots ) {
+                  if ( save_plot_data ) {
                      qDebug() << "export csv!";
                      US_Plot_Util upu;
                      map < QString, QwtPlot *> plots =
@@ -1213,15 +1268,57 @@ void US_Hydrodyn::fractal_dimension() {
                                                   );
                      }
                   }
-                  break;
+               } else {
+                  switch ( dialog.exec() ) {
+                  case QDialog::Accepted :
+                     {
+                        qDebug() << "export csv!";
+                        US_Plot_Util upu;
+                        map < QString, QwtPlot *> plots =
+                           {
+                              {
+                                 QString("_%1_%2_FD_%3_pr%4_thr%5_start%6_end%7_steps%8" )
+                                 .arg( project )
+                                 .arg( current_model + 1 )
+                                 .arg( type )
+                                 .arg( sas_asa_probe_radius )
+                                 .arg( sas_asa_threshold )
+                                 .arg( angstrom_start )
+                                 .arg( angstrom_end )
+                                 .arg( angstrom_steps )
+                                 ,plot
+                              }
+                           };
+                        QString errors;
+                        QString messages;
+                        if ( !upu.printtofile( "Fractal Dimension " + type
+                                               ,plots
+                                               ,errors
+                                               ,messages ) ) {
+                           QMessageBox::warning( this,
+                                                 windowTitle() + us_tr( ": Fractal Dimension" ),
+                                                 QString( us_tr( "Errors saving plots\n:%1" ) )
+                                                 .arg( errors )
+                                                 );
+                        } else {
+                           QMessageBox::information( this,
+                                                     windowTitle() + us_tr( ": Fractal Dimension" ),
+                                                     QString( "Plots saved in directory <i>%1</i><br><br>%2" )
+                                                     .arg( somo_tmp_dir.replace( "//", "/" ) )
+                                                     .arg( messages )
+                                                     );
+                        }
+                     }
+                     break;
 
-               case QDialog::Rejected :
-                  qDebug() << "rejected";
-                  break;
+                  case QDialog::Rejected :
+                     qDebug() << "rejected";
+                     break;
 
-               default :
-                  qDebug() << "unknown exec response";
-                  break;
+                  default :
+                     qDebug() << "unknown exec response";
+                     break;
+                  }
                }
             }
          }

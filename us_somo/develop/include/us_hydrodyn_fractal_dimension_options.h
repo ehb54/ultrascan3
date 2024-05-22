@@ -25,9 +25,6 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
 
       static QString options( map < QString, QString > & parameters ); // returns current options in a string format
 
-   private:
-      US_Fractal_Dimension ufd;
-
       enum WidgetId : int {
          ASA_THRESHOLD            = 0
             ,ASA_PROBE_RADIUS         = 1
@@ -48,6 +45,11 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
             ,SURFACE_LABEL            = 16
             };
 
+      static QString                          paramname( enum WidgetId widget_id );
+
+   private:
+      US_Fractal_Dimension ufd;
+
       enum WidgetType : int {
          QLINEEDIT                = 0
          ,QCOMBOBOX                = 1
@@ -66,12 +68,11 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
 
       US_Config *                             USglobal;
 
-      vector < QWidget * >                    widgets;
+      map < int, QWidget * >                  widgets;
       QWidget *                               setup( enum WidgetId widget_id );
       QString                                 name( enum WidgetId widget_id );
       QString                                 tooltip( enum WidgetId widget_id );
       bool                                    hide( enum WidgetId widget_id );
-      static QString                          paramname( enum WidgetId widget_id );
       static QVariant                         defaultvalue( enum WidgetId widget_id );
       QVariant                                paramvalue( enum WidgetId widget_id );
       enum WidgetType                         type( enum WidgetId widget_id );

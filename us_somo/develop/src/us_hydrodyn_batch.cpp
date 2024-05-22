@@ -493,6 +493,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_dmd->setPalette( qp_cb ); AUTFBACK( cb_dmd );
    connect(cb_dmd, SIGNAL(clicked()), this, SLOT(set_dmd()));
 
+   cb_fd = new QCheckBox(this);
+   cb_fd->setText(us_tr(" Compute Fractal Dimension "));
+   cb_fd->setChecked(batch->fd);
+   cb_fd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_fd->setPalette( qp_cb ); AUTFBACK( cb_fd );
+   connect(cb_fd, SIGNAL(clicked()), this, SLOT(set_fd()));
+   
    cb_somo = new QCheckBox(this);
    cb_somo->setText(us_tr(" Build SoMo Bead Model "));
    cb_somo->setChecked(batch->somo);
@@ -920,7 +927,12 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addWidget(lbl_process);
    leftside->addWidget(cb_mm_first);
    leftside->addWidget(cb_mm_all);
-   leftside->addWidget(cb_dmd);
+   {
+      QHBoxLayout * hbl = new QHBoxLayout; hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( cb_dmd );
+      hbl->addWidget( cb_fd );
+      leftside->addLayout( hbl );
+   }
    leftside->addLayout(hbl_somo_grid);
    leftside->addLayout(hbl_iqq_prr);
    leftside->addLayout(hbl_csv_saxs);
@@ -1369,6 +1381,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_grpy                  ->setChecked( false );
       cb_hullrad               ->setChecked( false );
       cb_dmd                   ->setChecked( false );
+      cb_fd                    ->setChecked( false );
       cb_prr                   ->setChecked( false ); 
       cb_iqq                   ->setChecked( false ); 
       cb_saxs_search           ->setChecked( false );
@@ -1392,6 +1405,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_grpy                  ->setEnabled( false );
       cb_hullrad               ->setEnabled( false );
       cb_dmd                   ->setEnabled( false );
+      cb_fd                    ->setEnabled( false );
       cb_prr                   ->setEnabled( false ); 
       cb_iqq                   ->setEnabled( false ); 
       cb_saxs_search           ->setEnabled( false );
@@ -1418,6 +1432,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->grpy                  = false;
       batch->hullrad               = false;
       batch->dmd                   = false;
+      batch->fd                    = false;
       batch->prr                   = false;
       batch->iqq                   = false;
       batch->saxs_search           = false;
@@ -1445,6 +1460,7 @@ void US_Hydrodyn_Batch::update_enables()
 
          if ( !any_bead_model_selected ) {
             cb_dmd    ->setEnabled( true );
+            cb_fd     ->setEnabled( true );
             cb_prr    ->setEnabled( true );
             cb_iqq    ->setEnabled( true );
 
@@ -1550,6 +1566,7 @@ void US_Hydrodyn_Batch::update_enables()
          } else {
             // bead models selected also restricts to bead model computations
             cb_dmd                   ->setChecked( false );
+            cb_fd                    ->setChecked( false );
             cb_prr                   ->setChecked( false ); 
             cb_iqq                   ->setChecked( false ); 
             cb_saxs_search           ->setChecked( false );
@@ -1562,6 +1579,7 @@ void US_Hydrodyn_Batch::update_enables()
             cb_compute_prr_std_dev   ->setChecked( false );
 
             cb_dmd                   ->setEnabled( false );
+            cb_fd                    ->setEnabled( false );
             cb_prr                   ->setEnabled( false ); 
             cb_iqq                   ->setEnabled( false ); 
             cb_saxs_search           ->setEnabled( false );
@@ -1574,6 +1592,7 @@ void US_Hydrodyn_Batch::update_enables()
             cb_compute_prr_std_dev   ->setEnabled( false );
 
             batch->dmd                   = false;
+            batch->fd                    = false;
             batch->prr                   = false;
             batch->iqq                   = false;
             batch->saxs_search           = false;
@@ -1646,14 +1665,16 @@ void US_Hydrodyn_Batch::update_enables()
       cb_grpy              ->isChecked() ||
       cb_hullrad           ->isChecked() ||
       cb_dmd               ->isChecked() || 
+      cb_fd               ->isChecked() || 
       0;
       
    if (
        ( cb_vdw_beads         ->isChecked() ||
+         cb_somo              ->isChecked() ||
+         cb_somo_o            ->isChecked() ||
          cb_zeno              ->isChecked() ||
-         cb_grpy              ->isChecked() ) &&
-       !cb_somo              ->isChecked() &&
-       !cb_somo_o            ->isChecked() &&
+         cb_grpy              ->isChecked()
+         ) &&
        !cb_grid              ->isChecked() &&
        !cb_iqq               ->isChecked() &&
        !cb_prr               ->isChecked() &&
@@ -1661,7 +1682,7 @@ void US_Hydrodyn_Batch::update_enables()
        !cb_hullrad           ->isChecked() &&
        !cb_dmd               ->isChecked() 
        ) {
-      // zeno & grpy for now
+      // zeno & grpy with vdw or somo models 
       cb_results_dir       ->setEnabled( true );
       le_results_dir_name  ->setEnabled( true );
    } else {
@@ -1889,7 +1910,13 @@ void US_Hydrodyn_Batch::set_mm_all()
 
 void US_Hydrodyn_Batch::set_dmd()
 {
-   batch->dmd = cb_somo->isChecked();
+   batch->dmd = cb_dmd->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_fd()
+{
+   batch->fd = cb_fd->isChecked();
    update_enables();
 }
 
@@ -2220,6 +2247,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_equi_grid->setEnabled(false);
    cb_iqq->setEnabled(false);
    cb_dmd->setEnabled( false );
+   cb_fd->setEnabled( false );
    cb_prr->setEnabled(false);
    cb_hydro->setEnabled(false);
    cb_zeno->setEnabled(false);
@@ -2262,6 +2290,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
    cb_dmd->setEnabled( true );
+   cb_fd->setEnabled( true );
    pb_start->setEnabled(true);
    pb_stop->setEnabled(false);
    update_enables();

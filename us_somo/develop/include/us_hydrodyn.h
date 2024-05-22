@@ -266,6 +266,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool saxs_plot_widget;
 
       map < QString, QString >            gparams;
+      QString                             gparam_value( const QString & param ); // convenience function, returns empty string if not defined
 
       US_Config *USglobal;
 
@@ -1100,7 +1101,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
       void gui_script_run();
-      void fractal_dimension();
+      void fractal_dimension( bool from_parameters = false );
       
    public:
       void save_params_force_results_name( save_info & save );
