@@ -1332,7 +1332,7 @@ void US_ExperGuiRotor::addSmetoList( void )
 void US_ExperGuiRotor::removeSmefromList( void )
 {
   te_smes_to_assign->setFocus();
-  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  QTextCursor storeCursorPos = te_smes_to_assign->textCursor();
   te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
   te_smes_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
   te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
