@@ -6,6 +6,7 @@
 #include "../include/us_util.h"
 
 #include "../include/us_fractal_dimension.h"
+#include <values.h>
 
 using namespace std;
 
@@ -23,7 +24,7 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
                                             );
       ~US_Hydrodyn_Fractal_Dimension_Options();
 
-      static QString options( map < QString, QString > & parameters ); // returns current options in a string format
+      static QString options( map < QString, QString > & parameters, double xmin = DBL_MAX, double xmax = DBL_MAX ); // returns current options in a string format
 
       enum WidgetId : int {
          ASA_THRESHOLD            = 0
@@ -43,6 +44,7 @@ class US_EXTERN US_Hydrodyn_Fractal_Dimension_Options : public QFrame
             ,HEADER_LABEL             = 14
             ,MASS_LABEL               = 15
             ,SURFACE_LABEL            = 16
+            ,BOX_MASS_LABEL           = 17
             };
 
       static QString                          paramname( enum WidgetId widget_id );

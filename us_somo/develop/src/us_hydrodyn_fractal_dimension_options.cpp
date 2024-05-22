@@ -50,12 +50,13 @@ void US_Hydrodyn_Fractal_Dimension_Options::setupGUI() {
          ,ENABLED
          ,PLOTS
          ,SAVE_PLOT_DATA
-         ,MASS_LABEL
+         ,BOX_MASS_LABEL
          ,ASA_THRESHOLD
          ,ASA_PROBE_RADIUS
          ,ANGSTROM_START
          ,ANGSTROM_END
          ,ANGSTROM_STEPS
+         ,MASS_LABEL
          ,ENRIGHT_CA_PCT_START
          ,ENRIGHT_CA_PCT_END
          ,SURFACE_LABEL
@@ -178,7 +179,7 @@ QWidget * US_Hydrodyn_Fractal_Dimension_Options::setup( WidgetId widget_id ) {
 
          // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MODEL    ), US_Fractal_Dimension::USFD_BOX_MODEL );
          // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_ALT      ), US_Fractal_Dimension::USFD_BOX_ALT );
-         // cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS     ), US_Fractal_Dimension::USFD_BOX_MASS );
+         cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS     ), US_Fractal_Dimension::USFD_BOX_MASS );
          cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT      ), US_Fractal_Dimension::USFD_ENRIGHT );
          cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ), US_Fractal_Dimension::USFD_ENRIGHT_FULL );
          cmb_method->addItem( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ROLL_SPHERE  ), US_Fractal_Dimension::USFD_ROLL_SPHERE );
@@ -195,6 +196,7 @@ QWidget * US_Hydrodyn_Fractal_Dimension_Options::setup( WidgetId widget_id ) {
    case PLOTS :
    case SAVE_PLOT_DATA :
    case HEADER_LABEL :
+   case BOX_MASS_LABEL :
    case MASS_LABEL :
    case SURFACE_LABEL :
       break;
@@ -220,6 +222,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::name( WidgetId widget_id ) {
    case PLOTS                : return us_tr( "Show plots" );
    case SAVE_PLOT_DATA       : return us_tr( "Save plot data as CSV" );
    case HEADER_LABEL         : return us_tr( "Fractal Dimension options" );
+   case BOX_MASS_LABEL       : return us_tr( "Box Mass & Mass fractal D parameters" );
    case MASS_LABEL           : return us_tr( "Mass fractal D parameters" );
    case SURFACE_LABEL        : return us_tr( "Surface fractal D parameters" );
    default                   : break;
@@ -232,7 +235,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::tooltip( WidgetId widget_id ) {
 
    switch( widget_id ) {
    case ASA_THRESHOLD        : 
-   case ASA_PROBE_RADIUS     : return us_tr( "not currently used" );
+   case ASA_PROBE_RADIUS     : return us_tr( "Used to exclude interior atoms\nAn ASA Threshold of 0 will include all atoms" );
 
    case ENRIGHT_CA_PCT_START :
    case ENRIGHT_CA_PCT_END   : return QString( us_tr( "Only for the %1 method" ) ).arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT ) );
@@ -240,7 +243,8 @@ QString US_Hydrodyn_Fractal_Dimension_Options::tooltip( WidgetId widget_id ) {
    case ANGSTROM_START       : 
    case ANGSTROM_END         : 
    case ANGSTROM_STEPS       : return
-         QString( us_tr( "Only for the %1 and %2 methods" ) )
+         QString( us_tr( "Used for the %1, %2 and %2 methods" ) )
+         .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS ) )
          .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT ) )
          .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ) )
          ;
@@ -282,6 +286,7 @@ bool US_Hydrodyn_Fractal_Dimension_Options::hide( WidgetId widget_id ) {
    case SAVE_PLOT_DATA       : return false;
 
    case HEADER_LABEL         :
+   case BOX_MASS_LABEL       :
    case MASS_LABEL           :
    case SURFACE_LABEL        : return false;
 
@@ -367,6 +372,7 @@ US_Hydrodyn_Fractal_Dimension_Options::WidgetType US_Hydrodyn_Fractal_Dimension_
    case PLOTS                : return QCHECKBOX;
    case SAVE_PLOT_DATA       : return QCHECKBOX;
    case HEADER_LABEL         : return QLABEL;
+   case BOX_MASS_LABEL       : return QLABEL;
    case MASS_LABEL           : return QLABEL;
    case SURFACE_LABEL        : return QLABEL;
    default                   : break;
@@ -420,7 +426,7 @@ void US_Hydrodyn_Fractal_Dimension_Options::ok() {
    close();
 }
 
-QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString > & parameters ) {
+QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString > & parameters, double xmin, double xmax ) {
 
    QString result = "";
 
@@ -429,12 +435,25 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
    result += US_Fractal_Dimension::method_name( method );
 
    switch ( method ) {
+
+   case US_Fractal_Dimension::USFD_BOX_MASS :
+      result +=
+         QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4" )
+         .arg( xmin != DBL_MAX ? exp( xmin ) : paramvalue( ANGSTROM_START, parameters ).toDouble(), 0, 'f', 2 )
+         .arg( xmax != DBL_MAX ? exp( xmax ) : paramvalue( ANGSTROM_END, parameters ).toDouble(), 0, 'f', 2 )
+         // .arg( UNICODE_ANGSTROM ) not working on csv export, perhaps utf8 ?
+         .arg( "A" )
+         .arg( paramvalue( ANGSTROM_STEPS, parameters ).toInt() )
+         ;
+      break;
+
    case US_Fractal_Dimension::USFD_ENRIGHT :
       result +=
          QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4 ; Slice %5 - %6 %" )
-         .arg( paramvalue( ANGSTROM_START, parameters ).toDouble() )
-         .arg( paramvalue( ANGSTROM_END, parameters ).toDouble() )
-         .arg( UNICODE_ANGSTROM )
+         .arg( xmin != DBL_MAX ? pow( xmin, 10 ) : paramvalue( ANGSTROM_START, parameters ).toDouble(), 0, 'f', 2 )
+         .arg( xmax != DBL_MAX ? pow( xmax, 10 ) : paramvalue( ANGSTROM_END, parameters ).toDouble(), 0, 'f', 2 ) 
+         // .arg( UNICODE_ANGSTROM ) not working on csv export
+         .arg( "A" )
          .arg( paramvalue( ANGSTROM_STEPS, parameters ).toInt() )
          .arg( paramvalue( ENRIGHT_CA_PCT_START, parameters ).toInt() )
          .arg( paramvalue( ENRIGHT_CA_PCT_END, parameters ).toInt() )
@@ -444,9 +463,10 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
    case US_Fractal_Dimension::USFD_ENRIGHT_FULL :
       result +=
          QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4" )
-         .arg( paramvalue( ANGSTROM_START, parameters ).toDouble() )
-         .arg( paramvalue( ANGSTROM_END, parameters ).toDouble() )
-         .arg( UNICODE_ANGSTROM )
+         .arg( xmin != DBL_MAX ? pow( xmin, 10 ) : paramvalue( ANGSTROM_START, parameters ).toDouble(), 0, 'f', 2 )
+         .arg( xmax != DBL_MAX ? pow( xmax, 10 ) : paramvalue( ANGSTROM_END, parameters ).toDouble(), 0, 'f', 2 )
+         // .arg( UNICODE_ANGSTROM ) not working on csv export
+         .arg( "A" )
          .arg( paramvalue( ANGSTROM_STEPS, parameters ).toInt() )
          ;
       break;
@@ -454,9 +474,10 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
    case US_Fractal_Dimension::USFD_ROLL_SPHERE :
       result +=
          QString( " ; D(s) ; Start/End %1 - %2 [%3] Steps %4" )
-         .arg( paramvalue( ROLL_SPHERE_START, parameters ).toDouble() )
-         .arg( paramvalue( ROLL_SPHERE_END, parameters ).toDouble() )
-         .arg( UNICODE_ANGSTROM )
+         .arg( xmin != DBL_MAX ? pow( xmin, 10 ) : paramvalue( ROLL_SPHERE_START, parameters ).toDouble(), 0, 'f', 2 )
+         .arg( xmax != DBL_MAX ? pow( xmax, 10 ) : paramvalue( ROLL_SPHERE_END, parameters ).toDouble(), 0, 'f', 2 )
+         // .arg( UNICODE_ANGSTROM ) not working on csv export
+         .arg( "A" )
          .arg( paramvalue( ROLL_SPHERE_STEPS, parameters ).toInt() )
          ;
       break;
