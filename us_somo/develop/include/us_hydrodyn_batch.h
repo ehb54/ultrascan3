@@ -40,6 +40,7 @@
 #include <iostream>
 
 using namespace std;
+#include "../include/us_hydrodyn_save.h"
 
 struct batch_info 
 {
@@ -266,6 +267,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QTemporaryDir    * split_dir;
       bool               create_split_dir();
       void               remove_split_dir();
+
+      save_info          fd_save_info;
 
    public :
       void add_file( QString filename );

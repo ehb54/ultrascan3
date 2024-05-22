@@ -438,7 +438,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
 
    case US_Fractal_Dimension::USFD_BOX_MASS :
       result +=
-         QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4" )
+         QString( " ; Dm(box) ; Start/End %1 - %2 [%3] Steps %4" )
          .arg( xmin != DBL_MAX ? exp( xmin ) : paramvalue( ANGSTROM_START, parameters ).toDouble(), 0, 'f', 2 )
          .arg( xmax != DBL_MAX ? exp( xmax ) : paramvalue( ANGSTROM_END, parameters ).toDouble(), 0, 'f', 2 )
          // .arg( UNICODE_ANGSTROM ) not working on csv export, perhaps utf8 ?
@@ -449,7 +449,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
 
    case US_Fractal_Dimension::USFD_ENRIGHT :
       result +=
-         QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4 ; Slice %5 - %6 %" )
+         QString( " ; Dm(slice) ; Start/End %1 - %2 [%3] Steps %4 ; Slice %5 - %6 %" )
          .arg( xmin != DBL_MAX ? pow( xmin, 10 ) : paramvalue( ANGSTROM_START, parameters ).toDouble(), 0, 'f', 2 )
          .arg( xmax != DBL_MAX ? pow( xmax, 10 ) : paramvalue( ANGSTROM_END, parameters ).toDouble(), 0, 'f', 2 ) 
          // .arg( UNICODE_ANGSTROM ) not working on csv export
@@ -462,7 +462,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
 
    case US_Fractal_Dimension::USFD_ENRIGHT_FULL :
       result +=
-         QString( " ; D(m) ; Start/End %1 - %2 [%3] Steps %4" )
+         QString( " ; Dm ; Start/End %1 - %2 [%3] Steps %4" )
          .arg( xmin != DBL_MAX ? pow( xmin, 10 ) : paramvalue( ANGSTROM_START, parameters ).toDouble(), 0, 'f', 2 )
          .arg( xmax != DBL_MAX ? pow( xmax, 10 ) : paramvalue( ANGSTROM_END, parameters ).toDouble(), 0, 'f', 2 )
          // .arg( UNICODE_ANGSTROM ) not working on csv export
@@ -473,7 +473,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::options( map < QString, QString >
 
    case US_Fractal_Dimension::USFD_ROLL_SPHERE :
       result +=
-         QString( " ; D(s) ; Start/End %1 - %2 [%3] Steps %4" )
+         QString( " ; Ds ; Start/End %1 - %2 [%3] Steps %4" )
          .arg( xmin != DBL_MAX ? pow( xmin, 10 ) : paramvalue( ROLL_SPHERE_START, parameters ).toDouble(), 0, 'f', 2 )
          .arg( xmax != DBL_MAX ? pow( xmax, 10 ) : paramvalue( ROLL_SPHERE_END, parameters ).toDouble(), 0, 'f', 2 )
          // .arg( UNICODE_ANGSTROM ) not working on csv export

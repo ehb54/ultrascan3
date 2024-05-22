@@ -260,9 +260,11 @@ static bool linear_fit(
    return true;
 }
 
-void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
+void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_info ) {
    qDebug() << "US_Hydrodyn::fractal_dimension()";
-   stopFlag = false;
+   if ( !batch_active() ) {
+      stopFlag = false;
+   }
    bool quiet = false;
 
    if ( from_parameters
@@ -725,7 +727,15 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
       QString                                 y_title;
       vector < pointmass >                    sas;
 
-      editor_msg( "darkblue", QString( us_tr( "Fractal dimension processing model %1\n" ) ).arg( current_model + 1 ) );
+      if ( from_parameters ) {
+         editor_msg( "darkblue",
+                     QString( us_tr( "Processing model %1 : %2\n" ) )
+                     .arg( current_model + 1 )
+                     .arg( US_Fractal_Dimension::method_name( method ) )
+                     );
+      } else {
+         editor_msg( "darkblue", QString( us_tr( "Fractal dimension processing model %1\n" ) ).arg( current_model + 1 ) );
+      }
 
       if ( show_bead_models ) {
          bead_model.clear( );
@@ -1034,7 +1044,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
             model_viewer( use_dir + QDir::separator() + spt_name + ".spt", "-script" );
          }
 
-         if ( total_atoms ) {
+         if ( total_atoms && sas.size() != total_atoms ) {
             editor_msg( "black",
                         QString( us_tr( "SAS atoms: %1 (%2%) of total %3 atoms" ) )
                         .arg( sas.size() )
@@ -1391,6 +1401,10 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
             fd_wtd = 3.0 + fd_wtd;
          }
 
+         if ( from_parameters ) {
+            editor_msg( "black", us_tr( US_Hydrodyn_Fractal_Dimension_Options::options( gparams, use_xmin, use_xmax ) ) );
+         }
+
          double rg_over_fd            = fd == 0 || fd == -1 ? -1 : model_vector[ current_model ].Rg / fd;
          double rg_over_fd_sd         = fd == 0 || fd == -1 ? -1 : fd_sd / fd;
 
@@ -1527,6 +1541,25 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters ) {
                .arg( model_vector[ current_model ].fractal_dimension_sd )
                .arg( model_vector[ current_model ].fractal_dimension_parameters )
                ;
+
+            if ( fd_save_info ) {
+               fd_save_info->data                                      = US_Hydrodyn_Save::save_data_initialized();
+               fd_save_info->data.results.name                         = QString("%1_%2").arg( project ).arg( current_model + 1 );
+               fd_save_info->data.fractal_dimension_parameters         = US_Hydrodyn_Fractal_Dimension_Options::options( gparams, use_xmin, use_xmax );
+               fd_save_info->data.fractal_dimension                    = fd;
+               fd_save_info->data.fractal_dimension_sd                 = fd_sd;
+               fd_save_info->data.fractal_dimension_wtd                = fd_wtd;
+               fd_save_info->data.fractal_dimension_wtd_sd             = fd_wtd_sd;
+               fd_save_info->data.fractal_dimension_wtd_wtd            = fd_wtd_wtd;
+               fd_save_info->data.fractal_dimension_wtd_wtd_sd         = fd_wtd_wtd_sd;
+               fd_save_info->data.rg_over_fractal_dimension            = rg_over_fd;
+               fd_save_info->data.rg_over_fractal_dimension_sd         = rg_over_fd_sd;
+               fd_save_info->data.rg_over_fractal_dimension_wtd        = rg_over_fd_wtd;
+               fd_save_info->data.rg_over_fractal_dimension_wtd_sd     = rg_over_fd_wtd_sd;
+               fd_save_info->data.rg_over_fractal_dimension_wtd_wtd    = rg_over_fd_wtd_wtd;
+               fd_save_info->data.rg_over_fractal_dimension_wtd_wtd_sd = rg_over_fd_wtd_wtd_sd;
+               fd_save_info->data_vector.push_back( fd_save_info->data );
+            }      
          }
       }
    }

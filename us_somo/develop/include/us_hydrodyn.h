@@ -1101,7 +1101,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
       void gui_script_run();
-      void fractal_dimension( bool from_parameters = false );
+      void fractal_dimension( bool from_parameters = false, save_info * fd_save_info = (save_info *)0 );
       
    public:
       void save_params_force_results_name( save_info & save );
