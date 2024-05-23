@@ -1,4 +1,5 @@
 #include "../include/us_ffd.h"
+#include <math.h>
 
 #define FFD_REMOVE_DUP_B // to trim products
 #define TSO QTextStream(stdout)
