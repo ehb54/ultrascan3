@@ -27,7 +27,7 @@ class US_Edit : public US_Widgets
 	 US_Edit(QString auto_mode);
 
 	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
-		  QString  workingDir, int currChInd );
+		  QString  workingDir, int currChInd, int plotind );
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;

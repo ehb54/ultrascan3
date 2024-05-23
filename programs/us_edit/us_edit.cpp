@@ -736,7 +736,8 @@ pb_plateau->setVisible(false);
 
 
 // AUTO: Constructor for manual processing 
-US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir, int currenChtInd ) : US_Widgets()
+US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currenChtInd, int plotind ) : US_Widgets()
 {
  
    check        = US_Images::getIcon( US_Images::CHECK );
@@ -1222,6 +1223,8 @@ pb_plateau->setVisible(false);
    cb_triple->setCurrentIndex( currenChtInd );
    new_triple( currenChtInd );
 
+   cb_lplot ->setCurrentIndex( plotind );
+
    show_mwl_controls( false );
 }
 
@@ -1445,7 +1448,8 @@ pb_plateau->setVisible(false);
 //QLineEdit* 
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton* 
-   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
 //QLineEdit* 
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel* 
@@ -8212,7 +8216,11 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 void US_Edit::manual_edit_auto( void )
 {
   int currChIndex = cb_triple->currentIndex();
-  sdiag = new US_Edit( allData, triples, workingDir, currChIndex );
+  //int plotInd = index_data();
+  int plotInd = plotndx;
+  qDebug() << "IN manual_edit_auto( void ), plotInd -- " << plotInd;
+  
+  sdiag = new US_Edit( allData, triples, workingDir, currChIndex, plotInd );
   /** The following will block parent windows from closing BUT not from continuing timer execution ***/
   sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   sdiag->setWindowModality(Qt::ApplicationModal);
@@ -10706,6 +10714,8 @@ DbgLv(1) << "lambda_plot_next  clicked";
 
    pb_larrow->setEnabled     ( true );
    cb_lplot ->setCurrentIndex( plotndx );
+
+   qDebug() << "plotndx = " << plotndx;
 }
 
 // Custom Lambdas has been clicked
