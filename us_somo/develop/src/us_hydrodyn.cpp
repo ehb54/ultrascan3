@@ -99,7 +99,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
-
+   stopFlag = false;
+   
 #if defined( AVG_TEST )
    US_Average avg;
    avg.test();
