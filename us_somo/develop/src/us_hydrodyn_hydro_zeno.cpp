@@ -23,7 +23,7 @@ US_Hydrodyn_Hydro_Zeno::US_Hydrodyn_Hydro_Zeno(struct hydro_options *hydro,
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO  Hydrodynamic Calculation Zeno Options"));
-   this->setMinimumWidth(600);
+   this->setMinimumWidth(800);
    setupGUI();
    update_enables();
    global_Xpos += 30;
@@ -163,8 +163,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    cb_zeno_surface_thickness_from_rg = new QCheckBox( this );
    cb_zeno_surface_thickness_from_rg->setText( us_tr( "Compute surface thickness from Rg:") );
    cb_zeno_surface_thickness_from_rg->setEnabled( true );
-   cb_zeno_surface_thickness_from_rg->setChecked( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "zeno_surface_thickness_from_rg" ) &&
-                                ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_surface_thickness_from_rg" ] == "true"  );
+   cb_zeno_surface_thickness_from_rg->setChecked( (*hydro).zeno_surface_thickness_from_rg );
    cb_zeno_surface_thickness_from_rg->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_zeno_surface_thickness_from_rg->setPalette( PALET_NORMAL );
    AUTFBACK( cb_zeno_surface_thickness_from_rg );
