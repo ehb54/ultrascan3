@@ -1661,6 +1661,11 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.zeno_interior_steps" ] = QString( "%1" ).arg( hydro.zeno_interior_steps );
       parameters[ "hydro.zeno_surface_steps" ] = QString( "%1" ).arg( hydro.zeno_surface_steps );
       parameters[ "hydro.zeno_surface_thickness" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness );
+      
+      parameters[ "hydro.zeno_surface_thickness_from_rg" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg ? "1" : "0" );
+      parameters[ "hydro.zeno_surface_thickness_from_rg_a" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_a );
+      parameters[ "hydro.zeno_surface_thickness_from_rg_b" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_b );
+
       parameters[ "misc.hydro_supc" ] = QString( "%1" ).arg( misc.hydro_supc );
       parameters[ "misc.hydro_zeno" ] = QString( "%1" ).arg( misc.hydro_zeno );
       parameters[ "misc.parallel_grpy" ] = QString( "%1" ).arg( misc.parallel_grpy );
@@ -2162,6 +2167,9 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.zeno_interior_steps" ) ) hydro.zeno_interior_steps = parameters[ "hydro.zeno_interior_steps" ].toUInt();
    if ( parameters.count( "hydro.zeno_surface_steps" ) ) hydro.zeno_surface_steps = parameters[ "hydro.zeno_surface_steps" ].toUInt();
    if ( parameters.count( "hydro.zeno_surface_thickness" ) ) hydro.zeno_surface_thickness = parameters[ "hydro.zeno_surface_thickness" ].toFloat();
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg" ) ) hydro.zeno_surface_thickness_from_rg = parameters[ "hydro.zeno_surface_thickness_from_rg" ] == "1";
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_a" ) ) hydro.zeno_surface_thickness_from_rg_a = parameters[ "hydro.zeno_surface_thickness_from_rg_a" ].toDouble();
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_b" ) ) hydro.zeno_surface_thickness_from_rg_b = parameters[ "hydro.zeno_surface_thickness_from_rg_b" ].toDouble();
    if ( parameters.count( "misc.hydro_supc" ) ) misc.hydro_supc = parameters[ "misc.hydro_supc" ] == "1";
    if ( parameters.count( "misc.hydro_zeno" ) ) misc.hydro_zeno = parameters[ "misc.hydro_zeno" ] == "1";
    if ( parameters.count( "misc.parallel_grpy" ) ) misc.hydro_zeno = parameters[ "misc.parallel_grpy" ] == "1";
@@ -3180,6 +3188,9 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.zeno_interior_steps    = 1000;
    hydro.zeno_surface_steps     = 1000;
    hydro.zeno_surface_thickness = 0.0f;
+   hydro.zeno_surface_thickness_from_rg = false;
+   hydro.zeno_surface_thickness_from_rg_a = -0.147;
+   hydro.zeno_surface_thickness_from_rg_b = 0.0328;
 
    misc.hydro_supc              = true;
    misc.hydro_zeno              = false;

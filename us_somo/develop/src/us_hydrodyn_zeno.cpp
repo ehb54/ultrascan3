@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_zeno.h"
 //Added by qt3to4:
 #include <QTextStream>
+#include "../include/us_unicode.h"
 
 US_Hydrodyn  * zeno_us_hydrodyn;
 static mQProgressBar * zeno_progress;
@@ -13469,6 +13470,7 @@ bool US_Hydrodyn_Zeno::run(
                            vector < PDB_atom > *   bead_model,
                            double              &   sum_mass,
                            double              &   sum_volume,
+                           const double        &   Rg,
                            mQProgressBar       *   use_progress,
                            bool                    keep_files,
                            bool                    zeno_cxx,
@@ -13549,9 +13551,17 @@ bool US_Hydrodyn_Zeno::run(
                                               "nm" : "A" );
 
    // add skin thickness
-   if ( options->zeno_surface_thickness > 0.0 )
-   {
-      tso << QString( "st        %1\n"    ).arg( options->zeno_surface_thickness );
+   if ( options->zeno_surface_thickness_from_rg ) {
+      double st = options->zeno_surface_thickness_from_rg_a + options->zeno_surface_thickness_from_rg_b * Rg;
+      qDebug() << QString( "Rg %1 st %2\n" ).arg( Rg ).arg( st );
+      if ( st > 0 ) {
+         tso << QString( "st        %1\n"    ).arg( st );
+      }
+   } else {
+      if ( options->zeno_surface_thickness > 0.0 )
+      {
+         tso << QString( "st        %1\n"    ).arg( options->zeno_surface_thickness );
+      }
    }
 
    fout.close();
@@ -13969,6 +13979,22 @@ bool US_Hydrodyn::calc_zeno()
 
                fname = fname.replace( QRegExp( "\\.(zno)$" ), "" );
 
+               if ( hydro.zeno_surface_thickness_from_rg ) {
+                  double st = hydro.zeno_surface_thickness_from_rg_a + hydro.zeno_surface_thickness_from_rg_b * model_vector[ current_model ].asa_rg_pos;
+                  editor_msg(
+                             "darkblue"
+                             ,QString( us_tr( "Computed skin thickness for model %1 from Rg %2 [%3] is %4 [%5]\n" ) )
+                             .arg( current_model + 1 )
+                             .arg( model_vector[ current_model ].asa_rg_pos, 0, 'f', 3 )
+                             .arg( UNICODE_ANGSTROM )
+                             .arg( st, 0, 'f', 3 )
+                             .arg( UNICODE_ANGSTROM )
+                             );
+                  if ( st <= 0 ) {
+                     editor_msg( "red", us_tr( "NOTICE: zero or negative computed skin thickness will be ignored, reverting to ZENO default\n" ) );
+                  }
+               }
+
                US_Timer           us_timers;
                us_timers          .clear_timers();
                us_timers.init_timer( "compute zeno" );
@@ -13981,6 +14007,7 @@ bool US_Hydrodyn::calc_zeno()
                           &bead_models[ current_model ], 
                           sum_mass,
                           sum_volume,
+                          model_vector[ current_model ].asa_rg_pos,
                           zeno_mm ? mprogress : progress,
                           true,
                           zeno_cxx,
@@ -14578,6 +14605,10 @@ bool US_Hydrodyn::calc_zeno()
                      add_to_zeno += pH_msg();
                      add_to_zeno += vbar_msg( model_vector[ current_model ].vbar, true );
                      add_to_zeno += visc_dens_msg( true );
+                     if ( hydro.zeno_surface_thickness_from_rg ) {
+                        add_to_zeno += QString( "Computed skin thickness: %1\n" )
+                           .arg( hydro.zeno_surface_thickness_from_rg_a + hydro.zeno_surface_thickness_from_rg_b * model_vector[ current_model ].Rg );
+                     }
                      
                      if ( hydro.mass_correction ) {
                         add_to_zeno += QString( "Manually corrected MW: %1 [Da]\n" ).arg( hydro.mass );
