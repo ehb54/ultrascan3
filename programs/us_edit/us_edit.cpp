@@ -555,8 +555,7 @@ pb_plateau->setVisible(false);
        rb_custom      ->hide();
        rb_radius      ->hide();
        rb_waveln      ->hide();
-       
-       
+
      }
    
 
@@ -720,6 +719,16 @@ pb_plateau->setVisible(false);
    // details[ "autoflowID" ]   = QString("1140");
    // details[ "runID" ]        = QString("2023");
    // details[ "OptimaName" ]   = QString("Optima 1");
+   // details[ "expType" ]      = QString("VELOCITY");  
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("ABDE-Test-052124-run1693");
+   // details[ "protocolName" ] = QString("ABDE-Test-052124-v2");
+   // details[ "statusID" ]     = QString("341");
+   // details[ "autoflowID" ]   = QString("1152");
+   // details[ "runID" ]        = QString("1693");
+   // details[ "OptimaName" ]   = QString("Optima 2");  
+   // details[ "expType" ]      = QString("ABDE");  
    
    // load_auto( details );
   
@@ -2055,6 +2064,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
   autoflowStatusID    = details_at_editing[ "statusID" ].toInt();
+  autoflow_expType    = details_at_editing[ "expType" ];
       
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
@@ -2097,6 +2107,18 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 
   process_optics_auto();
 
+  //Hide some gui elements for "ABDE"
+  if ( autoflow_expType == "ABDE" )
+    {
+      lb_baseline -> hide();
+      le_baseline -> hide();
+      lb_plateau  -> hide();
+      le_plateau  -> hide();
+
+      lb_odlim    -> hide();
+      ct_odlim    -> hide();
+    }
+  
 }
 
 //Slot to process optics type...
@@ -2112,6 +2134,9 @@ void US_Edit::process_optics_auto( )
   iwavl_edit_ref.clear();
   iwavl_edit_ref_index.clear();
   triple_plot_first_time.clear();
+
+  //abde
+  edited_triples_abde. clear();
   
   //Read centerpiece names from protocol:
   centerpiece_names.clear();
@@ -2735,6 +2760,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    
    //for ( int trx = 0; trx < triples.size(); trx++ )
+   //Go over triples: for IP-MWL data, find reference wvl
+   //find auto-meniscus porisions
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
      {
        QString triple_name = cb_triple->itemText( trx );
@@ -3009,7 +3036,15 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
 	   qDebug() << triple_name  << ", " << triple_info;
 	 }
+
+       if ( autoflow_expType == "ABDE" )
+	 {
+	   edited_triples_abde[ triple_name ] = false;
+	   automatic_meniscus[ triple_name ]  = false;
+	 }
      }
+   //[FINISHED] Go over triples: for IP-MWL data, find reference wvl
+   //[FINISHED] find auto-meniscus porisions
 
    if ( editProfile.count() == cb_triple->count() )
      all_loaded = true;
@@ -3026,7 +3061,10 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      //if (  dataType != "IP" )
      new_triple_auto( 0 );                  //ALEXEY <--- here does NOT applies the gap removal
 
-   pb_write->setEnabled( true );
+   if ( autoflow_expType == "ABDE" )
+     pb_write->setEnabled( false );
+   else
+     pb_write->setEnabled( true );
    pb_emanual->setEnabled( true );
    pb_undo ->setEnabled( false ); 
 
@@ -7574,6 +7612,13 @@ DbgLv(1) << "EDT:NewTr: DONE";
  
  if ( all_loaded ) 
    {
+     if ( autoflow_expType == "ABDE" )
+       {
+	 setUnsetSaveBttn_abde();
+	 if( !edited_triples_abde[ cb_triple->currentText() ] )  
+	   return;
+       }
+     
      qDebug() << "NEW_TRIPLE_AUTO: all_loaded: " << all_loaded;
 
      qDebug() << "NEW_TRIPLE_AUTO: editProfile.count(): " << editProfile.count();
@@ -8191,23 +8236,49 @@ void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edi
 
   automatic_meniscus[ t_name ] = false;
 
-  //Put a comment, why this triple was processed manually
-  bool ok;
-  QString msg = QString(tr("Put a comment on MANUAL editing :"));
-  QString default_text = QString(tr("Reason for MANUAL editing: "));
-  QString comment_t    = QInputDialog::getText( this,
-						tr( "Reason for MANUAL editing" ),
-						msg, QLineEdit::Normal, default_text, &ok );
-  
-  if ( !ok )
+  //Put a comment, why this triple was processed manually IF NOT "ABDE"
+  if ( autoflow_expType != "ABDE" )
     {
-      return;
+      bool ok;
+      QString msg = QString(tr("Put a comment on MANUAL editing :"));
+      QString default_text = QString(tr("Reason for MANUAL editing: "));
+      QString comment_t    = QInputDialog::getText( this,
+						    tr( "Reason for MANUAL editing" ),
+						    msg, QLineEdit::Normal, default_text, &ok );
+      
+      if ( !ok )
+	{
+	  return;
+	}
+      
+      manual_edit_comments[ t_name ] = comment_t;
     }
-
-  manual_edit_comments[ t_name ] = comment_t;
+  else
+    {
+      edited_triples_abde[ t_name ] = true;
+      setUnsetSaveBttn_abde();
+    }
+      
   ///////////////////////////////////////////////////////
 
   new_triple_auto( 0 ); 
+}
+
+//for ABDE, check if all triples were processed & enable/diable Save
+void US_Edit::setUnsetSaveBttn_abde( void )
+{
+  bool all_processed = true;
+  QMap<QString, bool>::iterator os;
+  for ( os = edited_triples_abde.begin(); os != edited_triples_abde.end(); ++os )
+    {
+      if ( !os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+
+  pb_write -> setEnabled( all_processed );
 }
 
 // Save edit profile(s)

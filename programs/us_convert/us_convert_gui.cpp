@@ -608,6 +608,11 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("ABDE_DemoAAV_1");
    // QString invid    = QString("12");
    // QString aprofileguid = QString("be10df3c-a567-4335-af26-59cb182c79b6");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE-Test-052124-run1693");
+   // QString protname = QString("ABDE-Test-052124-v2");
+   // QString invid    = QString("165");
+   // QString aprofileguid = QString("ff68a3ec-b526-4f52-851b-b6890bfea7de");
    
    // QMap < QString, QString > protocol_details;
    // protocol_details[ "dataPath" ]       = curdir;
