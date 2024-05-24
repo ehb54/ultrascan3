@@ -1,3 +1,4 @@
+//! \file us_tar.h
 #ifndef US_TAR_H
 #define US_TAR_H
 

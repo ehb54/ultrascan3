@@ -1,3 +1,4 @@
+//! \file us_solve_sim.h
 #ifndef US_SOLVE_SIM_H
 #define US_SOLVE_SIM_H
 
