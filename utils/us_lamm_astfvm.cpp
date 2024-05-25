@@ -1353,35 +1353,54 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
       DbgLv(1) << "ASTFVM:set_buffer:" << codiff_needed;
       DbgLv(1) << "ASTFVM:set_buffer:" << bfg << nullptr;
       if (codiff_needed){
-      if (bfg == nullptr){
-         DbgLv(1) << "no bfg, calc new";
-         bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
-                                                                       simparams.band_volume,
-                                                                       cosed_components, simparams.cp_pathlen,
-                                                                       simparams.cp_angle);
-         if (!bandFormingGradient->upper_comps.isEmpty()){
-            bandFormingGradient->get_eigenvalues();
+         if ( bandFormingGradient != nullptr || bandFormingGradient->is_suitable(simparams.meniscus,
+                                                                                 simparams.bottom,
+                                                                                 simparams.band_volume,
+                                                                                 simparams.cp_pathlen,
+                                                                                 simparams.cp_angle,
+                                                                                 cosed_components,
+                                                                                 simparams.speed_step.last().time_last)) {
+               DbgLv(1) << "reused old bfg";
          }
-      }
-      else if (!bfg->is_empty){
-         DbgLv(1) << "reused old bfg";
-         bandFormingGradient = bfg;
-         codiff_needed = true;
-      }
-      else{
-         DbgLv(1) << "bfg, but empty";
-      bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
-                                                                    simparams.band_volume,
-                                                                    cosed_components, simparams.cp_pathlen,
-                                                                    simparams.cp_angle);
-         if (!bandFormingGradient->upper_comps.isEmpty()){
-            bandFormingGradient->get_eigenvalues();
+         else if (bfg == nullptr){
+            DbgLv(1) << "no bfg, calc new";
+            bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
+                                                                          simparams.band_volume,
+                                                                          cosed_components, simparams.cp_pathlen,
+                                                                          simparams.cp_angle);
+            if (!bandFormingGradient->upper_comps.isEmpty()){
+               bandFormingGradient->get_eigenvalues();
+            }
+         }
+         else if (!bfg->is_empty){
+            DbgLv(1) << "reused old bfg";
+            bandFormingGradient = bfg;
             codiff_needed = true;
          }
+         else{
+            DbgLv(1) << "bfg, but empty";
+            if ( bandFormingGradient != nullptr ){
+               delete bandFormingGradient;
+               bandFormingGradient = nullptr;
+            }
+            bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient( simparams.meniscus, simparams.bottom,
+                                                                          simparams.band_volume,
+                                                                          cosed_components, simparams.cp_pathlen,
+                                                                          simparams.cp_angle);
+               if (!bandFormingGradient->upper_comps.isEmpty()){
+                  bandFormingGradient->get_eigenvalues();
+                  codiff_needed = true;
+               }
 
+            }
       }
+      else {
+         if ( bandFormingGradient != nullptr ){
+            delete bandFormingGradient;
+            bandFormingGradient = nullptr;
+         }
+         bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient();
       }
-      else{bandFormingGradient  = new US_Math_BF::Band_Forming_Gradient();}
       DbgLv(2) << "buff cosed bfg: beta count" << bandFormingGradient->eigenvalues.count();
    }
 }
@@ -2576,17 +2595,21 @@ void US_LammAstfvm::validate_bfg() {
     }
    DbgLv(1) << "validated bfg";
     if (dbg_level > 0){
+       QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data->rawGUID );
+       double *Visc;
+       double *Dens;
+       double *Conc;
        // save density and viscosity gradient to disk
-         QString dens_file = "density_gradient_" + QString::number(bandFormingGradient->cp_angle)+ "degree.txt";
-         QString visc_file = "viscosity_gradient_" + QString::number(bandFormingGradient->cp_angle)+ "degree.txt";
-         QString conc_file = "concentration_gradient_" + QString::number(bandFormingGradient->cp_angle)+ "degree.txt";
-         QFile dens_out(dens_file);
-         QFile visc_out(visc_file);
-         QFile conc_out(conc_file);
-         if (dens_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_out.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream dens_stream(&dens_out);
-            QTextStream visc_stream(&visc_out);
-            QTextStream conc_stream(&conc_out);
+         QString dens_raw_file = "density_gradient_" + rawGUID + "_raw.txt";
+         QString visc_raw_file = "viscosity_gradient_" + rawGUID + "_raw.txt";
+         QString conc_raw_file = "concentration_gradient_" + rawGUID + "_raw.txt";
+         QFile dens_raw_out(dens_raw_file);
+         QFile visc_raw_out(visc_raw_file);
+         QFile conc_raw_out(conc_raw_file);
+         if (dens_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+            QTextStream dens_stream(&dens_raw_out);
+            QTextStream visc_stream(&visc_raw_out);
+            QTextStream conc_stream(&conc_raw_out);
             dens_stream << "radius\t";
             visc_stream << "radius\t";
             conc_stream << "radius\t";
@@ -2617,9 +2640,96 @@ void US_LammAstfvm::validate_bfg() {
                visc_stream << "\n";
                conc_stream << "\n";
             }
-            conc_out.close();
-            dens_out.close();
-            visc_out.close();
+            conc_raw_out.close();
+            dens_raw_out.close();
+            visc_raw_out.close();
+         }
+    }
+   if (dbg_level > 0){
+      QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data->rawGUID );
+      double *Visc;
+      double *Dens;
+      double *Conc;
+      // save density and viscosity gradient to disk
+      QString dens_raw_file = "density_gradient_" + rawGUID + ".txt";
+      QString visc_raw_file = "viscosity_gradient_" + rawGUID + ".txt";
+      QString conc_raw_file = "concentration_gradient_" + rawGUID + ".txt";
+      QFile dens_raw_out(dens_raw_file);
+      QFile visc_raw_out(visc_raw_file);
+      QFile conc_raw_out(conc_raw_file);
+      if (dens_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+         QTextStream dens_stream(&dens_raw_out);
+         QTextStream visc_stream(&visc_raw_out);
+         QTextStream conc_stream(&conc_raw_out);
+         dens_stream << "radius\t";
+         visc_stream << "radius\t";
+         conc_stream << "radius\t";
+         QVector<QVector<double>> dens_data(auc_data->scanCount());
+         QVector<QVector<double>> visc_data(auc_data->scanCount());
+         QVector<QVector<double>> conc_data(auc_data->scanCount());
+
+
+
+         for (int i = 0; i < auc_data->scanCount(); i++){
+            double time = auc_data->scanData[i].seconds;
+            QVector<double> ViscVec(auc_data->pointCount());
+            QVector<double> DensVec(auc_data->pointCount());
+            QVector<double> ConcVec(auc_data->pointCount());
+            Visc = ViscVec.data();
+            Dens = DensVec.data();
+            Conc = ConcVec.data();
+            for ( int j = 0; j < auc_data->pointCount(); j++ )      // loop for all x[m]
+            {
+               Dens[ j ] = bandFormingGradient->base_density;
+               Visc[ j ] = bandFormingGradient->base_viscosity;
+               Conc[ j ] = 0.0;
+            }
+            bandFormingGradient->interpolateCCodiff(auc_data->pointCount(), auc_data->xvalues.data(), time, Visc, Dens, Conc);
+            dens_data[i] = DensVec;
+            visc_data[i] = ViscVec;
+            conc_data[i] = ConcVec;
+         }
+         for (int i = 0; i < auc_data->scanCount(); i++){
+            dens_stream << "Scan " << i << "\t";
+            dens_stream << "Scan " << i << "\t";
+            visc_stream << "Scan " << i << "\t";
+            visc_stream << "Scan " << i << "\t";
+            conc_stream << "Scan " << i << "\t";
+            conc_stream << "Scan " << i << "\t";
+         }
+         dens_stream << "\n";
+         visc_stream << "\n";
+         conc_stream << "\n";
+         for (int i = 0; i < auc_data->scanCount(); i++){
+            dens_stream << QString::number(auc_data->scanData[i].seconds,'f',2) << "\t";
+            dens_stream << QString::number(auc_data->scanData[i].seconds,'f',2) << "\t";
+            visc_stream << QString::number(auc_data->scanData[i].seconds,'f',2) << "\t";
+            visc_stream << QString::number(auc_data->scanData[i].seconds,'f',2) << "\t";
+            conc_stream << QString::number(auc_data->scanData[i].seconds,'f',2) << "\t";
+            conc_stream << QString::number(auc_data->scanData[i].seconds,'f',2) << "\t";
+         }
+         dens_stream << "\n";
+         visc_stream << "\n";
+         conc_stream << "\n";
+         for (int j = 0; j < auc_data->pointCount(); j++){
+            dens_stream << QString::number(auc_data->radius(j), 'f', 4) << "\t";
+            visc_stream << QString::number(auc_data->radius(j), 'f', 4) << "\t";
+            conc_stream << QString::number(auc_data->radius(j), 'f', 4) << "\t";
+            for (int i = 0; i < auc_data->scanCount(); i++){
+               dens_stream << QString::number(auc_data->scanData[i].seconds, 'f', 2) << "\t";
+               visc_stream << QString::number(auc_data->scanData[i].seconds, 'f', 2) << "\t";
+               conc_stream << QString::number(auc_data->scanData[i].seconds, 'f', 2) << "\t";
+               dens_stream << QString::number(dens_data[i][j], 'f', 6) << "\t";
+               visc_stream << QString::number(visc_data[i][j], 'f', 6) << "\t";
+               conc_stream << QString::number(conc_data[i][j], 'f', 6) << "\t";
+            }
+            dens_stream << "\n";
+            visc_stream << "\n";
+            conc_stream << "\n";
+         }
+         conc_raw_out.close();
+         dens_raw_out.close();
+         visc_raw_out.close();
          }
     }
 }
