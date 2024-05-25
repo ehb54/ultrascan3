@@ -121,6 +121,23 @@ public:
 
       bool save_data(QString folder, QString key, US_DB2* db);
 
+      //! \brief Check if the band forming gradient is suitable for the simulation
+      //! \param n_mensicus The double value representing the new meniscus
+      //! \param n_bottom The double value representing the new bottom
+      //! \param n_overlay_volume The double value representing the new overlay volume
+      //! \param n_cp_pathlen The double value representing the new path length of the cell
+      //! \param n_cp_angle The double value representing the new angle of the cell
+      //! \param n_cosed_component The new cosedimenting components
+      //! \param n_maxTime The maximum time for the simulation
+      //! \return A boolean if the band forming gradient is suitable
+      bool is_suitable(double n_mensicus,
+                       double n_bottom,
+                       double n_overlay_volume,
+                       double n_cp_pathlen,
+                       double n_cp_angle,
+                       QList<US_CosedComponent> n_cosed_component,
+                       int n_maxTime);
+
       QString readGradientDataFromDB(QString load_key, QString &dir, US_DB2 *db);
 
       Band_Forming_Gradient(US_SimulationParameters asparms, US_DataIO::EditedData* editedData, US_Buffer* buffer);
@@ -129,13 +146,13 @@ public:
       //! \brief Given an Vector of eigenvalues the norm is calculated for a given internal radius meniscus and
       //! the external radius bottom
       //! \param beta The double value representing the eigenvalue
-      double norm(const double &beta) const;
+      double norm(const double &beta);
 
       //! \brief Calculate the eigenfunction for a given eigenvalue beta, external radius bottom and position x
       //! (x<= bottom)
       //! \param beta The double value representing the eigenvalue
       //! \param x    The double value representing the position r inside the cell
-      double eigenfunction(const double &beta, const double &x) const;
+      double eigenfunction(const double &beta, const double &x);
 
       //! \brief Calculate the equilibrium concentration of a cosedimenting component
       //! \param cosed_comp The cosedimenting component to calculate for
@@ -188,7 +205,13 @@ public:
        double dt;
    private:
       QMap<QString, std::array<double,3>> value_cache;
+      QMap<QString, double> bessel_cache;
 
+      //! \brief calculate a bessel function of a given type for the input x
+      //! \param bessel_type The string representing the type of the bessel function J0, J1, Y0, Y1
+      //! \param x The double value representing the input value for the bessel function
+      //! \return The double value representing the result of the bessel function
+      double bessel(const QString& bessel_type, double x);
 
 
       int     Nx;       // number of points in radial direction

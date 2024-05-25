@@ -374,25 +374,27 @@ bool US_Math_BF::Band_Forming_Gradient::get_eigenvalues( ) {
    bool return_value = secantSolver.solve_wrapper();
    eigenvalues = secantSolver.solutions;
    for (double beta: eigenvalues){
-      pre_calc_betas.append(1 / beta * ((-meniscus * bessel_J1(meniscus * beta) +
+      pre_calc_betas.append(1 / beta * ((-meniscus * bessel("J1", (meniscus * beta)) +
                                            (meniscus + overlay_thickness) *
-                                           bessel_J1(beta * (meniscus + overlay_thickness))) *
-                                          bessel_Y1(bottom * beta) + bessel_J1(bottom * beta) *
-                                                                     (meniscus * bessel_Y1(meniscus * beta) -
-                                                                      (meniscus + overlay_thickness) *
-                                                                      bessel_Y1(beta * (meniscus +
-                                                                                        overlay_thickness)))) * norm(beta));
+                                           bessel("J1",(beta * (meniscus + overlay_thickness)))) *
+                                          bessel("Y1",(bottom * beta)) +
+                                          bessel("J1",(bottom * beta)) *
+                                          (meniscus * bessel("Y1",(meniscus * beta)) -
+                                          (meniscus + overlay_thickness) *
+                                          bessel("Y1",(beta * (meniscus + overlay_thickness)))))
+                                          * norm(beta));
    }
    return return_value;
 }
 
-double US_Math_BF::Band_Forming_Gradient::norm(const double &beta) const {
-   return (sq(M_PI) / 2 * sq(beta) * sq(bessel_J1(beta * meniscus)) /
-           (sq(bessel_J1(beta * meniscus)) - sq(bessel_J1(beta * bottom))));
+double US_Math_BF::Band_Forming_Gradient::norm(const double &beta) {
+   return (sq(M_PI) / 2 * sq(beta) * sq(bessel("J1",(beta * meniscus))) /
+           (sq(bessel("J1",(beta * meniscus))) - sq(bessel("J1",(beta * bottom)))));
 }
 
-double US_Math_BF::Band_Forming_Gradient::eigenfunction(const double &beta, const double &x) const {
-   return (bessel_J0(beta * x) * bessel_Y1(beta * bottom) - bessel_Y0(beta * x) * bessel_J1(beta * bottom));
+double US_Math_BF::Band_Forming_Gradient::eigenfunction(const double &beta, const double &x) {
+   return (bessel("J0",(beta * x)) * bessel("Y1",(beta * bottom))
+   - bessel("Y0",(beta * x)) * bessel("J1",(beta * bottom)));
 }
 
 double US_Math_BF::Band_Forming_Gradient::calc_eq_comp_conc(US_CosedComponent &cosed_comp) const {
@@ -1061,6 +1063,42 @@ bool US_Math_BF::Band_Forming_Gradient::save_data(QString folder, QString key, U
 
 
    return true;
+}
+
+bool US_Math_BF::Band_Forming_Gradient::is_suitable( double n_meniscus, double n_bottom, double n_overlay_volume,
+                                                     double n_cp_pathlen, double n_cp_angle,
+                                                     QList<US_CosedComponent> n_cosed_component, int n_maxTime ) {
+   if ( is_empty ) {
+      return false;
+   }
+   if ( QString::number(meniscus, 'f', 4) != QString::number(n_meniscus, 'f', 4) ||
+      QString::number(bottom, 'f', 4) != QString::number(n_bottom, 'f', 4) ||
+      QString::number(overlay_volume, 'f', 4) != QString::number(n_overlay_volume, 'f', 4) ||
+      QString::number(cp_pathlen, 'f', 4) != QString::number(n_cp_pathlen, 'f', 4) ||
+      QString::number(cp_angle, 'f', 4) != QString::number(n_cp_angle, 'f', 4) ||
+        cosed_component != n_cosed_component || dens_bfg_data.scanData.last().seconds >= n_maxTime) {
+      return false;
+   }
+   return true;
+}
+
+double US_Math_BF::Band_Forming_Gradient::bessel( const QString& bessel_type, double x ) {
+   QString cache_key = bessel_type + "_" + QString::number(x, 'f', 4);
+   if (bessel_cache.contains(cache_key)) {
+      return bessel_cache[cache_key];
+   }
+   double result = 0.0;
+   if (bessel_type == "J0") {
+      result = bessel_J0(x);
+   } else if (bessel_type == "J1") {
+      result = bessel_J1(x);
+   } else if (bessel_type == "Y0") {
+      result = bessel_Y0(x);
+   } else if (bessel_type == "Y1") {
+      result = bessel_Y1(x);
+   }
+   bessel_cache[cache_key] = result;
+   return result;
 }
 
 
