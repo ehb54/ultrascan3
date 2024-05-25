@@ -477,6 +477,144 @@ DbgLv(1) << "2P:SF: orig_sols: "
             bfg->get_eigenvalues();
             bfg->calculate_gradient(*simparms,&auc_data);
          }
+         if (dbg_level > 0){
+               QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
+               double *Visc;
+               double *Dens;
+               double *Conc;
+               // save density and viscosity gradient to disk
+               QString dens_raw_file = "density_gradient_" + rawGUID + ".txt";
+               QString visc_raw_file = "viscosity_gradient_" + rawGUID + ".txt";
+               QString conc_raw_file = "concentration_gradient_" + rawGUID + ".txt";
+               QFile dens_raw_out(dens_raw_file);
+               QFile visc_raw_out(visc_raw_file);
+               QFile conc_raw_out(conc_raw_file);
+               if (dens_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+                  QTextStream dens_stream(&dens_raw_out);
+                  QTextStream visc_stream(&visc_raw_out);
+                  QTextStream conc_stream(&conc_raw_out);
+                  dens_stream << "radius\t";
+                  visc_stream << "radius\t";
+                  conc_stream << "radius\t";
+                  QVector<QVector<double>> dens_data(auc_data.scanCount());
+                  QVector<QVector<double>> visc_data(auc_data.scanCount());
+                  QVector<QVector<double>> conc_data(auc_data.scanCount());
+
+
+
+                  for (int i = 0; i < auc_data.scanCount(); i++){
+                     double time = auc_data.scanData[i].seconds;
+                     QVector<double> ViscVec(auc_data.pointCount());
+                     QVector<double> DensVec(auc_data.pointCount());
+                     QVector<double> ConcVec(auc_data.pointCount());
+                     Visc = ViscVec.data();
+                     Dens = DensVec.data();
+                     Conc = ConcVec.data();
+                     for ( int j = 0; j < auc_data.pointCount(); j++ )      // loop for all x[m]
+                     {
+                        Dens[ j ] = bfg->base_density;
+                        Visc[ j ] = bfg->base_viscosity;
+                        Conc[ j ] = 0.0;
+                     }
+                     bfg->interpolateCCodiff(auc_data.pointCount(), auc_data.xvalues.data(), time, Visc, Dens, Conc);
+                     dens_data[i] = DensVec;
+                     visc_data[i] = ViscVec;
+                     conc_data[i] = ConcVec;
+                  }
+                  for (int i = 0; i < auc_data.scanCount(); i++){
+                     dens_stream << "Scan " << i << "\t";
+                     dens_stream << "Scan " << i << "\t";
+                     visc_stream << "Scan " << i << "\t";
+                     visc_stream << "Scan " << i << "\t";
+                     conc_stream << "Scan " << i << "\t";
+                     conc_stream << "Scan " << i << "\t";
+                  }
+                  dens_stream << "\n";
+                  visc_stream << "\n";
+                  conc_stream << "\n";
+                  for (int i = 0; i < auc_data.scanCount(); i++){
+                     dens_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     dens_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     visc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     visc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     conc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     conc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                  }
+                  dens_stream << "\n";
+                  visc_stream << "\n";
+                  conc_stream << "\n";
+                  for (int j = 0; j < auc_data.pointCount(); j++){
+                     dens_stream << QString::number(auc_data.radius(j), 'f', 4) << "\t";
+                     visc_stream << QString::number(auc_data.radius(j), 'f', 4) << "\t";
+                     conc_stream << QString::number(auc_data.radius(j), 'f', 4) << "\t";
+                     for (int i = 0; i < auc_data.scanCount(); i++){
+                        dens_stream << QString::number(auc_data.scanData[i].seconds, 'f', 2) << "\t";
+                        visc_stream << QString::number(auc_data.scanData[i].seconds, 'f', 2) << "\t";
+                        conc_stream << QString::number(auc_data.scanData[i].seconds, 'f', 2) << "\t";
+                        dens_stream << QString::number(dens_data[i][j], 'f', 6) << "\t";
+                        visc_stream << QString::number(visc_data[i][j], 'f', 6) << "\t";
+                        conc_stream << QString::number(conc_data[i][j], 'f', 6) << "\t";
+                     }
+                     dens_stream << "\n";
+                     visc_stream << "\n";
+                     conc_stream << "\n";
+                  }
+                  conc_raw_out.close();
+                  dens_raw_out.close();
+                  visc_raw_out.close();
+               }
+         }
+         if (dbg_level > 0){
+            QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
+            double *Visc;
+            double *Dens;
+            double *Conc;
+            // save density and viscosity gradient to disk
+            QString dens_raw_file = "density_gradient_" + rawGUID + "_raw.txt";
+            QString visc_raw_file = "viscosity_gradient_" + rawGUID + "_raw.txt";
+            QString conc_raw_file = "concentration_gradient_" + rawGUID + "_raw.txt";
+            QFile dens_raw_out(dens_raw_file);
+            QFile visc_raw_out(visc_raw_file);
+            QFile conc_raw_out(conc_raw_file);
+            if (dens_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+               QTextStream dens_stream(&dens_raw_out);
+               QTextStream visc_stream(&visc_raw_out);
+               QTextStream conc_stream(&conc_raw_out);
+               dens_stream << "radius\t";
+               visc_stream << "radius\t";
+               conc_stream << "radius\t";
+               for (int i = 0; i < bfg->dens_bfg_data.scanData.size(); i++){
+                  dens_stream << bfg->dens_bfg_data.scanData[i].seconds << "\t";
+                  dens_stream << bfg->dens_bfg_data.scanData[i].seconds << "\t";
+                  visc_stream << bfg->visc_bfg_data.scanData[i].seconds << "\t";
+                  visc_stream << bfg->visc_bfg_data.scanData[i].seconds << "\t";
+                  conc_stream << bfg->conc_bfg_data.scanData[i].seconds << "\t";
+                  conc_stream << bfg->conc_bfg_data.scanData[i].seconds << "\t";
+               }
+               dens_stream << "\n";
+               visc_stream << "\n";
+               conc_stream << "\n";
+               for (int j = 0; j < bfg->dens_bfg_data.pointCount(); j++){
+                  dens_stream << QString::number(bfg->dens_bfg_data.radius(j)) << "\t";
+                  visc_stream << QString::number(bfg->visc_bfg_data.radius(j)) << "\t";
+                  conc_stream << QString::number(bfg->conc_bfg_data.radius(j)) << "\t";
+                  for (int i = 0; i < bfg->dens_bfg_data.scanData.size(); i++){
+                     dens_stream << bfg->dens_bfg_data.scanData[i].seconds << "\t";
+                     visc_stream << bfg->visc_bfg_data.scanData[i].seconds << "\t";
+                     conc_stream << bfg->conc_bfg_data.scanData[i].seconds << "\t";
+                     dens_stream << QString::number(bfg->dens_bfg_data.scanData[i].rvalues[j]) << "\t";
+                     visc_stream << QString::number(bfg->visc_bfg_data.scanData[i].rvalues[j]) << "\t";
+                     conc_stream << QString::number(bfg->conc_bfg_data.scanData[i].rvalues[j]) << "\t";
+                  }
+                  dens_stream << "\n";
+                  visc_stream << "\n";
+                  conc_stream << "\n";
+               }
+               conc_raw_out.close();
+               dens_raw_out.close();
+               visc_raw_out.close();
+            }
+         }
       }
 
    }
