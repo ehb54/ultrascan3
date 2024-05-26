@@ -1,3 +1,4 @@
+//! \file us_load_auc.h
 #ifndef US_LOAD_AUC_H
 #define US_LOAD_AUC_H
 

@@ -70,9 +70,14 @@
     - \ref US_BufferGui
     - \ref US_Choice
     - \ref US_ColorGradIO
+    - \ref US_CombPlotsGui
+    - \ref US_CSV_Loader
     - \ref US_DataLoader
     - \ref US_Editor
     - \ref US_EditorGui
+    - \ref US_EditSpectrum
+    - \ref US_ExtinctFitter
+    - \ref US_Extinction
     - \ref US_GuiSettings
     - \ref US_GuiUtil
     - \ref US_Help
@@ -80,9 +85,13 @@
     - \ref US_Investigator
     - \ref US_License
     - \ref US_LoadableNoise
+    - \ref US_LoadAUC
+    - \ref US_Minimize
     - \ref US_ModelEditor
     - \ref US_ModelGui
     - \ref US_ModelLoader
+    - \ref US_MwlData
+    - \ref US_NewSpectrum
     - \ref US_NoiseLoader
     - \ref US_Passwd
     - \ref US_Plot
