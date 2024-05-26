@@ -51,6 +51,7 @@ public:
 
     QString channel_name; ///< Channel name for the report.
 
+    //Main parameters set manually in reference reports
     double tot_conc;                  ///< Total concentration.
     double tot_conc_tol;              ///< Total concentration tolerance.
     double rmsd_limit;                ///< RMSD limit.
@@ -59,11 +60,13 @@ public:
     double experiment_duration;       ///< Experiment duration.
     double experiment_duration_tol;   ///< Experiment duration tolerance.
 
+    //Bool flag for changed exp. time & if read form DB
     bool exp_time_changed;            ///< Flag indicating if experiment time has changed.
     bool DBread;                      ///< Flag indicating if data is read from the database.
     bool interf_report_changed;       ///< Flag indicating if the interface report has changed.
     bool report_changed;              ///< Flag indicating if the report has changed.
 
+    //report mask params
     bool tot_conc_mask;               ///< Total concentration mask.
     bool rmsd_limit_mask;             ///< RMSD limit mask.
     bool av_intensity_mask;           ///< Average intensity mask.
@@ -71,6 +74,7 @@ public:
     bool integration_results_mask;    ///< Integration results mask.
     bool plots_mask;                  ///< Plots mask.
 
+    //Pseudo3D mask parameters
     bool pseudo3d_mask;               ///< Pseudo3D mask.
     bool pseudo3d_2dsait_s_ff0;       ///< Pseudo3D 2D SAIT s vs ff0 mask.
     bool pseudo3d_2dsait_s_d;         ///< Pseudo3D 2D SAIT s vs D mask.
@@ -85,6 +89,7 @@ public:
     bool pseudo3d_pcsa_mw_ff0;        ///< Pseudo3D PCSA mw vs ff0 mask.
     bool pseudo3d_pcsa_mw_d;          ///< Pseudo3D PCSA mw vs D mask.
 
+    //Rest of parameters following from protocol: not used so far
     int scan_number;                  ///< Number of scans.
     double load_volume;               ///< Load volume.
     double av_rotor_speed;            ///< Average rotor speed.

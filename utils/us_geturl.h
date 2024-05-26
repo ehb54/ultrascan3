@@ -10,13 +10,8 @@
 #include <QtWidgets/QApplication>
 #include "us_extern.h"
 
-/**
- * @class US_GetUrl
- * @brief A class to perform HTTP GET requests.
- *
- * This class uses QNetworkAccessManager to perform HTTP GET requests and
- * retrieve data from a specified URL.
- */
+// derived from last answer https://stackoverflow.com/questions/46943134/how-do-i-write-a-qt-http-get-request
+
 class US_UTIL_EXTERN US_GetUrl : public QObject {
     Q_OBJECT
 public:
@@ -32,6 +27,8 @@ public:
      */
     void get(const QString & url);
 
+    QNetworkAccessManager *manager; ///< Manager for handling network operations.
+
     /**
      * @brief Returns the downloaded data.
      *
@@ -46,7 +43,6 @@ public:
             void downloaded();
 
 private:
-    QNetworkAccessManager *manager; ///< Manager for handling network operations.
     QByteArray m_DownloadedData;    ///< Byte array to store downloaded data.
 
 private slots:

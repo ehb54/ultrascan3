@@ -21,7 +21,7 @@
  */
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-#define US_EXPORT       __declspec(dllexport)
+  #define US_EXPORT       __declspec(dllexport)
   #define US_IMPORT       __declspec(dllimport)
 
   /**
@@ -78,7 +78,7 @@
  * @brief Default definition for exporting symbols if not on Windows.
  */
 #if !defined(US_EXPORT)
-#define US_EXPORT
+  #define US_EXPORT
 #endif
 
 /**
@@ -86,7 +86,7 @@
  * @brief Default definition for importing symbols if not on Windows.
  */
 #if !defined(US_IMPORT)
-#define US_IMPORT
+  #define US_IMPORT
 #endif
 
 /**
@@ -94,7 +94,7 @@
  * @brief Default definition for utility symbols if not on Windows.
  */
 #if !defined(US_UTIL_EXTERN)
-#define US_UTIL_EXTERN
+  #define US_UTIL_EXTERN
 #endif
 
 /**
@@ -102,7 +102,7 @@
  * @brief Default definition for GUI symbols if not on Windows.
  */
 #if !defined(US_GUI_EXTERN)
-#define US_GUI_EXTERN
+  #define US_GUI_EXTERN
 #endif
 
 #endif // US_EXTERN_H
