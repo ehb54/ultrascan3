@@ -15,28 +15,36 @@
 #include "us_eprofile.h"
 #include "us_minimize.h"
 
-//! \class US_ExtinctionGui
+class CustomListWidgetItem : public QListWidgetItem {
+public:
+    CustomListWidgetItem(QListWidget* parent = nullptr)
+            : QListWidgetItem(parent) {}
+
+    bool operator<(const QListWidgetItem& other) const;
+};
+
+//! \class US_Extinction
 //! \brief A class to provide a GUI for managing extinction data.
-class US_GUI_EXTERN US_ExtinctionGui : public US_Widgets
+class US_GUI_EXTERN US_Extinction : public US_Widgets
 {
     Q_OBJECT
 
     public:
 
     /*!
-     * \brief Constructor for US_ExtinctionGui.
+     * \brief Constructor for US_Extinction.
      * \param type The type of extinction.
      * \param db_flag Flag indicating if database is used.
      * \param p_buffer Pointer to the buffer.
      * \param p_analyte Pointer to the analyte.
      * \param p_solution Pointer to the solution.
      */
-    US_ExtinctionGui( QString type, bool db_flag, US_Buffer* p_buffer = 0, US_Analyte* p_analyte = 0, US_Solution* p_solution = 0 );
+    US_Extinction( QString type, bool db_flag, US_Buffer* p_buffer = 0, US_Analyte* p_analyte = 0, US_Solution* p_solution = 0 );
 
     /*!
-     * \brief Destructor for US_ExtinctionGui.
+     * \brief Destructor for US_Extinction.
      */
-    ~US_ExtinctionGui() {};
+    ~US_Extinction() {};
 
     private:
         US_Buffer* buffer; /*!< Buffer object. */
