@@ -4055,13 +4055,16 @@ bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
       if ( ref_chnns[rn] < ref_chnn_min )
 	ref_chnn_min = ref_chnns[rn];
     }
-
   qDebug() << "min, max -- " << ref_chnn_min << ref_chnn_max;
+
+  int ref_use_chhs_number = 0;
   for (int rn=0; rn<ref_use_chnns.size(); ++rn)
     {
       //skip if it's a ref chann
       if ( ref_chnns[rn] > 0 )
 	continue;
+
+      ++ref_use_chhs_number;
       
       if ( ref_use_chnns[rn] < ref_chnn_min ||
 	   ref_use_chnns[rn] > ref_chnn_max ||
@@ -4074,6 +4077,13 @@ bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
 
 	  all_refs_set = false;
 	}
+    }
+
+  //if all channs set as ref. than it's incorrect
+  if ( ref_use_chhs_number == 0 )
+    {
+      msg_to_user << QString(tr("All channels are set as \"Reference\"; Please define at least one non-reference channel..."));
+      all_refs_set = false;
     }
   
   return all_refs_set;
