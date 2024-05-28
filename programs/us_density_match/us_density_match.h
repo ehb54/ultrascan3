@@ -1,3 +1,4 @@
+//! \file us_density_match.h
 #ifndef US_DENS_MATCH_H
 #define US_DENS_MATCH_H
 

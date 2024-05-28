@@ -130,16 +130,27 @@
     - \ref US_WidgetsDialog
 
   - Programs
-     - \ref US_Win
+     - \ref US_ABDE_MW
+     - \ref US_auditTrailGMP
+     - \ref US_Analysis_auto
+     - \ref US_Buoyancy
+     - \ref US_ColorGradient
+     - \ref US_CombineModels
      - \ref US_Config
        - \ref US_Admin
+       - \ref US_Advanced
        - \ref US_Color
        - \ref US_Database
        - \ref US_Font
+       - \ref US_NewXpnHostDB
+       - \ref US_XpnHost
+       - \ref US_XpnHostDB
      - \ref US_Convert
+     - \ref US_Dcdt
+     - \ref US_DDistr_Combine
      - \ref US_HelpDaemon
      - \ref licenseMain
-   
+     - \ref US_Win
 */
 /*!
 Practice:<br>
