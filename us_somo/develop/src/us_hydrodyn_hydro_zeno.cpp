@@ -169,7 +169,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( cb_zeno_surface_thickness_from_rg );
    connect( cb_zeno_surface_thickness_from_rg, SIGNAL( clicked() ), this, SLOT( set_zeno_surface_thickness_from_rg() ) );
 
-   lbl_zeno_surface_thickness_from_rg_a = new QLabel(us_tr("Surface thickness from Rg intercept:"), this );
+   lbl_zeno_surface_thickness_from_rg_a = new QLabel(us_tr("Surface thickness from Rg a:"), this );
    lbl_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_thickness_from_rg_a->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_thickness_from_rg_a );
@@ -183,7 +183,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    le_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness_from_rg_a, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_a(const QString &)));
 
-   lbl_zeno_surface_thickness_from_rg_b = new QLabel(us_tr("Surface thickness from Rg slope:"), this );
+   lbl_zeno_surface_thickness_from_rg_b = new QLabel(us_tr("Surface thickness from Rg b:"), this );
    lbl_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_thickness_from_rg_b->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_thickness_from_rg_b );
@@ -196,6 +196,20 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( le_zeno_surface_thickness_from_rg_b );
    le_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness_from_rg_b, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_b(const QString &)));
+
+   lbl_zeno_surface_thickness_from_rg_c = new QLabel(us_tr("Surface thickness from Rg c:"), this );
+   lbl_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_surface_thickness_from_rg_c->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_surface_thickness_from_rg_c );
+   lbl_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_surface_thickness_from_rg_c = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
+   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness_from_rg_c));
+   le_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignVCenter);
+   le_zeno_surface_thickness_from_rg_c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_surface_thickness_from_rg_c );
+   le_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_surface_thickness_from_rg_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_c(const QString &)));
 
    cb_zeno_cxx = new QCheckBox( this );
    cb_zeno_cxx->setText( us_tr( "Test experimental new Zeno version") );
@@ -273,6 +287,10 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
 
    background->addWidget( lbl_zeno_surface_thickness_from_rg_b, j, 1 );
    background->addWidget( le_zeno_surface_thickness_from_rg_b , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_surface_thickness_from_rg_c, j, 1 );
+   background->addWidget( le_zeno_surface_thickness_from_rg_c , j, 2 );
    j++;
 
    background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
@@ -398,6 +416,12 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness_from_rg_b(const QStri
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness_from_rg_c(const QString &str)
+{
+   (*hydro).zeno_surface_thickness_from_rg_c = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Hydro_Zeno::update_zeno_repeats(const QString &str)
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_repeats" ] = QString( "%1" ).arg( str.toUInt() );
@@ -445,4 +469,5 @@ void US_Hydrodyn_Hydro_Zeno:: update_enables()
    le_zeno_surface_thickness          ->setEnabled( !cb_zeno_surface_thickness_from_rg->isChecked() );
    le_zeno_surface_thickness_from_rg_a->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
    le_zeno_surface_thickness_from_rg_b->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
+   le_zeno_surface_thickness_from_rg_c->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
 }

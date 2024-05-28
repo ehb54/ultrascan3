@@ -69,6 +69,7 @@ struct hydro_options
    bool zeno_surface_thickness_from_rg;
    double zeno_surface_thickness_from_rg_a;
    double zeno_surface_thickness_from_rg_b;
+   double zeno_surface_thickness_from_rg_c;
 };
 
 class US_EXTERN US_Hydrodyn_Hydro : public QFrame

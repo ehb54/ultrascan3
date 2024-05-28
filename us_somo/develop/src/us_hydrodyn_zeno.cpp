@@ -13552,7 +13552,12 @@ bool US_Hydrodyn_Zeno::run(
 
    // add skin thickness
    if ( options->zeno_surface_thickness_from_rg ) {
-      double st = options->zeno_surface_thickness_from_rg_a + options->zeno_surface_thickness_from_rg_b * Rg;
+      // linear
+      // double st = options->zeno_surface_thickness_from_rg_a + options->zeno_surface_thickness_from_rg_b * Rg;
+
+      // sigmoid
+      double st = options->zeno_surface_thickness_from_rg_a / ( 1 + exp( -( Rg - options->zeno_surface_thickness_from_rg_b ) / options->zeno_surface_thickness_from_rg_c ) );
+
       qDebug() << QString( "Rg %1 st %2\n" ).arg( Rg ).arg( st );
       if ( st > 0 ) {
          tso << QString( "st        %1\n"    ).arg( st );
@@ -13980,7 +13985,10 @@ bool US_Hydrodyn::calc_zeno()
                fname = fname.replace( QRegExp( "\\.(zno)$" ), "" );
 
                if ( hydro.zeno_surface_thickness_from_rg ) {
-                  double st = hydro.zeno_surface_thickness_from_rg_a + hydro.zeno_surface_thickness_from_rg_b * model_vector[ current_model ].asa_rg_pos;
+                  // linear
+                  // double st = hydro.zeno_surface_thickness_from_rg_a + hydro.zeno_surface_thickness_from_rg_b * model_vector[ current_model ].asa_rg_pos;
+                  // sigmoid
+                  double st = hydro.zeno_surface_thickness_from_rg_a / ( 1 + exp( -( model_vector[ current_model ].asa_rg_pos - hydro.zeno_surface_thickness_from_rg_b ) / hydro.zeno_surface_thickness_from_rg_c ) );
                   editor_msg(
                              "darkblue"
                              ,QString( us_tr( "Computed skin thickness for model %1 from Rg %2 [%3] is %4 [%5]\n" ) )
