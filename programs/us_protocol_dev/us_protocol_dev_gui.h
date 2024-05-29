@@ -51,6 +51,8 @@
 #include "us_report_gmp.h"
 #include "us_report_gui.h"
 
+class US_ProtocolDevMain;
+
 /**
  * \class VerticalTabStyle
  * \brief Class representing a custom style for vertical tabs.
@@ -923,7 +925,7 @@ class US_ProtocolDevMain : public US_Widgets
          * \brief Signal to pass to report.
          * \param protocol_details The protocol details.
          */
-        void pass_to_report( QMap < QString, QString > & protocol details );
+        void pass_to_report( QMap < QString, QString > & protocol_details );
 
         /**
          * \brief Signal to indicate that the US project is closed.

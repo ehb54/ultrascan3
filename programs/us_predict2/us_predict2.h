@@ -12,20 +12,16 @@
 //! \brief Class for predicting molecular weight, sedimentation, and diffusion coefficients.
 class US_Predict2 : public US_Widgets
 {
-    Q_OBJECT
+	Q_OBJECT
 
     public:
         //! \brief Constructor for US_Predict2
         US_Predict2();
 
-    private:
-        //! \enum ModelType
-        //! \brief Enumeration for different model types
-        enum ModelType { None, MW_SEDIMENTATION, MW_DIFFUSION, SED_DIFF };
+	private:
 
-        //! \enum ShapeType
-        //! \brief Enumeration for different shape types
-        enum ShapeType { PROLATE, OBLATE, ROD };
+      enum { None, MW_SEDIMENTATION, MW_DIFFUSION, SED_DIFF } model;
+      enum { PROLATE, OBLATE, ROD };
 
         int analyte_number;          //!< Analyte number
         double sed_coeff;            //!< Sedimentation coefficient
