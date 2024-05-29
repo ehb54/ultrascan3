@@ -1,3 +1,5 @@
+//! \file us_protocol_dev_gui.h
+//! \brief This file contains the declaration of the classes for the US Protocol Development GUI.
 #ifndef US_PROTODEV_H
 #define US_PROTODEV_H
 
@@ -6,16 +8,15 @@
 #include <fstream>
 #include <QtSql>
 
-
 #include "../us_xpn_viewer/us_xpn_viewer_gui.h"
 #include "../us_experiment/us_experiment_gui_optima.h"
-#include "../us_convert/us_experiment.h"     
-#include "../us_convert/us_experiment_gui.h" 
-#include "../us_convert/us_convert_gui.h"    
-#include "../us_convert/us_convertio.h"      
-#include "../us_convert/us_get_run.h"        
-#include "../us_convert/us_intensity.h"      
-#include "../us_convert/us_selectbox.h"      
+#include "../us_convert/us_experiment.h"
+#include "../us_convert/us_experiment_gui.h"
+#include "../us_convert/us_convert_gui.h"
+#include "../us_convert/us_convertio.h"
+#include "../us_convert/us_get_run.h"
+#include "../us_convert/us_intensity.h"
+#include "../us_convert/us_selectbox.h"
 #include "../us_convert/us_select_triples.h"
 
 #include "../us_edit/us_edit.h"
@@ -50,442 +51,910 @@
 #include "us_report_gmp.h"
 #include "us_report_gui.h"
 
-class US_ProtocolDevMain;
-
+/**
+ * \class VerticalTabStyle
+ * \brief Class representing a custom style for vertical tabs.
+ */
 class VerticalTabStyle : public QProxyStyle {
-public:
-  QSize sizeFromContents(ContentsType type, const QStyleOption* option,
-                         const QSize& size, const QWidget* widget) const {
-    QSize s = QProxyStyle::sizeFromContents(type, option, size, widget);
-    if (type == QStyle::CT_TabBarTab) {
-      s.transpose();
-    }
-    return s;
-  }
+    public:
+        /**
+         * \brief Calculates the size of the contents for the given type.
+         * \param type The type of contents.
+         * \param option The style options.
+         * \param size The size of the widget.
+         * \param widget The widget for which the size is being calculated.
+         * \return The size of the contents.
+         */
+        QSize sizeFromContents(ContentsType type, const QStyleOption* option,
+                               const QSize& size, const QWidget* widget) const {
+            QSize s = QProxyStyle::sizeFromContents(type, option, size, widget);
+            if (type == QStyle::CT_TabBarTab) {
+                s.transpose();
+            }
+            return s;
+        }
 
-  void drawControl(ControlElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const {
-    if (element == CE_TabBarTabLabel) {
-      if (const QStyleOptionTab* tab = qstyleoption_cast<const QStyleOptionTab*>(option)) {
-        QStyleOptionTab opt(*tab);
-        opt.shape = QTabBar::RoundedNorth;
-        QProxyStyle::drawControl(element, &opt, painter, widget);
-        return;
-      }
-    }
-    QProxyStyle::drawControl(element, option, painter, widget);
-  }
+        /**
+         * \brief Draws the control element for the given options.
+         * \param element The control element to be drawn.
+         * \param option The style options.
+         * \param painter The painter used for drawing.
+         * \param widget The widget for which the control element is being drawn.
+         */
+        void drawControl(ControlElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const {
+            if (element == CE_TabBarTabLabel) {
+                if (const QStyleOptionTab* tab = qstyleoption_cast<const QStyleOptionTab*>(option)) {
+                    QStyleOptionTab opt(*tab);
+                    opt.shape = QTabBar::RoundedNorth;
+                    QProxyStyle::drawControl(element, &opt, painter, widget);
+                    return;
+                }
+            }
+            QProxyStyle::drawControl(element, option, painter, widget);
+        }
 };
 
-
-//! \brief Initial panel
-class US_InitDialogueGui : public US_WidgetsDialog 
-{
-  Q_OBJECT
-  
-  public:
-    US_InitDialogueGui( QWidget* );
-    ~US_InitDialogueGui() {};
-
-
-   QList< QStringList >  autoflowdata;
-   QList< QStringList >  autoflowdataHistory;
-   QStringList occupied_instruments;
-   US_SelectItem* pdiag_autoflow;
-   US_SelectItem* pdiag_autoflowHistory; 
-
-   void initRecordsDialogue( void );
-   //void checkCertificates( void );
-
-   bool initDialogueOpen;
-   bool initMsgNorecOpen;
-   bool initMsgNorecDelOpen;
-   
-   void initAutoflowPanel( void );
-
-   QLabel* movie_label;
-
-   QMessageBox * msg_norec;
-   QMessageBox * msg_norec_del;
-   
-            
-  private:
-    US_ProtocolDevMain*    mainw;      // Parent to all panels
-    int offset;
-
-    int autoflow_records;
-    QMap < QString, QString > channels_report;
-
-    void initRecords( void );
-    //void initRecordsDialogue( void );
-    
-    int  get_autoflow_records( void );
-    QMap < QString, QString > read_autoflow_record( int, QString );
-    QMap < QString, QString > read_autoflow_failed_record( QString );
-    static int list_all_autoflow_records( QList< QStringList >&, US_DB2*, QString );
-    
-    void read_optima_machines( US_DB2* = 0 ); 
-    QList< QMap<QString, QString> > instruments;
-
-    void load_autoflowHistory_dialog( void );
-
-    void do_run_tables_cleanup( QMap< QString, QString > ); 
-    void do_run_data_cleanup( QMap< QString, QString > );
-    bool readAProfileBasicParms_auto ( QXmlStreamReader& );
-      
- protected:
-    void resizeEvent(QResizeEvent *event) override;
-      
-  private slots:
-     void update_autoflow_data( void );
-          
-  signals:
-     void define_new_experiment_init ( QMap < QString, QString > & protocol_details );
-     void switch_to_live_update_init(  QMap < QString, QString > & protocol_details );
-     void switch_to_post_processing_init(  QMap < QString, QString > & protocol_details );
-     void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
-     void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
-     void switch_to_report_init(  QMap < QString, QString > & protocol_details );
-     void to_initAutoflow( void );
-
-};
-
-//! \brief Experiment panel
-class US_ExperGui : public US_WidgetsDialog 
+//! \class US_InitDialogueGui
+//! \brief Class representing the initial panel in the protocol development GUI.
+class US_InitDialogueGui : public US_WidgetsDialog
 {
    Q_OBJECT
 
-   public:
-      US_ExperGui( QWidget* );
-      ~US_ExperGui() {};
+    public:
+        /**
+         * \brief Constructor for the initial dialogue GUI.
+         * \param parent The parent widget.
+         */
+        US_InitDialogueGui( QWidget* parent );
 
+        /**
+         * \brief Destructor for the initial dialogue GUI.
+         */
+        ~US_InitDialogueGui() {};
 
-   private:
-      US_ProtocolDevMain*    mainw;      // Parent to all panels
+        QList< QStringList > autoflowdata; //!< Autoflow data
+        QList< QStringList > autoflowdataHistory; //!< Autoflow data history
+        QStringList occupied_instruments; //!< List of occupied instruments
+        US_SelectItem* pdiag_autoflow; //!< Autoflow selection dialog
+        US_SelectItem* pdiag_autoflowHistory; //!< Autoflow history selection dialog
 
-      QLabel*     lb_exp_banner;
-      QPushButton* pb_openexp;          // Button to open exper.
-      QLineEdit*   opening_msg;
-      US_ExperimentMain*    sdiag;
-      int offset;
+        /**
+         * \brief Initializes the records dialogue.
+         */
+        void initRecordsDialogue( void );
 
- protected:
-      void resizeEvent(QResizeEvent *event) override;
-     
-      
-   private slots:
-      void manageExperiment ( void );        // Slot for exp.  button clicked
-      void us_exp_is_closed_set_button( void );
-      void to_live_update( QMap < QString, QString > & protocol_details );
-      //void clear_experiment( QString & protocolName);
-      void exp_cleared( void );
-      void pass_used_instruments( QMap < QString, QString > & );
-      void expsetup_msg_closed( void );
-  //void to_editing( QMap < QString, QString > & );
-      
-      
-   signals:
-      void switch_to_live_update( QMap < QString, QString > & protocol_details );
-      void set_auto_mode( void );
-      void reset_experiment( QString & protocolName);
-      void to_autoflow_records( void );
-      void define_used_instruments( QMap < QString, QString > &  );
-  //void switch_to_editing( QMap < QString, QString > &);
-      //void close_expsetup_msg( void );
+        /**
+         * \brief Initializes the autoflow panel.
+         */
+        void initAutoflowPanel( void );
+
+        QLabel* movie_label; //!< Label for movie
+
+        QMessageBox * msg_norec; //!< Message box for no record
+        QMessageBox * msg_norec_del; //!< Message box for no record deletion
+
+        bool initDialogueOpen; //!< Flag for dialogue open
+        bool initMsgNorecOpen; //!< Flag for no record message open
+        bool initMsgNorecDelOpen; //!< Flag for no record deletion message open
+
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
+        int offset; //!< Offset
+
+        int autoflow_records; //!< Autoflow records count
+        QMap< QString, QString > channels_report; //!< Channels report
+
+        /**
+         * \brief Initializes the records.
+         */
+        void initRecords( void );
+
+        /**
+         * \brief Gets the autoflow records.
+         * \return The number of autoflow records.
+         */
+        int get_autoflow_records( void );
+
+        /**
+         * \brief Reads the autoflow record.
+         * \param index The index of the record.
+         * \param status The status of the record.
+         * \return The autoflow record as a QMap.
+         */
+        QMap< QString, QString > read_autoflow_record( int index, QString status );
+
+        /**
+         * \brief Reads the failed autoflow record.
+         * \param status The status of the record.
+         * \return The failed autoflow record as a QMap.
+         */
+        QMap< QString, QString > read_autoflow_failed_record( QString status );
+
+        /**
+         * \brief Lists all autoflow records.
+         * \param records The list of records.
+         * \param db The database connection.
+         * \param status The status of the records.
+         * \return The number of records listed.
+         */
+        static int list_all_autoflow_records( QList< QStringList >&, US_DB2*, QString );
+
+        /**
+         * \brief Reads the Optima machines.
+         * \param db The database connection.
+         */
+        void read_optima_machines( US_DB2* db = 0 );
+        QList< QMap<QString, QString> > instruments; //!< List of instruments
+
+        /**
+         * \brief Loads the autoflow history dialog.
+         */
+        void load_autoflowHistory_dialog( void );
+
+        /**
+         * \brief Cleans up the run tables.
+         * \param run_table The run table to clean up.
+         */
+        void do_run_tables_cleanup( QMap< QString, QString > run_table );
+
+        /**
+         * \brief Cleans up the run data.
+         * \param run_data The run data to clean up.
+         */
+        void do_run_data_cleanup( QMap< QString, QString > run_data );
+
+        /**
+         * \brief Reads the basic parameters of the profile automatically.
+         * \param xml_reader The XML stream reader.
+         * \return True if successful, false otherwise.
+         */
+        bool readAProfileBasicParms_auto ( QXmlStreamReader& xml_reader );
+
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+    private slots:
+                /**
+                 * \brief Updates the autoflow data.
+                 */
+                void update_autoflow_data( void );
+
+        signals:
+                /**
+                 * \brief Signal to define a new experiment.
+                 * \param protocol_details The protocol details.
+                 */
+                void define_new_experiment_init ( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to live update.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_live_update_init(  QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to post-processing.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_post_processing_init(  QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to editing.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to analysis.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to report.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_report_init(  QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to initialize autoflow.
+             */
+            void to_initAutoflow( void );
 };
 
-
-//! \brief Observ panel
-class US_ObservGui : public US_WidgetsDialog 
+//! \class US_ExperGui
+//! \brief Class representing the experiment panel in the protocol development GUI.
+class US_ExperGui : public US_WidgetsDialog
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_ObservGui( QWidget* );
-      ~US_ObservGui() {};
+    public:
+        /**
+         * \brief Constructor for the experiment GUI.
+         * \param parent The parent widget.
+         */
+        US_ExperGui( QWidget* parent );
 
-      US_XpnDataViewer*     sdiag;
+        /**
+         * \brief Destructor for the experiment GUI.
+         */
+        ~US_ExperGui() {};
 
- private:
-      US_ProtocolDevMain*    mainw;      // Parent to all panels
-      //US_XpnDataViewer*     sdiag;
-      int offset;
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
 
- protected:
-      void resizeEvent(QResizeEvent *event) override;
-      
- private slots:
-      void process_protocol_details( QMap < QString, QString > & protocol_details );
-      //void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
-      void to_post_processing( QMap < QString, QString > & );
-      void to_close_program( void );
-      void reset_live_update( void );
-      void processes_stopped_passed( void );
-      void to_initAutoflow_xpnviewer ( void );
- signals:
-      void to_xpn_viewer( QMap < QString, QString > & protocol_details );
-      //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
-      void switch_to_post_processing( QMap < QString, QString > &  );
-      void close_everything( void );
-      void reset_live_update_passed( void );
-      void processes_stopped( void );
-      void stop_nodata( void );
-};
+        QLabel* lb_exp_banner; //!< Label for experiment banner
+        QPushButton* pb_openexp; //!< Button to open experiment
+        QLineEdit* opening_msg; //!< Line edit for opening message
+        US_ExperimentMain* sdiag; //!< Experiment main dialog
+        int offset; //!< Offset
 
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
 
-//! \brief PostProd panel
-class US_PostProdGui : public US_WidgetsDialog 
+    private slots:
+        /**
+         * \brief Manages the experiment.
+         */
+        void manageExperiment ( void );
+
+        /**
+         * \brief Sets the button when experiment is closed.
+         */
+        void us_exp_is_closed_set_button( void );
+
+        /**
+         * \brief Switches to live update.
+         * \param protocol_details The protocol details.
+         */
+        void to_live_update( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Clears the experiment.
+         */
+        void exp_cleared( void );
+
+        /**
+         * \brief Passes the used instruments.
+         * \param used_instruments The used instruments.
+         */
+        void pass_used_instruments( QMap < QString, QString > & used_instruments );
+
+        /**
+         * \brief Closes the experiment setup message.
+         */
+        void expsetup_msg_closed( void );
+
+        signals:
+            /**
+             * \brief Signal to switch to live update.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_live_update( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to set auto mode.
+             */
+            void set_auto_mode( void );
+
+            /**
+             * \brief Signal to reset the experiment.
+             * \param protocolName The protocol name.
+             */
+            void reset_experiment( QString & protocolName);
+
+            /**
+             * \brief Signal to switch to autoflow records.
+             */
+            void to_autoflow_records( void );
+
+            /**
+             * \brief Signal to define used instruments.
+             * \param used_instruments The used instruments.
+             */
+            void define_used_instruments( QMap < QString, QString > & used_instruments );
+    };
+
+//! \class US_ObservGui
+//! \brief Class representing the observation panel in the protocol development GUI.
+class US_ObservGui : public US_WidgetsDialog
 {
-  Q_OBJECT
-  
-  public:
-    US_PostProdGui( QWidget* );
-    ~US_PostProdGui() {};
-  
-         
-  private:
-    US_ProtocolDevMain*    mainw;      // Parent to all panels
-    US_ConvertGui*        sdiag;
-    int offset;
+    Q_OBJECT
 
- protected:
-    void resizeEvent(QResizeEvent *event) override;
-      
-  private slots:
-    //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
-    void import_data_us_convert( QMap < QString, QString > &);
-    
-    void to_editing(  QMap < QString, QString > & );
-    //void to_experiment( QString & protocolName );
-    void to_initAutoflow( void );
-    void reset_lims_import( void );
-    void resize_main( void );
-        
-  signals:
-    //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
-    void to_post_prod( QMap < QString, QString > & ); 
-    
-    void switch_to_editing(  QMap < QString, QString > & );
-    //void switch_to_exp( QString & protocolName );
-    void switch_to_initAutoflow( void);
-    void reset_lims_import_passed( void );
+    public:
+        /**
+         * \brief Constructor for the observation GUI.
+         * \param parent The parent widget.
+         */
+        US_ObservGui( QWidget* parent );
+
+        /**
+         * \brief Destructor for the observation GUI.
+         */
+        ~US_ObservGui() {};
+
+        US_XpnDataViewer* sdiag; //!< Xpn data viewer dialog
+
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
+        int offset; //!< Offset
+
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+    private slots:
+        /**
+         * \brief Processes the protocol details.
+         * \param protocol_details The protocol details.
+         */
+        void process_protocol_details( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Switches to post-processing.
+         * \param protocol_details The protocol details.
+         */
+        void to_post_processing( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Closes the program.
+         */
+        void to_close_program( void );
+
+        /**
+         * \brief Resets live update.
+         */
+        void reset_live_update( void );
+
+        /**
+         * \brief Passes the processes stopped signal.
+         */
+        void processes_stopped_passed( void );
+
+        /**
+         * \brief Initializes the autoflow in Xpn viewer.
+         */
+        void to_initAutoflow_xpnviewer ( void );
+
+        signals:
+                /**
+                 * \brief Signal to switch to Xpn viewer.
+                 * \param protocol_details The protocol details.
+                 */
+                void to_xpn_viewer( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to switch to post-processing.
+         * \param protocol_details The protocol details.
+         */
+        void switch_to_post_processing( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to close everything.
+         */
+        void close_everything( void );
+
+        /**
+         * \brief Signal to reset live update.
+         */
+        void reset_live_update_passed( void );
+
+        /**
+         * \brief Signal to indicate processes stopped.
+         */
+        void processes_stopped( void );
+
+        /**
+         * \brief Signal to stop no data.
+         */
+        void stop_nodata( void );
 };
 
-
-//! \brief Editing panel
-class US_EditingGui : public US_WidgetsDialog 
+//! \class US_PostProdGui
+//! \brief Class representing the post-production panel in the protocol development GUI.
+class US_PostProdGui : public US_WidgetsDialog
 {
-  Q_OBJECT
-  
-  public:
-    US_EditingGui( QWidget* );
-    ~US_EditingGui() {};
-  
-         
-  private:
-    US_ProtocolDevMain*    mainw;      // Parent to all panels
-    US_Edit*              sdiag;
-    int offset;
+    Q_OBJECT
 
- protected:
-    void resizeEvent(QResizeEvent *event) override;
-      
- private slots:
-   void do_editing( QMap < QString, QString > & );
-   void reset_data_editing( void );
-   void to_analysis( QMap < QString, QString > & );
-   void resize_main( void );
-   void to_initAutoflow( void );
+    public:
+        /**
+         * \brief Constructor for the post-production GUI.
+         * \param parent The parent widget.
+         */
+        US_PostProdGui( QWidget* parent );
 
- signals:
-   void start_editing( QMap < QString, QString > & );
-   void reset_data_editing_passed ( void );
-   void switch_to_analysis( QMap < QString, QString > &  );
-   void switch_to_initAutoflow( void);
+        /**
+         * \brief Destructor for the post-production GUI.
+         */
+        ~US_PostProdGui() {};
+
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
+        US_ConvertGui* sdiag; //!< Convert GUI dialog
+        int offset; //!< Offset
+
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+    private slots:
+        /**
+         * \brief Imports data using the convert GUI.
+         * \param protocol_details The protocol details.
+         */
+        void import_data_us_convert( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Switches to editing.
+         * \param protocol_details The protocol details.
+         */
+        void to_editing( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Switches to initialization autoflow.
+         */
+        void to_initAutoflow( void );
+
+        /**
+         * \brief Resets the LIMS import.
+         */
+        void reset_lims_import( void );
+
+        /**
+         * \brief Resizes the main window.
+         */
+        void resize_main( void );
+
+        signals:
+            /**
+             * \brief Signal to switch to post-production.
+             * \param protocol_details The protocol details.
+             */
+            void to_post_prod( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to editing.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_editing( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to initialization autoflow.
+             */
+            void switch_to_initAutoflow( void );
+
+            /**
+             * \brief Signal to reset the LIMS import.
+             */
+            void reset_lims_import_passed( void );
 };
 
-//! \brief Analysis panel
-class US_AnalysisGui : public US_WidgetsDialog 
+//! \class US_EditingGui
+//! \brief Class representing the editing panel in the protocol development GUI.
+class US_EditingGui : public US_WidgetsDialog
 {
-  Q_OBJECT
-  
-  public:
-    US_AnalysisGui( QWidget* );
-    ~US_AnalysisGui() {};
+    Q_OBJECT
 
-    US_Analysis_auto*     sdiag;
-         
-  private:
-    US_ProtocolDevMain*    mainw;      // Parent to all panels
-    //US_Analysis_auto*     sdiag;
-    int offset;
+    public:
+        /**
+         * \brief Constructor for the editing GUI.
+         * \param parent The parent widget.
+         */
+        US_EditingGui( QWidget* parent );
 
- protected:
-    void resizeEvent(QResizeEvent *event) override;
-      
- private slots:
-   void do_analysis( QMap < QString, QString > & );
-   void processes_stopped_passed( void );
-   void analysissetup_msg_closed( void );
-   void to_initAutoflow( void );
-   void to_report( QMap < QString, QString > & );
+        /**
+         * \brief Destructor for the editing GUI.
+         */
+        ~US_EditingGui() {};
 
- signals:
-   void start_analysis( QMap < QString, QString > & );
-   void processes_stopped( void );
-   void switch_to_initAutoflow( void);
-   void switch_to_report( QMap < QString, QString > &  );
-    
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
+        US_Edit* sdiag; //!< Edit dialog
+        int offset; //!< Offset
+
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+    private slots:
+        /**
+         * \brief Performs editing.
+         * \param protocol_details The protocol details.
+         */
+        void do_editing( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Resets data editing.
+         */
+        void reset_data_editing( void );
+
+        /**
+         * \brief Switches to analysis.
+         * \param protocol_details The protocol details.
+         */
+        void to_analysis( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Resizes the main window.
+         */
+        void resize_main( void );
+
+        /**
+         * \brief Switches to initialization autoflow.
+         */
+        void to_initAutoflow( void );
+
+        signals:
+            /**
+             * \brief Signal to start editing.
+             * \param protocol_details The protocol details.
+             */
+            void start_editing( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to reset data editing.
+             */
+            void reset_data_editing_passed ( void );
+
+            /**
+             * \brief Signal to switch to analysis.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_analysis( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to switch to initialization autoflow.
+             */
+            void switch_to_initAutoflow( void );
 };
 
-
-//! \brief Report panel
-class US_ReportStageGui : public US_WidgetsDialog 
+//! \class US_AnalysisGui
+//! \brief Class representing the analysis panel in the protocol development GUI.
+class US_AnalysisGui : public US_WidgetsDialog
 {
-  Q_OBJECT
-  
-  public:
-    US_ReportStageGui( QWidget* );
-    ~US_ReportStageGui() {};
-  
-    //US_Reports_auto*     sdiag;
-    US_ReporterGMP*     sdiag;
-    
-  private:
-    US_ProtocolDevMain*    mainw;      // Parent to all panels
-    int offset;
+    Q_OBJECT
 
- protected:
-    void resizeEvent(QResizeEvent *event) override;
-      
-  private slots:
-    void do_report( QMap < QString, QString > & );
-    void reset_reporting( void );
+    public:
+        /**
+         * \brief Constructor for the analysis GUI.
+         * \param parent The parent widget.
+         */
+        US_AnalysisGui( QWidget* parent );
 
-  signals:
-    void start_report( QMap < QString, QString > & );
-    void reset_reporting_passed ( void );
+        /**
+         * \brief Destructor for the analysis GUI.
+         */
+        ~US_AnalysisGui() {};
+
+        US_Analysis_auto* sdiag; //!< Analysis auto dialog
+
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
+        int offset; //!< Offset
+
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+    private slots:
+        /**
+         * \brief Performs analysis.
+         * \param protocol_details The protocol details.
+         */
+        void do_analysis( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Passes the processes stopped signal.
+         */
+        void processes_stopped_passed( void );
+
+        /**
+         * \brief Closes the analysis setup message.
+         */
+        void analysissetup_msg_closed( void );
+
+        /**
+         * \brief Switches to initialization autoflow.
+         */
+        void to_initAutoflow( void );
+
+        /**
+         * \brief Switches to report.
+         * \param protocol_details The protocol details.
+         */
+        void to_report( QMap < QString, QString > & protocol_details );
+
+        signals:
+            /**
+             * \brief Signal to start analysis.
+             * \param protocol_details The protocol details.
+             */
+            void start_analysis( QMap < QString, QString > & protocol_details );
+
+            /**
+             * \brief Signal to indicate processes stopped.
+             */
+            void processes_stopped( void );
+
+            /**
+             * \brief Signal to switch to initialization autoflow.
+             */
+            void switch_to_initAutoflow( void );
+
+            /**
+             * \brief Signal to switch to report.
+             * \param protocol_details The protocol details.
+             */
+            void switch_to_report( QMap < QString, QString > & protocol_details );
 };
 
+//! \class US_ReportStageGui
+//! \brief Class representing the report panel in the protocol development GUI.
+class US_ReportStageGui : public US_WidgetsDialog
+{
+    Q_OBJECT
 
+    public:
+        /**
+         * \brief Constructor for the report stage GUI.
+         * \param parent The parent widget.
+         */
+        US_ReportStageGui( QWidget* parent );
 
-//! \brief ProtocolDev Main Window
+        /**
+         * \brief Destructor for the report stage GUI.
+         */
+        ~US_ReportStageGui() {};
+
+        US_ReporterGMP* sdiag; //!< Reporter GMP dialog
+
+    private:
+        US_ProtocolDevMain* mainw; //!< Parent to all panels
+        int offset; //!< Offset
+
+    protected:
+        /**
+         * \brief Handles the resize event.
+         * \param event The resize event.
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+    private slots:
+                /**
+                 * \brief Performs reporting.
+                 * \param protocol_details The protocol details.
+                 */
+                void do_report( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Resets reporting.
+         */
+        void reset_reporting( void );
+
+        signals:
+                /**
+                 * \brief Signal to start reporting.
+                 * \param protocol_details The protocol details.
+                 */
+                void start_report( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to reset reporting.
+         */
+        void reset_reporting_passed ( void );
+};
+
+//! \class US_ProtocolDevMain
+//! \brief Class representing the main window for protocol development.
 class US_ProtocolDevMain : public US_Widgets
 {
-  Q_OBJECT
-  
- public:
-  US_ProtocolDevMain();
-  
-  QLabel*           gen_banner;
-  QTextEdit*        welcome;
-  QTabWidget*       tabWidget;       // Tab Widget holding the panels
-  QTextEdit*        logWidget;  
-  QTextEdit*        test_footer;
-  QString           icon_path;
+    Q_OBJECT
 
-  //bool us_mode_bool;
+    public:
+        /**
+         * \brief Constructor for the protocol development main window.
+         */
+        US_ProtocolDevMain();
 
-  QMessageBox * msg_expsetup;
-  QMessageBox * msg_liveupdate_finishing;
-  QMessageBox * msg_analysis_update_finishing;
-  QMessageBox * msg_analysissetup;
+        QLabel* gen_banner; //!< General banner label
+        QTextEdit* welcome; //!< Welcome text edit
+        QTabWidget* tabWidget; //!< Tab widget holding the panels
+        QTextEdit* logWidget; //!< Log widget
+        QTextEdit* test_footer; //!< Test footer
+        QString icon_path; //!< Icon path
 
-  
-  QDialog *     diag_expsetup;
-  
-  //QList< QStringList >  autoflowdata;
+        QMessageBox * msg_expsetup; //!< Experiment setup message box
+        QMessageBox * msg_liveupdate_finishing; //!< Live update finishing message box
+        QMessageBox * msg_analysis_update_finishing; //!< Analysis update finishing message box
+        QMessageBox * msg_analysissetup; //!< Analysis setup message box
 
-  //void check_current_stage( void );
+        QDialog * diag_expsetup; //!< Experiment setup dialog
 
-  void call_AutoflowDialogue();
-  void close_initDialogue();
+        void call_AutoflowDialogue();
+        void close_initDialogue();
 
-  bool window_closed;
-  bool data_location_disk;
-  bool xpn_viewer_closed_soft;
-  
-  int         curr_panx;       // Current panel index (0-7)
+        bool window_closed; //!< Flag for window closed
+        bool data_location_disk; //!< Flag for data location disk
+        bool xpn_viewer_closed_soft; //!< Flag for Xpn viewer closed softly
 
-  QWidget * cornerWidget;
-  //QStringList occupied_instruments;
+        int curr_panx; //!< Current panel index (0-7)
 
-  //US_SelectItem* pdiag_autoflow;
-    
- private:
-  US_InitDialogueGui*  epanInit;     // US_Init panel
-  US_ExperGui*         epanExp;         // US_Exp panel
-  US_ObservGui*        epanObserv;      // US_Observ panel 
-  US_PostProdGui*      epanPostProd;    // US_PostProd panel 
-  US_EditingGui*       epanEditing;     // US_Editing panel
-  US_AnalysisGui*      epanAnalysis;    // US_Analysis panel
-  US_ReportStageGui*   epanReport;      // US_Report panel
-    
-  //int         statflag;        // Composite panels status flag
-  //int         dbg_level;       // Debug print flag
-  //int         curr_panx;       // Current panel index (0-7)
+        QWidget * cornerWidget; //!< Corner widget
 
-  //int  get_autoflow_records( void );
-  //QMap < QString, QString > read_autoflow_record( int );
-  //static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
+    private:
+        US_InitDialogueGui* epanInit; //!< US_Init panel
+        US_ExperGui* epanExp; //!< US_Exp panel
+        US_ObservGui* epanObserv; //!< US_Observ panel
+        US_PostProdGui* epanPostProd; //!< US_PostProd panel
+        US_EditingGui* epanEditing; //!< US_Editing panel
+        US_AnalysisGui* epanAnalysis; //!< US_Analysis panel
+        US_ReportStageGui* epanReport; //!< US_Report panel
 
-  //void read_optima_machines( US_DB2* = 0 ); 
-  //QList< QMap<QString, QString> > instruments;  
-  
-private slots:
-  void checkDataLocation( void );
-  void initPanels  ( int  );     // Move to a new panel
-  //void reset     ( void );
-  //void newPanel  ( int  );     // Move to a new panel
-  //void statUpdate( void );     // Get a status flag update
-  // void panelUp   ( void );     // Move to next panel
-  //void panelDown ( void );     // Move to previous panel
-  //void help      ( void );     // Show documentation window
-   
-  //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
-  //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
+    private slots:
+        /**
+         * \brief Checks the data location.
+         */
+        void checkDataLocation( void );
 
-  void switch_to_live_update( QMap < QString, QString > & protocol_details );
-  void switch_to_post_processing( QMap < QString, QString > & );
-  void switch_to_editing( QMap < QString, QString > & protocol_details );
-  void switch_to_analysis( QMap < QString, QString > & protocol_details );
-  void switch_to_report( QMap < QString, QString > & protocol_details );
-  
-    
-  //void switch_to_experiment( QString & protocolName );
-  //void check_current_stage( void );
-  void close_all( void );
-  void closeEvent      ( QCloseEvent* );
+        /**
+         * \brief Initializes the panels.
+         * \param index The index of the panel to initialize.
+         */
+        void initPanels  ( int index );
 
-  void to_autoflow_records( void );
+        /**
+         * \brief Switches to live update.
+         * \param protocol_details The protocol details.
+         */
+        void switch_to_live_update( QMap < QString, QString > & protocol_details );
 
-  void define_new_experiment( QMap < QString, QString > & );
+        /**
+         * \brief Switches to post-processing.
+         * \param protocol_details The protocol details.
+         */
+        void switch_to_post_processing( QMap < QString, QString > & protocol_details );
 
-  //void delete_psql_record( int );
-  
-  void liveupdate_stopped( void );
+        /**
+         * \brief Switches to editing.
+         * \param protocol_details The protocol details.
+         */
+        void switch_to_editing( QMap < QString, QString > & protocol_details );
 
-  void show_liveupdate_finishing_msg( void );
+        /**
+         * \brief Switches to analysis.
+         * \param protocol_details The protocol details.
+         */
+        void switch_to_analysis( QMap < QString, QString > & protocol_details );
 
-  void analysis_update_stopped( void );
+        /**
+         * \brief Switches to report.
+         * \param protocol_details The protocol details.
+         */
+        void switch_to_report( QMap < QString, QString > & protocol_details );
 
-  void show_analysis_update_finishing_msg( void );
-  
-signals:
-  void pass_to_live_update( QMap < QString, QString > & protocol_details );
-  void pass_to_post_processing(  QMap < QString, QString > & );
-  void pass_to_editing( QMap < QString, QString > & protocol_details );
-  void pass_to_analysis( QMap < QString, QString > & protocol_details );
-  void pass_to_report( QMap < QString, QString > & protocol_details );
-  
+        /**
+         * \brief Closes all windows.
+         */
+        void close_all( void );
 
-  //void clear_experiment( QString & protocolName);
-  void us_comproject_closed( void );
-  void pass_used_instruments( QMap < QString, QString > &  );
-  void reset_lims_import( void );
-  void reset_data_editing( void );
-  void reset_live_update( void );
-  void reset_reporting( void );
+        /**
+         * \brief Handles the close event.
+         * \param event The close event.
+         */
+        void closeEvent ( QCloseEvent* event );
+
+        /**
+         * \brief Switches to autoflow records.
+         */
+        void to_autoflow_records( void );
+
+        /**
+         * \brief Defines a new experiment.
+         * \param protocol_details The protocol details.
+         */
+        void define_new_experiment( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Indicates that live update has stopped.
+         */
+        void liveupdate_stopped( void );
+
+        /**
+         * \brief Shows the live update finishing message.
+         */
+        void show_liveupdate_finishing_msg( void );
+
+        /**
+         * \brief Indicates that analysis update has stopped.
+         */
+        void analysis_update_stopped( void );
+
+        /**
+         * \brief Shows the analysis update finishing message.
+         */
+        void show_analysis_update_finishing_msg( void );
+
+        signals:
+                /**
+                 * \brief Signal to pass to live update.
+                 * \param protocol_details The protocol details.
+                 */
+                void pass_to_live_update( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to pass to post-processing.
+         * \param protocol_details The protocol details.
+         */
+        void pass_to_post_processing(  QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to pass to editing.
+         * \param protocol_details The protocol details.
+         */
+        void pass_to_editing( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to pass to analysis.
+         * \param protocol_details The protocol details.
+         */
+        void pass_to_analysis( QMap < QString, QString > & protocol_details );
+
+        /**
+         * \brief Signal to pass to report.
+         * \param protocol_details The protocol details.
+         */
+        void pass_to_report( QMap < QString, QString > & protocol details );
+
+        /**
+         * \brief Signal to indicate that the US project is closed.
+         */
+        void us_comproject_closed( void );
+
+        /**
+         * \brief Signal to pass used instruments.
+         * \param used_instruments The used instruments.
+         */
+        void pass_used_instruments( QMap < QString, QString > & used_instruments );
+
+        /**
+         * \brief Signal to reset LIMS import.
+         */
+        void reset_lims_import( void );
+
+        /**
+         * \brief Signal to reset data editing.
+         */
+        void reset_data_editing( void );
+
+        /**
+         * \brief Signal to reset live update.
+         */
+        void reset_live_update( void );
+
+        /**
+         * \brief Signal to reset reporting.
+         */
+        void reset_reporting( void );
 };
-
 
 #endif
