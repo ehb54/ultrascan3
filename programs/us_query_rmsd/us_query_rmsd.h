@@ -151,20 +151,26 @@ class DoubleTableWidgetItem : public QTableWidgetItem {
          * @brief Constructor for DoubleTableWidgetItem.
          * @param value The double value
          */
-        DoubleTableWidgetItem(double value);
+        DoubleTableWidgetItem(double value) : QTableWidgetItem(QString::number(value, 'f', 8)), m_value(value) {}
 
         /**
          * @brief Less than operator for comparing table widget items.
          * @param other Reference to the other table widget item
          * @return True if less than, false otherwise
          */
-        bool operator<(const QTableWidgetItem &other) const override;
+        bool operator<(const QTableWidgetItem &other) const override
+        {
+            return m_value < other.data(Qt::EditRole).toDouble();
+        }
 
         /**
          * @brief Get the double value.
          * @return The double value
          */
-        double get_value();
+        double get_value()
+        {
+            return m_value;
+        }
 
     private:
         double m_value; //!< The double value

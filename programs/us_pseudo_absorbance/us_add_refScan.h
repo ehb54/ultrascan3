@@ -38,35 +38,35 @@ class US_AddRefScan : public US_Widgets
                  */
                 void sig_plot_l(bool flag);
 
-        /**
-         * @brief Signal to plot right graph.
-         * @param flag Boolean flag
-         */
-        void sig_plot_r(bool flag);
+            /**
+             * @brief Signal to plot right graph.
+             * @param flag Boolean flag
+             */
+            void sig_plot_r(bool flag);
 
-        /**
-         * @brief Signal to plot distance.
-         * @param flag Boolean flag
-         */
-        void sig_plot_dist(bool flag);
+            /**
+             * @brief Signal to plot distance.
+             * @param flag Boolean flag
+             */
+            void sig_plot_dist(bool flag);
 
-        /**
-         * @brief Signal to plot overlap.
-         * @param flag Boolean flag
-         */
-        void sig_plot_ovlp(bool flag);
+            /**
+             * @brief Signal to plot overlap.
+             * @param flag Boolean flag
+             */
+            void sig_plot_ovlp(bool flag);
 
-        /**
-         * @brief Signal to plot intensity.
-         * @param flag Boolean flag
-         */
-        void sig_plot_inty(bool flag);
+            /**
+             * @brief Signal to plot intensity.
+             * @param flag Boolean flag
+             */
+            void sig_plot_inty(bool flag);
 
-        /**
-         * @brief Signal for clustering.
-         * @param id Cluster ID
-         */
-        void sig_cluster(int id);
+            /**
+             * @brief Signal for clustering.
+             * @param id Cluster ID
+             */
+            void sig_cluster(int id);
 
     private slots:
         void slt_import(void);
@@ -118,7 +118,23 @@ class US_AddRefScan : public US_Widgets
                 /**
                  * @brief Clears all current values.
                  */
-                void clear(void);
+                void clear(void){
+                    scid.clear();
+                    mean.clear();
+                    rmsd.clear();
+                    ref.clear();
+                    dev.clear();
+                    dev_aln.clear();
+                    aveMean = 0;
+
+                    scid_S.clear();
+                    mean_S.clear();
+                    rmsd_S.clear();
+                    ref_S.clear();
+                    dev_S.clear();
+                    dev_S_aln.clear();
+                    aveMean_S = 0;
+                }
         };
 
         /**
