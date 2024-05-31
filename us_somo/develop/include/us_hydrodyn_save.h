@@ -135,6 +135,8 @@ struct save_data
    double        rg_over_fractal_dimension_wtd_sd;
    double        rg_over_fractal_dimension_wtd_wtd;
    double        rg_over_fractal_dimension_wtd_wtd_sd;
+
+   double        zeno_skin_thickness;
 };
 
 struct save_info 

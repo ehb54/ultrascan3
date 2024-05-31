@@ -13950,6 +13950,7 @@ bool US_Hydrodyn::calc_zeno()
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
+            double used_skin_thickness = 0e0;
             if ( zeno_mm ) {
                progress->setValue( models_procd++ );
             }
@@ -14000,6 +14001,12 @@ bool US_Hydrodyn::calc_zeno()
                              );
                   if ( st <= 0 ) {
                      editor_msg( "red", us_tr( "NOTICE: zero or negative computed skin thickness will be ignored, reverting to ZENO default\n" ) );
+                  } else {
+                     used_skin_thickness = st;
+                  }
+               } else {
+                  if ( hydro.zeno_surface_thickness >= 0 ) {
+                     used_skin_thickness = hydro.zeno_surface_thickness;
                   }
                }
 
@@ -14071,6 +14078,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.total_beads           = bead_models [ current_model ].size();
                   this_data.results.vbar                  = use_vbar( model_vector[ current_model ].vbar );
                   this_data.con_factor                    = pow(10.0, this_data.hydro.unit + 9);
+                  this_data.zeno_skin_thickness           = used_skin_thickness;
                   
                   if ( bead_models[ current_model ].size() &&
                        bead_models[ current_model ][0].is_vdw == "vdw" ) {

@@ -245,6 +245,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Dimensionless intrinsic viscosity s.d.",
             "Dimensionless intrinsic viscosity s.d.",
 
+            "zeno_skin_thickness",
+            "Skin Thickness",
+            "Skin Thickness",
+
             "__SECTION__",
             "Additional SMI/GRPY results:",
 
@@ -625,6 +629,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "dimless_eta_sd",
             "Dimensionless intrinsic viscosity s.d.",
             "Dimensionless intrinsic viscosity s.d.",
+
+            "zeno_skin_thickness",
+            "Skin Thickness",
+            "Skin Thickness",
 
             "__SECTION__",
             "Additional GRPY results:",
@@ -1416,6 +1424,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          continue;
       }
 
+      if ( field[i] == "zeno_skin_thickness" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.zeno_skin_thickness);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 4;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
       if ( field[i] == "hydro.solvent_name" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_name);
@@ -1550,84 +1567,84 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       if ( field[i] == "fractal_dimension" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "fractal_dimension_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "fractal_dimension_wtd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "fractal_dimension_wtd_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "fractal_dimension_wtd_wtd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_wtd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "fractal_dimension_wtd_wtd_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_wtd_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension_wtd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension_wtd_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension_wtd_wtd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_wtd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
       if ( field[i] == "rg_over_fractal_dimension_wtd_wtd_sd" ) {
          field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_wtd_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 3;
+         field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'f';
          continue;
       }
@@ -3015,18 +3032,20 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.vdw_exposed_waters    = 0e0;
 
    data.fractal_dimension_parameters         = "";
-   data.fractal_dimension                    = 0;
-   data.fractal_dimension_sd                 = 0;
-   data.fractal_dimension_wtd                = 0;
-   data.fractal_dimension_wtd_sd             = 0;
-   data.fractal_dimension_wtd_wtd            = 0;
-   data.fractal_dimension_wtd_wtd_sd         = 0;
-   data.rg_over_fractal_dimension            = 0;
-   data.rg_over_fractal_dimension_sd         = 0;
-   data.rg_over_fractal_dimension_wtd        = 0;
-   data.rg_over_fractal_dimension_wtd_sd     = 0;
-   data.rg_over_fractal_dimension_wtd_wtd    = 0;
-   data.rg_over_fractal_dimension_wtd_wtd_sd = 0;
+   data.fractal_dimension                    = -1;
+   data.fractal_dimension_sd                 = -1;
+   data.fractal_dimension_wtd                = -1;
+   data.fractal_dimension_wtd_sd             = -1;
+   data.fractal_dimension_wtd_wtd            = -1;
+   data.fractal_dimension_wtd_wtd_sd         = -1;
+   data.rg_over_fractal_dimension            = -1;
+   data.rg_over_fractal_dimension_sd         = -1;
+   data.rg_over_fractal_dimension_wtd        = -1;
+   data.rg_over_fractal_dimension_wtd_sd     = -1;
+   data.rg_over_fractal_dimension_wtd_wtd    = -1;
+   data.rg_over_fractal_dimension_wtd_wtd_sd = -1;
+
+   data.zeno_skin_thickness  = 0e0;
 
    return data;
 }
