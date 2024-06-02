@@ -1,3 +1,4 @@
+//! \file us_reporter_gmp.h
 #ifndef US_REPORTER_GMP_H
 #define US_REPORTER_GMP_H
 
@@ -17,585 +18,635 @@
 #include "us_extern.h"
 #include "us_select_item.h"
 
+/**
+ * @class US_ReporterGMP
+ * @brief The US_ReporterGMP class provides functionality for generating GMP reports.
+ */
 class US_ReporterGMP : public US_Widgets
 {
-   Q_OBJECT
+    Q_OBJECT
 
-      public:
-         US_ReporterGMP();
-	 US_ReporterGMP( QString );
-  //Tests
-         US_ReporterGMP( QMap<QString, QString> );
-         void write_gmp_report_DB_test( QString, QString,
-					int, QString, QString );
+    public:
+        /**
+         * @brief Default constructor for US_ReporterGMP.
+         */
+        US_ReporterGMP();
 
-         // QMap < QString, QString > read_autoflow_record_pub( int );
-         // int list_all_autoflow_records_pub( QList< QStringList >& );
-  
-	 QTreeWidget     * genTree;
-         QTreeWidget     * miscTree;
-	 QTreeWidget     * perChanTree;
-	 QTreeWidget     * combPlotsTree;
-	 bool            first_time_gen_tree_build;
-         bool            first_time_misc_tree_build;
-	 bool            first_time_perChan_tree_build;
+        /**
+         * @brief Constructor for US_ReporterGMP with a specified parameter.
+         * @param param The specified parameter
+         */
+        US_ReporterGMP(QString param);
 
-	 bool auto_mode;
-	 QLabel* lb_hdr1 ;
-	 
-	 QProgressDialog * progress_msg;
-	 US_RunProtocol    currProto;
+        /**
+         * @brief Constructor for US_ReporterGMP for testing.
+         * @param test_params The parameters for testing
+         */
+        US_ReporterGMP(QMap<QString, QString> test_params);
 
-	 QString ap_xml;
+        /**
+         * @brief Function to write GMP report to DB for testing.
+         * @param runID The run ID
+         * @param protocolID The protocol ID
+         * @param invID The investigator ID
+         * @param protocolName The protocol name
+         * @param esign The electronic signature
+         */
+        void write_gmp_report_DB_test(QString runID, QString protocolID, int invID, QString protocolName, QString esign);
 
-	 US_Pseudo3D_Combine*       sdiag_pseudo3d; 
-	 US_DDistr_Combine*         sdiag_combplot;
-	 US_AnalysisProfileGui*     sdiag; 
-	 US_AnaProfile              currAProf;
-	 US_AnaProfile::AnaProf2DSA cAP2;
-	 US_AnaProfile::AnaProfPCSA cAPp;
-	 QStringList  chndescs;       
-	 QStringList  chndescs_alt;
-	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
-	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports_internal;
-	 QMap< QString, QList< double > > ch_wvls;
+        QTreeWidget* genTree;               //!< General report tree
+        QTreeWidget* miscTree;              //!< Miscellaneous report tree
+        QTreeWidget* perChanTree;           //!< Per-channel report tree
+        QTreeWidget* combPlotsTree;         //!< Combined plots tree
+        bool first_time_gen_tree_build;     //!< Flag for first time general tree build
+        bool first_time_misc_tree_build;    //!< Flag for first time miscellaneous tree build
+        bool first_time_perChan_tree_build; //!< Flag for first time per-channel tree build
 
-	 QList< int > replicates;
-	 QMap < int, QStringList > replicates_to_channdesc;
-	 QMap< QString, QStringList > channdesc_to_overlapping_wvls;
-	 
-	 // QString      reportMask;
+        bool auto_mode;                     //!< Flag for auto mode
+        QLabel* lb_hdr1;                    //!< Header label
 
-	 //for model simulations:
-	 QPointer< US_ResidPlotFem >    resplotd;
-	 QPointer< US_PlotControlFem >  eplotcd;
-	 US_DataIO::EditedData*      rg_editdata();
-	 US_DataIO::RawData*         rg_simdata();
-	 QList< int >*               rg_excllist();
-	 US_Model*                   rg_model();
-	 US_Noise*                   rg_ti_noise();
-	 US_Noise*                   rg_ri_noise();
-	 QPointer< US_ResidsBitmap > rg_resbmap();
-	 QString                     rg_tripleInfo();
+        QProgressDialog* progress_msg;      //!< Progress message dialog
+        US_RunProtocol currProto;           //!< Current run protocol
 
+        QString ap_xml;                     //!< XML string for analysis profile
 
-	 struct GenReportMaskStructure
-	 {
-	   QMap <QString, bool >    ShowReportParts;
-	   QMap <QString, QString > ShowSolutionParts;
-	   QMap <QString, QString > ShowAnalysisGenParts;
-	   QMap <QString, QString > ShowAnalysis2DSAParts;
-	   QMap <QString, QString > ShowAnalysisPCSAParts;
-	   int has_anagen_items;
-	   int has_ana2dsa_items;
-	   int has_anapcsa_items;
-	 };
+        US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
+        US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
+        US_AnalysisProfileGui* sdiag;        //!< Analysis profile GUI dialog
+        US_AnaProfile currAProf;            //!< Current analysis profile
+        US_AnaProfile::AnaProf2DSA cAP2;    //!< 2DSA analysis profile
+        US_AnaProfile::AnaProfPCSA cAPp;    //!< PCSA analysis profile
+        QStringList chndescs;               //!< Channel descriptions
+        QStringList chndescs_alt;           //!< Alternative channel descriptions
+        QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
+        QMap<QString, QMap<QString, US_ReportGMP>> ch_reports_internal; //!< Internal channel reports
+        QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths
 
-	 GenReportMaskStructure genMask_edited;
+        QList<int> replicates;              //!< Replicate list
+        QMap<int, QStringList> replicates_to_channdesc; //!< Replicate to channel descriptions map
+        QMap<QString, QStringList> channdesc_to_overlapping_wvls; //!< Channel descriptions to overlapping wavelengths map
 
-	 struct PerChanReportMaskStructure
-	 {
-	   QMap < QString, bool >  ShowChannelParts;
-   
-	   //     triple_name     model           feature  value  [Exp. Duration, Intensity, RMSD, Integration Results, Tot. Conc.]
-	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelParts;
-	   QMap < QString, QMap < QString, int > >  has_tripleModel_items;
+        QPointer<US_ResidPlotFem> resplotd;    //!< Residual plot dialog
+        QPointer<US_PlotControlFem> eplotcd;   //!< Plot control dialog
+        US_DataIO::EditedData* rg_editdata();  //!< Edited data
+        US_DataIO::RawData* rg_simdata();      //!< Simulated data
+        QList<int>* rg_excllist();             //!< Exclusion list
+        US_Model* rg_model();                  //!< Model
+        US_Noise* rg_ti_noise();               //!< TI noise
+        US_Noise* rg_ri_noise();               //!< RI noise
+        QPointer<US_ResidsBitmap> rg_resbmap(); //!< Residuals bitmap
+        QString rg_tripleInfo();               //!< Triple information
 
-	   //     triple_name     model           feature  value  [All types of plots] 
-	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPlotParts;
-	   QMap < QString, QMap < QString, int > >  has_tripleModelPlot_items;
+        struct GenReportMaskStructure
+        {
+            QMap<QString, bool> ShowReportParts;          //!< Map of report parts to show
+            QMap<QString, QString> ShowSolutionParts;     //!< Map of solution parts to show
+            QMap<QString, QString> ShowAnalysisGenParts;  //!< Map of general analysis parts to show
+            QMap<QString, QString> ShowAnalysis2DSAParts; //!< Map of 2DSA analysis parts to show
+            QMap<QString, QString> ShowAnalysisPCSAParts; //!< Map of PCSA analysis parts to show
+            int has_anagen_items;                         //!< Flag for general analysis items
+            int has_ana2dsa_items;                        //!< Flag for 2DSA analysis items
+            int has_anapcsa_items;                        //!< Flag for PCSA analysis items
+        };
 
-	   //     triple_name     model           feature  value  [All types of pseudo distr.] 
-	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPseudo3dParts;
-	   QMap < QString, QMap < QString, int > >  has_tripleModelPseudo3d_items;
+        GenReportMaskStructure genMask_edited; //!< Edited general report mask structure
 
-	   //     Individual Combined Plots
-	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleTypeModelRangeIndividualCombo;
-	   QMap < QString, QMap < QString, int > >  has_tripleModelIndCombo_items;
-	 };
+        struct PerChanReportMaskStructure
+        {
+            QMap<QString, bool> ShowChannelParts; //!< Map of channel parts to show
 
-	 PerChanReportMaskStructure perChanMask_edited;
+            // triple_name -> model -> feature -> value [Exp. Duration, Intensity, RMSD, Integration Results, Tot. Conc.]
+            QMap<QString, QMap<QString, QMap<QString, QString>>> ShowTripleModelParts; //!< Map of triple model parts to show
+            QMap<QString, QMap<QString, int>> has_tripleModel_items;                   //!< Map of triple model items
 
-	 struct CombPlotsReportMaskStructure
-	 {
-	   QMap <QString, int >    ShowCombPlotsTypes;
+            // triple_name -> model -> feature -> value [All types of plots]
+            QMap<QString, QMap<QString, QMap<QString, QString>>> ShowTripleModelPlotParts; //!< Map of triple model plot parts to show
+            QMap<QString, QMap<QString, int>> has_tripleModelPlot_items;                   //!< Map of triple model plot items
 
-	   //     type (s,D,..)   model    yes/no
-	   QMap < QString, QMap < QString, QString> >  ShowCombPlotParts;
+            // triple_name -> model -> feature -> value [All types of pseudo distr.]
+            QMap<QString, QMap<QString, QMap<QString, QString>>> ShowTripleModelPseudo3dParts; //!< Map of triple model pseudo3d parts to show
+            QMap<QString, QMap<QString, int>> has_tripleModelPseudo3d_items;                   //!< Map of triple model pseudo3d items
 
-	   int has_combo_plots;
-	 };
-	 
-	 CombPlotsReportMaskStructure combPlotsMask_edited;
+            // Individual Combined Plots
+            QMap<QString, QMap<QString, QMap<QString, QString>>> ShowTripleTypeModelRangeIndividualCombo; //!< Map of individual combined plots
+            QMap<QString, QMap<QString, int>> has_tripleModelIndCombo_items;                               //!< Map of triple model individual combined items
+        };
 
-         struct MiscReportMaskStructure
-	 {
-	   QMap < QString, bool >  ShowMiscParts;
-	 };
-  
-         MiscReportMaskStructure miscMask_edited;
-  
+        PerChanReportMaskStructure perChanMask_edited; //!< Edited per-channel report mask structure
 
-	 QString JsonMask_gen_loaded;
-	 QString JsonMask_perChan_loaded;
+        struct CombPlotsReportMaskStructure
+        {
+            QMap<QString, int> ShowCombPlotsTypes; //!< Map of combined plots types to show
 
-	 bool GMP_report;
-	 
-	 US_Plot*     plotLayout1;  // Derived from QVBoxLayout
-	 US_Plot*     plotLayout2;
+            // type (s,D,..) -> model -> yes/no
+            QMap<QString, QMap<QString, QString>> ShowCombPlotParts; //!< Map of combined plot parts to show
 
-	 // Widgets
-	 QwtPlot*     data_plot1;
-	 QwtPlot*     data_plot2;
-	 	 
-      private:
+            int has_combo_plots; //!< Flag for combined plots
+        };
 
-	 //General report Mask
-	 QJsonObject json;
-	 QMap<QString, QTreeWidgetItem *> topItem;
-	 QMap<QString, QTreeWidgetItem *> solutionItem;
-	 QMap<QString, QTreeWidgetItem *> analysisItem;
-	 QMap<QString, QTreeWidgetItem *> analysisGenItem;
-	 QMap<QString, QTreeWidgetItem *> analysis2DSAItem;
-	 QMap<QString, QTreeWidgetItem *> analysisPCSAItem;
-	 QStringList topLevelItems;
-	 
-	 QStringList solutionItems;
-	 QStringList solutionItems_vals;
-	 
-	 QStringList analysisItems;
-	 
-	 QStringList analysisGenItems;
-	 QStringList analysisGenItems_vals;
-	 
-	 QStringList analysis2DSAItems;
-	 QStringList analysis2DSAItems_vals;
-	 
-	 QStringList analysisPCSAItems;
-	 QStringList analysisPCSAItems_vals;
-	 //End of general report mask
+        CombPlotsReportMaskStructure combPlotsMask_edited; //!< Edited combined plots report mask structure
 
-         //miscTree masks
-         QMap<QString, QTreeWidgetItem *> miscItem;
-         QStringList miscTopLevelItems;
-         //End of miscellaneous report masks
+        struct MiscReportMaskStructure
+        {
+            QMap<QString, bool> ShowMiscParts; //!< Map of miscellaneous parts to show
+        };
 
-	 //perChan Report masks
-	 QMap<QString, QTreeWidgetItem *> chanItem;
-	 QMap<QString, QTreeWidgetItem *> tripleItem;
-	 QMap<QString, QTreeWidgetItem *> tripleModelItem;
-	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
-	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
-	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
-         QMap<QString, QTreeWidgetItem *> tripleMaskIndComboPlotItem;
-         
+        MiscReportMaskStructure miscMask_edited; //!< Edited miscellaneous report mask structure
 
-	 //CombPlots masks
-	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
-	 QMap<QString, QTreeWidgetItem *> ItemCombPlots;
+        QString JsonMask_gen_loaded;     //!< Loaded general JSON mask
+        QString JsonMask_perChan_loaded; //!< Loaded per-channel JSON mask
 
-         QList< QStringList >  gmpReportsDBdata;
-	 QList< QStringList >  autoflowdata;
-	 US_SelectItem* pdiag_autoflow;
-         US_SelectItem* pdiag_autoflow_db;
+        bool GMP_report;                 //!< Flag for GMP report
 
-	 QString html_assembled;
-	 QString html_failed;
-	 QString html_general;
-	 QString html_lab_rotor;
-	 QString html_operator;
-	 QString html_speed;
-	 QString html_cells;
-	 QString html_solutions;
-	 QString html_optical;
-	 QString html_ranges;
-	 QString html_scan_count;
-	 QString html_analysis_profile;
-	 QString html_analysis_profile_2dsa;
-	 QString html_analysis_profile_pcsa; 
-	 
-	 US_Help       showHelp;
+        US_Plot* plotLayout1; //!< Plot layout 1
+        US_Plot* plotLayout2; //!< Plot layout 2
 
-	 QPushButton*  pb_download_report;
-	 QPushButton*  pb_gen_report  ;
-	 QPushButton*  pb_view_report ;
-         QPushButton*  pb_view_report_db ;
-	 QPushButton*  pb_view_report_auto ;
-	 QPushButton*  pb_select_all ;
-	 QPushButton*  pb_unselect_all ;
-	 QPushButton*  pb_expand_all ;
-	 QPushButton*  pb_collapse_all ;
-	 QPushButton*  pb_help;
-	 QPushButton*  pb_close;
-	 QLineEdit*    le_loaded_run;
-         QLineEdit*    le_loaded_run_db;
+        // Widgets
+        QwtPlot* data_plot1; //!< Data plot 1
+        QwtPlot* data_plot2; //!< Data plot 2
 
-         QTextEdit*    te_fpath_info;
-         QTextEdit*    te_fpath_info_db;
-  
-	 QString    AProfileGUID;
-	 QString    ProtocolName_auto;
-	 QString    AutoflowID_auto;
-         QString    FullRunName_auto;
-         int        invID;
-	 QString    runID;
-	 QString    runName;
-	 QString    filePath;
-	 QString    filePath_db;  
-	 QString    FileName;
-	 QString    intensityID;
-	 QString    analysisIDs;
-	 QString    autoflowStatusID;
-         QString    optimaName;
-  
-	 QString    current_date;
-	 
-	 QString    duration_str;
-	 QString    delay_stage_str;
-	 QString    total_time_str;
+    private:
+        QJsonObject json;                         //!< JSON object
+        QMap<QString, QTreeWidgetItem*> topItem;  //!< Map of top items
+        QMap<QString, QTreeWidgetItem*> solutionItem; //!< Map of solution items
+        QMap<QString, QTreeWidgetItem*> analysisItem; //!< Map of analysis items
+        QMap<QString, QTreeWidgetItem*> analysisGenItem; //!< Map of general analysis items
+        QMap<QString, QTreeWidgetItem*> analysis2DSAItem; //!< Map of 2DSA analysis items
+        QMap<QString, QTreeWidgetItem*> analysisPCSAItem; //!< Map of PCSA analysis items
+        QStringList topLevelItems;                     //!< List of top-level items
 
-	 QString    delay_uvvis_str;
-	 QString    scanint_uvvis_str;
-	 QString    delay_int_str;
-	 QString    scanint_int_str;
+        QStringList solutionItems;             //!< List of solution items
+        QStringList solutionItems_vals;        //!< List of solution item values
 
-	 int        ncells_used;
-	 int        nsol_channels;
-	 int        nchan_optics;
-	 int        nchan_ranges;
+        QStringList analysisItems;             //!< List of analysis items
 
-	 bool       has_uvvis;
-	 bool       has_interference;
-	 bool       has_fluorescense;
-	 
-	 QVector< QString >  Array_of_triples;
-	 QVector< QString >  Array_of_tripleNames;
-	 QMap< QString, QStringList > Triple_to_Models;
-	 QMap< QString, QStringList > Triple_to_ModelsMissing;
-	 QMap< QString, QString >     Triple_to_FailedStage;
-	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
-	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDescGuid;
-	 
-         QStringList droppedTriplesList;
-	 
-	 QMap< QString, QString > triple_info_map;
-	 QString   currentTripleName;
+        QStringList analysisGenItems;          //!< List of general analysis items
+        QStringList analysisGenItems_vals;     //!< List of general analysis item values
 
-	 QMap< QString, QString > intensityRIMap;
-	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
-	 QMap< QString, int > comboPlotsMapTypes;
-         QMap< QString, QMap< QString, QMap< QString, bool> > > indComboPlotsMapTripleTypeRangeBool;
-	 QMap< QString, QStringList > CombPlots_Type_to_Models;
-         QMap< QString, QString > eSign_details;
+        QStringList analysis2DSAItems;         //!< List of 2DSA analysis items
+        QStringList analysis2DSAItems_vals;    //!< List of 2DSA analysis item values
 
-         QMap< QString, QStringList >     CombPlotsParmsMap;
-         QMap< QString, QList< QColor > > CombPlotsParmsMap_Colors;
-  
-	 void  get_current_date( void );
-	 void  format_needed_params( void );
-	 void  assemble_pdf( QProgressDialog * );
-	 void  add_solution_details( const QString, const QString, QString& );
-	 void  assemble_parts( QString& );
-         int   list_all_gmp_reports_db( QList< QStringList >&, US_DB2* );
-	 int   list_all_autoflow_records( QList< QStringList >&  );
-	 QMap < QString, QString > read_autoflow_record( int );
-	 void  write_pdf_report( void );
-         void  remove_files_by_mask( QString, QStringList );
-         void write_gmp_report_DB( QString, QString );
-  
-  void  assemble_user_inputs_html( void );
-  void  assemble_run_details_html( void );
-         int   get_expID_by_runID_invID( US_DB2*, QString );
-         double get_loading_volume( int );
-  
-         void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&,
-					   QString&,  QString&,  QString&,  QString&, QString&,
-					   QString&,  QString&,  QString&,  QString&, QString&,
-					   QString&,  QString& );
-	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
-         QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
+        QStringList analysisPCSAItems;         //!< List of PCSA analysis items
+        QStringList analysisPCSAItems_vals;    //!< List of PCSA analysis item values
 
-  void read_reportLists_from_aprofile( QStringList &, QStringList & );
-  bool readReportLists( QXmlStreamReader&, QMap< QString, QString> &, QMap< QString, QString> & );
-  QStringList buildDroppedTriplesList ( US_DB2*, QMap <QString, QString> );
-  
-	 
-	 void read_protocol_and_reportMasks( void );
-	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
-         QMap< QString, QString > read_autoflowGMPReportEsign_record( US_DB2*);
-         QString get_assigned_oper_revs( QJsonDocument );
-	 void parse_gen_mask_json ( const QString  );
-	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
-	 QMap< QString, QString > parse_models_desc_json( const QString, const QString ); 
-	 
-	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
-	 void build_genTree ( void );
-         void build_miscTree ( void );
-	 void build_perChanTree ( void ) ;
-	 void build_combPlotsTree ( void ) ; 
-	 void gui_to_parms ( void ) ;
-	 
-	 void get_children_to_json( QString &, QTreeWidgetItem* );
-	 QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
-	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
-	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
-	 void parse_edited_combPlots_mask_json( const QString, CombPlotsReportMaskStructure &  );
-         void parse_edited_misc_mask_json( const QString, MiscReportMaskStructure &  );
+        // Miscellaneous tree masks
+        QMap<QString, QTreeWidgetItem*> miscItem; //!< Map of miscellaneous items
+        QStringList miscTopLevelItems;            //!< List of miscellaneous top-level items
 
+        // Per-channel report masks
+        QMap<QString, QTreeWidgetItem*> chanItem;               //!< Map of channel items
+        QMap<QString, QTreeWidgetItem*> tripleItem;             //!< Map of triple items
+        QMap<QString, QTreeWidgetItem*> tripleModelItem;        //!< Map of triple model items
+        QMap<QString, QTreeWidgetItem*> tripleMaskItem;         //!< Map of triple mask items
+        QMap<QString, QTreeWidgetItem*> tripleMaskPlotItem;     //!< Map of triple mask plot items
+        QMap<QString, QTreeWidgetItem*> tripleMaskPseudoItem;   //!< Map of triple mask pseudo items
+        QMap<QString, QTreeWidgetItem*> tripleMaskIndComboPlotItem; //!< Map of triple mask individual combined plot items
 
-	 bool model_exists;
-	 
-	 QVector< US_DataIO::RawData    > rawData;
-	 QVector< US_DataIO::EditedData > editedData;
+        // Combined plots masks
+        QMap<QString, QTreeWidgetItem*> topItemCombPlots; //!< Map of top items for combined plots
+        QMap<QString, QTreeWidgetItem*> ItemCombPlots;    //!< Map of items for combined plots
 
-	 QVector< SP_SPEEDPROFILE >     speed_steps;
-	 
-	 US_DataIO::EditedData*      edata;
-	 US_DataIO::RawData*         rdata;
-	 US_DataIO::RawData*         sdata;
-	 US_DataIO::RawData          wsdata;
-	 
-	 QPointer< US_ResidsBitmap >    rbmapd;
+        QList<QStringList> gmpReportsDBdata; //!< GMP reports DB data
+        QList<QStringList> autoflowdata;     //!< Autoflow data
+        US_SelectItem* pdiag_autoflow;       //!< Autoflow select item dialog
+        US_SelectItem* pdiag_autoflow_db;    //!< Autoflow select item dialog for DB
 
-	 // Class to hold model descriptions
-	 class ModelDesc
-	 {
-         public:
-	   QString   description;    // Full model description
-	   QString   baseDescr;      // Base analysis-set description
-	   QString   fitfname;       // Associated fit file name
-	   QString   modelID;        // Model DB ID
-	   QString   modelGUID;      // Model GUID
-	   QString   filepath;       // Full path model file name
-	   QString   editID;         // Edit parent DB ID
-	   QString   editGUID;       // Edit parent GUID
-	   QString   antime;         // Analysis date & time (yymmddHHMM)
-	   QDateTime lmtime;         // Record lastmod date & time
-	   double    variance;       // Variance value
-	   double    meniscus;       // Meniscus radius value
-	   double    bottom;         // Bottom radius value
-	   
-	   // Less than operator to enable sort
-	   bool operator< ( const ModelDesc& md )
-	     const { return ( description < md.description ); }
-	 };
-	 
-	 // Class to hold noise description
-	 class NoiseDesc
-	 {
-         public:
-	   QString   description;    // Full noise description
-	   QString   baseDescr;      // Base analysis-set description
-	   QString   noiseID;        // Noise DB ID
-	   QString   noiseGUID;      // Noise GUID
-	   QString   filepath;       // Full path noise file name
-	   QString   modelID;        // Model parent DB ID
-	   QString   modelGUID;      // Model parent GUID
-	   QString   antime;         // Analysis date & time (yymmddHHMM)
-	   
-	   // Less than operator to enable sort
-	   bool operator< ( const NoiseDesc& nd )
-	     const { return ( description < nd.description ); }
-	 };
+        QString html_assembled;              //!< Assembled HTML string
+        QString html_failed;                 //!< Failed HTML string
+        QString html_general;                //!< General HTML string
+        QString html_lab_rotor;              //!< Lab rotor HTML string
+        QString html_operator;               //!< Operator HTML string
+        QString html_speed;                  //!< Speed HTML string
+        QString html_cells;                  //!< Cells HTML string
+        QString html_solutions;              //!< Solutions HTML string
+        QString html_optical;                //!< Optical HTML string
+        QString html_ranges;                 //!< Ranges HTML string
+        QString html_scan_count;             //!< Scan count HTML string
+        QString html_analysis_profile;       //!< Analysis profile HTML string
+        QString html_analysis_profile_2dsa;  //!< 2DSA analysis profile HTML string
+        QString html_analysis_profile_pcsa;  //!< PCSA analysis profile HTML string
 
-	 QVector< double >    v_meni;
-	 QVector< double >    v_bott;
-	 QVector< double >    v_rmsd;
-	 
-	 QString              filedir;
-	 QString              fname_load;
-	 QString              fname_edit;
-	 QStringList          edtfiles;
-	 int                  nedtfs;
-	 int                  ix_best;
-	 int                  ix_setfit;
-	 bool                 have3val;
-	 bool                 bott_fit;
-	 int                  idEdit;
+        US_Help showHelp;                    //!< Help display object
 
-	 double               fit_xvl; //for 2d data
-	 double               f_meni;  //for 3d data
-	 double               f_bott;  //for 3d data
+        QPushButton* pb_download_report;     //!< Download report button
+        QPushButton* pb_gen_report;          //!< Generate report button
+        QPushButton* pb_view_report;         //!< View report button
+        QPushButton* pb_view_report_db;      //!< View report from DB button
+        QPushButton* pb_view_report_auto;    //!< View auto report button
+        QPushButton* pb_select_all;          //!< Select all button
+        QPushButton* pb_unselect_all;        //!< Unselect all button
+        QPushButton* pb_expand_all;          //!< Expand all button
+        QPushButton* pb_collapse_all;        //!< Collapse all button
+        QPushButton* pb_help;                //!< Help button
+        QPushButton* pb_close;               //!< Close button
+        QLineEdit* le_loaded_run;            //!< Loaded run line edit
+        QLineEdit* le_loaded_run_db;         //!< Loaded run DB line edit
 
-	 double               dy_global;
-	 double               miny_global;
-	 QString tripleInfo;
-	 
-	 int                  eID_global;
-	 QString              eID_updated; 
-	 
-	 US_Model                    model;
-	 US_Model                    model_loaded;
-	 US_Model                    model_used;
-	 
-	 US_Noise                    ri_noise;
-	 US_Noise                    ti_noise;
-	 QList< int >                excludedScans;
-	 US_Solution                 solution_rec;
+        QTextEdit* te_fpath_info;            //!< File path info text edit
+        QTextEdit* te_fpath_info_db;         //!< File path info DB text edit
 
-	 US_Math2::SolutionData      solution;
-	 QVector< QVector< double > > resids;
-	 
-	 US_SimulationParameters     simparams;
-	 QList< US_DataIO::RawData >   tsimdats;
-	 QList< US_Model >             tmodels;
-	 QVector< int >                kcomps;
+        QString AProfileGUID;                //!< Analysis profile GUID
+        QString ProtocolName_auto;           //!< Auto protocol name
+        QString AutoflowID_auto;             //!< Auto autoflow ID
+        QString FullRunName_auto;            //!< Auto full run name
+        int invID;                           //!< Investigator ID
+        QString runID;                       //!< Run ID
+        QString runName;                     //!< Run name
+        QString filePath;                    //!< File path
+        QString filePath_db;                 //!< File path for DB
+        QString FileName;                    //!< File name
+        QString intensityID;                 //!< Intensity ID
+        QString analysisIDs;                 //!< Analysis IDs
+        QString autoflowStatusID;            //!< Autoflow status ID
+        QString optimaName;                  //!< Optima name
 
+        QString current_date;                //!< Current date
 
-	 QStringList noiIDs;      // Noise GUIDs
-	 QStringList noiEdIDs;    // Noise edit GUIDs
-	 QStringList noiMoIDs;    // Noise model GUIDs
-	 QStringList noiTypes;    // Noise types
-	 QStringList modIDs;      // Model GUIDs
-	 QStringList modEdIDs;    // Model edit GUIDs
-	 QStringList modDescs;    // Model descriptions
+        QString duration_str;                //!< Duration string
+        QString delay_stage_str;             //!< Delay stage string
+        QString total_time_str;              //!< Total time string
 
-	 int           thrdone;
-	 
-	 double       density;
-	 double       viscosity;
-	 double       vbar;
-	 double       compress;
+        QString delay_uvvis_str;             //!< UVVIS delay string
+        QString scanint_uvvis_str;           //!< UVVIS scan interval string
+        QString delay_int_str;               //!< Intensity delay string
+        QString scanint_int_str;             //!< Intensity scan interval string
 
-	 QString      svbar_global;
-	 
-	 bool         manual;
-	 bool          dataLoaded;
-	 bool          haveSim;
-	 bool          dataLatest;
-	 bool          buffLoaded;
-	 bool          cnstvb;
-	 bool          cnstff;
-	 bool          exp_steps;
-	 bool          dat_steps;
-	 bool          is_dmga_mc;
+        int ncells_used;                     //!< Number of cells used
+        int nsol_channels;                   //!< Number of solution channels
+        int nchan_optics;                    //!< Number of optical channels
+        int nchan_ranges;                    //!< Number of channel ranges
 
-	 QMap< QString, QString >    adv_vals;
+        bool has_uvvis;                      //!< Flag for UVVIS
+        bool has_interference;               //!< Flag for interference
+        bool has_fluorescense;               //!< Flag for fluorescence
 
-	 int           dbg_level;
-	 int           nthread;
-	 int           scanCount;
+        QVector<QString> Array_of_triples;   //!< Array of triples
+        QVector<QString> Array_of_tripleNames; //!< Array of triple names
+        QMap<QString, QStringList> Triple_to_Models; //!< Triple to models map
+        QMap<QString, QStringList> Triple_to_ModelsMissing; //!< Triple to missing models map
+        QMap<QString, QString> Triple_to_FailedStage; //!< Triple to failed stage map
+        QMap<QString, QMap<QString, QString>> Triple_to_ModelsDesc; //!< Triple to models description map
+        QMap<QString, QMap<QString, QString>> Triple_to_ModelsDescGuid; //!< Triple to models description GUID map
 
-	 QPoint        rpd_pos;
-	 QString    FileName_parsed;
+        QStringList droppedTriplesList; //!< List of dropped triples
 
-	 //main simulation results
-	 QString rmsd_global;
+        QMap<QString, QString> triple_info_map; //!< Triple info map
+        QString currentTripleName; //!< Current triple name
 
-	 void simulate_triple( const QString, QString );
-	 bool loadData( QMap < QString, QString > & );
-	 bool loadModel( QMap < QString, QString > & );
-	 bool loadNoises( QMap < QString, QString > & );
-	 void loadNoises_whenAbsent ( void );
-	 int  count_noise_auto( US_DataIO::EditedData*, US_Model*,
-				QStringList&, QStringList& );
+        QMap<QString, QString> intensityRIMap; //!< Intensity RI map
+        QMap<QString, QMap<QString, QString>> comboPlotsMap; //!< Combined plots map
+        QMap<QString, int> comboPlotsMapTypes; //!< Combined plots types map
+        QMap<QString, QMap<QString, QMap<QString, bool>>> indComboPlotsMapTripleTypeRangeBool; //!< Individual combined plots map
+        QMap<QString, QStringList> CombPlots_Type_to_Models; //!< Combined plots type to models map
+        QMap<QString, QString> eSign_details; //!< Electronic signature details
 
-	 int id_list_db_auto( QString );
-	 int models_in_edit_auto( QString, QStringList& );
-	 int noises_in_model_auto( QString, QStringList& );
-	 void simulateModel( QMap < QString, QString > & );
-	 void adjustModel( void );
+        QMap<QString, QStringList> CombPlotsParmsMap; //!< Combined plots parameters map
+        QMap<QString, QList<QColor>> CombPlotsParmsMap_Colors; //!< Combined plots parameters colors map
 
-	 QStringList scan_dbase_models( QStringList );
-	 
-	 QString text_model(     US_Model, int );
-	 QString html_header   ( QString, QString, US_DataIO::EditedData* );
-	 QString distrib_info( QMap < QString, QString > & );
-	 QString calc_replicates_averages( void );
-	 QString get_replicate_group_number( QString );
-	 QMap<QString, double>  get_replicate_group_results( US_ReportGMP::ReportItem, QString, QStringList );
-	 void    assemble_replicate_av_integration_html( void );
-	 
-	 QString get_filename( QString );
-	 
-      public slots:
-	void    thread_progress( int, int );
-	void    thread_complete( int );
-	void    resplot_done( void );
-	void    update_progress( int );
-	
-      private slots:
-	void loadRun_auto( QMap < QString, QString > & );
-	void check_failed_triples( void );
-	QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
-	QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
-	void check_models ( int );
-	void check_for_missing_models ( void );
-        void check_for_dropped_triples( void );
- 	QString  compose_html_failed_stage_missing_models( void );
-	QString  missing_models_msg( void );
-	void reset_report_panel ( void );
-	void view_report ( void );
-        void view_report_db ( void );
-        void load_gmp_report_db( void );
-	void load_gmp_run ( void );
-	void generate_report( void );
-	void changedItem    ( QTreeWidgetItem*, int );
-	void select_all( void );
-	void unselect_all( void );
-	void expand_all( void );
-	void collapse_all( void );
+        void get_current_date(void); //!< Get the current date
+        void format_needed_params(void); //!< Format needed parameters
+        void assemble_pdf(QProgressDialog*); //!< Assemble PDF
+        void add_solution_details(const QString, const QString, QString&); //!< Add solution details
+        void assemble_parts(QString&); //!< Assemble parts
+        int list_all_gmp_reports_db(QList<QStringList>&, US_DB2*); //!< List all GMP reports from DB
+        int list_all_autoflow_records(QList<QStringList>&); //!< List all autoflow records
+        QMap<QString, QString> read_autoflow_record(int); //!< Read autoflow record
+        void write_pdf_report(void); //!< Write PDF report
+        void remove_files_by_mask(QString, QStringList); //!< Remove files by mask
+        void write_gmp_report_DB(QString, QString); //!< Write GMP report to DB
 
-	void show_results   ( QMap < QString, QString > & );
-	void calc_residuals( void );
-	void assemble_distrib_html(  QMap < QString, QString > &  );
-	//void assemble_integration_results_html( void );
-        void assemble_plots_html( QStringList,  QString = QString(""));
-	double  interp_sval( double, double*, double*,  int );
-	void plotres( QMap < QString, QString > &   );
-	void plot_pseudo3D( QString, QString );
-	bool modelGuidExistsForStage( QString, QString );
-  bool modelGuidExistsForStage_ind( QString, QString, QString );
-	void process_combined_plots ( QString );
-  void process_combined_plots_individual ( QString, QString );
+        void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
+        void assemble_run_details_html(void); //!< Assemble run details in HTML
+        int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
+        double get_loading_volume(int); //!< Get loading volume
 
-  QMap< QString, QString> read_autoflowGMPReportEsign_record( QString );
-  void get_assigned_oper_revs( QJsonDocument, QStringList& );
-	
-	QString indent    (     int  )  const;
-	QString table_row( const QString&, const QString& ) const;
-	QString table_row( const QString&, const QString&,
-			   const QString& )                 const;
-	QString table_row( const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString& )                 const;
-	QString table_row( const QString&, const QString&,
-			   const QString&, const QString& ) const;
-	QString table_row( const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString& )                 const;
-	QString table_row( const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString&, const QString& ) const;
-	QString table_row( const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString&, const QString& ) const;
-	QString table_row( const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString&, const QString&,
-			   const QString& ) const;
+        void read_autoflowStatus_record(QString&, QString&, QString&, QString&,
+                                        QString&, QString&, QString&, QString&, QString&,
+                                        QString&, QString&, QString&, QString&, QString&,
+                                        QString&, QString&); //!< Read autoflow status record
+        QMap<QString, QMap<QString, QString>> parse_autoflowStatus_json(const QString, const QString); //!< Parse autoflow status JSON
+        QMap<QString, QString> parse_autoflowStatus_analysis_json(const QString); //!< Parse autoflow status analysis JSON
 
-       void paintPage(QPrinter& printer, int pageNumber, int pageCount,
-       		     QPainter* painter, QTextDocument* doc,
-       		     const QRectF& textRect, qreal footerHeight);
-       void printDocument(QPrinter& printer, QTextDocument* doc);
-                        //QWidget* parentWidget);
-       double mmToPixels(QPrinter& printer, int mm);
-  
-	void    write_plot    ( const QString&, const QwtPlot* );
-	bool    mkdir         ( const QString&, const QString& );
+        void read_reportLists_from_aprofile(QStringList&, QStringList&); //!< Read report lists from analysis profile
+        bool readReportLists(QXmlStreamReader&, QMap<QString, QString>&, QMap<QString, QString>&); //!< Read report lists
+        QStringList buildDroppedTriplesList(US_DB2*, QMap<QString, QString>); //!< Build dropped triples list
 
-	void distrib_plot_stick(  int );
-	void distrib_plot_2d   (  int );
-	
-	void help          ( void )
-	{ showHelp.show_help( "reporter_gmp.html" ); };
-	
-      signals:
-	void reset_reports( void );
-   
+        void read_protocol_and_reportMasks(void); //!< Read protocol and report masks
+        QMap<QString, QString> read_autoflowIntensity(QString, US_DB2*); //!< Read autoflow intensity
+        QMap<QString, QString> read_autoflowGMPReportEsign_record(US_DB2*); //!< Read autoflow GMP report electronic signature record
+        QString get_assigned_oper_revs(QJsonDocument); //!< Get assigned operator revisions
+        void parse_gen_mask_json(const QString); //!< Parse general mask JSON
+        QMap<QString, QMap<QString, QString>> parse_comb_plots_json(const QString); //!< Parse combined plots JSON
+        QMap<QString, QString> parse_models_desc_json(const QString, const QString); //!< Parse models description JSON
+
+        void get_item_childs(QList<QTreeWidgetItem*>&, QTreeWidgetItem*); //!< Get item children
+        void build_genTree(void); //!< Build general tree
+        void build_miscTree(void); //!< Build miscellaneous tree
+        void build_perChanTree(void); //!< Build per-channel tree
+        void build_combPlotsTree(void); //!< Build combined plots tree
+        void gui_to_parms(void); //!< Convert GUI to parameters
+
+        void get_children_to_json(QString&, QTreeWidgetItem*); //!< Get children to JSON
+        QString tree_to_json(QMap<QString, QTreeWidgetItem*>); //!< Convert tree to JSON
+        void parse_edited_gen_mask_json(const QString, GenReportMaskStructure&); //!< Parse edited general mask JSON
+        void parse_edited_perChan_mask_json(const QString, PerChanReportMaskStructure&); //!< Parse edited per-channel mask JSON
+        void parse_edited_combPlots_mask_json(const QString, CombPlotsReportMaskStructure&); //!< Parse edited combined plots mask JSON
+        void parse_edited_misc_mask_json(const QString, MiscReportMaskStructure&); //!< Parse edited miscellaneous mask JSON
+
+        bool model_exists; //!< Flag for model existence
+
+        QVector<US_DataIO::RawData> rawData; //!< Raw data vector
+        QVector<US_DataIO::EditedData> editedData; //!< Edited data vector
+
+        QVector<SP_SPEEDPROFILE> speed_steps; //!< Speed steps
+
+        US_DataIO::EditedData* edata; //!< Edited data
+        US_DataIO::RawData* rdata; //!< Raw data
+        US_DataIO::RawData* sdata; //!< Simulation data
+        US_DataIO::RawData wsdata; //!< Workspace data
+
+        QPointer<US_ResidsBitmap> rbmapd; //!< Residuals bitmap dialog
+
+        /**
+         * @class ModelDesc
+         * @brief Class to hold model descriptions.
+         */
+        class ModelDesc
+        {
+            public:
+                QString description; //!< Full model description
+                QString baseDescr; //!< Base analysis-set description
+                QString fitfname; //!< Associated fit file name
+                QString modelID; //!< Model DB ID
+                QString modelGUID; //!< Model GUID
+                QString filepath; //!< Full path model file name
+                QString editID; //!< Edit parent DB ID
+                QString editGUID; //!< Edit parent GUID
+                QString antime; //!< Analysis date & time (yymmddHHMM)
+                QDateTime lmtime; //!< Record last modified date & time
+                double variance; //!< Variance value
+                double meniscus; //!< Meniscus radius value
+                double bottom; //!< Bottom radius value
+
+                /**
+                 * @brief Less than operator to enable sort.
+                 * @param md The ModelDesc object to compare with
+                 * @return True if this object is less than the given object
+                 */
+                bool operator<(const ModelDesc& md) const { return (description < md.description); }
+        };
+
+        /**
+         * @class NoiseDesc
+         * @brief Class to hold noise descriptions.
+         */
+        class NoiseDesc
+        {
+            public:
+                QString description; //!< Full noise description
+                QString baseDescr; //!< Base analysis-set description
+                QString noiseID; //!< Noise DB ID
+                QString noiseGUID; //!< Noise GUID
+                QString filepath; //!< Full path noise file name
+                QString modelID; //!< Model parent DB ID
+                QString modelGUID; //!< Model parent GUID
+                QString antime; //!< Analysis date & time (yymmddHHMM)
+
+                /**
+                 * @brief Less than operator to enable sort.
+                 * @param nd The NoiseDesc object to compare with
+                 * @return True if this object is less than the given object
+                 */
+                bool operator<(const NoiseDesc& nd) const { return (description < nd.description); }
+        };
+
+        QVector<double> v_meni; //!< Meniscus vector
+        QVector<double> v_bott; //!< Bottom vector
+        QVector<double> v_rmsd; //!< RMSD vector
+
+        QString filedir; //!< File directory
+        QString fname_load; //!< File name to load
+        QString fname_edit; //!< Edit file name
+        QStringList edtfiles; //!< Edit files list
+        int nedtfs; //!< Number of edit files
+        int ix_best; //!< Best index
+        int ix_setfit; //!< Set fit index
+        bool have3val; //!< Flag for having 3 values
+        bool bott_fit; //!< Flag for bottom fit
+        int idEdit; //!< Edit ID
+
+        double fit_xvl; //!< Fit x value for 2D data
+        double f_meni; //!< Meniscus value for 3D data
+        double f_bott; //!< Bottom value for 3D data
+
+        double dy_global; //!< Global y value
+        double miny_global; //!< Global minimum y value
+        QString tripleInfo; //!< Triple information
+
+        int eID_global; //!< Global experiment ID
+        QString eID_updated; //!< Updated experiment ID
+
+        US_Model model; //!< Model
+        US_Model model_loaded; //!< Loaded model
+        US_Model model_used; //!< Used model
+
+        US_Noise ri_noise; //!< RI noise
+        US_Noise ti_noise; //!< TI noise
+        QList<int> excludedScans; //!< Excluded scans list
+        US_Solution solution_rec; //!< Solution record
+
+        US_Math2::SolutionData solution; //!< Solution data
+        QVector<QVector<double>> resids; //!< Residuals vector
+
+        US_SimulationParameters simparams; //!< Simulation parameters
+        QList<US_DataIO::RawData> tsimdats; //!< Simulation data list
+        QList<US_Model> tmodels; //!< Models list
+        QVector<int> kcomps; //!< Components vector
+
+        QStringList noiIDs; //!< Noise GUIDs list
+        QStringList noiEdIDs; //!< Noise edit GUIDs list
+        QStringList noiMoIDs; //!< Noise model GUIDs list
+        QStringList noiTypes; //!< Noise types list
+        QStringList modIDs; //!< Model GUIDs list
+        QStringList modEdIDs; //!< Model edit GUIDs list
+        QStringList modDescs; //!< Model descriptions list
+
+        int thrdone; //!< Thread done flag
+
+        double density; //!< Density
+        double viscosity; //!< Viscosity
+        double vbar; //!< Vbar
+        double compress; //!< Compressibility
+
+        QString svbar_global; //!< Global svbar
+
+        bool manual; //!< Manual flag
+        bool dataLoaded; //!< Data loaded flag
+        bool haveSim; //!< Have simulation flag
+        bool dataLatest; //!< Data latest flag
+        bool buffLoaded; //!< Buffer loaded flag
+        bool cnstvb; //!< Constant vbar flag
+        bool cnstff; //!< Constant f/f0 flag
+        bool exp_steps; //!< Experimental steps flag
+        bool dat_steps; //!< Data steps flag
+        bool is_dmga_mc; //!< DMGA Monte Carlo flag
+
+        QMap<QString, QString> adv_vals; //!< Advanced values map
+
+        int dbg_level; //!< Debug level
+        int nthread; //!< Number of threads
+        int scanCount; //!< Scan count
+
+        QPoint rpd_pos; //!< Residuals plot position
+        QString FileName_parsed; //!< Parsed file name
+
+        QString rmsd_global; //!< Global RMSD
+
+        void simulate_triple(const QString, QString); //!< Simulate triple
+        bool loadData(QMap<QString, QString>&); //!< Load data
+        bool loadModel(QMap<QString, QString>&); //!< Load model
+        bool loadNoises(QMap<QString, QString>&); //!< Load noises
+        void loadNoises_whenAbsent(void); //!< Load noises when absent
+        int count_noise_auto(US_DataIO::EditedData*, US_Model*, QStringList&, QStringList&); //!< Count noise automatically
+
+        int id_list_db_auto(QString); //!< Get ID list from DB automatically
+        int models_in_edit_auto(QString, QStringList&); //!< Get models in edit automatically
+        int noises_in_model_auto(QString, QStringList&); //!< Get noises in model automatically
+        void simulateModel(QMap<QString, QString>&); //!< Simulate model
+        void adjustModel(void); //!< Adjust model
+
+        QStringList scan_dbase_models(QStringList); //!< Scan database models
+
+        QString text_model(US_Model, int); //!< Convert model to text
+        QString html_header(QString, QString, US_DataIO::EditedData*); //!< Generate HTML header
+        QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
+        QString calc_replicates_averages(void); //!< Calculate replicates averages
+        QString get_replicate_group_number(QString); //!< Get replicate group number
+        QMap<QString, double> get_replicate_group_results(US_ReportGMP::ReportItem, QString, QStringList); //!< Get replicate group results
+        void assemble_replicate_av_integration_html(void); //!< Assemble replicate average integration HTML
+
+        QString get_filename(QString); //!< Get file name
+
+    public slots:
+        void thread_progress(int, int); //!< Slot for thread progress
+        void thread_complete(int); //!< Slot for thread completion
+        void resplot_done(void); //!< Slot for residuals plot done
+        void update_progress(int); //!< Slot for updating progress
+
+    private slots:
+        void loadRun_auto(QMap<QString, QString>&); //!< Load run automatically
+        void check_failed_triples(void); //!< Check failed triples
+        QMap<QString, QString> read_autoflowAnalysis_record(US_DB2*, const QString&); //!< Read autoflow analysis record
+        QMap<QString, QString> read_autoflowAnalysisHistory_record(US_DB2*, const QString&); //!< Read autoflow analysis history record
+        void check_models(int); //!< Check models
+        void check_for_missing_models(void); //!< Check for missing models
+        void check_for_dropped_triples(void); //!< Check for dropped triples
+        QString compose_html_failed_stage_missing_models(void); //!< Compose HTML for failed stage with missing models
+        QString missing_models_msg(void); //!< Generate missing models message
+        void reset_report_panel(void); //!< Reset report panel
+        void view_report(void); //!< View report
+        void view_report_db(void); //!< View report from DB
+        void load_gmp_report_db(void); //!< Load GMP report from DB
+        void load_gmp_run(void); //!< Load GMP run
+        void generate_report(void); //!< Generate report
+        void changedItem(QTreeWidgetItem*, int); //!< Handle item change
+        void select_all(void); //!< Select all items
+        void unselect_all(void); //!< Unselect all items
+        void expand_all(void); //!< Expand all items
+        void collapse_all(void); //!< Collapse all items
+
+        void show_results(QMap<QString, QString>&); //!< Show results
+        void calc_residuals(void); //!< Calculate residuals
+        void assemble_distrib_html(QMap<QString, QString>&); //!< Assemble distribution HTML
+        void assemble_plots_html(QStringList, QString = QString("")); //!< Assemble plots HTML
+        double interp_sval(double, double*, double*, int); //!< Interpolate s-value
+        void plotres(QMap<QString, QString>&); //!< Plot residuals
+        void plot_pseudo3D(QString, QString); //!< Plot pseudo 3D
+        bool modelGuidExistsForStage(QString, QString); //!< Check if model GUID exists for stage
+        bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
+        void process_combined_plots(QString); //!< Process combined plots
+        void process_combined_plots_individual(QString, QString); //!< Process combined plots (individual)
+
+        QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
+        void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
+
+        QString indent(int) const; //!< Generate indent
+        QString table_row(const QString&, const QString&) const; //!< Generate table row with 2 columns
+        QString table_row(const QString&, const QString&, const QString&) const; //!< Generate table row with 3 columns
+        QString table_row(const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 4 columns
+        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 5 columns
+        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 6 columns
+        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 7 columns
+        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 8 columns
+        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 9 columns
+
+        /**
+         * @brief Paint the page for the PDF report.
+         * @param printer The QPrinter object
+         * @param pageNumber The page number
+         * @param pageCount The total number of pages
+         * @param painter The QPainter object
+         * @param doc The QTextDocument object
+         * @param textRect The text rectangle
+         * @param footerHeight The footer height
+         */
+        void paintPage(QPrinter& printer, int pageNumber, int pageCount,
+                       QPainter* painter, QTextDocument* doc,
+                       const QRectF& textRect, qreal footerHeight);
+
+        /**
+         * @brief Print the document.
+         * @param printer The QPrinter object
+         * @param doc The QTextDocument object
+         */
+        void printDocument(QPrinter& printer, QTextDocument* doc);
+
+        /**
+         * @brief Convert millimeters to pixels.
+         * @param printer The QPrinter object
+         * @param mm The value in millimeters
+         * @return The value in pixels
+         */
+        double mmToPixels(QPrinter& printer, int mm);
+
+        /**
+         * @brief Write plot to file.
+         * @param filename The file name
+         * @param plot The QwtPlot object
+         */
+        void write_plot(const QString& filename, const QwtPlot* plot);
+
+        /**
+         * @brief Create directory if it does not exist.
+         * @param dirPath The directory path
+         * @param dirName The directory name
+         * @return True if the directory was created, false otherwise
+         */
+        bool mkdir(const QString& dirPath, const QString& dirName);
+
+        /**
+         * @brief Plot stick distribution.
+         * @param index The index of the distribution
+         */
+        void distrib_plot_stick(int index);
+
+        /**
+         * @brief Plot 2D distribution.
+         * @param index The index of the distribution
+         */
+        void distrib_plot_2d(int index);
+
+        /**
+         * @brief Display help.
+         */
+        void help(void)
+        { showHelp.show_help("reporter_gmp.html"); };
+
+        signals:
+                /**
+                 * @brief Signal to reset reports.
+                 */
+                void reset_reports(void);
 };
+
 #endif

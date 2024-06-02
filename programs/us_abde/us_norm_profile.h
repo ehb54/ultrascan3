@@ -1,3 +1,6 @@
+//! \file us_norm_profile.h
+//! \brief Contains the declaration of the US_Norm_Profile class and its members.
+
 #ifndef US_NORM_PROFILE_H
 #define US_NORM_PROFILE_H
 
@@ -11,85 +14,148 @@
 #include "us_minimize.h"
 #include "qwt_legend.h"
 
-
-class US_Norm_Profile : public US_Widgets{
+//! \class US_Norm_Profile
+//! \brief A class for handling normalization profiles in the analysis.
+class US_Norm_Profile : public US_Widgets
+{
     Q_OBJECT
-public:
-    explicit US_Norm_Profile();
 
-signals:
-    void widgetClosed();
+    public:
+        //! \brief Constructor for the US_Norm_Profile class.
+        explicit US_Norm_Profile();
 
-protected:
-    void closeEvent(QCloseEvent *event) override;
+    signals:
+        //! \brief Signal emitted when the widget is closed.
+        void widgetClosed();
 
-private:
-    QPushButton* pb_load;
-    QPushButton* pb_reset;
-    QPushButton* pb_close;
-    QPushButton* pb_save;
+    protected:
+        //! \brief Override of the close event to emit widgetClosed signal.
+        //! \param event The close event.
+        void closeEvent(QCloseEvent* event) override;
 
-    QLineEdit* le_investigator;
-    QLineEdit* le_runinfo;
+    private:
+        QPushButton* pb_load; //!< Button to load data.
+        QPushButton* pb_reset; //!< Button to reset the profile.
+        QPushButton* pb_close; //!< Button to close the widget.
+        QPushButton* pb_save; //!< Button to save the profile.
 
-    US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+        QLineEdit* le_investigator; //!< Line edit for investigator name.
+        QLineEdit* le_runinfo; //!< Line edit for run information.
 
-    US_Plot* usplot;
-    QwtPlot* plot;
-    QwtPlotGrid* grid;
+        US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice.
 
-    int scanid;
-    int nscans;
-    QStringList filenames;
-    QStringList filePaths;
-    QStringList selFilenames;
-    QVector<QVector<double>> xvalues;
-    QVector<QVector<double>> yvalues;
-    QVector<QVector<double>> xvalues_sel;
-    QVector<QVector<double>> midxval_sel;
-    QVector<QVector<double>> yvalues_sel;
-    QVector<QVector<double>> yvaluesN_sel;
-    QVector<QVector<double>> integral_sel;
-    QVector<QVector<double>> integralN_sel;
-    double x_min_picked = -1;
-    double x_max_picked = -1;
+        US_Plot* usplot; //!< US_Plot object for plotting.
+        QwtPlot* plot; //!< QwtPlot object for the main plot.
+        QwtPlotGrid* grid; //!< Grid for the QwtPlot.
 
-    QListWidget *lw_inpData;
-    QListWidget *lw_selData;
+        int scanid; //!< Scan ID.
+        int nscans; //!< Number of scans.
+        QStringList filenames; //!< List of filenames.
+        QStringList filePaths; //!< List of file paths.
+        QStringList selFilenames; //!< List of selected filenames.
+        QVector<QVector<double>> xvalues; //!< X values for the plot.
+        QVector<QVector<double>> yvalues; //!< Y values for the plot.
+        QVector<QVector<double>> xvalues_sel; //!< Selected X values.
+        QVector<QVector<double>> midxval_sel; //!< Selected mid X values.
+        QVector<QVector<double>> yvalues_sel; //!< Selected Y values.
+        QVector<QVector<double>> yvaluesN_sel; //!< Normalized selected Y values.
+        QVector<QVector<double>> integral_sel; //!< Selected integral values.
+        QVector<QVector<double>> integralN_sel; //!< Normalized selected integral values.
+        double x_min_picked = -1; //!< Minimum X value picked.
+        double x_max_picked = -1; //!< Maximum X value picked.
 
-    QPushButton *pb_rmItem;
-    QPushButton *pb_cleanList;
-    QPushButton *pb_pick_rp;
-    QCheckBox *ckb_rawData;
-    QCheckBox *ckb_integral;
-    QCheckBox *ckb_norm;
-    QCheckBox *ckb_legend;
-    QCheckBox *ckb_xrange;
-    US_PlotPicker *picker;
+        QListWidget *lw_inpData; //!< List widget for input data.
+        QListWidget *lw_selData; //!< List widget for selected data.
 
-    void selectData(void);
-    void plotData(void);
-    QMap<QString, QVector<double>> trapz(QVector<double>,
-                                                  QVector<double>);
-    QVector<double> getXlimit(QVector<double>, double, double, int *, int *);
-    void enableWidgets(bool);
+        QPushButton *pb_rmItem; //!< Button to remove an item.
+        QPushButton *pb_cleanList; //!< Button to clean the list.
+        QPushButton *pb_pick_rp; //!< Button to pick a reference point.
+        QCheckBox *ckb_rawData; //!< Checkbox for raw data.
+        QCheckBox *ckb_integral; //!< Checkbox for integral.
+        QCheckBox *ckb_norm; //!< Checkbox for normalization.
+        QCheckBox *ckb_legend; //!< Checkbox for legend.
+        QCheckBox *ckb_xrange; //!< Checkbox for X range.
+        US_PlotPicker *picker; //!< Plot picker object.
 
-private slots:
-    void slt_loadAUC(void);
-    void slt_addRmItem(QListWidgetItem *);
-    void slt_rmItem(void);
-    void slt_inItemSel(int);
-    void slt_outItemSel(int);
-    void slt_cleanList(void);
-    void slt_pickPoint(void);
-    void slt_mouse(const QwtDoublePoint& point);
-    void slt_xrange(int);
-    void slt_legend(int);
-    void slt_integral(int);
-    void slt_norm(int);
-    void slt_rawData(int);
-    void slt_reset(void);
-    void slt_save(void);
+        //! \brief Select data for the plot.
+        void selectData(void);
+
+        //! \brief Plot the selected data.
+        void plotData(void);
+
+        //! \brief Perform trapezoidal integration.
+        //! \param x X values.
+        //! \param y Y values.
+        //! \return A map containing the integration results.
+        QMap<QString, QVector<double>> trapz(QVector<double> x, QVector<double> y);
+
+        //! \brief Get X limits for the plot.
+        //! \param x X values.
+        //! \param xmin Minimum X value.
+        //! \param xmax Maximum X value.
+        //! \param imin Pointer to the minimum index.
+        //! \param imax Pointer to the maximum index.
+        //! \return A vector of X limits.
+        QVector<double> getXlimit(QVector<double> x, double xmin, double xmax, int* imin, int* imax);
+
+        //! \brief Enable or disable widgets.
+        //! \param enable Boolean to enable or disable the widgets.
+        void enableWidgets(bool enable);
+
+    private slots:
+        //! \brief Slot to load AUC data.
+        void slt_loadAUC(void);
+
+        //! \brief Slot to add or remove an item.
+        //! \param item The list widget item.
+        void slt_addRmItem(QListWidgetItem *);
+
+        //! \brief Slot to remove an item.
+        void slt_rmItem(void);
+
+        //! \brief Slot for input item selection.
+        //! \param index The selected index.
+        void slt_inItemSel(int index);
+
+        //! \brief Slot for output item selection.
+        //! \param index The selected index.
+        void slt_outItemSel(int index);
+
+        //! \brief Slot to clean the list.
+        void slt_cleanList(void);
+
+        //! \brief Slot to pick a point on the plot.
+        void slt_pickPoint(void);
+
+        //! \brief Slot to handle mouse events on the plot.
+        //! \param point The point where the mouse event occurred.
+        void slt_mouse(const QwtDoublePoint& point);
+
+        //! \brief Slot to set the X range.
+        //! \param state The state of the X range checkbox.
+        void slt_xrange(int state);
+
+        //! \brief Slot to toggle the legend.
+        //! \param state The state of the legend checkbox.
+        void slt_legend(int state);
+
+        //! \brief Slot to toggle the integral.
+        //! \param state The state of the integral checkbox.
+        void slt_integral(int state);
+
+        //! \brief Slot to toggle the normalization.
+        //! \param state The state of the normalization checkbox.
+        void slt_norm(int state);
+
+        //! \brief Slot to toggle the raw data.
+        //! \param state The state of the raw data checkbox.
+        void slt_rawData(int state);
+
+        //! \brief Slot to reset the profile.
+        void slt_reset(void);
+
+        //! \brief Slot to save the profile.
+        void slt_save(void);
 };
 
 #endif // US_NORM_PROFILE_H

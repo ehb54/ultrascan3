@@ -1,3 +1,4 @@
+//! \file us_pseudo3d_combine.h
 #ifndef US_PSE3D_COMBINE_H
 #define US_PSE3D_COMBINE_H
 

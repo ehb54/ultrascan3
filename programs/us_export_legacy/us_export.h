@@ -1,3 +1,5 @@
+//! \file us_export.h
+//! \brief Contains the declaration of the US_ExportLegacy class and its members.
 #ifndef US_EXPORT_LEGACY_H
 #define US_EXPORT_LEGACY_H
 
@@ -13,109 +15,189 @@
 #include <qwt_plot_marker.h>
 
 #ifndef DbgLv
+//! \def DbgLv(a)
+//! \brief Macro for debug level logging.
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+//! \class US_ExportLegacy
+//! \brief A class for exporting legacy data in UltraScan.
 class US_ExportLegacy : public US_Widgets
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_ExportLegacy();
+    public:
+        //! \brief Constructor for the US_ExportLegacy class.
+        US_ExportLegacy();
 
-   private:
+    private:
+        QLineEdit* le_id; //!< Line edit for ID.
+        QLineEdit* le_temp; //!< Line edit for temperature.
 
-      QLineEdit*    le_id;
-      QLineEdit*    le_temp;
+        QTextEdit* te_desc; //!< Text edit for description.
+        QTextEdit* te_stat; //!< Text edit for status.
 
-      QTextEdit*    te_desc;
-      QTextEdit*    te_stat;
+        QPushButton* pb_load; //!< Button to load data.
+        QPushButton* pb_details; //!< Button to show details.
+        QPushButton* pb_view; //!< Button to view report.
+        QPushButton* pb_save; //!< Button to save data.
+        QPushButton* pb_reset; //!< Button to reset the form.
+        QPushButton* pb_help; //!< Button to show help.
+        QPushButton* pb_close; //!< Button to close the dialog.
 
-      QPushButton*  pb_load;
-      QPushButton*  pb_details;
-      QPushButton*  pb_view;
-      QPushButton*  pb_save;
-      QPushButton*  pb_reset;
-      QPushButton*  pb_help;
-      QPushButton*  pb_close;
+        QListWidget* lw_triples; //!< List widget for triples.
 
-      QListWidget*  lw_triples;
+        int scanCount; //!< Count of scans.
+        int valueCount; //!< Count of values.
+        int dbg_level; //!< Debug level.
+        int nexport; //!< Export count.
 
-      int           scanCount;
-      int           valueCount;
-      int           dbg_level;
-      int           nexport;
+        bool dataLoaded; //!< Flag to indicate if data is loaded.
 
-      bool          dataLoaded;
+        QString run_name; //!< Run name.
+        QString workingDir; //!< Working directory.
+        QString runID; //!< Run ID.
+        QString rawDtype; //!< Raw data type.
+        QString rawChann; //!< Raw channel.
+        QString rawCell; //!< Raw cell.
+        QString rawWaveln; //!< Raw wavelength.
 
-      QString       run_name;
-      QString       workingDir;
-      QString       runID;
-      QString       rawDtype;
-      QString       rawChann;
-      QString       rawCell;
-      QString       rawWaveln;
+        QStringList files; //!< List of files.
 
-      QStringList   files;
+        US_DataIO::EditedData* edata; //!< Pointer to edited data.
+        US_DataIO::RawData* rdata; //!< Pointer to raw data.
+        US_DataIO::Scan* dscan; //!< Pointer to scan data.
 
-      US_DataIO::EditedData*  edata;
-      US_DataIO::RawData*     rdata;
-      US_DataIO::Scan*        dscan;
+        US_Disk_DB_Controls* dkdb_cntrls; //!< Disk/DB controls.
 
-      US_Disk_DB_Controls*    dkdb_cntrls;
+    private slots:
+        //! \brief Slot to load data.
+        void load(void);
 
-   private slots:
+        //! \brief Slot to plot data.
+        void data_plot(void);
 
-      void load       ( void );
-      void data_plot  ( void );
-      void export_data( void );
-      void details    ( void );
-      void reset      ( void );
-      void update     ( int  );
+        //! \brief Slot to export data.
+        void export_data(void);
 
-      void    exp_mosttypes   ( QStringList& );
-      void    exp_intensity   ( QStringList& );
-      void    exp_interference( QStringList& );
-      void    write_report    ( QTextStream& );
-      void    update_disk_db  ( bool );
-      bool    mkdir           ( QString&, QString& );
-      void    new_triple      ( int );
-      QString indent          ( int ) const;
-      void    view_report     ( void );
-      QString table_row       ( const QString&, const QString& ) const;
-      QString html_header     ( QString, QString, US_DataIO::RawData* );
-      QString data_details    ( void );
-      double  time_correction ( void );
-      void    rDataStrings    ( US_DataIO::RawData*,
-                                QString&, QString&, QString&, QString& );
+        //! \brief Slot to show details.
+        void details(void);
 
-      int     getRIProfile       ( QVector< double >& );
-      void    convertToIntensity ( QVector< double >& );
-      void    parseRIProfile     ( QString&, QVector< double >& );
+        //! \brief Slot to reset the form.
+        void reset(void);
 
-      void help               ( void )
-      { showHelp.show_help( "export_legacy.html" ); };
+        //! \brief Slot to update the form.
+        //! \param value The update value.
+        void update(int value);
 
-   protected:
-      QStringList                       triples;
-      QVector< US_DataIO::EditedData >  dataList;
-      QVector< US_DataIO::RawData    >  rawList;
-      QVector< int >                    extrips;
+        //! \brief Export most types of data.
+        //! \param files The list of files to export.
+        void exp_mosttypes(QStringList& files);
 
-      US_Help      showHelp;
+        //! \brief Export intensity data.
+        //! \param files The list of files to export.
+        void exp_intensity(QStringList& files);
 
-      // Layouts
-      QBoxLayout*  mainLayout;
-      QBoxLayout*  leftLayout;
-      QBoxLayout*  rightLayout;
-      QBoxLayout*  buttonLayout;
+        //! \brief Export interference data.
+        //! \param files The list of files to export.
+        void exp_interference(QStringList& files);
 
-      QGridLayout* analysisLayout;
-      QGridLayout* runInfoLayout;
+        //! \brief Write a report to a text stream.
+        //! \param ts The text stream to write to.
+        void write_report(QTextStream& ts);
 
-      US_Plot*     plotLayout2;  // Derived from QVBoxLayout
+        //! \brief Update the disk/DB controls.
+        //! \param db True if updating to DB, false for disk.
+        void update_disk_db(bool db);
 
-      // Widgets
-      QwtPlot*     data_plot2;
+        //! \brief Create a directory.
+        //! \param dir The directory path.
+        //! \param subdir The subdirectory path.
+        //! \return True if the directory was created, false otherwise.
+        bool mkdir(QString& dir, QString& subdir);
+
+        //! \brief Slot to handle new triple selection.
+        //! \param index The index of the new triple.
+        void new_triple(int index);
+
+        //! \brief Get an indentation string.
+        //! \param level The indentation level.
+        //! \return The indentation string.
+        QString indent(int level) const;
+
+        //! \brief Slot to view a report.
+        void view_report(void);
+
+        //! \brief Generate a table row HTML string.
+        //! \param label The row label.
+        //! \param value The row value.
+        //! \return The table row as an HTML string.
+        QString table_row(const QString& label, const QString& value) const;
+
+        //! \brief Generate an HTML header string.
+        //! \param title The title of the header.
+        //! \param subtitle The subtitle of the header.
+        //! \param data The raw data pointer.
+        //! \return The HTML header string.
+        QString html_header(QString title, QString subtitle, US_DataIO::RawData* data);
+
+        //! \brief Get data details as a string.
+        //! \return The data details string.
+        QString data_details(void);
+
+        //! \brief Get the time correction value.
+        //! \return The time correction value.
+        double time_correction(void);
+
+        //! \brief Get raw data strings.
+        //! \param data The raw data pointer.
+        //! \param runID The run ID.
+        //! \param filename The file name.
+        //! \param dataType The data type.
+        //! \param comment The comment.
+        void rDataStrings(US_DataIO::RawData* data, QString& runID, QString& filename, QString& dataType, QString& comment);
+
+        //! \brief Get RI profile.
+        //! \param profile The RI profile vector.
+        //! \return The profile index.
+        int getRIProfile(QVector<double>& profile);
+
+        //! \brief Convert data to intensity.
+        //! \param data The data vector.
+        void convertToIntensity(QVector<double>& data);
+
+        //! \brief Parse RI profile from a string.
+        //! \param profileString The profile string.
+        //! \param profile The RI profile vector.
+        void parseRIProfile(QString& profileString, QVector<double>& profile);
+
+        //! \brief Slot to show help documentation.
+        void help(void)
+        {
+            showHelp.show_help("export_legacy.html");
+        };
+
+    protected:
+        QStringList triples; //!< List of triples.
+        QVector<US_DataIO::EditedData> dataList; //!< List of edited data.
+        QVector<US_DataIO::RawData> rawList; //!< List of raw data.
+        QVector<int> extrips; //!< Vector of extra triples.
+
+        US_Help showHelp; //!< Help object.
+
+        // Layouts
+        QBoxLayout* mainLayout; //!< Main layout.
+        QBoxLayout* leftLayout; //!< Left layout.
+        QBoxLayout* rightLayout; //!< Right layout.
+        QBoxLayout* buttonLayout; //!< Button layout.
+
+        QGridLayout* analysisLayout; //!< Analysis layout.
+        QGridLayout* runInfoLayout; //!< Run info layout.
+
+        US_Plot* plotLayout2; //!< Plot layout.
+
+        // Widgets
+        QwtPlot* data_plot2; //!< Data plot.
 };
-#endif
+
+#endif // US_EXPORT_LEGACY_H

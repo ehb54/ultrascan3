@@ -1,3 +1,4 @@
+//! \file us_editor.h
 #ifndef US_EDITOR_H
 #define US_EDITOR_H
 

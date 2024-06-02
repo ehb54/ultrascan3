@@ -1,3 +1,4 @@
+//! \file us_integral.h
 #ifndef US_INTEGRAL_H
 #define US_INTEGRAL_H
 
@@ -17,134 +18,193 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 
-//!< \brief Distribution structure
+//! \brief Distribution structure
 typedef struct distro_sys
 {
-   QList< S_Solute >   in_distro;      // Raw input distribution
-   QList< S_Solute >   nm_distro;      // Normalized concentration distro
-   QList< S_Solute >   bo_distro;      // Boundary distro w/ orig points
-   QList< S_Solute >   bf_distro;      // Boundary fractions distro
-   QString             run_name;       // Distro run name
-   QString             analys_name;    // Distro analysis name
-   QString             method;         // Model method (e.g., "2DSA")
-   QString             editGUID;       // Associated edit GUID
-   QString             solutionGUID;   // Associated solution GUID
-   QString             label;          // Distro label (channel description)
-   int                 distro_type;    // Distro type flag
-   int                 solutionID;     // Associated solution db ID
-   double              tot_conc;        // Total Concentration
+    QList< S_Solute >   in_distro;      //!< Raw input distribution
+    QList< S_Solute >   nm_distro;      //!< Normalized concentration distribution
+    QList< S_Solute >   bo_distro;      //!< Boundary distribution with original points
+    QList< S_Solute >   bf_distro;      //!< Boundary fractions distribution
+    QString             run_name;       //!< Distribution run name
+    QString             analys_name;    //!< Distribution analysis name
+    QString             method;         //!< Model method (e.g., "2DSA")
+    QString             editGUID;       //!< Associated edit GUID
+    QString             solutionGUID;   //!< Associated solution GUID
+    QString             label;          //!< Distribution label (channel description)
+    int                 distro_type;    //!< Distribution type flag
+    int                 solutionID;     //!< Associated solution database ID
+    double              tot_conc;       //!< Total concentration
 } DisSys;
 
-
-//! \brief Less-than function for sorting distributions
+//! \brief Less-than function for sorting distributions by S_Solute attribute
 bool distro_lessthan_s(const S_Solute&, const S_Solute&);
 bool distro_lessthan_k(const S_Solute&, const S_Solute&);
 bool distro_lessthan_w(const S_Solute&, const S_Solute&);
 bool distro_lessthan_d(const S_Solute&, const S_Solute&);
 
-
-//! Class for displaying models in pseudo-3D
+//! \brief Class for displaying models in pseudo-3D
 class US_Integral : public US_Widgets
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      //! \brief Pseudo-3D Combination constructor
-      US_Integral();
+    public:
+        //! \brief Pseudo-3D Combination constructor
+        US_Integral();
 
-      int get_x();
+        //! \brief Function to get x-axis value
+        //! \return x-axis value
+        int get_x();
 
-   private:
+    private:
 
-      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F };
+        //! \brief Enumeration for attribute types
+        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F };
 
-      QLabel*       lb_division;
+        QLabel*       lb_division;       //!< Division label
+        QTextEdit*    te_distr_info;     //!< Distribution information text edit
+        QLineEdit*    le_prefilt;        //!< Pre-filter line edit
+        US_Help       showHelp;          //!< Help object
 
-      QTextEdit*    te_distr_info;
+        QwtCounter*   ct_division;       //!< Division counter
+        QwtCounter*   ct_smoothing;      //!< Smoothing counter
+        QwtCounter*   ct_boundaryPct;    //!< Boundary percentage counter
+        QwtCounter*   ct_boundaryPos;    //!< Boundary position counter
 
-      QLineEdit*    le_prefilt;
+        QwtPlot*      data_plot;         //!< Data plot
 
-      US_Help       showHelp;
+        QwtPlotPicker* pick;             //!< Plot picker
 
-      QwtCounter*   ct_division;
-      QwtCounter*   ct_smoothing;
-      QwtCounter*   ct_boundaryPct;
-      QwtCounter*   ct_boundaryPos;
+        US_Disk_DB_Controls* dkdb_cntrls; //!< Disk database controls
 
-      QwtPlot*      data_plot;
+        QPushButton*  pb_refresh;        //!< Refresh button
+        QPushButton*  pb_reset;          //!< Reset button
+        QPushButton*  pb_prefilt;        //!< Pre-filter button
+        QPushButton*  pb_lddistr;        //!< Load distribution button
+        QPushButton*  pb_help;           //!< Help button
+        QPushButton*  pb_close;          //!< Close button
+        QPushButton*  pb_rmvdist;        //!< Remove distribution button
+        QPushButton*  pb_mdlpars;        //!< Model parameters button
+        QPushButton*  pb_save;           //!< Save button
 
-      QwtPlotPicker* pick;
+        QRadioButton* rb_x_mass;         //!< x-axis mass radio button
+        QRadioButton* rb_x_ff0;          //!< x-axis frictional ratio radio button
+        QRadioButton* rb_x_vbar;         //!< x-axis vbar radio button
+        QRadioButton* rb_x_s;            //!< x-axis sedimentation coefficient radio button
+        QRadioButton* rb_x_d;            //!< x-axis diffusion coefficient radio button
+        QRadioButton* rb_da_n;           //!< Distribution average n radio button
+        QRadioButton* rb_da_s;           //!< Distribution average s radio button
+        QRadioButton* rb_da_w;           //!< Distribution average w radio button
 
-      US_Disk_DB_Controls* dkdb_cntrls;
+        QButtonGroup* bg_x_axis;         //!< x-axis button group
+        QButtonGroup* bg_di_avg;         //!< Distribution average button group
 
-      QPushButton*  pb_refresh;
-      QPushButton*  pb_reset;
-      QPushButton*  pb_prefilt;
-      QPushButton*  pb_lddistr;
-      QPushButton*  pb_help;
-      QPushButton*  pb_close;
-      QPushButton*  pb_rmvdist;
-      QPushButton*  pb_mdlpars;
-      QPushButton*  pb_save;
+        QVector< DisSys >             alldis;    //!< All distributions
 
-      QRadioButton* rb_x_mass;
-      QRadioButton* rb_x_ff0;
-      QRadioButton* rb_x_vbar;
-      QRadioButton* rb_x_s;
-      QRadioButton* rb_x_d;
-      QRadioButton* rb_da_n;
-      QRadioButton* rb_da_s;
-      QRadioButton* rb_da_w;
+        QVector< double >             v_bfracs;  //!< Boundary fraction vector
+        QVector< QVector< double > >  v_vbars;   //!< Vector of vbars per fraction
+        QVector< QVector< double > >  v_mmass;   //!< Vector of molar masses per fraction
+        QVector< QVector< double > >  v_frats;   //!< Vector of friction ratios per fraction
+        QVector< QVector< double > >  v_sedcs;   //!< Vector of sedimentation coefficient vectors per distribution
+        QVector< QVector< double > >  v_difcs;   //!< Vector of diffusion coefficient vectors per distribution
 
-      QButtonGroup* bg_x_axis;
-      QButtonGroup* bg_di_avg;
+        int           dbg_level;        //!< Debug level
+        int           plot_x;           //!< x-axis plot selection
 
-      QVector< DisSys >             alldis;    // All distributions
+        QString       xa_title;         //!< x-axis title
+        QString       ya_title;         //!< y-axis title
+        QString       mfilter;          //!< Filter string
 
-      QVector< double >             v_bfracs;  // Boundary fraction vector
-      QVector< QVector< double > >  v_vbars;   // Vector of vbars per fraction
-      QVector< QVector< double > >  v_mmass;   // Vector of molar masses per fraction
-      QVector< QVector< double > >  v_frats;   // Vector of frict ratios per fraction
-      QVector< QVector< double > >  v_sedcs;   // Vector of sedi coeff vectors per distro
-      QVector< QVector< double > >  v_difcs;   // Vector of diff coeff vectors per distro
+        QStringList   pfilts;           //!< Pre-filter string list
+        QStringList   mdescs;           //!< Model descriptions string list
 
-      int           dbg_level;
-      int           plot_x;
+    private slots:
 
-      QString       xa_title;
-      QString       ya_title;
-      QString       mfilter;
+                //! \brief Slot to plot data
+                //! \param index Index of the data to be plotted
+                void plot_data(int index);
 
-      QStringList   pfilts;
-      QStringList   mdescs;
+        //! \brief Slot to plot data
+        void plot_data();
 
+        //! \brief Slot to update disk database
+        //! \param checked Whether the disk database is checked
+        void update_disk_db(bool checked);
 
-   private slots:
+        //! \brief Slot to update division
+        //! \param value New division value
+        void update_divis(double value);
 
-      void plot_data(      int );
-      void plot_data(      void );
-      void update_disk_db( bool );
-      void update_divis  ( double );
-      void select_prefilt( void );
-      void load_distro(    void );
-      void load_distro(    US_Model, QString );
-      void resort_sol(  QVector < DisSys >&);
-      void reset(   void );
-      void save(    void );
-      void sort_distro    ( QList< S_Solute >&, bool );
-      void remove_distro  ( void );
-      void select_x_axis  ( int  );
-      void build_bf_distro( int  );
-      void build_bf_dists ( void );
-      void build_bf_vects ( void );
-      int  plot_x_select  ( void );
-      QString anno_title  ( int );
-      QString ptype_text  ( int );
-      void models_summary ( void );
-      void write_csv( const QString, const QString, QVector< double >&,
-                                     const QString, QVector< double >& );
+        //! \brief Slot to select pre-filter
+        void select_prefilt();
 
-      void help       ( void )
-      { showHelp.show_help( "integral.html" ); }
+        //! \brief Slot to load distribution
+        void load_distro();
+
+        //! \brief Slot to load distribution
+        //! \param model Model to load
+        //! \param method Method for loading
+        void load_distro(US_Model model, QString method);
+
+        //! \brief Slot to resort solution
+        //! \param distributions Vector of distributions to be resorted
+        void resort_sol(QVector< DisSys >& distributions);
+
+        //! \brief Slot to reset the interface
+        void reset();
+
+        //! \brief Slot to save the current state
+        void save();
+
+        //! \brief Slot to sort distribution
+        //! \param solutes List of solutes to be sorted
+        //! \param ascending Whether to sort in ascending order
+        void sort_distro(QList< S_Solute >& solutes, bool ascending);
+
+        //! \brief Slot to remove distribution
+        void remove_distro();
+
+        //! \brief Slot to select x-axis
+        //! \param index Index of the selected x-axis
+        void select_x_axis(int index);
+
+        //! \brief Slot to build boundary fraction distribution
+        //! \param index Index of the boundary fraction
+        void build_bf_distro(int index);
+
+        //! \brief Slot to build boundary fraction distributions
+        void build_bf_dists();
+
+        //! \brief Slot to build boundary fraction vectors
+        void build_bf_vects();
+
+        //! \brief Slot to select x-axis for plotting
+        //! \return Selected x-axis index
+        int plot_x_select();
+
+        //! \brief Function to get annotation title
+        //! \param index Index of the annotation
+        //! \return Annotation title
+        QString anno_title(int index);
+
+        //! \brief Function to get plot type text
+        //! \param index Index of the plot type
+        //! \return Plot type text
+        QString ptype_text(int index);
+
+        //! \brief Slot to display models summary
+        void models_summary();
+
+        //! \brief Function to write CSV file
+        //! \param filename Name of the CSV file
+        //! \param headers Headers for the CSV file
+        //! \param values Vector of values to be written
+        //! \param xheaders Headers for the x-axis
+        //! \param xvalues Vector of x-axis values
+        void write_csv(const QString filename, const QString headers, QVector< double >& values,
+                       const QString xheaders, QVector< double >& xvalues);
+
+        //! \brief Slot to display help information
+        void help()
+        { showHelp.show_help("integral.html"); }
 };
 #endif

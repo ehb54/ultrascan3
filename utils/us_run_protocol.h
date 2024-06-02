@@ -1,3 +1,4 @@
+//! \file us_run_protocol.h
 #ifndef US_RPROTOCOL_H
 #define US_RPROTOCOL_H
 

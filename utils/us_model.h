@@ -1,3 +1,4 @@
+//! \file us_model.h
 #ifndef US_MODEL_H
 #define US_MODEL_H
 
