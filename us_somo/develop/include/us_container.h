@@ -18,7 +18,9 @@ class US_Container : public QObject {
 
    // bool pull( const QString & name );
 
-   bool containers_supported();
+   bool installed();
+   bool test();
+   // QStringList prepend( const QStringList & args ); // takes an argument list and prepends proper type to run
 
  private:
 
