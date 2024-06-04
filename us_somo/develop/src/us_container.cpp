@@ -2,10 +2,13 @@
 #include <qdebug.h>
 #include <qprocess.h>
 #include <qtextstream.h>
+#include <qtemporaryfile.h>
+#include <qdir.h>
+#include <quuid.h>
 
 US_Container::US_Container() : QObject() {
    qDebug() << "US_Container::US_Container()";
-   type = "";
+   container_type = "";
 }
 
 US_Container::~US_Container() {
@@ -14,7 +17,7 @@ US_Container::~US_Container() {
 
 bool US_Container::installed() {
    qDebug() << "US_Container::installed()";
-   if ( !type.isEmpty() ) {
+   if ( !container_type.isEmpty() ) {
       return true;
    }
    
@@ -41,7 +44,7 @@ bool US_Container::installed() {
 
       if ( started ) {
          qDebug() << "US_Container::installed() : " << t;
-         type = t;
+         container_type = t;
          return true;
       }
    }
@@ -99,3 +102,26 @@ bool US_Container::test() {
 
    return true;
 }
+
+#define UNIQUE_NAME_PREFIX "us_container_"
+
+QString US_Container::unique_name( QString basename ) {
+   // note : max container name is 128 characters
+   qDebug() << "US_Container::unique_name()";
+
+   if ( !basename.isEmpty() ) {
+      basename += "_";
+   }
+
+   QString result;
+   result = UNIQUE_NAME_PREFIX + basename + QUuid::createUuid().toString( QUuid::Id128 );
+
+   qDebug() << "US_Container::unique_name()" << result;
+
+   return result;
+}
+   
+QString US_Container::type() {
+   return container_type;
+}
+

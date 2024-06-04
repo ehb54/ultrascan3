@@ -21,10 +21,12 @@ class US_Container : public QObject {
    bool installed();
    bool test();
    // QStringList prepend( const QStringList & args ); // takes an argument list and prepends proper type to run
+   static QString unique_name( QString basename = "" ); // convenience to name containers
+   QString type();
 
  private:
 
-   QString type; // typically "docker" or "podman"
+   QString container_type; // typically "docker" or "podman"
 
 };
 
