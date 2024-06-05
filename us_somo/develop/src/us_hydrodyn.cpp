@@ -99,6 +99,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
+   us_container_grpy = (US_Container_Grpy *)0;
+   grpy_parallel_pulled = false;
+   
    stopFlag = false;
    
 #if defined( AVG_TEST )

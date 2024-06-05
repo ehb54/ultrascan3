@@ -569,7 +569,6 @@ void US_Hydrodyn_Misc::setupGUI()
    
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
       cb_export_ssbond->hide();
-      cb_parallel_grpy->hide();
       lbl_vdw_ot_mult ->hide();
       le_vdw_ot_mult  ->hide();
       lbl_vdw_ot_dpct ->hide();

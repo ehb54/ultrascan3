@@ -83,6 +83,7 @@
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
 // #include "us_hydrodyn_fractal_dimension_options.h"
+#include "us_container_grpy.h"
 
 // #include "us_hydrodyn_pat.h"
 
@@ -292,6 +293,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
+      bool                grpy_parallel_pulled;
+      US_Container_Grpy * us_container_grpy;
+      
       set < QString > residues_with_atomic_vs_bead_hydration_differences;
       void            compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl = {} );
       bool            residue_atomic_vs_bead_hydration_differences( const struct residue & r );

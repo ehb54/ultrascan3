@@ -4,10 +4,10 @@
 
 #define PULL_TIMEOUT_SECS 120
 
-US_Container_Grpy::US_Container_Grpy( bool pull ) {
+US_Container_Grpy::US_Container_Grpy( bool pull, bool do_not_use_container ) {
    qDebug() << "US_Container_Grpy::US_Container_Grpy()";
 
-   if ( usc.installed() ) {
+   if ( usc.installed() && !do_not_use_container ) {
       image_name =
          QString( "ehb1/grpy:" )
          + ( US_Arch::is_arm()
@@ -113,7 +113,7 @@ QStringList US_Container_Grpy::arguments( QString directory ) {
          << container_names.back()
          << "-v"
          << QString( "%1:/work" ).arg( directory.isEmpty() ? QDir::currentPath() : directory )
-         << "grpy"
+         << image_name
          ;
    }
    

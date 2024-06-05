@@ -12,6 +12,7 @@
 // includes and defines need cleanup
  
 #include "../include/us_hydrodyn.h"
+
 #define SLASH QDir::separator()
 
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
@@ -98,45 +99,32 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       editor_msg( "dark blue", courier, visc_dens_msg() );
    }
 
-   grpy_prog = 
-      USglobal->config_list.system_dir + SLASH +
-#if defined(BIN64)
-      "bin64"
-#else
-      "bin"
-#endif
-      + SLASH
-      + "GRPY"
-#if defined(Q_OS_WIN)
-      + "_win64.exe"
-#else
-# if defined(Q_OS_MAC)
-      + "_osx10.11"
-# else
-      + "_linux64"
-# endif
-#endif      
-      ;
-
+   if ( !us_container_grpy ) {
+      us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
+   } else if ( ( misc.parallel_grpy && !us_container_grpy->arguments().size() )
+               || ( !misc.parallel_grpy && us_container_grpy->arguments().size() ) ) {
+      // in case they switched from non-parallel to parallel or vice-versa
+      qDebug() << "grpy recreate!!";
+      delete us_container_grpy;
+      us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
+   } else {
+      qDebug() << "grpy NOT recreated";
+   }      
+   
    if ( misc.parallel_grpy ) {
-      grpy_prog =
-         USglobal->config_list.system_dir + SLASH +
-#if defined(BIN64)
-         "bin64"
-#else
-         "bin"
-#endif
-         + SLASH
-         + "GRPY_parallel"
-         ;
-
-      editor_msg( "darkblue", QString( us_tr( "\nParallel GRPY enabled with %1 threads\n" ) ).arg( USglobal->config_list.numThreads ) );
+      grpy_parallel_pulled = true;
    }
 
-   QFileInfo qfi( grpy_prog );
-   if ( !qfi.exists() ) {
-      editor_msg( (QString) "red", QString("GRPY program '%1' does not exist\n").arg(grpy_prog));
-      return false;
+   grpy_prog = us_container_grpy->executable();
+   
+   if ( us_container_grpy->arguments().size() ) {
+      editor_msg( "darkblue", QString( us_tr( "\nParallel GRPY enabled with %1 threads\n" ) ).arg( USglobal->config_list.numThreads ) );
+   } else {
+      QFileInfo qfi( grpy_prog );
+      if ( !qfi.exists() ) {
+         editor_msg( (QString) "red", QString("GRPY program '%1' does not exist\n").arg(grpy_prog));
+         return false;
+      }
    }
 
    // if ( !overwrite_hydro )
@@ -403,11 +391,7 @@ void US_Hydrodyn::grpy_process_next() {
    // us_qdebug( "grpy_last_processed " + grpy_last_processed );
    {
       QStringList args;
-      if ( misc.parallel_grpy ) {
-         args
-            << QString( "%1" ).arg( USglobal->config_list.numThreads )
-            ;
-      }
+      args << us_container_grpy->arguments( get_somo_dir() );
       args
          << "-e"
          << grpy_last_processed
