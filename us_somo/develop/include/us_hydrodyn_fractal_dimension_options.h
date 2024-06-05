@@ -6,7 +6,12 @@
 #include "../include/us_util.h"
 
 #include "../include/us_fractal_dimension.h"
-#include <values.h>
+#if defined( Q_OS_MAC )
+# include <limits.h>
+# include <float.h>
+#else
+# include <values.h>
+#endif
 
 using namespace std;
 
