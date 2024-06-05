@@ -100,6 +100,11 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    }
 
    if ( !us_container_grpy ) {
+      if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
+         editor_msg( "dark red", us_tr(
+                                       "Attempting to get the docker image for parallel GRPY\n"
+                                       "The first time you run this, it may take awhile\n" ) );
+      }                                        
       us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
    } else if ( ( misc.parallel_grpy && !us_container_grpy->arguments().size() )
                || ( !misc.parallel_grpy && us_container_grpy->arguments().size() ) ) {
