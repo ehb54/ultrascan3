@@ -6,7 +6,7 @@
 #include "../include/us_util.h"
 
 #include "../include/us_fractal_dimension.h"
-#if defined( Q_OS_MAC )
+#if defined( Q_OS_MAC ) || defined( Q_OS_WIN )
 # include <limits.h>
 # include <float.h>
 #else

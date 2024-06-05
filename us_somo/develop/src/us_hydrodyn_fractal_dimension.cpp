@@ -1,4 +1,3 @@
-#include "../include/us_hydrodyn_pdbdefs.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_fractal_dimension.h"
 #include "../include/us_hydrodyn_asab1.h"
