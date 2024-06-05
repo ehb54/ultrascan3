@@ -111,7 +111,14 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       qDebug() << "grpy NOT recreated";
    }      
    
-   if ( misc.parallel_grpy ) {
+
+   if ( misc.parallel_grpy && !us_container_grpy->arguments().size() ) {
+      editor_msg( "red", us_tr( "parallel GRPY requested but unable to start\n"
+                                "Check to make sure you have 'docker' installed and a working network connection to the internet\n"
+                                "Resorting to non-parallel GRPY\n" ) );
+   }
+
+   if ( misc.parallel_grpy && !us_container_grpy->arguments().size() ) {
       grpy_parallel_pulled = true;
    }
 
