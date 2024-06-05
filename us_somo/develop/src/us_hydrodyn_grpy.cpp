@@ -103,7 +103,10 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
          editor_msg( "dark red", us_tr(
                                        "Attempting to get the docker image for parallel GRPY\n"
-                                       "The first time you run this, it may take awhile\n" ) );
+                                       "The first time you run this, it may take awhile\n"
+                                       "Please be patient\n"
+                                       ) );
+         qApp->processEvents();
       }                                        
       us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
    } else if ( ( misc.parallel_grpy && !us_container_grpy->arguments().size() )
@@ -111,6 +114,14 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       // in case they switched from non-parallel to parallel or vice-versa
       qDebug() << "grpy recreate!!";
       delete us_container_grpy;
+      if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
+         editor_msg( "dark red", us_tr(
+                                       "Attempting to get the docker image for parallel GRPY\n"
+                                       "The first time you run this, it may take awhile\n"
+                                       "Please be patient\n"
+                                       ) );
+         qApp->processEvents();
+      }                                        
       us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
    } else {
       qDebug() << "grpy NOT recreated";
