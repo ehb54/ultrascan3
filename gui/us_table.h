@@ -1,3 +1,4 @@
+//! \file us_table.h
 #ifndef US_TABLE_H
 #define US_TABLE_H
 

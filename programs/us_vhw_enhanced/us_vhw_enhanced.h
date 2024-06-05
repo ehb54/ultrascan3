@@ -1,3 +1,4 @@
+//! \file us_vhw_enhcd.h
 #ifndef US_VHW_ENHCD_H
 #define US_VHW_ENHCD_H
 
@@ -9,191 +10,204 @@
 #include "us_model.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
-
 #include "qwt_plot_marker.h"
 
-#define PA_POINTS 20     // plateau average points to left and right
+#define PA_POINTS 20     //!< Plateau average points to left and right
 
 #ifndef DbgLv
-#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< Debug-level-conditioned qDebug()
 #endif
 
+/**
+ * @struct GrpInfo
+ * @brief Structure to hold group information for vHW Enhanced analysis.
+ */
 typedef struct groupinfo_s
 {
-   double        x1;          // x of top mouse pick
-   double        y1;          // y of top mouse pick
-   double        x2;          // x of bottom mouse pick
-   double        y2;          // y of bottom mouse pick
-   double        sed;         // average intercept sedcoeff of group
-   double        percent;     // percent fraction of all divisions
-   int           ndivs;       // number of division lines included in pick
-   QList< int >  idivs;       // list of divisions (0 to n-1) included
+    double        x1;          //!< X coordinate of top mouse pick
+    double        y1;          //!< Y coordinate of top mouse pick
+    double        x2;          //!< X coordinate of bottom mouse pick
+    double        y2;          //!< Y coordinate of bottom mouse pick
+    double        sed;         //!< Average intercept sedimentation coefficient of group
+    double        percent;     //!< Percent fraction of all divisions
+    int           ndivs;       //!< Number of division lines included in pick
+    QList<int>    idivs;       //!< List of divisions (0 to n-1) included
 } GrpInfo;
 
+/**
+ * @class US_vHW_Enhanced
+ * @brief The US_vHW_Enhanced class provides functionality for enhanced vHW analysis.
+ */
 class US_vHW_Enhanced : public US_AnalysisBase2
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_vHW_Enhanced();
+    public:
+        /**
+         * @brief Constructor for US_vHW_Enhanced.
+         */
+        US_vHW_Enhanced();
 
-   private:
+    private:
 
-      enum { NONE, START, END } groupstep;
+        enum { NONE, START, END } groupstep; //!< Enum for group selection steps
 
-      QLabel*       lb_tolerance;
-      QLabel*       lb_division;
+        QLabel*       lb_tolerance;          //!< Label for tolerance
+        QLabel*       lb_division;           //!< Label for division
 
-      QLineEdit*    le_temper;
-      QLineEdit*    le_model;
+        QLineEdit*    le_temper;             //!< Line edit for temperature
+        QLineEdit*    le_model;              //!< Line edit for model
 
-      QCheckBox*    ck_modelpl;
-      QCheckBox*    ck_vhw_enh;
-      QCheckBox*    ck_manrepl;
-      QCheckBox*    ck_use_fed;
+        QCheckBox*    ck_modelpl;            //!< Checkbox for model plot
+        QCheckBox*    ck_vhw_enh;            //!< Checkbox for vHW enhanced
+        QCheckBox*    ck_manrepl;            //!< Checkbox for manual replacement
+        QCheckBox*    ck_use_fed;            //!< Checkbox for use fed
 
-      US_Help       showHelp;
- 
-      QwtCounter*   ct_tolerance;
-      QwtCounter*   ct_division;
+        US_Help       showHelp;              //!< Help display object
 
-      QwtPlotCurve*  curve;
-      QwtPlotCurve*  dcurve;
-      US_PlotPicker* gpick;
+        QwtCounter*   ct_tolerance;          //!< Counter for tolerance
+        QwtCounter*   ct_division;           //!< Counter for division
 
-      QPushButton*  pb_dstrpl;
-      QPushButton*  pb_rsetda;
-      QPushButton*  pb_selegr;
-      QPushButton*  pb_replot;
+        QwtPlotCurve*  curve;                //!< Plot curve
+        QwtPlotCurve*  dcurve;               //!< Division plot curve
+        US_PlotPicker* gpick;                //!< Plot picker
 
-      double        boundPct;
-      double        positPct;
-      double        baseline;
-      double        correc;
-      double        C0;
-      double        c0term;
-      double        Swavg;
-      double        omega;
-      double        range;
-      double        span;
-      double        basecut;
-      double        platcut;
-      double        bdtoler;
-      double        invert;
-      double        divfac;
-      double        cpij;
-      double        sumcpij;
-      double        sedc;
-      double        sdiff;
-      double        bdiff_coef;
-      double        bdiff_sedc;
-      double        total_conc;
+        QPushButton*  pb_dstrpl;             //!< Distribution plot button
+        QPushButton*  pb_rsetda;             //!< Reset data button
+        QPushButton*  pb_selegr;             //!< Select group button
+        QPushButton*  pb_replot;             //!< Replot button
 
-      int           row;
-      int           run_id;
-      int           divsCount;
-      int           scanCount;
-      int           valueCount;
-      int           dbg_level;
-      int           lscnCount;
-      int           last_plot;                 // Last plot's triple row index
+        double        boundPct;              //!< Bound percentage
+        double        positPct;              //!< Position percentage
+        double        baseline;              //!< Baseline value
+        double        correc;                //!< Correction value
+        double        C0;                    //!< Initial concentration
+        double        c0term;                //!< C0 term
+        double        Swavg;                 //!< Average sedimentation coefficient
+        double        omega;                 //!< Angular velocity
+        double        range;                 //!< Range value
+        double        span;                  //!< Span value
+        double        basecut;               //!< Base cut value
+        double        platcut;               //!< Plateau cut value
+        double        bdtoler;               //!< Back-diffusion tolerance
+        double        invert;                //!< Invert value
+        double        divfac;                //!< Division factor
+        double        cpij;                  //!< CPij value
+        double        sumcpij;               //!< Sum of CPij values
+        double        sedc;                  //!< Sedimentation coefficient
+        double        sdiff;                 //!< Sedimentation difference
+        double        bdiff_coef;            //!< Back-diffusion coefficient
+        double        bdiff_sedc;            //!< Back-diffusion sedimentation coefficient
+        double        total_conc;            //!< Total concentration
 
-      bool          haveZone;
-      bool          groupSel;
-      bool          forcePlot;
-      bool          skipPlot;
-      bool          mo_plats;
-      bool          vhw_enh;
+        int           row;                   //!< Row index
+        int           run_id;                //!< Run ID
+        int           divsCount;             //!< Divisions count
+        int           scanCount;             //!< Scan count
+        int           valueCount;            //!< Value count
+        int           dbg_level;             //!< Debug level
+        int           lscnCount;             //!< Last scan count
+        int           last_plot;             //!< Last plot's triple row index
 
-      QString       run_name;
-      QString       cell;
-      QString       wavelength;
-      QString       workingDir;
-      QString       runID;
-      QString       editID;
+        bool          haveZone;              //!< Flag for having a zone
+        bool          groupSel;              //!< Flag for group selection
+        bool          forcePlot;             //!< Flag for forcing plot
+        bool          skipPlot;              //!< Flag for skipping plot
+        bool          mo_plats;              //!< Flag for model plateaus
+        bool          vhw_enh;               //!< Flag for vHW enhancement
 
-      QVector< US_DataIO::EditedData > dsimList;  // Simulation data
-      QVector< bool >                  have_sims; // Have-simulation flags
-      QVector< US_Model >              modlList;  // Models for triples
+        QString       run_name;              //!< Run name
+        QString       cell;                  //!< Cell name
+        QString       wavelength;            //!< Wavelength
+        QString       workingDir;            //!< Working directory
+        QString       runID;                 //!< Run ID
+        QString       editID;                //!< Edit ID
 
-      QVector< double >            aseds;      // All division sedcoeff values
-      QVector< double >            dseds;      // Division sedcoeff intercepts
-      QVector< double >            dslos;      // Division slope values
-      QVector< double >            dsigs;      // Division sigma values
-      QVector< double >            dcors;      // Division correlation values
-      QVector< int >               dpnts;      // Division fitted line points
+        QVector<US_DataIO::EditedData> dsimList; //!< Simulation data
+        QVector<bool>                  have_sims; //!< Have-simulation flags
+        QVector<US_Model>              modlList; //!< Models for triples
 
-      QVector< double >            scPlats;    // Scan plateaus current triple
-      QVector< int >               liveScans;  // Vector of live-scan indexes
-      QVector< QVector< double > > CPijs;      // CPij vecs, divs in scans
-      QVector< QVector< double > > mconcs;     // Mid-div concs, divs in scans
-      QVector< double >            bdrads;     // Back-diffusion radii
-      QVector< double >            bdcons;     // Back-diffusion concentrations
+        QVector<double>            aseds;      //!< All division sedimentation coefficients
+        QVector<double>            dseds;      //!< Division sedimentation intercepts
+        QVector<double>            dslos;      //!< Division slope values
+        QVector<double>            dsigs;      //!< Division sigma values
+        QVector<double>            dcors;      //!< Division correlation values
+        QVector<int>               dpnts;      //!< Division fitted line points
 
-      QList< double >              groupxy;    // Group select pick coordinates
-      QList< GrpInfo >             groupdat;   // Selected group info structures
+        QVector<double>            scPlats;    //!< Scan plateaus for the current triple
+        QVector<int>               liveScans;  //!< Vector of live scan indexes
+        QVector<QVector<double>>   CPijs;      //!< CPij vectors, divisions in scans
+        QVector<QVector<double>>   mconcs;     //!< Mid-division concentrations, divisions in scans
+        QVector<double>            bdrads;     //!< Back-diffusion radii
+        QVector<double>            bdcons;     //!< Back-diffusion concentrations
 
-      US_DataIO::EditedData*       edata;      // Current triple edited data
-      US_DataIO::EditedData*       expda;      // Current triple edited data (exp.)
-      US_DataIO::EditedData*       simda;      // Current triple edited data (sim.)
-      US_DataIO::Scan*             dscan;      // Current data scsan
-      US_DataIO::Scan*             expsc;      // Current data scsan (exp.)
-      US_DataIO::Scan*             simsc;      // Current data scsan (sim.)
+        QList<double>              groupxy;    //!< Group select pick coordinates
+        QList<GrpInfo>             groupdat;   //!< Selected group information structures
 
-      US_Model                     model;      // Current loaded model
+        US_DataIO::EditedData*     edata;      //!< Current triple edited data
+        US_DataIO::EditedData*     expda;      //!< Current triple edited data (experimental)
+        US_DataIO::EditedData*     simda;      //!< Current triple edited data (simulation)
+        US_DataIO::Scan*           dscan;      //!< Current data scan
+        US_DataIO::Scan*           expsc;      //!< Current data scan (experimental)
+        US_DataIO::Scan*           simsc;      //!< Current data scan (simulation)
 
-      int kcalls[20]; // Timing counts
-      int kmsecs[20];
-   private slots:
+        US_Model                   model;      //!< Current loaded model
 
-      void load(        void );
-      void data_plot(   void );
-      void distr_plot(  void );
-      void save_data(   void );
-      void view_report( void );
-      void sel_groups(  void );
-      void div_seds(    void );
-      void update_density(   double );
-      void update_viscosity( double );
-      void update_vbar(      double );
-      void update_bdtoler(   double );
-      void update_divis(     double );
-      int  first_gteq( double, QVector< double >&, int, int );
-      int  first_gteq( double, QVector< double >&, int );
-      double sed_coeff( double, double, double* = NULL, int* = NULL );
-      double avg_plateau(  void );
-      double sedcoeff_intercept( void );
-      double back_diff_coeff( double );
-      void groupClick( const QwtDoublePoint& );
-      void add_group_info( void );
-      void write_vhw(      void );
-      void write_dis(      void );
-      void write_model(    void );
-      void write_report(   QTextStream& );
-      QString text_time( double, int );
-      QString text_time( double );
-      QStringList last_edit_files( QStringList );
-      void new_triple  ( int );
-      void update      ( int );
-      void copy_data_files( QString, QString, QString );
-      bool fitted_plateaus( void );
-      bool model_plateaus ( void );
-      void plot_refresh   ( void );
-      void vhw_calcs_enhanced( double*, double* );
-      void vhw_calcs_standard( double*, double* );
-      bool have_model          ( void );
-      void vert_exclude_lines  ( void );
-      void exclude_from        ( double );
-      void exclude_to          ( double );
-      void live_scans          ( void );
-      void init_partials       ( void );
-      void update_mid_concs    ( void );
-      void create_simulation   ( void );
-      void plot_data2          ( void );
-      void get_model           ( void );
+        int kcalls[20];                        //!< Timing counts
+        int kmsecs[20];                        //!< Timing milliseconds
 
-      void help     ( void )
-      { showHelp.show_help( "vhw_enhanced.html" ); };
+    private slots:
+                void load(void);                       //!< Slot to load data
+        void data_plot(void);                  //!< Slot to plot data
+        void distr_plot(void);                 //!< Slot to plot distribution
+        void save_data(void);                  //!< Slot to save data
+        void view_report(void);                //!< Slot to view the report
+        void sel_groups(void);                 //!< Slot to select groups
+        void div_seds(void);                   //!< Slot to divide sedimentation coefficients
+        void update_density(double);           //!< Slot to update density
+        void update_viscosity(double);         //!< Slot to update viscosity
+        void update_vbar(double);              //!< Slot to update vbar
+        void update_bdtoler(double);           //!< Slot to update back-diffusion tolerance
+        void update_divis(double);             //!< Slot to update division
+        int first_gteq(double, QVector<double>&, int, int); //!< Find first value greater than or equal to given value
+        int first_gteq(double, QVector<double>&, int);      //!< Find first value greater than or equal to given value
+        double sed_coeff(double, double, double* = NULL, int* = NULL); //!< Calculate sedimentation coefficient
+        double avg_plateau(void);              //!< Calculate average plateau
+        double sedcoeff_intercept(void);       //!< Calculate sedimentation coefficient intercept
+        double back_diff_coeff(double);        //!< Calculate back-diffusion coefficient
+        void groupClick(const QwtDoublePoint&); //!< Handle group click
+        void add_group_info(void);             //!< Add group information
+        void write_vhw(void);                  //!< Write vHW data
+        void write_dis(void);                  //!< Write distribution data
+        void write_model(void);                //!< Write model data
+        void write_report(QTextStream&);       //!< Write the report
+        QString text_time(double, int);        //!< Convert time to text format
+        QString text_time(double);             //!< Convert time to text format
+        QStringList last_edit_files(QStringList); //!< Get last edit files
+        void new_triple(int);                  //!< Handle new triple selection
+        void update(int);                      //!< Update the display
+        void copy_data_files(QString, QString, QString); //!< Copy data files
+        bool fitted_plateaus(void);            //!< Check for fitted plateaus
+        bool model_plateaus(void);             //!< Check for model plateaus
+        void plot_refresh(void);               //!< Refresh the plot
+        void vhw_calcs_enhanced(double*, double*); //!< Perform enhanced vHW calculations
+        void vhw_calcs_standard(double*, double*); //!< Perform standard vHW calculations
+        bool have_model(void);                 //!< Check if model is available
+        void vert_exclude_lines(void);         //!< Exclude vertical lines
+        void exclude_from(double);             //!< Exclude data from a certain point
+        void exclude_to(double);               //!< Exclude data to a certain point
+        void live_scans(void);                 //!< Handle live scans
+        void init_partials(void);              //!< Initialize partials
+        void update_mid_concs(void);           //!< Update mid concentrations
+        void create_simulation(void);          //!< Create simulation
+        void plot_data2(void);                 //!< Plot data (alternative)
+        void get_model(void);                  //!< Get the model
 
+        /**
+         * @brief Display help.
+         */
+        void help(void)
+        { showHelp.show_help("vhw_enhanced.html"); };
 };
+
 #endif

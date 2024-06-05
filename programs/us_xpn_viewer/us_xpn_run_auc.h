@@ -1,3 +1,4 @@
+//! \file us_xpn_run_auc.h
 #ifndef US_XPN_RUN_AUC_H
 #define US_XPN_RUN_AUC_H
 
