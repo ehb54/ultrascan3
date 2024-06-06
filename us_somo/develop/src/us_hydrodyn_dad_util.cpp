@@ -500,7 +500,7 @@ void US_Hydrodyn_Dad::set_detector()
       }
 
       switch ( QMessageBox::warning(this, 
-                                    us_tr( "US-SOMO: DAD Remove Files" ),
+                                    us_tr( "US-SOMO: UV-Vis Remove Files" ),
                                     QString( us_tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
@@ -5407,12 +5407,12 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
       
    // apparently a valid dad file
    if ( !dad_lambdas.lambdas.size() ) {
-      errormsg = QString( UNICODE_LAMBDA_QS + "s must be loaded prior to loading of DAD absorption data" );
+      errormsg = QString( UNICODE_LAMBDA_QS + "s must be loaded prior to loading of UV-Vis absorption data" );
       return false;
    }
 
    if ( dad_lambdas.lambdas.size() != absorption_row_size ) {
-      errormsg = QString( "DAD absorption column count %1 does not match number of " + UNICODE_LAMBDA_QS + "s %2" )
+      errormsg = QString( "UV-Vis absorption column count %1 does not match number of " + UNICODE_LAMBDA_QS + "s %2" )
          .arg( dad_lambdas.lambdas.size() )
          .arg( absorption_row_size )
          ;
@@ -5420,18 +5420,18 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
    }
 
    switch ( QMessageBox::question(this, 
-                                  windowTitle() + us_tr( " : Load DAD Data" )
+                                  windowTitle() + us_tr( " : Load UV-Vis Data" )
                                   ,dad_lambdas.summary_rich()
                                   + QString(
                                             "<hr>"
-                                            "Proceed with these DAD " + UNICODE_LAMBDA_QS + "s?"
+                                            "Proceed with these UV_Vis " + UNICODE_LAMBDA_QS + "s?"
                                             )
                                   ) )
    {
    case QMessageBox::Yes : 
       break;
    default:
-      errormsg = "DAD " + UNICODE_LAMBDA_QS + "s need to be loaded";
+      errormsg = "UV-Vis " + UNICODE_LAMBDA_QS + "s need to be loaded";
       return false;
       break;
    }
@@ -5455,7 +5455,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
       do {
          lambda_crop = false;
          QDialog dialog(this);
-         dialog.setWindowTitle( windowTitle() + us_tr( ": DAD load : subselect " + UNICODE_LAMBDA_QS + " range" ) );
+         dialog.setWindowTitle( windowTitle() + us_tr( ": UV-Vis load : subselect " + UNICODE_LAMBDA_QS + " range" ) );
          dialog.setMinimumWidth( 200 );
 
          QFormLayout form(&dialog);
@@ -5547,7 +5547,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
       do {
          QDialog dialog(this);
-         dialog.setWindowTitle( windowTitle() + us_tr( ": DAD load : Set times" ) );
+         dialog.setWindowTitle( windowTitle() + us_tr( ": UV-Vis load : Set times" ) );
          dialog.setMinimumWidth( 200 );
 
          QFormLayout form(&dialog);
@@ -5619,7 +5619,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
                   ;
             }
          } else {
-            errormsg = "DAD load cancelled";
+            errormsg = "UV-Vis load cancelled";
             return false;
          }
       } while ( try_again );
@@ -5638,7 +5638,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
             qApp->processEvents();
          }
          double time = start_time_seconds + i * collection_interval_seconds;
-         QString name = QString( "%1_DAD_AL_t%2" ).arg( basename ).arg( time ).replace( QRegularExpression( "[. &]" ), "_" );
+         QString name = QString( "%1_UV-Vis_AL_t%2" ).arg( basename ).arg( time ).replace( QRegularExpression( "[. &]" ), "_" );
          if ( lambda_crop ) {
             vector < double > x_cropped;
             vector < double > y_cropped;
@@ -5758,7 +5758,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
             progress->setValue( i ); progress->setMaximum( lambda_size );
             qApp->processEvents();
          }
-         QString name = QString( "%1_DAD_At_L%2" ).arg( basename ).arg( lambdas[ i ] ).replace( QRegularExpression( "[. &]" ), "_" );
+         QString name = QString( "%1_UV-Vis_At_L%2" ).arg( basename ).arg( lambdas[ i ] ).replace( QRegularExpression( "[. &]" ), "_" );
          add_plot( name, times, absorption_data_by_lambda[ i ], true, false );
       }
    }
@@ -5775,7 +5775,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 //    QString errormsg = "";
 //    if ( dad_angles.dad_angle.size() ) {
 //       QString use_dir = QDir::current().canonicalPath();
-//       QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving the DAD Angles" ),  use_dir , "*.csv" );
+//       QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving the UV-Vis Angles" ),  use_dir , "*.csv" );
 
 //       if ( use_filename.isEmpty() ) {
 //          return false;
@@ -5794,7 +5794,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 //                                windowTitle(),
 //                                QString(
 //                                        us_tr(
-//                                              "Error saving DAD Angles file %1\n"
+//                                              "Error saving UV-Vis Angles file %1\n"
 //                                              "Error : %2\n"
 //                                              )
 //                                        )

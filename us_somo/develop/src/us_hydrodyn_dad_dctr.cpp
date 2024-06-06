@@ -20,7 +20,7 @@ US_Hydrodyn_Dad_Dctr::US_Hydrodyn_Dad_Dctr(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD : Concentration Detector" ) );
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis : Concentration Detector" ) );
 
    setupGUI();
 
@@ -38,7 +38,7 @@ void US_Hydrodyn_Dad_Dctr::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: DAD : Concentration Detector" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: UV-Vis : Concentration Detector" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );

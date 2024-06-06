@@ -38,22 +38,22 @@ QString DAD_Lambdas::list() {
 QString DAD_Lambdas::summary() {
    return
       lambdas.size()
-      ? QString( us_tr( "%1 DAD " + UNICODE_LAMBDA_QS + "s loaded, range [%2:%3]" ) )
+      ? QString( us_tr( "%1 UV-Vis " + UNICODE_LAMBDA_QS + "s loaded, range [%2:%3]" ) )
       .arg( lambdas.size() )
       .arg( lambdas.front() )
       .arg( lambdas.back() )
-      : QString( us_tr( "No DAD " + UNICODE_LAMBDA_QS + "s currently loaded" ) )
+      : QString( us_tr( "No UV-Vis " + UNICODE_LAMBDA_QS + "s currently loaded" ) )
       ;
 }
 
 QString DAD_Lambdas::summary_rich() {
    if ( !lambdas.size() ) {
-      return us_tr( "<b>DAD Lambdas</b> not loaded" );
+      return us_tr( "<b>UV-Vis Lambdas</b> not loaded" );
    }
    QStringList qsl;
 
    qsl
-      << QString( us_tr( "<b>DAD " + UNICODE_LAMBDA_QS + "s</b> loaded from %1<hr>" ) ).arg( loaded_filename )
+      << QString( us_tr( "<b>UV-Vis " + UNICODE_LAMBDA_QS + "s</b> loaded from %1<hr>" ) ).arg( loaded_filename )
       << QString( us_tr( "%1 " + UNICODE_LAMBDA_QS + "s present, range [%2:%3]" ) )
       .arg( lambdas.size() )
       .arg( lambdas.front() )
@@ -307,9 +307,9 @@ void DAD_Angles::build_q_to_ri( double lambda, double n ) {
 QString DAD_Angles::list_rich( double lambda, double n ) {
    QStringList qsl;
    if ( !dad_angle.size() ) {
-      return us_tr( "<b>DAD Angles</b> not loaded" );
+      return us_tr( "<b>UV-Vis Angles</b> not loaded" );
    }
-   qsl << QString( us_tr( "<b>DAD Angles</b> loaded from %1<hr>" ) ).arg( loaded_filename );
+   qsl << QString( us_tr( "<b>UV-Vis Angles</b> loaded from %1<hr>" ) ).arg( loaded_filename );
    if ( !lambda || !n ) {
       qsl << "<table border=1 bgcolor=#FFF cellpadding=1.5>\n<tr><th> Detector </th><th> Angle </th><th> RI-Corr. </th><th> Gain </th><th> Norm.-Coef. </th></tr>\n";
       for ( auto it = dad_angle.begin();
@@ -384,8 +384,8 @@ bool DAD_Angles::load( const QString & filename, const QStringList & csvlines, Q
       return false;
    }
 
-   if ( !csvlines[0].contains( QRegularExpression( "^\\s*\"\\s*US-SOMO DAD Angles" ) ) ) {
-      errormsg = us_tr( "Not a DAD Angles csv file" );
+   if ( !csvlines[0].contains( QRegularExpression( "^\\s*\"\\s*US-SOMO UV-Vis Angles" ) ) ) {
+      errormsg = us_tr( "Not a UV-Vis Angles csv file" );
       return false;
    }
 
@@ -405,7 +405,7 @@ bool DAD_Angles::load( const QString & filename, const QStringList & csvlines, Q
       QStringList qsl = data.front().split( "," );
       data.pop_front();
       if ( qsl.size() < 5 ) {
-         errormsg += QString( us_tr( "Error in DAD Angles csv line %1\n" ) ).arg( pos );
+         errormsg += QString( us_tr( "Error in UV-Vis Angles csv line %1\n" ) ).arg( pos );
          continue;
       }
       int index = qsl[0].toInt();
@@ -439,7 +439,7 @@ bool DAD_Angles::save( const QString & filename, QString & errormsg ) {
    QStringList qsl;
 
    qsl
-      << "\"US-SOMO DAD Angles\"\n"
+      << "\"US-SOMO UV-Vis Angles\"\n"
       << "\"Detector\",\"Angle\",\"RI-Corr.\",\"Gain\",\"Norm.-Coef.\"\n";
       ;
 
@@ -644,7 +644,7 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: DAD"));
+   setWindowTitle(us_tr("US-SOMO: UV-Vis"));
    order_ascending = false;
    conc_widget     = false;
 #if QT_VERSION >= 0x040000
@@ -1058,7 +1058,7 @@ void US_Hydrodyn_Dad::help()
 void US_Hydrodyn_Dad::closeEvent(QCloseEvent *e)
 {
    QMessageBox mb( this->windowTitle(), 
-                   us_tr("Attention:\nAre you sure you want to exit the DAD window?"),
+                   us_tr("Attention:\nAre you sure you want to exit the UV-Vis window?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,
@@ -1581,10 +1581,10 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
          filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir
                                                     ,
                                                     "All files (*);;"
-                                                    "csv files [DAD data and Angles] (*.csv);;"
+                                                    "csv files [UV-Vis data and Angles] (*.csv);;"
                                                     "dat files [foxs / other] (*.dat);;"
                                                     "ssaxs files (*.ssaxs);;"
-                                                    "txt files [Wyatt DAD Angles or specified q I sd] (*.txt)"
+                                                    "txt files [Wyatt UV-Vis Angles or specified q I sd] (*.txt)"
                                                     );
       }
    }
@@ -1780,7 +1780,7 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
                                QString(
                                        us_tr(
                                              "Loaded files contain a different solvent refractive index (%1)\n"
-                                             "than set in the Options->DAD parameters->Solvent refractive index (%2)\n"
+                                             "than set in the Options->UV-Vis parameters->Solvent refractive index (%2)\n"
                                              "You should remove all files, adjust the parameter value and reload the files"
                                              )
                                        )
@@ -1799,7 +1799,7 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
                                QString(
                                        us_tr(
                                              "Loaded files contain multiple different solvent refractive index (%1)\n"
-                                             "which do not match the Options->DAD parameters->Solvent refractive index (%2)\n"
+                                             "which do not match the Options->UV-Vis parameters->Solvent refractive index (%2)\n"
                                              "Proceed with caution!"
                                              )
                                        )
@@ -2121,7 +2121,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    }
 
    if ( dad_angles.populate( filename, qsl_nb ) ) {
-      editor_msg( "black", QString( "%1 DAD angles loaded\n" ).arg( filename ) );
+      editor_msg( "black", QString( "%1 UV-Vis angles loaded\n" ).arg( filename ) );
       editor_msg( "black", dad_angles.list() );
       lbl_dad_lambdas_data->setText( dad_angles.list_rich( dad_param_lambda, dad_param_n ) );
       return false;
@@ -2198,7 +2198,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       QRegExp rx_fit_method         ( " Fit method:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_fit_q_ranges       ( " Fit ranges:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_fit_chi2           ( " Fit chi^2:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_fit_sd_scale       ( " Fit DAD SD mult:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_sd_scale       ( " Fit UV-Vis SD mult:\\s*(\\S+)(\\s|$)" );
       
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 ) {
          QString unitstr = rx_unit.cap( 1 ).toLower();
@@ -2315,7 +2315,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       use_units = 1.0;
    }
 
-   if ( ext == "dat" && qv[ 0 ].contains( " DAD parameter file" ) )
+   if ( ext == "dat" && qv[ 0 ].contains( " UV-Vis parameter file" ) )
    {
       QRegExp rx_dad_param_lambda            ( "^# __dad_param_lambda: (\\S+)\\s*$" );
       QRegExp rx_dad_param_n                 ( "^# __dad_param_n: (\\S+)\\s*$" );
@@ -2570,7 +2570,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       QString errormsg;
       
       if ( dad_lambdas.load( filename, qsl, errormsg ) ) {
-         editor_msg( "black", QString( "%1 DAD lambdas loaded\n" ).arg( filename ) );
+         editor_msg( "black", QString( "%1 UV-Vis lambdas loaded\n" ).arg( filename ) );
          editor_msg( "black", dad_lambdas.summary() );
          lbl_dad_lambdas_data->setText( dad_lambdas.summary_rich() + DAD_LAMBDA_EXTC_MSG );
          return false;
@@ -2579,13 +2579,13 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       // try absorbtion
       {
          if ( dad_load( filename, qsl, errormsg ) ) {
-            editor_msg( "black", QString( us_tr( "%1 - DAD absorption data\n" ) ).arg( filename ) );
+            editor_msg( "black", QString( us_tr( "%1 - UV-Vis absorption data\n" ) ).arg( filename ) );
             return false;
          }
          if ( errormsg != "not a valid dad file" ) {
             QMessageBox::warning(
                                  this
-                                 ,"US-SOMO DAD load Error"
+                                 ,"US-SOMO UV-Vis load Error"
                                  ,QString( us_tr( "Loading file %1:\nError: %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
                                  );
             return false;
@@ -2600,15 +2600,15 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       // {
       //    QString errormsg;
       //    if ( dad_angles.load( filename, qsl, errormsg ) ) {
-      //       editor_msg( "black", QString( "%1 DAD angles loaded\n" ).arg( filename ) );
+      //       editor_msg( "black", QString( "%1 UV-Vis angles loaded\n" ).arg( filename ) );
       //       editor_msg( "black", dad_angles.list() );
       //       lbl_dad_angles_data->setText( dad_angles.list_rich( dad_param_lambda, dad_param_n ) );
       //       return false;
       //    }
-      //    if ( errormsg != us_tr( "Not a DAD Angles csv file" ) ) {
+      //    if ( errormsg != us_tr( "Not a UV-Vis Angles csv file" ) ) {
       //       QMessageBox::warning(
       //                            this
-      //                            ,"US-SOMO DAD Angles load Error"
+      //                            ,"US-SOMO UV-Vis Angles load Error"
       //                            ,QString( us_tr( "Loading file %1:\nError: %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
       //                            );
       //       return false;
@@ -2619,13 +2619,13 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       // {
       //    QString errormsg;
       //    if ( dad_load( filename, qsl, errormsg ) ) {
-      //       editor_msg( "black", QString( us_tr( "%1 - DAD data\n" ) ).arg( filename ) );
+      //       editor_msg( "black", QString( us_tr( "%1 - UV-Vis data\n" ) ).arg( filename ) );
       //       return false;
       //    }
       //    if ( errormsg != "not a dad file" ) {
       //       QMessageBox::warning(
       //                            this
-      //                            ,"US-SOMO DAD load Error"
+      //                            ,"US-SOMO UV-Vis load Error"
       //                            ,QString( us_tr( "Loading file %1:\nError: %2" ) ).arg( filename ).arg( us_tr( errormsg ) )
       //                            );
       //       return false;
@@ -4049,7 +4049,7 @@ bool US_Hydrodyn_Dad::save_file( QString file, bool &cancel, bool &overwrite_all
          .arg( f_fit_method.count( file ) ? QString( " Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
          .arg( f_fit_q_ranges.count( file ) ? QString( " Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
          .arg( f_fit_chi2.count( file ) ? QString( " Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
-         .arg( f_fit_sd_scale.count( file ) ? QString( " Fit DAD SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
+         .arg( f_fit_sd_scale.count( file ) ? QString( " Fit UV-Vis SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
          ;
    }
 
@@ -4714,7 +4714,7 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
       unsigned int size = ( unsigned int )q.size();
 
       QString use_head = head;
-      use_head = use_head.replace( "_DAD_AL_t", "_DAD" );
+      use_head = use_head.replace( "_UV-Vis_AL_t", "_UV-Vis" );
 
       progress->setMaximum( files_size + size + 1 );
 
@@ -5197,7 +5197,7 @@ void US_Hydrodyn_Dad::join()
       // ask for overlap point
       bool ok;
       double res = US_Static::getDouble(
-                                           us_tr( "US-SOMO: DAD: Join" ),
+                                           us_tr( "US-SOMO: UV-Vis: Join" ),
                                            QString( us_tr( "The curves %1 and %2\n"
                                                         "have an overlap q-range of %3 to %4.\n"
                                                         "Enter the join q-value:" ) )
@@ -6186,7 +6186,7 @@ void US_Hydrodyn_Dad::view()
                   .arg( f_fit_method.count( file ) ? QString( " Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
                   .arg( f_fit_q_ranges.count( file ) ? QString( " Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
                   .arg( f_fit_chi2.count( file ) ? QString( " Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
-                  .arg( f_fit_sd_scale.count( file ) ? QString( " Fit DAD SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
+                  .arg( f_fit_sd_scale.count( file ) ? QString( " Fit UV-Vis SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
                   ;
             }
          }

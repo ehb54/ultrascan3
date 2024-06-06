@@ -20,7 +20,7 @@ US_Hydrodyn_Dad_Gauss_Mode::US_Hydrodyn_Dad_Gauss_Mode(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD : Gaussian Options" ) );
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis : Gaussian Options" ) );
 
    setupGUI();
 

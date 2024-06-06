@@ -37,7 +37,7 @@ US_Hydrodyn_Dad_Fit::US_Hydrodyn_Dad_Fit(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD: Gaussian Fit" ) );
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis: Gaussian Fit" ) );
 
    update_dad = true;
    running = false;
@@ -195,7 +195,7 @@ void US_Hydrodyn_Dad_Fit::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( us_tr( "US-SOMO: DAD: Gaussian Fit" ), this);
+   lbl_title = new QLabel( us_tr( "US-SOMO: UV-Vis: Gaussian Fit" ), this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);

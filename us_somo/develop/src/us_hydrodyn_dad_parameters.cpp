@@ -21,7 +21,7 @@ US_Hydrodyn_Dad_Parameters::US_Hydrodyn_Dad_Parameters(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD : DAD Processing Parameters" ) );
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis : UV-Vis Processing Parameters" ) );
 
    setupGUI();
 
@@ -39,7 +39,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: DAD : DAD Processing Parameters" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: UV-Vis : UV-Vis Processing Parameters" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );
@@ -288,7 +288,7 @@ void US_Hydrodyn_Dad_Parameters::save()
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
       QDir::separator() + "somo_dad_default_dad_param.dat" ;
 
-   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Select a name to save the DAD parameters" ) , use_dir , "*_dad_param.dat" );
+   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Select a name to save the UV-Vis parameters" ) , use_dir , "*_dad_param.dat" );
 
    if ( fn.isEmpty() )
    {
@@ -311,7 +311,7 @@ void US_Hydrodyn_Dad_Parameters::save()
 
    QTextStream ts( &f );
 
-   ts << "# US-SOMO DAD parameter file\n";
+   ts << "# US-SOMO UV-Vis parameter file\n";
 
    if ( !le_dad_param_lambda->text().isEmpty() )
    {

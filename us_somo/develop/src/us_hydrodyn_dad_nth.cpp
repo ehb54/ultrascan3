@@ -21,7 +21,7 @@ US_Hydrodyn_Dad_Nth::US_Hydrodyn_Dad_Nth(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD : Select curves" ) );
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis : Select curves" ) );
 
    alpha        = parameters->count( "alpha" ) ? (*parameters)[ "alpha" ].toDouble() : 0.05;
    alpha_over_5 = 0.2 * alpha;

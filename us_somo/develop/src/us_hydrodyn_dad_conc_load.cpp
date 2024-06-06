@@ -23,7 +23,7 @@ US_Hydrodyn_Dad_Conc_Load::US_Hydrodyn_Dad_Conc_Load(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD: File Concentration Loader"));
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis: File Concentration Loader"));
 
    disable_updates = false;
 
@@ -523,7 +523,7 @@ void US_Hydrodyn_Dad_Conc_Load::adjust()
    // ask & add or subtract
    bool ok;
    int res = US_Static::getInteger(
-                                      us_tr( "US-SOMO: DAD: File Concentration Loader: Adjust timecode" ),
+                                      us_tr( "US-SOMO: UV-Vis: File Concentration Loader: Adjust timecode" ),
                                       us_tr( "Enter a timecode correction:" ), 
                                       0, 
                                       -1000, 

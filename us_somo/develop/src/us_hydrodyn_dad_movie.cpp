@@ -26,7 +26,7 @@ US_Hydrodyn_Dad_Movie::US_Hydrodyn_Dad_Movie(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: DAD MOVIE"));
+   setWindowTitle(us_tr("US-SOMO: UV-Vis MOVIE"));
 
 
    for ( int i = 0; i < dad_win->lb_files->count(); i++ )

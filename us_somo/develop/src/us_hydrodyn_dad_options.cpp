@@ -23,7 +23,7 @@ US_Hydrodyn_Dad_Options::US_Hydrodyn_Dad_Options(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD : Options" ) );
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis : Options" ) );
 
    setupGUI();
 
@@ -43,7 +43,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
 {
    int minHeight1  = 28;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: DAD : Options" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: UV-Vis : Options" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_LABEL );
@@ -304,7 +304,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
 
-   pb_dad_parameters = new QPushButton(us_tr("DAD Processing Parameters"), this);
+   pb_dad_parameters = new QPushButton(us_tr("UV-Vis Processing Parameters"), this);
    pb_dad_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_dad_parameters->setMinimumHeight(minHeight1);
    pb_dad_parameters->setPalette( PALET_PUSHB );

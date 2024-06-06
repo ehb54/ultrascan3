@@ -40,7 +40,7 @@ US_Hydrodyn_Dad_Svd::US_Hydrodyn_Dad_Svd(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: DAD SVD"));
+   setWindowTitle(us_tr("US-SOMO: UV-Vis SVD"));
 
    cg_red = USglobal->global_colors.cg_label;
    cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
@@ -1770,7 +1770,7 @@ void US_Hydrodyn_Dad_Svd::to_dad()
 {
    if ( !ush_win->dad_widget )
    {
-      editor_msg( "red", us_tr( "US-SOMO DAD window has been closed" ) );
+      editor_msg( "red", us_tr( "US-SOMO UV-Vis window has been closed" ) );
       return;
    }
 

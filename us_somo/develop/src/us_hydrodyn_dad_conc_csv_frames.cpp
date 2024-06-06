@@ -24,7 +24,7 @@ US_Hydrodyn_Dad_Conc_Csv_Frames::US_Hydrodyn_Dad_Conc_Csv_Frames(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO DAD: Concentration CSV Time -> Frame conversion" ) );
+   setWindowTitle( us_tr( "US-SOMO UV-Vis: Concentration CSV Time -> Frame conversion" ) );
 
    setupGUI();
 

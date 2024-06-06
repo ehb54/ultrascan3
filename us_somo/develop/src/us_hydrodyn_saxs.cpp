@@ -1246,7 +1246,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
    iq_widgets.push_back( pb_saxs_buffer );
 
-   pb_dad = new QPushButton("DAD", this);
+   pb_dad = new QPushButton("UV-Vis", this);
    pb_dad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_dad->setMinimumHeight(minHeight1);
    SET_WIDTH_FROM_TEXT_LEN( pb_dad );
@@ -6890,7 +6890,7 @@ void US_Hydrodyn_Saxs::reset_dad_csv()
       return;
    } 
 
-   dad_csv.name = "SAXS I(q) DAD";
+   dad_csv.name = "SAXS I(q) UV-Vis";
 
    dad_csv.header.clear( );
    dad_csv.header_map.clear( );

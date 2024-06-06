@@ -26,7 +26,7 @@ US_Hydrodyn_Dad_Conc::US_Hydrodyn_Dad_Conc(
    us_hydrodyn = ((US_Hydrodyn_Dad *)dad_window)->us_hydrodyn;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: DAD: File Concentrations"));
+   setWindowTitle( us_tr( "US-SOMO: UV-Vis: File Concentrations"));
    order_ascending = false;
    disable_updates = false;
    setupGUI();
@@ -453,7 +453,7 @@ void US_Hydrodyn_Dad_Conc::load()
    if ( !QFile::exists( fname ) )
    {
       QMessageBox::warning( this, 
-                            us_tr( "US-SOMO: DAD Subtraction Utility: Concentrations" ),
+                            us_tr( "US-SOMO: UV-Vis Subtraction Utility: Concentrations" ),
                             QString( us_tr( "File %1 does not exist" ) ).arg( fname ) );
       return;
    }
@@ -463,7 +463,7 @@ void US_Hydrodyn_Dad_Conc::load()
    if ( !f.open( QIODevice::ReadOnly ) )
    {
       QMessageBox::warning( this, 
-                            us_tr( "US-SOMO: DAD Subtraction Utility: Concentrations" ),
+                            us_tr( "US-SOMO: UV-Vis Subtraction Utility: Concentrations" ),
                             QString( us_tr( "Can not open file %1 for reading" ) ).arg( fname ) );
       return;
    }
@@ -511,7 +511,7 @@ void US_Hydrodyn_Dad_Conc::load()
          hbscl->exec();
       } else {
          QMessageBox::warning( this, 
-                               us_tr( "US-SOMO: DAD: File Concentrations"),
+                               us_tr( "US-SOMO: UV-Vis: File Concentrations"),
                                us_tr( "The file does not seem to contain data the this program understands" ) );
          delete hbscl;
          return;
@@ -553,7 +553,7 @@ void US_Hydrodyn_Dad_Conc::save()
    if ( !f.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, 
-                            us_tr( "US-SOMO: DAD Subtraction Utility: Concentrations" ),
+                            us_tr( "US-SOMO: UV-Vis Subtraction Utility: Concentrations" ),
                             QString( us_tr( "Can not open file %1 for writing" ) ).arg( fname ) );
       return;
    }
@@ -566,7 +566,7 @@ void US_Hydrodyn_Dad_Conc::save()
    ts << csv_to_qstring( tmp_csv );
    f.close();
    QMessageBox::information( this, 
-                             us_tr( "US-SOMO: DAD Subtraction Utility: Concentrations" ),
+                             us_tr( "US-SOMO: UV-Vis Subtraction Utility: Concentrations" ),
                              QString( us_tr( "File %1 saved" ) ).arg( fname ) );
 }
 
