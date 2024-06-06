@@ -603,28 +603,34 @@ DbgLv(1) << "CGui: reset complete";
     // QString protname = QString("11JAN2024-PAPBM1M2-Mabanglo-test");
     // QString invid    = QString("19");
     // QString aprofileguid = QString("3fb72b82-6e93-4ecb-9d47-ecbf552f2234");
-
+   
    // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE_DemoData-Optima2-1209");
    // QString protname = QString("ABDE_DemoAAV_1");
    // QString invid    = QString("12");
    // QString aprofileguid = QString("be10df3c-a567-4335-af26-59cb182c79b6");
-   
-   //  QMap < QString, QString > protocol_details;
-   //  protocol_details[ "dataPath" ]       = curdir;
-   //  protocol_details[ "invID_passed" ]   = invid;
-   //  protocol_details[ "protocolName" ]   = protname;
-   //  //protocol_details[ "experimentName" ];
-   //  protocol_details[ "correctRadii" ]   = QString("YES");
-   //  protocol_details[ "expAborted" ]     = QString("NO");
-   //  //protocol_details[ "runID" ]          =  ;
-   //  protocol_details[ "label" ]          = QString("Some label");
-   //  protocol_details[ "aprofileguid" ]   = aprofileguid;
-   //  protocol_details[ "CellChNumber" ]   = QString("6");
 
-   //  // /*********************************************************************************/
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE-Test-052124-run1693");
+   // QString protname = QString("ABDE-Test-052124-v2");
+   // QString invid    = QString("165");
+   // QString aprofileguid = QString("ff68a3ec-b526-4f52-851b-b6890bfea7de");
+   
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "dataPath" ]       = curdir;
+   // protocol_details[ "invID_passed" ]   = invid;
+   // protocol_details[ "protocolName" ]   = protname;
+   // //protocol_details[ "experimentName" ];
+   // protocol_details[ "correctRadii" ]   = QString("YES");
+   // protocol_details[ "expAborted" ]     = QString("NO");
+   // //protocol_details[ "runID" ]          =  ;
+   // protocol_details[ "label" ]          = QString("Some label");
+   // protocol_details[ "aprofileguid" ]   = aprofileguid;
+   // protocol_details[ "CellChNumber" ]   = QString("6");
+   // protocol_details[ "expType" ]        = QString("ABDE");
+
+   // // /*********************************************************************************/
 
    
-   //  import_data_auto( protocol_details ); 
+   // import_data_auto( protocol_details ); 
    
 
    qDebug() << "US_CONVERT: SET !"; 
@@ -1662,9 +1668,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE ")
+     if ( expType == "ABDE")
        {
-	 
+	 absorbance_conversion_abde();
+	 return;
        }
 
      return;
@@ -1805,7 +1812,8 @@ void US_ConvertGui::process_optics()
 
      if ( expType == "ABDE" )
        {
-	 
+	 absorbance_conversion_abde();
+	 return;
        }
      
      return;
@@ -2216,7 +2224,7 @@ DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " <<
    scanTolerance = 5.0;
 
      
-   if ( ! init_output_data() )
+   if ( ! init_output_data() )  //Copy of allData -> outData
       return;
 
    setTripleInfo();
@@ -5620,6 +5628,145 @@ void US_ConvertGui::PseudoCalcAvg( void )
    pb_reference->setEnabled( false );
    pb_cancelref->setEnabled( true );
 
+}
+
+
+//For ABDE: convert to absorbance based on AProfile's ref. chann/use ref. chann defs
+void US_ConvertGui::absorbance_conversion_abde( void )
+{
+  data_plot->replot();
+  
+  //Map of ref-to-outData
+  // QMap ref_to_outData< QString("1B232"),US_DataIO::RawData* >
+  QMap < QString, US_DataIO::RawData > ref_to_outData;
+  QMap < QString, QString > sample_to_ref;
+  for ( int ii = 0; ii < outData.size(); ii++)
+    {
+      QString cell     = QString::number( outData.at(ii)->cell );
+      QString channame = QString( outData.at(ii)->channel );
+      QString wvl = QString::number( outData.at(ii)->scanData.at(0).wavelength );
+
+      QString cellchan    = cell + channame;
+      QString cellchanwvl = cellchan + wvl;
+
+      qDebug() << "in absorbance_conversion_abde(): cell, channame, wvl, #,  out_triples -- "
+	       << cell << channame << wvl << ii << out_triples[ii];
+      //Output: in absorbance_conversion_abde(): cell, channame, wvl, #,  out_triples --  "3" "B" 290 179 "3 / B / 290"
+      
+      if ( channels_abde_refs[ cellchan ] > 0 )
+      	ref_to_outData[ cellchanwvl ] = *(outData[ii]);
+
+      //connect sample & ref by triple name (1A232)
+      if ( channels_abde_use_refs[ cellchan ] > 0 )
+      	{
+      	  int use_ref_num = channels_abde_use_refs[ cellchan ];
+      	  QMap<QString, int>::iterator rnr;
+      	  for ( rnr = channels_abde_refs.begin(); rnr != channels_abde_refs.end(); ++rnr )
+      	    {
+      	      if ( rnr.value() == use_ref_num ) 
+      		{
+      		  sample_to_ref[ cellchanwvl ] = rnr.key() + wvl;
+      		  break;
+      		}
+      	    }
+       
+      	}
+    }
+
+  //Debug
+  qDebug() << "ref_to_outData.keys() -- " << ref_to_outData.keys();
+  qDebug() << "sample_to_ref.keys() -- " << sample_to_ref.keys();
+  
+  //Now, go over outData again:
+  for ( int ii = 0; ii < outData.size(); ii++)
+    {
+      QString cell     = QString::number( outData.at(ii)->cell );
+      QString channame = QString( outData.at(ii)->channel );
+      QString wvl = QString::number( outData.at(ii)->scanData.at(0).wavelength );
+
+      QString cellchan    = cell + channame;
+      QString cellchanwvl = cellchan + wvl;
+
+      int ns = outData.at(ii)->scanData.size();
+
+      US_DataIO::RawData* currentData = outData[ ii ];
+      int kcpoint   = currentData->pointCount();
+
+      qDebug() << "in absorbance_conversion_abde(): cell, channame, wvl, #,  out_triples -- "
+	       << cell << channame << wvl << ii;
+
+      //Set correction vector to itself initially
+      QVector< QVector<double>> buffer_rvalues;
+      for ( int ss = 0; ss < currentData->scanCount(); ss++ )
+	buffer_rvalues << currentData->scanData.at( ss ).rvalues;
+      
+      //1. if NOT a reference itself:
+      if ( sample_to_ref.contains( cellchanwvl ))
+       	{
+       	  qDebug() << "Going to convert for triple -- " << cellchanwvl
+       		   << "with the reference triple -- " << sample_to_ref[ cellchanwvl ];
+      
+       	  //Check for matching Scan # in Sample & Ref.
+       	  qDebug() << "#Scans: ns_data, ns_ref -- "
+       		   << ns << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.size();
+
+       	  int ns_min = ns;
+       	  if (ns != ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.size())
+       	    {
+       	      qDebug() << "Number Scans Not Matched!";
+	      ns_min = qMin( ns,  ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.size() );
+       	      //return;
+       	    }
+      
+       	  buffer_rvalues. clear();
+	  for (int nsc = 0; nsc < ns_min; nsc++)
+	    {
+	      buffer_rvalues << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.at( nsc ).rvalues;
+	      //qDebug() << "Buffer vals [in Correction] " << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.at( nsc ).rvalues;
+	    }
+	  //	}
+      //2. Refrence itself
+      // else
+      //  	{
+      //  	  for (int nsc = 0; nsc < ns; nsc++)
+      //  	    buffer_rvalues << outData.at(ii)->scanData.at( nsc ).rvalues;
+      //  	}
+
+	  for ( int ss = 0; ss < currentData->scanCount(); ss++ )
+	    {
+	      US_DataIO::Scan* scan = &currentData->scanData[ ss ];
+	      
+	      //qDebug() << "buffer_rvalues at log : " << buffer_rvalues.at( ss );
+	      
+	      for ( int rr = 0; rr < kcpoint; rr++ )
+		{
+		  double rvalue = scan->rvalues[ rr ];
+		  double val = buffer_rvalues.at(ss).at(rr) / rvalue;
+		  if (val <= 0)
+		    val = 1e-5;
+		  
+		  scan->rvalues[ rr ] = std::log10(val);
+		}
+	    }
+	}
+    }
+
+  plot_current();
+  QApplication::restoreOverrideCursor();
+
+  pb_reference  ->setEnabled( false );
+  referenceDefined = true;
+  
+  // ALEXEY: just enable Save btn for autoflow 
+  lw_todoinfo->clear();
+  pb_saveUS3 ->setEnabled( true );
+  //show_intensity_auto();
+    
+  enableRunIDControl( false );
+     
+  le_status->setText( tr( "[ABDE] Conversion to Absorbance Completed." ) );
+  qApp->processEvents();
+  
 }
 
 
