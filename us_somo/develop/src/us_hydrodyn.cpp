@@ -1663,6 +1663,7 @@ void US_Hydrodyn::setupGUI()
    pb_fractal_dimension->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_fractal_dimension->setPalette( PALET_PUSHB );
    connect(pb_fractal_dimension, SIGNAL(clicked()), SLOT(fractal_dimension()));
+   pb_fractal_dimension->hide();
    
    // ***** bd *******
    //   pb_bd_prepare = new QPushButton(us_tr("Create Browflex files"), this);
