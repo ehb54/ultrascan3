@@ -449,6 +449,7 @@ SOURCES *= \
         src/us_hydrodyn_settings.cpp \
         src/us_hydrodyn_supc.cpp \
         src/us_hydrodyn_util.cpp \
+        src/us_hydrodyn_vdw_overlap.cpp \
         src/us_hydrodyn_xsr.cpp \
         src/us_hydrodyn_write.cpp \
         src/us_hydrodyn_zeno.cpp \
@@ -866,6 +867,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_1d.h \
         include/us_hydrodyn_saxs_2d.h \
         include/us_hydrodyn_supc.h \
+        include/us_hydrodyn_vdw_overlap.h \
         include/us_hydrodyn_xsr.h \
         include/us_hydrodyn_zeno.h \
         include/us_fable.h \

@@ -569,16 +569,18 @@ void US_Hydrodyn_Misc::setupGUI()
    
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
       cb_export_ssbond->hide();
-      lbl_vdw_ot_mult ->hide();
-      le_vdw_ot_mult  ->hide();
-      lbl_vdw_ot_dpct ->hide();
-      le_vdw_ot_dpct  ->hide();
-      cb_vdw_ot_alt   ->hide();
-      cb_vdw_saxs_skip_pr0pair   ->hide();
    }
 
-   lbl_vdw_ot_dpct ->hide();
-   le_vdw_ot_dpct  ->hide();
+   // vdw controls move to us_hydrodyn_vdw_overlap
+   lbl_vdw_ot_mult             ->hide();
+   le_vdw_ot_mult              ->hide();
+   lbl_vdw_ot_dpct             ->hide();
+   le_vdw_ot_dpct              ->hide();
+   cb_vdw_ot_alt               ->hide();
+   cb_vdw_saxs_water_beads     ->hide();
+   cb_vdw_saxs_skip_pr0pair    ->hide();
+   lbl_vdw_ot_dpct             ->hide();
+   le_vdw_ot_dpct              ->hide();
    
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, hdrFontSize));

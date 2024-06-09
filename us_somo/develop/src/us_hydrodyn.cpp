@@ -24,6 +24,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_best.h"
 #include "../include/us_ffd.h"
+#include "../include/us_hydrodyn_vdw_overlap.h"
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include <qregexp.h>
 #include <qfont.h>
@@ -570,64 +571,65 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO Solution Bead Modeler"));
-   advanced_config.auto_view_pdb = true;
-   advanced_config.scroll_editor = false;
-   advanced_config.auto_calc_somo = false;
-   advanced_config.auto_show_hydro = false;
-   advanced_config.pbr_broken_logic = true;
-   advanced_config.use_sounds = false;
-   advanced_config.expert_mode = false;
+   advanced_config.auto_view_pdb        = true;
+   advanced_config.scroll_editor        = false;
+   advanced_config.auto_calc_somo       = false;
+   advanced_config.auto_show_hydro      = false;
+   advanced_config.pbr_broken_logic     = true;
+   advanced_config.use_sounds           = false;
+   advanced_config.expert_mode          = false;
    advanced_config.experimental_threads = false;
-   advanced_config.experimental_renum = false;
-   advanced_config.debug_1 = false;
-   advanced_config.debug_2 = false;
-   advanced_config.debug_3 = false;
-   advanced_config.debug_4 = false;
-   advanced_config.debug_5 = false;
-   advanced_config.debug_6 = false;
-   advanced_config.debug_7 = false;
-   atom_widget                     = false;
-   best_widget                     = false;
-   residue_widget                  = false;
-   hybrid_widget                   = false;
-   saxs_widget                     = false;
-   saxs_options_widget             = false;
-   sas_options_saxs_widget         = false;
-   sas_options_sans_widget         = false;
-   sas_options_curve_widget        = false;
-   sas_options_bead_model_widget   = false;
-   sas_options_hydration_widget    = false;
-   sas_options_guinier_widget      = false;
-   sas_options_xsr_widget          = false;
-   sas_options_misc_widget         = false;
-   sas_options_experimental_widget = false;
-   saxs_plot_widget                = false;
-   fractal_dimension_options_widget = false;
-   asa_widget = false;
-   misc_widget = false;
-   grid_widget = false;
-   hydro_widget = false;
-   hydro_zeno_widget = false;
-   overlap_widget = false;
-   grid_overlap_widget = false;
-   bead_output_widget = false;
-   results_widget = false;
-   pdb_visualization_widget = false;
-   pdb_parsing_widget = false;
-   advanced_config_widget = false;
-   saxs_search_widget = false;
-   saxs_screen_widget = false;
-   saxs_buffer_widget = false;
-   saxs_hplc_widget = false;
-   saxs_1d_widget = false;
-   saxs_2d_widget = false;
-   bd_widget = false;
-   bd_options_widget = false;
-   dmd_options_widget = false;
-   anaflex_options_widget = false;
-   batch_widget = false;
-   save_widget = false;
-   comparative_widget = false;
+   advanced_config.experimental_renum   = false;
+   advanced_config.debug_1              = false;
+   advanced_config.debug_2              = false;
+   advanced_config.debug_3              = false;
+   advanced_config.debug_4              = false;
+   advanced_config.debug_5              = false;
+   advanced_config.debug_6              = false;
+   advanced_config.debug_7              = false;
+   atom_widget                          = false;
+   best_widget                          = false;
+   residue_widget                       = false;
+   hybrid_widget                        = false;
+   saxs_widget                          = false;
+   saxs_options_widget                  = false;
+   sas_options_saxs_widget              = false;
+   sas_options_sans_widget              = false;
+   sas_options_curve_widget             = false;
+   sas_options_bead_model_widget        = false;
+   sas_options_hydration_widget         = false;
+   sas_options_guinier_widget           = false;
+   sas_options_xsr_widget               = false;
+   sas_options_misc_widget              = false;
+   sas_options_experimental_widget      = false;
+   saxs_plot_widget                     = false;
+   fractal_dimension_options_widget     = false;
+   asa_widget                           = false;
+   misc_widget                          = false;
+   vdw_overlap_widget                   = false;
+   grid_widget                          = false;
+   hydro_widget                         = false;
+   hydro_zeno_widget                    = false;
+   overlap_widget                       = false;
+   grid_overlap_widget                  = false;
+   bead_output_widget                   = false;
+   results_widget                       = false;
+   pdb_visualization_widget             = false;
+   pdb_parsing_widget                   = false;
+   advanced_config_widget               = false;
+   saxs_search_widget                   = false;
+   saxs_screen_widget                   = false;
+   saxs_buffer_widget                   = false;
+   saxs_hplc_widget                     = false;
+   saxs_1d_widget                       = false;
+   saxs_2d_widget                       = false;
+   bd_widget                            = false;
+   bd_options_widget                    = false;
+   dmd_options_widget                   = false;
+   anaflex_options_widget               = false;
+   batch_widget                         = false;
+   save_widget                          = false;
+   comparative_widget                   = false;
    if ( !install_new_version() )
    {
       exit(0);
@@ -635,26 +637,26 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
 
-   calcAutoHydro = false;
-   overwrite = false;
-   overwrite_hydro = false;
-   saveParams = false;
-   setSuffix = true;
-   guiFlag = true;
-   bead_model_selected_filter = "";
-   residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
-   editor = (mQTextEdit *)0;
+   calcAutoHydro                        = false;
+   overwrite                            = false;
+   overwrite_hydro                      = false;
+   saveParams                           = false;
+   setSuffix                            = true;
+   guiFlag                              = true;
+   bead_model_selected_filter           = "";
+   residue_filename                     = US_Config::get_home_dir() + "etc/somo.residue";
+   editor                               = (mQTextEdit *)0;
 
 #if QT_VERSION >= 0x040000
-   gparams[ "zeno_cxx" ] = "true";
+   gparams[ "zeno_cxx" ]                = "true";
 #endif
 
-   last_saxs_search_csv.name = "__empty__";
-   last_saxs_screen_csv.name = "__empty__";
-   last_saxs_buffer_csv.name = "__empty__";
-   last_saxs_hplc_csv.name = "__empty__";
+   last_saxs_search_csv.name            = "__empty__";
+   last_saxs_screen_csv.name            = "__empty__";
+   last_saxs_buffer_csv.name            = "__empty__";
+   last_saxs_hplc_csv.name              = "__empty__";
 
-   misc.restore_pb_rule = false;
+   misc.restore_pb_rule                 = false;
 
    if ( saxs_options.default_hybrid_filename.isEmpty() ) {
       saxs_options.default_hybrid_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hybrid";
@@ -1008,6 +1010,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(us_tr("&ASA Calculation"), this, SLOT(show_asa()));
    somo_options->insertItem(us_tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
    somo_options->insertItem(us_tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
+   somo_options->insertItem(us_tr("&vdW Overlap Parameters"), this, SLOT(show_vdw_overlap()));
    somo_options->insertItem(us_tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
    somo_options->insertItem(us_tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options()));
    somo_options->insertItem(us_tr("&Miscellaneous Options"), this, SLOT(show_misc()));
@@ -1107,6 +1110,10 @@ void US_Hydrodyn::setupGUI()
       {
          QAction *qa = submenu->addAction( us_tr("AtoB (Grid) &Overlap Reduction") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(show_grid_overlap()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&vdW Overlap Parameters" ) );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_vdw_overlap()));
       }
       {
          QAction *qa = submenu->addAction( us_tr("&Hydrodynamic Calculations") );
@@ -2260,6 +2267,23 @@ void US_Hydrodyn::show_misc()
    }
    update_vbar();
 }
+
+void US_Hydrodyn::show_vdw_overlap() {
+   if ( vdw_overlap_widget ) {
+      if (vdw_overlap_window->isVisible()) {
+         vdw_overlap_window->raise();
+      } else {
+         vdw_overlap_window->show();
+      }
+      return;
+   } else {
+      vdw_overlap_window = new US_Hydrodyn_Vdw_Overlap( &misc, &vdw_overlap_widget, this );
+      fixWinButtons( vdw_overlap_window );
+      vdw_overlap_window->show();
+   }
+   update_vbar();
+}
+
 
 void US_Hydrodyn::show_saxs_options()
 {

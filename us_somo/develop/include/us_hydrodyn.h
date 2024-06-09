@@ -442,6 +442,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_visualization_widget;
       bool saxs_widget;
       bool fractal_dimension_options_widget;
+      bool vdw_overlap_widget;
 
       bool saxs_options_widget;
       bool sas_options_saxs_widget;
@@ -611,6 +612,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
       QFrame * fractal_dimension_options_window;
+      QFrame * vdw_overlap_window;
 
       US_Hydrodyn_SasOptionsSaxs         * sas_options_saxs_window;
       US_Hydrodyn_SasOptionsSans         * sas_options_sans_window;
@@ -1160,6 +1162,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void select_save_params();
       void show_saxs_options();
       void show_fractal_dimension_options();
+      void show_vdw_overlap();
       void show_bd_options();
       void show_anaflex_options();
       void show_dmd_options();
