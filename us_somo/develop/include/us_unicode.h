@@ -7,5 +7,7 @@
 #define UNICODE_PLUSMINUS_QS QString( "%1" ).arg( UNICODE_PLUSMINUS )
 #define UNICODE_ALPHA u8"\u03B1"
 #define UNICODE_ALPHA_QS QString( "%1" ).arg( UNICODE_ALPHA )
+#define UNICODE_SUPER_2 u8"\u00B2"
+#define UNICODE_SUPER_2_QS QString( "%1" ).arg( UNICODE_SUPER_2 )
 
 #endif 
