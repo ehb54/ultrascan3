@@ -1351,7 +1351,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
        }
       SetNonIdealCase_2();
       DbgLv(1) << "ASTFVM:set_buffer:" << codiff_needed;
-      DbgLv(1) << "ASTFVM:set_buffer:" << bfg << nullptr;
+      DbgLv(1) << "ASTFVM:set_buffer:" << bfg << nullptr << bandFormingGradient;
       if (codiff_needed){
          if ( bandFormingGradient != nullptr && bandFormingGradient->is_suitable(simparams.meniscus,
                                                                                  simparams.bottom,

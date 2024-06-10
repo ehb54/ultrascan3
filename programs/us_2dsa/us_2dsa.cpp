@@ -1169,7 +1169,7 @@ DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
    dset.s20w_correction    = sd.s20w_correction;
    dset.D20w_correction    = sd.D20w_correction;
    dset.manual             = manual;
-   dset.bfg                = *bfg;
+
 DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
  << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
 DbgLv(1) << "SimulationParameter --";

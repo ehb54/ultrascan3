@@ -477,7 +477,7 @@ DbgLv(1) << "2P:SF: orig_sols: "
             bfg->get_eigenvalues();
             bfg->calculate_gradient(*simparms,&auc_data);
          }
-         if (dbg_level > 0){
+         if (dbg_level > 1){
                QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
                double *Visc;
                double *Dens;
@@ -532,6 +532,9 @@ DbgLv(1) << "2P:SF: orig_sols: "
                   dens_stream << "\n";
                   visc_stream << "\n";
                   conc_stream << "\n";
+                  dens_stream << "\t";
+                  visc_stream << "\t";
+                  conc_stream << "\t";
                   for (int i = 0; i < auc_data.scanCount(); i++){
                      dens_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
                      dens_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
@@ -564,7 +567,7 @@ DbgLv(1) << "2P:SF: orig_sols: "
                   visc_raw_out.close();
                }
          }
-         if (dbg_level > 0){
+         if (dbg_level > 1){
             QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
             double *Visc;
             double *Dens;
