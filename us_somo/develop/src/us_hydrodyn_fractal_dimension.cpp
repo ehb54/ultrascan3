@@ -1422,7 +1422,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                              .arg( fd_sd, 0, 'f', 3 )
                              )
                      );
-         if ( rg_over_fd != -1 ) {
+         if ( rg_over_fd != -1 && advanced_config.expert_mode ) {
             editor_msg( "black",
                         QString(
                                 us_tr( "Rg / Fractal dimension for model %1.: %2 %3 %4 [%5]\n" )
@@ -1445,7 +1445,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                                 .arg( fd_wtd_sd, 0, 'f', 3 )
                                 )
                         );
-            if ( rg_over_fd_wtd != -1 ) {
+            if ( rg_over_fd_wtd != -1 && advanced_config.expert_mode ) {
                editor_msg( "black",
                            QString(
                                    us_tr( "Rg / Fractal dimension for model %1 wtd.: %2 %3 %4 [%5]\n" )
@@ -1468,7 +1468,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                                 .arg( fd_wtd_sd, 0, 'f', 3 )
                                 )
                         );
-            if ( rg_over_fd_wtd != -1 ) {
+            if ( rg_over_fd_wtd != -1 && advanced_config.expert_mode ) {
                editor_msg( "black",
                            QString(
                                    us_tr( "Rg / Fractal dimension for model %1 avg. of wtd.: %2 %3 %4 [%5]\n" )
@@ -1491,7 +1491,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                                 )
                         );
 
-            if ( rg_over_fd_wtd_wtd != -1 ) {
+            if ( rg_over_fd_wtd_wtd != -1 && advanced_config.expert_mode ) {
                editor_msg( "black",
                            QString(
                                    us_tr( "Rg / Fractal dimension for model %1 wtd. of wtd.: %2 %3 %4 [%5]\n" )
