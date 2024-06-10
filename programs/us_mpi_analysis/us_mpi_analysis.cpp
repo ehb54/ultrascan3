@@ -2694,18 +2694,6 @@ void US_MPI_Analysis::calculate_cosed() {
    US_LammAstfvm::CosedData* csD = nullptr;
    QList<US_CosedComponent> cosed_components;
    US_Math_BF::Band_Forming_Gradient* bfg = nullptr;
-   if ( !data_sets[0]->bfg.is_empty &&
-        data_sets[0]->bfg.is_suitable(data_sets[0]->simparams.meniscus,
-                                      data_sets[0]->simparams.bottom,
-                                      data_sets[0]->simparams.band_volume,
-                                      data_sets[0]->simparams.cp_pathlen,
-                                      data_sets[0]->simparams.cp_angle
-      data_sets[0]->solution_rec.buffer.cosed_component,
-         (int)auc_data->scanData.last().seconds)
-
-   ) {
-      bandFormingGradient = &data_sets[0]->bfg;
-   }
    QMap<QString, US_DataIO::RawData> cosed_comp_data;
    bool codiff_needed = false;
    bool cosed_needed = false;
@@ -2877,7 +2865,7 @@ void US_MPI_Analysis::calculate_cosed() {
    if ( codiff_needed ){
       bool recalc = true;
       if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
-            (bandFormingGradient == nullptr || bandFormigGradient->is_empty)){
+            (bandFormingGradient == nullptr && bandFormigGradient->is_empty)){
          delete bandFormingGradient;
          bandFormingGradient = bfgs.first();
       }
@@ -2889,7 +2877,7 @@ void US_MPI_Analysis::calculate_cosed() {
                                                 data_sets[0]->simparams.cp_pathlen,
                                                 data_sets[0]->simparams.cp_angle
                                                 data_sets[0]->solution_rec.buffer.cosed_component,
-                                                (int)auc_data->scanData.last().seconds) ){
+                                                (int)data_sets[0]->run_data.scanData.last().seconds) ){
             recalc = false;
          }
          if ( recalc ){
