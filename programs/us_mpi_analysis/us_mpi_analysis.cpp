@@ -2865,7 +2865,7 @@ void US_MPI_Analysis::calculate_cosed() {
    if ( codiff_needed ){
       bool recalc = true;
       if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
-            (bandFormingGradient == nullptr && bandFormigGradient->is_empty)){
+            (bandFormingGradient == nullptr && bandFormingGradient->is_empty)){
          delete bandFormingGradient;
          bandFormingGradient = bfgs.first();
       }
@@ -2875,7 +2875,7 @@ void US_MPI_Analysis::calculate_cosed() {
                                                 data_sets[0]->simparams.bottom,
                                                 data_sets[0]->simparams.band_volume,
                                                 data_sets[0]->simparams.cp_pathlen,
-                                                data_sets[0]->simparams.cp_angle
+                                                data_sets[0]->simparams.cp_angle,
                                                 data_sets[0]->solution_rec.buffer.cosed_component,
                                                 (int)data_sets[0]->run_data.scanData.last().seconds) ){
             recalc = false;
