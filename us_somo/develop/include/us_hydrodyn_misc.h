@@ -29,6 +29,12 @@
 
 using namespace std;
 
+enum CALC_HYDRO_METHOD : int {
+   AUTO_CALC_HYDRO_SMI    = 1
+   ,AUTO_CALC_HYDRO_ZENO   = 2
+   ,AUTO_CALC_HYDRO_GRPY   = 3
+      };
+
 struct misc_options
 {
    double vbar;
@@ -57,6 +63,8 @@ struct misc_options
    bool   export_ssbond;
 
    bool   parallel_grpy;
+
+   enum   CALC_HYDRO_METHOD auto_calc_hydro_method;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
@@ -141,6 +149,9 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QCheckBox *cb_vdw_saxs_water_beads;
       QCheckBox *cb_vdw_saxs_skip_pr0pair;
 
+      QLabel    *lbl_auto_calc_hydro_method;
+      QComboBox *cmb_auto_calc_hydro_method;
+      
    private slots:
 
       void setupGUI();
@@ -158,6 +169,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       void update_avg_vbar(double);
       void update_avg_num_elect(double);
       void update_avg_protons(double);
+      void update_auto_calc_hydro_method();
       
       void update_target_e_density(const QString &);
       void update_target_volume(const QString &);

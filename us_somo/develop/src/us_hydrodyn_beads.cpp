@@ -214,9 +214,23 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    pb_vdw_beads->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      no_ovlp_removal ? calc_zeno_hydro() : calc_hydro();
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         no_ovlp_removal ? 
+            calc_zeno_hydro() : calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
    } 
    else
    {
@@ -932,10 +946,23 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      calc_hydro();
-   }
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
+   } 
    else
    {
       play_sounds(1);
@@ -1278,10 +1305,23 @@ int US_Hydrodyn::calc_grid()
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      calc_hydro();
-   }
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
+   } 
    else
    {
       play_sounds(1);
@@ -1436,9 +1476,20 @@ int US_Hydrodyn::calc_vdw_beads()
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_stop_calc->setEnabled(false);
-   if ( calcAutoHydro )
-   {
-      calc_zeno_hydro();
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
    } else {
       play_sounds(1);
    }

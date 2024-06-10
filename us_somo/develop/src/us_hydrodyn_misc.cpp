@@ -582,6 +582,35 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_vdw_ot_dpct             ->hide();
    le_vdw_ot_dpct              ->hide();
    
+
+   // auto calc method
+   lbl_auto_calc_hydro_method = new QLabel( us_tr( " Method used when automatically\n calculate hydrodynamics is checked:" ), this );
+   lbl_auto_calc_hydro_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_auto_calc_hydro_method->setMinimumHeight(minHeight1 * 2);
+   lbl_auto_calc_hydro_method->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_auto_calc_hydro_method );
+   lbl_auto_calc_hydro_method->setFont(QFont( USglobal->config_list.fontFamily, useFontSize, QFont::Bold));
+
+   cmb_auto_calc_hydro_method = new QComboBox();
+   cmb_auto_calc_hydro_method->setPalette( PALET_NORMAL );
+   AUTFBACK( cmb_auto_calc_hydro_method );
+   cmb_auto_calc_hydro_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cmb_auto_calc_hydro_method->setEnabled(true);
+   cmb_auto_calc_hydro_method->setMaxVisibleItems( 1 );
+
+   cmb_auto_calc_hydro_method->addItem( us_tr( "SMI or ZENO if overlaps present (legacy)" ), AUTO_CALC_HYDRO_SMI );
+   cmb_auto_calc_hydro_method->addItem( us_tr( "ZENO" ),                                     AUTO_CALC_HYDRO_ZENO );
+   cmb_auto_calc_hydro_method->addItem( us_tr( "GRPY" ),                                     AUTO_CALC_HYDRO_GRPY );
+
+   {
+      int index = cmb_auto_calc_hydro_method->findData( (int) (*misc).auto_calc_hydro_method );
+      if ( index != -1 ) {
+         cmb_auto_calc_hydro_method->setCurrentIndex( index );
+      }
+   }
+
+   connect( cmb_auto_calc_hydro_method, SIGNAL( currentIndexChanged( QString ) ), SLOT( update_auto_calc_hydro_method() ) );
+
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, hdrFontSize));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -691,6 +720,11 @@ void US_Hydrodyn_Misc::setupGUI()
          leftside->addLayout( hbl, j, 0, 1, 2 );
       }
       j++;
+
+      leftside->addWidget( lbl_auto_calc_hydro_method, j, 0 );
+      leftside->addWidget( cmb_auto_calc_hydro_method, j, 1 );
+      j++;
+      
 
 #if !defined( USE_RIGHTSIDE )
       leftside->addWidget(pb_help, j, 0);
@@ -977,6 +1011,13 @@ void US_Hydrodyn_Misc::update_avg_volume(double val)
 void US_Hydrodyn_Misc::update_avg_vbar(double val)
 {
    (*misc).avg_vbar = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::update_auto_calc_hydro_method() {
+   int val = cmb_auto_calc_hydro_method->currentData().toInt();
+   qDebug() << "US_Hydrodyn_Misc::update_auto_calc_hydro_method() " << val;
+   (*misc).auto_calc_hydro_method = (CALC_HYDRO_METHOD) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

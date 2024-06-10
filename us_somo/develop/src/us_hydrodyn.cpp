@@ -507,6 +507,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_no_model_selected = false;
    last_bead_model = "";
 
+   misc.auto_calc_hydro_method = AUTO_CALC_HYDRO_ZENO;
+
    SS_setup();
 
    // no_rr = false;
@@ -5499,12 +5501,23 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      calc_hydro();
-   }
-   else
-   {
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
+   } else {
       play_sounds(1);
    }
 

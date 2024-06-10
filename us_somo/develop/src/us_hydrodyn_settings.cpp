@@ -1711,6 +1711,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "asa.vvv_grid_dR" ] = QString( "%1" ).arg( asa.vvv_grid_dR );
       parameters[ "misc.export_msroll" ] = QString( "%1" ).arg( misc.export_msroll );
       parameters[ "misc.parallel_grpy" ] = QString( "%1" ).arg( misc.parallel_grpy );
+      parameters[ "misc.auto_calc_hydro_method" ] = QString( "%1" ).arg( (int) misc.auto_calc_hydro_method );
 
       parameters[ "saxs_options.qstart" ] = QString( "%1" ).arg( saxs_options.qstart );
       parameters[ "saxs_options.qend" ] = QString( "%1" ).arg( saxs_options.qend );
@@ -2174,7 +2175,6 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_c" ) ) hydro.zeno_surface_thickness_from_rg_c = parameters[ "hydro.zeno_surface_thickness_from_rg_c" ].toDouble();
    if ( parameters.count( "misc.hydro_supc" ) ) misc.hydro_supc = parameters[ "misc.hydro_supc" ] == "1";
    if ( parameters.count( "misc.hydro_zeno" ) ) misc.hydro_zeno = parameters[ "misc.hydro_zeno" ] == "1";
-   if ( parameters.count( "misc.parallel_grpy" ) ) misc.hydro_zeno = parameters[ "misc.parallel_grpy" ] == "1";
    if ( parameters.count( "batch.saxs_search" ) ) batch.saxs_search = parameters[ "batch.saxs_search" ] == "1";
    if ( parameters.count( "batch.zeno" ) ) batch.zeno = parameters[ "batch.zeno" ] == "1";
 
@@ -2217,6 +2217,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "asa.vvv_grid_dR" ) ) asa.vvv_grid_dR = parameters[ "asa.vvv_grid_dR" ].toFloat();
    if ( parameters.count( "misc.export_msroll" ) ) misc.export_msroll = parameters[ "misc.export_msroll" ] == "1";
    if ( parameters.count( "misc.parallel_grpy" ) ) misc.parallel_grpy = parameters[ "misc.parallel_grpy" ] == "1";
+   if ( parameters.count( "misc.auto_calc_hydro_method" ) ) misc.auto_calc_hydro_method = (CALC_HYDRO_METHOD) parameters[ "misc.auto_calc_hydro_method" ].toInt();
 
    if ( parameters.count( "saxs_options.qstart" ) ) saxs_options.qstart = parameters[ "saxs_options.qstart" ].toDouble();
    if ( parameters.count( "saxs_options.qend" ) ) saxs_options.qend = parameters[ "saxs_options.qend" ].toDouble();
@@ -3206,7 +3207,6 @@ void US_Hydrodyn::hard_coded_defaults()
 
    misc.hydro_supc                                          = true;
    misc.hydro_zeno                                          = false;
-   misc.parallel_grpy                                       = false;
 
    rotamer_changed                                          = true;  // force on-demand loading of rotamer file
 
@@ -3259,6 +3259,7 @@ void US_Hydrodyn::hard_coded_defaults()
 
    misc.export_msroll                                       = false;
    misc.parallel_grpy                                       = false;
+   misc.auto_calc_hydro_method                              = AUTO_CALC_HYDRO_ZENO;
 
    saxs_options.cs_qRgmax                                   = 1e0;
    saxs_options.cs_qstart                                   = saxs_options.qstart * saxs_options.qstart;
