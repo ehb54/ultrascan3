@@ -259,7 +259,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_vdw_grpy_threshold_percent );
    connect(cnt_vdw_grpy_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_vdw_grpy_threshold_percent(double)));
 
-   lbl_hydrate_probe_radius = new QLabel(us_tr(" Hydrate ASA Probe Radius [" + UNICODE_ANGSTROM_QS + "]: "), this);
+   lbl_hydrate_probe_radius = new QLabel(us_tr(" vdW Hydrate ASA Probe Radius [" + UNICODE_ANGSTROM_QS + "]: "), this);
    lbl_hydrate_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrate_probe_radius->setMinimumHeight(minHeight1);
    lbl_hydrate_probe_radius->setPalette( PALET_LABEL );
@@ -278,7 +278,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_hydrate_probe_radius );
    connect(cnt_hydrate_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_hydrate_probe_radius(double)));
 
-   lbl_hydrate_threshold = new QLabel(us_tr(" Hydrate ASA Threshold [" + UNICODE_ANGSTROM_QS + UNICODE_SUPER_2 + "]: "), this);
+   lbl_hydrate_threshold = new QLabel(us_tr(" vdW Hydrate ASA Threshold [" + UNICODE_ANGSTROM_QS + UNICODE_SUPER_2 + "]: "), this);
    lbl_hydrate_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrate_threshold->setMinimumHeight(minHeight1);
    lbl_hydrate_threshold->setPalette( PALET_LABEL );
