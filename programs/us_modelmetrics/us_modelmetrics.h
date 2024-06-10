@@ -1,3 +1,4 @@
+//! \file us_modelmetrics.h
 #ifndef US_MODELMETRICS_H
 #define US_MODELMETRICS_H
 
@@ -24,197 +25,318 @@
 #include "us_license_t.h"
 #include "us_license.h"
 
+//! \class HydroParm
+//! \brief Class representing a hydrodynamic parameter with concentration.
 class HydroParm
 {
-	public:
-   double parm, conc;
+public:
+    double parm;  //!< Parameter value
+    double conc;  //!< Concentration value
 
-   HydroParm() {};
-   ~HydroParm() {};
-   bool operator==(const HydroParm& objIn)
-   {
-      return ( parm == objIn.parm );
-   }
-   bool operator!=(const HydroParm& objIn)
-   {
-      return ( parm != objIn.parm );
-   }
-   bool operator < (const HydroParm& objIn) const
-   {
-      if ( parm < objIn.parm ) 
-	      return (true);
-      else
-	      return (false);
-   }
+    //! \brief Default constructor
+    HydroParm() {};
+
+    //! \brief Destructor
+    ~HydroParm() {};
+
+    //! \brief Equality operator
+    //! \param objIn Another HydroParm object to compare
+    //! \return True if the parameter values are equal
+    bool operator==(const HydroParm& objIn)
+    {
+        return (parm == objIn.parm);
+    }
+
+    //! \brief Inequality operator
+    //! \param objIn Another HydroParm object to compare
+    //! \return True if the parameter values are not equal
+    bool operator!=(const HydroParm& objIn)
+    {
+        return (parm != objIn.parm);
+    }
+
+    //! \brief Less-than operator
+    //! \param objIn Another HydroParm object to compare
+    //! \return True if the parameter value is less than the other
+    bool operator < (const HydroParm& objIn) const
+    {
+        return (parm < objIn.parm);
+    }
 };
 
+//! \struct reportItem
+//! \brief Structure representing a report item with various metrics and data.
 struct reportItem
 {
-   QString investigator, runID, triple, analysis, iterations, edit, parameter;
-   QString sigma, d[3], x[3], span, minimum, maximum, mean, mode;
-   QString median, skew, kurtosis, span_label, filename, integral, totalc, name, csv;
-   QPixmap pixmap;
+    QString investigator;  //!< Investigator name
+    QString runID;         //!< Run ID
+    QString triple;        //!< Triple
+    QString analysis;      //!< Analysis type
+    QString iterations;    //!< Number of iterations
+    QString edit;          //!< Edit type
+    QString parameter;     //!< Parameter
+    QString sigma;         //!< Sigma value
+    QString d[3];          //!< Array of D values
+    QString x[3];          //!< Array of X values
+    QString span;          //!< Span value
+    QString minimum;       //!< Minimum value
+    QString maximum;       //!< Maximum value
+    QString mean;          //!< Mean value
+    QString mode;          //!< Mode value
+    QString median;        //!< Median value
+    QString skew;          //!< Skew value
+    QString kurtosis;      //!< Kurtosis value
+    QString span_label;    //!< Span label
+    QString filename;      //!< Filename
+    QString integral;      //!< Integral value
+    QString totalc;        //!< Total concentration
+    QString name;          //!< Name
+    QString csv;           //!< CSV data
+    QPixmap pixmap;        //!< Pixmap image
 };
 
 //! \brief Less-than function for sorting S_Solute values
-bool distro_lessthan( const S_Solute&, const S_Solute& );
+bool distro_lessthan(const S_Solute&, const S_Solute&);
 
-class US_ModelMetrics : public US_Widgets 
+//! \class US_ModelMetrics
+//! \brief Class for managing and analyzing model metrics.
+class US_ModelMetrics : public US_Widgets
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	public:
-      US_ModelMetrics();
-      enum hydro_parms { HPs, HPd, HPm, HPk, HPf, HPv, HPr };
+    public:
+        //! \brief Constructor for US_ModelMetrics
+        US_ModelMetrics();
 
+        //! \enum hydro_parms
+        //! \brief Enumeration for hydrodynamic parameters
+        enum hydro_parms { HPs, HPd, HPm, HPk, HPf, HPv, HPr };
 
-	private:
+    private:
+        reportItem         report_entry; //!< Report entry
+        QString            report;       //!< Report string
+        QString            xtitle;       //!< X-axis title
+        QTextStream        report_ts;    //!< Report text stream
+        QFile              report_file;  //!< Report file
+        int                dbg_level;    //!< Debug level
+        int                mc_iters;     //!< Monte Carlo iterations
+        int                fixed;        //!< Fixed parameter
+        int                calc_val;     //!< Calculated value
+        int                model_count;  //!< Model count
+        bool               monte_carlo;  //!< Monte Carlo flag
+        bool               saved;        //!< Saved flag
+        bool               xautoscale;   //!< X-axis autoscale flag
+        double             plotxmin;     //!< X-axis minimum plot value
+        double             plotxmax;     //!< X-axis maximum plot value
+        double*            xx;           //!< X data array
+        double*            yy;           //!< Y data array
+        double             sigma;        //!< Sigma value
+        double             tc;           //!< Total concentration
+        double             cmin;         //!< Minimum concentration
+        double             cmax;         //!< Maximum concentration
+        double             smin;         //!< Minimum S value
+        double             smax;         //!< Maximum S value
+        double             kmin;         //!< Minimum K value
+        double             kmax;         //!< Maximum K value
+        double             wmin;         //!< Minimum W value
+        double             wmax;         //!< Maximum W value
+        double             vmin;         //!< Minimum V value
+        double             vmax;         //!< Maximum V value
+        double             dmin;         //!< Minimum D value
+        double             dmax;         //!< Maximum D value
+        double             fmin;         //!< Minimum F value
+        double             fmax;         //!< Maximum F value
+        double             xmin;         //!< Minimum X value
+        double             xmax;         //!< Maximum X value
+        double             rmin;         //!< Minimum R value
+        double             rmax;         //!< Maximum R value
+        double             dval1;        //!< D value 1
+        double             xval1;        //!< X value 1
+        double             dval2;        //!< D value 2
+        double             xval2;        //!< X value 2
+        double             dval3;        //!< D value 3
+        double             xval3;        //!< X value 3
+        double             total_conc;   //!< Total concentration
+        QList< HydroParm > hp_distro;    //!< Hydrodynamic parameter distribution
+        QList< HydroParm > orig_list;    //!< Original list
+        US_Help            showHelp;     //!< Help display
+        US_Editor*         te;           //!< Text editor
+        US_Model*          model;        //!< Model object
+        US_PlotPicker*     pick;         //!< Plot picker
+        QPushButton*       pb_load_model; //!< Load model button
+        QPushButton*       pb_prefilter; //!< Prefilter button
+        QPushButton*       pb_report;    //!< Report button
+        QPushButton*       pb_write;     //!< Write button
+        QLabel*            lbl_dval1;    //!< D value 1 label
+        QLabel*            lbl_dval2;    //!< D value 2 label
+        QLabel*            lbl_dval3;    //!< D value 3 label
+        QLabel*            lbl_span;     //!< Span label
+        QLabel*            lbl_minimum;  //!< Minimum value label
+        QLabel*            lbl_maximum;  //!< Maximum value label
+        QLabel*            lbl_mean;     //!< Mean value label
+        QLabel*            lbl_mode;     //!< Mode value label
+        QLabel*            lbl_median;   //!< Median value label
+        QLabel*            lbl_kurtosis; //!< Kurtosis value label
+        QLabel*            lbl_skew;     //!< Skew value label
+        QLabel*            lbl_sigma;    //!< Sigma value label
+        QLabel*            lbl_integral; //!< Integral value label
+        QLabel*            lbl_name;     //!< Name label
+        QLabel*            lbl_plotxmin; //!< X-axis minimum plot value label
+        QLabel*            lbl_plotxmax; //!< X-axis maximum plot value label
+        QwtCounter*        ct_dval1;     //!< D value 1 counter
+        QwtCounter*        ct_dval2;     //!< D value 2 counter
+        QwtCounter*        ct_dval3;     //!< D value 3 counter
+        QwtCounter*        ct_sigma;     //!< Sigma counter
+        QButtonGroup*      bg_hp;        //!< Hydrodynamic parameter button group
+        QButtonGroup*      bg_plotlimits; //!< Plot limits button group
+        QRadioButton*      rb_s;         //!< S value radio button
+        QRadioButton*      rb_d;         //!< D value radio button
+        QRadioButton*      rb_f;         //!< F value radio button
+        QRadioButton*      rb_k;         //!< K value radio button
+        QRadioButton*      rb_m;         //!< M value radio button
+        QRadioButton*      rb_v;         //!< V value radio button
+        QRadioButton*      rb_r;         //!< R value radio button
+        QStringList        pfilts;       //!< Prefilter list
+        QString            mfilter;      //!< Model filter
+        QString            run_name;     //!< Run name
+        QString            method;       //!< Method
+        QString            analysis_name; //!< Analysis name
+        QString            editGUID;     //!< Edit GUID
+        QLineEdit*         le_model;     //!< Model line edit
+        QLineEdit*         le_investigator; //!< Investigator line edit
+        QLineEdit*         le_prefilter; //!< Prefilter line edit
+        QLineEdit*         le_experiment; //!< Experiment line edit
+        QLineEdit*         le_dval1;     //!< D value 1 line edit
+        QLineEdit*         le_dval2;     //!< D value 2 line edit
+        QLineEdit*         le_dval3;     //!< D value 3 line edit
+        QLineEdit*         le_span;      //!< Span line edit
+        QLineEdit*         le_minimum;   //!< Minimum value line edit
+        QLineEdit*         le_maximum;   //!< Maximum value line edit
+        QLineEdit*         le_mean;      //!< Mean value line edit
+        QLineEdit*         le_mode;      //!< Mode value line edit
+        QLineEdit*         le_median;    //!< Median value line edit
+        QLineEdit*         le_kurtosis;  //!< Kurtosis value line edit
+        QLineEdit*         le_skew;      //!< Skew value line edit
+        QLineEdit*         le_integral;  //!< Integral value line edit
+        QLineEdit*         le_name;      //!< Name line edit
+        QLineEdit*         le_plotxmin;  //!< X-axis minimum plot value line edit
+        QLineEdit*         le_plotxmax;  //!< X-axis maximum plot value line edit
+        QwtPlot*           data_plot;    //!< Data plot
+        QList< S_Solute >  sk_distro;    //!< Skew distribution
+        QList< S_Solute >  xy_distro;    //!< XY distribution
+        QList< S_Solute >* sdistro;      //!< Solute distribution
 
-      reportItem         report_entry;
-      QString            report, xtitle;
-      QTextStream        report_ts;
-      QFile              report_file;
-      int                dbg_level;
-      int                mc_iters;
-      int                fixed;
-      int                calc_val;
-      int                model_count;
-      bool               monte_carlo;
-      bool               saved;
-		bool					 xautoscale;
-		double 				 plotxmin;
-		double 				 plotxmax;
-      double*            xx;
-      double*            yy;
-      double             sigma;
-      double             tc;
-      double             cmin;
-      double             cmax;
-      double             smin;
-      double             smax;
-      double             kmin;
-      double             kmax;
-      double             wmin;
-      double             wmax;
-      double             vmin;
-      double             vmax;
-      double             dmin;
-      double             dmax;
-      double             fmin;
-      double             fmax;
-      double             xmin;
-      double             xmax;
-      double             rmin;
-      double             rmax;
-      double             dval1, xval1;
-      double             dval2, xval2;
-      double             dval3, xval3;
-      double             total_conc;
-      QList <HydroParm>  hp_distro, orig_list;
-      US_Help            showHelp;
-      US_Editor*         te;
-      US_Model*          model;
-		US_PlotPicker*     pick;
-      QPushButton*       pb_load_model;
-      QPushButton*       pb_prefilter;
-      QPushButton*       pb_report;
-      QPushButton*       pb_write;
-      QLabel*            lbl_dval1;
-      QLabel*            lbl_dval2;
-      QLabel*            lbl_dval3;
-      QLabel*            lbl_span;
-      QLabel*            lbl_minimum;
-      QLabel*            lbl_maximum;
-      QLabel*            lbl_mean;
-      QLabel*            lbl_mode;
-      QLabel*            lbl_median;
-      QLabel*            lbl_kurtosis;
-      QLabel*            lbl_skew;
-      QLabel*            lbl_sigma;
-      QLabel*            lbl_integral;
-      QLabel*            lbl_name;
-      QLabel*            lbl_plotxmin;
-      QLabel*            lbl_plotxmax;
+        US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
-      QwtCounter*        ct_dval1;
-      QwtCounter*        ct_dval2;
-      QwtCounter*        ct_dval3;
-      QwtCounter*        ct_sigma;
-      QButtonGroup*      bg_hp;
-      QButtonGroup*      bg_plotlimits;
-      QRadioButton*      rb_s;
-      QRadioButton*      rb_d;
-      QRadioButton*      rb_f;
-      QRadioButton*      rb_k;
-      QRadioButton*      rb_m;
-      QRadioButton*      rb_v;
-      QRadioButton*      rb_r;
-      QStringList        pfilts;
-      QString            mfilter;
-      QString            run_name;
-      QString            method;
-      QString            analysis_name;
-      QString            editGUID;
-      QLineEdit*         le_model;
-      QLineEdit*         le_investigator;
-      QLineEdit*         le_prefilter;
-      QLineEdit*         le_experiment;
-      QLineEdit*         le_dval1;
-      QLineEdit*         le_dval2;
-      QLineEdit*         le_dval3;
-      QLineEdit*         le_span;
-      QLineEdit*         le_minimum;
-      QLineEdit*         le_maximum;
-      QLineEdit*         le_mean;
-      QLineEdit*         le_mode;
-      QLineEdit*         le_median;
-      QLineEdit*         le_kurtosis;
-      QLineEdit*         le_skew;
-      QLineEdit*         le_integral;
-      QLineEdit*         le_name;
-      QLineEdit*         le_plotxmin;
-      QLineEdit*         le_plotxmax;
+    private slots:
+        //! \brief Create a table row with 5 columns
+        //! \param row Row number
+        //! \param col1 Column 1 value
+        //! \param col2 Column 2 value
+        //! \param col3 Column 3 value
+        //! \param col4 Column 4 value
+        //! \return Formatted table row string
+        QString table_row(const int row, const QString &col1, const QString &col2, const QString &col3, const QString &col4) const;
 
-      QwtPlot*           data_plot;
+        //! \brief Create a table row with 6 columns
+        //! \param row Row number
+        //! \param col1 Column 1 value
+        //! \param col2 Column 2 value
+        //! \param col3 Column 3 value
+        //! \param col4 Column 4 value
+        //! \param col5 Column 5 value
+        //! \return Formatted table row string
+        QString table_row(const int row, const QString &col1, const QString &col2, const QString &col3, const QString &col4, const QString &col5, const QString &col6) const;
 
-      QList< S_Solute >  sk_distro;
-      QList< S_Solute >  xy_distro;
-      QList< S_Solute >* sdistro;
+        //! \brief Indent a string
+        //! \param spaces Number of spaces to indent
+        //! \return Indented string
+        QString indent(const int spaces) const;
 
+        //! \brief Select investigator
+        void sel_investigator(void);
 
-      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+        //! \brief Add report item
+        void addReportItem(void);
 
-private slots:
+        //! \brief Update disk/db selection
+        //! \param disk Flag indicating disk selection
+        void update_disk_db(bool disk);
 
-   QString table_row         ( const int, const QString &, const QString &,
-                               const QString &, const QString &) const;
-   QString table_row         ( const int, const QString &, const QString &,
-                               const QString &, const QString &,
-                               const QString &, const QString &) const;
-   QString indent            ( const int ) const;
-	void sel_investigator     ( void );
-	void addReportItem        ( void );
-	void update_disk_db       ( bool );
-	void load_model           ( void );
-	void select_prefilter     ( void );
-	void reset                ( void );
-	void calc                 ( void );
-	void plot_data            ( void );
-	void update_sigma         ( void );
-	void update_name          ( const QString & );
-	void select_hp            ( int  );
-	void write_report         ( void );
-   void sort_distro          ( QList< S_Solute >&, bool );
-	bool equivalent           ( double, double, double );
-	void set_dval1            ( double );
-	void set_dval2            ( double );
-	void set_dval3            ( double );
-	void set_plotxmin         ( const QString & );
-	void set_plotxmax         ( const QString & );
-   void set_dval_labels      ( bool update=false );
-	void set_sigma            ( double );
-	void help                 ( void )
-      { showHelp.show_help( "manual/us_modelmetrics.html" ); };
+        //! \brief Load model
+        void load_model(void);
+
+        //! \brief Select prefilter
+        void select_prefilter(void);
+
+        //! \brief Reset the state
+        void reset(void);
+
+        //! \brief Calculate metrics
+        void calc(void);
+
+        //! \brief Plot data
+        void plot_data(void);
+
+        //! \brief Update sigma value
+        void update_sigma(void);
+
+        //! \brief Update name
+        //! \param name New name
+        void update_name(const QString &name);
+
+        //! \brief Select hydrodynamic parameter
+        //! \param index Parameter index
+        void select_hp(int index);
+
+        //! \brief Write report
+        void write_report(void);
+
+        //! \brief Sort distribution
+        //! \param distro Distribution list
+        //! \param ascend Flag indicating ascending order
+        void sort_distro(QList< S_Solute > &distro, bool ascend);
+
+        //! \brief Check if two values are equivalent
+        //! \param val1 First value
+        //! \param val2 Second value
+        //! \param tol Tolerance
+        //! \return True if values are equivalent within tolerance
+        bool equivalent(double val1, double val2, double tol);
+
+        //! \brief Set D value 1
+        //! \param value New value
+        void set_dval1(double value);
+
+        //! \brief Set D value 2
+        //! \param value New value
+        void set_dval2(double value);
+
+        //! \brief Set D value 3
+        //! \param value New value
+        void set_dval3(double value);
+
+        //! \brief Set X-axis minimum plot value
+        //! \param value New value
+        void set_plotxmin(const QString &value);
+
+        //! \brief Set X-axis maximum plot value
+        //! \param value New value
+        void set_plotxmax(const QString &value);
+
+        //! \brief Set D value labels
+        //! \param update Flag indicating if labels should be updated
+        void set_dval_labels(bool update = false);
+
+        //! \brief Set sigma value
+        //! \param value New value
+        void set_sigma(double value);
+
+        //! \brief Show help
+        void help(void)
+        {
+            showHelp.show_help("manual/us_modelmetrics.html");
+        };
 };
-#endif
 
+#endif

@@ -1082,6 +1082,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    expType_old = cb_exptype ->currentText();
 
    qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+
 }
 
 void US_ExperGuiRotor::init_grevs( void )
@@ -1331,7 +1332,7 @@ void US_ExperGuiRotor::addSmetoList( void )
 void US_ExperGuiRotor::removeSmefromList( void )
 {
   te_smes_to_assign->setFocus();
-  QTextCursor storeCursorPos = te_apprs_to_assign->textCursor();
+  QTextCursor storeCursorPos = te_smes_to_assign->textCursor();
   te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
   te_smes_to_assign->moveCursor(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
   te_smes_to_assign->moveCursor(QTextCursor::End, QTextCursor::KeepAnchor);
@@ -1507,6 +1508,7 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
      {
        if (exptype == "Buoyancy" )
 	 {
+	   qDebug() << "ABDE set in Rotor 1st time!";
 	   mainw->set_abde_mode_aprofile();
 	   if ( expType_changed )
 	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
@@ -2452,7 +2454,11 @@ void US_ExperGuiSolutions::savePanel()
 	   else
 	     {
 	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): -- " << ii << rpSolut->chsols.size();
-	       ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       if ( ii < rpSolut->chsols.size() )
+		 ch_comment             = rpSolut->chsols[ ii ].ch_comment;
+	       else
+		 ch_comment      = QString("");                                           //are comments saved this way???
+	       qDebug() << "sol save 2aBd, ii, rpSolut->chsols.size(): after reding comment-- ";
 	       if ( solution_comment_init[ ii ] )
 		 commentStrings( solution, ch_comment, cs, ii );
 	       qDebug() << "sol save 2aBd_1: went through 1st time NON-zero";
@@ -2521,7 +2527,6 @@ DbgLv(1) << "EGSo: svP:  sids " << sids;
      cb_solution->disconnect();
       
    }
- 
 }
 
 // Get a specific panel value
@@ -2985,6 +2990,7 @@ DbgLv(1) << "EGOp:st: nochan nuchan done" << nochan << nuchan << is_done;
 void US_ExperGuiRanges::initPanel()
 {
    rpRange             = &(mainw->currProto.rpRange);
+   rpSolut             = &(mainw->currProto.rpSolut);
 
 DbgLv(1) << "EGRn:inP:  call rbS";
    rebuild_Ranges();
@@ -3014,7 +3020,9 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setValue( locrads[ ii ] );
       cc_hrads[ ii ]->setValue( hicrads[ ii ] );
 
+      //abde
       cc_buff_sp_ck[ ii ]->setChecked( abde_buff[ ii ] );
+      qDebug() << "Ranges::abde_buffes for chann " << ii << " is -- " << abde_buff[ ii ]; 
 
       cc_labls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );
@@ -3380,20 +3388,29 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
        for ( int ii = 0; ii < nrnchan; ii++ )
 	 {
 	   //check if channel MWL
-	   int kswavl          = swvlens[ ii ].count();
-
-	   if( kswavl > 1 )
+	   int kswavl       = swvlens[ ii ].count();
+	   QString chanName = rchans[ ii ];;
+	   QStringList msg_to_user;     
+	   
+	   if( kswavl > 1 && iStwoOrMoreAnalytesSpectra_forChannel( chanName, msg_to_user, "INIT", -1 ) ) 
 	     {
 	       genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
 	       cc_buff_sp[ ii ]-> setVisible( true );
 	       //cc_buff_sp_ck[ ii ]->setChecked( false );
 
 	       qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+
+	       //define channel as MWL-deconv.
+	       abde_mwl_deconv[ ii ] = true;
 	     }
 	   else
 	     {
 	       genL->removeWidget( cc_buff_sp[ ii ] );
 	       cc_buff_sp[ ii ]-> setVisible( false );
+
+	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ii ]
+	       abde_buff[ ii ]       = false;
+	       abde_mwl_deconv[ ii ] = false;
 	     }
 	 }
      }
@@ -3415,6 +3432,10 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 
 	   genL->removeWidget( cc_buff_sp[ ii ] );
 	   cc_buff_sp[ ii ]-> setVisible( false );
+
+	   //also, reset abde_buff[ ii ]
+	   abde_buff[ ii ]       = false;
+	   abde_mwl_deconv[ ii ] = false;
 	 }
      }
 }
@@ -3433,7 +3454,8 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       rpRange->chrngs[ ii ].hi_rad  = hicrads[ ii ];
 
       //abde
-      rpRange->chrngs[ ii ].abde_buffer_spectrum = abde_buff[ ii ];
+      rpRange->chrngs[ ii ].abde_buffer_spectrum   = abde_buff[ ii ];
+      rpRange->chrngs[ ii ].abde_mwl_deconvolution = abde_mwl_deconv[ ii ];
 
       rpRange->chrngs[ ii ].wvlens.clear();
 
@@ -3784,25 +3806,58 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        qDebug() << "Submit::init: ABDE_MODE ";
        QStringList msg_to_user;
        if ( !extinctionProfilesExist( msg_to_user ) )
+       	 {
+       	   pb_submit->setEnabled( false );
+       	   pb_saverp->setEnabled( false );
+
+       	   msg_to_user.removeDuplicates();
+        
+       	   QMessageBox::critical( this,
+       				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+       				  msg_to_user.join("\n") +
+       				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+       				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+       				     "\n\"Database:Manage Buffer Data\"\n\n"
+       				     "Saving protocol or run submission to the Optima are not possible "
+       				     "until this problem is resolved."));
+       	 }
+
+       //Check for the correct settings in AProfile for 'Use Reference#'
+       if ( !useReferenceNumbersSet( msg_to_user ) )
 	 {
 	   pb_submit->setEnabled( false );
 	   pb_saverp->setEnabled( false );
-
+	   
 	   msg_to_user.removeDuplicates();
 	   
 	   QMessageBox::critical( this,
-				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+				  tr( "ATTENTION: Reference Channels NOT set Properly (ABDE)" ),
 				  msg_to_user.join("\n") +
-				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
-				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
-				     "\n\"Database:Manage Buffer Data\"\n\n"
+				  tr("\n\nPlease define references for all sample channels "
+				     "in the tab 8. AProfile: ABDE Settings. \n\n"
+				     "Saving protocol or run submission to the Optima are not possible "
+				     "until this problem is resolved."));
+	 }
+
+       //Check for Matching Wvls in Refs. && Samples:
+       if ( !samplesReferencesWvlsMatch( msg_to_user ) )
+	 {
+	   pb_submit->setEnabled( false );
+	   pb_saverp->setEnabled( false );
+	   
+	   msg_to_user.removeDuplicates();
+
+	   QMessageBox::critical( this,
+				  tr( "ATTENTION: Ranges Settings for Refs./Samples are Incorrect (ABDE)" ),
+				  msg_to_user.join("\n") +
+				  tr("\n\nPlease revise wavelengths settings "
+				     "in the tab 7:Ranges to correct the above error(s). \n\n"
 				     "Saving protocol or run submission to the Optima are not possible "
 				     "until this problem is resolved."));
 	 }
      }
 
-   
-   
+     
    //DEBUG
    //Opt system check, what cells will be uvvis and/or interference
    QStringList oprof   = sibLValue( "optical", "profiles" );
@@ -3836,6 +3891,204 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    
 }
 
+bool US_ExperGuiUpload::samplesReferencesWvlsMatch( QStringList& msg_to_user )
+{
+  bool all_matches = true;
+  msg_to_user. clear();
+
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+
+  qDebug() << "in samplesReferencesWvlsMatch(): chnns_names.size(), ref_chnns.size(), ref_use_chnns.size(), rpRange->nranges -- "
+	   << chnns_names.size() << ref_chnns.size() << ref_use_chnns.size() << rpRange->nranges;
+
+  //Create a QMap< QString(Reference), QStringList(Samples)>, to match Sample channs to each Reference chan.
+  QMap< QString, QStringList > ref_to_samples;
+  for (int rn=0; rn<ref_chnns.size(); ++rn) //over refs
+    {
+      if ( ref_chnns[rn] > 0 )
+	{
+	  QString ref_chnn_name  = chnns_names[ rn ];
+	  int      ref_number    = ref_chnns[ rn ];
+	  QStringList samples_for_ref;  
+	  for (int rnu=0; rnu<ref_use_chnns.size(); ++rnu) //over samples
+	    {
+	      if ( ref_use_chnns[rnu] == ref_number )
+		{
+		  QString sample_chnn_name  = chnns_names[ rnu ];
+		  samples_for_ref << sample_chnn_name;
+		}
+	    }
+	  //put into QMap: ref-to-samples:
+	  ref_to_samples[ ref_chnn_name ] = samples_for_ref;
+	}
+    }
+
+  //iterate over ref_to_samples:
+  QMap<QString, QStringList>::iterator rts;
+  for ( rts = ref_to_samples.begin(); rts != ref_to_samples.end(); ++rts )
+    {
+      QString ref_chn_name         = rts.key();
+      QStringList sample_chn_names = rts.value();
+
+      qDebug() << "in samplesReferencesWvlsMatch(): ref_chn_name, sample_chn_names -- "
+	       << ref_chn_name << sample_chn_names;
+      
+      for ( const auto& sn : sample_chn_names )
+	if ( !matchRefSampleWvls( ref_chn_name, sn, msg_to_user ) )
+	  all_matches = false;
+    }
+
+  return all_matches;
+}
+
+bool US_ExperGuiUpload::matchRefSampleWvls( QString ref_chn_name, QString sn, QStringList&msg_to_user )
+{
+  bool matchedOK = true;
+  QList< double > all_wvls_ref, all_wvls_sample;
+  int    nwavl_ref, nwavl_sample;
+  QString msg;
+  
+  //
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel = rpRange->chrngs[ ii ].channel;
+
+      QString chan_red            = channel.split(",")[0].replace(" / ","").trimmed();
+      QString ref_chn_name_red    = ref_chn_name.split(":")[0].trimmed();
+      QString sample_chn_name_red = sn.split(":")[0].trimmed();
+
+      qDebug() << "in matchRefSampleWvls(): over ranges: channel name, ref_chn_name, sample_chn_name  -- "
+	       << channel << ref_chn_name << sn;
+      qDebug() << "in matchRefSampleWvls(): over ranges: channel name, ref_chn_name_red, sample_chn_name_red -- "
+	       << channel << ref_chn_name_red  << sample_chn_name_red;
+      
+      if ( chan_red == ref_chn_name_red )
+	{
+	  all_wvls_ref = rpRange->chrngs[ ii ].wvlens;
+	  nwavl_ref    = all_wvls_ref.count();
+	}
+
+      if ( chan_red == sample_chn_name_red )
+	{
+	  all_wvls_sample = rpRange->chrngs[ ii ].wvlens;
+	  nwavl_sample    = all_wvls_sample.count();
+	}
+    }
+
+  qDebug() << "in matchRefSampleWvls(): REF_chn_name, all_wvls_ref, nwavl_ref -- "
+	   << ref_chn_name << all_wvls_ref << nwavl_ref;
+  qDebug() << "in matchRefSampleWvls(): SAMPLE_chn_name, all_wvls_sample, nwavl_sample -- "
+	   << sn << all_wvls_sample << nwavl_sample;
+
+  
+  //1: # wvls NOT equal:
+  if ( nwavl_ref < nwavl_sample )
+    {
+      msg += "Less wavelengths than in a SAMPLE -- ";
+      matchedOK = false;
+    }
+  //2: mismatched wvls:
+  else
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls_sample.size(); ++i)
+	{
+	  double s_wvl = all_wvls_sample[i];
+	  wvl_present[ s_wvl ] = false;
+	  for (int j=0; j<all_wvls_ref.size(); j++)
+	    {
+	      double ref_wvl = all_wvls_ref[j];
+	      if ( s_wvl == ref_wvl )
+		{
+		  wvl_present[ s_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      matchedOK = false;
+	      msg += "Some wavelengths in REF missing required by SAMPLE -- ; ";
+	      break; 
+	    }
+	}
+    }
+ 
+  //messages
+  if ( !matchedOK )
+    msg_to_user << QString(tr("REF channel: %1: Ranges: %2%3"))
+      .arg( ref_chn_name )
+      .arg( msg )
+      .arg( sn );
+  
+  return matchedOK;
+}
+
+bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
+{
+  bool all_refs_set = true;
+  msg_to_user. clear();
+
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+  
+  qDebug() << "in useReferenceNumbersSet(): chnns_names.size(), ref_chnns.size(), ref_use_chnns.size() -- "
+	   << chnns_names.size() << ref_chnns.size() << ref_use_chnns.size();
+
+  int ref_chnn_max = 0;
+  int ref_chnn_min = 1000;
+  for (int rn=0; rn<ref_chnns.size(); ++rn)
+    {
+      if ( ref_chnns[rn] > ref_chnn_max )
+	ref_chnn_max = ref_chnns[rn];
+      if ( ref_chnns[rn] < ref_chnn_min )
+	ref_chnn_min = ref_chnns[rn];
+    }
+  qDebug() << "min, max -- " << ref_chnn_min << ref_chnn_max;
+
+  int ref_use_chhs_number = 0;
+  for (int rn=0; rn<ref_use_chnns.size(); ++rn)
+    {
+      //skip if it's a ref chann
+      if ( ref_chnns[rn] > 0 )
+	continue;
+
+      ++ref_use_chhs_number;
+      
+      if ( ref_use_chnns[rn] < ref_chnn_min ||
+	   ref_use_chnns[rn] > ref_chnn_max ||
+	   ref_use_chnns[rn] == 0 )
+	{
+	  QString chnn_name = chnns_names[ rn ];
+	  msg_to_user << QString(tr("%1: \"Use Reference#\" field is %2"))
+	    .arg( chnn_name )
+	    .arg( "not set, or out of range" );
+
+	  all_refs_set = false;
+	}
+    }
+
+  //if all channs set as ref. than it's incorrect
+  if ( ref_use_chhs_number == 0 )
+    {
+      msg_to_user << QString(tr("All channels are set as \"Reference\"; Please define at least one non-reference channel..."));
+      all_refs_set = false;
+    }
+  
+  return all_refs_set;
+}
+
 bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 {
   bool all_profiles_exist = true;
@@ -3860,12 +4113,13 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
   //over channels
   for ( int ii = 0; ii < rpRange->nranges; ii++ )
     {
-      QString channel = rpRange->chrngs[ ii ].channel;
+      QString channel   = rpRange->chrngs[ ii ].channel;
       QList< double > all_wvls = rpRange->chrngs[ ii ].wvlens;
-      int    nwavl    = all_wvls.count();
-      bool   buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+      int    nwavl      = all_wvls.count();
+      bool   buff_req   = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+      bool   mwl_deconv = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
 
-      if ( nwavl > 1 )
+      if ( nwavl > 1 && mwl_deconv )
 	{
 	  QString sol_id = rpSolut->chsols[ii].sol_id;
 	  US_Solution*   solution = new US_Solution;
@@ -3975,14 +4229,46 @@ bool US_ExperGuiUpload::validExtinctionProfile( QString desc, QList< double > al
       eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
       eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
 
-      msg = "is out of range;";
+      msg = "is out of range; ";
     }
   else //empty ext. profile
     {
       eprofile_ok = false;
-      msg = "does not exist;";
+      msg = "does not exist; ";
+    }
+
+  //check existence of all wavelengths (for non-empty ext.prof.)
+  if ( nwavl_e > 0 )
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls.size(); ++i)
+	{
+	  double p_wvl = all_wvls[i];
+	  wvl_present[ p_wvl ] = false;
+	  for (int j=0; j<ext_prof.size(); j++)
+	    {
+	      double e_wvl = ext_prof[j];
+	      if ( p_wvl == e_wvl )
+		{
+		  wvl_present[ p_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      eprofile_ok = false;
+	      msg += "some wavelengths missing; ";
+	      break; 
+	    }
+	}
     }
   
+  //messages
   if ( !eprofile_ok )
     msg_to_user << QString(tr("%1: Extinction profile %2"))
       .arg( desc )

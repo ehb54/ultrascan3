@@ -20,6 +20,10 @@ gui.makefile = Makefile
 
 ## define all standalone programs as sub dir target dynamically by looking for *.pro files
 PROGRAMS = $$files(programs/*.pro,true)
+
+## remove us_mpi_analysis when building gui
+PROGRAMS -= "programs/us_mpi_analysis/us_mpi_analysis.pro"
+
 for(tmp, PROGRAMS){
 pro_file_name = $$basename(tmp)
 pro_name = $$section(pro_file_name,.pro,0,0 )

@@ -1900,6 +1900,9 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
 	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
+
+	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	 }
      }
    else

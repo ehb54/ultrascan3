@@ -1,3 +1,4 @@
+//! \file us_ddist_combine.h
 #ifndef US_DDIST_COMBO_H
 #define US_DDIST_COMBO_H
 

@@ -1,4 +1,4 @@
-//! \brief us_math.h
+//! \brief us_math2.h
 #ifndef US_MATH_H
 #define US_MATH_H
 

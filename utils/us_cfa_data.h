@@ -1,3 +1,4 @@
+//! \file us_cfa_data.h
 #ifndef US_CFA_DATA_H
 #define US_CFA_DATA_H
 

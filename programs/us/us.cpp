@@ -240,21 +240,26 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ),    this );
-  addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet" ),   velocity );
-  addMenu(  P_GRIDEDIT , tr( "C&ustom 2-D Grid Editor" ),          velocity );
-  addMenu(  P_2DSA     , tr( "&2-D Spectrum Analysis" ),           velocity );
-  addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis" ),
-                                                                   velocity );
-  addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
-  addMenu(  P_DMGAINIT , tr( "Initialize Discrete Model &Genetic Algorithm" ),
-                                                                   velocity );
-  addMenu(  P_SECOND   , tr( "Second &Moment" ),                   velocity );
-  addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );
-  addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );
-  addMenu(  P_FEMSTAT  , tr( "FE Model &Statistics" ),             velocity );
-  addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ), velocity );
-  addMenu(  P_RAMP     , tr( "Speed &Ramp Analysis" ),             velocity );
-  
+  addMenu(  P_FEMA     , tr( "&Finite Element Model Viewer" ),                          velocity );
+  addMenu(  P_2DSA     , tr( "&2-Dimensional Spectrum Analysis (2DSA)" ),               velocity );
+  addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ),                     velocity );
+  addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm (GA)" ),                    velocity );
+  addMenu(  P_DMGAINIT , tr( "Initialize Discrete Model &Genetic Algorithm (DMGA)" ),   velocity );
+  addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis (PCSA)" ),  velocity );
+  addMenu(  P_GRIDEDIT , tr( "C&ustom Grid Editor (CG)" ),              velocity );
+  addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet (vHW)" ),  velocity );
+  addMenu(  P_DCDT     , tr( "&Time Derivative (dC/dt)" ),              velocity );
+  addMenu(  P_SECOND   , tr( "Second &Moment" ),                        velocity );
+  velocity->addSeparator();
+  addMenu(  P_RMSD     , tr( "&Query Model RMSDs" ),                velocity );
+  addMenu(  P_FEMSTAT  , tr( "FE Model &Statistics" ),              velocity );
+  addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ),  velocity );
+  addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), velocity );
+  addMenu(  P_DDCOMB   , tr( "Combine Discrete Distrib&utions"   ), velocity );
+  addMenu(  P_INTCOMB  , tr( "Combine I&ntegral Distributions"   ), velocity );
+  addMenu(  P_GLOMODL  , tr( "Create Glo&bal Model"              ), velocity );
+  addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), velocity );
+
 #ifdef EQUI_MENU
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
   addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
@@ -268,34 +273,30 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   QMenu* multiwave   = new QMenu( tr( "&Multiwavelength" ),   this );
-  QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
-  addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
-  addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
-
-  addMenu(  P_ABDE_FIT , tr( "ABDE Analysis"                     ), utilities );
+  QMenu* spectrum    = new QMenu( tr( "&Spectral Analysis" ),   this );
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
-  // addMenu(  P_GMPRPT   , tr( "&GMP Report Generator and Viewer"  ), utilities );
+  addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
+  addMenu(  P_LEGDATA  , tr( "&Convert Optima Data (Beckman tar.gz) " ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
+  addMenu(  P_FDSMAN   , tr( "FDS File &Manager"                 ), utilities );
+  addMenu(  P_PSEUDO_ABS  , tr( "&Pseudo-Absorbance"             ), utilities );
+  addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
+  utilities->addSeparator();
+  addMenu(  P_ABDE_FIT , tr( "&ABDE Analysis"                    ), utilities );
+  addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum );
+  addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum );
+  utilities->addMenu(spectrum);
+  addMenu(  P_RAMP     , tr( "Speed &Ramp Analysis"              ), utilities );
+  addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
+  addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
+  addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
+  addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
+
+  // addMenu(  P_GMPRPT   , tr( "&GMP Report Generator and Viewer"  ), utilities );
 #if 0    // temporarily disable Create Experiment until truly ready
   addMenu(  P_CEXPERI  , tr( "Create E&xperiment"                ), utilities );
 #endif
-  addMenu(  P_FDSMAN   , tr( "FDS File &Manager"                 ), utilities );
-  addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
-  utilities->addMenu(spectrum);
-  addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
-  addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );  
-  addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
-  addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
-  addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), utilities );
-  addMenu(  P_DDCOMB   , tr( "Combine Discrete Distrib&utions"   ), utilities );
-  addMenu(  P_INTCOMB  , tr( "Combine I&ntegral Distributions"   ), utilities );
-  addMenu(  P_GLOMODL  , tr( "Create Glo&bal Model"              ), utilities );
-  addMenu(  P_VIEWCFA  , tr( "View Ra&w CFA Data"                ), utilities );
-  addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
-  addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
-  addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
-  addMenu(  P_PSEUDO_ABS  , tr( "Pseudo-Absorbance"              ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
   addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
@@ -322,7 +323,6 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_AUDIT,    tr( "&Audit Trail" ),              gmp );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
-  addMenu(  P_RMSD         , tr( "&Query Model RMSDs" ), database );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
   addMenu(  P_BUFFER       , tr( "Manage &Buffer Data"       ), database );
   addMenu(  P_VBAR         , tr( "Manage &Analytes"          ), database );

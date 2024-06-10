@@ -1707,6 +1707,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
   QString failedID     = protocol_details[ "failedID" ];
+
+  QString expType      = protocol_details[ "expType" ];
     
   QDir directory( currDir );
   
@@ -1721,7 +1723,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
   qDebug() << "failedID: str, INT --  "
 	   << protocol_details[ "failedID" ]
-	   << protocol_details[ "failedID" ].toInt();  
+	   << protocol_details[ "failedID" ].toInt();
+
+  qDebug() << "ExpType: " << expType;
 
 
   //Re-attachment to FAILED GMP run
@@ -2383,7 +2387,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       //autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
       autoflowentry << id << runname << optimaname  << ptime_created;
 
-      
+      qDebug() << "1. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
+	
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
       else
@@ -2443,6 +2448,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
+
+	      qDebug() << "2. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
 	    }
 	}
     }
@@ -2638,6 +2645,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
 	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	 }
      }
    else

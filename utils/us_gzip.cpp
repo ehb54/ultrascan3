@@ -552,9 +552,9 @@ QString US_Gzip::make_ofname( const QString& filename, bool decompress )
     if ( decompress ) 
     {  // Decompress:  strip ".gz" or change ".svgz" to ".svg"
        if ( filename.endsWith( ".gz" ) )
-          return ofile.section( ".", 0, 2 );
+          return ofile.section( ".", 0, -2 );
        else if ( filename.endsWith( ".svgz" ) )
-          return ofile.section( ".", 0, 2 ) + ".svg";
+          return ofile.section( ".", 0, -2 ) + ".svg";
        else
           return QString( "" ); 
     } 
