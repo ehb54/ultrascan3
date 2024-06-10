@@ -457,7 +457,21 @@ US_Settings::set_us_debug( dbg_level );
             else{
                US_LammAstfvm astfvm(model,dset->simparams);
                US_Buffer tmp = dset->solution_rec.buffer;
-               astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
+               // check bfg
+               if ( !dset->bfg.is_empty && !dset->bfg.is_suitable(
+                  dset->simparams.meniscus,
+                  dset->simparams.bottom,
+                  dset->simparams.band_volume,
+                  dset->simparams.cp_pathlen,
+                  dset->simparams.cp_angle,
+                  dset->solution_rec.buffer.cosed_component,
+                  (int)dset->run_data.scanData.last().seconds
+               )){
+                  astfvm.set_buffer(dset->solution_rec.buffer, &dset->bfg, csD);
+               }
+               else {
+                  astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
+               }
                astfvm.calculate(simdat);
             }
 //DebugTime("END: clcr-NA-astfem");
@@ -725,7 +739,21 @@ DbgLv(0)<< " norm_s norm_a norm_b" << norm_s << norm_a << norm_b
             else{
                US_LammAstfvm astfvm(model,dset->simparams);
                US_Buffer tmp = dset->solution_rec.buffer;
-               astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
+               // check bfg
+               if ( !dset->bfg.is_empty && !dset->bfg.is_suitable(
+                  dset->simparams.meniscus,
+                  dset->simparams.bottom,
+                  dset->simparams.band_volume,
+                  dset->simparams.cp_pathlen,
+                  dset->simparams.cp_angle,
+                  dset->solution_rec.buffer.cosed_component,
+                  (int)dset->run_data.scanData.last().seconds
+                  )){
+                  astfvm.set_buffer(dset->solution_rec.buffer, &dset->bfg, csD);
+               }
+               else {
+                  astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
+               }
                astfvm.calculate(simdat);
             }
 #if 0
@@ -915,7 +943,21 @@ DbgLv(1) << "CR: sdat:"
             else{
                US_LammAstfvm astfvm(model,dset->simparams);
                US_Buffer tmp = dset->solution_rec.buffer;
-               astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
+               // check bfg
+               if ( !dset->bfg.is_empty && !dset->bfg.is_suitable(
+                  dset->simparams.meniscus,
+                  dset->simparams.bottom,
+                  dset->simparams.band_volume,
+                  dset->simparams.cp_pathlen,
+                  dset->simparams.cp_angle,
+                  dset->solution_rec.buffer.cosed_component,
+                  (int)dset->run_data.scanData.last().seconds
+               )){
+                  astfvm.set_buffer(dset->solution_rec.buffer, &dset->bfg, csD);
+               }
+               else {
+                  astfvm.set_buffer(dset->solution_rec.buffer, bfg, csD);
+               }
                astfvm.calculate(simdat);
             }
             if (abort) return;

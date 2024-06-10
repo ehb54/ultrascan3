@@ -39,6 +39,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             QString                 model_file;   //!< Model file path
             QList< QString >        noise_files;  //!< Path(s) of noise file(s)
             US_DataIO::EditedData   run_data;     //!< Experiment data
+            US_Math_BF::Band_Forming_Gradient bfg{};//!< Band-forming gradient
             US_Model                model;        //!< Model input and output
             SIMPARAMS               simparams;    //!< Simulation parameters
             US_Solution             solution_rec; //!< Solution record

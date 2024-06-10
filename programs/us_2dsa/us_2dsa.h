@@ -40,7 +40,7 @@ class US_2dsa : public US_AnalysisBase2
 
       void analysis_done( int );
       void resplot_done( void );
-
+      US_Math_BF::Band_Forming_Gradient* bfg;
       US_DataIO::EditedData*      mw_editdata();
       US_DataIO::RawData*         mw_simdata();
       US_DataIO::RawData*         mw_resdata();

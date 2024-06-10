@@ -1682,8 +1682,12 @@ DbgLv(0) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
    {
       // 2DSA: Recompute the global fit and save A and b matrices for later use
       US_SolveSim solvesim( data_sets, my_rank, false );
+      US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+      if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
+      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
-                               &gl_nnls_a, &gl_nnls_b );
+                               &gl_nnls_a, &gl_nnls_b, bfg );
 DbgLv(0) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
       nsolutes             = gsim->solutes.size();
@@ -1798,8 +1802,12 @@ DbgLv(0) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
    {  // GA:  Compute and output each dataset model
 //      wksim_vals           = simulation_values;
       US_SolveSim solvesim( data_sets, my_rank, false );
+      US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+      if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
+      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
-                               &gl_nnls_a, &gl_nnls_b );
+                               &gl_nnls_a, &gl_nnls_b, bfg );
 DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
 
@@ -1886,8 +1894,12 @@ DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
    else if ( mdl_type == US_Model::PCSA )
    {  // PCSA: Recompute the global fit and save A and b matrices for later use
       US_SolveSim solvesim( data_sets, my_rank, false );
+      US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+      if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
+      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
-                               &gl_nnls_a, &gl_nnls_b );
+                               &gl_nnls_a, &gl_nnls_b, bfg );
       nsolutes             = gsim->zsolutes.size();
 DbgLv(1) << "WrGlob:  glob recompute nzsols" << wksim_vals.zsolutes.size() << nsolutes
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
@@ -2678,9 +2690,22 @@ void US_MPI_Analysis::calculate_cosed() {
    data_sets[0]->simparams.meshType != US_SimulationParameters::ASTFVM){
       return;
    }
+
    US_LammAstfvm::CosedData* csD = nullptr;
    QList<US_CosedComponent> cosed_components;
    US_Math_BF::Band_Forming_Gradient* bfg = nullptr;
+   if ( !data_sets[0]->bfg.is_empty &&
+        data_sets[0]->bfg.is_suitable(data_sets[0]->simparams.meniscus,
+                                      data_sets[0]->simparams.bottom,
+                                      data_sets[0]->simparams.band_volume,
+                                      data_sets[0]->simparams.cp_pathlen,
+                                      data_sets[0]->simparams.cp_angle
+      data_sets[0]->solution_rec.buffer.cosed_component,
+         (int)auc_data->scanData.last().seconds)
+
+   ) {
+      bandFormingGradient = &data_sets[0]->bfg;
+   }
    QMap<QString, US_DataIO::RawData> cosed_comp_data;
    bool codiff_needed = false;
    bool cosed_needed = false;
@@ -2849,7 +2874,7 @@ void US_MPI_Analysis::calculate_cosed() {
    if (!cosed_comp_data.isEmpty()){
       csD->sa_data= cosed_comp_data.first();
    }
-   if (codiff_needed){
+   if ( codiff_needed ){
       bool recalc = true;
       if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
             (bandFormingGradient == nullptr || bandFormigGradient->is_empty)){
