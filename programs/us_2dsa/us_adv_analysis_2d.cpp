@@ -59,7 +59,7 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    QLayout* lo_bandcp      = us_radiobutton( tr( "Band-forming Centerpiece" ),
          rb_bandcp,  sparms->band_forming );
 
-   ct_bandload  = us_counter( 3,    1,    20,   1 );
+   ct_bandload  = us_counter( 3,    1,    20,   15 );
    ct_spoints   = us_counter( 3,   50, 10000,  10 );
 
    ct_bandload->setSingleStep(  0.1 );
@@ -121,12 +121,14 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
    cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
    cmb_mesh->setCurrentIndex( (int)sparms->meshType );
+   cmb_mesh->setCurrentText(cmb_mesh->itemData(cmb_mesh->currentIndex()).toString());
    
    cmb_moving = us_comboBox();
    cmb_moving->setMaxVisibleItems( 2 );
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
    cmb_moving->setCurrentIndex( (int)sparms->gridType );
+   cmb_moving->setCurrentText(cmb_moving->itemData(cmb_moving->currentIndex()).toString());
 
    int row      = 0;
    optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 6 );

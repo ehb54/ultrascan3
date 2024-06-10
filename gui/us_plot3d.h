@@ -176,6 +176,7 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       QTimer*       timer;
 
       QVector< QVector< double > > zdata;
+      QVector< QVector< double > > d_data;
 
       Qwt3D::SurfacePlot*          dataWidget;
 

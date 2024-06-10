@@ -13,6 +13,8 @@
 #include "us_zsolute.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
+#include "us_math_bf.h"
+#include "us_lamm_astfvm.h"
 
 #define SIMPARAMS US_SimulationParameters
 
@@ -38,6 +40,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             QString                 model_file;   //!< Model file path
             QList< QString >        noise_files;  //!< Path(s) of noise file(s)
             US_DataIO::EditedData   run_data;     //!< Experiment data
+            US_Math_BF::Band_Forming_Gradient bfg{};//!< Band-forming gradient
             US_Model                model;        //!< Model input and output
             SIMPARAMS               simparams;    //!< Simulation parameters
             US_Solution             solution_rec; //!< Solution record
@@ -79,6 +82,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
          bool                  dbg_timing; //!< Debug-timing-prints flag
          US_DataIO::RawData    sim_data;   //!< Simulation data
          US_DataIO::RawData    residuals;  //!< Residuals data (run-sim-noi)
+         QVector< double >     a_cached;
+         QVector< double >     b_cached;
+         QVector< double >     n_cached;
     };
 
     //! Constructor for the SolveSim class
@@ -114,7 +120,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param NSave          Optional pointer for saving norm vector
     void calc_residuals( int, int, Simulation&, bool = false,
                          QVector< double >* = 0, QVector< double >*  = 0,
-                         QVector< double >* = 0 );
+                         QVector< double >* = 0,
+                         US_Math_BF::Band_Forming_Gradient* = nullptr,
+                         US_LammAstfvm::CosedData* = nullptr );
 
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
