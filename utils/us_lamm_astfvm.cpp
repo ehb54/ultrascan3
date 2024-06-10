@@ -1353,7 +1353,7 @@ void US_LammAstfvm::set_buffer(US_Buffer buffer, US_Math_BF::Band_Forming_Gradie
       DbgLv(1) << "ASTFVM:set_buffer:" << codiff_needed;
       DbgLv(1) << "ASTFVM:set_buffer:" << bfg << nullptr;
       if (codiff_needed){
-         if ( bandFormingGradient != nullptr || bandFormingGradient->is_suitable(simparams.meniscus,
+         if ( bandFormingGradient != nullptr && bandFormingGradient->is_suitable(simparams.meniscus,
                                                                                  simparams.bottom,
                                                                                  simparams.band_volume,
                                                                                  simparams.cp_pathlen,
