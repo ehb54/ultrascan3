@@ -1,3 +1,4 @@
+//! \file us_colorgradIO.h
 #ifndef US_COLORGRIO_H
 #define US_COLORGRIO_H
 

@@ -1,3 +1,4 @@
+//! \file us_help.h
 #ifndef US_HELP_H
 #define US_HELP_H
 

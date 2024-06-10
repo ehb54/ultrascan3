@@ -315,6 +315,7 @@ class US_ConvertGui : public US_Widgets
       bool    gmpRun_bool;
       bool    protDev_bool;
       bool dataSavedOtherwise;
+      QString expType;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -335,6 +336,7 @@ class US_ConvertGui : public US_Widgets
   //void process_reference_auto( const double, const double );
   void process_reference_auto( const double );
   void PseudoCalcAvg   ( void );
+  void absorbance_conversion_abde( void );
   //void PseudoCalcAvg_av  ( void );
   void PseudoCalcAvgMWL( void );
       bool read            ( void );
@@ -363,7 +365,11 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, bool >    channels_to_drop;
       QMap < QString, QString > channels_report;
       QMap < QString, QStringList >    triples_dropped_from_channel;
-  QMap < QString, QMap <QString, QString> > drop_operations;								   
+  QMap < QString, QMap <QString, QString> > drop_operations;
+  //ABDE
+  QMap < QString, int >  channels_abde_refs;
+  QMap < QString, int >  channels_abde_use_refs;					   
+							   
 
   private slots:
       //! \brief Select the current investigator

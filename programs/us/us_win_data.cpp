@@ -25,7 +25,7 @@ namespace US_WinData
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
-    P_VIEWCFA,      P_VIEWXPN,      P_VIEWTMST,
+    P_LEGDATA,      P_VIEWXPN,      P_VIEWTMST,
     P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS,
 
     P_VIEWMWL,      P_VIEWMSS,      P_MWSPECF,  // MultiWavelength Menu
@@ -241,9 +241,9 @@ namespace US_WinData
       QObject::tr( "Combine Models into a Global Model"  )
     },
 
-    { P_VIEWCFA,   0, 0, "us_cfa_viewer",
-      QObject::tr( "Loading View Raw CFA Data" ),
-      QObject::tr( "View/Import Raw CFA Data"  )
+    { P_LEGDATA,   0, 0, "us_legacy_converter",
+      QObject::tr( "Loading Beckman Optima File Converter" ),
+      QObject::tr( "Beckman Optima File Converter"  )
     },
 
     { P_VIEWXPN,   0, 0, "us_xpn_viewer",

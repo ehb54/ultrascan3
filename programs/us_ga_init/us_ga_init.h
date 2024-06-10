@@ -1,3 +1,4 @@
+//! \file us_ga_init.h
 #ifndef US_GA_INIT_H
 #define US_GA_INIT_H
 

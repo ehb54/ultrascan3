@@ -167,9 +167,11 @@ class US_BufferGuiNew : public US_Widgets
 
       QPushButton*  pb_accept;
       QPushButton*  pb_spectrum;
-
       QLabel*       lb_bselect;
+      QLabel*       lb_density;
+      QLabel*       lb_viscos;
       QLabel*       lb_bselect_name;
+
 
       QLineEdit*    le_descrip;
       QLineEdit*    le_concen;
@@ -179,7 +181,9 @@ class US_BufferGuiNew : public US_Widgets
       QLineEdit*    le_ph;   
       QLineEdit*    le_compress;
       QCheckBox*    ck_manual;
+      QSlider*      sl_temp;
       QCheckBox*    ck_cosed;
+
       QListWidget*  lw_allcomps;
       QListWidget*  lw_bufcomps;
       QListWidget*  lw_upper_cosedcomps;
@@ -225,6 +229,10 @@ class US_BufferGuiNew : public US_Widgets
       void write_db        ( void );
       void write_disk      ( void );
       void update_db_disk  ( bool );
+
+      void calc_visc_dent_temp ( void );
+      void set_temp20 ( void );
+
       bool can_accept      ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       

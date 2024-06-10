@@ -818,6 +818,8 @@ void US_SelectItem::set_unset_failed_autoflow()
 	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
 	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	 }
      }
 
