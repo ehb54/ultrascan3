@@ -1682,12 +1682,8 @@ DbgLv(0) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
    {
       // 2DSA: Recompute the global fit and save A and b matrices for later use
       US_SolveSim solvesim( data_sets, my_rank, false );
-      US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
-      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
-      if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
-      DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
-                               &gl_nnls_a, &gl_nnls_b, bfg );
+                               &gl_nnls_a, &gl_nnls_b );
 DbgLv(0) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
       nsolutes             = gsim->solutes.size();
@@ -1899,7 +1895,7 @@ DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
       if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
       DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
-                               &gl_nnls_a, &gl_nnls_b, bfg );
+                               &gl_nnls_a, &gl_nnls_b,nullptr, bfg );
       nsolutes             = gsim->zsolutes.size();
 DbgLv(1) << "WrGlob:  glob recompute nzsols" << wksim_vals.zsolutes.size() << nsolutes
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
