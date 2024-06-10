@@ -864,7 +864,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    sl_temp->setMaximum(50);
    sl_temp->setSingleStep(1);
    sl_temp->setValue(20);
-   QPushButton* pb_temp20C = us_pushbutton( tr ( "Rest Temperature" ) );
+   QPushButton* pb_temp20C = us_pushbutton( tr ( "Reset Temperature" ) );
    QHBoxLayout* lo_temp = new QHBoxLayout();
    lo_temp->addWidget(lb_temperature);
    lo_temp->addWidget(sl_temp);
