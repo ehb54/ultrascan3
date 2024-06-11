@@ -1405,7 +1405,7 @@ void US_Hydrodyn::setupGUI()
    lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model Suffix:"), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_bead_model_prefix->setMinimumHeight(minHeight1);
+   lbl_bead_model_prefix->setMinimumHeight(minHeight1 * 2 );
    lbl_bead_model_prefix->setPalette( PALET_LABEL );
    AUTFBACK( lbl_bead_model_prefix );
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -1428,22 +1428,23 @@ void US_Hydrodyn::setupGUI()
 
    le_bead_model_prefix = new QLineEdit( this );    le_bead_model_prefix->setObjectName( "bead_model_prefix Line Edit" );
    le_bead_model_prefix->setText(us_tr(""));
-   le_bead_model_prefix->setMinimumHeight(minHeight1);
+   le_bead_model_prefix->setMinimumHeight( minHeight1 * 2 );
    le_bead_model_prefix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_prefix->setPalette( PALET_EDIT );
    AUTFBACK( le_bead_model_prefix );
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
-   le_bead_model_suffix = new QLineEdit( this );    le_bead_model_suffix->setObjectName( "bead_model_suffix Line Edit" );
+   le_bead_model_suffix = new QTextEdit( this );    le_bead_model_suffix->setObjectName( "bead_model_suffix Line Edit" );
    le_bead_model_suffix->setText(us_tr(""));
-   le_bead_model_suffix->setMinimumHeight(minHeight1);
+   le_bead_model_suffix->setMinimumHeight(minHeight1 * 2 );
    le_bead_model_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_suffix->setPalette( PALET_EDIT );
    AUTFBACK( le_bead_model_suffix );
    le_bead_model_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_bead_model_suffix->setReadOnly(true);
-
+   le_bead_model_suffix->setFixedHeight( minHeight1 * 2 );
+   
    pb_somo = new QPushButton(us_tr("Build SoMo Bead Model"), this);
    Q_CHECK_PTR(pb_somo);
    pb_somo->setMinimumHeight(minHeight1);
@@ -3310,7 +3311,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    le_pdb_file->setText( QDir::toNativeSeparators( filename ) );
 
    bead_model_suffix = "";
-   le_bead_model_suffix->setText( bead_model_suffix );
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
 
 #if defined(START_RASMOL)
    if ( display_pdb && advanced_config.auto_view_pdb ) {
@@ -3987,7 +3988,7 @@ int US_Hydrodyn::do_calc_hydro()
       progress->reset();
       return -1;
    }
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    // qDebug() << "us_hydrodyn::do_calc_hydro()_rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
 
    int retval = us_hydrodyn_supc_main(&results,
@@ -4819,7 +4820,7 @@ void US_Hydrodyn::setHydroFile()
             new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
             if ( file != new_file )
             {
-               le_bead_model_suffix->setText(bead_model_suffix);
+               le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                any_changes = true;
             }
 
@@ -4830,7 +4831,7 @@ void US_Hydrodyn::setHydroFile()
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -4866,7 +4867,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -4877,7 +4878,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
                // frmc = us_fopen(QString("%1.rmc").arg(fname).toLatin1().data(), "w");
@@ -4890,7 +4891,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -4902,7 +4903,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -5392,7 +5393,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    }
 
    bead_model_suffix = getExtendedSuffix(false, false).replace( "a2b", QString( "eqm%1" ).arg( dR ).replace( ".","_" ) ) + "g";
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(false);

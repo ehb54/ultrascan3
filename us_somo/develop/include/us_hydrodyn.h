@@ -528,7 +528,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QLineEdit *le_bead_model_file;
       QLineEdit *le_bead_model_prefix;
-      QLineEdit *le_bead_model_suffix;
+      QTextEdit *le_bead_model_suffix;
 
       QPushButton *pb_batch;
       QPushButton *pb_batch2;

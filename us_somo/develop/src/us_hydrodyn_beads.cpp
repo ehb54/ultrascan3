@@ -83,7 +83,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    no_ovlp_removal ? append_options_log_somo_ovlp() : append_options_log_somo();
    display_default_differences();
    bead_model_suffix = getExtendedSuffix(false, true, no_ovlp_removal );
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(true);
@@ -352,7 +352,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    }
 
    bead_model_suffix = getExtendedSuffix(false, false, no_ovlp_removal);
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(false);
@@ -1015,7 +1015,7 @@ int US_Hydrodyn::calc_grid()
    }
 
    bead_model_suffix = getExtendedSuffix(false, false) + "g";
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(false);
@@ -1401,7 +1401,7 @@ int US_Hydrodyn::calc_vdw_beads()
    //    }
    // }
    bead_model_suffix = getExtendedSuffix( false, false, true, true );
-   le_bead_model_suffix->setText( bead_model_suffix );
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
 
    if ( !overwrite )
    {

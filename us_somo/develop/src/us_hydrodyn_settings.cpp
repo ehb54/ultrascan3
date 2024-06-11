@@ -4180,9 +4180,20 @@ void US_Hydrodyn::display_default_differences()
       editor_msg( "dark green", "\nAll options set to default values\n");
    }
    le_bead_model_suffix->setText(
-                                 setSuffix ? (getExtendedSuffix(true, true) + " / " +
-                                              getExtendedSuffix(true, false) + " / " + 
-                                              getExtendedSuffix(true, true, true)) : "");
+                                 setSuffix
+                                 ? (
+                                    "<center>"
+                                    + getExtendedSuffix(true, true)
+                                    + " / "
+                                    + getExtendedSuffix(true, false)
+                                    + "</center>"
+                                    + "<center>"
+                                    + getExtendedSuffix(true, true, true)
+                                    + " / "
+                                    + getExtendedSuffix(true, true, true, true ) 
+                                    + "</center>"
+                                    )
+                                 : "");
 }
 
 void US_Hydrodyn::config()

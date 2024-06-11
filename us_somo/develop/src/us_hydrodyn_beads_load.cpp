@@ -47,7 +47,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          US_File_Util ufu;
          
          if ( ufu.read( filename, qsl ) && qsl.filter( "vdW model parameters:" ).size() ) {
-            QStringList qsl_check = qsl.filter( QRegularExpression( "^  (Hydrate probe radius|Hydrate threshold|Theoretical waters|Exposed residues|Theoretical waters exposed).*:" ) );
+            QStringList qsl_check = qsl.filter( QRegularExpression( "^  (Hydrate probe radius|Hydrate threshold|Theoretical waters|Exposed|Theoretical waters exposed).*:" ) );
             if ( qsl_check.size() == 5 ) {
                double res[qsl_check.size()];
                for ( int i = 0; i < (int) qsl_check.size(); ++i ) {
@@ -1293,7 +1293,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             bead_model_suffix = "em2dam";
          }
 
-         le_bead_model_suffix->setText(bead_model_suffix);
+         le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
+
          if ( do_write_bead_model && model_count == 1 ) 
          {
             if ( !overwrite )
