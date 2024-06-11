@@ -270,6 +270,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_auto    = false;
    finishing_live_update = false;
    in_reload_all_data  = false;
+   in_reload_all_data_set_gui  = false;
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
    in_reload_end_processes  = false;
@@ -3429,21 +3430,25 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
 
    qApp->processEvents();  //ALEXEY: maybe this will help
    DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
-   
-   cb_optsys->disconnect();
-   cb_optsys->clear();
-   DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
-   
-   cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
-   DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
-   cb_optsys->setCurrentIndex( optndx_auto );
-   DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
-   
-   // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-   //          this,         SLOT  ( changeOptics( )            ) );
 
-   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeOptics_auto(  )       ));
+
+   //First time setting Optics types counter //////////////////////////////////////////////
+   if ( !in_reload_all_data_set_gui )
+     {
+       qDebug() << "[FIRTS TIME] Setting Optics types counter...";
+       cb_optsys->disconnect();
+       cb_optsys->clear();
+       DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
+       
+       cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
+       DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
+       cb_optsys->setCurrentIndex( optndx_auto );
+       DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+       connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+		this,         SLOT  ( changeOptics_auto(  )       ));
+     }
+   // END of [First time setting Optics types counter] /////////////////////////////////////
+   
    
    DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
 
@@ -3483,11 +3488,18 @@ DbgLv(1) << "RDa: mwr ntriple" << ntriple;
 DbgLv(1) << "RDa: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "RDa: nscan" << nscan << "npoint" << npoint;
 DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
-   cb_cellchn->disconnect();                                      
-   cb_cellchn->clear();
-   cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+
+   //First time setting Cell/Channs counter //////////////////////////////////////////////////////
+   if ( !in_reload_all_data_set_gui )
+     {
+       qDebug() << "[FIRTS TIME] Setting Cell/Channs counter...";
+       cb_cellchn->disconnect();                                      
+       cb_cellchn->clear();
+       cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
+       connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+		this,         SLOT  ( changeCellCh(            ) ) );
+     }
+   //END of [First time setting Cell/Channs counter ] //////////////////////////////////////////////
 
    nlambda      = xpn_data->lambdas_raw( lambdas );               // ALEXEY  lambdas
    int wvlo     = lambdas[ 0 ];
@@ -3528,7 +3540,14 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    in_reload_auto      = false;
 
    // Ok to enable some buttons now
-   enableControls();                                    //ALEXEY ...and actual plotting data
+   //First time enabling Controls ///////////////////////////////////////////////////////
+   if ( !in_reload_all_data_set_gui )
+     {
+       qDebug() << "[FIRTS TIME] Enabling Controls...";
+       enableControls();                                    //ALEXEY ...and actual plotting data
+       in_reload_all_data_set_gui = true;
+     }
+   //ENF of [First time enabling Controls ] //////////////////////////////////////////////
 
    if ( combinedOptics )
      {

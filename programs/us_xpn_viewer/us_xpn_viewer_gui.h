@@ -279,6 +279,7 @@ class US_XpnDataViewer : public US_Widgets
      
      bool           in_reload_data_init;
      bool           in_reload_all_data;
+     bool           in_reload_all_data_set_gui;
      bool           in_reload_check_sysdata;
      bool           in_reload_end_processes;
      bool           in_reload_end_process_all_data_avail;
