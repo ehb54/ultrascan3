@@ -1,0 +1,132 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: UltraScan-III
+message: >-
+  A comprehensive data analysis framework for analytical
+  ultracentrifugation experiments, small angle scattering
+  experiments, and hydrodynamic bead modeling from atomic
+  structures
+type: software
+authors:
+  - given-names: Borries
+    family-names: Demeler
+    name-particle: Borries
+    email: demeler@gmail.com
+    affiliation: University of Montana
+    orcid: 'https://orcid.org/0000-0002-2414-9518'
+  - given-names: Emre
+    family-names: Brookes
+    email: emre.brookes@umontana.edu
+    affiliation: University of Montana
+    orcid: 'https://orcid.org/0000-0001-7348-6476'
+  - given-names: Gary
+    name-particle: E
+    family-names: Gorbet
+    email: gegorbet@gmail.com
+    orcid: 'https://orcid.org/0000-0002-3177-3773'
+  - given-names: Alexey
+    family-names: Savelyev
+    email: alexsav.science@gmail.com
+    orcid: 'https://orcid.org/0000-0002-4785-4148'
+  - given-names: Saeed
+    family-names: Mortezazadeh
+    orcid: 'https://orcid.org/0000-0001-6437-6953'
+    email: saeed.mortezazadeh@uleth.ca
+    affiliation: University of Lethbridge
+  - given-names: Lukas
+    family-names: Dobler
+    email: lukas.dobler@uni-konstanz.de
+    orcid: 'https://orcid.org/0000-0002-4249-012X'
+repository-code: 'https://github.com/ehb54/ultrascan3'
+url: 'https://ultrascan.aucsolutions.com'
+repository: 'https://github.com/ehb54'
+abstract: >-
+  UltraScan-III (US3) is a free and open source,
+  multi-platform software suite designed to provide
+  high-performance and high-throughput data analysis and
+  modeling of hydrodynamic data. US3 addresses many
+  challenges posed by this large, multi-user environment
+  through the use of a relational MySQL database with a
+  web-based interface, termed the UltraScan Laboratory
+  Information Management System (USLIMS). US3 allows
+  researchers to achieve an unsurpassed level of accuracy
+  and resolution in their data analysis. US3 is designed to
+  provide maximum flexibility in formulating a great variety
+  of custom analysis models and optimization approaches,
+  while at the same time offering an intuitive interface
+  that is easy to learn and use. The software currently
+  supports data from the Beckman XLA/I UV/visible absorbance
+  and intensity detector, the Rayleigh interference
+  detector, the Aviv fluorescence detector, and from two
+  recently developed multi-wavelength detectors. Both
+  single- and multi-speed experiments are supported. The
+  software is 64-bit and supports parallelization through
+  multi-threading on the desktop and through the message
+  passing interface library on remote supercomputer
+  installations. The software is highly configurable so that
+  repetitive actions can be largely automated to speed up
+  routine analysis and accelerate discovery, without
+  compromising rigor, accuracy, and flexibility in the
+  functionality. For AUC experiments, US3 uses finite
+  element solutions to model whole boundary simulations
+  using the adaptive space-time finite element solution for
+  the underlying flow equation. The solution built into US3
+  is able
+
+  to simulate self- and hetero-associating reactions,
+  including kinetic rate constants
+
+  (Demeler et al. 2010), supports solvent compressibility,
+  co-sedimenting solutes
+
+  and gradient formation, as well as concentration
+  dependency of s and D. The
+
+  parallel methods programmed into US3 provide significantly
+  higher accuracy and
+
+  resolution than conventional approaches, which are limited
+  by traditional desktop or
+
+  laptop computers where high-resolution analysis is
+  impractical and time consuming.
+
+  US3 also allows the user to process many datasets in
+  parallel, greatly improving
+
+  throughput and time savings. This is particularly critical
+  for the
+
+  new multi-wavelength data format, where datasets for
+  several hundred wavelengths
+
+  must be evaluated from each channel. US3 aims to provide a
+  comprehensive and robust analysis environment for all
+  hydrodynamic analysis. In addition to sedimentation data
+  analysis, UltraScan offers the SOMO Solution Modeler with
+  comprehensive facilities for hydrodynamic modeling. US3
+  adheres to the OpenAUC data standard, which provides
+  significantly higher storage and I/O efficiency than
+  traditional Beckman formatted ASCII files, increasing data
+  loading and network transfer speed. The OpenAUC standard
+  offers database associations between related data elements
+  which improves accuracy and automation. US3 is an ongoing
+  project with many collaborators and contributors.
+keywords:
+  - analytical ultracentrifugation
+  - finite element modeling
+  - hydrodynamic bead modeling
+  - small angle xray and neutron scattering
+  - Two-dimensional spectrum analysis grid optimization
+  - genetic algorithm optimization
+  - >-
+    Parametrically constrained spectrum analysis
+    optimization
+  - enhanced van Holde - Weischet analysis
+  - Discrete model genetic algorithm optimization
+  - Monte Carlo analysis
+  - Second moment analysis
+  - dC/dt analysis
+license: LGPL-3.0-or-later
