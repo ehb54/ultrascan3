@@ -159,7 +159,7 @@ void US_Hydrodyn_Vdw_Overlap::setupGUI()
 void US_Hydrodyn_Vdw_Overlap::update_vdw_ot_mult(const QString &str)
 {
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_mult" ] = str;
-   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Vdw_Overlap::update_vdw_ot_dpct(const QString &str)
