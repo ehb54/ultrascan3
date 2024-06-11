@@ -753,18 +753,18 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
       }else if (runtime > 300){
          dt_scaling += dt*0.05;
       }
-      DbgLv(2) << "BFG:CG: scan dt dt_scaling runtime" << scan_count << dt << dt_scaling << runtime << bessel_cache.size()
+      DbgLv(3) << "BFG:CG: scan dt dt_scaling runtime" << scan_count << dt << dt_scaling << runtime << bessel_cache.size()
                << "eigenfunction cache " << eigenfunction_cache.size();
       runtime += (dt + dt_scaling);
       scan_count++;
    }
 
-   DbgLv(0) << "Calculated BFG for" << Nx << "radial points and" <<scan_count<<"scans";
-   DbgLv(0) << "Eigenvalues" << eigenvalues.size();
-   DbgLv(0) << "Bessel cache used: " << bessel_cache_used << " cache size " << bessel_cache.size();
-   DbgLv(0) << "Eigenfunction cache used: " << eigenfunction_cache_used << " cache size " << eigenfunction_cache.size();
-   if ( dbg_level > -1 ) {
-      DbgLv(0) << "#####################################";
+   DbgLv(1) << "Calculated BFG for" << Nx << "radial points and" <<scan_count<<"scans";
+   DbgLv(1) << "Eigenvalues" << eigenvalues.size();
+   DbgLv(1) << "Bessel cache used: " << bessel_cache_used << " cache size " << bessel_cache.size();
+   DbgLv(1) << "Eigenfunction cache used: " << eigenfunction_cache_used << " cache size " << eigenfunction_cache.size();
+   if ( dbg_level > 2 ) {
+      DbgLv(3) << "#####################################";
       // calculate and print the integral of scan curves
       double cimn = 9e+14;
       double cimx = 0.0;
@@ -781,7 +781,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
 //if ( ii < 19  &&  ( (jj/100)*100 == jj || (jj+5)>nconc ) )
 // DbgLv(3) << "   jj cval dltr csum" << jj << cval << dltr << csum;
          }
-         DbgLv(0) << "Scan" << ii + 1 << " Time " << conc_bfg_data.scanData[ ii ].seconds << "  Integral" << csum;
+         DbgLv(2) << "Scan" << ii + 1 << " Time " << conc_bfg_data.scanData[ ii ].seconds << "  Integral" << csum;
          cimn = (cimn < csum) ? cimn : csum;
          cimx = (cimx > csum) ? cimx : csum;
          ciav += csum;
@@ -790,8 +790,8 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
       ciav /= (double) conc_bfg_data.scanData.size();
       double cidf = cimx - cimn;
       double cidp = (double) (qRound(10000.0 * cidf / ciav)) / 100.0;
-      DbgLv(0) << "  Integral Min Max Mean" << cimn << cimx << ciav;
-      DbgLv(0) << "  ( range of" << cidf << "=" << cidp << " percent of mean )";
+      DbgLv(2) << "  Integral Min Max Mean" << cimn << cimx << ciav;
+      DbgLv(2) << "  ( range of" << cidf << "=" << cidp << " percent of mean )";
    }
    return false;
 }
