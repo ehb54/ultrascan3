@@ -380,6 +380,7 @@ class US_MPI_Analysis : public QObject
         void     init_solutes  ( void );
         void     fill_queue    ( void );
         void     limitBucket   ( Bucket& );
+        void     calculate_cosed( void );
 
         // Master
         void     _2dsa_master      ( void );
@@ -417,7 +418,7 @@ class US_MPI_Analysis : public QObject
         // Worker
         void     _2dsa_worker      ( void );
 
-        void     calc_residuals     ( int, int, SIMULATION& );
+        void     calc_residuals     ( int, int, SIMULATION&, int = -1 );
 
         // GA Master
         void ga_master       ( void );
