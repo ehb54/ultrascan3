@@ -223,7 +223,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::name( WidgetId widget_id ) {
    case SAVE_PLOT_DATA       : return us_tr( "Save plot data as CSV" );
    case HEADER_LABEL         : return us_tr( "Fractal Dimension options" );
    case BOX_MASS_LABEL       : return us_tr( "Box Mass & Mass fractal D parameters" );
-   case MASS_LABEL           : return us_tr( "Mass fractal D parameters" );
+   case MASS_LABEL           : return us_tr( "Mass fractal D (slice) parameters" );
    case SURFACE_LABEL        : return us_tr( "Surface fractal D parameters" );
    default                   : break;
    }
@@ -243,7 +243,7 @@ QString US_Hydrodyn_Fractal_Dimension_Options::tooltip( WidgetId widget_id ) {
    case ANGSTROM_START       : 
    case ANGSTROM_END         : 
    case ANGSTROM_STEPS       : return
-         QString( us_tr( "Used for the %1, %2 and %2 methods" ) )
+         QString( us_tr( "Used for the %1, %2 and %3 methods" ) )
          .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_BOX_MASS ) )
          .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT ) )
          .arg( US_Fractal_Dimension::method_name( US_Fractal_Dimension::USFD_ENRIGHT_FULL ) )

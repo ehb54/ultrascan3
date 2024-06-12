@@ -1405,7 +1405,7 @@ void US_Hydrodyn::setupGUI()
    lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model Suffix:"), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_bead_model_prefix->setMinimumHeight(minHeight1 * 2 );
+   lbl_bead_model_prefix->setMinimumHeight( minHeight1 * 2 );
    lbl_bead_model_prefix->setPalette( PALET_LABEL );
    AUTFBACK( lbl_bead_model_prefix );
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -1437,7 +1437,7 @@ void US_Hydrodyn::setupGUI()
 
    le_bead_model_suffix = new QTextEdit( this );    le_bead_model_suffix->setObjectName( "bead_model_suffix Line Edit" );
    le_bead_model_suffix->setText(us_tr(""));
-   le_bead_model_suffix->setMinimumHeight(minHeight1 * 2 );
+   le_bead_model_suffix->setMinimumHeight( minHeight1 * 2 );
    le_bead_model_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_suffix->setPalette( PALET_EDIT );
    AUTFBACK( le_bead_model_suffix );
