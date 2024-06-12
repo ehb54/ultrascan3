@@ -9,5 +9,9 @@
 #define UNICODE_ALPHA_QS QString( "%1" ).arg( UNICODE_ALPHA )
 #define UNICODE_SUPER_2 u8"\u00B2"
 #define UNICODE_SUPER_2_QS QString( "%1" ).arg( UNICODE_SUPER_2 )
+#define UNICODE_SUPER_3 u8"\u00B3"
+#define UNICODE_SUPER_3_QS QString( "%1" ).arg( UNICODE_SUPER_3 )
+#define UNICODE_SUPER_MINUS u8"\u207B"
+#define UNICODE_SUPER_MINUS_QS QString( "%1" ).arg( UNICODE_SUPER_MINUS )
 
 #endif 
