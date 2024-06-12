@@ -6,6 +6,7 @@
 #include <QGridLayout>
 #include <QFrame>
 #include <QLabel>
+#include "../include/us_unicode.h"
 
 US_Hydrodyn_Misc::US_Hydrodyn_Misc(struct misc_options *misc,
                                    bool *misc_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
@@ -44,7 +45,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, hdrFontSize, QFont::Bold));
 
-   lbl_hydrovol = new QLabel(us_tr(" Hydration Water Vol. (A^3): "), this);
+   lbl_hydrovol = new QLabel(us_tr(" Hydration Water Vol. [" + UNICODE_ANGSTROM_QS + UNICODE_SUPER_3_QS + "]: "), this);
    Q_CHECK_PTR(lbl_hydrovol);
    lbl_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrovol->setMinimumWidth(220);
@@ -102,7 +103,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, useFontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
-   lbl_vbar_temperature = new QLabel(us_tr( QString( " Vbar measured/computed at T=(%1C): " ).arg( DEGREE_SYMBOL ) ), this);
+   lbl_vbar_temperature = new QLabel(us_tr( QString( " Vbar measured/computed at T=[%1C]: " ).arg( DEGREE_SYMBOL ) ), this);
    Q_CHECK_PTR(lbl_vbar_temperature);
    lbl_vbar_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar_temperature->setMinimumHeight(minHeight1);
@@ -137,7 +138,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_avg_banner );
    lbl_avg_banner->setFont(QFont( USglobal->config_list.fontFamily, hdrFontSize, QFont::Bold));
 
-   lbl_avg_radius = new QLabel(us_tr(" Average atomic radius (A): "), this);
+   lbl_avg_radius = new QLabel(us_tr(" Average atomic radius [" + UNICODE_ANGSTROM_QS + "]: "), this);
    Q_CHECK_PTR(lbl_avg_radius);
    lbl_avg_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_radius->setMinimumWidth(220);
@@ -160,7 +161,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_radius );
    connect(cnt_avg_radius, SIGNAL(valueChanged(double)), SLOT(update_avg_radius(double)));
 
-   lbl_avg_mass = new QLabel(us_tr(" Average atomic mass (Da): "), this);
+   lbl_avg_mass = new QLabel(us_tr(" Average atomic mass [Da]: "), this);
    Q_CHECK_PTR(lbl_avg_mass);
    lbl_avg_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_mass->setMinimumWidth(220);
@@ -252,7 +253,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_hydration );
    connect(cnt_avg_hydration, SIGNAL(valueChanged(double)), SLOT(update_avg_hydration(double)));
 
-   lbl_avg_volume = new QLabel(us_tr(" Average bead/atom volume (A^3): "), this);
+   lbl_avg_volume = new QLabel(us_tr(" Average bead/atom volume [" + UNICODE_ANGSTROM_QS + UNICODE_SUPER_3_QS + "]: "), this);
    Q_CHECK_PTR(lbl_avg_volume);
    lbl_avg_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_volume->setMinimumWidth(220);
@@ -306,7 +307,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_bead_model_controls );
    lbl_bead_model_controls->setFont(QFont( USglobal->config_list.fontFamily, hdrFontSize, QFont::Bold));
 
-   lbl_target_e_density = new QLabel(us_tr(" Target electron density (A^-3): "), this);
+   lbl_target_e_density = new QLabel(us_tr(" Target electron density [" + UNICODE_ANGSTROM_QS + UNICODE_SUPER_MINUS_QS + UNICODE_SUPER_3_QS + "]: "), this);
    lbl_target_e_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_target_e_density->setMinimumWidth(220);
    lbl_target_e_density->setMinimumHeight(minHeight1);
@@ -323,7 +324,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_target_e_density->setFont(QFont( USglobal->config_list.fontFamily, useFontSize));
    connect(le_target_e_density, SIGNAL(textChanged(const QString &)), SLOT(update_target_e_density(const QString &)));
 
-   lbl_target_volume = new QLabel(us_tr(" Target volume (A^3): "), this);
+   lbl_target_volume = new QLabel(us_tr(" Target volume [" + UNICODE_ANGSTROM_QS + UNICODE_SUPER_3_QS + "]: "), this);
    lbl_target_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_target_volume->setMinimumWidth(220);
    lbl_target_volume->setMinimumHeight(minHeight1);
@@ -390,7 +391,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_threshold->setFont(QFont( USglobal->config_list.fontFamily, hdrFontSize, QFont::Bold));
    lbl_threshold->hide();
 
-   lbl_covolume = new QLabel(us_tr(" Covolume [cm^3/mol]: "), this);
+   lbl_covolume = new QLabel(us_tr(" Covolume [cm" + UNICODE_SUPER_3_QS + "/mol]: "), this);
    lbl_covolume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_covolume->setMinimumWidth(220);
    lbl_covolume->setMinimumHeight(minHeight1);
@@ -408,7 +409,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_covolume->setFont(QFont( USglobal->config_list.fontFamily, useFontSize));
    connect(le_covolume, SIGNAL(textChanged(const QString &)), SLOT(update_covolume(const QString &)));
 
-   // lbl_thresh_SS = new QLabel(us_tr(" Disulfide distance threshold [A]: "), this);
+   // lbl_thresh_SS = new QLabel(us_tr(" Disulfide distance threshold [" + UNICODE_ANGSTROM_QS + "]: "), this);
    // lbl_thresh_SS->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    // lbl_thresh_SS->setMinimumWidth(220);
    // lbl_thresh_SS->setMinimumHeight(minHeight1);
@@ -426,7 +427,7 @@ void US_Hydrodyn_Misc::setupGUI()
    // le_thresh_SS->setFont(QFont( USglobal->config_list.fontFamily, useFontSize));
    // connect(le_thresh_SS, SIGNAL(textChanged(const QString &)), SLOT(update_thresh_SS(const QString &)));
 
-   lbl_thresh_carb_O = new QLabel(us_tr(" Carbohydrate O distance threshold [A]:"), this);
+   lbl_thresh_carb_O = new QLabel(us_tr(" Carbohydrate O distance threshold [" + UNICODE_ANGSTROM_QS + "]:"), this);
    lbl_thresh_carb_O->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_thresh_carb_O->setMinimumWidth(220);
    lbl_thresh_carb_O->setMinimumHeight(minHeight1);
@@ -446,7 +447,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(le_thresh_carb_O, SIGNAL(textChanged(const QString &)), SLOT(update_thresh_carb_O(const QString &)));
    le_thresh_carb_O->hide();
 
-   lbl_thresh_carb_N = new QLabel(us_tr(" Carbohydrate N distance threshold [A]:"), this);
+   lbl_thresh_carb_N = new QLabel(us_tr(" Carbohydrate N distance threshold [" + UNICODE_ANGSTROM_QS + "]:"), this);
    lbl_thresh_carb_N->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_thresh_carb_N->setMinimumWidth(220);
    lbl_thresh_carb_N->setMinimumHeight(minHeight1);
