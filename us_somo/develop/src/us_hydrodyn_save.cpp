@@ -182,25 +182,25 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Centre of diffusion [ X, Y, Z ] [nm]",
             "Centre of diffusion [ X, Y, Z ] [nm]",
 
-            "cen_of_visc_x",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
+            // "cen_of_visc_x",
+            // "Centre of viscosity [ X, Y, Z ] [nm]",
+            // "Centre of viscosity [ X, Y, Z ] [nm]",
 
-            "unc_int_visc",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
+            // "unc_int_visc",
+            // "Uncorrected intrinsic viscosity [cm^3/g]",
+            // "Uncorrected intrinsic viscosity [cm^3/g]",
 
-            "unc_einst_rad",
-            "Uncorrected Einstein's radius [nm]",
-            "Uncorrected Einstein's radius [nm]",
+            // "unc_einst_rad",
+            // "Uncorrected Einstein's radius [nm]",
+            // "Uncorrected Einstein's radius [nm]",
 
-            "cor_int_visc",
-            "Corrected intrinsic viscosity [cm^3/g]",
-            "Corrected intrinsic viscosity [cm^3/g]",
+            // "cor_int_visc",
+            // "Corrected intrinsic viscosity [cm^3/g]",
+            // "Corrected intrinsic viscosity [cm^3/g]",
 
-            "cor_einst_rad",
-            "Corrected Einstein's radius [nm]",
-            "Corrected Einstein's radius [nm]",
+            // "cor_einst_rad",
+            // "Corrected Einstein's radius [nm]",
+            // "Corrected Einstein's radius [nm]",
 
             "__SECTION__",
             "Additional ZENO results:",
@@ -250,7 +250,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Skin Thickness",
 
             "__SECTION__",
-            "Additional SMI/GRPY results:",
+            "Additional GRPY results:",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
