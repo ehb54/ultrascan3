@@ -1053,7 +1053,6 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
          }
       }
 
-
       // call US_Hydrodyn_Fractal_Dimension::compute_counting();
 
       {
@@ -1394,10 +1393,9 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
             }
          }
 
-
          if ( method == US_Fractal_Dimension::USFD_ROLL_SPHERE ) {
-            fd     = 3.0 + fd;
-            fd_wtd = 3.0 + fd_wtd;
+            fd     = 2.0 - fd;
+            fd_wtd = 2.0 - fd_wtd;
          }
 
          if ( from_parameters ) {

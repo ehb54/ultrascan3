@@ -176,7 +176,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_a = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_a->setObjectName( "Zeno_Skin_Thickness_From_Rg_A Line Edit" );
-   le_zeno_surface_thickness_from_rg_a->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness_from_rg_a));
+   le_zeno_surface_thickness_from_rg_a->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_a));
    le_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_a->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_a );
@@ -190,7 +190,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_b = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_b->setObjectName( "Zeno_Skin_Thickness_From_Rg_B Line Edit" );
-   le_zeno_surface_thickness_from_rg_b->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness_from_rg_b));
+   le_zeno_surface_thickness_from_rg_b->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_b));
    le_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_b->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_b );
@@ -204,7 +204,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_c = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
-   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness_from_rg_c));
+   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_c));
    le_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_c->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_c );

@@ -86,7 +86,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(pb_vbar, SIGNAL(clicked()), SLOT(select_vbar()));
 
 
-   lbl_vbar = new QLabel(us_tr(" Enter a vbar value: "), this);
+   lbl_vbar = new QLabel(us_tr(" Enter a vbar value [cm" + UNICODE_SUPER_3_QS + "/g]: "), this);
    Q_CHECK_PTR(lbl_vbar);
    lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setMinimumHeight(minHeight1);
@@ -276,7 +276,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_volume );
    connect(cnt_avg_volume, SIGNAL(valueChanged(double)), SLOT(update_avg_volume(double)));
 
-   lbl_avg_vbar = new QLabel(us_tr(" Average Residue vbar: "), this);
+   lbl_avg_vbar = new QLabel(us_tr(" Average Residue vbar [cm" + UNICODE_SUPER_3_QS + "/g]: "), this);
    Q_CHECK_PTR(lbl_avg_vbar);
    lbl_avg_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_vbar->setMinimumWidth(220);
