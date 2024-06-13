@@ -153,7 +153,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness = new QLineEdit(  this );    le_zeno_surface_thickness->setObjectName( "Zeno_Skin_Thickness Line Edit" );
-   le_zeno_surface_thickness->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness));
+   le_zeno_surface_thickness->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness));
    le_zeno_surface_thickness->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness );
@@ -161,7 +161,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    connect(le_zeno_surface_thickness, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness(const QString &)));
 
    cb_zeno_surface_thickness_from_rg = new QCheckBox( this );
-   cb_zeno_surface_thickness_from_rg->setText( us_tr( "Compute surface thickness from Rg:") );
+   cb_zeno_surface_thickness_from_rg->setText( us_tr( "Compute Skin Thickness from sigmoid fit of Rg-dependence:") );
    cb_zeno_surface_thickness_from_rg->setEnabled( true );
    cb_zeno_surface_thickness_from_rg->setChecked( (*hydro).zeno_surface_thickness_from_rg );
    cb_zeno_surface_thickness_from_rg->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -169,42 +169,42 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( cb_zeno_surface_thickness_from_rg );
    connect( cb_zeno_surface_thickness_from_rg, SIGNAL( clicked() ), this, SLOT( set_zeno_surface_thickness_from_rg() ) );
 
-   lbl_zeno_surface_thickness_from_rg_a = new QLabel(us_tr("Surface thickness from Rg a:"), this );
+   lbl_zeno_surface_thickness_from_rg_a = new QLabel(us_tr("Skin Thickness from sigmoid fit of Rg-dep. coeff. a:"), this );
    lbl_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_thickness_from_rg_a->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_thickness_from_rg_a );
    lbl_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_a = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_a->setObjectName( "Zeno_Skin_Thickness_From_Rg_A Line Edit" );
-   le_zeno_surface_thickness_from_rg_a->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness_from_rg_a));
+   le_zeno_surface_thickness_from_rg_a->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness_from_rg_a));
    le_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_a->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_a );
    le_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness_from_rg_a, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_a(const QString &)));
 
-   lbl_zeno_surface_thickness_from_rg_b = new QLabel(us_tr("Surface thickness from Rg b:"), this );
+   lbl_zeno_surface_thickness_from_rg_b = new QLabel(us_tr("Skin Thickness from sigmoid fit of Rg-dep. coeff. b:"), this );
    lbl_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_thickness_from_rg_b->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_thickness_from_rg_b );
    lbl_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_b = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_b->setObjectName( "Zeno_Skin_Thickness_From_Rg_B Line Edit" );
-   le_zeno_surface_thickness_from_rg_b->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness_from_rg_b));
+   le_zeno_surface_thickness_from_rg_b->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness_from_rg_b));
    le_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_b->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_b );
    le_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness_from_rg_b, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_b(const QString &)));
 
-   lbl_zeno_surface_thickness_from_rg_c = new QLabel(us_tr("Surface thickness from Rg c:"), this );
+   lbl_zeno_surface_thickness_from_rg_c = new QLabel(us_tr("Skin Thickness from sigmoid fit of Rg-dep. coeff. c:"), this );
    lbl_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_thickness_from_rg_c->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_thickness_from_rg_c );
    lbl_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_c = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
-   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness_from_rg_c));
+   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness_from_rg_c));
    le_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_c->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_c );
