@@ -23,7 +23,7 @@ US_Hydrodyn_Hydro_Zeno::US_Hydrodyn_Hydro_Zeno(struct hydro_options *hydro,
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO  Hydrodynamic Calculation Zeno Options"));
-   this->setMinimumWidth(800);
+   this->setMinimumWidth(1000);
    setupGUI();
    update_enables();
    global_Xpos += 30;
