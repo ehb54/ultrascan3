@@ -6638,26 +6638,6 @@ void US_Hydrodyn_Saxs::mals()
       US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->mals_window );
       ((US_Hydrodyn *)us_hydrodyn)->mals_window->show();
    }
-
-   ((US_Hydrodyn *)us_hydrodyn)->mals_window->disable_all();
-   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
-   {
-      if ( !( i % 500 ) ) {
-         qDebug() << "mals plotting curve " << i;
-      }
-      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
-      {
-         ((US_Hydrodyn *)us_hydrodyn)->mals_window->add_plot( qsl_plotted_iq_names[ i ],
-                                                                   plotted_q[ i ],
-                                                                   plotted_I[ i ],
-                                                                   plotted_I_error[ i ] );
-      } else {
-         ((US_Hydrodyn *)us_hydrodyn)->mals_window->add_plot( qsl_plotted_iq_names[ i ],
-                                                                   plotted_q[ i ],
-                                                                   plotted_I[ i ] );
-      }
-   }
-   ((US_Hydrodyn *)us_hydrodyn)->mals_window->update_enables();
 }
 
 void US_Hydrodyn_Saxs::mals_saxs()
@@ -6684,26 +6664,6 @@ void US_Hydrodyn_Saxs::mals_saxs()
       US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window );
       ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->show();
    }
-
-   ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->disable_all();
-   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
-   {
-      if ( !( i % 500 ) ) {
-         qDebug() << "mals_saxs plotting curve " << i;
-      }
-      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
-      {
-         ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->add_plot( qsl_plotted_iq_names[ i ],
-                                                                   plotted_q[ i ],
-                                                                   plotted_I[ i ],
-                                                                   plotted_I_error[ i ] );
-      } else {
-         ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->add_plot( qsl_plotted_iq_names[ i ],
-                                                                   plotted_q[ i ],
-                                                                   plotted_I[ i ] );
-      }
-   }
-   ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->update_enables();
 }
 
 
