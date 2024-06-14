@@ -273,12 +273,14 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
       //! \returns        Status of import (true->imported OK)
       bool    import_data   ( const int, const int );
+      bool    import_data_auto   ( const int, const int, bool& );
 
       //! \brief Reimport ScanData from the postgres database
       //! \param runId    Run ID to match
       //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
       //! \returns        Status of reimport (false->reimport not needed)
       bool    reimport_data ( const int, const int );
+      bool    reimport_data_auto ( const int, const int, bool& );
 
       //! \brief Load XPN internal variables from loaded rawDatas
       //! \param allData Vector of loaded rawDatas

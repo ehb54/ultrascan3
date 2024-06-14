@@ -1458,7 +1458,7 @@ bool US_XpnDataViewer::check_sysdata_connection( void )
   //Link *link1 = new Link();
   bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
   
-  qDebug() << "status_sys_data: " << status_sys_data;
+  qDebug() << "in [check_sysdata_connection]:  status_sys_data: " << status_sys_data;
 
   //US_Sleep::msleep( 400 );
 
@@ -3030,47 +3030,48 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
   
    in_reload_all_data   = true;          // Flag in the midst of a reload
 
-   //Here, check if connection to Optima possibly broken:
-   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0  )
-     {
-       //check connection to Optima: if at this point statusExp=0 due to lost connection
-       //then, stop everything && return to the Run Manager
+   
+   // //Here, check if connection to Optima possibly broken:
+   // if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0  )
+   //   {
+   //     //check connection to Optima: if at this point statusExp=0 due to lost connection
+   //     //then, stop everything && return to the Run Manager
 
-       /*
-       Link *link1 = new Link( xpndesc );                                                // THIS DID NOT WORK...
-       bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
-       qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
+   //     /*
+   //     Link *link1 = new Link( xpndesc );                                                // THIS DID NOT WORK...
+   //     bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
+   //     qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
               
-       bool combined_check = status_sys_data & link1->connected_itself;
-       link1->disconnectFromServer();
-       qDebug() << "in [retrieve_xpn_raw_auto()]: status_sys_data & connected_itself = ? "
-		<< status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
-       delete link1;                                                                      // THIS DID NOT WORK...
-       */
+   //     bool combined_check = status_sys_data & link1->connected_itself;
+   //     link1->disconnectFromServer();
+   //     qDebug() << "in [retrieve_xpn_raw_auto()]: status_sys_data & connected_itself = ? "
+   // 		<< status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+   //     delete link1;                                                                      // THIS DID NOT WORK...
+   //     */
        
-       //alternative  -- TO BE tested further 
-       US_XpnData* xpn_data11 = new US_XpnData();
-       bool o_connected           = xpn_data11->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
-       xpn_data11->close();
-       delete xpn_data11;
-       //end of checking connection to Optima sys_data server    
+   //     //alternative  -- TO BE tested further 
+   //     US_XpnData* xpn_data11 = new US_XpnData();
+   //     bool o_connected           = xpn_data11->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+   //     xpn_data11->close();
+   //     delete xpn_data11;
+   //     //end of checking connection to Optima sys_data server    
        
-       //if ( !combined_check )
-       if ( !o_connected )
-	 {
-	   timer_all_data_avail->stop();
-	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-	   qDebug() << "in [retrieve_xpn_raw_auto()]: stop timer_all_data_avail";
-	   qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0 && NO Coneection to Optima!";
-	   in_reload_all_data  = false;
-	   link-> disconnected_itself = true; // do we need to set it explicitly?
-	   reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
-	   qApp->processEvents();
+   //     //if ( !combined_check )
+   //     if ( !o_connected )
+   // 	 {
+   // 	   timer_all_data_avail->stop();
+   // 	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+   // 	   qDebug() << "in [retrieve_xpn_raw_auto()]: stop timer_all_data_avail";
+   // 	   qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0 && NO Coneection to Optima!";
+   // 	   in_reload_all_data  = false;
+   // 	   link-> disconnected_itself = true; // do we need to set it explicitly?
+   // 	   reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
+   // 	   qApp->processEvents();
 	   
-	   return;
-	 }
-     }
-   // end checking connection to Optima lost
+   // 	   return;
+   // 	 }
+   //   }
+   // // end checking connection to Optima lost
    
   
    QString drDesc    = "";
@@ -3170,7 +3171,27 @@ DbgLv(1) << "RDa:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
  //ALEXEY: maybe put in_reload_check_sysdata = true; and then false (after xpn_data->import_data( iRunId, scanmask ); )
  //in_reload_check_sysdata = true; //ALEXEY
 
-   xpn_data->import_data( iRunId, scanmask );                               // ALEXEY <-- actual data retreiving
+//xpn_data->import_data( iRunId, scanmask );                               // ALEXEY <-- actual data retreiving
+
+   bool o_connected = true;
+   xpn_data->import_data_auto( iRunId, scanmask, o_connected );                               // ALEXEY <-- actual data retreiving
+
+   //IF no connection to PostGreSQL ////////////////////////////////////////////////////
+   if ( !o_connected )
+     {
+       timer_all_data_avail->stop();
+       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       qDebug() << "in [retrieve_xpn_raw_auto()]: stop timer_all_data_avail";
+       qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0 && NO Coneection to Optima!";
+       in_reload_all_data  = false;
+       link-> disconnected_itself = true; // do we need to set it explicitly?
+       reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
+       qApp->processEvents();
+       
+       return;
+     }
+   // END check if PostGreSQL connection //////////////////////////////////////////////////
+   
 
    int ntsrows        = xpn_data->countOf( "scan_rows" );
 DbgLv(1) << "RDa:     ntsrows" << ntsrows;
@@ -5106,9 +5127,27 @@ QDateTime sttime=QDateTime::currentDateTime();
    qApp->processEvents();
 
    // Import any newly added Scan Data records
-   bool upd_ok        =  xpn_data->reimport_data( iRunId, scanmask );
+   bool o_connected   = true;
+   bool upd_ok        =  xpn_data->reimport_data_auto( iRunId, scanmask, o_connected );
    /* udp_ok -> false when ALSO conneciton to PostgresSql lost !!!********************/
+   qDebug() << "in [reloadData_auto()]: o_connected: " << o_connected;
    
+   //IF no connection to PostGreSQL
+   if ( !o_connected )
+     {
+       timer_data_reload->stop();
+       disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       qDebug() << "in [reloadData_auto()]: Stop auto-reload timer: " ;
+       qDebug() << "in [reloadData_auto()]: statusExp == 0 && NO Coneection to Optima!";
+       in_reload_auto   = false;
+       link-> disconnected_itself = true; // do we need to set it explicitly?
+       reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
+       qApp->processEvents();
+       
+       return;
+     }
+
+   //then, proceed as before: check if #scans changed etc.
    if ( ! upd_ok )                               
    {  // No change in data scans:  report inability to update
 
@@ -5143,62 +5182,64 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      in_reload_auto   = false; 
 	      return;
 	    }
-	  
-	  if ( statusExp == 0 ) // If there is still connection, then exp. is truly aborted!!
-	    {
-	      //check connection to Optima: if at this point statusExp=0 due to lost connection
-	      //then, stop everything && return to the Run Manager
 
-	      /*
-	      Link *link1 = new Link( xpndesc );                                                    // --- THIS DID NOT WORK ??
-	      bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
-	      qDebug() << "in [reloadData_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
+	  if ( statusExp == 0 )
+	    experimentAborted  = true;
+	  
+	  // if ( statusExp == 0 ) // If there is still connection, then exp. is truly aborted!!
+	  //   {
+	  //     //check connection to Optima: if at this point statusExp=0 due to lost connection
+	  //     //then, stop everything && return to the Run Manager
+
+	  //     /*
+	  //     Link *link1 = new Link( xpndesc );                                                    // --- THIS DID NOT WORK ??
+	  //     bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
+	  //     qDebug() << "in [reloadData_auto()]: statusExp == 0; status_sys_data: " << status_sys_data;
 	      	      
-	      bool combined_check = status_sys_data & link1->connected_itself;
-	      link1->disconnectFromServer();
-	      qDebug() << "in [reloadData_auto()]: status_sys_data & connected_itself = ? "
-		       << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
-	      delete link1;                                                                         //  --- THIS DID NOT WORK ??
-	      */
+	  //     bool combined_check = status_sys_data & link1->connected_itself;
+	  //     link1->disconnectFromServer();
+	  //     qDebug() << "in [reloadData_auto()]: status_sys_data & connected_itself = ? "
+	  // 	       << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+	  //     delete link1;                                                                         //  --- THIS DID NOT WORK ??
+	  //     */
 
-	      // alternative  -- TO BE tested further
-	      QString xpndesc11     = currentInstrument[ "name" ];
-	      QString xpnhost11     = currentInstrument[ "optimaHost" ];
-	      QString xpnport11     = currentInstrument[ "optimaPort" ];
-	      QString xpnname11     = currentInstrument[ "optimaDBname" ];
-	      QString xpnuser11     = currentInstrument[ "optimaDBusername" ];
-	      QString xpnpasw11     = currentInstrument[ "optimaDBpassw" ];
-	      QString xpnmsgPort11  = currentInstrument[ "msgPort" ];
+	  //     // alternative  -- TO BE tested further
+	  //     QString xpndesc11     = currentInstrument[ "name" ];
+	  //     QString xpnhost11     = currentInstrument[ "optimaHost" ];
+	  //     QString xpnport11     = currentInstrument[ "optimaPort" ];
+	  //     QString xpnname11     = currentInstrument[ "optimaDBname" ];
+	  //     QString xpnuser11     = currentInstrument[ "optimaDBusername" ];
+	  //     QString xpnpasw11     = currentInstrument[ "optimaDBpassw" ];
+	  //     QString xpnmsgPort11  = currentInstrument[ "msgPort" ];
 
-	      qDebug() << "DB parms: " << xpndesc11 << xpnhost11 << xpnport11 << xpnname11 << xpnuser11 << xpnpasw11 << xpnmsgPort11;
+	  //     qDebug() << "DB parms: " << xpndesc11 << xpnhost11 << xpnport11 << xpnname11 << xpnuser11 << xpnpasw11 << xpnmsgPort11;
 	      
-	      US_XpnData* xpn_data11 = new US_XpnData();
-	      bool o_connected       = xpn_data11->connect_data( xpnhost11, xpnport11.toInt(), xpnname11, xpnuser11,  xpnpasw11 );
-	      xpn_data11->close();
-	      delete xpn_data11;
+	  //     US_XpnData* xpn_data11 = new US_XpnData();
+	  //     bool o_connected       = xpn_data11->connect_data( xpnhost11, xpnport11.toInt(), xpnname11, xpnuser11,  xpnpasw11 );
+	  //     xpn_data11->close();
+	  //     delete xpn_data11;
 
-	      qDebug() << "DB connection, o_connected ?  -- " << o_connected;
-	      //end of checking connection to Optima sys_data server    
+	  //     qDebug() << "DB connection, o_connected ?  -- " << o_connected;
+	  //     //end of checking connection to Optima sys_data server    
 
-	      //if ( !combined_check )
-	      if ( !o_connected )
-		{
-		  timer_data_reload->stop();
-		  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-		  qDebug() << "in [reloadData_auto()]: Stop auto-reload timer: " ;
-		  qDebug() << "in [reloadData_auto()]: statusExp == 0 && NO Coneection to Optima!";
-		  in_reload_auto   = false;
-		  link-> disconnected_itself = true; // do we need to set it explicitly?
-		  reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
-		  qApp->processEvents();
+	  //     //if ( !combined_check )
+	  //     if ( !o_connected )
+	  // 	{
+	  // 	  timer_data_reload->stop();
+	  // 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  // 	  qDebug() << "in [reloadData_auto()]: Stop auto-reload timer: " ;
+	  // 	  qDebug() << "in [reloadData_auto()]: statusExp == 0 && NO Coneection to Optima!";
+	  // 	  in_reload_auto   = false;
+	  // 	  link-> disconnected_itself = true; // do we need to set it explicitly?
+	  // 	  reset_liveupdate_panel();          //assumes link-> disconnected_itself = true!!!
+	  // 	  qApp->processEvents();
 		  
-		  return;
-		}
-	      else
-		experimentAborted  = true;
-	    }
+	  // 	  return;
+	  // 	}
+	  //     else
+	  // 	experimentAborted  = true;
+	  //   }
 
-	  
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 
@@ -5227,9 +5268,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      return;
 	    }
 	}
-
-      
-   
+         
        in_reload_auto   = false;         // Flag no longer in the midst of reload
        
        qDebug() << "Exit from reloaData with no change!";

@@ -600,6 +600,73 @@ DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
    return status;
 }
 
+// Import XPN data from a selected database server [for autoflow]
+bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_conn )
+{
+   bool status   = true;
+   ntscan        = 0;
+   ntsrow        = 0;
+
+   qDebug() << "in [import_data_auto]: Init o_Conn status: " << o_conn;
+   
+   if ( ! dbxpn.open() )
+   {
+     o_conn = false;
+     qDebug() << "XPN: import_data_auto: !dbxpn.open() !!! runId, scanMask, o_conn -- "
+	      << runId << scanMask << o_conn;
+     return false;
+   }
+
+   tAsdata.clear();     // Clear table value vectors
+   tFsdata.clear();
+   tIsdata.clear();
+   tWsdata.clear();
+   tSydata.clear();
+   tCrprof.clear();
+   bool ascnf    = scanMask & 1;
+   bool fscnf    = scanMask & 2;
+   bool iscnf    = scanMask & 4;
+   bool wscnf    = scanMask & 8;
+
+   arows         = 0;
+   frows         = 0;
+   irows         = 0;
+   wrows         = 0;
+
+   // Scan and build data for System Status Data
+   int srows     = scan_xpndata( runId, 'S' );
+
+   if ( ascnf )
+   {  // Scan and build data for Absorbance Scan Data
+      arows      = scan_xpndata( runId, 'A' );
+   }
+
+   if ( fscnf )
+   {  // Scan and build data for Fluorescence Scan Data
+      frows      = scan_xpndata( runId, 'F' );
+   }
+
+   if ( iscnf )
+   {  // Scan and build data for Interference Scan Data
+      irows      = scan_xpndata( runId, 'I' );
+   }
+
+   if ( wscnf )
+   {  // Scan and build data for Wavelength Scan Data
+      wrows      = scan_xpndata( runId, 'W' );
+   }
+
+   // Scan and build data for Centrifuge Run Profile
+   int crows     = scan_xpndata( runId, 'C' );
+DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
+   << arows << frows << irows << wrows << srows << crows;
+
+   ntsrow        = arows + frows + irows + wrows;
+
+   return status;
+}
+
+
 // Re-import XPN data from a selected database server
 bool US_XpnData::reimport_data( const int runId, const int scanMask )
 {
@@ -607,8 +674,8 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
 
    if ( ! dbxpn.open() )
    {
-     qDebug() << "XPN: reimport_data: !dbxpn.open() !!! runID, scanMask -- "
-	      << runID << scanMask;
+     qDebug() << "XPN: reimport_data: !dbxpn.open() !!! runId, scanMask -- "
+	      << runId << scanMask;
      return false;
    }
 
@@ -668,6 +735,81 @@ DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
 
    return status;
 }
+
+
+// Re-import XPN data from a selected database server [for autoflow]
+bool US_XpnData::reimport_data_auto( const int runId, const int scanMask, bool& o_conn )
+{
+   bool status   = false;
+
+   qDebug() << "in [reimport_data_auto]: Init o_Conn status: " << o_conn;
+   
+   if ( ! dbxpn.open() )
+   {
+     o_conn = false;
+     qDebug() << "XPN: reimport_data_auto: !dbxpn.open() !!! runId, scanMask, o_conn -- "
+	      << runId << scanMask << o_conn;
+     
+     return false;
+   }
+
+   int oarows    = tAsdata.count();     // Get old row counts
+   int ofrows    = tFsdata.count();
+   int oirows    = tIsdata.count();
+   int owrows    = tWsdata.count();
+   if ( oarows > 1  &&  tAsdata[ 0 ].radPath != tAsdata[ 1 ].radPath )
+      oarows       /= 2;
+   if ( ofrows > 0  &&  tFsdata[ 0 ].radPath != tFsdata[ 1 ].radPath )
+      ofrows       /= 2;
+   if ( owrows > 0  &&  tWsdata[ 0 ].radPath != tWsdata[ 1 ].radPath )
+      owrows       /= 2;
+   bool ascnf    = scanMask & 1;
+   bool fscnf    = scanMask & 2;
+   bool iscnf    = scanMask & 4;
+   bool wscnf    = scanMask & 8;
+
+   int arows     = 0;
+   int frows     = 0;
+   int irows     = 0;
+   int wrows     = 0;
+
+   if ( ascnf )
+   {  // Scan and update data for Absorbance Scan Data
+      arows      = update_xpndata( runId, 'A' );
+      status     = ( status  ||  arows > oarows );
+DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
+ qDebug() << "XpDa: rei_dat: arows oarows status" << arows << oarows << status; 
+   }
+
+   if ( fscnf )
+   {  // Scan and update data for Fluorescence Scan Data
+      frows      = update_xpndata( runId, 'F' );
+      status     = ( status  ||  frows > ofrows );
+   }
+
+   if ( iscnf )
+   {  // Scan and update data for Interference Scan Data
+      irows      = update_xpndata( runId, 'I' );
+      status     = ( status  ||  irows > oirows );
+   }
+
+   if ( wscnf )
+   {  // Scan and update data for Wavelength Scan Data
+      wrows      = update_xpndata( runId, 'W' );
+      status     = ( status  ||  wrows > owrows );
+   }
+
+DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+ qDebug() << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+//*DEBUG*
+//status=true;
+//*DEBUG*
+
+   return status;
+}
+
 
 // Query and save data for a [AIFW]ScanData or [SC] table
 int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
