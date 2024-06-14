@@ -1,4 +1,4 @@
-//! \brief us_vector.h
+//! \file us_vector.h
 #ifndef US_VECTOR_H
 #define US_VECTOR_H
 

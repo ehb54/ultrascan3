@@ -489,11 +489,13 @@ void US_QueryRmsd::fill_table(int){
    int rowht        = fm->height() + 2;
    tw_rmsd->clearContents();
    tw_rmsd->setRowCount(allData.size());
-
+   tw_rmsd->setSortingEnabled( false );
    selIndex.clear();
    int n = 0;
+   double max_rmsd = 0;
    for (int i = 0; i < allData.size(); i++){
       double rmsd = allData.at(i).rmsd;
+      max_rmsd = qMax(max_rmsd, rmsd);
       QString edit = allData.at(i).edit;
       QString analysis = allData.at(i).analysis;
       QString method = allData.at(i).method;
@@ -547,14 +549,17 @@ void US_QueryRmsd::fill_table(int){
    tw_rmsd->setRowCount(n);
    tw_rmsd->verticalHeader()->setFont(tw_font);
    tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-   tw_rmsd->setSortingEnabled( true );
-   tw_rmsd->sortItems(4, Qt::DescendingOrder);
+   
    if (threshold == -1){
-      DoubleTableWidgetItem *item = static_cast<DoubleTableWidgetItem*>(tw_rmsd->item(0, 4));
-      threshold = item->get_value();
+      threshold = max_rmsd;
       le_threshold->setText(QString::number(threshold));
    }
    highlight();
+   
+   tw_rmsd->setSortingEnabled( true );
+   if ( hheader->sortIndicatorSection() > 4 ) {
+      hheader->setSortIndicator( 4, Qt::DescendingOrder );
+   }
 
    QString fname("RMSD_%1_%2_%3_%4-%5-%6.dat");
    le_file->setText(fname.arg(cb_edit->currentText(), cb_analysis->currentText(),

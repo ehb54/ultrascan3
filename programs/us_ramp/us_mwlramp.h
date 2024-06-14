@@ -1,3 +1,4 @@
+//! \file us_mwlramp.h
 #ifndef US_MWLRAMP_H
 #define US_MWLRAMP_H
 

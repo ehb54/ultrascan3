@@ -27,7 +27,7 @@ class US_Edit : public US_Widgets
 	 US_Edit(QString auto_mode);
 
 	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
-		  QString  workingDir, int currChInd );
+		  QString  workingDir, int currChInd, int plotind );
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
@@ -163,7 +163,9 @@ class US_Edit : public US_Widgets
 
       QVector < int > iwavl_edit_ref;
       QVector < int > iwavl_edit_ref_index;
-      QVector < int > triple_plot_first_time; 
+      QVector < int > triple_plot_first_time;
+
+      QMap < QString, bool > edited_triples_abde;
       
       QStringList        trip_rpms;
       QStringList        celchns;
@@ -318,6 +320,7 @@ class US_Edit : public US_Widgets
       QString ProtocolName_auto;
       int     autoflowID_passed;
       int     autoflowStatusID;
+      QString autoflow_expType;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
@@ -455,6 +458,8 @@ class US_Edit : public US_Widgets
       void write_triple      ( void );
       void write_mwl         ( void );
 
+      void setUnsetSaveBttn_abde( void );
+  
       void manual_edit_auto  ( void );
       void write_auto        ( void );
       void write_triple_auto ( int );

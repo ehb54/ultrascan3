@@ -1,3 +1,5 @@
+//! \file us_eqreporter.h
+//! \brief Contains the declaration of the US_EqReporter class and its members.
 #ifndef US_EQREPORTER_H
 #define US_EQREPORTER_H
 
@@ -16,35 +18,76 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+//! \class US_EqReporter
+//! \brief A class for generating reports on equilibrium fitting in UltraScan.
 class US_EqReporter : public QObject
 {
-	Q_OBJECT
-	
-	public:
-		US_EqReporter( QVector< US_DataIO::EditedData >&,
-            QVector< ScanEdit >&, QVector< EqScanFit >&, EqRunFit&,
-            QWidget* = 0 );
+    Q_OBJECT
 
-      void    scan_diagnostics();
-      bool    check_scan_fit( int );
-      QString fit_report( FitCtrlPar&, bool, bool, QString& );
+    public:
+        //! \brief Constructor for the US_EqReporter class.
+        //! \param data_list Reference to the vector of edited data.
+        //! \param scan_edits Reference to the vector of scan edits.
+        //! \param scan_fits Reference to the vector of scan fits.
+        //! \param run_fit Reference to the run fit parameters structure.
+        //! \param parent Pointer to the parent widget.
+        US_EqReporter(QVector< US_DataIO::EditedData >& data_list,
+                      QVector< ScanEdit >& scan_edits, QVector< EqScanFit >& scan_fits, EqRunFit& run_fit,
+                      QWidget* parent = 0);
 
-	private:
-      QVector< US_DataIO::EditedData >&   dataList;
-      QVector< ScanEdit >&                scedits;
-      QVector< EqScanFit >&               scanfits;
-      EqRunFit&                           runfit;
-      QWidget*                            wparent;
+        //! \brief Perform scan diagnostics.
+        void scan_diagnostics();
 
-      int      dbg_level;
+        //! \brief Check the fit of a scan.
+        //! \param scan_index The index of the scan to check.
+        //! \return True if the fit is good, false otherwise.
+        bool check_scan_fit(int scan_index);
 
-      QString  asters;
+        //! \brief Generate a fit report.
+        //! \param fit_params Reference to the fit control parameters.
+        //! \param include_scan_info Boolean to include scan info in the report.
+        //! \param include_params Boolean to include parameters in the report.
+        //! \param report String to hold the generated report.
+        //! \return The fit report as a string.
+        QString fit_report(FitCtrlPar& fit_params, bool include_scan_info, bool include_params, QString& report);
 
-   private slots:
-      int     index_radius(   US_DataIO::EditedData*, double );
-      QString centerInLine(   const QString&, int, bool, const QChar );
-      QString scanInfoHeader( int, int );
-      int     maxLineWidth  ( QFontMetrics& fm, const QString& );
+    private:
+        QVector< US_DataIO::EditedData >&   dataList;  //!< Reference to the vector of edited data.
+        QVector< ScanEdit >&                scedits;   //!< Reference to the vector of scan edits.
+        QVector< EqScanFit >&               scanfits;  //!< Reference to the vector of scan fits.
+        EqRunFit&                           runfit;    //!< Reference to the run fit parameters structure.
+        QWidget*                            wparent;   //!< Pointer to the parent widget.
+
+        int      dbg_level;  //!< Debug level.
+
+        QString  asters;     //!< Asterisk string for formatting.
+
+    private slots:
+        //! \brief Get the index of a radius in edited data.
+        //! \param edited_data Pointer to the edited data.
+        //! \param radius The radius value.
+        //! \return The index of the radius.
+        int index_radius(US_DataIO::EditedData* edited_data, double radius);
+
+        //! \brief Center a string in a line.
+        //! \param text The text to center.
+        //! \param width The width of the line.
+        //! \param is_header Boolean indicating if the text is a header.
+        //! \param fill_char The character to fill the line with.
+        //! \return The centered text as a string.
+        QString centerInLine(const QString& text, int width, bool is_header, const QChar fill_char);
+
+        //! \brief Get the header information for a scan.
+        //! \param scan_number The scan number.
+        //! \param num_scans The total number of scans.
+        //! \return The scan header information as a string.
+        QString scanInfoHeader(int scan_number, int num_scans);
+
+        //! \brief Get the maximum line width.
+        //! \param fm Reference to the font metrics.
+        //! \param text The text to measure.
+        //! \return The maximum line width.
+        int maxLineWidth(QFontMetrics& fm, const QString& text);
 };
-#endif
 
+#endif

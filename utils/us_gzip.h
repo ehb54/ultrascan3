@@ -1,3 +1,4 @@
+//! \file us_gzip.h
 #ifndef US_GZIP_H
 #define US_GZIP_H
 
