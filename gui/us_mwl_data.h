@@ -1,3 +1,4 @@
+//! \file us_mwl_data.h
 #ifndef US_MWL_DATA_H
 #define US_MWL_DATA_H
 

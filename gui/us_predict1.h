@@ -1,3 +1,4 @@
+//! \file us_predict1.h
 #ifndef US_PREDICT1_H
 #define US_PREDICT1_H
 

@@ -1,3 +1,4 @@
+//! \file us_reporter.h
 #ifndef US_REPORTER_H
 #define US_REPORTER_H
 
@@ -14,114 +15,248 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+/**
+ * @class US_Reporter
+ * @brief The US_Reporter class provides a user interface for generating and managing reports.
+ */
 class US_Reporter : public US_Widgets
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_Reporter();
+    public:
+        /**
+         * @brief Constructor for US_Reporter.
+         */
+        US_Reporter();
 
-      class DataDesc
-      {
-         public:
-         int       linen;             // line number
-         int       level;             // tree level (0,...)
-         int       checkState;        // check state flag (0,1,2)
-         int       children;          // number of children
-         QString   label;             // entry label
-         QString   type;              // type of entry (Run, Data, ...)
-         QString   filename;          // file name
-         QString   filepath;          // full file path name
-         QString   runid;             // run ID
-         QString   triple;            // triple (e.g., "2/A/280")
-         QString   analysis;          // analysis
-         QString   lastmodDate;       // file last modification date/time
-         QString   description;       // triple data set description
-      };
+        /**
+         * @class DataDesc
+         * @brief Class to describe data entries in the report.
+         */
+        class DataDesc
+        {
+        public:
+            int       linen;             //!< Line number
+            int       level;             //!< Tree level (0,...)
+            int       checkState;        //!< Check state flag (0,1,2)
+            int       children;          //!< Number of children
+            QString   label;             //!< Entry label
+            QString   type;              //!< Type of entry (Run, Data, ...)
+            QString   filename;          //!< File name
+            QString   filepath;          //!< Full file path name
+            QString   runid;             //!< Run ID
+            QString   triple;            //!< Triple (e.g., "2/A/280")
+            QString   analysis;          //!< Analysis
+            QString   lastmodDate;       //!< File last modification date/time
+            QString   description;       //!< Triple data set description
+        };
 
-   private:
+    private:
+        QTreeWidget*        tw_recs;    //!< Tree widget
 
-      QTreeWidget*        tw_recs;    // tree widget
+        DataDesc            cdesc;      //!< Current record description
+        QVector<DataDesc>   adescs;     //!< All descriptions
 
-      DataDesc            cdesc;      // current record description
-      QVector< DataDesc > adescs;     // all descriptions
+        QMap<QString, QString> appmap;  //!< Applications name, label map
+        QMap<QString, QString> extmap;  //!< Extensions name, label map
+        QMap<QString, QString> rptmap;  //!< Reports name, label map
 
-      QMap< QString, QString > appmap; // applications name,label map
-      QMap< QString, QString > extmap; // applications name,label map
-      QMap< QString, QString > rptmap; // reports name,label map
+        QList<int>          se_rptrows; //!< List of selected report rows
 
-      QList< int >        se_rptrows;  // List of selected report rows
+        QStringList         sl_runids;  //!< List of existing report runIDs
+        QStringList         se_runids;  //!< List of selected runIDs
+        QStringList         se_reports; //!< List of selected reports
 
-      QStringList         sl_runids;   // List of existing report runIDs
-      QStringList         se_runids;   // List of selected runIDs
-      QStringList         se_reports;  // List of selected reports
+        US_Help       showHelp;         //!< Help display object
 
-      US_Help       showHelp;
+        US_DB2*       db;               //!< Database connection
 
-      US_DB2*       db;
+        QComboBox*    cb_runids;        //!< Combo box for run IDs
 
-      QComboBox*    cb_runids;
+        QPushButton*  pb_view;          //!< View button
+        QPushButton*  pb_save;          //!< Save button
+        QPushButton*  pb_help;          //!< Help button
+        QPushButton*  pb_close;         //!< Close button
 
-      QPushButton*  pb_view;
-      QPushButton*  pb_save;
-      QPushButton*  pb_help;
-      QPushButton*  pb_close;
+        int           ntrows;           //!< Number of tree rows
+        int           ntcols;           //!< Number of tree columns
+        int           nsrpts;           //!< Number of selected reports
+        int           nsruns;           //!< Number of selected runs
+        int           nstrips;          //!< Number of selected triples
+        int           nshtmls;          //!< Number of selected HTML files
+        int           nsplots;          //!< Number of selected plots
+        int           dbg_level;        //!< Debug level
 
-      int           ntrows;
-      int           ntcols;
-      int           nsrpts;
-      int           nsruns;
-      int           nstrips;
-      int           nshtmls;
-      int           nsplots;
-      int           dbg_level;
+        bool          rbtn_click;       //!< Radio button click flag
+        bool          change_tree;      //!< Change tree flag
+        bool          changed;          //!< Changed flag
+        bool          load_ok;          //!< Load OK flag
+        bool          ld_wait;          //!< Load wait flag
 
-      bool          rbtn_click;
-      bool          change_tree;
-      bool          changed;
-      bool          load_ok;
-      bool          ld_wait;
+        QString       run_name;         //!< Run name
+        QString       investig;         //!< Investigation
+        QString       pagedir;          //!< Page directory
+        QString       pagepath;         //!< Page path
+        QString       ppdfpath;         //!< PDF path
+        QString       hsclogo;          //!< HS logo
+        QString       becklogo;         //!< Beckman logo
+        QString       us3logo;          //!< US3 logo
+        QString       archdir;          //!< Archive directory
 
-      QString       run_name;
-      QString       investig;
-      QString       pagedir;
-      QString       pagepath;
-      QString       ppdfpath;
-      QString       hsclogo;
-      QString       becklogo;
-      QString       us3logo;
-      QString       archdir;
+    private slots:
+        /**
+         * @brief Slot for clicking on an item in the tree widget.
+         * @param item The clicked item
+         */
+        void clickedItem(QTreeWidgetItem* item);
 
+        /**
+         * @brief Slot for changing an item in the tree widget.
+         * @param item The changed item
+         * @param column The column of the changed item
+         */
+        void changedItem(QTreeWidgetItem* item, int column);
 
-   private slots:
+        /**
+         * @brief Slot for showing context menu on row right-click.
+         * @param item The clicked item
+         */
+        void row_context(QTreeWidgetItem* item);
 
-      void clickedItem   ( QTreeWidgetItem* );
-      void changedItem   ( QTreeWidgetItem*, int );
-      void row_context   ( QTreeWidgetItem* );
-      void build_runids  ( void );
-      void new_runid     ( int  );
-      void build_descs   ( QString&, int& );
-      void build_map     ( QString, QMap< QString, QString >& );
-      void build_tree    ( void );
-      void count_children( DataDesc*, int&, int& );
-      void state_children( DataDesc*, int& );
-      void state_parents ( DataDesc*, int& );
-      void mark_checked  ( void );
-      void view          ( void );
-      void save          ( void );
-      bool write_report  ( void );
-      bool count_reports ( void );
-      void item_view     ( void );
-      void item_show     ( void );
-      void item_save     ( void );
-      void load_profile  ( void );
-      void save_profile  ( void );
-      void sync_db       ( void );
-      void copy_logos    ( QString );
-      void write_pdf     ( void );
-      QString pad_line   ( const QString );
+        /**
+         * @brief Build the list of run IDs.
+         */
+        void build_runids(void);
 
-      void help          ( void )
-      { showHelp.show_help( "reporter.html" ); };
+        /**
+         * @brief Slot for selecting a new run ID.
+         * @param index The index of the selected run ID
+         */
+        void new_runid(int index);
+
+        /**
+         * @brief Build the descriptions for the specified run ID.
+         * @param runid The run ID
+         * @param level The level of the tree
+         */
+        void build_descs(QString& runid, int& level);
+
+        /**
+         * @brief Build a map for the specified type.
+         * @param type The type of entries
+         * @param map The map to build
+         */
+        void build_map(QString type, QMap<QString, QString>& map);
+
+        /**
+         * @brief Build the tree structure.
+         */
+        void build_tree(void);
+
+        /**
+         * @brief Count the children of a data description.
+         * @param desc The data description
+         * @param count The count of children
+         * @param level The level in the tree
+         */
+        void count_children(DataDesc* desc, int& count, int& level);
+
+        /**
+         * @brief Update the state of children items.
+         * @param desc The data description
+         * @param state The state to set
+         */
+        void state_children(DataDesc* desc, int& state);
+
+        /**
+         * @brief Update the state of parent items.
+         * @param desc The data description
+         * @param state The state to set
+         */
+        void state_parents(DataDesc* desc, int& state);
+
+        /**
+         * @brief Mark checked items.
+         */
+        void mark_checked(void);
+
+        /**
+         * @brief View the selected item.
+         */
+        void view(void);
+
+        /**
+         * @brief Save the selected item.
+         */
+        void save(void);
+
+        /**
+         * @brief Write the report to a file.
+         * @return True if successful, false otherwise
+         */
+        bool write_report(void);
+
+        /**
+         * @brief Count the number of reports.
+         * @return True if successful, false otherwise
+         */
+        bool count_reports(void);
+
+        /**
+         * @brief View the selected item.
+         */
+        void item_view(void);
+
+        /**
+         * @brief Show the selected item.
+         */
+        void item_show(void);
+
+        /**
+         * @brief Save the selected item.
+         */
+        void item_save(void);
+
+        /**
+         * @brief Load the profile.
+         */
+        void load_profile(void);
+
+        /**
+         * @brief Save the profile.
+         */
+        void save_profile(void);
+
+        /**
+         * @brief Synchronize with the database.
+         */
+        void sync_db(void);
+
+        /**
+         * @brief Copy logos to the specified directory.
+         * @param directory The directory to copy logos to
+         */
+        void copy_logos(QString directory);
+
+        /**
+         * @brief Write the report to a PDF file.
+         */
+        void write_pdf(void);
+
+        /**
+         * @brief Pad a line with spaces.
+         * @param line The line to pad
+         * @return The padded line
+         */
+        QString pad_line(const QString line);
+
+        /**
+         * @brief Show help for the reporter.
+         */
+        void help(void)
+        {
+            showHelp.show_help("reporter.html");
+        }
 };
-#endif
+
+#endif // US_REPORTER_H

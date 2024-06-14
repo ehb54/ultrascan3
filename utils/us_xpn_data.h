@@ -1,3 +1,4 @@
+//! \file us_xpn_data.h
 #ifndef US_XPN_DATA_H
 #define US_XPN_DATA_H
 

@@ -1,3 +1,4 @@
+//! \file us_data_process.h
 #ifndef US_DATA_PROCESS_H
 #define US_DATA_PROCESS_H
 
@@ -7,42 +8,85 @@
 #include "us_dataIO.h"
 #include "us_db2.h"
 
+//! \class US_DataProcess
+//! \brief Class to manage data processing operations, including database interactions and file handling.
 class US_DataProcess : public QObject
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_DataProcess( US_DataModel*, QWidget* = 0 );
+    public:
+        //! \brief Constructor for US_DataProcess
+        //! \param model Pointer to US_DataModel object
+        //! \param parent Optional parent widget
+        US_DataProcess( US_DataModel* model, QWidget* parent = 0 );
 
-      int     record_upload      ( int );
-      int     record_download    ( int );
-      int     record_remove_db   ( int );
-      int     record_remove_local( int );
+        //! \brief Upload a record to the database
+        //! \param recordID ID of the record to be uploaded
+        //! \return Status code of the operation
+        int record_upload( int recordID );
 
-      QString lastError          ( void     );
-      void    partialError       ( int, int );
-      void    appendError        ( QString  );
-      bool    raw_ancestor_ok    ( int      );
+        //! \brief Download a record from the database
+        //! \param recordID ID of the record to be downloaded
+        //! \return Status code of the operation
+        int record_download( int recordID );
 
-   private:
-      QString                 errMsg;     // message from last error
+        //! \brief Remove a record from the database
+        //! \param recordID ID of the record to be removed
+        //! \return Status code of the operation
+        int record_remove_db( int recordID );
 
-      QWidget*                parentw;    // parent widget
+        //! \brief Remove a record from local storage
+        //! \param recordID ID of the record to be removed
+        //! \return Status code of the operation
+        int record_remove_local( int recordID );
 
-      US_DB2*                 db;         // pointer to database connection
+        //! \brief Get the last error message
+        //! \return Last error message
+        QString lastError( void );
 
-      US_DataModel*           da_model;   // data model object
+        //! \brief Handle partial errors
+        //! \param errCode Error code
+        //! \param errCount Error count
+        void partialError( int errCode, int errCount );
 
-      US_DataModel::DataDesc  cdesc;      // current record description
+        //! \brief Append an error message to the log
+        //! \param message Error message to append
+        void appendError( QString message );
 
-      US_SyncExperiment*      syncExper;  // experiment synchronizer
+        //! \brief Check if the raw ancestor record is okay
+        //! \param recordID ID of the record to check
+        //! \return True if the raw ancestor record is okay, false otherwise
+        bool raw_ancestor_ok( int recordID );
 
-      int                     dbg_level;
+    private:
+        QString                 errMsg;     //!< Message from the last error
+        QWidget*                parentw;    //!< Parent widget
+        US_DB2*                 db;         //!< Pointer to database connection
+        US_DataModel*           da_model;   //!< Data model object
+        US_DataModel::DataDesc  cdesc;      //!< Current record description
+        US_SyncExperiment*      syncExper;  //!< Experiment synchronizer
+        int                     dbg_level;  //!< Debug level
 
-   private slots:
-      QString get_model_filename( US_DataModel::DataDesc* );
-      QString get_model_filename( QString );
-      QString get_noise_filename( US_DataModel::DataDesc* );
-      QString get_noise_filename( QString );
+    private slots:
+        //! \brief Get the filename of a model record
+        //! \param desc Pointer to DataDesc object
+        //! \return Filename of the model record
+        QString get_model_filename( US_DataModel::DataDesc* desc );
+
+        //! \brief Get the filename of a model record
+        //! \param guid GUID of the model record
+        //! \return Filename of the model record
+        QString get_model_filename( QString guid );
+
+        //! \brief Get the filename of a noise record
+        //! \param desc Pointer to DataDesc object
+        //! \return Filename of the noise record
+        QString get_noise_filename( US_DataModel::DataDesc* desc );
+
+        //! \brief Get the filename of a noise record
+        //! \param guid GUID of the noise record
+        //! \return Filename of the noise record
+        QString get_noise_filename( QString guid );
 };
-#endif
+
+#endif // US_DATA_PROCESS_H

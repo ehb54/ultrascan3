@@ -336,6 +336,7 @@ class US_ConvertGui : public US_Widgets
   //void process_reference_auto( const double, const double );
   void process_reference_auto( const double );
   void PseudoCalcAvg   ( void );
+  void absorbance_conversion_abde( void );
   //void PseudoCalcAvg_av  ( void );
   void PseudoCalcAvgMWL( void );
       bool read            ( void );
