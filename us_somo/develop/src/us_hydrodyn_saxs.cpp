@@ -3863,7 +3863,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                 "total scatter count  %2\n"
                                 "total non-OW  count  %3\n"
                                 "OW count             %4\n"
-                                 )
+                                )
                         .arg( total_terms )
                         .arg( atoms.size() )
                         .arg( (int) atoms.size() - ow_wat_count_remaining )
@@ -6612,27 +6612,6 @@ void US_Hydrodyn_Saxs::dad() {
       US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->dad_window );
       ((US_Hydrodyn *)us_hydrodyn)->dad_window->show();
    }
-
-   ((US_Hydrodyn *)us_hydrodyn)->dad_window->disable_all();
-   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
-   {
-      if ( !( i % 500 ) ) {
-         qDebug() << "dad plotting curve " << i;
-      }
-      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
-      {
-         ((US_Hydrodyn *)us_hydrodyn)->dad_window->add_plot( qsl_plotted_iq_names[ i ],
-                                                                   plotted_q[ i ],
-                                                                   plotted_I[ i ],
-                                                                   plotted_I_error[ i ] );
-      } else {
-         ((US_Hydrodyn *)us_hydrodyn)->dad_window->add_plot( qsl_plotted_iq_names[ i ],
-                                                                   plotted_q[ i ],
-                                                                   plotted_I[ i ] );
-      }
-   }
-   ((US_Hydrodyn *)us_hydrodyn)->dad_window->update_enables();
-
 }
 
 void US_Hydrodyn_Saxs::mals()
