@@ -4241,6 +4241,19 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
       // Default the used model to a "Mean" model
       US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
    }
+   else {
+      if ( US_Settings::advanced_level() > 0)
+      {  // For non dmga and users with advanced settings > 0, show the advanced dialog
+         model_used   = model_loaded;
+	 // create advanced dialog and display it
+         advdiag = new US_AdvancedFem( &model_used, adv_vals, (QWidget*)this );
+         advdiag->show();
+	 // wait for dialog to finish
+         advdiag->exec();
+         qApp->processEvents();
+         delete advdiag;
+      }
+   }
    simulate_model( );
 }
 
