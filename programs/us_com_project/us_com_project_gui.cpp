@@ -2387,7 +2387,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       //autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
       autoflowentry << id << runname << optimaname  << ptime_created;
 
-      
+      qDebug() << "1. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
+	
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
       else
@@ -2447,6 +2448,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
+
+	      qDebug() << "2. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
 	    }
 	}
     }

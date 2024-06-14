@@ -1,3 +1,4 @@
+//! \file us_noise.h
 #ifndef US_NOISE_H
 #define US_NOISE_H
 

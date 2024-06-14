@@ -339,6 +339,8 @@ void US_AnaprofPanGen::initPanel()
 use_db=false;
 #endif
 
+ AProfIsIntiated = false;
+
 //Setting ref report && DEBUG: check how current ch_reports looks like
  QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
  QMap < QString, US_ReportGMP > triple_reports_ref;
@@ -593,6 +595,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 ref_numbers_list << currProf->ref_channels[ kk ];
 	 sb_use_ref_chs[ ii ] ->setValue( currProf->ref_use_channels[ kk ] );
 
+	 qDebug() << "Init APfor::Gen: currProf->ref_use_channels[ kk ] -- " <<  currProf->ref_use_channels[ kk ];
 	 qDebug() << "Init APfor::Gen: ref_numbers_list -- " <<  ref_numbers_list;
 	 
 	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
@@ -697,6 +700,7 @@ else
 
    //ABDE: for ref./use ref fields, set the 1st B-chann, to a reference
    //ABDE: IF NO refs. set at all
+   AProfIsIntiated = true;
    if ( mainw->abde_mode_aprofile )
      {
        bool all_reps_run = true;
@@ -716,6 +720,16 @@ else
 		 }
 	     }
 	 }
+       else //boud max for sb_use_ref_chs counters
+	 {
+	   int ref_number_max = 0;
+	   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+	     if (ref_numbers_list[rn] > ref_number_max )
+	       ref_number_max = ref_numbers_list[rn];
+
+	   for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+	     sb_use_ref_chs[ i ]->setMaximum( ref_number_max );
+	 }
      }
 
    // Save to update Gui
@@ -726,7 +740,7 @@ else
       check_user_level();
    DbgLv(1) << "APGe: inP:  FROM initAprfile:General - RTN check_user_level()";
 
-
+   
    //if expTyp "ABDE": modify AProfile's GUI
    
 }
@@ -1036,6 +1050,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 ( le_ref_chs[ ii ]->text().isEmpty() ) ?
 	   currProf->ref_channels << 0 : currProf->ref_channels << le_ref_chs[ ii ]->text().split(":")[1].toInt();
 	 currProf->ref_use_channels << sb_use_ref_chs[ ii ]->value();
+	 qDebug() << "in SavePanel() AProf_Gen: chann, sb_use_ref_chs[ ii ]->value() -- " << ii << sb_use_ref_chs[ ii ]->value();
 
 	 //ALEXEY: add additional field for channels to be or not to be analysed
 	 if ( ck_runs[ ii ]->isChecked() ) 

@@ -1,3 +1,4 @@
+//! \file us_choice.h
 #ifndef US_CHOICE_H
 #define US_CHOICE_H
 

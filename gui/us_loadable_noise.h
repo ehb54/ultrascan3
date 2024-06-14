@@ -1,3 +1,4 @@
+//! \file us_loadable_noise.h
 #ifndef US_LOADABLENOISE_H
 #define US_LOADABLENOISE_H
 

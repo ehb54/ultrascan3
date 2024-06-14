@@ -2106,16 +2106,6 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	     }
 	 }
 
-       // //Reference? (set #) enable first...
-       // for ( int i=0; i<sb_ref_chs.size(); ++i)
-       // 	 {
-       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-       // 	     {
-       // 	       sb_ref_chs[ i ] -> setEnabled( true );
-       // 	       break;
-       // 	     }
-       // 	 }
-
        //if runReport unChecked:
        int ref_number = 0; // will be largest of all in ref_numbers_list;
        for ( int i=0; i<le_ref_chs.size(); ++i)
@@ -2159,22 +2149,25 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       ( ck_report_runs[ i ]->isChecked() ) ?
 		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
 
-	       // //and re-set maxValue to to the max in ref_numbers_list:
-	       // sb_use_ref_chs[ i ]->setMaximum( ref_number );
-
-	       //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
-	       //&& ref_numbers_list changed
-	       int ref_chann_number = 0;
-	       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-		 if ( ref_numbers_list[rn] > 0 )
-		   ++ref_chann_number;
-	       if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
-		 sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
-	       else if ( ref_chann_number == 1 )
-		 sb_use_ref_chs[ i ] -> setValue( 1 );
+	       //ONLY when AProf->Gen initialized:
+	       if ( AProfIsIntiated )
+		 {
+		   //and re-set maxValue to to the max in ref_numbers_list:
+		   sb_use_ref_chs[ i ]->setMaximum( ref_number );
+		   
+		   //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
+		   //&& ref_numbers_list changed
+		   int ref_chann_number = 0;
+		   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+		     if ( ref_numbers_list[rn] > 0 )
+		       ++ref_chann_number;
+		   if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
+		     sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
+		   else if ( ref_chann_number == 1 )
+		     sb_use_ref_chs[ i ] -> setValue( 1 );
+		 }
 	     }
 	 }
-       
      }
    else
      {
@@ -2197,17 +2190,6 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	     }
 	 }
 
-       // //Reference? (set #) disable...
-       // for ( int i=0; i<sb_ref_chs.size(); ++i)
-       // 	 {
-       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-       // 	     {
-       // 	       sb_ref_chs[ i ] -> setEnabled( false );
-       // 	       sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
-       // 	       break;
-       // 	     }
-       // 	 }
-
        //Reference? (set #) disable...//if runReport Checked back: 
        for ( int i=0; i<le_ref_chs.size(); ++i)
        	 {
@@ -2227,6 +2209,12 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
        	       break;
        	     }
        	 }
+
+       //find new max ref_#
+       int ref_number_max = 0;
+       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+	 if (ref_numbers_list[rn] > ref_number_max )
+	   ref_number_max = ref_numbers_list[rn];
        
        //Use Reference?
        for ( int i=0; i<sb_use_ref_chs.size(); ++i)
@@ -2241,19 +2229,24 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       ( ck_report_runs[ i ]->isChecked() ) ?
 		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
 	     
-	     }
+	       //ONLY when AProf->Gen initialized:
+	       if ( AProfIsIntiated )
+		 {
+		   //and re-set maxValue to to the max in ref_numbers_list:
+		   sb_use_ref_chs[ i ]->setMaximum( ref_number_max );
 
-	   //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
-	   //&& ref_numbers_list changed
-	   int ref_chann_number = 0;
-	   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-	     if ( ref_numbers_list[rn] > 0 )
-	       ++ref_chann_number;
-	   if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
-	     sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
-	   else if ( ref_chann_number == 1 && ck_report_runs[ i ]->isChecked() )
-	     sb_use_ref_chs[ i ] -> setValue( 1 );
-	
+		   //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
+		   // //&& ref_numbers_list changed
+		   int ref_chann_number = 0;
+		   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+		     if ( ref_numbers_list[rn] > 0 )
+		       ++ref_chann_number;
+		   if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
+		     sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
+		   else if ( ref_chann_number == 1 && ck_report_runs[ i ]->isChecked() )
+		     sb_use_ref_chs[ i ] -> setValue( 1 );
+		 }
+	     }
 	 }
      }
 
@@ -2282,6 +2275,18 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	   le_ref_chs[ i ] -> setText("");
 	 }
      }
+
+   // //Reset use_ref maximum() based on max # references
+   // int max_ref = 0;
+   // for (int rn=0; rn<ref_numbers_list.size(); ++rn )
+   //   if (ref_numbers_list[rn] > max_ref )
+   //     max_ref = ref_numbers_list[rn];
+
+   // qDebug() << "MAX_REF -- " << max_ref;
+
+   // for ( int i=0; i<sb_use_ref_chs.size(); ++i)
+   //   if ( ck_report_runs[ i ]->isChecked() )
+   // 	 sb_use_ref_chs[ i ] -> setMaximum( max_ref );
 }
 
 //Togle Analysis Run checkbox

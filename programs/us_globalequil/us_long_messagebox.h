@@ -1,3 +1,4 @@
+//! \file us_long_messagebox.h
 #ifndef US_LONGMSGBOX_H
 #define US_LONGMSGBOX_H
 
