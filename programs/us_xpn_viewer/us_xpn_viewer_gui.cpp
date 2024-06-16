@@ -2715,7 +2715,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 {
   //Also reset the panel before reattachement
   //reset_auto();
-
+  in_reload_all_data_set_gui  = false;
+  
   opsys_auto.clear();
   combinedOptics = false;
   
