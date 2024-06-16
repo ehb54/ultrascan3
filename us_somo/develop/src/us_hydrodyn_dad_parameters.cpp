@@ -286,22 +286,22 @@ void US_Hydrodyn_Dad_Parameters::save()
 
    QString use_dir = 
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
-      QDir::separator() + "somo_dad_default_dad_param.dat" ;
+      QDir::separator() + "somo_uv_vis_default_uv_vis_param.dat" ;
 
-   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Select a name to save the UV-Vis parameters" ) , use_dir , "*_dad_param.dat" );
-
-   if ( fn.isEmpty() )
-   {
-      return;
-   }
+   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Select a name to save the UV-Vis parameters" ) , use_dir , "*_uv_vis_param.dat" );
 
    if ( fn.isEmpty() )
    {
       return;
    }
 
-   fn.replace( QRegExp( "(|_dad_param)\\.(dat|DAT)$" ), "" );
-   fn += "_dad_param.dat";
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   fn = fn.replace( QRegExp( "(|_uv_vis_param)\\.(dat|DAT)$" ), "" );
+   fn += "_uv_vis_param.dat";
 
    QFile f( fn );
    if ( !f.open( QIODevice::WriteOnly ) )
@@ -315,31 +315,31 @@ void US_Hydrodyn_Dad_Parameters::save()
 
    if ( !le_dad_param_lambda->text().isEmpty() )
    {
-      ts << "# __dad_param_lambda: " << le_dad_param_lambda->text() << Qt::endl;
+      ts << "# __uv_vis_param_lambda: " << le_dad_param_lambda->text() << Qt::endl;
    }
 
    if ( !le_dad_param_n->text().isEmpty() )
    {
-      ts << "# __dad_param_n: " << le_dad_param_n->text() << Qt::endl;
+      ts << "# __uv_vis_param_n: " << le_dad_param_n->text() << Qt::endl;
    }
 
    if ( !le_dad_param_g_dndc->text().isEmpty() )
    {
-      ts << "# __dad_param_g_dndc: " << le_dad_param_g_dndc->text() << Qt::endl;
+      ts << "# __uv_vis_param_g_dndc: " << le_dad_param_g_dndc->text() << Qt::endl;
    }
    if ( !le_dad_param_g_extinction_coef->text().isEmpty() )
    {
-      ts << "# __dad_param_g_extinction_coef: " << le_dad_param_g_extinction_coef->text() << Qt::endl;
+      ts << "# __uv_vis_param_g_extinction_coef: " << le_dad_param_g_extinction_coef->text() << Qt::endl;
    }
 
    if ( !le_dad_param_g_conc->text().isEmpty() )
    {
-      ts << "# __dad_param_g_conc: " << le_dad_param_g_conc->text() << Qt::endl;
+      ts << "# __uv_vis_param_g_conc: " << le_dad_param_g_conc->text() << Qt::endl;
    }
 
    if ( !le_dad_param_DLS_detector->text().isEmpty() )
    {
-      ts << "# __dad_param_DLS_detector: " << le_dad_param_DLS_detector->text() << Qt::endl;
+      ts << "# __uv_vis_param_DLS_detector: " << le_dad_param_DLS_detector->text() << Qt::endl;
    }
    
    f.close();
@@ -358,7 +358,7 @@ void US_Hydrodyn_Dad_Parameters::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/somo/dad_parameters.html");
+   online_help->show_help("manual/somo/uv_vis_options.html");
 }
 
 void US_Hydrodyn_Dad_Parameters::closeEvent( QCloseEvent *e )

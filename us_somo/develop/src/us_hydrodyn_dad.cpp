@@ -984,7 +984,7 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
 
    QString dctr_file = 
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
-      QDir::separator() + "somo_dad_default_dctr.dat" ;
+      QDir::separator() + "somo_uv_vis_default_dctr.dat" ;
    if ( QFile( dctr_file ).exists() )
    {
       load_file( dctr_file );
@@ -992,7 +992,7 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
 
    QString dad_params_file = 
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
-      QDir::separator() + "somo_dad_default_dad_param.dat" ;
+      QDir::separator() + "somo_uv_vis_default_uv_vis_param.dat" ;
    // set defaults always
    dad_param_lambda            = 0;
    dad_param_n                 = 0;
@@ -2317,12 +2317,12 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    if ( ext == "dat" && qv[ 0 ].contains( " UV-Vis parameter file" ) )
    {
-      QRegExp rx_dad_param_lambda            ( "^# __dad_param_lambda: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_n                 ( "^# __dad_param_n: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_g_dndc            ( "^# __dad_param_g_dndc: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_g_extinction_coef ( "^# __dad_param_g_extinction_coef: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_g_conc            ( "^# __dad_param_g_conc: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_DLS_detector      ( "^# __dad_param_DLS_detector: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_lambda            ( "^# __uv_vis_param_lambda: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_n                 ( "^# __uv_vis_param_n: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_g_dndc            ( "^# __uv_vis_param_g_dndc: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_g_extinction_coef ( "^# __uv_vis_param_g_extinction_coef: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_g_conc            ( "^# __uv_vis_param_g_conc: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_DLS_detector      ( "^# __uv_vis_param_DLS_detector: (\\S+)\\s*$" );
 
       for ( int i = 1; i < (int) qv.size(); i++ ) {
 

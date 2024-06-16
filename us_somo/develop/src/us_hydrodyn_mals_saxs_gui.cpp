@@ -5334,6 +5334,10 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
          plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title );
          plot_errors->setAxisTitle(QwtPlot::xBottom,  title );
       }
+      if ( !files_selected_count ) {
+         plot_dist  ->setAxisTitle(QwtPlot::xBottom,  "" );
+         plot_errors->setAxisTitle(QwtPlot::xBottom,  "" );
+      }
       plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
       // qDebug() << "::update_enables() plot_errors is " << ( plot_errors->isVisible() ? "visible" : "not visible" );
    }
@@ -5366,6 +5370,10 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
       } else {
          plot_dist->setAxisTitle(QwtPlot::yLeft, title );
       }
+      if ( !files_selected_count ) {
+         plot_dist->setAxisTitle(QwtPlot::yLeft, "" );
+      }
+
    }
    model_enables();
 

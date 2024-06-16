@@ -3607,7 +3607,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect(rb_pbmode_fasta, SIGNAL(clicked( )), SLOT( set_pbmode_fasta( )));
    rb_pbmode_fasta->hide();
 
-   rb_pbmode_dad = new QRadioButton( "DAD info.", this ); 
+   rb_pbmode_dad = new QRadioButton( "UV-Vis info.", this ); 
    rb_pbmode_dad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    rb_pbmode_dad->setMinimumHeight(minHeight3);
    rb_pbmode_dad->setPalette( PALET_NORMAL );
@@ -5673,6 +5673,10 @@ void US_Hydrodyn_Dad::update_enables()
          plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title );
          plot_errors->setAxisTitle(QwtPlot::xBottom,  title );
       }
+      if ( !files_selected_count ) {
+         plot_dist  ->setAxisTitle(QwtPlot::xBottom,  "" );
+         plot_errors->setAxisTitle(QwtPlot::xBottom,  "" );
+      }
       plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
       // qDebug() << "::update_enables() plot_errors is " << ( plot_errors->isVisible() ? "visible" : "not visible" );
    }
@@ -5703,11 +5707,13 @@ void US_Hydrodyn_Dad::update_enables()
             }
          }
       }
-
       if ( axis_y_log ) {
          plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
       } else {
          plot_dist->setAxisTitle(QwtPlot::yLeft, title );
+      }
+      if ( !files_selected_count ) {
+         plot_dist->setAxisTitle(QwtPlot::yLeft, "" );
       }
    }
    model_enables();

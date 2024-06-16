@@ -187,7 +187,7 @@ void US_Hydrodyn_Dad_Dctr::save()
 
    QString use_dir = 
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
-      QDir::separator() + "somo_dad_default_dctr.dat" ;
+      QDir::separator() + "somo_uv_vis_default_dctr.dat" ;
 
    QString fn = QFileDialog::getSaveFileName( this , us_tr( "Select a name to save the detector settings" ) , use_dir , "*_dctr.dat" );
 
@@ -248,7 +248,7 @@ void US_Hydrodyn_Dad_Dctr::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/somo/dad_dctr.html");
+   online_help->show_help("manual/somo/us_vis_options.html");
 }
 
 void US_Hydrodyn_Dad_Dctr::closeEvent( QCloseEvent *e )
