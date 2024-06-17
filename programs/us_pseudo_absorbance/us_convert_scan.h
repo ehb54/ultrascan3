@@ -110,17 +110,18 @@ private:
     const double maxAbs = 3;
     bool abs_plt_on;
     int nscans;
+    int max_nscans;
     int smooth;
     int wavl_id;
-    int ref_file_id;
+    int plot_ref_file;
     QVector<double> wavelength;
     QVector<CellChannel> ccw_items;
     QVector<US_DataIO::RawData> intensity_data;
     QVector<QVector<QVector<double>>> absorbance_data;
+    QVector<QVector<QVector<double>>> refscan_data;
     QVector<QVector<double>> absorbance_shifts;
-    QVector<QVector<double>> refscan_data;
     QVector<RefscanFile> refscan_files;
-    QVector<bool> absorbance_state;
+    QVector<int> absorbance_state;
 
     void list_ccw_items(QString&);
     void set_table();
@@ -130,12 +131,14 @@ private:
     void plot_absorbance();
     void calc_absorbance(int);
     void update_shifts(int);
-    bool get_refval_file(int, int, QVector<double>&);
-    bool get_refval_buffer(int, int, QVector<double>&);
+    bool get_refval_file(int, int);
+    bool get_refval_buffer(int, int);
     QVector<double> smooth_refscan(QVector<double>, int, bool, bool, double);
     bool linear_interpolation(const QVector<double>&, QVector<double>&, QVector<double>&);
     void disconnect_picker();
     bool set_abs_runid(QString&);
+    void set_ct_scans(int = 0);
+
 };
 
 #endif // US_CONVERT_SCAN_H
