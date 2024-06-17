@@ -102,16 +102,14 @@ private:
     QwtPlotGrid* grid;
 
     QwtCounter* ct_smooth;
-    QwtCounter* ct_lscns_smp;
-    QwtCounter* ct_lscns_buf;
+    QwtCounter* ct_scans;
 
     QTableWidget* tb_triple;
     QFont font;
 
     const double maxAbs = 3;
     bool abs_plt_on;
-    int ns_smp;
-    int ns_buf;
+    int nscans;
     int smooth;
     int wavl_id;
     int ref_file_id;

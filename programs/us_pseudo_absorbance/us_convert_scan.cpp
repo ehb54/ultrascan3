@@ -36,51 +36,47 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     import_lyt->addLayout(imp_lyt_2);
 
     // Cell / Channel / Wavelength
-    int width_lb = 170;
-    int width_ct = 130;
+    int width_lb = 90;
+    int width_ct = 90;
     QLabel* lb_buffer = us_banner("Absorbance Data Control");
 
-    QLabel* lb_lscns_smp = us_label("# Scans (Sample)", 0);
-    lb_lscns_smp->setAlignment(Qt::AlignCenter);
-    lb_lscns_smp->setFixedWidth(width_lb);
+    QLabel* lb_scans = us_label("# Scans", 0);
+    lb_scans->setAlignment(Qt::AlignCenter);
+    lb_scans->setFixedWidth(width_lb);
 
-    QLabel* lb_lscns_buf = us_label("# Scans (Buffer)", 0);
-    lb_lscns_buf->setAlignment(Qt::AlignCenter);
-    lb_lscns_buf->setFixedWidth(width_lb);
-
-    QLabel *lb_smooth    = us_label("Smoothing Level", 0);
+    QLabel *lb_smooth    = us_label("Smooth", 0);
     lb_smooth->setAlignment(Qt::AlignCenter);
     lb_smooth->setFixedWidth(width_lb);
 
     pb_apply = us_pushbutton("Apply");
 
-    ns_smp = 1;
-    ct_lscns_smp = us_counter(2, 1, 200, ns_smp);
-    ct_lscns_smp->setSingleStep(1);
-    ct_lscns_smp->setFixedWidth(width_ct);
-
-    ns_buf = 10;
-    ct_lscns_buf = us_counter(2, 1, 200, ns_buf);
-    ct_lscns_buf->setSingleStep(1);
-    ct_lscns_buf->setFixedWidth(width_ct);
+    nscans = 1;
+    ct_scans = us_counter(1, 1, 1, nscans);
+    ct_scans->setSingleStep(1);
+    ct_scans->setFixedWidth(width_ct);
 
     smooth = 0;
-    ct_smooth = us_counter(2, 0, 10, smooth);
+    ct_smooth = us_counter(1, 0, 0, smooth);
     ct_smooth->setSingleStep(1);
     ct_smooth->setFixedWidth(width_ct);
 
-    QGridLayout* ccw_lyt_1_l = new QGridLayout();
-    ccw_lyt_1_l->addWidget(lb_lscns_smp, 0, 0, 1, 1);
-    ccw_lyt_1_l->addWidget(ct_lscns_smp, 0, 1, 1, 1);
-    ccw_lyt_1_l->addWidget(lb_lscns_buf, 1, 0, 1, 1);
-    ccw_lyt_1_l->addWidget(ct_lscns_buf, 1, 1, 1, 1);
-    ccw_lyt_1_l->addWidget(lb_smooth,    2, 0, 1, 1);
-    ccw_lyt_1_l->addWidget(ct_smooth,    2, 1, 1, 1);
+    // QGridLayout* ccw_lyt_1_l = new QGridLayout();
+    // ccw_lyt_1_l->addWidget(lb_scans, 0, 0, 1, 1);
+    // ccw_lyt_1_l->addWidget(ct_scans, 0, 1, 1, 1);
+    // ccw_lyt_1_l->addWidget(lb_smooth,    1, 0, 1, 1);
+    // ccw_lyt_1_l->addWidget(ct_smooth,    1, 1, 1, 1);
 
-    QHBoxLayout* ccw_lyt_1 = new QHBoxLayout();
-    ccw_lyt_1->addLayout(ccw_lyt_1_l, 0);
-    ccw_lyt_1->addSpacing(1);
-    ccw_lyt_1->addWidget(pb_apply, 0, Qt::AlignVCenter);
+    QHBoxLayout* ss_lyt = new QHBoxLayout();
+    ss_lyt->addWidget(lb_scans);
+    ss_lyt->addWidget(ct_scans);
+    ss_lyt->addWidget(lb_smooth);
+    ss_lyt->addWidget(ct_smooth);
+    ss_lyt->addWidget(pb_apply);
+
+    // QHBoxLayout* ccw_lyt_1 = new QHBoxLayout();
+    // ccw_lyt_1->addLayout(ss_lyt, 0);
+    // ccw_lyt_1->addSpacing(1);
+    // ccw_lyt_1->addWidget(pb_apply, 0, Qt::AlignVCenter);
 
     static QChar clambda( 955 );   // Lambda character
     QLabel* lb_lambstrt = us_label(tr( "%1 Start:" ).arg( clambda ) );
@@ -136,7 +132,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 
     QVBoxLayout* ccw_lyt = new QVBoxLayout();
     ccw_lyt->addWidget(lb_buffer);
-    ccw_lyt->addLayout(ccw_lyt_1);
+    ccw_lyt->addLayout(ss_lyt);
     ccw_lyt->addWidget(tb_triple);
     ccw_lyt->addLayout(ccw_lyt_2);
     ccw_lyt->addLayout(ccw_lyt_3);
@@ -254,8 +250,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     connect(pb_apply, &QPushButton::clicked, this, &US_ConvertScan::apply_scan_smooth);
     connect(pb_default, &QPushButton::clicked, this, &US_ConvertScan::default_region);
     connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
-    connect(ct_lscns_buf, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
-    connect(ct_lscns_smp, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
+    connect(ct_scans, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
 }
 
 void US_ConvertScan::reset(){
@@ -289,8 +284,7 @@ void US_ConvertScan::apply_scan_smooth() {
     QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
     QString qs = "QPushButton { background-color: %1 }";
     pb_apply->setStyleSheet(qs.arg(color.name()));
-    ns_smp = static_cast<int>(ct_lscns_smp->value());
-    ns_buf = static_cast<int>(ct_lscns_buf->value());
+    nscans = static_cast<int>(ct_scans->value());
     smooth = static_cast<int>(ct_smooth->value());
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     for (int ii = 0; ii < ccw_items.size(); ii++) {
@@ -719,7 +713,7 @@ void US_ConvertScan::save_run() {
                 miss_ccw << ccw_str.arg(cell).arg(channel).arg(wvl);
             } else {
                 US_DataIO::RawData rawdata = intensity_data.at(rid);
-                int nn = absorbance_data.at(rid).size() - ns_smp;
+                int nn = absorbance_data.at(rid).size() - nscans;
                 if (nn < 0) {
                     nn = 0;
                 }
@@ -936,7 +930,7 @@ void US_ConvertScan::plot_intensity(){
 
     int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
     US_DataIO::RawData raw_data = intensity_data.at(raw_id);
-    int nn = raw_data.scanCount() - ns_smp;
+    int nn = raw_data.scanCount() - nscans;
     if (nn < 0) {
         nn = 0;
     }
@@ -1043,7 +1037,7 @@ void US_ConvertScan::plot_absorbance(){
     double x_1 = ccw_items.at(row).minmax_x.first;
     double x_2 = ccw_items.at(row).minmax_x.second;
 
-    int nn = absorbance_data.at(raw_id).size() - ns_smp;
+    int nn = absorbance_data.at(raw_id).size() - nscans;
     if (nn < 0) {
         nn = 0;
     }
@@ -1182,7 +1176,7 @@ bool US_ConvertScan::get_refval_buffer(int ref_row, int rid, QVector<double>& yv
         int iwvl = static_cast<int>(qRound(rawdata.scanData.at(0).wavelength * 10));
         if (iwvl_tgt == iwvl) {
             ref_xvals << rawdata.xvalues;
-            int nn = rawdata.scanCount() - static_cast<int>(ns_buf);
+            int nn = rawdata.scanCount();
             if (nn < 0) {
                 nn = 0;
             }
@@ -1255,7 +1249,7 @@ void US_ConvertScan::calc_absorbance(int item_row){
             ref_yvals << yvals;
         }
 
-        int nn = rawdata.scanCount() - ns_smp;
+        int nn = rawdata.scanCount() - nscans;
         if (nn < 0) {
             nn = 0;
         }
@@ -1310,7 +1304,7 @@ void US_ConvertScan::update_shifts(int item_row){
             continue;
         }
         US_DataIO::RawData rawdata = intensity_data.at(rid);
-        int nn = rawdata.scanCount() - ns_smp;
+        int nn = rawdata.scanCount() - nscans;
         if (nn < 0) {
             nn = 0;
         }
