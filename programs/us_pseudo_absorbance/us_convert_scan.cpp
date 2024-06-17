@@ -36,13 +36,17 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     import_lyt->addLayout(imp_lyt_2);
 
     // Cell / Channel / Wavelength
+    int width_lb = 90;
+    int width_ct = 90;
     QLabel* lb_buffer = us_banner("Absorbance Data Control");
 
     QLabel* lb_scans = us_label("# Scans", 0);
     lb_scans->setAlignment(Qt::AlignCenter);
+    lb_scans->setFixedWidth(width_lb);
 
     QLabel *lb_smooth    = us_label("Smooth", 0);
     lb_smooth->setAlignment(Qt::AlignCenter);
+    lb_smooth->setFixedWidth(width_lb);
 
     pb_apply = us_pushbutton("Apply");
 
@@ -50,11 +54,13 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     max_nscans = 1000;
     ct_scans = us_counter(1, 1, 1, nscans);
     ct_scans->setSingleStep(1);
+    ct_scans->setFixedWidth(width_ct);
     align_center(ct_scans);
 
     smooth = 0;
     ct_smooth = us_counter(1, 0, 10, smooth);
     ct_smooth->setSingleStep(1);
+    ct_smooth->setFixedWidth(width_ct);
     align_center(ct_smooth);
 
     QLabel* lb_scan_from = us_label("Scan Focus From:");
