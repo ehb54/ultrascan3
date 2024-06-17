@@ -103,6 +103,8 @@ private:
 
     QwtCounter* ct_smooth;
     QwtCounter* ct_scans;
+    QwtCounter* ct_scan_from;
+    QwtCounter* ct_scan_to;
 
     QTableWidget* tb_triple;
     QFont font;
@@ -138,6 +140,7 @@ private:
     void disconnect_picker();
     bool set_abs_runid(QString&);
     void set_ct_scans(int = 0);
+    void align_center(QwtCounter*);
 
 };
 

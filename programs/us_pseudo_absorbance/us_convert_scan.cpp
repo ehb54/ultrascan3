@@ -17,10 +17,10 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     imp_lyt_1->addWidget(pb_load_ref);
     imp_lyt_1->addWidget(pb_reset);
 
-    QLabel* lb_runIdInt = us_label("Run ID:");
+    QLabel* lb_runIdInt = us_label("Run ID");
     lb_runIdInt->setAlignment(Qt::AlignCenter);
     le_runid = us_lineedit("", 0, true );
-    QLabel* lb_desc  = us_label("Description:", 0 );
+    QLabel* lb_desc  = us_label("Description", 0 );
     lb_desc->setAlignment(Qt::AlignCenter);
     le_desc      = us_lineedit( "", 0, true);
 
@@ -36,17 +36,13 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     import_lyt->addLayout(imp_lyt_2);
 
     // Cell / Channel / Wavelength
-    int width_lb = 90;
-    int width_ct = 90;
     QLabel* lb_buffer = us_banner("Absorbance Data Control");
 
     QLabel* lb_scans = us_label("# Scans", 0);
     lb_scans->setAlignment(Qt::AlignCenter);
-    lb_scans->setFixedWidth(width_lb);
 
     QLabel *lb_smooth    = us_label("Smooth", 0);
     lb_smooth->setAlignment(Qt::AlignCenter);
-    lb_smooth->setFixedWidth(width_lb);
 
     pb_apply = us_pushbutton("Apply");
 
@@ -54,19 +50,42 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     max_nscans = 1000;
     ct_scans = us_counter(1, 1, 1, nscans);
     ct_scans->setSingleStep(1);
-    ct_scans->setFixedWidth(width_ct);
+    align_center(ct_scans);
 
     smooth = 0;
     ct_smooth = us_counter(1, 0, 10, smooth);
     ct_smooth->setSingleStep(1);
-    ct_smooth->setFixedWidth(width_ct);
+    align_center(ct_smooth);
 
-    QHBoxLayout* ss_lyt = new QHBoxLayout();
-    ss_lyt->addWidget(lb_scans);
-    ss_lyt->addWidget(ct_scans);
-    ss_lyt->addWidget(lb_smooth);
-    ss_lyt->addWidget(ct_smooth);
-    ss_lyt->addWidget(pb_apply);
+    QLabel* lb_scan_from = us_label("Scan Focus From:");
+    lb_scan_from->setAlignment(Qt::AlignRight);
+    QLabel* lb_scan_to = us_label("To:");
+    lb_scan_to->setAlignment(Qt::AlignRight);
+
+    ct_scan_from = us_counter(3, 1, 1, 1);
+    ct_scan_from->setSingleStep(1);
+    align_center(ct_scan_from);
+
+    ct_scan_to = us_counter(3, 1, 1, 1);
+    ct_scan_to->setSingleStep(1);
+    align_center(ct_scan_to);
+
+    QGridLayout* scan_lyt = new QGridLayout();
+    scan_lyt->addWidget(lb_scans,  0, 0, 1, 1);
+    scan_lyt->addWidget(ct_scans,  0, 1, 1, 1);
+    scan_lyt->addWidget(lb_smooth, 0, 2, 1, 1);
+    scan_lyt->addWidget(ct_smooth, 0, 3, 1, 1);
+    scan_lyt->addWidget(pb_apply,  0, 4, 1, 1);
+
+    scan_lyt->addWidget(lb_scan_from, 1, 0, 1, 2);
+    scan_lyt->addWidget(ct_scan_from, 1, 2, 1, 3);
+
+    scan_lyt->addWidget(lb_scan_to, 2, 0, 1, 2);
+    scan_lyt->addWidget(ct_scan_to, 2, 2, 1, 3);
+
+    for(int ii = 0; ii < scan_lyt->columnCount(); ii++) {
+        scan_lyt->setColumnMinimumWidth(ii, 90);
+    }
 
     tb_triple = new QTableWidget();
     tb_triple->setRowCount(0);
@@ -85,7 +104,8 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 
     QVBoxLayout* ccw_lyt = new QVBoxLayout();
     ccw_lyt->addWidget(lb_buffer);
-    ccw_lyt->addLayout(ss_lyt);
+    ccw_lyt->addLayout(scan_lyt);
+    ccw_lyt->addSpacing(1);
     ccw_lyt->addWidget(tb_triple);
 
     static QChar clambda( 955 );   // Lambda character
@@ -230,6 +250,13 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     connect(pb_apply, &QPushButton::clicked, this, &US_ConvertScan::apply_scan_smooth);
     connect(pb_default, &QPushButton::clicked, this, &US_ConvertScan::default_region);
     connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
+}
+
+void US_ConvertScan::align_center(QwtCounter* ct) {
+    QLineEdit *le = ct->findChild<QLineEdit*>();
+    if (le) {
+        le->setAlignment(Qt::AlignCenter);
+    }
 }
 
 void US_ConvertScan::reset(){
