@@ -60,60 +60,12 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     ct_smooth->setSingleStep(1);
     ct_smooth->setFixedWidth(width_ct);
 
-    // QGridLayout* ccw_lyt_1_l = new QGridLayout();
-    // ccw_lyt_1_l->addWidget(lb_scans, 0, 0, 1, 1);
-    // ccw_lyt_1_l->addWidget(ct_scans, 0, 1, 1, 1);
-    // ccw_lyt_1_l->addWidget(lb_smooth,    1, 0, 1, 1);
-    // ccw_lyt_1_l->addWidget(ct_smooth,    1, 1, 1, 1);
-
     QHBoxLayout* ss_lyt = new QHBoxLayout();
     ss_lyt->addWidget(lb_scans);
     ss_lyt->addWidget(ct_scans);
     ss_lyt->addWidget(lb_smooth);
     ss_lyt->addWidget(ct_smooth);
     ss_lyt->addWidget(pb_apply);
-
-    // QHBoxLayout* ccw_lyt_1 = new QHBoxLayout();
-    // ccw_lyt_1->addLayout(ss_lyt, 0);
-    // ccw_lyt_1->addSpacing(1);
-    // ccw_lyt_1->addWidget(pb_apply, 0, Qt::AlignVCenter);
-
-    static QChar clambda( 955 );   // Lambda character
-    QLabel* lb_lambstrt = us_label(tr( "%1 Start:" ).arg( clambda ) );
-    lb_lambstrt->setAlignment(Qt::AlignCenter);
-    QLabel* lb_lambstop = us_label(tr( "%1 End:" ).arg( clambda ) );
-    lb_lambstop->setAlignment(Qt::AlignCenter);
-
-    le_lambstrt = us_lineedit("", -1, true);
-    le_lambstop = us_lineedit("", -1, true);
-    lb_lambstrt->setFixedWidth(70);
-    lb_lambstop->setFixedWidth(70);
-
-    cb_plot_id  = us_comboBox();
-    cb_plot_id->setEditable(true);
-    cb_plot_id->setFixedWidth(100);
-
-    QHBoxLayout* ccw_lyt_2 = new QHBoxLayout();
-    ccw_lyt_2->addWidget(lb_lambstrt, 0);
-    ccw_lyt_2->addSpacing(1);
-    ccw_lyt_2->addWidget(le_lambstrt, 1);
-    ccw_lyt_2->addSpacing(1);
-    ccw_lyt_2->addWidget(cb_plot_id,  0);
-    ccw_lyt_2->addSpacing(1);
-    ccw_lyt_2->addWidget(lb_lambstop, 0);
-    ccw_lyt_2->addSpacing(1);
-    ccw_lyt_2->addWidget(le_lambstop, 1);
-
-    pb_prev_id  = us_pushbutton( "Previous", true, 0 );
-    pb_next_id  = us_pushbutton( "Next",     true, 0 );
-    pb_prev_id->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
-    pb_next_id->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
-    pb_prev_id->setFixedWidth(150);
-    pb_next_id->setFixedWidth(150);
-
-    QHBoxLayout* ccw_lyt_3 = new QHBoxLayout();
-    ccw_lyt_3->addWidget(pb_prev_id, 0, Qt::AlignRight);
-    ccw_lyt_3->addWidget(pb_next_id, 0, Qt::AlignLeft);
 
     tb_triple = new QTableWidget();
     tb_triple->setRowCount(0);
@@ -134,26 +86,51 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     ccw_lyt->addWidget(lb_buffer);
     ccw_lyt->addLayout(ss_lyt);
     ccw_lyt->addWidget(tb_triple);
-    ccw_lyt->addLayout(ccw_lyt_2);
-    ccw_lyt->addLayout(ccw_lyt_3);
+
+    static QChar clambda( 955 );   // Lambda character
+    QLabel* lb_lambstrt = us_label(tr( "%1 Start:" ).arg( clambda ) );
+    lb_lambstrt->setAlignment(Qt::AlignCenter);
+    QLabel* lb_lambstop = us_label(tr( "%1 End:" ).arg( clambda ) );
+    lb_lambstop->setAlignment(Qt::AlignCenter);
+
+    le_lambstrt = us_lineedit("", -1, true);
+    le_lambstop = us_lineedit("", -1, true);
+
+    cb_plot_id  = us_comboBox();
+    cb_plot_id->setEditable(true);
+
+    pb_prev_id  = us_pushbutton( "Previous", true, 0 );
+    pb_next_id  = us_pushbutton( "Next",     true, 0 );
+    pb_prev_id->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+    pb_next_id->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+    pb_prev_id->setFixedWidth(150);
+    pb_next_id->setFixedWidth(150);
 
     QLabel *lb_zero = us_label("Shift to Zero");
     lb_zero->setAlignment(Qt::AlignCenter);
-    lb_zero->setFixedWidth(120);
     pb_pick_rp = us_pushbutton("Pick Region");
     QPushButton *pb_default = us_pushbutton("Default");
-
-    QHBoxLayout *buff_lyt_1 = new QHBoxLayout();
-    buff_lyt_1->addWidget(lb_zero);
-    buff_lyt_1->addWidget(pb_pick_rp);
-    buff_lyt_1->addWidget(pb_default);
-
     pb_save = us_pushbutton("Save Absorbance Data");
-    pb_save->setFixedWidth(250);
 
-    QVBoxLayout* buffer_lyt = new QVBoxLayout();
-    buffer_lyt->addLayout(buff_lyt_1);
-    buffer_lyt->addWidget(pb_save, 0, Qt::AlignCenter);
+    QGridLayout* save_lyt = new QGridLayout();
+    save_lyt->addWidget(pb_prev_id,   0, 1, 1, 2);
+    save_lyt->addWidget(pb_next_id,   0, 3, 1, 2);
+
+    save_lyt->addWidget(lb_lambstrt,  1, 0, 1, 1);
+    save_lyt->addWidget(le_lambstrt,  1, 1, 1, 1);
+    save_lyt->addWidget(cb_plot_id,   1, 2, 1, 2);
+    save_lyt->addWidget(lb_lambstop,  1, 4, 1, 1);
+    save_lyt->addWidget(le_lambstop,  1, 5, 1, 1);
+
+    save_lyt->addWidget(lb_zero,      2, 0, 1, 2);
+    save_lyt->addWidget(pb_pick_rp,   2, 2, 1, 2);
+    save_lyt->addWidget(pb_default,   2, 4, 1, 2);
+
+    save_lyt->addWidget(pb_save,      3, 1, 1, 4);
+
+    for (int ii = 0; ii < save_lyt->columnCount(); ii++) {
+        save_lyt->setColumnMinimumWidth(ii, 75);
+    }
 
     QLabel* lb_status = us_label("Status:");
     lb_status->setAlignment(Qt::AlignCenter);
@@ -179,7 +156,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     left_lyt->addSpacing(3);
     left_lyt->addLayout(ccw_lyt);
     left_lyt->addSpacing(3);
-    left_lyt->addLayout(buffer_lyt);
+    left_lyt->addLayout(save_lyt);
     left_lyt->addSpacing(3);
     left_lyt->addLayout(status_lyt);
     left_lyt->addLayout(close_lyt);
