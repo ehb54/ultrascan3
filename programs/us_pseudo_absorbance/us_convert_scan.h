@@ -107,7 +107,7 @@ private:
     QTableWidget* tb_triple;
     QFont font;
 
-    const double maxAbs = 3;
+    const double maxAbs = 2;
     bool abs_plt_on;
     int nscans;
     int max_nscans;

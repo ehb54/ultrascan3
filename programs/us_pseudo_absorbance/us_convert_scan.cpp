@@ -552,13 +552,15 @@ void US_ConvertScan::select_refscan(int ref_row) {
             ccw_items[item_row].ref_id = ref_row - 1;
         }
 
-        QModelIndex index = tb_triple->model()->index(item_row, 0);
-        tb_triple->selectionModel()->
-            select(index, QItemSelectionModel::Select | QItemSelectionModel::Current);
         QGuiApplication::setOverrideCursor(Qt::WaitCursor);
         calc_absorbance(item_row);
         QGuiApplication::restoreOverrideCursor();
-        emit sig_plot();
+
+        QModelIndex index = tb_triple->model()->index(item_row, 0);
+        // tb_triple->selectionModel()->
+        //     select(index, QItemSelectionModel::Select | QItemSelectionModel::Current);
+        tb_triple->setCurrentIndex(index);
+        set_wavl_ctrl();
     }
 }
 
@@ -702,8 +704,8 @@ void US_ConvertScan::save_run() {
         QMessageBox::warning(this, "Warning!", "No triple selected to save!");
         return;
     } else if (run_list.size() > 1) {
-        QMessageBox::warning(this, "Warning!", "Triples from multiple RunID are selected!\n"
-                                               "Please select the triples of each RunID separately.");
+        QMessageBox::warning(this, "Warning!", "Triples from multiple RunIDs are selected!\n"
+                                               "Please select triples of each RunID separately.");
         return;
     }
 
@@ -717,7 +719,7 @@ void US_ConvertScan::save_run() {
         if (x_1 > 0 && x_2 > 0) {
             shift = true;
         }
-        foreach (int jj, ccw_items.at(ii).rawdata_ids) {
+        for (int jj = 0; jj < ccw_items.at(ii).rawdata_ids.size(); jj++) {
             int rid = ccw_items.at(ii).rawdata_ids.at(jj);
             int cell = ccw_items.at(ii).cell;
             char channel = ccw_items.at(ii).channel;
@@ -726,15 +728,13 @@ void US_ConvertScan::save_run() {
                 miss_ccw << ccw_str.arg(cell).arg(channel).arg(wvl);
             } else {
                 US_DataIO::RawData rawdata = intensity_data.at(rid);
-                int nn = absorbance_data.at(rid).size() - nscans;
-                if (nn < 0) {
-                    nn = 0;
-                }
-                QVector<QVector<double>> absorbance = absorbance_data.at(rid).mid(nn);
-                QVector<double> shifts = absorbance_shifts.at(rid).mid(nn);
-                QVector<US_DataIO::Scan> scans = rawdata.scanData.mid(nn);
-                for (int mm = 0; mm < absorbance.size(); mm++) {
-                    for (int nn = 0; nn < absorbance.at(mm).size(); nn++) {
+                int N = absorbance_data.at(rid).size() - nscans;
+                QVector<QVector<double>> absorbance = absorbance_data.at(rid).mid(N);
+                QVector<double> shifts = absorbance_shifts.at(rid).mid(N);
+                QVector<US_DataIO::Scan> scans = rawdata.scanData.mid(N);
+                for (int mm = 0; mm < nscans; mm++) {
+                    int np = absorbance.at(mm).size();
+                    for (int nn = 0; nn < np; nn++) {
                         double val = absorbance.at(mm).at(nn);
                         if (shift) {
                             val += shifts.at(mm);
@@ -1191,6 +1191,7 @@ bool US_ConvertScan::get_refval_buffer(int ref_row, int raw_id) {
 
     int iwvl_tgt = static_cast<int>(qRound(intensity_data.at(raw_id).scanData.at(0).wavelength * 10));
     QVector<double> xvals_tgt = intensity_data.at(raw_id).xvalues;
+    int N_tgt = intensity_data[raw_id].scanCount() - nscans;
 
     bool ok = false;
     foreach (int rid, ccw_items.at(ref_row).rawdata_ids) {
@@ -1198,9 +1199,11 @@ bool US_ConvertScan::get_refval_buffer(int ref_row, int raw_id) {
         int iwvl = static_cast<int>(qRound(rawdata.scanData.at(0).wavelength * 10));
         if (iwvl_tgt == iwvl) {
             QVector<double> ref_xvals = rawdata.xvalues;
-            int N = rawdata.scanCount() - nscans;
-            for (int ii = N; ii < rawdata.scanCount(); ii++) {
-                QVector<double> ref_yvals = rawdata.scanData.at(ii).rvalues;
+            int N_ref = rawdata.scanCount() - nscans;
+            for (int ii = 0; ii < nscans; ii++) {
+                int II_ref = ii + N_ref;
+                int II_tgt = ii + N_tgt;
+                QVector<double> ref_yvals = rawdata.scanData.at(II_ref).rvalues;
                 if (linear_interpolation(xvals_tgt, ref_xvals, ref_yvals)) {
                     if (smooth > 0){
                         QVector<double> yvals = smooth_refscan(ref_yvals, smooth, true, true, maxAbs);
@@ -1208,7 +1211,7 @@ bool US_ConvertScan::get_refval_buffer(int ref_row, int raw_id) {
                         ref_yvals << yvals;
                     }
                     for (int jj = 0; jj < ref_yvals.size(); jj++) {
-                        refscan_data[raw_id][ii][jj] = ref_yvals.at(jj);
+                        refscan_data[raw_id][II_tgt][jj] = ref_yvals.at(jj);
                     }
                 } else {
                     return false;
