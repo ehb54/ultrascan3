@@ -156,8 +156,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
-
-      
+			 
+  bool AProfIsIntiated;
+		      
    private slots:
       void  build_general_layout( void );
 
