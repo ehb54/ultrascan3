@@ -43,6 +43,8 @@ private slots:
     void pick_region(void);
     void mouse_click(const QwtDoublePoint&);
     void default_region();
+    void lower_scan_range(double);
+    void upper_scan_range(double);
 
 private:
 

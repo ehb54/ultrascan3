@@ -68,11 +68,11 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QLabel* lb_scan_to = us_label("To:");
     lb_scan_to->setAlignment(Qt::AlignRight);
 
-    ct_scan_from = us_counter(3, 1, 1, 1);
+    ct_scan_from = us_counter(2, 1, 1, 1);
     ct_scan_from->setSingleStep(1);
     align_center(ct_scan_from);
 
-    ct_scan_to = us_counter(3, 1, 1, 1);
+    ct_scan_to = us_counter(2, 1, 1, 1);
     ct_scan_to->setSingleStep(1);
     align_center(ct_scan_to);
 
@@ -304,6 +304,21 @@ void US_ConvertScan::apply_scan_smooth() {
         calc_absorbance(ii);
     }
     QGuiApplication::restoreOverrideCursor();
+
+    ct_scan_from->disconnect();
+    ct_scan_to->disconnect();
+    double cv = ct_scans->value();
+    ct_scan_from->setMaximum(cv);
+    ct_scan_to->setMaximum(cv);
+    if (ct_scan_from->value() > cv) {
+        ct_scan_from->setValue(cv);
+    }
+    if (ct_scan_to->value() > cv) {
+        ct_scan_to->setValue(cv);
+    }
+    connect(ct_scan_from, &QwtCounter::valueChanged, this, &US_ConvertScan::lower_scan_range);
+    connect(ct_scan_to, &QwtCounter::valueChanged, this, &US_ConvertScan::upper_scan_range);
+
     emit sig_plot();
 }
 
@@ -448,10 +463,15 @@ void US_ConvertScan::import_run(){
 
 void US_ConvertScan::set_ct_scans(int maxval) {
     ct_scans->disconnect();
+
     if (maxval == 0) {
         max_nscans = 1000;
         ct_scans->setValid(1);
         ct_scans->setMaximum(1);
+        ct_scan_from->disconnect();
+        ct_scan_to->disconnect();
+        ct_scan_from->setMaximum(1);
+        ct_scan_to->setMaximum(1);
     } else {
         int cv = ct_scans->value();
         max_nscans = maxval;
@@ -463,6 +483,24 @@ void US_ConvertScan::set_ct_scans(int maxval) {
         ct_scans->setValue(cv);
     }
     connect(ct_scans, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
+}
+
+void US_ConvertScan::lower_scan_range(double value) {
+    if (value > ct_scan_to->value()) {
+        ct_scan_to->disconnect();
+        ct_scan_to->setValue(value);
+        connect(ct_scan_to, &QwtCounter::valueChanged, this, &US_ConvertScan::upper_scan_range);
+    }
+    emit sig_plot();
+}
+
+void US_ConvertScan::upper_scan_range(double value) {
+    if (value < ct_scan_from->value()) {
+        ct_scan_from->disconnect();
+        ct_scan_from->setValue(value);
+        connect(ct_scan_from, &QwtCounter::valueChanged, this, &US_ConvertScan::lower_scan_range);
+    }
+    emit sig_plot();
 }
 
 void US_ConvertScan::prev_id(){
@@ -762,10 +800,12 @@ void US_ConvertScan::save_run() {
             } else {
                 US_DataIO::RawData rawdata = intensity_data.at(rid);
                 int N = absorbance_data.at(rid).size() - nscans;
-                QVector<QVector<double>> absorbance = absorbance_data.at(rid).mid(N);
-                QVector<double> shifts = absorbance_shifts.at(rid).mid(N);
-                QVector<US_DataIO::Scan> scans = rawdata.scanData.mid(N);
-                for (int mm = 0; mm < nscans; mm++) {
+                int pos = ct_scan_from->value() - 1 + N;
+                int len = ct_scan_to->value() + N - pos;
+                QVector<QVector<double>> absorbance = absorbance_data.at(rid).mid(pos, len);
+                QVector<double> shifts = absorbance_shifts.at(rid).mid(pos, len);
+                QVector<US_DataIO::Scan> scans = rawdata.scanData.mid(pos, len);
+                for (int mm = 0; mm < absorbance.size(); mm++) {
                     int np = absorbance.at(mm).size();
                     for (int nn = 0; nn < np; nn++) {
                         double val = absorbance.at(mm).at(nn);
@@ -983,15 +1023,11 @@ void US_ConvertScan::plot_intensity(){
 
     int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
     US_DataIO::RawData raw_data = intensity_data.at(raw_id);
-    int nn = raw_data.scanCount() - nscans;
-    if (nn < 0) {
-        nn = 0;
-    }
-    int ns = raw_data.scanCount() - nn;
+    int N = raw_data.scanCount() - nscans;
     QPen pen_plot(Qt::yellow);
     pen_plot.setWidth(1);
-    double rb = qCeil(ns / 50.0);
-    int nc = qCeil(ns / rb);
+    double rb = qCeil(nscans / 50.0);
+    int nc = qCeil(nscans / rb);
     HSVcolormap colormap(nc);
     QVector<QColor> colorList;
     int error = colormap.get_colorlist(colorList);
@@ -1004,8 +1040,11 @@ void US_ConvertScan::plot_intensity(){
     double min_r  =  1e20;
     double max_r  = -1e20;
     int np = raw_data.pointCount();
-    for (int ii = nn; ii < raw_data.scanCount(); ++ii){
-        r = raw_data.scanData.at(ii).rvalues.data();
+    int ii_0 = ct_scan_from->value() - 1;
+    int ii_1 = ct_scan_to->value();
+    int cnt = 0;
+    for (int ii = ii_0; ii < ii_1; ++ii){
+        r = raw_data.scanData.at(N + ii).rvalues.data();
         for (int j = 0; j < np; ++j){
             min_x = qMin(min_x, x[j]);
             max_x = qMax(max_x, x[j]);
@@ -1014,9 +1053,10 @@ void US_ConvertScan::plot_intensity(){
         }
         QwtPlotCurve* curve = us_curve( qwtplot_insty,"");
         if (error == 0)
-            pen_plot.setColor(colorList[ ii % nc ]);
+            pen_plot.setColor(colorList[ cnt % nc ]);
         curve->setPen( pen_plot );
         curve->setSamples(x, r, np);
+        cnt++;
     }
 
     grid = us_grid(qwtplot_insty);
@@ -1090,12 +1130,10 @@ void US_ConvertScan::plot_absorbance(){
     double x_1 = ccw_items.at(row).minmax_x.first;
     double x_2 = ccw_items.at(row).minmax_x.second;
 
-    int nn = absorbance_data.at(raw_id).size() - nscans;
-    if (nn < 0) {
-        nn = 0;
-    }
-    QVector<QVector<double>> absorbance = absorbance_data.at(raw_id).mid(nn);
-    QVector<double> shifts = absorbance_shifts.at(raw_id).mid(nn);
+    int N = absorbance_data.at(raw_id).size() - nscans;
+
+    QVector<QVector<double>> absorbance = absorbance_data.at(raw_id).mid(N);
+    QVector<double> shifts = absorbance_shifts.at(raw_id).mid(N);
     if (x_1 > 0 && x_2 > 0) {
         for (int ii = 0; ii < absorbance.size(); ii++) {
             for (int jj = 0; jj < absorbance.at(ii).size(); jj++) {
@@ -1125,7 +1163,11 @@ void US_ConvertScan::plot_absorbance(){
     int np = xvalues.size();
     int l1 = np * 0.2;
     int l2 = np * 0.8;
-    for (int ii = 0; ii < ns; ++ii){
+
+    int ii_0 = ct_scan_from->value() - 1;
+    int ii_1 = ct_scan_to->value();
+    int cnt = 0;
+    for (int ii = ii_0; ii < ii_1; ++ii){
         rp = absorbance.at(ii).data();
         for (int jj = 0; jj < np; ++jj)
             if (jj > l1 && jj < l2){
@@ -1134,9 +1176,10 @@ void US_ConvertScan::plot_absorbance(){
             }
         QwtPlotCurve* curve = us_curve( qwtplot_abs,"");
         if (error == 0)
-            pen_plot.setColor(colorList[ ii % nc ]);
+            pen_plot.setColor(colorList[ cnt % nc ]);
         curve->setPen( pen_plot );
         curve->setSamples(xp, rp, np);
+        cnt++;
     }
     grid = us_grid(qwtplot_abs);
     double dr = (max_r - min_r) * 0.05;
