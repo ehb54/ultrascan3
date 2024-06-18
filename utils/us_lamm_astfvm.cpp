@@ -2020,7 +2020,8 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
    QElapsedTimer timer;
    static int kst1 = 0;
    static int kst2 = 0;
-
+   double D20w_correction_stem = (simparams.temperature+K0)*VISC_20W/K20;
+   double s20w_correction_stem = (VISC_20W/(1.0 - model.components[ comp_x ].vbar20 * DENS_20W));
    switch ( NonIdealCaseNo ) {
       case 0:      // ideal, s=s_0, D=D_0
 
@@ -2056,7 +2057,7 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
          if (codiff_needed){
             bandFormingGradient->interpolateCCodiff(Nv, x, t, Dens, Visc);}
 
-         if (dbg_level > 0){
+         if (dbg_level > 2){
             // calculate density and viscosity mean avg std
             DbgLv(2) << "#####################################";
             DbgLv(2) << "LFVM:AdjustSD: dens visc: t" << t << param_s20w << param_D20w;
@@ -2108,32 +2109,11 @@ void US_LammAstfvm::AdjustSD(double t, int Nv, double *x, const double *u, doubl
             int dneg_in = 0;
             bool log_need = false;
             for ( jj = 0; jj < Nv; jj++ ) {
-               US_Math2::SolutionData sol_data{};
-               sol_data.density = Dens[ jj ];
-               sol_data.viscosity = Visc[ jj ];
-               sol_data.vbar20 = model.components[ comp_x ].vbar20; //The assumption here is that vbar does not change with
-               sol_data.vbar = model.components[ comp_x ].vbar20; //temp, so vbar correction will cancel in s correction
-               sol_data.manual = manual;
-               US_Math2::data_correction(simparams.temperature, sol_data);
-               s_adj[ jj ] = param_s20w / sol_data.s20w_correction;
-               if (param_s20w / sol_data.s20w_correction < smin){
-                  if (smin > 0.0 && param_s20w / sol_data.s20w_correction < 0.0) sneg_in = jj;
-                  smin = param_s20w / sol_data.s20w_correction;
-               }
-               if (param_s20w / sol_data.s20w_correction > smax){
-                  smax = param_s20w / sol_data.s20w_correction;
-               }
-               D_adj[ jj ] = param_D20w / sol_data.D20w_correction;
-               if (param_D20w / sol_data.D20w_correction < dmin){
-                  if (dmin > 0.0 && param_D20w / sol_data.D20w_correction < 0.0) dneg_in = jj;
-                  dmin = param_D20w / sol_data.D20w_correction;
-               }
-               if (param_D20w / sol_data.D20w_correction > dmax){
-                  dmax = param_D20w / sol_data.D20w_correction;
-               }
+               s_adj[ jj ] = param_s20w * s20w_correction_stem / Visc[jj] * (1.0 - model.components[ comp_x ].vbar20 * Dens[jj]);
+               D_adj[ jj ] = param_D20w * D20w_correction_stem / Visc[jj];
                //D_adj[ jj ] = qAbs( dA / visc );
             }
-            if (dbg_level > 0){
+            if (dbg_level > 3){
                DbgLv(2) << "AdjSD:  s or D negative: t" << t << param_s << param_D << Nv << param_s20w << param_D20w;
                DbgLv(2) << "AdjSD:  smin smax sneg_in r(sneg_in)" << smin << smax << sneg_in << x[sneg_in];
                DbgLv(2) << "AdjSD:  dmin dmax dneg_in r(dneg_in)" << dmin << dmax << dneg_in << x[dneg_in];
