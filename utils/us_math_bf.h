@@ -109,9 +109,8 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
             Band_Forming_Gradient(double m, double b, double band_loading,
                                   QList<US_CosedComponent> &comps, double pathlen,
                                   double angle);
-
+            Band_Forming_Gradient( const US_Math_BF::Band_Forming_Gradient &bfg );
             Band_Forming_Gradient();
-            Band_Forming_Gradient(const Band_Forming_Gradient& bfg);
 
             bool operator== (const US_Math_BF::Band_Forming_Gradient&) const;
 

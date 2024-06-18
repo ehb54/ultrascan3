@@ -138,6 +138,38 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
    is_empty = false;
 }
 
+US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient( const US_Math_BF::Band_Forming_Gradient &bfg ) {
+   is_empty = bfg.is_empty;
+   meniscus = bfg.meniscus;
+   bottom = bfg.bottom;
+   overlay_volume = bfg.overlay_volume;
+   overlay_thickness = bfg.overlay_thickness;
+   cp_pathlen = bfg.cp_pathlen;
+   cp_angle = bfg.cp_angle;
+   cosed_component = bfg.cosed_component;
+   base_comps = bfg.base_comps;
+   upper_comps = bfg.upper_comps;
+   lower_comps = bfg.lower_comps;
+   base_density = bfg.base_density;
+   base_viscosity = bfg.base_viscosity;
+   eigenvalues = bfg.eigenvalues;
+   pre_calc_betas = bfg.pre_calc_betas;
+   dens_bfg_data = bfg.dens_bfg_data;
+   visc_bfg_data = bfg.visc_bfg_data;
+   conc_bfg_data = bfg.conc_bfg_data;
+   simparms = bfg.simparms;
+   Nx = bfg.Nx;
+   dt = bfg.dt;
+   dbg_level = bfg.dbg_level;
+   eigenfunction_cache = bfg.eigenfunction_cache;
+   bessel_cache = bfg.bessel_cache;
+   value_cache = bfg.value_cache;
+   total_volume = bfg.total_volume;
+   lower_volume = bfg.lower_volume;
+   eigenfunction_cache_used = 0;
+   bessel_cache_used = 0;
+}
+
 US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(US_SimulationParameters asparms,
                                                          US_DataIO::EditedData *editedData, US_Buffer *buffer): meniscus(asparms.meniscus), bottom(asparms.bottom),
                                                                                                                 overlay_volume(asparms.band_volume),
@@ -1194,38 +1226,6 @@ double US_Math_BF::Band_Forming_Gradient::bessel( const QString& bessel_type, do
       }
    }
    return result;
-}
-
-US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient( const US_Math_BF::Band_Forming_Gradient &bfg ) {
-   is_empty = bfg.is_empty;
-   meniscus = bfg.meniscus;
-   bottom = bfg.bottom;
-   overlay_volume = bfg.overlay_volume;
-   overlay_thickness = bfg.overlay_thickness;
-   cp_pathlen = bfg.cp_pathlen;
-   cp_angle = bfg.cp_angle;
-   cosed_component = bfg.cosed_component;
-   base_comps = bfg.base_comps;
-   upper_comps = bfg.upper_comps;
-   lower_comps = bfg.lower_comps;
-   base_density = bfg.base_density;
-   base_viscosity = bfg.base_viscosity;
-   eigenvalues = bfg.eigenvalues;
-   pre_calc_betas = bfg.pre_calc_betas;
-   dens_bfg_data = bfg.dens_bfg_data;
-   visc_bfg_data = bfg.visc_bfg_data;
-   conc_bfg_data = bfg.conc_bfg_data;
-   simparms = bfg.simparms;
-   Nx = bfg.Nx;
-   dt = bfg.dt;
-   dbg_level = bfg.dbg_level;
-   eigenfunction_cache = bfg.eigenfunction_cache;
-   bessel_cache = bfg.bessel_cache;
-   value_cache = bfg.value_cache;
-   total_volume = bfg.total_volume;
-   lower_volume = bfg.lower_volume;
-   eigenfunction_cache_used = 0;
-   bessel_cache_used = 0;
 }
 
 
