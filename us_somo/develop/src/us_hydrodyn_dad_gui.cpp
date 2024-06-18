@@ -5330,7 +5330,7 @@ void US_Hydrodyn_Dad::update_enables()
    bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
    bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
    bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
-   bool all_DAD          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_DAD_" ).size();
+   bool all_UV_Vis          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_UV-Vis_" ).size();
    bool all_atl          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_At_L" ).size();
    bool any_blc          = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_blc" ).size();
 
@@ -5429,12 +5429,12 @@ void US_Hydrodyn_Dad::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_powerfit           ->setEnabled( !files_are_time && files_selected_count == 1 );
-   pb_baseline2_start    ->setEnabled( files_are_time && files_selected_count == 1 && all_atl && all_DAD );
-   pb_baseline2_apply    ->setEnabled( files_are_time && files_selected_count && all_atl && all_DAD && baseline2_fit_ok && !any_blc );
+   pb_baseline2_start    ->setEnabled( files_are_time && files_selected_count == 1 && all_atl && all_UV_Vis );
+   pb_baseline2_apply    ->setEnabled( files_are_time && files_selected_count && all_atl && all_UV_Vis && baseline2_fit_ok && !any_blc );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
-   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_atl && all_DAD /* && gaussians.size() */ );
+   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_atl && all_UV_Vis /* && gaussians.size() */ );
    pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && dad_param_n && dad_param_lambda && dad_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
    pb_create_istar_q     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_ihasht );
    pb_load_conc          ->setEnabled( true );
@@ -5653,12 +5653,12 @@ void US_Hydrodyn_Dad::update_enables()
       } else {
          if ( type_files( selected_files ) )
          {
-            if ( all_DAD ) {
+            if ( all_UV_Vis ) {
                title = us_tr( "Time [s]" );
             } else {
                title = us_tr( "Time [a.u.]" );
             }
-         } else if ( all_DAD ) {
+         } else if ( all_UV_Vis ) {
             title = us_tr( UNICODE_LAMBDA_QS + " [nm]" );
          } else {
             title = us_tr( "q [1/Angstrom]" );
@@ -5690,7 +5690,7 @@ void US_Hydrodyn_Dad::update_enables()
                title = us_tr( "R(q, t) [cm^-1]" );
             } else if ( all_ihasht ) {
                title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
-            } else if ( all_DAD ) {
+            } else if ( all_UV_Vis ) {
                title = us_tr( "A(t) [a.u.]" );
             } else {
                title = us_tr( "I(t) [a.u.]" );
@@ -5700,7 +5700,7 @@ void US_Hydrodyn_Dad::update_enables()
                title = us_tr( "I*(q) [g mol^-1]" );
             } else if ( all_ihashq ) {
                title = us_tr( "I#(q) [g^2 cm^-3 mol^-1]" );
-            } else if ( all_DAD ) {
+            } else if ( all_UV_Vis ) {
                title = us_tr( "A(" + UNICODE_LAMBDA_QS + ") [a.u.]" );
             } else {
                title = us_tr( "I(q) [a.u.]" );

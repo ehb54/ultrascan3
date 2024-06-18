@@ -387,7 +387,7 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
          .replace( ".", "_" )
          ;
 
-      name = name.replace( "_DAD_AL_t_bs", "_DAD_bs_AL_t" );
+      name = name.replace( "_UV_Vis_AL_t_bs", "_UV_Vis_bs_AL_t" );
 
       {
          int ext = 0;
@@ -3243,8 +3243,8 @@ bool US_Hydrodyn_Dad::create_istar_q_ng( QStringList files, double t_min, double
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
    head +=
       make_ihashq
-      ? "_DAD_Ihashq_t"
-      : "_DAD_Istarq_t"
+      ? "_UV_Vis_Ihashq_t"
+      : "_UV_Vis_Istarq_t"
       ;
    
    // TSO << "create_istar_q_ng()  head: " << head << "\n";
