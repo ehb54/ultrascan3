@@ -25,19 +25,19 @@ class US_AdvancedFem : public US_WidgetsDialog
                       QWidget* p = 0 );
 
    private:
-      US_Model*                 model;
-      QMap< QString, QString >& parmap;
+      US_Model*                 model;  //! \brief Pointer to model
+      QMap< QString, QString >& parmap; //! \brief Reference to advanced dialog values
 
-      QGridLayout*  mainLayout;
+      QGridLayout*  mainLayout;    //! \brief Pointer to main layout
 
-      QWidget*      parentw;
+      QWidget*      parentw;       //! \brief Pointer to parent widget
 
-      QwtCounter*   ct_simpoints;
-      QwtCounter*   ct_bldvolume;
-      QwtCounter*   ct_parameter;
+      QwtCounter*   ct_simpoints;  //! \brief Number of simulation points
+      QwtCounter*   ct_bandvolume; //! \brief Band-loading volume
+      QwtCounter*   ct_parameter;  //! \brief Parameter
 
-      QComboBox*    cb_mesh;
-      QComboBox*    cb_grid;
+      QComboBox*    cb_mesh;      //! \brief Mesh type
+      QComboBox*    cb_grid;      //! \brief Grid type
 
    protected:
       US_Help       showHelp;

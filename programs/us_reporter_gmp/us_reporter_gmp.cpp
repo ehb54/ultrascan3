@@ -3836,13 +3836,13 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   dbg_level  = US_Settings::us_debug();
 
-  adv_vals[ "simpoints" ] = "500";
-  adv_vals[ "bndvolume" ] = "0.015";
-  adv_vals[ "parameter" ] = "0";
-  adv_vals[ "modelnbr"  ] = "0";
-  adv_vals[ "meshtype"  ] = "ASTFEM";
-  adv_vals[ "gridtype"  ] = "Moving";
-  adv_vals[ "modelsim"  ] = "mean";
+  adv_vals[ "simpoints"  ] = "500";
+  adv_vals[ "bandvolume" ] = "0.015";
+  adv_vals[ "parameter"  ] = "0";
+  adv_vals[ "modelnbr"   ] = "0";
+  adv_vals[ "meshtype"   ] = "ASTFEM";
+  adv_vals[ "gridtype"   ] = "Moving";
+  adv_vals[ "modelsim"   ] = "mean";
 
   resids.clear();
   dataLoaded = false;
@@ -4983,9 +4983,9 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   
   qDebug() << "SimMdl: speed_steps:" << simparams.speed_step.size();
   
-  QString mtyp = adv_vals[ "meshtype"  ];
-  QString gtyp = adv_vals[ "gridtype"  ];
-  QString bvol = adv_vals[ "bndvolume" ];
+  QString mtyp = adv_vals[ "meshtype"   ];
+  QString gtyp = adv_vals[ "gridtype"   ];
+  QString bvol = adv_vals[ "bandvolume" ];
   
   
   if ( gtyp.contains( "Constant" ) )
