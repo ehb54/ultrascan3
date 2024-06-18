@@ -328,15 +328,15 @@ void US_ConvertScan::apply_scan_smooth() {
 int US_ConvertScan::read_auc(QVector<US_DataIO::RawData>& rawdata,
                               QVector<QVector<QVector<double>>>& absorbance,
                               QVector<QVector<QVector<double>>>& refscans,
-                              QVector<QVector<double>>& shifts, QString& dir) {
+                              QVector<QVector<double>>& shifts, QString& working_dir) {
 
-    QDir inDir = QDir( dir, "*.auc", QDir::Name, QDir::Files | QDir::Readable );
+    QDir inDir = QDir( working_dir, "*.auc", QDir::Name, QDir::Files | QDir::Readable );
     if (inDir.count() == 0){
         le_status->setText("auc files not found!");
         return -1;
     }
 
-    QFileInfo finfo(dir);
+    QFileInfo finfo(working_dir);
     QString run_id = finfo.baseName();
     QRegExp re( "[^A-Za-z0-9_-]" );
     bool run_id_changed = false;
@@ -441,7 +441,8 @@ int US_ConvertScan::read_auc(QVector<US_DataIO::RawData>& rawdata,
     if (rawdata.isEmpty()) {
         return -1;
     }
-
+    working_dir.clear();
+    working_dir = run_id;
     return maxscans;
 
 }
