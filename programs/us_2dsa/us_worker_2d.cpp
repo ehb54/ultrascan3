@@ -72,7 +72,14 @@ DbgLv(1) << "WT:DWk: "
    sim_vals.ti_noise    = workin.sim_vals.ti_noise;
    sim_vals.ri_noise    = workin.sim_vals.ri_noise;
    sim_vals.solutes     = workin.sim_vals.solutes;
-   bandFormingGradient  = workin.bandFormingGradient;
+   if (workin.bandFormingGradient != nullptr)
+   {
+      bandFormingGradient = new US_Math_BF::Band_Forming_Gradient(*workin.bandFormingGradient);
+   }
+   else
+   {
+      bandFormingGradient = nullptr;
+   }
    cosedData            = workin.cosedData;
 }
 
