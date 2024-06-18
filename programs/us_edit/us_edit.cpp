@@ -8645,6 +8645,28 @@ void US_Edit::write_auto( void )
      }
    ////////////////////////////////////////////////////////////////////
 
+   //IF ABDE, stop here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   if ( autoflow_expType == "ABDE" )
+     {
+       details_at_editing_local[ "analysisIDs" ] = "NULL";
+   
+       //ALEXEY: here major actions on setting analysis tables etc. !!!!
+       QMessageBox::information( this,
+				 tr( "Saving of Edit Profiles is Complete." ),
+				 tr( "Edit profiles were saved successfully. \n\n"
+				     "The program will switch to Analysis stage." ) );
+       
+       reset();
+       this->close();
+       qApp->processEvents();
+       
+       emit edit_complete_auto( details_at_editing_local  );
+
+       return;
+     }
+   // END of IF ABDE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   
    // Now, remove duplicates from channels array, fill QMap keeping track on if reference wavelength set for each channel (if MWL) 
    channels_all       .removeDuplicates();
    triples_all_optics .removeDuplicates(); //Absence of this caused incorrect analyses list: need to test!!!

@@ -910,7 +910,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool    samplesReferencesWvlsMatch( QStringList& );
       bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
-      bool    extinctionProfilesExist( QStringList& );
+      bool    extinctionProfilesExist( QStringList&, bool& );
       bool    validExtinctionProfile( QString, QList< double >,
 				      QList< double >, QStringList& );
 
