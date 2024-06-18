@@ -77,6 +77,7 @@ private:
         QPair<double, double> minmax_x;
     };
 
+    US_Disk_DB_Controls* disk_controls;
     QPushButton* pb_prev_id;
     QPushButton* pb_next_id;
     QPushButton* pb_import;
@@ -143,6 +144,8 @@ private:
     bool set_abs_runid(QString&);
     void set_ct_scans(int = 0);
     void align_center(QwtCounter*);
+    int read_auc(QVector<US_DataIO::RawData>&, QVector<QVector<QVector<double>>>&,
+                  QVector<QVector<QVector<double>>>&, QVector<QVector<double>>&, QString&);
 
 };
 

@@ -1,4 +1,5 @@
 #include "us_convert_scan.h"
+#include "us_load_auc.h"
 #include <QGuiApplication>
 
 US_ConvertScan::US_ConvertScan() : US_Widgets()
@@ -7,6 +8,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     font = QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() );
     // font.setPointSize(font.pointSize() - 1);
 
+    disk_controls = new US_Disk_DB_Controls;
     QLabel* lb_runInfoInt  = us_banner("Intensity Data Control");
     pb_import = us_pushbutton("Import Run");
     pb_reset = us_pushbutton("Reset");
@@ -32,6 +34,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 
     QVBoxLayout* import_lyt = new QVBoxLayout();
     import_lyt->addWidget(lb_runInfoInt);
+    import_lyt->addLayout(disk_controls);
     import_lyt->addLayout(imp_lyt_1);
     import_lyt->addLayout(imp_lyt_2);
 
@@ -322,43 +325,47 @@ void US_ConvertScan::apply_scan_smooth() {
     emit sig_plot();
 }
 
-void US_ConvertScan::import_run(){
-    QString dir;
-
-    dir = QFileDialog::getExistingDirectory( this,
-                                            tr( "Open Run ID" ),
-                                            US_Settings::importDir(),
-                                            QFileDialog::DontResolveSymlinks );
-
-    if (dir.isEmpty()) return;
+int US_ConvertScan::read_auc(QVector<US_DataIO::RawData>& rawdata,
+                              QVector<QVector<QVector<double>>>& absorbance,
+                              QVector<QVector<QVector<double>>>& refscans,
+                              QVector<QVector<double>>& shifts, QString& dir) {
 
     QDir inDir = QDir( dir, "*.auc", QDir::Name, QDir::Files | QDir::Readable );
     if (inDir.count() == 0){
         le_status->setText("auc files not found!");
-        return;
+        return -1;
     }
-    inDir.makeAbsolute();
-    le_status->setText("parsing files!");
 
-    QFileInfoList fileList = inDir.entryInfoList();
-    QStringList bad_files;
-    QString run_id;
-    QString run_type;
-    QStringList run_type_avail{"RI"};
+    QFileInfo finfo(dir);
+    QString run_id = finfo.baseName();
     QRegExp re( "[^A-Za-z0-9_-]" );
-    bool runId_changed = false;
-    // QString ccw_str("%1 / %2 / %3");
+    bool run_id_changed = false;
+    int reIdx = run_id.indexOf(re, 0);
+    if (reIdx >=0) {
+        run_id_changed = true;
+    }
+    while (reIdx >=0){
+        run_id = run_id.replace(reIdx, 1, "_");
+        reIdx = run_id.indexOf(re, reIdx);
+    }
 
-    QVector<US_DataIO::RawData> rawdata;
-    QVector<QVector<QVector<double>>> absorbance;
-    QVector<QVector<QVector<double>>> refscans;
-    QVector<QVector<double>> shifts;
-    // QStringList fnames;
     QStringList loaded_runids;
     foreach (CellChannel cc, ccw_items) {
         loaded_runids << cc.runid;
     }
+    if (loaded_runids.contains(run_id)) {
+        QMessageBox::warning( this, tr( "Error" ),
+                             tr( "The RunID (%1) is already loaded!" ).arg(run_id));
+        return -1;
+    }
 
+    inDir.makeAbsolute();
+    le_status->setText("parsing files!");
+    QFileInfoList fileList = inDir.entryInfoList();
+    QStringList bad_files;
+    QString run_type;
+    QStringList run_type_avail{"RI"};
+    // QStringList fnames;
     int maxscans = 1000000;
 
     for (int ii = 0; ii < fileList.size(); ++ii){
@@ -369,30 +376,28 @@ void US_ConvertScan::import_run(){
             bad_files << fn;
             continue;
         }
-        if (rdata.scanCount() == 0) continue;
+        if (rdata.scanCount() == 0) {
+            bad_files << fn;
+            continue;
+        }
 
         QString rtp = QChar::fromLatin1(rdata.type[0]);
         rtp.append(QChar::fromLatin1(rdata.type[1]));
         QString rid = fn.section(".", 0, -6);
         int reIdx = rid.indexOf(re, 0);
-        if (reIdx >=0) runId_changed = true;
         while (reIdx >=0){
             rid = rid.replace(reIdx, 1, "_");
             reIdx = rid.indexOf(re, reIdx);
         }
-        if (run_id.isEmpty()) {
-            run_id = rid;
-        } else {
-            if (run_id != rid) {
-                QMessageBox::warning( this, tr( "Warning!" ),
-                                     tr( "Multiple RunIDs Found!"));
-                return;
-            }
+        if (run_id != rid) {
+            QMessageBox::warning( this, tr( "Warning!" ),
+                                 tr( "Multiple RunIDs Found!"));
+            return -1;
         }
         if (! run_type_avail.contains(rtp)){
             QMessageBox::warning( this, tr( "Error" ),
                                  tr( "The Run type (%1) is not supported!" ).arg(rtp));
-            return;
+            return -1;
         }
         if (run_type.isEmpty()){
             run_type = rtp;
@@ -400,14 +405,10 @@ void US_ConvertScan::import_run(){
             if (run_type != rtp){
                 QMessageBox::warning( this, tr( "Error" ),
                                      tr( "Multiple run types are found in the directory!" ));
-                return;
+                return -1;
             }
         }
-        if (loaded_runids.contains(run_id)) {
-            QMessageBox::warning( this, tr( "Error" ),
-                                 tr( "The RunID (%1) is already loaded!" ).arg(run_id));
-            return;
-        }
+
         rawdata << rdata;
         // fnames << fn;
         int ns = rdata.scanCount();
@@ -426,7 +427,7 @@ void US_ConvertScan::import_run(){
         shifts << sh;
     }
 
-    if ( runId_changed ) {
+    if ( run_id_changed ) {
         QMessageBox::warning( this, tr( "Warning!" ),
                              tr( "The RunID changed. It can only have alphanumeric,"
                                 "underscore, and hyphen characters."));
@@ -438,27 +439,55 @@ void US_ConvertScan::import_run(){
     }
 
     if (rawdata.isEmpty()) {
+        return -1;
+    }
+
+    return maxscans;
+
+}
+
+void US_ConvertScan::import_run() {
+    QVector<US_DataIO::RawData> rawdata;
+    QVector<QVector<QVector<double>>> absorbance;
+    QVector<QVector<QVector<double>>> refscans;
+    QVector<QVector<double>> shifts;
+    QString workingDir;
+
+    if (disk_controls->db()) {
+        QVector< US_DataIO::RawData > allData;
+        QStringList triples;
+        US_LoadAUC* dialog = new US_LoadAUC( false, allData, triples, workingDir );
+        if ( dialog->exec() == QDialog::Rejected )  return;
+    } else {
+        workingDir = QFileDialog::getExistingDirectory( this,
+                                                tr( "Open Run ID" ),
+                                                US_Settings::importDir(),
+                                                QFileDialog::DontResolveSymlinks );
+        if (workingDir.isEmpty()) return;
+    }
+
+    int maxscn = read_auc(rawdata, absorbance, refscans, shifts, workingDir);
+    if (maxscn == -1) {
         return;
     }
 
     QVector<int> states(rawdata.size(), -1);
-
     intensity_data << rawdata;
     absorbance_data << absorbance;
     absorbance_state << states;
     absorbance_shifts << shifts;
     refscan_data << refscans;
 
-    list_ccw_items(run_id);
+    list_ccw_items(workingDir);
     set_table();
     set_wavl_ctrl();
     pb_reset->setEnabled(true);
     hasData = true;
     le_status->clear();
 
-    maxscans = qMin(max_nscans, maxscans);
-    set_ct_scans(maxscans);
-    return;
+    maxscn = qMin(max_nscans, maxscn);
+    set_ct_scans(maxscn);
+
 }
 
 void US_ConvertScan::set_ct_scans(int maxval) {
