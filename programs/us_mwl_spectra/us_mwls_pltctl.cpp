@@ -116,7 +116,7 @@ QGLWidget* US_MwlSPlotControl::data_3dplot( void )
 }
 
 // Public slot to return a pointer to the 3D plot main widget
-US_Plot3Dxyz* US_MwlSPlotControl::widget_3dplot( void )
+US_Plot3D* US_MwlSPlotControl::widget_3dplot( void )
 {
    return plot3d_w;
 }
@@ -150,7 +150,7 @@ qDebug() << "PCtrl:  plot3_btn: scales" << rxscale << ryscale << zscale;
 
    if ( plot3d_w == 0 )
    {  // If no 3-D plot window, bring it up now
-      plot3d_w     = new US_Plot3Dxyz( this, xyzdat );
+      plot3d_w     = new US_Plot3D( this, nullptr, xyzdat );
       // Position so a corner is near a control dialog corner
       int cx       = x();
       int cy       = y();
@@ -172,7 +172,7 @@ qDebug() << "PCtrl:  plot3_btn: scales" << rxscale << ryscale << zscale;
 
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
    plot3d_w->setParameters( ncol, nrow, rxscale, ryscale, zscale );
-   plot3d_w->replot       ( );
+   plot3d_w->replot       ( false );
 
    plot3d_w->setVisible( true );
 }

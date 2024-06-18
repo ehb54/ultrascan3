@@ -9,7 +9,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_mwl_data.h"
-#include "us_plot3d_xyz.h"
+#include "us_plot3d.h"
 #include "us_model.h"
 
 class US_MwlSpectra : public US_Widgets
@@ -23,7 +23,7 @@ class US_MwlSpectra : public US_Widgets
 
   private:
      QPointer< US_MwlSPlotControl > p3d_ctld;    //!< Pointer to 3D control
-     QPointer< US_Plot3Dxyz >       p3d_pltw;    //!< Pointer to 3D plot window
+     QPointer< US_Plot3D >          p3d_pltw;    //!< Pointer to 3D plot window
      QList< US_Model >              loadedmodels;      //!< model list
      QVector< QVector3D >           mdlxyz;      //!< Models 3D data vector
      QVector< QVector3D >           xyzdat;      //!< Normalized 3D data vector
@@ -165,8 +165,8 @@ class US_MwlSpectra : public US_Widgets
      void   final_stats    ( QVector< int >&,    QVector< double >&,
                              QVector< double >&, QVector< double >&,
                              QVector< double >& );
-     void changedPlotX      ( bool );
-     double comp_value(const US_Model::SimulationComponent*,int);
+     void   changedPlotX   ( bool );
+     double comp_value     ( const US_Model::SimulationComponent*, int );
      void   help           ( void )
      { showHelp.show_help( "mwl_spectra.html" ); };
 };

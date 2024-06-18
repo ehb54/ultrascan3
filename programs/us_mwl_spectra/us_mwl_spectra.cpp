@@ -1387,7 +1387,7 @@ DbgLv(1) << "Plt3D";
          QString ptitle = tr( "MWL 3-D Plot, Spectra" );
 
          p3d_pltw->setPlotTitle( ptitle );
-         p3d_pltw->replot();
+         p3d_pltw->replot( false );
       }
    }
 
@@ -1408,7 +1408,7 @@ DbgLv(1) << "Save Plot";
    if ( nfiles == 2 )
    {  // If there is a 3D window, first save a PNG of that window
 
-      p3d_pltw->replot();                // Do the plot
+      p3d_pltw->replot( false );                // Do the plot
       QString fpath3d = savedir + fname3d;
 
       p3d_pltw->save_plot( fpath3d, QString( "png" ) );
