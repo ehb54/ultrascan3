@@ -1446,6 +1446,9 @@ if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
    DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
    if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
    DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+   if ( bfg != nullptr && my_rank > 2 ){ // copy the gradient for faster lookups
+      bfg = new US_Math_BF::Band_Forming_Gradient(*bfg);
+   }
    solvesim.calc_residuals( offset, dataset_count, simu_values, false, nullptr, nullptr, nullptr, bfg);
 
 //*DEBUG*
