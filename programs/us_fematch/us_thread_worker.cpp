@@ -36,10 +36,7 @@ DbgLv(1) << " THRWRK:" << thrn << "model-0 s k" << model.components[0].s*1.e13
    << model.components[0].f_f0;
    double compress    = buffer.compressibility;
 
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0  &&
-        model.coSedSolute           <  0.0  &&
-        compress                    == 0.0 )
+   if ( simparams.meshType != US_SimulationParameters::ASTFVM )
    {
       US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    

@@ -28,6 +28,27 @@ class US_UTIL_EXTERN US_Hardware
    static bool rotorValues ( QString, QMap< QString, QString >, double* );
 };
 
+//! \brief Channel data
+class US_UTIL_EXTERN US_AbstractChannel
+{
+   public:
+   US_AbstractChannel();
+
+   QString guid;                 //!< global identifier
+
+   QString name;                 //!< channel name description
+
+   QString shape; //!< shape of channel
+
+   double  angle; //!< angle of channel, if sector shaped, default: 2.5 degrees
+
+   double  width; //!< width of channel if rectangular, 0 otherwise.
+
+   double path_length;  //!< path length of channel
+
+   double bottom_position; //!< bottom of channel
+};
+
 //! \brief Centerpiece data
 class US_UTIL_EXTERN US_AbstractCenterpiece
 {
@@ -39,7 +60,7 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
       QString guid;                 //!< global identifier
       QString name;                 //!< textual description
       QString material;             //!< epon, aluminum, titanium
-      int     channels;             //!< number of columns of channels
+      int     count_channels;             //!< number of columns of channels
       QString shape;                //!< shape of the channel
 
       //! Angle of sector, if sector shaped, default: 2.5 degrees
@@ -54,6 +75,7 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
       //! Bottom position of each row 
       QList< double > path_length;  //!< path lengths of channels in a column
       QList< double > bottom_position; //!< bottom of each row of channels
+      QList< US_AbstractChannel > channels; //!< channels
 
       //!  Read centerpieces from database (or local disk if db==NULL)
       //!  \param db           Pointer to database connection (NULL for local)

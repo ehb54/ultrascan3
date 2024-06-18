@@ -141,10 +141,12 @@ DbgLv(1) << "CN(WT):  CN:  nscan" << nscan << "npoint" << npoint;
 
       // Compute the other coefficients
       model1.update_coefficients(); 
+      if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+          // Convert to 20w space
+          model1.components[ 0 ].s /= dset->s20w_correction;
+          model1.components[ 0 ].D /= dset->D20w_correction;
+      }
 
-      // Convert to 20w space
-      model1.components[ 0 ].s /= dset->s20w_correction;
-      model1.components[ 0 ].D /= dset->D20w_correction;
 
       // Reinitialize the simulation data set initial concentrations
       for ( int jj = 0; jj < nscan; jj++ )
@@ -152,10 +154,18 @@ DbgLv(1) << "CN(WT):  CN:  nscan" << nscan << "npoint" << npoint;
             simdat.setValue( jj, kk, 0.0 );
 
 DbgLv(1) << "CN(WT):  CN:   ii" << ii << "astfem_rsa:";
-      // Perform finite element modeling to compute the simulation
-      US_Astfem_RSA astfem_rsa( model1, simparms );
+      if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+          // Perform finite element modeling to compute the simulation
+          US_Astfem_RSA astfem_rsa( model1, simparms );
 
-      astfem_rsa.calculate( simdat );
+          astfem_rsa.calculate( simdat );
+      }
+      else{
+          US_LammAstfvm astfvm(model1, simparms);
+          astfvm.set_buffer(dset->solution_rec.buffer);
+          astfvm.calculate(simdat);
+      }
+
 
       // Store the norm value for this simulation (A matrix column)
       double znorm      = US_Math2::norm_value( &simdat );

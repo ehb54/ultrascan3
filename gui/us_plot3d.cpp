@@ -596,7 +596,11 @@ void US_Plot3D::replot()
 {
    unsigned int kcols = (unsigned int)ncols;
    unsigned int krows = (unsigned int)nrows;
+    double dx = (xmax - xmin) / (ncols - 1);
+    double dy = (ymax - ymin) / (nrows - 1);
 
+    double tmin = DBL_MAX;
+    double tmax = -DBL_MAX;
    double** wdata = new double* [ ncols ];
 DbgLv(2) << "P3D: replot: ncols nrows" << ncols << nrows;
 
@@ -612,6 +616,10 @@ if ((ii&63)==1) DbgLv(2) << "P3D:  rp: row" << ii;
       {
          double zval       = zdata[ ii ][ jj ];
          wdata[ ii ][ jj ] = zval;
+         QVector<double> temp;
+         temp.clear();
+         temp << xmin + ii*dx << ymin + jj*dy << zdata[ii][jj];
+         d_data << temp;
          zdmx              = zdmx > zval ? zdmx : zval;
 if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
  << "  wdat" << zval;
@@ -623,7 +631,8 @@ if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
 
    for ( int ii = 0; ii < ncols; ii++ )
       for ( int jj = 0; jj < nrows; jj++ )
-         wdata[ ii ][ jj ] *= zfac;
+      {wdata[ ii ][ jj ] *= zfac;
+      d_data[ii*nrows+jj][2] *= zfac;}
 
    // load the widget raster data
    //dataWidget->loadFromData( wdata, kcols, krows, ymin, ymax, xmin, xmax );
@@ -1595,9 +1604,30 @@ void US_Plot3D::dump_contents()
    QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
 
-   QString ofname     = US_Settings::reportDir() + "/" + modldesc
+   QString ofname     = US_Settings::reportDir() + "/"  +modldesc
       + "_" + datetime + "_plot3d." + fileext;
+    {
+        QString data_filename = US_Settings::reportDir() + "/"  +modldesc
+                                + "_" + datetime + "_plot3d_data." + "csv";
+        QFile myFile(data_filename);
+        if (!myFile.open(QIODevice::WriteOnly)) {
+            qDebug() << "Could not write to file:" << data_filename << "Error string:" << myFile.errorString();
+        }
+        else{
+            QTextStream out(&myFile);
+            QVector<QString> radius;
 
+            out << xatitle << "; " << yatitle << "; " << zatitle;
+            out << Qt::endl;
+                    foreach(auto tmp, d_data) {
+                    out << QString::number(tmp[0], 'f', 4);
+                    out << "; " << QString::number(tmp[1], 'f', 4);
+                    out << "; " << QString::number(tmp[2], 'f', 4);
+                    out << Qt::endl;
+                }
+            myFile.flush();}
+        myFile.close();
+    }
    bool ok = IO::save( dataWidget, ofname, imagetype );
 //DbgLv(2) << " oformats" << IO::outputFormatList();
 DbgLv(2) << " dump_contents" << ofname << "  OK " << ok;

@@ -97,7 +97,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    int     cp_id       = 0;
    QString channel     = QChar(rawdata.channel);
    int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
-   int     ch          = qMax( 0, iechan ) / 2;
+   int     ch          = qMax( 0, iechan );
            iechan      = qMax( 0, iechan ) + 1;
    QString ecell       = QString::number(rawdata.cell);
    int     iecell      = ecell.toInt();
@@ -702,13 +702,27 @@ DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
       QStringList shapes;
       shapes << "sector" << "standard" << "rectangular" << "band forming"
              << "meniscus matching" << "circular" << "synthetic";
-      QString shape   = cp_list[ cp ].shape;
-      bottom_position = cp_list[ cp ].bottom_position[ ch ];
-      cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
-      cp_angle        = cp_list[ cp ].angle;
-      cp_width        = cp_list[ cp ].width;
-      cp_sector       = qMax( 0, shapes.indexOf( shape ) );
-      band_forming    = ( shape == "band forming" );
+      US_AbstractCenterpiece centerpiece = cp_list[ cp ];
+      bool found = false;
+      if (!centerpiece.channels.isEmpty() && ch < centerpiece.channels.count()){
+            US_AbstractChannel channel = centerpiece.channels[ch];
+            bottom_position = channel.bottom_position;
+            cp_pathlen = channel.path_length;
+            cp_angle = channel.angle;
+            cp_width = channel.width;
+            cp_sector = qMax( 0, shapes.indexOf( channel.shape ) );
+            band_forming = ( channel.shape == "band forming");
+            found = true;
+         }
+      if (!found){
+         QString shape   = cp_list[ cp ].shape;
+         bottom_position = cp_list[ cp ].bottom_position[ ch ];
+         cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
+         cp_angle        = cp_list[ cp ].angle;
+         cp_width        = cp_list[ cp ].width;
+         cp_sector       = qMax( 0, shapes.indexOf( shape ) );
+         band_forming    = ( shape == "band forming" );
+      }
 
    }
 
