@@ -248,7 +248,7 @@ void US_Hydrodyn_Dad_Dctr::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/somo/us_vis_options.html");
+   online_help->show_help("manual/somo/uv_vis_options.html");
 }
 
 void US_Hydrodyn_Dad_Dctr::closeEvent( QCloseEvent *e )
