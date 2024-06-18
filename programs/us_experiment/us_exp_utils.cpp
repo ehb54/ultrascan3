@@ -4112,6 +4112,13 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user, bool&
 	   << rpSolut->nschan
 	   << rpRange->nranges;
 
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  // QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+  
+
   //DB
   US_Passwd pw;
   QString masterPW = pw.getPasswd();
@@ -4223,6 +4230,10 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user, bool&
 	    }
 	  else // ABDE-MWL, but NOT qualified as deconvoluted
 	    {
+	      //skip if it's a ref chann
+	      if ( ref_chnns[ ii ] > 0 )
+		continue;
+
 	      all_profiles_exist = false;
 	      all_to_deconvolute = false;
 	      msg_to_user << "MWL channel " + channel + ": no deconvolution possible...";
