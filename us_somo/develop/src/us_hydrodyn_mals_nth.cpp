@@ -395,7 +395,7 @@ void US_Hydrodyn_Mals_Nth::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/somo/mals_nth.html");
+   online_help->show_help("manual/somo/saxs_hplc_nth.html");
 }
 
 void US_Hydrodyn_Mals_Nth::closeEvent( QCloseEvent *e )

@@ -4689,6 +4689,7 @@ void US_Hydrodyn_Dad::setupGUI()
             ,pb_to_saxs
             ,pb_ref
             ,rb_pbmode_conc
+            ,pb_movie
             // ,lbl_powerfit_lambda_abs
             // ,lbl_powerfit_lambda2_abs
             }
