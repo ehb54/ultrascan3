@@ -113,6 +113,37 @@ int US_XpnData::checkExpStatus( QString runid )
    return sqry.value( 0 ).toInt();
 }
 
+// Check Experiment status [for autoflow]
+int US_XpnData::checkExpStatus_auto( QString runid, bool& o_conn )
+{
+
+  qDebug() << "in [checkExpStatus_auto]: Init o_conn status: " << o_conn;
+   
+  if ( ! dbxpn.open() )
+    {
+      o_conn = false;
+      qDebug() << "XPN: checkExpStatus_auto: !dbxpn.open() !!! runid, o_conn -- "
+	       << runid << o_conn;
+     
+      return false;
+    }
+    
+   QString tabname( "ExperimentRun" );
+   QSqlQuery  sqry;
+   QString schname( "AUC_schema" );
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+  
+   QString qrytext = "SELECT \"RunStatus\" from " + qrytab
+                        + " WHERE \"RunId\"=" + runid + ";";
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+
+   qDebug() << "INSIDE CheckExpSTATUS: status: " <<  sqry.value( 0 ).toInt();
+   return sqry.value( 0 ).toInt();
+}
+
+
 void US_XpnData::setEtimOffZero( void )
 {
    //etimoff  = 0;

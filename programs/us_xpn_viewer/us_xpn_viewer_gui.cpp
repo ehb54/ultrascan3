@@ -2617,7 +2617,8 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   qDebug() << "SYS_STAT: After replot(), BEFORE CheExpStat!! ";
 
-  int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
+  bool o_connection = true;
+  int exp_status = CheckExpComplete_auto( RunID_to_retrieve, o_connection  );
    
   if ( exp_status == 5 || exp_status == 0 )
     {
@@ -2648,7 +2649,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	  return;
 	}
 
-      if ( exp_status == 0 )
+      if ( exp_status == 0 && o_connection )
 	experimentAborted  = true;
       
       if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
@@ -3205,8 +3206,9 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 
       in_reload_all_data   = false;
 
-      //ALEXEY: rare case when no data but exp. aborted !!!! 
-      if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0  ) //ALEXEY should be == 3 as per documentation
+      //ALEXEY: rare case when no data but exp. aborted !!!!
+      bool o_connection = true;
+      if ( CheckExpComplete_auto( RunID_to_retrieve, o_connection ) == 0  ) //ALEXEY should be == 3 as per documentation
 	{
 	  if ( finishing_live_update )
 	    {
@@ -3217,8 +3219,9 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	    }
 	  
 	  qDebug() << "ABORTION IN EARLY STAGE...";
-	  
-	  experimentAborted  = true;
+
+	  if ( o_connection )
+	    experimentAborted  = true;
 	  
 	  timer_all_data_avail->stop();
 	  disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -3239,8 +3242,9 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	    }
 	}
 
-      //ALEXEY: rare case when no data but experiment "finished" !!!! 
-      if ( CheckExpComplete_auto( RunID_to_retrieve ) == 5  ) 
+      //ALEXEY: rare case when no data but experiment "finished" !!!!
+      bool o_connection_1 = true;
+      if ( CheckExpComplete_auto( RunID_to_retrieve, o_connection_1 ) == 5  ) 
 	{
 	  if ( finishing_live_update )
 	    {
@@ -3565,8 +3569,9 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    
    qDebug() << "finishing_live_update " << finishing_live_update;
 
-   //ALEXEY: Add Exp. Abortion Exception HERE... 
-   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
+   //ALEXEY: Add Exp. Abortion Exception HERE...
+   bool o_connection = true;
+   if ( CheckExpComplete_auto( RunID_to_retrieve, o_connection ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
        if ( finishing_live_update )
 	 {
@@ -3577,8 +3582,9 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	 }
        
        qDebug() << "ABORTION IN EARLY STAGE...";
-       
-       experimentAborted  = true;
+
+       if ( o_connection )
+	 experimentAborted  = true;
        
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -5094,11 +5100,11 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 }
 
 
-int US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
+int US_XpnDataViewer::CheckExpComplete_auto( QString & runid, bool& o_conn )
 {
   // Implement Optima's ExperimentRun query for RunStatus field [enum: 0 - NoRunInfo; 2- InProgress; 5- CompleteOK], look in db_defines.h of Dennis's util
   // in utils/us_xpn_data.cpp
-  int exp_status =  xpn_data->checkExpStatus( runid );
+  int exp_status =  xpn_data->checkExpStatus_auto( runid, o_conn );
 
   return exp_status;
 }
@@ -5171,7 +5177,8 @@ QDateTime sttime=QDateTime::currentDateTime();
 DbgLv(1) << "RLd:       NO CHANGE";
 
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
-      int statusExp = CheckExpComplete_auto( RunID_to_retrieve  );
+      bool o_connection = true;
+      int statusExp = CheckExpComplete_auto( RunID_to_retrieve, o_connection  );
 
       if ( statusExp == 5 || statusExp == 0 )
 	{
@@ -5183,7 +5190,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      return;
 	    }
 
-	  if ( statusExp == 0 )
+	  if ( statusExp == 0 && o_connection )
 	    experimentAborted  = true;
 	  
 	  // if ( statusExp == 0 ) // If there is still connection, then exp. is truly aborted!!

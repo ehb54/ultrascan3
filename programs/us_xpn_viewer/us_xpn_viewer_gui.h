@@ -357,7 +357,7 @@ class US_XpnDataViewer : public US_Widgets
      void   end_process_all_data_avail ( void );
      
      void   reloadData_auto     ( void );
-     int    CheckExpComplete_auto( QString & );
+  int    CheckExpComplete_auto( QString &, bool & );
      void   update_autoflow_runId_timeStarted( void );
      int    read_timeElapsed_offset( void );
      void   delete_autoflow_record( void );
