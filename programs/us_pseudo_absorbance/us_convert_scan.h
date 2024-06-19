@@ -37,14 +37,15 @@ private slots:
     void next_id();
     void plot_all();
     void select_refscan(int);
-    void update_scan_smooth();
-    void apply_scan_smooth();
+    void update_nscans();
+    void apply_nscans();
     void save_run(void);
     void pick_region(void);
     void mouse_click(const QwtDoublePoint&);
     void default_region();
     void lower_scan_range(double);
     void upper_scan_range(double);
+    void plot_ref_state();
 
 private:
 
@@ -103,8 +104,10 @@ private:
     QwtPlot* qwtplot_insty;
     QwtPlot* qwtplot_abs;
     QwtPlotGrid* grid;
+    QCheckBox* chkb_abs_int;
 
-    QwtCounter* ct_smooth;
+    // QwtCounter* ct_smooth;
+    QwtCounter* ct_maxod;
     QwtCounter* ct_scans;
     QwtCounter* ct_scan_from;
     QwtCounter* ct_scan_to;
@@ -112,7 +115,7 @@ private:
     QTableWidget* tb_triple;
     QFont font;
 
-    const double maxAbs = 2;
+    double max_OD = 2;
     bool abs_plt_on;
     int nscans;
     int max_nscans;

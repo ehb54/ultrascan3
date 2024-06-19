@@ -39,37 +39,47 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     import_lyt->addLayout(imp_lyt_2);
 
     // Cell / Channel / Wavelength
-    int width_lb = 90;
-    int width_ct = 90;
+    int width_lb = 150;
+    int width_ct = 150;
     QLabel* lb_buffer = us_banner("Absorbance Data Control");
 
     QLabel* lb_scans = us_label("# Scans", 0);
     lb_scans->setAlignment(Qt::AlignCenter);
     lb_scans->setFixedWidth(width_lb);
 
-    QLabel *lb_smooth    = us_label("Smooth", 0);
-    lb_smooth->setAlignment(Qt::AlignCenter);
-    lb_smooth->setFixedWidth(width_lb);
+    // QLabel *lb_smooth    = us_label("Smooth", 0);
+    // lb_smooth->setAlignment(Qt::AlignCenter);
+    // lb_smooth->setFixedWidth(width_lb);
+
+    QLabel *lb_maxod    = us_label("Max OD", 0);
+    lb_maxod->setAlignment(Qt::AlignCenter);
+    lb_maxod->setFixedWidth(width_lb);
 
     pb_apply = us_pushbutton("Apply");
 
     nscans = 1;
     max_nscans = 1000;
-    ct_scans = us_counter(1, 1, 1, nscans);
+    ct_scans = us_counter(2, 1, 1, nscans);
     ct_scans->setSingleStep(1);
     ct_scans->setFixedWidth(width_ct);
     align_center(ct_scans);
 
     smooth = 0;
-    ct_smooth = us_counter(1, 0, 10, smooth);
-    ct_smooth->setSingleStep(1);
-    ct_smooth->setFixedWidth(width_ct);
-    align_center(ct_smooth);
+    // ct_smooth = us_counter(2, 0, 10, smooth);
+    // ct_smooth->setSingleStep(1);
+    // ct_smooth->setFixedWidth(width_ct);
+    // align_center(ct_smooth);
 
-    QLabel* lb_scan_from = us_label("Scan Focus From:");
-    lb_scan_from->setAlignment(Qt::AlignRight);
-    QLabel* lb_scan_to = us_label("To:");
-    lb_scan_to->setAlignment(Qt::AlignRight);
+    max_OD = 2.0;
+    ct_maxod = us_counter(2, 0, 10, max_OD);
+    ct_maxod->setSingleStep(0.1);
+    ct_maxod->setFixedWidth(width_ct);
+    align_center(ct_maxod);
+
+    QLabel* lb_scan_from = us_label("Scans From");
+    lb_scan_from->setAlignment(Qt::AlignCenter);
+    QLabel* lb_scan_to =   us_label("Scans To");
+    lb_scan_to->setAlignment(Qt::AlignCenter);
 
     ct_scan_from = us_counter(2, 1, 1, 1);
     ct_scan_from->setSingleStep(1);
@@ -82,19 +92,17 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QGridLayout* scan_lyt = new QGridLayout();
     scan_lyt->addWidget(lb_scans,  0, 0, 1, 1);
     scan_lyt->addWidget(ct_scans,  0, 1, 1, 1);
-    scan_lyt->addWidget(lb_smooth, 0, 2, 1, 1);
-    scan_lyt->addWidget(ct_smooth, 0, 3, 1, 1);
-    scan_lyt->addWidget(pb_apply,  0, 4, 1, 1);
+    // scan_lyt->addWidget(lb_smooth, 1, 0, 1, 1);
+    // scan_lyt->addWidget(ct_smooth, 1, 1, 1, 1);
+    scan_lyt->addWidget(pb_apply,  1, 2, 1, 1);
+    scan_lyt->addWidget(lb_maxod,  1, 0, 1, 1);
+    scan_lyt->addWidget(ct_maxod,  1, 1, 1, 1);
 
-    scan_lyt->addWidget(lb_scan_from, 1, 0, 1, 2);
-    scan_lyt->addWidget(ct_scan_from, 1, 2, 1, 3);
+    scan_lyt->addWidget(lb_scan_from, 2, 0, 1, 1);
+    scan_lyt->addWidget(ct_scan_from, 2, 1, 1, 2);
 
-    scan_lyt->addWidget(lb_scan_to, 2, 0, 1, 2);
-    scan_lyt->addWidget(ct_scan_to, 2, 2, 1, 3);
-
-    for(int ii = 0; ii < scan_lyt->columnCount(); ii++) {
-        scan_lyt->setColumnMinimumWidth(ii, 90);
-    }
+    scan_lyt->addWidget(lb_scan_to, 3, 0, 1, 1);
+    scan_lyt->addWidget(ct_scan_to, 3, 1, 1, 2);
 
     tb_triple = new QTableWidget();
     tb_triple->setRowCount(0);
@@ -209,6 +217,10 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     plot_title->setStyleSheet("background-color: white;"
                               "color:black; font-size: 11pt");
 
+    chkb_abs_int = new QCheckBox();
+    QGridLayout* chkb_lyt = us_checkbox("Plot Both Intensity and Reference scans", chkb_abs_int);
+    chkb_lyt->setAlignment(Qt::AlignCenter);
+
     QwtText xLabel, yLabel;
     usplot_insty = new US_Plot( qwtplot_insty, tr( "" ),
                                tr( "Radius (in cm)" ), tr( "Intensity" ),
@@ -231,6 +243,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QVBoxLayout* right_lyt = new QVBoxLayout();
     right_lyt->setSpacing(0);
     right_lyt->addWidget(plot_title);
+    right_lyt->addLayout(chkb_lyt);
     right_lyt->addLayout(usplot_insty);
     right_lyt->addLayout(usplot_abs);
 
@@ -256,9 +269,16 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     connect(pb_next_id, &QPushButton::clicked, this, &US_ConvertScan::next_id);
     connect(pb_save, &QPushButton::clicked, this, &US_ConvertScan::save_run);
     connect(pb_pick_rp, &QPushButton::clicked, this, &US_ConvertScan::pick_region);
-    connect(pb_apply, &QPushButton::clicked, this, &US_ConvertScan::apply_scan_smooth);
+    connect(pb_apply, &QPushButton::clicked, this, &US_ConvertScan::apply_nscans);
     connect(pb_default, &QPushButton::clicked, this, &US_ConvertScan::default_region);
-    connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
+    // connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
+    connect(ct_maxod, &QwtCounter::valueChanged, this, &US_ConvertScan::update_nscans);
+    connect(chkb_abs_int, &QCheckBox::stateChanged, this, &US_ConvertScan::plot_ref_state);
+}
+
+void US_ConvertScan::plot_ref_state() {
+    plot_intensity();
+    plot_refscan();
 }
 
 void US_ConvertScan::align_center(QwtCounter* ct) {
@@ -292,16 +312,17 @@ void US_ConvertScan::reset(){
     set_wavl_ctrl();
 }
 
-void US_ConvertScan::update_scan_smooth() {
+void US_ConvertScan::update_nscans() {
     pb_apply->setStyleSheet("QPushButton { background-color: red }");
 }
 
-void US_ConvertScan::apply_scan_smooth() {
+void US_ConvertScan::apply_nscans() {
     QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
     QString qs = "QPushButton { background-color: %1 }";
     pb_apply->setStyleSheet(qs.arg(color.name()));
     nscans = static_cast<int>(ct_scans->value());
-    smooth = static_cast<int>(ct_smooth->value());
+    max_OD = ct_maxod->value();
+    // smooth = static_cast<int>(ct_smooth->value());
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     for (int ii = 0; ii < ccw_items.size(); ii++) {
         calc_absorbance(ii);
@@ -508,11 +529,11 @@ void US_ConvertScan::set_ct_scans(int maxval) {
         ct_scans->setMaximum(max_nscans);
         if (cv > max_nscans) {
             cv = max_nscans;
-            apply_scan_smooth();
+            apply_nscans();
         }
         ct_scans->setValue(cv);
     }
-    connect(ct_scans, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
+    connect(ct_scans, &QwtCounter::valueChanged, this, &US_ConvertScan::update_nscans);
 }
 
 void US_ConvertScan::lower_scan_range(double value) {
@@ -1052,6 +1073,10 @@ void US_ConvertScan::plot_intensity(){
     }
 
     int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
+    bool flag = chkb_abs_int->isChecked();
+    flag = flag && (absorbance_state.at(raw_id) >= 0 && absorbance_state.at(raw_id) < 100);
+    flag = !flag;
+
     US_DataIO::RawData raw_data = intensity_data.at(raw_id);
     int N = raw_data.scanCount() - nscans;
     QPen pen_plot(Qt::yellow);
@@ -1081,9 +1106,11 @@ void US_ConvertScan::plot_intensity(){
             min_r = qMin(min_r, r[j]);
             max_r = qMax(max_r, r[j]);
         }
-        QwtPlotCurve* curve = us_curve( qwtplot_insty,"");
-        if (error == 0)
+        QwtPlotCurve* curve = us_curve( qwtplot_insty, tr("Intensity %1").arg(cnt + 1));
+        pen_plot.setColor(QColor(Qt::red));
+        if (flag && error == 0) {
             pen_plot.setColor(colorList[ cnt % nc ]);
+        }
         curve->setPen( pen_plot );
         curve->setSamples(x, r, np);
         cnt++;
@@ -1102,8 +1129,8 @@ void US_ConvertScan::plot_intensity(){
 void US_ConvertScan::plot_refscan(){
     if (ccw_items.isEmpty()) return;
 
-    QVector<double> yvalues;
     QVector<double> xvalues;
+    QVector<QVector<double>> yvalues;
     if (plot_ref_file >= 0) {
         le_runid->clear();
         le_desc->setText(refscan_files.at(plot_ref_file).filename);
@@ -1111,35 +1138,44 @@ void US_ConvertScan::plot_refscan(){
         yvalues << refscan_files.at(plot_ref_file).yvalues.at(wavl_id);
     } else {
         int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
-        if (absorbance_state.at(raw_id) < 100) {
+        if (absorbance_state.at(raw_id) == -1) {
+            return;
+        }
+        if (absorbance_state.at(raw_id) < 100 && !chkb_abs_int->isChecked()) {
             return;
         }
         xvalues << intensity_data.at(raw_id).xvalues;
-        yvalues << refscan_data.at(raw_id).last();
+        int N = absorbance_data.at(raw_id).size() - nscans;
+        QVector<QVector<double>> refscan = refscan_data.at(raw_id).mid(N);
+        int ii_0 = ct_scan_from->value() - 1;
+        int ii_1 = ct_scan_to->value();
+        yvalues << refscan.at(ii_0);
+        ii_0++;
+        if (absorbance_state.at(raw_id) < 100) {
+            for (int ii = ii_0; ii < ii_1; ++ii){
+                yvalues << refscan.at(ii);
+            }
+        }
     }
 
-    if (xvalues.size() != yvalues.size()) {
-        QMessageBox::warning(this, "Warning!", "Number of the radial points and intesity values"
-                                               " in the reference scan don't match!");
-        return;
-    }
-
-    QPen pen = QPen( QBrush( Qt::white ), 2.0 );
+    QPen pen = QPen( QBrush( Qt::white ), 1. );
     double min_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).lowerBound();
     double max_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).upperBound();
 
     const double *xp, *rp;
     xp = xvalues.data();
-    rp = yvalues.data();
     int np = xvalues.size();
 
-    for (int ii = 0; ii < np; ++ii){
-        min_r = qMin(min_r, rp[ii]);
-        max_r = qMax(max_r, rp[ii]);
+    for (int ii = 0; ii < yvalues.size(); ii++) {
+        rp = yvalues.at(ii).data();
+        for (int jj = 0; jj < np; ++jj){
+            min_r = qMin(min_r, rp[jj]);
+            max_r = qMax(max_r, rp[jj]);
+        }
+        QwtPlotCurve* curve = us_curve( qwtplot_insty, tr("Reference %1").arg(ii + 1));
+        curve->setPen(pen);
+        curve->setSamples(xp, rp, np);
     }
-    QwtPlotCurve* curve = us_curve( qwtplot_insty,"");
-    curve->setPen(pen);
-    curve->setSamples(xp, rp, np);
     double dr = (max_r - min_r) * 0.05;
     qwtplot_insty->setAxisScale( QwtPlot::yLeft  , min_r - dr, max_r + dr);
     qwtplot_insty->updateAxes();
@@ -1204,7 +1240,7 @@ void US_ConvertScan::plot_absorbance(){
                 min_r = qMin(min_r, rp[jj]);
                 max_r = qMax(max_r, rp[jj]);
             }
-        QwtPlotCurve* curve = us_curve( qwtplot_abs,"");
+        QwtPlotCurve* curve = us_curve( qwtplot_abs, tr("Absorbance %1").arg(cnt + 1));
         if (error == 0)
             pen_plot.setColor(colorList[ cnt % nc ]);
         curve->setPen( pen_plot );
@@ -1273,7 +1309,7 @@ bool US_ConvertScan::get_refval_file(int ref_id, int raw_id) {
             QVector<double> ref_yvals = refscan_files.at(ref_id).yvalues.at(ii);
             if (linear_interpolation(xvals_tgt, ref_xvals, ref_yvals)) {
                 if (smooth > 0){
-                    QVector<double> yvals = smooth_refscan(ref_yvals, smooth, true, true, maxAbs);
+                    QVector<double> yvals = smooth_refscan(ref_yvals, smooth, true, true, max_OD);
                     ref_yvals.clear();
                     ref_yvals << yvals;
                 }
@@ -1312,7 +1348,7 @@ bool US_ConvertScan::get_refval_buffer(int ref_row, int raw_id) {
                 QVector<double> ref_yvals = rawdata.scanData.at(II_ref).rvalues;
                 if (linear_interpolation(xvals_tgt, ref_xvals, ref_yvals)) {
                     if (smooth > 0){
-                        QVector<double> yvals = smooth_refscan(ref_yvals, smooth, true, true, maxAbs);
+                        QVector<double> yvals = smooth_refscan(ref_yvals, smooth, true, true, max_OD);
                         ref_yvals.clear();
                         ref_yvals << yvals;
                     }
@@ -1381,8 +1417,8 @@ void US_ConvertScan::calc_absorbance(int item_row){
                     val = 1e-5;
                 }
                 val = std::log10(val);
-                if (val > maxAbs) val = maxAbs;
-                else if (val < -maxAbs) val = -maxAbs;
+                if (val > max_OD) val = max_OD;
+                else if (val < -max_OD) val = -max_OD;
                 absorbance_data[rid][jj][kk] = val;
                 if (shift && x >= x_1 && x <= x_2) {
                     miny = qMin(miny, val);
