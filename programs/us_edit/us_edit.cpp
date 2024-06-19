@@ -10561,8 +10561,24 @@ DbgLv(1) << "ldelta_value  value" << value;
 // Lambda Start has changed
 void US_Edit::lambda_start_value( int value )
 {
-   slambda     = cb_lstart->itemText( value ).toInt();
-DbgLv(1) << "lambda_start_value  value" << value << slambda;
+   int new_slambda = cb_lstart->itemText( value ).toInt();
+   if ( new_slambda == slambda ) // check if new start is same as current start -> skip every update
+   {
+      return;
+   }
+   else if ( new_slambda > elambda ) // check if new start is less than end
+   {
+      // if so, set start to end
+      slambda = elambda;
+      elambda = new_slambda;
+      cb_lstart->setCurrentIndex( cb_lstart->findText( QString::number( slambda ) ) );
+      cb_lend  ->setCurrentIndex( cb_lend  ->findText( QString::number( elambda ) ) );
+   }
+   else
+   {
+      slambda     = cb_lstart->itemText( value ).toInt();
+   }
+   DbgLv(1) << "lambda_start_value  value" << value << slambda;
 
    reset_plot_lambdas();
 }
@@ -10570,8 +10586,24 @@ DbgLv(1) << "lambda_start_value  value" << value << slambda;
 // Lambda End has changed
 void US_Edit::lambda_end_value( int value )
 {
-   elambda     = cb_lend  ->itemText( value ).toInt();
-DbgLv(1) << "lambda_end_value  value" << value << elambda;
+   int new_elambda = cb_lend->itemText( value ).toInt();
+   if ( new_elambda == elambda ) // check if new end is same as current end -> skip every update
+   {
+      return;
+   }
+   else if ( new_elambda < slambda ) // check if new end is less than start
+   {
+      // if so, set end to start
+      elambda = slambda;
+      slambda = new_elambda;
+      cb_lstart->setCurrentIndex( cb_lstart->findText( QString::number( slambda ) ) );
+      cb_lend  ->setCurrentIndex( cb_lend  ->findText( QString::number( elambda ) ) );
+   }
+   else
+   {
+      elambda     = cb_lend  ->itemText( value ).toInt();
+   }
+   DbgLv(1) << "lambda_end_value  value" << value << elambda;
 
    reset_plot_lambdas();
 }
