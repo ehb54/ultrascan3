@@ -36,6 +36,7 @@ private slots:
     void prev_id();
     void next_id();
     void plot_all();
+    void plot_absorbance();
     void select_refscan(int);
     void update_nscans();
     void apply_nscans();
@@ -115,7 +116,6 @@ private:
     QTableWidget* tb_triple;
     QFont font;
 
-    double max_OD = 2;
     bool abs_plt_on;
     int nscans;
     int max_nscans;
@@ -136,8 +136,9 @@ private:
     void offon_prev_next();
     void plot_intensity();
     void plot_refscan();
-    void plot_absorbance();
+
     void calc_absorbance(int);
+    void trim_absorbance(QVector<QVector<double>>&, QVector<double>&, bool);
     void update_shifts(int);
     bool get_refval_file(int, int);
     bool get_refval_buffer(int, int);
