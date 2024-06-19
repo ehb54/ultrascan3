@@ -5633,12 +5633,12 @@ void US_Hydrodyn_Dad::update_enables()
       resize_plots();
    }
 
-   if ( files_selected_count > 1 && files_compatible )
-   {
-      pb_cormap           ->setEnabled( true );
-   } else {
-      pb_cormap           ->setEnabled( false );
-   }
+   // if ( files_selected_count > 1 && files_compatible )
+   // {
+   //    pb_cormap           ->setEnabled( true );
+   // } else {
+   pb_cormap           ->setEnabled( false );
+   // }
 
    pb_ggqfit           ->setEnabled( false );
 
