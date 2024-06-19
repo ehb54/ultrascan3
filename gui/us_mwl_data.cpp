@@ -10,7 +10,7 @@
 US_MwlData::US_MwlData( )
 {
    clear();                // Clear internal vectors
-
+   curccx      = 0;        // Current cell/channel index
    dbg_level  = US_Settings::us_debug();
 DbgLv(0) << "MwDa: dbg_level" << dbg_level;
 }
@@ -558,7 +558,7 @@ void US_MwlData::clear()
    npointt    = 0;
    slambda    = 0;
    elambda    = 0;
-
+   curccx     = 0;
    mapCounts();
 }
 
@@ -1187,6 +1187,7 @@ DbgLv(1) << "MwDa:RdXML take_i" << att.value( "take_intensity" ).toString()
 int US_MwlData::set_celchnx( int ccx )
 {
 //DbgLv(1) << "SetCCX" << ccx;
+   if (ccx != -1)
    curccx    = qMax( 0, qMin( ccx, ( ncelchn - 1 ) ) );
 
    return curccx;

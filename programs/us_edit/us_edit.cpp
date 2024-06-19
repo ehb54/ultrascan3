@@ -1427,8 +1427,10 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
-   pb_airGap->setHidden( true );
+   pb_airGap->setVisible( false );
+   lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
 
    // Data range
@@ -1807,6 +1809,18 @@ void US_Edit::reset( void )
    rb_radius    ->setChecked( true );
    rb_waveln    ->setChecked( false );
    pb_custom    ->setEnabled( false );
+   if (pb_airGap != nullptr)
+   {
+     pb_airGap->setHidden( true );
+   }
+   if (le_airGap != nullptr)
+   {
+     le_airGap->setHidden( true );
+   }
+   if (lb_airGap != nullptr)
+   {
+      lb_airGap->setHidden( true );
+   }
    connect_mwl_ctrls( true );
 
    set_pbColors( NULL );
@@ -6449,17 +6463,44 @@ DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
                        + QString( QChar( data.type[ 1 ] ) );
 
    le_info->setText( runID + "  (" + desc + ")" );
+   QString plot_type;
+   if ( dataType == "RA" )
+   {
+      plot_type = "Radial Absorbance Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
+   }
+   else if ( dataType == "RI" )
+   {
+      plot_type = "Pseudo Absorbance Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
+   }
+   else if ( dataType == "IP" )
+   {
 
+      plot_type = "Radial Interference Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fringes " ) );
+
+      // Enable Air Gap
+      pb_airGap->setHidden( false );
+      le_airGap->setHidden( false );
+   }
+   else if ( dataType == "FI" )
+   {
+      plot_type = "Fluorescence Intensity Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fluorescence Intensity " ) );
+   }
+   else
+      plot_type = "File type not recognized";
    // Plot Title
-   QString     title   = tr( "Pseudo Absorbance Data\n"
+   QString     title   = tr( "%6"
                              "Run ID: %1\n"
                              "Cell: %2  Channel: %3  %4: %5" )
                          .arg( runID ).arg( scell ).arg( schan )
-                         .arg( rectype ).arg( svalu );
+                         .arg( rectype ).arg( svalu ).arg( plot_type );
 DbgLv(1) << "PlMwl:  title" << title;
 
    data_plot->setTitle    ( title );
-   data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
+
 
    data_plot->detachItems ( QwtPlotItem::Rtti_PlotCurve ); 
    v_line = NULL;
@@ -7823,11 +7864,12 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
-   pb_airGap   ->setEnabled( true );
-   pb_noise    ->setEnabled( true );
-   pb_spikes   ->setEnabled( true );
+   pb_airGap   ->setEnabled( false );
+   pb_noise    ->setEnabled( false );
+   pb_spikes   ->setEnabled( false );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
+   pb_float    ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    all_edits    = false;

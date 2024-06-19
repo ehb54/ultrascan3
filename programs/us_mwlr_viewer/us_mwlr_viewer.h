@@ -7,7 +7,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_mwl_data.h"
-#include "us_plot3d_xyz.h"
+#include "us_plot3d.h"
 #include "us_mwl_pltctrl.h"
 #include "us_dataIO.h"
 
@@ -22,7 +22,7 @@ class US_MwlRawViewer : public US_Widgets
 
   private:
      QPointer< US_MwlPlotControl >   p3d_ctld;   //!< Pointer to 3D control
-     QPointer< US_Plot3Dxyz >        p3d_pltw;   //!< Pointer to 3D plot window
+     QPointer< US_Plot3D >           p3d_pltw;   //!< Pointer to 3D plot window
 
      QVector< double >               curr_adata; //!< Current averaged data
 
