@@ -10566,7 +10566,7 @@ void US_Edit::lambda_start_value( int value )
    {
       return;
    }
-   else if ( new_slambda > elambda ) // check if new start is less than end
+   else if ( new_slambda > elambda ) // check if new start is greater than end
    {
       // if so, set start to end
       slambda = elambda;
