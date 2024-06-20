@@ -295,7 +295,6 @@ void US_ConvertScan::reset(){
     set_ct_scans();
     hasData = false;
     wavl_id = 0;
-    plot_ref_file = -1;
     wavelength.clear();
     ccw_items.clear();
     intensity_data.clear();
@@ -473,7 +472,6 @@ void US_ConvertScan::load_ref_scan() {
 
     refscan_files << reffile;
     set_table();
-    set_wavl_ctrl();
     pb_reset->setEnabled(true);
     hasData = true;
     le_status->clear();
@@ -636,7 +634,6 @@ void US_ConvertScan::import_run() {
 
     list_ccw_items(workingDir);
     set_table();
-    set_wavl_ctrl();
     pb_reset->setEnabled(true);
     hasData = true;
     le_status->clear();
@@ -714,8 +711,8 @@ void US_ConvertScan::set_wavl_ctrl(){
     cb_plot_id->clear();
     wavelength.clear();
     wavl_id = 0;
-    plot_ref_file = -1;
-    if (ccw_items.isEmpty()) {
+    // plot_ref_file = -1;
+    if (ccw_items.isEmpty() && refscan_files.isEmpty()) {
         le_lambstrt->clear();
         le_lambstop->clear();
         le_runid->clear();
@@ -726,18 +723,15 @@ void US_ConvertScan::set_wavl_ctrl(){
     }
 
     int row = tb_triple->currentRow();
-    QString cellname = tb_triple->item(row, 0)->text();
-    if (cellname.startsWith("Reference", Qt::CaseInsensitive)) {
-        for (int ii = 0; ii < refscan_files.size(); ii++) {
-            if (refscan_files.at(ii).name.compare(cellname) == 0) {
-                wavelength << refscan_files.at(ii).wavelength;
-                plot_ref_file = ii;
-            }
-        }
-    } else {
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    if (role < 100) {
         wavelength << ccw_items.at(row).wavelength;
-        plot_ref_file = -1;
+        // plot_ref_file = -1;
+    } else {
+        // plot_ref_file = role - 100;
+        wavelength << refscan_files.at(role - 100).wavelength;
     }
+
     le_lambstrt->setText(tr("%1").arg(wavelength.first()));
     le_lambstrt->setAlignment(Qt::AlignCenter);
     le_lambstop->setText(tr("%1").arg(wavelength.last()));
@@ -761,29 +755,28 @@ void US_ConvertScan::select_id(int id){
     disconnect_picker();
     wavl_id = id;
     offon_prev_next();
-    if (plot_ref_file >= 0) {
+    int row = tb_triple->currentRow();
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    if (role >= 100) {
         le_runid->clear();
-        le_desc->setText(refscan_files.at(plot_ref_file).filename);
+        le_desc->setText(refscan_files.at(role - 100).filename);
+        double wl = wavelength.at(wavl_id);
+        QString title("Wavelength= %1 nm");
+        plot_title->setText(title.arg(wl));
     } else {
-        int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
+        int raw_id = ccw_items.at(role).rawdata_ids.at(wavl_id);
         le_runid->setText(ccw_items.at(tb_triple->currentRow()).runid);
         le_desc->setText(intensity_data.at(raw_id).description);
+        double wl = wavelength.at(wavl_id);
+        int ns = intensity_data.at(raw_id).scanData.size();
+        QString title("Wavelength= %1 nm; #Scans= %2");
+        plot_title->setText(title.arg(wl).arg(ns));
     }
     emit sig_plot();
     return;
 }
 
 void US_ConvertScan::plot_all(){
-    le_status->clear();
-    if (ccw_items.isEmpty()) {
-        plot_title->setText("");
-    } else{
-        QString title("Wavelength= %1 nm; #Scans= %2");
-        double wl = wavelength.at(wavl_id);
-        int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
-        int ns = intensity_data.at(raw_id).scanData.size();
-        plot_title->setText(title.arg(wl).arg(ns));
-    }
     plot_intensity();
     plot_refscan();
     plot_absorbance();
@@ -793,30 +786,17 @@ void US_ConvertScan::plot_all(){
 void US_ConvertScan::select_refscan(int ref_row) {
     QComboBox* combo = qobject_cast<QComboBox*>(sender());
     if (combo) {
-        QString ref_text = combo->itemText(ref_row);
         int item_row = tb_triple->indexAt(combo->pos()).row();
-        if (ref_row == 0) {
-            ccw_items[item_row].ref_id = -1;
-        } else if (ref_text.startsWith("Reference", Qt::CaseInsensitive)) {
-            for (int ii = 0; ii < refscan_files.size(); ii++) {
-                if (refscan_files.at(ii).name.compare(ref_text) == 0) {
-                    ccw_items[item_row].ref_id = ii + 100;
-                    break;
-                }
-            }
-        } else {
-            ccw_items[item_row].ref_id = ref_row - 1;
-        }
+        int role = combo->itemData(ref_row, Qt::UserRole).toInt();
+        ccw_items[item_row].ref_id = role;
 
         QGuiApplication::setOverrideCursor(Qt::WaitCursor);
         calc_absorbance(item_row);
         QGuiApplication::restoreOverrideCursor();
 
+        highlight();
         QModelIndex index = tb_triple->model()->index(item_row, 0);
-        // tb_triple->selectionModel()->
-        //     select(index, QItemSelectionModel::Select | QItemSelectionModel::Current);
         tb_triple->setCurrentIndex(index);
-        set_wavl_ctrl();
     }
 }
 
@@ -1044,7 +1024,11 @@ void US_ConvertScan::save_run() {
 void US_ConvertScan::set_table(){
     tb_triple->disconnect();
     tb_triple->clearContents();
-    tb_triple->setRowCount(ccw_items.size() + refscan_files.size());
+    int nrows = ccw_items.size() + refscan_files.size();
+    if (nrows == 0) {
+        return;
+    }
+    tb_triple->setRowCount(nrows);
 
     QString runid;
     int rcode = 1;
@@ -1060,7 +1044,6 @@ void US_ConvertScan::set_table(){
         rcode_list << rcode;
     }
 
-    QStringList combo_items;
     for (int ii = 0; ii < ccw_items.size(); ii++){
         rcode = rcode_list.at(ii);
         int cell = ccw_items.at(ii).cell;
@@ -1074,11 +1057,11 @@ void US_ConvertScan::set_table(){
         } else {
             item_cc = tr("[%1] %2 / %3").arg(rcode).arg(cell).arg(channel);
         }
-        combo_items << item_cc;
         QTableWidgetItem *twi_cc;
         twi_cc = new QTableWidgetItem(item_cc);
         twi_cc->setFlags(twi_cc->flags() & ~Qt::ItemIsEditable);
         twi_cc->setFont(font);
+        twi_cc->setData(Qt::UserRole, QVariant(ii));
         tb_triple->setItem(ii, 0, twi_cc);
 
         QString item_wvl = tr("%1-%2 (%3)").arg(min_wl).arg(max_wl).arg(nwl);
@@ -1091,7 +1074,6 @@ void US_ConvertScan::set_table(){
 
     for (int ii = 0; ii < refscan_files.size(); ii++) {
         QString item_cc = refscan_files.at(ii).name;
-        combo_items << item_cc;
         QTableWidgetItem *twi_cc;
         twi_cc = new QTableWidgetItem(item_cc);
         twi_cc->setFlags(twi_cc->flags() & ~Qt::ItemIsEditable);
@@ -1105,6 +1087,7 @@ void US_ConvertScan::set_table(){
         twi_wvl = new QTableWidgetItem(item_wvl);
         twi_wvl->setFlags(twi_wvl->flags() & ~Qt::ItemIsEditable);
         twi_wvl->setFont(font);
+        twi_cc->setData(Qt::UserRole, QVariant(ii + 100));
         tb_triple->setItem(II, 1, twi_wvl);
 
         QTableWidgetItem *twi_2 = new QTableWidgetItem();
@@ -1122,19 +1105,26 @@ void US_ConvertScan::set_table(){
         combo->lineEdit()->setAlignment(Qt::AlignCenter);
         combo->lineEdit()->setReadOnly(true);
         combo->addItem("none");
-        for (int jj = 0; jj < combo_items.size(); jj++) {
+        for (int jj = 0; jj < nrows; jj++) {
             combo->addItem(tb_triple->item(jj, 0)->text());
         }
+
+        int cid = 0;
         int re_fid = ccw_items.at(ii).ref_id;
-        if ( re_fid >= 0 && re_fid < 100) {
-            combo->setCurrentIndex(re_fid + 1);
-        } else if ( re_fid >= 0 && re_fid >= 100) {
-            QString name = refscan_files.at(re_fid - 100).name;
-            combo->setCurrentText(name);
-        }
         for (int jj = 0; jj < combo->count(); jj++) {
+            if (jj == 0) {
+                combo->setItemData(jj, -1, Qt::UserRole);
+                continue;
+            }
+            int role = tb_triple->item(jj - 1, 0)->data(Qt::UserRole).toInt();
+            combo->setItemData(jj, role, Qt::UserRole);
             combo->setItemData(jj, Qt::AlignCenter, Qt::TextAlignmentRole);
+            if (role == re_fid) {
+                cid = jj;
+            }
         }
+        combo->setCurrentIndex(cid);
+
         tb_triple->setCellWidget(ii, 2, combo);
         connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(select_refscan(int)));
 
@@ -1151,9 +1141,10 @@ void US_ConvertScan::set_table(){
         tb_triple->setCellWidget(ii, 3, wgt);
 
     }
-    tb_triple->setCurrentCell(0, 0);
     connect( tb_triple, &QTableWidget::currentCellChanged, this, &US_ConvertScan::set_wavl_ctrl);
-    return;
+    QModelIndex index = tb_triple->model()->index(0, 0);
+    tb_triple->setCurrentIndex(index);
+    highlight();
 }
 
 void US_ConvertScan::list_ccw_items(QString& runid){
@@ -1210,7 +1201,13 @@ void US_ConvertScan::plot_intensity(){
         return;
     }
 
-    int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
+    int row = tb_triple->currentRow();
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    if (role >= 100) {
+        return;
+    }
+
+    int raw_id = ccw_items.at(role).rawdata_ids.at(wavl_id);
     bool flag = chkb_abs_int->isChecked();
     flag = flag && (absorbance_state.at(raw_id) >= 0 && absorbance_state.at(raw_id) < 100);
     flag = !flag;
@@ -1265,15 +1262,19 @@ void US_ConvertScan::plot_intensity(){
 }
 
 void US_ConvertScan::plot_refscan(){
-    if (ccw_items.isEmpty()) return;
+    if (ccw_items.isEmpty() && refscan_files.isEmpty()) {
+        return;
+    }
 
+    double min_r = 1e99;
+    double max_r = -1e99;
     QVector<double> xvalues;
     QVector<QVector<double>> yvalues;
-    if (plot_ref_file >= 0) {
-        le_runid->clear();
-        le_desc->setText(refscan_files.at(plot_ref_file).filename);
-        xvalues << refscan_files.at(plot_ref_file).xvalues;
-        yvalues << refscan_files.at(plot_ref_file).yvalues.at(wavl_id);
+    int row = tb_triple->currentRow();
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    if (role >= 100) {
+        xvalues << refscan_files.at(role - 100).xvalues;
+        yvalues << refscan_files.at(role - 100).yvalues.at(wavl_id);
     } else {
         int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
         if (absorbance_state.at(raw_id) == -1) {
@@ -1282,6 +1283,8 @@ void US_ConvertScan::plot_refscan(){
         if (absorbance_state.at(raw_id) < 100 && !chkb_abs_int->isChecked()) {
             return;
         }
+        min_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).lowerBound();
+        max_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).upperBound();
         xvalues << intensity_data.at(raw_id).xvalues;
         int N = absorbance_data.at(raw_id).size() - nscans;
         QVector<QVector<double>> refscan = refscan_data.at(raw_id).mid(N);
@@ -1296,10 +1299,8 @@ void US_ConvertScan::plot_refscan(){
         }
     }
 
+    grid = us_grid(qwtplot_insty);
     QPen pen = QPen( QBrush( Qt::white ), 1. );
-    double min_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).lowerBound();
-    double max_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).upperBound();
-
     const double *xp, *rp;
     xp = xvalues.data();
     int np = xvalues.size();
@@ -1325,11 +1326,20 @@ void US_ConvertScan::plot_absorbance(){
     qwtplot_abs->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     grid = us_grid(qwtplot_abs);
     qwtplot_abs->replot();
-    if (ccw_items.isEmpty()) return;
+    if (ccw_items.isEmpty()) {
+        return;
+    }
 
     int row = tb_triple->currentRow();
-    int raw_id = ccw_items.at(row).rawdata_ids.at(wavl_id);
-    if (absorbance_state.at(raw_id) == -1) return;
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    if (role >= 100) {
+        return;
+    }
+
+    int raw_id = ccw_items.at(role).rawdata_ids.at(wavl_id);
+    if (absorbance_state.at(raw_id) == -1) {
+        return;
+    }
 
     double x_1 = ccw_items.at(row).minmax_x.first;
     double x_2 = ccw_items.at(row).minmax_x.second;
@@ -1588,12 +1598,37 @@ void US_ConvertScan::calc_absorbance(int item_row){
         }
         absorbance_state[rid] = ref_id;
     }
-    if (not_found_wvl.isEmpty()) {
-        tb_triple->item(item_row, 0)->setBackground(QBrush(Qt::white));
-        tb_triple->item(item_row, 1)->setBackground(QBrush(Qt::white));
-    } else {
-        tb_triple->item(item_row, 0)->setBackground(QBrush(Qt::yellow));
-        tb_triple->item(item_row, 1)->setBackground(QBrush(Qt::yellow));
+}
+
+void US_ConvertScan::highlight() {
+    for (int ii = 0; ii < ccw_items.size(); ii++) {
+        QVector<int> wvls;
+        tb_triple->item(ii, 0)->setBackground(QBrush(Qt::white));
+        tb_triple->item(ii, 1)->setBackground(QBrush(Qt::white));
+        int ref_id = ccw_items.at(ii).ref_id;
+        if ( ref_id == -1) {
+            continue;
+        } else if ( ref_id < 100 ) {
+            foreach (double d, ccw_items.at(ref_id).wavelength) {
+                wvls << qRound(d * 10);
+            }
+        } else {
+            foreach (double d, refscan_files.at(ref_id - 100).wavelength) {
+                wvls << qRound(d * 10);
+            }
+        }
+        bool ok = true;
+        foreach (double val, ccw_items.at(ii).wavelength) {
+            int ival = qRound(val * 10);
+            if (! wvls.contains(ival)) {
+                ok = false;
+                break;
+            }
+        }
+        if (! ok) {
+            tb_triple->item(ii, 0)->setBackground(QBrush(Qt::yellow));
+            tb_triple->item(ii, 1)->setBackground(QBrush(Qt::yellow));
+        }
     }
 }
 

@@ -122,7 +122,6 @@ private:
     int max_nscans;
     int smooth;
     int wavl_id;
-    int plot_ref_file;
     QVector<double> wavelength;
     QVector<CellChannel> ccw_items;
     QVector<US_DataIO::RawData> intensity_data;
@@ -134,6 +133,7 @@ private:
 
     void list_ccw_items(QString&);
     void set_table();
+    void highlight();
     void offon_prev_next();
     void plot_intensity();
     void plot_refscan();
