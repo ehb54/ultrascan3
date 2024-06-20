@@ -1,4 +1,5 @@
 #include "us_add_refScan.h"
+#include <QTextStream>
 
 US_AddRefScan::US_AddRefScan() : US_Widgets()
 {
@@ -64,6 +65,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     ckb_align->setCheckState(Qt::Unchecked);
     pb_clscltr = us_pushbutton("Clustering Control", false, 0 );
     pb_clscltr->setDisabled(true);
+    pb_clscltr->setFixedWidth(150);
 
     QHBoxLayout* cls_aln_lyt = new QHBoxLayout();
     cls_aln_lyt->addLayout(ckb_cls_lyt);
@@ -73,7 +75,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     QLabel* lb_CA = us_banner(tr("Chromatic Aberration Correction"));
     ckb_CA_state = new QCheckBox();
     QGridLayout* ckb_CA_state_lyt = us_checkbox("Do Not Correct", ckb_CA_state);
-    ckb_CA_state->setCheckState(Qt::Unchecked);
+    ckb_CA_state->setCheckState(Qt::Checked);
     ckb_CA_local = new QCheckBox();
     QGridLayout* ckb_CA_source_lyt = us_checkbox("Local Disk", ckb_CA_local);
     ckb_CA_local->setCheckState(Qt::Unchecked);
@@ -82,36 +84,48 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     ckb_CA_state->setDisabled(true);
     ckb_CA_local->setDisabled(true);
     pb_loadCA->setDisabled(true);
-    QHBoxLayout *CA_lyt = new QHBoxLayout();
-    CA_lyt->addLayout(ckb_CA_state_lyt);
-    CA_lyt->addLayout(ckb_CA_source_lyt);
-    CA_lyt->addWidget(pb_loadCA);
+    // QHBoxLayout *CA_lyt = new QHBoxLayout();
+    // CA_lyt->addLayout(ckb_CA_state_lyt);
+    // CA_lyt->addLayout(ckb_CA_source_lyt);
+    // CA_lyt->addWidget(pb_loadCA);
+
+    lb_CA->hide();
+    ckb_CA_state->hide();
+    for (int ii = 0; ii < ckb_CA_state_lyt->count(); ii++) {
+        ckb_CA_state_lyt->itemAt(ii)->widget()->hide();
+    }
+    for (int ii = 0; ii < ckb_CA_source_lyt->count(); ii++) {
+        ckb_CA_source_lyt->itemAt(ii)->widget()->hide();
+    }
+    pb_loadCA->hide();
+
 
     // save refScan control
-    QLabel* lb_save = us_banner(tr("Saving Control"));
-    dkdb_ctrl = new US_Disk_DB_Controls();
-    dkdb_ctrl->set_disk();
+    // QLabel* lb_save = us_banner(tr("Saving Control"));
+    // dkdb_ctrl = new US_Disk_DB_Controls();
+    // dkdb_ctrl->set_disk();
 
-    lb_dir = us_label( tr( "Directory:" ), -1 );
-    le_dir = us_lineedit( US_Settings::importDir(), -1, true );
-    lb_dbName   = us_label( tr( "Database:" ), -1 );
-    le_dbName  = us_lineedit( "", -1, true );
+    // lb_dir = us_label( tr( "Directory:" ), -1 );
+    // le_dir = us_lineedit( US_Settings::workBaseDir(), -1, true );
+    // lb_dbName   = us_label( tr( "Database:" ), -1 );
+    // le_dbName  = us_lineedit( "", -1, true );
     pb_save = us_pushbutton("Save", false, 0 );
     pb_save->setDisabled(true);
+    pb_save->setFixedWidth(150);
 
-    if (dkdb_ctrl->db()){
-        lb_dir->hide();
-        le_dir->hide();
-    }else{
-        lb_dbName->hide();
-        le_dbName->hide();
-    }
-    QHBoxLayout* dir_lyt = new QHBoxLayout();
-    dir_lyt->addWidget(lb_dir);
-    dir_lyt->addWidget(le_dir);
-    QHBoxLayout* db_lyt = new QHBoxLayout();
-    db_lyt->addWidget(lb_dbName);
-    db_lyt->addWidget(le_dbName);
+    // if (dkdb_ctrl->db()){
+    //     lb_dir->hide();
+    //     le_dir->hide();
+    // }else{
+    //     lb_dbName->hide();
+    //     le_dbName->hide();
+    // }
+    // QHBoxLayout* dir_lyt = new QHBoxLayout();
+    // dir_lyt->addWidget(lb_dir);
+    // dir_lyt->addWidget(le_dir);
+    // QHBoxLayout* db_lyt = new QHBoxLayout();
+    // db_lyt->addWidget(lb_dbName);
+    // db_lyt->addWidget(le_dbName);
 
     // status
     QLabel* lb_status = us_label(tr("Status:"));
@@ -134,7 +148,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     // layout
     QVBoxLayout* left_lyt = new QVBoxLayout();
     left_lyt->addStretch(0);
-    left_lyt->setSpacing(5);
+    left_lyt->setSpacing(1);
     left_lyt->addWidget(lb_run);
     left_lyt->addLayout(import_lyt);
     left_lyt->addLayout(rid_lyt);
@@ -144,14 +158,14 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     left_lyt->addLayout(wavl_plt_lyt);
     left_lyt->addWidget(lb_cluster);
     left_lyt->addLayout(cls_aln_lyt);
-    left_lyt->addWidget(pb_clscltr);
-    left_lyt->addWidget(lb_CA);
-    left_lyt->addLayout(CA_lyt);
-    left_lyt->addWidget(lb_save);
-    left_lyt->addLayout(dkdb_ctrl);
-    left_lyt->addLayout(dir_lyt);
-    left_lyt->addLayout(db_lyt);
-    left_lyt->addWidget(pb_save);
+    left_lyt->addWidget(pb_clscltr, 0, Qt::AlignCenter);
+    // left_lyt->addWidget(lb_CA);
+    // left_lyt->addLayout(CA_lyt);
+    // left_lyt->addWidget(lb_save);
+    // left_lyt->addLayout(dkdb_ctrl);
+    // left_lyt->addLayout(dir_lyt);
+    // left_lyt->addLayout(db_lyt);
+    left_lyt->addWidget(pb_save, 0, Qt::AlignCenter);
     //    left_lyt->setStretch(0);
     //    left_lyt->addSpacing(20);
     left_lyt->addStretch(1);
@@ -325,7 +339,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     connect(pb_save,    SIGNAL(clicked()), this, SLOT(slt_save()));
     connect(pb_loadCA,    SIGNAL(clicked()), this, SLOT(slt_load_CA()));
     connect(ckb_CA_state, SIGNAL(stateChanged(int)), this, SLOT(slt_CA_state(int)));
-    connect(dkdb_ctrl,  SIGNAL(changed(bool)),  this, SLOT(slt_db_local(bool)));
+    // connect(dkdb_ctrl,  SIGNAL(changed(bool)),  this, SLOT(slt_db_local(bool)));
     connect(this,  SIGNAL(sig_plot_l(bool)),    this, SLOT(slt_plot_l(bool)));
     connect(this,  SIGNAL(sig_plot_r(bool)),    this, SLOT(slt_plot_r(bool)));
     connect(this,  SIGNAL(sig_plot_dist(bool)), this, SLOT(slt_plot_dist(bool)));
@@ -700,29 +714,31 @@ void US_AddRefScan::slt_save(void){
     }
     this->setCursor(QCursor(Qt::ArrowCursor));
 
-    if (dkdb_ctrl->db())
-        save_db(referenceScans);
-    else
-        save_local(referenceScans);
+    // if (dkdb_ctrl->db())
+    //     save_db(referenceScans);
+    // else
+    //     save_local(referenceScans);
+
+    save_local(referenceScans);
     return;
 }
 
-void US_AddRefScan::slt_db_local(bool status){
-    if (status){
-        lb_dir->hide();
-        le_dir->hide();
-        lb_dbName->show();
-        le_dbName->show();
-        check_connection();
-    }else{
-        lb_dir->show();
-        le_dir->show();
-        lb_dbName->hide();
-        le_dbName->hide();
-    }
+// void US_AddRefScan::slt_db_local(bool status){
+//     if (status){
+//         lb_dir->hide();
+//         le_dir->hide();
+//         lb_dbName->show();
+//         le_dbName->show();
+//         check_connection();
+//     }else{
+//         lb_dir->show();
+//         le_dir->show();
+//         lb_dbName->hide();
+//         le_dbName->hide();
+//     }
 
-    return;
-}
+//     return;
+// }
 
 void US_AddRefScan::slt_plot_l(bool state){
     tab0_plotLU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
@@ -2354,20 +2370,48 @@ bool US_AddRefScan::check_runIDs(US_DB2* db, QVector<int>& experimentIDs,
 }
 
 void US_AddRefScan::save_local(US_RefScanDataIO::RefData &refScans){
-    QString outFileName;
-    FileNameWidget FileName(outFileName);
-    FileName.show();
-    int s = FileName.exec();
-    if (s == QDialog::Accepted){
-        qDebug() << outFileName;
-        int error = US_RefScanDataIO::writeRefData(outFileName, refScans);
-        if (error != US_RefScanDataIO::OK)
-            le_status->setText(US_RefScanDataIO::errorString(error));
-        else{
-            le_status->setText("Written on the local disk");
-            US_RefScanDataIO::RefData refScans2;
-            US_RefScanDataIO::readRefData(outFileName, refScans2);
-            qDebug() << "";
+    // QString outFileName;
+    // FileNameWidget FileName(outFileName);
+    // FileName.show();
+    // int s = FileName.exec();
+    // if (s == QDialog::Accepted){
+    //     qDebug() << outFileName;
+    //     int error = US_RefScanDataIO::writeRefData(outFileName, refScans);
+    //     if (error != US_RefScanDataIO::OK)
+    //         le_status->setText(US_RefScanDataIO::errorString(error));
+    //     else{
+    //         le_status->setText("Written on the local disk");
+    //         US_RefScanDataIO::RefData refScans2;
+    //         US_RefScanDataIO::readRefData(outFileName, refScans2);
+    //         qDebug() << "";
+    //     }
+    // }
+
+    QString fpath = QFileDialog::getSaveFileName(this, "Save Reference Scan File",
+                                                       US_Settings::dataDir(), tr("dat (*.dat)"));
+    if (fpath.isEmpty()) {
+        return;
+    }
+    if (!fpath.endsWith(".dat", Qt::CaseInsensitive)) {
+        fpath.append(".dat");
+    }
+    QFile file(fpath);
+
+    if (file.open(QIODevice::WriteOnly)) {
+        QTextStream textout{&file};
+        // textout << "Points(cm)";
+        textout << "cm";
+        for (int ii = 0; ii < refScans.nWavelength; ii++) {
+            // textout << tr(";Lambda(%1)").arg(refScans.wavelength.at(ii));
+            textout << tr(";%1nm").arg(refScans.wavelength.at(ii));
+        }
+        textout << "\n";
+        for (int ii = 0; ii < refScans.nPoints; ii++) {
+            textout << QString::number(refScans.xValues.at(ii));
+            for (int jj = 0; jj < refScans.nWavelength; jj++) {
+                textout << ";" << QString::number(refScans.rValues.at(jj).at(ii));
+            }
+            textout << "\n";
         }
     }
     return;
@@ -2492,10 +2536,10 @@ void US_AddRefScan::check_connection(){
     // First row
     if (dbCon->isConnected()){
         QStringList DB   = US_Settings::defaultDB();
-        if (DB.isEmpty())
-            le_dbName->setText("Undefined");
-        else
-            le_dbName->setText(DB.at(3));
+        // if (DB.isEmpty())
+        //     le_dbName->setText("Undefined");
+        // else
+        //     le_dbName->setText(DB.at(3));
     }
     return;
 }
