@@ -19,6 +19,7 @@
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 #endif
+#include "../include/us_plot_zoom.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -2584,6 +2585,7 @@ void US_Hydrodyn_Mals_Saxs::svd()
 
 void US_Hydrodyn_Mals_Saxs::line_width()
 {
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    use_line_width++;
    if ( use_line_width > 5 )
    {
@@ -2602,10 +2604,12 @@ void US_Hydrodyn_Mals_Saxs::line_width()
          replot_baseline( "color rotate" );
       }
    }
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Mals_Saxs::color_rotate()
 {
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    vector < QColor >  new_plot_colors;
 
    for ( unsigned int i = 1; i < ( unsigned int )plot_colors.size(); i++ )
@@ -2626,6 +2630,7 @@ void US_Hydrodyn_Mals_Saxs::color_rotate()
          replot_baseline( "color rotate" );
       }
    }
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Mals_Saxs::movie()

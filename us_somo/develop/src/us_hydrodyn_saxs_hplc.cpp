@@ -15,6 +15,7 @@
 #include <QTextStream>
 #include <QMouseEvent>
 #include <QCloseEvent>
+#include "../include/us_plot_zoom.h"
 
 // #define JAC_VERSION
 
@@ -5907,6 +5908,7 @@ void US_Hydrodyn_Saxs_Hplc::legend()
 
 void US_Hydrodyn_Saxs_Hplc::legend_set()
 {
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    if ( legend_vis ) {
       QwtLegend* legend_saxs = new QwtLegend;
       // legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -5914,6 +5916,7 @@ void US_Hydrodyn_Saxs_Hplc::legend_set()
    } else {      
       plot_dist->insertLegend( NULL );
    }
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Saxs_Hplc::similar_files()

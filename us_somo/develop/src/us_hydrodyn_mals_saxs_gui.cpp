@@ -251,7 +251,7 @@ void US_Hydrodyn_Mals_Saxs::setupGUI()
    cb_dots->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    cb_dots->setPalette( PALET_NORMAL );
    AUTFBACK( cb_dots );
-   connect( cb_dots, SIGNAL( clicked() ), SLOT( set_eb() ) );
+   connect( cb_dots, SIGNAL( clicked() ), SLOT( set_dots() ) );
 
    pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));

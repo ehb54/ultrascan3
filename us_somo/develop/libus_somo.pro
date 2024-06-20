@@ -488,6 +488,7 @@ SOURCES *= \
         src/us_pm_objects.cpp \
         src/us_pm_test.cpp \
 #        src/us_polyfit.cpp \
+        src/us_plot_zoom.cpp \
 #  us_pixmap.cpp \
 #  us_plotdata.cpp \
 #  us_printfilter.cpp \
@@ -894,7 +895,7 @@ HEADERS *= \
 #  us_nucleotide.h \
         include/us_pdb_util.h \
         include/us_pm.h \
-#  us_pixmap.h \
+        include/us_plot_zoom.h \
 #  us_plotdata.h \
 #  us_printfilter.h \
 #  us_pseudo3d_combine.h \

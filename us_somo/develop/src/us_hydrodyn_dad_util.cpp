@@ -15,6 +15,7 @@
 #include "../include/us_hydrodyn_dad_simulate.h"
 #include "../include/us_lm.h"
 #include "../include/us_svd.h"
+#include "../include/us_plot_zoom.h"
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 #endif
@@ -2600,6 +2601,7 @@ void US_Hydrodyn_Dad::svd()
 
 void US_Hydrodyn_Dad::line_width()
 {
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    use_line_width++;
    if ( use_line_width > 5 )
    {
@@ -2618,10 +2620,12 @@ void US_Hydrodyn_Dad::line_width()
          replot_baseline( "color rotate" );
       }
    }
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Dad::color_rotate()
 {
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    vector < QColor >  new_plot_colors;
 
    for ( unsigned int i = 1; i < ( unsigned int )plot_colors.size(); i++ )
@@ -2642,6 +2646,7 @@ void US_Hydrodyn_Dad::color_rotate()
          replot_baseline( "color rotate" );
       }
    }
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Dad::movie()

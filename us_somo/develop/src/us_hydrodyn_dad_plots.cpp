@@ -11,6 +11,7 @@
 #include <qwt_plot_layout.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
+#include "../include/us_plot_zoom.h"
 
 // #define DEBUG_RESCALE
 
@@ -818,6 +819,7 @@ void US_Hydrodyn_Dad::set_dots() {
 
 void US_Hydrodyn_Dad::set_eb()
 {
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    if ( current_mode == MODE_GGAUSSIAN ) {
       if ( cb_ggauss_scroll->isChecked() && unified_ggaussian_ok ) {
          ggaussian_rmsd();
@@ -835,6 +837,7 @@ void US_Hydrodyn_Dad::set_eb()
          update_enables();
       }
    }
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Dad::plot_files( bool save_zoom_state ) 
