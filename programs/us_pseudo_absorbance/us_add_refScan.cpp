@@ -65,11 +65,11 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     ckb_align->setCheckState(Qt::Unchecked);
     pb_clscltr = us_pushbutton("Clustering Control", false, 0 );
     pb_clscltr->setDisabled(true);
-    pb_clscltr->setFixedWidth(150);
+    // pb_clscltr->setFixedWidth(150);
 
-    QHBoxLayout* cls_aln_lyt = new QHBoxLayout();
-    cls_aln_lyt->addLayout(ckb_cls_lyt);
-    cls_aln_lyt->addLayout(ckb_aln_lyt);
+    // QHBoxLayout* cls_aln_lyt = new QHBoxLayout();
+    // cls_aln_lyt->addLayout(ckb_cls_lyt);
+    // cls_aln_lyt->addLayout(ckb_aln_lyt);
 
     // Chromatic Aberration Correction
     QLabel* lb_CA = us_banner(tr("Chromatic Aberration Correction"));
@@ -111,7 +111,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     // le_dbName  = us_lineedit( "", -1, true );
     pb_save = us_pushbutton("Save", false, 0 );
     pb_save->setDisabled(true);
-    pb_save->setFixedWidth(150);
+    // pb_save->setFixedWidth(150);
 
     // if (dkdb_ctrl->db()){
     //     lb_dir->hide();
@@ -127,6 +127,12 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     // db_lyt->addWidget(lb_dbName);
     // db_lyt->addWidget(le_dbName);
 
+
+    QGridLayout* procctrl_lyt = new QGridLayout();
+    procctrl_lyt->addLayout(ckb_cls_lyt, 0, 0, 1, 1);
+    procctrl_lyt->addLayout(ckb_aln_lyt, 0, 1, 1, 1);
+    procctrl_lyt->addWidget(pb_clscltr,  1, 0, 1, 1);
+    procctrl_lyt->addWidget(pb_save,     1, 1, 1, 1);
     // status
     QLabel* lb_status = us_label(tr("Status:"));
     le_status = us_lineedit(tr(""), -1, true);
@@ -157,7 +163,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     left_lyt->addLayout(wavl_rng_lyt);
     left_lyt->addLayout(wavl_plt_lyt);
     left_lyt->addWidget(lb_cluster);
-    left_lyt->addLayout(cls_aln_lyt);
+    left_lyt->addLayout(procctrl_lyt);
     left_lyt->addWidget(pb_clscltr, 0, Qt::AlignCenter);
     // left_lyt->addWidget(lb_CA);
     // left_lyt->addLayout(CA_lyt);
@@ -308,6 +314,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     tab1_lyt->addLayout(tab1_plt_lyt3, 1);
     tab1_lyt->addLayout(tab1_plt_lyt4);
     tab1_lyt->setMargin(0);
+    tab1_lyt->setSpacing(1);
 
     //**//
     tabs = new QTabWidget();
