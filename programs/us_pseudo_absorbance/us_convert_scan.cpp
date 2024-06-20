@@ -1,5 +1,6 @@
 #include "us_convert_scan.h"
 #include "us_load_auc.h"
+#include "us_csv_loader.h"
 #include <QGuiApplication>
 
 US_ConvertScan::US_ConvertScan() : US_Widgets()
@@ -89,19 +90,17 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     align_center(ct_scan_to);
 
     QGridLayout* scan_lyt = new QGridLayout();
-    scan_lyt->addWidget(lb_scans,  0, 0, 1, 1);
-    scan_lyt->addWidget(ct_scans,  0, 1, 1, 1);
+    scan_lyt->addWidget(lb_scans,     0, 0, 1, 1);
+    scan_lyt->addWidget(ct_scans,     0, 1, 1, 1);
     // scan_lyt->addWidget(lb_smooth, 1, 0, 1, 1);
     // scan_lyt->addWidget(ct_smooth, 1, 1, 1, 1);
-    scan_lyt->addWidget(pb_apply,  0, 2, 1, 1);
-    scan_lyt->addWidget(lb_maxod,  1, 0, 1, 1);
-    scan_lyt->addWidget(ct_maxod,  1, 1, 1, 2);
-
-    scan_lyt->addWidget(lb_scan_from, 2, 0, 1, 1);
-    scan_lyt->addWidget(ct_scan_from, 2, 1, 1, 2);
-
-    scan_lyt->addWidget(lb_scan_to, 3, 0, 1, 1);
-    scan_lyt->addWidget(ct_scan_to, 3, 1, 1, 2);
+    scan_lyt->addWidget(pb_apply,     0, 2, 1, 1);
+    scan_lyt->addWidget(lb_scan_from, 1, 0, 1, 1);
+    scan_lyt->addWidget(ct_scan_from, 1, 1, 1, 2);
+    scan_lyt->addWidget(lb_scan_to,   2, 0, 1, 1);
+    scan_lyt->addWidget(ct_scan_to,   2, 1, 1, 2);
+    scan_lyt->addWidget(lb_maxod,     3, 0, 1, 1);
+    scan_lyt->addWidget(ct_maxod,     3, 1, 1, 2);
 
     tb_triple = new QTableWidget();
     tb_triple->setRowCount(0);
@@ -263,6 +262,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 
     connect(this, &US_ConvertScan::sig_plot, this, &US_ConvertScan::plot_all);
     connect(pb_import, &QPushButton::clicked, this, &US_ConvertScan::import_run);
+    connect(pb_load_ref, &QPushButton::clicked, this, &US_ConvertScan::load_ref_scan);
     connect(pb_reset, &QPushButton::clicked, this, &US_ConvertScan::reset);
     connect(pb_prev_id, &QPushButton::clicked, this, &US_ConvertScan::prev_id);
     connect(pb_next_id, &QPushButton::clicked, this, &US_ConvertScan::next_id);
@@ -342,6 +342,142 @@ void US_ConvertScan::apply_nscans() {
     connect(ct_scan_to, &QwtCounter::valueChanged, this, &US_ConvertScan::upper_scan_range);
 
     emit sig_plot();
+}
+
+void US_ConvertScan::load_ref_scan() {
+    QString filter = "text files (*);;csv files (*.csv);;dat files (*.dat)";
+    QString fpath = QFileDialog::getOpenFileName(this, "Load Reference Scans",
+                                                 US_Settings::dataDir(), filter);
+    if (fpath.isEmpty()) {
+        return;
+    }
+
+    for (int ii = 0; ii < refscan_files.size(); ii++) {
+        QString file_loaded = refscan_files.at(ii).filename;
+        if (file_loaded.compare(fpath) == 0) {
+            QMessageBox::warning(this, "Error!", "The following file has already been uploaded!\n" + fpath);
+            return;
+        }
+    }
+
+
+    QString note = "A Header Instance: cm;220nm;222nm;224nm";
+    US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
+    int state = csv_loader->exec();
+    if (state != QDialog::Accepted) return;
+    double min_r = 5;
+    double max_r = 8;
+    QString mesg = tr("Reference scan files should have at least two columns with the following pattern. "
+                      "The preferred data separator is semicolon. "
+                      "The first column is the radial points where header name is (cm). "
+                      "The radial point should be between %1 to %2 cm and equally distanced with 0.001 cm. "
+                      "The rest of the columns are reference profiles at different wavelengths. "
+                      "They should be positive values where the header specifies what wavelength they are for."
+                      "Each wavelength header item should be number followed by (nm). "
+                      "Here is an example:\n\n"
+                      "cm;220nm;222nm;224nm;226nm;230nm\n"
+                      "5.8;1629.81;1712.49;1579.66;1732.45;1632.21\n"
+                      "5.801;1631.89;1713.16;1580.46;1733.07;1632.54\n"
+                      "....\n"
+                      "....\n").arg(min_r).arg(max_r);
+    US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+    if (csv_data.columnCount() < 2 ) {
+        QMessageBox::warning(this, "Error!", mesg + "\n\nError in the number of columns!");
+        return;
+    }
+    QStringList header = csv_data.header();
+    QVector<double> wavl;
+    QVector<QPair<double, int>> wavl_idx;
+    for (int ii = 0; ii < header.size(); ii++) {
+        QString name = header.at(ii).trimmed();
+        if (ii == 0 && name.compare("cm", Qt::CaseSensitive) != 0) {
+            QMessageBox::warning(this, "Error!", mesg + "\n\nError in the header!");
+            return;
+        } else if (ii > 0) {
+            if (name.endsWith("nm")) {
+                name.chop(2);
+                bool ok;
+                double val = name.toDouble(&ok);
+                if (!ok) {
+                    QMessageBox::warning(this, "Error!", mesg + "\n\nError in the header!");
+                    return;
+                }
+                if (val < 180 || val > 800) {
+                    QMessageBox::warning(this, "Error!", "Error in the header! Wavelengths are out of range. "
+                                                         "They must be in a range of 180 to 800 nm.");
+                    return;
+                }
+                if (wavl.contains(val)) {
+                    QMessageBox::warning(this, "Error!", mesg + "\n\nError in the header! Wavelength redundancy!");
+                    return;
+                } else {
+                    wavl << val;
+                    wavl_idx << qMakePair(val, ii - 1);
+                }
+            } else {
+                QMessageBox::warning(this, "Error!", mesg + "\n\nError in the header!");
+                return;
+            }
+        }
+    }
+    QVector<double> xvalues = csv_data.columnAt(0);
+    QString mesg_r = mesg + "\n\nError in the radial points!";
+    if (xvalues.first() < min_r || xvalues.last() > max_r) {
+        QMessageBox::warning(this, "Error!", mesg_r);
+        return;
+    }
+    for(int ii = 1; ii < xvalues.size(); ii++) {
+        double r = xvalues.at(ii);
+        if (r < min_r || r > max_r) {
+            QMessageBox::warning(this, "Error!", mesg_r);
+            return;
+        }
+        double dr = xvalues.at(ii) - xvalues.at(ii - 1);
+        if (dr < 0.0008 || dr > 0.003) {
+            QMessageBox::warning(this, "Error!", mesg_r);
+            return;
+        }
+    }
+    mesg_r = mesg + "\n\nError in the data values!";
+    QVector<QVector<double>> yvalues;
+    for (int ii = 1; ii < csv_data.columnCount(); ii++) {
+        QVector<double> col = csv_data.columnAt(ii);
+        foreach (double d, col) {
+            if (d <= 0) {
+                QMessageBox::warning(this, "Error!", mesg_r + " Negative and zero values are not allowed!");
+                return;
+            }
+        }
+        yvalues << col;
+    }
+
+    std::sort(wavl_idx.begin(), wavl_idx.end(),
+              [](auto a, auto b) { return a.first < b.first;});
+    RefscanFile reffile;
+    double min_wvl = 10000;
+    double max_wvl = 0;
+    reffile.xvalues << xvalues;
+    for (int ii = 0; ii < wavl_idx.size(); ii++) {
+        double wvl = wavl_idx.at(ii).first;
+        double idx = wavl_idx.at(ii).second;
+        min_wvl = qMin(min_wvl, wvl);
+        max_wvl = qMax(max_wvl, wvl);
+        reffile.wavelength << wvl;
+        reffile.yvalues << yvalues.at(idx);
+    }
+    reffile.min_wvl = min_wvl;
+    reffile.max_wvl = max_wvl;
+    reffile.nwvl = reffile.wavelength.size();
+    reffile.filename = fpath;
+    reffile.name = tr("Reference %1").arg(refscan_files.size() + 1);
+
+    refscan_files << reffile;
+    set_table();
+    set_wavl_ctrl();
+    pb_reset->setEnabled(true);
+    hasData = true;
+    le_status->clear();
+
 }
 
 int US_ConvertScan::read_auc(QVector<US_DataIO::RawData>& rawdata,
@@ -908,7 +1044,7 @@ void US_ConvertScan::save_run() {
 void US_ConvertScan::set_table(){
     tb_triple->disconnect();
     tb_triple->clearContents();
-    tb_triple->setRowCount(ccw_items.size());
+    tb_triple->setRowCount(ccw_items.size() + refscan_files.size());
 
     QString runid;
     int rcode = 1;
@@ -960,7 +1096,8 @@ void US_ConvertScan::set_table(){
         twi_cc = new QTableWidgetItem(item_cc);
         twi_cc->setFlags(twi_cc->flags() & ~Qt::ItemIsEditable);
         twi_cc->setFont(font);
-        tb_triple->setItem(ii, 0, twi_cc);
+        int II = ccw_items.size() + ii;
+        tb_triple->setItem(II, 0, twi_cc);
 
         QString item_wvl = tr("%1-%2 (%3)").arg(refscan_files.at(ii).min_wvl)
                                .arg(refscan_files.at(ii).max_wvl).arg(refscan_files.at(ii).nwvl);
@@ -968,7 +1105,15 @@ void US_ConvertScan::set_table(){
         twi_wvl = new QTableWidgetItem(item_wvl);
         twi_wvl->setFlags(twi_wvl->flags() & ~Qt::ItemIsEditable);
         twi_wvl->setFont(font);
-        tb_triple->setItem(ii, 1, twi_wvl);
+        tb_triple->setItem(II, 1, twi_wvl);
+
+        QTableWidgetItem *twi_2 = new QTableWidgetItem();
+        twi_2->setFlags(twi_2->flags() & ~Qt::ItemIsEditable);
+        tb_triple->setItem(II, 2, twi_2);
+
+        QTableWidgetItem *twi_3 = new QTableWidgetItem();
+        twi_3->setFlags(twi_3->flags() & ~Qt::ItemIsEditable);
+        tb_triple->setItem(II, 3, twi_3);
     }
 
     for (int ii = 0; ii < ccw_items.size(); ii++) {

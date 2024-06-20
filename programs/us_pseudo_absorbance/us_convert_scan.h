@@ -47,6 +47,7 @@ private slots:
     void lower_scan_range(double);
     void upper_scan_range(double);
     void plot_ref_state();
+    void load_ref_scan();
 
 private:
 
