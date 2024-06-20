@@ -1052,7 +1052,7 @@ void US_Hydrodyn_Dad::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo/somo_dad.html");
+   online_help->show_help("manual/somo/somo_uv_vis.html");
 }
 
 void US_Hydrodyn_Dad::closeEvent(QCloseEvent *e)
