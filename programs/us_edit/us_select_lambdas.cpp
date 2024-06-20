@@ -158,6 +158,7 @@ void US_SelectLambdas::cancel( void )
 
 void US_SelectLambdas::done( void )
 {
+   std::sort( selected.begin(), selected.end() );
    emit new_lambda_list( selected );
 
    accept();
