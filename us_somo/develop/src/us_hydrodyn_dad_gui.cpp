@@ -767,7 +767,7 @@ void US_Hydrodyn_Dad::setupGUI()
    connect( le_powerfit_lambda2_abs, SIGNAL( textChanged( const QString & ) ), SLOT( powerfit_lambda2_abs_text( const QString & ) ) );
    connect( le_powerfit_lambda2_abs, SIGNAL( focussed ( bool ) )             , SLOT( powerfit_lambda2_abs_focus( bool ) ) );
 
-   lbl_powerfit_extinction_coef = new QLabel( us_tr( " Extc. coef. [nm]: " ), this );
+   lbl_powerfit_extinction_coef = new QLabel( us_tr( " Extc. coef. [mL/(mg*cm)]: " ), this );
    lbl_powerfit_extinction_coef->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_powerfit_extinction_coef->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_powerfit_extinction_coef );

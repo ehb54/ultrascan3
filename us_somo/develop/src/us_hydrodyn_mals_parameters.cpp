@@ -121,7 +121,7 @@ void US_Hydrodyn_Mals_Parameters::setupGUI()
    le_mals_param_g_dndc->setMinimumWidth( 200 );
    le_mals_param_g_dndc-> setMinimumHeight( minHeight1 );
 
-   lbl_mals_param_g_extinction_coef = new QLabel( us_tr( "Global extinction coefficient [ml mg^-1 cm^-1]: " ), this );
+   lbl_mals_param_g_extinction_coef = new QLabel( us_tr( "Global extinction coefficient [mL mg^-1 cm^-1]: " ), this );
    lbl_mals_param_g_extinction_coef->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mals_param_g_extinction_coef->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_mals_param_g_extinction_coef );
