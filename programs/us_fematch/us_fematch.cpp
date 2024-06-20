@@ -397,13 +397,13 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ti_noise.count = 0;
    ri_noise.count = 0;
 
-   adv_vals[ "simpoints" ] = "500";
-   adv_vals[ "bndvolume" ] = "0.015";
-   adv_vals[ "parameter" ] = "0";
-   adv_vals[ "modelnbr"  ] = "0";
-   adv_vals[ "meshtype"  ] = "ASTFEM";
-   adv_vals[ "gridtype"  ] = "Moving";
-   adv_vals[ "modelsim"  ] = "mean";
+   adv_vals[ "simpoints"  ] = "500";
+   adv_vals[ "bandvolume" ] = "0.015";
+   adv_vals[ "parameter"  ] = "0";
+   adv_vals[ "modelnbr"   ] = "0";
+   adv_vals[ "meshtype"   ] = "ASTFEM";
+   adv_vals[ "gridtype"   ] = "Moving";
+   adv_vals[ "modelsim"   ] = "mean";
 
    sdata          = &wsdata;
 
@@ -2100,9 +2100,9 @@ DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
 
 DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
 
-   QString mtyp = adv_vals[ "meshtype"  ];
-   QString gtyp = adv_vals[ "gridtype"  ];
-   QString bvol = adv_vals[ "bndvolume" ];
+   QString mtyp = adv_vals[ "meshtype"   ];
+   QString gtyp = adv_vals[ "gridtype"   ];
+   QString bvol = adv_vals[ "bandvolume" ];
 
 #if 0
    if ( mtyp.contains( "Claverie" ) )

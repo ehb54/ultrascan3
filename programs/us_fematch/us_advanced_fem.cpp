@@ -25,14 +25,14 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_analysis  = us_banner( tr( "Advanced Analysis"          ) );
-   QLabel* lb_simpoints = us_label(  tr( "Simulation Points:"         ) );
-   QLabel* lb_bldvolume = us_label(  tr( "Band-loading Volume:"       ) );
-   QLabel* lb_parameter = us_label(  tr( "Parameter:"                 ) );
+   QLabel* lb_analysis   = us_banner( tr( "Advanced Analysis"          ) );
+   QLabel* lb_simpoints  = us_label(  tr( "Simulation Points:"         ) );
+   QLabel* lb_bandvolume = us_label(  tr( "Band-loading Volume:"       ) );
+   QLabel* lb_parameter  = us_label(  tr( "Parameter:"                 ) );
 
-   ct_simpoints = us_counter( 3, 0, 10000,   1 );
-   ct_bldvolume = us_counter( 3, 0,   1, 0.001 );
-   ct_parameter = us_counter( 2, 1,  50,     1 );
+   ct_simpoints  = us_counter( 3, 0, 10000,   1 );
+   ct_bandvolume = us_counter( 3, 0,   1, 0.001 );
+   ct_parameter  = us_counter( 2, 1,  50,     1 );
 
    cb_mesh      = us_comboBox();
    cb_mesh->addItem( "Adaptive Space Time Mesh (ASTFEM)" );
@@ -50,25 +50,25 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    QPushButton* pb_accept  = us_pushbutton( tr( "Accept" ) );
 
    int row      = 0;
-   mainLayout->addWidget( lb_analysis,   row++, 0, 1, 6 );
-   mainLayout->addWidget( lb_simpoints,  row,   0, 1, 3 );
-   mainLayout->addWidget( ct_simpoints,  row++, 3, 1, 3 );
-   mainLayout->addWidget( lb_bldvolume,  row,   0, 1, 3 );
-   mainLayout->addWidget( ct_bldvolume,  row++, 3, 1, 3 );
-   mainLayout->addWidget( lb_parameter,  row,   0, 1, 3 );
-   mainLayout->addWidget( ct_parameter,  row++, 3, 1, 3 );
-   mainLayout->addWidget( cb_mesh,       row++, 0, 1, 6 );
-   mainLayout->addWidget( cb_grid,       row++, 0, 1, 6 );
-   mainLayout->addWidget( pb_help,       row,   0, 1, 2 );
-   mainLayout->addWidget( pb_cancel,     row,   2, 1, 2 );
-   mainLayout->addWidget( pb_accept,     row++, 4, 1, 2 );
+   mainLayout->addWidget( lb_analysis,     row++, 0, 1, 6 );
+   mainLayout->addWidget( lb_simpoints,    row,   0, 1, 3 );
+   mainLayout->addWidget( ct_simpoints,    row++, 3, 1, 3 );
+   mainLayout->addWidget( lb_bandvolume,   row,   0, 1, 3 );
+   mainLayout->addWidget( ct_bandvolume,   row++, 3, 1, 3 );
+   mainLayout->addWidget( lb_parameter,    row,   0, 1, 3 );
+   mainLayout->addWidget( ct_parameter,    row++, 3, 1, 3 );
+   mainLayout->addWidget( cb_mesh,         row++, 0, 1, 6 );
+   mainLayout->addWidget( cb_grid,         row++, 0, 1, 6 );
+   mainLayout->addWidget( pb_help,         row,   0, 1, 2 );
+   mainLayout->addWidget( pb_cancel,       row,   2, 1, 2 );
+   mainLayout->addWidget( pb_accept,       row++, 4, 1, 2 );
 
-   ct_simpoints->setValue( parmap[ "simpoints" ].toDouble() );
-   ct_bldvolume->setValue( parmap[ "bldvolume" ].toDouble() );
-   ct_parameter->setValue( parmap[ "parameter" ].toDouble() );
-   ct_simpoints->setSingleStep(     5 );
-   ct_bldvolume->setSingleStep( 0.001 );
-   ct_parameter->setSingleStep(     1 );
+   ct_simpoints ->setValue( parmap[ "simpoints" ].toDouble() );
+   ct_bandvolume->setValue( parmap[ "bandvolume" ].toDouble() );
+   ct_parameter ->setValue( parmap[ "parameter" ].toDouble() );
+   ct_simpoints ->setSingleStep(     5 );
+   ct_bandvolume->setSingleStep( 0.001 );
+   ct_parameter ->setSingleStep(     1 );
 
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
@@ -88,11 +88,11 @@ qDebug() << "AdvF:Post-resize size" << size();
 // private slot to pass parameters then close with an accepted() signal
 void US_AdvancedFem::done( void )
 {
-   parmap[ "simpoints" ] = QString::number( ct_simpoints->value() );
-   parmap[ "bldvolume" ] = QString::number( ct_bldvolume->value() );
-   parmap[ "parameter" ] = QString::number( ct_parameter->value() );
-   parmap[ "meshtype"  ] = cb_mesh->currentText();
-   parmap[ "gridtype"  ] = cb_grid->currentText();
+   parmap[ "simpoints"  ] = QString::number( ct_simpoints ->value() );
+   parmap[ "bandvolume" ] = QString::number( ct_bandvolume->value() );
+   parmap[ "parameter"  ] = QString::number( ct_parameter ->value() );
+   parmap[ "meshtype"   ] = cb_mesh->currentText();
+   parmap[ "gridtype"   ] = cb_grid->currentText();
 
    accept();
 }
