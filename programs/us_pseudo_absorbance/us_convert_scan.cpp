@@ -961,7 +961,7 @@ void US_ConvertScan::save_run() {
         return;
     } else if (run_list.size() > 1) {
         QMessageBox::warning(this, "Warning!", "Triples from multiple RunIDs are selected!\n"
-                                               "Please select triples of each RunID separately.");
+                                               "Please save each RunID separately.");
         return;
     }
 
@@ -1014,7 +1014,7 @@ void US_ConvertScan::save_run() {
     }
     if (! miss_ccw.isEmpty()) {
         int ans = QMessageBox::question(this, "Warning!",
-                                        tr("Absorbance data for (%1) triples is missing.\n"
+                                        tr("There is (%1) triple(s) missing.\n"
                                            "Do you proceed to save the remaining (%2) "
                                            "triples ?").arg(miss_ccw.size()).arg(out_rawdata.size()));
         if (ans == QMessageBox::No) {
