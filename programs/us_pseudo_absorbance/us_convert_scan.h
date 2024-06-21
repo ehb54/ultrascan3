@@ -61,6 +61,7 @@ private:
         double min_wvl;
         double max_wvl;
         int nwvl;
+        int wavl_id;
         QVector<double> wavelength;
         QVector<double> xvalues;
         QVector<QVector<double>> yvalues;
@@ -75,6 +76,7 @@ private:
         int cell;
         int ref_id;
         QString runid;
+        int wavl_id;
         QVector<double> wavelength;
         QVector<int> rawdata_ids;
         QPair<double, double> minmax_x;
@@ -121,8 +123,6 @@ private:
     int nscans;
     int max_nscans;
     int smooth;
-    int wavl_id;
-    QVector<double> wavelength;
     QVector<CellChannel> ccw_items;
     QVector<US_DataIO::RawData> intensity_data;
     QVector<QVector<QVector<double>>> absorbance_data;

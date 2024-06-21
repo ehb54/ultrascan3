@@ -294,8 +294,6 @@ void US_ConvertScan::reset(){
     tb_triple->setRowCount(0);
     set_ct_scans();
     hasData = false;
-    wavl_id = 0;
-    wavelength.clear();
     ccw_items.clear();
     intensity_data.clear();
     absorbance_data.clear();
@@ -469,6 +467,7 @@ void US_ConvertScan::load_ref_scan() {
     reffile.nwvl = reffile.wavelength.size();
     reffile.filename = fpath;
     reffile.name = tr("Reference %1").arg(refscan_files.size() + 1);
+    reffile.wavl_id = 0;
 
     refscan_files << reffile;
     set_table();
@@ -686,50 +685,69 @@ void US_ConvertScan::upper_scan_range(double value) {
 }
 
 void US_ConvertScan::prev_id(){
-    --wavl_id;
-    cb_plot_id->setCurrentIndex(wavl_id);
-    return;
+    int row = tb_triple->currentRow();
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    int wavl_id;
+    if (role < 100) {
+        wavl_id = ccw_items.at(role).wavl_id;
+    } else {
+        wavl_id = refscan_files.at(role - 100).wavl_id;
+    }
+    cb_plot_id->setCurrentIndex(--wavl_id);
 }
 
 void US_ConvertScan::next_id(){
-    ++wavl_id;
-    cb_plot_id->setCurrentIndex(wavl_id);
-    return;
+    int row = tb_triple->currentRow();
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    int wavl_id;
+    if (role < 100) {
+        wavl_id = ccw_items.at(role).wavl_id;
+    } else {
+        wavl_id = refscan_files.at(role - 100).wavl_id;
+    }
+    cb_plot_id->setCurrentIndex(++wavl_id);
 }
 
 void US_ConvertScan::offon_prev_next(){
-    int n_wavls = wavelength.size();
+    int n_wavls, wavl_id;
+    int row = tb_triple->currentRow();
+    int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    if (role < 100) {
+        n_wavls = ccw_items.at(role).wavelength.size();
+        wavl_id = ccw_items.at(role).wavl_id;
+    } else {
+        n_wavls = refscan_files.at(role - 100).wavelength.size();
+        wavl_id = refscan_files.at(role - 100).wavl_id;
+    }
     pb_prev_id->setDisabled(wavl_id <= 0);
     pb_next_id->setDisabled(wavl_id >= (n_wavls - 1));
     return;
 }
 
 void US_ConvertScan::set_wavl_ctrl(){
-    if (tb_triple->currentColumn() == 2) return;
+    if (tb_triple->currentColumn() >= 2) return;
 
     cb_plot_id->disconnect();
     cb_plot_id->clear();
-    wavelength.clear();
-    wavl_id = 0;
-    // plot_ref_file = -1;
     if (ccw_items.isEmpty() && refscan_files.isEmpty()) {
         le_lambstrt->clear();
         le_lambstop->clear();
         le_runid->clear();
         le_desc->clear();
-        offon_prev_next();
         emit sig_plot();
         return;
     }
 
     int row = tb_triple->currentRow();
     int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    QVector<double> wavelength;
+    int wavl_id;
     if (role < 100) {
         wavelength << ccw_items.at(row).wavelength;
-        // plot_ref_file = -1;
+        wavl_id = ccw_items.at(row).wavl_id;
     } else {
-        // plot_ref_file = role - 100;
         wavelength << refscan_files.at(role - 100).wavelength;
+        wavl_id = refscan_files.at(role - 100).wavl_id;
     }
 
     le_lambstrt->setText(tr("%1").arg(wavelength.first()));
@@ -742,36 +760,38 @@ void US_ConvertScan::set_wavl_ctrl(){
     for (int ii = 0; ii < cb_plot_id->count(); ii++) {
         cb_plot_id->setItemData(ii, Qt::AlignCenter, Qt::TextAlignmentRole);
     }
-    offon_prev_next();
+    cb_plot_id->setCurrentIndex(wavl_id);
 
     // connect(cb_plot_id, QOverload<int>::of(&QComboBox::currentIndexChanged),
     //         [=](int index){ select_id(index); });
 
     connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(select_id(int)));
-    select_id(0);
+    select_id(wavl_id);
 }
 
 void US_ConvertScan::select_id(int id){
     disconnect_picker();
-    wavl_id = id;
-    offon_prev_next();
     int row = tb_triple->currentRow();
     int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
     if (role >= 100) {
         le_runid->clear();
         le_desc->setText(refscan_files.at(role - 100).filename);
-        double wl = wavelength.at(wavl_id);
+        double wl = refscan_files.at(role - 100).wavelength.at(id);
+        refscan_files[role - 100].wavl_id = id;
+        // double wl = wavelength.at(wavl_id);
         QString title("Wavelength= %1 nm");
         plot_title->setText(title.arg(wl));
     } else {
-        int raw_id = ccw_items.at(role).rawdata_ids.at(wavl_id);
+        int raw_id = ccw_items.at(role).rawdata_ids.at(id);
+        ccw_items[role].wavl_id = id;
         le_runid->setText(ccw_items.at(tb_triple->currentRow()).runid);
         le_desc->setText(intensity_data.at(raw_id).description);
-        double wl = wavelength.at(wavl_id);
+        double wl = ccw_items.at(role).wavelength.at(id);
         int ns = intensity_data.at(raw_id).scanData.size();
         QString title("Wavelength= %1 nm; #Scans= %2");
         plot_title->setText(title.arg(wl).arg(ns));
     }
+    offon_prev_next();
     emit sig_plot();
     return;
 }
@@ -1062,12 +1082,14 @@ void US_ConvertScan::set_table(){
         twi_cc->setFlags(twi_cc->flags() & ~Qt::ItemIsEditable);
         twi_cc->setFont(font);
         twi_cc->setData(Qt::UserRole, QVariant(ii));
+        twi_cc->setTextAlignment(Qt::AlignCenter);
         tb_triple->setItem(ii, 0, twi_cc);
 
         QString item_wvl = tr("%1-%2 (%3)").arg(min_wl).arg(max_wl).arg(nwl);
         QTableWidgetItem *twi_wvl;
         twi_wvl = new QTableWidgetItem(item_wvl);
         twi_wvl->setFlags(twi_wvl->flags() & ~Qt::ItemIsEditable);
+        twi_wvl->setTextAlignment(Qt::AlignCenter);
         twi_wvl->setFont(font);
         tb_triple->setItem(ii, 1, twi_wvl);
     }
@@ -1077,6 +1099,8 @@ void US_ConvertScan::set_table(){
         QTableWidgetItem *twi_cc;
         twi_cc = new QTableWidgetItem(item_cc);
         twi_cc->setFlags(twi_cc->flags() & ~Qt::ItemIsEditable);
+        twi_cc->setData(Qt::UserRole, QVariant(ii + 100));
+        twi_cc->setTextAlignment(Qt::AlignCenter);
         twi_cc->setFont(font);
         int II = ccw_items.size() + ii;
         tb_triple->setItem(II, 0, twi_cc);
@@ -1087,7 +1111,7 @@ void US_ConvertScan::set_table(){
         twi_wvl = new QTableWidgetItem(item_wvl);
         twi_wvl->setFlags(twi_wvl->flags() & ~Qt::ItemIsEditable);
         twi_wvl->setFont(font);
-        twi_cc->setData(Qt::UserRole, QVariant(ii + 100));
+        twi_wvl->setTextAlignment(Qt::AlignCenter);
         tb_triple->setItem(II, 1, twi_wvl);
 
         QTableWidgetItem *twi_2 = new QTableWidgetItem();
@@ -1112,13 +1136,13 @@ void US_ConvertScan::set_table(){
         int cid = 0;
         int re_fid = ccw_items.at(ii).ref_id;
         for (int jj = 0; jj < combo->count(); jj++) {
+            combo->setItemData(jj, Qt::AlignCenter, Qt::TextAlignmentRole);
             if (jj == 0) {
                 combo->setItemData(jj, -1, Qt::UserRole);
                 continue;
             }
             int role = tb_triple->item(jj - 1, 0)->data(Qt::UserRole).toInt();
             combo->setItemData(jj, role, Qt::UserRole);
-            combo->setItemData(jj, Qt::AlignCenter, Qt::TextAlignmentRole);
             if (role == re_fid) {
                 cid = jj;
             }
@@ -1174,13 +1198,13 @@ void US_ConvertScan::list_ccw_items(QString& runid){
 
     foreach (QString key, keys) {
         CellChannel cc;
-        // cc.has_ref = false;
         QStringList ksp = key.split("-");
         cc.cell = ksp.at(0).toInt();
         cc.channel = ksp.at(1).at(0).toLatin1();
         cc.minmax_x = qMakePair(-1, -1);
         cc.ref_id = -1;
         cc.runid = runid;
+        cc.wavl_id = 0;
         QVector<QPair<double, int>> wavl_idx = wavl_idx_map.value(key);
         std::sort(wavl_idx.begin(), wavl_idx.end(),
                   [](auto a, auto b) { return a.first < b.first;});
@@ -1207,6 +1231,7 @@ void US_ConvertScan::plot_intensity(){
         return;
     }
 
+    int wavl_id = ccw_items.at(role).wavl_id;
     int raw_id = ccw_items.at(role).rawdata_ids.at(wavl_id);
     bool flag = chkb_abs_int->isChecked();
     flag = flag && (absorbance_state.at(raw_id) >= 0 && absorbance_state.at(raw_id) < 100);
@@ -1272,10 +1297,13 @@ void US_ConvertScan::plot_refscan(){
     QVector<QVector<double>> yvalues;
     int row = tb_triple->currentRow();
     int role = tb_triple->item(row, 0)->data(Qt::UserRole).toInt();
+    int wavl_id;
     if (role >= 100) {
+        wavl_id = refscan_files.at(role - 100).wavl_id;
         xvalues << refscan_files.at(role - 100).xvalues;
         yvalues << refscan_files.at(role - 100).yvalues.at(wavl_id);
     } else {
+        wavl_id = ccw_items.at(tb_triple->currentRow()).wavl_id;
         int raw_id = ccw_items.at(tb_triple->currentRow()).rawdata_ids.at(wavl_id);
         if (absorbance_state.at(raw_id) == -1) {
             return;
@@ -1335,7 +1363,7 @@ void US_ConvertScan::plot_absorbance(){
     if (role >= 100) {
         return;
     }
-
+    int wavl_id = ccw_items.at(role).wavl_id;
     int raw_id = ccw_items.at(role).rawdata_ids.at(wavl_id);
     if (absorbance_state.at(raw_id) == -1) {
         return;
