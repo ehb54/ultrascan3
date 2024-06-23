@@ -31,6 +31,9 @@ class US_EXTERN US_Hydrodyn_Dad_Parameters : public QDialog
 
       QLabel *                                lbl_title;
 
+      QLabel *                                lbl_dad_param_desc;
+      QLineEdit *                             le_dad_param_desc;
+
       QLabel *                                lbl_dad_param_lambda;
       QLineEdit *                             le_dad_param_lambda;
 
@@ -49,11 +52,33 @@ class US_EXTERN US_Hydrodyn_Dad_Parameters : public QDialog
       QLabel *                                lbl_dad_param_DLS_detector;
       QLineEdit *                             le_dad_param_DLS_detector;
 
+      QLabel *                                lbl_dad_param_dndc2_a;
+      QLineEdit *                             le_dad_param_dndc2_a;
+
+      QLabel *                                lbl_lambda_dependence_coeff;
+
+      QLabel *                                lbl_dad_param_dndc2_b;
+      QLineEdit *                             le_dad_param_dndc2_b;
+
+      QLabel *                                lbl_dad_param_dndc2_c;
+      QLineEdit *                             le_dad_param_dndc2_c;
+
+      QLabel *                                lbl_dad_param_n2_a;
+      QLineEdit *                             le_dad_param_n2_a;
+
+      QLabel *                                lbl_dad_param_n2_b;
+      QLineEdit *                             le_dad_param_n2_b;
+
+      QLabel *                                lbl_dad_param_n2_c;
+      QLineEdit *                             le_dad_param_n2_c;
+
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
       QPushButton *                           pb_keep;
       QPushButton *                           pb_save;
+      QPushButton *                           pb_load;
 
+      void                     *              us_hydrodyn;
       void                     *              us_hydrodyn_dad;
       map < QString, QString > *              parameters;
 
@@ -63,6 +88,8 @@ class US_EXTERN US_Hydrodyn_Dad_Parameters : public QDialog
 
    private slots:
 
+      void                                    set_dad_param_desc              ( const QString & );
+
       void                                    set_dad_param_lambda            ( const QString & );
       void                                    set_dad_param_n                 ( const QString & );
       void                                    set_dad_param_g_dndc            ( const QString & );
@@ -70,9 +97,18 @@ class US_EXTERN US_Hydrodyn_Dad_Parameters : public QDialog
       void                                    set_dad_param_g_conc            ( const QString & );
       void                                    set_dad_param_DLS_detector      ( const QString & );
 
+      void                                    set_dad_param_dndc2_a           ( const QString & );
+      void                                    set_dad_param_dndc2_b           ( const QString & );
+      void                                    set_dad_param_dndc2_c           ( const QString & );
+
+      void                                    set_dad_param_n2_a              ( const QString & );
+      void                                    set_dad_param_n2_b              ( const QString & );
+      void                                    set_dad_param_n2_c              ( const QString & );
+
       void                                    help();
       void                                    quit();
       void                                    keep();
+      void                                    load();
       void                                    save();
 
    protected slots:

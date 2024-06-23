@@ -1150,6 +1150,9 @@ void US_Hydrodyn_Dad_Options::set_dad_parameters()
 {
    {
       map < QString, QString > parameters;
+
+      parameters[ "dad_param_desc"              ] = ((US_Hydrodyn_Dad *)dad_win)->dad_param_desc;
+
       parameters[ "dad_param_lambda"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_lambda, 0, 'g', 8 );
       parameters[ "dad_param_n"                 ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_n, 0, 'g', 8 );
       parameters[ "dad_param_g_dndc"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_g_dndc, 0, 'g', 8 );
@@ -1157,6 +1160,13 @@ void US_Hydrodyn_Dad_Options::set_dad_parameters()
       parameters[ "dad_param_g_conc"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_g_conc, 0, 'g', 8 );
       parameters[ "dad_param_DLS_detector"      ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_DLS_detector );
 
+      parameters[ "dad_param_dndc2_a"           ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_dndc2_a, 0, 'g', 8 );
+      parameters[ "dad_param_dndc2_b"           ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_dndc2_b, 0, 'g', 8 );
+      parameters[ "dad_param_dndc2_c"           ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_dndc2_c, 0, 'g', 8 );
+
+      parameters[ "dad_param_n2_a"              ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_n2_a, 0, 'g', 8 );
+      parameters[ "dad_param_n2_b"              ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_n2_b, 0, 'g', 8 );
+      parameters[ "dad_param_n2_c"              ] = QString( "%1" ).arg( ((US_Hydrodyn_Dad *)dad_win)->dad_param_n2_c, 0, 'g', 8 );
 
       US_Hydrodyn_Dad_Parameters *dad_parameters = 
          new US_Hydrodyn_Dad_Parameters(
@@ -1173,12 +1183,22 @@ void US_Hydrodyn_Dad_Options::set_dad_parameters()
          return;
       }
 
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_desc              = parameters[ "dad_param_lambda"            ];
+
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_lambda            = parameters[ "dad_param_lambda"            ].toDouble();
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_n                 = parameters[ "dad_param_n"                 ].toDouble();
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_g_dndc            = parameters[ "dad_param_g_dndc"            ].toDouble();
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_g_extinction_coef = parameters[ "dad_param_g_extinction_coef" ].toDouble();
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_g_conc            = parameters[ "dad_param_g_conc"            ].toDouble();
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_DLS_detector      = parameters[ "dad_param_DLS_detector"      ].toInt();
+
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_dndc2_a           = parameters[ "dad_param_dndc2_a"           ].toDouble();
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_dndc2_b           = parameters[ "dad_param_dndc2_b"           ].toDouble();
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_dndc2_c           = parameters[ "dad_param_dndc2_c"           ].toDouble();
+      
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_n2_a              = parameters[ "dad_param_n2_a"              ].toDouble();
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_n2_b              = parameters[ "dad_param_n2_b"              ].toDouble();
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_n2_c              = parameters[ "dad_param_n2_c"              ].toDouble();
    }
 }
 

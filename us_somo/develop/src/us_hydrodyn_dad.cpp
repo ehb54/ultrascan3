@@ -995,12 +995,23 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
       QDir::separator() + "somo_uv_vis_default_uv_vis_param.dat" ;
    // set defaults always
+   dad_param_desc              = "enter a description";
+
    dad_param_lambda            = 0;
    dad_param_n                 = 0;
    dad_param_g_dndc            = 0;
    dad_param_g_extinction_coef = 0;
    dad_param_g_conc            = 0;
    dad_param_DLS_detector      = 0;
+
+   dad_param_dndc2_a           = 0.410854315;
+   dad_param_dndc2_b           = 2.857579907;
+   dad_param_dndc2_c           = -0.81436267;
+
+   dad_param_n2_a              = 1.151964091;
+   dad_param_n2_b              = 4619.756721;
+   dad_param_n2_c              = -2.22444448;
+
    if ( QFile( dad_params_file ).exists() ) {
       load_file( dad_params_file );
    }
@@ -2318,14 +2329,26 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    if ( ext == "dat" && qv[ 0 ].contains( " UV-Vis parameter file" ) )
    {
+      QRegExp rx_dad_param_desc              ( "^# __uv_vis_param_desc: (.*)\\s*$" );
       QRegExp rx_dad_param_lambda            ( "^# __uv_vis_param_lambda: (\\S+)\\s*$" );
       QRegExp rx_dad_param_n                 ( "^# __uv_vis_param_n: (\\S+)\\s*$" );
       QRegExp rx_dad_param_g_dndc            ( "^# __uv_vis_param_g_dndc: (\\S+)\\s*$" );
       QRegExp rx_dad_param_g_extinction_coef ( "^# __uv_vis_param_g_extinction_coef: (\\S+)\\s*$" );
       QRegExp rx_dad_param_g_conc            ( "^# __uv_vis_param_g_conc: (\\S+)\\s*$" );
       QRegExp rx_dad_param_DLS_detector      ( "^# __uv_vis_param_DLS_detector: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_dndc2_a           ( "^# __uv_vis_param_dndc2_a: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_dndc2_b           ( "^# __uv_vis_param_dndc2_b: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_dndc2_c           ( "^# __uv_vis_param_dndc2_c: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_n2_a              ( "^# __uv_vis_param_n2_a: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_n2_b              ( "^# __uv_vis_param_n2_b: (\\S+)\\s*$" );
+      QRegExp rx_dad_param_n2_c              ( "^# __uv_vis_param_n2_c: (\\S+)\\s*$" );
 
       for ( int i = 1; i < (int) qv.size(); i++ ) {
+
+         if ( rx_dad_param_desc.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_desc = rx_dad_param_desc.cap( 1 );
+            continue;
+         }
 
          if ( rx_dad_param_lambda.indexIn( qv[ i ] ) != -1 ) {
             dad_param_lambda = rx_dad_param_lambda.cap( 1 ).toDouble();
@@ -2349,6 +2372,32 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
          }
          if ( rx_dad_param_DLS_detector.indexIn( qv[ i ] ) != -1 ) {
             dad_param_DLS_detector = rx_dad_param_DLS_detector.cap( 1 ).toInt();
+            continue;
+         }
+
+         if ( rx_dad_param_dndc2_a.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_dndc2_a = rx_dad_param_dndc2_a.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_dad_param_dndc2_b.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_dndc2_b = rx_dad_param_dndc2_b.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_dad_param_dndc2_c.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_dndc2_c = rx_dad_param_dndc2_c.cap( 1 ).toDouble();
+            continue;
+         }
+
+         if ( rx_dad_param_n2_a.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_n2_a = rx_dad_param_n2_a.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_dad_param_n2_b.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_n2_b = rx_dad_param_n2_b.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_dad_param_n2_c.indexIn( qv[ i ] ) != -1 ) {
+            dad_param_n2_c = rx_dad_param_n2_c.cap( 1 ).toDouble();
             continue;
          }
 

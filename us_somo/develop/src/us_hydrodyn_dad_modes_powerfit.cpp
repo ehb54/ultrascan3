@@ -22,13 +22,13 @@ static set < QString >        powerfit_tmp_plotnames;
 static bool                   powerfit_corrected_data_ok;
 static QString                powerfit_last_used_name;
 
-static double                 powerfit_dndc2_a = 0.410854315;
-static double                 powerfit_dndc2_b = 2.857579907;
-static double                 powerfit_dndc2_c = -0.81436267;
+// static double                 powerfit_dndc2_a = 0.410854315;
+// static double                 powerfit_dndc2_b = 2.857579907;
+// static double                 powerfit_dndc2_c = -0.81436267;
 
-static double                 powerfit_n2_a    = 1.151964091;
-static double                 powerfit_n2_b    = 4619.756721;
-static double                 powerfit_n2_c    = -2.22444448;
+// static double                 powerfit_n2_a    = 1.151964091;
+// static double                 powerfit_n2_b    = 4619.756721;
+// static double                 powerfit_n2_c    = -2.22444448;
 
 static map < double, double > powerfit_corrected_lambda;
 
@@ -36,20 +36,20 @@ static map < double, double > powerfit_corrected_lambda;
 
 // --- powerfit ---
 
-static void powerfit_corrected_lambda_create( const vector < double > & x ) {
+void US_Hydrodyn_Dad::powerfit_corrected_lambda_create( const vector < double > & x ) {
 
    powerfit_corrected_lambda.clear();
 
    for ( const auto & v : x ) {
       double dndc2_correction =
-         powerfit_dndc2_a
-         + powerfit_dndc2_b
-         * pow( v, powerfit_dndc2_c )
+         dad_param_dndc2_a
+         + dad_param_dndc2_b
+         * pow( v, dad_param_dndc2_c )
          ;
       double n2_correction =
-         powerfit_n2_a
-         + powerfit_n2_b
-         * pow( v, powerfit_n2_c )
+         dad_param_n2_a
+         + dad_param_n2_b
+         * pow( v, dad_param_n2_c )
          ;
 
       powerfit_corrected_lambda[ v ] = v * pow( dndc2_correction * n2_correction, -1 );

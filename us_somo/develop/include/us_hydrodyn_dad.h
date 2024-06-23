@@ -300,12 +300,22 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       DAD_Angles    dad_angles;
       bool          dad_load( const QString & filename, const QStringList & qsl, QString & errormsg ); 
 
+      QString       dad_param_desc;
+
       double        dad_param_lambda;
       double        dad_param_n;
       double        dad_param_g_dndc;
       double        dad_param_g_extinction_coef;
       double        dad_param_g_conc;
       int           dad_param_DLS_detector;
+
+      double        dad_param_dndc2_a;
+      double        dad_param_dndc2_b;
+      double        dad_param_dndc2_c;
+
+      double        dad_param_n2_a;
+      double        dad_param_n2_b;
+      double        dad_param_n2_c;
 
       void          deselect_conc_file();
       
@@ -800,6 +810,8 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       map < QString, QColor >            plot_color;
       map < QString, Qt::PenStyle >      plot_style;
       map < QString, double >            plot_width_multiplier;
+
+      void                               powerfit_corrected_lambda_create( const vector < double > & x );
 
       double                             powerfit_dndc2_a;
       double                             powerfit_dndc2_b;
