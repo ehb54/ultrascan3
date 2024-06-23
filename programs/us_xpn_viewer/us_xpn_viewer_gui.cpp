@@ -2965,22 +2965,31 @@ void US_XpnDataViewer::end_processes( void )
 	  //message informing user before throwing signal!
 	  QMessageBox msgBox_sys_data;
 	  msgBox_sys_data.setIcon(QMessageBox::Critical);
+	  msgBox_sys_data.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
 	  msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
 	  
-	  QString msg_sys_text = QString("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1. Please check the following: ").arg(xpndesc);
-	  QString msg_sys_text_info = QString("1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nUse of the UltraScan GMP in conjunction with the %1 machine is suspended until this condition is resolved. \n\nThe program will return to the Optima Run Manager.").arg(xpndesc);
+	  QString msg_sys_text = QString(tr("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1.\n\n "))
+	    .arg(xpndesc);
+	  QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" where you can re-attach to this run later "
+						 "by clicking \"Select Optima Run to follow\" once the network "
+						 "issue is resolved. UltraScan will then resume data acquisition.\n\n"
+						 "NOTE: If the network connection cannot be re-established to the ongoing run, " 
+						 "you can delete this run from the Run Manager (\"Delete Record\" button). "
+						 "The data will still be collected on the %1, "
+						 "but will need to be imported and processed manually at the end of the experiment."))
+	    .arg(xpndesc);
 	  
-	  QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("OK"), QMessageBox::YesRole);
+	  QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("Return"), QMessageBox::YesRole);
 	  msgBox_sys_data.setText( msg_sys_text );
 	  msgBox_sys_data.setInformativeText( msg_sys_text_info );
 	  msgBox_sys_data.exec();
 	  
 	  if (msgBox_sys_data.clickedButton() == Accept_sys)
-	    qDebug() << "Closing Program...";
-	    
-	  emit aborted_back_to_initAutoflow( );
+	    qDebug() << "Going to Run Manager..";
 
+	  emit aborted_back_to_initAutoflow( );
 	  return;
+	   
 	}
 
       emit liveupdate_processes_stopped();
