@@ -449,7 +449,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_gg_oldstyle = new QCheckBox(this);
-   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable old style Gaussian fit display"));
+   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable legacy Gaussian fit display"));
    cb_gg_oldstyle->setEnabled( true );
    cb_gg_oldstyle->setChecked( (*parameters)[ "hplc_cb_gg_oldstyle" ] == "true" );
    cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -716,22 +716,37 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    {
       QGridLayout * gl_other = new QGridLayout( 0 ); gl_other->setContentsMargins( 0, 0, 0, 0 ); gl_other->setSpacing( 0 );
-      gl_other->addWidget         ( lbl_dist_max , 0, 0 );
-      gl_other->addWidget         ( le_dist_max  , 0, 1 );
+      int row = 0;
+      gl_other->addWidget         ( cb_gg_smooth , row, 0 );
+      gl_other->addWidget         ( le_gg_smooth , row, 1 );
+      ++row;
 
-      gl_other->addWidget         ( lbl_ampl_width_min , 1, 0 );
-      gl_other->addWidget         ( le_ampl_width_min  , 1, 1 );
+      gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
+      ++row;
 
-      gl_other->addWidget         ( cb_lock_min_retry       , 2, 0 );
-      gl_other->addWidget         ( le_lock_min_retry_mult  , 2, 1 );
+      gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
+      ++row;
 
-      gl_other->addWidget         ( cb_maxfpk_restart       , 3, 0 );
+      gl_other->addWidget         ( lbl_dist_max , row, 0 );
+      gl_other->addWidget         ( le_dist_max  , row, 1 );
+      ++row;
+
+      gl_other->addWidget         ( lbl_ampl_width_min , row, 0 );
+      gl_other->addWidget         ( le_ampl_width_min  , row, 1 );
+      ++row;
+
+      gl_other->addWidget         ( cb_lock_min_retry       , row, 0 );
+      gl_other->addWidget         ( le_lock_min_retry_mult  , row, 1 );
+      ++row;
+
+      gl_other->addWidget         ( cb_maxfpk_restart       , row, 0 );
       {
          QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          // hbl->addWidget     ( le_maxfpk_restart_tries );
          hbl->addWidget     ( le_maxfpk_restart_pct );
-         gl_other->addLayout( hbl , 3, 1 );
+         gl_other->addLayout( hbl , row, 1 );
       }
+
       background->addLayout( gl_other );
    }
 
@@ -780,12 +795,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       gl_other->addWidget         ( cb_guinier_qrgmax , ++row, 0 );
       gl_other->addWidget         ( le_guinier_qrgmax , row, 1 );
 
-      gl_other->addWidget         ( cb_gg_smooth , ++row, 0 );
-      gl_other->addWidget         ( le_gg_smooth , row, 1 );
+      // gl_other->addWidget         ( cb_gg_smooth , ++row, 0 );
+      // gl_other->addWidget         ( le_gg_smooth , row, 1 );
 
-      ++row;  gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
+      // ++row;  gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
 
-      ++row;  gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
+      // ++row;  gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
 
       gl_other->addWidget         ( lbl_mwt_k , ++row, 0 );
       gl_other->addWidget         ( le_mwt_k  , row, 1 );
