@@ -213,7 +213,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: SAXS HPLC"));
+   setWindowTitle(us_tr("US-SOMO: HPLC/KIN"));
    order_ascending = false;
    conc_widget     = false;
    legend_vis      = false;
@@ -622,7 +622,7 @@ void US_Hydrodyn_Saxs_Hplc::help()
 void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
 {
    QMessageBox mb( this->windowTitle(), 
-                   us_tr("Attention:\nAre you sure you want to exit the HPLC SAXS window?"),
+                   us_tr("Attention:\nAre you sure you want to exit the HPLC/KIN window?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,

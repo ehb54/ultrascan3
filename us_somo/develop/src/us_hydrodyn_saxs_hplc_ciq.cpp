@@ -19,7 +19,7 @@ US_Hydrodyn_Saxs_Hplc_Ciq::US_Hydrodyn_Saxs_Hplc_Ciq(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Make I(q)" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Make I(q)" ) );
 
    setupGUI();
    update_enables();
@@ -50,7 +50,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    int minHeight1  = 30;
    int minHeight2  = 25;
 
-   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: SAXS HPLC : Make I(q) without Gaussians" ) :  us_tr( "US-SOMO: SAXS HPLC : Make I(q)" ), this );
+   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: HPLC/KIN : Make I(q) without Gaussians" ) :  us_tr( "US-SOMO: HPLC/KIN : Make I(q)" ), this );
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );

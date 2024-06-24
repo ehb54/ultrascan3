@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Hplc_Dctr::US_Hydrodyn_Saxs_Hplc_Dctr(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Concentration Detector" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Concentration Detector" ) );
 
    setupGUI();
 
@@ -38,7 +38,7 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : Concentration Detector" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: HPLC/KIN : Concentration Detector" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );
