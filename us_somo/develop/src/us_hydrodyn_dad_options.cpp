@@ -1183,7 +1183,7 @@ void US_Hydrodyn_Dad_Options::set_dad_parameters()
          return;
       }
 
-      ((US_Hydrodyn_Dad *)dad_win)->dad_param_desc              = parameters[ "dad_param_lambda"            ];
+      ((US_Hydrodyn_Dad *)dad_win)->dad_param_desc              = parameters[ "dad_param_desc"              ];
 
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_lambda            = parameters[ "dad_param_lambda"            ].toDouble();
       ((US_Hydrodyn_Dad *)dad_win)->dad_param_n                 = parameters[ "dad_param_n"                 ].toDouble();

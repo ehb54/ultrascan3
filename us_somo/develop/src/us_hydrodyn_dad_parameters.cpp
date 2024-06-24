@@ -214,7 +214,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    AUTFBACK( lbl_lambda_dependence_coeff );
    lbl_lambda_dependence_coeff -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
-   lbl_dad_param_dndc2_a = new QLabel( us_tr( "[dn/dc](" + UNICODE_LAMBDA_QS + ") coeff. A: " ), this );
+   lbl_dad_param_dndc2_a = new QLabel( us_tr( "[[dn/dc](" + UNICODE_LAMBDA_QS + ")]^0.5 coeff. A: " ), this );
    lbl_dad_param_dndc2_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_dndc2_a->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_dndc2_a );
@@ -235,7 +235,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_dndc2_a->setMinimumWidth( 200 );
    le_dad_param_dndc2_a-> setMinimumHeight( minHeight1 );
 
-   lbl_dad_param_dndc2_b = new QLabel( us_tr( "[dn/dc](" + UNICODE_LAMBDA_QS + ") coeff. B: " ), this );
+   lbl_dad_param_dndc2_b = new QLabel( us_tr( "[[dn/dc](" + UNICODE_LAMBDA_QS + ")]^0.5 coeff. B: " ), this );
    lbl_dad_param_dndc2_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_dndc2_b->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_dndc2_b );
@@ -256,7 +256,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_dndc2_b->setMinimumWidth( 200 );
    le_dad_param_dndc2_b-> setMinimumHeight( minHeight1 );
 
-   lbl_dad_param_dndc2_c = new QLabel( us_tr( "[dn/dc](" + UNICODE_LAMBDA_QS + ") coeff. C: " ), this );
+   lbl_dad_param_dndc2_c = new QLabel( us_tr( "[[dn/dc](" + UNICODE_LAMBDA_QS + ")]^0.5 coeff. C: " ), this );
    lbl_dad_param_dndc2_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_dndc2_c->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_dndc2_c );
@@ -277,7 +277,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_dndc2_c->setMinimumWidth( 200 );
    le_dad_param_dndc2_c-> setMinimumHeight( minHeight1 );
 
-   lbl_dad_param_n2_a = new QLabel( us_tr( "Refractive index n(" + UNICODE_LAMBDA_QS + ") coeff. A: " ), this );
+   lbl_dad_param_n2_a = new QLabel( us_tr( "Refractive index [n(" + UNICODE_LAMBDA_QS + ")]^0.5 coeff. A: " ), this );
    lbl_dad_param_n2_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_n2_a->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_n2_a );
@@ -298,7 +298,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_n2_a->setMinimumWidth( 200 );
    le_dad_param_n2_a-> setMinimumHeight( minHeight1 );
 
-   lbl_dad_param_n2_b = new QLabel( us_tr( "Refractive index n(" + UNICODE_LAMBDA_QS + ") coeff. B: " ), this );
+   lbl_dad_param_n2_b = new QLabel( us_tr( "Refractive index [n(" + UNICODE_LAMBDA_QS + ")]^0.5 coeff. B: " ), this );
    lbl_dad_param_n2_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_n2_b->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_n2_b );
@@ -319,7 +319,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_n2_b->setMinimumWidth( 200 );
    le_dad_param_n2_b-> setMinimumHeight( minHeight1 );
 
-   lbl_dad_param_n2_c = new QLabel( us_tr( "Refractive index n(" + UNICODE_LAMBDA_QS + ") coeff. C: " ), this );
+   lbl_dad_param_n2_c = new QLabel( us_tr( "Refractive index [n(" + UNICODE_LAMBDA_QS + ")]^0.5 coeff. C: " ), this );
    lbl_dad_param_n2_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dad_param_n2_c->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dad_param_n2_c );
