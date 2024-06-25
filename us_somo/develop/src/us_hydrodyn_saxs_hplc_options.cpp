@@ -851,21 +851,21 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    if ( !parameters->count( "expert_mode" ) )
    {
-      // lbl_baseline     ->hide();
-      // rb_linear        ->hide();
-      // rb_integral      ->hide();
-      // lbl_smooth       ->hide();
-      // le_smooth        ->hide();
-      // lbl_reps         ->hide();
-      // le_reps          ->hide();
-      // lbl_epsilon      ->hide();
-      // le_epsilon       ->hide();
+      // lbl_baseline           ->hide();
+      // rb_linear              ->hide();
+      // rb_integral            ->hide();
+      // lbl_smooth             ->hide();
+      // le_smooth              ->hide();
+      // lbl_reps               ->hide();
+      // le_reps                ->hide();
+      // lbl_epsilon            ->hide();
+      // le_epsilon             ->hide();
 
-      // lbl_gaussian_type->hide();
-      // rb_gauss         ->hide();
-      // rb_gmg           ->hide();
-      // rb_emg           ->hide();
-      // rb_emggmg        ->hide();
+      // lbl_gaussian_type      ->hide();
+      // rb_gauss               ->hide();
+      // rb_gmg                 ->hide();
+      // rb_emg                 ->hide();
+      // rb_emggmg              ->hide();
 
       lbl_ampl_width_min        ->hide();
       le_ampl_width_min         ->hide();
@@ -875,13 +875,19 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       // le_maxfpk_restart_tries   ->hide();
       le_maxfpk_restart_pct     ->hide();
 
-      lbl_i_power         ->hide();
-      le_i_power          ->hide();
+      lbl_i_power               ->hide();
+      le_i_power                ->hide();
+
+      pb_fasta_file             ->hide();
+      lbl_fasta_value           ->hide();
+      le_fasta_value            ->hide();
    }
 
-   cb_save_bl       ->hide();
-   lbl_start_region ->hide();
-   le_start_region  ->hide();
+   lbl_fasta_pH              ->hide();
+   le_fasta_pH               ->hide();
+   cb_save_bl                ->hide();
+   lbl_start_region          ->hide();
+   le_start_region           ->hide();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Options::quit()
