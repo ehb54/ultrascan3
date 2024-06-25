@@ -792,6 +792,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       gl_other->addWidget         ( cb_discard_it_sd_mult , ++row, 0 );
       gl_other->addWidget         ( le_discard_it_sd_mult , row, 1 );
 
+      gl_other->addWidget         ( cb_makeiq_cutmax_pct , ++row, 0 );
+      gl_other->addWidget         ( le_makeiq_cutmax_pct , row, 1 );
+
       gl_other->addWidget         ( cb_guinier_qrgmax , ++row, 0 );
       gl_other->addWidget         ( le_guinier_qrgmax , row, 1 );
 
@@ -810,9 +813,6 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
       gl_other->addWidget         ( lbl_mwt_qmax , ++row, 0 );
       gl_other->addWidget         ( le_mwt_qmax  , row, 1 );
-
-      gl_other->addWidget         ( cb_makeiq_cutmax_pct , ++row, 0 );
-      gl_other->addWidget         ( le_makeiq_cutmax_pct , row, 1 );
 
       gl_other->addWidget         ( cb_makeiq_avg_peaks , ++row, 0 );
       gl_other->addWidget         ( le_makeiq_avg_peaks , row, 1 );
