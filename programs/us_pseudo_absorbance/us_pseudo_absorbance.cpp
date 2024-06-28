@@ -24,8 +24,8 @@ US_PseudoAbsorbance::US_PseudoAbsorbance() : US_Widgets()
     setWindowTitle( tr( "Pseudo-Absorbance Program" ) );
     setPalette( US_GuiSettings::frameColorDefault() );
 
-    pb_addRef = us_pushbutton("Add New Reference Scans");
-    pb_cnvtSc = us_pushbutton("Convert Intensity to Absorbance");
+    pb_addRef = us_pushbutton("Reference Scan Calculation");
+    pb_cnvtSc = us_pushbutton("Pseudo-Absorbance Conversion");
     pb_rmri   = us_pushbutton("Radial Invariant Noise Correction");
     int width = 350;
     pb_addRef->setMinimumWidth(width);
