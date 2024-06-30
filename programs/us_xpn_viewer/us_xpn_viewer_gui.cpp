@@ -3203,9 +3203,12 @@ DbgLv(1) << "RDa:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
    // END check if PostGreSQL connection //////////////////////////////////////////////////
    
 
-   int ntsrows        = xpn_data->countOf( "scan_rows" );
+   int ntsrows        = xpn_data->countOf( "scan_rows" ); // <-- gets 'ntsrow' from xpn_data->import_data_auto( iRunId, scanmask, o_connected );
+                                                          // plus scan_xpndata( const int runId, const QChar scantype )
 DbgLv(1) << "RDa:     ntsrows" << ntsrows;
 DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
+
+ qDebug() << "RDa:     ntsrows" << ntsrows;
  qApp->processEvents();
 
    if ( ntsrows < 1 )
@@ -3283,7 +3286,9 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	      return;
 	    }
 	}
-      
+
+
+      qDebug() << "ntsrows < 1, possibly as a result of no Posgresql conneciton!";
       return;
    }
 

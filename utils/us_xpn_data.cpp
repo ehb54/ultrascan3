@@ -664,35 +664,55 @@ bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_
    irows         = 0;
    wrows         = 0;
 
+   //booleans for diff. types
+   bool srows_bool = true;
+   bool arows_bool = true;
+   bool frows_bool = true;
+   bool irows_bool = true;
+   bool wrows_bool = true;
+   bool crows_bool = true;
+   
    // Scan and build data for System Status Data
-   int srows     = scan_xpndata( runId, 'S' );
+   int srows     = scan_xpndata_auto( runId, 'S', srows_bool );
 
    if ( ascnf )
    {  // Scan and build data for Absorbance Scan Data
-      arows      = scan_xpndata( runId, 'A' );
+     arows      = scan_xpndata_auto( runId, 'A', arows_bool );
    }
 
    if ( fscnf )
    {  // Scan and build data for Fluorescence Scan Data
-      frows      = scan_xpndata( runId, 'F' );
+     frows      = scan_xpndata_auto( runId, 'F', frows_bool );
    }
 
    if ( iscnf )
    {  // Scan and build data for Interference Scan Data
-      irows      = scan_xpndata( runId, 'I' );
+     irows      = scan_xpndata_auto( runId, 'I', irows_bool );
    }
 
    if ( wscnf )
    {  // Scan and build data for Wavelength Scan Data
-      wrows      = scan_xpndata( runId, 'W' );
+     wrows      = scan_xpndata_auto( runId, 'W', wrows_bool );
    }
 
    // Scan and build data for Centrifuge Run Profile
-   int crows     = scan_xpndata( runId, 'C' );
-DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
-   << arows << frows << irows << wrows << srows << crows;
+   int crows     = scan_xpndata_auto( runId, 'C', crows_bool );
+   
+   qDebug() << "XpDa:i_d: arows frows irows wrows srows crows"
+	    << arows << frows << irows << wrows << srows << crows;
+
+   qDebug() << "XpDa:i_d: [BOOLS] arows_bool frows_bool irows_bool wrows_bool srows_bool crows_bool"
+	    << arows_bool << frows_bool << irows_bool << wrows_bool << srows_bool << crows_bool;
 
    ntsrow        = arows + frows + irows + wrows;
+   qDebug() << "in [import_data_auto]:ntsrow = " << ntsrow;
+
+   if ( !arows_bool || !frows_bool || !irows_bool || !wrows_bool || !srows_bool || !crows_bool)
+     {
+       o_conn = false;
+       qDebug() << "No connection in one of scan_xpndata_auto()...";
+       return false;
+     }
 
    return status;
 }
@@ -873,9 +893,10 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    sqry.next();
    count           = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
+ 
    if ( count < 1 )
    {
-      return count;
+     return count;
    }
 
    emit status_text( tr( " Scanning %1 rows of %2 table..." )
@@ -1166,6 +1187,347 @@ DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
 
    return rows;
 }
+
+
+// Query and save data for a [AIFW]ScanData or [SC] table: [for autoflow framework]
+int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& o_conn )
+{
+   QSqlQuery  sqry;
+   QSqlRecord qrec;
+   QString schname( "AUC_schema" );
+   QString tabname( "AbsorbanceScanData" );
+   tabname         = ( scantype == 'F' ) ? "FluorescenceScanData" : tabname;
+   tabname         = ( scantype == 'I' ) ? "InterferenceScanData" : tabname;
+   tabname         = ( scantype == 'W' ) ? "WavelengthScanData"   : tabname;
+   tabname         = ( scantype == 'S' ) ? "SystemStatusData"     : tabname;
+   tabname         = ( scantype == 'C' ) ? "CentrifugeRunProfile" : tabname;
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+   QString sRunId  = QString::number( runId );
+   QStringList cnames;
+   QList< int > cxs;
+
+   int count       = 0;
+   int rows        = 0;
+
+   // Get count of rows matching runId
+   QString qrytext = "SELECT count(*) from " + qrytab
+                   + " WHERE \"RunId\"=" + sRunId + ";";
+   if ( scantype == 'C' )
+      qrytext         = "SELECT count(*) from " + qrytab + ";";
+
+   sqry            = dbxpn.exec( qrytext );
+   bool scan_xpndata_query_success = sqry.next();
+   count           = sqry.value( 0 ).toInt();
+DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
+ 
+   qDebug() << "XpDa:s_x: sRunId" << sRunId << "scan_xpndata_query_success, count: " << scan_xpndata_query_success << count;
+   if( !scan_xpndata_query_success )
+     {
+       qDebug() << "in [scan_xpndata()], scan_xpndata_query_success, NO CONNECTION? "
+		<< scan_xpndata_query_success << !scan_xpndata_query_success;
+       qDebug() << "count = 0 ? " << count;
+       o_conn = false;
+
+       return count;
+     }
+   
+   if ( count < 1 )
+   {
+     qDebug() << "in [scan_xpndata()], count < 1...";
+     return count;
+   }
+
+   emit status_text( tr( " Scanning %1 rows of %2 table..." )
+                     .arg( count ).arg( tabname ) );
+
+   // Get columns and determine indecies of fields
+   qrytext         = "SELECT * from " + qrytab
+                     + " WHERE \"RunId\"=" + sRunId
+                     + " ORDER BY \"DataId\" ;";
+   if ( scantype == 'C' )
+      qrytext         = "SELECT * from " + qrytab + ";";
+
+   int cols        = column_indexes( tabname, cnames, cxs );
+DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
+ << cnames[cols-1] << "tabname" << tabname;
+
+   sqry            = dbxpn.exec( qrytext );
+
+   int isctyp    = ( scantype == 'A' ) ? 1 : 0;
+   isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
+   isctyp        = ( scantype == 'I' ) ? 3 : isctyp;
+   isctyp        = ( scantype == 'W' ) ? 4 : isctyp;
+   isctyp        = ( scantype == 'S' ) ? 5 : isctyp;
+   isctyp        = ( scantype == 'C' ) ? 6 : isctyp;
+DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype
+ << "qrytext" << qrytext;
+
+   // Loop to read data and store in internal array
+
+   while ( sqry.next() )
+   {
+      rows++;
+      emit status_text( tr( "Of %1 ScanData(%2) rows, queried row %3" )
+                        .arg( count ).arg( scantype ).arg( rows ) );
+
+      switch ( isctyp )
+      {
+         case 1:
+         {
+            update_ATable( sqry, cxs );
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+int ldx=tAsdata.count()-1;
+tbAsData asdrow = tAsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << asdrow.runId
+ << "dat" << asdrow.dataId << "count" << asdrow.count;
+DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
+ << asdrow.rads[0] << asdrow.rads[1] << asdrow.vals[0] << asdrow.vals[1];
+DbgLv(1) << "XpDa:scn:      etim scn temp speed omg estr"
+ << asdrow.exptime << asdrow.scanSeqN << asdrow.tempera << asdrow.speed
+ << asdrow.omgSqT << asdrow.expstart.toString();
+}
+//*DEBUG*
+
+            break;
+         }
+         case 2:
+         {
+            update_FTable( sqry, cxs );
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+int ldx=tFsdata.count()-1;
+tbFsData fsdrow = tFsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << fsdrow.runId
+ << "dat" << fsdrow.dataId;
+DbgLv(1) << "XpDa:scn:       cnames" << cnames;
+}
+//*DEBUG*
+            break;
+         }
+         case 3:
+         {
+            update_ITable( sqry, cxs );
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+int ldx=tIsdata.count()-1;
+tbIsData isdrow = tIsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << isdrow.runId
+ << "dat" << isdrow.dataId;
+DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
+ << isdrow.rads[0] << isdrow.rads[1] << isdrow.vals[0] << isdrow.vals[1];
+}
+//*DEBUG*
+            break;
+         }
+         case 4:
+         {
+            update_WTable( sqry, cxs );
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+int ldx=tWsdata.count()-1;
+tbWsData wsdrow = tWsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat count" << wsdrow.runId
+ << wsdrow.dataId << wsdrow.count;
+}
+//*DEBUG*
+            break;
+         }
+         case 5:
+         {
+            tbSyData sydrow;
+
+            sydrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+            sydrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+            sydrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+            sydrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+            sydrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+            sydrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+            sydrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+            sydrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
+
+            tSydata << sydrow;
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.dataId
+ << "time" << sydrow.exptime << "temp" << sydrow.tempera << "speed" << sydrow.speed
+ << "omg2t" << sydrow.omgSqT;
+}
+//*DEBUG*
+            break;
+         }
+         case 6:
+         {
+            tbCrProf crprow;
+
+            crprow.frunId    = sqry.value( cxs[  0 ] ).toInt();
+            crprow.tempera   = sqry.value( cxs[  1 ] ).toDouble();
+            crprow.sbrake    = sqry.value( cxs[  2 ] ).toInt();
+            crprow.brrate    = sqry.value( cxs[  3 ] ).toDouble();
+            crprow.holdte    = sqry.value( cxs[  4 ] ).toInt();
+            crprow.holdsp    = sqry.value( cxs[  5 ] ).toInt();
+            crprow.sette     = sqry.value( cxs[  6 ] ).toInt();
+            crprow.sstintv   = sqry.value( cxs[  7 ] ).toDouble();
+            crprow.stages    = sqry.value( cxs[  8 ] ).toString();
+            crprow.stgrpm    = sqry.value( cxs[  9 ] ).toDouble();
+            crprow.stgstart  = sqry.value( cxs[ 10 ] ).toDouble();
+            crprow.stgdurat  = sqry.value( cxs[ 11 ] ).toDouble();
+            crprow.stgaccel  = sqry.value( cxs[ 12 ] ).toDouble();
+            crprow.paramids  = sqry.value( cxs[ 13 ] ).toString();
+
+            tCrprof << crprow;
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "fugeRunId" << crprow.frunId
+ << "ssInterval" << crprow.sstintv;
+}
+//*DEBUG*
+            break;
+         }
+      }
+   }
+
+   if ( scantype == 'C' )
+   {  // Show mapping of RunId to ExperimentId to FugeRunProfileId
+      QList< int >  rExpIds;  // ExperimentRun experiment Ids
+      QList< int >  rRunIds;  // ExperimentRun run Ids
+      QList< int >  dExpIds;  // ExperimentDefinition experiment Ids
+      QList< int >  dFugIds;  // ExperimentDefinition fugeProfile Ids
+DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
+
+      int iRunId      = sRunId.toInt();
+      tabname         = "ExperimentRun";
+      sqtab           = schname + "." + tabname;
+      qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+      qrytext         = "SELECT * from " + qrytab + ";"; 
+      sqry            = dbxpn.exec( qrytext );
+      qrec            = dbxpn.record( qrytab );
+      // Get indexes to ExperimentId and RunId
+      cols            = column_indexes( tabname, cnames, cxs );
+      int jexpid      = cnames.indexOf( "ExperimentId" );
+      int jrunid      = cnames.indexOf( "RunId" );
+      while ( sqry.next() )
+      {  // Build a list of ExperimentRun expIds and runIds
+         int rExpId      = sqry.value( jexpid ).toInt();
+         int rRunId      = sqry.value( jrunid ).toInt();
+         rExpIds << rExpId;
+         rRunIds << rRunId;
+      }
+
+      tabname         = "ExperimentDefinition";
+      sqtab           = schname + "." + tabname;
+      qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+      qrytext         = "SELECT * from " + qrytab + ";"; 
+      sqry            = dbxpn.exec( qrytext );
+      qrec            = dbxpn.record( qrytab );
+      cols            = column_indexes( tabname, cnames, cxs );
+      // Get indexes to ExperimentId and FugeRunProfileId
+      jexpid          = cnames.indexOf( "ExperimentId" );
+      int jfruid      = cnames.indexOf( "FugeRunProfileId" );
+      int jexpnm      = cnames.indexOf( "Name" );
+//DbgLv(1) << "XpDa:scn:    jexpid jfruid" << jexpid << jfruid;
+      while ( sqry.next() )
+      {  // Build a list of ExperimentDefinition expIds and fugeIds
+         int dExpId      = sqry.value( jexpid ).toInt();
+         int dFugId      = sqry.value( jfruid ).toInt();
+         dExpIds << dExpId;
+         dFugIds << dFugId;
+DbgLv(1) << "XpDa:scn:  dExpId" << dExpId << "dFugId" << dFugId
+ << "Name" << sqry.value(jexpnm).toString();
+      }
+//DbgLv(1) << "XpDa:scn: dExpIds" << dExpIds;
+//DbgLv(1) << "XpDa:scn: dFugIds" << dFugIds;
+      // Map experimentId to runId, then fugeId to experimentId
+      int rrndx       = rRunIds.indexOf( iRunId );
+DbgLv(1) << "XpDa:scn:  iRunId" << iRunId << "rrndx" << rrndx;
+      int iExpId      = rExpIds[ rrndx ];
+      int dendx       = dExpIds.indexOf( iExpId );
+DbgLv(1) << "XpDa:scn:  iExpId" << iExpId << "dendx" << dendx;
+      int iFugId      = ( dendx >= 0 ) ? dFugIds[ dendx ] : iExpId;
+      sstintv         = 0.0;
+      double sstintl  = 1000.0;
+DbgLv(1) << "XpDa:scn:    RunId" << iRunId << "ExperimentId" << iExpId
+ << "FugeRunProfileId" << iFugId; 
+
+      for ( int ii = 0; ii < tCrprof.count(); ii++ )
+      {  // Look for matching fuge Id in CentrifugeRunProfile values
+         sstintl          = tCrprof[ ii ].sstintv;
+
+         if ( tCrprof[ ii ].frunId == iFugId )
+         {  // Match found:  save corresponding SystemStatusInterval
+            sstintv          = sstintl;
+            break;
+         }
+      }
+
+      sstintv         = ( sstintv > 0.0 ) ? sstintv : sstintl;
+DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
+   }
+
+   if ( scantype == 'S' )
+   {  // Determine experiment time offset (time at last rms=0 point)
+      int ntssda        = tSydata.count();
+      fnzstx            = 0;
+
+      for ( int ii = 0; ii < ntssda; ii++ )
+      {  // Find the index to the first non-zero speed
+         int irSpeed       = (int)qRound( tSydata[ ii ].speed );
+         if ( irSpeed > 0 )
+         {
+            fnzstx            = ii;
+            break;
+         }
+      }
+
+      // First non-zero-speed time index
+      fnzstx            = ( fnzstx > 0 ) ? fnzstx : 1;                        //ALEXEY: if tSydata.count() == 1 (so only tSydata[0] exists), AND fnzstx was 0, THEN
+                                                                              //        fnzstx = ( fnzstx > 0 ) ? fnzstx : 1; will lead to fnzstx = 1 !!!
+                                                                              //        THEN   int etime1        = tSydata[ 1 ].exptime; WILL CRASH  
+      int t2tx          = fnzstx + 1;
+      // Experiment time offset (== negative of first time + interval)
+      //int etime1        = tSydata[ fnzstx ].exptime;
+
+      //ALEXEY: check additionally if tSydata[fnzstx] exists!!! 
+      int etime1 = 0;
+      if ( fnzstx < tSydata.count() )
+      {
+	etime1          = tSydata[ fnzstx ].exptime;
+      }
+      ////////////////
+      
+      int timeintv      = sstintv;
+      if ( t2tx < tSydata.count() )
+      {
+         timeintv          = tSydata[ t2tx ].exptime - etime1;
+      }
+      timeintv          = qMax( timeintv, 1 );
+      etimoff           = timeintv - etime1;
+//*DEBUG*
+DbgLv(1) << "XpDa:scn: fnzstx" << fnzstx << "etimoff" << etimoff
+ << "  etime1 timeintv" << etime1 << timeintv << sstintv;
+int nn=qMin(tSydata.count(),fnzstx+3);
+DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
+//if(nn>4) {
+// DbgLv(1) << "XpDa:scn: times:"
+//  << tSydata[nn-5].exptime
+//  << tSydata[nn-4].exptime
+//  << tSydata[nn-3].exptime
+//  << tSydata[nn-2].exptime
+//  << tSydata[nn-1].exptime;
+// DbgLv(1) << "XpDa:scn: speeds:"
+//  << tSydata[nn-5].speed
+//  << tSydata[nn-4].speed
+//  << tSydata[nn-3].speed
+//  << tSydata[nn-2].speed
+//  << tSydata[nn-1].speed; }
+//*DEBUG*
+   }
+
+   return rows;
+}
+
+
 
 // Query and update data for a [AIFW]ScanData table
 int US_XpnData::update_xpndata( const int runId, const QChar scantype )

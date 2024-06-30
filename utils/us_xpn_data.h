@@ -251,6 +251,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param scantype Scan type ('A','F','I','W','S','C') to match
       //! \returns        Number of rows of match ScanData found
       int     scan_xpndata( const int, const QChar );
+      int     scan_xpndata_auto( const int, const QChar, bool& );
 
       //! \brief Update the DB [AIFW]ScanData table information
       //! \param runId    Run ID to match
