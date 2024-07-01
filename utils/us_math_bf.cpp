@@ -408,7 +408,7 @@ bool US_Math_BF::Band_Forming_Gradient::get_eigenvalues( ) {
    std::function<double(const double &)> func = [&men, &bot](const double &a) {
       return US_Math_BF::transcendental_equation(a, men, bot);
    };
-   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 15000, func,
+   US_Math_BF::Secant_Solver secantSolver = *new US_Math_BF::Secant_Solver(0.01, 5000, func,
                                                                            0.01,
                                                                            GSL_DBL_EPSILON, 20);
    bool return_value = secantSolver.solve_wrapper();
@@ -434,7 +434,7 @@ double US_Math_BF::Band_Forming_Gradient::norm(const double &beta) {
 }
 
 double US_Math_BF::Band_Forming_Gradient::eigenfunction(const int &beta, const double &x) {
-   const unsigned int cache_key = (unsigned int)(beta*x*16384);
+   const unsigned int cache_key = (unsigned int)(beta*x*1024);
    double result = eigenfunction_cache.value(cache_key, 0.0);
    if (result != 0.0){
       eigenfunction_cache_used++;
@@ -496,7 +496,7 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const int N, const double
    const int t_key = (int)(t*16);
    for ( int i = 0; i < N; i++ ) {
       double x_c = x[i];
-      const int x_key = (int)(x[i]*16384);
+      const int x_key = (int)(x[i]*1024);
       if (value_cache.contains(x_key) && value_cache.value(x_key).contains(t_key))
       {
          std::array<double,3> tmp = value_cache.value(x_key).value(t_key);
@@ -550,7 +550,7 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
    double viscosity = base_viscosity;
    double concentration = 0.0;
    const int t_key = (int)(t*16);
-   const int x_key = (unsigned int)(x*16384);
+   const int x_key = (unsigned int)(x*1024);
    if (value_cache.contains(x_key) && value_cache.value(x_key).contains(t_key))
    {
       std::array<double,3> tmp = value_cache.value(x_key).value(t_key);
@@ -604,7 +604,7 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
    double viscosity = base_viscosity;
    double concentration = 0.0;
    const int t_key = (int)(t*16);
-   const int x_key = (int)(x*16384);
+   const int x_key = (int)(x*1024);
    if (value_cache.contains(x_key) && value_cache.value(x_key).contains(t_key))
    {
       std::array<double,3> tmp = value_cache.value(x_key).value(t_key);
@@ -655,8 +655,10 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    simparms = asparms;
    int bfg_idx = 1;
    QVector<double> xvalues;
-   simparms.radial_resolution = (bottom - meniscus)/(double)(editedData->pointCount()-1);
-   for ( int ii = 0; ii < editedData->pointCount(); ii++ ) {
+   // Limit the radial_resolution to 0.001
+   int r_points = (int)((bottom - meniscus)/0.001 + 1);
+   simparms.radial_resolution = (bottom - meniscus)/(double)(r_points-1);
+   for ( int ii = 0; ii < r_points; ii++ ) {
       xvalues << meniscus + ii*simparms.radial_resolution;
    }
    visc_bfg_data.xvalues = xvalues;
