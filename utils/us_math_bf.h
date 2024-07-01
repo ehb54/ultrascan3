@@ -151,9 +151,9 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
 
             //! \brief Calculate the eigenfunction for a given eigenvalue beta, external radius bottom and position x
             //! (x<= bottom)
-            //! \param beta The double value representing the eigenvalue
+            //! \param beta The index of the eigenvalue in array
             //! \param x    The double value representing the position r inside the cell
-            double eigenfunction(const double &beta, const double &x);
+            double eigenfunction(const int &beta, const double &x);
 
             //! \brief Calculate the equilibrium concentration of a cosedimenting component
             //! \param cosed_comp The cosedimenting component to calculate for

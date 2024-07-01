@@ -433,8 +433,8 @@ double US_Math_BF::Band_Forming_Gradient::norm(const double &beta) {
            (sq(bessel("J1",(beta * meniscus))) - sq(bessel("J1",(beta * bottom)))));
 }
 
-double US_Math_BF::Band_Forming_Gradient::eigenfunction(const double &beta, const double &x) {
-   const unsigned int cache_key = (unsigned int)(beta*x*1024);
+double US_Math_BF::Band_Forming_Gradient::eigenfunction(const int &beta, const double &x) {
+   const unsigned int cache_key = (unsigned int)(beta*x*16384);
    double result = eigenfunction_cache.value(cache_key, 0.0);
    if (result != 0.0){
       eigenfunction_cache_used++;
@@ -445,8 +445,9 @@ double US_Math_BF::Band_Forming_Gradient::eigenfunction(const double &beta, cons
       return result;
    }
    else {
-      result = (bessel("J0",(beta * x)) * bessel("Y1",(beta * bottom))
-                - bessel("Y0",(beta * x)) * bessel("J1",(beta * bottom)));
+      double ev = eigenvalues[beta];
+      result = (bessel("J0",(ev * x)) * bessel("Y1",(ev * bottom))
+                - bessel("Y0",(ev * x)) * bessel("J1",(ev * bottom)));
       eigenfunction_cache.insert(cache_key,result);
       return result;
    }
@@ -480,7 +481,7 @@ double US_Math_BF::Band_Forming_Gradient::calc_comp_conc(const double &x, const 
       for (int i = 0; i < eigenvalues.size(); i++) {
          double pre_calc = pre_calc_betas[i];
          double beta = eigenvalues[i];
-         decay += pre_calc * eigenfunction(beta, x) *
+         decay += pre_calc * eigenfunction(i, x) *
                     exp(-cosed_comp.d_coeff * ((temp>260)?temp:temp+K0)/K20 * sq(beta) * t);
       }
    }
@@ -495,7 +496,7 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const int N, const double
    const int t_key = (int)(t*16);
    for ( int i = 0; i < N; i++ ) {
       double x_c = x[i];
-      const int x_key = (int)(x[i]*1024);
+      const int x_key = (int)(x[i]*16384);
       if (value_cache.contains(x_key) && value_cache.value(x_key).contains(t_key))
       {
          std::array<double,3> tmp = value_cache.value(x_key).value(t_key);
@@ -549,7 +550,7 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
    double viscosity = base_viscosity;
    double concentration = 0.0;
    const int t_key = (int)(t*16);
-   const int x_key = (unsigned int)(x*1024);
+   const int x_key = (unsigned int)(x*16384);
    if (value_cache.contains(x_key) && value_cache.value(x_key).contains(t_key))
    {
       std::array<double,3> tmp = value_cache.value(x_key).value(t_key);
@@ -603,7 +604,7 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
    double viscosity = base_viscosity;
    double concentration = 0.0;
    const int t_key = (int)(t*16);
-   const int x_key = (int)(x*1024);
+   const int x_key = (int)(x*16384);
    if (value_cache.contains(x_key) && value_cache.value(x_key).contains(t_key))
    {
       std::array<double,3> tmp = value_cache.value(x_key).value(t_key);
@@ -625,11 +626,9 @@ bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const do
                      cosed_comp.dens_coeff[3] * c2 + cosed_comp.dens_coeff[4] * c3 +
                      cosed_comp.dens_coeff[5] * c4);
 
-         viscosity += (cosed_comp.visc_coeff[0] +
-                       cosed_comp.visc_coeff[1] * sqrt(fabs(c1)) +
-                       cosed_comp.visc_coeff[2] * c1 +
-                       cosed_comp.visc_coeff[3] * c2 +
-                       cosed_comp.visc_coeff[4] * c3 - 1.0) * base_viscosity;
+         viscosity += (cosed_comp.visc_coeff[1] * sqrt(fabs(c1)) + cosed_comp.visc_coeff[2] * c1 +
+                       cosed_comp.visc_coeff[3] * c2 + cosed_comp.visc_coeff[4] * c3 +
+                       cosed_comp.visc_coeff[5] * c4);
       }
       // cache the value
       std::array<double,3> tmp{density,viscosity,concentration};
@@ -656,19 +655,9 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters as
    simparms = asparms;
    int bfg_idx = 1;
    QVector<double> xvalues;
+   simparms.radial_resolution = (bottom - meniscus)/(double)(editedData->pointCount()-1);
    for ( int ii = 0; ii < editedData->pointCount(); ii++ ) {
-      // Because the points close to the meniscus are important every point is used
-      if ( ii < editedData->pointCount() * 0.1 ) {
-         xvalues << editedData->xvalues[ii];
-      }
-         // after the initial 10 % of the channel only every 5th point is used
-      else if ( ii % 2 == 0 ) {
-         xvalues << editedData->xvalues[ii];
-      }
-         // ensure that the bottom is included
-      else if ( ii == editedData->pointCount() - 1 ) {
-         xvalues << editedData->xvalues[ii];
-      }
+      xvalues << meniscus + ii*simparms.radial_resolution;
    }
    visc_bfg_data.xvalues = xvalues;
    visc_bfg_data.xvalues.detach();
