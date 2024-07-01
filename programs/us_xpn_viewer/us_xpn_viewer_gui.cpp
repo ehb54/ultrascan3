@@ -3183,8 +3183,14 @@ DbgLv(1) << "RDa:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
 //xpn_data->import_data( iRunId, scanmask );                               // ALEXEY <-- actual data retreiving
 
+   //MEasure time of xpn_data->import_data_auto:
+  QElapsedTimer timer_xpn_data_import_data_auto;
+  timer_xpn_data_import_data_auto.start();
+
    bool o_connected = true;
    xpn_data->import_data_auto( iRunId, scanmask, o_connected );                               // ALEXEY <-- actual data retreiving
+
+   qDebug() << "[TIME] of xpn_data->import_data_auto: " << int( timer_xpn_data_import_data_auto.elapsed() / 1000 ) << " sec";
 
    //IF no connection to PostGreSQL ////////////////////////////////////////////////////
    if ( !o_connected )

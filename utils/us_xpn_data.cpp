@@ -673,30 +673,49 @@ bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_
    bool crows_bool = true;
    
    // Scan and build data for System Status Data
+   QElapsedTimer timer_srows;
+   timer_srows.start();
    int srows     = scan_xpndata_auto( runId, 'S', srows_bool );
-
+   qDebug() << "[TIME] of scan_xpndata_auto( runId, 'S', srows_bool ) " << int( timer_srows.elapsed() / 1000 ) << " sec"; 
+   
    if ( ascnf )
    {  // Scan and build data for Absorbance Scan Data
+     QElapsedTimer timer_arows;
+     timer_arows.start();
      arows      = scan_xpndata_auto( runId, 'A', arows_bool );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'A', arows_bool ) " << int( timer_arows.elapsed() / 1000 ) << " sec"; 
    }
 
    if ( fscnf )
    {  // Scan and build data for Fluorescence Scan Data
+     QElapsedTimer timer_frows;
+     timer_frows.start();
      frows      = scan_xpndata_auto( runId, 'F', frows_bool );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'F', frows_bool ) " << int( timer_frows.elapsed() / 1000 ) << " sec"; 
    }
 
    if ( iscnf )
    {  // Scan and build data for Interference Scan Data
+     QElapsedTimer timer_irows;
+     timer_irows.start();
      irows      = scan_xpndata_auto( runId, 'I', irows_bool );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'I', irows_bool ) " << int( timer_irows.elapsed() / 1000 ) << " sec"; 
    }
 
    if ( wscnf )
    {  // Scan and build data for Wavelength Scan Data
+     QElapsedTimer timer_wrows;
+     timer_wrows.start();
      wrows      = scan_xpndata_auto( runId, 'W', wrows_bool );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'W', wrows_bool ) " << int( timer_wrows.elapsed() / 1000 ) << " sec"; 
    }
 
    // Scan and build data for Centrifuge Run Profile
+   QElapsedTimer timer_crows;
+   timer_crows.start();
    int crows     = scan_xpndata_auto( runId, 'C', crows_bool );
+   qDebug() << "[TIME] of scan_xpndata_auto( runId, 'C', crows_bool ) " << int( timer_crows.elapsed() / 1000 ) << " sec"; 
+   
    
    qDebug() << "XpDa:i_d: arows frows irows wrows srows crows"
 	    << arows << frows << irows << wrows << srows << crows;
@@ -1216,13 +1235,18 @@ int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& 
    if ( scantype == 'C' )
       qrytext         = "SELECT count(*) from " + qrytab + ";";
 
+   qDebug() << "in [scan_xpndata_auto()]: scantype, qrytext -- "
+	    << scantype << qrytext;
+   
+   
    sqry            = dbxpn.exec( qrytext );
+   qDebug() << "sqry.isActive() ? " << sqry.isActive();
    bool scan_xpndata_query_success = sqry.next();
    count           = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
  
    qDebug() << "XpDa:s_x: sRunId" << sRunId << "scan_xpndata_query_success, count: " << scan_xpndata_query_success << count;
-   if( !scan_xpndata_query_success )
+   if( !scan_xpndata_query_success || !sqry.isActive() )
      {
        qDebug() << "in [scan_xpndata()], scan_xpndata_query_success, NO CONNECTION? "
 		<< scan_xpndata_query_success << !scan_xpndata_query_success;
