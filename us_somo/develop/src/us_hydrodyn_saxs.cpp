@@ -44,8 +44,8 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-#define SET_WIDTH_FROM_TEXT_LEN_PAD(widget,pad) (widget->setMaximumWidth(QFontMetrics(widget->font()).averageCharWidth()*(pad+widget->text().length())))
-#define SET_WIDTH_FROM_TEXT_LEN(widget) (widget->setMaximumWidth(QFontMetrics(widget->font()).averageCharWidth()*(2+widget->text().length())))
+#define SET_WIDTH_FROM_TEXT_LEN_PAD(widget,pad) (widget->setMaximumWidth(QFontMetrics(widget->font()).averageCharWidth()*1.4*(pad+widget->text().length())))
+#define SET_WIDTH_FROM_TEXT_LEN(widget) SET_WIDTH_FROM_TEXT_LEN_PAD(widget,3)
 
 // #define SAXS_DEBUG
 // #define SAXS_DEBUG2
@@ -1273,7 +1273,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_mals_saxs = new QPushButton("MALS+SAXS", this);
    pb_mals_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_mals_saxs->setMinimumHeight(minHeight1);
-   SET_WIDTH_FROM_TEXT_LEN_PAD( pb_mals_saxs, 5 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_mals_saxs );
    pb_mals_saxs->setPalette( PALET_PUSHB );
    connect(pb_mals_saxs, SIGNAL(clicked()), SLOT(mals_saxs()));
    iq_widgets.push_back( pb_mals_saxs );

@@ -964,7 +964,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_errors_widgets.push_back( cb_plot_errors_rev );
    plot_errors_widgets.push_back( cb_plot_errors_sd );
    plot_errors_widgets.push_back( cb_plot_errors_pct );
-   plot_errors_widgets.push_back( cb_plot_errors_group );
+   // plot_errors_widgets.push_back( cb_plot_errors_group );
 
    hide_widgets( plot_errors_widgets, true );
 
@@ -4031,8 +4031,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( pb_gauss_fit );
    ggaussian_widgets.push_back( le_gauss_pos );
    ggaussian_widgets.push_back( le_gauss_pos_width );
-   // ggaussian_widgets.push_back( le_gauss_fit_start );
-   // ggaussian_widgets.push_back( le_gauss_fit_end );
+#warning these ggaussian fit start/end were hidden, likely for a reason
+   ggaussian_widgets.push_back( le_gauss_fit_start );
+   ggaussian_widgets.push_back( le_gauss_fit_end );
    ggaussian_widgets.push_back( pb_ggauss_rmsd );
    ggaussian_widgets.push_back( lbl_gauss_fit );
    ggaussian_widgets.push_back( pb_ggauss_results );
