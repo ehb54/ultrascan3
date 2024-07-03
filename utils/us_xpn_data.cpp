@@ -675,14 +675,14 @@ bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_
    // Scan and build data for System Status Data
    QElapsedTimer timer_srows;
    timer_srows.start();
-   int srows     = scan_xpndata_auto( runId, 'S', srows_bool );
+   int srows     = scan_xpndata_auto( runId, 'S', srows_bool, timer_srows );
    qDebug() << "[TIME] of scan_xpndata_auto( runId, 'S', srows_bool ) " << int( timer_srows.elapsed() / 1000 ) << " sec"; 
    
    if ( ascnf )
    {  // Scan and build data for Absorbance Scan Data
      QElapsedTimer timer_arows;
      timer_arows.start();
-     arows      = scan_xpndata_auto( runId, 'A', arows_bool );
+     arows      = scan_xpndata_auto( runId, 'A', arows_bool, timer_arows );
      qDebug() << "[TIME] of scan_xpndata_auto( runId, 'A', arows_bool ) " << int( timer_arows.elapsed() / 1000 ) << " sec"; 
    }
 
@@ -690,7 +690,7 @@ bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_
    {  // Scan and build data for Fluorescence Scan Data
      QElapsedTimer timer_frows;
      timer_frows.start();
-     frows      = scan_xpndata_auto( runId, 'F', frows_bool );
+     frows      = scan_xpndata_auto( runId, 'F', frows_bool, timer_frows );
      qDebug() << "[TIME] of scan_xpndata_auto( runId, 'F', frows_bool ) " << int( timer_frows.elapsed() / 1000 ) << " sec"; 
    }
 
@@ -698,7 +698,7 @@ bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_
    {  // Scan and build data for Interference Scan Data
      QElapsedTimer timer_irows;
      timer_irows.start();
-     irows      = scan_xpndata_auto( runId, 'I', irows_bool );
+     irows      = scan_xpndata_auto( runId, 'I', irows_bool, timer_irows );
      qDebug() << "[TIME] of scan_xpndata_auto( runId, 'I', irows_bool ) " << int( timer_irows.elapsed() / 1000 ) << " sec"; 
    }
 
@@ -706,14 +706,14 @@ bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_
    {  // Scan and build data for Wavelength Scan Data
      QElapsedTimer timer_wrows;
      timer_wrows.start();
-     wrows      = scan_xpndata_auto( runId, 'W', wrows_bool );
+     wrows      = scan_xpndata_auto( runId, 'W', wrows_bool, timer_wrows );
      qDebug() << "[TIME] of scan_xpndata_auto( runId, 'W', wrows_bool ) " << int( timer_wrows.elapsed() / 1000 ) << " sec"; 
    }
 
    // Scan and build data for Centrifuge Run Profile
    QElapsedTimer timer_crows;
    timer_crows.start();
-   int crows     = scan_xpndata_auto( runId, 'C', crows_bool );
+   int crows     = scan_xpndata_auto( runId, 'C', crows_bool, timer_crows );
    qDebug() << "[TIME] of scan_xpndata_auto( runId, 'C', crows_bool ) " << int( timer_crows.elapsed() / 1000 ) << " sec"; 
    
    
@@ -1209,7 +1209,7 @@ DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
 
 
 // Query and save data for a [AIFW]ScanData or [SC] table: [for autoflow framework]
-int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& o_conn )
+int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& o_conn, QElapsedTimer elapse_t )
 {
    QSqlQuery  sqry;
    QSqlRecord qrec;
@@ -1238,14 +1238,23 @@ int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& 
    qDebug() << "in [scan_xpndata_auto()]: scantype, qrytext -- "
 	    << scantype << qrytext;
    
+   qDebug() << "[TIME 1] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
    
    sqry            = dbxpn.exec( qrytext );
    qDebug() << "sqry.isActive() ? " << sqry.isActive();
+
+   qDebug() << "[TIME 2] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
    bool scan_xpndata_query_success = sqry.next();
+
+   qDebug() << "[TIME 3] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
    count           = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
- 
    qDebug() << "XpDa:s_x: sRunId" << sRunId << "scan_xpndata_query_success, count: " << scan_xpndata_query_success << count;
+   
+   qDebug() << "[TIME 4] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
    if( !scan_xpndata_query_success || !sqry.isActive() )
      {
        qDebug() << "in [scan_xpndata()], scan_xpndata_query_success, NO CONNECTION? "
@@ -1265,6 +1274,8 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
    emit status_text( tr( " Scanning %1 rows of %2 table..." )
                      .arg( count ).arg( tabname ) );
 
+   qDebug() << "[TIME 5] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+
    // Get columns and determine indecies of fields
    qrytext         = "SELECT * from " + qrytab
                      + " WHERE \"RunId\"=" + sRunId
@@ -1276,7 +1287,12 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
 DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
  << cnames[cols-1] << "tabname" << tabname;
 
+ qDebug() << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
+ << cnames[cols-1] << "tabname" << tabname;
+
    sqry            = dbxpn.exec( qrytext );
+
+   qDebug() << "[TIME 6] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
 
    int isctyp    = ( scantype == 'A' ) ? 1 : 0;
    isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
@@ -1287,6 +1303,9 @@ DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
 DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype
  << "qrytext" << qrytext;
 
+ qDebug() << "XpDa:s_x:  isctyp scantype" << isctyp << scantype
+ << "qrytext" << qrytext;
+ 
    // Loop to read data and store in internal array
 
    while ( sqry.next() )
@@ -1372,12 +1391,19 @@ DbgLv(1) << "XpDa:scn:    row" << rows << "run dat count" << wsdrow.runId
             sydrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
 
             tSydata << sydrow;
+
+	    qDebug() << "[TIME 7 'S'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
 //*DEBUG*
 if(rows<21 || (rows+21)>count) {
 DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.dataId
  << "time" << sydrow.exptime << "temp" << sydrow.tempera << "speed" << sydrow.speed
  << "omg2t" << sydrow.omgSqT;
-}
+
+ qDebug() << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.dataId
+ << "time" << sydrow.exptime << "temp" << sydrow.tempera << "speed" << sydrow.speed
+ << "omg2t" << sydrow.omgSqT;
+ 
+ }
 //*DEBUG*
             break;
          }
@@ -1401,10 +1427,15 @@ DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.da
             crprow.paramids  = sqry.value( cxs[ 13 ] ).toString();
 
             tCrprof << crprow;
+
+	    qDebug() << "[TIME 7 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
 //*DEBUG*
 if(rows<21 || (rows+21)>count) {
 DbgLv(1) << "XpDa:scn:    row" << rows << "fugeRunId" << crprow.frunId
  << "ssInterval" << crprow.sstintv;
+ qDebug() << "XpDa:scn:    row" << rows << "fugeRunId" << crprow.frunId
+ << "ssInterval" << crprow.sstintv;
+ 
 }
 //*DEBUG*
             break;
@@ -1424,9 +1455,18 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       tabname         = "ExperimentRun";
       sqtab           = schname + "." + tabname;
       qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
-      qrytext         = "SELECT * from " + qrytab + ";"; 
+      qrytext         = "SELECT * from " + qrytab + ";";
+
+      qDebug() << "[TIME 8 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       sqry            = dbxpn.exec( qrytext );
+
+      qDebug() << "[TIME 9 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       qrec            = dbxpn.record( qrytab );
+
+      qDebug() << "[TIME 10 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       // Get indexes to ExperimentId and RunId
       cols            = column_indexes( tabname, cnames, cxs );
       int jexpid      = cnames.indexOf( "ExperimentId" );
@@ -1439,12 +1479,23 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
          rRunIds << rRunId;
       }
 
+      qDebug() << "[TIME 11 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+     
       tabname         = "ExperimentDefinition";
       sqtab           = schname + "." + tabname;
       qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
-      qrytext         = "SELECT * from " + qrytab + ";"; 
+      qrytext         = "SELECT * from " + qrytab + ";";
+
+      qDebug() << "[TIME 12 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       sqry            = dbxpn.exec( qrytext );
+
+      qDebug() << "[TIME 13 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       qrec            = dbxpn.record( qrytab );
+
+      qDebug() << "[TIME 14 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       cols            = column_indexes( tabname, cnames, cxs );
       // Get indexes to ExperimentId and FugeRunProfileId
       jexpid          = cnames.indexOf( "ExperimentId" );
@@ -1460,6 +1511,9 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
 DbgLv(1) << "XpDa:scn:  dExpId" << dExpId << "dFugId" << dFugId
  << "Name" << sqry.value(jexpnm).toString();
       }
+
+      qDebug() << "[TIME 15 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
 //DbgLv(1) << "XpDa:scn: dExpIds" << dExpIds;
 //DbgLv(1) << "XpDa:scn: dFugIds" << dFugIds;
       // Map experimentId to runId, then fugeId to experimentId
@@ -1494,6 +1548,8 @@ DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
       int ntssda        = tSydata.count();
       fnzstx            = 0;
 
+      qDebug() << "[TIME 8 'S'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
       for ( int ii = 0; ii < ntssda; ii++ )
       {  // Find the index to the first non-zero speed
          int irSpeed       = (int)qRound( tSydata[ ii ].speed );
@@ -1546,6 +1602,8 @@ DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
 //  << tSydata[nn-2].speed
 //  << tSydata[nn-1].speed; }
 //*DEBUG*
+
+ qDebug() << "[TIME 9 'S'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
    }
 
    return rows;
