@@ -67,7 +67,7 @@ QString US_DataFiles::get_filename( const QString& path, const QString& guid,
             numFile     = ii + 1;                     // Expected file numeric
 
             if ( numCurr > numFile )  // There is a gap: use missing number name
-               ofname  = lfchar + QString().sprintf( "%07i", numFile ) + ".xml";
+               ofname  = lfchar + QString().asprintf( "%07i", numFile ) + ".xml";
          }
       }
 
@@ -80,7 +80,7 @@ QString US_DataFiles::get_filename( const QString& path, const QString& guid,
    {  // No match and no numeric gap, so bump to number past last existing file
       if ( f_names.size() > 0 )
          numFile     = f_names.last().mid( 1, 7 ).toInt() + 1;
-      ofname      = lfchar + QString().sprintf( "%07i", numFile ) + ".xml";
+      ofname      = lfchar + QString().asprintf( "%07i", numFile ) + ".xml";
    }
 
    return path + "/" + ofname;
