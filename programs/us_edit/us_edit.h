@@ -51,6 +51,19 @@ class US_Edit : public US_Widgets
             QList< QPointF > changes;
       };
 
+      class RA_Wavl
+      {
+         public:
+            QVector<int> wavelength;
+            QVector<double> rpoints;
+            QVector<QVector<double>> rvalues;
+            void clear () {
+                wavelength.clear();
+                rpoints.clear();
+                rvalues.clear();
+            }
+      };
+
       QList< Edits >                    changed_points;
       US_DataIO::RawData                data;
       US_DataIO::RawData*               edata;
@@ -312,6 +325,8 @@ class US_Edit : public US_Widgets
       QVector< QVector< int > >     wavelns_i;
 
       QVector< QVector< double > >  rdata;
+      QVector< QVector< double > >  rdata_xvals;
+      // QVector<RA_Wavl> rdata_new;
 
       QString filename_runID_passed;
       QString filename_runID_auto;
@@ -396,6 +411,7 @@ class US_Edit : public US_Widgets
       bool isSet_to_analyse_triple( QString, QString  );
       bool isSet_to_edit_triple( QString, QString );
       bool isSet_edit_info_for_channel( QString, QString );
+      // void sort_by_wavelenght();
       
    private slots:         
       void load              ( void );

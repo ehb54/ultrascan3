@@ -4514,6 +4514,11 @@ DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
       }
 DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
+
+
+
+
+
       QVector< double > wrdata;
       wrdata.fill( 0.0, ndpoint );
       rdata .clear();
@@ -4531,11 +4536,33 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
       // The output has (ncelchn * nrpoint) data sets, each of which
       //   contains (nscan * nwaveln) data points.
       int trx       = 0;
+      int trx_b     = 0;
 
       for ( int ccx = 0; ccx < ncelchn; ccx++ )
       {  // Handle each triple of AUC data
          lambdas_by_cell( ccx );                      // Lambdas in cell
+         trx_b = trx;
+         double min_xval = -1000;
+         double max_xval =  1000;
+         double dx       =  1000;
+         for ( int jwx = 0; jwx < nwaveln; jwx++ )
+         {
+            edata         = &allData[ trx ];               // Triple data
+            min_xval = qMax(min_xval, qRound(edata->xvalues.first() * 1000) / 1000.0);
+            max_xval = qMin(max_xval, qRound(edata->xvalues.last()  * 1000) / 1000.0);
+            dx = qMin(dx, edata->xvalues.at(1) - edata->xvalues.at(0));
+            trx++;
+         }
+         dx = qRound(dx * 1000) / 1000.0;
+         QVector<double> xvals;
+         double xx = min_xval;
+         while (xx <= max_xval)
+         {
+            xvals << xx;
+            xx += dx;
+         }
 
+         trx = trx_b;
          for ( int jwx = 0; jwx < nwaveln; jwx++ )
          {  // Each wavelength in the current cell
             edata         = &allData[ trx ];               // Triple data
@@ -4559,6 +4586,18 @@ DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
          } // END: input triples loop
       } // END: input celchn loop
 DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+
+
+
+
+
+
+
+
+
+
+
 
 DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       lb_triple->setText( tr( "Cell / Channel" ) );
