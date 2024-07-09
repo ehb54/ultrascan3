@@ -4519,16 +4519,16 @@ DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
 
 
-      QVector< double > wrdata;
-      wrdata.fill( 0.0, ndpoint );
-      rdata .clear();
-DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+//       QVector< double > wrdata;
+//       wrdata.fill( 0.0, ndpoint );
+//       rdata .clear();
+// DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
 
-      for ( int ii = 0; ii < ndset; ii++ )
-      {  // Initialize the data vector that has wavelength as the x-axis
-         rdata << wrdata;
-      }
-DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+//       for ( int ii = 0; ii < ndset; ii++ )
+//       {  // Initialize the data vector that has wavelength as the x-axis
+//          rdata << wrdata;
+//       }
+// DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
 
       // Update wavelength-x-axis data vector with amplitude data points
       // The input has (ncelchn * nwaveln) data sets, each of which
@@ -4537,24 +4537,24 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
       //   contains (nscan * nwaveln) data points.
       int trx       = 0;
       int trx_b     = 0;
-
+      rdata.clear();
       for ( int ccx = 0; ccx < ncelchn; ccx++ )
       {  // Handle each triple of AUC data
          lambdas_by_cell( ccx );                      // Lambdas in cell
          trx_b = trx;
          double min_xval = -1000;
          double max_xval =  1000;
-         double dx       =  1000;
+         double dx       = -1000;
          for ( int jwx = 0; jwx < nwaveln; jwx++ )
          {
             edata         = &allData[ trx ];               // Triple data
             min_xval = qMax(min_xval, qRound(edata->xvalues.first() * 1000) / 1000.0);
             max_xval = qMin(max_xval, qRound(edata->xvalues.last()  * 1000) / 1000.0);
-            dx = qMin(dx, edata->xvalues.at(1) - edata->xvalues.at(0));
+            dx = qMax(dx, edata->xvalues.at(1) - edata->xvalues.at(0));
             trx++;
          }
          dx = qRound(dx * 1000) / 1000.0;
-         QVector<double> xvals;
+         QVector< double > xvals;
          double xx = min_xval;
          while (xx <= max_xval)
          {
@@ -4562,29 +4562,55 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
             xx += dx;
          }
 
+         rdata_xvals << xvals;
          trx = trx_b;
-         for ( int jwx = 0; jwx < nwaveln; jwx++ )
-         {  // Each wavelength in the current cell
-            edata         = &allData[ trx ];               // Triple data
-            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
-            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+         // order of sorting data:
+         int nscans = allData[trx].scanCount();
+         int ndp = xvals.size() * nwaveln * nscans;
+         QVector< double > yvals(ndp, 0);
+         QVector< int > xvals_pos(nwaveln, 0);
 
-            for ( int scx = 0; scx < edata->scanCount(); scx++ )
-            {  // Each scan of a triple
-               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
-               int odx       = ccx * nrpoint;         // Output dataset index
-               int opx       = scx * maxwavl + wvx;   // Output point index
-DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
-               for ( int rax = 0; rax < nrpoint; rax++ )
-               {  // Store ea. radius data point as a wavelength point in a scan
-                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
-               } // END: radius points loop
-            } // END: scans loop
+         for (int ii = 0; ii < xvals.size(); ii++)
+         {
+            trx = trx_b;
+            int txval = static_cast<int>(qRound(xvals.at(ii) * 1000));
+            for ( int jj = 0; jj < nwaveln; jj++ )
+            {  // Each wavelength in the current cell
+                edata         = &allData[ trx ];               // Triple data
+                int iwavl     = rawi_wvlns[ jj ];             // Wavelength value
+                int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+                DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-            trx++;
-         } // END: input triples loop
-      } // END: input celchn loop
+                int rpidx = -1;
+                for ( int kk = xvals_pos.at(jj); kk < edata->pointCount(); kk++)
+                {
+                    int cxval = static_cast<int>(qRound(edata->xvalues.at(kk) * 1000));
+                    if ( cxval == txval ) {
+                        rpidx = kk;
+                        xvals_pos[jj] = kk;
+                        break;
+                    }
+                }
+                if ( rpidx == -1 ) {
+                    xvals_pos[jj] = edata->pointCount();
+                    trx++;
+                    continue;
+                }
+
+                int idx_ii = ii * nwaveln * nscans;
+                for ( int ss = 0; ss < nscans; ss++ )
+                {
+                    double yval = edata->scanData.at(ss).rvalues.at(rpidx);
+                    int idx_ss = ss * nwaveln;
+                    int idx_wv = idx_ii + idx_ss + jj;
+                    yvals[idx_wv] = yval;
+                }
+
+                trx++;
+            } // END: input triples loop
+         }
+         rdata << yvals;
+      }
 DbgLv(1) << "IS-MWL:    Triples loop complete";
 
 
@@ -6630,37 +6656,81 @@ DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    {  // Build plot of radius record with wavelength points
 DbgLv(1) << "PlMwl:    START xa_WAV";
       data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Wavelength (nm)" ) );
-      QVector< double > wrdata = rdata[ index ];
-      int     dpx    = 0;
-
-      for ( int ii = 0; ii < nscan; ii++ )
-      {
-         if ( ! includes.contains( ii ) ) continue;
-
-         for ( int jj = 0; jj < npoint; jj++ )
-         {
-            rr[ jj ] = expi_wvlns[ jj ];
-            valueV   = qMin( maxOD, wrdata[ dpx++ ] );
-            vv[ jj ] = valueV;
-
-            maxR     = qMax( maxR, rr[ jj ] );
-            minR     = qMin( minR, rr[ jj ] );
-            maxV     = qMax( maxV, valueV );
-            minV     = qMin( minV, valueV );
-
-            if ( valueV > odlimit )
-               kodlim++;
+      int ccx = cb_triple->currentIndex();
+      lambdas_by_cell( ccx );
+      QVector< double > lamda_vec; // = rawi_wvlns;
+      QVector< double > rvals_vec = rdata.at(ccx);
+      foreach (int rwvl, rawi_wvlns) {
+          lamda_vec << rwvl;
+      }
+      auto minmax = std::minmax(lamda_vec.constBegin(), lamda_vec.constEnd());
+      minR = *(minmax.first);
+      maxR = *(minmax.second);
+      int rpidx = cb_lplot->currentIndex();
+      int npoints = cb_lplot->count();
+      int nscans = rdata.at(ccx).size() / nwaveln / npoints;
+      // int scan_from = ct_from->value();
+      // int scan_to = ct_to->value();
+      // if (scan_from > nscans) {
+      //     scan_from = nscans;
+      // }
+      // if (scan_to > nscans) {
+      //     scan_to = nscans;
+      // }
+      int idx_ii = rpidx * nwaveln * nscans;
+      for ( int ss = 0; ss < nscans; ss++) {
+         if ( ! includes.contains( ss ) ) continue;
+         int idx_ss = ss * nwaveln;
+         QVector< double > rv;
+         for (int jj = 0; jj < nwaveln; jj++) {
+             // rv << rvals_vec.mi
+            int idx = idx_ii + idx_ss + jj;
+            double val = rvals_vec.at(idx);
+            maxV     = qMax( maxV, val );
+            minV     = qMin( minV, val );
+            rv << val;
          }
 
-         US_DataIO::Scan*  scn = &data.scanData[ ii ];
-         QString ctitle = tr( "Raw Data at " )
-            + QString::number( scn->seconds ) + tr( " seconds" )
-            + " #" + QString::number( ii );
-
-         QwtPlotCurve* cc = us_curve( data_plot, ctitle );
+         QwtPlotCurve* cc = us_curve( data_plot, "" );
          cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         cc->setSamples( rr, vv, npoint );
+         cc->setSamples( lamda_vec.data(), rv.data(), nwaveln );
+
       }
+
+
+
+
+      // QVector< double > wrdata = rdata[ index ];
+      // int     dpx    = 0;
+
+      // for ( int ii = 0; ii < nscan; ii++ )
+      // {
+      //    if ( ! includes.contains( ii ) ) continue;
+
+      //    for ( int jj = 0; jj < npoint; jj++ )
+      //    {
+      //       rr[ jj ] = expi_wvlns[ jj ];
+      //       valueV   = qMin( maxOD, wrdata[ dpx++ ] );
+      //       vv[ jj ] = valueV;
+
+      //       maxR     = qMax( maxR, rr[ jj ] );
+      //       minR     = qMin( minR, rr[ jj ] );
+      //       maxV     = qMax( maxV, valueV );
+      //       minV     = qMin( minV, valueV );
+
+      //       if ( valueV > odlimit )
+      //          kodlim++;
+      //    }
+
+      //    US_DataIO::Scan*  scn = &data.scanData[ ii ];
+      //    QString ctitle = tr( "Raw Data at " )
+      //       + QString::number( scn->seconds ) + tr( " seconds" )
+      //       + " #" + QString::number( ii );
+
+      //    QwtPlotCurve* cc = us_curve( data_plot, ctitle );
+      //    cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+      //    cc->setSamples( rr, vv, npoint );
+      // }
 DbgLv(1) << "PlMwl:      END xa_WAV  kodlim odlimit" << kodlim << odlimit;
    }
 
@@ -10747,6 +10817,11 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
 
       cb_lplot->disconnect();
       cb_lplot->clear();
+      int ccx = cb_triple->currentIndex();
+      expc_radii.clear();
+      foreach (double xval, rdata_xvals.at(ccx)) {
+          expc_radii << QString::number(xval);
+      }
       cb_lplot->addItems( expc_radii );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
