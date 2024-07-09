@@ -6342,9 +6342,9 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       //    delete plot_errors_zoomer;
       //    plot_errors_zoomer = (ScrollZoomer *) 0;
       // }
-      if ( plot_errors->isVisible() ) {
-         cb_plot_errors_group->show();
-      }
+      // if ( plot_errors->isVisible() ) {
+      //    cb_plot_errors_group->show();
+      // }
       cb_plot_errors_group->setChecked( ggauss_scroll_save_group );
       cb_plot_errors_group->setChecked( true );
       ggaussian_rmsd();
