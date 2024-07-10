@@ -2,6 +2,8 @@
 add_library(utils SHARED
         us_datafiles.cpp
         us_datafiles.h
+        us_util.cpp
+        us_util.h
         )
 
 # Ensure debug information is included

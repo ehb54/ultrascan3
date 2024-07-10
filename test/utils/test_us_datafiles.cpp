@@ -1,24 +1,7 @@
-#include <QtTest>
+#include "test_us_datafiles.h"
+#include <QFile>
 #include <QXmlStreamWriter>
-#include "us_datafiles.h"
-
-// Unit test class
-class TestUSDataFiles : public QObject
-{
-Q_OBJECT
-
-private slots:
-    void initTestCase();     // Called before the first test function
-    void cleanupTestCase();  // Called after the last test function
-
-    void test_no_existing_files();                   // Test case for no existing files
-    void test_existing_file_with_matching_guid();    // Test case for existing file with matching GUID
-    void test_existing_files_without_matching_guid();// Test case for existing files without matching GUID
-    void test_gap_in_numbering();                    // Test case for gap in numbering
-
-private:
-    QString path;
-};
+#include <QDir>
 
 // Helper function to create an XML file with the specified GUID
 void createXmlFile(const QString& filename, const QString& tag, const QString& att, const QString& guid)
@@ -116,7 +99,3 @@ void TestUSDataFiles::test_gap_in_numbering()
     QCOMPARE(filename, path + QDir::separator() + "M0000001.xml"); // Should fill the gap
     QVERIFY(newFile);
 }
-
-// Main function to run the test
-QTEST_MAIN(TestUSDataFiles)
-#include "test_us_datafiles.moc"
