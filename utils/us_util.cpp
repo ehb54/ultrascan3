@@ -143,7 +143,7 @@ QString US_Util::toISODatetimeText( QString dttext )
 // Convert a binary uuid to a QString
 QString US_Util::uuid_unparse( unsigned char* uu )
 {
-   return QString().sprintf(
+   return QString().asprintf(
          "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
          "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
          uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
@@ -212,7 +212,7 @@ void US_Util::uuid_parse( const QString& in, unsigned char* uu )
 // in truth, that a random number over the given range has hit 1.
 bool US_Util::ithTime( int timeinc )
 {
-   int rannum  = qrand() % timeinc;
+   int rannum  = rand() % timeinc;
    return ( rannum == 1 );
 }
 
