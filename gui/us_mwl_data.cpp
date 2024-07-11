@@ -10,7 +10,7 @@
 US_MwlData::US_MwlData( )
 {
    clear();                // Clear internal vectors
-   curccx = 0;
+   curccx      = 0;        // Current cell/channel index
    dbg_level  = US_Settings::us_debug();
 DbgLv(0) << "MwDa: dbg_level" << dbg_level;
 }
@@ -559,7 +559,6 @@ void US_MwlData::clear()
    slambda    = 0;
    elambda    = 0;
    curccx     = 0;
-
    mapCounts();
 }
 

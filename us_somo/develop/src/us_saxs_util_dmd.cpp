@@ -3,12 +3,8 @@
 //Added by qt3to4:
 #include <QTextStream>
 
-#if defined( Q_OS_MACOS )
-# include "../include/bits_stdc++.h"
-#else
-# include <bits/stdc++.h>
-#endif
-
+#include <signal.h> // for kill()
+#include <array>    // for std::array
 
 #if !defined( Q_OS_WIN )
 # include <sys/wait.h>

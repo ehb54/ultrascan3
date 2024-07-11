@@ -6,7 +6,7 @@
 #include "us_math2.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
-#include "us_plot3d_xyz.h"
+#include "us_plot3d.h"
 #include "us_vhwc_pltctl.h"
 #include "qwt_plot_marker.h"
 
@@ -125,7 +125,7 @@ class US_vHW_Combine : public US_Widgets
         QVector<QVector3D> xyzdat;    //!< XYZ data
 
         QPointer<US_VhwCPlotControl> p3d_ctld; //!< Pointer to 3D control
-        QPointer<US_Plot3Dxyz>       p3d_pltw; //!< Pointer to 3D window
+        QPointer<US_Plot3D>          p3d_pltw; //!< Pointer to 3D window
 
         QStringList distIDs;          //!< All distribution IDs
         QStringList pdisIDs;          //!< Plotted distribution IDs
