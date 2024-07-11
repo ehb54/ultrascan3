@@ -6748,7 +6748,6 @@ DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
 DbgLv(1) << "PlMwl:    START xa_WAV";
       data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Wavelength (nm)" ) );
       int ccx = cb_triple->currentIndex();
-      lambdas_by_cell( ccx );
       rvec.clear();
 
       foreach (int rwvl, rawi_wvlns) {
@@ -6776,7 +6775,7 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
          vv = vvec.data();
          QwtPlotCurve* cc = us_curve( data_plot, tr("Scan %1").arg(ss) );
          cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         cc->setSamples( rr, vv, npoint );
+         cc->setSamples( rr, vv, nwaveln );
       }
    }
 
@@ -10681,6 +10680,7 @@ void US_Edit::lselect_range_on( bool checked )
 DbgLv(1) << "lselect range checked" << checked;
    if ( checked )
    {
+      lambdas_by_cell();
       connect_mwl_ctrls( false );
       ct_ldelta->setValue( 1 );
       cb_lstart->setCurrentIndex( 0 );
@@ -10703,6 +10703,7 @@ void US_Edit::lselect_custom_on( bool checked )
 DbgLv(1) << "lselect custom checked" << checked;
    if ( checked )
    {
+      lambdas_by_cell();
       connect_mwl_ctrls( false );
       ct_ldelta->setValue( 1 );
       cb_lstart->setCurrentIndex( 0 );
@@ -10834,6 +10835,50 @@ DbgLv(1) << "rpl: set_lambdas() complete.  trx" << triple_index;
 DbgLv(1) << "rpl: reset_outData() complete";
 }
 
+// turn on and off scan control widgets and lambda widgets as switching to x axis wavelength
+void US_Edit::xaxis_wavl_wgts_on( bool on )
+{
+   rb_lrange->setDisabled( on );
+   rb_custom->setDisabled( on );
+   pb_incall->setDisabled( on );
+   ct_ldelta->setDisabled( on );
+   pb_incall->setDisabled( on );
+   cb_lstart->setDisabled( on );
+   cb_lend->setDisabled( on );
+   pb_custom->setDisabled( on );
+
+   ct_from->setDisabled( on );
+   ct_to->setDisabled( on );
+   pb_excludeRange->setDisabled( on );
+   pb_edit1->setDisabled( on );
+   pb_exclusion->setDisabled( on );
+   pb_include->setDisabled( on );
+
+   if ( ! on ) {
+      int from = ct_from->value();
+      int to = ct_to->value();
+      if ( from == 0 )
+         pb_edit1  ->setEnabled( false );
+      else
+         pb_edit1  ->setEnabled( true );
+
+      if ( to == 0 )
+         pb_excludeRange->setEnabled( false );
+      else
+         pb_excludeRange->setEnabled( true );
+
+      if ( rb_custom->isChecked() ) {
+          ct_ldelta->setDisabled( true );
+          pb_custom->setEnabled( true );
+      } else {
+          ct_ldelta->setEnabled( true );
+          pb_custom->setEnabled( true );
+      }
+
+   }
+
+}
+
 // X-axis has been changed to Radius or Wavelength
 void US_Edit::xaxis_radius_on( bool checked )
 {
@@ -10850,8 +10895,7 @@ DbgLv(1) << "xaxis_radius_on  checked" << checked;
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
       cb_lplot->setCurrentIndex( expc_wvlns.size() / 2 );
 
-      ct_from->setEnabled(true);
-      ct_to->setEnabled(true);
+      xaxis_wavl_wgts_on( false );
    }
 }
 
@@ -10878,8 +10922,7 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
       cb_lplot->setCurrentIndex( expc_radii.size() / 2 );
 
-      ct_from->setDisabled(true);
-      ct_to->setDisabled(true);
+      xaxis_wavl_wgts_on( true );
    }
 }
 

@@ -398,6 +398,7 @@ class US_Edit : public US_Widgets
       bool isSet_to_edit_triple( QString, QString );
       bool isSet_edit_info_for_channel( QString, QString );
       void set_data_over_lamda();
+      void xaxis_wavl_wgts_on( bool );
       
    private slots:         
       void load              ( void );
