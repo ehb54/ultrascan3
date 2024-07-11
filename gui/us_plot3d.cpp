@@ -1000,7 +1000,9 @@ if ((ii&63)==1) DbgLv(2) << "P3D:  rp: row" << ii;
          QVector<double> temp;
          temp.clear();
          temp << xmin + ii*dx << ymin + jj*dy << zdata[ii][jj];
-         d_data << temp;
+         Triple t = Triple( xmin + ii*dx, ymin + jj*dy, zdata[ii][jj] );
+         tdata[ ii ][ jj ] = t;
+         zdata << temp;
          zdmx              = zdmx > zval ? zdmx : zval;
 if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
  << "  wdat" << zval;
@@ -2269,17 +2271,6 @@ void US_Plot3D::dump_contents()
 
    QString ofname     = US_Settings::reportDir() + "/"  +modldesc
       + "_" + datetime + "_plot3d." + fileext;
-    {
-        QString data_filename = US_Settings::reportDir() + "/"  +modldesc
-                                + "_" + datetime + "_plot3d_data." + "csv";
-        QFile myFile(data_filename);
-        if (!myFile.open(QIODevice::WriteOnly)) {
-            qDebug() << "Could not write to file:" << data_filename << "Error string:" << myFile.errorString();
-        }
-        else{
-            QTextStream out(&myFile);
-            QVector<QString> radius;
-
    bool ok           = false;
    if (fileext == "csv")
    {
