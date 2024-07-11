@@ -2423,13 +2423,6 @@ void US_LammAstfvm::quadInterpolate(const double *x0, const double *u0, int N0, 
                (( ( xv - x2 ) * ( xv - x3 ) ) / ( ( x1 - x2 ) * ( x1 - x3 ) )) * y1/x1 +
                (( ( xv - x1 ) * ( xv - x3 ) ) / ( ( x2 - x1 ) * ( x2 - x3 ) )) * y2/x2 +
                (( ( xv - x1 ) * ( xv - x2 ) ) / ( ( x3 - x1 ) * ( x3 - x2 ) )) * y3/x3;
-       if (abs(yv/xv-yv1)>1e-5){
-           qDebug() << "yv yv1 xv" << QString::number(yv,'e',7) << QString::number(yv1,'e',7) << QString::number(xv,'f',6);
-           qDebug() << "x1 y1" << QString::number(x1,'f',6) << QString::number(y1,'e',7);
-           qDebug() << "x2 y2" << QString::number(x2,'f',6) << QString::number(y2,'e',7);
-           qDebug() << "x3 y3" << QString::number(x3,'f',6) << QString::number(y3,'e',7);
-           qDebug() << "----";
-       }
 //y1 *= x1;
 //y2 *= x2;
 //y3 *= x3;
