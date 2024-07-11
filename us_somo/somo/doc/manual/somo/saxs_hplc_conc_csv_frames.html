@@ -4,7 +4,7 @@
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
 	<title>SOMO HPLC-SAXS Concentration CSV in Time to Frames conversion</title>
-	<link href="mainstyle1.css" rel="styleSheet" type="text/css">
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 	<style type="text/css">
 		@page { margin: 0.79in }
 		p { margin-bottom: 0.1in; line-height: 120% }
@@ -28,21 +28,25 @@
 <hr>
 <center>
 <h2>HPLC-SAXS Concentration CSV in Time to Frames conversion</h2></center>
-<h3><center>Last updated: May 2018</center></h3><p>
+<h3><center>Last updated: July 2024</center></h3><p>
+
+<span style="color:#CC0000">Warning: this <b>Help</b> section was originally written in 2017, and has not been fully updated for the July 2024 intermediate <b><i>US-SOMO</i></b> release. Therefore, all screenshots refer to an older layup, although the commands are mostly the same. In particular, the <b><i>CorMap Analysis</i></b> button has been renamed "<b><i>PVP</i></b>" ("P-value pair" analysis). An update of this <b>Help</b> section is planned.</span><p>
+<br>
+
 <h3><center>Synopsis</center></h3>
 
 <p class="iucr-body-text-western"><span lang="en-US">
 <div id="refs">
-  <a href=somo_saxs_hplc.html#conc_load><b><i>Concentration load</i></b></a> is used to upload any chromatographic data files containing a concentration-related elution profile, as described in the main <a href=somo_saxs_hplc.html#conc_load>HPLC-SAXS documentation</a>.
+  <a href=somo_saxs_hplc.html#conc_load><b><i>Conc. file load</i></b></a> is used to upload any chromatographic data files containing a concentration-related elution profile, as described in the main <a href=somo_saxs_hplc.html#conc_load><b><i>HPLC/KIN</b></i> documentation</a>.
   This window comes up when you load a CSV file in the expected format (see <b>Details</b> below).
-  The purpose of this window is to convert these time vs absorbance data into concentration curves of Frame number vs absorbance.
+  The purpose of this window is to convert these time vs absorbance data into concentration curves of Frame number vs absorbance. Note than starting from the <span style="color:#CC0000"><b><i>US-SOMO</b></i> July 2024 intermediate release</span>, there is now a dedicated module for the analysis of <b><i>UV-Vis</b></i> data (see <a href=somo_uv_vis.html>here</a>).
     </Div>
 </p>
     
 <h3><center>Details</center></h3>
 
 The format of the CSV file is currently based upon the data produced from the SWING beamline of the SOLEIL Synchrotron.
-(Please contact us if you encounter a different format you would like to use.)
+(Please contact us if you encounter a different format you would like to use).
 The file is in a white-space separated format with the first header row containing "# Time" and then a series of wavelengths.
 For example: "#	Time	280	260	214	290	305	410	530	550".
 Then subsequent rows contain the sequence number starting at 1, the Time in minutes, followed by the absorbance at the specified wavelengths.
@@ -134,7 +138,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 18, 2018.
+Last modified on July 10, 2024.
 </font>
 </body>
 </html>
