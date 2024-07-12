@@ -5,7 +5,7 @@ VER1=`grep US_Version $DESF |cut -d\" -f2`
 REV1=`grep SOMO_Revision $DESF |cut -d\" -f2`
 ##VER2=`grep US_Version $us3/utils/us_defines.h|cut -d\" -f2|sed -n 1p`
 VER2=`sed -n '/0x0500/,/define/p' $us3/utils/us_defines.h|grep US_Vers|cut -d'"' -f2`
-REV2="SOMOsvn-"`svn info|grep Revision|cut -d' ' -f2`
+REV2="SOMOgit-`(cd $us3/us_somo;git log --oneline . | wc -l)`"
 
 if [ "$VER1" != "$VER2"  -o  "$REV1" != "$REV2" ]
 then
