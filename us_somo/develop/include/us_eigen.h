@@ -1,3 +1,9 @@
+// This code is a wrapper to the Eigen C++ template library
+// As of this writing, the Eigen software is available from https://gitlab.com/libeigen/eigen
+// and further information about Eigen is available from https://eigen.tuxfamily.org
+// The Eigen Source Code is subject to the terms of the Mozilla Public License, v. 2.0. 
+// If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 #ifndef US_EIGEN_H
 #define US_EIGEN_H
 
