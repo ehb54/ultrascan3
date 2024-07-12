@@ -2170,7 +2170,7 @@ readline(int ind)
 
    nat++;
 
-   if ( sscanf(stringa + 7, "%s", dd->elm) ) {};
+   if ( 1 == sscanf(stringa + 7, "%s", dd->elm) ) {};
    /*      printf("\n%s\t%s\n","dd->elm  ",dd->elm);
            printf("\n%s\t%d\n","flagr1 atom",flagr1);  
            if ( 1 == scanf("%s",pluto) ) {};
@@ -2179,7 +2179,7 @@ readline(int ind)
    if (flagr1 != 1)
    {
 
-      if ( sscanf(stringa + 12, "%s", dd->amin) ) {};
+      if ( 1 == sscanf(stringa + 12, "%s", dd->amin) ) {};
       /*   printf("\n%s\t%s\n","dd->amin  ",dd->amin); 
            if ( 1 == scanf("%s",pluto) ) {};
            getchar(); */
@@ -2195,7 +2195,7 @@ readline(int ind)
 
    else
    {
-      if ( sscanf(stringa + 11, "%s", dd->amin) ) {};
+      if ( 1 == sscanf(stringa + 11, "%s", dd->amin) ) {};
       /*   printf("\n%s\t%s\n","carb dd->amin  ",dd->amin);
            if ( 1 == scanf("%s",pluto) ) {};
            getchar(); */
@@ -2277,11 +2277,11 @@ readline(int ind)
 
    nat++;
 
-   if ( sscanf(stringa+7,"%s",dd->elm) ) {};
+   if ( 1 == sscanf(stringa+7,"%s",dd->elm) ) {};
    printf("\n%s\t%s\n","carb dd->elm  ",dd->elm);
    if ( 1 == scanf("%s",pluto) ) {};
    getchar(); 
-   if ( sscanf(stringa+11,"%s",dd->amin);     ) {};
+   if ( 1 == sscanf(stringa+11,"%s",dd->amin);     ) {};
    printf("\n%s\t%s\n","carb dd->amin  ",dd->amin);
    if ( 1 == scanf("%s",pluto) ) {};
    getchar(); 
