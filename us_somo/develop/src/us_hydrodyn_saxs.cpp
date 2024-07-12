@@ -1366,7 +1366,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    cnt_bin_size = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_bin_size );
-#warning DIST change for testing
+   // #warning DIST change for testing
    // cnt_bin_size->setRange(0.000001, 100); cnt_bin_size->setSingleStep( 0.000001 );
    cnt_bin_size->setRange(0.01, 100); cnt_bin_size->setSingleStep( 0.01 );
    cnt_bin_size->setValue(our_saxs_options->bin_size);
