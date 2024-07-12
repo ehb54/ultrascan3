@@ -23,14 +23,15 @@
 <h2>
 SOMO - Select Parameters to be Saved Module:</h2>
 <p>
-<h3><center>Last updated: December 2020 </center></h3><p>
+<h3><center>Last updated: June 2024 </center></h3><p>
 <p>
 
 <img SRC="somo-save_parameters.png" ALT="SOMO Parameters to be Saved Screen">
 </center>
 <p>
-In this module you can select a series of parameters that can be saved in a comma-separated file (extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of six, tab-selectable screens where the parameters are subdivided according to their origin and characteristics. The parameters can be toggled from one window of the panel to the other (left side, list of parameters available; right side, parameters to be saved) by clicking on them (multiple selection available; you can scroll down while keeping pressed the central mouse button to select a contiguos series of parameters) and then using the arrows present between the two windows.<br>
-The six screens are <b><i>Main hydro results:</i></b>, <b><i>Additional SMI results:</i></b>, <b><i>Additional ZENO results:</i></b>, <b><i>Additional GRPY results:</i></b>, <b><i>Solvent conditions:</i></b>, and <b><i>ASA results:</i></b>. Note that the order by which you select the parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the saved file. The <b>Model name</b> "parameter" is the only one which is fixed, alwas available and not selectable, because it will be used to distinguish the results of individual models when multiple models (such as from NMR-style files) are analyzed in a single run.<p>
+In this module you can select a series of parameters that can be saved in a comma-separated file (extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of eight, tab-selectable screens where the parameters are subdivided according to their origin and characteristics. The parameters can be toggled from one window of the panel to the other (left side, list of parameters available; right side, parameters to be saved) by clicking on them (multiple selection available; you can scroll down while keeping pressed the central mouse button to select a contiguos series of parameters) and then using the arrows present between the two windows.<br>
+The eight screens are <b><i>Main hydro results:</i></b>, <b><i>Additional SMI results:</i></b>, <b><i>Additional ZENO results:</i></b>, <b><i>Additional GRPY results:</i></b>, <b><i>Additional vdW results:</i></b>, <b><i>Solvent conditions:</i></b>,  <b><i>ASA results and options:</i></b>, and <b><i>Fractal Dimension:</i></b>. Note that the order by which you select the parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the saved file. The <b>Model name</b> "parameter" is the only one which is fixed, alwas available and not selectable, because it will be used to distinguish the results of individual models when multiple models (such as from NMR-style files) are analyzed in a single run.<p>
+
 The <b><i>Main hydro results:</i></b> screen contains all parameters which are listed in the <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a> pop-up window, plus some other general parameters <i>i.e.</i>:<br>
 <p>
 <b>Total beads in model<br>
@@ -74,7 +75,8 @@ Intrisic viscosity s.d.<br>
 Dt/d0<br>
 Dt/d0 s.d.<br>
 Dimensionless intrinsic viscosity [eta]<br>
-Dimensionless intrinsic viscosity s.d.</b>
+Dimensionless intrinsic viscosity s.d.<br>
+Skin Thickness</b>
 <p>
 The <b><i>Additional GRPY results:</i></b> screen contains additional parameters that are calculated by the <b><i>GRPY</b></i> method:<br>
 <b><p>
@@ -91,6 +93,13 @@ Relaxation times, tau(5) [ns]<br>
 Relaxation times, tau(m) [ns]<br>
 GRPY Einstein's radius [nm]</b>
 <p>
+The <b><i>Additional vdW results:</i></b> screen contains information on the atomic hydration used in the bead models generation:<br>
+<b><p>
+vdW Theoretical Waters<br>
+vdW Exposed Residues<br>
+vdW Exposed Waters</b>
+<p>
+
 The <b><i>Solvent conditions:</i></b> screen contains the parameters as set in the <a href=somo_hydro.html><b><i>
 Hydrodynamic Calculations</i></b></a> options module:<br><p>
 <b>Solvent name<br>
@@ -100,11 +109,28 @@ Solvent viscosity [cP]<br>
 Solvent density [g/ml]<br>
 pH</b>
 <p>
-The <b><i>ASA results:</i></b> screen presently contains only two parameters, derived from the <b>ASAB1</b> execution:<p>
+The <b><i>ASA results and options:</i></b> screen contains first two parameters, derived from the <b>ASAB1</b> execution, and then the settings used for the <b><i>vdW with overlaps</b></i> method to perform the atomic hydration and to identify the buried beads for their exclusion in the <b><i>GRPY</b></i> computations: <p>
 <b>Radius of gyration (+r) [A] (from PDB atomic structure)</b> (<i>computed by taking into account the actual radius</i> r <i>of each atom</i>)<br>
-<b>Radius of gyration (-r) [A] (from PDB atomic structure)</b> (<i>computed without taking into account the actual radius</i> r <i> of each atom</i>)
+<b>Radius of gyration (-r) [A] (from PDB atomic structure)</b> (<i>computed without taking into account the actual radius</i> r <i> of each atom</i>)<br><b>
+ASA Hydrate probe radius [A]<br>
+ASA Hydrate Threshold [A^2]<br>
+ASA vdW+GRPY probe radius [A]<br>
+ASA vdW+GRPY Threshold [&]</b>
 <p>
-
+The <b><i>Fractal Dimension:</i></b> screen contains sveral parameters and information about the <b><i>D<sub>m</sub></i></b> and <b><i>D<sub>s</sub></i></b> computations:<p>
+<b>Fractal dimension parameters<br>
+Fractal dimension<br>
+Fractal dimension s.d.<br>
+Fractal dimension weighted average<br>
+Fractal dimension weighted average s.d.<br>
+Fractal dimension weighted weighted average<br>
+Fractal dimension weighted weighted average s.d.<br>
+Rg / fractal dimension<br>
+Rg / fractal dimension s.d.<br>
+Rg / Fractal dimension weighted average<br>
+Rg / Fractal dimension weighted average s.d.<br>
+Rg / Fractal dimension weighted weighted average<br>
+Rg / Fractal dimension weighted weighted average s.d.</b>
 
 <p>
 <hr>
@@ -122,7 +148,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on December 18, 2020.
+Last modified on June 13, 2024.
 </font>
 </body>
 </html>

@@ -23,17 +23,17 @@
 <h2>
 SOMO - SAXS/SANS Simulation Options:</h2></center>
 
-<h3><center>Last updated: March 2023</center></h3><p>
-<center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module",<br> J. Appl. Cryst., 46:1823-1833 (2013).</span>
+<h3><center>Last updated: June 2024</center></h3><p>
+<center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module", J. Appl. Cryst., 46:1823-1833 (2013).</span>
 </center>
 <p><center>
 <img SRC="somo-SAXS_SANS_Options_summary2.png" ALT="SOMO SAXS/SANS Simulation Options Summary">
 </center>
 <p>
-In this module you can set/change the parameters used by the  <a href="somo_saxs.html"><b>SAXS/SANS Simulation Module</b></a>. The module has been split up into several sub-modules, as shown in the above image. The sub-menus can be accessed by clicking on their names.<p>
+In this module you can set/change the parameters used by the  <a href="somo_saxs.html"><b>SAXS/SANS (SAS) and MALS Data Processing and Simulation Module</b></a>. The module has been split up into several sub-modules, as shown in the above image. The sub-menus can be accessed by clicking on their names.<p>
 
 <p><center>
-<img SRC="somo-SAXS_Computation_Options2.png" ALT="SOMO SAXS Computation Options">
+<img SRC="somo-SAXS_Computation_Options2new.png" ALT="SOMO SAXS Computation Options">
 </center>
 <p>
 
@@ -68,7 +68,7 @@ A <i>P(r)</i> can be simultaneously computed with the quick Debye method at rela
 
 
 <li>
-<b><i>Crysol</i></b>. This will externally call the popular program Crysol (Svergun, Barberato, and Koch. J. Appl. Cryst. 28:768-773, 1995), whose main options can be set in the fields below. Currently (October 2013) the parametric fit to an experimental curve capability of Crysol has not yet been implemented within <b>US-SOMO</b>.<p>
+<b><i>Crysol</i></b>. This will externally call the popular program Crysol (Svergun, Barberato, and Koch. J. Appl. Cryst. 28:768-773, 1995), whose main options can be set in the fields below. Notice: the parametric fit to an experimental curve capability of Crysol has not been implemented within <b>US-SOMO</b>.<p>
 </ul><p>
 
 Next come a series of entries where various parameters can be set:<p>
@@ -84,9 +84,11 @@ The next three entries set some <b><i>Crysol</i></b> options (the first affects 
 <b>SH/Crysol: Maximun order of harmonics</b> (default: <b>15</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: 40).<p> 
 <b>Crysol: Order of the Fibonacci grid</b> (default: <b>17</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: 18)<p>
 <b>Crysol: Contrast of the hydration shell (e/A^3):</b> (default: <b>0.03 e/A<sup>3</sup></b>). Set this parameter to "0" if you want to run Crysol on a structure with explicit hydration waters.<p>
-Three checkboxes follow, still Crysol-related:<p>
-<i>Crysol: automatically load difference intensity</i> (default: <b>on</b>). After a Crysol computation, the difference intensity data will be loaded in the graphic window.<p>
-<i>Crysol: support version 2.6</i> (default: <b>on</b>).<p>
+Five checkboxes follow, grouped under <b>Crysol options:</b>:<p>
+<i>Automatically load difference intensity</i> (default: <b>on</b>). After a Crysol computation, the difference intensity data will be loaded in the graphic window.<p>
+<i>Support version 2.6</i> (default: <b>on</b>).<p>
+<i>Support version 3.1+</i> (default: <b>off</b>).<p>
+<i>Shell water (3.1+ only)</i> (default: <b>off</b>). This is a relatively recent new <b><i>Crysol</i></b> feature allowing the representation of hydration waters as dummy beads placed on the bio-macromolecule's exterior surface, and their inclusion in the <i>I</i>(<i>q</i>) calculations (see Franke et al., J. Appl. Cryst. 50:1212-1225, 2017).<p>
 <i>Crysol: Explicit hydrogens</i> (default: <b>off</b>). By default, Crysol uses implicit hydrogens considered as part of the bound atom and explicit hydrogens are removed.  If you wish to use explicit hydrogens specificed in your pdb, then select this option.<p>
 <hr> 
 <p>
@@ -125,7 +127,7 @@ where <i>b(0)<sub>i</sub></i> are the neutron scattering lengths of the non-H at
 and <i>f(NH<sub>NExch</sub>)<sub>i</sub></i> is the fraction of non-exchanged peptide bond H (which is 0 for all atoms except
 for the peptide bond N atom), all as defined in this panel (see above). The perdeuteration field is used by <i><b>Cryson</b></i> (see below).
 <p>
-As for the SAXS Computation options panel, we have listed a series of alternative methods for the computation of the SANS <i>I(q)</i> vs. <i>q</i> curves. However, only <i><b>Cryson</b></i> (Svergun et al., Proc. Natl. Acad. Sci. USA, 95, 2267-2272, 1998) is presently (October 2013) active.<p>
+As for the SAXS Computation options panel, we have listed a series of alternative methods for the computation of the SANS <i>I(q)</i> vs. <i>q</i> curves. However, only <i><b>Cryson</b></i> (Svergun et al., Proc. Natl. Acad. Sci. USA, 95, 2267-2272, 1998) is presently (as of June 2024) active.<p>
 The <i><b>maximum number of harmonics</i></b> and the <i><b>order of the Fibonacci grid</i></b> can be set in the corresponding fields for <i><b>Cryson</b></i>. Regarding the <i>Cryson: contrast of the hydration shell</i> field, it is automatically computed from the D<sub>2</sub>O fraction (see Cryson manual), but the value proposed can be overridden by checking the checkbox provided and entering a different value.<p>
 
 <hr>
@@ -159,7 +161,7 @@ The <i>Dummy atom PDB's in NM</i> checkbox is used when uploading bead models wh
 
 <hr>
 <p><center>
-<img SRC="somo-SAS_Guinier_Options.png" ALT="SOMO SAS Guinier options">
+<img SRC="somo-SAS_Guinier_Options_new.png" ALT="SOMO SAS Guinier options">
 </center>
 <p>
 In the <b><i>SAS Guinier Options</i></b> menu, the options controlling the Guinier analysis of SAS data can be set, and the various operational modes can be then launched. After setting/revising the options and the parameters, three different Guinier analyses can be launched by pressing "Process Guinier" (conventional Guinier, ln[<i>I(q)</i>]&nbsp;vs.&nbsp;<i>q<sup>2</sup></i>), "Process CS Guinier" (cross-section Guinier for rod-like particles, ln[<i>q&nbsp;I(q)</i>]&nbsp;vs.&nbsp;<i>q<sup>2</sup></i>), or "Process TV Guinier" (transverse Guinier for disk-like particles, ln[<i>q<sup>2</sup>&nbsp;I(q)</i>]&nbsp;vs.&nbsp;<i>q<sup>2</sup></i>), respectively. <p>
@@ -202,7 +204,11 @@ The <b><i>Minimum number of points:</i></b> to be included in the analysis (defa
 The <b><i>Maximum number of points:</i></b> to be included in the analysis (default: <b>100</b>).<p>
 </ul><p>
 
-The <b><i>MW and M/L computation options</i></b> section deals with the parameters that are necessary to perform a correct calculation of <i>&lt;M&gt;<sub>w</sub></i> or <i>&lt;M/L&gt;<sub>w/z</sub></i> or <i>&lt;M/A&gt;<sub>w/z</sub></i>. The conversion from the corresponding experimental <i>&lt;I<sub>exp</sub>(0)&gt;<sub>w</sub></i> value is done by first putting the data on an absolute scale by normalizing for the intensity extrapolated to 0 scattering angle of a known standard, <sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub>, according to:<p>
+The <b><i>MW and M/L computation options</i></b> section deals with the parameters that are necessary to perform a correct calculation of <i>&lt;M&gt;<sub>w</sub></i> or <i>&lt;M/L&gt;<sub>w/z</sub></i> or <i>&lt;M/A&gt;<sub>w/z</sub></i>. <p>
+
+<span style="color:#CC0000">Note: from the July 2024 release, the calculations necessary to put the experimental data on an absolute scale can be done directly in the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</i></b></a> module, generating what we have called "<i>I</i>#(<i>q</i>)" and "<i>I</i>*(<i>q</i>)" datasets/files. These files will be automatically recognized and no further calculations will be performed on them, except using an entered concentration for the "<i>I</i>#(<i>q</i>)" datasets.</span><p>
+
+Otherwise, the conversion from the corresponding experimental <i>&lt;I<sub>exp</sub>(0)&gt;<sub>w</sub></i> value is done by first putting the data on an absolute scale by normalizing for the intensity extrapolated to 0 scattering angle of a known standard, <sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub>, according to:<p>
 
 <img SRC="somo-SAXS_norm_eq1.png" ALT="Normalization for SAXS"> <p>
 
@@ -210,10 +216,9 @@ Then the reduced <sub><sub><sub><img SRC="somo-SAXS_I0_star.png" ALT="I(0)* for 
 
 <img SRC="somo-SAXS_norm_eq2corr.png" ALT="I(0)* calculation for SAXS"> <p>
 
-where <i>N</i><sub>A</sub> is Avogadro's number, <i>c</i> is the sample concentration [mg&nbsp;ml<sup>-1</sup>], <i>R<sub>e</sub></i> is the diffusion length of the electron [cm], <i>m<sub>n</sub></i> is the nucleon mass [g], <sub><sub><sub><sub><img SRC="vbar_symbol.png" ALT="vbar symbol"></sub></sub></sub></sub> is the partial specific volume of the particle [cm<sup>3</sup>&nbsp;g<sup>-1</sup>], &rho;<i><sub>e</sub></i> is the solvent electron density [e/cm<sup>3</sup>], and Z and A are the number of electrons and of nucleons, respectively, in the particle, whose ratio is usually taken as a constant specific for each class of biomacromolecules. <p>
+where <i>N</i><sub>A</sub> is Avogadro's number, <i>c</i> is the sample concentration [mg&nbsp;ml<sup>-1</sup>], <i>R<sub>e</sub></i> is the diffusion length of the electron [cm], <i>m<sub>n</sub></i> is the nucleon mass [g] (<span style="color:#CC0000">note: from 2019, this value by default is taken as 1/<i>N</i><sub>A</sub></span>), <sub><sub><sub><sub><img SRC="vbar_symbol.png" ALT="vbar symbol"></sub></sub></sub></sub> is the partial specific volume of the particle [cm<sup>3</sup>&nbsp;g<sup>-1</sup>], &rho;<i><sub>e</sub></i> is the solvent electron density [e/cm<sup>3</sup>], and Z and A are the number of electrons and of nucleons, respectively, in the particle, whose ratio is usually taken as a constant specific for each class of biomacromolecules. <p>
 <p>
-If a series of SAXS curves have been uploaded in the SAS module (for instance, from the HPLC-SAXS data processing module), it is possible to set/modify their associated parameters by pressing the <i><b>Set Curve Concentration, PSV, I0 standard experimental</b></i> button (see 
- <a href="somo_saxs_conc.html">here</a>).<p>
+If a series of <i>I</i>(<i>q</i>) SAXS curves have been uploaded in the SAS module (for instance, from the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</i></b></a> module), it is possible to set/modify their associated parameters by pressing the <i><b>Set Curve Concentration, PSV, I0 standard experimental</b></i> button (see <a href="somo_saxs_conc.html">here</a>). As stated above, for already fully pre-processed <i>I</i>*(<i>q</i>) datasets, proper values for these parameters were already employed, and will just be shown by accessing this module. The same partially holds for <i>I</i>#(<i>q</i>) datasets, for which a <i>c</i> value can instead be entered.<p>
 When no parameters are entered via the <i><b>Set Curve Concentration, PSV, I0 standard experimental</b></i> module, the program will utilize the values as set in this section of the <b><i>Guinier Options</b></i> module, which also contains the other parameters necessary for the computation of the <i>&lt;M&gt;<sub>w</sub></i> or <i>&lt;M/L&gt;<sub>w/z</sub></i> or <i>&lt;M/A&gt;<sub>w/z</sub></i> values. In particular:<p>
 <ul>
 <li>
@@ -225,13 +230,13 @@ The <b>Default diffusion length (cm)</b> is set here. (Default: <b>2.82 &times; 
 <li>
 The default <b>Electron/nucleon ratio Z/A</b> is set here. (Default: <b>1.87</b>; average value for proteins).<p>
 <li>
-The default <b>Nucleon mass (g)</b> is set here. (Default: <b>1.674 &times; 10<sup>-24</sup> g</b>).<p>
+The default <b>Nucleon mass (g)</b> is set here. (Default: <b>1.6606 &times; 10<sup>-24</sup> g</b>).<p>
 <li>
 By selecting the <i>Use I0 standards for normalization</i> checkbox, the <sub><sub><sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub></sub></sub> experimental value and its theoretical value under the same experimental (T, pressure) conditions will be used to normalize the SAXS data.<p>
 <li>
-The <b>Default I0 standard experimental (a.u.)</b> will be used if a <sub><sub><sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub></sub></sub> is not associated with the data, or entered via the <a href="somo_saxs_conc.html"><i><b>Set Curve Concentration, PSV, I0 standard experimental</b></i></a> module. (Default: <b>0.01633 a.u.</b>; this value is set equal to the default value for water at 20 &deg;C, the standard used in US-SOMO, see below).<p>
+The <b>Default I0 standard experimental (a.u.)</b> will be used if a <sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub> is not associated with the data, or entered via the <a href="somo_saxs_conc.html"><i><b>Set Curve Concentration, PSV, I0 standard experimental</b></i></a> module. (Default: <b>0.01633 a.u.</b>; this value is set equal to the default value for water at 20 &deg;C, the standard used in US-SOMO, see below).<p>
 <li>
-The <b>I0 standard theoretical (cm^-1)</b> refers to the absolute <sub><sub><sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_abs_std.png" ALT="I(0)std abs for SAXS"></sub></sub></sub></sub></sub></sub></sub> for the chosen standard. The default value (<b>0.01633 cm<sup>-1</sup></b>) is that for H<sub>2</sub>O at 20 &deg;C.
+The <b>I0 standard theoretical (cm^-1)</b> refers to the absolute <sub><sub><sub><img SRC="somo-SAXS_I0_abs_std.png" ALT="I(0)std abs for SAXS"></sub></sub></sub> for the chosen standard. The default value (<b>0.01633 cm<sup>-1</sup></b>) is that for H<sub>2</sub>O at 20 &deg;C.
 <p>
 </ul>
 <p>
@@ -297,7 +302,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 7, 2023.
+Last modified on June 25, 2024.
 </font>
 </body>
 </html>

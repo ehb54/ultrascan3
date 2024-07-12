@@ -3,8 +3,8 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO HPLC-SAXS Module Make I(q) Panel</title>
-	<link href="mainstyle1.css" rel="styleSheet" type="text/css">
+	<title>SOMO HPLC/KIN Module Make I(q) Panel</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
 <table BORDER=0 CELLPADDING=5 >
@@ -21,29 +21,34 @@
 <hr>
 <center>
 <h2>
-SOMO HPLC-SAXS Module Make I(q):</h2></center>
-<h3><center>Last updated: January 2018 </center></h3><p>
-
-<p><center>
-<img SRC="somo-HPLC-SAXS_Make_Iq.png" ALT="SOMO HPLC-SAXS Make I(q) panel">
+SOMO HPLC/KIN Module Make I(q):</h2></center>
+<h3><center>Last updated: July 2024 </center></h3><p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-KIN_Make_Iq.png" ALT="Somo-HPLC/KIN Make I(q)" width="1000"></td>
+</tr> 
+</table>
 </center>
+<td align=justify>
 <p>
 
-This pop-up panel will appear when the <b><i>Make I(q)</i></b> button is pressed in the main <b><i>HPLC-SAXS</i></b> module. <p>
+This pop-up panel will appear when the <b><i>Make I(q)</i></b> button is pressed in the main <b><i>HPLC/KIN</i></b> module. <p>
 
-Three main options are present in this panel:<p>
+Several options are present in this panel:<p>
 
 <ul>
 
 
 <li>
-The first checkbox <i>Create sum of peak curves</i> allows to check that the individual Gaussian will add back up reconstructing the original <i>I(q)</i> vs. <i>q</i> curves. If checked, their point-wise sum can also be saved, as either <i>sum(I)</i> (reconstructed values) and <i>sum(G)</i> (pure Gaussians) curves. If  baselines were established and subtracted, two sums will be produced, without and with baseline back-addition (default: <b>unchecked</b>). If the <i>integral</i> baseline procedure was employed, the back-addition will work properly only if the exact integration limits are still present, e.g., if no cropping operation was performed after the baseline correction. For this reason, a <b>Warning</b> message is printed below this checkbox.<p>
+The first checkbox <i>Create sum of peak curves</i> allows to check that the individual Gaussian will add back up reconstructing the original <i>I(q)</i> vs. <i>q</i> curves. If checked, their point-wise sum can also be saved, as either <i>sum(I)</i> (reconstructed values) and <i>sum(G)</i> (pure Gaussians) curves. If  baselines were established and subtracted, two sums will be produced, without and with baseline back-addition (default: <b>unchecked</b>). If the <i>integral</i> baseline procedure was employed, the back-addition will work properly only if the exact integration limits are still present, e.g., if no cropping operation was performed after the baseline correction. For this reason, a <b>Warning</b> message is printed below this checkbox (<b>default: unchecked</b>).<p>
 
 <li>
-<i>Add SD computed %-wise from the difference between the sum of Gaussians and original I(q)</i>. In all cases, the original errors associated with each <i>I(q)</i> vs. <i>q</i> point in each frame will assigned to each point in the resulting decomposed <i>I(q)</i> vs. <i>q</i> curves for each frame. Alternatively, if this checkbox is checked a new set of additional errors are computed by point-wise calculating the difference between the sum of the Gaussians and the original, baseline-corrected curve. These additional SDs are then assigned %-wise to each point in the decomposed <i>I(q)</i> vs. <i>q</i> curves, and the new total SDs are calculated at each point by taking the square root of the sum of the square of the original SD plus the square of the Gaussian-derived SD (default: <b>checked</b>).<p>
+<i>Add SD computed %-wise from the difference between the sum of Gaussians and original I(q)</i>. In all cases, the original errors associated with each <i>I(q)</i> vs. <i>q</i> point in each frame will assigned to each point in the resulting decomposed <i>I(q)</i> vs. <i>q</i> curves for each frame. Alternatively, if this checkbox is checked a new set of additional errors are computed by point-wise calculating the difference between the sum of the Gaussians and the original, baseline-corrected curve. These additional SDs are then assigned %-wise to each point in the decomposed <i>I(q)</i> vs. <i>q</i> curves, and the new total SDs are calculated at each point by taking the square root of the sum of the square of the original SD plus the square of the Gaussian-derived SD (<b>default: unchecked</b>).<p>
 </ul>
 
-If in computing the SD of the <i>I(t)</i> data zeros are produced, an additional line will be present in this panel, as shown above.<p>
+If while computing the SD of the <i>I(t)</i> data zeros are produced, an additional line will be present in this panel, as shown above.<p>
 
 The extra line reads <i>If zeros are produced when computing SDs:</i> and then offers two options:<p>
 
@@ -53,13 +58,11 @@ The extra line reads <i>If zeros are produced when computing SDs:</i> and then o
 <i>Average adjacent SDs</i>. An average between the SD of the previous and following datapoints will be made and assigned to the data point in question (<b>default option</b>).<p>
 <li>
 <i>Set to 0.1% of peak's I(q)</i>. The corresponding <i>I(q)</i> points will have 0.1% SD.<p>
-</ul>
-<p>
 
-The third option was recently added (January 2018):
-<ul>
 <li>
-The checkbox <i>Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity"</i>, allow to automatically select a number of frames whose intensity (as defined by the associated Gaussian) is within a % value of the top frame intensity, as defined in its associated field (default: <b>unchecked</b>, with <b>5%</b> as the limiting value). All frames selected according to this criterion for each Gaussian-defined peak are first normalized (if an associated concentration file is present; see below), and then averaged. This feature, introduced for the January 2018 release, makes it quite simple to automatically generate averaged datasets after a Gaussian decomposition, without the need to manually check the resulting chromatograms to decide which frames to include in the averages.
+The checkbox <i>Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity"</i>, allow to automatically select a number of frames whose intensity (as defined by the associated Gaussian) is within a % value of the top frame intensity, as defined in its associated field (default: <b>unchecked</b>, with <b>5%</b> as the limiting value). All frames selected according to this criterion for each Gaussian-defined peak are first normalized (if an associated concentration file is present; see below), and then averaged. This feature, introduced for the January 2018 release, makes it quite simple to automatically generate averaged datasets after a Gaussian decomposition, without the need to manually check the resulting chromatograms to decide which frames to include in the averages.<p>
+<li>
+The checkbox <i>Make I*(q) using the concentration curve "filename"?</i> is introduced from the  <span style="color:#CC0000">July 2024 intermediate release</span>, to cope with the possibility of having already converted the original <i>I</i>(<i>q</i>) vs. <i>q</i> data into <i>I*</i>(<i>q</i>) vs. <i>q</i> data, where the <i>I*</i> data are in [g/mol] units. Such conversion is usually done for kinetics data where the concentration is equal for all frames (<b>default: unchecked</b>).<p>
 </ul>
 <p>
 
@@ -71,19 +74,19 @@ If a concentration chromatogram has been associated to the SAXS data, an additio
 The first deals with the new concentration chromatogram re-shaping routine. The question asked is <i>Do you want to set the concentration file Gaussian centers, widths and skewness to the SAXS-optimized values, adjusting the amplitudes and keeping the areas constant?</i><br>
 A series of considerations and warnings follow. The first states that using this procedure implies that all species that were defined as Gaussians contributing to the SAXS signal also contribute to the concentration signal. If this condition is not met, e.g., when a non-absorbing component is present and a spectrophotometric concentration detector is used, appling this correction can lead to serious mistakes.<br>
 In <span style="color:#CC0000">red</span> then comes a <span style="color:#CC0000">warning: Be aware that this option will result in an apparent mass artificially approximately constant along each of the deconvoluted Gaussian peaks, reflecting just the oscillations in the original SAXS data.</span><br>
-However, the apparent average mass for each peak should be a closer approximation to the real value when significant band broadening occurs between the concentration and the SAXS detectors.<p>
+However, the apparent average mass for each peak should be a closer approximation to the real value when significant band broadening occurs between the concentration and the SAXS detectors (<b>default: checked</b>).<p>
 
 <li>
 
-<i>I0 standard experimental value (a.u.):</i>. A normalization factor from a standard sample to be associated with the data can be also entered here. If this checkbox is checked, its value will be associated in each resulting <i>I(q)</i> vs. <i>q</i> curve (default: <b>unchecked</b>).<p>
+<i>Data already normalized. I0 standard experimental value (a.u.):</i>. A normalization factor from a standard sample to be associated with the data can be also entered here. If this checkbox is checked, its value will be associated in each resulting <i>I(q)</i> vs. <i>q</i> curve (default: <b>unchecked</b>).<p>
 
 <li>
-Finally, a calculated concentration can be associated to each of the resulting <i>I(q)</i> vs. <i>q</i> curves. This is done by entering an extinction coefficient (or a <i>dn/dc</i>) for each Gaussian. In addition, a partial specific volume (<i>psv</i>) value, needed for the computation of the &lt;<i>M</i>><i><sub>w</sub></i>, &lt;<i>M</i>&#47;<i>L</i>><i><sub>w/z</sub></i>, and &lt;<i>M</i>&#47;<i>A</i>><i><sub>w/z</sub></i> by Guinier analysis in the main <b>US-SOMO <i>SAS module</i></b>, can be also entered here. The module will present as many fields as the Gaussians used to decomposed the data. If all the Gaussians represent a species with the same extinction coefficient (or <i>dn/dc</i>) and <i>psv</i>, the values need to be entered only once in the 1st Gaussian fields, and then they can be propagated to all the other fields by pressing the <b><i>Duplicate Gaussian 1 values globally</i></b> button. The concentration value will be used either by the automatic frames-to-be-averaged selector described above, or when the <b><i>Normalize</b></i> button in the main <b>HPLC-SAXS</b> module is pressed after dataset selection.<p>
+Finally, a calculated concentration can be associated to each of the resulting <i>I(q)</i> vs. <i>q</i> curves. This is done by entering an extinction coefficient (or a <i>dn/dc</i>) for each Gaussian. In addition, a partial specific volume (<i>psv</i>) value, needed for the computation of the &lt;<i>M</i>><i><sub>w</sub></i>, &lt;<i>M</i>&#47;<i>L</i>><i><sub>w/z</sub></i>, and &lt;<i>M</i>&#47;<i>A</i>><i><sub>w/z</sub></i> by Guinier analysis in the main <b><i>US-SOMO SAS module</i></b>, can be also entered here. The module will present as many fields as the Gaussians used to decompose the data. If all the Gaussians represent a species with the same extinction coefficient (or <i>dn/dc</i>) and <i>psv</i>, the values need to be entered only once in the 1st Gaussian fields, and then they can be propagated to all the other fields by pressing the <b><i>Duplicate Gaussian 1 values globally</i></b> button. The concentration value will be used either by the automatic frames-to-be-averaged selector described above, or when the <b><i>Normalize</b></i> button in the main <b><i>HPLC/KIN</b></i> module is pressed after dataset selection.<p>
 </ul>
 
 It is also possible to back-generate an <i>I(q)</i> vs. <i>q</i> set without using the Gaussian decomposition by pressing the <b><i>Make I(q) without Gaussians</i></b> button.<p>
 
-For normal operation, once all fields/checkboxes have been properly set, pressing <b><i>Continue</i></b> will return to the main <b><i>HPLC-SAXS</i></b> window and start the make <i>I(q)</i> process.
+For normal operation, once all fields/checkboxes have been properly set, pressing <b><i>Continue</i></b> will return to the main <b><i>HPLC/KIN</i></b> window and start the make <i>I(q)</i> process.
 
 
 
@@ -104,7 +107,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on January 5, 2018.
+Last modified on July 10, 2024.
 </font>
 </body>
 </html>

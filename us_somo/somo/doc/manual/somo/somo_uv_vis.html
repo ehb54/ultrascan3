@@ -1,0 +1,615 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO SAXS/SANS (SAS) UV-Vis Module</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - SAXS/SANS (SAS) UV-Vis Module</h2>
+<p>
+<p>
+<h3><center>Last updated: June 2024 </center></h3><p>
+</center>
+
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=0 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_main.png" ALT="Somo-SAS UV-Vis module main screen"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This module is made available from the <span style="color:#CC0000">July 2024 release</span>, and was developed for the analysis of time-and wavelength-resolved absorbance data collected with either a <i>Diode Array Detector</i> (<i>DAD</i>) or a <i>Charged-Coupled Device</i> (<i>CCD</i>). These data are originally produced as a matrix-format array containing in columns the absorbance values as a function of time for each wavelength covered by the detector, and in lines their values as a function of wavelength. The <b><i>UV-Vis</i></b> module will first generate individual <i>Absorption</i> vs. <i>time</i> (<i>A</i>(<i>t</i>) vs. <i>t</i>) files for each <i>wavelength</i> present, which can be subsequently transposed into <i>Absorption</i> vs. <i>wavelength</i> (<i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i>, where &lambda; is the greek symbol for wavelength) for each available <i>time</i> point.<p>
+
+At the top of the left-side panel, you can pre-select a directory where your data are stored. Clicking on this field (shown in the picture above is the <i>/home/ultrascan/ultrascan/somo/saxs</i> path) will open a directory navigator where you can selected another directory. Checking the <i>Lock</i> checkbox will make the selected directory the default one upon re-starting the application.<p>
+
+In the bottom command bar, some important options can be set, as described <a href=us_vis_options.html>here</a>, by pressing the <i><b>Options</b></i> button. It is advisable to check them before proceeding with data processing.<p>
+
+To begin with data processing, in the current set-up you first have to load a file where the wavelengths covered by your <i>DAD</i> or <i>CCD</i> are listed. The current format for this file is a single column listing all the wavelengths sequentially (separated by character return).<br>
+Use the <b><i>Add files</i></b> button to navigate the directory tree until you find the wavelengths-containing file. Upon loading, in the progress window at the bottom left side of this module a message will be printed listing the number of wavelengths and the [starting:ending] wavelengths:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_loadwl.png" ALT="Somo-SAS UV-Vis module wavelengths loaded message"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+You can now load your array containing the <i>Absorption</i> vs. <i>time</i> data for each <i>wavelength</i>, by using again the <b><i>Add files</i></b> button to navigate the directory tree (note: you can also use the <b><i>Add Dir.</i></b> to directly select a directory, but you must be sure that it contains only the single file with your array). Upon choosing a file, to avoid potential mismatches a message will pop-up alerting the user of the already loaded wavelengths:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_checklambdas.png" ALT="Somo-SAS UV-Vis module check wavelengths loaded message"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing <i>Yes</i> will allow the program to proceed. To avoid loading data collected for wavelengths that will not be utilized in the subsequent analyses, another pop-up window will present the option of subselecting a range of wavelengths for loading the corresponding <i>Absorption</i> vs. <i>time</i> data:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_subselectlambdas.png" ALT="Somo-SAS UV-Vis module subselect wavelengths for data loading message"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In this example, we restrict the data to the to the 220-600 nm wavelength interval, and we will proceed by pressing <i>Ok</i>. Pressing <i>Cancel</i> will instead load the data for the full wavelength range. A final pop-up window will then let you define the <i>starting time</i> (0 in this example) and the <i>collection interval</i> (1 s in this example) for the data that, we remind, are stored in a file as an array containing the <i>Absorption</i> values at each <i>wavelength</i> in lines, and their <i>time-evolution</i> in columns (a column containing the <i>times</i> is not present in this format):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_definetimes.png" ALT="Somo-SAS UV-Vis module define times for data loading message"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing <i>Ok</i> will finally launch the data loading, populating the upper left-hand window with the data labels (format "<i>originalfilename</i>_UV-Vis_At_Lxxx_xxx", where "L" stands for "lambda" and "xxx_xxx" is the wavelength at which that particular <i>Absorption</i> vs. <i>time</i> data sequence was recorded. At the same time, the <i>Progress bar</i> in the bottom row will signal the advancement of data loading:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_dataloading.png" ALT="Somo-SAS UV-Vis module data loading snapshot"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Note that since individual files are created from the loaded array containing the <i>Absorption</i> vs. <i>time</i> data for each <i>wavelength</i>, the <i><b>Produced data</i></b> section is also being populated with the same filenames. The completion of the loading process is then signaled in the progress window at the bottom left:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_dataloaded.png" ALT="Somo-SAS UV-Vis module data loading message"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Pressing <b><i>Select all</i></b> will show the entire loaded dataset in the graphics window:
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_selectall.png" ALT="Somo-SAS UV-Vis module full dataset loaded visualization"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In this case, we are dealing with a baseline region followed by the injection of a sample. The graphic window now has the correct labels for the <i>x</i> (<b>Time [s]</b>) and <i>y</i> (<b>A(t) [a.u.]</b> axes. The list of the loaded data can be scrolled using the right-hand bar, and for long data filenames (such as in this case) the full wavelength values, which are positioned at the end of the filename, can be revealed by scrolling with the bottom bar, as done in the picture above.<br>
+Pressing again <b><i>Select all</i></b> will unselect all selected data.<br>
+The content of each file can be visualized in a text format by pressing <b><i>View Selected</i></b> (no editing is allowed). Note that if multiple files are selected, each one will be opened in a separate viewer; however, <b><i>View Selected</i></b> becomes unavailable if ten or more files are selected.<br>
+Since upon loading the initial array has been subdivided into single <i>Absorption</i> vs. <i>time</i> data for each <i>wavelength</i>  files, on pressing <b><i>Remove files</i></b> a pop-up panel will be shown asking what action should be taken:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_removefiles.png" ALT="Somo-SAS UV-Vis module remove files options"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<i>Save them now</i> will open up the directories navigator for saving the newly created individual files, <i>Remove them anyway</i> will clear all the selected files</i>, <i>Quit from removing files</i> will abort this operation.<br>
+Individual files can be selected and visualized by clicking on them in the file list, holding "<i>Shift</i>" while clicking on separate files will select and visualize also all files in between the selected ones, holding "<i>Ctrl</i>" while clicking on separate files will select and visualize just those files, as shown in the example below:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_twofiles_selected.png" ALT="Somo-SAS UV-Vis module selecting two files"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+For the image above, the <b><i>Legend</i></b> button in the top row above the graph has also been pressed, resulting in the two selected files filenames being shown below the graph.<br>
+As with all the <b><i>US-SOMO</i></b> graphics windows, graph regions can be zoomed-in with the mouse (holding the left mouse button), and zoomed-back in steps by clicking on the mouse right button. Pressing the <b><i>Rescale XY</i></b> or <b><i>Rescale Y</i></b> buttons in the top bar above the graph will also provide other means of rescaling.<br>
+<b><i>Log X</i></b> and <b><i>Log Y</i></b> will change the respective axes to log<sub>10</sub> scales, and the buttons will then be re-labeled <b><i>Lin X</i></b> and <b><i>Lin Y</i></b>, respectively; pressing them again will then revert the respective axes to linear scaling.<br>
+The default data visualization mode is by lines connecting the data points. It can be changed to individual points (squares) mode by checking the <i>Dots</i> checkbox; the <i>Err</i> checkbox will show the points as empty diamonds with their associated <i>y</i>-axis standard deviations, if present, as vertical bars. <b><i>Width</i></b> will lead to a stepwise increase of the width of either lines or symbols for four cycles, reverting then to the original width. <b><i>Color</i></b> will sequentially change the color of each shown data set each time it is pressed.<p>
+All the above functions belong to the <i>Options</i> set as selected by the round checkbox of the <i><b>Plot buttons</i></b> row positioned above the buttons bar.<br> 
+Checking the <i>Selections</i> checkbox will change the buttons bar to four new buttons: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_selections_checkbox.png" ALT="Somo-SAS UV-Vis module Selection checkbox new buttons bar"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<b><i>Select visible</i></b> will become active (the <span style="color:#CC0000">red color</span> on the labels signals no availability at the moment) once a part of the graph has been selected (zoomed) with the mouse. It is a practical way of selecting just one of a few of the dataset shown in the graph, and will affect the selected files listed in the top left panel.<br>
+Likewise, <b><i>Remove visible</i></b> will become active  once a part of the graph has been selected (zoomed) with the mouse. pressing it will lead to the same pop-up panel as described above if the selected data have NOT yet been saved.<br>
+For both those buttons, cliking on the mouse righ button thus reverting to the full graph will make them inactive.<br>
+<b><i>Save plots</i></b> will open up the directories browser where a location and a filename can be chosen to save all the data currently shown in the graphics window as a csv-formatted file.<p>
+
+Checking the <i>Cropping</i> checkbox will change the buttons bar to seven new buttons: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_cropping_checkbox.png" ALT="Somo-SAS UV-Vis module Cropping checkbox new buttons bar"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+As for the <i>Selections</i>, the <i>Cropping</i> buttons become all available when a part of the graph is selected using the mouse/left button, (only <b><i>Crop Zeros</i></b> and <b><i>Crop Common</i></b> are available when files are just displayed after selection).<p>
+
+<b><i>Crop Common</i></b> will crop all selected files so that they have identical <i>x</i>-axis values by dropping points outside of the union of all selected file's <i>x</i>-axis values.<br>
+<b><i>Crop Vis(ible)</i></b> will remove what is shown in the graphics window. For instance, this is practical way to trim the data on the <i>x</i>-axis.<br>
+<b><i>Crop to Vis(ible)</i></b> will select <b>only</b> what is shown in the graphics window after zooming with the mouse.<br>
+<b><i>Crop Zeros</i></b> will remove data having zero or negative values in the intensity columns (<span style="color:#CC0000">discouraged: a warning panel will pop-up, asking the user whether she/he really wants to proceed, since experimental zero or negative values can have statistical significance</span>).<br>
+<b><i>Crop Left</i></b> and <b><i>Crop Right</i></b> will remove one point on the left or right of the selected data, respectively.<br>
+<b><i>Undo</i></b> will undo the last cropping action performed.<p>
+
+Checking the <i>S.D. Util.</i> checkbox will change the buttons bar to two new buttons: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_SDutil_checkbox.png" ALT="Somo-SAS UV-Vis module S.D. utility checkbox new buttons bar"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This utility was devised to better evaluate the associated SD in SEC-SAXS chromatograms (see <a href=somo_saxs_hplc.html>here</a>). As most <i>DAD</i> or <i>CCD</i>-generated data do not carry any SD information, it could be useful to define them by analyzing flat regions of time-dependent absorbance and evaluating the oscillations in their values.
+By pressing the <b><i>SD eval.</b></i> button, two vertical red lines will be superimposed on the initial region of the chromatogram, and two red-background fields controlling their position will appear in the bottom row of the commands below the graphics window:<p>
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_SDutil_defineregion.png" ALT="Somo-SAS UV-Vis module SD evaluation define region"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+An additional checkbox, <i><b>2 regions</i></b>, if selected will duplicate the vertical lines and their associate fields (colored magenta this time), allowing to utilize more than one flat region for the SD estimation (not shown).<p> 
+
+The SD evaluation is carried out by fitting the data included between each zone with a 3<sup>rd</sup> degree polynomial, and taking the RMSD of the fit as the SD. If two regions are chosen, the final SD will be an average between the values computed from each region.<p>
+
+After adjusting the zone(s) for the SD evaluation, pressing <b><i>Keep</i></b> will accept the values, and the <b><i>SD apply</i></b> button becomes available. Pressing it will apply the SD calculation to any selected <i>A</i>(<i>t</i>) dataset, generating files with the extension <i>"_sde"</i>.<p>
+
+In this example, the SD were evaluated in a baseline region at a wavelength where no changes were recorded in the experiment's time frame, and then applied to the <i>A</i>(<i>t</i>) data at &lambda;=280.066 nm. In the image below, these <i>A</i>(<i>t</i>) data with SD (green) are compared with the ones without SD (white) at the very close &lambda;=280.436 nm in a restricted time interval:
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_SDutil_applied.png" ALT="Somo-SAS UV-Vis module SD evaluation applied example"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Checking the <i>UV-Vis info</i> checkbox will list first the source of the wavelengths for the current dataset, then their number and range, followed by the chosen wavelength with its associated extinction coefficient:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_info.png" ALT="Somo-SAS UV-Vis module SD wavelengths and associated info"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Finally, checking the <i>None</i> checkbox will make all the buttons disappear.<p>
+
+At the bottom of the graphics window there are four buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_bottom_bar.png" ALT="Somo-SAS UV-Vis module bottom bar buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<i><b>Residuals</i></b> will become active when two files have been selected, and pressing it will compare them showing their differences in an additional graph below the main one:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_residuals.png" ALT="Somo-SAS UV-Vis module residuals"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+checking <i>Reverse</i> will reverse the order of the comparison, while checking <i>By percent</i> will show their % difference instead of the absolute values (not shown). Pressing again <i><b>Residuals</i></b> will exit from this function.<p>
+
+<i><b>PVP Analysis</i></b> is not (yet) available for the current (<span style="color:#CC0000">July 2024</span>) <i><b>US-SOMO</i></b> release.<p>
+
+<i><b>Cancel</i></b> and <i><b>Keep</i></b> are buttons that become available when other functions are enabled (see below).<p>
+
+Returning to the commands on the left-side, below the list of loaded data files, the <i><b>Adv. Sel.</i></b> button will open up a module where advanced selection options are available:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_AdvSel.png" ALT="Somo-SAS UV-Vis module Advanced Selection module"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The user can consult the <b>Help</b> present for the same functions in the HPLC/KIN module of <i><b>US-SOMO</i></b>, see <a href=saxs_hplc_nth.html>here</a>.<p>
+
+The <i><b>Average</i></b> button is not available for <i>A</i>(<i>t</i>) vs. <i>t</i>) data, its use will be described when dealing with <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> data (see below).<p>
+
+<i><b>Bin</i></b> can be used to reduce the number of time points in <i>A</i>(<i>t</i>) vs. <i>t</i> files. On pressing it, a pop-up panel will ask the number of points to be used for binning:
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Bin.png" ALT="Somo-SAS UV-Vis module Bin pop-up question"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+After choosing a suitable bin size, on pressing <i>Ok</i> a new series of the selected files will be produced with extension "<i>-bin#</i>", with "#" being the number of points chosen. The newly-generated files will be automatically selected and shown in the graphics window. <i>Cancel</i> will abort the operation.<p>
+
+<i><b>Smooth</i></b> can be used to treat particularly noisy data. On pressing it, a pop-up panel will ask the number of points to be used for smoothing: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Smooth.png" ALT="Somo-SAS UV-Vis module Smooth pop-up question"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+After choosing a suitable number of points over which the smoothing is to be applied, on pressing <i>Ok</i> a new series of the selected files will be produced with extension "<i>-sm#</i>", with "#" being the number of points chosen. The newly-generated files will be automatically selected and shown in the graphics window. <i>Cancel</i> will abort the operation.<p>
+
+<i><b>Baseline</i></b> is a function that is used to define a region of a single <i>A</i>(<i>t</i>) vs. <i>t</i> file to be averaged and subsequently subtracted to the entire file. Pressing it will add some functions at the bottom of the graphics window:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Baseline.png" ALT="Somo-SAS UV-Vis module Smooth Baseline fit"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+After zooming in a candidate region, two vertical pink bars can be moved either by entering times in the pink-colored <i>Fit range:</i> boxes, or by acting with the mouse on the white-to-cyan-scale bar-wheel below the graph (the <i><b>Legend</i></b> has been enabled for this image) after having clicked on one of the pink boxes, or by clicking on the the "&lt;" and "&gt;" buttons placed at its sides. The green solid line will appear automatically on setting the limits, showing the current average between the points in the selected interval, whose value is also reported at the bottom. The <i><b>Fit</b></i> button can be used if the green line does not appear automatically.<br>
+The <i><b>Create baseline subtracted Curve</b></i> button can be used to generate the baseline-subtracted curve for the current file (not shown in the graphics window, only appended to the files list in the left-hand side panel; the filename will the the same with appended "<i>_blc#_#######</i>", with "#_#######" being the subtracted baseline average value).<br>
+Pressing <i><b>Cancel</b></i> will exit from the <i>Baseline</i> function <i>without</i> retaining the chosen baseline region.<br>
+Pressing <i><b>Keep</b></i> will instead save the chosen baseline region limits, which can then be used to generate baseline-subtracted curves for any other loaded data files.<br>
+The effect on subtracting a baseline can be seen in the image below, where the evident drifting of the <i>A</i>(<i>t</i>) vs. <i>t</i> values at the selected wavelength have been offset, allowing a correct determination of the absorbance of the sample at the time of sample injection:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Baseline_sub_comp.png" ALT="Somo-SAS UV-Vis module comparison of curves after baseline correction"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+If a <i>baseline</i> has been defined on a file, and <i>kept</i>, the <i><b>Baseline apply</b></i> button can be used to generate baseline-subtracted curves, Any number of files can be simultaneuosly selected and then baseline-corrected. The module will evaluate the average baseline value for each file using the common baseline region as defined in the original file. The newly generated, baseline subtracted curves (with their names appended as explained above) will be then automatically shown in the graphics window:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Multiple_Baseline_sub.png" ALT="Somo-SAS UV-Vis module multiple baseline-subtracted data"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The <i><b>Concentration</b></i> and <i><b>Make A(t)</b></i> buttons are available only when <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> data are selected (see below).<p>
+
+The <i><b>Make A(&lambda;)</b></i> button is used to transpose <i>A</i>(<i>t</i>) vs. <i>t</i> data into <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> data. At least two <i>A</i>(<i>t</i>) vs. <i>t</i> files must be selected before this button becomes available.<br>
+To demonstrate its usage, we will first crop the above-generated baseline-subtracted data, to remove the zone before sample injection. The first operation is to select with the mouse a large part of the no-sample region:
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_select_region.png" ALT="Somo-SAS UV-Vis module select region for cropping"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Pressing <i><b>Crop Vis</b></i> will make a pop-up panel appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_timeshift_question.png" ALT="Somo-SAS UV-Vis module asking to timeshift cropped data"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This function will allow to optionally reset the time axis to 0 after cropping, so that <i>t</i>=0 coincides with the sample injection. Press <i>No</i> to decline. If <i>Yes</i> is pressed, another pop-up panel will appear stating the details of the timeshift operation following cropping:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_timeshift_details.png" ALT="Somo-SAS UV-Vis module timeshift details for cropped data"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Press <i>Ok</i> to continue.<br>
+This operation can be repeated with a finer zooming, until the exact sample injection point is left as the data time origin:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_timeshifted_crop_data.png" ALT="Somo-SAS UV-Vis module timeshifted cropped data"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+We can now proceed with <i><b>Make A(&lambda;)</b></i>. At the end of the operation, the new files generated will have the extension "<i>AL_t_####</i>", where "####" reports the progressive time (note: in this particular case, since the data were baseline-subctrated, the extension is "<i>AL_t_bs####</i>"), and the <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> data are automatically shown in the graphics window:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Make_A_L_results.png" ALT="Somo-SAS UV-Vis module Make A(L) results"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The dangers of not carefully evaluating the zone for baseline correction can be seen by comparing the <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> at the same <i>t</i>=8 s without (lime green) and with (pink) baseline correction: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_comp_bs_nobs.png" ALT="Somo-SAS UV-Vis module comparing A(L) with/without baseline subtraction"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where an overcorrection in the 290-330 nm range can be seen for the baseline subtracted spectrum.<p>
+
+If two or more <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> are selected, the <i><b>Average</i></b> button becomes available. Pressing it will produce a pointwise (for each &lambda; value) average <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> file, containing also the SD of the mean, with extension "<i>f#_firstt_lastt</i>", where "#" is the number of files averaged, and "<i>firstt</i>","<i>lastt</i>" are the times associated with the first and the last averaged files.<p>
+
+Given the very fine <i>&lambda;</i> intervals usually provided by <i>DAD</i> or <i>CCD</i> detectors, <i><b>Bin</i></b> can also be utilized for <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> files to reduce the number of independent <i>&lambda;s</i>. See above for the <i><b>Bin</i></b> usage. 
+<p>
+
+<i><b>Concentration</i></b>, available when only a single <i>A</i>(<i>&lambda;</i>) vs. <i>&lambda;</i> file is selected, will open below the graphics window an advanced module for spectral analysis, including full scattering correction and concentration determination:
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Concentration_start.png" ALT="Somo-SAS UV-Vis module Calling the Concentration Utility"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The first thing one notices is that the &lambda; chosen for the concentration determination, the "standard" 280 nm at which extinction coefficients are calculated, indicated with the vertical red line labeled "&lambda;(abs)" in the graph, is not centered on the absorbance maximum. The extinction coefficient for this sample was therefore recalculated at the &lambda; maximum, 274 nm, and found to be 0.481 mL mg<sup>-1</sup> cm<sup>-1</sup>. These values were then entered in the <i>&lambda;(abs) [nm]</i> and <i>Extc. coeff. [mL/(mg*cm)]</i> fields, respectively. In addition, a &lambda; at which a simple scattering correction is evaluated, 320 nm, is entered in the <i>&lambda;(scat) [nm]</i> field. We can now see the vertical red line correctly positioned at the top of the absorbance peak, and a new vertical magenta line labeled "&lambda;(scat)" positioned at &lambda;=320 nm:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Concentration_start2.png" ALT="Somo-SAS UV-Vis module changing param in the Concentration Utility"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The <i>A(&lambda;,abs) [a.u.]</i> and <i>A(&lambda;,scat) [a.u.]</i> fields show the respective values as linearly interpolated from the absorbances read from the data at the closest wavelengths to those selected in the <i>&lambda;(abs) [nm]</i> and <i>&lambda;(scat) [nm]</i> fields.<br>
+The bottom line reports the concentration (<i>c, [mg/mL]</i>) calculated according to three different ways:<p>
+
+<ul>
+<li>
+<i>Uncorr.</i>: the "raw" calculation, just dividing the absorbance measured at the peak &lambda; (<i>A(&lambda;,abs) [a.u.]</i>) by the extinction coefficient;<p>
+
+<li>
+<i>Scat. corr.</i>: the absorbance at the scattering &lambda; (<i>A(&lambda;,scat) [a.u.]</i>) is subtracted to the absorbance measured at the peak &lambda; <i>A(&lambda;,abs) [a.u.]</i> before dividing by the extinction coefficient;<p>
+
+<li>
+<i>Full corr.</i>: in this procedure, described below, a full scattering curve is evaluated in an interval where no absorption is taking place, by fitting the absorbance data to the theoretical power law, <i>Abs</i>(&lambda;)=<i>A</i>+<i>B</i>*(&lambda;)<sup><i>-C</i></sup>, with <i>A</i>, <i>B</i>, and <i>C</i> the coefficients. The power law is then used to calculate a full scattering curve covering the entire wavelength range of the data, which is then pointwise subtracted to the original curve. The concentration is then calculated dividing the absorbance at the peak wavelength of the corrected spectrum by the extinction coefficient. However, since the refractive index of the solution and the differential increment of the solute refractive index <i>dn/dc</i> both change as a function of the wavelength, affecting the scattering by the solute, a <i>dispersion correction option</i> has also been implemented (<i>Disp. Corr.</i> checkbox; see below).<p>
+</ul>
+
+The first step in the <i>Full scattering correction</i> procedure is to define the wavelength range for the power law fit, marked by the movable vertical pink lines (labelled "Start" and "End") and/or entering values in the boxes with the pink background (the lines can be moved as described above for the <i><b>Baseline</i></b> function). By <b>default</b>, &lambda;=350 nm is taken as the lower wavelength, and the last wavelength available in the current data (600 nm in this example) is taken as the higher wavelength. The <i>A</i> coefficient, which governs the offset of the baseline, is initialized to 0, while the <i>B</i> coefficient is initialized by computing the absolute value of [Abs(&lambda;<sub>min</sub>)/(&lambda;<sub>min</sub>)<sup><i>-C</i><sub>min</sub></sup>] (6.2506e+07 in this example), where Abs(&lambda;<sub>min</sub>) is the absorbance at the chosen lower &lambda; and <i>C</i><sub>min</sub> is the minimum value allowed for the exponent <i>C</i> as defined in the middle of the three <i>C,min.,max;</i> labelled boxes (3.9 in this example). Note that according to the theory, the scattering power law should have an exponent of 4, which is the starting value for the <i>C</i> coefficient in our fit. However, we usually leave some room to account for noisy and not truly "theoretical" data by allowing the <i>C</i> coefficient to assume a value between the minimum and maximum values as listed in the second and third <i>C,min.,max;</i> labelled boxes.<p>
+In the <i>Fit controls:</i> line, we have first the fitter <i>&epsilon;:</i> value (<b>default: 1e<sup>-7</sup></b>), then the number of iterations allowed <i>Iter:</i>  (<b>default: 1000</b>), and finally the maximum number of calls  <i>Max calls:</i>  (<b>default: 10000</b>). Next comes a pulldown box where a fit weighting method can be chosen:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Concentration_fitweighting.png" ALT="Somo-SAS UV-Vis module fit weighting in the Concentration Utility"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Since <i>DAD</i>- or <i>CCD</i>-produced data usually do not carry associated SD values, the <b>default</b> method is <b>no weighting</b>. The options are listed in the image above. For instance, SD weighting can be used if the analyzed spectrum was produced within this module as an average of a number of spectra each without associated errors, resulting in the SD of the average having been calculated.<p>
+
+Pressing <i><b>Fit</i></b> will launch it, with these results:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Concentration_fit.png" ALT="Somo-SAS UV-Vis module scattering fit in the Concentration Utility"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In this example, the <i>C</i> term was found to be almost equal to the upper limit, and the offset <i>A</i> term almost negligeable. The resulting scattering curve is shown in green, and the scattering-corrected spectrum in cyan. The third box on the last line, reporting the concentration after full scattering correction, is now populated. Note how this value, 0.453 mg/mL, is very close to the one calculated using just the absorbance value at &lambda;=320 nm for the scattering correction, 0.459 mg/mL, consistent with a small scattering contribution for this sample, which nevertheless affects significantly the calculated concentration, as indicated by their difference from the uncorrected value, 0.488 mg/mL.<p>
+
+We can now assess the effects of changing the limits for the scattering power fit. After manually inserting values of &lambda;=330 nm and &lambda;=550 nm as the lower and upper limits, respectively, the <i><b>Reset</i></b> button is pressed to re-initialize the fit parameters. Pressing <i><b>Fit</i></b> will then produce these results:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Concentration_fit2.png" ALT="Somo-SAS UV-Vis module scattering fit 2 in the Concentration Utility"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+with a slightly improved RMSD and a slightly lower offset value, while the exponent is practically the same. The fully corrected concentration is also slightly lower than the one calculated with the previous &lambda; limits.<p>
+
+The  effect of using the <i>dispersion correction</i> (<i>Disp. corr.</i> checkbox selected) can be now evaluated using the other previous settings: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Concentration_fit_disp_corr.png" ALT="Somo-SAS UV-Vis module scattering fit with dispersion correction in the Concentration Utility"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+with very similar results, suggesting that the dipersion correction plays a minor role when the scattering contribution is not high. Note that we had to initialize the fitting with a lower limit on the <i>C</i> term, although its final value is again close to the upper limit. The RMSD is noticeably worse in this case. Note also that the wavelengths shown in the graph are not the ones calculated with the dispersion correction (see below) and used for the fit, but the original ones.<p>
+
+The dispersion correction is based on recalculating the effective wavelength in solution based of optical constant <i>K</i> in the Rayleigh-Gans-Debye scattering theory:<p>
+
+<td><img SRC="RGD_K1.png" ALT="Somo-SAS UV-Vis module RGD K in the Concentration Utility" width="170"></td><p>
+
+where <i>n</i><sub>&lambda;</sub> and <i>(dn/dc)</i><sub>&lambda;</sub> are the &lambda;-dependent refractive index of the solution and differential increment of the refractive index of the solute as a function of the concentration. We can rewrite:<p>
+
+<tr><td><img SRC="RGD_K2.png" ALT="Somo-SAS UV-Vis module RGD K rearranged in the Concentration Utility" width="260"></td><p>
+
+<td><img SRC="RGD_K3.png" ALT="Somo-SAS UV-Vis module RGD K rearranged in the Concentration Utility" width="270"></td><p></tr>
+
+<p><td align=justify>
+
+leading to:<p>
+
+<td align=justify>
+
+<td><img SRC="RGD_K4.png" ALT="Somo-SAS UV-Vis module RGD lambda corrected in the Concentration Utility" width="170"></td><p>
+
+<td><img SRC="RGD_K5.png" ALT="Somo-SAS UV-Vis module RGD lambda corrected in the Concentration Utility" width="170"></td><p>
+
+These &lambda;-dependencies can be derived by fitting with power laws the square roots of <i>n</i><sub>&lambda;</sub> and <i>(dn/dc)</i><sub>&lambda;</sub> values calculated as a function of &lambda; using, for example, the program SEDNTERP3 (downloadable <a href="http://www.jphilo.mailway.com/download.htm">here</a>). Remember to properly set also the temperature at which these calculations are made! Therefore, in the <b><i>US-SOMO</i></b> <a href=us_vis_options.html><b><i>UV-Vis Options</i></b></a> entries are provided to store these values calculated for the <b>current solvent and sample</b>. 
+
+<p>
+<br>
+
+
+<hr>
+The <b>Produced Data</b> section is used to manage any new file produced in this module:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-SAS_UV_Vis_Produced_Data.png" ALT="Somo-SAS UV-Vis module Produced Data Section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+To begin with, in the first field the path to a default directory that is automatically created inside the directory from where you first loaded data is shown (in this example, <i>/home/ultrascan/emre/DAD/produced</i>). Clicking on this field will open up the directories navigator where you can create a specific new directory that will be then used as a new location where to save the data.<p>
+
+Below the directory field there is the list of produced files, which can be selected by clicking on them (with the usual rules for <i>Shift</i> and <i>Ctrl</i>), and that can be managed using the provided buttons:<p>
+
+<ul>
+<li>
+<i><b>Select all</i></b> will select all data listed in this section.<p>
+
+<li>
+<i><b>Sel. Unsel.</i></b> will select only previously unselected data listed in this section.<p>
+
+<li>
+<i><b>Remove</i></b> will delete all data selected in this section. As usual, a pop-up warning panel will alert the user before proceeding.<p>
+
+<li>
+<i><b>Show</i></b> will additionally show in the graphics window the data selected in this section.<p>
+
+<li>
+<i><b>Show only</i></b>  will show in the graphics window only the data selected in this section.<p>
+
+<li>
+<i><b>Save CSV</i></b> will save in a single csv-style file the data selected in this section.<p>
+
+<li>
+<i><b>Save</i></b> will save in individual <i>.dat</i> files the data selected in this section.<p>
+
+</ul>
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on June 24, 2024
+</font>
+</body>
+</html>
