@@ -144,52 +144,81 @@ void mQThread::usleep( unsigned long usecs )
    QThread::usleep( usecs );
 }
 
-void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets, bool hide, QWidget * do_resize )
-{
-   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); ++i )
-   {
-      hide ? widgets[ i ]->hide() : widgets[ i ]->show();
+void ShowHide::hide_widgets( const std::set < QWidget *> & widgets, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return hide_widgets( widgets, always_hide_widgets, hide, do_resize );
+}
+
+void ShowHide::hide_widgets( const std::set < QWidget *> & widgets,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide,
+                             QWidget * do_resize ) {
+   for ( auto const & widget : widgets ) {
+      hide || always_hide_widgets.count( widget ) ? widget->hide() : widget->show();
    }
-   if ( do_resize )
-   {
+   if ( do_resize ) {
        do_resize->resize( 0, 0 );
    }
 }
 
-void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize )
-{
-   if ( ( int )widgets.size() >= row )
-   {
+void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return hide_widgets( widgets, always_hide_widgets, hide, do_resize );
+}
+
+void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide, QWidget * do_resize ) {
+   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); ++i ) {
+      hide || always_hide_widgets.count( widgets[ i ] ) ? widgets[ i ]->hide() : widgets[ i ]->show();
+   }
+   if ( do_resize ) {
+       do_resize->resize( 0, 0 );
+   }
+}
+
+void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return hide_widgets( widgets, row, always_hide_widgets, hide, do_resize );
+}   
+
+void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets,
+                             int row,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide,
+                             QWidget * do_resize ) {
+   if ( ( int )widgets.size() >= row ) {
       return;
    }
-   for ( unsigned int i = 0; i < ( unsigned int )widgets[ row ].size(); ++i )
-   {
-      hide ? widgets[ row ][ i ]->hide() : widgets[ row ][ i ]->show();
+   for ( unsigned int i = 0; i < ( unsigned int )widgets[ row ].size(); ++i ) {
+      hide || always_hide_widgets.count( widgets[ row ][ i ] ) ? widgets[ row ][ i ]->hide() : widgets[ row ][ i ]->show();
    }
-   if ( do_resize )
-   {
+   if ( do_resize ) {
        do_resize->resize( 0, 0 );
    }
 }
 
-void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize )
-{
-   for ( int j = 0; j < (int) widgets.size(); ++j )
-   {
-      if ( j != row )
-      {
-         for ( int i = 0; i < (int) widgets[ j ].size(); ++i )
-         {
-            hide ? widgets[ j ][ i ]->hide() : widgets[ j ][ i ]->show();
+void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return only_widgets( widgets, row, always_hide_widgets, hide, do_resize );
+}
+
+void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets,
+                             int row,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide,
+                             QWidget * do_resize ) {
+   for ( int j = 0; j < (int) widgets.size(); ++j ) {
+      if ( j != row ) {
+         for ( int i = 0; i < (int) widgets[ j ].size(); ++i ) {
+            hide || always_hide_widgets.count( widgets[ row ][ i ] ) ? widgets[ j ][ i ]->hide() : widgets[ j ][ i ]->show();
          }
       }
    }
-   if ( do_resize )
-   {
+   if ( do_resize ) {
        do_resize->resize( 0, 0 );
    }
 }
-
 
 QStringList MQT::get_lb_qsl( QListWidget * lb, bool only_selected )
 {

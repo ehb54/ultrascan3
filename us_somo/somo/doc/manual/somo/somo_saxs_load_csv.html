@@ -23,7 +23,7 @@
 <h2>
 SOMO - SAXS/SANS Load, manage, and process SAS data Module</h2></center>
 
-<h3><center>Last updated: March 2023 </center></h3><p>
+<h3><center>Last updated: March 2024 </center></h3><p>
 
 Previously computed csv-style <i>I(q)</i> vs. <i>q</i> files, such as those generated using the <a href="somo_batch.html">US-SOMO Batch Mode</a>, can also be uploaded in the SOMO SAXS/SANS graphics window by pressing the <i><b>Load SAXS</i></b> (or <i><b>Load SANS</i></b>) button.<p>
 If one or multiple files were already loaded in the SAS window, a pop-up window will appear asking to select a target curve upon which the new data to be plotted can be rescaled:
@@ -73,7 +73,7 @@ After selecting the curve and pressing <b>OK</b>, the graphics window will be up
 <p>
 
 
-From the  <a href="somo-SAXS_SANS_Iq_panel1.png"><b><i>SAXS/SANS I(q) Plotting Functions:</i></b></a> panel, pressing the  <b><i>Load Plotted</i></b> button will re-open the <i>Load, manage, and process SAS data</i> window, listing all data currently shown on the graphics window, on which further operations can be performed: 
+From the  <a href="somo-SAXS_SANS_Iq_panel1new.png"><b><i>SAXS/SANS I(q) Plotting Functions:</i></b></a> panel, pressing the  <b><i>Load Plotted</i></b> button will re-open the <i>Load, manage, and process SAS data</i> window, listing all data currently shown on the graphics window, on which further operations can be performed: 
 
 <center>
 <p>
@@ -101,7 +101,7 @@ Pressing the <b><i>Plot</i></b> button will then launch the NNLS operation, at t
 <img SRC="somo-SAXS_SANS_NNLS_graph_new.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS plotted">
 </center>
 <p>
-Here, the <i>Err</i> checkbox in the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel has been selected, allowing to show the target curve as circles with their associated error bars.<p>
+Here, the <i>Err</i> checkbox in the main <a href="somo-SAXS_SANS_Iq_panel1new1.png">US-SOMO SAXS/SANS</a> panel has been selected, allowing to show the target curve as circles with their associated error bars.<p>
 
 At the same time, the progress window will report the results of the NNLS fit:
 <center>
@@ -149,7 +149,7 @@ The csv file for this analysis will have this structure:<p>
 "P value",5.85714e-10,"bad"<br>
 "Scaling factor",1<p>
 <hr><p>
-Likewise, the best matching curve from an ensemble can be found by selecting the <i>Best fit</i> checkbox, and proceed as described above for the <i>NNLS fit</i>. At the end of the process, the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel, and at the same time also the progress window in the bottom-left corner of the panel:<p>
+Likewise, the best matching curve from an ensemble can be found by selecting the <i>Best fit</i> checkbox, and proceed as described above for the <i>NNLS fit</i>. At the end of the process, the program will return to the main <a href="somo-SAXS_SANS_new2.png">US-SOMO SAXS/SANS</a> panel, and at the same time also the progress window in the bottom-left corner of the panel:<p>
 
 <center>
 <p>
@@ -307,7 +307,7 @@ or as a <i>% difference</i>, with the two horizontal white lines indicating the 
 </center>
 <p>
 
-The above example highlights the issues of the <i>P</i>(<i>r</i>) computed SD, often overall unrealistically small or quite high in the high-<i>r</i> region, especially when dealing with flexible structures for which the <i>D</i><sub>max</sub> value is not well defined. A better evaluation of the goodness-of-the-fit of <i>P</i>(<i>r</i>) (real) space NNLS fit has been proposed (Brookes et al., submitted, 2023), where <i>I</i>(<i>q</i>) vs. <i>q</i> curves for each of the <i>P</i>(<i>r</i>) NNLS-selected contributing models are calculated using WAXSiS (<a href="https://waxsis.uni-saarland.de/">https://waxsis.uni-saarland.de/</a>), and then a sum weigheted by their % contributions is scaled against the experimental <i>I</i>(<i>q</i>) vs. <i>q</i> data. 
+The above example highlights the issues of the <i>P</i>(<i>r</i>) computed SD, often overall unrealistically small or quite high in the high-<i>r</i> region, especially when dealing with flexible structures for which the <i>D</i><sub>max</sub> value is not well defined. A better evaluation of the goodness-of-the-fit of <i>P</i>(<i>r</i>) (real) space NNLS fit has been proposed (Brookes et al., J. Appl. Cryst. 56:910-926, 2023; DOI: 10.1107/S1600576723005344), where <i>I</i>(<i>q</i>) vs. <i>q</i> curves for each of the <i>P</i>(<i>r</i>) NNLS-selected contributing models are calculated using WAXSiS (<a href="https://waxsis.uni-saarland.de/">https://waxsis.uni-saarland.de/</a>), and then a sum weigheted by their % contributions is scaled against the experimental <i>I</i>(<i>q</i>) vs. <i>q</i> data. 
 <p>
 <hr>
 
@@ -328,7 +328,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 7, 2023
+Last modified on March 29, 2024
 </font>
 </body>
 </html>

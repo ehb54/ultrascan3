@@ -23,7 +23,7 @@
 <h2>
 SOMO - Accessible Surface Area (ASA) Options Module:</h2>
 <p>
-<h3><center>Last updated: February 2021 </center></h3><p>
+<h3><center>Last updated: June 2024 </center></h3><p>
 <p>
 <img SRC="somo-asa1.png" ALT="SOMO ASA Screen">
 </center>
@@ -31,24 +31,41 @@ SOMO - Accessible Surface Area (ASA) Options Module:</h2>
 In this module, you can set the parameters and options for calculating the Accessible Surface Area (ASA) of your structure. This information is then used by the model builder to discriminate exposed from buried beads, allowing the exclusion of the latter from the hydrodynamic computations. In addition, it offers the possibility of re-checking the ASA of the beads in the final bead model, to better discriminate buried from exposed beads. The ASA module offers two alternative methods, a Voronoi tessellation approach which is an implementation of SurfRace, kindly provided by O.V. Tsodikov (Tsodikov OV, Record MT Jr, Sergeev YV.  Novel computer program for fast exact calculation of accessible and molecular surface areas and average surface curvature. J. Comput. Chem. 23:600-609, 2002), and a rolling sphere algorithm (ASAB1, see Spotorno et al., Eur. J. Biophys. 25:373-384, 26:417, 1997; Rai et al., Structure 13:723-734, 2005) based on Lee and Richards' method (Lee B, Richards FM. The interpretation of protein structures: estimation of static accessibility. J. Mol. Biol. 55:379-400, 1971).
 During our testing, we found that the Voronoi method performs well for relatively small, compact structures, but was a bit hectic when examining large structures, while ASAB1 was more reliable and is thus presented as the default option. As for the bead re-check, only the rolling sphere method is available.
 <p>
-The first two checkboxes, <i><b>Perform ASA Calculation</b></i> and <i><b>Re-check bead ASA</b></i>, enable or disable these operations. Both are recommended (<b>default</b>).<br>
-Next is the choice of the ASA method for operating on the atomic structure (PDB file), <i><b>Voronoi Tessellation</b></i> or <i><b>Rolling Sphere</b></i>. <i><b>Rolling Sphere</b></i> is the <b>default</b>.<br>
-In the <i><b>ASA Probe Radius (A)</b></i> field, you set the radius of the hypothetical (water) molecule used to probe the surface of the molecule for accessibility. The <b>default</b> value is <b>1.4 &Aring;</b>.<br>
-Likewise, in the <i><b>ASA Probe Recheck Radius (A)</b></i> field, you set the radius of the probe used to re-check the beads in the final bead model for accessibility. This entry is used for all bead models <b>except</b> for <i>vdW</i> models when their hydrodynamic properties are then calculated with the <b><i>GRPY</i></b> method (see below). The <b>default</b> value is <b>1.4 &Aring;</b>.<br>
-In the <i><b>SOMO ASA Threshold (A^2)</b></i> field, you set the accessible surface area threshold above which a main- or side-chain will be considered exposed to the solvent in the <i>SoMo</i> method. The <b>default</b> value is <b>20 &Aring;<sup>2</sup></b>.<br>
+The first two checkboxes, <i><b>Perform ASA Calculation</b></i> and <i><b>Re-check bead ASA</b></i>, enable or disable these operations. Both are recommended (<b>default</b>).<p>
+
+Next is the choice of the ASA method for operating on the atomic structure (PDB file), <i><b>Voronoi Tessellation</b></i> or <i><b>Rolling Sphere</b></i>. <i><b>Rolling Sphere</b></i> is the <b>default</b>.<p>
+<ul>
+<li>
+In the <i><b>ASA Probe Radius [&Aring;]</b></i> field, you set the radius of the hypothetical (water) molecule used to probe the surface of the molecule for accessibility. The <b>default</b> value is <b>1.4 &Aring;</b>.<p>
+<li>
+Likewise, in the <i><b>ASA Probe Recheck Radius [&Aring;]</b></i> field, you set the radius of the probe used to re-check the beads in the final bead model for accessibility. This entry is used for all bead models <b>except</b> for <i>vdW</i> models when their hydrodynamic properties are then calculated with the <b><i>GRPY</i></b> method (see below). The <b>default</b> value is <b>1.4 &Aring;</b>.<p>
+<li>
+In the <i><b>SOMO ASA Threshold [&Aring;<sup>2</sup>]</b></i> field, you set the accessible surface area threshold above which a main- or side-chain will be considered exposed to the solvent in the <i>SoMo</i> method. The <b>default</b> value is <b>20 &Aring;<sup>2</sup></b>.<p>
+<li>
 The <i><b>SOMO Bead ASA Threshold %</b></i> field lets you set the % of the surface of a bead that must be at least accessible to re-classify as exposed a bead previously considered to be buried in the <i>SoMo</i> method. Beads are initially assigned as being buried or exposed based on the status of the main- or side-chain they represent.
 However, during overlap removal some beads initially classified as buried may become exposed, hence the need to re-check their status. This operation is performed if the <i><b>Re-check bead ASA</b></i> checkbox is selected (recommended).
-The <b>default</b> value is <b>50%</b> for <i>SoMo</i>-type beads.
-<br>Likewise, in the <i><b>Grid ASA Threshold (A^2)</b></i> field, you set the accessible surface area threshold above which primary beads will be considered to be exposed to the solvent in the <i>AtoB (Grid)</i> method. This will allow a better treatment of the beads during the overlap removal phase. The <b>default</b> value is <b>10 &Aring;<sup>2</sup></b>.
-<br>The <i><b>Grid Bead ASA Threshold %</b></i> field lets you set the % of the surface of a bead that must be at least accessible to re-classify as exposed a bead previously considered to be buried in the <i>Grid (AtoB)</i> method. If the <i>Enable ASA screening</i> function in the <a href=somo_grid.html>SOMO Grid Function Options (AtoB)</a> module is <b>not</b> selected, beads are <b>all</b> assigned as being buried, and their final status <b>must</b> be checked by
-the <b>Re-check bead ASA</b> routine. The <b>default</b> value is <b>30%</b>.<br>
-Two new fields were added from the <span style="color:#CC0000">February 2021</span> release:<br>
-In the <i><b>vdW+GRPY ASA Probe Radius (A)</b></i> field, a different radius (&Aring;) from the one utilized for all the previuosly-described operations is set for the identification of buried beads in <i>vdW</i>-type models when their hydrodynamic parameters are computed using the <b><i>GRPY</i></b> method. This is because in <i>vdW</i> models each atom is represented by a bead, and thus using the standard 1.4 &Aring; water radius value will result in too many beads being considered as buried and thus potentially <i>excluded</i> from the hydrodynamic computations (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). The <b>default</b> value is <b>1 &Aring;</b>.<br>
+The <b>default</b> value is <b>50%</b> for <i>SoMo</i>-type beads.<p>
+<li>
+Likewise, in the <i><b>Grid ASA Threshold [&Aring;<sup>2</sup>]</b></i> field, you set the accessible surface area threshold above which primary beads will be considered to be exposed to the solvent in the <i>AtoB (Grid)</i> method. This will allow a better treatment of the beads during the overlap removal phase. The <b>default</b> value is <b>10 &Aring;<sup>2</sup></b>.<p>
+<li>
+The <i><b>Grid Bead ASA Threshold %</b></i> field lets you set the % of the surface of a bead that must be at least accessible to re-classify as exposed a bead previously considered to be buried in the <i>Grid (AtoB)</i> method. If the <i>Enable ASA screening</i> function in the <a href=somo_grid.html>SOMO Grid Function Options (AtoB)</a> module is <b>not</b> selected, beads are <b>all</b> assigned as being buried, and their final status <b>must</b> be checked by the <b>Re-check bead ASA</b> routine. The <b>default</b> value is <b>30%</b>.<p>
+<li>
+In the <i><b>vdW+GRPY ASA Probe Radius [&Aring;]</b></i> field, a different radius from the one utilized for all the previuosly-described operations is set for the identification of buried beads in <i>vdW</i>-type models when their hydrodynamic parameters are computed using the <b><i>GRPY</i></b> method. This is because in <i>vdW</i> models each atom is represented by a bead, and thus using the standard 1.4 &Aring; water radius value will result in too many beads being considered as buried and thus potentially <i>excluded</i> from the hydrodynamic computations (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). The <b>default</b> value is <b>1 &Aring;</b>.<p>
+<li>
 Likewise, the <i><b>vdW+GRPY ASA Threshold %</b></i> field has been created to allow for a much lower % of the surface
-of a <i>vdW</i> bead that must be at least accessible to avoid classifying it as buried and thus potentially being <i>excluded</i> from the hydrodynamic computations using the <b><i>GRPY</i></b> method (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). This results because since in <i>vdW</i>-type models each bead represent an atom, and within a <i>residue</i> most atoms are chemically bound to other atoms, their free surface is much lower than the one we compute from their atomic radius. A better measure of their "starting" ASA would be to perform an ASA check on each atom within a <i>residue</i> like if it was completely isolated from all other residues. Waiting for this method to be implemented, currently (<span style="color:#CC0000">February 2021</span>) a very low <b>default</b> value of <b>1%</b> is set for this field.<br>
+of a <i>vdW</i> bead that must be at least accessible to avoid classifying it as buried and thus potentially being <i>excluded</i> from the hydrodynamic computations using the <b><i>GRPY</i></b> method (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). This results because since in <i>vdW</i>-type models each bead represent an atom, and within a <i>residue</i> most atoms are chemically bound to other atoms, their free surface is much lower than the one we compute from their atomic radius. A better measure of their "starting" ASA would be to perform an ASA check on each atom within a <i>residue</i> like if it was completely isolated from all other residues. Waiting for this method to be implemented, currently (<span style="color:#CC0000">July 2024</span>) a very low <b>default</b> value of <b>1%</b> is set for this field.<p>
 
-Finally, the <i><b>ASAB1 Step Size (A)</b></i> field defines the increment between the 2D slices in which the structure (or the model) is subdivided in the rolling sphere method, which are then integrated. The <b>default</b> value is <b>1 &Aring;</b>.
+</ul>
+Two new fields were added from the <span style="color:#CC0000">July 2024</span> release:<br>
+<ul>
+<li>
+<i><b>vdW Hydrate ASA Probe Radius [&Aring;]:</b></i> In the <b><i>vdW with overlaps</b></i> method, the <i>pH</i>-dependent number of the theoretically "bound" hydration waters is assigned to each hydratable atom. To avoid "hydrating" atoms that are not solvent accessible, an ASA check with the rolling-sphere method is performed on the entire structure beforehand, with a probe radius set in this field (<b>default</b> value: <b>1.4 &Aring;</b>).<p>
+<li>
+<i><b>vdW Hydrate ASA Threshold [&Aring;<sup>2</sup>]:</b></i> And in this field an ASA threshold is set to decide which "hydratable" atoms will be "hydrated" (<b>default</b> value: <b>10 &Aring;<sup>2</sup>)</b>.<p>
+<li>
+Finally, the <i><b>ASAB1 Step Size [&Aring;]</b></i> field defines the increment between the 2D slices in which the structure (or the model) is subdivided in the rolling sphere method, which are then integrated. The <b>default</b> value is <b>1 &Aring;</b>.
 <p>
+</ul>
 Another <i>volume</i> and <i>surface area</i> calculation method, operating only on a PDB structure, is also offered within this module: selecting the <b><i>Compute VVV volume, surface area on load PDB</i></b> checkbox, our implementation of the "<b><sup>3</sup>V: Voss Volume Voxelator</b>" program (see <a href="http://3vee.molmovdb.org/volumeCalc.php">http://3vee.molmovdb.org/volumeCalc.php</a>) will be launched, using the parameters indicated in the two fields below. The results can be an useful check against those produced by other calculations performed within <b><i>US-SOMO</b></i>.<br>
 <b><i>VVV probe radius (A):</b></i> is the size of the probe sphere used by <b><sup>3</sup>V</b> (<b>default</b>: <b>1.4 &Aring;</b>). For instance, a probe size of 0 &Aring; returns the van der Walls surface of the structure, while a probe size of 1.4 &Aring; produces the water accessible surface area (see <a href="http://3vee.molmovdb.org/glossary.php">http://3vee.molmovdb.org/glossary.php</a>). <br>
 <b><i>VVV grid edge size (A):</b></i> controls the resolution at which the calculations are performed (<b>default</b>: <b>0.5 &Aring;</b>). 
@@ -69,7 +86,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on February 27, 2021
+Last modified on June 12, 2024.
 </font>
 </body>
 </html>

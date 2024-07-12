@@ -25,11 +25,11 @@ SOMO - Hydrodynamic Calculations Options Module:</h2>
 </center>
 <p>
 <p>
-<h3><center>Last updated: December 2020 </center></h3><p>
+<h3><center>Last updated: June 2024 </center></h3><p>
 <table id="somohydrodynamiccomputationsoptionswindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
 <center>
-<td><center><img SRC="somo-hydro.png" ALT="SOMO Hydrodynamics Screen">
+<td><center><img SRC="somo-hydro_June24.png" ALT="SOMO Hydrodynamics Screen">
 </tr>
 </center>
 <td align=justify>
@@ -59,7 +59,7 @@ in this field (and the <i><b>Automatic (Sum of Bead Masses)</b></i> checkbox is 
 
 The "<i>Inclusion of Buried Beads in Hydrodynamic Calculations (for SMI)</i>" box, valid <b>only</b> for the  <b><i>SMI</i></b> method, allows to either <i><b>Exclude</b></i> or <i><b>Include</b></i> the beads labeled as buried in the hydrodynamic computations by <b><i>SMI</i></b> for <i>SoMo models without overlaps</i>. We have demonstrated (Rai et al., Structure 13:723-734, 2005; Brookes et al., Eur. Biophys. J., 39:423-435, 2010) that for these models excluding the buried beads has no effect on the translational diffusion properties. Moreover, as the memory required by the full supermatrix inversion procedures implemented in the <b><i>SMI</i></b> hydrodynamics computations module grows exponentially with the number of beads employed, excluding the buried beads from the computations allows for both a faster processing and the capability of processing bigger structures (<b>default</b>: <i>Exclude</i>).<p>
 
-The "<i>Inclusion of Buried Beads in Hydrodynamic Calculations (for GRPY)</i>" box, valid <b>only</b> for the  <b><i>GRPY</i></b> method, allows to either <i><b>Exclude</b></i> or <i><b>Include</b></i> the beads labeled as buried in the hydrodynamic computations by <i><b>GRPY</i></b>. As <i><b>GRPY</i></b> calculates the <i>rotational diffusion coefficients</i> and the <i>intrinsic viscosity</i> with a sound procedure, the effect of excluding a relevant portion of the beads, especially for atomic-sized beads such as in the <i>vdW</i> models, needs an in depth investigation. As of <span style="color:#CC0000">February 2021</span>, preliminary tests indicate that reducing by &sim;50% the number of the used beads by using an ASA probe radius of 1 &Aring; and a cut-off of 1% of the bead theoretical surface area (see <a href=somo_asa.html>here</a>) has a &sim;+0.1% effect on the <i>translational diffusion coefficient</i>, a &sim;-0.13% on the <i>harmonic mean of the rotational relaxation time</i>, and a &sim;-0.22% on the <i>intrinsic viscosity</i> values for <i>vdW</i> models of lysozyme. While excluding buries beads from the computations surely allows for both a faster processing and the capability of processing bigger structures by the <b><i>GRPY</i></b> method, for the moment being the <b><i>default</i></b> option is to <i>include</i> the buried beads.<p>
+The "<i>Inclusion of Buried Beads in Hydrodynamic Calculations (for GRPY)</i>" box, valid <b>only</b> for the  <b><i>GRPY</i></b> method, allows to either <i><b>Exclude</b></i> or <i><b>Include</b></i> the beads labeled as buried in the hydrodynamic computations by <i><b>GRPY</i></b>. As <i><b>GRPY</i></b> calculates the <i>rotational diffusion coefficients</i> and the <i>intrinsic viscosity</i> with a sound procedure, the effect of excluding a relevant portion of the beads, especially for atomic-sized beads such as in the <i>vdW</i> models, would need an in depth investigation. Preliminary tests (<span style="color:#CC0000">February 2021</span>,) indicate that reducing by &sim;50% the number of the used beads by using an ASA probe radius of 1 &Aring; and a cut-off of 1% of the bead theoretical surface area (see <a href=somo_asa.html>here</a>) has a &sim;+0.1% effect on the <i>translational diffusion coefficient</i>, a &sim;-0.13% on the <i>harmonic mean of the rotational relaxation time</i>, and a &sim;-0.22% on the <i>intrinsic viscosity</i> values for <i>vdW</i> models of lysozyme. However, excluding buries beads from the computations  allows for both a faster processing and the capability of processing bigger structures by the <b><i>GRPY</i></b> method. Due also to the availability of parallel <b><i>GRPY</i></b> for all operating systems from the <span style="color:#CC0000">July 2024</span> release, the <b><i>default</i></b> option is now to <i>exclude</i> the buried beads.<p>
 
 Finally, the "<i>Overlap cut-off (for SMI):</i> box, valid <b>only</b> for the <b><i>SMI</i></b> method, allows the user to select a different bead overlap cut-off when checking the model before the hydrodynamic computations (it should be recalled that the <i>hydrodynamic interaction tensor</i> used by the <b><i>SMI</i></b> method is valid only for non-overlapping beads). If an overlap exceeding the threshold is found between any couple of beads, the computations are halted. An overlap cut-off is already present in the <b>Bead Overlap Reduction</b> set-up options, and if the bead model has been internally generated, then the <i><b>From Bead Model</b></i> checkbox should be selected. For models generated in other ways, the tolerance can be increased (at your own risk!) by selecting the <i><b>Manual</b></i> checkbox and entering a value in the <i>Enter cut-off</i> field. If this cut-off is different from the one present in the <b>Bead Overlap Reduction</b> module, a message alerting of the different cut-off value will appear in the progress window when the <b><i>SMI</i></b> hydrodynamic computations are started (<b>default</b>: <i>From Bead Model</i>). 
 
@@ -78,7 +78,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on December 18, 2020.
+Last modified on June 9, 2024.
 </font>
 </body>
 </html>

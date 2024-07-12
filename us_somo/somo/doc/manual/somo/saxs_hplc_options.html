@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO HPLC-SAXS Module Options Panel</title>
+	<title>SOMO HPLC/KIN Module Options Panel</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -21,42 +21,49 @@
 <hr>
 <center>
 <h2>
-SOMO HPLC-SAXS Module Options Panel</h2></center>
-<h3><center>Last updated: May 2016 </center></h3><p>
+SOMO HPLC/KIN Module Options Panel</h2></center>
+<h3><center>Last updated: June 2024 </center></h3><p>
 
 <center>
-<img SRC="somo-HPLC-SAXS_options.png" ALT="SOMO HPLC-SAXS options">
+<img SRC="somo-HPLC-SAXS_options_new.png" ALT="SOMO HPLC-SAXS options">
 </center>
 <p>
 
-The first set of options deals with <b><i>baseline removal</b></i>
-tools. By <b><i>default</b></i>, the <b>US-SOMO <i>HPLC-SAXS</i></b> module will
-utilize an <b><i>Integral of I(t) baseline removal</i></b>
-tool. 
-The method is based upon the assumption that capillary fouling deposits are formed
-in proportion to the sample intensity while exposed to the beam (and that the buffer is not responsible).
-We have developed a mathematical model of this condition and implemented it as
-the <a name="integral"></a>integral baseline procedure.<br>
+The first set of options deals with <b><i>baseline removal</b></i> tools. By <b><i>default</b></i>, the <b>US-SOMO <i>HPLC-SAXS</i></b> module will utilize an <b><i>Integral of I(t) baseline removal</i></b> tool. 
+The method is based upon the assumption that capillary fouling deposits are formed in proportion to the sample intensity while exposed to the beam (and that the buffer is not responsible).
+We have developed a mathematical model of this condition and implemented it as the <a name="integral"></a>integral baseline procedure.<br>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_new_baseline.png" ALT="Somo-HPLC/KIN Options Baseline section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This is an iterative procedure and the number of steps can be set in the <i>Maximum iterations:</i> field (<b><i>default: 5</b></i> iterations). The program will generate a baseline at each iterative step, which will be showed when testing the results. <br> 
 
-This is an iterative procedure and the numberof steps can be set in the <i>Maximum iterations:</i> field (<b><i>default: 5</b></i> iterations). The program will generate a baseline at each iterative step, which will be showed when testing the results. <br> 
-
-As part of this procedure, the <i>epsilon</i> value corresponds to
-the intensity fouling deposits constant  and an early termination criteria 
-can be defined here which will stop the iterative procedure when 
-the difference in <i>epsilon</i> between iterations is less than or
-equal to the <i>epsilon early termination limit</i> field (<b><i>default: none</b></i>).<br>
+As part of this procedure, the <i>epsilon</i> value corresponds to the intensity fouling deposits constant  and an early termination criteria can be defined here which will stop the iterative procedure when the difference in <i>epsilon</i> between iterations is less than or equal to the <i>epsilon early termination limit</i> field (<b><i>default: none</b></i>).<br>
 
 The <i>Smoothing</i> field controls the size of a Gaussian smoothing kernel of 2n+1 points (<b><i>default: n=3</b></i>) that will be applied to each <i>I</i>(<i>t</i>) chromatogram prior to Integral Baseline computation, to avoid large oscillations especially at low <i>q</i> values which might cause problems. The Integral Baseline is nevertheless applied to the <b>original</b> <i>I</i>(<i>t</i>) chromatograms, not to the smoothed data! <br>
 
-The <i>Global CorMap Analysis maximum q [A^-1]</i> field defines the upper <i>q</i> value limit (<b><i>default: 0.05 &Aring;<sup>-1</sup></b></i>) for the CorMap analysis of datasets (see <a href=cormap.html>here</a>). <p>
+The <i>Global PVP Analysis maximum q [A^-1]</i> field defines the upper <i>q</i> value limit (<b><i>default: 0.05 &Aring;<sup>-1</sup></b></i>) for the CorMap-based <i>P</i>-value pair analysis of datasets (see <a href=cormap.html>here</a>). <p>
 
-For special needs or very minor baseline correction requirements, the original linear
-baseline implementation (Brookes et al., J. App. Cryst. 46:1823-1833,
-2013) is available by selecting the <b><i>Linear baseline
-removal</i></b> checkbox. A description of the linear baseline removal
-tool can be found <a href=somo_saxs_hplc_linear_baselines.html>here</a>)<p>
+For special needs or very minor baseline correction requirements, the original linear baseline implementation (Brookes et al., J. App. Cryst. 46:1823-1833, 2013) is available by selecting the <b><i>Linear baseline removal</i></b> checkbox. A description of the linear baseline removal tool can be found <a href=somo_saxs_hplc_linear_baselines.html>here</a>)<p>
 
-The next set of options deals with the <b><i>Gaussian mode</b></i>. Four alternative checkboxes are available:<p>
+The next set of options deals with the <b><i>Gaussian mode</b></i>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_new_Gaussians.png" ALT="Somo-HPLC/KIN Options Baseline sectiong"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Four alternative round checkboxes are available in the first line:<p>
 <ul>
 <li>
 <b><i>Standard Gaussian</i></b>. This will generate symmetrical Gaussians (<b><i>default option</b></i>).<p>
@@ -90,30 +97,88 @@ where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a
 
 where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, <i>a<sub>3</sub></i>, and <i>a<sub>4</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, <i>distorsion 1</i>, and <i>distorsion 2</i>, respectively, of the exponentially + half-Gaussian modified Gaussian(s).<p>
 </ul>
+Note: you can switch between these different Gaussian modes also from the <b><i>HPLC/KIN</i></b> main screen (<b><i>Gaussian options</i></b> button).<p>
+Three other checkboxes are then presented, labeled as "<i>Experimental</i>" as of <span style="color:#CC0000">July 2024</span>, pending their full validation in a publication  (Brookes and Rocco, manuscript in preparation):<p>
+<ul>
+<li>
+<i>Experimental: Global Gaussian Initialization smoothing. Maximum smoothing points:</i> followed by a field that becomes available if this checkbox is selected (<b><i>default: unchecked</b></i> and <b><i>3</b></i> maximum smoothing points). This feature was developed to avoid local minimima problems when propagating a set of Gaussians optimized on a few chromatograms to all other chromatograms. Especially for high scattering angles, very noisy data, local spikes can lead the optimization of the individual fits to stop before reaching a true global minimum. Smoothing at the fit level alleviates this problem. <span style="color:#CC0000">Importantly</span>, the final decomposition is done on the <i>original</i>, <b>not</b> on the <i>smoothed</i> curves.<p>
+<li>
+<i>Experimental: Global Gaussian cyclic fit</i>. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously. This procedure has provided in our still limited tests (as of <span style="color:#CC0000">July 2024</span>) a significant improvement of the individual fits in the global Gaussian decomposition, with fits with bad <i>p-values</i> going globally from 20-30% to 2-3% of the total (Brookes and Rocco, manuscript in preparation). <b><i>Default: unchecked</b></i>. <span style="color:#CC0000">Note:</span> this option can be run <i>coupled</i> to the previous one, with potential additional gains in the quality of the fits.<p> 
+<li>
+<i>Experimental: Global Gaussian - Enable legacy Gaussian fit display</i>. To compare Global Gaussian results obtained without and with the previous two options, selecting this checkbox will enable the display of the individual resulting Gaussians superimposed to the experimental curves. <b><i>Default: unchecked</b></i>.<p> 
+</ul>
 
 The <b><i>Maximum absolute value of EMG and GMG distortions:</b></i> field sets limits to the distortions to avoid unreasonably skewed Gaussians (<b><i>default: 50</i></b>).<p>
 
 The <i><b>Clear cached Gaussian values</i></b> button allows to clear all Gaussian data produced during the current session.<p>
 
-In the <i><b>Miscellaneous options</i></b> section there is the option of saving the *.csv files in transposed format, by selecting the <b><i>Save CSV transposed</b></i> checkbox.<p>
+The final section of this module presents a set of <b><i>Miscellaneous Options</b></i>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_new_misc.png" ALT="Somo-HPLC/KIN Options Miscellaneous Options section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The first button on the left-side, <b><i>Concentration Detector Properties</b></i>, will lead to another pop-up panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_conc_detector.png" ALT="Somo-HPLC/KIN Options Concentration Detector Properties"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where you can choose between two mutually exclusive options which concentration detector is utilized sequentially (or in parallel) in your chromatographic system. This sub-module is fully described <a href=saxs_hplc_dctr.html>here</a>.<p>
 
-It is followed by the <i><b>I(t) negative integral check window</i></b> field, where the sliding window size for the negative integral test can be set (<b><i>default: 25</b></i>).  As described previously, this is the size of a sliding window over adjacent frames. If the sum of <i>I</i>(<i>t</i>) values within the window is less than the negative of sum of the corresponding SD values, the <i>I</i>(<i>t</i>)  curve will be
-identified and a warning will be issued. Such regions can be indicative of not optimal buffer subtraction, and might cause problems with the integral baseline correction.<p>
+The button on the right-side, <b><i>SAXS Processing Parameters</b></i>, will also open another pop-up panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_SAXS_param.png" ALT="Somo-HPLC/KIN Options SAXS Processing Parameters"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
 
-The next line contains the checkbox for the <b><i>On Make I(t), discard I(t) with no signal above std. dev. multiplied by:</b></i> and its associated field (<b><i>default: checked</b></i> with <b><i>3</b></i> as the multiplier value). This tests whether or not there is any point in the <i>I</i>(<i>t</i>) curve where the <i>I</i>(<i>t</i>) value is greater than the SD of the point of <i>I</i>(<i>t</i>) multiplied by the value in this field. If the test fails, the <i>I</i>(<i>t</i>) curve is assumed to contain no signal and is dropped. A <b><i>Warning</b></i> message appears in an appropriate pop-up messagebox listing the first 20 occurences and how many more were found.<p>
+This sub-module was created to provide the necessary parameters for converting "raw""<i>I</i>(<i>q</i>) data to an absolute scale. A first absolute scale for the intensity is in [g<sup>2</sup>/(cm<sup>3</sup>*mol)], that we identify with the symbol "<i>I#</i>(<i>q</i>)". By dividing <i>I#</i>(<i>q</i>) data by the concentration of the sample in mg/mL, one obtains the data in the absolute scale of [g/mol], which we previously identified with the symbol "<i>I*</i>(<i>q</i>)". These operations utilize the parameters listed in this module, which is fully described <a href=saxs_hplc_parameters.html>here</a>.<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_new_misc1.png" ALT="Somo-HPLC/KIN Options Miscellaneous Options section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Below those two buttons there is the option of saving the *.csv files produced in the <b><i>HPLC/KIN</b></i> module in transposed format, by selecting the <b><i>Save CSV transposed</b></i> checkbox. <b><i>Default: unchecked</b></i>.<p> 
 
-The <b><i>Limit Guinier Maximum q*Rg</b></i> allows to set this limit to a specified value (<b><i>default: 1.1</b></i>) when performing the linear regression in the Guinier analysis to calculate the <i>R<sub>g</sub></i> and <i>I</i>(0) from the <i>I</i>(<i>q</i>) vs <i>q</i> datasets in the <b><i>Test I(q)</i></b> module (see the corresponding section in the main Help). <p>
+It is followed by the <i><b>I(t) negative integral check window</i></b> field, where the sliding window size for the negative integral test can be set (<b><i>default: 25</b></i>).  As described previously, this is the size of a sliding window over adjacent frames. If the sum of <i>I</i>(<i>t</i>) values within the window is less than the negative of sum of the corresponding SD values, the <i>I</i>(<i>t</i>)  curve will be identified and a warning will be issued. Such regions can be indicative of not optimal buffer subtraction, and might cause problems with the integral baseline correction.<p>
 
-Finally, the last three fields allow modifying the constants for the approximate calculation of the molecular weight as described by Rambo and Tainer (Accurate assesment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013). The first two fields contain the constants <b><i>MW[RT]k</b></i> (<b><i>default: 1</b></i>) and <b><i>MW[RT]c</b></i> (<b><i>default: -2.095</b></i>), which are the linear fit power law constants as described in eq. (2) of the aforementioned reference and whose default values are taken from Fig. 3, where they were reported for <i>I</i>(<i>q</i>) vs. <i>q</i> data limited to <i>q</i> = 0.3 &Aring;<sup>-1</sup>. The third field contains the actual <i>q<sub>max</sub></i> cut-off value to which the available <i>I</i>(<i>q</i>) vs. <i>q</i> data will be limited (<b><i>default: 0.2 &Aring;<sup>-1</sup></b></i>). The constants default values are for globular proteins, and the cut-off value was found empirically to provide better results. If any of these values is changed, a warning will pop-up:
+The next line contains the checkbox for the <b><i>On Make I(t), discard I(t) with no signal above std. dev. multiplied by:</b></i> and its associated field (<b><i>default: checked</b></i> with <b><i>3</b></i> as the multiplier value). This tests whether or not there is any point in the <i>I</i>(<i>t</i>) curve where the <i>I</i>(<i>t</i>) value is greater than the SD of the point of <i>I</i>(<i>t</i>) multiplied by the value in this field. If the test fails, the <i>I</i>(<i>t</i>) curve is assumed to contain no signal and is dropped. A <b><i>Warning</b></i> message appears in an appropriate pop-up message box listing the first 20 occurences and how many more were found.<p>
+
+<b><i>Make I(q): drop curves below % of Gaussian max intensity</b></i>. When recreating <i>I</i>(<i>q</i>) vs. <i>q</i> using Gaussians,  they will be generated for all times for all Gaussians. This option will cut-off the tails of each decomposed peak where the signal is already near baseline values, based on a percent value in respect to the maximum intensity of each peak, to avoid generating meaningless extra <i>I</i>(<i>q</i>) vs. <i>q</i> data. <b><i>Default: 1%</b></i>.<p>  
+
+The <b><i>Limit Guinier Maximum q*Rg</b></i> allows to set this limit to a specified value when performing the linear regression in the Guinier analysis to calculate the <i>R<sub>g</sub></i> and <i>I</i>(0) from the <i>I</i>(<i>q</i>) vs <i>q</i> datasets in the <b><i>Test I(q)</i></b> module (see the corresponding section in the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</b> main Help page</i></a>). <b><i>Default: checked</b></i> with <b><i>1.1</b></i> as the limiting product.<p>
+
+Finally, the last three fields allow modifying the constants for the approximate calculation of the molecular weight as described by Rambo and Tainer (Accurate assessment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013). The first two fields contain the constants <b><i>MW[RT]k</b></i> (<b><i>default: 1</b></i>) and <b><i>MW[RT]c</b></i> (<b><i>default: -2.095</b></i>), which are the linear fit power law constants as described in eq. (2) of the aforementioned reference and whose default values are taken from Fig. 3, where they were reported for <i>I</i>(<i>q</i>) vs. <i>q</i> data limited to <i>q</i> = 0.3 &Aring;<sup>-1</sup>. The third field contains the actual <i>q<sub>max</sub></i> cut-off value to which the available <i>I</i>(<i>q</i>) vs. <i>q</i> data will be limited (<b><i>default: 0.2 &Aring;<sup>-1</sup></b></i>). The constants default values are for globular proteins, and the cut-off value was found empirically to provide better results. If any of these values is changed, a warning will pop-up:
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_options_RT_warning.png" ALT="Rambo & Tainer constants changed warning">
 </center>
 <p>
 
-If the values are not reverted to the default values, this pop-up will keep showing up during the current <i><b>US-SOMO</b></i> session every time a molecular weight calculation with the Rambo-Tainer approach is performed, unless the <i>Do not show this warning again</i> button is pressed, avoiding the nuisance when using different values for different kind of biomacromolecules (e.g., RNA) or for testing purposes.
+If the values are not reverted to the default values, this pop-up will keep showing up during the current <i><b>US-SOMO</b></i> session every time a molecular weight calculation with the Rambo-Tainer approach is performed, unless the <i>Do not show this warning again</i> button is pressed, avoiding the nuisance when using different values for different kind of biomacromolecules (e.g., RNA) or for testing purposes.<p>
 
-<p>
+<br>
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
@@ -129,7 +194,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 20, 2016.
+Last modified on June 26, 2024
 </font>
 </body>
 </html>

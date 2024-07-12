@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Hplc_Gauss_Mode::US_Hydrodyn_Saxs_Hplc_Gauss_Mode(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Gaussian Options" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Gaussian Options" ) );
 
    setupGUI();
 

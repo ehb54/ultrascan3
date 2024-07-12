@@ -332,6 +332,25 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    AUTFBACK( cb_crysol_version_26 );
    connect(cb_crysol_version_26, SIGNAL(clicked()), this, SLOT(set_crysol_version_26()));
 
+   cb_crysol_version_3 = new QCheckBox(this);
+   cb_crysol_version_3->setText(us_tr(" Support version 3.1+"));
+   cb_crysol_version_3->setEnabled(true);
+   cb_crysol_version_3->setChecked((*saxs_options).crysol_version_3 );
+   cb_crysol_version_3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_crysol_version_3->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_crysol_version_3 );
+   connect(cb_crysol_version_3, SIGNAL(clicked()), this, SLOT(set_crysol_version_3()));
+   
+   cb_crysol_water_dummy_beads = new QCheckBox(this);
+   cb_crysol_water_dummy_beads->setText(us_tr(" Shell water (3.1+ only)"));
+   cb_crysol_water_dummy_beads->setEnabled(true);
+   cb_crysol_water_dummy_beads->setChecked((*saxs_options).crysol_water_dummy_beads );
+   cb_crysol_water_dummy_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_crysol_water_dummy_beads->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_crysol_water_dummy_beads );
+   connect(cb_crysol_water_dummy_beads, SIGNAL(clicked()), this, SLOT(set_crysol_water_dummy_beads()));
+   
+
    cb_crysol_explicit_hydrogens = new QCheckBox(this);
    cb_crysol_explicit_hydrogens->setText(us_tr(" Explicit hydrogens"));
    cb_crysol_explicit_hydrogens->setEnabled(true);
@@ -558,6 +577,8 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    hbl_crysol->addWidget(lbl_crysol);
    hbl_crysol->addWidget(cb_crysol_default_load_difference_intensity);
    hbl_crysol->addWidget(cb_crysol_version_26);
+   hbl_crysol->addWidget(cb_crysol_version_3);
+   hbl_crysol->addWidget(cb_crysol_water_dummy_beads);
    hbl_crysol->addWidget(cb_crysol_explicit_hydrogens);
    background->addLayout( hbl_crysol , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -982,8 +1003,30 @@ void US_Hydrodyn_SasOptionsSaxs::set_crysol_default_load_difference_intensity()
 void US_Hydrodyn_SasOptionsSaxs::set_crysol_version_26()
 {
    (*saxs_options).crysol_version_26 = cb_crysol_version_26->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( cb_crysol_version_26->isChecked() ) {
+      cb_crysol_version_3->setChecked( false );
+      set_crysol_version_3();
+   } else {
+      ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   }
 }
+
+void US_Hydrodyn_SasOptionsSaxs::set_crysol_version_3()
+{
+   (*saxs_options).crysol_version_3 = cb_crysol_version_3->isChecked();
+   if ( cb_crysol_version_3->isChecked() ) {
+      cb_crysol_version_26->setChecked( false );
+      set_crysol_version_26();
+   } else {
+      ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   }
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_crysol_water_dummy_beads()
+{
+   (*saxs_options).crysol_water_dummy_beads = cb_crysol_water_dummy_beads->isChecked();
+}
+
 
 void US_Hydrodyn_SasOptionsSaxs::set_crysol_explicit_hydrogens()
 {

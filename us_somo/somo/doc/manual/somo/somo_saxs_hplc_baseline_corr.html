@@ -1,0 +1,618 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO HPLC/KIN Module</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO HPLC/KIN Module - Baseline correction</h2></center>
+<h3><center>Last updated: June 2024 </center></h3><p>
+
+<center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. P&eacute;rez, P. Vachette, and M. Rocco.<br>
+Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst. 49:1827-1841, 2016. Some subsequent improvements are discussed in Brookes and Rocco, "Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite", Eur. Biophys. J. 47:855-864 (2018). The most recent (July 2024) developments will be subsequently published (Brookes and Rocco, in preparation).</span>
+</center>
+<br>
+
+<span style="color:#CC0000">Warning: this <b>Help</b> section was originally written in 2017, and has not been updated for the July 2024 intermediate <b><i>US-SOMO</i></b> release. Therefore, all screenshots refer to an older layup, although the commands are mostly the same. In particular, the <b><i>CorMap Analysis</i></b> button has been renamed "<b><i>PVP</i></b>" ("P-value pair" analysis). An update of this <b>Help</b> section is planned.</span><p>
+<br>
+
+The <b>Integral Baseline</b> method is based upon the assumption that capillary fouling deposits are formed in proportion to the sample concentration while exposed to the beam, and that neither the buffer nor the instrumental background are contributing to this effect. That deposition on the capillary does occur is clearly proven by the fact that a steady SAXS signal is maintained even after completion of the protein elution. The theory underlying the Integral Baseline correction procedure can be found <a href=IntegralBaselineTheory.html>here.</a> <p>
+
+To help the user decide if a baseline correction is needed, and to find a proper region of SAXS steady state signal at the end of the chromatograms, the currently implemented Integral Baseline method requires an analysis on blank frames. These "Blanks" (<span style="color:#CC0000"><i>no less than <b>10 frames</b>, possibly at least <b>20 or more</b> must be available</i></span>) should have been collected well before the void volume, and should preferentially be the same ones that were then averaged and subtracted from all the data collected during the chromatogram development.<p>
+
+<p><center>
+<img SRC="BlanksLoaded.png" ALT="SOMO HPLC-SAXS Blanks loaded" width="1000">
+</center>
+<p>
+
+After Blanks files have been loaded using the <b><i>Add files</b></i> button (see above), their analysis is launched by pressing the <b><i>Blanks analysis</b></i> button. The module will automatically convert the <i>I(q)</i> vs. <i>q</i>  frames into  <i>I(t)</i> vs. <i>t</i>  chromatograms:<p>
+
+<p><center>
+<img SRC="BlanksTransformed.png" ALT="SOMO HPLC-SAXS Blanks I(t)" width="1000">
+</center>
+<p>
+
+The two vertical magenta lines and their corresponding fields at the bottom of the buttons' zone define the beginning and end regions for the Blanks analysis. By clicking on one of the fields and then moving the mouse on the grey-scale bar-wheel just below the graphics window, these limits can be changed. This can also be done in steps of a single frame by clicking on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at the extremities of the bar-wheel. Alternatively, the limits can be manually changed by entering a numerical value in their respective fields.<p>
+
+The Blanks analysis is performed by clicking on the <b><i>CorMap Analysis</i></b> button. This will launch a pairwise Correlation Map analysis (see <a href=cormap.html>here</a> for a descrption of the CorMap implementation in the US-SOMO HPLC/KIN module). Before the analysis is effectively launched, a pop-up panel will appear:<p>
+
+<p><center>
+<img SRC="CorMapSampling.png" ALT="SOMO HPLC-SAXS CorMap sampling pop-up">
+</center>
+<p>
+
+It was found during the implementation of the Blanks analysis that finely spaced <i>q</i> values might result in cross-correlation effects in the CorMap analysis (see also <a href=cormap.html>here</a>). Therefore, this pop-up panel will allow to chose a sampling in <i>q</i> space to eliminate or at least alleviate this problem. Since usually a one-every-two values sampling is sufficent, this can be directly done by pressing the <i>Sample alternate q points</i> button. Larger sampling intervals can be chosen by entering an integer value after pressing the <i>Specify a larger gap in q points</i> button. If no sampling is wanted, the <i>Continue</i> button should be pressed.<br>
+A second pop-up option will also allow to start the CorMap analysis above a chosen <i>q<sub>min</sub></i> value, to avoid including very noisy, low-<i>q</i> values in the analysis:<p>
+
+<p><center>
+<img SRC="CorMapSampling_minq.png" ALT="SOMO HPLC-SAXS CorMap minimun q value pop-up">
+</center>
+<p>
+
+After these choices are made, the analysis is effectively launched, and the results are shown in a new pop-up panel (see <a href=cormap.html>here</a> for a full description of the CorMap implementation):<p>
+
+<p><center>
+<img SRC="CorMapBlanksAlternatePoints.png" ALT="SOMO HPLC-SAXS CorMap of Blanks with alternate points">
+</center>
+<p>
+
+The pop-up panel begings by reporting on the top bar the type of analysis (here "Blanks mode t 1 - 89"), the max <i>q</i> limit used (here 0.05 &Aring;<sup>-1</sup>), and the sampling used (here "Only every 2<sup>nd</sup> <i>q</i> value selected").<p>
+Three plots are present on the top of the panel:
+<ul>
+<li>
+A <b>Pairwise P-value map</b>, a square matrix in which the square (<i>i</i>,<i>j</i>) contains the <i>P</i>-value
+resulting from the (<i>i</i>,<i>j</i>) curves represented by a three color code: green for <i>P</i> &ge; 0.05, yellow for 0.01 &le; <i>P</i> &le; 0.05, and red for <i>P</i> &lt; 0.01. The labels on the axes correspond to the reference numbers given to the analyzed frames (see below).<p>
+
+<li>
+A <b>Red pair % histogram</b> plot as a function of the time/frame number, derived from the analysis of the pairwise <i>P</i>-value map in terms of the distribution of values between the three classes with an emphasis on the % of red squares.<p>
+
+<li>
+A <b>Red cluster size histogram</b>, derived from an evaluation of the average size of clusters of horizontally and/or vertically adjacent "red" squares. After careful examination of several indicators derived from the <i>P</i>-value map analysis, this was chosen as the most reliable to determine the global similarity between all frames of the considered subset. <p>
+</ul>
+
+The text area reports first the the pairwise <i>P</i>-map color definition, and then where to look for the correspondence between the axis ticks and the actual data. Then follows a summary of the most relevant data:<p>
+
+<ul>
+<li>
+A summary of the resulting <i>P</i> values pairs in terms of the green+yellow sum % and red % values.<p>
+
+<li>
+The average one-to-all <i>P</i> value &#177; its SD (in parentheses the % SD value) and the % of red values &#177; their SD (in parentheses the % SD value.)<p>
+
+<li>
+The red cluster count, their average size &#177; their SD (in parentheses the % SD value) and their average  &#177; SD size as % of the total area.<p>
+
+<li>
+The red cluster maximum size (with its % in respect to the total area), the number of occurences of that cluster size, and the position of the first occurence.<p>
+</ul>
+
+Below these summaries, the first list reports the correspondence between the "Reference numbers" (<b>Ref</b>) assigned to each dataset (here frames) and its "real" name. This was introduced to avoid having to deal with complicated names in the axes legends on the plots (in this case, the frame numbers that were extracted from the <i>I(t)</i> vs. <i>t</i> filenames start at "1", so they are equal to the "Ref" numbers). The list also reports for each frame the <i>Avg. P value</i>, the <i>Min. P value</i>, and the <i>% Red</i> points.<br>
+At the end of the first list, a second list reports all the pairwise comparisons results, including the number of points compared (<i>N</i>), followed by the <i>q</i> point position where the longest streak occurs (<i>Start point</i>), then the length of the longest streak (<i>C</i>), and finally the <i>P-value</i> of a streak of length <i>C</i> occurring in a sequence of <i>N</i> points, as shown in the image below:<p> 
+
+<p><center>
+<img SRC="CorMapBlanksList.png" ALT="SOMO HPLC-SAXS CorMap Blanks list" width="1000">
+</center>
+<p>
+
+At the end of the text area, a checkbox is present. If selected, the paiwise analyses will be adjusted for multiple testing using the Holm-Bonferroni approach (Holm, S. A simple sequentially rejective multiple test procedure. Scandinavian Journal of Statistics 6:65-70, 1979; see <a href=cormap.html>here</a>):<p>
+
+<p><center>
+<img SRC="CorMapBlanksAlternatePointsHB.png" ALT="SOMO HPLC-SAXS CorMap of Blanks with alternate points using Holm-Bonferroni">
+</center>
+<p>
+
+Note that in this case the Holm-Bonferroni multiple testing adjustment on a dataset where a one-every-two <i>q</i>-values sampling was applied has produced a completely green pairwise <i>P</i>-values map. Without sampling, this is what is obtained without the Holm-Bonferroni adjustment:<p>
+
+<p><center>
+<img SRC="CorMapBlanksNoAlternatePoints.png" ALT="SOMO HPLC-SAXS CorMap of Blanks no alternate points">
+</center>
+<p>
+
+and with Holm-Bonferroni adjustment:<p>
+
+<p><center>
+<img SRC="CorMapBlanksNoAlternatePointsHB.png" ALT="SOMO HPLC-SAXS CorMap of Blanks no alternate points using Holm-Bonferroni">
+</center>
+<p>
+
+
+All data listed in the CorMap analyis pop-up window can be saved in a csv-type file with the <b><i>Save</i></b> button. Previously analyzed datasets can be recalled with the <b><i>Load</i></b> button.<p>
+After closing the CorMap analysis window, the Blanks data can be accepted by pressing the <b><i>Keep</i></b> button. <b><i>Cancel</i></b> will instead discard the current CorMap analysis.<p>
+
+The Integral Baseline analysis of the actual sample frames can then begin. Contrary to what was required in our previously developed Integral Baseline method, the current version requires that <b>all</b>  <i>I(t)</i> vs. <i>t</i> chromatograms must be selected before hitting the <b><i>Baseline</i></b> button.<br>
+In any case, on pressing <b><i>Baseline</i></b> a first pop-up warning message will always appear:<p>
+
+<p><center>
+<img SRC="Baseline_blanks_noblanks.png" ALT="SOMO HPLC-SAXS Int Bas Blanks/no Blanks question">
+</center>
+<p>
+
+This allows the user to proceed without using a Blanks reference set to judge if a stable baseline has been reached at the end of the chromatograms. In this case, only the Holm-Bonferroni adjusted pairwise comparison will be used.<p>
+
+If Blanks are to be used, a second pop-up warning message will appear:<p>
+
+<p><center>
+<img SRC="IntegralBaselineBlanksWarning.png" ALT="SOMO HPLC-SAXS Int Bas Blanks Warning">
+</center>
+<p>
+
+alerting that a blanks analysis is needed to proceed any further, and offering up to three options:<p>
+
+<ul>
+<li>
+<i>Load blanks</i>, which will allow to load <i>I</i>(<i>q</i>) vs. <i>q</i> Blanks files  to be subjected to the analysis as described above;<p>
+
+<li>
+<i>Load previous analysis</i>, which will allow to select a previously saved Blanks analysis cvs file;<p>
+</ul>
+
+and, if Blanks were analyzed during the current session,<p>
+
+<ul>
+<li>
+<i>Accept currently analyzed blanks</i> (followed by the filename of the currently analyzed blanks).<p>
+</ul>
+
+Another pop-up will then appear, reminding that the first step in the Integral Baseline procedure is to find a final region of constant intensity:<p>
+
+<p><center>
+<img SRC="IntegralBaselinePrescription.png" ALT="SOMO HPLC-SAXS integral baseline prescription">
+</center>
+<p>
+
+After pressing <i>OK</i>, the graphics window will present all the selected <i>I(t)</i> vs. <i>t</i> chromatograms  and switch to the <i>Baseline</i> mode of analysis:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline1a.png" ALT="SOMO HPLC-SAXS integral baseline setting 1">
+</center>
+<p>
+
+As shown in the image above, this superimposes to the selected chromatograms three vertical lines on the right side, the last two lines of buttons under the graphics window are replaced by three colored fields (magenta-red-magenta), and a dashed line is drawn horizontally (orange). In addition, a <i>Fix window width</i> checkbox with its associated magenta-colored field in now present (<b>default: 20 frames, unchecked</b>), as well as a new <b><i>Find best region</i></b> button.<br>
+The first vertical magenta line, which by default is positioned at 75% of the available frames, has multiple usages:<p>
+
+<ul>
+<li>
+It defines the starting frame of a sliding window over which a <b>CorMap</b> analysis will be carried out;<p>
+
+<li>
+It will also define the first frame where the <b>CorMap</b> analysis will start;<p>
+
+<li>
+When the Integral Baseline is calculated, it will be the end point of the computations (but the calculated baseline, which will be constant beyond this point, will be then subtracted up to the last frame).<p>
+</ul>
+
+The second vertical magenta line defines the end of the sliding window (<b>default: 20 frames</b> beyond the first magenta line).<p>
+
+The vertical red line defines the end for the sliding window analysis (<b>default position: 5 frames</b> from the end of the available frames).<p>
+
+The horizontal orange line represents the average intensity across the current window of the lowest <i>q</i>-value among the selected <i>I(t)</i> vs. <i>t</i> chromatograms.<p>
+
+It is important to remind that the baseline is set to be at zero at the beginning of the data on the left side.<p>
+
+The positions of the three vertical lines are indicated in the three background color-coded fields. By cliking on one of the fields, the corresponding vertical line position can be changed using either the grey-shades bar-wheel, or the "<b>&lt;</b>" and "<b>&gt;</b>" buttons at its sides. Manual values can be also entered.<p>
+
+If the <i>Fix window width</i> checkbox is not selected, moving either of the two vertical magenta lines will also change the width of the sliding window.<p>
+
+It is then best to first define a window width by moving either one of the vertical magenta lines, and then fix it by selecting the <i>Fix window width</i> checkbox. At this point, the entire window can by positioned by using either of the two vertical magenta lines. It is suggested to position it in a region where there is still some visible intensity decay, as shown below:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline2a.png" ALT="SOMO HPLC-SAXS integral baseline setting 2">
+</center>
+<p>
+
+The baseline analysis is then completed by pressing the <b><i>Find best region</i></b> button.<p>
+This will launch a special <b>CorMap</b> analysis in which first a global CorMap calculation will be carried out between the entire range of frames from the first vertical magenta line to the vertical red line. Subsets of this CorMap analysis corresponding to the sliding window regions will then be extracted and compared with the average of all possible CorMap analysis results extracted from the pre-analyzed Blanks data for a sliding window of the same size.<p>
+
+In addition, the analysis will calculate the integrated average intensity at each frame of all the <i>I</i>(<i>q</i>) values from the minimum <i>q</i>-value selected up to the <i>q<sub>max</sub></i> defined in the <a href=saxs_hplc_options.html><b>Options</b></a> panel (<b>default: 0.05 &Aring;<sup>-1</sup></b>).<p>
+The results will appear in two pop-up panels. The first one is analogous to the one appearing after the Blanks analysis:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline3a.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap" width="1000">
+</center>
+<p>
+
+Here, it can be appreciated the almost completely red left and top sides of the <i>Pairwise P value map</i> plot, originating from the fact that regions on the descending side of the elution peak were included in the analysis. This also heavily affects the right-side <i>Red cluster size histogram</i>, with an almost invisible huge size (&asymp;5000) but extremely low count cluster greatly compressing the scale. If we zoom on the low red cluster size region, this is what becomes visible:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline3b.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap zoom">
+</center>
+<p>
+
+But most relevant is the second pop-up panel that will appear on top of the first:
+
+<p><center>
+<img id="baselinebest" SRC="somo-HPLC-SAXS_integral_baseline3c.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap analysis" width="1000">
+</center>
+<p>
+
+The graph in this panel is composed of two plots, both as a function of the starting window position. The bottom histogram (left-side <i>y</i>-axis scale) reports the average red cluster size for each window in the sliding window ensemble. The horizontal green solid line defines the Blanks average red cluster size for all possible windows of the same size as the sliding window utilized for the Sample analysis (the dotted line represents + 1 SD). The bars in the histograms are colored red when they are above the Blanks + 1 SD value, while cyan and white when they are &le; the Blanks + 1 SD value, with the white being the lowest value(s) (equal values are possible).<p>
+
+The top plot (right-side <i>y</i>-axis scale) reports the averaged <i>I</i>(<i>q</i>) for <i>q</i> &le; the <i>q<sub>max</sub></i> value (0.05 &Aring;<sup>-1</sup> by default, as set in the <b>Options</b>), as the solid orange line, with the dotted orange lines representing &plusmn;1 SD. The solid magenta line defines the zero value expected for blanks-subtracted data when only buffer is present.<p>
+The goal of this combined analysis is twofold:<p>
+<ul>
+<li>
+To find region(s) of steady-state intensity;<p>
+<li>
+To compare the average integrated <i>I</i>(<i>q</i>) intensity with the zero value expected for pure buffer conditions.<p>
+</ul>
+
+The first message appearing in the text region concerns the second of the points listed above.<p>
+<ul>
+<li>If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot is <b>always above</b> the zero reference line <b>and</b> there is at least one occurrence of an average red cluster size being <b>equal or less</b> than the Blanks' average red cluster size +1 SD, the message "<i>Integral baseline correction is possible</i>" appears.<p>
+<li>If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot is <b>always above</b> the zero reference line <b>but</b> the average red cluster sizes are always <b>higher</b> than the Blanks' average red cluster size +1 SD, the message "<i>Integral baseline correction would be possible, but no steady-state end region has been identified</i>" appears.<p>
+<li>If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot <b>crosses and goes below</b> the zero reference line, <b>irrespective</b> of the average red cluster size status, the message "<i>Integral baseline correction is not recommended</i>" appears.<p>
+</ul>
+
+Below the summary sentence, a first report of the baseline analysis is printed. It contains:<p>
+<ul>
+<li>
+The root name of the files analyzed;<br>
+<li>
+The <i>q</i> sampling interval;<br>
+<li>
+The CorMap analysis <i>q<sub>max</sub></i>;<br>
+<li>
+A list of the best starting positions for end frames (that span a length equal to the chosen sliding window size) where the average red cluster size is within 1 SD similar to those of the Blanks (white bars in the histogram; if no white bars are present, green bars will be listed; if neither white of green bars are present, a single, lowest count bar will be listed, colored yellow in the histogram);<br>
+<li>
+In orange color, the frame position of the lowest average integrated intensity.<p>
+</ul>
+
+A second block of information is then printed further down, containing Blanks-related information:<p>
+<ul>
+<li>
+The root name of the Blanks frames files utilized in this analysis;<br>
+<li>
+Their <i>q</i> sampling interval;<br>
+<li>
+The maximum available sliding window width;<br>
+<li>
+The used sliding window width;<br>
+<li>
+The number of sliding windows averaged;<br>
+<li>
+The red cluster average size for the used sliding window;<br>
+<li>
+And its associated SD.<p>
+</ul>
+
+The user should then examine the information provided and consider the suggestion made at the top of the text window:<p>
+If the averaged integrated intensity -1 SD reaches at some point the zero line, then no Baseline correction is likely necessary.<p>
+
+If the averaged integrated intensity -1 SD at some point crosses and goes +1 SD below the zero line, then other issues might be present, such as incorrect Blanks subtraction, or drifting problems. In the latter case, a Linear Baseline correction might be indicated (see <a href=somo_saxs_hplc_linear_baselines.html>here</a>).<p>
+
+If the averaged integrated intensity is always above +1 SD of the zero line, then an Integral Baseline correction could be necessary. The second condition warranting it is that there is an end region where a sufficient number of Sample frames (equal to the sliding window size by definition) is judged by the average red cluster size of the Pairwise P value Map to be similar within +1 SD of the average Blanks frames. Those are the starting frames listed in the first block of summary information, but beware of the presence of a single yellow-colored starting frame: it means that no frames passed the stringent Pairwise P value Map average red cluster size test, and that the listed frame is only the one having the lowest average red cluster size (which can be much higher than the Blanks average red cluster size). The user could try repeating the analysis using a different (smaller) sliding window size. Check also the starting/ending positions to be sure to include an appropriate end region for this analysis.<p>
+
+When both the Integral Baseline applicability conditions are met, the user could automatically transfer the position of the window into the Baseline module, by clicking on the <b><i>Set region in the HPLC window</i></b> bar at the bottom of the an analysis window. This will open a pop-up panel:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline_setwindow.png" ALT="SOMO HPLC-SAXS integral baseline setting window in Baseline module">
+</center>
+<p>
+
+listing all possible starting positions for the baseline window, beginning with the farthest one. The user should pick a position matching with the lowest average integrated intensity frame position (orange colored text). If more than a lowest average integrated intensity frame is available, it is advisable to pick an earlier one, to avoid a potential undercorrection when integral baseline subtraction is performed. Once a position is chosen, clicking on <i>OK</i> will transfer it to the Baseline module panel:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baselines1.png" ALT="SOMO HPLC-SAXS integral baseline applied higher q">
+</center>
+<p>
+
+To verify what the Integral Baseline will effectively produce, <b><i>Test Baseline</i></b> should be launched. This will show in scroll mode every original <i>I(t)</i> vs. <i>t</i> chromatogram, a smoothed version using a Gaussian smoothing kernel of 2<i>n</i>+1 points (where <i>n</i> is set in the <a href=saxs_hplc_options.html>Options</a> panel, with <i>n</i> = 3 as default), the iterations in the Integral Baseline computation (whose number is also set in the <a href=saxs_hplc_options.html>Options</a> panel, with 5 as default), and the final, integral baseline-corrected chromatogram:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline_test.png" ALT="SOMO HPLC-SAXS integral baseline test">
+</center>
+<p>
+
+In the example shown above, blue is an original <i>I(t)</i> vs. <i>t</i> chromatogram at <i>q</i> = 0.00791 &Aring;<sup>-1</sup>, white its smoothed version with the default settings, cream, olive green, orange and pale yellow are integral baseline iterations 1, 2, 3 and 5, respectively (the 4<sup>th</sup> iteration is not visible, completely superimposed by the 5<sup>th</sup>), and light green is the final, integral baseline-corrected <i>I(t)</i> vs. <i>t</i> chromatogram. The Gaussian smoothing is applied to remove large oscillations in the original <i>I(t)</i> vs. <i>t</i> chromatogram, giving rise occasionally to values below the current integral baseline iteration, leading then to addition rather than subtraction in the computations. The final integral baseline is then subtracted from the original <i>I(t)</i> vs. <i>t</i> chromatogram, not the smoothed one.<p>
+As can be seen in the example above, the procedure appears to have produced a reasonable correction. All <i>I(t)</i> vs. <i>t</i> chromatograms can be checked in the <b><i>Test baseline</i></b> mode, which can be abandoned by pressing <b><i>Cancel</i></b>.<p>
+The Integral Baseline procedure can now be applied to all selected <i>I(t)</i> vs. <i>t</i> chromatograms by pressing <b><i>Baseline apply</i></b>. If files that failed the negative regions test within a sliding window (of 25 frames in this case) where the sum
+of the intensity is less than the negative of the sum of the corresponding SD values over the window are present, this message will again appear:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_negative_integral_warning.png" ALT="SOMO HPLC-SAXS negative I(t) integral warning" width="800">
+</center>
+<p>
+
+After pressing <i>Ok</i>, all the integral baselines will be computed and then subtracted from the <i>I(t)</i> vs. <i>t</i> chromatograms. When the overall computed change in baseline is found to be negative, no baseline correction is applied. A pop-up panel will alert the user listing the first 20 such occurences and giving the number of all the others found:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_negative_integral_baseline_warning.png" ALT="SOMO HPLC-SAXS negative integral baseline warning">
+</center>
+<p>
+
+Each resulting baseline-subtracted chromatogram will have a "-bi" added after the <i>q</i> value and an "-s" at the end of the filename to indicate that an integral baseline subtraction was applied (if a linear baseline option is used, the first label will be "-bl"). The numerical value of the overall change in baseline and the alpha value (for an explanation alpha see <a href=saxs_hplc_options.html>here</a>) are also added to the filename of the produced files, as shown in the <b><i>Data files</i></b> panel. Files where no baseline was subtracted will have a "0s" at the end of the filename:<p> 
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline_finalset.png" ALT="SOMO HPLC-SAXS integral baseline final set" width="1000">
+</center>
+<p>
+
+<hr>
+If the baseline procedure without Blanks was selected, the Baseline module will proceed slightly differently.<p>
+
+First, the "sampling" pop-ups will appear, since in this case the sampling is not set by what was used for the Blanks:<p>
+
+<p><center>
+<img SRC="CorMapSampling.png" ALT="SOMO HPLC-SAXS CorMap sampling pop-up">
+</center>
+<p>
+
+<p><center>
+<img SRC="CorMapSampling_minq.png" ALT="SOMO HPLC-SAXS CorMap minimun q value pop-up">
+</center>
+<p>
+
+In the following example, no sampling was applied. The sliding window size and the beginning-end of the baseline analysis region are set as with the procedure with Blanks (see above), and the <i><b>Find best region</i></b> button is then pressed. The CorMap results will this time be displayed with the Holm-Bonferroni checkbox automatically selected:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baselines_noblanksCM.png" ALT="SOMO HPLC-SAXS integral baseline Find best region CM no blanks" width="1000">
+</center>
+<p>
+
+The second pop-up will also appear:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline_HB.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap HB analysis">
+</center>
+<p>
+
+In respect with the analysis including a comparison with the Blanks (see above), there are two differences:<p>
+
+<ul>
+<li>
+The histogram reports the Red pair % instead of the Average Red Cluster size. This is because with the Holm-Bonferroni adjustment the formation of red cluster is severely inhibited.<p>
+<li>
+The Blanks average line is obviously absent. The cut-off to mark the histogram bars white is set to 1%. If no window reaches this level, the lowest window will be marked with a yellow color in the histogram.<p>
+</ul>
+All other functionalities are as with the analysis including the Blanks comparison.<p> 
+
+
+<hr>
+A first assessment of the results of the Integral Baseline subtraction can be done by comparing two identical subsets of <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms before and after correction. In the figure below, the subsets are from <i>q</i> = 0.00791 to <i>q</i> = 0.05029 &Aring;<sup>-1</sup> scaled on each other in a frame interval corresponding to the half-height of the peak, before (top panel) and after (bottom panel) baseline subtraction:<p>
+
+<p><center>
+<img SRC="IntegralBas_Scaling.png" ALT="SOMO HPLC-SAXS Integral Baseline results comparison by scaling">
+</center>
+<p>
+
+The fact that the right-hand sides of the peaks are nicely superimposed after baseline subtraction validates a posteriori the procedure used to build the baseline, since for a single species the elution peaks at different <i>q</i>-values should be strictly proportional to each other.<p>
+
+More checks of the Integral Baseline subtraction correctness can be performed using the <b><i>Trial make I(q)</b></i> mode. In this mode, the selected <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms are temporarily transposed back into <i>I</i>(<i>q</i>) vs. <i>q</i> frames and can be analyzed by either scaling or Guinier approximation utilities. In the example below, we have selected a subset of <i>q</i>-values from &asymp;0.008 to &asymp;0.21 &Aring;<sup>-1</sup>, and we have pressed the <b><i>Trial make I(q)</b></i> button:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_select.png" ALT="SOMO HPLC-SAXS test I(q) selection" width="1000">
+</center>
+<p>
+
+This will bring up again the gray-shades wheel-bar and change the two lowermost bars with the buttons below the graphics window. At the bottom, a <i>Time range for I(q):</i> label will appear, followed by two fields with red background indicating the region subjected to the <b><i>Test I(q)</i></b> procedure. The limits can be changed by either clicking on each red-colored field and then using the gray-shades bar-wheel at the top, or on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. Alternatively, if a region was pre-selected with the mouse, it can be applied by clicking on the <b><i>Vis. range</i></b> button. In this example, we have set the <i>Time range for I(q)</i> limits from frame 1100 to 1130. <p>  
+
+Two operations can be then performed. Pressing the <b><i>Scale Analysis</i></b> button on the row above will change the layout in this way (note that, by pressing <b><i>Log X</i></b> and <b><i>Log Y</i></b> on the left-side commands panel, both axes have also been changed to log<sub>10</sub>):<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale.png" ALT="SOMO HPLC-SAXS test I(q) scale layout" width="1000">
+</center>
+<p>
+
+The two lowermost rows now display the tools for scaling the back-generated temporary <i>I</i>(<i>q</i>) vs. <i>q</i> curves on top of each other. The two red-background fields now indicate the actual <i>q range for scaling</i>, which can be adjusted by clicking on each field and using the gray-shades bar-wheel at the top or on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides; two vertical red lines will mark the corresponding positions on the graph. The <b><i>Reset q range</b></i> button will re-expand the <i>q</i> range.<br>
+The last row contains the scaling settings/commands:<p>
+<ul>
+<li>
+The <i>Scale to:</i> round checkboxes will scale the curves to either the <i>Minimum</i> (<b><i>default</i></b>) or the <i>Maximum</i> values among the selected curves.<p>
+
+<li>
+The <i>Save interpolated to target</i> checkbox ensures all <i>q</i> or <i>t</i> grids of the data will be identical by interpolating each curve to the minimum or maximum intensity curve.  This is a convenience tool to allow curves generated on different grids to be put on a common grid.
+<p>
+
+<li>
+<b><i>Reset scaling</i></b> will return to the initial situation.<p>
+
+<li>
+<b><i>Apply</i></b> will perform the scaling.<p>
+
+<li>
+The <i><b>Create scaled set</b></i> will generated an actual set of scaled data which can be then saved as files.<p>
+
+</ul><p>
+
+In the image below, the scaling has been performed on the indicated <i>q</i> range. The <i>Messages</i> panel reports the statistics of the scaling process as applied to each curve scaled on the one with the lowest intensity:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale1.png" ALT="SOMO HPLC-SAXS test I(q) scaled set" width="1000">
+</center>
+<p>
+
+By pressing <b><i>Residuals</i></b>, the residuals of the scaling operation are also shown. 
+
+If the <b><i>Scroll</b></i> checkbox is selected, the scaled files can be examined one at a time, scrolling through them using the gray-shades wheel-bar or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. The file name of the data currently shown will appear below the gray-shades wheel-bar, as shown here:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale2a.png" ALT="SOMO HPLC-SAXS test I(q) scaled set blow-up">
+</center>
+<p>
+
+A <b>CorMap</b> analysis can be also performed on the scaled set by pressing <b><i>CorMap Analysis</i></b>. This will produce two pop-up outputs, one containg the CorMap analysis on the full <i>q</i>-range available:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_full.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap full range" width="1000">
+</center>
+<p>
+
+and the other limited to the <i>q<sub>max</sub></i> value presente in the <b><i>Options</i></b> (0.05 &Aring;<sup>-1</sup> in this case):<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_0_05.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap q=0.05" width="1000">
+</center>
+<p>
+
+Note that one-every-other <i>q</i>-value has been utilized in this analysis. As can be seen, both the pairwise <i>P</i>-value map and the red pair % histogram indicate that with the exception of three frames of the ensemble (#2, #9 and #31, corresponding to frames #1101, #1108 and #1130), most are similar to all the others, with an overall &asymp;8-9% of red pairs. Limiting the lower <i>q</i>-values to 0.015 &Aring;<sup>-1</sup> reduced this overall % red pairs count to 6% (not shown), with frames #1101 and #1130 still being substantially different from all others.<p>
+
+If the <i>Holm-Bonferroni adjusted P values</i> checkbox is selected, these will be the results:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_fullHB.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap full range HB adjusted" width="1000">
+</center>
+<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_0_05HB.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap q=0.05 HB adjusted" width="1000">
+</center>
+<p>
+
+Clearly, the combination of the one-every-other <i>q</i>-value sampling and the Holm-Bonferroni adjustment is over-permissive for this dataset. If the analysis is repeated without the sampling, these are the results:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_fullHB_nosampl.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap full range HB adjusted no sampling" width="1000">
+</center>
+<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_0_05HB_nosampl.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap q=0.05 HB adjusted no sampling" width="1000">
+</center>
+<p>
+
+In this case, similar results are obtained as with the one-every-other <i>q</i>-value sampling and no Holm-Bonferroni adjustment.<p>
+
+Pressing <b><i>Cancel</i></b> will completely exit from the <b><i>Test I(q)</i></b> mode.<p>
+
+Pressing <b><i>Trial make I(q)</i></b> will instead exit from the scaling mode only.<p>
+
+Pressing then the <b><i>Guinier</i></b> button will call the other test function available in the <b><i>Test I(q)</i></b> mode:<p>
+
+<p>
+If the maximum <i>q</i> value for the currently examined <i>I</i>(<i>q</i>) vs. <i>q</i> dataset does not reach the <b><i>MW[RT] q<sub>max</sub> cut-off</b></i> value present in the <i><b>Options</b></i> panel for the Rambo and Tainer approximate molecular weight calculation method (see <a href=saxs_hplc_options.html>here</a>), a warning will appear:
+<p>
+<p><center>
+<img SRC="somo-HPLC-SAXS_RT_warning1.png" ALT="SOMO HPLC-SAXS test I(q) Guinier Rambo-Tainer q(max) cut-off warning">
+</center>
+<p>
+
+Pressing <i><b>Ok</i></b> will allow to proceed, showing the <i>Guinier</i> mode of the <b><i>Trial make I(q)</b></i> panel (in the case examined, the pop-up alert dit <b>not</b> appear, as the <i>q<sub>max</sub></i> utilized was &gt;0.2 &Aring;<sup>-1</sup>):
+
+<p>
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_Guinier.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test initial">
+</center>
+<p>
+
+The lowermost row now carries the tools necessary to perform a Guinier analysis on the back-generated temporary <i>I</i>(<i>q</i>) vs. <i>q</i> curves:<p>
+<ul>
+<li>
+The <i>q range:</i> fields (red background) indicate the <i>q</i> range currently selected. By clicking on each one and using the gray-shades bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides, the <i>q</i>-range can be changed.<br>
+<li>
+The <i>plot extension:</i> fields provide a <i>q</i> range extension of the Guinier and Residuals plots, allowing additional <i>q</i> range before (left box) and after (right) the Guinier range to be shown. By clicking on one and using the gray-shades bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides, the <i>q</i>-range extension can be changed.<br>
+<li>
+The <i>SD</i> checkbox controls if the linear regressions for the Guinier analyses are carried out with SD weighting (<b><i>default: checked</b></i>).<br>
+<li>
+The <i>qmax*Rg</i> checkbox and its associated field enable a sequential routine which examines, starting from the higher <i>q</i> value utilized in the regression (<i>q<sub>max</sub></i>), if the product <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> is &le; the limit set in the apposite field (the <b><i>default</b></i> value is set in the <b><i>Options</b></i> panel). If the products exceeds the limit, that <i>q<sub>max</sub></i> value is dropped, and the regression is repeated utilizing the next lower <i>q</i> value. The test is repeated until a <i>q<sub>max</sub></i> value satisfying the <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> &le; set limit is found. It is highly advisable to <b>deselect</b> this checkbox before manually changing the <i>q range</i> fields, and to <b>re-select</b> it afterwards, otherwise the program will continuously repeat the <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> routine while the limits are manually moved.<p>
+</ul>
+At the bottom of this window region, the averages values for all the curves are reported, and they include:<br>
+<ul>
+<li>
+The number of curves used (<b><i>Avg. xx curves</i></b>);<br>
+<li>
+The average <i><b>qmax*Rg</i></b> (where <i><b>qmax</b></i> is the maximum <i>q</i> value included in the Guinier analysis), with the range in square brackets;<br>
+<li>
+The average <i><b>Rg</i></b>, with the SD in round brackets and the range in square brackets;<br>
+<li>
+The average intensity extrapolated at 0 scattering angle <i><b>I0</i></b>, with the SD in round brackets and the range in square brackets.<br>
+<li>
+In the line below, an approximates molecular average molecular weight, <b><i>MW[RT]</b></i> is reported, together with its SD (in round brackets) and range [in square brackets], based on the method of Rambo and Tainer (Accurate assesment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013). If the available <i>q</i>-range is below that required by the method, a warning message appears in the <i>Messages</i> area.
+<p>
+</ul>
+The regression data for each individual curve are reported in the <i>Messages</i> window.<p>
+
+The residuals of each linear regression can be seen by pressing <b><i>Residuals</i></b>:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_Guinier_adjusted.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test adjusted" width="1000">
+</center>
+<p>
+
+Note how the average <i>Rg</i> recovered for this extended set, 14.8&plusmn;0.2 &Aring;, compares well with the 15.0 &Aring; that can be calculated from the lysozyme average NMR structure (1E8L.pdb) using the WAXSiS server (<a href="http://waxsis.uni-goettingen.de/">http://waxsis.uni-goettingen.de/</a>).<p>
+
+As with the scaling option, every individual Guinier plot can be visualized by selecting the <b><i>Scroll</b></i> checkbox and using the gray-shades wheel-bar:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_Guinier_adjusted_scroll.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test adjusted">
+</center>
+<p>
+
+At this point, a plot of the <i>Rg</i> values across the chromatogram together with a typical <i>I</i>(<i>t</i>) profile (continuous green curve) can be shown by pressing <b><i>Rg plot</i></b>:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_Guinier_Rgplot.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test Rg plot">
+</center>
+<p>
+
+A new row will appear below the graphics window, with these fields:<p>
+<ul>
+<li>
+<i>Time range for Rg plot:</i> with its two fields. Clicking on each one and using the gray-scale bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides will allow to expand or restrict the Time axis (by default, the original time range is shown).<br>
+
+<li>
+<i>Rg range:</i> with its two fields. Clicking on each one and using the gray-scale bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides will allow to expand or restrict the <i>R<sub>g</sub></i> range. The default is governed by the actual <i>R<sub>g</sub></i> with error bars range with an additional empty space of 2.5% of the total range added to the lower and upper <i>R<sub>g</sub></i> limit. <br> 
+
+
+<li>
+The <i>Lock range</i> checkbox if selected will maintain the actual shown <i>R<sub>g</sub></i> range. Pressing the <b><i>Replot</i></b> button will replot the data keeping the selected <i>R<sub>g</sub></i> range and maximizing the  <i>I</i>(<i>t</i>) profile within the selected time range limits.<br>
+
+</ul><p>
+
+The scroll capability can also be activated in this mode, and the currently selected Guinier plot will be highlighted in the <i>R<sub>g</sub></i> plot:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_Guinier_Rgplot_Scroll.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test Rg plot">
+</center>
+<p>
+
+Likewise, plots of the approximate molecular weight calculations can be shown by pressing the <b><i>Approx. MW plot</b></i> button:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_Guinier_MW_plot.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test Rg plot">
+</center>
+<p>
+
+
+Pressing <i><b>Test I(q)</i></b> button will bring back the main options of this utility.<p>
+
+Pressing the <b><i>Cancel</i></b> button will exit the <b><i>Test I(q)</i></b> utility.<p>
+
+If Gaussian analysis is not required, a series of <i>I(q)</i> vs. <i>q</i> frames can be re-created at this stage from the baseline-corrected data by pressing the <b><i>Make I(q)</i></b> button.<p>
+
+<br>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on June 30, 2024.
+</font>
+</body>
+</html>
+

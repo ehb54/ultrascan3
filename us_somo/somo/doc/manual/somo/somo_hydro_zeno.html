@@ -3,8 +3,8 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>Zeno Hydrodynamics Options Module</title>
-	<link href="mainstyle1.css" rel="styleSheet" type="text/css">
+	<title>Zeno - Hydrodynamic Calculations Options Module</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
 <table BORDER=0 CELLPADDING=5 >
@@ -20,10 +20,9 @@
 
 <hr>
 <center>
-<h2>
-Zeno - Hydrodynamic Calculations  Options Module:</h2>
+<h2> Zeno - Hydrodynamic Calculations Options Module</h2>
 <p>
-<h3><center>Last updated: December 2017 </center></h3><p>
+<h3><center>Last updated: June 2024 </center></h3><p>
 </center>
 <p>
 
@@ -37,7 +36,7 @@ In this module, the options and settings controlling the <b><i>ZENO</i></b> meth
 
 <b>Computational Method:</b> The Zeno computational method involves enclosing an arbitrary-shaped probed object within a sphere and launching random walks from this sphere.The probing trajectories either hit or return to the launch surface ('loss'), whereupon the trajectory is either terminated or reinitiated.<p>
 
-<center><img SRC="somo-Zeno_options.png" ALT="SOMO Zeno Hydrodynamic Options Screen"></center><p>
+<center><img SRC="somo-Zeno_optionsNew.png" ALT="SOMO Zeno Hydrodynamic Options Screen"></center><p>
 
 <b><i>Compute Zeno</i></b> checkbox. This will launch a Monte Carlo numerical path integration that generates a large number of random walks in the space outside the body. Because the Laplacian operator governs the statistics of these walks, sums taken over these random walks yield:
 <ul>
@@ -58,32 +57,15 @@ Intrinsic viscosity, [&eta;]
 <li>
 Hydrodynamic volume, V<sub>h</sub>
 </ul>
-Enter the number of steps in the <i>Zeno Steps (thousands):</i> field (<b>Default:</b> 100). <p>
-
-<b><i>Compute Interior</i></b> checkbox. This will perform a Monte Carlo integration that generates a large number of points distributed randomly throughout the interior of the body. Sums taken over these points yield:
-<ul>
-<li>
-Particle volumes, V
-<li>
-Radius of gyration (evaluated for the interior of the particle), R<sub>gi</sub>
-<li>
-Particle scattering function, P(q) (currently not operative)
-</ul>
-Enter the number of steps in the <i>Interior Steps (thousands):</i> field (<b>Default:</b> 100). <p>
-
-<b><i>Compute Surface</i></b> checkbox. A Monte Carlo integration that generates a large number of points distributed randomly over the surface of the body. Sums taken over these points yield:
-<ul>
-<li>
-Surface area, S
-<li>
-Radius of gyration (evaluated for the surface of the particles), R<sub>gs</sub>
-<li>
-Translational diffusion coefficient, D<sub>t</sub>, by the Kirkwood double-sum formula 
-</ul>
-Enter the number of steps in the <i>Surface Steps (thousands):</i> field (<b>Default:</b> 100). <p>
+Enter the number of steps in the <i>Zeno Steps (thousands):</i> field (<b>Default:</b> 1000). <p>
 
 The <i>Skin Thickness (current units):</i> The skin thickness is utilized in the Zeno calculation.  It is a multiplier of the launch radius.  The launch radius is the radius of a sphere centered at zero which contains the model. 
-Leaving the value at 0 uses the internal default value of 1E-6. The authors of Zeno recommend that the value should be on the order of 1E-5 to 1E-6. (<b>Default:</b> 0.000000)<p>
+Leaving the value at 0 uses the internal default value of 1E-6. The authors of Zeno recommend that the value should be on the order of 1E-5 to 1E-6. (<b>Default:</b> 0.000)<p>
+
+More recently, we have discovered a discrepancy between the translational diffusion coefficient as calculated by <b><i>ZENO</i></b> and <b><i>GRPY</i></b>.  We found that the <b><i>ZENO</i></b> calculation of <i>D<sub>t</i><sub>(20,w)</sub> constantly produced relatively larger (&#126;+1-2%) values than those computed by <b><i>GRPY</i></b> for our test set of 25 protein structures. We could track a dependency on the "<i>Skin Thickness</i>" parameter in the <b><i>ZENO</i></b> calculations, that correlated linearly, although not perfectly, with the radius of gyration <i>R<sub>g</sub></i> of those proteins. Using more elongated structures (derived from the fibrinogen main body crystal structure 3GHG.pdb) we found that the <b><i>ZENO</i></b> skin-dependence of the differences with the <b><i>GRPY</i></b> calculations reached a plateau at <i>R<sub>g</sub></i> values of 50-60 &Aring;. The <i>R<sub>g</sub></i>-dependence of this entire dataset of 33 protein structures was fitted with a sigmoid, and using this skin thickness heuristic dependence reduced the discrepancy between <b><i>GRPY</i></b> and <b><i>ZENO</i></b> calculated <i>D<sub>t</i><sub>(20,w)</sub> values to an average of 0.5&plusmn;0.22% (range &plusmn;0.6%) (Brookes and Rocco, manuscript in preparation). This heuristic <b><i>ZENO</i></b> skin value calculation is now offered as a <b><i>default</i></b> option from the <span style="color:#CC0000">July 2024</span> release of <b><i>US-SOMO</i></b>.
+<p>
+The last entry in this option panel is the <i>Zeno repetitions</i>. <b><i>ZENO</i></b> could be relaunched sequentially on the same model, providing additional statistics on the calculated parameters. <b>Default: 1</b> (meaning <b><i>ZENO</i></b> will run just once for each model).
+
 
 <p>
 <hr>
@@ -101,7 +83,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on December 13, 2017.
+Last modified on June 13, 2024
 </font>
 </body>
 </html>
