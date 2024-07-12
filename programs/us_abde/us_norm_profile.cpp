@@ -57,17 +57,23 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     pb_rmItem = us_pushbutton("Remove Item");
     pb_cleanList = us_pushbutton("Clean List");
 
-    QHBoxLayout *sel_lyt = new QHBoxLayout();
-    sel_lyt->addWidget(pb_rmItem);
-    sel_lyt->addWidget(pb_cleanList);
-
     ckb_xrange = new QCheckBox();
     QGridLayout *us_xrange = us_checkbox("Limit Radius",
                                                 ckb_xrange);
     pb_pick_rp = us_pushbutton("Pick Two Points", false);
-    QHBoxLayout *xrange_lyt = new QHBoxLayout();
-    xrange_lyt->addLayout(us_xrange);
-    xrange_lyt->addWidget(pb_pick_rp);
+
+    ckb_norm_max = new QCheckBox();
+    QGridLayout *us_norm_max = us_checkbox("Normalize by Maximum",
+                                         ckb_norm_max);
+    pb_pick_norm = us_pushbutton("Pick a Point");
+
+    QGridLayout *bottom_lyt = new QGridLayout();
+    bottom_lyt->addWidget(pb_rmItem,         0, 0, 1, 1);
+    bottom_lyt->addWidget(pb_cleanList,      0, 1, 1, 1);
+    bottom_lyt->addLayout(us_xrange,         1, 0, 1, 1);
+    bottom_lyt->addWidget(pb_pick_rp,        1, 1, 1, 1);
+    bottom_lyt->addLayout(us_norm_max,       2, 0, 1, 1);
+    bottom_lyt->addWidget(pb_pick_norm,      2, 1, 1, 1);
 
     ckb_rawData = new QCheckBox();
     QGridLayout *rawData_lyt = us_checkbox("Raw Data", ckb_rawData);
@@ -78,7 +84,7 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     ckb_integral->setChecked(true);
 
     ckb_norm = new QCheckBox();
-    QGridLayout *norm_lyt = us_checkbox("Normalize", ckb_norm);
+    QGridLayout *norm_lyt = us_checkbox("Normalized", ckb_norm);
     ckb_norm->setChecked(true);
 
     ckb_legend = new QCheckBox();
@@ -113,8 +119,7 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     left_lyt->addWidget(lw_inpData);
     left_lyt->addWidget(lb_selList);
     left_lyt->addWidget(lw_selData);
-    left_lyt->addLayout(sel_lyt);
-    left_lyt->addLayout(xrange_lyt);
+    left_lyt->addLayout(bottom_lyt);
     left_lyt->addStretch(1);
 
     right_lyt->addLayout(intg_lyt);
@@ -143,6 +148,7 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     picker->setRubberBandPen(QPen(Qt::red));
     picker->setTrackerPen(QPen(Qt::red));
     plotData();
+    picker_state = XNONE;
 
     connect(pb_load, SIGNAL(clicked()), this, SLOT(slt_loadAUC()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
@@ -155,13 +161,17 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
     connect(pb_cleanList, SIGNAL(clicked()), this, SLOT(slt_cleanList()));
 
-    connect(pb_pick_rp, SIGNAL(clicked()),
-            this, SLOT(slt_pickPoint()));
+    connect(pb_pick_rp, SIGNAL(clicked()), this, SLOT(slt_pickRange()));
+    connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint()));
     connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
     connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
     connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
     connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
     connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
+    connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
+    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
+            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
+    ckb_norm_max->setCheckState(Qt::Checked);
 }
 
 void US_Norm_Profile::slt_xrange(int state){
@@ -206,9 +216,13 @@ void US_Norm_Profile::slt_rmItem(void){
     selFilenames.removeAt(row);
     lw_selData->takeItem(row);
     selectData();
+    if (lw_selData->count() == 0) {
+        picker_state = XNONE;
+    }
 }
 
 void US_Norm_Profile::slt_cleanList(void){
+    picker_state = XNONE;
     for (int i = 0; i < lw_selData->count(); i++){
         int rowInp = filenames.indexOf(lw_selData->item(i)->text());
         lw_inpData->item(rowInp)->setForeground(Qt::black);
@@ -294,6 +308,7 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
     double dx;
     double sum = 0;
     double maxY = -1e99;
+
     for (int i = 1; i < np; i++){
         dx = x[i] - x[i - 1];
         sum += dx * ( y[i] + y[i - 1] ) * 0.5;
@@ -302,9 +317,25 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
         maxY = qMax(maxY, y[i]);
     }
 
+    double normY = 1;
+    if (x_norm > 0 && x_norm <= x[0]) {
+        normY = y[0];
+    } else if (x_norm >= x[np - 1]) {
+        normY = y[np - 1];
+    } else if (x_norm > x[0] && x_norm < x[np - 1]) {
+        for (int i = 1; i < np - 1; i++) {
+            if (x[i] >= x_norm) {
+                normY = y[i];
+                break;
+            }
+        }
+    } else {
+        normY = maxY;
+    }
+
     for (int i = 0; i < integral.size(); i++){
         integralN << integral.at(i) * 100 / sum;
-        yvalN << yval.at(i) / maxY;
+        yvalN << yval.at(i) / normY;
     }
     yvalN << yval.last() / maxY;
     out["midxval"] = midxval;
@@ -315,10 +346,8 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
 
 }
 
-QVector<double> US_Norm_Profile::getXlimit(QVector<double> xval_in,
-                                                 double xmin, double xmax,
-                                                 int *idMin, int *inMax){
-    QVector<double> xval_out;
+QPair<int, int> US_Norm_Profile::getXlimit(QVector<double> xval_in,
+                                           double xmin, double xmax){
     const double *xp = xval_in.data();
     int id1 = -1;
     int id2 = -1;
@@ -327,25 +356,21 @@ QVector<double> US_Norm_Profile::getXlimit(QVector<double> xval_in,
         if (id1 == -1){
             if (xp[i] >= xmin){
                 id1 = i;
-                xval_out << xp[i];
             }
         } else {
             if (xp[i] >= xmax){
-                id2 = i;
-                xval_out << xp[i];
+                id2 = i + 1;
                 break;
-            } else {
-                xval_out << xp[i];
             }
         }
     }
     if (id2 == -1){
-        id2 = np - 1;
+        id2 = np;
     }
-    (*idMin) = id1;
-    (*inMax) = id2;
-    return xval_out;
-
+    QPair<int, int> pair;
+    pair.first = id1;
+    pair.second = id2 - id1;
+    return pair;
 }
 
 void US_Norm_Profile::selectData(void){
@@ -361,15 +386,10 @@ void US_Norm_Profile::selectData(void){
     }
     for (int i = 0; i < inpIds.size(); i++){
         int id = inpIds.at(i);
-        int np = xvalues.at(id).size();
-
         if (x_min_picked != -1 && x_max_picked != -1){
-            int idMin = 0;
-            int idMax = np - 1;
-            QVector<double> xval= getXlimit(xvalues.at(id), x_min_picked,
-                              x_max_picked, &idMin, &idMax);
-            xvalues_sel << xval;
-            yvalues_sel << yvalues.at(id).mid(idMin, xval.size());
+            QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
+            xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
+            yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
         } else {
             xvalues_sel << xvalues.at(id);
             yvalues_sel << yvalues.at(id);
@@ -557,58 +577,75 @@ void US_Norm_Profile::slt_norm(int) {
     plotData();
 }
 
-void US_Norm_Profile::slt_pickPoint(){
-    picker->disconnect();
+void US_Norm_Profile::slt_pickRange(){
     x_min_picked = -1;
     x_max_picked = -1;
-    if (selFilenames.size() == 0)
-        return;
+    if (selFilenames.size() == 0) return;
+    if (picker_state == XNORM) return;
+
+    picker_state = XRANGE;
     pb_pick_rp->setStyleSheet("QPushButton { background-color: red }");
-    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
-            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
     selectData();
     enableWidgets(false);
+}
 
-    return;
+void US_Norm_Profile::slt_pickPoint() {
+    if (selFilenames.size() == 0)  return;
+    if (picker_state == XRANGE) return;
+    pb_pick_norm->setStyleSheet("QPushButton { background-color: red }");
+    selectData();
+    enableWidgets(false);
+    picker_state = XNORM;
 }
 
 void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
-    double x = point.x();
-    if (x_min_picked == -1){
-        x_min_picked = x;
-        double miny = plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
-        double maxy = plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
-        QVector<double> xx;
-        QVector<double> yy;
-        int np = 50;
-        double dyy = (maxy - miny) / np;
-        double y0 = miny;
-        for (int i = 0; i < np; ++i){
-            xx << x_min_picked;
-            yy << y0 + i * dyy;
-        }
-        QPen pen(Qt::red);
-        pen.setWidth(3);
-        QwtPlotCurve* curve = us_curve( plot,"");
-        curve->setStyle(QwtPlotCurve::Dots);
-        curve->setPen(pen);
-        curve->setSamples(xx.data(), yy.data(), np);
-//        grid = us_grid(plot);
-        plot->replot();
+    if (selFilenames.size() == 0) return;
+    if (picker_state == XNONE) return;
 
-    } else {
-        if (x <= x_min_picked){
-            QString mess("Pick a radial point greater than: %1 cm");
-            QMessageBox::warning( this, tr( "Warning" ), mess.arg(x_min_picked));
-            return;
+    if (picker_state == XRANGE) {
+        double x = point.x();
+        if (x_min_picked == -1){
+            x_min_picked = x;
+            double miny = plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
+            double maxy = plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
+            QVector<double> xx;
+            QVector<double> yy;
+            int np = 50;
+            double dyy = (maxy - miny) / np;
+            double y0 = miny;
+            for (int i = 0; i < np; ++i){
+                xx << x_min_picked;
+                yy << y0 + i * dyy;
+            }
+            QPen pen(Qt::red);
+            pen.setWidth(3);
+            QwtPlotCurve* curve = us_curve( plot,"");
+            curve->setStyle(QwtPlotCurve::Dots);
+            curve->setPen(pen);
+            curve->setSamples(xx.data(), yy.data(), np);
+            //        grid = us_grid(plot);
+            plot->replot();
+        } else {
+            if (x <= x_min_picked){
+                QString mess("Pick a radial point greater than: %1 cm");
+                QMessageBox::warning( this, tr( "Warning" ), mess.arg(x_min_picked));
+                return;
+            }
+            x_max_picked = x;
+            pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
+            selectData();
+            enableWidgets(true);
+            picker_state = XNONE;
         }
-        x_max_picked = x;
-        picker->disconnect();
-        pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
-        selectData();
+    } else if (picker_state == XNORM) {
+        x_norm = point.x();
         enableWidgets(true);
+        QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+        QString bkg = tr("QPushButton { background-color: %1 }").arg(color.name());
+        pb_pick_norm->setStyleSheet(bkg);
+        picker_state = XNONE;
+        selectData();
     }
-    return;
 }
 
 void US_Norm_Profile::slt_reset(){
@@ -762,4 +799,18 @@ void US_Norm_Profile::slt_outItemSel(int row)
     } else {
         le_runinfo->setText(lw_selData->item(row)->text());
     }
+}
+
+void US_Norm_Profile::slt_norm_by_max(int state) {
+    QString qs = "QPushButton { background-color: %1 }";
+    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+    if (state == Qt::Checked) {
+        pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+        pb_pick_norm->setDisabled(true);
+        x_norm = -1;
+    } else {
+        pb_pick_norm->setDisabled(false);
+        pb_pick_norm->setStyleSheet(qs.arg("yellow"));
+    }
+    selectData();
 }
