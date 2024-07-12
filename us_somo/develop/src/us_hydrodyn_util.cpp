@@ -598,3 +598,11 @@ void US_Hydrodyn::clear_temp_dirs() {
    qd_somo_tmp_dir.mkdir( qd_somo_tmp_dir.path() );
    qd_saxs_tmp_dir.mkdir( qd_saxs_tmp_dir.path() );
 }
+
+QString US_Hydrodyn::gparam_value( const QString & param ) {
+   return
+      gparams.count( param )
+      ? gparams[ param ]
+      : ""
+      ;
+}

@@ -40,7 +40,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: SAXS HPLC SVD"));
+   setWindowTitle(us_tr("US-SOMO: HPLC/KIN SVD"));
 
    cg_red = USglobal->global_colors.cg_label;
    cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
@@ -1770,7 +1770,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::to_hplc()
 {
    if ( !ush_win->saxs_hplc_widget )
    {
-      editor_msg( "red", us_tr( "US-SOMO SAXS HPLC window has been closed" ) );
+      editor_msg( "red", us_tr( "US-SOMO HPLC/KIN window has been closed" ) );
       return;
    }
 

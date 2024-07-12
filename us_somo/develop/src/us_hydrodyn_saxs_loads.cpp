@@ -3239,7 +3239,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             if ( run_nnls )
             {
                editor->append("NNLS target: " + nnls_target + "\n");
-               nnls_csv_footer << "\"NNLS target:\"," + nnls_target;
+
+               // {
+               //    nnls_csv_footer << "\"NNLS target:\"," + nnls_target;
+               // }
             }
             if ( nnls_csv ) {
                QString use_dir = USglobal->config_list.root_dir + "/" + "somo" + "/" + "saxs";
@@ -3727,6 +3730,36 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   (*remember_mw_source)[use_csv_filename + " Model"] =  "copied from target curve";
                   if ( run_nnls )
                   {
+
+                     {
+                        QString rg_msg;
+                        {
+                           double Rg;
+                           QString errormsg;
+                           if ( US_Saxs_Util::compute_rg_from_pr( nnls_r, nnls_B, Rg, errormsg ) ) {
+                              rg_msg = QString( "%1" ).arg( Rg, 0, 'f', 2 );
+                           } else {
+                              rg_msg = errormsg;
+                           }
+                        }
+                        double dmax = nnls_r.back();
+                        {
+                           int i = (int) nnls_r.size() - 1;
+                           if ( i > (int) nnls_B.size() - 1 ) {
+                              i = (int) nnls_B.size() - 1;
+                           }
+                           while ( --i >= 0 && nnls_B[i] == 0 ) {
+                              dmax = nnls_r[i];
+                           }
+                        }               
+                        
+                        nnls_csv_footer << QString( "\"NNLS target:\",\"%1\",,%2,%3" )
+                           .arg( QString( "%1" ).arg( nnls_target ).replace( QRegularExpression( "(\"| )" ) , "_" ) )
+                           .arg( rg_msg )
+                           .arg( dmax )
+                           ;
+                     }
+
                      calc_nnls_fit( nnls_target, use_csv_filename );
                      if ( nnls_csv ) {
                         if ( QFile::exists(nnls_csv_filename) )
@@ -3737,7 +3770,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                         QFile f( nnls_csv_filename );
                         if ( f.open(QIODevice::WriteOnly ) ) {
                            QTextStream tso(&f);
-                           tso << "\"File\",\"Model\",\"Contribution weight\"\n";
+                           tso << "\"File\",\"Model\",\"Contribution weight\",\"Rg [A]\",\"Dmax [A]\"\n";
                            tso << nnls_csv_data.join("\n") << "\n";
                            tso << "\n\"Messages:\"\n";
                            tso << nnls_csv_footer.join("\n") << "\n";
@@ -3765,21 +3798,36 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          return;
       }
 
+      float mw = 0.0;
+
       if ( !ext.contains(QRegExp("^sprr(|_(x|n|r))")) )
       {
          // check for gnom output
          QTextStream ts(&f);
          QString tmp;
          unsigned int pos = 0;
+         QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+
          while ( !ts.atEnd() )
          {
             tmp = ts.readLine();
+            if ( qx_mw.indexIn( tmp ) != -1 ) {
+               mw = qx_mw.cap(1).toFloat();
+               TSO <<
+                  QString(
+                          "load pr found gnom mw %1\n"
+                          )
+                  .arg( mw )
+                  ;
+               (*remember_mw)[QFileInfo(filename).fileName()] = mw;
+               (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+            }
             pos++;
             if ( tmp.contains("Distance distribution  function of particle") ) 
             {
                editor->append("\nRecognized GNOM output.\n");
-               startline = pos + 4;
-               pop_last = 2;
+               startline = pos + 3;
+               pop_last = 1;
                break;
             }
          }
@@ -3791,7 +3839,6 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       //      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
       QString firstLine = ts.readLine();
       QRegExp sprr_mw_line("mw\\s+(\\S+)\\s+Daltons");
-      float mw = 0.0;
       if ( sprr_mw_line.indexIn(firstLine) != -1 )
       {
          mw = sprr_mw_line.cap(1).toFloat();
@@ -3850,7 +3897,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          }
       }
       f.close();
-      // US_Vector::printvector3( "pr load 0 r, pr, pr_error", r, pr, pr_error, 6, 10 );
+      // US_Vector::printvector3( "pr load 0 r, pr, pr_error", r, pr, pr_error, 6 );
 
       if ( pr_error.size() && pr.size() != pr_error.size() ) {
          pr_error.clear();
@@ -3875,7 +3922,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       if ( mw )
       {
          (*remember_mw)[use_filename] = mw;
-         (*remember_mw_source)[use_filename] = "loaded from sprr file";
+         (*remember_mw_source)[use_filename] = (*remember_mw_source)[QFileInfo(filename).fileName()];
       }         
       check_pr_grid( r, pr, pr_error );
       plot_one_pr(r, pr, pr_error, use_filename, skip_mw );
@@ -4823,13 +4870,40 @@ void US_Hydrodyn_Saxs::load_gnom()
       f.close();
       f.open(QIODevice::ReadOnly);
       bool ask_save_mw_to_gnom;
+      double gnom_mw = 0e0;
+
       {
          QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
          QStringList mwline = qsl_gnom.filter(qx_mw);
          ask_save_mw_to_gnom = !mwline.size();
-      }
 
-      double gnom_mw = 0e0;
+         if ( mwline.size() ) {
+
+            if ( qx_mw.indexIn(mwline[0]) == -1 )
+            {
+               TSO << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
+               gnom_mw = 0e0;
+            } else {
+               TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+               gnom_mw = qx_mw.cap(1).toDouble();
+            }
+            if ( mwline.size() > 1 )
+            {
+               if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                  US_Static::us_message(us_tr("Please note:"), 
+                                        QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
+                                                      "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+               }
+            }
+            if ( gnom_mw > 0e0 )
+            {
+               (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
+               (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+            }
+         } else {
+            TSO << "mwline empty\n";
+         }
+      }
 
       double units = 1;
       if ( our_saxs_options->iq_scale_ask )
@@ -4940,37 +5014,39 @@ void US_Hydrodyn_Saxs::load_gnom()
                } else {
                   // end of prr
                   TSO << "end of prr\n";
-                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
-                  QStringList mwline = qsl_gnom.filter(qx_mw);
-                  if ( mwline.size() )
-                  {
-                     if ( qx_mw.indexIn(mwline[0]) == -1 )
-                     {
-                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
-                        gnom_mw = 0e0;
-                     } else {
-                        // cout << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
-                        gnom_mw = qx_mw.cap(1).toDouble();
-                     }
-                     if ( mwline.size() > 1 )
-                     {
-                        if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                           US_Static::us_message(us_tr("Please note:"), 
-                                                 QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
-                                                               "Using the first one found (%1 Daltons)")).arg(gnom_mw));
-                        }
-                     }
-                     if ( gnom_mw > 0e0 )
-                     {
-                        (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
-                        (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
-                     }
-                  }
+                  // QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+                  // QStringList mwline = qsl_gnom.filter(qx_mw);
+                  // if ( mwline.size() )
+                  // {
+                  //    if ( qx_mw.indexIn(mwline[0]) == -1 )
+                  //    {
+                  //       TSO << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
+                  //       gnom_mw = 0e0;
+                  //    } else {
+                  //       TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+                  //       gnom_mw = qx_mw.cap(1).toDouble();
+                  //    }
+                  //    if ( mwline.size() > 1 )
+                  //    {
+                  //       if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                  //          US_Static::us_message(us_tr("Please note:"), 
+                  //                                QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
+                  //                                              "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+                  //       }
+                  //    }
+                  //    if ( gnom_mw > 0e0 )
+                  //    {
+                  //       (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
+                  //       (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+                  //    }
+                  // } else {
+                  //    TSO << "mwline empty\n";
+                  // }
                   gnom_mw = get_mw(filename,false);
-                  if ( !mwline.size() )
-                  {
-                     ask_save_mw_to_gnom = true;
-                  }
+                  // if ( !mwline.size() )
+                  // {
+                  //    ask_save_mw_to_gnom = true;
+                  // }
                   if ( cb_normalize->isChecked() )
                   {
                      normalize_pr(r, &pr, &pre, get_mw(filename, false));

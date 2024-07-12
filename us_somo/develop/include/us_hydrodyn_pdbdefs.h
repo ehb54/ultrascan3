@@ -52,17 +52,7 @@ struct saxs
    float               b5[5];                // b coefficients 5 term gaussian
    float               c5;                   // c coefficient  5 term gaussian
    float               volume;               // atomic volume
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    vector < double >   vcoeff;               // variable length coefficients, c,a0b0 etc
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
    float               si;                   // q == 0 scattering intensity
 };
 
@@ -166,6 +156,15 @@ struct PDB_atom
    int hydrogens;    
    float        saxs_excl_vol;   // SAXS excluded volume value
    double       si;
+   double num_elect;  // number of electrons for vdw bead models + saxs pr
+
+   // should be in a separate header, but without a rewrite of bead model functions, we'll kludge into bead0
+   QString      is_vdw;
+   double       vdw_theo_waters;
+   int          vdw_count_exposed;
+   double       vdw_theo_waters_exposed;
+   float        asa_hydrate_probe_radius;
+   float        asa_hydrate_threshold;
 };
 
 struct PDB_chain   // chain in PDB file
@@ -199,6 +198,20 @@ struct PDB_model
    double protons;                          // number of protons
    double isoelectric_point;                // pH of zero net charge
    QString  model_id;
+
+   QString       fractal_dimension_parameters;
+   double        fractal_dimension;
+   double        fractal_dimension_sd;
+   double        fractal_dimension_wtd;
+   double        fractal_dimension_wtd_sd;
+   double        fractal_dimension_wtd_wtd;
+   double        fractal_dimension_wtd_wtd_sd;
+   double        rg_over_fractal_dimension;
+   double        rg_over_fractal_dimension_sd;
+   double        rg_over_fractal_dimension_wtd;
+   double        rg_over_fractal_dimension_wtd_sd;
+   double        rg_over_fractal_dimension_wtd_wtd;
+   double        rg_over_fractal_dimension_wtd_wtd_sd;
 };
 
 struct bead
@@ -307,6 +320,8 @@ struct saxs_options
 
    bool    crysol_default_load_difference_intensity;
    bool    crysol_version_26;
+   bool    crysol_version_3;
+   bool    crysol_water_dummy_beads;
 
    // bead model control
    bool    compute_saxs_coeff_for_bead_models;
@@ -447,6 +462,7 @@ struct saxs_atom
    float radius;      // radius of atomic group
    // for bead models:
    float srv;         // square root of relative volume
+   double electrons;
    saxs saxs_data;    
 };
 

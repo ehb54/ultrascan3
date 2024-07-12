@@ -32,7 +32,7 @@ US_Hydrodyn_Saxs_Hplc_Simulate::US_Hydrodyn_Saxs_Hplc_Simulate(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: HPLC SAXS Simulate" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN Simulate" ) );
 
    setupGUI();
    ((US_Hydrodyn*)us_hydrodyn)->fixWinButtons( this );

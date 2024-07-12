@@ -4793,7 +4793,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
    }
 
    if(asa.method == 1) {
-      // surfracer
+      // ASAB1
       editor->append("Computing ASA via ASAB1\n");
       qApp->processEvents();
       if (stopFlag)

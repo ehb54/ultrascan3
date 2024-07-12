@@ -38,6 +38,7 @@ class US_Hydrodyn_Zeno
                vector < PDB_atom > *   bead_model,
                double              &   sum_mass,
                double              &   sum_volume,
+               const double        &   Rg,
                mQProgressBar *         use_progress,
                bool                    keep_files = false,
                bool                    zeno_cxx = false,

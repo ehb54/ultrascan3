@@ -131,6 +131,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Dad;
+      friend class US_Hydrodyn_Dad_Conc;
+      friend class US_Hydrodyn_Mals;
+      friend class US_Hydrodyn_Mals_Conc;
+      friend class US_Hydrodyn_Mals_Saxs;
+      friend class US_Hydrodyn_Mals_Saxs_Conc;
+      friend class US_Hydrodyn_Mals_Saxs_Svd;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Buffer;
@@ -237,6 +244,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_clear_plot_saxs;
       QPushButton *pb_saxs_legend;
       QPushButton *pb_plot_pr;
+      QPushButton *pb_pr_to_iq;
       QPushButton *pb_load_pr;
       QPushButton *pb_load_plot_pr;
       QPushButton *pb_clear_plot_pr;
@@ -246,7 +254,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
       QPushButton *pb_saxs_buffer;
+      QPushButton *pb_dad;
       QPushButton *pb_saxs_hplc;
+      QPushButton *pb_mals;
+      QPushButton *pb_mals_saxs;
       QPushButton *pb_saxs_xsr;
       QPushButton *pb_saxs_1d;
       QPushButton *pb_saxs_2d;
@@ -468,6 +479,32 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool write_temp_pdb_selected_models( QString & error_msg );
       QString last_selected_pdb_filename;
 
+      bool log_rebin(
+                     int intervals
+                     ,const vector <double> & q
+                     ,const vector <double> & I
+                     ,const vector <double> & e
+                     ,vector <double> & rebin_q
+                     ,vector <double> & rebin_I
+                     ,vector <double> & rebin_e
+                     ,QString & errors
+                     );                     
+
+      bool log_rebin(
+                     int intervals
+                     ,const vector <double> & q
+                     ,const vector <double> & I
+                     ,vector <double> & rebin_q
+                     ,vector <double> & rebin_I
+                     ,QString & errors
+                     );                     
+
+      bool last_pr_rebin_save(
+                              const QString & header
+                              ,const QString & rxstr
+                              ,QStringList & created_files
+                              );
+
       QBoxLayout * qbl_plots;
       QBoxLayout * qbl_resid;
 
@@ -526,6 +563,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map < QString, float > *remember_mw;
       map < QString, float > *match_remember_mw;
       map < QString, QString > *remember_mw_source;
+      QString info_remember_mw( const QString & msg = "" ); // report contents of remember_mw maps
       // map < QString, float > contrib;
       vector < vector < float > > contrib_array;
       vector < PDB_atom * >  contrib_pdb_atom;
@@ -754,6 +792,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void reset_buffer_csv();
       csv  hplc_csv;
       void reset_hplc_csv();
+      csv  dad_csv;
+      void reset_dad_csv();
+      csv  mals_csv;
+      void reset_mals_csv();
+      csv  mals_saxs_csv;
+      void reset_mals_saxs_csv();
 
       csv  conc_csv;         // stores curve specific data
       void sync_conc_csv();  // removes deleted curves, adds non-extant curves with default
@@ -812,6 +856,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool use_SDs_for_fitting_iqq;
       bool use_SDs_for_fitting_prr;
       bool nnls_plot_contrib;
+
+      bool pr_to_iq( int pos, QString name );
+      bool pr_to_iq( const map < double, double > & pr_exact, QString name );
 
    private:
       
@@ -875,6 +922,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                              );
 
 
+      bool            bead_model_has_electrons();
+
    private slots:
 
       void pr_info( const QString & msg = "", bool detail = false ); // stdout report of pr vectors
@@ -882,6 +931,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void pr_replot();
       void do_rescale();
       void do_rescale_y();
+
+      bool pr_to_iq(); // pick name
 
       void manual_guinier_process();
       void set_manual_guinier();
@@ -1015,7 +1066,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void run_guinier_cs();
       void run_guinier_Rt();
       QString saxs_filestring();
-      QString sprr_filestring();
+      QString sprr_filestring( const QString & append = "" );
       void set_create_native_saxs();
       void set_guinier();
       void set_cs_guinier();
@@ -1034,7 +1085,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
+      void dad();
       void saxs_hplc();
+      void mals();
+      void mals_saxs();
       void saxs_xsr();
       void saxs_1d();
       void saxs_2d();

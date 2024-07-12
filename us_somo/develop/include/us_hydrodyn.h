@@ -64,6 +64,9 @@
 #include "us_hydrodyn_saxs_search.h"
 #include "us_hydrodyn_saxs_buffer.h"
 #include "us_hydrodyn_saxs_hplc.h"
+#include "us_hydrodyn_dad.h"
+#include "us_hydrodyn_mals.h"
+#include "us_hydrodyn_mals_saxs.h"
 #include "us_hydrodyn_saxs_1d.h"
 #include "us_hydrodyn_saxs_2d.h"
 #include "us_hydrodyn_advanced_config.h"
@@ -79,6 +82,9 @@
 #include "us_hydrodyn_pdb_tool.h"
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
+// #include "us_hydrodyn_fractal_dimension_options.h"
+#include "us_container_grpy.h"
+
 // #include "us_hydrodyn_pat.h"
 
 #include "us3i_gui_settings.h"
@@ -104,6 +110,7 @@ struct _vdwf {
    double ionized_mw_delta;
    double r;
    double w;
+   double e;
    int color;
 };
 
@@ -115,6 +122,20 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Cluster;
       friend class US_Hydrodyn_Cluster_Dmd;
+      friend class US_Hydrodyn_Dad;
+      friend class US_Hydrodyn_Dad_Svd;
+      friend class US_Hydrodyn_Dad_Options;
+      friend class US_Hydrodyn_Dad_Baseline_Best;
+      friend class US_Hydrodyn_Dad_Parameters;
+      friend class US_Hydrodyn_Mals;
+      friend class US_Hydrodyn_Mals_Svd;
+      friend class US_Hydrodyn_Mals_Options;
+      friend class US_Hydrodyn_Mals_Baseline_Best;
+      friend class US_Hydrodyn_Mals_Parameters;
+      friend class US_Hydrodyn_Mals_Saxs;
+      friend class US_Hydrodyn_Mals_Saxs_Svd;
+      friend class US_Hydrodyn_Mals_Saxs_Options;
+      friend class US_Hydrodyn_Mals_Saxs_Baseline_Best;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Hydro;
       friend class US_Hydrodyn_Saxs_Screen;
@@ -246,6 +267,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool saxs_plot_widget;
 
       map < QString, QString >            gparams;
+      QString                             gparam_value( const QString & param ); // convenience function, returns empty string if not defined
 
       US_Config *USglobal;
 
@@ -271,6 +293,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
+      bool                grpy_parallel_pulled;
+      US_Container_Grpy * us_container_grpy;
+      
+      set < QString > residues_with_atomic_vs_bead_hydration_differences;
+      void            compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl = {} );
+      bool            residue_atomic_vs_bead_hydration_differences( const struct residue & r );
+      QString         list_residues_with_atomic_vs_bead_hydration_differences();
+      void            info_residue( struct residue & r, const QString & msg = "" );
+      bool            model_vector_has_hydration_differences( const vector < struct PDB_model > & m );
+
       bool     gui_script;
       QString  gui_script_file;
       void     gui_script_msg  ( int line, QString arg, QString msg );
@@ -409,6 +441,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
       bool saxs_widget;
+      bool fractal_dimension_options_widget;
+      bool vdw_overlap_widget;
 
       bool saxs_options_widget;
       bool sas_options_saxs_widget;
@@ -494,7 +528,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QLineEdit *le_bead_model_file;
       QLineEdit *le_bead_model_prefix;
-      QLineEdit *le_bead_model_suffix;
+      QTextEdit *le_bead_model_suffix;
 
       QPushButton *pb_batch;
       QPushButton *pb_batch2;
@@ -538,6 +572,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QPushButton *pb_bd;
 
+      QPushButton *pb_fractal_dimension;
+      
       //      QPushButton *pb_bd_prepare;
       //      QPushButton *pb_bd_load;
       //      QPushButton *pb_bd_edit;
@@ -575,6 +611,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
+      QFrame * fractal_dimension_options_window;
+      QFrame * vdw_overlap_window;
 
       US_Hydrodyn_SasOptionsSaxs         * sas_options_saxs_window;
       US_Hydrodyn_SasOptionsSans         * sas_options_sans_window;
@@ -922,6 +960,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Saxs_Hplc    *saxs_hplc_window;
       csv                      last_saxs_hplc_csv;
 
+      bool                     dad_widget;
+      US_Hydrodyn_Dad         *dad_window;
+      csv                      last_dad_csv;
+      
+      bool                     mals_widget;
+      US_Hydrodyn_Mals         *mals_window;
+      csv                      last_mals_csv;
+      
+      bool                     mals_saxs_widget;
+      US_Hydrodyn_Mals_Saxs    *mals_saxs_window;
+      csv                      last_mals_saxs_csv;
+      
       bool                     saxs_search_widget;
       US_Hydrodyn_Saxs_Search  *saxs_search_window;
       csv                      last_saxs_search_csv;
@@ -1006,6 +1056,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       hydro_results grpy_results;
       hydro_results grpy_results2;
+      bool          grpy_vdw;
 
       QProcess *hullrad;
       void hullrad_process_next();
@@ -1041,6 +1092,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void clear_temp_dirs();
       
+      // for vdw beads saxs excl vol
+      vector < atom >                atom_list;
+      map < QString, atom >          atom_map;
+      void                           select_atom_file(const QString &filename);
+
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();
@@ -1051,8 +1107,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
       void gui_script_run();
+      void fractal_dimension( bool from_parameters = false, save_info * fd_save_info = (save_info *)0 );
       
    public:
+      void save_params_force_results_name( save_info & save );
+
       bool          cli_progress;
       mQProgressBar *progress;
       mQProgressBar *mprogress;
@@ -1102,6 +1161,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_prr( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute prr curve
       void select_save_params();
       void show_saxs_options();
+      void show_fractal_dimension_options();
+      void show_vdw_overlap();
       void show_bd_options();
       void show_anaflex_options();
       void show_dmd_options();
@@ -1278,6 +1339,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int compute_bd_connections();            // computes intersected pb beads within tolerance map
       int write_pdb( QString fname, vector < PDB_atom > *model );
+
+
+      bool write_pdb_from_model(
+                                const PDB_model & model
+                                ,QString & errors
+                                ,QString & writtenname
+                                ,const QString & headernote = ""
+                                ,const QString & suffix     = ""
+                                ,const QString & filename   = ""
+                                );
 
       // ancillary pdb utils
 

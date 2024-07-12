@@ -2478,6 +2478,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    }
 
    // remove them now
+   lb_created_files->setUpdatesEnabled( false );
+
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_created_files->item( i )->text() ) )
@@ -2487,11 +2489,17 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
       }
    }
 
+   lb_created_files->setUpdatesEnabled( true );
+
+   lb_files->setUpdatesEnabled( false );
+
+   QString msg = "";
+
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_files->item( i )->text() ) )
       {
-         editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
+         msg += QString( us_tr( "Removed %1\n" ) ).arg( lb_files->item( i )->text() );
          if ( lbl_buffer->text() == lb_files->item( i )->text() )
          {
             lbl_buffer->setText( "" );
@@ -2518,6 +2526,12 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
       }
    }
 
+   lb_files->setUpdatesEnabled( true );
+
+   if ( !msg.isEmpty() ) {
+      editor_msg( "black", msg );
+   }
+
    disable_updates = false;
    plot_files();
    if ( !lb_files->count() &&
@@ -2536,6 +2550,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          conc_window->cancel();
       }
    }
+   qApp->processEvents();
+   repaint();
 }
 
 class hplc_sortable_qstring {
