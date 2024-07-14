@@ -1,5 +1,9 @@
 #include "../include/us_util.h"
 
+// #ifdef WIN32
+// #include <QDesktopServices.h>
+// #endif
+
 US_Help::US_Help(QWidget *parent, const char* ) : QWidget( parent )
 {
   USglobal = new US_Config();
@@ -40,6 +44,15 @@ void US_Help::show_html_file( QString helpFile )
 
 void US_Help::openBrowser()
 {
+   // removed since windows (10?) doesn't seem to honor the default browser setting
+   // by removing the user can configure their favorite browser in us3_config
+   // and it will be initialized in us_config.cpp to the QSettings() value
+// #ifdef WIN32
+//    QDesktopServices::openUrl( QUrl( URL, QUrl::TolerantMode ) );
+//    return;
+// #endif
+   
+
 #if QT_VERSION < 0x040000
   proc = new QProcess( this );
 # ifdef Q_OS_MAC
