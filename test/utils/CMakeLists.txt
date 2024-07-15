@@ -2,7 +2,7 @@
 project(TestUSUtils)
 
 # Find Qt6 packages
-find_package(Qt6 REQUIRED COMPONENTS Core Test Xml)
+find_package(Qt5 REQUIRED COMPONENTS Core Test Xml)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/utils
@@ -17,9 +17,9 @@ add_executable(test_us_utils
 
 # Link the utils library and Qt libraries to the test executable
 target_link_libraries(test_us_utils utils
-        Qt6::Core
-        Qt6::Test
-        Qt6::Xml
+        Qt5::Core
+        Qt5::Test
+        Qt5::Xml
         )
 
 # Add the test to CTest

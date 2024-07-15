@@ -17,7 +17,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 enable_testing()
 
 # Find Qt packages
-find_package(Qt6 REQUIRED COMPONENTS Core GUI NETWORK SQL Test Xml)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Network Sql Test Xml)
 
 # Include the src subdirectory
 add_subdirectory(utils)
