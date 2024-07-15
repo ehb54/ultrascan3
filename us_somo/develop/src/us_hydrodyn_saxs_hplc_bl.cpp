@@ -18,7 +18,7 @@ US_Hydrodyn_Saxs_Hplc_Bl::US_Hydrodyn_Saxs_Hplc_Bl(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Subtract Baseline" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Subtract Baseline" ) );
 
    setupGUI();
    update_enables();

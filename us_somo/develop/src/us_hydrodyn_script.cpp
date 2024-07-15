@@ -153,6 +153,28 @@ void US_Hydrodyn::gui_script_run() {
          } else {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
          }
+      } else if ( cmd == "saxs_options" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+         if ( opt1 == "overwrite" ) {
+            cb_overwrite->setChecked( true );
+            set_overwrite();
+         } else if ( opt1 == "fulldebye" ) {
+            saxs_options.saxs_iq_native_debye   = true;
+            saxs_options.saxs_iq_native_sh      = false;
+            saxs_options.saxs_iq_native_fast    = false;
+            saxs_options.saxs_iq_native_hybrid  = false;
+            saxs_options.saxs_iq_native_hybrid2 = false;
+            saxs_options.saxs_iq_native_hybrid3 = false;
+            saxs_options.saxs_iq_foxs           = false;
+            saxs_options.saxs_iq_crysol         = false;
+            saxs_options.saxs_iq_sastbx         = false;
+         } else {
+            gui_script_error( i, cmd, "unknown option : " + opt1 );
+         }
       } else if ( cmd == "batch" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -182,6 +204,12 @@ void US_Hydrodyn::gui_script_run() {
             }
             batch_window->cb_prr->setChecked( true );
             batch_window->set_prr();
+         } else if ( opt1 == "iqq" ) {
+            if ( !batch_window->cb_iqq->isEnabled() ) {
+               gui_script_error( i, cmd, opt1 + ": not enabled" );
+            }
+            batch_window->cb_iqq->setChecked( true );
+            batch_window->set_iqq();
          } else if ( opt1 == "sascsv" ) {
             if ( !batch_window->cb_csv_saxs->isEnabled() ) {
                gui_script_error( i, cmd, opt1 + ": not enabled" );

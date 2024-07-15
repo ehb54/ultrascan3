@@ -5,11 +5,18 @@ More information is available [here](https://ultrascan.aucsolutions.com)
 
 The UltraScan project is supported by NIH Funding GM120600
 
-### installation
+### Licensing
+
+This project is licensed under the Lesser General Public License (LGPL). You can find the LGPL license in the LICENSE file in the root directory of this project.
+
+This project uses the Eigen library, which is licensed under the Mozilla Public License 2.0 (MPL2). 
+You can find the Eigen source code and license at [Eigen GitHub repository](https://gitlab.com/libeigen/eigen).
+
+### Installation
 
 The simplest way is to download and install a precompiled [binary](https://www.ultrascan3.aucsolutions.com/download.php)
 
-### building
+### Building
  
 If you wish to compile from source, here are some notes to get you started.
 
@@ -21,7 +28,7 @@ One could also take hints from this [Dockerfile](https://github.com/ehb54/ultras
 
 Please create an issue or [contact us](https://www.ultrascan3.aucsolutions.com/contacts.php) if you have further questions.
 
-### container environment
+### Container environment
 
 Assuming you are experienced with containers...
 

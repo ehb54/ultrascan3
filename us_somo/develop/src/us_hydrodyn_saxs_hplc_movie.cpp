@@ -26,7 +26,7 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: SAXS HPLC MOVIE"));
+   setWindowTitle(us_tr("US-SOMO: HPLC/KIN MOVIE"));
 
 
    for ( int i = 0; i < hplc_win->lb_files->count(); i++ )

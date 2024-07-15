@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO HPLC-SAXS Module</title>
+	<title>SOMO HPLC/KIN Module</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -21,18 +21,22 @@
 <hr>
 <center>
 <h2>
-SOMO HPLC-SAXS Module linear baseline tool:</h2></center>
-<h3><center>Last updated: December 2017</center></h3><p>
-<center><span style="color:#CC0000">NOTICE: the HPLC-SAXS module is being developed by E. Brookes, J. Perez, P. Vachette, and M. Rocco.<br>
+SOMO HPLC/KIN Module linear baseline tool:</h2></center>
+<h3><center>Last updated: July 2024</center></h3><p>
+<center><span style="color:#CC0000">NOTICE: the HPLC/KIN module is being developed by E. Brookes, J. Perez, P. Vachette, and M. Rocco.<br>
 Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst. 49:1827-1841 (2016).</span>
 </center>
+<br>
+<span style="color:#CC0000">Warning: this <b>Help</b> section was originally written in 2017, and has not been updated for the July 2024 intermediate <b><i>US-SOMO</i></b> release. Therefore, all screenshots refer to an older layup, although the commands are mostly the same. In particular, the <b><i>CorMap Analysis</i></b> button has been renamed "<b><i>PVP</i></b>" ("P-value pair" analysis). An update of this <b>Help</b> section is planned.</span><p>
+<br>
+
 <hr>
 <p>
 This portion of the manual describes the utilization of the original linear baseline subtraction tool (see Brookes et al. J. Appl. Cryst. 46:1823-1833, 2013). This tool should be now utilized <span style="color:#CC0000"><b>only</b></span> if there is just a minor drift between the initial and final baseline portions in the <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms, likely not due to capillary fouling but to other resaons such as incomplete column buffer equilibration. Starting from the May 2016 release, we have implemented a tool assessing the amount of drift and suggesting which kind of baseline subtraction would be more appropriate.<br>
-As an example, we utilize here a HPLC-SAXS dataset collected on an Aldolase sample, which, in addition of multiple, non-resolved peaks that will be the subject of Gaussian decomposition with distorted Gaussian functions (see <a href=somo_saxs_hplc_skewedGauss.html>here</a>), shows only a minor baseline drift:<p>
+As an example, we utilize here a SEC-SAXS dataset collected on an Aldolase sample, which, in addition of multiple, non-resolved peaks that will be the subject of Gaussian decomposition with distorted Gaussian functions (see <a href=somo_saxs_hplc_skewedGauss.html>here</a>), shows only a minor baseline drift:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_linbas1.png" ALT="SOMO HPLC-SAXS linear baseline setting 1">
+<img SRC="somo-HPLC-SAXS_linbas1.png" ALT="SOMO HPLC/KIN linear baseline setting 1" width="1000">
 </center>
 <p>
 
@@ -40,7 +44,7 @@ Contrary to what is required for the new Integral Baseline method, a single chro
 In the <b><i>Options</i></b> module, select the <i>Linear baseline removal</i> checkbox. The <b><i>Baseline</i></b> button is then pressed. A pop-up message will appear:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_linear_baseline_warning.png" ALT="SOMO HPLC-SAXS linear baseline warning">
+<img SRC="somo-HPLC-SAXS_linear_baseline_warning.png" ALT="SOMO HPLC/KIN linear baseline warning">
 </center>
 <p>
 
@@ -48,14 +52,14 @@ In the <b><i>Options</i></b> module, select the <i>Linear baseline removal</i> c
 Pressing "OK" will allow to proceed. As shown in the image below, this superimposes to the selected chromatogram six vertical lines, three for each side. The two magenta lines on each side define the beginning and end, respectively, of the chromatogram regions over which the data are averaged to set the beginning and end of a baseline. The red lines define instead the beginning and end points of the data to be subjected to the baseline correction. The positions of the six lines are shown in the six fields in the bottom row, with their backgrounds color-coded accordingly. If the <i>zero base</i> checkbox is selected, the left-side lines and they respective fields will be removed, as it happens for the integral baseline operation (<b><i>default: not selected</i></b>).<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_linbas2.png" ALT="SOMO HPLC-SAXS linear baseline setting 2">
+<img SRC="somo-HPLC-SAXS_linbas2.png" ALT="SOMO HPLC/KIN linear baseline setting 2" width="1000">
 </center>
 <p>
 
 By clicking on each field, the corresponding line can be moved across the chromatogram using the <b><i>gray-shades bar-wheel</i></b> at the top of this panel or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. The actual baseline is shown as a green dashed line, while the two orange dashed lines show the trends of linear regression done on the regions delimited by the two couples of vertical magenta lines. Ideally, the orange lines should come as close as possible to the green line:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_linbas3.png" ALT="SOMO HPLC-SAXS linear baseline setting 3">
+<img SRC="somo-HPLC-SAXS_linbas3.png" ALT="SOMO HPLC/KIN linear baseline setting 3" width="1000">
 </center>
 <p>
 
@@ -69,14 +73,14 @@ After pressing <b><i>Keep</i></b>, it is best to then select one by one a few ot
 The <b><i>Baseline apply</i></b> button becomes available once a baseline has been defined even a single <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms is selected. Pressing it will allow to compare how the chosen settings perform:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_linbas4.png" ALT="SOMO HPLC-SAXS linear baseline setting 4">
+<img SRC="somo-HPLC-SAXS_linbas4.png" ALT="SOMO HPLC/KIN linear baseline setting 4" width="1000">
 </center>
 <p>
 
 The baseline parameters thus set can be applied to all curves with concurrent subtraction of each baseline by selecting them all and then pressing again the <b><i>Baseline apply</i></b> button. A new set of data is generated, the initial and final points used in the linear baseline subtraction are added to the filename of the produced files, and two labels are added, "-bl" (=baseline linear) after the <i>q</i> value, ans "-s" at the end of the filename, as shown in the <b><i>Data files</i></b> panel:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_linbas5.png" ALT="SOMO HPLC-SAXS linear baseline all subtracted">
+<img SRC="somo-HPLC-SAXS_linbas5.png" ALT="SOMO HPLC/KIN linear baseline all subtracted" width="1000">
 </center>
 <p>
 
@@ -99,7 +103,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on December 13, 2017.
+Last modified on July 1, 2024.
 </font>
 </body>
 </html>

@@ -18,7 +18,7 @@ US_Hydrodyn_Saxs_Hplc_P3d::US_Hydrodyn_Saxs_Hplc_P3d(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Plot 3D" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Plot 3D" ) );
 
    setupGUI();
    update_enables();
@@ -37,7 +37,7 @@ void US_Hydrodyn_Saxs_Hplc_P3d::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : Plot 3D" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: HPLC/KIN : Plot 3D" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );

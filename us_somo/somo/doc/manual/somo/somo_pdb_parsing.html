@@ -23,28 +23,26 @@
 <h2>
 SOMO - PDB Parsing Options Module:</h2>
 <p>
-<h3><center>Last updated: December 2020 </center></h3><p>
+<h3><center>Last updated: June 2024 </center></h3><p>
 
 <img SRC="somo-parsing.png" ALT="SOMO PDB Parsing Options Screen">
 </center>
 <p>
 
-In this module, still under development, you can control the options affecting the
+In this module you can control the options affecting the
 way SOMO reads and loads the various fields present in PDB files.
 <p>
-
-<p>
-<table BORDER CELLSPACING=5 CELLPADDING=5>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=7 bgcolor="#FFFFFF">
 <tr>
-<p>
-<p>
-
 <td><center><img SRC="somo-parsing1.png" ALT="PDB Parsing Options"></td>
-</tr>
-<tr>
+</tr> 
+</table>
+</center>
 <td align=justify>
+<p>
 
-In the <b>Miscellaneous parsing options</b> subpanel, the first three options listed are <b>not</b> presently selectable, and are currently hard-coded in the program. The the fourth has just (<span style="color:#CC0000">September 2020</span>) been made operational (<b><i>default:</i></b> selected), and the other two are new additions.
+In the <b>Miscellaneous parsing options</b> subpanel, the first three options listed are <b>not</b> presently selectable, and are currently hard-coded in the program. The the fourth has been made operational in <span style="color:#CC0000">September 2020</span> (<b><i>default:</i></b> selected), and the other two are additions made in <span style="color:#CC0000">December 2020</span>.
 <p>
 <ul>
 <li>
@@ -72,21 +70,22 @@ In the <b>Miscellaneous parsing options</b> subpanel, the first three options li
 </table>
 
 <p>
-<table BORDER CELLSPACING=5 CELLPADDING=5>
-<tr>
-<p>
-The next two subpanels deal with non-coded residues and missing atoms, respectively.
-<p>
-<p>
-<p>
 
+
+<p>
+The next two subpanels deal with non-coded residues and missing atoms, respectively:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=7 bgcolor="#FFFFFF">
+<tr>
 <td><center><img SRC="somo-parsing2.png" ALT="Non-coded Residues"></td>
-</tr>
-<tr>
+</tr> 
+</table>
+</center>
 <td align=justify>
-
-
 <p>
+
+
 In the <b>If non-coded residues are found:</b> subpanel, the user will be able to choose between three
 options:
 
@@ -104,6 +103,7 @@ In any case, if this option is selected, the pop-up window shown below will appe
 <tr>
 <p>
 <td><center><img SRC="somo-warning1.png" ALT="Warning for skipping non-coded residues"></td>
+</center>
 <p>
 </tr>
 
@@ -121,28 +121,24 @@ This is a "patch" option, allowing to roughly define a <b>single</b> "side-chain
 <td><center><img SRC="somo-warning3.png" ALT="Warning for using the automatic bead builder"></td>
 <p>
 </tr>
-
+</center>
 <td align=justify>
 </td>
 </tr>
 </table>
 
 <p>
-<table BORDER CELLSPACING=5 CELLPADDING=5>
-<tr>
-<p>
-<p>
-
-<td><center><img SRC="somo-parsing3.png" ALT="Missing Atoms within Coded Residues"></td>
-</tr>
-<tr>
-<td align=justify>
-
-
-<p>
 In the <b>If missing atoms within a residue are found:</b>  subpanel, the user will be able to choose between three
 options:
-
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=7 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-parsing3.png" ALT="Missing Atoms within Coded Residues"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
 <ul>
 <li>
 <b><i>List them and stop operation (fix it with WHATIF)</i></b>. This is the most rigorous option, and calls for either manually build the missing atoms in the PDB file, or, for proteins, to use an automatic missing atom(s) builder such as WHATIF (<a href="http://swift.cmbi.ru.nl/servers/html/index.html">http://swift.cmbi.ru.nl/servers/html/index.html</a>; WARNING: WHATIF will <b>not</b> build missing <b>main chain </b> atoms, only <b>side chain</b> atoms). The program is therefore halted, waiting for proper action to be taken.
@@ -159,7 +155,7 @@ In any case, if this option is selected, the pop-up window shown below will appe
 <td><center><img SRC="somo-warning2.png" ALT="Warning for skipping non-coded residues"></td>
 <p>
 </tr>
-
+</center>
 <td align=justify>
 
 <ul>
@@ -174,14 +170,13 @@ If coded residues contains extra or non-coded <i>atoms</i>, they will be treated
 </td>
 </tr>
 
-
 <p>
 <td><center><img SRC="somo-warning4.png" ALT="Warning for skipping non-coded residues"></td>
 <p>
 
 
 </table>
-
+</center>
 
 <hr>
 <font face="helvetica" size="-1">
@@ -198,7 +193,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on December 18, 2020.
+Last modified on Jube 16, 2024
 </font>
 </body>
 </html>

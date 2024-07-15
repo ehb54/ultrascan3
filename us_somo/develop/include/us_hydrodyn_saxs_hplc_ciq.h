@@ -51,6 +51,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       QCheckBox *                             cb_zero_avg_local_sd;
       QCheckBox *                             cb_zero_keep_as_zeros;
 
+      QCheckBox *                             cb_istarq;
+
       QCheckBox *                             cb_I0se;
       QLineEdit *                             le_I0se;
 
@@ -125,6 +127,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       void                                    set_zero_keep_as_zeros();
 
       void                                    set_normalize();
+
+      void                                    set_istarq();
 
       void                                    set_I0se();
 

@@ -153,6 +153,8 @@ class US_AddResidue : public QWidget
       void update_bead_hydrated_info();
       void clear_bead_hydrated_info();
 
+      bool enable_assign_hydration;
+
    private slots:
       void add();
       void reset( bool reselect = true );

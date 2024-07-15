@@ -1184,6 +1184,100 @@ void US_Hydrodyn::info_citation_stack() {
    TSO << "citation_stack() : " << citation_stack.join( " , " ) << Qt::endl;
 }
 
+void US_Hydrodyn::info_residue( struct residue & r, const QString & msg ) {
+   TSO << LBD << "info_residue() : " << msg << Qt::endl << LBD;
+   
+   TSO << r.comment << Qt::endl;
+   TSO << r.name.toUpper()
+       << "\t" << r.type
+       << "\t" << QString().sprintf("%7.2f", r.molvol)
+       << "\t" << r.asa
+       << "\t" << r.r_atom.size()
+       << "\t" << r.r_bead.size()
+       << "\t" << r.vbar;
+
+   for ( int j = 0; j < (int) r.pKas.size(); ++j ) {
+      TSO << "\t" << r.vbar
+          << "\t" << r.pKas[ j ]
+         ;
+   }
+            
+   TSO << "\n";
+            
+   for (unsigned int j=0; j<r.r_atom.size(); j++)
+   {
+      TSO << r.r_atom[j].name.toUpper()
+          << "\t" << r.r_atom[j].hybrid.name
+          << "\t" << r.r_atom[j].hybrid.mw
+          << "\t" << r.r_atom[j].hybrid.radius
+          << "\t" << r.r_atom[j].bead_assignment
+          << "\t" << (unsigned int) r.r_atom[j].positioner
+          << "\t" << r.r_atom[j].serial_number 
+          << "\t" << r.r_atom[j].hydration
+         ;
+      if ( r.r_atom[j].ionization_index ) {
+         int ionization_index = r.r_atom[j].ionization_index;
+         if ( r.r_atom_1.count( ionization_index ) ) {
+            TSO << "\t" << ionization_index
+                << "\t" << r.r_atom_1[ ionization_index ].hybrid.name
+                << "\t" << r.r_atom_1[ ionization_index ].hybrid.mw
+                << "\t" << r.r_atom_1[ ionization_index ].hybrid.radius
+                << "\t" << r.r_atom_1[ ionization_index ].bead_assignment
+                << "\t" << (unsigned int) r.r_atom_1[ ionization_index ].positioner
+                << "\t" << r.r_atom_1[ ionization_index ].serial_number 
+                << "\t" << r.r_atom_1[ ionization_index ].hydration
+               ;
+         }
+      }
+      TSO << "\n";               
+   }
+   for (unsigned int j=0; j<r.r_bead.size(); j++)
+   {
+      TSO << r.r_bead[j].hydration
+          << "\t" << r.r_bead[j].color
+          << "\t" << r.r_bead[j].placing_method
+          << "\t" << r.r_bead[j].chain
+          << "\t" << r.r_bead[j].volume << "\n";
+   }
+
+   TSO << LBD;
+
+   for ( int i = 0; i < (int) r.r_atom.size(); ++i ) {
+      TSO <<
+         QString( "r_atom %1 name %2 hybrid.name %3 ionization_index %4\n" )
+         .arg( i, 2 )
+         .arg( r.r_atom[i].name, 4 )
+         .arg( r.r_atom[i].hybrid.name, 5 )
+         .arg( r.r_atom[i].ionization_index )
+         ;
+   }
+
+   TSO << LBD;
+   
+   for ( auto it = r.r_atom_1.begin();
+         it != r.r_atom_1.end();
+         ++it ) {
+      TSO <<
+         QString( "r_atom_1 %1 name %2 hybrid.name %3 ionization_index %4\n" )
+         .arg( it->first, 2 )
+         .arg( it->second.name, 4 )
+         .arg( it->second.hybrid.name, 5 )
+         .arg( it->second.ionization_index )
+         ;
+   }
+   TSO << LBD;
+
+   for ( int i = 0; i < (int) r.pKas.size(); ++i ) {
+      TSO <<
+         QString( " r.pKas[%1] = %2\n" )
+         .arg( i )
+         .arg( r.pKas[i] )
+         ;
+   }      
+   TSO << LBD;
+}
+
+
 
 #undef TSO
 #undef LBE

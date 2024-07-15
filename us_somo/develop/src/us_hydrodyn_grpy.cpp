@@ -12,6 +12,7 @@
 // includes and defines need cleanup
  
 #include "../include/us_hydrodyn.h"
+
 #define SLASH QDir::separator()
 
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
@@ -98,30 +99,55 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       editor_msg( "dark blue", courier, visc_dens_msg() );
    }
 
-   grpy_prog = 
-      USglobal->config_list.system_dir + SLASH +
-#if defined(BIN64)
-      "bin64"
-#else
-      "bin"
-#endif
-      + SLASH
-      + "GRPY"
-#if defined(Q_OS_WIN)
-      + "_win64.exe"
-#else
-# if defined(Q_OS_MAC)
-      + "_osx10.11"
-# else
-      + "_linux64"
-# endif
-#endif      
-      ;
+   if ( !us_container_grpy ) {
+      if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
+         editor_msg( "dark red", us_tr(
+                                       "Attempting to get the docker image for parallel GRPY\n"
+                                       "The first time you run this, it may take awhile\n"
+                                       "Please be patient\n"
+                                       ) );
+         qApp->processEvents();
+      }                                        
+      us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
+   } else if ( ( misc.parallel_grpy && !us_container_grpy->arguments().size() )
+               || ( !misc.parallel_grpy && us_container_grpy->arguments().size() ) ) {
+      // in case they switched from non-parallel to parallel or vice-versa
+      qDebug() << "grpy recreate!!";
+      delete us_container_grpy;
+      if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
+         editor_msg( "dark red", us_tr(
+                                       "Attempting to get the docker image for parallel GRPY\n"
+                                       "The first time you run this, it may take awhile\n"
+                                       "Please be patient\n"
+                                       ) );
+         qApp->processEvents();
+      }                                        
+      us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
+   } else {
+      qDebug() << "grpy NOT recreated";
+   }      
+   
 
-   QFileInfo qfi( grpy_prog );
-   if ( !qfi.exists() ) {
-      editor_msg( (QString) "red", QString("GRPY program '%1' does not exist\n").arg(grpy_prog));
-      return false;
+   if ( misc.parallel_grpy && !us_container_grpy->arguments().size() ) {
+      editor_msg( "red", us_tr( "parallel GRPY requested but unable to start\n"
+                                "Check to make sure you have 'docker' installed and a working network connection to the internet\n"
+                                "Resorting to non-parallel GRPY\n" ) );
+   }
+
+   if ( misc.parallel_grpy && !us_container_grpy->arguments().size() ) {
+      grpy_parallel_pulled = true;
+   }
+
+   grpy_prog = us_container_grpy->executable();
+   
+   if ( us_container_grpy->arguments().size() ) {
+      editor_msg( "darkblue", QString( us_tr( "\nParallel GRPY enabled with %1 threads\n" ) ).arg( USglobal->config_list.numThreads ) );
+   } else {
+      QFileInfo qfi( grpy_prog );
+      if ( !qfi.exists() ) {
+         editor_msg( (QString) "red", QString("GRPY program '%1' does not exist\n").arg(grpy_prog));
+         return false;
+      }
    }
 
    // if ( !overwrite_hydro )
@@ -191,13 +217,15 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    grpy_results2                      = grpy_results;
 
-   QDir::setCurrent(somo_dir);
+   grpy_vdw                           = bead_model_suffix.contains( "-vdw" );
+   
+   QDir::setCurrent(get_somo_dir());
    
    QString extension;
 
 #if defined( TEST_VDW_GRPY_ASA )
    bool use_threshold = false;
-   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
+   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "-vdw" ) ) {
 
       switch ( QMessageBox::question(this, 
                                      this->windowTitle() + us_tr(": GRPY ASA" ),
@@ -222,7 +250,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    }
 #endif
 
-   if ( !hydro.grpy_bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
+   if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
+
       extension =
          QString( "_R%1PR%2" )
          .arg( asa.vdw_grpy_threshold_percent )
@@ -246,7 +275,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             bead_model = bead_models[current_model];
 
             QString fname = 
-               somo_dir + SLASH +
+               get_somo_dir() + SLASH +
                project +
                ( bead_model_from_file ? "" : QString( "_%1" ).arg( model_name( current_model ) ) ) +
                QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
@@ -264,7 +293,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             
             // always run asa
 
-            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
+            if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
                // expose all
                for ( int i = 0; i < (int) bead_model.size(); ++i ) {
                   bead_model[ i ].exposed_code = 1;
@@ -326,7 +355,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_mm         = grpy_to_process.size() > 1;
    grpy_mm_results = "";
    grpy_mm_name    =
-      somo_dir + SLASH +
+      get_somo_dir() + SLASH +
       project +
       QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
       extension
@@ -380,22 +409,24 @@ void US_Hydrodyn::grpy_process_next() {
    timers.start_timer( "compute grpy this model" );
 
    grpy = new QProcess( this );
-   grpy->setWorkingDirectory( somo_dir );
+   grpy->setWorkingDirectory( get_somo_dir() );
    // us_qdebug( "prog is " + grpy_prog );
    // us_qdebug( "grpy_last_processed " + grpy_last_processed );
    {
       QStringList args;
+      args << us_container_grpy->arguments( get_somo_dir() );
       args
          << "-e"
-         << grpy_last_processed;
-
+         << grpy_last_processed
+         ;
+      
       connect( grpy, SIGNAL(readyReadStandardOutput()), this, SLOT(grpy_readFromStdout()) );
       connect( grpy, SIGNAL(readyReadStandardError()), this, SLOT(grpy_readFromStderr()) );
       connect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(grpy_finished( int, QProcess::ExitStatus )) );
       connect( grpy, SIGNAL(started()), this, SLOT(grpy_started()) );
 
       editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
-                  .arg( QFileInfo( grpy_last_processed ).baseName() )
+                  .arg( QFileInfo( grpy_last_processed ).completeBaseName() )
                   .arg( grpy_last_used_beads )
                   );
       grpy->start( grpy_prog, args, QIODevice::ReadOnly );
@@ -695,6 +726,34 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.rot_diff_coef_y               = grpy_captures[ "rot_diff_coef_y" ][0];
       this_data.rot_diff_coef_z               = grpy_captures[ "rot_diff_coef_z" ][0];
 
+      this_data.fractal_dimension_parameters         = model_vector[ grpy_last_model_number ].fractal_dimension_parameters;
+      this_data.fractal_dimension                    = model_vector[ grpy_last_model_number ].fractal_dimension;
+      this_data.fractal_dimension_sd                 = model_vector[ grpy_last_model_number ].fractal_dimension_sd;
+      this_data.fractal_dimension_wtd                = model_vector[ grpy_last_model_number ].fractal_dimension_wtd;
+      this_data.fractal_dimension_wtd_sd             = model_vector[ grpy_last_model_number ].fractal_dimension_wtd_sd;
+      this_data.fractal_dimension_wtd_wtd            = model_vector[ grpy_last_model_number ].fractal_dimension_wtd_wtd;
+      this_data.fractal_dimension_wtd_wtd_sd         = model_vector[ grpy_last_model_number ].fractal_dimension_wtd_wtd_sd;
+      this_data.rg_over_fractal_dimension            = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension;
+      this_data.rg_over_fractal_dimension_sd         = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_sd;
+      this_data.rg_over_fractal_dimension_wtd        = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd;
+      this_data.rg_over_fractal_dimension_wtd_sd     = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd_sd;
+      this_data.rg_over_fractal_dimension_wtd_wtd    = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd_wtd;
+      this_data.rg_over_fractal_dimension_wtd_wtd_sd = model_vector[ grpy_last_model_number ].rg_over_fractal_dimension_wtd_wtd_sd;
+
+      if ( !hydro.grpy_bead_inclusion && grpy_vdw ) {
+         this_data.vdw_grpy_probe_radius      = asa.vdw_grpy_probe_radius;
+         this_data.vdw_grpy_threshold         = asa.vdw_grpy_threshold_percent;
+      }
+
+      if ( bead_models[ grpy_last_model_number ].size() &&
+           bead_models[ grpy_last_model_number ][0].is_vdw == "vdw" ) {
+         this_data.hydrate_probe_radius          = bead_models[ grpy_last_model_number ][0].asa_hydrate_probe_radius;
+         this_data.hydrate_threshold             = bead_models[ grpy_last_model_number ][0].asa_hydrate_threshold;
+         this_data.vdw_theo_waters               = bead_models[ grpy_last_model_number ][0].vdw_theo_waters;
+         this_data.vdw_exposed_residues          = bead_models[ grpy_last_model_number ][0].vdw_count_exposed;
+         this_data.vdw_exposed_waters            = bead_models[ grpy_last_model_number ][0].vdw_theo_waters_exposed;
+      }
+
       // qDebug() << "US_Hydrodyn::grpy_finished() asa rg pos " << this_data.results.asa_rg_pos << " neg " << this_data.results.asa_rg_neg;
       
       if ( it->second.count( "Dr" ) ) {
@@ -799,11 +858,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          {
             if ( this_data.results.D20w ) {
                this_data.tra_fric_coef =
-                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.results.D20w );
+                  Rbar * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.results.D20w );
 
                QTextStream( stdout )
                   << "tfc " << this_data.tra_fric_coef << " = " << Qt::endl
-                  << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
+                  << "Rbar * ( K0 + hydro.temperature )" << ( Rbar * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
                   << "AVOGADRO * this_data.results.D20w" << ( AVOGADRO * this_data.results.D20w ) << Qt::endl
                   ;
                
@@ -813,11 +872,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          {
             if ( this_data.rot_diff_coef ) {
                this_data.rot_fric_coef =
-                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.rot_diff_coef );
+                  Rbar * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.rot_diff_coef );
 
                // QTextStream( stdout )
                //    << "rfc " << this_data.rot_fric_coef << " = " << Qt::endl
-               //    << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
+               //    << "Rbar * ( K0 + hydro.temperature )" << ( Rbar * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
                //    << "AVOGADRO * this_data.rot_diff_coef" << ( AVOGADRO * this_data.rot_diff_coef ) << Qt::endl
                //    ;
                
@@ -829,7 +888,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          // {
          //    if ( this_data.results.D20w ) {
          //       this_data.results.rs = 1e1 * ( 1e7 / fconv ) * 
-         //          R * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
+         //          Rbar * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
          //       grpy_results.rs  += this_data.results.rs;
          //       grpy_results2.rs += this_data.results.rs * this_data.results.rs;
          //    }
@@ -883,7 +942,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
          // rot fric and stokes
          {
-            double factor = 1e-2 * (R/AVOGADRO) * ( K0 + hydro.temperature ) / pow( fconv, 2 );
+            double factor = 1e-2 * (Rbar/AVOGADRO) * ( K0 + hydro.temperature ) / pow( fconv, 2 );
             this_data.rot_fric_coef_x =
                factor / this_data.rot_diff_coef_x;
             this_data.rot_fric_coef_y =
@@ -1041,7 +1100,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       if ( saveParams && create_hydro_res && !grpy_mm )
       {
-         QString fname = somo_dir + "/" + this_data.results.name + ".grpy.csv";
+         QString fname = get_somo_dir() + "/" + this_data.results.name + ".grpy.csv";
          if ( !overwrite_hydro ) {
             fname = fileNameCheck( fname, 0, this );
          }
