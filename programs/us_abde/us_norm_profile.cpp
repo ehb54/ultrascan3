@@ -337,7 +337,7 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
         integralN << integral.at(i) * 100 / sum;
         yvalN << yval.at(i) / normY;
     }
-    yvalN << yval.last() / maxY;
+    yvalN << yval.last() / normY;
     out["midxval"] = midxval;
     out["yvaluesN"] = yvalN;
     out["integral"] = integral;
