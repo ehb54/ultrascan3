@@ -611,6 +611,8 @@ void US_Norm_Profile::slt_pickPoint() {
 void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
     if (selFilenames.size() == 0) return;
     if (picker_state == XNONE) return;
+    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+    QString bkgc = tr("QPushButton { background-color: %1 }").arg(color.name());
 
     if (picker_state == XRANGE) {
         double x = point.x();
@@ -642,7 +644,7 @@ void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
                 return;
             }
             x_max_picked = x;
-            pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
+            pb_pick_rp->setStyleSheet(bkgc);
             selectData();
             enableWidgets(true);
             picker_state = XNONE;
@@ -650,9 +652,7 @@ void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
     } else if (picker_state == XNORM) {
         x_norm = point.x();
         enableWidgets(true);
-        QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
-        QString bkg = tr("QPushButton { background-color: %1 }").arg(color.name());
-        pb_pick_norm->setStyleSheet(bkg);
+        pb_pick_norm->setStyleSheet(bkgc);
         picker_state = XNONE;
         selectData();
     }
