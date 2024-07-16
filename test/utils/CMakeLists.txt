@@ -1,7 +1,7 @@
 # Project definition
 project(TestUSUtils)
 
-# Find Qt6 packages
+# Find Qt5 packages
 find_package(Qt5 REQUIRED COMPONENTS Core Test Xml)
 
 # Include directories
