@@ -175,13 +175,15 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
 }
 
 void US_Norm_Profile::slt_xrange(int state){
-    x_min_picked = -1;
-    x_max_picked = -1;
     QString qs = "QPushButton { background-color: %1 }";
     QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
     if (state == Qt::Checked){
         pb_pick_rp->setEnabled(true);
-        pb_pick_rp->setStyleSheet(qs.arg("yellow"));
+        if (x_min_picked == -1 && x_max_picked == -1) {
+            pb_pick_rp->setStyleSheet(qs.arg("yellow"));
+        } else {
+            pb_pick_rp->setStyleSheet(qs.arg(color.name()));
+        }
     }else{
         pb_pick_rp->setDisabled(true);
         pb_pick_rp->setStyleSheet(qs.arg(color.name()));
@@ -308,6 +310,10 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
     double dx;
     double sum = 0;
     double maxY = -1e99;
+    bool flag_pnorm = false;
+    if (! ckb_norm_max->isChecked() && x_norm > 0) {
+        flag_pnorm = true;
+    }
 
     for (int i = 1; i < np; i++){
         dx = x[i] - x[i - 1];
@@ -318,11 +324,11 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
     }
 
     double normY = 1;
-    if (x_norm > 0 && x_norm <= x[0]) {
+    if (flag_pnorm && x_norm <= x[0]) {
         normY = y[0];
-    } else if (x_norm >= x[np - 1]) {
+    } else if (flag_pnorm && x_norm >= x[np - 1]) {
         normY = y[np - 1];
-    } else if (x_norm > x[0] && x_norm < x[np - 1]) {
+    } else if (flag_pnorm && x_norm > x[0] && x_norm < x[np - 1]) {
         for (int i = 1; i < np - 1; i++) {
             if (x[i] >= x_norm) {
                 normY = y[i];
@@ -380,13 +386,17 @@ void US_Norm_Profile::selectData(void){
     integral_sel.clear();
     integralN_sel.clear();
     midxval_sel.clear();
+    bool flag_limit = false;
+    if (ckb_xrange->isChecked() && x_min_picked != -1 && x_max_picked != -1) {
+        flag_limit = true;
+    }
     QVector<int> inpIds;
     for (int i = 0; i < lw_selData->count(); i++){
         inpIds << filenames.indexOf(lw_selData->item(i)->text());
     }
     for (int i = 0; i < inpIds.size(); i++){
         int id = inpIds.at(i);
-        if (x_min_picked != -1 && x_max_picked != -1){
+        if (flag_limit){
             QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
             xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
             yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
@@ -807,10 +817,13 @@ void US_Norm_Profile::slt_norm_by_max(int state) {
     if (state == Qt::Checked) {
         pb_pick_norm->setStyleSheet(qs.arg(color.name()));
         pb_pick_norm->setDisabled(true);
-        x_norm = -1;
     } else {
         pb_pick_norm->setDisabled(false);
-        pb_pick_norm->setStyleSheet(qs.arg("yellow"));
+        if (x_norm == -1) {
+            pb_pick_norm->setStyleSheet(qs.arg("yellow"));
+        } else {
+            pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+        }
     }
     selectData();
 }
