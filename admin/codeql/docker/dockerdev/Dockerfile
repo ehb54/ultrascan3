@@ -22,6 +22,7 @@ RUN apt-get install -y emacs-nox
 RUN apt-get install -y xorg
 RUN apt-get install -y x11-apps
 RUN apt-get install -y telnet
+RUN apt-get install -y cmake
 
 # qt
 RUN apt-get install -y qtbase5-dev
