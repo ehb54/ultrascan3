@@ -44,6 +44,8 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
+#define SET_WIDTH_FROM_TEXT_LEN_PAD(widget,pad) (widget->setMaximumWidth(QFontMetrics(widget->font()).averageCharWidth()*1.4*(pad+widget->text().length())))
+#define SET_WIDTH_FROM_TEXT_LEN(widget) SET_WIDTH_FROM_TEXT_LEN_PAD(widget,3)
 
 // #define SAXS_DEBUG
 // #define SAXS_DEBUG2
@@ -159,6 +161,9 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_screen_csv();
    reset_buffer_csv();
    reset_hplc_csv();
+   reset_dad_csv();
+   reset_mals_csv();
+   reset_mals_saxs_csv();
    setupGUI();
 
    // QTextStream(stdout) << US_Vector::qs_mapqsqs( "saxs residue_atom_hybrid_map\n", residue_atom_hybrid_map );
@@ -565,6 +570,11 @@ void US_Hydrodyn_Saxs::refresh(
       // rb_curve_saxs_dry->setEnabled(false);
       rb_curve_saxs->setEnabled(false);
       rb_curve_sans->setEnabled(false);
+      if ( bead_model_has_electrons() ) {
+         rb_curve_raw->setEnabled(true);
+         rb_curve_saxs->setChecked(true);
+         rb_curve_saxs->setEnabled(true);
+      }
    } else {
       rb_curve_raw->setEnabled(true);
       // rb_curve_saxs_dry->setEnabled(true);
@@ -996,6 +1006,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_plot_saxs = new QPushButton(us_tr("Load Plotted"), this);
    pb_load_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_plot_saxs->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_load_plot_saxs );
    pb_load_plot_saxs->setPalette( PALET_PUSHB );
    connect(pb_load_plot_saxs, SIGNAL(clicked()), SLOT(load_plot_saxs()));
    iq_widgets.push_back( pb_load_plot_saxs );
@@ -1003,6 +1014,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_set_grid = new QPushButton(us_tr("Set Grid"), this);
    pb_set_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_set_grid->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_set_grid );
    pb_set_grid->setPalette( PALET_PUSHB );
    connect(pb_set_grid, SIGNAL(clicked()), SLOT(set_grid()));
    iq_widgets.push_back( pb_set_grid );
@@ -1017,6 +1029,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_width = new QPushButton(us_tr( "Width" ), this);
    pb_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_width->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_width );
    pb_width->setPalette( PALET_PUSHB );
    connect(pb_width, SIGNAL(clicked()), SLOT(set_width()));
    iq_widgets.push_back( pb_width );
@@ -1024,6 +1037,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    pb_rescale->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_rescale );
    pb_rescale->setPalette( PALET_PUSHB );
    connect(pb_rescale, SIGNAL(clicked()), SLOT(do_rescale()));
    pb_rescale->hide();
@@ -1031,6 +1045,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_rescale_y = new QPushButton(us_tr("Rescale Y"), this);
    pb_rescale_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    pb_rescale_y->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_rescale_y );
    pb_rescale_y->setPalette( PALET_PUSHB );
    connect(pb_rescale_y, SIGNAL(clicked()), SLOT(do_rescale_y()));
    pb_rescale_y->hide();
@@ -1050,6 +1065,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pp = new QPushButton(" Save plots", this);
    pb_pp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pp->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_pp );
    pb_pp->setPalette( PALET_PUSHB );
    connect(pb_pp, SIGNAL(clicked()), SLOT(pp()));
    iq_widgets.push_back( pb_pp );
@@ -1057,6 +1073,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_saxs_legend = new QPushButton( "Legend", this);
    pb_saxs_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_legend->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_saxs_legend );
    pb_saxs_legend->setPalette( PALET_PUSHB );
    connect(pb_saxs_legend, SIGNAL(clicked()), SLOT(saxs_legend()));
    iq_widgets.push_back( pb_saxs_legend );
@@ -1074,6 +1091,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_gnom = new QPushButton("Load GNOM File", this);
    pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_gnom->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_load_gnom );
    pb_load_gnom->setPalette( PALET_PUSHB );
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
    iq_widgets.push_back( pb_load_gnom );
@@ -1081,6 +1099,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_ift = new QPushButton("IFT", this);
    pb_ift->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_ift->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN(pb_ift);
    pb_ift->setPalette( PALET_PUSHB );
    connect(pb_ift, SIGNAL(clicked()), SLOT(call_ift()));
    iq_widgets.push_back( pb_ift );
@@ -1088,6 +1107,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_saxs_search = new QPushButton("Search", this);
    pb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_search->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_saxs_search );
    pb_saxs_search->setPalette( PALET_PUSHB );
    connect(pb_saxs_search, SIGNAL(clicked()), SLOT(saxs_search()));
    iq_widgets.push_back( pb_saxs_search );
@@ -1097,7 +1117,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_screen = new QPushButton("Screen", this);
       pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_screen->setMinimumHeight(minHeight1);
-      pb_saxs_screen->setMaximumWidth( maxWidth * 6 );
+      SET_WIDTH_FROM_TEXT_LEN( pb_saxs_screen );
       pb_saxs_screen->setPalette( PALET_PUSHB );
       connect(pb_saxs_screen, SIGNAL(clicked()), SLOT(saxs_screen()));
       iq_widgets.push_back( pb_saxs_screen );
@@ -1221,18 +1241,42 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_saxs_buffer = new QPushButton("Data", this);
    pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_buffer->setMinimumHeight(minHeight1);
-   pb_saxs_buffer->setMaximumWidth( maxWidth * 6 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_saxs_buffer );
    pb_saxs_buffer->setPalette( PALET_PUSHB );
    connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
    iq_widgets.push_back( pb_saxs_buffer );
 
-   pb_saxs_hplc = new QPushButton("HPLC", this);
+   pb_dad = new QPushButton("UV-Vis", this);
+   pb_dad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_dad->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_dad );
+   pb_dad->setPalette( PALET_PUSHB );
+   connect(pb_dad, SIGNAL(clicked()), SLOT(dad()));
+   iq_widgets.push_back( pb_dad );
+
+   pb_saxs_hplc = new QPushButton("HPLC/KIN", this);
    pb_saxs_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_hplc->setMinimumHeight(minHeight1);
-   pb_saxs_hplc->setMaximumWidth( maxWidth * 4 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_saxs_hplc );
    pb_saxs_hplc->setPalette( PALET_PUSHB );
    connect(pb_saxs_hplc, SIGNAL(clicked()), SLOT(saxs_hplc()));
    iq_widgets.push_back( pb_saxs_hplc );
+
+   pb_mals = new QPushButton("MALS", this);
+   pb_mals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_mals->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_mals );
+   pb_mals->setPalette( PALET_PUSHB );
+   connect(pb_mals, SIGNAL(clicked()), SLOT(mals()));
+   iq_widgets.push_back( pb_mals );
+
+   pb_mals_saxs = new QPushButton("MALS+SAXS", this);
+   pb_mals_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_mals_saxs->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_mals_saxs );
+   pb_mals_saxs->setPalette( PALET_PUSHB );
+   connect(pb_mals_saxs, SIGNAL(clicked()), SLOT(mals_saxs()));
+   iq_widgets.push_back( pb_mals_saxs );
 
    if ( started_in_expert_mode )
    {
@@ -1241,7 +1285,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_xsr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_xsr->setMinimumHeight(minHeight1);
       pb_saxs_xsr->setPalette( PALET_PUSHB );
-      pb_saxs_xsr->setMaximumWidth( maxWidth * 3 );
+      SET_WIDTH_FROM_TEXT_LEN( pb_saxs_xsr );
       connect(pb_saxs_xsr, SIGNAL(clicked()), SLOT(saxs_xsr()));
       iq_widgets.push_back( pb_saxs_xsr );
 
@@ -1249,7 +1293,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_1d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_1d->setMinimumHeight(minHeight1);
       pb_saxs_1d->setPalette( PALET_PUSHB );
-      pb_saxs_1d->setMaximumWidth( maxWidth * 2 );
+      SET_WIDTH_FROM_TEXT_LEN( pb_saxs_1d );
       connect(pb_saxs_1d, SIGNAL(clicked()), SLOT(saxs_1d()));
       iq_widgets.push_back( pb_saxs_1d );
 
@@ -1257,7 +1301,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_2d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_2d->setMinimumHeight(minHeight1);
       pb_saxs_2d->setPalette( PALET_PUSHB );
-      pb_saxs_2d->setMaximumWidth( maxWidth * 2 );
+      SET_WIDTH_FROM_TEXT_LEN( pb_saxs_2d );
       connect(pb_saxs_2d, SIGNAL(clicked()), SLOT(saxs_2d()));
       iq_widgets.push_back( pb_saxs_2d );
    } 
@@ -1265,6 +1309,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_guinier_analysis = new QPushButton("Guinier", this);
    pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_guinier_analysis->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_guinier_analysis );
    pb_guinier_analysis->setEnabled(true);
    pb_guinier_analysis->setPalette( PALET_PUSHB );
    connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT( guinier_window() ) );
@@ -1273,6 +1318,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_guinier_cs = new QPushButton("CS-Guinier", this);
    pb_guinier_cs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_guinier_cs->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_guinier_cs );
    pb_guinier_cs->setEnabled(true);
    pb_guinier_cs->setPalette( PALET_PUSHB );
    connect(pb_guinier_cs, SIGNAL(clicked()), SLOT(run_guinier_cs()));
@@ -1320,7 +1366,9 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    cnt_bin_size = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_bin_size );
-   cnt_bin_size->setRange(0.01, 100); cnt_bin_size->setSingleStep( 0.01);
+   // #warning DIST change for testing
+   // cnt_bin_size->setRange(0.000001, 100); cnt_bin_size->setSingleStep( 0.000001 );
+   cnt_bin_size->setRange(0.01, 100); cnt_bin_size->setSingleStep( 0.01 );
    cnt_bin_size->setValue(our_saxs_options->bin_size);
    cnt_bin_size->setMinimumHeight(minHeight1);
    cnt_bin_size->setEnabled(true);
@@ -1449,6 +1497,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_contrib = new QPushButton(us_tr("Display"), this);
    pb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_contrib->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_pr_contrib );
    pb_pr_contrib->setPalette( PALET_PUSHB );
    pb_pr_contrib->setEnabled(false);
    connect(pb_pr_contrib, SIGNAL(clicked()), SLOT(show_pr_contrib()));
@@ -1457,13 +1506,25 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_plot_pr = new QPushButton(us_tr("Compute P(r) Distribution"), this);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_plot_pr->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_plot_pr );
    pb_plot_pr->setPalette( PALET_PUSHB );
    connect(pb_plot_pr, SIGNAL(clicked()), SLOT(show_plot_pr()));
    pr_widgets.push_back( pb_plot_pr );
 
+   pb_pr_to_iq = new QPushButton( QString( "P(r) %1 I(q)" ).arg( u8"\u2192" ), this);
+   pb_pr_to_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_pr_to_iq->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_pr_to_iq );
+   pb_pr_to_iq->setPalette( PALET_PUSHB );
+   connect(pb_pr_to_iq, SIGNAL(clicked()), SLOT(pr_to_iq()));
+#warning restore when back to pr->iq testing
+   // pr_widgets.push_back( pb_pr_to_iq );
+   pb_pr_to_iq->hide();
+
    pb_load_pr = new QPushButton(us_tr("Load P(r) Distribution"), this);
    pb_load_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_pr->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_load_pr );
    pb_load_pr->setPalette( PALET_PUSHB );
    connect(pb_load_pr, SIGNAL(clicked()), SLOT(load_pr()));
    pr_widgets.push_back( pb_load_pr );
@@ -1471,6 +1532,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_plot_pr = new QPushButton(us_tr("Load Plotted P(r)"), this);
    pb_load_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_plot_pr->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_load_plot_pr );
    pb_load_plot_pr->setPalette( PALET_PUSHB );
    connect(pb_load_plot_pr, SIGNAL(clicked()), SLOT(load_plot_pr()));
    pr_widgets.push_back( pb_load_plot_pr );
@@ -1478,6 +1540,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_clear_plot_pr = new QPushButton(us_tr("Clear P(r) Distribution"), this);
    pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_clear_plot_pr->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_clear_plot_pr );
    pb_clear_plot_pr->setPalette( PALET_PUSHB );
    connect(pb_clear_plot_pr, SIGNAL(clicked()), SLOT(clear_plot_pr()));
    pr_widgets.push_back( pb_clear_plot_pr );
@@ -1485,6 +1548,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_legend = new QPushButton(us_tr("Legend"), this);
    pb_pr_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_legend->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_pr_legend );
    pb_pr_legend->setPalette( PALET_PUSHB );
    connect(pb_pr_legend, SIGNAL(clicked()), SLOT(pr_legend()));
    pr_widgets.push_back( pb_pr_legend );
@@ -1492,6 +1556,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_width2 = new QPushButton(us_tr( "Width" ), this);
    pb_width2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_width2->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_width2 );
    pb_width2->setPalette( PALET_PUSHB );
    connect(pb_width2, SIGNAL(clicked()), SLOT(set_width()));
    pr_widgets.push_back( pb_width2 );
@@ -1499,17 +1564,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_info = new QPushButton(us_tr( "info" ), this);
    pb_pr_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_info->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_pr_info );
    pb_pr_info->setPalette( PALET_PUSHB );
    connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
    // pr_widgets.push_back( pb_pr_info );
+#warning restore info when back to vdw tests
    pb_pr_info->hide();
 
    pb_pr_info2 = new QPushButton(us_tr( "info2" ), this);
    pb_pr_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_info2->setMinimumHeight(minHeight1);
+   SET_WIDTH_FROM_TEXT_LEN( pb_pr_info2 );
    pb_pr_info2->setPalette( PALET_PUSHB );
    connect(pb_pr_info2, SIGNAL(clicked()), SLOT(pr_info2()));
    // pr_widgets.push_back( pb_pr_info2 );
+#warning restore info2 when back to vdw tests
    pb_pr_info2->hide();
 
    cb_pr_eb = new QCheckBox(this);
@@ -1992,7 +2061,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
 
    hbl_various_0->addWidget(pb_saxs_buffer);
+   hbl_various_0->addWidget(pb_dad);
    hbl_various_0->addWidget(pb_saxs_hplc);
+   hbl_various_0->addWidget(pb_mals);
+   hbl_various_0->addWidget(pb_mals_saxs);
 
    if ( started_in_expert_mode )
    {
@@ -2139,8 +2211,16 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addLayout( hbl_contrib , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   background->addWidget(pb_plot_pr, j, 0);
-   background->addWidget(progress_pr, j, 1);
+   {
+      QBoxLayout * hbl = new QHBoxLayout( 0 ); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_plot_pr );
+      hbl->addWidget( pb_pr_to_iq );
+      hbl->addWidget( progress_pr );
+      background->addLayout( hbl, j, 0, 1, 2 );
+   }
+   // background->addWidget(pb_plot_pr, j, 0);
+   // background->addWidget(pb_plot_pr, j, 0);
+   // background->addWidget(progress_pr, j, 1);
    j++;
    //   background->addWidget(pb_load_pr, j, 0);
    // background->addWidget(pb_clear_plot_pr, j, 1);
@@ -2213,6 +2293,11 @@ void US_Hydrodyn_Saxs::setupGUI()
       rb_curve_raw->setEnabled(false);
       rb_curve_saxs->setEnabled(false);
       rb_curve_sans->setEnabled(false);
+      if ( bead_model_has_electrons() ) {
+         rb_curve_raw->setEnabled(true);
+         rb_curve_saxs->setChecked(true);
+         rb_curve_saxs->setEnabled(true);
+      }
    } else {
       rb_curve_raw->setEnabled(true);
       rb_curve_saxs->setEnabled(true);
@@ -2710,6 +2795,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       return;
    }
    
+   // QTextStream(stdout)
+   //    << info_remember_mw( ": show_plot_pr() start" )
+   //    ;
+
    progress_pr->set_cli_prefix( "pr" );
    pb_pr_contrib->setEnabled(false);
    stopFlag = false;
@@ -2727,8 +2816,28 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    cout << " sleep 1 a done" << endl;
 #endif
    
+   // for ( auto it = atom_map.begin();
+   //       it != atom_map.end();
+   //       ++it ) {
+   //    QTextStream(stdout) << it->first << " atom name " << it->second.name << " hybrid name " << it->second.hybrid.name << "\n";
+   // }
+
+   if ( (double) our_saxs_options->water_e_density ) {
+      atom_map[ "OW~O2H2" ].saxs_excl_vol = 10 / ( (double) our_saxs_options->water_e_density + (double) our_saxs_options->crysol_hydration_shell_contrast );
+      editor_msg( "darkblue", QString( "Exclude volume of solvent atom: %1\n" ).arg( atom_map[ "OW~O2H2" ].saxs_excl_vol ) );
+   } else {
+      atom_map[ "OW~O2H2" ].saxs_excl_vol = 0;
+   }
+
+   QString use_name  = QFileInfo(model_filename).fileName();
+   map < double, double > pr_exact;
+#warning set pr_exact to true to resurrect pr->iq
+   bool do_pr_exact = false;
+   bool do_make_iq = false;
+
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+#warning pr_to_iq off except for bead model source
       current_model = selected_models[i];
 #if defined(PR_DEBUG)
       printf("creating pr %u\n", current_model); fflush(stdout);
@@ -2762,17 +2871,77 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
       contrib_pdb_atom.clear( );
 
+      bool include_0_dist_pairs =
+         !(
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_skip_pr0pair" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_skip_pr0pair" ] == "true"
+           )
+         ;
+
+      if ( !include_0_dist_pairs ) {
+         editor_msg( "darkblue", us_tr( "experimental: zero distance pairs skipped\n" ) );
+      }
+      
       if ( source )
       {
          // bead models
-         for (unsigned int j = 0; j < bead_models[current_model].size(); j++)
-         {
+         do_make_iq = true;
+
+         bool saxs_water_beads =
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_saxs_water_beads" ) &&
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_saxs_water_beads" ] == "true"
+            ;
+         
+         for (unsigned int j = 0; j < bead_models[current_model].size(); j++) {
             PDB_atom *this_atom = &(bead_models[current_model][j]);
-            new_atom.pos[0] = this_atom->bead_coordinate.axis[0];
-            new_atom.pos[1] = this_atom->bead_coordinate.axis[1];
-            new_atom.pos[2] = this_atom->bead_coordinate.axis[2];
+            new_atom.pos[0]    = this_atom->bead_coordinate.axis[0];
+            new_atom.pos[1]    = this_atom->bead_coordinate.axis[1];
+            new_atom.pos[2]    = this_atom->bead_coordinate.axis[2];
+            new_atom.b =
+               this_atom->num_elect
+               // - (double) our_saxs_options->water_e_density * (4/3) * M_PI * pow( this_atom->bead_computed_radius, 3.0 )
+               - (double) our_saxs_options->water_e_density * this_atom->saxs_excl_vol
+               ;
+            b_count++;
+            b_bar += new_atom.b;
+
+            new_atom.atom_name     = this_atom->name;
+            new_atom.hybrid_name   = this_atom->resName;
+            new_atom.electrons     = this_atom->num_elect;
+            // new_atom.excl_vol      = (4/3) * M_PI * pow( this_atom->bead_computed_radius, 3.0 );
+            new_atom.excl_vol      = this_atom->saxs_excl_vol;
+
             atoms.push_back(new_atom);
             contrib_pdb_atom.push_back(this_atom);
+
+            if ( this_atom->bead_hydration && saxs_water_beads ) {
+               int addbeads = (int)(this_atom->bead_hydration + 0.5 );
+               new_atom.atom_name   = "OW";
+               new_atom.hybrid_name = "O2H2";
+
+               if ( !hybrid_map.count( new_atom.hybrid_name ) ) {
+                  QTextStream(stdout) << QString( "--> %1 missing from hybrid_map\n" ).arg( new_atom.hybrid_name );
+               }
+               new_atom.electrons     = hybrid_map[ new_atom.hybrid_name ].num_elect;
+               new_atom.excl_vol      = atom_map[ "OW~O2H2" ].saxs_excl_vol;
+               new_atom.b             =
+                  new_atom.electrons
+                  - (double) our_saxs_options->water_e_density * new_atom.excl_vol
+                  ;
+               
+               QTextStream(stdout) <<
+                  QString( "pr calc bead model : atom %1 %2 e %3 bead_hydration %4 rounded %5\n" )
+                  .arg( this_atom->name )
+                  .arg( this_atom->resName )
+                  .arg( new_atom.electrons )
+                  .arg( this_atom->bead_hydration )
+                  .arg( addbeads )
+                  ;
+
+               for ( int i = 0; i < addbeads; ++i ) {
+                  atoms.push_back( new_atom );
+               }
+            }
          }
       }
       else 
@@ -2875,16 +3044,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
                      QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
-                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                        US_Static::us_message( us_tr("Missing Atom:"), 
-                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
-                     }
-                     progress_pr->reset();
-                     lbl_core_progress->setText("");
-                     pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
-                     // pb_plot_saxs_sans->setEnabled(true);
-                     pb_plot_pr->setEnabled(true);
-                     return;
+                     continue;
+                     // if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                     //    US_Static::us_message( us_tr("Missing Atom:"), 
+                     //                           QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     // }
+                     // progress_pr->reset();
+                     // lbl_core_progress->setText("");
+                     // pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
+                     // // pb_plot_saxs_sans->setEnabled(true);
+                     // pb_plot_pr->setEnabled(true);
+                     // return;
                   }
                   new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
@@ -2941,16 +3111,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) )
                   {
                      QTextStream( stdout ) << QString( "atom_map missing %1\n" ).arg( this_atom_name + "~" + hybrid_name );
-                     if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
-                        US_Static::us_message( us_tr("Missing Atom:"), 
-                                               QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
-                     }
-                     progress_pr->reset();
-                     lbl_core_progress->setText("");
-                     pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
-                     // pb_plot_saxs_sans->setEnabled(true);
-                     pb_plot_pr->setEnabled(true);
-                     return;
+                     continue;
+                     // if ( !((US_Hydrodyn *)us_hydrodyn)->gui_script ) {
+                     //    US_Static::us_message( us_tr("Missing Atom:"), 
+                     //                           QString( us_tr("Atom %1 not defined") ).arg( this_atom_name ) );
+                     // }
+                     // progress_pr->reset();
+                     // lbl_core_progress->setText("");
+                     // pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
+                     // // pb_plot_saxs_sans->setEnabled(true);
+                     // pb_plot_pr->setEnabled(true);
+                     // return;
                   }
                   // cout << "atom " << this_atom->name 
                   // << " hybrid " << this_atom->hybrid_name
@@ -2980,26 +3151,32 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                          hybrid_name.toLatin1().data()
                          );
 #endif
+                  new_atom.atom_name = this_atom_name;
+                  new_atom.hybrid_name = hybrid_name;
+                  new_atom.electrons     = b[hybrid_name];
+                  new_atom.excl_vol      = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
                }
+                  
                atoms.push_back(new_atom);
                contrib_pdb_atom.push_back(this_atom);
             }
          }
-         if ( !rb_curve_raw->isChecked() )
+      }
+      if ( !rb_curve_raw->isChecked() )
+      {
+         b_bar /= b_count;
+         if ( b_bar )
          {
-            b_bar /= b_count;
-            if ( b_bar )
-            {
-               b_bar_inv2 = 1.0 / (b_bar * b_bar);
-            } else {
-               b_bar_inv2 = 0.0;
-               rb_curve_raw->setChecked(true);
-               rb_curve_saxs->setChecked(false);
-               rb_curve_sans->setChecked(false);
-               editor_msg( "red", us_tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
-            }
+            b_bar_inv2 = 1.0 / (b_bar * b_bar);
+         } else {
+            b_bar_inv2 = 0.0;
+            rb_curve_raw->setChecked(true);
+            rb_curve_saxs->setChecked(false);
+            rb_curve_sans->setChecked(false);
+            editor_msg( "red", us_tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
          }
       }
+
 #if defined(BUG_DEBUG)
       qApp->processEvents();
       cout << "atoms size " << atoms.size() << endl;
@@ -3008,6 +3185,29 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       cout << " sleep 1 b done" << endl;
 #endif
       // ok now we have all the atoms
+      if ( 0 ) {
+         for ( auto it = atoms.begin();
+               it != atoms.end();
+               ++it ) {
+            //    // QTextStream( stdout ) << QString( "saxs_name %1 hybrid_name %2 residue_name %3 atom_name %4 b %5\n" )
+            //    //    .arg( it->saxs_name )
+            //    //    .arg( it->hybrid_name )
+            //    //    .arg( it->residue_name )
+            //    //    .arg( it->atom_name )
+            //    //    .arg( it->b )
+            //    //    ;
+            QTextStream( stdout ) << QString( "%1 %2 [%3,%4,%5] b %6 elect %7 exclvol %8\n" )
+               .arg( it->atom_name )
+               .arg( it->hybrid_name )
+               .arg( it->pos[0] )
+               .arg( it->pos[1] )
+               .arg( it->pos[2] )
+               .arg( it->b )
+               .arg( it->electrons )
+               .arg( it->excl_vol )
+               ;
+         }
+      }
 
       editor_msg( "black", 
                   QString("Number of atoms %1. Bin size %2.\n")
@@ -3022,6 +3222,307 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       // contrib_file = te_filename2->text();
       contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
       cout << "contrib_file " << contrib_file << endl;
+
+      bool spec_wat_check        = false;
+      int ow_wat_count           = 0;
+      int ow_wat_count_remaining = 0;
+      double ow_cutoff           = 0;
+      int ow_wats_kept           = 0;
+
+      // #warning REMOVE BEFORE DIST (WAT controls)
+      // controls are hidden outside of expert mode? so ok
+      {
+         for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+            if ( atoms[i].atom_name == "OW" ) {
+               ++ow_wat_count;
+            }
+         }
+
+         if ( ow_wat_count > 1 ) {
+            // by count
+            {
+               bool ok;
+               int ow_user_count =
+                  QInputDialog::getInt(this
+                                       ,windowTitle() + " : WAT cutoff"
+                                       ,tr("Closest number of WATs to keep (0 or CANCEL to keep all) : ")
+                                       ,ow_wat_count
+                                       ,1
+                                       ,ow_wat_count
+                                       ,1
+                                       ,&ok );
+               if (ok && ow_user_count < ow_wat_count) {
+                  // remove atoms with cutoff > ow_cutoff2
+                  map < int, double > min_dist2_to_prot;
+                  
+                  // step 1 find minimum distance
+                  editor_msg( "darkblue", "Finding distance of WATs to non-WATs\n" );
+                  qApp->processEvents();
+
+                  progress_pr->setMaximum(atoms.size());
+                  
+                  for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                     progress_pr->setValue(i);
+                     qApp->processEvents();
+                     if ( atoms[i].atom_name == "OW" ) {
+                        for ( unsigned int j = 0; j < atoms.size(); ++j ) {
+                           if ( i != j && atoms[j].atom_name != "OW" ) {
+                              double rik2 = 
+                                 (atoms[i].pos[0] - atoms[j].pos[0]) *
+                                 (atoms[i].pos[0] - atoms[j].pos[0]) +
+                                 (atoms[i].pos[1] - atoms[j].pos[1]) *
+                                 (atoms[i].pos[1] - atoms[j].pos[1]) +
+                                 (atoms[i].pos[2] - atoms[j].pos[2]) *
+                                 (atoms[i].pos[2] - atoms[j].pos[2])
+                                 ;
+                              if ( !min_dist2_to_prot.count( i )
+                                   || min_dist2_to_prot[ i ] > rik2
+                                   ) {
+                                 min_dist2_to_prot[ i ] = rik2;
+                              }
+                           }
+                        }
+                     }
+                  }
+                                 
+                  // order by distance
+                  map < double, set < int > > min_dist2_to_atoms;
+                  for ( auto it = min_dist2_to_prot.begin();
+                        it != min_dist2_to_prot.end();
+                        ++it ) {
+                     min_dist2_to_atoms[ it->second ].insert( it->first );
+                  }
+
+                  // keep ow_user_count
+                  set < int > min_dist2_to_prot_keep;
+                  int elements_so_far = 0;
+                  for ( auto it = min_dist2_to_atoms.begin();
+                        it != min_dist2_to_atoms.end();
+                        ++it ) {
+                     min_dist2_to_prot_keep.insert( it->second.begin(), it->second.end() );
+                     elements_so_far += (int)it->second.size();
+                     if ( elements_so_far >= ow_user_count ) {
+                        break;
+                     }
+                  }
+                  ow_wats_kept = elements_so_far;
+
+                  // recreate atoms
+                  
+                  vector < saxs_atom > new_atoms;
+                  for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                     if ( !min_dist2_to_prot.count( i )
+                          || min_dist2_to_prot_keep.count( i ) ) {
+                        new_atoms.push_back( atoms[i] );
+                        if ( atoms[i].atom_name == "OW" ) {
+                           ++ow_wat_count_remaining;
+                        }
+                     }
+                  }
+
+                  editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
+                  progress_pr->reset();
+                  
+                  if ( new_atoms.size() != atoms.size() ) {
+                     switch( QMessageBox::question(this
+                                                   ,windowTitle() + " : WAT treatment" 
+                                                   ,QString( us_tr("Write the modified PDB?") )
+                                                   ) ) {
+                     case QMessageBox::Yes :
+                        {
+                           // build up coordinate map of removed WATs
+                           set < point > keep_WAT;
+                           for ( int i = 0; i < (int) new_atoms.size(); ++i ) {
+                              if ( new_atoms[ i ].atom_name == "OW" ) {
+                                 point p;
+                                 p.axis[0] = new_atoms[ i ].pos[0];
+                                 p.axis[1] = new_atoms[ i ].pos[1];
+                                 p.axis[2] = new_atoms[ i ].pos[2];
+                                 
+                                 keep_WAT.insert( p );
+                              }
+                           }
+                           
+                           PDB_model tmp_model = model_vector[current_model];
+                           for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j ) {
+                              tmp_model.molecule[j].atom.clear();
+                              for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+                                 PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                                 if ( this_atom->name != "OW" ) {
+                                    tmp_model.molecule[j].atom.push_back( *this_atom );
+                                 } else {
+                                    if ( keep_WAT.count( this_atom->coordinate ) ) {
+                                       tmp_model.molecule[j].atom.push_back( *this_atom );
+                                    }
+                                 }
+                              }
+                           }
+                           {
+                              QString errors;
+                              QString writtenname;
+                              if ( 
+                                  ((US_Hydrodyn *)us_hydrodyn)->write_pdb_from_model( tmp_model
+                                                                                      ,errors
+                                                                                      ,writtenname
+                                                                                      ,QString( " WATs further than %1 [A] removed" ).arg( ow_cutoff )
+                                                                                      ,QString( "_wc%1" ).arg( ow_wats_kept )
+                                                                                      ,model_filepathname
+                                                                                      ) ) {
+                                 editor_msg( "black", QString( us_tr( "File %1 created\n" ) ).arg( writtenname ) );
+                              } else {
+                                 editor_msg( "red", QString( us_tr( "Error writing File %1. %2\n" ) ).arg( writtenname ).arg( errors ) );
+                              }
+                           }
+                        }
+                        break;
+                     default:
+                        break;
+                     }
+                     atoms = new_atoms;
+                  } else {
+                     ow_cutoff = 0;
+                  }
+               }
+            }
+            {
+               double ow_cutoff2 = 0;
+               if ( !ow_wats_kept ) {
+                  bool ok;
+                  ow_cutoff = QInputDialog::getDouble(this
+                                                      ,windowTitle() + " : WAT cutoff"
+                                                      ,tr("Cutoff WAT to non-WAT distance [A] (0 or CANCEL for no cutoff) : ")
+                                                      ,10
+                                                      ,0
+                                                      ,100
+                                                      ,3
+                                                      ,&ok
+                                                      ,Qt::WindowFlags(), 1);
+                  if (ok) {
+                     ow_cutoff2 = ow_cutoff * ow_cutoff;
+                  }
+
+                  if ( ow_cutoff2 ) {
+                     // remove atoms with cutoff > ow_cutoff2
+                     map < int, double > min_dist2_to_prot;
+                  
+                     // step 1 find minimum distance
+                     editor_msg( "darkblue", "Finding distance of WATs to non-WATs\n" );
+                     qApp->processEvents();
+
+                     progress_pr->setMaximum(atoms.size());
+
+                     for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                        progress_pr->setValue(i);
+                        qApp->processEvents();
+                        if ( atoms[i].atom_name == "OW" ) {
+                           for ( unsigned int j = 0; j < atoms.size(); ++j ) {
+                              if ( i != j && atoms[j].atom_name != "OW" ) {
+                                 double rik2 = 
+                                    (atoms[i].pos[0] - atoms[j].pos[0]) *
+                                    (atoms[i].pos[0] - atoms[j].pos[0]) +
+                                    (atoms[i].pos[1] - atoms[j].pos[1]) *
+                                    (atoms[i].pos[1] - atoms[j].pos[1]) +
+                                    (atoms[i].pos[2] - atoms[j].pos[2]) *
+                                    (atoms[i].pos[2] - atoms[j].pos[2])
+                                    ;
+                                 if ( !min_dist2_to_prot.count( i )
+                                      || min_dist2_to_prot[ i ] > rik2
+                                      ) {
+                                    min_dist2_to_prot[ i ] = rik2;
+                                 }
+                              }
+                           }
+                        }
+                     }
+                                 
+                     vector < saxs_atom > new_atoms;
+                     for ( unsigned int i = 0; i < atoms.size(); ++i ) {
+                        if ( !min_dist2_to_prot.count( i )
+                             || min_dist2_to_prot[ i ] <= ow_cutoff2 ) {
+                           new_atoms.push_back( atoms[i] );
+                           if ( atoms[i].atom_name == "OW" ) {
+                              ++ow_wat_count_remaining;
+                           }
+                        }
+                     }
+
+                     editor_msg( "darkblue", QString( "removed %1 of %2 WATs\n" ).arg( atoms.size() - new_atoms.size() ).arg( ow_wat_count ) );
+                     progress_pr->reset();
+                     if ( new_atoms.size() != atoms.size() ) {
+                        switch( QMessageBox::question(this
+                                                      ,windowTitle() + " : WAT treatment" 
+                                                      ,QString( us_tr("Write the modified PDB?") )
+                                                      ) ) {
+                        case QMessageBox::Yes :
+                           {
+                              // build up coordinate map of removed WATs
+                              set < point > keep_WAT;
+                              for ( int i = 0; i < (int) new_atoms.size(); ++i ) {
+                                 if ( new_atoms[ i ].atom_name == "OW" ) {
+                                    point p;
+                                    p.axis[0] = new_atoms[ i ].pos[0];
+                                    p.axis[1] = new_atoms[ i ].pos[1];
+                                    p.axis[2] = new_atoms[ i ].pos[2];
+                                 
+                                    keep_WAT.insert( p );
+                                 }
+                              }
+                           
+                              PDB_model tmp_model = model_vector[current_model];
+                              for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j ) {
+                                 tmp_model.molecule[j].atom.clear();
+                                 for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+                                    PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                                    if ( this_atom->name != "OW" ) {
+                                       tmp_model.molecule[j].atom.push_back( *this_atom );
+                                    } else {
+                                       if ( keep_WAT.count( this_atom->coordinate ) ) {
+                                          tmp_model.molecule[j].atom.push_back( *this_atom );
+                                       }
+                                    }
+                                 }
+                              }
+                              {
+                                 QString errors;
+                                 QString writtenname;
+                                 if ( 
+                                     ((US_Hydrodyn *)us_hydrodyn)->write_pdb_from_model( tmp_model
+                                                                                         ,errors
+                                                                                         ,writtenname
+                                                                                         ,QString( " WATs further than %1 [A] removed" ).arg( ow_cutoff )
+                                                                                         ,QString( "_co%1" ).arg( ow_cutoff ).replace(".","_")
+                                                                                         ,model_filepathname
+                                                                                         ) ) {
+                                    editor_msg( "black", QString( us_tr( "File %1 created\n" ) ).arg( writtenname ) );
+                                 } else {
+                                    editor_msg( "red", QString( us_tr( "Error writing File %1. %2\n" ) ).arg( writtenname ).arg( errors ) );
+                                 }
+                              }
+                           }
+                           break;
+                        default:
+                           break;
+                        }
+                        atoms = new_atoms;
+                     } else {
+                        ow_cutoff = 0;
+                     }
+                  }
+               }
+            }
+
+            switch( QMessageBox::question(this
+                                          ,windowTitle() + " : WAT treatment" 
+                                          ,QString( us_tr("Exclude WAT WAT from P(r)?") )
+                                    ) ) {
+            case QMessageBox::Yes :
+               spec_wat_check = true;
+               break;
+            default:
+               break;
+            }
+         }
+      }
 
       // restore threading later
       if ( 0 && USglobal->config_list.numThreads > 1 )
@@ -3118,11 +3619,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          double rik; 
          unsigned int pos;
          progress_pr->setMaximum((int)(atoms.size()));
+         QTextStream(stdout) << QString( "ready to compute pr, atoms.size() %1\n" ).arg( atoms.size() );
          if ( cb_pr_contrib->isChecked() &&
               !source &&
               contrib_file.contains(QRegExp("(PDB|pdb)$")) )
          {
             // contrib version
+            QTextStream(stdout) << "running contrib pr\n";
+            
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
@@ -3138,52 +3642,109 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pb_plot_pr->setEnabled(true);
                   return;
                }
-               for ( unsigned int j = i + 1; j < atoms.size(); j++ )
-               {
-                  rik = 
-                     sqrt(
-                          (atoms[i].pos[0] - atoms[j].pos[0]) *
-                          (atoms[i].pos[0] - atoms[j].pos[0]) +
-                          (atoms[i].pos[1] - atoms[j].pos[1]) *
-                          (atoms[i].pos[1] - atoms[j].pos[1]) +
-                          (atoms[i].pos[2] - atoms[j].pos[2]) *
-                          (atoms[i].pos[2] - atoms[j].pos[2])
-                          );
-                  pos = (unsigned int)floor(rik / delta);
-                  if ( hist.size() <= pos )
+               if ( spec_wat_check ) {
+                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
                   {
-                     hist.resize(pos + 1024);
-                     // if ( cb_guinier->isChecked() )
-                     // {
-                     for ( unsigned int k = 0; k < atoms.size(); k++ )
-                     {
-                        contrib_array[k].resize(pos + 1024);
+                     if ( atoms[i].atom_name != "OW" || atoms[j].atom_name != "OW" ) {
+                        rik = 
+                           sqrt(
+                                (atoms[i].pos[0] - atoms[j].pos[0]) *
+                                (atoms[i].pos[0] - atoms[j].pos[0]) +
+                                (atoms[i].pos[1] - atoms[j].pos[1]) *
+                                (atoms[i].pos[1] - atoms[j].pos[1]) +
+                                (atoms[i].pos[2] - atoms[j].pos[2]) *
+                                (atoms[i].pos[2] - atoms[j].pos[2])
+                                );
+                        if ( include_0_dist_pairs || rik ) {
+                           pos = (unsigned int)floor(rik / delta);
+                           if ( hist.size() <= pos )
+                           {
+                              hist.resize(pos + 1024);
+                              // if ( cb_guinier->isChecked() )
+                              // {
+                              for ( unsigned int k = 0; k < atoms.size(); k++ )
+                              {
+                                 contrib_array[k].resize(pos + 1024);
+                              }
+                              // }
+                           }
+                           if ( rb_curve_raw->isChecked() )
+                           {
+                              hist[pos]++;
+                              // if ( cb_guinier->isChecked() )
+                              // {
+                              contrib_array[i][pos]++;
+                              contrib_array[j][pos]++;
+                              // } else {
+                              //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
+                              //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
+                              // }
+                           } else {
+                              // good for both saxs & sans
+                              double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                              hist[pos] += this_pr;
+                              // if ( cb_guinier->isChecked() )
+                              // {
+                              contrib_array[i][pos] += this_pr;
+                              contrib_array[j][pos] += this_pr;
+                              // } else {
+                              //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
+                              //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
+                              // }
+                           }
+                        }
                      }
-                     // }
                   }
-                  if ( rb_curve_raw->isChecked() )
+               } else {
+                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
                   {
-                     hist[pos]++;
-                     // if ( cb_guinier->isChecked() )
-                     // {
-                     contrib_array[i][pos]++;
-                     contrib_array[j][pos]++;
-                     // } else {
-                     //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
-                     //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
-                     // }
-                  } else {
-                     // good for both saxs & sans
-                     double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
-                     hist[pos] += this_pr;
-                     // if ( cb_guinier->isChecked() )
-                     // {
-                     contrib_array[i][pos] += this_pr;
-                     contrib_array[j][pos] += this_pr;
-                     // } else {
-                     //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
-                     //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
-                     // }
+                     rik = 
+                        sqrt(
+                             (atoms[i].pos[0] - atoms[j].pos[0]) *
+                             (atoms[i].pos[0] - atoms[j].pos[0]) +
+                             (atoms[i].pos[1] - atoms[j].pos[1]) *
+                             (atoms[i].pos[1] - atoms[j].pos[1]) +
+                             (atoms[i].pos[2] - atoms[j].pos[2]) *
+                             (atoms[i].pos[2] - atoms[j].pos[2])
+                             );
+                     if ( include_0_dist_pairs || rik ) {
+                        pos = (unsigned int)floor(rik / delta);
+                        if ( hist.size() <= pos )
+                        {
+                           hist.resize(pos + 1024);
+                           // if ( cb_guinier->isChecked() )
+                           // {
+                           for ( unsigned int k = 0; k < atoms.size(); k++ )
+                           {
+                              contrib_array[k].resize(pos + 1024);
+                           }
+                           // }
+                        }
+                        if ( rb_curve_raw->isChecked() )
+                        {
+                           hist[pos]++;
+                           // if ( cb_guinier->isChecked() )
+                           // {
+                           contrib_array[i][pos]++;
+                           contrib_array[j][pos]++;
+                           // } else {
+                           //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
+                           //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
+                           // }
+                        } else {
+                           // good for both saxs & sans
+                           double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                           hist[pos] += this_pr;
+                           // if ( cb_guinier->isChecked() )
+                           // {
+                           contrib_array[i][pos] += this_pr;
+                           contrib_array[j][pos] += this_pr;
+                           // } else {
+                           //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
+                           //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
+                           // }
+                        }
+                     }
                   }
                }
             }
@@ -3191,6 +3752,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          } else {
             // non contrib version:
             printf( "atoms.size() %d\n", (int) atoms.size() );
+            QTextStream(stdout) << QString( "running not contrib pr, b_bar_inv2 %1\n" ).arg( b_bar_inv2 );
+            int total_terms = 0;
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
                progress_pr->setValue(i+1);
@@ -3205,31 +3768,108 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pb_plot_pr->setEnabled(true);
                   return;
                }
-               for ( unsigned int j = i + 1; j < atoms.size(); j++ )
-               {
-                  rik = 
-                     sqrt(
-                          (atoms[i].pos[0] - atoms[j].pos[0]) *
-                          (atoms[i].pos[0] - atoms[j].pos[0]) +
-                          (atoms[i].pos[1] - atoms[j].pos[1]) *
-                          (atoms[i].pos[1] - atoms[j].pos[1]) +
-                          (atoms[i].pos[2] - atoms[j].pos[2]) *
-                          (atoms[i].pos[2] - atoms[j].pos[2])
-                          );
-                  pos = (unsigned int)floor(rik / delta);
-                  if ( hist.size() <= pos )
+               if ( spec_wat_check ) {
+                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
                   {
-                     hist.resize(pos + 128);
+                     if ( atoms[i].atom_name != "OW" || atoms[j].atom_name != "OW" ) {
+                        rik = 
+                           sqrt(
+                                (atoms[i].pos[0] - atoms[j].pos[0]) *
+                                (atoms[i].pos[0] - atoms[j].pos[0]) +
+                                (atoms[i].pos[1] - atoms[j].pos[1]) *
+                                (atoms[i].pos[1] - atoms[j].pos[1]) +
+                                (atoms[i].pos[2] - atoms[j].pos[2]) *
+                                (atoms[i].pos[2] - atoms[j].pos[2])
+                                );
+                        if ( include_0_dist_pairs || rik ) {
+                           ++total_terms;
+
+                           pos = (unsigned int)floor(rik / delta);
+                           if ( hist.size() <= pos )
+                           {
+                              hist.resize(pos + 128);
+                           }
+                           if ( rb_curve_raw->isChecked() )
+                           {
+                              hist[pos]++;
+                              if ( do_pr_exact ) {
+                                 if ( pr_exact.count( rik ) ) {
+                                    pr_exact[ rik ]++;
+                                 } else {
+                                    pr_exact[ rik ] = 1;
+                                 }
+                              }
+                           } else {
+                              // good for both saxs & sans
+                              hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                              if ( do_pr_exact ) {
+                                 if ( pr_exact.count( rik ) ) {
+                                    pr_exact[ rik ] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                                 } else {
+                                    pr_exact[ rik ] = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                                 }
+                              }
+                           }
+                        }
+                     }
                   }
-                  if ( rb_curve_raw->isChecked() )
+               } else {
+                  for ( unsigned int j = i + 1; j < atoms.size(); j++ )
                   {
-                     hist[pos]++;
-                  } else {
-                     // good for both saxs & sans
-                     hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                     rik = 
+                        sqrt(
+                             (atoms[i].pos[0] - atoms[j].pos[0]) *
+                             (atoms[i].pos[0] - atoms[j].pos[0]) +
+                             (atoms[i].pos[1] - atoms[j].pos[1]) *
+                             (atoms[i].pos[1] - atoms[j].pos[1]) +
+                             (atoms[i].pos[2] - atoms[j].pos[2]) *
+                             (atoms[i].pos[2] - atoms[j].pos[2])
+                             );
+                     if ( include_0_dist_pairs || rik ) {
+                        ++total_terms;
+                        pos = (unsigned int)floor(rik / delta);
+                        if ( hist.size() <= pos )
+                        {
+                           hist.resize(pos + 128);
+                        }
+                        if ( rb_curve_raw->isChecked() )
+                        {
+                           hist[pos]++;
+                           if ( do_pr_exact ) {
+                              if ( pr_exact.count( rik ) ) {
+                                 pr_exact[ rik ]++;
+                              } else {
+                                 pr_exact[ rik ] = 1;
+                              }
+                           }
+                        } else {
+                           // good for both saxs & sans
+                           hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                           if ( do_pr_exact ) {
+                              if ( pr_exact.count( rik ) ) {
+                                 pr_exact[ rik ] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                              } else {
+                                 pr_exact[ rik ] = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
+                              }
+                           }
+                        }
+                     }
                   }
                }
             }
+            // #warning REMOVE BEFORE DIST
+            // editor_msg( "darkblue",
+            //             QString(
+            //                     "Computed cross-terms %1\n"
+            //                     "total scatter count  %2\n"
+            //                     "total non-OW  count  %3\n"
+            //                     "OW count             %4\n"
+            //                     )
+            //             .arg( total_terms )
+            //             .arg( atoms.size() )
+            //             .arg( (int) atoms.size() - ow_wat_count_remaining )
+            //             .arg( ow_wat_count_remaining )
+            //             );
          }
       } // end non-threaded
          
@@ -3301,15 +3941,29 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       // save the data to a file
       if ( create_native_saxs )
       {
+         QString append = "";
+         if ( ow_wat_count ) {
+            if ( ow_cutoff ) {
+               append += QString( "_co%1" ).arg( ow_cutoff ).replace(".","_");
+            }
+            if ( ow_wats_kept ) {
+               append += QString( "_wc%1" ).arg( ow_wats_kept );
+            }
+            append +=
+               QString("_hs%1").arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+            if ( spec_wat_check ) {
+               append += "_noWW";
+            }
+         }
+
          QString fpr_name = 
             USglobal->config_list.root_dir + 
-            SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring();
+            SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring( append );
          
          bool ok_to_write = true;
          if ( QFile::exists(fpr_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
          {
-
             fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name, 0, this);
             ok_to_write = true;
 #if defined(OLD_WAY)
@@ -3332,8 +3986,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
          }
 
+         // QTextStream(stdout)
+         //    << info_remember_mw( ": show_plot_pr() before ok_to_write" )
+         //    ;
+         
          if ( ok_to_write )
          {
+            use_name = QFileInfo(fpr_name).baseName();
             FILE *fpr = us_fopen(fpr_name, "w");
             if ( fpr ) 
             {
@@ -3474,7 +4133,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plotted_pr        .push_back(pr);
    plotted_pr_error  .push_back(pr_error);
 
-   QString use_name  = QFileInfo(model_filename).fileName();
    QString plot_name = use_name;
    int extension     = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
@@ -3485,12 +4143,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
 
-#if QT_VERSION < 0x040000
-   long ppr = plot_pr->insertCurve( plot_name );
-   plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
-   plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
-   plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
    curve->setStyle( QwtPlotCurve::Lines );
    curve->setSamples(
@@ -3500,7 +4152,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   );
    curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
    curve->attach( plot_pr );
-#endif
 
    if ( plot_pr_zoomer )
    {
@@ -3521,6 +4172,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plot_pr->replot();
 
    compute_rg_to_progress( r, pr, use_name );
+
+   if ( do_make_iq ) {
+      pr_to_iq( plotted_r.size() - 1, plot_name );
+   }
+   if ( do_pr_exact ) {
+      pr_to_iq( pr_exact, QString( "%1_m%2_exact" ).arg( plot_name ).arg( our_saxs_options->fast_modulation ).replace( ".", "_" ) );
+   }
 
    progress_pr->setMaximum(1);
    progress_pr->setValue(1);
@@ -4983,7 +5641,9 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
    {
       pb_plot_saxs_sans->setText(us_tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(us_tr("Load SANS Curve"));
+      SET_WIDTH_FROM_TEXT_LEN( pb_load_saxs_sans );
       pb_clear_plot_saxs->setText(us_tr("Clear SANS Curve"));
+      SET_WIDTH_FROM_TEXT_LEN( pb_clear_plot_saxs );
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
@@ -5012,7 +5672,9 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
    } else {
       pb_plot_saxs_sans->setText(us_tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(us_tr("Load SAXS Curve"));
+      SET_WIDTH_FROM_TEXT_LEN( pb_load_saxs_sans );
       pb_clear_plot_saxs->setText(us_tr("Clear SAXS Curve"));
+      SET_WIDTH_FROM_TEXT_LEN( pb_clear_plot_saxs );
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
@@ -5539,13 +6201,20 @@ QString US_Hydrodyn_Saxs::saxs_filestring()
    return result;
 }
 
-QString US_Hydrodyn_Saxs::sprr_filestring()
+QString US_Hydrodyn_Saxs::sprr_filestring( const QString & append )
 {
    QString result = 
       QString("%1_%2b%3")
       .arg(te_filename2->text())
       .arg( model_vector[ current_model ].model_id )
-      .arg(our_saxs_options->bin_size);
+      .arg(our_saxs_options->bin_size)
+      .replace( ".", "_" );
+
+   if ( our_saxs_options->smooth ) {
+      result += QString( "_sm%1" ).arg( our_saxs_options->smooth ).replace( ".", "_" );
+   }
+
+   result += append;
 
    if ( rb_curve_sans->isChecked() )
    {
@@ -5921,6 +6590,84 @@ void US_Hydrodyn_Saxs::saxs_hplc()
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();
 }
 
+void US_Hydrodyn_Saxs::dad() {
+   qDebug() << "dad";
+   if ( ((US_Hydrodyn *)us_hydrodyn)->dad_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->dad_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->dad_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->dad_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv.name != "__empty__" )
+      {
+         hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->dad_window = new US_Hydrodyn_Dad( hplc_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->dad_window );
+      ((US_Hydrodyn *)us_hydrodyn)->dad_window->show();
+   }
+}
+
+void US_Hydrodyn_Saxs::mals()
+{
+   // qDebug() << "mals";
+   if ( ((US_Hydrodyn *)us_hydrodyn)->mals_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->mals_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv.name != "__empty__" )
+      {
+         hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->mals_window = new US_Hydrodyn_Mals( hplc_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->mals_window );
+      ((US_Hydrodyn *)us_hydrodyn)->mals_window->show();
+   }
+}
+
+void US_Hydrodyn_Saxs::mals_saxs()
+{
+   // qDebug() << "mals_saxs";
+   if ( ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_mals_saxs_csv.name != "__empty__" )
+      {
+         hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_mals_saxs_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window = new US_Hydrodyn_Mals_Saxs( hplc_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window );
+      ((US_Hydrodyn *)us_hydrodyn)->mals_saxs_window->show();
+   }
+}
+
+
 void US_Hydrodyn_Saxs::reset_buffer_csv()
 {
    if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv.name != "__empty__" )
@@ -6072,6 +6819,237 @@ void US_Hydrodyn_Saxs::reset_hplc_csv()
          tmp_num_data.push_back(hplc_csv.data[i][j].toDouble());
       }
       hplc_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_dad_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv.name != "__empty__" )
+   {
+      hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_dad_csv;
+      return;
+   } 
+
+   dad_csv.name = "SAXS I(q) UV-Vis";
+
+   dad_csv.header.clear( );
+   dad_csv.header_map.clear( );
+   dad_csv.data.clear( );
+   dad_csv.num_data.clear( );
+   dad_csv.prepended_names.clear( );
+
+   dad_csv.header.push_back("Parameter");
+   dad_csv.header.push_back("Active");
+   dad_csv.header.push_back("Low value");
+   dad_csv.header.push_back("High value");
+   dad_csv.header.push_back("Points");
+   dad_csv.header.push_back("Interval");
+   dad_csv.header.push_back("Current value");
+   dad_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear( );
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   dad_csv.prepended_names.push_back(tmp_data[0]);
+   dad_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   dad_csv.prepended_names.push_back(tmp_data[0]);
+   dad_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
+   tmp_data.push_back("");
+
+   dad_csv.prepended_names.push_back(tmp_data[0]);
+   dad_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < dad_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < dad_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(dad_csv.data[i][j].toDouble());
+      }
+      dad_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_mals_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv.name != "__empty__" )
+   {
+      hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_mals_csv;
+      return;
+   } 
+
+   mals_csv.name = "SAXS I(q) MALS";
+
+   mals_csv.header.clear( );
+   mals_csv.header_map.clear( );
+   mals_csv.data.clear( );
+   mals_csv.num_data.clear( );
+   mals_csv.prepended_names.clear( );
+
+   mals_csv.header.push_back("Parameter");
+   mals_csv.header.push_back("Active");
+   mals_csv.header.push_back("Low value");
+   mals_csv.header.push_back("High value");
+   mals_csv.header.push_back("Points");
+   mals_csv.header.push_back("Interval");
+   mals_csv.header.push_back("Current value");
+   mals_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear( );
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   mals_csv.prepended_names.push_back(tmp_data[0]);
+   mals_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   mals_csv.prepended_names.push_back(tmp_data[0]);
+   mals_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
+   tmp_data.push_back("");
+
+   mals_csv.prepended_names.push_back(tmp_data[0]);
+   mals_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < mals_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < mals_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(mals_csv.data[i][j].toDouble());
+      }
+      mals_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_mals_saxs_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_mals_saxs_csv.name != "__empty__" )
+   {
+      hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_mals_saxs_csv;
+      return;
+   } 
+
+   mals_saxs_csv.name = "SAXS I(q) MALS+SAXS";
+
+   mals_saxs_csv.header.clear( );
+   mals_saxs_csv.header_map.clear( );
+   mals_saxs_csv.data.clear( );
+   mals_saxs_csv.num_data.clear( );
+   mals_saxs_csv.prepended_names.clear( );
+
+   mals_saxs_csv.header.push_back("Parameter");
+   mals_saxs_csv.header.push_back("Active");
+   mals_saxs_csv.header.push_back("Low value");
+   mals_saxs_csv.header.push_back("High value");
+   mals_saxs_csv.header.push_back("Points");
+   mals_saxs_csv.header.push_back("Interval");
+   mals_saxs_csv.header.push_back("Current value");
+   mals_saxs_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear( );
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   mals_saxs_csv.prepended_names.push_back(tmp_data[0]);
+   mals_saxs_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   mals_saxs_csv.prepended_names.push_back(tmp_data[0]);
+   mals_saxs_csv.data.push_back(tmp_data);
+
+   tmp_data.clear( );
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
+   tmp_data.push_back("");
+
+   mals_saxs_csv.prepended_names.push_back(tmp_data[0]);
+   mals_saxs_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < mals_saxs_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < mals_saxs_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(mals_saxs_csv.data[i][j].toDouble());
+      }
+      mals_saxs_csv.num_data.push_back(tmp_num_data);
    }
 }
 
@@ -7056,6 +8034,19 @@ void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
 }
 
 
+bool US_Hydrodyn_Saxs::bead_model_has_electrons() {
+   for ( unsigned int i = 0; i < selected_models.size(); i++ ) {
+      for ( unsigned int j = 0; j < bead_models[selected_models[i]].size(); j++ ) {
+         // cout << "saxs name [" << j << "] = " << bead_models[i][j].saxs_data.saxs_name << endl;
+         if ( bead_models[i][j].active &&
+              bead_models[i][j].num_elect <= 0 ){
+            return false;
+         }
+      }
+   }
+   return true;
+}
+
 // #define DEBUG_RESID
 
 void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
@@ -7220,10 +8211,17 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       if ( our_saxs_options->saxs_iq_crysol )
       {
          qs += "cr";
-         qs += QString("_h%1_g%2_hs%3")
-            .arg( our_saxs_options->sh_max_harmonics )
-            .arg( our_saxs_options->sh_fibonacci_grid_order )
-            .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         if ( our_saxs_options->crysol_version_3
+              && our_saxs_options->crysol_water_dummy_beads ) {
+            qs += QString("_h%1_sw_hs%2")
+               .arg( our_saxs_options->sh_max_harmonics )
+               .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         } else {
+            qs += QString("_h%1_g%2_hs%3")
+               .arg( our_saxs_options->sh_max_harmonics )
+               .arg( our_saxs_options->sh_fibonacci_grid_order )
+               .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         }
          if ( U_EXPT &&
               (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
               (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 )
@@ -7455,6 +8453,65 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       return;
    }
 
+
+   // regrid question ...
+
+   {
+      switch( QMessageBox::question(this
+                                    ,windowTitle() + " : Rebin" 
+                                    ,QString(us_tr("Do you wish to rebin the selected target %1?") )
+                                    .arg( grid_target )
+                                    ) ) {
+      case QMessageBox::Yes :
+         {
+            bool ok;
+            int intervals = US_Static::getInteger(
+                                                  windowTitle() + " : Log Rebin Rebin" 
+                                                  ,QString( us_tr( 
+                                                                  "Enter the number of log bins"
+                                                                   ) )
+                                                  ,100
+                                                  ,10
+                                                  ,10000
+                                                  ,1
+                                                  ,&ok
+                                                  ,this 
+                                                  );
+            if ( ok ) {
+               vector < double > rebin_q;
+               vector < double > rebin_I;
+               vector < double > rebin_e;
+               QString errors;
+
+               if (
+                   log_rebin(
+                             intervals
+                             ,plotted_q[ pos ]
+                             ,plotted_I[ pos ]
+                             ,plotted_I_error[ pos ]
+                             ,rebin_q
+                             ,rebin_I
+                             ,rebin_e
+                             ,errors
+                             )
+                   ) {
+                  QString new_target = grid_target;
+                  new_target.replace( QRegularExpression( "\\.[^.]+$" ), "" );
+                  plot_one_iqq( rebin_q, rebin_I, rebin_e, QString( "%1-lb%2" ).arg( new_target ).arg( intervals ) );
+                  set_guinier();
+               } else {
+                  QMessageBox::critical( this
+                                         ,windowTitle() + " : Log Rebin Rebin"
+                                         ,errors );
+               }
+            }
+            return;
+         }
+         break;
+      default:
+         break;
+      }
+   }
 
    int last_result = 1;
 
@@ -8057,4 +9114,19 @@ bool US_Hydrodyn_Saxs::write_temp_pdb_selected_models( QString & error_msg ) {
 
    // qDebug() << QString( us_tr( "File %1 created\n" ) ).arg( last_selected_pdb_filename );
    return true;
+}
+
+QString US_Hydrodyn_Saxs::info_remember_mw( const QString & msg ) {
+   return
+      QString( "--------------------------------------------------------------------------------\n" )
+      + QString( "info_remember_mw() %1\n" ).arg( msg )
+      + "--------------------------------------------------------------------------------\n"
+      + US_Vector::qs_mapqsfloat( "remember_mw", *remember_mw )
+      + "\n"
+      + US_Vector::qs_mapqsfloat( "match_remember_mw", *match_remember_mw )
+      + "\n"
+      + US_Vector::qs_mapqsqs( "remember_mw_source", *remember_mw_source )
+      + "\n"
+      + "--------------------------------------------------------------------------------\n"
+      ;
 }

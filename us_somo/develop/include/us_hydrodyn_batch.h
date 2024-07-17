@@ -40,6 +40,7 @@
 #include <iostream>
 
 using namespace std;
+#include "../include/us_hydrodyn_save.h"
 
 struct batch_info 
 {
@@ -53,6 +54,7 @@ struct batch_info
    bool mm_first;
    bool mm_all;
    bool dmd;
+   bool fd;
    bool somo;
    bool somo_o;
    bool grid;
@@ -151,6 +153,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_mm_first;
       QCheckBox     *cb_mm_all;
       QCheckBox     *cb_dmd;
+      QCheckBox     *cb_fd;
       QCheckBox     *cb_grid;
       QCheckBox     *cb_vdw_beads;
       QCheckBox     *cb_equi_grid;
@@ -265,6 +268,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool               create_split_dir();
       void               remove_split_dir();
 
+      save_info          fd_save_info;
+
    public :
       void add_file( QString filename );
       void add_files( vector < QString > filenames );
@@ -291,6 +296,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_mm_first();
       void set_mm_all();
       void set_dmd();
+      void set_fd();
       void set_somo();
       void set_somo_o();
       void set_grid();

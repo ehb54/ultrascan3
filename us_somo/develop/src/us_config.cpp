@@ -456,7 +456,9 @@ void US_Config::setDefault()
    config_list.browser = "/usr/bin/firefox";
 
 #ifdef WIN32
-   config_list.browser = "C:/Program Files/Internet Explorer/iexplore.exe";
+   // internet explorer is past EOL
+   // config_list.browser = "C:/Program Files (x86)/Internet Explorer/iexplore.exe";
+   config_list.browser = QSettings( "HKEY_CLASSES_ROOT\\http\\shell\\open\\command", QSettings::NativeFormat ).value( "Default" ).toString();
 #endif
 
 #ifdef MAC

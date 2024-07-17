@@ -108,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel       *                          lbl_other_options;
 
       QPushButton  *                          pb_detector;
+      QPushButton  *                          pb_saxs_hplc_parameters;
 
       QCheckBox    *                          cb_csv_transposed;
 
@@ -154,7 +155,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel                                * lbl_fasta_value;
       QLineEdit                             * le_fasta_value;
 
-   private slots:
+      bool                                    any_changes();
 
    private slots:
       void                                    fasta_file();
@@ -164,6 +165,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       void                                    ok();
 
       void                                    set_detector();
+      void                                    set_saxs_hplc_parameters();
 
       void                                    clear_gauss();
 

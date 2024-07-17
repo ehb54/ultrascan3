@@ -277,6 +277,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
+   QRegularExpression rx2( "^(.*)\\D(\\d+)\\.[^.]+$" );
 
    vector < int > contrib_to_plot;
 
@@ -313,8 +314,14 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
             nnls_csv_data <<
                QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
          } else {
-            nnls_csv_data <<
-               QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+            QRegularExpressionMatch match = rx2.match( model_name );
+            if ( match.hasMatch() ) {
+               nnls_csv_data <<
+                  QString("\"%1\",%2,%3").arg(model_name).arg(match.captured(2)).arg(rescaled_x[i]);
+            } else {
+               nnls_csv_data <<
+                  QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+            }
          }
       }      
 
@@ -935,6 +942,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    // for ( unsigned int i = 0; i < use_x.size(); i++ ) {
 
    QRegularExpression rx( "^(.*) Model: (\\d+)" );
+   QRegularExpression rx2( "^(.*)\\D(\\d+)\\.[^.]+$" );
 
    vector < int > contrib_to_plot;
 
@@ -963,16 +971,47 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       }
       {
          QString model_name = model_names[i];
+
+         // compute Rg, dmax
+         QString rg_msg = "\"missing model for Rg computation\"";
+         double dmax = nnls_r.back();
+         if ( nnls_A.count( model_name ) ) {
+            {
+               double Rg;
+               QString errormsg;
+               if ( US_Saxs_Util::compute_rg_from_pr( nnls_r, nnls_A[model_name], Rg, errormsg ) ) {
+                  rg_msg = QString( "%1" ).arg( Rg, 0, 'f', 2 );
+               } else {
+                  rg_msg = "\"" + errormsg + "\"";
+               }
+            }
+            {
+               int i = (int) nnls_r.size() - 1;
+               if ( i > (int) nnls_A[model_name].size() - 1 ) {
+                  i = (int) nnls_A[model_name].size() - 1;
+               }
+               while ( --i >= 0 && nnls_A[model_name][i] == 0 ) {
+                  dmax = nnls_r[i];
+               }
+            }               
+         }
+
          model_name.replace( "\"", "" );
 
          QRegularExpressionMatch match = rx.match( model_name );
          
          if ( match.hasMatch() ) {
             nnls_csv_data <<
-               QString("\"%1\",%2,%3").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]);
+               QString("\"%1\",%2,%3,%4,%5").arg(match.captured(1)).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
          } else {
-            nnls_csv_data <<
-               QString("\"%1\",,%2").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]);
+            QRegularExpressionMatch match = rx2.match( model_name );
+            if ( match.hasMatch() ) {
+               nnls_csv_data <<
+                  QString("\"%1\",%2,%3,%4,%5").arg(model_name).arg(match.captured(2)).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
+            } else {
+               nnls_csv_data <<
+                  QString("\"%1\",,%2,%3,%4").arg(model_name.replace( "\"", "" )).arg(rescaled_x[i]).arg( rg_msg ).arg( dmax );
+            }
          }
       }      
 
@@ -1720,3 +1759,109 @@ bool US_Hydrodyn_Saxs::compute_rg_to_progress(
       return false;
    }
 }
+
+
+bool US_Hydrodyn_Saxs::log_rebin(
+                                 int intervals
+                                 ,const vector <double> & q
+                                 ,const vector <double> & I
+                                 ,vector <double> & rebin_q
+                                 ,vector <double> & rebin_I
+                                 ,QString & errors
+                                 ) {
+   vector < double > e;
+   vector < double > rebin_e;
+
+   return log_rebin( intervals, q, I, e, rebin_q, rebin_I, rebin_e, errors );
+}
+   
+
+bool US_Hydrodyn_Saxs::log_rebin(
+                                 int intervals
+                                 ,const vector <double> & q
+                                 ,const vector <double> & I
+                                 ,const vector <double> & e
+                                 ,vector <double> & rebin_q
+                                 ,vector <double> & rebin_I
+                                 ,vector <double> & rebin_e
+                                 ,QString & errors
+                                 ) {
+   errors = "";
+
+   errors = "not yet implemented";
+
+   if ( !q.size() ) {
+      errors = "log_rebin(): empty q vector";
+      return false;
+   }
+   
+   if ( q.size() != I.size() ) {
+      errors = "log_rebin(): q I vector size mismatch";
+      return false;
+   }
+
+   vector < double > use_e = e;
+   
+   if ( use_e.size() < q.size() ) {
+      use_e.resize( q.size(), 0 );
+   }
+
+   vector < double > bins;
+   double start = q[0];
+   double end   = q.back();
+   
+   // setup bins
+   {
+      int start_interval_val = 1;
+      int end_interval_val   = intervals + 1;
+      double min_log         = log2( start );
+      double max_log         = log2( end );
+      double scale           = (max_log - min_log) / (end_interval_val - start_interval_val);
+   
+      for ( int i = 1; i <= intervals + 1; ++i )  {
+         bins.push_back( pow(2, min_log + scale * ( i - start_interval_val ) ) );
+      }
+   }
+
+   // rebin data & return
+
+   rebin_q.clear();
+   rebin_I.clear();
+   rebin_e.clear();
+
+   int bin = 0;
+
+   double qsum  = 0;
+   double Isum  = 0;
+   double esum2 = 0;
+   int    count = 0;
+   
+   for ( int i = 0; i < (int) q.size() && bin < (int) bins.size(); ++i ) {
+      if ( q[i] > bins[ bin ] ) {
+         // add any points previously collected 
+         if ( count ) {
+            rebin_q.push_back( qsum / count );
+            rebin_I.push_back( Isum / count );
+            rebin_e.push_back( sqrt( esum2 ) / count );
+            qsum  = 0;
+            Isum  = 0;
+            esum2 = 0;
+            count = 0;
+         }
+         ++bin;
+      }
+      qsum += q[i];
+      Isum += I[i];
+      esum2 += use_e[i] * use_e[i];
+      ++count;
+   }
+
+   if ( count ) {
+      rebin_q.push_back( qsum / count );
+      rebin_I.push_back( Isum / count );
+      rebin_e.push_back( sqrt( esum2 ) / count );
+   }      
+
+   return true;
+}
+

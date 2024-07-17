@@ -1610,6 +1610,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.crysol_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.crysol_hydration_shell_contrast );
       parameters[ "saxs_options.crysol_default_load_difference_intensity" ] = QString( "%1" ).arg( saxs_options.crysol_default_load_difference_intensity );
       parameters[ "saxs_options.crysol_version_26" ] = QString( "%1" ).arg( saxs_options.crysol_version_26 );
+      parameters[ "saxs_options.crysol_version_3" ] = QString( "%1" ).arg( saxs_options.crysol_version_3 );
+      parameters[ "saxs_options.crysol_water_dummy_beads" ] = QString( "%1" ).arg( saxs_options.crysol_water_dummy_beads );
       parameters[ "saxs_options.fast_bin_size" ] = QString( "%1" ).arg( saxs_options.fast_bin_size );
       parameters[ "saxs_options.fast_modulation" ] = QString( "%1" ).arg( saxs_options.fast_modulation );
       parameters[ "saxs_options.compute_saxs_coeff_for_bead_models" ] = QString( "%1" ).arg( saxs_options.compute_saxs_coeff_for_bead_models );
@@ -1659,6 +1661,12 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.zeno_interior_steps" ] = QString( "%1" ).arg( hydro.zeno_interior_steps );
       parameters[ "hydro.zeno_surface_steps" ] = QString( "%1" ).arg( hydro.zeno_surface_steps );
       parameters[ "hydro.zeno_surface_thickness" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness );
+      
+      parameters[ "hydro.zeno_surface_thickness_from_rg" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg ? "1" : "0" );
+      parameters[ "hydro.zeno_surface_thickness_from_rg_a" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_a );
+      parameters[ "hydro.zeno_surface_thickness_from_rg_b" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_b );
+      parameters[ "hydro.zeno_surface_thickness_from_rg_c" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_c );
+
       parameters[ "misc.hydro_supc" ] = QString( "%1" ).arg( misc.hydro_supc );
       parameters[ "misc.hydro_zeno" ] = QString( "%1" ).arg( misc.hydro_zeno );
       parameters[ "batch.saxs_search" ] = QString( "%1" ).arg( batch.saxs_search );
@@ -1702,6 +1710,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "asa.vvv_probe_radius" ] = QString( "%1" ).arg( asa.vvv_probe_radius );
       parameters[ "asa.vvv_grid_dR" ] = QString( "%1" ).arg( asa.vvv_grid_dR );
       parameters[ "misc.export_msroll" ] = QString( "%1" ).arg( misc.export_msroll );
+      parameters[ "misc.parallel_grpy" ] = QString( "%1" ).arg( misc.parallel_grpy );
+      parameters[ "misc.auto_calc_hydro_method" ] = QString( "%1" ).arg( (int) misc.auto_calc_hydro_method );
 
       parameters[ "saxs_options.qstart" ] = QString( "%1" ).arg( saxs_options.qstart );
       parameters[ "saxs_options.qend" ] = QString( "%1" ).arg( saxs_options.qend );
@@ -2108,6 +2118,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.crysol_hydration_shell_contrast" ) ) saxs_options.crysol_hydration_shell_contrast = parameters[ "saxs_options.crysol_hydration_shell_contrast" ].toFloat();
    if ( parameters.count( "saxs_options.crysol_default_load_difference_intensity" ) ) saxs_options.crysol_default_load_difference_intensity = parameters[ "saxs_options.crysol_default_load_difference_intensity" ] == "1";
    if ( parameters.count( "saxs_options.crysol_version_26" ) ) saxs_options.crysol_version_26 = parameters[ "saxs_options.crysol_version_26" ] == "1";
+   if ( parameters.count( "saxs_options.crysol_version_3" ) ) saxs_options.crysol_version_3 = parameters[ "saxs_options.crysol_version_3" ] == "1";
+   if ( parameters.count( "saxs_options.crysol_water_dummy_beads" ) ) saxs_options.crysol_water_dummy_beads = parameters[ "saxs_options.crysol_water_dummy_beads" ] == "1";
    if ( parameters.count( "saxs_options.fast_bin_size" ) ) saxs_options.fast_bin_size = parameters[ "saxs_options.fast_bin_size" ].toFloat();
    if ( parameters.count( "saxs_options.fast_modulation" ) ) saxs_options.fast_modulation = parameters[ "saxs_options.fast_modulation" ].toFloat();
    if ( parameters.count( "saxs_options.compute_saxs_coeff_for_bead_models" ) ) saxs_options.compute_saxs_coeff_for_bead_models = parameters[ "saxs_options.compute_saxs_coeff_for_bead_models" ] == "1";
@@ -2157,6 +2169,10 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.zeno_interior_steps" ) ) hydro.zeno_interior_steps = parameters[ "hydro.zeno_interior_steps" ].toUInt();
    if ( parameters.count( "hydro.zeno_surface_steps" ) ) hydro.zeno_surface_steps = parameters[ "hydro.zeno_surface_steps" ].toUInt();
    if ( parameters.count( "hydro.zeno_surface_thickness" ) ) hydro.zeno_surface_thickness = parameters[ "hydro.zeno_surface_thickness" ].toFloat();
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg" ) ) hydro.zeno_surface_thickness_from_rg = parameters[ "hydro.zeno_surface_thickness_from_rg" ] == "1";
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_a" ) ) hydro.zeno_surface_thickness_from_rg_a = parameters[ "hydro.zeno_surface_thickness_from_rg_a" ].toDouble();
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_b" ) ) hydro.zeno_surface_thickness_from_rg_b = parameters[ "hydro.zeno_surface_thickness_from_rg_b" ].toDouble();
+   if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_c" ) ) hydro.zeno_surface_thickness_from_rg_c = parameters[ "hydro.zeno_surface_thickness_from_rg_c" ].toDouble();
    if ( parameters.count( "misc.hydro_supc" ) ) misc.hydro_supc = parameters[ "misc.hydro_supc" ] == "1";
    if ( parameters.count( "misc.hydro_zeno" ) ) misc.hydro_zeno = parameters[ "misc.hydro_zeno" ] == "1";
    if ( parameters.count( "batch.saxs_search" ) ) batch.saxs_search = parameters[ "batch.saxs_search" ] == "1";
@@ -2200,6 +2216,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "asa.vvv_probe_radius" ) ) asa.vvv_probe_radius = parameters[ "asa.vvv_probe_radius" ].toFloat();
    if ( parameters.count( "asa.vvv_grid_dR" ) ) asa.vvv_grid_dR = parameters[ "asa.vvv_grid_dR" ].toFloat();
    if ( parameters.count( "misc.export_msroll" ) ) misc.export_msroll = parameters[ "misc.export_msroll" ] == "1";
+   if ( parameters.count( "misc.parallel_grpy" ) ) misc.parallel_grpy = parameters[ "misc.parallel_grpy" ] == "1";
+   if ( parameters.count( "misc.auto_calc_hydro_method" ) ) misc.auto_calc_hydro_method = (CALC_HYDRO_METHOD) parameters[ "misc.auto_calc_hydro_method" ].toInt();
 
    if ( parameters.count( "saxs_options.qstart" ) ) saxs_options.qstart = parameters[ "saxs_options.qstart" ].toDouble();
    if ( parameters.count( "saxs_options.qend" ) ) saxs_options.qend = parameters[ "saxs_options.qend" ].toDouble();
@@ -2338,6 +2356,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    {
       gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
    }
+
+   save_params_force_results_name( save_params );
 
    return true;
 }
@@ -2756,541 +2776,558 @@ bool US_Hydrodyn::load_config_json ( QString &json )
 void US_Hydrodyn::hard_coded_defaults()
 {
    // hard coded defaults
-   replicate_o_r_method_somo = false;
+   replicate_o_r_method_somo                                = false;
 
-   sidechain_overlap.remove_overlap = true;
-   sidechain_overlap.fuse_beads = true;
-   sidechain_overlap.fuse_beads_percent = 70.0;
-   sidechain_overlap.remove_hierarch = true;
-   sidechain_overlap.remove_hierarch_percent = 1.0;
-   sidechain_overlap.remove_sync = false;
-   sidechain_overlap.remove_sync_percent = 1.0;
-   sidechain_overlap.translate_out = true;
-   sidechain_overlap.show_translate = true;
+   sidechain_overlap.remove_overlap                         = true;
+   sidechain_overlap.fuse_beads                             = true;
+   sidechain_overlap.fuse_beads_percent                     = 70.0;
+   sidechain_overlap.remove_hierarch                        = true;
+   sidechain_overlap.remove_hierarch_percent                = 1.0;
+   sidechain_overlap.remove_sync                            = false;
+   sidechain_overlap.remove_sync_percent                    = 1.0;
+   sidechain_overlap.translate_out                          = true;
+   sidechain_overlap.show_translate                         = true;
 
-   mainchain_overlap.remove_overlap = true;
-   mainchain_overlap.fuse_beads = true;
-   mainchain_overlap.fuse_beads_percent = 70.0;
-   mainchain_overlap.remove_hierarch = true;
-   mainchain_overlap.remove_hierarch_percent = 1.0;
-   mainchain_overlap.remove_sync = false;
-   mainchain_overlap.remove_sync_percent = 1.0;
-   mainchain_overlap.translate_out = false;
-   mainchain_overlap.show_translate = false;
+   mainchain_overlap.remove_overlap                         = true;
+   mainchain_overlap.fuse_beads                             = true;
+   mainchain_overlap.fuse_beads_percent                     = 70.0;
+   mainchain_overlap.remove_hierarch                        = true;
+   mainchain_overlap.remove_hierarch_percent                = 1.0;
+   mainchain_overlap.remove_sync                            = false;
+   mainchain_overlap.remove_sync_percent                    = 1.0;
+   mainchain_overlap.translate_out                          = false;
+   mainchain_overlap.show_translate                         = false;
 
-   buried_overlap.remove_overlap = true;
-   buried_overlap.fuse_beads = false;
-   buried_overlap.fuse_beads_percent = 0.0;
-   buried_overlap.remove_hierarch = true;
-   buried_overlap.remove_hierarch_percent = 1.0;
-   buried_overlap.remove_sync = false;
-   buried_overlap.remove_sync_percent = 1.0;
-   buried_overlap.translate_out = false;
-   buried_overlap.show_translate = false;
+   buried_overlap.remove_overlap                            = true;
+   buried_overlap.fuse_beads                                = false;
+   buried_overlap.fuse_beads_percent                        = 0.0;
+   buried_overlap.remove_hierarch                           = true;
+   buried_overlap.remove_hierarch_percent                   = 1.0;
+   buried_overlap.remove_sync                               = false;
+   buried_overlap.remove_sync_percent                       = 1.0;
+   buried_overlap.translate_out                             = false;
+   buried_overlap.show_translate                            = false;
 
-   replicate_o_r_method_grid = false;
+   replicate_o_r_method_grid                                = false;
 
-   grid_exposed_overlap.remove_overlap = true;
-   grid_exposed_overlap.fuse_beads = false;
-   grid_exposed_overlap.fuse_beads_percent = 0.0;
-   grid_exposed_overlap.remove_hierarch = false;
-   grid_exposed_overlap.remove_hierarch_percent = 1.0;
-   grid_exposed_overlap.remove_sync = true;
-   grid_exposed_overlap.remove_sync_percent = 1.0;
-   grid_exposed_overlap.translate_out = true;
-   grid_exposed_overlap.show_translate = true;
+   grid_exposed_overlap.remove_overlap                      = true;
+   grid_exposed_overlap.fuse_beads                          = false;
+   grid_exposed_overlap.fuse_beads_percent                  = 0.0;
+   grid_exposed_overlap.remove_hierarch                     = false;
+   grid_exposed_overlap.remove_hierarch_percent             = 1.0;
+   grid_exposed_overlap.remove_sync                         = true;
+   grid_exposed_overlap.remove_sync_percent                 = 1.0;
+   grid_exposed_overlap.translate_out                       = true;
+   grid_exposed_overlap.show_translate                      = true;
 
-   grid_buried_overlap.remove_overlap = true;
-   grid_buried_overlap.fuse_beads = false;
-   grid_buried_overlap.fuse_beads_percent = 0.0;
-   grid_buried_overlap.remove_hierarch = false;
-   grid_buried_overlap.remove_hierarch_percent = 1.0;
-   grid_buried_overlap.remove_sync = true;
-   grid_buried_overlap.remove_sync_percent = 1.0;
-   grid_buried_overlap.translate_out = false;
-   grid_buried_overlap.show_translate = false;
+   grid_buried_overlap.remove_overlap                       = true;
+   grid_buried_overlap.fuse_beads                           = false;
+   grid_buried_overlap.fuse_beads_percent                   = 0.0;
+   grid_buried_overlap.remove_hierarch                      = false;
+   grid_buried_overlap.remove_hierarch_percent              = 1.0;
+   grid_buried_overlap.remove_sync                          = true;
+   grid_buried_overlap.remove_sync_percent                  = 1.0;
+   grid_buried_overlap.translate_out                        = false;
+   grid_buried_overlap.show_translate                       = false;
 
-   grid_overlap.remove_overlap = true;
-   grid_overlap.fuse_beads = false;
-   grid_overlap.fuse_beads_percent = 0.0;
-   grid_overlap.remove_hierarch = false;
-   grid_overlap.remove_hierarch_percent = 1.0;
-   grid_overlap.remove_sync = true;
-   grid_overlap.remove_sync_percent = 1.0;
-   grid_overlap.translate_out = false;
-   grid_overlap.show_translate = false;
+   grid_overlap.remove_overlap                              = true;
+   grid_overlap.fuse_beads                                  = false;
+   grid_overlap.fuse_beads_percent                          = 0.0;
+   grid_overlap.remove_hierarch                             = false;
+   grid_overlap.remove_hierarch_percent                     = 1.0;
+   grid_overlap.remove_sync                                 = true;
+   grid_overlap.remove_sync_percent                         = 1.0;
+   grid_overlap.translate_out                               = false;
+   grid_overlap.show_translate                              = false;
 
-   overlap_tolerance = 0.001;
+   overlap_tolerance                                        = 0.001;
 
-   sidechain_overlap.title = "exposed side chain beads";
-   mainchain_overlap.title = "exposed main/main and main/side chain beads";
-   buried_overlap.title = "buried beads";
-   grid_exposed_overlap.title = "exposed grid beads";
-   grid_buried_overlap.title = "buried grid beads";
-   grid_overlap.title = "grid beads";
+   sidechain_overlap.title                                  = "exposed side chain beads";
+   mainchain_overlap.title                                  = "exposed main/main and main/side chain beads";
+   buried_overlap.title                                     = "buried beads";
+   grid_exposed_overlap.title                               = "exposed grid beads";
+   grid_buried_overlap.title                                = "buried grid beads";
+   grid_overlap.title                                       = "grid beads";
 
-   bead_output.sequence = 0;
-   bead_output.output = 1;
-   bead_output.correspondence = true;
+   bead_output.sequence                                     = 0;
+   bead_output.output                                       = 1;
+   bead_output.correspondence                               = true;
 
-   asa.probe_radius = (float) 1.4;
-   asa.probe_recheck_radius = (float) 1.4;
-   asa.threshold = 20.0;
-   asa.threshold_percent = 50.0;
-   asa.vdw_grpy_probe_radius = (float) 1.0;
-   asa.vdw_grpy_threshold_percent = (float) 1.0;
-   asa.grid_threshold = 10.0;
-   asa.grid_threshold_percent = 30.0;
-   asa.calculation = true;
-   asa.recheck_beads = true;
-   asa.method = true; // by default use ASAB1
-   asa.asab1_step = 1.0;
+   asa.probe_radius                                         = (float) 1.4;
+   asa.probe_recheck_radius                                 = (float) 1.4;
+   asa.threshold                                            = 20.0;
+   asa.threshold_percent                                    = 50.0;
+   asa.vdw_grpy_probe_radius                                = (float) 1.0;
+   asa.vdw_grpy_threshold_percent                           = (float) 1.0;
+   asa.grid_threshold                                       = 10.0;
+   asa.grid_threshold_percent                               = 30.0;
+   asa.calculation                                          = true;
+   asa.recheck_beads                                        = true;
+   asa.method                                               = true; // by default use ASAB1
+   asa.asab1_step                                           = 1.0;
 
-   grid.cubic = true;       // apply cubic grid
-   grid.hydrate = true;    // true: hydrate model
-   grid.center = 0;    // 1: center of cubelet, 0: center of mass, 2: center of scattering
-   grid.tangency = false;   // true: Expand beads to tangency
-   grid.cube_side = 5.0;
-   grid.enable_asa = true;   // true: enable asa
-   grid.equalize_radii_constant_volume = false;
+   grid.cubic                                               = true;       // apply cubic grid
+   grid.hydrate                                             = true;    // true: hydrate model
+   grid.center                                              = 0;    // 1: center of cubelet, 0: center of mass, 2: center of scattering
+   grid.tangency                                            = false;   // true: Expand beads to tangency
+   grid.cube_side                                           = 5.0;
+   grid.enable_asa                                          = true;   // true: enable asa
+   grid.equalize_radii_constant_volume                      = false;
 
-   misc.hydrovol         = 24.041;
-   misc.compute_vbar     = true;
-   misc.vbar             = 0.72;
-   misc.vbar_temperature = 20.0;
-   misc.pb_rule_on       = true;
-   misc.avg_radius       = 1.68;
-   misc.avg_mass         = 14.5;
-   misc.avg_num_elect    = 7.7;
-   misc.avg_protons      = 7.7;
-   misc.avg_volume       = 15.3;
-   misc.avg_vbar         = 0.72;
-   overlap_tolerance     = 0.001;
+   misc.hydrovol                                            = 24.041;
+   misc.compute_vbar                                        = true;
+   misc.vbar                                                = 0.72;
+   misc.vbar_temperature                                    = 20.0;
+   misc.pb_rule_on                                          = true;
+   misc.avg_radius                                          = 1.68;
+   misc.avg_mass                                            = 14.5;
+   misc.avg_num_elect                                       = 7.7;
+   misc.avg_protons                                         = 7.7;
+   misc.avg_volume                                          = 15.3;
+   misc.avg_vbar                                            = 0.72;
+   overlap_tolerance                                        = 0.001;
 
-   hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+   hydro.unit                                               = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
 
-   hydro.solvent_name = "Water";
-   hydro.solvent_acronym = "w";
-   hydro.temperature = K20 - K0;
-   hydro.pH = 7;
-   hydro.solvent_viscosity = VISC_20W * 100;
-   hydro.solvent_density = DENS_20W;
-   hydro.manual_solvent_conditions = false;
+   hydro.solvent_name                                       = "Water";
+   hydro.solvent_acronym                                    = "w";
+   hydro.temperature                                        = K20 - K0;
+   hydro.pH                                                 = 7;
+   hydro.solvent_viscosity                                  = VISC_20W * 100;
+   hydro.solvent_density                                    = DENS_20W;
+   hydro.manual_solvent_conditions                          = false;
 
-   hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
-   hydro.boundary_cond = false;      // false: stick, true: slip (default false)
-   hydro.volume_correction = false;   // false: Automatic, true: manual (provide value)
-   hydro.use_avg_for_volume = false;   // only active if hydro.volume_correction is false
-   hydro.volume = 0.0;               // volume correction
-   hydro.mass_correction = false;      // false: Automatic, true: manual (provide value)
-   hydro.mass = 0.0;                  // mass correction
-   hydro.bead_inclusion = false;      // false: exclude hidden beads; true: use all beads
-   hydro.grpy_bead_inclusion = true;      // false: exclude hidden beads; true: use all beads
-   hydro.rotational = false;         // false: include beads in volume correction for rotational diffusion, true: exclude
-   hydro.viscosity = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
-   hydro.overlap_cutoff = false;      // false: same as in model building, true: enter manually
-   hydro.overlap = 0.0;               // overlap
+   hydro.reference_system                                   = false;   // false: diffusion center, true: cartesian origin (default false)
+   hydro.boundary_cond                                      = false;      // false: stick, true: slip (default false)
+   hydro.volume_correction                                  = false;   // false: Automatic, true: manual (provide value)
+   hydro.use_avg_for_volume                                 = false;   // only active if hydro.volume_correction is false
+   hydro.volume                                             = 0.0;               // volume correction
+   hydro.mass_correction                                    = false;      // false: Automatic, true: manual (provide value)
+   hydro.mass                                               = 0.0;                  // mass correction
+   hydro.bead_inclusion                                     = false;      // false: exclude hidden beads; true: use all beads
+   hydro.grpy_bead_inclusion                                = false;      // false: exclude hidden beads; true: use all beads
+   hydro.rotational                                         = false;         // false: include beads in volume correction for rotational diffusion, true: exclude
+   hydro.viscosity                                          = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
+   hydro.overlap_cutoff                                     = false;      // false: same as in model building, true: enter manually
+   hydro.overlap                                            = 0.0;               // overlap
 
-   pdb_parse.skip_hydrogen = true;
-   pdb_parse.skip_water = true;
-   pdb_parse.alternate = true;
-   pdb_parse.find_sh = true;
-   pdb_parse.missing_residues = 2;
-   pdb_parse.missing_atoms = 2;
+   pdb_parse.skip_hydrogen                                  = true;
+   pdb_parse.skip_water                                     = true;
+   pdb_parse.alternate                                      = true;
+   pdb_parse.find_sh                                        = true;
+   pdb_parse.missing_residues                               = 2;
+   pdb_parse.missing_atoms                                  = 2;
 
-   saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
+   saxs_options.water_e_density                             = 0.334f; // water electron density in e/A^3
 
-   saxs_options.h_scat_len = -0.3742f;        // H scattering length (*10^-12 cm)
-   saxs_options.d_scat_len = 0.6671f ;        // D scattering length (*10^-12 cm)
-   saxs_options.h2o_scat_len_dens = -0.562f;  // H2O scattering length density (*10^-10 cm^2)
-   saxs_options.d2o_scat_len_dens = 6.404f;   // D2O scattering length density (*10^-10 cm^2)
-   saxs_options.d2o_conc = 0.16f;             // D2O concentration (0 to 1)
-   saxs_options.frac_of_exch_pep = 0.1f;      // Fraction of exchanged peptide H (0 to 1)
+   saxs_options.h_scat_len                                  = -0.3742f;        // H scattering length (*10^-12 cm)
+   saxs_options.d_scat_len                                  = 0.6671f ;        // D scattering length (*10^-12 cm)
+   saxs_options.h2o_scat_len_dens                           = -0.562f;  // H2O scattering length density (*10^-10 cm^2)
+   saxs_options.d2o_scat_len_dens                           = 6.404f;   // D2O scattering length density (*10^-10 cm^2)
+   saxs_options.d2o_conc                                    = 0.16f;             // D2O concentration (0 to 1)
+   saxs_options.frac_of_exch_pep                            = 0.1f;      // Fraction of exchanged peptide H (0 to 1)
 
-   saxs_options.wavelength = 1.5;         // scattering wavelength
-   saxs_options.start_angle = 0.014f;     // start angle
-   saxs_options.end_angle = 8.214f;       // ending angle
-   saxs_options.delta_angle = 0.2f;       // angle stepsize
-   saxs_options.max_size = 40.0;          // maximum size (A)
-   saxs_options.bin_size = 1.0f;          // Bin size (A)
-   saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
-   saxs_options.curve = 1;                // 0 = raw, 1 = saxs, 2 = sans
-   saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
+   saxs_options.wavelength                                  = 1.5;         // scattering wavelength
+   saxs_options.start_angle                                 = 0.014f;     // start angle
+   saxs_options.end_angle                                   = 8.214f;       // ending angle
+   saxs_options.delta_angle                                 = 0.2f;       // angle stepsize
+   saxs_options.max_size                                    = 40.0;          // maximum size (A)
+   saxs_options.bin_size                                    = 1.0f;          // Bin size (A)
+   saxs_options.hydrate_pdb                                 = false;      // Hydrate the PDB model? (true/false)
+   saxs_options.curve                                       = 1;                // 0 = raw, 1 = saxs, 2 = sans
+   saxs_options.saxs_sans                                   = 0;            // 0 = saxs, 1 = sans
 
-   saxs_options.guinier_csv = false;
-   saxs_options.guinier_csv_filename = "guinier";
-   saxs_options.qRgmax = 1.3e0;
-   saxs_options.qstart = 1e-7;
-   saxs_options.qend = .5e0;
-   saxs_options.pointsmin = 10;
-   saxs_options.pointsmax = 100;
+   saxs_options.guinier_csv                                 = false;
+   saxs_options.guinier_csv_filename                        = "guinier";
+   saxs_options.qRgmax                                      = 1.3e0;
+   saxs_options.qstart                                      = 1e-7;
+   saxs_options.qend                                        = .5e0;
+   saxs_options.pointsmin                                   = 10;
+   saxs_options.pointsmax                                   = 100;
 
-   bd_options.threshold_pb_pb = 5;
-   bd_options.threshold_pb_sc = 5;
-   bd_options.threshold_sc_sc = 5;
-   bd_options.do_rr = true;
-   bd_options.force_chem = true;
-   bd_options.bead_size_type = 0;
-   bd_options.show_pdb = true;
-   bd_options.run_browflex = true;
-   bd_options.tprev = 8.0e-9;
-   bd_options.ttraj = 8.0e-6;
-   bd_options.deltat = 1.6e-13;
-   bd_options.npadif = 10;
-   bd_options.nconf = 1000;
-   bd_options.inter = 2;
-   bd_options.iorder = 1;
-   bd_options.iseed = 1234;
-   bd_options.icdm = 0;
-   bd_options.chem_pb_pb_bond_type = 0;
-   bd_options.compute_chem_pb_pb_force_constant = false;
-   bd_options.chem_pb_pb_force_constant = 10.0;
-   bd_options.compute_chem_pb_pb_equilibrium_dist = true;
-   bd_options.chem_pb_pb_equilibrium_dist = 0.0;
-   bd_options.compute_chem_pb_pb_max_elong = true;
-   bd_options.chem_pb_pb_max_elong = 0.0;
-   bd_options.chem_pb_sc_bond_type = 0;
-   bd_options.compute_chem_pb_sc_force_constant = false;
-   bd_options.chem_pb_sc_force_constant = 10.0;
-   bd_options.compute_chem_pb_sc_equilibrium_dist = true;
-   bd_options.chem_pb_sc_equilibrium_dist = 0.0;
-   bd_options.compute_chem_pb_sc_max_elong = true;
-   bd_options.chem_pb_sc_max_elong = 0.0;
-   bd_options.chem_sc_sc_bond_type = 0;
-   bd_options.compute_chem_sc_sc_force_constant = false;
-   bd_options.chem_sc_sc_force_constant = 10.0;
-   bd_options.compute_chem_sc_sc_equilibrium_dist = true;
-   bd_options.chem_sc_sc_equilibrium_dist = 0.0;
-   bd_options.compute_chem_sc_sc_max_elong = true;
-   bd_options.chem_sc_sc_max_elong = 0.0;
-   bd_options.pb_pb_bond_type = 0;
-   bd_options.compute_pb_pb_force_constant = false;
-   bd_options.pb_pb_force_constant = 10.0;
-   bd_options.compute_pb_pb_equilibrium_dist = true;
-   bd_options.pb_pb_equilibrium_dist = 0.0;
-   bd_options.compute_pb_pb_max_elong = true;
-   bd_options.pb_pb_max_elong = 0.0;
-   bd_options.pb_sc_bond_type = 0;
-   bd_options.compute_pb_sc_force_constant = false;
-   bd_options.pb_sc_force_constant = 10.0;
-   bd_options.compute_pb_sc_equilibrium_dist = true;
-   bd_options.pb_sc_equilibrium_dist = 0.0;
-   bd_options.compute_pb_sc_max_elong = true;
-   bd_options.pb_sc_max_elong = 0.0;
-   bd_options.sc_sc_bond_type = 0;
-   bd_options.compute_sc_sc_force_constant = false;
-   bd_options.sc_sc_force_constant = 10.0;
-   bd_options.compute_sc_sc_equilibrium_dist = true;
-   bd_options.sc_sc_equilibrium_dist = 0.0;
-   bd_options.compute_sc_sc_max_elong = true;
-   bd_options.sc_sc_max_elong = 0.0;
-   bd_options.nmol = 1;
+   bd_options.threshold_pb_pb                               = 5;
+   bd_options.threshold_pb_sc                               = 5;
+   bd_options.threshold_sc_sc                               = 5;
+   bd_options.do_rr                                         = true;
+   bd_options.force_chem                                    = true;
+   bd_options.bead_size_type                                = 0;
+   bd_options.show_pdb                                      = true;
+   bd_options.run_browflex                                  = true;
+   bd_options.tprev                                         = 8.0e-9;
+   bd_options.ttraj                                         = 8.0e-6;
+   bd_options.deltat                                        = 1.6e-13;
+   bd_options.npadif                                        = 10;
+   bd_options.nconf                                         = 1000;
+   bd_options.inter                                         = 2;
+   bd_options.iorder                                        = 1;
+   bd_options.iseed                                         = 1234;
+   bd_options.icdm                                          = 0;
+   bd_options.chem_pb_pb_bond_type                          = 0;
+   bd_options.compute_chem_pb_pb_force_constant             = false;
+   bd_options.chem_pb_pb_force_constant                     = 10.0;
+   bd_options.compute_chem_pb_pb_equilibrium_dist           = true;
+   bd_options.chem_pb_pb_equilibrium_dist                   = 0.0;
+   bd_options.compute_chem_pb_pb_max_elong                  = true;
+   bd_options.chem_pb_pb_max_elong                          = 0.0;
+   bd_options.chem_pb_sc_bond_type                          = 0;
+   bd_options.compute_chem_pb_sc_force_constant             = false;
+   bd_options.chem_pb_sc_force_constant                     = 10.0;
+   bd_options.compute_chem_pb_sc_equilibrium_dist           = true;
+   bd_options.chem_pb_sc_equilibrium_dist                   = 0.0;
+   bd_options.compute_chem_pb_sc_max_elong                  = true;
+   bd_options.chem_pb_sc_max_elong                          = 0.0;
+   bd_options.chem_sc_sc_bond_type                          = 0;
+   bd_options.compute_chem_sc_sc_force_constant             = false;
+   bd_options.chem_sc_sc_force_constant                     = 10.0;
+   bd_options.compute_chem_sc_sc_equilibrium_dist           = true;
+   bd_options.chem_sc_sc_equilibrium_dist                   = 0.0;
+   bd_options.compute_chem_sc_sc_max_elong                  = true;
+   bd_options.chem_sc_sc_max_elong                          = 0.0;
+   bd_options.pb_pb_bond_type                               = 0;
+   bd_options.compute_pb_pb_force_constant                  = false;
+   bd_options.pb_pb_force_constant                          = 10.0;
+   bd_options.compute_pb_pb_equilibrium_dist                = true;
+   bd_options.pb_pb_equilibrium_dist                        = 0.0;
+   bd_options.compute_pb_pb_max_elong                       = true;
+   bd_options.pb_pb_max_elong                               = 0.0;
+   bd_options.pb_sc_bond_type                               = 0;
+   bd_options.compute_pb_sc_force_constant                  = false;
+   bd_options.pb_sc_force_constant                          = 10.0;
+   bd_options.compute_pb_sc_equilibrium_dist                = true;
+   bd_options.pb_sc_equilibrium_dist                        = 0.0;
+   bd_options.compute_pb_sc_max_elong                       = true;
+   bd_options.pb_sc_max_elong                               = 0.0;
+   bd_options.sc_sc_bond_type                               = 0;
+   bd_options.compute_sc_sc_force_constant                  = false;
+   bd_options.sc_sc_force_constant                          = 10.0;
+   bd_options.compute_sc_sc_equilibrium_dist                = true;
+   bd_options.sc_sc_equilibrium_dist                        = 0.0;
+   bd_options.compute_sc_sc_max_elong                       = true;
+   bd_options.sc_sc_max_elong                               = 0.0;
+   bd_options.nmol                                          = 1;
 
-   anaflex_options.run_anaflex = true;
-   anaflex_options.nfrec = 10;
-   anaflex_options.instprofiles = false;
-   anaflex_options.run_mode_1 = false;
-   anaflex_options.run_mode_1_1 = false;
-   anaflex_options.run_mode_1_2 = false;
-   anaflex_options.run_mode_1_3 = false;
-   anaflex_options.run_mode_1_4 = false;
-   anaflex_options.run_mode_1_5 = false;
-   anaflex_options.run_mode_1_7 = false;
-   anaflex_options.run_mode_1_8 = false;
-   anaflex_options.run_mode_1_12 = false;
-   anaflex_options.run_mode_1_13 = false;
-   anaflex_options.run_mode_1_14 = false;
-   anaflex_options.run_mode_1_18 = true;
-   anaflex_options.run_mode_1_20 = false;
-   anaflex_options.run_mode_1_24 = false;
-   anaflex_options.run_mode_2 = false;
-   anaflex_options.run_mode_2_1 = false;
-   anaflex_options.run_mode_2_2 = false;
-   anaflex_options.run_mode_2_3 = false;
-   anaflex_options.run_mode_2_4 = false;
-   anaflex_options.run_mode_2_5 = false;
-   anaflex_options.run_mode_2_7 = false;
-   anaflex_options.run_mode_2_8 = false;
-   anaflex_options.run_mode_2_12 = false;
-   anaflex_options.run_mode_2_13 = false;
-   anaflex_options.run_mode_2_14 = false;
-   anaflex_options.run_mode_2_18 = true;
-   anaflex_options.run_mode_2_20 = false;
-   anaflex_options.run_mode_2_24 = false;
-   anaflex_options.run_mode_3 = true;
-   anaflex_options.run_mode_3_1 = true;
-   anaflex_options.run_mode_3_5 = false;
-   anaflex_options.run_mode_3_9 = false;
-   anaflex_options.run_mode_3_10 = false;
-   anaflex_options.run_mode_3_14 = false;
-   anaflex_options.run_mode_3_15 = false;
-   anaflex_options.run_mode_3_16 = false;
-   anaflex_options.run_mode_4 = false;
-   anaflex_options.run_mode_4_1 = false;
-   anaflex_options.run_mode_4_6 = false;
-   anaflex_options.run_mode_4_7 = false;
-   anaflex_options.run_mode_4_8 = true;
-   anaflex_options.run_mode_9 = false;
-   anaflex_options.ntimc = 21;
-   anaflex_options.tmax = (float)1.6e-6;
-   anaflex_options.run_mode_3_5_iii = 1;
-   anaflex_options.run_mode_3_5_jjj = 99999;
-   anaflex_options.run_mode_3_10_theta = 90.0;
-   anaflex_options.run_mode_3_10_refractive_index = (float)1.3312;
-   anaflex_options.run_mode_3_10_lambda = 633.0;
-   anaflex_options.run_mode_3_14_iii = 1;
-   anaflex_options.run_mode_3_14_jjj = 99999;
+   anaflex_options.run_anaflex                              = true;
+   anaflex_options.nfrec                                    = 10;
+   anaflex_options.instprofiles                             = false;
+   anaflex_options.run_mode_1                               = false;
+   anaflex_options.run_mode_1_1                             = false;
+   anaflex_options.run_mode_1_2                             = false;
+   anaflex_options.run_mode_1_3                             = false;
+   anaflex_options.run_mode_1_4                             = false;
+   anaflex_options.run_mode_1_5                             = false;
+   anaflex_options.run_mode_1_7                             = false;
+   anaflex_options.run_mode_1_8                             = false;
+   anaflex_options.run_mode_1_12                            = false;
+   anaflex_options.run_mode_1_13                            = false;
+   anaflex_options.run_mode_1_14                            = false;
+   anaflex_options.run_mode_1_18                            = true;
+   anaflex_options.run_mode_1_20                            = false;
+   anaflex_options.run_mode_1_24                            = false;
+   anaflex_options.run_mode_2                               = false;
+   anaflex_options.run_mode_2_1                             = false;
+   anaflex_options.run_mode_2_2                             = false;
+   anaflex_options.run_mode_2_3                             = false;
+   anaflex_options.run_mode_2_4                             = false;
+   anaflex_options.run_mode_2_5                             = false;
+   anaflex_options.run_mode_2_7                             = false;
+   anaflex_options.run_mode_2_8                             = false;
+   anaflex_options.run_mode_2_12                            = false;
+   anaflex_options.run_mode_2_13                            = false;
+   anaflex_options.run_mode_2_14                            = false;
+   anaflex_options.run_mode_2_18                            = true;
+   anaflex_options.run_mode_2_20                            = false;
+   anaflex_options.run_mode_2_24                            = false;
+   anaflex_options.run_mode_3                               = true;
+   anaflex_options.run_mode_3_1                             = true;
+   anaflex_options.run_mode_3_5                             = false;
+   anaflex_options.run_mode_3_9                             = false;
+   anaflex_options.run_mode_3_10                            = false;
+   anaflex_options.run_mode_3_14                            = false;
+   anaflex_options.run_mode_3_15                            = false;
+   anaflex_options.run_mode_3_16                            = false;
+   anaflex_options.run_mode_4                               = false;
+   anaflex_options.run_mode_4_1                             = false;
+   anaflex_options.run_mode_4_6                             = false;
+   anaflex_options.run_mode_4_7                             = false;
+   anaflex_options.run_mode_4_8                             = true;
+   anaflex_options.run_mode_9                               = false;
+   anaflex_options.ntimc                                    = 21;
+   anaflex_options.tmax                                     = (float)1.6e-6;
+   anaflex_options.run_mode_3_5_iii                         = 1;
+   anaflex_options.run_mode_3_5_jjj                         = 99999;
+   anaflex_options.run_mode_3_10_theta                      = 90.0;
+   anaflex_options.run_mode_3_10_refractive_index           = (float)1.3312;
+   anaflex_options.run_mode_3_10_lambda                     = 633.0;
+   anaflex_options.run_mode_3_14_iii                        = 1;
+   anaflex_options.run_mode_3_14_jjj                        = 99999;
       
-   batch.missing_atoms = 2;
-   batch.missing_residues = 2;
-   batch.somo = true;
-   batch.grid = false;
-   batch.hydro = true;
-   batch.zeno = false;
-   batch.avg_hydro = false;
-   batch.avg_hydro_name = "results";
-   batch.height = 0;
-   batch.width = 0;
-   batch.file.clear( );
+   batch.missing_atoms                                      = 2;
+   batch.missing_residues                                   = 2;
+   batch.somo                                               = true;
+   batch.grid                                               = false;
+   batch.hydro                                              = true;
+   batch.zeno                                               = false;
+   batch.avg_hydro                                          = false;
+   batch.avg_hydro_name                                     = "results";
+   batch.height                                             = 0;
+   batch.width                                              = 0;
+   batch.file                                               .clear( );
 
-   path_load_pdb = "";
-   path_view_pdb = "";
-   path_load_bead_model = "";
-   path_view_asa_res = "";
-   path_view_bead_model = "";
-   path_open_hydro_res = "";
-   saxs_options.path_load_saxs_curve = "";
-   saxs_options.path_load_gnom = "";
-   saxs_options.path_load_prr = "";
+   path_load_pdb                                            = "";
+   path_view_pdb                                            = "";
+   path_load_bead_model                                     = "";
+   path_view_asa_res                                        = "";
+   path_view_bead_model                                     = "";
+   path_open_hydro_res                                      = "";
+   saxs_options.path_load_saxs_curve                        = "";
+   saxs_options.path_load_gnom                              = "";
+   saxs_options.path_load_prr                               = "";
 
-   save_params.field.clear( );
+   save_params.field                                        .clear( );
 
-   asa.hydrate_probe_radius = 1.4f;
-   asa.hydrate_threshold = 10.0f;
+   asa.hydrate_probe_radius                                 = 1.4f;
+   asa.hydrate_threshold                                    = 10.0f;
 
-   misc.target_e_density       = 0e0;
-   misc.target_volume          = 0e0;
-   misc.set_target_on_load_pdb = false;
-   misc.equalize_radii         = false;
+   misc.target_e_density                                    = 0e0;
+   misc.target_volume                                       = 0e0;
+   misc.set_target_on_load_pdb                              = false;
+   misc.equalize_radii                                      = false;
 
-   dmd_options.force_chem = true;
-   dmd_options.pdb_static_pairs = false;
-   dmd_options.threshold_pb_pb = 5;
-   dmd_options.threshold_pb_sc = 5;
-   dmd_options.threshold_sc_sc = 5;
+   dmd_options.force_chem                                   = true;
+   dmd_options.pdb_static_pairs                             = false;
+   dmd_options.threshold_pb_pb                              = 5;
+   dmd_options.threshold_pb_sc                              = 5;
+   dmd_options.threshold_sc_sc                              = 5;
 
-   saxs_options.normalize_by_mw = true;
+   saxs_options.normalize_by_mw                             = true;
 
-   saxs_options.saxs_iq_native_debye = false;
-   saxs_options.saxs_iq_native_hybrid = false;
-   saxs_options.saxs_iq_native_hybrid2 = false;
-   saxs_options.saxs_iq_native_hybrid3 = true;
-   saxs_options.saxs_iq_native_fast = false;
-   saxs_options.saxs_iq_native_fast_compute_pr = false;
-   saxs_options.saxs_iq_foxs = false;
-   saxs_options.saxs_iq_crysol = false;
+   saxs_options.saxs_iq_native_debye                        = false;
+   saxs_options.saxs_iq_native_hybrid                       = false;
+   saxs_options.saxs_iq_native_hybrid2                      = false;
+   saxs_options.saxs_iq_native_hybrid3                      = true;
+   saxs_options.saxs_iq_native_fast                         = false;
+   saxs_options.saxs_iq_native_fast_compute_pr              = false;
+   saxs_options.saxs_iq_foxs                                = false;
+   saxs_options.saxs_iq_crysol                              = false;
 
-   saxs_options.sans_iq_native_debye = true;
-   saxs_options.sans_iq_native_hybrid = false;
-   saxs_options.sans_iq_native_hybrid2 = false;
-   saxs_options.sans_iq_native_hybrid3 = false;
-   saxs_options.sans_iq_native_fast = false;
-   saxs_options.sans_iq_native_fast_compute_pr = false;
-   saxs_options.sans_iq_cryson = false;
+   saxs_options.sans_iq_native_debye                        = true;
+   saxs_options.sans_iq_native_hybrid                       = false;
+   saxs_options.sans_iq_native_hybrid2                      = false;
+   saxs_options.sans_iq_native_hybrid3                      = false;
+   saxs_options.sans_iq_native_fast                         = false;
+   saxs_options.sans_iq_native_fast_compute_pr              = false;
+   saxs_options.sans_iq_cryson                              = false;
 
-   saxs_options.hybrid2_q_points = 15;
+   saxs_options.hybrid2_q_points                            = 15;
 
-   saxs_options.iq_ask = false;
+   saxs_options.iq_ask                                      = false;
 
-   saxs_options.iq_scale_ask = false;
-   saxs_options.iq_scale_angstrom = true;
-   saxs_options.iq_scale_nm = false;
+   saxs_options.iq_scale_ask                                = false;
+   saxs_options.iq_scale_angstrom                           = true;
+   saxs_options.iq_scale_nm                                 = false;
 
-   saxs_options.sh_max_harmonics = 15;
-   saxs_options.sh_fibonacci_grid_order = 17;
-   saxs_options.crysol_hydration_shell_contrast = 0.03f;
-   saxs_options.crysol_default_load_difference_intensity = true;
-   saxs_options.crysol_version_26 = true;
+   saxs_options.sh_max_harmonics                            = 15;
+   saxs_options.sh_fibonacci_grid_order                     = 17;
+   saxs_options.crysol_hydration_shell_contrast             = 0.03f;
+   saxs_options.crysol_default_load_difference_intensity    = true;
+   saxs_options.crysol_version_26                           = false;
+   saxs_options.crysol_version_3                            = false;
+   saxs_options.crysol_water_dummy_beads                    = false;
 
-   saxs_options.fast_bin_size = 0.5f;
-   saxs_options.fast_modulation = 0.23f;
+   saxs_options.fast_bin_size                               = 0.5f;
+   saxs_options.fast_modulation                             = 0.23f;
 
-   saxs_options.compute_saxs_coeff_for_bead_models = true;
-   saxs_options.compute_sans_coeff_for_bead_models = false;
+   saxs_options.compute_saxs_coeff_for_bead_models          = true;
+   saxs_options.compute_sans_coeff_for_bead_models          = false;
 
-   saxs_options.default_atom_filename = "";
-   saxs_options.default_hybrid_filename = "";
-   saxs_options.default_saxs_filename = "";
-   saxs_options.default_rotamer_filename = "";
+   saxs_options.default_atom_filename                       = "";
+   saxs_options.default_hybrid_filename                     = "";
+   saxs_options.default_saxs_filename                       = "";
+   saxs_options.default_rotamer_filename                    = "";
 
-   saxs_options.steric_clash_distance         = 20.0;
-   saxs_options.steric_clash_recheck_distance = 0.0;
+   saxs_options.steric_clash_distance                       = 20.0;
+   saxs_options.steric_clash_recheck_distance               = 0.0;
 
-   saxs_options.disable_iq_scaling = false;
-   saxs_options.disable_nnls_scaling = false;
-   saxs_options.autocorrelate = true;
-   saxs_options.hybrid_radius_excl_vol = false;
-   saxs_options.scale_excl_vol = 1.0f;
-   saxs_options.subtract_radius = false;
-   saxs_options.iqq_scale_minq = 0.0f;
-   saxs_options.iqq_scale_maxq = 0.0f;
+   saxs_options.disable_iq_scaling                          = false;
+   saxs_options.disable_nnls_scaling                        = false;
+   saxs_options.autocorrelate                               = true;
+   saxs_options.hybrid_radius_excl_vol                      = false;
+   saxs_options.scale_excl_vol                              = 1.0f;
+   saxs_options.subtract_radius                             = false;
+   saxs_options.iqq_scale_minq                              = 0.0f;
+   saxs_options.iqq_scale_maxq                              = 0.0f;
 
-   saxs_options.iqq_scale_nnls = false;
-   saxs_options.iqq_scale_linear_offset = false;
-   saxs_options.iqq_scale_chi2_fitting = true;
-   saxs_options.iqq_expt_data_contains_variances = false;
-   saxs_options.iqq_ask_target_grid = true;
-   saxs_options.iqq_scale_play = false;
-   saxs_options.swh_excl_vol = 0.0f;
-   saxs_options.iqq_default_scaling_target = "";
+   saxs_options.iqq_scale_nnls                              = false;
+   saxs_options.iqq_scale_linear_offset                     = false;
+   saxs_options.iqq_scale_chi2_fitting                      = true;
+   saxs_options.iqq_expt_data_contains_variances            = false;
+   saxs_options.iqq_ask_target_grid                         = true;
+   saxs_options.iqq_scale_play                              = false;
+   saxs_options.swh_excl_vol                                = 0.0f;
+   saxs_options.iqq_default_scaling_target                  = "";
 
-   saxs_options.saxs_iq_hybrid_adaptive = true;
-   saxs_options.sans_iq_hybrid_adaptive = true;
+   saxs_options.saxs_iq_hybrid_adaptive                     = true;
+   saxs_options.sans_iq_hybrid_adaptive                     = true;
 
-   saxs_options.bead_model_rayleigh   = true;
-   saxs_options.iqq_log_fitting       = false;
-   saxs_options.iqq_kratky_fit        = false;
-   saxs_options.iqq_use_atomic_ff     = false;
-   saxs_options.iqq_use_saxs_excl_vol = false;
-   saxs_options.alt_hydration         = false;
+   saxs_options.bead_model_rayleigh                         = true;
+   saxs_options.iqq_log_fitting                             = false;
+   saxs_options.iqq_kratky_fit                              = false;
+   saxs_options.iqq_use_atomic_ff                           = false;
+   saxs_options.iqq_use_saxs_excl_vol                       = false;
+   saxs_options.alt_hydration                               = false;
 
-   saxs_options.xsr_symmop                = 2;
-   saxs_options.xsr_nx                    = 32;
-   saxs_options.xsr_ny                    = 32;
-   saxs_options.xsr_griddistance          = 3e0;
-   saxs_options.xsr_ncomponents           = 1;
-   saxs_options.xsr_compactness_weight    = 10e0;
-   saxs_options.xsr_looseness_weight      = 10e0;
-   saxs_options.xsr_temperature           = 1e-3;
+   saxs_options.xsr_symmop                                  = 2;
+   saxs_options.xsr_nx                                      = 32;
+   saxs_options.xsr_ny                                      = 32;
+   saxs_options.xsr_griddistance                            = 3e0;
+   saxs_options.xsr_ncomponents                             = 1;
+   saxs_options.xsr_compactness_weight                      = 10e0;
+   saxs_options.xsr_looseness_weight                        = 10e0;
+   saxs_options.xsr_temperature                             = 1e-3;
 
-   hydro.zeno_zeno              = true;
-   hydro.zeno_interior          = false;
-   hydro.zeno_surface           = false;
-   hydro.zeno_zeno_steps        = 1000;
-   hydro.zeno_interior_steps    = 1000;
-   hydro.zeno_surface_steps     = 1000;
-   hydro.zeno_surface_thickness = 0.0f;
+   hydro.zeno_zeno                                          = true;
+   hydro.zeno_interior                                      = false;
+   hydro.zeno_surface                                       = false;
+   hydro.zeno_zeno_steps                                    = 1000;
+   hydro.zeno_interior_steps                                = 1000;
+   hydro.zeno_surface_steps                                 = 1000;
+   hydro.zeno_surface_thickness                             = 0.0f;
+   hydro.zeno_surface_thickness_from_rg                     = false;
 
-   misc.hydro_supc              = true;
-   misc.hydro_zeno              = false;
+   // linear
 
-   rotamer_changed = true;  // force on-demand loading of rotamer file
+   // hydro.zeno_surface_thickness_from_rg_a                = -0.147;
+   // hydro.zeno_surface_thickness_from_rg_b                = 0.0328;
 
-   batch.saxs_search = false;
-   batch.zeno        = false;
+   // sigmoid
 
-   saxs_options.ignore_errors                      = false;
-   saxs_options.trunc_pr_dmax_target               = false;
-   saxs_options.alt_ff                             = true;
-   saxs_options.crysol_explicit_hydrogens          = false;
-   saxs_options.use_somo_ff                        = false;
-   saxs_options.five_term_gaussians                = true;
-   saxs_options.iq_exact_q                         = false;
-   saxs_options.use_iq_target_ev                   = false;
-   saxs_options.set_iq_target_ev_from_vbar         = false;
-   saxs_options.iq_target_ev                       = 0e0;
-   saxs_options.hydration_rev_asa                  = false;
-   saxs_options.compute_exponentials               = false;
-   saxs_options.compute_exponential_terms          = 5;
-   saxs_options.dummy_saxs_name                    = "DAM";
-   saxs_options.dummy_saxs_names                   .clear( );
-   saxs_options.dummy_saxs_names                   .push_back( saxs_options.dummy_saxs_name );
-   saxs_options.multiply_iq_by_atomic_volume       = false;
-   saxs_options.dummy_atom_pdbs_in_nm              = false;
-   saxs_options.iq_global_avg_for_bead_models      = false;
-   saxs_options.apply_loaded_sf_repeatedly_to_pdb  = false;
-   saxs_options.bead_models_use_var_len_sf         = false;
-   saxs_options.bead_models_var_len_sf_max         = 10;
-   saxs_options.bead_models_use_gsm_fitting        = false;
-   saxs_options.bead_models_use_quick_fitting      = true;
-   saxs_options.bead_models_use_bead_radius_ev     = true;
-   saxs_options.bead_models_rho0_in_scat_factors   = true;
-   saxs_options.smooth                             = 0;
-   saxs_options.ev_exp_mult                        = 1e0;
-   saxs_options.sastbx_method                      = 0;
-   saxs_options.saxs_iq_sastbx                     = false;
-   saxs_options.saxs_iq_native_sh                  = false;
-   saxs_options.sans_iq_native_sh                  = false;
+   hydro.zeno_surface_thickness_from_rg_a                   = 1.071009096;
+   hydro.zeno_surface_thickness_from_rg_b                   = 20.85931361;
+   hydro.zeno_surface_thickness_from_rg_c                   = 8.013801076;
 
-   saxs_options.alt_sh1                            = false;
-   saxs_options.alt_sh2                            = false;
+   misc.hydro_supc                                          = true;
+   misc.hydro_zeno                                          = false;
 
-   grid.create_nmr_bead_pdb                        = false;
+   rotamer_changed                                          = true;  // force on-demand loading of rotamer file
 
-   batch.compute_iq_only_avg                       = false;
+   batch.saxs_search                                        = false;
+   batch.zeno                                               = false;
 
-   asa.vvv                                         = false;
-   asa.vvv_probe_radius                            = 1.4f;
-   asa.vvv_grid_dR                                 = 0.5f;
+   saxs_options.ignore_errors                               = false;
+   saxs_options.trunc_pr_dmax_target                        = false;
+   saxs_options.alt_ff                                      = true;
+   saxs_options.crysol_explicit_hydrogens                   = false;
+   saxs_options.use_somo_ff                                 = false;
+   saxs_options.five_term_gaussians                         = true;
+   saxs_options.iq_exact_q                                  = false;
+   saxs_options.use_iq_target_ev                            = false;
+   saxs_options.set_iq_target_ev_from_vbar                  = false;
+   saxs_options.iq_target_ev                                = 0e0;
+   saxs_options.hydration_rev_asa                           = false;
+   saxs_options.compute_exponentials                        = false;
+   saxs_options.compute_exponential_terms                   = 5;
+   saxs_options.dummy_saxs_name                             = "DAM";
+   saxs_options.dummy_saxs_names                            .clear( );
+   saxs_options.dummy_saxs_names                            .push_back( saxs_options.dummy_saxs_name );
+   saxs_options.multiply_iq_by_atomic_volume                = false;
+   saxs_options.dummy_atom_pdbs_in_nm                       = false;
+   saxs_options.iq_global_avg_for_bead_models               = false;
+   saxs_options.apply_loaded_sf_repeatedly_to_pdb           = false;
+   saxs_options.bead_models_use_var_len_sf                  = false;
+   saxs_options.bead_models_var_len_sf_max                  = 10;
+   saxs_options.bead_models_use_gsm_fitting                 = false;
+   saxs_options.bead_models_use_quick_fitting               = true;
+   saxs_options.bead_models_use_bead_radius_ev              = true;
+   saxs_options.bead_models_rho0_in_scat_factors            = true;
+   saxs_options.smooth                                      = 0;
+   saxs_options.ev_exp_mult                                 = 1e0;
+   saxs_options.sastbx_method                               = 0;
+   saxs_options.saxs_iq_sastbx                              = false;
+   saxs_options.saxs_iq_native_sh                           = false;
+   saxs_options.sans_iq_native_sh                           = false;
 
-   misc.export_msroll                              = false;
+   saxs_options.alt_sh1                                     = false;
+   saxs_options.alt_sh2                                     = false;
 
-   saxs_options.cs_qRgmax                          = 1e0;
-   saxs_options.cs_qstart                          = saxs_options.qstart * saxs_options.qstart;
-   saxs_options.cs_qend                            = saxs_options.qend   * saxs_options.qend;
+   grid.create_nmr_bead_pdb                                 = false;
 
-   saxs_options.conc                               = 1e0;
-   saxs_options.psv                                = 7.2e-1;
-   saxs_options.use_cs_psv                         = false;
-   saxs_options.cs_psv                             = 0e0;
-   saxs_options.I0_exp                             = 5.4e-5;
-   saxs_options.I0_theo                            = 1.633e-2;
-   saxs_options.diffusion_len                      = 2.82e-13;
-   saxs_options.nucleon_mass                       = 1.674e-24;
+   batch.compute_iq_only_avg                                = false;
 
-   saxs_options.guinier_outlier_reject             = false;
-   saxs_options.guinier_outlier_reject_dist        = 2e0;
-   saxs_options.guinier_use_sd                     = false;
-   saxs_options.guinier_use_standards              = false;
+   asa.vvv                                                  = false;
+   asa.vvv_probe_radius                                     = 1.4f;
+   asa.vvv_grid_dR                                          = 0.5f;
 
-   saxs_options.cryson_sh_max_harmonics            = 15;
-   saxs_options.cryson_sh_fibonacci_grid_order     = 17;
-   saxs_options.cryson_hydration_shell_contrast    = 
+   misc.export_msroll                                       = false;
+   misc.parallel_grpy                                       = false;
+   misc.auto_calc_hydro_method                              = AUTO_CALC_HYDRO_ZENO;
+
+   saxs_options.cs_qRgmax                                   = 1e0;
+   saxs_options.cs_qstart                                   = saxs_options.qstart * saxs_options.qstart;
+   saxs_options.cs_qend                                     = saxs_options.qend   * saxs_options.qend;
+
+   saxs_options.conc                                        = 1e0;
+   saxs_options.psv                                         = 7.2e-1;
+   saxs_options.use_cs_psv                                  = false;
+   saxs_options.cs_psv                                      = 0e0;
+   saxs_options.I0_exp                                      = 5.4e-5;
+   saxs_options.I0_theo                                     = 1.633e-2;
+   saxs_options.diffusion_len                               = 2.82e-13;
+   saxs_options.nucleon_mass                                = 1.6606e-24; // update 20 jan 2024 from 1.674e-24;
+
+   saxs_options.guinier_outlier_reject                      = false;
+   saxs_options.guinier_outlier_reject_dist                 = 2e0;
+   saxs_options.guinier_use_sd                              = false;
+   saxs_options.guinier_use_standards                       = false;
+
+   saxs_options.cryson_sh_max_harmonics                     = 15;
+   saxs_options.cryson_sh_fibonacci_grid_order              = 17;
+   saxs_options.cryson_hydration_shell_contrast             = 
       saxs_options.d2o_conc * saxs_options.d2o_scat_len_dens +
       ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
-   saxs_options.cryson_manual_hs                   = false;
+   saxs_options.cryson_manual_hs                            = false;
 
-   advanced_config.temp_dir_threshold_mb           = 50;
+   advanced_config.temp_dir_threshold_mb                    = 50;
 
-   gparams                                         .clear( );
-   gparams[ "guinier_auto_fit" ]                   = "1";
-   gparams[ "perdeuteration" ]                     = "0";
-   gparams[ "guinier_qRtmax" ]                     = "1";
-   gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
+   gparams                                                  .clear( );
+   gparams[ "guinier_auto_fit" ]                            = "1";
+   gparams[ "perdeuteration" ]                              = "0";
+   gparams[ "guinier_qRtmax" ]                              = "1";
+   gparams[ "guinier_electron_nucleon_ratio" ]              = "1.87e0";
 
-   gparams[ "guinier_mwt_k" ]                      = "1";
-   gparams[ "guinier_mwt_c" ]                      = "-2.095";
-   gparams[ "guinier_mwt_qmax" ]                   = "0.2";
+   gparams[ "guinier_mwt_k" ]                               = "1";
+   gparams[ "guinier_mwt_c" ]                               = "-2.095";
+   gparams[ "guinier_mwt_qmax" ]                            = "0.2";
 
-   gparams[ "hplc_bl_linear"             ]         = "false";
-   gparams[ "hplc_bl_integral"           ]         = "true";
-   gparams[ "hplc_bl_save"               ]         = "false";
-   gparams[ "hplc_bl_smooth"             ]         = "0";
-   gparams[ "hplc_bl_reps"               ]         = "5";
-   gparams[ "hplc_zi_window"             ]         = "25";
-   gparams[ "hplc_discard_it_sd_mult"    ]         = "2";
-   gparams[ "hplc_cb_discard_it_sd_mult" ]         = "true";
-   gparams[ "hplc_dist_max"              ]         = "50.0";
-   gparams[ "hplc_cormap_maxq"           ]         = "0.05";
-   gparams[ "hplc_cormap_alpha"          ]         = "0.01";
-   gparams[ "save_csv_on_load_pdb"       ]         = "false";
-   gparams[ "hplc_cb_makeiq_cutmax_pct"  ]         = "true";
-   gparams[ "hplc_makeiq_cutmax_pct"     ]         = "1";
-   gparams[ "hplc_cb_makeiq_avg_peaks"   ]         = "false";
-   gparams[ "hplc_makeiq_avg_peaks"      ]         = "5";
-   gparams[ "zeno_repeats"               ]         = "1";
-   gparams[ "zeno_max_cap"               ]         = "false";
-   gparams[ "zeno_max_cap_pct"           ]         = "0.5";
+   gparams[ "hplc_bl_linear"             ]                  = "false";
+   gparams[ "hplc_bl_integral"           ]                  = "true";
+   gparams[ "hplc_bl_save"               ]                  = "false";
+   gparams[ "hplc_bl_smooth"             ]                  = "0";
+   gparams[ "hplc_bl_reps"               ]                  = "5";
+   gparams[ "hplc_zi_window"             ]                  = "25";
+   gparams[ "hplc_discard_it_sd_mult"    ]                  = "2";
+   gparams[ "hplc_cb_discard_it_sd_mult" ]                  = "true";
+   gparams[ "hplc_dist_max"              ]                  = "50.0";
+   gparams[ "hplc_cormap_maxq"           ]                  = "0.05";
+   gparams[ "hplc_cormap_alpha"          ]                  = "0.01";
+   gparams[ "save_csv_on_load_pdb"       ]                  = "false";
+   gparams[ "hplc_cb_makeiq_cutmax_pct"  ]                  = "true";
+   gparams[ "hplc_makeiq_cutmax_pct"     ]                  = "1";
+   gparams[ "hplc_cb_makeiq_avg_peaks"   ]                  = "false";
+   gparams[ "hplc_makeiq_avg_peaks"      ]                  = "5";
+   gparams[ "zeno_repeats"               ]                  = "1";
+   gparams[ "zeno_max_cap"               ]                  = "false";
+   gparams[ "zeno_max_cap_pct"           ]                  = "0.5";
 
-   gparams[ "covolume"                   ]         = "12.4";
-   gparams[ "use_pH"                     ]         = "true";
-   gparams[ "thresh_SS"                  ]         = "2.5";
-   gparams[ "thresh_carb_O"              ]         = "2";
-   gparams[ "thresh_carb_N"              ]         = "2";
+   gparams[ "covolume"                   ]                  = "12.4";
+   gparams[ "use_pH"                     ]                  = "true";
+   gparams[ "thresh_SS"                  ]                  = "2.5";
+   gparams[ "thresh_carb_O"              ]                  = "2";
+   gparams[ "thresh_carb_N"              ]                  = "2";
 
-   gparams[ "vdw_inflate"                ]         = "false";
-   gparams[ "vdw_inflate_mult"           ]         = "1";
+   gparams[ "vdw_inflate"                ]                  = "false";
+   gparams[ "vdw_inflate_mult"           ]                  = "1";
 
+   save_params_force_results_name( save_params );
 }
 
 void US_Hydrodyn::set_default()
@@ -3370,6 +3407,8 @@ void US_Hydrodyn::set_default()
    }
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
+
+   save_params_force_results_name( save_params );
 
    default_sidechain_overlap = sidechain_overlap;
    default_mainchain_overlap = mainchain_overlap;
@@ -4141,9 +4180,20 @@ void US_Hydrodyn::display_default_differences()
       editor_msg( "dark green", "\nAll options set to default values\n");
    }
    le_bead_model_suffix->setText(
-                                 setSuffix ? (getExtendedSuffix(true, true) + " / " +
-                                              getExtendedSuffix(true, false) + " / " + 
-                                              getExtendedSuffix(true, true, true)) : "");
+                                 setSuffix
+                                 ? (
+                                    "<center>"
+                                    + getExtendedSuffix(true, true)
+                                    + " / "
+                                    + getExtendedSuffix(true, false)
+                                    + "</center>"
+                                    + "<center>"
+                                    + getExtendedSuffix(true, true, true)
+                                    + " / "
+                                    + getExtendedSuffix(true, true, true, true ) 
+                                    + "</center>"
+                                    )
+                                 : "");
 }
 
 void US_Hydrodyn::config()
@@ -4334,4 +4384,22 @@ void US_Hydrodyn::config()
       //    run_us_admin();
       // }
    }
+}
+
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn::save_params_force_results_name( save_info & save ) {
+   QStringList qsl;
+   for ( auto field : save.field ) {
+      qsl << field;
+   }
+
+   US_Vector::printvector( "save_info field", save.field );
+
+   if ( qsl.filter( "results.name" ).size() ) {
+      TSO << __func__ << ": found results.name, not inserted\n";
+      return;
+   }
+
+   save.field.insert( save.field.begin(), "results.name" );
 }

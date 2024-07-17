@@ -7178,6 +7178,8 @@ bool US_Saxs_Util::linear_interpolate_iq_curve(
    return true;
 }
 
+// inputs x1, y1, x2, output y2
+
 bool US_Saxs_Util::linear_interpolate( 
                                       vector < double > &x1,
                                       vector < double > &y1, 

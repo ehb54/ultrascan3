@@ -10,6 +10,9 @@
 
 #include "../include/us_hydrodyn.h"
 #include "../include/us_vvv.h"
+#include "../include/us_unicode.h"
+
+#define TSO QTextStream(stdout)
 
 #if defined(Q_OS_WIN)
 // hmm. unicode difference for Windows between QWidgets and QTextStream?
@@ -87,7 +90,6 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
 }
 
 void US_Hydrodyn::read_residue_file() {
-
    QString str1, str2;
    unsigned int numatoms, numbeads, /* i, */ j;
    // unsigned int positioner;
@@ -682,6 +684,8 @@ void US_Hydrodyn::read_residue_file() {
    // for ( int i = 0; i < (int) residue_list.size(); ++i ) {
    //    QTextStream( stdout ) << ( i + 1 ) << " " << residue_list[ i ].name << " " << residue_list[ i ].unique_name << " " << residue_list[ i ].comment << Qt::endl;
    // }
+   compute_residues_with_atomic_vs_bead_hydration_differences();
+   QTextStream(stdout) << list_residues_with_atomic_vs_bead_hydration_differences();
 }
 
 // #define DEBUG_VBAR
@@ -930,6 +934,75 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
 #endif
 }
 
+bool US_Hydrodyn::residue_atomic_vs_bead_hydration_differences( const struct residue & r ) {
+   // for each bead
+
+   // TSO << "residue_atomic_vs_bead_hydration_differences() : name " << r.name << "\n";
+
+   // is there any atomic hydration? if so, then bead hydration should match
+
+   for ( auto & a : r.r_atom ) {
+      if ( a.ionization_index
+           || a.hydration
+           || a.hydration2
+           ) {
+         return false;
+      }
+      
+   }
+
+   // no atomic hydration, any bead hydration?
+   for ( auto & b : r.r_bead ) {
+      if ( b.hydration ) {
+         return true;
+      }
+   }
+
+   return false;
+}
+   
+void US_Hydrodyn::compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl ) {
+   residues_with_atomic_vs_bead_hydration_differences.clear();
+   
+   const vector < struct residue > *use_rl = &rl;
+   
+   if ( !use_rl->size() ) {
+      use_rl = &residue_list;
+   }
+   
+   for ( auto &r : *use_rl ) {
+      if ( residue_atomic_vs_bead_hydration_differences( r ) ) {
+         // {
+         //    struct residue r_tmp = r;
+         //    info_residue( r_tmp, "no atomic hydration but has bead hydration" );
+         // }
+         residues_with_atomic_vs_bead_hydration_differences.insert( r.name );
+      }
+   }
+}
+
+QString US_Hydrodyn::list_residues_with_atomic_vs_bead_hydration_differences() {
+   QStringList qsl;
+
+   for ( auto &n : residues_with_atomic_vs_bead_hydration_differences ) {
+      qsl << n;
+   }
+   return qsl.join( "\n" ) + "\n";
+}
+
+bool US_Hydrodyn::model_vector_has_hydration_differences( const vector < struct PDB_model > & m ) {
+   for ( auto &model : m ) {
+      for ( auto &chain : model.molecule ) {
+         for ( auto &a : chain.atom ) {
+            if ( residues_with_atomic_vs_bead_hydration_differences.count( a.resName ) ) {
+               return true;
+            }
+         }
+      }
+   }
+   return false;
+}
+
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
 {
    double rmw = 0.0;
@@ -1163,6 +1236,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    skip_waters.insert( "HOH" );
    skip_waters.insert( "DOD" );
    skip_waters.insert( "SOL" );
+   skip_waters.insert( "CIM" );
 
    QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", Qt::CaseInsensitive );
    if ( f.open( QIODevice::ReadOnly ) )
@@ -1275,7 +1349,6 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             }
             if (temp_model.molecule.size() ) {
-               temp_model.molecule.push_back(temp_chain); // add the last chain of this model
                SS_apply( temp_model, QString( "%1_model_%2").arg( project ).arg( temp_model.model_id ) );
                editor_msg( "black", "\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg( temp_model.model_id ) + ":");
@@ -1360,7 +1433,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                                     .arg( it->first )
                                     .arg( it->second )
                                     .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
-                                    .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                                    .arg( (double)(resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0), 0, 'f', 0 )
                                     );
                      }
                      if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
@@ -1411,6 +1484,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                str1.mid(12,1) != "H" &&
                str1.mid(13,1) != "H" &&
                !str1.mid(12,5).trimmed().startsWith( "H" ) &&
+               !str1.mid(12,5).trimmed().contains( QRegularExpression( "^\\dH" ) ) &&
                !skip_waters.count( str1.mid(17,3).trimmed() )
                )
             {                  
@@ -1507,7 +1581,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
       // the residue list is wrong if there are unknown residues
 
       map < QString, int > resname_counts_nonwat;
-      map < QString, int > resname_theo_wat;
+      map < QString, double > resname_theo_wat;
       map < QString, int > resname_counts_wat;
       int resname_counts_nonwat_total = 0;
       int resname_counts_wat_total    = 0;
@@ -1563,6 +1637,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             }
          }
       }
+      qDebug() << "tot_theo_wat " << tot_theo_wat;
+      
       // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
       // {
       //   str += temp_model.residue[m].name + " ";
@@ -1586,7 +1662,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                            .arg( it->first )
                            .arg( it->second )
                            .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
-                           .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                           .arg( (double)(resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0), 0, 'f', 0 )
                            );
             }
             if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
@@ -1640,6 +1716,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
 
    // info_model_vector( QString( "source: model_vector" ), model_vector, { "GLU", "HIS", "CGU", "ALA" } );
    // info_model_vector_mw( QString( "read_pdb() : model_vector" ), model_vector, true );
+   QTextStream(stdout) << "end of read_pdb()\n";
+   info_residue_protons_electrons_at_pH( 7, model_vector[0] );
 
    model_vector_as_loaded = model_vector;
    if ( advanced_config.debug_2 )
@@ -1648,6 +1726,9 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    }
    // QTextStream( stdout ) << list_chainIDs(model_vector);
    // QTextStream( stdout ) << list_chainIDs(model_vector_as_loaded);
+   if ( model_vector_has_hydration_differences( model_vector ) ) {
+      editor_msg( "darkred", us_tr( "WARNING: PDB contains residues with bead hydration without atomic hydration,\nvdW models should not be used a they rely on atomic hydration\n\n" ) );
+   }
    return 0;
 }
 
@@ -2064,17 +2145,18 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs += 
       QString(
               us_tr(
-                    "SAXS excluded volume (anhydrous) : %1 [A^3]\n"
+                    "SAXS excluded volume (anhydrous) : %1 [%2^3]\n"
                     )
               )
       .arg( model->volume )
+      .arg( UNICODE_ANGSTROM )
       ;
    
    if ( hydro.temperature != 20 ) {
       qs +=
          QString(
                  us_tr(
-                       "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
+                       "Anh. Molecular vol. (from vbar)  : %1 [" + UNICODE_ANGSTROM_QS + "^3] @ %2%3C\n"
                        )
                  )
          .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
@@ -2086,9 +2168,9 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
-                    "Hyd. Molecular vol. (from vbar)  : %4 [A^3] @ %5%6C\n"
-                    "Radius of gyration               : %7 [A]\n"
+                    "Anh. Molecular vol. (from vbar)  : %1 [%12^3] @ %2%3C\n"
+                    "Hyd. Molecular vol. (from vbar)  : %4 [%13^3] @ %5%6C\n"
+                    "Radius of gyration               : %7 [%14]\n"
                     "Number of electrons              : %8\n"
                     "Number of protons                : %9\n"
                     "Net charge                       : %10\n"
@@ -2106,16 +2188,20 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( model->protons, 0, 'f', 1 )
       .arg( model->protons - model->num_elect, 0, 'f', 1 )
       .arg( model->isoelectric_point, 0, 'f', 2 )
+      .arg( UNICODE_ANGSTROM )
+      .arg( UNICODE_ANGSTROM )
+      .arg( UNICODE_ANGSTROM )
       ;
 
    if ( model->volume ) {
       qs +=
          QString(
                  us_tr(
-                       "Average electron density         : %1 [A^-3]\n"
+                       "Average electron density         : %1 [%2^-3]\n"
                        )
                  )
          .arg( model->num_elect / model->volume, 0, 'f', 3 )
+         .arg( UNICODE_ANGSTROM )
       ;
    }
 
@@ -2528,6 +2614,8 @@ void US_Hydrodyn::calc_mw()
    // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
    // info_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_residue_protons_electrons_at_pH( le_pH->text().toDouble(),  model_vector[ 0 ] );
+   QTextStream(stdout) << "end of calc_mw()\n";
+   info_residue_protons_electrons_at_pH( 7, model_vector[0] );
 }
 
 void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {
@@ -3174,7 +3262,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 
    // tbd. qs += vbar_msg( model->vbar );
 
-   header << "SAXS excluded volume (anhydrous) [A^3]";
+   header << "SAXS excluded volume (anhydrous) [" << UNICODE_ANGSTROM << "^3]";
    data   << QString( "%1" ).arg( model->volume );
    
    
@@ -3192,9 +3280,9 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
    // }
 
    header
-      << "Anh. Molecular vol. (from vbar) [A^3]"
-      << "Hyd. Molecular vol. (from vbar) [A^3]"
-      << "Radius of gyration [A]"
+      << "Anh. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
+      << "Hyd. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
+      << "Radius of gyration [" << UNICODE_ANGSTROM << "]"
       << "Number of electrons"
       << "Number of protons"
       << "Net charge"
@@ -3214,7 +3302,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
       ;      
       
    if ( model->volume ) {
-      header << "Average electron density [A^-3]";
+      header << "Average electron density [" << UNICODE_ANGSTROM << "^-3]";
       data   << QString( "%1" ).arg( model->num_elect / model->volume, 0, 'f', 3 );
    }
 
@@ -3225,3 +3313,51 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
    
    return US_File_Util::putcontents( filename, qs, error );
 }   
+
+
+void US_Hydrodyn::select_atom_file(const QString &filename)
+{
+   QString str1;
+   QFileInfo fi(filename);
+   // lbl_atom_table->setText(fi.baseName() + "." + fi.completeSuffix());
+   atom_list.clear( );
+   atom_map.clear( );
+   QFile f(filename);
+   struct atom current_atom;
+   if (f.open(QIODevice::ReadOnly|QIODevice::Text))
+   {
+      QTextStream ts(&f);
+      while (!ts.atEnd())
+      {
+         ts >> current_atom.name;
+         ts >> current_atom.hybrid.name;
+         ts >> current_atom.hybrid.mw;
+         ts >> current_atom.hybrid.radius;
+         ts >> current_atom.saxs_excl_vol;
+         str1 = ts.readLine(); // read rest of line
+         if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
+         {
+            atom_list.push_back(current_atom);
+            atom_map[current_atom.name + "~" + current_atom.hybrid.name] = current_atom;
+         }
+      }
+      f.close();
+   }
+   // add generic ABB
+   {
+      atom abb_atom;
+      abb_atom.name                    = "ABB";
+      abb_atom.hybrid.name             = "ABB";
+      abb_atom.hybrid.mw               = misc.avg_mass;
+      abb_atom.hybrid.ionized_mw_delta = 0;
+      abb_atom.hybrid.radius           = misc.avg_radius;
+      abb_atom.hybrid.scat_len         = 0;
+      abb_atom.hybrid.saxs_name        = "ABB";
+      abb_atom.hybrid.num_elect        = misc.avg_num_elect;
+      abb_atom.hybrid.protons          = misc.avg_protons;
+      abb_atom.saxs_excl_vol           = (4/3)*M_PI*pow(misc.avg_radius, 3 );
+
+      atom_list.push_back(abb_atom);
+      atom_map[abb_atom.name + "~" + abb_atom.hybrid.name] = abb_atom;
+   }   
+}

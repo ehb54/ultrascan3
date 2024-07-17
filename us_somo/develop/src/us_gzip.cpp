@@ -201,7 +201,7 @@ using namespace gzip_data;
 
 US_Gzip::US_Gzip()
 {
-  static_dtree[ 0 ].Len = 0;
+  static_dtree[ 0 ].GZLen = 0;
 }
 
 int US_Gzip::gzip( const QString& filename )
@@ -2260,7 +2260,7 @@ void US_Gzip::ct_init ( void )
 
     compressed_len = 0L;
 
-    if ( static_dtree[ 0 ].Len != 0 ) return; /* ct_init already called */
+    if ( static_dtree[ 0 ].GZLen != 0 ) return; /* ct_init already called */
 
     /* Initialize the mapping length (0..255) -> length code (0..28) */
     length = 0;
@@ -2304,10 +2304,10 @@ void US_Gzip::ct_init ( void )
     for ( bits = 0; bits <= MAX_BITS; bits++ ) bl_count[ bits ] = 0;
     
     n = 0;
-    while ( n <= 143 ) static_ltree[ n++ ].Len = 8, bl_count[ 8 ]++;
-    while ( n <= 255 ) static_ltree[ n++ ].Len = 9, bl_count[ 9 ]++;
-    while ( n <= 279 ) static_ltree[ n++ ].Len = 7, bl_count[ 7 ]++;
-    while ( n <= 287 ) static_ltree[ n++ ].Len = 8, bl_count[ 8 ]++;
+    while ( n <= 143 ) static_ltree[ n++ ].GZLen = 8, bl_count[ 8 ]++;
+    while ( n <= 255 ) static_ltree[ n++ ].GZLen = 9, bl_count[ 9 ]++;
+    while ( n <= 279 ) static_ltree[ n++ ].GZLen = 7, bl_count[ 7 ]++;
+    while ( n <= 287 ) static_ltree[ n++ ].GZLen = 8, bl_count[ 8 ]++;
     
     /* Codes 286 and 287 do not exist, but we must include them in the
      * tree construction to get a canonical Huffman tree (longest code
@@ -2318,7 +2318,7 @@ void US_Gzip::ct_init ( void )
     /* The static distance tree is trivial: */
     for ( n = 0; n < D_CODES; n++ ) 
     {
-        static_dtree[ n ].Len = 5;
+        static_dtree[ n ].GZLen = 5;
         static_dtree[ n ].Code = bi_reverse( n, 5 );
     }
 
@@ -2519,7 +2519,7 @@ void US_Gzip::init_block( void )
     flags = 0; flag_bit = 1;
 }
 
-#define send_code(c, tree) send_bits( tree[ c ].Code, tree[ c ].Len )
+#define send_code(c, tree) send_bits( tree[ c ].Code, tree[ c ].GZLen )
    /* Send a code of the given tree. c and tree must not have side effects */
 
 #define l_buf inbuf
@@ -2722,7 +2722,7 @@ void US_Gzip::build_tree( tree_desc* desc )
     } 
     else 
     {
-      tree[ n ].Len = 0;
+      tree[ n ].GZLen = 0;
     }
   }
 
@@ -2738,7 +2738,7 @@ void US_Gzip::build_tree( tree_desc* desc )
     tree [ new1 ].Freq = 1;
     depth[ new1 ]      = 0;
     opt_len--; 
-    if ( stree ) static_len -= stree[ new1 ].Len;
+    if ( stree ) static_len -= stree[ new1 ].GZLen;
       /* new is 0 or 1 so it does not have extra bits */
   }
 
@@ -2807,7 +2807,7 @@ int US_Gzip::build_bl_tree( void )
 
   for ( max_blindex = BL_CODES - 1; max_blindex >= 3; max_blindex-- ) 
   {
-    if ( bl_tree[ bl_order[ max_blindex ] ].Len != 0 ) break;
+    if ( bl_tree[ bl_order[ max_blindex ] ].GZLen != 0 ) break;
   }
 
   /* Update opt_len to include the bit length tree and counts */
@@ -2847,12 +2847,12 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
   /* In a first pass, compute the optimal bit lengths (which may
    * overflow in the case of the bit length tree). */
 
-  tree[ heap[ heap_max ] ].Len = 0; /* root of the heap */
+  tree[ heap[ heap_max ] ].GZLen = 0; /* root of the heap */
 
   for ( h = heap_max + 1; h < HEAP_SIZE; h++ ) 
   {
     n    = heap[ h ];
-    bits = tree[ tree[ n ].Dad ].Len + 1;
+    bits = tree[ tree[ n ].Dad ].GZLen + 1;
     
     if ( bits > max_length) 
     {
@@ -2860,7 +2860,7 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
       overflow++;
     }
     
-    tree[ n ].Len = (ush) bits;
+    tree[ n ].GZLen = (ush) bits;
     /* We overwrite tree[ n ].Dad which is no longer needed */
 
     if ( n > max_code ) continue; /* not a leaf node */
@@ -2873,7 +2873,7 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
     f        = tree[ n ].Freq;
     opt_len += (ulg) f * ( bits + xbits );
     
-    if ( stree ) static_len += (ulg) f * ( stree[ n ].Len + xbits );
+    if ( stree ) static_len += (ulg) f * ( stree[ n ].GZLen + xbits );
   }
 
   if ( overflow == 0) return;
@@ -2911,10 +2911,10 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
 
       if ( m > max_code ) continue;
       
-      if ( tree[ m ].Len != (unsigned) bits ) 
+      if ( tree[ m ].GZLen != (unsigned) bits ) 
       {
-        opt_len      += ( (long) bits - (long) tree[ m ].Len ) * (long) tree[ m ].Freq;
-        tree[ m ].Len = (ush) bits;
+        opt_len      += ( (long) bits - (long) tree[ m ].GZLen ) * (long) tree[ m ].Freq;
+        tree[ m ].GZLen = (ush) bits;
       }
       n--;
     }
@@ -2951,7 +2951,7 @@ void US_Gzip::gen_codes ( ct_data* tree, int max_code )
 
   for ( n = 0;  n <= max_code; n++ ) 
   {
-    int len = tree[ n ].Len;
+    int len = tree[ n ].GZLen;
 
     if ( len == 0 ) continue;
     
@@ -3015,7 +3015,7 @@ void US_Gzip::send_all_trees( int lcodes, int dcodes, int blcodes )
   
   for ( rank = 0; rank < blcodes; rank++ ) 
   {
-    send_bits( bl_tree[ bl_order[ rank ] ].Len, 3 );
+    send_bits( bl_tree[ bl_order[ rank ] ].GZLen, 3 );
   }
 
   send_tree( (ct_data*) dyn_ltree, lcodes - 1 ); /* send the literal tree */
@@ -3044,7 +3044,7 @@ void US_Gzip::scan_tree( ct_data* tree, int max_code )
   int n;                       /* iterates over all tree elements */
   int prevlen   = -1;          /* last emitted length */
   int curlen;                  /* length of current code */
-  int nextlen   = tree[0].Len; /* length of next code */
+  int nextlen   = tree[0].GZLen; /* length of next code */
   int count     = 0;           /* repeat count of the current code */
   int max_count = 7;           /* max repeat count */
   int min_count = 4;           /* min repeat count */
@@ -3055,12 +3055,12 @@ void US_Gzip::scan_tree( ct_data* tree, int max_code )
     min_count = 3;
   }
 
-  tree[ max_code + 1 ].Len = (ush) 0xffff; /* guard */
+  tree[ max_code + 1 ].GZLen = (ush) 0xffff; /* guard */
 
   for ( n = 0; n <= max_code; n++ ) 
   {
     curlen  = nextlen; 
-    nextlen = tree[ n + 1 ].Len;
+    nextlen = tree[ n + 1 ].GZLen;
     
     if ( ++count < max_count && curlen == nextlen ) 
     {
@@ -3116,12 +3116,12 @@ void US_Gzip::send_tree( ct_data* tree, int max_code )
   int n;                       /* iterates over all tree elements */
   int prevlen   = -1;          /* last emitted length */
   int curlen;                  /* length of current code */
-  int nextlen   = tree[0].Len; /* length of next code */
+  int nextlen   = tree[0].GZLen; /* length of next code */
   int count     = 0;           /* repeat count of the current code */
   int max_count = 7;           /* max repeat count */
   int min_count = 4;           /* min repeat count */
 
-  /* tree[max_code+1].Len = -1; */  /* guard already set */
+  /* tree[max_code+1].GZLen = -1; */  /* guard already set */
 
   if ( nextlen == 0 )
   {
@@ -3132,7 +3132,7 @@ void US_Gzip::send_tree( ct_data* tree, int max_code )
   for ( n = 0; n <= max_code; n++ ) 
   {
     curlen  = nextlen; 
-    nextlen = tree[ n + 1 ].Len;
+    nextlen = tree[ n + 1 ].GZLen;
 
     if ( ++count < max_count && curlen == nextlen ) 
     {

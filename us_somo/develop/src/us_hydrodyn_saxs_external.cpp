@@ -478,6 +478,63 @@ void US_Hydrodyn_Saxs::ift_readFromStderr()
    //  qApp->processEvents();
 }
    
+bool US_Hydrodyn_Saxs::last_pr_rebin_save(
+                                          const QString & header
+                                          ,const QString & rxstr
+                                          ,QStringList & created_files
+                                          ) {
+   vector < double > rebin_r;
+   // new bin
+   for ( double x = 0; x <= plotted_r.back().back(); x += our_saxs_options->bin_size ) {
+      rebin_r.push_back( x );
+   }
+   vector < double > rebin_pr;
+   vector < double > rebin_sd;
+
+   interpolate( plotted_r.back(), rebin_r, plotted_pr.back(), rebin_pr );
+   interpolate( plotted_r.back(), rebin_r, plotted_pr_error.back(), rebin_sd );
+               
+   // US_Vector::printvector3( "rebin'd r,pr,sd", rebin_r, rebin_pr, rebin_sd );
+
+   QString dest_rebin =
+      USglobal->config_list.root_dir
+      + "/somo/saxs/"
+      + QString( "%1" )
+      .arg( ift_last_processed ).replace( QRegExp( rxstr )
+                                          , QString("_bin%1_%2ift.dat" )
+                                          .arg( our_saxs_options->bin_size )
+                                          .arg( cb_normalize->isChecked() ? "normed_" : "" )
+                                          )
+      ;
+
+   qDebug() << "dest_rebin: " << dest_rebin;
+
+   QStringList rebin_pr_contents;
+   for ( int i = 0; i < (int)rebin_r.size(); ++i ) {
+      rebin_pr_contents << QString( "%1 %2 %3" )
+         .arg( rebin_r[i], 0, 'g', 9 )
+         .arg( rebin_pr[i], 0, 'g', 9 )
+         .arg( rebin_sd[i], 0, 'g', 9 )
+         ;
+   }
+
+   QString rebin_pr_out = header + rebin_pr_contents.join( "\n" ) + "\n";
+   if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+      dest_rebin = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest_rebin, 0, this );
+   }
+   {
+      QString error;
+      if ( !US_File_Util::putcontents( dest_rebin, rebin_pr_out, error ) ) {
+         editor_msg( "red", error );
+         return false;
+      } else {
+         created_files << dest_rebin;
+      }
+   }
+   return true;
+}
+
+
 void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
 {
    //   for ( int i = 0; i < 10000; i++ )
@@ -651,7 +708,9 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          } else {
             created_files << dest;
             if ( prcontents_normed.isEmpty() || !cb_normalize->isChecked() ) {
+               cb_normalize->setChecked( false );
                load_pr( false, dest, mw == -1e0 );
+               last_pr_rebin_save( header, rxstr, created_files );
             }
          }            
          if ( !prcontents_normed.isEmpty() ) {
@@ -669,6 +728,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
                } else {
                   load_pr( false, dest, mw == -1e0 );
                }
+               last_pr_rebin_save( header, rxstr, created_files );
             }
          }
       } else {
@@ -678,6 +738,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          } else {
             created_files << dest;
             load_pr( false, dest, mw == -1e0 );
+            last_pr_rebin_save( header, rxstr, created_files );
          }
       }
    }
@@ -944,7 +1005,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       "bin"
 #endif
       + SLASH
-      + "crysol" 
+      + ( our_saxs_options->crysol_version_3 ? "crysol3" : "crysol" )
 #if defined(WIN32)
       + ".exe"
 #endif      
@@ -1353,59 +1414,52 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    } else {
       crysol = new QProcess( this );
       crysol->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-      crysol->addArgument( prog );
-
-      crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
-
-      crysol->addArgument( "/sm" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
-
-      crysol->addArgument( "/ns" );
-      crysol->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-
-      crysol->addArgument( "/dns" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->water_e_density ) );
-
-      crysol->addArgument( "/dro" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
-
-      crysol->addArgument( "/lm" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
-      
-      crysol->addArgument( "/fb" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
-
-      if ( our_saxs_options->crysol_explicit_hydrogens )
       {
-         crysol->addArgument( "/eh" );
-      }
-#else
-      {
-         args
-            << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb )
+         if ( our_saxs_options->crysol_version_3 ) {
+            if ( our_saxs_options->crysol_water_dummy_beads ) {
+               args
+                  << "--shell=water"
+                  ;
+            }
+            args
+               << QString("--smax=%1").arg( our_saxs_options->end_q )
+               << QString("--ns=%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
+               << QString("--dns=%1").arg( our_saxs_options->water_e_density )
+               << QString("--dro=%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
+               << QString("--lm=%1").arg( our_saxs_options->sh_max_harmonics )
+               << QString("--fb=%1").arg( our_saxs_options->sh_fibonacci_grid_order )
+               ;
 
-            << "/sm"
-            <<  QString("%1").arg( our_saxs_options->end_q )
+            if ( our_saxs_options->crysol_explicit_hydrogens ) {
+               args << "--explicit-hydrogens";
+            }
+            args << QFileInfo( use_pdb ).fileName();
+         } else {
+            args
+               << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb )
+
+               << "/sm"
+               <<  QString("%1").arg( our_saxs_options->end_q )
          
-            << "/ns"
-            << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
+               << "/ns"
+               << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
 
-            << "/dns"
-            << QString("%1").arg( our_saxs_options->water_e_density )
+               << "/dns"
+               << QString("%1").arg( our_saxs_options->water_e_density )
 
-            << "/dro"
-            << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
+               << "/dro"
+               << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
 
-            << "/lm"
-            << QString("%1").arg( our_saxs_options->sh_max_harmonics )
+               << "/lm"
+               << QString("%1").arg( our_saxs_options->sh_max_harmonics )
       
-            << "/fb"
-            << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order )
-            ;
+               << "/fb"
+               << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order )
+               ;
 
-         if ( our_saxs_options->crysol_explicit_hydrogens ) {
-            args << "/eh";
+            if ( our_saxs_options->crysol_explicit_hydrogens ) {
+               args << "/eh";
+            }
          }
 
          if ( U_EXPT &&
@@ -1429,7 +1483,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             }
          }
       }
-#endif
    }
    connect( crysol, SIGNAL(readyReadStandardOutput()), this, SLOT(crysol_readFromStdout()) );
    connect( crysol, SIGNAL(readyReadStandardError()), this, SLOT(crysol_readFromStderr()) );
@@ -1672,7 +1725,12 @@ void US_Hydrodyn_Saxs::crysol_finishup()
       type = ".fit";
    }
 
-   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00" + type;
+   QString created_dat;
+   if ( our_saxs_options->crysol_version_3 ) {
+      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + type;
+   } else {
+      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + "00" + type;
+   }
 
    // us_qdebug( "created_dat: " + created_dat );
 

@@ -23,7 +23,7 @@ US_Hydrodyn_Hydro_Zeno::US_Hydrodyn_Hydro_Zeno(struct hydro_options *hydro,
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO  Hydrodynamic Calculation Zeno Options"));
-   this->setMinimumWidth(500);
+   this->setMinimumWidth(1000);
    setupGUI();
    update_enables();
    global_Xpos += 30;
@@ -153,12 +153,63 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness = new QLineEdit(  this );    le_zeno_surface_thickness->setObjectName( "Zeno_Skin_Thickness Line Edit" );
-   le_zeno_surface_thickness->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness));
+   le_zeno_surface_thickness->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness));
    le_zeno_surface_thickness->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness );
    le_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness(const QString &)));
+
+   cb_zeno_surface_thickness_from_rg = new QCheckBox( this );
+   cb_zeno_surface_thickness_from_rg->setText( us_tr( "Compute Skin Thickness from sigmoid fit of Rg-dependence:") );
+   cb_zeno_surface_thickness_from_rg->setEnabled( true );
+   cb_zeno_surface_thickness_from_rg->setChecked( (*hydro).zeno_surface_thickness_from_rg );
+   cb_zeno_surface_thickness_from_rg->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zeno_surface_thickness_from_rg->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_zeno_surface_thickness_from_rg );
+   connect( cb_zeno_surface_thickness_from_rg, SIGNAL( clicked() ), this, SLOT( set_zeno_surface_thickness_from_rg() ) );
+
+   lbl_zeno_surface_thickness_from_rg_a = new QLabel(us_tr("Skin Thickness from sigmoid fit of Rg-dep. coeff. a:"), this );
+   lbl_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_surface_thickness_from_rg_a->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_surface_thickness_from_rg_a );
+   lbl_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_surface_thickness_from_rg_a = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_a->setObjectName( "Zeno_Skin_Thickness_From_Rg_A Line Edit" );
+   le_zeno_surface_thickness_from_rg_a->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_a));
+   le_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignVCenter);
+   le_zeno_surface_thickness_from_rg_a->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_surface_thickness_from_rg_a );
+   le_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_surface_thickness_from_rg_a, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_a(const QString &)));
+
+   lbl_zeno_surface_thickness_from_rg_b = new QLabel(us_tr("Skin Thickness from sigmoid fit of Rg-dep. coeff. b:"), this );
+   lbl_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_surface_thickness_from_rg_b->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_surface_thickness_from_rg_b );
+   lbl_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_surface_thickness_from_rg_b = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_b->setObjectName( "Zeno_Skin_Thickness_From_Rg_B Line Edit" );
+   le_zeno_surface_thickness_from_rg_b->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_b));
+   le_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignVCenter);
+   le_zeno_surface_thickness_from_rg_b->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_surface_thickness_from_rg_b );
+   le_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_surface_thickness_from_rg_b, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_b(const QString &)));
+
+   lbl_zeno_surface_thickness_from_rg_c = new QLabel(us_tr("Skin Thickness from sigmoid fit of Rg-dep. coeff. c:"), this );
+   lbl_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_surface_thickness_from_rg_c->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_surface_thickness_from_rg_c );
+   lbl_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_surface_thickness_from_rg_c = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
+   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_c));
+   le_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignVCenter);
+   le_zeno_surface_thickness_from_rg_c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_surface_thickness_from_rg_c );
+   le_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_surface_thickness_from_rg_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_c(const QString &)));
 
    cb_zeno_cxx = new QCheckBox( this );
    cb_zeno_cxx->setText( us_tr( "Test experimental new Zeno version") );
@@ -227,6 +278,19 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
 
    background->addWidget( lbl_zeno_surface_thickness, j, 1 );
    background->addWidget( le_zeno_surface_thickness , j, 2 );
+   j++;
+
+   background->addWidget( cb_zeno_surface_thickness_from_rg, j, 0 );
+   background->addWidget( lbl_zeno_surface_thickness_from_rg_a, j, 1 );
+   background->addWidget( le_zeno_surface_thickness_from_rg_a , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_surface_thickness_from_rg_b, j, 1 );
+   background->addWidget( le_zeno_surface_thickness_from_rg_b , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_surface_thickness_from_rg_c, j, 1 );
+   background->addWidget( le_zeno_surface_thickness_from_rg_c , j, 2 );
    j++;
 
    background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
@@ -334,6 +398,30 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness(const QString &str)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Hydro_Zeno::set_zeno_surface_thickness_from_rg()
+{
+   (*hydro).zeno_surface_thickness_from_rg = cb_zeno_surface_thickness_from_rg->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness_from_rg_a(const QString &str)
+{
+   (*hydro).zeno_surface_thickness_from_rg_a = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness_from_rg_b(const QString &str)
+{
+   (*hydro).zeno_surface_thickness_from_rg_b = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness_from_rg_c(const QString &str)
+{
+   (*hydro).zeno_surface_thickness_from_rg_c = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Hydro_Zeno::update_zeno_repeats(const QString &str)
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_repeats" ] = QString( "%1" ).arg( str.toUInt() );
@@ -377,4 +465,9 @@ void US_Hydrodyn_Hydro_Zeno:: update_enables()
    le_zeno_max_cap       ->setEnabled( cb_zeno_max_cap ->isChecked() );
    le_zeno_surface_steps ->setEnabled( cb_zeno_surface ->isChecked() );
    le_zeno_interior_steps->setEnabled( cb_zeno_interior->isChecked() );
+
+   le_zeno_surface_thickness          ->setEnabled( !cb_zeno_surface_thickness_from_rg->isChecked() );
+   le_zeno_surface_thickness_from_rg_a->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
+   le_zeno_surface_thickness_from_rg_b->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
+   le_zeno_surface_thickness_from_rg_c->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
 }
