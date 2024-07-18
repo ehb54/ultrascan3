@@ -116,26 +116,26 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
       QVector<QVector<QString>> export_data;
       export_data.clear();
       // determine axis title
-      QString x_axis_title = plot.axisTitle( QwtPlot::xBottom ).text();
+      QString x_axis_title = plot->axisTitle( QwtPlot::xBottom ).text();
       if ( x_axis_title.isEmpty() )
       {
-         x_axis_title = plot.axisTitle( QwtPlot::xTop ).text();
+         x_axis_title = plot->axisTitle( QwtPlot::xTop ).text();
       }
       if ( x_axis_title.isEmpty() )
       {
          x_axis_title = QString("x");
       }
-      QString y_axis_title = plot.axisTitle( QwtPlot::yLeft ).text();
+      QString y_axis_title = plot->axisTitle( QwtPlot::yLeft ).text();
       if ( y_axis_title.isEmpty() )
       {
-         y_axis_title = plot.axisTitle( QwtPlot::yRight ).text();
+         y_axis_title = plot->axisTitle( QwtPlot::yRight ).text();
       }
       if ( y_axis_title.isEmpty() )
       {
          y_axis_title = QString("y");
       }
       int max_length = 0;
-      for ( QwtPlotCurve &item: plot.itemList(QwtPlotItem::Rtti_PlotCurve ) )
+      for ( QwtPlotCurve &item: plot->itemList(QwtPlotItem::Rtti_PlotCurve ) )
       {
          // create two Vectors for x and y respective
          QVector<QString> x_data;
