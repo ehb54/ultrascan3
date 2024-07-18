@@ -168,13 +168,14 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          }
       }
       // dump everything into a file
-      QFile myFile(ofname);
+      QFile myFile( filename );
       if ( !myFile.open( QIODevice::WriteOnly ) )
       {
-         qDebug() << "Could not write to file:" << ofname << "Error string:" << myFile.errorString();
+         qDebug() << "Could not write to file:" << filename << "Error string:" << myFile.errorString();
       }
       else
       {
+         QTextStream out(&myFile);
          for ( int ii = 0; ii < max_length; ii++ )
          {
             for ( int jj = 0; jj < export_data.size() - 1; jj++ )
