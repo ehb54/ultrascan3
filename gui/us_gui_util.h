@@ -13,6 +13,8 @@
 #define dataPlotClear(a) a->clear()
 #endif
 #include "qwt_plot.h"
+#include "qwt_plot_curve.h"
+#include "qwt_series_data.h"
 #include "us_extern.h"
 
 //! \brief General GUI utilities for UltraScan
