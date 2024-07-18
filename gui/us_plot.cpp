@@ -81,6 +81,13 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnZoom->setFont( buttonFont );
    connect( btnZoom, SIGNAL( toggled( bool ) ), SLOT( zoom( bool ) ) );
 
+   QToolButton* btnCSV = new QToolButton( toolBar );
+   btnCSV->setText( "CSV" );
+   btnCSV->setIcon( QIcon( QPixmap( print_xpm ) ) );
+   btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnCSV->setFont( buttonFont );
+   connect( btnCSV, SIGNAL( clicked() ), SLOT( csv() ) );
+
    QToolButton* btnPrint = new QToolButton( toolBar );
    btnPrint->setText( "Print" );
    btnPrint->setIcon( QIcon( QPixmap( print_xpm ) ) );
@@ -120,6 +127,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    connect( btnCMap,   SIGNAL( clicked() ), SLOT( colorMap() ) );
 
    toolBar->addWidget( btnZoom   );
+   toolBar->addWidget( btnCSV    );
    toolBar->addWidget( btnPrint  );
    toolBar->addWidget( btnSVG    );
    toolBar->addWidget( btnPNG    );
@@ -276,6 +284,24 @@ void US_Plot::zoom( bool on )
       delete zoomer;
       zoomer = NULL;
    }
+}
+
+void US_Plot::csv( void )
+{
+    QDir dir;
+    QString reportDir = US_Settings::reportDir();
+    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
+    QString fileName = QFileDialog::getSaveFileName( plot,
+                                                     tr( "Export File Name" ), reportDir,
+                                                     tr( "SVG Documents (*.svgz)" ) );
+
+    if ( ! fileName.isEmpty() )
+    {
+        if ( fileName.right( 5 ) != ".svgz" ) fileName += ".svgz";
+
+        US_GuiUtil::save_csv( fileName, plot );
+    }
 }
 
 void US_Plot::svg( void )

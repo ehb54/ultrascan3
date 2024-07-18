@@ -44,5 +44,12 @@ class US_GUI_EXTERN US_GuiUtil
       //! \returns A status flag:  0 if all-ok
       static int save_png( const QString&, const QwtPlot* );
 
+   //! \brief Save a plot to a CSV file
+   //!
+   //! \param filename Full path name of the file to produce
+   //! \param plot     A pointer to the plot to save
+   //! \returns A status flag:  0 if all-ok
+   static int save_csv( const QString&, const QwtPlot* );
+
 };
 #endif
