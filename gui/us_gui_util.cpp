@@ -135,7 +135,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          y_axis_title = QString("y");
       }
       int max_length = 0;
-      for ( QwtPlotCurve* item: plot->itemList(QwtPlotItem::Rtti_PlotCurve ) )
+      for ( QwtPlotItem* item: plot->itemList( QwtPlotItem::Rtti_PlotCurve ) )
       {
          // create two Vectors for x and y respective
          QVector<QString> x_data;
@@ -151,7 +151,14 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
             x_data << QString::number(point.x());
             y_data << QString::number(point.y());
          }
-         max_length = max(max_length, x_data.size(), y_data.size());
+         if ( max_length < x_data.size() )
+         {
+            max_length = x_data.size();
+         }
+         if ( max_length < y_data.size() )
+         {
+            max_length = y_data.size();
+         }
          export_data << x_data << y_data;
       }
       // iterate over all entries to ensure a proper csv format
