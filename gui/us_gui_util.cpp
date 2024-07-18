@@ -141,7 +141,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          {
             continue;
          }
-         QwtPlotCurve* item = static_cast<const QwtPlotCurve*>(it);
+         QwtPlotCurve* item = static_cast<QwtPlotCurve*>(it);
          // create two Vectors for x and y respective
          QVector<QString> x_data;
          x_data.clear();
