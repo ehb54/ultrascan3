@@ -135,15 +135,15 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          y_axis_title = QString("y");
       }
       int max_length = 0;
-      for ( QwtPlotCurve &item: plot->itemList(QwtPlotItem::Rtti_PlotCurve ) )
+      for ( QwtPlotCurve* item: plot->itemList(QwtPlotItem::Rtti_PlotCurve ) )
       {
          // create two Vectors for x and y respective
          QVector<QString> x_data;
          x_data.clear();
          QVector<QString> y_data;
          y_data.clear();
-         x_data << item.title.text() + " " + x_axis_title;
-         y_data << item.title.text() + " " + y_axis_title;
+         x_data << item->title().text() + " " + x_axis_title;
+         y_data << item->title().text() + " " + y_axis_title;
          const QwtSeriesData<QPointF>* data = item->data();
          for (size_t i = 0; i < data->size(); i++)
          {
