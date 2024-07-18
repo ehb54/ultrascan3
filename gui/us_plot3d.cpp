@@ -1157,6 +1157,7 @@ void US_Plot3D::replot( bool hold_color )
                double yval       = ( yroff - tdata[ kk ][ jj ].y );
                double zval       = tdata[ kk ][ jj ].z;
                wdata[ ii ][ jj ] = Triple( xval, yval, zval );
+               tdata[ ii ][ jj ] = Triple( xval, yval, zval );
             }
          }
       }
@@ -1215,6 +1216,9 @@ void US_Plot3D::replot( bool hold_color )
          {
             double zval       = zdata[ ii ][ jj ];
             wddat[ ii ][ jj ] = zval;
+            Triple t = tdata[ ii ][ jj ];
+            t.z = zval;
+            tdata[ ii ][ jj ] = t);
             zdmx              = qMax( zdmx, zval );
             if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
                                                  << "  wdat" << zval;
@@ -2337,6 +2341,38 @@ void US_Plot3D::dump_contents()
                }
             }
             myFile.flush();}
+         else {
+            for ( int ii = 0; ii < ncols; ii++ )
+            {  // copy data to work 2D vector and get new z-max
+               if ((ii&63)==1) DbgLv(2) << "P3D:  rp: row" << ii;
+               wddat[ ii ] = new double [ nrows ];
+
+               for ( int jj = 0; jj < nrows; jj++ )
+               {
+                  double zval       = zdata[ ii ][ jj ];
+                  wddat[ ii ][ jj ] = zval;
+                  zdmx              = qMax( zdmx, zval );
+               }
+            }
+
+            // scale back data to have same z-max as before
+            zfac           = ( zdmx < 1e-20 ) ? zmax : ( zmax / zdmx );
+
+            for ( int ii = 0; ii < ncols; ii++ )
+               for ( int jj = 0; jj < nrows; jj++ )
+               {
+                  wddat[ ii ][ jj ] *= zfac;
+                  tdata[ ii ][ jj ].z *= zfac;
+               }
+            out << xatitle << ", " << yatitle << ", " << zatitle;
+            out << Qt::endl;
+            for ( int ii = 0; ii < ncols; ii++){
+               for ( int jj = 0; jj < nrows; jj++){
+                  out << QString::number(wdata[ii][jj].x) << ", " << QString::number(wdata[ii][jj].y) << ", " << QString::number(wdata[ii][jj].z) << Qt::endl;
+               }
+            }
+            myFile.flush();
+         }
 
          myFile.close();
          ok = true;}
