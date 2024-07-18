@@ -1218,7 +1218,7 @@ void US_Plot3D::replot( bool hold_color )
             wddat[ ii ][ jj ] = zval;
             Triple t = tdata[ ii ][ jj ];
             t.z = zval;
-            tdata[ ii ][ jj ] = t);
+            tdata[ ii ][ jj ] = t;
             zdmx              = qMax( zdmx, zval );
             if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
                                                  << "  wdat" << zval;
