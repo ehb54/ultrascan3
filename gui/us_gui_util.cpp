@@ -135,7 +135,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          y_axis_title = QString("y");
       }
       int max_length = 0;
-      for ( QwtPlotCurve& item: plot.itemList(QwtPlotItem::Rtti_PlotCurve ) )
+      for ( QwtPlotCurve &item: plot.itemList(QwtPlotItem::Rtti_PlotCurve ) )
       {
          // create two Vectors for x and y respective
          QVector<QString> x_data;
