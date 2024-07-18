@@ -137,6 +137,10 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
       int max_length = 0;
       for ( QwtPlotItem* item: plot->itemList( QwtPlotItem::Rtti_PlotCurve ) )
       {
+         if ( item->rtti() != QwtPlotItem::Rtti_PlotCurve )
+         {
+            continue;
+         }
          // create two Vectors for x and y respective
          QVector<QString> x_data;
          x_data.clear();
