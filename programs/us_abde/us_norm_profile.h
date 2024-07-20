@@ -34,6 +34,9 @@ class US_Norm_Profile : public US_Widgets
         void closeEvent(QCloseEvent* event) override;
 
     private:
+        enum PickerState {XRANGE, XNORM, XNONE};
+
+        enum PickerState picker_state;
         QPushButton* pb_load; //!< Button to load data.
         QPushButton* pb_reset; //!< Button to reset the profile.
         QPushButton* pb_close; //!< Button to close the widget.
@@ -63,6 +66,7 @@ class US_Norm_Profile : public US_Widgets
         QVector<QVector<double>> integralN_sel; //!< Normalized selected integral values.
         double x_min_picked = -1; //!< Minimum X value picked.
         double x_max_picked = -1; //!< Maximum X value picked.
+        double x_norm = -1; //!< A radial point that normalization occurs based on
 
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
@@ -70,11 +74,13 @@ class US_Norm_Profile : public US_Widgets
         QPushButton *pb_rmItem; //!< Button to remove an item.
         QPushButton *pb_cleanList; //!< Button to clean the list.
         QPushButton *pb_pick_rp; //!< Button to pick a reference point.
+        QPushButton *pb_pick_norm; //!< Button to pick a reference normalization point.
         QCheckBox *ckb_rawData; //!< Checkbox for raw data.
         QCheckBox *ckb_integral; //!< Checkbox for integral.
         QCheckBox *ckb_norm; //!< Checkbox for normalization.
         QCheckBox *ckb_legend; //!< Checkbox for legend.
         QCheckBox *ckb_xrange; //!< Checkbox for X range.
+        QCheckBox *ckb_norm_max; //!< Normalize by Maximum.
         US_PlotPicker *picker; //!< Plot picker object.
 
         //! \brief Select data for the plot.
@@ -95,8 +101,8 @@ class US_Norm_Profile : public US_Widgets
         //! \param xmax Maximum X value.
         //! \param imin Pointer to the minimum index.
         //! \param imax Pointer to the maximum index.
-        //! \return A vector of X limits.
-        QVector<double> getXlimit(QVector<double> x, double xmin, double xmax, int* imin, int* imax);
+        //! \return QPair of X limits.
+        QPair<int, int> getXlimit(QVector<double> x, double xmin, double xmax);
 
         //! \brief Enable or disable widgets.
         //! \param enable Boolean to enable or disable the widgets.
@@ -124,7 +130,10 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Slot to clean the list.
         void slt_cleanList(void);
 
-        //! \brief Slot to pick a point on the plot.
+        //! \brief Slot to pick two points on the plot.
+        void slt_pickRange(void);
+
+        //! \brief Slot to pick a normaling point on the plot.
         void slt_pickPoint(void);
 
         //! \brief Slot to handle mouse events on the plot.
@@ -156,6 +165,9 @@ class US_Norm_Profile : public US_Widgets
 
         //! \brief Slot to save the profile.
         void slt_save(void);
+
+        //! \brief Slot to normalize by maximum peak
+        void slt_norm_by_max(int state);
 };
 
 #endif // US_NORM_PROFILE_H

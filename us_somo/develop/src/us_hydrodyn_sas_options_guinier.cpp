@@ -369,7 +369,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_diffusion_len );
    connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
 
-   lbl_electron_nucleon_ratio = new QLabel(us_tr(" Nucleon/electron ratio A/Z : "), this);
+   lbl_electron_nucleon_ratio = new QLabel(us_tr(" Electron/nucleon ratio Z/A : "), this);
    lbl_electron_nucleon_ratio->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_electron_nucleon_ratio->setPalette( PALET_LABEL );
    AUTFBACK( lbl_electron_nucleon_ratio );

@@ -758,6 +758,22 @@ class US_EXTERN US_Saxs_Util
                  vector < double > &to_data,
                  vector < double > &to_errors );
 
+      static bool crop(
+                       const vector < double >  & x
+                       ,const vector < double > & y
+                       ,double                    x_min
+                       ,double                    x_max
+                       ,vector < double >       & x_cropped
+                       ,vector < double >       & y_cropped
+                       ,QString                 & errormsg
+                       );
+
+      static bool transpose_vvd(
+                                const vector < vector < double > > & x
+                                ,vector < vector < double > >      & y
+                                ,QString                           & errormsg
+                                );
+
       bool read_control( QString controlfile );
 
 #if defined( USE_MPI )
@@ -876,8 +892,14 @@ class US_EXTERN US_Saxs_Util
                                                           unsigned int      points
                                                           );
                                                              
-
       bool         align_test();
+
+      static bool                                     average( 
+                                                             const vector < vector < double > > & ys,
+                                                             vector < double > & y_avg,
+                                                             vector < double > & y_sd,
+                                                             QString & error_msg
+                                                              );
 
       static bool  read_sas_data( 
                                  QString             filename,

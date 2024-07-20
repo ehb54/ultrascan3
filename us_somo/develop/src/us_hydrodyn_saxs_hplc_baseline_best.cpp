@@ -29,7 +29,7 @@ US_Hydrodyn_Saxs_Hplc_Baseline_Best::US_Hydrodyn_Saxs_Hplc_Baseline_Best(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: HPLC SAXS Baseline Best Region Analysis" ) +
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN Baseline Best Region Analysis" ) +
                ( parameters.count( "name" ) ? QString( " : %1" ).arg( parameters[ "name" ] ) : QString( "" ) ) );
 
    plot_zoomer         = ( ScrollZoomer * )0;

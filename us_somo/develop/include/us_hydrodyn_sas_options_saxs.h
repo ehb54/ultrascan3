@@ -82,6 +82,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QLabel     *lbl_crysol;
       QCheckBox  *cb_crysol_default_load_difference_intensity;
       QCheckBox  *cb_crysol_version_26;
+      QCheckBox  *cb_crysol_version_3;
+      QCheckBox  *cb_crysol_water_dummy_beads;
       QCheckBox  *cb_crysol_explicit_hydrogens;
 
       QLabel      *lbl_ra;
@@ -133,6 +135,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       void update_crysol_hydration_shell_contrast(double);
       void set_crysol_default_load_difference_intensity();
       void set_crysol_version_26();
+      void set_crysol_version_3();
+      void set_crysol_water_dummy_beads();
       void set_crysol_explicit_hydrogens();
 
       void crysol_target();

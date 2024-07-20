@@ -2875,6 +2875,20 @@ mem_ris(int model)
    this_data.hydro_res = "";
    this_data.proc_time = (double)(supc_timers.times[ "compute smi" ]) / 1e3;
 
+   this_data.fractal_dimension_parameters          = (*model_vector)[ model_idx[ model ] ].fractal_dimension_parameters;
+   this_data.fractal_dimension                     = (*model_vector)[ model_idx[ model ] ].fractal_dimension;
+   this_data.fractal_dimension_sd                  = (*model_vector)[ model_idx[ model ] ].fractal_dimension_sd;
+   this_data.fractal_dimension_wtd                 = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd;
+   this_data.fractal_dimension_wtd_sd              = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd_sd;
+   this_data.fractal_dimension_wtd_wtd             = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd_wtd;
+   this_data.fractal_dimension_wtd_wtd_sd          = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd_wtd_sd;
+   this_data.rg_over_fractal_dimension             = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension;
+   this_data.rg_over_fractal_dimension_sd          = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_sd;
+   this_data.rg_over_fractal_dimension_wtd         = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd;
+   this_data.rg_over_fractal_dimension_wtd_sd      = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd_sd;
+   this_data.rg_over_fractal_dimension_wtd_wtd     = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd_wtd;
+   this_data.rg_over_fractal_dimension_wtd_wtd_sd  = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd_wtd_sd;
+
    QString hydro_res;
    QString hydro_format_string;
 

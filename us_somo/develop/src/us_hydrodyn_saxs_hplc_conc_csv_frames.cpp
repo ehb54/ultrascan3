@@ -24,7 +24,7 @@ US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames::US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO SAXS HPLC: Concentration CSV Time -> Frame conversion" ) );
+   setWindowTitle( us_tr( "US-SOMO HPLC/KIN: Concentration CSV Time -> Frame conversion" ) );
 
    setupGUI();
 

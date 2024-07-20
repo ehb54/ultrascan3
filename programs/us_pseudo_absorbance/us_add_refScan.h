@@ -87,7 +87,7 @@ class US_AddRefScan : public US_Widgets
         void slt_plot_ovlp(bool);
         void slt_plot_inty(bool);
         void slt_save(void);
-        void slt_db_local(bool);
+        // void slt_db_local(bool);
         void slt_reset(void);
         void slt_CA_state(int);
         void slt_load_CA(void);
@@ -175,11 +175,11 @@ class US_AddRefScan : public US_Widgets
         QLineEdit* le_lambstrt; ///< Line edit for start wavelength
         QLineEdit* le_lambstop; ///< Line edit for stop wavelength
         QLineEdit* le_status; ///< Line edit for status
-        QLineEdit* le_dir; ///< Line edit for directory
-        QLineEdit* le_dbName; ///< Line edit for database name
+        // QLineEdit* le_dir; ///< Line edit for directory
+        // QLineEdit* le_dbName; ///< Line edit for database name
 
-        QLabel* lb_dbName; ///< Label for database name
-        QLabel* lb_dir; ///< Label for directory
+        // QLabel* lb_dbName; ///< Label for database name
+        // QLabel* lb_dir; ///< Label for directory
         QLabel* lb_wavlBw; ///< Label for wavelength bandwidth
         QLabel* lb_runIDs; ///< Label for run IDs
         QLabel* lb_wavl; ///< Label for wavelength
@@ -207,7 +207,7 @@ class US_AddRefScan : public US_Widgets
 
         QRadioButton *rb_db; ///< Radio button for database
         QTabWidget* tabs; ///< Tab widget
-        US_Disk_DB_Controls* dkdb_ctrl; ///< Disk/DB controls
+        // US_Disk_DB_Controls* dkdb_ctrl; ///< Disk/DB controls
         US_Passwd pw; ///< Password object
         US_DB2* dbCon; ///< Database connection
 

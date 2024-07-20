@@ -1,6 +1,8 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
+#include "../include/us_hydrodyn_fractal_dimension_options.h"
+
 #include <qregexp.h>
 //Added by qt3to4:
 #include <QResizeEvent>
@@ -493,6 +495,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_dmd->setPalette( qp_cb ); AUTFBACK( cb_dmd );
    connect(cb_dmd, SIGNAL(clicked()), this, SLOT(set_dmd()));
 
+   cb_fd = new QCheckBox(this);
+   cb_fd->setText(us_tr(" Compute Fractal Dimension "));
+   cb_fd->setChecked(batch->fd);
+   cb_fd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_fd->setPalette( qp_cb ); AUTFBACK( cb_fd );
+   connect(cb_fd, SIGNAL(clicked()), this, SLOT(set_fd()));
+   
    cb_somo = new QCheckBox(this);
    cb_somo->setText(us_tr(" Build SoMo Bead Model "));
    cb_somo->setChecked(batch->somo);
@@ -920,7 +929,12 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addWidget(lbl_process);
    leftside->addWidget(cb_mm_first);
    leftside->addWidget(cb_mm_all);
-   leftside->addWidget(cb_dmd);
+   {
+      QHBoxLayout * hbl = new QHBoxLayout; hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( cb_dmd );
+      hbl->addWidget( cb_fd );
+      leftside->addLayout( hbl );
+   }
    leftside->addLayout(hbl_somo_grid);
    leftside->addLayout(hbl_iqq_prr);
    leftside->addLayout(hbl_csv_saxs);
@@ -1369,6 +1383,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_grpy                  ->setChecked( false );
       cb_hullrad               ->setChecked( false );
       cb_dmd                   ->setChecked( false );
+      cb_fd                    ->setChecked( false );
       cb_prr                   ->setChecked( false ); 
       cb_iqq                   ->setChecked( false ); 
       cb_saxs_search           ->setChecked( false );
@@ -1392,6 +1407,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_grpy                  ->setEnabled( false );
       cb_hullrad               ->setEnabled( false );
       cb_dmd                   ->setEnabled( false );
+      cb_fd                    ->setEnabled( false );
       cb_prr                   ->setEnabled( false ); 
       cb_iqq                   ->setEnabled( false ); 
       cb_saxs_search           ->setEnabled( false );
@@ -1418,6 +1434,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->grpy                  = false;
       batch->hullrad               = false;
       batch->dmd                   = false;
+      batch->fd                    = false;
       batch->prr                   = false;
       batch->iqq                   = false;
       batch->saxs_search           = false;
@@ -1445,6 +1462,7 @@ void US_Hydrodyn_Batch::update_enables()
 
          if ( !any_bead_model_selected ) {
             cb_dmd    ->setEnabled( true );
+            cb_fd     ->setEnabled( true );
             cb_prr    ->setEnabled( true );
             cb_iqq    ->setEnabled( true );
 
@@ -1550,6 +1568,7 @@ void US_Hydrodyn_Batch::update_enables()
          } else {
             // bead models selected also restricts to bead model computations
             cb_dmd                   ->setChecked( false );
+            cb_fd                    ->setChecked( false );
             cb_prr                   ->setChecked( false ); 
             cb_iqq                   ->setChecked( false ); 
             cb_saxs_search           ->setChecked( false );
@@ -1562,6 +1581,7 @@ void US_Hydrodyn_Batch::update_enables()
             cb_compute_prr_std_dev   ->setChecked( false );
 
             cb_dmd                   ->setEnabled( false );
+            cb_fd                    ->setEnabled( false );
             cb_prr                   ->setEnabled( false ); 
             cb_iqq                   ->setEnabled( false ); 
             cb_saxs_search           ->setEnabled( false );
@@ -1574,6 +1594,7 @@ void US_Hydrodyn_Batch::update_enables()
             cb_compute_prr_std_dev   ->setEnabled( false );
 
             batch->dmd                   = false;
+            batch->fd                    = false;
             batch->prr                   = false;
             batch->iqq                   = false;
             batch->saxs_search           = false;
@@ -1646,22 +1667,24 @@ void US_Hydrodyn_Batch::update_enables()
       cb_grpy              ->isChecked() ||
       cb_hullrad           ->isChecked() ||
       cb_dmd               ->isChecked() || 
+      cb_fd               ->isChecked() || 
       0;
       
    if (
        ( cb_vdw_beads         ->isChecked() ||
-         cb_zeno              ->isChecked() ) &&
-       !cb_somo              ->isChecked() &&
-       !cb_somo_o            ->isChecked() &&
+         cb_somo              ->isChecked() ||
+         cb_somo_o            ->isChecked() ||
+         cb_zeno              ->isChecked() ||
+         cb_grpy              ->isChecked()
+         ) &&
        !cb_grid              ->isChecked() &&
        !cb_iqq               ->isChecked() &&
        !cb_prr               ->isChecked() &&
        !cb_hydro             ->isChecked() &&
-       !cb_grpy              ->isChecked() &&
        !cb_hullrad           ->isChecked() &&
        !cb_dmd               ->isChecked() 
        ) {
-      // just zeno for now
+      // zeno & grpy with vdw or somo models 
       cb_results_dir       ->setEnabled( true );
       le_results_dir_name  ->setEnabled( true );
    } else {
@@ -1889,7 +1912,13 @@ void US_Hydrodyn_Batch::set_mm_all()
 
 void US_Hydrodyn_Batch::set_dmd()
 {
-   batch->dmd = cb_somo->isChecked();
+   batch->dmd = cb_dmd->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_fd()
+{
+   batch->fd = cb_fd->isChecked();
    update_enables();
 }
 
@@ -2220,6 +2249,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_equi_grid->setEnabled(false);
    cb_iqq->setEnabled(false);
    cb_dmd->setEnabled( false );
+   cb_fd->setEnabled( false );
    cb_prr->setEnabled(false);
    cb_hydro->setEnabled(false);
    cb_zeno->setEnabled(false);
@@ -2262,6 +2292,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
    cb_dmd->setEnabled( true );
+   cb_fd->setEnabled( true );
    pb_start->setEnabled(true);
    pb_stop->setEnabled(false);
    update_enables();
@@ -2296,6 +2327,87 @@ void US_Hydrodyn_Batch::start( bool quiet )
          break;
       case 2 : // continue
          break;
+      }
+   }
+
+   if ( batch->fd &&
+        ((US_Hydrodyn *)us_hydrodyn)->
+        gparam_value(
+                     US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::ENABLED )
+                     ) != "true" ) {
+      switch ( QMessageBox::warning(this, 
+                                    windowTitle() + us_tr( ": Warning" ),
+                                    QString(us_tr(
+                                                  "Fractal Dimension computations are not enabled in options\n"
+                                                  "What would you like to do?\n"))
+                                    ,us_tr("&Stop")
+                                    ,us_tr("&Change options now")
+                                    ) )
+      {
+      case 0 : // stop
+         return;
+         break;
+      case 1 : // change the vbar setting now
+         ((US_Hydrodyn *)us_hydrodyn)->show_fractal_dimension_options();
+         return;
+         break;
+      default :
+         return;
+         break;
+      }
+   }
+
+   if ( batch->fd &&
+        ((US_Hydrodyn *)us_hydrodyn)->
+        gparam_value(
+                     US_Hydrodyn_Fractal_Dimension_Options::paramname( US_Hydrodyn_Fractal_Dimension_Options::PLOTS )
+                     ) == "true" ) {
+      switch ( QMessageBox::warning(this, 
+                                    windowTitle() + us_tr( ": Warning" ),
+                                    QString(us_tr(
+                                                  "The Fractal Dimension plots are currently on\n"
+                                                  "This will require a manual intervention for each processed PDB\n"
+                                                  "What would you like to do?\n"))
+                                    ,us_tr("&Stop")
+                                    ,us_tr("&Change options now")
+                                    ,us_tr("C&ontinue")
+                                    ,0 // Stop == button 0
+                                    ,0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // stop
+         return;
+         break;
+      case 1 : // change the vbar setting now
+         ((US_Hydrodyn *)us_hydrodyn)->show_fractal_dimension_options();
+         return;
+         break;
+      case 2 : // continue
+         break;
+      }
+   }
+
+   if ( batch->fd ) {
+      // initialize fd_save_info for FD
+      fd_save_info.file = "";
+      fd_save_info.field.clear();
+      fd_save_info.field_flag.clear();
+      fd_save_info.data_vector.clear();
+      fd_save_info.data = US_Hydrodyn_Save::save_data_initialized();
+   }
+
+
+   QString fd_batch_save_name;
+   if ( batch->fd && cb_saveParams->isChecked() ) {
+      bool ok;
+      fd_batch_save_name = QInputDialog::getText(this
+                                                 ,windowTitle() + us_tr( ": Fractal Dimension Results Name" )
+                                                 ,tr("Enter the file name to save:")
+                                                 ,QLineEdit::Normal
+                                                 ,"FD_results"
+                                                 ,&ok);
+      if ( !ok ) {
+         return;
       }
    }
 
@@ -2470,6 +2582,10 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   if ( batch->mm_all ) 
                   {
                      lb_model->selectAll();
+                  }
+                  if ( batch->fd ) {
+                     qDebug() << "batch FD\n";
+                     ((US_Hydrodyn *)us_hydrodyn)->fractal_dimension( true, & fd_save_info );
                   }
                   if ( batch->somo )
                   {
@@ -3117,8 +3233,29 @@ void US_Hydrodyn_Batch::start( bool quiet )
       saxs_prr_norm.clear( );
       saxs_prr_mw.clear( );
    }
-   if ( save_batch_active )
-   {
+
+   if ( batch->fd
+        && ((US_Hydrodyn *)us_hydrodyn)->saveParams
+        && fd_save_info.data_vector.size()
+         ) {
+      QString fname = ((US_Hydrodyn *)us_hydrodyn)->get_somo_dir() + QDir::separator() + fd_batch_save_name + ".csv";
+      if ( QFile::exists(fname) && !overwrite_all )
+      {
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+      }         
+      // us_qdebug( "save batch 6" );
+      FILE *of = us_fopen(fname, "wb");
+      if ( of ) {
+         fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->header().toLatin1().data());
+         for ( unsigned int i = 0; i < fd_save_info.data_vector.size(); ++i ) {
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&fd_save_info.data_vector[i]).toLatin1().data());
+         }
+         fclose(of);
+         editor_msg( "darkblue", QString( us_tr( "Created file : %1\n" ) ).arg( fname ) );
+      }
+   }
+
+   if ( save_batch_active ) {
       QDir::setCurrent(((US_Hydrodyn *)us_hydrodyn)->somo_dir);
       save_batch_active = false;
 
@@ -3165,8 +3302,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
          }
          // us_qdebug( "save batch 4" );
       }
-      if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
-      {
+
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams ) {
          // us_qdebug( "save batch 5" );
          QString fname = batch->avg_hydro_name + ".csv";
          if ( QFile::exists(fname) && !overwrite_all )

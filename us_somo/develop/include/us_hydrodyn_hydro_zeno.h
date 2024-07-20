@@ -69,6 +69,14 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       QLabel    *lbl_zeno_surface_thickness;
       QLineEdit *le_zeno_surface_thickness;
 
+      QCheckBox *cb_zeno_surface_thickness_from_rg;
+      QLabel    *lbl_zeno_surface_thickness_from_rg_a;
+      QLineEdit *le_zeno_surface_thickness_from_rg_a;
+      QLabel    *lbl_zeno_surface_thickness_from_rg_b;
+      QLineEdit *le_zeno_surface_thickness_from_rg_b;
+      QLabel    *lbl_zeno_surface_thickness_from_rg_c;
+      QLineEdit *le_zeno_surface_thickness_from_rg_c;
+
       QLabel    *lbl_zeno_repeats;
       QLineEdit *le_zeno_repeats;
       
@@ -96,6 +104,11 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       void update_zeno_surface_steps ( const QString &str );
 
       void update_zeno_surface_thickness ( const QString &str );
+
+      void set_zeno_surface_thickness_from_rg();
+      void update_zeno_surface_thickness_from_rg_a ( const QString &str );
+      void update_zeno_surface_thickness_from_rg_b ( const QString &str );
+      void update_zeno_surface_thickness_from_rg_c ( const QString &str );
 
       void set_zeno_cxx();
 
