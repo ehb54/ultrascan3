@@ -18,6 +18,13 @@ enable_testing()
 
 # Find Qt packages
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Network Sql Test Xml)
+find_package(OpenSSL REQUIRED)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MySQL REQUIRED mysqlclient)
+
+include_directories(${MySQL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+link_directories(${MySQL_LIBRARY_DIRS})
 
 # Include the src subdirectory
 add_subdirectory(utils)
