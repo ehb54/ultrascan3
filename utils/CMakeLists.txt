@@ -1,5 +1,6 @@
 # Specify the library
 add_library(utils SHARED
+<<<<<<< HEAD
         us_ana_profile.cpp us_ana_profile.h
         us_analyte.cpp us_analyte.h
         us_archive.cpp us_archive.h
@@ -52,14 +53,38 @@ add_library(utils SHARED
         us_xpn_data.cpp us_xpn_data.h
         us_zsolute.cpp us_zsolute.h
         )
+=======
+        us_ana_profile.cpp
+        us_ana_profile.h
+        us_datafiles.cpp
+        us_datafiles.h
+        us_math2.cpp
+        us_math2.h
+        us_report_gmp.cpp
+        us_report_gmp.h
+        us_util.cpp
+        us_util.h
+        us_constants.cpp
+        us_constants.h
+        us_crc.cpp
+        us_crc.h
+        us_crypto.cpp us_crypto.h
+        us_matrix.cpp us_matrix.h us_crc.h
+        us_dataIO.cpp us_dataIO.h
+        us_settings.cpp us_settings.h)
+>>>>>>> af1a5c8bc (Additional Unit Testing us_ana_profile, us_crc, us_crypto, us_dataio, us_math2, and us_matrix.)
 
 # Ensure debug information is included
 target_compile_options(utils PRIVATE -g -O0)
 
 # Link Qt libraries to the utils library
+<<<<<<< HEAD
 target_link_libraries(utils Qt5::Core Qt5::Sql Qt5::Network Qt5::Xml)
 
 target_link_libraries(utils archive)
+=======
+target_link_libraries(utils Qt5::Core Qt5::Xml OpenSSL::SSL OpenSSL::Crypto)
+>>>>>>> af1a5c8bc (Additional Unit Testing us_ana_profile, us_crc, us_crypto, us_dataio, us_math2, and us_matrix.)
 
 # Specify include directories for utils
 target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
