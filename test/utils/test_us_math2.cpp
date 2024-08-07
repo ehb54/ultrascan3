@@ -29,25 +29,28 @@ void TestUSMath2::test_ranf()
 
 void TestUSMath2::test_linefit()
 {
-    double xArray[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    double yArray[10] = {0, 1.1, 2, 3.1, 4, 5, 6, 7.1, 8, 9};
-
-    double *x[10];
-    double *y[10];
-
-    for (int i = 0; i < 10; ++i)
-    {
-        x[i] = &xArray[i];
-        y[i] = &yArray[i];
-    }
+    // Setup test data
+    QVector<double> x = {1, 2, 3, 4, 5};
+    QVector<double> y = {2, 4, 6, 8, 10};
 
     double slope, intercept, sigma, correlation;
-    int n = 10;
+    int arraysize = x.size();
+    double* xPtr = x.data();
+    double* yPtr = y.data();
 
-    US_Math2::linefit(x, y, &slope, &intercept, &sigma, &correlation, n);
+    double average = US_Math2::linefit(&xPtr, &yPtr, &slope, &intercept, &sigma, &correlation, arraysize);
 
-    QCOMPARE(slope, 1.0);
-    QVERIFY(std::abs(intercept) < 0.1);
+    // Define tolerance
+    double tolerance = 0.0001;
+
+    // Compare slope with tolerance
+    QVERIFY2(qAbs(slope - 2.0) < tolerance, qPrintable(QString("Expected slope: 2.0, but got: %1").arg(slope)));
+    // Compare intercept with tolerance
+    QVERIFY2(qAbs(intercept - 0.0) < tolerance, qPrintable(QString("Expected intercept: 0.0, but got: %1").arg(intercept)));
+    // Compare sigma with tolerance (should be zero since data is perfectly linear)
+    QVERIFY2(qAbs(sigma - 0.0) < tolerance, qPrintable(QString("Expected sigma: 0.0, but got: %1").arg(sigma)));
+    // Compare correlation with tolerance (should be 1 for perfectly linear data)
+    QVERIFY2(qAbs(correlation - 1.0) < tolerance, qPrintable(QString("Expected correlation: 1.0, but got: %1").arg(correlation)));
 }
 
 void TestUSMath2::test_nearest_curve_point()

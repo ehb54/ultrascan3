@@ -1,23 +1,28 @@
-#include "test_us_crc.h"
+#include <QtTest/QtTest>
+#include "us_crc.h"
 
-void TestUSCrc::initTestCase()
-{
-    // Initialization code here
+class TestUSCrc : public QObject {
+
+private slots:
+    void test_crc32_data();
+    void test_crc32();
+};
+
+void TestUSCrc::test_crc32_data() {
+    QTest::addColumn<quint32>("initialCrc");
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<quint32>("expectedCrc");
+
+    QTest::newRow("empty") << quint32(0) << QByteArray("") << quint32(0);
+    QTest::newRow("example1") << quint32(0) << QByteArray("123456789") << quint32(0xcbf43926);
+    // Add more test cases as needed
 }
 
-void TestUSCrc::cleanupTestCase()
-{
-    // Cleanup code here
+void TestUSCrc::test_crc32() {
+    QFETCH(quint32, initialCrc);
+    QFETCH(QByteArray, data);
+    QFETCH(quint32, expectedCrc);
+
+    quint32 result = US_Crc::crc32(initialCrc, reinterpret_cast<const unsigned char*>(data.constData()), data.length());
+    QCOMPARE(result, expectedCrc);
 }
-
-void TestUSCrc::testCRC32()
-{
-    QByteArray input = "Hello, Ultrascan!";
-    quint32 initialCRC = 0xFFFFFFFF; // Initial CRC value
-    quint32 expectedCRC = 0xF2D2D2D2; // Expected CRC value (you need to calculate this value)
-
-    quint32 crcResult = US_Crc::crc32(initialCRC, reinterpret_cast<const unsigned char*>(input.constData()), input.size());
-
-    QCOMPARE(crcResult, expectedCRC);
-}
-
