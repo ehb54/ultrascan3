@@ -16,7 +16,11 @@ add_executable(test_us_utils
         test_us_util.cpp
         test_us_ana_profile.cpp
         test_us_math2.cpp
-        test_us_crc.cpp test_us_crc.cpp test_us_crc.h test_us_crypto.cpp test_us_crypto.h test_us_matrix.cpp test_us_matrix.h test_us_dataIO.cpp test_us_dataIO.h)
+        test_us_crc.cpp test_us_crc.h
+        test_us_crypto.cpp test_us_crypto.h
+        test_us_matrix.cpp test_us_matrix.h
+        test_us_dataIO.cpp test_us_dataIO.h
+        test_us_simparms.cpp test_us_simparms.h)
 
 # Link the utils library and Qt libraries to the test executable
 target_link_libraries(test_us_utils utils

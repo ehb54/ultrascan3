@@ -17,16 +17,23 @@ add_library(utils SHARED
         us_crypto.cpp us_crypto.h
         us_matrix.cpp us_matrix.h us_crc.h
         us_dataIO.cpp us_dataIO.h
-        us_settings.cpp us_settings.h)
+        us_settings.cpp us_settings.h
+        us_simparms.cpp us_simparms.h
+        us_hardware.cpp us_hardware.h
+        us_time_state.cpp us_time_state.h
+        us_db2.cpp us_db2.h
+        us_timer.cpp us_timer.h
+        us_astfem_math.cpp us_astfem_math.h
+        us_gzip.cpp us_gzip.h)
 
 # Ensure debug information is included
 target_compile_options(utils PRIVATE -g -O0)
 
 # Link Qt libraries to the utils library
-target_link_libraries(utils Qt5::Core Qt5::Xml OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(utils Qt5::Core Qt5::Xml OpenSSL::SSL OpenSSL::Crypto ${MYSQL_LIBRARY})
 
 # Specify include directories for utils
-target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(utils PUBLIC ${MYSQL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 
