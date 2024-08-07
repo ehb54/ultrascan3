@@ -4,10 +4,17 @@
 #include "test_us_ana_profile.h"
 #include "test_us_datafiles.h"
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include "test_us_simparams.h"
 =======
+=======
+#include "test_us_crc.h"
+>>>>>>> 1408abf68 (Tests pass locally except for TestUSMath2::test_linefit() and TestUSAnaProfile::testEqualityOperator() which have issues submitted to resolve.)
 #include "test_us_crypto.h"
-#include "test_us_dataio.h"
+#include "test_us_dataIO.h"
+#include "test_us_math2.h"
+#include "test_us_matrix.h"
+#include "test_us_simparms.h"
 
 // Function to dynamically load and run all test classes
 void runTest(QObject *test, int &status, int argc, char *argv[])
@@ -27,8 +34,13 @@ int main(int argc, char *argv[])
     runTest(new TestUSUtil, status, argc, argv);
     runTest(new TestUSAnaProfile, status, argc, argv);
     runTest(new TestUSDataFiles, status, argc, argv);
+    runTest(new TestUSCrc, status, argc, argv);
     runTest(new TestUSCrypto, status, argc, argv);
+    runTest(new TestUSDataFiles, status, argc, argv);
     runTest(new TestUSDataIO, status, argc, argv);
+    runTest(new TestUSMath2, status, argc, argv);
+    runTest(new TestUSMatrix, status, argc, argv);
+    runTest(new TestUSSimparms, status, argc, argv);
 
 <<<<<<< HEAD
         // Execute the tests in the TestUSUtil class

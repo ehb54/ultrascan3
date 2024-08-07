@@ -13,17 +13,23 @@ class TestUSMatrix : public QObject
 
 void TestUSMatrix::testLsfit()
 {
+    // Test data: y = 2x + 1
+    double x[] = {1, 2, 3, 4, 5};
+    double y[] = {3, 5, 7, 9, 11};
     int N = 5;
-    int order = 2;
-    double x[5] = {1, 2, 3, 4, 5};
-    double y[5] = {1, 4, 9, 16, 25};
-    double c[2] = {0, 0};
+    int order = 2; // Linear fit (y = c[1]*x + c[0])
 
-    bool result = US_Matrix::lsfit(c, x, y, N, order);
+    double c[2] = {0};
 
-    QVERIFY(result);
-    QVERIFY(c[0] > 0.0);
-    QVERIFY(c[1] > 0.0);
+    bool status = US_Matrix::lsfit(c, x, y, N, order);
+
+    QVERIFY(status == true);
+
+    double tolerance = 0.0001;
+
+    // Expected coefficients: c[1] (slope) = 2, c[0] (intercept) = 1
+    QVERIFY2(qAbs(c[0] - 1.0) < tolerance, qPrintable(QString("Expected intercept: 1.0, but got: %1").arg(c[0])));
+    QVERIFY2(qAbs(c[1] - 2.0) < tolerance, qPrintable(QString("Expected slope: 2.0, but got: %1").arg(c[1])));
 }
 
 void TestUSMatrix::testCholeskyDecomposition()
