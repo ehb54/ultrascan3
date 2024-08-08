@@ -122,6 +122,15 @@ DbgLv(1) << "MAIN:  CALL check_runname()";
 DbgLv(1) << "MAIN:  CALL reset()";
 //reset();
    resize( 500, 450 );
+
+   // //test
+   // US_AnaProfile profile1;
+   // US_AnaProfile profile2;
+
+   // if ( profile1 == profile2 )
+   //   qDebug() << "ana profs EQUAL";
+   // else
+   //   qDebug() << "ana profs NOT EQUAL";
 }
 
 
