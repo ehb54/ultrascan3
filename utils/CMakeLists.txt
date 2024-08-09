@@ -60,6 +60,7 @@ add_library(utils SHARED
         us_datafiles.h
         us_math2.cpp
         us_math2.h
+        us_memory.cpp us_memory.h
         us_report_gmp.cpp
         us_report_gmp.h
         us_util.cpp
@@ -82,8 +83,13 @@ add_library(utils SHARED
         us_db2.cpp us_db2.h
         us_timer.cpp us_timer.h
         us_astfem_math.cpp us_astfem_math.h
+<<<<<<< HEAD
         us_gzip.cpp us_gzip.h)
 >>>>>>> 1408abf68 (Tests pass locally except for TestUSMath2::test_linefit() and TestUSAnaProfile::testEqualityOperator() which have issues submitted to resolve.)
+=======
+        us_gzip.cpp us_gzip.h
+        us_settings.cpp us_settings.h)
+>>>>>>> f87d9a2ed (Add tests for us_memory, us_settings, and us_time_state)
 
 # Ensure debug information is included
 target_compile_options(utils PRIVATE -g -O0)
