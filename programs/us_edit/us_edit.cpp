@@ -936,9 +936,18 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
-   pb_airGap->setHidden( true );
+   pb_airGap->setVisible( false );
+   lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
+
+   
+   // // Air Gap (hidden by default)
+   // pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   // le_airGap = us_lineedit( "", 1, true );
+   // pb_airGap->setHidden( true );
+   // le_airGap->setHidden( true );
 
    // Data range
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
@@ -1213,21 +1222,30 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   qDebug() << "US_Edit manual setup 1";
+   
    reset();
+
+   qDebug() << "US_Edit manual setup 2";
 
    //Load already selected data
    this->allData    = allData;
    this->triples    = triples;
    this->workingDir = workingDir;
-   load_manual_auto();
 
+   qDebug() << "US_Edit manual setup 3";
+   load_manual_auto();
+   qDebug() << "US_Edit manual setup 4";
+   
    //pre-select channel passed from main window:
    cb_triple->setCurrentIndex( currenChtInd );
+   qDebug() << "US_Edit manual setup 5";
    new_triple( currenChtInd );
-
+   qDebug() << "US_Edit manual setup 6";
    cb_lplot ->setCurrentIndex( plotind );
-
+   qDebug() << "US_Edit manual setup 7";
    show_mwl_controls( false );
+   qDebug() << "US_Edit manual setup 8";
 }
 
 
@@ -1678,6 +1696,8 @@ void US_Edit::sel_investigator( void )
 // Reset parameters to their defaults
 void US_Edit::reset( void )
 {
+
+  qDebug() << "reset 1";
    changes_made = false;
    floatingData = false;
 
@@ -1724,16 +1744,21 @@ void US_Edit::reset( void )
 
    cb_triple->disconnect();
 
+   qDebug() << "reset 2";
+   
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
    v_line = NULL;
    pick     ->disconnect();
 
+   qDebug() << "reset 3";
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid = us_grid( data_plot );
+   qDebug() << "reset 4";
    data_plot->replot();
-
+   qDebug() << "reset 5";
+   
    // Disable pushbuttons
    pb_details     ->setEnabled( false );
 
@@ -1766,6 +1791,7 @@ void US_Edit::reset( void )
    
    ck_writemwl    ->setEnabled( false );
 
+   qDebug() << "reset 6";
    // Remove icons
    pb_meniscus    ->setIcon( QIcon() );
    pb_airGap      ->setIcon( QIcon() );
@@ -1778,6 +1804,8 @@ void US_Edit::reset( void )
 
    pb_float       ->setIcon( QIcon() );
 
+   qDebug() << "reset 61";
+
    editLabel     .clear();
    data.scanData .clear();
    includes      .clear();
@@ -1786,6 +1814,8 @@ void US_Edit::reset( void )
    triples       .clear();
    cb_triple    ->clear();
    cb_rpms      ->disconnect();
+
+   qDebug() << "reset 62";
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
@@ -1809,24 +1839,31 @@ void US_Edit::reset( void )
    rb_radius    ->setChecked( true );
    rb_waveln    ->setChecked( false );
    pb_custom    ->setEnabled( false );
+   qDebug() << "reset 63";
    if (pb_airGap != nullptr)
    {
      pb_airGap->setHidden( true );
    }
+   qDebug() << "reset 64";
    if (le_airGap != nullptr)
    {
      le_airGap->setHidden( true );
    }
+   qDebug() << "reset 65";
    if (lb_airGap != nullptr)
    {
       lb_airGap->setHidden( true );
    }
+   qDebug() << "reset 7";
    connect_mwl_ctrls( true );
-
+   qDebug() << "reset 8";
+   
    set_pbColors( NULL );
    lb_triple->setText( tr( "Cell / Channel / Wavelength" ) );
+   qDebug() << "reset 9";
 
    show_mwl_controls( false );
+   qDebug() << "reset 10";
 }
 
 // Reset parameters for a new triple
@@ -3811,8 +3848,12 @@ double US_Edit::find_meniscus_auto()
       //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
       //int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
 
-      int indexRight  = data.xindex( range_right );   
-      // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
+      //int indexRight  = data.xindex( range_right );
+      //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0!!!
+      int indexRight  = data.xindex( meniscus_init + ( range_right - meniscus_init )/2.0 );   
+
+      qDebug() << "data.xindex( range_right ) = " << data.xindex( range_right );
+      qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
 	
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
