@@ -936,9 +936,18 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
-   pb_airGap->setHidden( true );
+   pb_airGap->setVisible( false );
+   lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
+
+   
+   // // Air Gap (hidden by default)
+   // pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   // le_airGap = us_lineedit( "", 1, true );
+   // pb_airGap->setHidden( true );
+   // le_airGap->setHidden( true );
 
    // Data range
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
