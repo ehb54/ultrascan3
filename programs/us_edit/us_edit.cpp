@@ -1795,6 +1795,8 @@ void US_Edit::reset( void )
 
    pb_float       ->setIcon( QIcon() );
 
+   qDebug() << "reset 61";
+
    editLabel     .clear();
    data.scanData .clear();
    includes      .clear();
@@ -1803,6 +1805,8 @@ void US_Edit::reset( void )
    triples       .clear();
    cb_triple    ->clear();
    cb_rpms      ->disconnect();
+
+   qDebug() << "reset 62";
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
@@ -1826,14 +1830,17 @@ void US_Edit::reset( void )
    rb_radius    ->setChecked( true );
    rb_waveln    ->setChecked( false );
    pb_custom    ->setEnabled( false );
+   qDebug() << "reset 63";
    if (pb_airGap != nullptr)
    {
      pb_airGap->setHidden( true );
    }
+   qDebug() << "reset 64";
    if (le_airGap != nullptr)
    {
      le_airGap->setHidden( true );
    }
+   qDebug() << "reset 65";
    if (lb_airGap != nullptr)
    {
       lb_airGap->setHidden( true );
