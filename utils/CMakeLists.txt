@@ -2,6 +2,7 @@
 add_library(utils SHARED
         us_ana_profile.cpp
         us_ana_profile.h
+        us_analyte.cpp us_analyte.h
         us_datafiles.cpp
         us_datafiles.h
         us_math2.cpp
@@ -26,7 +27,8 @@ add_library(utils SHARED
         us_timer.cpp us_timer.h
         us_astfem_math.cpp us_astfem_math.h
         us_gzip.cpp us_gzip.h
-        us_settings.cpp us_settings.h)
+        us_settings.cpp us_settings.h
+        us_eprofile.cpp us_eprofile.h)
 
 # Ensure debug information is included
 target_compile_options(utils PRIVATE -g -O0)
