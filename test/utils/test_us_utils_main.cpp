@@ -8,7 +8,10 @@
 #include "test_us_dataIO.h"
 #include "test_us_math2.h"
 #include "test_us_matrix.h"
+#include "test_us_memory.h"
 #include "test_us_simparms.h"
+#include "test_us_settings.h"
+#include "test_us_time_state.h"
 
 // Function to dynamically load and run all test classes
 void runTest(QObject *test, int &status, int argc, char *argv[])
@@ -33,6 +36,9 @@ int main(int argc, char *argv[])
     runTest(new TestUSDataIO, status, argc, argv);
     runTest(new TestUSMath2, status, argc, argv);
     runTest(new TestUSMatrix, status, argc, argv);
+    runTest(new TestUSMemory, status, argc, argv);
+    runTest(new TestUSSettings, status, argc, argv);
+    runTest(new TestUSTimeState, status, argc, argv);
     runTest(new TestUSSimparms, status, argc, argv);
 
     return status;
