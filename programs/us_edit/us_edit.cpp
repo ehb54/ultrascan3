@@ -3848,8 +3848,11 @@ double US_Edit::find_meniscus_auto()
       //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
       //int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
 
-      int indexRight  = data.xindex( range_right );   
-      // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
+      //int indexRight  = data.xindex( range_right );   
+      int indexRight  = data.xindex( meniscus_init + ( range_right - meniscus_init )/2.0 );   
+
+      qDebug() << "data.xindex( range_right ) = " << data.xindex( range_right );
+      qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
 	
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
