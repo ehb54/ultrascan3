@@ -1213,21 +1213,30 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   qDebug() << "US_Edit manual setup 1";
+   
    reset();
+
+   qDebug() << "US_Edit manual setup 2";
 
    //Load already selected data
    this->allData    = allData;
    this->triples    = triples;
    this->workingDir = workingDir;
-   load_manual_auto();
 
+   qDebug() << "US_Edit manual setup 3";
+   load_manual_auto();
+   qDebug() << "US_Edit manual setup 4";
+   
    //pre-select channel passed from main window:
    cb_triple->setCurrentIndex( currenChtInd );
+   qDebug() << "US_Edit manual setup 5";
    new_triple( currenChtInd );
-
+   qDebug() << "US_Edit manual setup 6";
    cb_lplot ->setCurrentIndex( plotind );
-
+   qDebug() << "US_Edit manual setup 7";
    show_mwl_controls( false );
+   qDebug() << "US_Edit manual setup 8";
 }
 
 
