@@ -1209,6 +1209,20 @@ void US_ExperGuiRotor::addOpertoList( void )
 				.arg( c_oper ) );
       return;
     }
+
+  //also, check if to-be-added operator is in other role(s) already [rev, appr]
+  QString e_revList  = te_revs_to_assign->toPlainText();
+  QString e_apprList = te_apprs_to_assign->toPlainText();
+  if ( e_revList. contains( c_oper ) || e_apprList. contains( c_oper ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Operator" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already set as REVIEWER or APPROVER.<br>"
+				    "Please choose other operator.")
+				.arg( c_oper ) );
+      return;
+    }
   
   te_opers_to_assign->append( c_oper );
 }
@@ -1240,6 +1254,19 @@ void US_ExperGuiRotor::addRevtoList( void )
 				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
 				    "<font ><b>%1</b><br><br>"
 				    "is already in the list of reviewers.<br>"
+				    "Please choose other reviewer.")
+				.arg( c_rev ) );
+      return;
+    }
+
+  //also, check if to-be-added reviewer is an operator already
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_rev ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Reviewer" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already set as an OPERATOR.<br>"
 				    "Please choose other reviewer.")
 				.arg( c_rev ) );
       return;
@@ -1284,6 +1311,20 @@ void US_ExperGuiRotor::addApprtoList( void )
 				.arg( c_appr) );
       return;
     }
+
+  //also, check if to-be-added approver is an operator already
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_appr ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Approver" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already set as an OPERATOR.<br>"
+				    "Please choose other approver.")
+				.arg( c_appr ) );
+      return;
+    }
+  
   
   te_apprs_to_assign->append( c_appr );
 
