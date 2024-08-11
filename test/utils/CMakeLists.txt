@@ -25,7 +25,10 @@ add_executable(test_us_utils
         test_us_memory.cpp test_us_memory.h
         test_us_time_state.cpp test_us_time_state.h
         test_us_db2.cpp test_us_db2.h
-        test_us_analyte.cpp test_us_analyte.h)
+        test_us_analyte.cpp test_us_analyte.h
+        test_us_astfem_math.cpp test_us_astfem_math.h
+        test_us_project.cpp test_us_project.h
+        ../../utils/us_project.h ../../utils/us_project.cpp)
 
 # Link the utils library and Qt libraries to the test executable
 target_link_libraries(test_us_utils utils

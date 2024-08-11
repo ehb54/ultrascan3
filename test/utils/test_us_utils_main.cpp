@@ -3,6 +3,7 @@
 #include "test_us_util.h"
 #include "test_us_ana_profile.h"
 #include "test_us_analyte.h"
+#include "test_us_astfem_math.h"
 #include "test_us_datafiles.h"
 #include "test_us_crc.h"
 #include "test_us_crypto.h"
@@ -11,6 +12,7 @@
 #include "test_us_math2.h"
 #include "test_us_matrix.h"
 #include "test_us_memory.h"
+#include "test_us_project.h"
 #include "test_us_simparms.h"
 #include "test_us_settings.h"
 #include "test_us_time_state.h"
@@ -32,6 +34,7 @@ int main(int argc, char *argv[])
     runTest(new TestUSUtil, status, argc, argv);
     runTest(new TestUSAnaProfile, status, argc, argv);
     runTest(new TestUSAnalyte, status, argc, argv);
+    runTest(new TestUSAstfemMath, status, argc, argv);
     runTest(new TestUSDataFiles, status, argc, argv);
     runTest(new TestUSCrc, status, argc, argv);
     runTest(new TestUSCrypto, status, argc, argv);
@@ -41,6 +44,7 @@ int main(int argc, char *argv[])
     runTest(new TestUSMath2, status, argc, argv);
     runTest(new TestUSMatrix, status, argc, argv);
     runTest(new TestUSMemory, status, argc, argv);
+    runTest(new TestUSProject, status, argc, argv);
     runTest(new TestUSSettings, status, argc, argv);
     runTest(new TestUSTimeState, status, argc, argv);
     runTest(new TestUSSimparms, status, argc, argv);

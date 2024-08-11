@@ -28,7 +28,8 @@ add_library(utils SHARED
         us_astfem_math.cpp us_astfem_math.h
         us_gzip.cpp us_gzip.h
         us_settings.cpp us_settings.h
-        us_eprofile.cpp us_eprofile.h)
+        us_eprofile.cpp us_eprofile.h
+        us_project.cpp us_project.h)
 
 # Ensure debug information is included
 target_compile_options(utils PRIVATE -g -O0)
