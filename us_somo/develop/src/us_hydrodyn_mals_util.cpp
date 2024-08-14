@@ -5894,3 +5894,8 @@ void US_Hydrodyn_Mals::extc_info( const QString & msg ) {
 
    TSO << "============================================================\n";
 }
+
+void US_Hydrodyn_Mals::load_saxs_ref() {
+   qDebug() << "slot load_saxs_ref()";
+}
+
