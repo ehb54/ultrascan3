@@ -5899,3 +5899,6 @@ void US_Hydrodyn_Mals::load_saxs_ref() {
    qDebug() << "slot load_saxs_ref()";
 }
 
+void US_Hydrodyn_Mals::fitting() {
+   qDebug() << "slot fitting()";
+}

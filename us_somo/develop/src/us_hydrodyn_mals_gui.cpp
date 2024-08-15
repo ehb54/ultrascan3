@@ -405,6 +405,12 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_create_istar_q->setPalette( PALET_PUSHB );
    connect(pb_create_istar_q, SIGNAL(clicked()), SLOT(create_istar_q()));
    
+   pb_fitting = new QPushButton(us_tr("Fitting"), this);
+   pb_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_fitting->setMinimumHeight(minHeight1);
+   pb_fitting->setPalette( PALET_PUSHB );
+   connect(pb_fitting, SIGNAL(clicked()), SLOT(fitting()));
+   
    pb_load_conc = new QPushButton(us_tr("Conc. File"), this);
    pb_load_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_load_conc->setMinimumHeight(minHeight1);
@@ -3450,6 +3456,7 @@ void US_Hydrodyn_Mals::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
    hbl_file_buttons_4->addWidget ( pb_create_ihash_t );
    hbl_file_buttons_4->addWidget ( pb_create_istar_q );
+   hbl_file_buttons_4->addWidget ( pb_fitting );
 
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
@@ -3459,6 +3466,7 @@ void US_Hydrodyn_Mals::setupGUI()
    // hidden: files_widgets.push_back ( pb_create_i_of_q );
    files_widgets.push_back ( pb_create_ihash_t );
    files_widgets.push_back ( pb_create_istar_q );
+   files_widgets.push_back ( pb_fitting );
 
    QBoxLayout * hbl_conc_file = new QHBoxLayout(); hbl_conc_file->setContentsMargins( 0, 0, 0, 0 ); hbl_conc_file->setSpacing( 0 );
    // hbl_conc_file->addWidget ( pb_repeak );
@@ -4650,6 +4658,7 @@ void US_Hydrodyn_Mals::update_enables()
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
    pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && mals_param_n && mals_param_lambda && mals_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
    pb_create_istar_q     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_ihasht );
+   pb_fitting            ->setEnabled( false );
    pb_load_conc          ->setEnabled( true );
    pb_load_saxs_ref      ->setEnabled( true );
    // pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
@@ -4982,6 +4991,8 @@ void US_Hydrodyn_Mals::disable_all()
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
    pb_create_ihash_t     ->setEnabled( false );
+   pb_create_istar_q     ->setEnabled( false );
+   pb_fitting            ->setEnabled( false );
    pb_load_conc          ->setEnabled( false );
    pb_load_saxs_ref      ->setEnabled( false );
    pb_conc_file          ->setEnabled( false );
