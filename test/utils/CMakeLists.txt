@@ -7,7 +7,8 @@ find_package(MySQL)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/utils
-        ${CMAKE_SOURCE_DIR}/test/utils)
+        ${CMAKE_SOURCE_DIR}/test/utils
+        ${GTEST_INCLUDE_DIRS})
 
 # Add the test executable
 add_executable(test_us_utils
@@ -28,14 +29,16 @@ add_executable(test_us_utils
         test_us_analyte.cpp test_us_analyte.h
         test_us_astfem_math.cpp test_us_astfem_math.h
         test_us_project.cpp test_us_project.h
-        ../../utils/us_project.h ../../utils/us_project.cpp)
+        mock/mock_us_db2.h
+        test_us_project_gtest.cpp test_us_project_gtest.h
+        test_mock_us_db2.cpp test_mock_us_db2.h)
 
 # Link the utils library and Qt libraries to the test executable
 target_link_libraries(test_us_utils utils
         Qt5::Core
         Qt5::Test
         Qt5::Xml
-        )
+        gmock gtest)
 
 # Add the test to CTest
 add_test(NAME test_us_utils COMMAND test_us_utils)

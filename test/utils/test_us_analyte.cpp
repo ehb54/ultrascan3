@@ -93,6 +93,9 @@ void TestUSAnalyte::testWrite()
     // Load the file back and verify its contents
     US_Analyte loadedAnalyte;
     result = loadedAnalyte.load(false, analyte.analyteGUID);
+
+    qDebug() << "loadedAnalyte == analyte is " << (loadedAnalyte == analyte);
+    QCOMPARE(loadedAnalyte, analyte);
     QCOMPARE(result, US_DB2::OK);
     QCOMPARE(loadedAnalyte.description, QString("Test Analyte"));
     QCOMPARE(loadedAnalyte.sequence, QString("ATCG"));

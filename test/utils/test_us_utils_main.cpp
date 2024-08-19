@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <QtTest>
+#include <gtest/gtest.h>
 #include "test_us_util.h"
 #include "test_us_ana_profile.h"
 #include "test_us_analyte.h"
@@ -22,6 +23,11 @@ void runTest(QObject *test, int &status, int argc, char *argv[])
 {
     status |= QTest::qExec(test, argc, argv);
     delete test;
+}
+
+void runGTest(int &status, int argc, char *argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    status |= RUN_ALL_TESTS();
 }
 
 // Main function: entry point for the test application
@@ -48,6 +54,9 @@ int main(int argc, char *argv[])
     runTest(new TestUSSettings, status, argc, argv);
     runTest(new TestUSTimeState, status, argc, argv);
     runTest(new TestUSSimparms, status, argc, argv);
+
+    // Run GoogleTest-based tests
+    runGTest(status, argc, argv);
 
     return status;
 }

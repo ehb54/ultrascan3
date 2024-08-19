@@ -208,7 +208,7 @@ class US_UTIL_EXTERN US_DB2
 
         \param sqlQuery  A string containing the US3 query to execute.
     */
-    void          query       ( const QString& );
+    virtual void          query       ( const QString& );
 
     //! \brief A \a method to generate and make a CALL to the database
     //!        and automatically add the user's guid and
@@ -217,14 +217,14 @@ class US_UTIL_EXTERN US_DB2
     //!  CALL function_name( guid, pw, [arg1,] ... )
     //!  \param arguments A list that contains the function name and any 
     //!                   additional arguments needed.
-    void          query       ( const QStringList& );
+    virtual void          query       ( const QStringList& );
     
     /*! \brief Fetches the next row in the result set, if one exists. 
         Returns TRUE if the operation has been successful, or FALSE 
         if there are no more rows. Use the value() function to 
         retrieve the individual values in the row.
     */
-    bool          next        ( void );
+    virtual bool          next        ( void );
 
     /*! \brief Returns the value of one column in the current row of
         the result set. This function can be called repeatedly to retrieve
@@ -235,7 +235,7 @@ class US_UTIL_EXTERN US_DB2
 
         \param index   The column number in the current row. 
     */
-    QVariant      value       ( unsigned );
+    virtual QVariant      value       ( unsigned );
                   
     /*! \brief Returns TRUE if the US3 system is connected to a database,
         or returns FALSE otherwise.
@@ -342,12 +342,12 @@ class US_UTIL_EXTERN US_DB2
         status code itself to determine what went wrong, or you can call lastError()
         for a text string describing the error. 
     */
-    int           lastErrno   ( void ) { return db_errno;  };
+    virtual int           lastErrno   ( void ) { return db_errno;  };
 
     /*! \brief Returns the ID of the row resulting from the most recent INSERT or
         UPDATE statement. 
     */
-    int           lastInsertID( void );
+    virtual int           lastInsertID( void );
     
     /*! \brief Returns the most recent debug statement. This is only used in the
                development of the MySQL stored routines. To use it, one would
