@@ -80,6 +80,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnZoom->setCheckable( true );
    btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnZoom->setFont( buttonFont );
+   btnZoom->setIconSize ( QSize( 20, 20 ) );
+   btnZoom->setFixedSize( QSize( 40, 50 ) );
    connect( btnZoom, SIGNAL( toggled( bool ) ), SLOT( zoom( bool ) ) );
 
    QToolButton* btnCSV = new QToolButton( toolBar );
@@ -87,6 +89,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnCSV->setIcon( US_Images::getIcon( US_Images::TABLE ) );
    btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnCSV->setFont( buttonFont );
+   btnCSV->setIconSize ( QSize( 20, 20 ) );
+   btnCSV->setFixedSize( QSize( 40, 50 ) );
    connect( btnCSV, SIGNAL( clicked() ), SLOT( csv() ) );
 
    QToolButton* btnPrint = new QToolButton( toolBar );
@@ -94,6 +98,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnPrint->setIcon( QIcon( QPixmap( print_xpm ) ) );
    btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPrint->setFont( buttonFont );
+   btnPrint->setIconSize ( QSize( 20, 20 ) );
+   btnPrint->setFixedSize( QSize( 40, 50 ) );
    connect( btnPrint, SIGNAL( clicked() ), SLOT( print() ) );
 
    QToolButton* btnSVG = new QToolButton( toolBar );
@@ -101,6 +107,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnSVG->setIcon( QIcon( QPixmap( vec_xpm ) ) );
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnSVG->setFont( buttonFont );
+   btnSVG->setIconSize ( QSize( 20, 20 ) );
+   btnSVG->setFixedSize( QSize( 40, 50 ) );
    connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
 
    QToolButton* btnPNG = new QToolButton( toolBar );
@@ -108,6 +116,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnPNG->setIcon( QIcon( QPixmap( ras_xpm ) ) );
    btnPNG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPNG->setFont( buttonFont );
+   btnPNG->setIconSize ( QSize( 20, 20 ) );
+   btnPNG->setFixedSize( QSize( 40, 50 ) );
    connect( btnPNG, SIGNAL( clicked() ), SLOT( png() ) );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
@@ -115,6 +125,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnConfig->setIcon(QIcon( QPixmap( configure_32_xpm ) ) );
    btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnConfig->setFont( buttonFont );
+   btnConfig->setIconSize ( QSize( 20, 20 ) );
+   btnConfig->setFixedSize( QSize( 40, 50 ) );
    connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
 
    btnCMap                = new QToolButton( toolBar );
