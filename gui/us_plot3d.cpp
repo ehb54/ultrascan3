@@ -977,7 +977,11 @@ void US_Plot3D::replot()
 {
    unsigned int kcols = (unsigned int)ncols;
    unsigned int krows = (unsigned int)nrows;
+    double dx = (xmax - xmin) / (ncols - 1);
+    double dy = (ymax - ymin) / (nrows - 1);
 
+    double tmin = DBL_MAX;
+    double tmax = -DBL_MAX;
    double** wdata = new double* [ ncols ];
 DbgLv(2) << "P3D: replot: ncols nrows" << ncols << nrows;
 
@@ -993,6 +997,12 @@ if ((ii&63)==1) DbgLv(2) << "P3D:  rp: row" << ii;
       {
          double zval       = zdata[ ii ][ jj ];
          wdata[ ii ][ jj ] = zval;
+         QVector<double> temp;
+         temp.clear();
+         temp << xmin + ii*dx << ymin + jj*dy << zdata[ii][jj];
+         Triple t = Triple( xmin + ii*dx, ymin + jj*dy, zdata[ii][jj] );
+         tdata[ ii ][ jj ] = t;
+         zdata << temp;
          zdmx              = zdmx > zval ? zdmx : zval;
 if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
  << "  wdat" << zval;
@@ -1147,6 +1157,7 @@ void US_Plot3D::replot( bool hold_color )
                double yval       = ( yroff - tdata[ kk ][ jj ].y );
                double zval       = tdata[ kk ][ jj ].z;
                wdata[ ii ][ jj ] = Triple( xval, yval, zval );
+               tdata[ ii ][ jj ] = Triple( xval, yval, zval );
             }
          }
       }
@@ -1205,6 +1216,9 @@ void US_Plot3D::replot( bool hold_color )
          {
             double zval       = zdata[ ii ][ jj ];
             wddat[ ii ][ jj ] = zval;
+            Triple t = tdata[ ii ][ jj ];
+            t.z = zval;
+            tdata[ ii ][ jj ] = t;
             zdmx              = qMax( zdmx, zval );
             if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
                                                  << "  wdat" << zval;
@@ -2328,6 +2342,16 @@ void US_Plot3D::dump_contents()
                }
             }
             myFile.flush();}
+         else {
+            out << xatitle << ", " << yatitle << ", " << zatitle;
+            out << Qt::endl;
+            for ( int ii = 0; ii < tdata.size(); ii++){
+               for ( int jj = 0; jj < tdata.first().size(); jj++){
+                  out << QString::number(tdata[ii][jj].x) << ", " << QString::number(tdata[ii][jj].y) << ", " << QString::number(tdata[ii][jj].z) << Qt::endl;
+               }
+            }
+            myFile.flush();
+         }
 
          myFile.close();
          ok = true;}
