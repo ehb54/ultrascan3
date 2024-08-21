@@ -12,6 +12,7 @@ add_library(utils SHARED
         us_report_gmp.h
         us_util.cpp
         us_util.h
+        us_buffer.cpp us_buffer.cpp
         us_constants.cpp
         us_constants.h
         us_crc.cpp
@@ -26,6 +27,9 @@ add_library(utils SHARED
         us_db2.cpp us_db2.h
         us_timer.cpp us_timer.h
         us_astfem_math.cpp us_astfem_math.h
+        us_astfem_rsa.cpp us_astfem_rsa.h
+        us_model.cpp us_model.h
+        us_stiffbase.cpp us_stiffbase.h
         us_gzip.cpp us_gzip.h
         us_settings.cpp us_settings.h
         us_eprofile.cpp us_eprofile.h

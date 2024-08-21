@@ -1,0 +1,10 @@
+#ifndef ULTRASCANTEST_TEST_US_ASTFEM_RSA_H
+#define ULTRASCANTEST_TEST_US_ASTFEM_RSA_H
+
+
+class test_us_astfem_rsa {
+
+};
+
+
+#endif //ULTRASCANTEST_TEST_US_ASTFEM_RSA_H

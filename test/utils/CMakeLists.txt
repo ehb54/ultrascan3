@@ -31,7 +31,7 @@ add_executable(test_us_utils
         test_us_project.cpp test_us_project.h
         mock/mock_us_db2.h
         test_us_project_gtest.cpp test_us_project_gtest.h
-        test_mock_us_db2.cpp test_mock_us_db2.h)
+        test_mock_us_db2.cpp test_mock_us_db2.h test_us_astfem_rsa.cpp test_us_astfem_rsa.h test_us_stiffbase.cpp test_us_stiffbase.h test_us_model.cpp test_us_model.h)
 
 # Link the utils library and Qt libraries to the test executable
 target_link_libraries(test_us_utils utils

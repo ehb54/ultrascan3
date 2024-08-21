@@ -1,0 +1,10 @@
+#ifndef ULTRASCANTEST_TEST_US_STIFFBASE_H
+#define ULTRASCANTEST_TEST_US_STIFFBASE_H
+
+
+class test_us_stiffbase {
+
+};
+
+
+#endif //ULTRASCANTEST_TEST_US_STIFFBASE_H
