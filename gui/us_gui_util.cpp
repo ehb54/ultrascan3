@@ -164,7 +164,10 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          {
             max_length = y_data.size();
          }
-         export_data << x_data << y_data;
+         if ( data->size() > 0 || (x_data.size() > 1 && y_data.size() > 1) )
+         { // Only add data if there is data to add
+            export_data << x_data << y_data;
+         }
       }
       QString z_axis_title;
       if ( !plot->itemList( QwtPlotItem::Rtti_PlotSpectrogram ).isEmpty() )
@@ -222,7 +225,14 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          {
             max_length = y_data.size();
          }
-         export_data << x_data << y_data << z_data;
+         if ( max_length < z_data.size() )
+         {
+            max_length = z_data.size();
+         }
+         if ( x_data.size() > 1 && y_data.size() > 1 && z_data.size() > 1 )
+         { // Only add data if there is data to add
+            export_data << x_data << y_data << z_data;
+         }
       }
       // iterate over all entries to ensure a proper csv format
       for (auto & i : export_data)
