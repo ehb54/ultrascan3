@@ -35,7 +35,7 @@ void TestUSDataFiles::cleanupTestCase()
 void TestUSDataFiles::test_no_existing_files()
 {
     bool newFile;
-    QString guid = "12345";
+    QString guid = "123456";
     QString lfchar = "M";
     QString lkupTag = "model";
     QString lkupAtt = "guid";
