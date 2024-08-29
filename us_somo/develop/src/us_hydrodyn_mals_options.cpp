@@ -836,16 +836,6 @@ void US_Hydrodyn_Mals_Options::setupGUI()
 
    if ( !parameters->count( "expert_mode" ) )
    {
-      // lbl_baseline     ->hide();
-      // rb_linear        ->hide();
-      // rb_integral      ->hide();
-      // lbl_smooth       ->hide();
-      // le_smooth        ->hide();
-      // lbl_reps         ->hide();
-      // le_reps          ->hide();
-      // lbl_epsilon      ->hide();
-      // le_epsilon       ->hide();
-
       // lbl_gaussian_type->hide();
       // rb_gauss         ->hide();
       // rb_gmg           ->hide();
@@ -864,9 +854,29 @@ void US_Hydrodyn_Mals_Options::setupGUI()
       le_i_power          ->hide();
    }
 
-   cb_save_bl       ->hide();
-   lbl_start_region ->hide();
-   le_start_region  ->hide();
+   cb_save_bl                 ->hide();
+   lbl_start_region           ->hide();
+   le_start_region            ->hide();
+
+   lbl_baseline               ->hide();
+   rb_linear                  ->hide();
+   rb_integral                ->hide();
+   lbl_smooth                 ->hide();
+   le_smooth                  ->hide();
+   lbl_reps                   ->hide();
+   le_reps                    ->hide();
+   lbl_epsilon                ->hide();
+   le_epsilon                 ->hide();
+   lbl_zi_window              ->hide();
+   le_zi_window               ->hide();
+   cb_discard_it_sd_mult      ->hide();
+   le_discard_it_sd_mult      ->hide();
+   lbl_mwt_k                  ->hide();
+   le_mwt_k                   ->hide();
+   lbl_mwt_c                  ->hide();
+   le_mwt_c                   ->hide();
+   lbl_mwt_qmax               ->hide();
+   le_mwt_qmax                ->hide();
 }
 
 void US_Hydrodyn_Mals_Options::quit()
