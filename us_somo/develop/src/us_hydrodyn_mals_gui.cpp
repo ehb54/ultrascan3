@@ -4620,7 +4620,7 @@ void US_Hydrodyn_Mals::update_enables()
    baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_bl_integral" ] == "true";
 
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
-   pb_timeshift          ->setEnabled( files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
+   pb_timeshift          ->setEnabled( (int64_t)files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
    pb_timescale          ->setEnabled( files_selected_count && files_are_time && conc_selected_count == files_selected_count );
    pb_gauss_mode         ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
