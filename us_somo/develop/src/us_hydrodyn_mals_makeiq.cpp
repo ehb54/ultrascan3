@@ -3718,6 +3718,23 @@ bool US_Hydrodyn_Mals::create_istar_q_ng( QStringList files, double t_min, doubl
    progress->reset();
    if ( star_names.size() ) {
       set_selected( star_names );
+      update_csv_conc();
+      for ( auto & conc_data : csv_conc.data ) {
+         if ( star_names.count( conc_data[ 0 ] )
+              && f_conc.count( conc_data[ 0 ] ) ) {
+            conc_data[ 1 ] = QString( "%1" ).arg( f_conc[ conc_data[ 0 ] ] );
+         }
+      }
+         
+      if ( conc_widget )
+      {
+         if ( lb_files->count() )
+         {
+            conc_window->refresh( csv_conc );
+         } else {
+            conc_window->cancel();
+         }
+      }
    }
    update_enables();
    return true;
