@@ -147,7 +147,7 @@ class US_UTIL_EXTERN US_DB2
         \param masterPW Master password to decrypt DB password
         \param err      A reference to a string for error responses.
     */
-    bool          connect     ( const QString&, QString& );
+    virtual bool          connect     ( const QString&, QString& );
 
     /*! \brief Connects to a database using authentication parameters
         supplied in the argument list.
@@ -158,7 +158,7 @@ class US_UTIL_EXTERN US_DB2
         \param password The unencrypted password for the database/user.
         \param error    A reference to a string for error responses.
     */
-    bool          connect     ( const QString&, const QString&, 
+    virtual bool          connect     ( const QString&, const QString&,
                                 const QString&, const QString&, 
                                 QString& );
 
@@ -177,7 +177,7 @@ class US_UTIL_EXTERN US_DB2
 
         \param sqlQuery    A string containing the US3 query to execute.
     */
-    int           statusQuery ( const QString& );
+    virtual int           statusQuery ( const QString& );
 
     /*! \brief An overloaded method that builds the statusQuery string from
         the passed arguments and the stored DB settings.
@@ -185,7 +185,7 @@ class US_UTIL_EXTERN US_DB2
         \param arguments A list that contains the function name and any 
                          additional arguments needed.
     */
-    int           statusQuery ( const QStringList& );
+    virtual int           statusQuery ( const QStringList& );
 
     /*! \brief Implements a query on the active database connection, 
         cleaning up any unused results from a previous query. FunctionQuery()
@@ -245,7 +245,7 @@ class US_UTIL_EXTERN US_DB2
     /*! \brief Returns the number of rows returned in the current result
         set. 
     */
-    int           numRows     ( void );
+    virtual int           numRows     ( void );
 
     /*! \brief Loads raw binary data from a file and writes it to the
                database. This makes writing a record with binary information
@@ -334,7 +334,7 @@ class US_UTIL_EXTERN US_DB2
         you wish to determine if there has been an error, call lastErrno() first
         and then call lastError() to find out what the error was.
     */
-    QString       lastError   ( void ) { return error;  };
+    virtual QString       lastError   ( void ) { return error;  };
 
     /*! \brief Returns the integer status code of the most recent query performed
         by the US3 database system. If a query did not result in an error, then 

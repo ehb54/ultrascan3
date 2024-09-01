@@ -15,12 +15,12 @@ on:
   push:
     branches: 
      - master
-     - aaron-dev-test
+     - aaron-dev-test-utils
   pull_request:
     # The branches below must be a subset of the branches above
     branches: 
      - master
-     - aaron-dev-test
+     - aaron-dev-test-utils
   schedule:
     - cron: '20 18 * * 1'
 
@@ -49,6 +49,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          queries: ./admin/codeql/custom-queries/cpp
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.mpi local.pri
@@ -87,6 +88,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          queries: ./admin/codeql/custom-queries/cpp
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri

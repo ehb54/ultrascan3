@@ -4,7 +4,7 @@ TEST_F(TestUsProjectGtest, SimplifiedTest) {
     int projectID = 123;
 
     NiceMock<MockUS_DB2> mockDB;
-    testing::Mock::AllowLeak(&mockDB);
+    Mock::AllowLeak(&mockDB);
 
       EXPECT_CALL(mockDB, next())
             .WillOnce(Return(true));  // Simplified to Return(true)
@@ -18,7 +18,7 @@ TEST_F(TestUsProjectGtest, TestReadFromDBSuccess) {
     int projectID = 123;
 
     NiceMock<MockUS_DB2> mockDB;
-    testing::Mock::AllowLeak(&mockDB);
+    Mock::AllowLeak(&mockDB);
 
     EXPECT_CALL(mockDB, query(_))
             .WillOnce([]() {
@@ -83,7 +83,7 @@ TEST_F(TestUsProjectGtest, TestReadFromDBFailure) {
     int projectID = 123;
 
     NiceMock<MockUS_DB2> mockDB;
-    testing::Mock::AllowLeak(&mockDB);
+    Mock::AllowLeak(&mockDB);
 
     // Set up the expected sequence of calls and returns
     EXPECT_CALL(mockDB, query(_))
