@@ -1,0 +1,4 @@
+name: ultrascan3-cpp-queries
+version: 0.0.1
+dependencies:
+  codeql/cpp-all: "*"
