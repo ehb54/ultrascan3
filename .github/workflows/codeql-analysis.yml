@@ -180,7 +180,6 @@ jobs:
       - name: Configure and build
         run: |
           apt-get install -y cmake
-          apt-get install libmysqlclient-dev
           bdir=`pwd`
           echo $bdir
           pwd
@@ -191,6 +190,11 @@ jobs:
           cd build
           cmake .. 
           make -j4 
+
+      - name: Run a specific test
+        run: |
+          cd build
+          ./test_us_utils --gtest_filter=US_StiffBaseTest.CompLocalStifComputesCorrectly
 
       - name: Run tests
         run: |
