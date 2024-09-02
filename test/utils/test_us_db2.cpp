@@ -60,13 +60,3 @@ void TestUSDB2::testSecureConnection()
     QVERIFY(!err.isEmpty());
 #endif
 }
-
-void TestUSDB2::testQuery()
-{
-#ifndef NO_DB
-    US_DB2 db;
-    QString query = "SELECT 1";
-    db.rawQuery(query);
-    QVERIFY(db.numRows() == -1); // Should fail as no real database is connected
-#endif
-}

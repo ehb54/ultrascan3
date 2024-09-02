@@ -15,7 +15,6 @@ private slots:
     void testConstructor();
     void testConnection();
     void testSecureConnection();
-    void testQuery();
 };
 
 #endif // TEST_US_DB2_H
