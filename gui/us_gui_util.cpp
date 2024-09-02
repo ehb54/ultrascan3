@@ -6,6 +6,8 @@
 #include "us_settings.h"
 #if QT_VERSION > 0x050000
 #include "qwt_plot_renderer.h"
+#include "us_spectrodata.h"
+
 #endif
 
 // Save SVG+PNG or PNG file
@@ -147,8 +149,8 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          x_data.clear();
          QVector<QString> y_data;
          y_data.clear();
-         x_data << item->title().text() + " " + x_axis_title;
-         y_data << item->title().text() + " " + y_axis_title;
+         x_data << QString("\"") + item->title().text() + " " + x_axis_title + QString("\"");
+         y_data << QString("\"") + item->title().text() + " " + y_axis_title + QString("\"");
          const QwtSeriesData<QPointF>* data = item->data();
          for (size_t i = 0; i < data->size(); i++)
          {
@@ -188,29 +190,28 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          qDebug() << item->interval( Qt::XAxis ).minValue() << item->interval( Qt::XAxis ).maxValue();
          qDebug() << item->interval( Qt::YAxis ).minValue() << item->interval( Qt::YAxis ).maxValue();
          qDebug() << item->boundingRect().bottomLeft() << item->boundingRect().topRight();
-         QwtRasterData* data = item->data();
+         US_SpectrogramData* data = dynamic_cast<US_SpectrogramData*>(item->data());
          // create two Vectors for x and y respective
+         QSize raster_size;
+         QRectF rect;
+         // Get the raster data from US_SpectrogramData
+         data->initRaster( rect, raster_size );
          QVector<QString> x_data;
          x_data.clear();
          QVector<QString> y_data;
          y_data.clear();
          QVector<QString> z_data;
-         x_data << item->title().text() + " " + x_axis_title;
-         y_data << item->title().text() + " " + y_axis_title;
-         z_data << item->title().text() + " " + z_axis_title;
+         x_data << QString("\"") + item->title().text() + " " + x_axis_title + QString("\"");
+         y_data << QString("\"") + item->title().text() + " " + y_axis_title + QString("\"");
+         z_data << QString("\"") + item->title().text() + " " + z_axis_title + QString("\"");
          // Get the matrix data
-         int rows = 300;
-         int cols = 300;
-         QRectF rect = item->boundingRect();
-
-         double dx = rect.width() / (cols - 1);
-         double dy = rect.height() / (rows - 1);
+         int rows = raster_size.width();
+         int cols = raster_size.height();
 
          for (int row = 0; row < rows; ++row) {
             for (int col = 0; col < cols; ++col) {
-               double x = rect.left() + col * dx;
-               double y = rect.top() + row * dy;
-               double z = data->value(col, row);
+               double x, y, z;
+               data->value( row, col, x, y, z );
                x_data << QString::number(x);
                y_data << QString::number(y);
                z_data << QString::number(z);
@@ -271,7 +272,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
    }
 
    else
-   {  // Mark error:  filename does not end with ".csv"
+   {  // Mark error: filename does not end with ".csv"
        status = 1;
    }
 
