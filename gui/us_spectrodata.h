@@ -95,6 +95,14 @@ public:
    //! \return   The real Z value for raster location X,Y.
    virtual double value( double, double ) const;
 
+   //! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
+   //! \param x  The X pixel location for which to fetch Z.
+   //! \param y  The Y pixel location for which to fetch Z.
+   //! \param x_out  The real X value for raster location XY
+   //! \param y_out  The real Y value for raster location XY
+   //! \param z_out  The real Z value for raster location XY
+   void value( int, int, double&, double&, double& ) const;
+
    //! \brief Sets up the internal raster, based on a set of Solute points.
    //! \param solu  Pointer to list of solution points for the current distribution.
    void setRaster( QList< S_Solute >* );
