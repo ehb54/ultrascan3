@@ -42,6 +42,26 @@ enable_testing()
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
+# Attempt to find the MySQL header files
+find_path(MYSQL_INCLUDE_DIR
+        NAMES mysql.h
+        PATHS /usr/include /usr/local/include /usr/include/mysql /usr/local/include/mysql /usr/local/opt/mysql-client/include
+        )
+
+# Attempt to find the MySQL library files
+find_library(MYSQL_LIBRARY
+        NAMES mysqlclient
+        PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /usr/local/lib/x86_64-linux-gnu /usr/local/opt/mysql-client/lib
+        )
+
+# Check if both the header and library were found
+if(MYSQL_INCLUDE_DIR AND MYSQL_LIBRARY)
+    message(STATUS "MySQL include directory: ${MYSQL_INCLUDE_DIR}")
+    message(STATUS "MySQL library: ${MYSQL_LIBRARY}")
+else()
+    message(FATAL_ERROR "MySQL not found. Please install MySQL development libraries.")
+endif()
+
 # Check for pkg-config and find MySQL client
 find_package(PkgConfig REQUIRED)
 pkg_search_module(MYSQL REQUIRED mysqlclient)
@@ -52,7 +72,3 @@ link_directories(${MySQL_LIBRARY_DIRS} ${OPENSSL_LIBRARY_DIRS})
 # Include the src subdirectory
 add_subdirectory(utils)
 add_subdirectory(test)
-
-# Optionally print the paths for debugging
-message(STATUS "MySQL include directory: ${MYSQL_INCLUDE_DIR}")
-message(STATUS "MySQL libraries: ${MYSQL_LIBRARY}")
