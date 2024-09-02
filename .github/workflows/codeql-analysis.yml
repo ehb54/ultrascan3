@@ -180,6 +180,7 @@ jobs:
       - name: Configure and build
         run: |
           apt-get install -y cmake
+          apt-get install libmysqlclient-dev
           bdir=`pwd`
           echo $bdir
           pwd
