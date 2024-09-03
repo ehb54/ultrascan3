@@ -296,7 +296,7 @@ class US_Edit : public US_Widgets
       int                nwaveln;
       int                nwavelo;
       int                maxwavl;
-      int                nrpoint;
+      // int                nrpoint;
       int                ncelchn;
       int                ntriple;
 
@@ -312,6 +312,7 @@ class US_Edit : public US_Widgets
       QVector< QVector< int > >     wavelns_i;
 
       QVector< QVector< double > >  rdata;
+      QVector< QVector< double > >  rdata_xvals;
 
       QString filename_runID_passed;
       QString filename_runID_auto;
@@ -396,6 +397,8 @@ class US_Edit : public US_Widgets
       bool isSet_to_analyse_triple( QString, QString  );
       bool isSet_to_edit_triple( QString, QString );
       bool isSet_edit_info_for_channel( QString, QString );
+      void set_data_over_lamda();
+      void xaxis_wavl_wgts_on( bool );
       
    private slots:         
       void load              ( void );
