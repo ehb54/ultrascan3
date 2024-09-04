@@ -45,15 +45,30 @@ void TestUSMath2::test_linefit()
 
     // Compare slope with tolerance
     QVERIFY2(qAbs(slope - 2.0) < tolerance, qPrintable(QString("Expected slope: 2.0, but got: %1").arg(slope)));
+
     // Compare intercept with tolerance
     QVERIFY2(qAbs(intercept - 0.0) < tolerance, qPrintable(QString("Expected intercept: 0.0, but got: %1").arg(intercept)));
 
-    qDebug() << "Test is under review https://github.com/ehb54/ultrascan-tickets/issues/335";
-    // Compare sigma with tolerance (should be zero since data is perfectly linear)
-    // QVERIFY2(qAbs(sigma - 0.0) < tolerance, qPrintable(QString("Expected sigma: 0.0, but got: %1").arg(sigma)));
+    // Calculate the expected sigma as implemented in linefit
+    double sumy = 0.0;
+    for (int i = 0; i < arraysize; i++) {
+        sumy += y[i];
+    }
+    double calculated_average = sumy / arraysize;
+
+    double sumchi_sq = 0.0;
+    for (int i = 0; i < arraysize; i++) {
+        sumchi_sq += (y[i] - calculated_average) * (y[i] - calculated_average);
+    }
+    double expected_sigma = std::sqrt(sumchi_sq) / arraysize; // Match the linefit function's calculation
+
+    // Compare sigma with the expected value
+    QVERIFY2(qAbs(sigma - expected_sigma) < tolerance, qPrintable(QString("Expected sigma: %1, but got: %2").arg(expected_sigma).arg(sigma)));
+
     // Compare correlation with tolerance (should be 1 for perfectly linear data)
     QVERIFY2(qAbs(correlation - 1.0) < tolerance, qPrintable(QString("Expected correlation: 1.0, but got: %1").arg(correlation)));
 }
+
 
 void TestUSMath2::test_nearest_curve_point()
 {
