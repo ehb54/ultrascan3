@@ -1216,7 +1216,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
 
-   QLabel*      lb_operator   = us_label( tr( "Select Operator:" ) );
+                lb_operator   = us_label( tr( "Select Operator:" ) );
                 cb_operator   = new QComboBox( this );
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );

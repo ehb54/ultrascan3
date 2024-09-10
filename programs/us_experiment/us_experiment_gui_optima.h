@@ -161,6 +161,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox* cb_rotor;                            // Rotor combo box
       QComboBox* cb_calibr;                           // Calibration combo box
       QComboBox* cb_operator;                         // Operator combo box
+      QLabel*    lb_operator;
       QComboBox* cb_exptype;                          // Exp. Type combo box
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
