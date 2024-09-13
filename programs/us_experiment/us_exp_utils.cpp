@@ -1016,9 +1016,13 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    //setCbCurrentText( cb_optima,   optima_name );    // <-- NOT ENOUGH, no connection check
 
    //operator
+   qDebug() << "init Labs: operID + name -- "
+	    << QString::number( rpRotor->operID ) + ": " + rpRotor->opername;
+   
    setCbCurrentText( cb_operator, QString::number( rpRotor->operID ) + ": "
                                 + rpRotor->opername );
 
+   qDebug() << "init Labs: operator text: " << cb_operator->currentText();
 
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
@@ -1076,8 +1080,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        lb_smes_to_assign -> hide();
        te_smes_to_assign -> hide();
        pb_remove_sme     -> hide();
-            
+
+       //show Operator Info:
+       lb_operator -> setVisible(true);
+       cb_operator -> setVisible(true);
      }
+
 
    expType_old = cb_exptype ->currentText();
 
@@ -1453,7 +1461,40 @@ void US_ExperGuiRotor::savePanel()
    QString lab          = cb_lab   ->currentText();
    QString rot          = cb_rotor ->currentText();
    QString cal          = cb_calibr->currentText();
-   QString oper         = cb_operator->currentText();
+
+   //And save info on selected assigned oper(s) & rev(s)
+   QString oper_list = te_opers_to_assign->toPlainText();
+   QString rev_list  = te_revs_to_assign->toPlainText();
+   QString appr_list = te_apprs_to_assign->toPlainText();
+   QString sme_list  = te_smes_to_assign->toPlainText();
+   
+   rpRotor->operListAssign = oper_list;
+   rpRotor->revListAssign  = rev_list;
+   rpRotor->apprListAssign = appr_list;
+   rpRotor->smeListAssign  = sme_list;
+
+   qDebug() << "Lists of o,r,a: "
+	    << oper_list << rev_list << appr_list;
+   
+   //QString oper         = cb_operator->currentText();
+   QString oper;
+   if ( mainw->usmode )
+     oper = cb_operator->currentText();
+   else
+     {
+       QString oper_t       = oper_list.split("\n")[0];
+       qDebug() << "oper_t: " << oper_t;
+       if ( !oper_t.isEmpty() && oper_t.contains(".") )
+	 {
+	   QString oper_t_id    = oper_t.split(".")[0].simplified();
+	   QString oper_t_name  = oper_t.split(".")[1].simplified();
+	   QString oper_t_lname = oper_t_name.split(",")[0].simplified();
+	   QString oper_t_fname = oper_t_name.split(",")[1].simplified();
+	   
+	   oper = oper_t_id + ": " + oper_t_fname + " " + oper_t_lname;
+	 }
+     }
+   
    QString exptype      = cb_exptype ->currentText();
    QString instr        = cb_optima ->currentText();
 
@@ -1512,17 +1553,6 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    }
 
    qDebug() << "Rotor Save panel Done: " ;
-
-   //And save info on selected assigned oper(s) & rev(s)
-   QString oper_list = te_opers_to_assign->toPlainText();
-   QString rev_list  = te_revs_to_assign->toPlainText();
-   QString appr_list = te_apprs_to_assign->toPlainText();
-   QString sme_list  = te_smes_to_assign->toPlainText();
-   
-   rpRotor->operListAssign = oper_list;
-   rpRotor->revListAssign  = rev_list;
-   rpRotor->apprListAssign = appr_list;
-   rpRotor->smeListAssign  = sme_list;
 
 
    //if ABDE expType -- translate to 8. AProfie
