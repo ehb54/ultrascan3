@@ -434,19 +434,15 @@ double US_Math_BF::Band_Forming_Gradient::norm(const double &beta) {
 }
 
 double US_Math_BF::Band_Forming_Gradient::eigenfunction(const int &beta, const double &x) {
-   const unsigned int cache_key = (unsigned int)(beta*x*1024);
-   double result = eigenfunction_cache.value(cache_key, 0.0);
-   if (result != 0.0){
+   // construct a unsigned int key for the cache having the smallest 5 decimal places for beta and filling the rest with digits from x
+   unsigned int cache_key = (unsigned int)(beta) + ((unsigned int)(x * 16384) * 16384);
+   if (eigenfunction_cache.contains(cache_key)) {
       eigenfunction_cache_used++;
-      return result;
-   }
-   else if (eigenfunction_cache.contains(cache_key)) {
-      eigenfunction_cache_used++;
-      return result;
+      return eigenfunction_cache.value(cache_key, 0.0);
    }
    else {
       double ev = eigenvalues[beta];
-      result = (bessel("J0",(ev * x)) * bessel("Y1",(ev * bottom))
+      double result = (bessel("J0",(ev * x)) * bessel("Y1",(ev * bottom))
                 - bessel("Y0",(ev * x)) * bessel("J1",(ev * bottom)));
       eigenfunction_cache.insert(cache_key,result);
       return result;
