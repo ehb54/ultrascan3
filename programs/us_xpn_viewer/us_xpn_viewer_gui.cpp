@@ -1805,6 +1805,9 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
    {
       prectype    = ptype_mw;
       plrecs      = sllmbs;
+
+      //TEST: from  protocol (lambdas ? )
+      plrecs      = sllmbs;
    }
    else
    {
