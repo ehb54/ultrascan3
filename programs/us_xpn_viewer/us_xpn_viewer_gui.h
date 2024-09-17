@@ -27,6 +27,9 @@
 #include "us_link_ssl.h"
 #include "us_sleep.h"
 
+#include "us_run_protocol.h"
+#include "us_protocol_util.h"
+
 class SpeedoMeter: public QwtDial
 {
 
@@ -312,6 +315,7 @@ class US_XpnDataViewer : public US_Widgets
      QString        ExpID_to_use;
      QString        ProtocolName;
      QString        RunName;
+     int            invID;
      
      QString        CellChNumber;
      QString        TripleNumber;
@@ -361,7 +365,7 @@ class US_XpnDataViewer : public US_Widgets
      void   end_process_all_data_avail ( void );
      
      void   reloadData_auto     ( void );
-  int    CheckExpComplete_auto( QString &, bool & );
+     int    CheckExpComplete_auto( QString &, bool & );
      void   update_autoflow_runId_timeStarted( void );
      int    read_timeElapsed_offset( void );
      void   delete_autoflow_record( void );
@@ -369,6 +373,8 @@ class US_XpnDataViewer : public US_Widgets
 
      int    read_autoflow_stages_record( int );
      void   revert_autoflow_stages_record( int );
+
+     void read_protocol_auto( void );
 
      //void   expStatFive( void );
      //void   expStatThree( void );

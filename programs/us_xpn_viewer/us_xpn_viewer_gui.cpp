@@ -22,6 +22,7 @@
 #include "us_images.h"
 #include "us_colorgradIO.h"
 #include "qwt_legend.h"
+#include "us_protocol_util.h"
 
 
 #if QT_VERSION < 0x050000
@@ -857,6 +858,7 @@ if(mcknt>0)
    protocol_details[ "OptimaName" ] = QString("Optima 2"); 
    protocol_details[ "duration" ]   = QString("86700");
    protocol_details[ "runID" ]      = QString("1706");
+   protocol_details[ "invID_passed" ] = QString("219");
   
    
    check_for_data( protocol_details );
@@ -1780,9 +1782,11 @@ void US_XpnDataViewer::enableControls_early_stage_auto( void )
    npoint      = allData[ 0 ].pointCount();
    ntpoint     = nscan * npoint;
    int ktrip   = ncellch * nlambda;
-   //isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
+   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
    //TEST
-   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 16 );
+   //isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 16 );
+   //END of test
+   
    cb_cellchn ->setEnabled( isMWL );
 
 DbgLv(1) << "ec: ncc nwl nsc npt ntpt" << ncellch << nlambda << nscan
@@ -2906,6 +2910,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
   RunName      = protocol_details[ "experimentName" ];
+  invID        = protocol_details[ "invID_passed" ].toInt();
   
   //CellChNumber = protocol_details[ "CellChNumber" ];            //ALEXEY: in autoflow, these should be QStringLists - #chanels && #triples for each OS
   //TripleNumber = protocol_details[ "TripleNumber" ];            // otherwise: if one OS, singke numbers, as currently
@@ -2970,6 +2975,12 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
       emit close_program(); 
       return;
     }
+
+  //Read protocol & infer cellchans and triples
+  read_protocol_auto();
+  qDebug() << "CellChans from Protocol: " << cellchans_from_protocol;
+  qDebug() << "Triples from Protocol: " << triples_from_protocol;
+  //exit(1);
   
   //link = new Link();
   
@@ -3018,6 +3029,48 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 	  reset_auto();
 
 	  emit close_program(); 
+	}
+    }
+}
+
+// read protocol
+void US_XpnDataViewer::read_protocol_auto ( void )
+{
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QString xmlstr( "" );
+  int idProtocol_read = US_ProtocolUtil::read_record_auto( ProtocolName, invID,  &xmlstr, NULL, &db );
+  qDebug() << "idProtocol_read -- " << idProtocol_read;
+  qDebug() << "Protocol READ !!! ";
+  
+  QXmlStreamReader xmli( xmlstr );
+  US_RunProtocol currProto;
+  currProto. fromXml( xmli );
+
+  //read ranges & compose cellchans and triples lists
+  cellchans_from_protocol. clear();
+  triples_from_protocol  . clear();
+  int nchan_ranges  = currProto. rpRange. nranges;
+  for ( int i=0; i < nchan_ranges; ++i )
+    {
+      QString channel_c        = currProto. rpRange. chrngs[i]. channel;  //Channel description ("2 / A, sample [right]")
+      QString channel_c_f      = channel_c.split(",")[0];
+      cellchans_from_protocol << channel_c_f;
+      QList< double > wvl_list = currProto. rpRange. chrngs[i].wvlens;
+      for (int j=0; j < wvl_list.size(); ++j )
+	{
+	  QString triple_c = channel_c_f + " / " + QString::number( wvl_list[j] );
+	  //triples_from_protocol << triple_c.replace(" ", "");
+	  triples_from_protocol << triple_c;
 	}
     }
 }
@@ -3732,8 +3785,8 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
  //TEST for hard-coded example: MartinR_pDNA_Mixes2_50K_20C_23AUG24
  // cellchans. clear();
  // cellchans << "1 / A" << "1 / B" << "2 / A" <<  "2 / B" <<  "3 / A" <<  "3 / B";
- cellchans_from_protocol = cellchans;
- cellchans_from_protocol << "5 / A" << "5 / B"; // non-existent !!!
+ // cellchans_from_protocol = cellchans;
+ // cellchans_from_protocol << "5 / A" << "5 / B"; // non-existent !!!
  // END TEST
  
    //First time setting Cell/Channs counter //////////////////////////////////////////////////////
@@ -3779,9 +3832,9 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 #if 1
    ntriple      = xpn_data->data_triples( triples );              // ALEXEY triples
    //TEST: triples from protocol
-   triples_from_protocol = triples;
-   triples_from_protocol << "2 / B / 333" << "5 / A / 280";
-   triples_from_protocol. sort();
+   // triples_from_protocol = triples;
+   // triples_from_protocol << "2 / B / 333" << "5 / A / 280";
+   // triples_from_protocol. sort();
    //END test
 
    
