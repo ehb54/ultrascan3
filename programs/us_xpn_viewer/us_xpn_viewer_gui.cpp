@@ -1807,7 +1807,7 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
       plrecs      = sllmbs;
 
       //TEST: from  protocol (lambdas ? )
-      plrecs      = sllmbs;
+      plrecs_from_protocol    = sllmbs;
    }
    else
    {
@@ -3791,7 +3791,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 
  qDebug() << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
-	  << triples.count() << "ntriple_from_protocol: " << ntriple_from_protocol;
+	  << triples.count() << "ntriple_from_protocol: " << triples_from_protocol.count();
 #endif
 
 DbgLv(1) << "RDa: allData size" << allData.size();
