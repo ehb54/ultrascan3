@@ -1782,9 +1782,9 @@ void US_XpnDataViewer::enableControls_early_stage_auto( void )
    npoint      = allData[ 0 ].pointCount();
    ntpoint     = nscan * npoint;
    int ktrip   = ncellch * nlambda;
-   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
+   //isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
    //TEST
-   //isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 16 );
+   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 16 );
    //END of test
    
    cb_cellchn ->setEnabled( isMWL );
