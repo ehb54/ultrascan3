@@ -140,9 +140,9 @@ class US_XpnDataViewer : public US_Widgets
      QStringList    runInfo;        //!< List of run information strings
      QStringList    xpn_fnames;     //!< List of names of files loaded
      QStringList    cellchans;      //!< List of cell/channel values present
-     QStringList    cellchans_from_protocol;      //!< List of cell/channel values present
+  QMap< QString, QStringList >   cellchans_from_protocol;      //!< List of cell/channel values present
      QStringList    triples;        //!< List of triple values present
-     QStringList    triples_from_protocol;        //!< List of triple values present
+  QMap< QString, QStringList >   triples_from_protocol;        //!< List of triple values present
   
      US_Help        showHelp;
      US_PlotPicker* picker;
@@ -384,8 +384,8 @@ class US_XpnDataViewer : public US_Widgets
      void   plot_titles    ( void );
      void   plot_all       ( void );
      void   enableControls ( void );
-     void   enableControls_early_stage_auto ( void );
-     void enableCellsTriples_auto ( void );
+     void   enableControls_early_stage_auto ( QString );
+     void enableCellsTriples_auto ( QString );
      void   runDetails     ( void );
      
      void   export_auc     ( void );
@@ -397,6 +397,7 @@ class US_XpnDataViewer : public US_Widgets
 
      void   changeOptics   ( void );
      void   changeOptics_auto   ( void );
+     void   changeOptics_auto_internal   ( void );
      
      
      void   changeReload   ( void );

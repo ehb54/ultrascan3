@@ -848,29 +848,29 @@ if(mcknt>0)
    // protocol_details[ "duration" ]   = QString("36240");
    // protocol_details[ "runID" ]      = QString("1750");
 
-   // //ABDE MWL
-   // QMap < QString, QString > protocol_details;
-   // protocol_details[ "experimentId"] = QString("1154"); 
-   // protocol_details[ "protocolName"] = QString("ABDE_60K_PS_sucrose_v3_052824");
-   // protocol_details[ "experimentName" ] = QString("ABDE_60K_PS_sucrose_v3_052824");
-   // protocol_details[ "CellChNumber" ] = QString("6");
-   // protocol_details[ "TripleNumber" ] = QString("18");
-   // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   // protocol_details[ "duration" ]   = QString("86700");
-   // protocol_details[ "runID" ]      = QString("1706");
-   // protocol_details[ "invID_passed" ] = QString("219");
-
-   //MW-AUC-IF_test_031622
+   //ABDE MWL
    QMap < QString, QString > protocol_details;
-   protocol_details[ "experimentId"] = QString("779"); 
-   protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
-   protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
-   protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
-   protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
+   protocol_details[ "experimentId"] = QString("1154"); 
+   protocol_details[ "protocolName"] = QString("ABDE_60K_PS_sucrose_v3_052824");
+   protocol_details[ "experimentName" ] = QString("ABDE_60K_PS_sucrose_v3_052824");
+   protocol_details[ "CellChNumber" ] = QString("6");
+   protocol_details[ "TripleNumber" ] = QString("18");
    protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   protocol_details[ "duration" ]   = QString("3960");
-   protocol_details[ "runID" ]      = QString("1270");
-   protocol_details[ "invID_passed" ] = QString("2");
+   protocol_details[ "duration" ]   = QString("86700");
+   protocol_details[ "runID" ]      = QString("1706");
+   protocol_details[ "invID_passed" ] = QString("219");
+
+   // //MW-AUC-IF_test_031622
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("779"); 
+   // protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
+   // protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
+   // protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
+   // protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
+   // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   // protocol_details[ "duration" ]   = QString("3960");
+   // protocol_details[ "runID" ]      = QString("1270");
+   // protocol_details[ "invID_passed" ] = QString("2");
   
    
    check_for_data( protocol_details );
@@ -1756,7 +1756,7 @@ DbgLv(1) << "ec: call changeCellCh";
 
 
 // Enable the common dialog controls based on the presence of data
-void US_XpnDataViewer::enableControls_early_stage_auto( void )
+void US_XpnDataViewer::enableControls_early_stage_auto( QString datatype )
 {
    const QChar chlamb( 955 );
 
@@ -1789,7 +1789,7 @@ void US_XpnDataViewer::enableControls_early_stage_auto( void )
    ncellch     = cellchans.count();
    nlambda     = lambdas  .count();
    ntriple     = triples  .count();
-   ntriple_from_protocol     = triples_from_protocol  .count();
+   ntriple_from_protocol     = triples_from_protocol[ datatype ]  .count();
    nscan       = allData[ 0 ].scanCount();
    npoint      = allData[ 0 ].pointCount();
    ntpoint     = nscan * npoint;
@@ -1833,7 +1833,7 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
 
       //TEST: from  protocol
       for ( int jj = 0; jj < ntriple_from_protocol; jj++ )
-	plrecs_from_protocol << QString( triples_from_protocol[ jj ] ).replace( " ", "" );
+	plrecs_from_protocol << QString( triples_from_protocol[ datatype ][ jj ] ).replace( " ", "" );
    }
 
    lb_pltrec->setText( prectype );
@@ -1848,7 +1848,7 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
        cb_pltrec ->clear();
        
        //cb_cellchn->addItems( cellchans );
-       cb_cellchn->addItems( cellchans_from_protocol );
+       cb_cellchn->addItems( cellchans_from_protocol[ datatype ] );
        cb_rstart ->addItems( slrads );
        cb_rend   ->addItems( slrads );
        //cb_pltrec ->addItems( plrecs );
@@ -2990,8 +2990,12 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   //Read protocol & infer cellchans and triples
   read_protocol_auto();
-  qDebug() << "CellChans from Protocol: " << cellchans_from_protocol;
-  qDebug() << "Triples from Protocol: " << triples_from_protocol;
+  qDebug() << "CellChans from Protocol: -- \n"
+	   <<  "RI: " << cellchans_from_protocol[ "RI" ] << "\n"
+	   <<  "IP: " << cellchans_from_protocol[ "IP" ];
+  qDebug() << "Triples from Protocol: -- \n"
+	   << "RI: " << triples_from_protocol["RI"] << "\n"
+	   << "IP: " << triples_from_protocol["IP"];
   //exit(1);
   
   //link = new Link();
@@ -3068,20 +3072,39 @@ void US_XpnDataViewer::read_protocol_auto ( void )
   US_RunProtocol currProto;
   currProto. fromXml( xmli );
 
-  //read ranges & compose cellchans and triples lists
+  //read ranges & compose cellchans and triples lists [for both optics ]
   cellchans_from_protocol. clear();
   triples_from_protocol  . clear();
+  //UV.vis
   int nchan_ranges  = currProto. rpRange. nranges;
   for ( int i=0; i < nchan_ranges; ++i )
     {
       QString channel_c        = currProto. rpRange. chrngs[i]. channel;  //Channel description ("2 / A, sample [right]")
       QString channel_c_f      = channel_c.split(",")[0];
-      cellchans_from_protocol << channel_c_f;
+      cellchans_from_protocol[ "RI" ] << channel_c_f;
       QList< double > wvl_list = currProto. rpRange. chrngs[i].wvlens;
       for (int j=0; j < wvl_list.size(); ++j )
 	{
 	  QString triple_c = channel_c_f + " / " + QString::number( wvl_list[j] );
-	  triples_from_protocol << triple_c.replace(" ", "");
+	  triples_from_protocol[ "RI" ] << triple_c.replace(" ", "");
+	}
+    }
+
+  //Interference
+  int nchan_optics = currProto. rpOptic. nochan;
+  for ( int i=0; i<nchan_optics; ++i )
+    {
+      QString channel_c  = currProto. rpOptic. chopts[i].channel;    //RI [but captured above]
+      QString scan1      = currProto. rpOptic. chopts[i].scan1;
+      QString scan2      = currProto. rpOptic. chopts[i].scan2;      //IP
+      QString scan3      = currProto. rpOptic. chopts[i].scan3;
+
+      if ( !scan2.isEmpty() )
+	{
+	  QString channel_c_f      = channel_c.split(",")[0];
+	  cellchans_from_protocol[ "IP" ] << channel_c_f;
+	  QString triple_c = channel_c_f + " / " + QString::number( 660 );
+	  triples_from_protocol[ "IP" ] << triple_c.replace(" ", "");
 	}
     }
 }
@@ -3808,7 +3831,7 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
        cb_cellchn->clear();
        //cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
        //TEST
-       cb_cellchn->addItems( cellchans_from_protocol );  
+       cb_cellchn->addItems( cellchans_from_protocol[ runType ] );  
        //END TEST
        connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
 		this,         SLOT  ( changeCellCh(            ) ) );
@@ -3855,10 +3878,8 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 
  qDebug() << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
-	  << triples.count() << "ntriple_from_protocol: " << triples_from_protocol.count();
+	  << triples.count() << "ntriple_from_protocol: " << triples_from_protocol[ runType ].count();
 #endif
-
-DbgLv(1) << "RDa: allData size" << allData.size();
 
  qDebug() << "RDa: allData size" << allData.size();
 
@@ -3878,13 +3899,13 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    // //ENF of [First time enabling Controls ] //////////////////////////////////////////////
 
    
-   enableControls_early_stage_auto();                                    //ALEXEY ...and actual plotting data
+   enableControls_early_stage_auto( runType );                                    //ALEXEY ...and actual plotting data
 
    qDebug() << "[After 1st setup]Triples: " << triples;
-   qDebug() << "[After 1st setup]Triples from Protocol: " << triples_from_protocol;
+   qDebug() << "[After 1st setup]Triples from Protocol: " << triples_from_protocol[ runType ];
 
    //Set item enabled only if in both lists (prot & data)
-   enableCellsTriples_auto();
+   enableCellsTriples_auto( runType );
    
    //debugs
    if ( combinedOptics )
@@ -4008,13 +4029,13 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 }
 
 //enable cells and or triples
-void US_XpnDataViewer::enableCellsTriples_auto( void )
+void US_XpnDataViewer::enableCellsTriples_auto( QString datatype )
 {
   QStandardItemModel * cb_cellchn_model = qobject_cast<QStandardItemModel*>(cb_cellchn->model());
   for ( int i = 0; i < cb_cellchn->count(); i++ )
     {
       QStandardItem * item = cb_cellchn_model->item( i );
-      if ( ! cellchans. contains( cellchans_from_protocol[ i ] ) )  //deactivate item
+      if ( ! cellchans. contains( cellchans_from_protocol[ datatype ][ i ] ) )  //deactivate item
 	item->setEnabled( false );
       else                                //activate item
 	item->setEnabled( true );
@@ -4024,7 +4045,7 @@ void US_XpnDataViewer::enableCellsTriples_auto( void )
   for ( int i = 0; i < cb_pltrec->count(); i++ )
     {
       QStandardItem * item = cb_pltrec_model->item( i );
-      if ( ! triples. contains( triples_from_protocol[ i ] ) )  //deactivate item
+      if ( ! triples. contains( triples_from_protocol[ datatype ][ i ] ) )  //deactivate item
 	item->setEnabled( false );
       else                                //activate item
 	item->setEnabled( true );
@@ -4832,8 +4853,159 @@ void US_XpnDataViewer::changeOptics_auto( void )
        timer_end_process_all_data_avail->start(1000);     // 5 sec
      }
    else
-     changeOptics();
+     changeOptics_auto_internal();
 }
+
+
+// Slot to handle a change in the optical system [NEW]
+void US_XpnDataViewer::changeOptics_auto_internal( void )
+{
+  //reset global identifier
+  in_reload_all_data_set_gui = false;
+  
+   // Determine the new run type
+   int optrx      = cb_optsys->currentIndex();
+   optndx_auto    = optrx;
+
+   qDebug() << "Inside changeOptics(),  optndx_auto= " << optndx_auto; 
+   
+   QString ostyp  = cb_optsys ->currentText();
+   QString rtype( "RI" );
+   if ( ostyp == "Interference" )
+      rtype          = "IP";
+   else if ( ostyp == "Fluorescence" )
+      rtype          = "FI";
+   else if ( ostyp == "Wavelength" )
+      rtype          = "WI";
+DbgLv(1) << "chgOpt: optrx" << optrx << "ostyp" << ostyp
+ << "rtype" << rtype << "nopts" << cb_optsys->children().count();
+
+ qDebug()  << "chgOpt: optrx" << optrx << "ostyp" << ostyp
+	   << "rtype" << rtype << "runType" << runType << "nopts" << cb_optsys->children().count();
+
+  // If simply re-choosing the same optics, bale out now
+   if ( rtype == runType )
+      return;
+
+QDateTime sttime=QDateTime::currentDateTime();
+   runType       = rtype;    // Set the new run type (RI, IP, ...)
+
+   // Turn off auto-reload if on
+   if ( rlt_id != 0 )
+   {
+      ck_autorld->setChecked( false );
+      QMessageBox::warning( this,
+            tr( "Auto-Reload Stopped" ),
+            tr( "Auto-Reload has been stopped and its box unchecked,"
+                "\n since the optical system has been changed." ) );
+   }
+
+
+   // IF IN Export: update optics type selected with up-to-now data
+   if ( inExport )
+     {
+       int runix          = runID.lastIndexOf( "-run" ) + 4;
+       QString fRunId     = runID.mid( runix );
+       int iRunId         = fRunId.toInt();
+       DbgLv(1) << "IN ::changeOptics() when Exporting: RLd:  runID" << runID << "runix" << runix << "iRunId" << iRunId;
+       int scanmask       = 1;
+       scanmask           = ( runType == "FI" ) ? 2 : scanmask;
+       scanmask           = ( runType == "IP" ) ? 4 : scanmask;
+       scanmask           = ( runType == "WI" ) ? 8 : scanmask;
+       DbgLv(1) << "RLd:     iRunId" << iRunId << "runType scanmask" << runType << scanmask;
+       
+       // Import any newly added Scan Data records
+       bool upd_ok        =  xpn_data->reimport_data( iRunId, scanmask );
+     }
+   ///////////////////////////////////////////////////////////////////////
+   
+   // Set up for a new run type
+   if ( auto_mode_bool ) 
+     xpn_data->set_run_values( runID, rtype );
+   else
+     xpn_data->set_run_values( runID, runType );
+
+   // For new optics, rebuild internal arrays and all AUC
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   le_status->setText( tr( "Rebuilding AUC data ..." ) );
+   qApp->processEvents();
+
+
+   xpn_data->build_rawData( allData );                                        // ALEXEY <-- need to update data BEFORE with xpn_data->import_data() OR reimport_data()
+double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
+DbgLv(1) << "chgOpt:   build-raw done: tm2" << tm2;
+
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
+   // Reset various flags, counts, and lists
+   isRaw         = true;
+   haveData      = true;
+   ncellch       = xpn_data->cellchannels( cellchans );
+   r_radii.clear();
+   r_radii << allData[ 0 ].xvalues;
+   nscan         = allData[ 0 ].scanCount();
+   npoint        = allData[ 0 ].pointCount();
+
+DbgLv(1) << "chgOpt: mwr ntriple" << ntriple;
+DbgLv(1) << "chgOpt: ncellch" << ncellch << cellchans.count();
+DbgLv(1) << "chgOpt: nscan" << nscan << "npoint" << npoint;
+DbgLv(1) << "chgOpt:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
+
+   if ( !in_reload_all_data_set_gui )
+     { 
+       qDebug() << "[Optics change: FIRST TIME] Setting Cell/Channs counter...";
+       cb_cellchn->disconnect();                                      
+       cb_cellchn->clear();
+       //cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
+       //TEST
+       cb_cellchn->addItems( cellchans_from_protocol[ rtype ] );  
+       //END TEST
+       connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+		this,         SLOT  ( changeCellCh(            ) ) );
+     }
+ 
+   // cb_cellchn->disconnect();
+   // cb_cellchn->clear();
+   // cb_cellchn->addItems( cellchans );
+   // connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+   //          this,         SLOT  ( changeCellCh(            ) ) );
+
+   nlambda      = xpn_data->lambdas_raw( lambdas );
+   int wvlo     = lambdas[ 0 ];
+   int wvhi     = lambdas[ nlambda - 1 ];
+   ntriple      = xpn_data->data_triples( triples );
+DbgLv(1) << "chgOpt: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
+   << triples.count();
+
+DbgLv(1) << "chgOpt: allData size" << allData.size();
+   QApplication::restoreOverrideCursor();
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
+
+   // // Ok to reenable some buttons now
+   // enableControls();
+
+   enableControls_early_stage_auto( rtype );                                    //ALEXEY ...and actual plotting data
+
+   qDebug() << "[Optics change: After 1st setup]Triples: " << triples;
+   qDebug() << "[Optics change: After 1st setup]Triples from Protocol: " << triples_from_protocol;
+ 
+   //Set item enabled only if in both lists (prot & data)
+   enableCellsTriples_auto( rtype );
+ 
+   //ALEXEY: restart timer to update newly selected Optics
+   qDebug() << "IF timer restarts? auto_mode_bool, timer_all_data_avail->isActive(), inExport: " << auto_mode_bool <<  timer_all_data_avail->isActive() << inExport;
+   if ( auto_mode_bool &&  !timer_all_data_avail->isActive() && !inExport )
+     {
+       qDebug() << "YES, it restarts..." ;
+       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
+       timer_all_data_avail->start(40000);     // 60 sec
+     }
+}
+
+
 
 // Slot to handle a change in the optical system
 void US_XpnDataViewer::changeOptics( void )
