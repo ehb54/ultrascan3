@@ -860,20 +860,20 @@ if(mcknt>0)
    // protocol_details[ "runID" ]      = QString("1706");
    // protocol_details[ "invID_passed" ] = QString("219");
 
-   //MW-AUC-IF_test_031622
-   QMap < QString, QString > protocol_details;
-   protocol_details[ "experimentId"] = QString("779"); 
-   protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
-   protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
-   protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
-   protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
-   protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   protocol_details[ "duration" ]   = QString("3960");
-   protocol_details[ "runID" ]      = QString("1270");
-   protocol_details[ "invID_passed" ] = QString("2");
+   // //MW-AUC-IF_test_031622
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("779"); 
+   // protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
+   // protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
+   // protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
+   // protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
+   // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   // protocol_details[ "duration" ]   = QString("3960");
+   // protocol_details[ "runID" ]      = QString("1270");
+   // protocol_details[ "invID_passed" ] = QString("2");
   
    
-   check_for_data( protocol_details );
+   // check_for_data( protocol_details );
    // End of test
 
    //Connect to syste data server 
@@ -3744,7 +3744,7 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    //First time setting Optics types counter //////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
-       qDebug() << "[FIRTS TIME] Setting Optics types counter...";
+       qDebug() << "[FIRST TIME] Setting Optics types counter...";
        cb_optsys->disconnect();
        cb_optsys->clear();
        DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
@@ -3830,9 +3830,9 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
        cb_cellchn->disconnect();                                      
        cb_cellchn->clear();
        //cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
-       //TEST
+
+       //per optics type
        cb_cellchn->addItems( cellchans_from_protocol[ runType ] );  
-       //END TEST
        connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
 		this,         SLOT  ( changeCellCh(            ) ) );
      }
@@ -3899,7 +3899,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    // //ENF of [First time enabling Controls ] //////////////////////////////////////////////
 
    
-   enableControls_early_stage_auto( runType );                                    //ALEXEY ...and actual plotting data
+   enableControls_early_stage_auto( runType );               //ALEXEY ...and actual plotting data
 
    qDebug() << "[After 1st setup]Triples: " << triples;
    qDebug() << "[After 1st setup]Triples from Protocol: " << triples_from_protocol[ runType ];
@@ -3930,64 +3930,65 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
        //TEST: uncommnet
        qDebug() << "ABORTION IN EARLY STAGE... reached";
        
-       // if ( finishing_live_update )
-       // 	 {
-       // 	   timer_all_data_avail->stop();
-       // 	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-       // 	   in_reload_all_data   = false;  
-       // 	   return;
-       // 	 }
+       if ( finishing_live_update )
+	 {
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   in_reload_all_data   = false;  
+	   return;
+	 }
        
-       // qDebug() << "ABORTION IN EARLY STAGE...";
-
-       // if ( o_connection )
-       // 	 experimentAborted  = true;
+       qDebug() << "ABORTION IN EARLY STAGE...";
        
-       // timer_all_data_avail->stop();
-       // disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       if ( o_connection )
+	 experimentAborted  = true;
        
-       // if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
-       // 	 {
-       // 	   export_auc_auto();
-       // 	   updateautoflow_record_atLiveUpdate();
-
-       // 	   reset_auto();
+       timer_all_data_avail->stop();
+       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       
+       if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+	 {
+	   export_auc_auto();
+	   updateautoflow_record_atLiveUpdate();
 	   
-       // 	   in_reload_all_data   = false;  
+	   reset_auto();
 	   
-       // 	   emit experiment_complete_auto( details_at_live_update  ); 
-       // 	   return;
-       // 	 }
+	   in_reload_all_data   = false;  
+	   
+	   emit experiment_complete_auto( details_at_live_update  ); 
+	   return;
+	 }
      }
-  
-
+   
+   
    //Check if # expected Triples for given optics type satisfied..
    if ( !combinedOptics )
      {
-       if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
-
-	 //TEST: Uncomment
-	 qDebug() << "Switch to UPDATE reached";
+       if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )
+	 // <--- Change to the values from the protocol
 	 
-	 // {
-	 //   //stop timer
-	 //   timer_all_data_avail->stop();
-	 //   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-	   
-	 //   in_reload_all_data   = false;  
-	   
-	 //   // Auto-update hereafter
-	 //   //timer_data_reload = new QTimer;
-	   
-	 //   if ( !finishing_live_update )
-	 //     {
-	 //       qDebug() << "Switch to update!";
-	       
-	 //       //update hereafter
-	 //       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-	 //       timer_data_reload->start(10000);     // 10 sec
-	 //     }
-	 // }
+	 //TEST: Uncomment 
+	 //qDebug() << "Switch to UPDATE reached";
+	 
+	 {
+	   //stop timer
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	 
+	   in_reload_all_data   = false;  
+	 
+	   // Auto-update hereafter
+	   //timer_data_reload = new QTimer;
+	 
+	   if ( !finishing_live_update )
+	     {
+	       qDebug() << "Switch to update!";
+	    
+	       //update hereafter
+	       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+	       timer_data_reload->start(10000);     // 10 sec
+	     }
+	 }
      }
    else
      {
@@ -3997,7 +3998,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
 
-	   /***  TEST: uncomment
+	   /***/// TEST: uncomment
 	   //ALEXEY: here - either check that
 	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
 	   // 2. all triples for ALL optics systems are populated
@@ -4022,7 +4023,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 		   timer_data_reload->start(10000);     // 10 sec
 		 }
 	     }
-	   ***/
+	   /***/
 	 }
      }
 
