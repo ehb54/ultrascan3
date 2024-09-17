@@ -3099,7 +3099,7 @@ void US_XpnDataViewer::read_protocol_auto ( void )
       QString scan2      = currProto. rpOptic. chopts[i].scan2;      //IP
       QString scan3      = currProto. rpOptic. chopts[i].scan3;
 
-      if ( !scan2.isEmpty() )
+      if ( !scan2.isEmpty() && !channel_c.contains(" / B") )          //exclude B channels
 	{
 	  QString channel_c_f      = channel_c.split(",")[0];
 	  cellchans_from_protocol[ "IP" ] << channel_c_f;
