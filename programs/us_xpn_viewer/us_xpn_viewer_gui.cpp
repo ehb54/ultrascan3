@@ -3869,6 +3869,9 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    
    enableControls_early_stage_auto();                                    //ALEXEY ...and actual plotting data
 
+   qDebug() << "[After 1st setup]Triples: " << triples;
+   qDebug() << "[After 1st setup]Triples from Protocol: " << triples_from_protocol;
+
    //Set item enabled only if in both lists (prot & data)
    enableCellsTriples_auto();
    
