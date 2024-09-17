@@ -848,29 +848,29 @@ if(mcknt>0)
    // protocol_details[ "duration" ]   = QString("36240");
    // protocol_details[ "runID" ]      = QString("1750");
 
-   //ABDE MWL
-   QMap < QString, QString > protocol_details;
-   protocol_details[ "experimentId"] = QString("1154"); 
-   protocol_details[ "protocolName"] = QString("ABDE_60K_PS_sucrose_v3_052824");
-   protocol_details[ "experimentName" ] = QString("ABDE_60K_PS_sucrose_v3_052824");
-   protocol_details[ "CellChNumber" ] = QString("6");
-   protocol_details[ "TripleNumber" ] = QString("18");
-   protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   protocol_details[ "duration" ]   = QString("86700");
-   protocol_details[ "runID" ]      = QString("1706");
-   protocol_details[ "invID_passed" ] = QString("219");
-
-   // //MW-AUC-IF_test_031622
+   // //ABDE MWL
    // QMap < QString, QString > protocol_details;
-   // protocol_details[ "experimentId"] = QString("779"); 
-   // protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
-   // protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
-   // protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
-   // protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
+   // protocol_details[ "experimentId"] = QString("1154"); 
+   // protocol_details[ "protocolName"] = QString("ABDE_60K_PS_sucrose_v3_052824");
+   // protocol_details[ "experimentName" ] = QString("ABDE_60K_PS_sucrose_v3_052824");
+   // protocol_details[ "CellChNumber" ] = QString("6");
+   // protocol_details[ "TripleNumber" ] = QString("18");
    // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   // protocol_details[ "duration" ]   = QString("3960");
-   // protocol_details[ "runID" ]      = QString("1270");
-   // protocol_details[ "invID_passed" ] = QString("2");
+   // protocol_details[ "duration" ]   = QString("86700");
+   // protocol_details[ "runID" ]      = QString("1706");
+   // protocol_details[ "invID_passed" ] = QString("219");
+
+   //MW-AUC-IF_test_031622
+   QMap < QString, QString > protocol_details;
+   protocol_details[ "experimentId"] = QString("779"); 
+   protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
+   protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
+   protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
+   protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
+   protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   protocol_details[ "duration" ]   = QString("3960");
+   protocol_details[ "runID" ]      = QString("1270");
+   protocol_details[ "invID_passed" ] = QString("2");
   
    
    check_for_data( protocol_details );
