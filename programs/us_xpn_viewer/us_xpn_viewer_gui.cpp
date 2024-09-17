@@ -815,9 +815,30 @@ if(mcknt>0)
    // protocol_details[ "OptimaName" ] = QString("Optima 1"); 
    // protocol_details[ "duration" ]   = QString("43200");
 
+   //ABDE
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("1227"); 
+   // protocol_details[ "protocolName"] = QString("McCueA_BSA_ABDE_SEPT324v2");
+   // protocol_details[ "experimentName" ] = QString("McCueA_BSA_ABDE_SEPT324v2");
+   // protocol_details[ "CellChNumber" ] = QString("6");
+   // protocol_details[ "TripleNumber" ] = QString("6");
+   // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   // protocol_details[ "duration" ]   = QString("21960");
+
+   //Martin recent: MartinR_pDNA_Mixes2_50K_20C_23AUG24
+   QMap < QString, QString > protocol_details;
+   protocol_details[ "experimentId"] = QString("1217"); 
+   protocol_details[ "protocolName"] = QString("MartinR_pDNA_Mixes2_50K_20C_23AUG24");
+   protocol_details[ "experimentName" ] = QString("MartinR_pDNA_Mixes3_50K_20C_28AUG24");
+   protocol_details[ "CellChNumber" ] = QString("6");
+   protocol_details[ "TripleNumber" ] = QString("6");
+   protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   protocol_details[ "duration" ]   = QString("27300");
+   protocol_details[ "runID" ]      = QString("1778"); 
+  
    
-   // check_for_data( protocol_details );
-   // // End of test
+   check_for_data( protocol_details );
+   // End of test
 
    //Connect to syste data server 
    //link->connectToServer( );
@@ -1218,7 +1239,9 @@ void US_XpnDataViewer::reset( void )
    excludes  .clear();
    runInfo   .clear();
    cellchans .clear();
+   cellchans_from_protocol. clear();
    triples   .clear();
+   triples_from_protocol. clear();
    haveData      = false;
 
    dPlotClearAll( data_plot );
@@ -1302,7 +1325,9 @@ void US_XpnDataViewer::reset_auto( void )
    excludes  .clear();
    runInfo   .clear();
    cellchans .clear();
+   cellchans_from_protocol. clear();
    triples   .clear();
+   triples_from_protocol. clear();
    haveData      = false;
 
    dPlotClearAll( data_plot );
@@ -1692,6 +1717,130 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
 DbgLv(1) << "ec: call changeCellCh";
    changeCellCh();                          // Force a plot initialize
 }
+
+
+// Enable the common dialog controls based on the presence of data
+void US_XpnDataViewer::enableControls_early_stage_auto( void )
+{
+   const QChar chlamb( 955 );
+
+   if ( allData.size() == 0 )
+   {  // If no data yet, just reset
+      reset();
+      return;
+   }
+
+   // Enable and disable controls now
+   pb_loadXpn ->setEnabled( false );
+   pb_loadAUC ->setEnabled( false );
+   pb_reset   ->setEnabled( true );
+   pb_details ->setEnabled( true );
+   pb_reload  ->setEnabled( true );
+   cb_cellchn ->setEnabled( true );
+   cb_rstart  ->setEnabled( true );
+   cb_rend    ->setEnabled( true );
+   cb_pltrec  ->setEnabled( true );
+   pb_prev    ->setEnabled( true );
+   pb_next    ->setEnabled( true );
+   pb_plot2d  ->setEnabled( true );
+   pb_saveauc ->setEnabled( true );
+   pb_showtmst->setEnabled( haveTmst );
+//   pb_movie2d->setEnabled( true );
+   ct_from    ->setEnabled( true );
+   ct_to      ->setEnabled( true );
+   pb_exclude ->setEnabled( true );
+
+   ncellch     = cellchans.count();
+   nlambda     = lambdas  .count();
+   ntriple     = triples  .count();
+   ntriple_from_protocol     = triples_from_protocol  .count();
+   nscan       = allData[ 0 ].scanCount();
+   npoint      = allData[ 0 ].pointCount();
+   ntpoint     = nscan * npoint;
+   int ktrip   = ncellch * nlambda;
+   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
+   cb_cellchn ->setEnabled( isMWL );
+
+DbgLv(1) << "ec: ncc nwl nsc npt ntpt" << ncellch << nlambda << nscan
+ << npoint << ntpoint << "Mwl" << isMWL;
+DbgLv(1) << "ec: npoint" << npoint << "radsize" << r_radii.count();
+DbgLv(1) << "ec: nlambda" << nlambda << "lmbsize" << lambdas.count();
+DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" << ktrip;
+   QStringList slrads;
+   QStringList sllmbs;
+   QStringList plrecs;
+   QStringList plrecs_from_protocol;
+
+   for ( int jj = 0; jj < npoint; jj++ )
+      slrads << QString().sprintf( "%.3f", r_radii[ jj ] );
+
+   for ( int jj = 0; jj < nlambda; jj++ )
+      sllmbs << QString::number( lambdas[ jj ] );
+
+   if ( isMWL )
+   {
+      prectype    = ptype_mw;
+      plrecs      = sllmbs;
+   }
+   else
+   {
+      prectype    = ptype_tr;
+      for ( int jj = 0; jj < ntriple; jj++ )
+         plrecs << QString( triples[ jj ] ).replace( " ", "" );
+
+      //TEST: from  protocol
+      for ( int jj = 0; jj < ntriple_from_protocol; jj++ )
+	plrecs_from_protocol << QString( triples_from_protocol[ jj ] ).replace( " ", "" );
+   }
+
+   lb_pltrec->setText( prectype );
+   
+   if ( !in_reload_all_data_set_gui )
+     {
+       qDebug() << "[FIRST TIME] Enabling Controls...";
+       connect_ranges( false );
+       cb_cellchn->clear();
+       cb_rstart ->clear();
+       cb_rend   ->clear();
+       cb_pltrec ->clear();
+       
+       //cb_cellchn->addItems( cellchans );
+       cb_cellchn->addItems( cellchans_from_protocol );
+       cb_rstart ->addItems( slrads );
+       cb_rend   ->addItems( slrads );
+       //cb_pltrec ->addItems( plrecs );
+       cb_pltrec ->addItems( plrecs_from_protocol );
+     
+       
+       if ( nlambda == 1 )
+	 le_lrange ->setText( sllmbs[ 0 ] + tr( " only" ) );
+       else if ( nlambda > 1 )
+	 le_lrange ->setText( sllmbs[ 0 ] + tr( " to " ) 
+			      + sllmbs[ nlambda - 1 ] );
+       
+       cb_cellchn->setCurrentIndex( 0 );
+       cb_rstart ->setCurrentIndex( 0 );
+       cb_rend   ->setCurrentIndex( npoint - 1 );
+       connect_ranges( true );
+       
+       have_rngs  = false;
+       compute_ranges( );
+       
+       ct_from   ->setMaximum( nscan );
+       ct_to     ->setMaximum( nscan );
+       cb_pltrec ->setCurrentIndex( nlambda / 2 );
+       
+       
+       qApp->processEvents();
+       
+       DbgLv(1) << "ec: call changeCellCh";
+       changeCellCh();                          // Force a plot initialize
+
+       in_reload_all_data_set_gui = true;
+     }
+}
+
+
 
 // Load Optima raw (.postgres) data
 bool US_XpnDataViewer::load_xpn_raw_auto( )
@@ -3545,11 +3694,20 @@ DbgLv(1) << "RDa:      build-raw done: tm1 tm2" << tm1 << tm2;
    nscan         = allData[ 0 ].scanCount();
    npoint        = allData[ 0 ].pointCount();
 
-DbgLv(1) << "RDa: mwr ntriple" << ntriple;
+   DbgLv(1) << "RDa: mwr ntriple, ntriple_from_protocol " << ntriple << ntriple_from_protocol; 
 DbgLv(1) << "RDa: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "RDa: nscan" << nscan << "npoint" << npoint;
 DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 
+ //cellchans: format: ("1 / A", "1 / B", "2 / A", "2 / B", "3 / A", "3 / B")
+ qDebug() << "[retrieve_Auto]: cellchans -- " << cellchans;
+
+ //TEST for hard-coded example: MartinR_pDNA_Mixes2_50K_20C_23AUG24
+ cellchans. clear();
+ cellchans << "1 / A" << "1 / B" << "2 / A" <<  "2 / B" <<  "3 / A" <<  "3 / B";
+ cellchans_from_protocol = cellchans;
+ cellchans_from_protocol << "5 / A" << "5 / B"; // non-existent !!!
+ // END TEST
  
    //First time setting Cell/Channs counter //////////////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
@@ -3557,13 +3715,16 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
        qDebug() << "[FIRTS TIME] Setting Cell/Channs counter...";
        cb_cellchn->disconnect();                                      
        cb_cellchn->clear();
-       cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
+       //cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
+       //TEST
+       cb_cellchn->addItems( cellchans_from_protocol );  
+       //END TEST
        connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
 		this,         SLOT  ( changeCellCh(            ) ) );
      }
    //END of [First time setting Cell/Channs counter ] //////////////////////////////////////////////
 
- 
+  
    // cb_cellchn->disconnect();                                      
    // cb_cellchn->clear();
    // cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
@@ -3590,13 +3751,19 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 // #endif
 #if 1
    ntriple      = xpn_data->data_triples( triples );              // ALEXEY triples
+   //TEST: triples from protocol
+   triples_from_protocol = triples;
+   triples_from_protocol << "8 / B / 333";
+   //END test
+
+   
 DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
    << triples.count();
 
  qDebug() << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
-   << triples.count();
+	  << triples.count() << "ntriple_from_protocol: " << ntriple_from_protocol;
 #endif
 
 DbgLv(1) << "RDa: allData size" << allData.size();
@@ -3609,18 +3776,22 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    in_reload_auto      = false;
 
    // Ok to enable some buttons now
-   //First time enabling Controls ///////////////////////////////////////////////////////
-   if ( !in_reload_all_data_set_gui )
-     {
-       qDebug() << "[FIRTS TIME] Enabling Controls...";
-       enableControls();                                    //ALEXEY ...and actual plotting data
-       in_reload_all_data_set_gui = true;
-     }
-   //ENF of [First time enabling Controls ] //////////////////////////////////////////////
+   // //First time enabling Controls ///////////////////////////////////////////////////////
+   // if ( !in_reload_all_data_set_gui )
+   //   {
+   //     qDebug() << "[FIRST TIME] Enabling Controls...";
+   //     enableControls();                                    //ALEXEY ...and actual plotting data
+   //     in_reload_all_data_set_gui = true;
+   //   }
+   // //ENF of [First time enabling Controls ] //////////////////////////////////////////////
 
    
-   // enableControls();                                    //ALEXEY ...and actual plotting data
+   enableControls_early_stage_auto();                                    //ALEXEY ...and actual plotting data
 
+   //Set item enabled only if in both lists (prot & data)
+   enableCellsTriples_auto();
+   
+   //debugs
    if ( combinedOptics )
      {
        qDebug() << "CellChNumber, cellchans.count() for runType " <<  runType << ": " << CellChNumber_map[ runType ].toInt() << ", " << cellchans.count();
@@ -3628,7 +3799,8 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      }
    else
      {
-       qDebug() << "CellChNumber, cellchans.count() for runType " <<  runType << ": " << CellChNumber.toInt() << ", " << cellchans.count();
+       qDebug() << "CellChNumber, cellchans.count(), cellchans for runType " <<  runType << ": " << CellChNumber.toInt() << ", "
+		<< cellchans.count()   << cellchans;
        qDebug() << "TripleNumber, ntriple for runType " << runType << ": " << TripleNumber.toInt() << ", " << ntriple;
      }
 
@@ -3639,34 +3811,37 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    bool o_connection = true;
    if ( CheckExpComplete_auto( RunID_to_retrieve, o_connection ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
-       if ( finishing_live_update )
-	 {
-	   timer_all_data_avail->stop();
-	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-	   in_reload_all_data   = false;  
-	   return;
-	 }
+       //TEST
+       qDebug() << "ABORTION IN EARLY STAGE... reached";
        
-       qDebug() << "ABORTION IN EARLY STAGE...";
+       // if ( finishing_live_update )
+       // 	 {
+       // 	   timer_all_data_avail->stop();
+       // 	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       // 	   in_reload_all_data   = false;  
+       // 	   return;
+       // 	 }
+       
+       // qDebug() << "ABORTION IN EARLY STAGE...";
 
-       if ( o_connection )
-	 experimentAborted  = true;
+       // if ( o_connection )
+       // 	 experimentAborted  = true;
        
-       timer_all_data_avail->stop();
-       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       // timer_all_data_avail->stop();
+       // disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
        
-       if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
-	 {
-	   export_auc_auto();
-	   updateautoflow_record_atLiveUpdate();
+       // if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+       // 	 {
+       // 	   export_auc_auto();
+       // 	   updateautoflow_record_atLiveUpdate();
 
-	   reset_auto();
+       // 	   reset_auto();
 	   
-	   in_reload_all_data   = false;  
+       // 	   in_reload_all_data   = false;  
 	   
-	   emit experiment_complete_auto( details_at_live_update  ); 
-	   return;
-	 }
+       // 	   emit experiment_complete_auto( details_at_live_update  ); 
+       // 	   return;
+       // 	 }
      }
   
 
@@ -3674,25 +3849,29 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    if ( !combinedOptics )
      {
        if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
-	 {
-	   //stop timer
-	   timer_all_data_avail->stop();
-	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+	 //TEST:
+	 qDebug() << "Switch to UPDATE reached";
+	 
+	 // {
+	 //   //stop timer
+	 //   timer_all_data_avail->stop();
+	 //   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 	   
-	   in_reload_all_data   = false;  
+	 //   in_reload_all_data   = false;  
 	   
-	   // Auto-update hereafter
-	   //timer_data_reload = new QTimer;
+	 //   // Auto-update hereafter
+	 //   //timer_data_reload = new QTimer;
 	   
-	   if ( !finishing_live_update )
-	     {
-	       qDebug() << "Switch to update!";
+	 //   if ( !finishing_live_update )
+	 //     {
+	 //       qDebug() << "Switch to update!";
 	       
-	       //update hereafter
-	       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-	       timer_data_reload->start(10000);     // 10 sec
-	     }
-	 }
+	 //       //update hereafter
+	 //       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+	 //       timer_data_reload->start(10000);     // 10 sec
+	 //     }
+	 // }
      }
    else
      {
@@ -3731,6 +3910,30 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 
 
    in_reload_all_data   = false;  
+}
+
+//enable cells and or triples
+void US_XpnDataViewer::enableCellsTriples_auto( void )
+{
+  QStandardItemModel * cb_cellchn_model = qobject_cast<QStandardItemModel*>(cb_cellchn->model());
+  for ( int i = 0; i < cb_cellchn->count(); i++ )
+    {
+      QStandardItem * item = cb_cellchn_model->item( i );
+      if ( ! cellchans. contains( cellchans_from_protocol[ i ] ) )  //deactivate item
+	item->setEnabled( false );
+      else                                //activate item
+	item->setEnabled( true );
+    }
+
+  QStandardItemModel * cb_pltrec_model = qobject_cast<QStandardItemModel*>(cb_pltrec->model());
+  for ( int i = 0; i < cb_pltrec->count(); i++ )
+    {
+      QStandardItem * item = cb_pltrec_model->item( i );
+      if ( ! triples. contains( triples_from_protocol[ i ] ) )  //deactivate item
+	item->setEnabled( false );
+      else                                //activate item
+	item->setEnabled( true );
+    }
 }
 
 
