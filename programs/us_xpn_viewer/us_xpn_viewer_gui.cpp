@@ -3069,8 +3069,7 @@ void US_XpnDataViewer::read_protocol_auto ( void )
       for (int j=0; j < wvl_list.size(); ++j )
 	{
 	  QString triple_c = channel_c_f + " / " + QString::number( wvl_list[j] );
-	  //triples_from_protocol << triple_c.replace(" ", "");
-	  triples_from_protocol << triple_c;
+	  triples_from_protocol << triple_c.replace(" ", "");
 	}
     }
 }
