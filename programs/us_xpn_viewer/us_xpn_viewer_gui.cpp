@@ -825,16 +825,27 @@ if(mcknt>0)
    // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
    // protocol_details[ "duration" ]   = QString("21960");
 
-   //Martin recent: MartinR_pDNA_Mixes2_50K_20C_23AUG24
+   // //Martin recent: MartinR_pDNA_Mixes2_50K_20C_23AUG24
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("1217"); 
+   // protocol_details[ "protocolName"] = QString("MartinR_pDNA_Mixes2_50K_20C_23AUG24");
+   // protocol_details[ "experimentName" ] = QString("MartinR_pDNA_Mixes3_50K_20C_28AUG24");
+   // protocol_details[ "CellChNumber" ] = QString("6");
+   // protocol_details[ "TripleNumber" ] = QString("6");
+   // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   // protocol_details[ "duration" ]   = QString("27300");
+   // protocol_details[ "runID" ]      = QString("1778");
+
+   //Martin recent: MartinR_pDNA_Test_30K_20C_25JUN24
    QMap < QString, QString > protocol_details;
-   protocol_details[ "experimentId"] = QString("1217"); 
-   protocol_details[ "protocolName"] = QString("MartinR_pDNA_Mixes2_50K_20C_23AUG24");
-   protocol_details[ "experimentName" ] = QString("MartinR_pDNA_Mixes3_50K_20C_28AUG24");
+   protocol_details[ "experimentId"] = QString("1197"); 
+   protocol_details[ "protocolName"] = QString("MartinR_pDNA_Test_30K_20C_25JUN24");
+   protocol_details[ "experimentName" ] = QString("MartinR_pDNA_Test_30K_20C_25JUN24");
    protocol_details[ "CellChNumber" ] = QString("6");
-   protocol_details[ "TripleNumber" ] = QString("6");
+   protocol_details[ "TripleNumber" ] = QString("10");
    protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   protocol_details[ "duration" ]   = QString("27300");
-   protocol_details[ "runID" ]      = QString("1778"); 
+   protocol_details[ "duration" ]   = QString("36240");
+   protocol_details[ "runID" ]      = QString("1750");
   
    
    check_for_data( protocol_details );
@@ -3703,8 +3714,8 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
  qDebug() << "[retrieve_Auto]: cellchans -- " << cellchans;
 
  //TEST for hard-coded example: MartinR_pDNA_Mixes2_50K_20C_23AUG24
- cellchans. clear();
- cellchans << "1 / A" << "1 / B" << "2 / A" <<  "2 / B" <<  "3 / A" <<  "3 / B";
+ // cellchans. clear();
+ // cellchans << "1 / A" << "1 / B" << "2 / A" <<  "2 / B" <<  "3 / A" <<  "3 / B";
  cellchans_from_protocol = cellchans;
  cellchans_from_protocol << "5 / A" << "5 / B"; // non-existent !!!
  // END TEST
@@ -3753,7 +3764,8 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    ntriple      = xpn_data->data_triples( triples );              // ALEXEY triples
    //TEST: triples from protocol
    triples_from_protocol = triples;
-   triples_from_protocol << "8 / B / 333";
+   triples_from_protocol << "2 / B / 333" << "5 / A / 280";
+   triples_from_protocol. sort();
    //END test
 
    
