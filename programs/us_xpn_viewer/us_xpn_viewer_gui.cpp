@@ -1794,9 +1794,9 @@ void US_XpnDataViewer::enableControls_early_stage_auto( QString datatype )
    npoint      = allData[ 0 ].pointCount();
    ntpoint     = nscan * npoint;
    int ktrip   = ncellch * nlambda;
-   //isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
+   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
    //TEST (isMWL for smaller triple numbers)
-   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 16 );
+   //isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 16 );
    //END of test
    
    cb_cellchn ->setEnabled( isMWL );
@@ -3927,7 +3927,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    bool o_connection = true;
    if ( CheckExpComplete_auto( RunID_to_retrieve, o_connection ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
-       //TEST
+       //TEST: uncommnet
        qDebug() << "ABORTION IN EARLY STAGE... reached";
        
        // if ( finishing_live_update )
@@ -3966,7 +3966,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
      {
        if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
 
-	 //TEST:
+	 //TEST: Uncomment
 	 qDebug() << "Switch to UPDATE reached";
 	 
 	 // {
@@ -3997,6 +3997,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
 
+	   /***  TEST: uncomment
 	   //ALEXEY: here - either check that
 	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
 	   // 2. all triples for ALL optics systems are populated
@@ -4021,6 +4022,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 		   timer_data_reload->start(10000);     // 10 sec
 		 }
 	     }
+	   ***/
 	 }
      }
 
