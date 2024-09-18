@@ -3296,7 +3296,8 @@ void US_XpnDataViewer::end_process_all_data_avail( void )
       
       in_reload_end_process_all_data_avail = false;
 
-      changeOptics();
+      //changeOptics();
+      changeOptics_auto_internal();
     }
   else
     in_reload_end_process_all_data_avail   = false; 
@@ -4843,7 +4844,7 @@ void US_XpnDataViewer::changeOptics_auto( void )
      {
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);
-
+       in_reload_all_data   = false;  
        qDebug() << "Stopping timer_all_data_avail";
     }
 
@@ -4854,7 +4855,9 @@ void US_XpnDataViewer::changeOptics_auto( void )
        
        qDebug() << "Stopping timer_data_reload";
      }
-
+   
+   qApp->processEvents();
+   
 
    if ( !inExport )
      {
@@ -4871,6 +4874,8 @@ void US_XpnDataViewer::changeOptics_auto_internal( void )
 {
   //reset global identifier
   in_reload_all_data_set_gui = false;
+
+  qDebug() << "[changeOptics] in_reload_all_data_set_gui  1: " << in_reload_all_data_set_gui;
   
    // Determine the new run type
    int optrx      = cb_optsys->currentIndex();
@@ -4896,6 +4901,8 @@ DbgLv(1) << "chgOpt: optrx" << optrx << "ostyp" << ostyp
    if ( rtype == runType )
       return;
 
+   qDebug() << "[changeOptics] in_reload_all_data_set_gui  2: " << in_reload_all_data_set_gui;
+   
 QDateTime sttime=QDateTime::currentDateTime();
    runType       = rtype;    // Set the new run type (RI, IP, ...)
 
@@ -4939,13 +4946,16 @@ QDateTime sttime=QDateTime::currentDateTime();
    le_status->setText( tr( "Rebuilding AUC data ..." ) );
    qApp->processEvents();
 
-
+   qDebug() << "[changeOptics] in_reload_all_data_set_gui  3: " << in_reload_all_data_set_gui;
+ 
    xpn_data->build_rawData( allData );                                        // ALEXEY <-- need to update data BEFORE with xpn_data->import_data() OR reimport_data()
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 DbgLv(1) << "chgOpt:   build-raw done: tm2" << tm2;
 
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
+
+   qDebug() << "[changeOptics] in_reload_all_data_set_gui  4: " << in_reload_all_data_set_gui;
 
    // Reset various flags, counts, and lists
    isRaw         = true;
@@ -4960,6 +4970,8 @@ DbgLv(1) << "chgOpt: mwr ntriple" << ntriple;
 DbgLv(1) << "chgOpt: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "chgOpt: nscan" << nscan << "npoint" << npoint;
 DbgLv(1) << "chgOpt:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
+
+ qDebug() << "[changeOptics] in_reload_all_data_set_gui  5: " << in_reload_all_data_set_gui;
 
    if ( !in_reload_all_data_set_gui )
      { 
@@ -4993,6 +5005,8 @@ DbgLv(1) << "chgOpt: allData size" << allData.size();
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
 
+   qDebug() << "[changeOptics] in_reload_all_data_set_gui  6: " << in_reload_all_data_set_gui;
+   
    // // Ok to reenable some buttons now
    // enableControls();
 
@@ -5000,15 +5014,19 @@ DbgLv(1) << "chgOpt: allData size" << allData.size();
 
    qDebug() << "[Optics change: After 1st setup]Triples: " << triples;
    qDebug() << "[Optics change: After 1st setup]Triples from Protocol: " << triples_from_protocol;
+
+   qDebug() << "[changeOptics] in_reload_all_data_set_gui  7: " << in_reload_all_data_set_gui;
  
    //Set item enabled only if in both lists (prot & data)
    enableCellsTriples_auto( rtype );
+
+   qDebug() << "[changeOptics] in_reload_all_data_set_gui  8: " << in_reload_all_data_set_gui;
  
    //ALEXEY: restart timer to update newly selected Optics
    qDebug() << "IF timer restarts? auto_mode_bool, timer_all_data_avail->isActive(), inExport: " << auto_mode_bool <<  timer_all_data_avail->isActive() << inExport;
    if ( auto_mode_bool &&  !timer_all_data_avail->isActive() && !inExport )
      {
-       qDebug() << "YES, it restarts..." ;
+       qDebug() << "YES, it restarts... in Optics change" ;
        connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
        timer_all_data_avail->start(40000);     // 60 sec
      }
