@@ -3109,6 +3109,8 @@ void US_XpnDataViewer::read_protocol_auto ( void )
     }
 
   //TEST: comment later!!!
+  cellchans_from_protocol[ "RI" ] << "7 / A";
+  triples_from_protocol[ "RI" ]   << "7/A/333";
   cellchans_from_protocol[ "IP" ] << "3 / A";
   triples_from_protocol[ "IP" ]   << "3/A/660";
 }
