@@ -860,20 +860,19 @@ if(mcknt>0)
    // protocol_details[ "runID" ]      = QString("1706");
    // protocol_details[ "invID_passed" ] = QString("219");
 
-   //MW-AUC-IF_test_031622
-   QMap < QString, QString > protocol_details;
-   protocol_details[ "experimentId"] = QString("779"); 
-   protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
-   protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
-   protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
-   protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
-   protocol_details[ "OptimaName" ] = QString("Optima 2"); 
-   protocol_details[ "duration" ]   = QString("3960");
-   protocol_details[ "runID" ]      = QString("1270");
-   protocol_details[ "invID_passed" ] = QString("2");
-  
-   
-   check_for_data( protocol_details );
+   // //MW-AUC-IF_test_031622
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("779"); 
+   // protocol_details[ "protocolName"] = QString("MW-AUC-IF_test_031622");
+   // protocol_details[ "experimentName" ] = QString("MW-AUC-IF_test_031622");
+   // protocol_details[ "CellChNumber" ] = QString("IP:1,RI:2");
+   // protocol_details[ "TripleNumber" ] = QString("IP:1,RI:6");
+   // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
+   // protocol_details[ "duration" ]   = QString("3960");
+   // protocol_details[ "runID" ]      = QString("1270");
+   // protocol_details[ "invID_passed" ] = QString("2");
+     
+   // check_for_data( protocol_details );
    // End of test
 
    //Connect to syste data server 
@@ -4005,7 +4004,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
 
-	   /*** // TEST: uncomment
+	   /***/ // TEST: uncomment
 	   //ALEXEY: here - either check that
 	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
 	   // 2. all triples for ALL optics systems are populated
@@ -4030,7 +4029,7 @@ DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 		   timer_data_reload->start(10000);     // 10 sec
 		 }
 	     }
-	   ***/
+	   /***/
 	 }
      }
 
