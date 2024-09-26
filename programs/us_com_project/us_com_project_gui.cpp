@@ -1745,7 +1745,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 		       + tr("<br>")
 		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
 		      		       
-      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, all existing data for this run will be deleted from DB, ")
+      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+				   + tr("all existing data for this run will be deleted from DB, ")
 				   + tr("and the processing flow will reinitialize. ")
 				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
       
@@ -1786,6 +1787,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  do_run_tables_cleanup( protocol_details );
 
 	  do_run_data_cleanup( protocol_details );
+
+	  //Create fresh autoflowStatus record with the submitter person info & timestamp: 
+	  do_create_autoflowStatus_for_failedRun( protocol_details );
 	  
 	  //Switch to 2. LIVE_UPDATE:
 	  emit switch_to_live_update_init( protocol_details );
@@ -1985,6 +1989,87 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
     }
   
 }
+
+//Create fresh autofowStatus record: failed run re-init
+void US_InitDialogueGui::do_create_autoflowStatus_for_failedRun( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  //first, get current user (submitter) info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db -> query( qry );
+  db -> next();
+  int     u_ID    = db->value( 0 ).toInt();
+  QString u_fname = db->value( 1 ).toString();
+  QString u_lname = db->value( 2 ).toString();
+  QString u_email = db->value( 4 ).toString();
+  int     u_level = db->value( 5 ).toInt();
+
+  //autoflowStatus record
+  QString createGMPRun_Json;
+  createGMPRun_Json. clear();
+  createGMPRun_Json += "{ \"Person\": ";
+  
+  createGMPRun_Json += "[{";
+  createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+  createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+  createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+  createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+  createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+  createGMPRun_Json += "}],";
+  
+  //createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+  QString resubComm = tr("Resubmitting Failed GMP Run");
+  createGMPRun_Json += "\"Comment\": \""   + resubComm   + "\"";
+  
+  createGMPRun_Json += "}";
+  
+  qry. clear();
+  qry << "new_autoflowStatusGMPCreate_record"
+      << run_details[ "autoflowID" ]
+      << createGMPRun_Json;
+  
+  qDebug() << "[FAILED run init]: new_autoflowStatusGMPCreate_record qry -- " << qry;
+  
+  int autoflowStatusID = db->functionQuery( qry );
+  
+  if ( !autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (FAILED GMP run re-INIT): "
+				"There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+      
+      return;
+    }
+  qDebug() << "in do_create_autoflowStatus_for_failedRun: createGMPRun_Json -- " << createGMPRun_Json;
+  
+  run_details[ "statusID" ] = QString::number( autoflowStatusID );
+  
+  /************** finally, update autoflow record with StatusID: ****************/
+  qry. clear();
+  qry <<  "update_autoflow_with_statusID"
+      <<  run_details[ "autoflowID" ]
+      <<  QString::number( autoflowStatusID );
+  
+  qDebug() << "[FAILED run init]: update_autoflow_with_statusID qry -- " << qry;
+  db->query( qry );
+
+}
+
+
 
 //Read channel-to-ref_wvl info from AProfile
 bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
