@@ -1879,6 +1879,10 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
        changeCellCh();                          // Force a plot initialize
 
        in_reload_all_data_set_gui = true;
+
+       //for combined optics, if all types initialized, enable
+       if ( combinedOptics && opsys_auto.count() > 1 )
+	 cb_optsys -> setEnabled( true );
      }
 }
 
@@ -3619,6 +3623,8 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
    else if ( ( scanmask & 1 ) != 0 )  //<-- case of combined IP+RI runs: scanmask = 5; (5&1 = 1)
    {
+     qDebug() << "[BEGIN-Combined of opsys]: Optics List, optndx_auto: " << opsys_auto << optndx_auto;
+     
       QApplication::restoreOverrideCursor();
       QApplication::restoreOverrideCursor();
       QString runType2( "IP" );
@@ -3635,11 +3641,15 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       QString msg        = tr( "Multiple scan data types are present:\n" )
                            +   "'" + drtype1 + "'\n or \n"
                            +   "'" + drtype2 + "' .\n";
-      DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
+      DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifwa]scn_rows"
 	       << xpn_data->countOf( "iscn_rows" )
 	       << xpn_data->countOf( "fscn_rows" )
-	       << xpn_data->countOf( "wscn_rows" );
-      
+	       << xpn_data->countOf( "wscn_rows" )
+	       << xpn_data->countOf( "ascn_rows" );
+
+      qDebug() << "Combined opics: drtype1, drtype2 -- " << drtype1 << drtype2;
+      qDebug() << "Combined opics: opsys_auto, opsys_auto.count(), optndx_auto -- "
+	       << opsys_auto << opsys_auto.count() << optndx_auto;
       // ALEXEY: here DOES NOT check if Absorbance scan # is 0 !!!
       //opsys << drtype1 << drtype2;
       
@@ -3684,6 +3694,11 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 	    }
 	}
 
+      //END of dealing with optics list: 
+      qDebug() << "[END of opsys]: Optics List, optndx_auto: " << opsys_auto << optndx_auto;
+      /** Maybe the index optndx_auto needs to be iterated ? **/
+      
+      
       // if ( xpn_data->countOf( "iscn_rows" ) == 0 )
       // 	{
       // 	  //runType            = runType1;
@@ -3747,23 +3762,43 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
 
 
-   //First time setting Optics types counter //////////////////////////////////////////////
-   if ( !in_reload_all_data_set_gui )
+   // //First time setting Optics types counter //////////////////////////////////////////////
+   /* Single Optics *****/
+   if ( !in_reload_all_data_set_gui && !combinedOptics )
      {
-       qDebug() << "[FIRST TIME] Setting Optics types counter...";
+       qDebug() << "[FIRST TIME Single optics] Setting Optics types counter...";
        cb_optsys->disconnect();
        cb_optsys->clear();
        DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
-       
+    
        cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
        DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
        cb_optsys->setCurrentIndex( optndx_auto );
        DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
        connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-		this,         SLOT  ( changeOptics_auto(  )       ));
+   		this,         SLOT  ( changeOptics_auto(  )       ));
      }
+   
+   /* Combined  Optics *****/
+   if ( combinedOptics && opsys_auto.count() < 2 )
+     {
+       qDebug() << "[FIRST TIME Combined optics] Setting Optics types counter...";
+       cb_optsys->disconnect();
+       cb_optsys->clear();
+       DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
+    
+       cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
+       DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
+       cb_optsys->setCurrentIndex( optndx_auto );
+       DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+       connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+   		this,         SLOT  ( changeOptics_auto(  )       ));
+
+       //Disable for now
+       cb_optsys -> setEnabled( false );
+     }
+   
    // END of [First time setting Optics types counter] /////////////////////////////////////
-  
    
    // cb_optsys->disconnect();
    // cb_optsys->clear();
@@ -3832,7 +3867,7 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    //First time setting Cell/Channs counter //////////////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
-       qDebug() << "[FIRTS TIME] Setting Cell/Channs counter...";
+       qDebug() << "[FIRST TIME] Setting Cell/Channs counter...";
        cb_cellchn->disconnect();                                      
        cb_cellchn->clear();
        //cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
