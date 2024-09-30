@@ -4,8 +4,10 @@
 #include <QtCore>
 #include "archive_entry.h"
 #include "archive.h"
+#include "us_extern.h"
 
-class US_Archive
+
+class US_UTIL_EXTERN US_Archive
 {
 public:
     static bool extract(const QString&, const QString* = nullptr, QString* = nullptr);
