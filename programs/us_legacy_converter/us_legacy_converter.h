@@ -64,7 +64,7 @@ class US_LegacyConverter : public US_Widgets
         //! \param tarpath Path to the TAR archive
         //! \param extractpath Path to extract the files to
         //! \return true if extraction is successful, false otherwise
-        bool extract_files(const QString& tarpath, const QString& extractpath);
+        // bool extract_files(const QString& tarpath, const QString& extractpath);
 
     private slots:
         //! \brief Slot to load data

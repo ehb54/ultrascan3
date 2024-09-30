@@ -2,7 +2,8 @@
 #include "us_license_t.h"
 #include "us_license.h"
 //#include "us_extern.h"
-#include <QtGlobal>
+// #include <QtGlobal>
+#include "us_archive.h"
 
 int main(int argc, char *argv[])
 {
@@ -199,87 +200,88 @@ void US_LegacyConverter::load() {
    reload();
 }
 
-bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& savepath) {
+// bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& savepath) {
 
-   QFileInfo finfo(tarfile);
-   QString ost;
-#ifdef Q_OS_LINUX
-   ost = "LINUX";
-#elif defined ( Q_OS_MACOS )
-   ost = "MACOS";
-#elif defined ( Q_OS_WINDOWS )
-   ost = "WINDOWS";
-#else
-   ost = "NONE";
-#endif
+//    QFileInfo finfo(tarfile);
+//    QString ost;
+// #ifdef Q_OS_LINUX
+//    ost = "LINUX";
+// #elif defined ( Q_OS_MACOS )
+//    ost = "MACOS";
+// #elif defined ( Q_OS_WINDOWS )
+//    ost = "WINDOWS";
+// #else
+//    ost = "NONE";
+// #endif
 
-   QString sys_tar;
-   if (ost.compare("WINDOWS") == 0) {
-      sys_tar = QDir(QCoreApplication::applicationDirPath()).filePath("tar.exe");
-      if (! QFileInfo::exists(sys_tar) || ! QFileInfo(sys_tar).isExecutable()) {
-         QMessageBox::warning(this, "Error!", "TAR program is not found in the following path!\n" + sys_tar);
-         sys_tar.clear();
-         return false;
-      }
-   } else if (ost.compare("MACOS") == 0 || ost.compare("LINUX") == 0){
-      sys_tar = "tar";
-   } else {
-      QMessageBox::warning(this, "Error!", "This program only supports the MS Windows, macOS, and Linux!");
-      return false;
-   }
-   te_info->append("Process: starting to extract the loaded file using the system tar program ...");
-   qApp->processEvents();
-   QStringList tarr_args;
-   tarr_args << "-zxf" << finfo.absoluteFilePath() << "-C" << savepath;
-   int state = QProcess::execute(sys_tar, tarr_args);
-   if (state == -2) {
-      QString mesg = tr("The process of extracting the tar file cannot start!\n%1 %2\n\n"
-                        "Starting to use the internal methods!");
-      QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
-   } else if (state == -1) {
-      QString mesg = tr("The process of extracting the tar file crashed!\n%1 %2\n\n"
-                        "Starting to use the internal methods!");
-      QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
-   } else if (state == 0) {
-      return true;
-   } else {
-      QString mesg = tr("Extracting the tar file failed with the return value of %1!\n%2%3\n\n"
-                        "Starting to use the internal methods!");
-      QMessageBox::warning(this, "Warning!", mesg.arg(state).arg(sys_tar, tarr_args.join(" ")));
-   }
+//    QString sys_tar;
+//    if (ost.compare("WINDOWS") == 0) {
+//       sys_tar = QDir(QCoreApplication::applicationDirPath()).filePath("tar.exe");
+//       if (! QFileInfo::exists(sys_tar) || ! QFileInfo(sys_tar).isExecutable()) {
+//          QMessageBox::warning(this, "Error!", "TAR program is not found in the following path!\n" + sys_tar);
+//          sys_tar.clear();
+//          return false;
+//       }
+//    } else if (ost.compare("MACOS") == 0 || ost.compare("LINUX") == 0){
+//       sys_tar = "tar";
+//    } else {
+//       QMessageBox::warning(this, "Error!", "This program only supports the MS Windows, macOS, and Linux!");
+//       return false;
+//    }
+//    te_info->append("Process: starting to extract the loaded file using the system tar program ...");
+//    qApp->processEvents();
+//    QStringList tarr_args;
+//    tarr_args << "-zxf" << finfo.absoluteFilePath() << "-C" << savepath;
+//    int state = QProcess::execute(sys_tar, tarr_args);
+//    if (state == -2) {
+//       QString mesg = tr("The process of extracting the tar file cannot start!\n%1 %2\n\n"
+//                         "Starting to use the internal methods!");
+//       QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
+//    } else if (state == -1) {
+//       QString mesg = tr("The process of extracting the tar file crashed!\n%1 %2\n\n"
+//                         "Starting to use the internal methods!");
+//       QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
+//    } else if (state == 0) {
+//       return true;
+//    } else {
+//       QString mesg = tr("Extracting the tar file failed with the return value of %1!\n%2%3\n\n"
+//                         "Starting to use the internal methods!");
+//       QMessageBox::warning(this, "Warning!", mesg.arg(state).arg(sys_tar, tarr_args.join(" ")));
+//    }
 
-   QString tmpfile = QDir(savepath).filePath("data.tar.gz");
+//    QString tmpfile = QDir(savepath).filePath("data.tar.gz");
 
-   if (QFile::copy(tarfile, tmpfile)) {
-      US_Gzip gzip;
-      te_info->append("Process: starting to unzip the file using the US_Gzip program ...");
-      qApp->processEvents();
+//    if (QFile::copy(tarfile, tmpfile)) {
+//       US_Gzip gzip;
+//       te_info->append("Process: starting to unzip the file using the US_Gzip program ...");
+//       qApp->processEvents();
 
-      state = gzip.gunzip(tmpfile);
-      if (state != 0) {
-         QMessageBox::warning(this, "Error!", "Failed to unzip the file!\n" +
-                                                  gzip.explain(state));
-         return false;
-      }
-      tmpfile.chop(3);
-      // qDebug() << tmpfile;
-      te_info->append("Process: starting to extract the tar file using the US_Tar program ...");
-      qApp->processEvents();
-      US_Tar ustar;
-      QStringList extlist;
-      state = ustar.extract(tmpfile, &extlist, savepath);
-      if (state != 0) {
-         QMessageBox::warning(this, "Error!", "FAILED to extract the file!\n" +
-                                                  ustar.explain(state));
-         return false;
-      }
-   } else {
-      QMessageBox::warning(this, "Error!", tr("FAILED to copy the file to the /tmp directory!"));
-      return false;
-   }
-   return true;
+//       state = gzip.gunzip(tmpfile);
+//       if (state != 0) {
+//          QMessageBox::warning(this, "Error!", "Failed to unzip the file!\n" +
+//                                                   gzip.explain(state));
+//          return false;
+//       }
+//       tmpfile.chop(3);
+//       // qDebug() << tmpfile;
+//       te_info->append("Process: starting to extract the tar file using the US_Tar program ...");
+//       qApp->processEvents();
+//       US_Tar ustar;
+//       QStringList extlist;
+//       state = ustar.extract(tmpfile, &extlist, savepath);
+//       if (state != 0) {
+//          QMessageBox::warning(this, "Error!", "FAILED to extract the file!\n" +
+//                                                   ustar.explain(state));
+//          return false;
+//       }
+//    } else {
+//       QMessageBox::warning(this, "Error!", tr("FAILED to copy the file to the /tmp directory!"));
+//       return false;
+//    }
+//    return true;
 
-}
+// }
+
 
 void US_LegacyConverter::reload() {
    reset();
@@ -311,7 +313,13 @@ void US_LegacyConverter::reload() {
    QTemporaryDir tmp_dir_sorted;
    QString runid;
    if (tmp_dir.isValid()) {
-      if (! extract_files(tar_finfo.absoluteFilePath(), tmp_dir.path())) {
+      QString fpath = tar_finfo.absoluteFilePath();
+      QString opath = tmp_dir.path();
+      QString error;
+      bool ok = US_Archive::extract(fpath, &opath, &error);
+      te_info->append("Process: starting to extract the file ...");
+      qApp->processEvents();
+      if (! ok) {
          te_info->append("Failed to exctract the file: " + tar_finfo.absoluteFilePath());
          tar_fpath.clear();
          qApp->restoreOverrideCursor();
