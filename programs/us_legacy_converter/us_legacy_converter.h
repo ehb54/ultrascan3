@@ -6,8 +6,8 @@
 #include "us_widgets.h"
 #include "us_dataIO.h"
 #include "us_settings.h"
-#include "us_tar.h"
-#include "us_gzip.h"
+// #include "us_tar.h"
+// #include "us_gzip.h"
 #include "../us_convert/us_convert.h"
 
 //! \brief Class for converting legacy data to a modern format

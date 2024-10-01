@@ -1,8 +1,6 @@
 #include "us_legacy_converter.h"
 #include "us_license_t.h"
 #include "us_license.h"
-//#include "us_extern.h"
-// #include <QtGlobal>
 #include "us_archive.h"
 
 int main(int argc, char *argv[])
@@ -317,7 +315,7 @@ void US_LegacyConverter::reload() {
       QString opath = tmp_dir.path();
       QString error;
       bool ok = US_Archive::extract(fpath, &opath, &error);
-      te_info->append("Process: starting to extract the file ...");
+      te_info->append("Process: Extracting file ...");
       qApp->processEvents();
       if (! ok) {
          te_info->append("Failed to exctract the file: " + tar_finfo.absoluteFilePath());
