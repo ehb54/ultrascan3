@@ -11,9 +11,10 @@ class US_UTIL_EXTERN US_Archive
 {
 public:
     static bool extract(const QString&, const QString* = nullptr, QString* = nullptr);
+    static bool compress(const QStringList&, QString&, QString* = nullptr);
 
 private:
-    static int extract_entry(struct archive*, struct archive_entry*, QString&, QString&);
+    static void list_files(const QString&, const QString&, QStringList&, QStringList&);
 
 };
 

@@ -1,127 +1,280 @@
 #include "us_archive.h"
 
-
-int US_Archive:: extract_entry(struct archive *archive, struct archive_entry *entry,
-                               QString& path, QString& error) {
-
-    QDir dir(path);
-    dir.makeAbsolute();
-    if (! dir.mkpath(dir.absolutePath())) {
-        error = "US_Archive: Error: Could not make the directory: " + dir.absolutePath();
-        return -1;
-    }
-
-    QString entry_path;
-    QTextStream tsep(&entry_path);
-    tsep << archive_entry_pathname(entry);
-    QString target = dir.absoluteFilePath(entry_path);
-
-    // Ensure that directories leading up to the file exist
-    // mode_t entry_type = archive_entry_mode(entry);
-    // entry_type = entry_type & AE_IFMT;
-    auto entry_type = archive_entry_filetype(entry);
-    if (entry_type == AE_IFDIR) {
-        if (! dir.mkpath(target)) {
-            error = "US_Archive: Error: Could not make the directory: " + target;
-            return -1;
-        } else {
-            return 0;
-        }
-
-    } else if (entry_type == AE_IFREG) {
-        QFileInfo finfo(target);
-        if (! dir.mkpath(finfo.absoluteDir().absolutePath())) {
-            error = "US_Archive: Error: Could not make the directory: " + finfo.absoluteDir().absolutePath();
-            return -1;
-        }
-
-        QFile file(target);
-        file.setPermissions(QFileDevice::WriteOwner);
-        if (file.open(QIODevice::WriteOnly)) {
-            QDataStream dst(&file);
-            const void *buff;
-            size_t size;
-            int64_t offset;
-            while (archive_read_data_block(archive, &buff, &size, &offset) == ARCHIVE_OK) {
-                size_t size_o = static_cast<size_t>(dst.writeRawData(static_cast<const char*>(buff), static_cast<qint64>(size)));
-                if (size != size_o) {
-                    error = "US_Archive: Error: Could not write the file: " + target;
-                    file.close();
-                    return -1;
-                }
-            }
-            file.close();
-            return 0;
-        } else {
-            error = "US_Archive: Error: Could create the file: " + target;
-            return -1;
-        }
-    } else {
-        QString msg("US_Archive: Warning: Not supported file type ( %1 ): %2");
-        error = msg.arg(entry_type, 8).arg(entry_path);
-        return 1;
-    }
-}
-
-
 bool US_Archive::extract(const QString& filename, const QString* path, QString* error) {
 
-    QString outpath;
-    if (path == nullptr) {
-        QFileInfo fino(filename);
-        outpath = fino.absolutePath();
-    } else {
-        outpath = *path;
-    }
-
+    QString error_;
     if (error != nullptr) {
         error->clear();
     }
 
-    QString error_str;
-    QByteArray fname_bta = filename.toUtf8();
-
-    struct archive *archive;
-    struct archive_entry *entry;
-    int result;
-
-    // Initialize the archive object for reading
-    archive = archive_read_new();
-    archive_read_support_format_all(archive);      // Enable support for all formats
-    archive_read_support_filter_all(archive); // Enable support for all compression types
-
-    // Open the archive file directly from disk
-    result = archive_read_open_filename(archive, fname_bta.data(), 10240); // 10240 is the block size
-    if (result != ARCHIVE_OK) {
-        error_str = "US_Archive: Error: ";
-        QTextStream ts(&error_str);
-        ts << archive_error_string(archive);
-        error_str += ": " + filename;
-        archive_read_close(archive);
-        archive_read_free(archive);
+    QDir dir;
+    if (path == nullptr) {
+        QFileInfo fino(filename);
+        dir.setPath(fino.absolutePath());
+    } else {
+        dir.setPath(*path);
+    }
+    dir.makeAbsolute();
+    if (! dir.mkpath(dir.path())) {
+        error_ = "US_Archive: Error: Could not make the directory: " + dir.path();
         if (error != nullptr) {
-            *error = error_str;
+            *error = error_;
         }
         return false;
     }
 
-    // Iterate over all entries in the archive
-    while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
-        // Extract the entry to the specified directory
-        result = extract_entry(archive, entry, outpath, error_str);
-        if (result == -1) {
-            archive_read_close(archive);
-            archive_read_free(archive);
-            if (error != nullptr) {
-                *error = error_str;
-            }
-            return false;
+    struct archive *archive;
+    struct archive_entry *entry;
+
+    // Initialize archive object to read
+    archive = archive_read_new();
+    archive_read_support_format_all(archive);    // Enable support for all formats
+    archive_read_support_filter_all(archive);    // Enable support for all compression filters
+
+    int result;
+    // Open archive file
+    result = archive_read_open_filename(archive, filename.toUtf8().constData(), 10240);
+    if (result != ARCHIVE_OK) {
+        error_ = QObject::tr("US_Archive: Error: %1: %2").
+                 arg(archive_error_string(archive), filename);
+        archive_read_close(archive);
+        archive_read_free(archive);
+        if (error != nullptr) {
+            *error = error_;
         }
-        archive_read_data_skip(archive);  // Skip to the next entry
+        return false;
     }
 
-    // Clean up
+    // Loop into the archive file as far as it has files
+    while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
+        // Get the relative path of entry
+        QString entry_path = QObject::tr("%1").arg(archive_entry_pathname(entry));
+        QFileInfo target(dir.absoluteFilePath(entry_path));
+
+        // mode_t entry_type = archive_entry_mode(entry);
+        // entry_type = entry_type & AE_IFMT;
+        mode_t entry_type = archive_entry_filetype(entry);
+        //If the entry is a directory, make its absolute path
+        //If the entry is a file, make its parent's absolute path
+        if (entry_type == AE_IFDIR) {
+            if (! dir.mkpath(target.absoluteFilePath())) {
+                error_ = "US_Archive: Error: Failed to make path: " + target.absoluteFilePath();
+                if (error != nullptr) {
+                    *error = error_;
+                }
+                archive_read_close(archive);
+                archive_read_free(archive);
+                return false;
+            }
+        } else if (entry_type == AE_IFREG) {
+            if (! dir.mkpath(target.absolutePath())) {
+                error_ = "US_Archive: Error: Failed to make path: " + target.absolutePath();
+                if (error != nullptr) {
+                    *error = error_;
+                }
+                archive_read_close(archive);
+                archive_read_free(archive);
+                return false;
+            }
+
+            QFile file(target.absoluteFilePath());
+            file.setPermissions(QFileDevice::WriteOwner);
+            if (file.open(QIODevice::WriteOnly)) {
+                QDataStream dstream(&file);
+                const void *buff;
+                size_t size;
+                int64_t offset;
+                //Read the entry data with a buffer, then write it to the file
+                while (archive_read_data_block(archive, &buff, &size, &offset) == ARCHIVE_OK) {
+                    size_t size_o = static_cast<size_t>(dstream.writeRawData(static_cast<const char*>(buff),
+                                                                             static_cast<qint64>(size)));
+                    if (size != size_o) {
+                        error_ = "US_Archive: Error: Failed to write file: " + target.absolutePath();
+                        file.close();
+                        if (error != nullptr) {
+                            *error = error_;
+                        }
+                        archive_read_close(archive);
+                        archive_read_free(archive);
+                        return false;
+                    }
+                }
+                file.close();
+            } else {
+                error_ = "US_Archive: Error: Failed to open file: " + target.absolutePath();
+                if (error != nullptr) {
+                    *error = error_;
+                }
+                archive_read_close(archive);
+                archive_read_free(archive);
+                return false;
+            }
+        }
+        // Skip the current entry data blocks
+        archive_read_data_skip(archive);
+    }
+
     archive_read_close(archive);
     archive_read_free(archive);
     return true;
+}
+
+bool US_Archive::compress(const QStringList& list, QString& filename, QString* error) {
+    struct archive *archive;
+    archive = archive_write_new();
+
+    if (error != nullptr) {
+        error->clear();
+    }
+    QString error_;
+    QTextStream error_ts(&error_);
+    QFileInfo finfo;
+    finfo.setFile(filename);
+    QString extention = finfo.completeSuffix();
+
+    int result;
+    bool flag = true;
+    if (extention.compare("tar", Qt::CaseInsensitive) == 0) {
+        result = archive_write_set_format_pax_restricted(archive);
+    }
+    else if (extention.compare("tgz", Qt::CaseInsensitive) == 0) {
+        result = archive_write_set_format_pax_restricted(archive);
+        if (result == ARCHIVE_OK) result = archive_write_add_filter_gzip(archive);
+    }
+    else if (extention.compare("tar.gz", Qt::CaseInsensitive) == 0) {
+        result = archive_write_set_format_pax_restricted(archive);
+        if (result == ARCHIVE_OK) result = archive_write_add_filter_gzip(archive);
+    }
+    else if (extention.compare("tar.xz", Qt::CaseInsensitive) == 0) {
+        result = archive_write_set_format_pax_restricted(archive);
+        if (result == ARCHIVE_OK) result = archive_write_add_filter_xz(archive);
+    }
+    else if (extention.compare("tar.bz2", Qt::CaseInsensitive) == 0) {
+        result = archive_write_set_format_pax_restricted(archive);
+        if (result == ARCHIVE_OK) result = archive_write_add_filter_bzip2(archive);
+    }
+    else if (extention.compare("zip", Qt::CaseInsensitive) == 0) {
+        result = archive_write_set_format_zip(archive);
+    } else {
+        error_ = "US_Archive: Error: file format not supported: " + filename;
+        flag = false;
+    }
+
+    if (flag && result != ARCHIVE_OK) {
+        error_ts << archive_error_string(archive);
+        flag = false;
+    }
+
+    if (! flag) {
+        if (error != nullptr) {
+            *error = error_;
+        }
+        archive_write_free(archive);
+        return false;
+    }
+
+    QStringList absolute_files;
+    QStringList relative_files;
+    QDir dir;
+    for (int ii = 0; ii < list.size(); ii++) {
+        finfo.setFile(list.at(ii));
+        finfo.makeAbsolute();
+        QString absolute = finfo.absoluteFilePath();
+        QString relative = finfo.fileName();
+        if (! finfo.exists()) {
+            error_ = "US_Archive: Error: item not exist: " + absolute;
+            if (error != nullptr) {
+                *error = error_;
+            }
+            archive_write_free(archive);
+            return false;
+        }
+        if (ii == 0) {
+            dir.setPath(finfo.absolutePath());
+        }
+        if (finfo.isFile()) {
+            absolute_files << absolute;
+            relative_files << relative;
+        } else if (finfo.isDir()) {
+            list_files(absolute, relative, absolute_files, relative_files);
+        }
+    }
+    if (absolute_files.size() == 0) {
+        error_ = "US_Archive: Error: empty file";
+        if (error != nullptr) {
+            *error = error_;
+        }
+        archive_write_free(archive);
+        return false;
+    }
+
+    dir.makeAbsolute();
+    filename = dir.absoluteFilePath(filename);
+    result = archive_write_open_filename(archive, filename.toUtf8().constData());
+    if (result != ARCHIVE_OK) {
+        error_.clear();
+        error_ts << archive_error_string(archive);
+        if (error != nullptr) {
+            *error = error_;
+        }
+        archive_write_free(archive);
+        return false;
+    }
+
+    for (int ii = 0; ii < absolute_files.size(); ii++) {
+        QString absolute = absolute_files.at(ii);
+        QString relative = relative_files.at(ii);
+        struct archive_entry *entry;
+        QFile file(absolute);
+
+        if (!file.open(QIODevice::ReadOnly)) {
+            error_ = "US_Archive: Error: Failed to open file: " + absolute;
+            if (error != nullptr) {
+                *error = error_;
+            }
+            archive_write_close(archive);
+            archive_write_free(archive);
+            return false;
+        }
+
+        // Write the file header
+        entry = archive_entry_new();
+        archive_entry_set_pathname(entry, relative.toUtf8().constData());
+        archive_entry_set_size(entry, file.size());
+        archive_entry_set_filetype(entry, AE_IFREG);
+        archive_entry_set_perm(entry, 0644);
+        archive_write_header(archive, entry);
+
+        // Write the file content
+        QByteArray file_content = file.readAll();
+        archive_write_data(archive, file_content.data(), file_content.size());
+
+        // Free the entry
+        archive_entry_free(entry);
+        file.close();
+    }
+
+    archive_write_close(archive);
+    archive_write_free(archive);
+    return true;
+}
+
+
+void US_Archive::list_files(const QString& abs_path, const QString& base_dir,
+                            QStringList& abs_list, QStringList& rel_list) {
+
+    // Loop recursively into folders to list all files
+    QDir dir(abs_path);
+    QDir::Filters filter = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoDotAndDotDot | QDir::NoSymLinks;
+    QFileInfoList list = dir.entryInfoList(filter);
+    foreach (const QFileInfo item, list) {
+        QString rel_dir = base_dir + "/" + item.fileName();
+
+        if (item.isDir()) {
+            list_files(item.absoluteFilePath(), rel_dir, abs_list, rel_list);
+        } else {
+            abs_list << item.absoluteFilePath();
+            rel_list << rel_dir;
+        }
+    }
 }
