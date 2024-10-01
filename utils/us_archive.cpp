@@ -84,12 +84,12 @@ bool US_Archive::extract(const QString& filename, const QString* path, QString* 
                 const void *buff;
                 size_t size;
                 int64_t offset;
-                //Read the entry data with a buffer, then write it to the file
+                //Read data blocks with a buffer to write them in a file
                 while (archive_read_data_block(archive, &buff, &size, &offset) == ARCHIVE_OK) {
                     size_t size_o = static_cast<size_t>(dstream.writeRawData(static_cast<const char*>(buff),
                                                                              static_cast<qint64>(size)));
                     if (size != size_o) {
-                        error_ = "US_Archive: Error: Failed to write file: " + target.absolutePath();
+                        error_ = "US_Archive: Error: Failed to write data blocks: " + target.absolutePath();
                         file.close();
                         if (error != nullptr) {
                             *error = error_;
@@ -127,11 +127,11 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
         error->clear();
     }
     QString error_;
-    QTextStream error_ts(&error_);
     QFileInfo finfo;
     finfo.setFile(filename);
     QString extention = finfo.completeSuffix();
 
+    // Check archive format
     int result;
     bool flag = true;
     if (extention.compare("tar", Qt::CaseInsensitive) == 0) {
@@ -156,12 +156,12 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
     else if (extention.compare("zip", Qt::CaseInsensitive) == 0) {
         result = archive_write_set_format_zip(archive);
     } else {
-        error_ = "US_Archive: Error: file format not supported: " + filename;
+        error_ = "US_Archive: Error: File format not supported: " + filename;
         flag = false;
     }
 
     if (flag && result != ARCHIVE_OK) {
-        error_ts << archive_error_string(archive);
+        error_ = QObject::tr("US_Archive: Error: Failed to initialize archive data structure: %1").arg(archive_error_string(archive));
         flag = false;
     }
 
@@ -176,6 +176,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
     QStringList absolute_files;
     QStringList relative_files;
     QDir dir;
+    // List all files and directories
     for (int ii = 0; ii < list.size(); ii++) {
         finfo.setFile(list.at(ii));
         finfo.makeAbsolute();
@@ -200,7 +201,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
         }
     }
     if (absolute_files.size() == 0) {
-        error_ = "US_Archive: Error: empty file";
+        error_ = "US_Archive: Error: Empty file list";
         if (error != nullptr) {
             *error = error_;
         }
@@ -208,12 +209,13 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
         return false;
     }
 
+    // Create archive file
     dir.makeAbsolute();
     filename = dir.absoluteFilePath(filename);
     result = archive_write_open_filename(archive, filename.toUtf8().constData());
     if (result != ARCHIVE_OK) {
         error_.clear();
-        error_ts << archive_error_string(archive);
+        error_ = QObject::tr("US_Archive: Error: Failed to create archive file: %1").arg(archive_error_string(archive));
         if (error != nullptr) {
             *error = error_;
         }
@@ -221,6 +223,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
         return false;
     }
 
+    // Loop to add all files to the archive file
     for (int ii = 0; ii < absolute_files.size(); ii++) {
         QString absolute = absolute_files.at(ii);
         QString relative = relative_files.at(ii);
@@ -263,7 +266,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
 void US_Archive::list_files(const QString& abs_path, const QString& base_dir,
                             QStringList& abs_list, QStringList& rel_list) {
 
-    // Loop recursively into folders to list all files
+    // Loop folders recursively to list all files
     QDir dir(abs_path);
     QDir::Filters filter = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoDotAndDotDot | QDir::NoSymLinks;
     QFileInfoList list = dir.entryInfoList(filter);
