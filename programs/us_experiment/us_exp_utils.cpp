@@ -1031,6 +1031,11 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 	    << "cb_rotor text" << cb_rotor->currentText();
    DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
 
+   //import Data Disk
+   rpRotor->importData  = ck_disksource->isChecked();
+   le_dataDiskPath ->setText( rpRotor->importDataDisk );
+   
+
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
    te_revs_to_assign  -> setText( rpRotor->revListAssign );
@@ -1084,6 +1089,13 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        //show Operator Info:
        lb_operator -> setVisible(true);
        cb_operator -> setVisible(true);
+
+       //Hide data disk upload
+       pb_importDisk   -> hide();
+       le_dataDiskPath -> hide();
+       ck_disksource   -> hide();
+       rpRotor->importData = false;
+       rpRotor->importDataDisk = "";
      }
 
 
@@ -1515,6 +1527,11 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    rpRotor->exptype     = exptype;
 
+   //
+   rpRotor->importDataDisk    = importDataPath;
+   rpRotor->importData        = ck_disksource->isChecked();
+
+   
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
          <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
          <<  rpRotor->instID  << ", " << rpRotor->instrname  << " / "
@@ -3812,9 +3829,19 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    //                       connected );
 
    if ( mainw->automode )
-     subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-                           mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
-                           !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+     {
+       subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+
+       //add cond. for data from disk:
+       if ( rpRotor->importData && rpRotor->importDataDisk.isEmpty() )
+	 {
+	   qDebug() << "Data Disk ? " << rpRotor->importData;
+	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
+	   subm_enab = false;
+	 }
+     }
    else
      subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                            mainw->connection_status );               // ALEXEY: use top-level connection boolean!
@@ -3855,6 +3882,15 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	       pb_submit->hide();
 	       pb_saverp->show();
 	     }
+	 }
+
+       //connect to different slot if disk data:
+       if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+	 {
+	   pb_submit -> disconnect();
+	   connect( pb_submit,    SIGNAL( clicked()          ),
+		    this,         SLOT  ( submitExperiment_confirm_dataDisk() ) );
+       
 	 }
      }
    else
@@ -3959,7 +3995,8 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    //qDebug() << "Upload::initPanel(): oprof -- " << oprof;
    // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
    // 	    << ncells_interference << ", " << nchannels_uvvis;
-   
+   qDebug() << "Data Disk ? " << rpRotor->importData;
+   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
 }
 
 bool US_ExperGuiUpload::samplesReferencesWvlsMatch( QStringList& msg_to_user )

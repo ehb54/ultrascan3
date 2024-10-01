@@ -1210,10 +1210,12 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
 
    QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
-   QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
+   //QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
+                lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
-   QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
+   //QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
+		lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
 
                 lb_operator   = us_label( tr( "Select Operator:" ) );
@@ -1221,6 +1223,16 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
+
+		//select data source from disk
+		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
+		ck_disksource ->setAutoFillBackground( true );
+		ck_disksource ->setChecked( false );
+
+		pb_importDisk   = us_pushbutton( tr( "Import Data" ) );
+		le_dataDiskPath = us_lineedit( "", 0, true );
+		
+		
 
    int row     = 0;
    genL->addWidget( lb_lab,          row,   0, 1, 1 );
@@ -1248,6 +1260,17 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
    genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
+
+   genL->addWidget( ck_disksource,     row++,   0, 1, 4 );
+   genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
+   genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
+
+
+   //connect checkbox & import
+   connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
+	    this,           SLOT  ( importDiskChecked( bool ) ) );
+   connect( pb_importDisk,      SIGNAL( clicked()       ),
+	    this,           SLOT(   importDisk()        ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1402,10 +1425,61 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    lb_operator -> hide();
    cb_operator -> hide();
 
+   //hide import Disk for now
+   pb_importDisk   -> hide();
+   le_dataDiskPath -> hide();
+   importDataPath = "";
+     
    initPanel();
 
    first_time_init = false;
    //currentOperator_index = 0;
+}
+
+
+// Check import disk
+void US_ExperGuiRotor::importDiskChecked( bool checked )
+{
+  qDebug() << "In checking ck_importDisk; checked, !checked = "
+	   << checked << !checked;
+    
+  pb_importDisk   -> setVisible( checked );
+  le_dataDiskPath -> setVisible( checked );
+
+  lb_instrument  -> setVisible( !checked );
+  cb_optima  -> setVisible( !checked );
+  lb_optima_connected -> setVisible( !checked );
+  le_optima_connected -> setVisible( !checked );
+  
+  if ( !checked )
+    {
+      importDataPath = "";
+      le_dataDiskPath ->setText("");
+    }
+}
+
+// Import from disk
+void US_ExperGuiRotor::importDisk( void )
+{
+  QString dir;
+  int jmpType  = 0;
+
+  dir = QFileDialog::getExistingDirectory( this,
+					   tr( "Raw Data Directory" ),
+					   US_Settings::importDir(),
+					   QFileDialog::DontResolveSymlinks );
+
+  dir.replace( "\\", "/" );
+  
+  if ( dir.isEmpty() )      // If no directory chosen, return now
+    return;
+  
+  QDir readDir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+  readDir.makeAbsolute();
+  if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing "/"
+     
+  le_dataDiskPath   ->setText( dir );
+  importDataPath = dir;
 }
 
 // Slot for change in Lab selection
@@ -6116,7 +6190,137 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 }
 
 
+//Confirm the Data Disk submission
+void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
+{
+  if ( mainw->automode && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+  
+  QMessageBox msgBox;
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  QString message_protocol = tr( "");
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("Data from Disk will be Submitted for GMP Processing:");
 
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+  QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
+
+  qDebug() << "oper,rev,appr,sme Lists -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
+ 
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+  QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
+    
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
+  QString info_text;
+  
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2 <br><br>"
+				  "<b>Assigner Approver(s):</b> <br>"
+				  "&emsp; %3"))
+	.arg( o_list )
+	.arg( r_list )
+	.arg( a_list );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING") || a_list. contains( "MISSING") )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Experiment <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s), reviewer(s) and/or approver(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
+    }
+
+  msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
+ 
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept)
+    {
+      if ( !mainw->usmode )
+	{
+	  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) || a_list. contains( "MISSING" ) ) 
+	    {
+	      return;
+	    }
+	  else
+	    {
+	      //get user info:
+	      //get info on logged in user [submitter]:
+	      US_Passwd   pw;
+	      QString     masterPW  = pw.getPasswd();
+	      US_DB2      db( masterPW );  // New constructor
+	      QStringList qry;
+	      qry <<  QString( "get_user_info" );
+	      db.  query( qry );
+	      db. next();
+	      int u_ID        = db. value( 0 ).toInt();
+	      QString u_fname = db. value( 1 ).toString();
+	      QString u_lname = db. value( 2 ).toString();
+	      int u_lev       = db. value( 5 ).toInt();
+	      
+	      QString user_submitter = u_lname + ", " + u_fname;
+	      
+	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	      qDebug() << "Checking master password...";
+	      gmp_submitter_map.clear();
+	      US_Passwd   pw_at;
+	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+	      
+	      int submit_map_size = gmp_submitter_map.keys().size();
+	      qDebug() << "Submitter map: "
+		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		       << gmp_submitter_map.keys().isEmpty() 
+		       << gmp_submitter_map[ "User:" ]
+		       << gmp_submitter_map[ "Comment:" ]
+		       << gmp_submitter_map[ "Master Password:" ];
+	      
+	      //Enable GMP run submit ONLY if form was filled && password correct
+	      
+	      if ( submit_map_size > 0 ) 
+		{
+		  qDebug() << "Submitting GMP [Data Disk]...";
+		  submitExperiment_dataDisk();
+		}
+	    }
+	}
+      else
+	{
+	  qDebug() << "Will be no R&D submission...";
+	  // qDebug() << "Submitting R&D...";
+	  // submitExperiment_dataDisk();
+	}
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    {
+      return;
+    }
+}
 
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
@@ -7015,6 +7219,15 @@ void US_ExperGuiUpload::clearData_protDev()
   qApp->processEvents();
   progress_msg->close();
   /** End Iterate over fileNameList ****************************************************************/
+}
+
+// Slot to submit GMP run with Disk Data
+void US_ExperGuiUpload::submitExperiment_dataDisk()
+{
+  //TO DO:
+  /*
+    Add filepath to the autoflow record:
+   */
 }
 
 

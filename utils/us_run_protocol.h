@@ -36,6 +36,10 @@ class US_UTIL_EXTERN US_RunProtocol
 	    QString     exptype;
 	    QString     opername; 
 	    QString     instrname;
+
+	    //data form Disk
+	    QString     importDataDisk;
+	    bool        importData;
 	    
             QString     labGUID;       //!< Laboratory GUID
             QString     rotGUID;       //!< Rotor GUID

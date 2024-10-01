@@ -165,6 +165,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox* cb_exptype;                          // Exp. Type combo box
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
+  QCheckBox* ck_disksource;
+  QPushButton* pb_importDisk;
+  QLineEdit *  le_dataDiskPath;
       
       QVector< US_Rotor::Lab >               labs;    // All labs
       QVector< US_Rotor::Rotor >             rotors;  // All rotors in lab
@@ -181,7 +184,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
       QStringList sl_operators;    // Operator combo choices
       QStringList sl_operators_copy;    // Operator combo choices
-      QLineEdit *  le_instrument;
+  QLabel*      lb_instrument;
+  QLabel*      lb_optima_connected;
+  //QLineEdit *  le_instrument;
       QLineEdit*   le_optima_connected;
       
       int         dbg_level;
@@ -195,6 +200,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       //int          currentOperator_index;
       QString      currentOperator;
 
+  QString importDataPath;
+  
       QString expType_old;
 
       //Assigning oper(s) && rev(s)
@@ -235,6 +242,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void changeOperator( int );  // Slot for change in operator
       void changeExpType( int );   // Slot for change in exp. type
       void changeOptima ( int );   // Slot for change in exp. type
+
+  void importDisk( void );
+  void importDiskChecked( bool );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values
@@ -893,11 +903,13 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
+  void    submitExperiment_confirm_dataDisk( void );
       void    clearData_protDev( void );
  
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
       void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
+      void    submitExperiment_dataDisk( void );  
       bool    saveRunProtocol ( void );  // Save the Run Protocol
       bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
