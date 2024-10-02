@@ -2,37 +2,60 @@
 #define US_ARCHIVE_H
 
 #include <QtCore>
-#include "archive_entry.h"
-#include "archive.h"
 #include "us_extern.h"
 
 //! \brief A class to extract and compress archive files
 //!        Supported files format: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip
-class US_UTIL_EXTERN US_Archive
+class US_UTIL_EXTERN US_Archive : public QObject
 {
-public:
-    //! \brief Static function to extract archive files. Supported files format: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip
-    //! \param filename Input path to the archive file
-    //! \param outpath Output directory where extracted data is saved. The default is NULL, which means that the content will be extracted to the archive file path.
-    //! \param error String to view errors if the extraction process fails. The default is NULL.
-    //! \return A boolean to verify the success of the extraction
-    static bool extract(const QString&, const QString* = nullptr, QString* = nullptr);
+    Q_OBJECT
 
-    //! \brief Static function to compress files and folders into an archive file.
-    //! \param list A list of all files and folders need to be compressed.
+public:
+    US_Archive() {};
+
+    //! \brief Method to extract archive file (Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip).
+    //! \param filename Path to archive file. Output directory is taken from the path of the archive file unless it is set directly using setPath() method.
+    //! \return A boolean to verify the success of the extraction
+    bool extract(const QString&);
+
+    //! \brief Method to compress files and folders into an archive file.
+    //! \param list list of all files and folders need to be compressed.
     //! \param filename The output archive filename. The output path is taken from the path of the first item.
-    //! After compression is complete, this parameter stores the path of the archive file. Supported files format: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip
-    //! \param error String to view errors if the compression process fails. The default is NULL.
+    //! After compression is complete, this parameter stores the path of the archive file.
+    //! Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip
     //! \return A boolean to verify the success of the compression
-    static bool compress(const QStringList&, QString&, QString* = nullptr);
+    bool compress(const QStringList&, QString&);
+
+    //! \brief Method to set the path to store extracted data.
+    //! \param Path
+    void setPath(const QString&);
+
+    //! \brief Method to receive the error string.
+    //! \return Error string.
+    QString getError();
+
+signals:
+    //! \brief A Signal sent when an entry is extracted successfully
+    //! \param relative_path
+    //! \param absolute_path
+    void itemExtracted (const QString&, const QString&);
+
+    //! \brief A Signal sent when an entry is added to the archive file successfully
+    //! \param relative_path
+    //! \param absolute_path
+    void itemAdded (const QString&, const QString&);
 
 private:
-    //! \brief A private static function to list contents of a directory.
-    //! \param full_path Absolute path to the directory.
+
+    QString outpath;
+    QString error;
+    QStringList absolute_paths;
+    QStringList relative_paths;
+
+    //! \brief List contents of a directory.
+    //! \param absolute_path Absolute path to the directory.
     //! \param relative_path Relative path to the directory.
-    //! \param full_path_list A list to store all absolute paths.
-    //! \param relative_path_list A list to store all relative paths.
-    static void list_files(const QString&, const QString&, QStringList&, QStringList&);
+    void list_files(const QString&, const QString&);
 
 };
 

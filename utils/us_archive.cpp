@@ -1,25 +1,19 @@
 #include "us_archive.h"
+#include "archive_entry.h"
+#include "archive.h"
 
-bool US_Archive::extract(const QString& filename, const QString* path, QString* error) {
-
-    QString error_;
-    if (error != nullptr) {
-        error->clear();
-    }
+bool US_Archive::extract(const QString& filename) {
 
     QDir dir;
-    if (path == nullptr) {
+    if (outpath.isEmpty()) {
         QFileInfo fino(filename);
         dir.setPath(fino.absolutePath());
     } else {
-        dir.setPath(*path);
+        dir.setPath(outpath);
     }
     dir.makeAbsolute();
     if (! dir.mkpath(dir.path())) {
-        error_ = "US_Archive: Error: Could not make the directory: " + dir.path();
-        if (error != nullptr) {
-            *error = error_;
-        }
+        error = "US_Archive: Error: Could not make the directory: " + dir.path();
         return false;
     }
 
@@ -35,13 +29,10 @@ bool US_Archive::extract(const QString& filename, const QString* path, QString* 
     // Open archive file
     result = archive_read_open_filename(archive, filename.toUtf8().constData(), 10240);
     if (result != ARCHIVE_OK) {
-        error_ = QObject::tr("US_Archive: Error: %1: %2").
-                 arg(archive_error_string(archive), filename);
+        error = QObject::tr("US_Archive: Error: %1: %2").
+                arg(archive_error_string(archive), filename);
         archive_read_close(archive);
         archive_read_free(archive);
-        if (error != nullptr) {
-            *error = error_;
-        }
         return false;
     }
 
@@ -58,20 +49,15 @@ bool US_Archive::extract(const QString& filename, const QString* path, QString* 
         //If the entry is a file, make its parent's absolute path
         if (entry_type == AE_IFDIR) {
             if (! dir.mkpath(target.absoluteFilePath())) {
-                error_ = "US_Archive: Error: Failed to make path: " + target.absoluteFilePath();
-                if (error != nullptr) {
-                    *error = error_;
-                }
+                error = "US_Archive: Error: Failed to make path: " + target.absoluteFilePath();
                 archive_read_close(archive);
                 archive_read_free(archive);
                 return false;
             }
+            // emit itemExtracted(entry_path, target.absoluteFilePath());
         } else if (entry_type == AE_IFREG) {
             if (! dir.mkpath(target.absolutePath())) {
-                error_ = "US_Archive: Error: Failed to make path: " + target.absolutePath();
-                if (error != nullptr) {
-                    *error = error_;
-                }
+                error = "US_Archive: Error: Failed to make path: " + target.absolutePath();
                 archive_read_close(archive);
                 archive_read_free(archive);
                 return false;
@@ -89,22 +75,17 @@ bool US_Archive::extract(const QString& filename, const QString* path, QString* 
                     size_t size_o = static_cast<size_t>(dstream.writeRawData(static_cast<const char*>(buff),
                                                                              static_cast<qint64>(size)));
                     if (size != size_o) {
-                        error_ = "US_Archive: Error: Failed to write data blocks: " + target.absolutePath();
+                        error = "US_Archive: Error: Failed to write data blocks: " + target.absolutePath();
                         file.close();
-                        if (error != nullptr) {
-                            *error = error_;
-                        }
                         archive_read_close(archive);
                         archive_read_free(archive);
                         return false;
                     }
                 }
                 file.close();
+                emit itemExtracted(entry_path, target.absoluteFilePath());
             } else {
-                error_ = "US_Archive: Error: Failed to open file: " + target.absolutePath();
-                if (error != nullptr) {
-                    *error = error_;
-                }
+                error = "US_Archive: Error: Failed to open file: " + target.absolutePath();
                 archive_read_close(archive);
                 archive_read_free(archive);
                 return false;
@@ -119,14 +100,14 @@ bool US_Archive::extract(const QString& filename, const QString* path, QString* 
     return true;
 }
 
-bool US_Archive::compress(const QStringList& list, QString& filename, QString* error) {
+bool US_Archive::compress(const QStringList& list, QString& filename) {
+    absolute_paths.clear();
+    relative_paths.clear();
+
     struct archive *archive;
     archive = archive_write_new();
 
-    if (error != nullptr) {
-        error->clear();
-    }
-    QString error_;
+    error.clear();
     QFileInfo finfo;
     finfo.setFile(filename);
     QString extention = finfo.completeSuffix();
@@ -156,25 +137,20 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
     else if (extention.compare("zip", Qt::CaseInsensitive) == 0) {
         result = archive_write_set_format_zip(archive);
     } else {
-        error_ = "US_Archive: Error: File format not supported: " + filename;
+        error = "US_Archive: Error: File format not supported: " + filename;
         flag = false;
     }
 
     if (flag && result != ARCHIVE_OK) {
-        error_ = QObject::tr("US_Archive: Error: Failed to initialize archive data structure: %1").arg(archive_error_string(archive));
+        error = QObject::tr("US_Archive: Error: Failed to initialize archive data structure: %1").arg(archive_error_string(archive));
         flag = false;
     }
 
     if (! flag) {
-        if (error != nullptr) {
-            *error = error_;
-        }
         archive_write_free(archive);
         return false;
     }
 
-    QStringList absolute_files;
-    QStringList relative_files;
     QDir dir;
     // List all files and directories
     for (int ii = 0; ii < list.size(); ii++) {
@@ -183,10 +159,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
         QString absolute = finfo.absoluteFilePath();
         QString relative = finfo.fileName();
         if (! finfo.exists()) {
-            error_ = "US_Archive: Error: item not exist: " + absolute;
-            if (error != nullptr) {
-                *error = error_;
-            }
+            error = "US_Archive: Error: item not exist: " + absolute;
             archive_write_free(archive);
             return false;
         }
@@ -194,17 +167,14 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
             dir.setPath(finfo.absolutePath());
         }
         if (finfo.isFile()) {
-            absolute_files << absolute;
-            relative_files << relative;
+            absolute_paths << absolute;
+            relative_paths << relative;
         } else if (finfo.isDir()) {
-            list_files(absolute, relative, absolute_files, relative_files);
+            list_files(absolute, relative);
         }
     }
-    if (absolute_files.size() == 0) {
-        error_ = "US_Archive: Error: Empty file list";
-        if (error != nullptr) {
-            *error = error_;
-        }
+    if (absolute_paths.size() == 0) {
+        error = "US_Archive: Error: Empty file list";
         archive_write_free(archive);
         return false;
     }
@@ -214,27 +184,20 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
     filename = dir.absoluteFilePath(filename);
     result = archive_write_open_filename(archive, filename.toUtf8().constData());
     if (result != ARCHIVE_OK) {
-        error_.clear();
-        error_ = QObject::tr("US_Archive: Error: Failed to create archive file: %1").arg(archive_error_string(archive));
-        if (error != nullptr) {
-            *error = error_;
-        }
+        error = QObject::tr("US_Archive: Error: Failed to create archive file: %1").arg(archive_error_string(archive));
         archive_write_free(archive);
         return false;
     }
 
     // Loop to add all files to the archive file
-    for (int ii = 0; ii < absolute_files.size(); ii++) {
-        QString absolute = absolute_files.at(ii);
-        QString relative = relative_files.at(ii);
+    for (int ii = 0; ii < absolute_paths.size(); ii++) {
+        QString absolute = absolute_paths.at(ii);
+        QString relative = relative_paths.at(ii);
         struct archive_entry *entry;
         QFile file(absolute);
 
         if (!file.open(QIODevice::ReadOnly)) {
-            error_ = "US_Archive: Error: Failed to open file: " + absolute;
-            if (error != nullptr) {
-                *error = error_;
-            }
+            error = "US_Archive: Error: Failed to open file: " + absolute;
             archive_write_close(archive);
             archive_write_free(archive);
             return false;
@@ -255,6 +218,9 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
         // Free the entry
         archive_entry_free(entry);
         file.close();
+
+        // emit signal
+        emit itemAdded(relative, absolute);
     }
 
     archive_write_close(archive);
@@ -262,9 +228,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename, QString* e
     return true;
 }
 
-
-void US_Archive::list_files(const QString& abs_path, const QString& base_dir,
-                            QStringList& abs_list, QStringList& rel_list) {
+void US_Archive::list_files(const QString& abs_path, const QString& base_dir) {
 
     // Loop folders recursively to list all files
     QDir dir(abs_path);
@@ -274,10 +238,18 @@ void US_Archive::list_files(const QString& abs_path, const QString& base_dir,
         QString rel_dir = base_dir + "/" + item.fileName();
 
         if (item.isDir()) {
-            list_files(item.absoluteFilePath(), rel_dir, abs_list, rel_list);
+            list_files(item.absoluteFilePath(), rel_dir);
         } else {
-            abs_list << item.absoluteFilePath();
-            rel_list << rel_dir;
+            absolute_paths << item.absoluteFilePath();
+            relative_paths << rel_dir;
         }
     }
+}
+
+void US_Archive::setPath(const QString& path) {
+    outpath = path;
+}
+
+QString US_Archive::getError() {
+    return error;
 }
