@@ -6,6 +6,7 @@
 #include "us_widgets.h"
 #include "us_dataIO.h"
 #include "us_settings.h"
+#include "us_archive.h"
 // #include "us_tar.h"
 // #include "us_gzip.h"
 #include "../us_convert/us_convert.h"
@@ -35,6 +36,8 @@ class US_LegacyConverter : public US_Widgets
         QPushButton *pb_save;       //!< Button to save data
         US_LineEdit_RE *le_runid;   //!< Line edit for run ID with regular expression validation
         QLineEdit *le_dir;          //!< Line edit for directory
+        US_Archive* archive;        //!< Archive object
+        int counter;                //!< counter to update test edit
 
         //! \brief Resets the converter to its initial state
         void reset(void);
@@ -60,12 +63,6 @@ class US_LegacyConverter : public US_Widgets
         //! \return true if reading is successful, false otherwise
         bool read_beckman_files(const QString& filepath, QString& data);
 
-        //! \brief Extracts files from a TAR archive
-        //! \param tarpath Path to the TAR archive
-        //! \param extractpath Path to extract the files to
-        //! \return true if extraction is successful, false otherwise
-        // bool extract_files(const QString& tarpath, const QString& extractpath);
-
     private slots:
         //! \brief Slot to load data
         void load(void);
@@ -82,6 +79,11 @@ class US_LegacyConverter : public US_Widgets
         //! \brief Slot to update tolerance
         //! \param tolerance New tolerance value
         void new_tolerance(double tolerance);
+
+        //! \brief Slot to update text edit when a file extracted from the archive file
+        //! \param relative path
+        //! \param absolute path
+        void itemExtracted(const QString&, const QString&);
 };
 
 #endif // US_LEGACY_CONVERTER

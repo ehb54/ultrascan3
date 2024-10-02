@@ -85,12 +85,16 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    layout->setSpacing(2);
    this->setLayout(layout);
 
+   archive = new US_Archive();
+   counter = 0;
+
    connect(pb_load, &QPushButton::clicked, this, &US_LegacyConverter::load);
    connect(pb_reload, &QPushButton::clicked, this, &US_LegacyConverter::reload);
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
    connect(le_dir, &QLineEdit::textChanged, this, &US_LegacyConverter::runid_updated);
    connect(pb_save, &QPushButton::clicked, this, &US_LegacyConverter::save_auc);
    connect(ct_tolerance, &QwtCounter::valueChanged, this, &US_LegacyConverter::new_tolerance);
+   connect(archive, &US_Archive::itemExtracted, this, &US_LegacyConverter::itemExtracted);
 }
 
 void US_LegacyConverter::new_tolerance(double){
@@ -198,89 +202,6 @@ void US_LegacyConverter::load() {
    reload();
 }
 
-// bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& savepath) {
-
-//    QFileInfo finfo(tarfile);
-//    QString ost;
-// #ifdef Q_OS_LINUX
-//    ost = "LINUX";
-// #elif defined ( Q_OS_MACOS )
-//    ost = "MACOS";
-// #elif defined ( Q_OS_WINDOWS )
-//    ost = "WINDOWS";
-// #else
-//    ost = "NONE";
-// #endif
-
-//    QString sys_tar;
-//    if (ost.compare("WINDOWS") == 0) {
-//       sys_tar = QDir(QCoreApplication::applicationDirPath()).filePath("tar.exe");
-//       if (! QFileInfo::exists(sys_tar) || ! QFileInfo(sys_tar).isExecutable()) {
-//          QMessageBox::warning(this, "Error!", "TAR program is not found in the following path!\n" + sys_tar);
-//          sys_tar.clear();
-//          return false;
-//       }
-//    } else if (ost.compare("MACOS") == 0 || ost.compare("LINUX") == 0){
-//       sys_tar = "tar";
-//    } else {
-//       QMessageBox::warning(this, "Error!", "This program only supports the MS Windows, macOS, and Linux!");
-//       return false;
-//    }
-//    te_info->append("Process: starting to extract the loaded file using the system tar program ...");
-//    qApp->processEvents();
-//    QStringList tarr_args;
-//    tarr_args << "-zxf" << finfo.absoluteFilePath() << "-C" << savepath;
-//    int state = QProcess::execute(sys_tar, tarr_args);
-//    if (state == -2) {
-//       QString mesg = tr("The process of extracting the tar file cannot start!\n%1 %2\n\n"
-//                         "Starting to use the internal methods!");
-//       QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
-//    } else if (state == -1) {
-//       QString mesg = tr("The process of extracting the tar file crashed!\n%1 %2\n\n"
-//                         "Starting to use the internal methods!");
-//       QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
-//    } else if (state == 0) {
-//       return true;
-//    } else {
-//       QString mesg = tr("Extracting the tar file failed with the return value of %1!\n%2%3\n\n"
-//                         "Starting to use the internal methods!");
-//       QMessageBox::warning(this, "Warning!", mesg.arg(state).arg(sys_tar, tarr_args.join(" ")));
-//    }
-
-//    QString tmpfile = QDir(savepath).filePath("data.tar.gz");
-
-//    if (QFile::copy(tarfile, tmpfile)) {
-//       US_Gzip gzip;
-//       te_info->append("Process: starting to unzip the file using the US_Gzip program ...");
-//       qApp->processEvents();
-
-//       state = gzip.gunzip(tmpfile);
-//       if (state != 0) {
-//          QMessageBox::warning(this, "Error!", "Failed to unzip the file!\n" +
-//                                                   gzip.explain(state));
-//          return false;
-//       }
-//       tmpfile.chop(3);
-//       // qDebug() << tmpfile;
-//       te_info->append("Process: starting to extract the tar file using the US_Tar program ...");
-//       qApp->processEvents();
-//       US_Tar ustar;
-//       QStringList extlist;
-//       state = ustar.extract(tmpfile, &extlist, savepath);
-//       if (state != 0) {
-//          QMessageBox::warning(this, "Error!", "FAILED to extract the file!\n" +
-//                                                   ustar.explain(state));
-//          return false;
-//       }
-//    } else {
-//       QMessageBox::warning(this, "Error!", tr("FAILED to copy the file to the /tmp directory!"));
-//       return false;
-//    }
-//    return true;
-
-// }
-
-
 void US_LegacyConverter::reload() {
    reset();
    le_load->clear();
@@ -289,7 +210,7 @@ void US_LegacyConverter::reload() {
    QRegularExpressionMatch match;
 
    te_info->clear();
-   te_info->append("Parsing Data. Please Wait!");
+   te_info->append("Extracting archive file. Please Wait!");
    te_info->moveCursor(QTextCursor::End);
    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
    qApp->processEvents();
@@ -313,16 +234,21 @@ void US_LegacyConverter::reload() {
    if (tmp_dir.isValid()) {
       QString fpath = tar_finfo.absoluteFilePath();
       QString opath = tmp_dir.path();
-      QString error;
-      bool ok = US_Archive::extract(fpath, &opath, &error);
+      bool ok = archive->extract(fpath, opath);
       te_info->append("Process: Extracting file ...");
       qApp->processEvents();
       if (! ok) {
-         te_info->append("Failed to exctract the file: " + tar_finfo.absoluteFilePath());
+         te_info->clear();
+         te_info->append( tr("Failed to exctract the file: %1 \n").arg(tar_finfo.absoluteFilePath()) );
+         te_info->append(archive->getError());
          tar_fpath.clear();
          qApp->restoreOverrideCursor();
          return;
       }
+      te_info->clear();
+      te_info->append("Parsing Data. Please Wait!");
+      counter = 0;
+      qApp->processEvents();
       runid = tar_finfo.fileName().chopped(7);
    } else {
       QMessageBox::warning(this, "Error!", tr("FAILED to create a /tmp directory!"));
@@ -371,18 +297,14 @@ void US_LegacyConverter::reload() {
 
 void US_LegacyConverter::list_files(const QString& path, QStringList& flist) {
    QDir dir(path);
-   QStringList filter;
-   QStringList tmp_list = dir.entryList(QStringList({"*"}), QDir::Files | QDir::NoSymLinks);
-   foreach (const QString& fname, tmp_list) {
-      QFileInfo fileInfo(dir.absoluteFilePath(fname));
-      flist.append(fileInfo.absoluteFilePath());
-   }
-
-   // Recursively process subdirectories
-   QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-   foreach (const QString& subdir, subdirs) {
-      QString subdirPath = dir.absoluteFilePath(subdir);
-      list_files(subdirPath, flist);
+   QDir::Filters filter = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoDotAndDotDot | QDir::NoSymLinks;
+   QFileInfoList info_list = dir.entryInfoList(filter);
+   foreach (const QFileInfo item, info_list) {
+      if (item.isDir()) {
+         list_files(item.absoluteFilePath(), flist);
+      } else {
+         flist << item.absoluteFilePath();
+      }
    }
 }
 
@@ -502,4 +424,11 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
    }
    qDebug().noquote() << status;
    return true;
+}
+
+
+void US_LegacyConverter::itemExtracted(const QString& relative, const QString&) {
+   te_info->append(relative);
+   if ( counter % 10 == 0) qApp->processEvents();
+   counter++;
 }
