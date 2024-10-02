@@ -1,3 +1,4 @@
+//! \file us_pcsa.h
 #ifndef US_PCSA_H
 #define US_PCSA_H
 
@@ -20,7 +21,7 @@
 #include "us_analyte.h"
 #include "us_zsolute.h"
 #include "qwt_plot_marker.h"
-#ifdef Q_OS_WIN         // Include headers so getpid() works on Windows
+#ifdef Q_OS_WIN
 #include <windows.h>
 #include <psapi.h>
 #include <process.h>
@@ -46,95 +47,171 @@
 #define ATTR_C US_ZSolute::ATTR_C
 #endif
 
+//! \class US_pcsa
+//! \brief Class for processing and analyzing PCSA data.
 class US_pcsa : public US_AnalysisBase2
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_pcsa();
+    public:
+        //! \brief Constructor for US_pcsa
+        US_pcsa();
 
-      void analysis_done( int );
+        //! \brief Indicates that the analysis is done
+        //! \param status Status of the analysis
+        void analysis_done(int status);
 
-      US_DataIO::EditedData*      mw_editdata();
-      US_DataIO::RawData*         mw_simdata();
-      US_DataIO::RawData*         mw_resdata();
-      QList< int >*               mw_excllist();
-      US_Model*                   mw_model();
-      US_Noise*                   mw_ti_noise();
-      US_Noise*                   mw_ri_noise();
-      QPointer< QTextEdit >       mw_status_text();
-      QStringList*                mw_model_stats();
-      QVector< US_ModelRecord >*  mw_mrecs();
-      QVector< US_ModelRecord >*  mw_mrecs_mc();
-      int*                        mw_base_rss();
+        //! \brief Gets the multi-wavelength edited data
+        //! \return Pointer to the edited data
+        US_DataIO::EditedData* mw_editdata();
 
-   private:
-      QGridLayout*         progressLayout;
+        //! \brief Gets the multi-wavelength simulated data
+        //! \return Pointer to the simulated data
+        US_DataIO::RawData* mw_simdata();
 
-      US_Editor*           te_results;
+        //! \brief Gets the multi-wavelength residual data
+        //! \return Pointer to the residual data
+        US_DataIO::RawData* mw_resdata();
 
-      SS_DATASET                      dset;
+        //! \brief Gets the exclusion list
+        //! \return Pointer to the exclusion list
+        QList<int>* mw_excllist();
 
-      QList< SS_DATASET* >            dsets;
+        //! \brief Gets the model
+        //! \return Pointer to the model
+        US_Model* mw_model();
 
-      QVector< SP_SPEEDPROFILE >      speed_steps;
+        //! \brief Gets the TI noise data
+        //! \return Pointer to the TI noise data
+        US_Noise* mw_ti_noise();
 
-      US_DataIO::EditedData*          edata;
-      US_DataIO::RawData              sdata;
-      US_DataIO::RawData              rdata;
+        //! \brief Gets the RI noise data
+        //! \return Pointer to the RI noise data
+        US_Noise* mw_ri_noise();
 
-      QPointer< US_ResidPlotPc >        resplotd;
-      QPointer< US_PlotControlPc >      eplotcd;
-      QPointer< US_AnalysisControlPc >  analcd;
-      QPointer< US_MLinesPlot >         mlplotd;
+        //! \brief Gets the status text edit pointer
+        //! \return Pointer to the status text edit
+        QPointer<QTextEdit> mw_status_text();
 
-      QVector< US_ModelRecord >         mrecs;
-      QVector< US_ModelRecord >         mrecs_mc;
+        //! \brief Gets the model statistics
+        //! \return Pointer to the model statistics string list
+        QStringList* mw_model_stats();
 
-      US_Model             model;
-      US_Noise             ri_noise_in;
-      US_Noise             ti_noise_in;
+        //! \brief Gets the model records
+        //! \return Pointer to the model records vector
+        QVector<US_ModelRecord>* mw_mrecs();
 
-      QStringList          model_stats;
+        //! \brief Gets the Monte Carlo model records
+        //! \return Pointer to the Monte Carlo model records vector
+        QVector<US_ModelRecord>* mw_mrecs_mc();
 
-      QPoint               rbd_pos;
-      QPoint               epd_pos;
-      QPoint               acd_pos;
+        //! \brief Gets the base RSS value
+        //! \return Pointer to the base RSS value
+        int* mw_base_rss();
 
-      QLineEdit*           le_vari;
-      QLineEdit*           le_rmsd;
+    private:
+        QGridLayout* progressLayout; //!< Layout for progress display
 
-      QTextEdit*           te_status;
+        US_Editor* te_results; //!< Editor for displaying results
 
-      QPushButton*         pb_fitcntl;
-      QPushButton*         pb_plt3d;
-      QPushButton*         pb_pltres;
+        SS_DATASET dset; //!< Data set
 
-      double               rmsd;
+        QList<SS_DATASET*> dsets; //!< List of data sets
 
-      int                  dbg_level;
-      int                  mc_iters;
-      int                  baserss;
+        QVector<SP_SPEEDPROFILE> speed_steps; //!< Speed steps vector
 
-      bool                 exp_steps;
-      bool                 dat_steps;
+        US_DataIO::EditedData* edata; //!< Edited data pointer
+        US_DataIO::RawData sdata; //!< Simulated data
+        US_DataIO::RawData rdata; //!< Residual data
 
-   private slots:
-      void open_resplot( void );
-      void open_3dplot(  void );
-      void open_fitcntl( void );
-      QString model_statistics( void );
-      QString distrib_info( void );
-      void data_plot      ( void );
-      void write_report   ( QTextStream& );
-      void write_bmap     ( const QString );
-      void child_closed   ( QObject* );
-      void load     ( void );
-      void view     ( void );
-      void save     ( void );
-      void close    ( void );
-      void new_triple( int );
-      void help     ( void )
-      { showHelp.show_help( "manual/pcsa.html" ); };
+        QPointer<US_ResidPlotPc> resplotd; //!< Residual plot pointer
+        QPointer<US_PlotControlPc> eplotcd; //!< Experimental plot control pointer
+        QPointer<US_AnalysisControlPc> analcd; //!< Analysis control pointer
+        QPointer<US_MLinesPlot> mlplotd; //!< Multi-lines plot pointer
+
+        QVector<US_ModelRecord> mrecs; //!< Model records vector
+        QVector<US_ModelRecord> mrecs_mc; //!< Monte Carlo model records vector
+
+        US_Model model; //!< Model
+        US_Noise ri_noise_in; //!< RI noise input
+        US_Noise ti_noise_in; //!< TI noise input
+
+        QStringList model_stats; //!< Model statistics
+
+        QPoint rbd_pos; //!< Position of residual plot dialog
+        QPoint epd_pos; //!< Position of experimental plot dialog
+        QPoint acd_pos; //!< Position of analysis control dialog
+
+        QLineEdit* le_vari; //!< Line edit for variance
+        QLineEdit* le_rmsd; //!< Line edit for RMSD
+
+        QTextEdit* te_status; //!< Text edit for status
+
+        QPushButton* pb_fitcntl; //!< Fit control button
+        QPushButton* pb_plt3d; //!< 3D plot button
+        QPushButton* pb_pltres; //!< Residual plot button
+
+        double rmsd; //!< Root Mean Square Deviation
+
+        int dbg_level; //!< Debug level
+        int mc_iters; //!< Number of Monte Carlo iterations
+        int baserss; //!< Base RSS value
+
+        bool exp_steps; //!< Flag for experimental steps
+        bool dat_steps; //!< Flag for data steps
+
+    private slots:
+        //! \brief Opens the residual plot
+        void open_resplot(void);
+
+        //! \brief Opens the 3D plot
+        void open_3dplot(void);
+
+        //! \brief Opens the fit control
+        void open_fitcntl(void);
+
+        //! \brief Gets model statistics
+        //! \return Model statistics string
+        QString model_statistics(void);
+
+        //! \brief Gets distribution information
+        //! \return Distribution information string
+        QString distrib_info(void);
+
+        //! \brief Plots data
+        void data_plot(void);
+
+        //! \brief Writes a report
+        //! \param ts QTextStream to write the report to
+        void write_report(QTextStream& ts);
+
+        //! \brief Writes a bitmap
+        //! \param filename Name of the bitmap file
+        void write_bmap(const QString filename);
+
+        //! \brief Slot to handle child closed event
+        //! \param obj Pointer to the closed child object
+        void child_closed(QObject* obj);
+
+        //! \brief Loads data
+        void load(void);
+
+        //! \brief Views data
+        void view(void);
+
+        //! \brief Saves data
+        void save(void);
+
+        //! \brief Closes the application
+        void close(void);
+
+        //! \brief Handles new triple selection
+        //! \param index Index of the new triple
+        void new_triple(int index);
+
+        //! \brief Shows help information
+        void help(void)
+        { showHelp.show_help("manual/pcsa.html"); };
 };
-#endif
+
+#endif // US_PCSA_H

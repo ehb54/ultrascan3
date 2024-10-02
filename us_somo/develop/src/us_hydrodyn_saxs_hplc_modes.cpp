@@ -760,7 +760,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
       
       for ( int i = 0; i < (int) unified_ggaussian_gaussians_size; i++ )
       {
-         gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+         gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
       }
       testiq_gauss_line();
    }         
@@ -2799,7 +2799,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    switch ( count )
    {
    case 0 : msg = ""; break;
-   case 1 : msg = QString( "qmax*Rg %1   Rg %2   I0 %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
+   case 1 : msg = QString( "qmax*Rg %1   Rg %2   I0 %3\n" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
    default :
       {
          double countinv = 1e0 / (double) count;
@@ -2819,7 +2819,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          }
          msg += QString( "" )
             .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]  I0 %.2e (%.2e) [%.2e:%.2e]"
+                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]\nI0 %.2e (%.2e) [%.2e:%.2e]"
                      , qrg_avg
                      , qrg_min
                      , qrg_max
@@ -2838,13 +2838,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    }
    if ( mwt_x.size() || mwc_x.size() )
    {
-      msg += "\n";
+      // msg += "\n";
       if ( mwt_x.size() )
       {
          double count    = (double) mwt_x.size();
          double countinv = 1e0 / count;
          mwt_avg  *= countinv;
-         msg += QString( "MW[RT] " );
+         msg += QString( "  MW[RT] " );
          if ( count != ( int ) guinier_q2.size() )
          {
             msg += QString( "%1 of %2 " ).arg( count ).arg( guinier_q2.size() );
@@ -3245,9 +3245,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       }
       guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
       guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
    }
       
    double mw_use_min = posmin - 1e0;
@@ -3430,9 +3428,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       }
       guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
       guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
    }
 
    if ( testiq_active && rb_testiq_gaussians.size() )
@@ -3440,7 +3436,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       for ( int i = 0; i < (int) unified_ggaussian_gaussians_size; i++ )
       {
          int line_width = use_line_width < 3 ? ( use_line_width + 1 ) : use_line_width;
-         double pos = unified_ggaussian_params[ common_size * i  ];
+         double pos = unified_ggaussian_params[ (vector<double>::size_type) common_size * i  ];
          QString text = QString( "%1" ).arg( i + 1 );
          QColor color = rb_testiq_gaussians[ i ]->isChecked() ? Qt::magenta : Qt::blue;
 #if QT_VERSION >= 0x040000
@@ -3506,9 +3502,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_range(
       // puts( "redoing zoomer" );
       guinier_plot_zoomer = new ScrollZoomer(guinier_plot->canvas());
       guinier_plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      guinier_plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( guinier_plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 
@@ -3524,9 +3518,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_range(
       guinier_plot_errors_zoomer = new ScrollZoomer(guinier_plot_errors->canvas());
       guinier_plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       guinier_plot_errors_zoomer->symmetric_rescale = true;
-#if QT_VERSION < 0x040000
-      guinier_plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( guinier_plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 }
@@ -4173,9 +4165,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_text( const QString & text )
@@ -4192,9 +4182,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_focus( bool hasFocus )
@@ -4245,9 +4233,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_start_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_text( const QString & text )
@@ -4264,9 +4250,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 #define UHSH_MAX_RG 1000
@@ -4319,9 +4303,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_start_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_end_text( const QString & text )
@@ -4338,9 +4320,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_end_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_start_focus( bool hasFocus )
@@ -4391,9 +4371,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_start_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_end_text( const QString & text )
@@ -4410,9 +4388,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_end_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 #define UHSH_MAX_MW 1e7
@@ -5400,9 +5376,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_update_plot_errors()
 
 //    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
 //    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-// #if QT_VERSION < 0x040000
-//    plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-// #endif
+//    plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
    // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
    if ( hide )
@@ -6136,9 +6110,16 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       }
    }
 
-   if ( !ggaussian_compatible() )
-   {
-      QString msg_addendum = "";
+   int no_gaussian_count = ggaussian_sel_no_gaussian_count();
+
+   QTextStream( stdout ) << "ggaussian_sel_no_gaussian_count() " << no_gaussian_count << Qt::endl;
+   QTextStream( stdout ) << "total selected " << ggaussian_selected_file_index.size() << Qt::endl;
+
+   bool not_compatible = !ggaussian_compatible();
+
+   QString msg_addendum = ""; 
+
+   if ( not_compatible ) {
       if ( cb_fix_width->isChecked() )
       {
          msg_addendum += " or widths";
@@ -6178,10 +6159,84 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    pb_ggauss_rmsd->setText( QString( us_tr( "Recompute %1" ).arg( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) ) );
 
-   if ( !create_unified_ggaussian_target() )
+   org_f_gaussians = f_gaussians;
+
    {
-      update_enables();
-      return;
+      if ( not_compatible ) {
+         QMessageBox::information(
+                                  this, 
+                                  windowTitle() + us_tr( ": Global Gaussians" ),
+                                  QString( us_tr( "NOTICE: Some files selected have Gaussians with varying centers%1 or\na different number of Gaussians or centers that do not match the last Gaussians.\n" ) ) .arg( msg_addendum )
+                                  + "\n" + us_tr( "Global Gaussians will be reinitialized\n" ) );
+         if ( !create_unified_ggaussian_target( true, false ) ) {
+            update_enables();
+            return;
+         }
+      } else {                                        
+         if ( no_gaussian_count ) {
+            if ( no_gaussian_count == (int) ggaussian_selected_file_index.size() ) {
+               QMessageBox::information(
+                                        this, 
+                                        windowTitle() + us_tr( ": Global Gaussians" ),
+                                        msg_addendum + "\n" + us_tr( "Global Gaussians will be initialized\n" ) );
+         
+               if ( !create_unified_ggaussian_target( true, false ) ) {
+                  update_enables();
+                  return;
+               }
+            } else {
+               switch ( QMessageBox::question(this, 
+                                              windowTitle() + us_tr( ": Global Gaussians" ),
+                                              QString( us_tr( "%1 selected curves do not have defined Gaussians and must be initialized" ) ).arg( no_gaussian_count ),
+                                              us_tr( "&Reinitialize only curves with missing Gaussians" ),
+                                              us_tr( "&Reinitialize all curves with last used Gaussians" ),
+                                              QString(),
+                                              0, // Stop == button 0
+                                              0 // Escape == button 0
+                                              ) ) {
+               case 0 : // Reinitialize only curves with missing Gaussians
+                  if ( !create_unified_ggaussian_target( true, true ) ) {
+                     update_enables();
+                     return;
+                  }
+                  break;
+               case 1 : // Reinitialize all curves
+                  if ( !create_unified_ggaussian_target( true, false ) ) {
+                     update_enables();
+                     return;
+                  }
+                  break;
+               }
+            }
+         } else {
+            bool do_rescale = false;
+
+            switch ( QMessageBox::question(this, 
+                                           windowTitle() + us_tr( ": Global Gaussians" ),
+                                           QString( us_tr(
+                                                          "Rescale and refit the Gaussian amplitudes?\n\n"
+                                                          "Answer \"Yes\" if you want to re-fit the amplitudes using the last single curve Gaussian known"
+                                                          " [the most recent of a Gaussian file load or single Gaussian \"Keep\"].\n\n"
+                                                          "Answer \"No\" if you want to maintain the current values." ) ),
+
+                                           QMessageBox::Yes | QMessageBox::No,
+                                           QMessageBox::No
+                                           ) ) {
+            case QMessageBox::Yes : // Yes, rescale
+               do_rescale = true;
+               break;
+            case QMessageBox::No : // No do not rescale
+            default :
+               do_rescale = false;
+               break;
+            }       
+   
+            if ( !create_unified_ggaussian_target( do_rescale, false ) ) {
+               update_enables();
+               return;
+            }
+         }
+      }
    }
 
    // add_ggaussian_curve( "unified_ggaussian_target", unified_ggaussian_I );
@@ -6202,7 +6257,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       gauss_max_height *= 20e0;
    }
       
-   org_f_gaussians = f_gaussians;
+   // org_f_gaussians = f_gaussians;
 
    running        = true;
 
@@ -6245,6 +6300,9 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       cb_ggauss_scroll_p_green ->setEnabled( true );
       cb_ggauss_scroll_p_yellow->setEnabled( true );
       cb_ggauss_scroll_p_red   ->setEnabled( true );
+      cb_ggauss_scroll_smoothed->setEnabled( true );
+      cb_ggauss_scroll_oldstyle->setEnabled( true );
+         
       disable_updates = true;
       gauss_delete_markers();
       lb_files->clearSelection();
@@ -6263,6 +6321,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       cb_ggauss_scroll_p_green ->setEnabled( false );
       cb_ggauss_scroll_p_yellow->setEnabled( false );
       cb_ggauss_scroll_p_red   ->setEnabled( false );
+      cb_ggauss_scroll_smoothed->setEnabled( false );
+      cb_ggauss_scroll_oldstyle->setEnabled( false );
       // restore to ggaussian plot mode
       disable_updates = true;
       gauss_delete_markers();
@@ -6282,9 +6342,9 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       //    delete plot_errors_zoomer;
       //    plot_errors_zoomer = (ScrollZoomer *) 0;
       // }
-      if ( plot_errors->isVisible() ) {
-         cb_plot_errors_group->show();
-      }
+      // if ( plot_errors->isVisible() ) {
+      //    cb_plot_errors_group->show();
+      // }
       cb_plot_errors_group->setChecked( ggauss_scroll_save_group );
       cb_plot_errors_group->setChecked( true );
       ggaussian_rmsd();
@@ -6308,6 +6368,20 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_p_yellow()
 {
    us_qdebug( "ggauss_scroll_p_yellow()" );
    ggauss_scroll_set_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_smoothed() 
+{
+   us_qdebug( "ggauss_scroll_smoothed()" );
+   ggauss_scroll_set_selected();
+}
+
+static int ggauss_scroll_highlight_last_pos;
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_oldstyle() 
+{
+   us_qdebug( "ggauss_scroll_oldstyle()" );
+   ggauss_scroll_highlight( ggauss_scroll_highlight_last_pos );
 }
 
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
@@ -6335,20 +6409,20 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
          lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
          pb_ggauss_rmsd->setEnabled( false );
       } else {
-         editor_msg( "red", us_tr( "Internal error (ggausm_scroll_set_selected): building global Gaussians" ) );
+         editor_msg( "red", us_tr( "Internal error (ggauss_scroll_set_selected): building global Gaussians" ) );
          ggaussian_enables();
          return;
       }
    }
    
    if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_P.size() ) {
-      editor_msg( "red", us_tr( "Internal error (ggausm_scroll_set_selected): P set does not match Gaussian size" ) );
+      editor_msg( "red", us_tr( "Internal error (ggauss_scroll_set_selected): P set does not match Gaussian size" ) );
       ggaussian_enables();
       return;
    }
 
    if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ) {
-      editor_msg( "red", us_tr( "Internal error (ggausm_scroll_set_selected): chi2 set does not match Gaussian size" ) );
+      editor_msg( "red", us_tr( "Internal error (ggauss_scroll_set_selected): chi2 set does not match Gaussian size" ) );
       ggaussian_enables();
       return;
    }
@@ -6356,6 +6430,16 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
    int fcount = (int) unified_ggaussian_files.size();
 
    for ( int i = 0; i < fcount; ++i ) {
+      if ( cb_ggauss_scroll_smoothed->isChecked() ) {
+         if ( !f_best_smoothed_smoothing.count( unified_ggaussian_files[ i ] ) ) {
+            continue;
+         }
+      }
+      if ( cb_ggauss_scroll_oldstyle->isChecked() ) {
+         if ( !f_qs_oldstyle.count( unified_ggaussian_files[ i ] ) ) {
+            continue;
+         }
+      }
       if ( ggaussian_last_pfit_P[ i ] >= 0.05 ) {
          if ( cb_ggauss_scroll_p_green->isChecked() ) {
             ggauss_scroll_set.push_back( i );
@@ -6461,7 +6545,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
 
 void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
 {
-   // us_qdebug( QString( "ggauss_scroll_highlight %1 " ).arg( pos ) );
+   us_qdebug( QString( "ggauss_scroll_highlight %1 " ).arg( pos ) );
+   ggauss_scroll_highlight_last_pos = pos;
    lbl_wheel_pos->setText( "" );
    if ( pos >= (int) ggauss_scroll_set.size()  || pos < 0 ) {
       editor_msg( "red", us_tr( "Internal error ggauss_scroll_highlight: pos >= size or < 0" ) );
@@ -6542,11 +6627,14 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
    lbl_wheel_Pcolor->setPixmap( pm );
 
    lbl_wheel_pos_below->setText( 
-                                QString( "%1 %2 %3 P %4" )
+                                QString( "%1 %2 %3 P %4%5" )
                                 .arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] )
                                 .arg( unified_ggaussian_use_errors && cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" )
                                 .arg( ggaussian_last_chi2[ ggauss_scroll_set [ pos ] ], 0, 'g', 4 )
                                 .arg( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ], 0, 'f', 4 )
+                                .arg( f_best_smoothed_smoothing.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] )
+                                      ? QString( "\nSmoothing points %1" ).arg( f_best_smoothed_smoothing[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ] )
+                                      : QString( "" ) )
                                  );
 
    disable_updates = true;
@@ -6559,6 +6647,40 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
    disable_updates = false;
    suppress_replot = true;
    plot_files();
+   // if smoothed version present add curve
+   
+   if ( f_best_smoothed_smoothing.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ) ) {
+      QTextStream( stdout ) << QString( "found smoothed curved for %1\n" ).arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] );
+
+      QPen use_pen = QPen( QColor( "#ffb29b" ), use_line_width + 1, Qt::DashDotDotLine );
+      QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian_smoothed" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setSamples(
+                        (double *)&(f_qs_smoothed[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        (double *)&(f_Is_smoothed[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        f_qs_smoothed[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ].size()
+                        );
+      curve->setPen( use_pen );
+      curve->attach( plot_dist );
+   }      
+
+   // if oldstyle version present and checkbox set, add curve
+   if ( cb_ggauss_scroll_oldstyle->isChecked() &&
+        f_qs_oldstyle.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ) ) {
+      QTextStream( stdout ) << QString( "found oldstyle curved for %1\n" ).arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] );
+
+      QPen use_pen = QPen( QColor( "#ffffff" ), use_line_width + 1, Qt::DashLine );
+      QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian_oldstyle" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setSamples(
+                        (double *)&(f_qs_oldstyle[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        (double *)&(f_Is_oldstyle[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ][ 0 ]),
+                        f_qs_oldstyle[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ].size()
+                        );
+      curve->setPen( use_pen );
+      curve->attach( plot_dist );
+   }      
+
    // add gaussian curve ...
 
    {
@@ -6771,6 +6893,20 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
 
 void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
 {
+   if ( !f_best_smoothed_smoothing.size() ) {
+      cb_ggauss_scroll_smoothed->hide();
+      cb_ggauss_scroll_smoothed->setChecked( false );
+   } else {
+      cb_ggauss_scroll_smoothed->show();
+   }
+
+   if ( !f_qs_oldstyle.size() ) {
+      cb_ggauss_scroll_oldstyle->hide();
+      cb_ggauss_scroll_oldstyle->setChecked( false );
+   } else {
+      cb_ggauss_scroll_oldstyle->show();
+   }
+   
    if ( cb_ggauss_scroll->isChecked() ) {
       disable_all();
       wheel_enables       ( ggauss_scroll_set.size() );

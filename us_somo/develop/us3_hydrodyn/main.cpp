@@ -18,13 +18,16 @@ int main (int argc, char **argv)
    QLocale::setDefault( QLocale::c() );
    QApplication a(argc, argv);
 
-   bool expert = false;
-   bool debug = false;
-   bool residue_file = false;
-   bool script = false;
+   bool expert                = false;
+   bool debug                 = false;
+   bool residue_file          = false;
+   bool script                = false;
+   bool init_configs_silently = false;
+   bool cli_progress          = false;
 
    QString residue_filename;
    QString script_filename;
+   QString gui_script_filename = "";
 
    US_Hydrodyn *hydrodyn;
    vector < QString > batch_file;
@@ -43,12 +46,14 @@ int main (int argc, char **argv)
          }
          argcbase++;
          expert = true;
+         continue;
       }
       if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-d")) )
       {
          puts("debug mode");
          argcbase++;
          debug = true;
+         continue;
       }
       if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-r")) )
       {
@@ -60,6 +65,7 @@ int main (int argc, char **argv)
          residue_file = true;
          residue_filename = a.arguments()[argcbase];
          argcbase++;
+         continue;
       }
       if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-c")) )
       {
@@ -71,13 +77,52 @@ int main (int argc, char **argv)
          script = true;
          script_filename = a.arguments()[argcbase];
          argcbase++;
+         continue;
+      }
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-I")) )
+      {
+         if ( debug )
+         {
+            puts("init configs silently");
+         }
+         argcbase++;
+         init_configs_silently = true;
+         continue;
+      }
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-p")) )
+      {
+         if ( debug )
+         {
+            puts("cli progress");
+         }
+         argcbase++;
+         cli_progress = true;
+         continue;
+      }
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-g")) )
+      {
+         if ( debug )
+         {
+            puts("gui script file");
+         }
+         argcbase++;
+         // gui_script = true;
+         gui_script_filename = a.arguments()[argcbase];
+         if ( !QFile( gui_script_filename ).exists() ) {
+            QTextStream( stderr ) << QString( "file %1 does not exist\n" ).arg( gui_script_filename );
+            exit(-1);
+         }
+         gui_script_filename = QFileInfo( gui_script_filename ).absoluteFilePath();
+         argcbase++;
+         continue;
       }
    }
    for ( int i = argcbase; i < a.arguments().size(); i++ ) 
    {
       batch_file.push_back( dir->filePath(a.arguments()[i]) );      
    }
-   hydrodyn = new US_Hydrodyn(batch_file);
+   hydrodyn = new US_Hydrodyn(batch_file, gui_script_filename, init_configs_silently );
+      
    hydrodyn->setWindowTitle("SOMO Solution Modeler");
    if ( residue_file )
    {
@@ -89,9 +134,10 @@ int main (int argc, char **argv)
    {
       hydrodyn->advanced_config.auto_view_pdb = false;
       hydrodyn->advanced_config.scroll_editor = true;
-      hydrodyn->advanced_config.expert_mode = true;
+      hydrodyn->advanced_config.expert_mode   = true;
    }
    hydrodyn->set_expert( expert );
+   hydrodyn->cli_progress = cli_progress;
 
    if ( debug )
    {
@@ -144,6 +190,7 @@ void process_script(QString script_filename, US_Hydrodyn *h)
       QString c;
       while ( !(c = ts.readLine()).isNull() )
       {
+         cout << "somo> " << c << "\n";
          bool ok = false;
 
          line++;

@@ -40,6 +40,7 @@
 #include <iostream>
 
 using namespace std;
+#include "../include/us_hydrodyn_save.h"
 
 struct batch_info 
 {
@@ -53,6 +54,7 @@ struct batch_info
    bool mm_first;
    bool mm_all;
    bool dmd;
+   bool fd;
    bool somo;
    bool somo_o;
    bool grid;
@@ -151,6 +153,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_mm_first;
       QCheckBox     *cb_mm_all;
       QCheckBox     *cb_dmd;
+      QCheckBox     *cb_fd;
       QCheckBox     *cb_grid;
       QCheckBox     *cb_vdw_beads;
       QCheckBox     *cb_equi_grid;
@@ -257,6 +260,15 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       void         stop_processing();
       bool         overwriteForcedOn;
+      bool         overwrite_all;
+
+      vector < int >     split_if_mm( int i );
+      vector < QString > split_mm_files;
+      QTemporaryDir    * split_dir;
+      bool               create_split_dir();
+      void               remove_split_dir();
+
+      save_info          fd_save_info;
 
    public :
       void add_file( QString filename );
@@ -284,6 +296,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_mm_first();
       void set_mm_all();
       void set_dmd();
+      void set_fd();
       void set_somo();
       void set_somo_o();
       void set_grid();
@@ -338,7 +351,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       void set_counts();
 
-      QString get_file_name(int i);
+      QString get_file_name(int i, int model = -1 );
       void check_for_missing_files(bool display_messages);
 
    protected slots:

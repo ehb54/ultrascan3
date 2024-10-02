@@ -825,13 +825,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    plot->setAxisScale( QwtPlot::yLeft,   miny, maxy );
    
    plot_zoomer = new ScrollZoomer(plot->canvas());
-#if QT_VERSION < 0x040000
-   plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
    plot_zoomer->setRubberBandPen( QPen(Qt::red, 1, Qt::DotLine ) );
    plot_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
 
    plot->replot();
 }

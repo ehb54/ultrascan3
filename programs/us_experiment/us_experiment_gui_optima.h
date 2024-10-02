@@ -62,6 +62,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       int         getProtos   ( QStringList&, QList< QStringList >& );
       // Append to the names,summary-data protocol lists
       bool        updateProtos( const QStringList );
+      void        setProtos   ( QStringList );
+  
 
       void check_user_level( void );
       void update_inv( void );
@@ -98,6 +100,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList           pr_names;   // List of protocol names
       QStringList           instr_opers;  // Instrument operators
 
+      QMap < QString, bool >  ul2_operator_for_optima; //for UL<3, determine if the user is an operator, for each machine
+
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
@@ -106,15 +110,19 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void project_info    ( US_Project& ); // Slot for project diag results
       void sel_investigator( void );        // Slot for investigator changed
       void run_name_entered( void );        // Slot for run name entered
+      void label_name_entered( void );      // Slot for label name entered
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
       void check_empty_runname(const QString &);
       void update_protdata( void );
+      
  signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
       void  set_tabs_buttons_active  ( void );
+      void  go_back_to_run_manager( void );
+      
 };
 
 //! \brief Experiment Rotor panel
@@ -153,6 +161,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox* cb_rotor;                            // Rotor combo box
       QComboBox* cb_calibr;                           // Calibration combo box
       QComboBox* cb_operator;                         // Operator combo box
+      QLabel*    lb_operator;
       QComboBox* cb_exptype;                          // Exp. Type combo box
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
@@ -185,6 +194,38 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList  experimentTypes;
       //int          currentOperator_index;
       QString      currentOperator;
+
+      QString expType_old;
+
+      //Assigning oper(s) && rev(s)
+      QLabel*      lb_operator_reviewer_banner;
+      QLabel* lb_choose_oper;
+      QLabel* lb_choose_rev;
+      QLabel* lb_choose_appr;
+      QLabel* lb_choose_sme;
+      QLabel* lb_opers_to_assign;
+      QLabel* lb_revs_to_assign;
+      QLabel* lb_apprs_to_assign;
+      QLabel* lb_smes_to_assign;
+  
+      QPushButton*  pb_add_oper;
+      QPushButton*  pb_remove_oper;
+      QPushButton*  pb_add_rev;
+      QPushButton*  pb_remove_rev;
+      QPushButton*  pb_add_appr;
+      QPushButton*  pb_remove_appr;
+      QPushButton*  pb_add_sme;
+      QPushButton*  pb_remove_sme;
+  
+      QTextEdit*    te_opers_to_assign;
+      QTextEdit*    te_revs_to_assign;
+      QTextEdit*    te_apprs_to_assign;
+      QTextEdit*    te_smes_to_assign;
+
+      QComboBox*    cb_choose_operator;
+      QComboBox*    cb_choose_rev;
+      QComboBox*    cb_choose_appr;
+      QComboBox*    cb_choose_sme;				  
       
    private slots:
       void changeLab  ( int );     // Slot for change in lab
@@ -202,6 +243,18 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       // Get pointer to abstractRotor for named rotor
       US_Rotor::AbstractRotor* abstractRotor( const QString );
       void test_optima_connection( void );
+      void init_grevs( void );
+      void init_gapprs( void );
+      void init_gsmes( void );
+      void addOpertoList( void );
+      void removeOperfromList( void );
+      void addRevtoList( void );
+      void removeRevfromList( void );
+      void addApprtoList( void );
+      void removeApprfromList( void );
+      void addSmetoList( void );
+      void removeSmefromList( void );
+  
 };
 
 //! \brief Experiment Speeds panel
@@ -573,6 +626,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRanges*  rpRange;
       US_RunProtocol::RunProtoSpeed*   rpSpeed;  //!< Speed controls
+      US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
+  
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
@@ -580,6 +635,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
       QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
       QList< QLabel* >         cc_lbtos;   // Pointers to "to" labels
+      QList< QWidget* >        cc_buff_sp;
+      QList< QCheckBox* >      cc_buff_sp_ck;
 
       int          dbg_level;              // Debug level
       int          mxrow;                  // Maximum possible rows (24)
@@ -591,12 +648,15 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel
       QVector< double >          locrads;  // Low radius value, ea. channel
       QVector< double >          hicrads;  // High radius value, ea. channel
+      QVector< bool >            abde_buff;
+      QVector< bool >            abde_mwl_deconv;
 
       QComboBox * cb_scancount;
       QComboBox * cb_scancount_int;
       QLineEdit * le_scanint;
       QLineEdit * le_scanint_int;
-      
+
+      QGridLayout* genL;			
    private slots:
       // \brief Manage extinction profiles in a dialog
 //      void manageEProfiles  ( void );
@@ -606,7 +666,10 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       void detailRanges     ( void );
       // \brief Select the wavelengths to scan for a channel
       void selectWavelengths( void );
-
+  bool    iStwoOrMoreAnalytesSpectra_forChannel( QString, QStringList&, QString, int );
+      bool    validExtinctionProfile( QString, QList< double >,
+				      QList< double >, QStringList& );
+  
       void selectWavelengths_manual( void );
       void Wavelengths_class( void );
       // \brief Handle (un)check of Auto in Optima box
@@ -620,6 +683,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       // \brief Handle a change in the high radius value
       void changedHighRadius( double );
       // \brief Rebuild the Ranges part of the current run protocol
+      void buffer_spectrum_checked( bool );
+  
       void rebuild_Ranges   ( void );
 };
 
@@ -763,7 +828,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QPushButton* pb_details;
 
       QGridLayout* genL;
-      
+
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
@@ -815,6 +880,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool         connected;   // We are Connected to the Optima
       QString      json_upl;    // JSON to upload
 
+      QMap<QString,QString> gmp_submitter_map;
+
       QJsonObject absorbanceObject;
 
       QSqlDatabase dbxpn;
@@ -825,22 +892,39 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
-
+      void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
+      void    clearData_protDev( void );
+ 
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
-      void    saveRunProtocol ( void );  // Save the Run Protocol
+      void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
+      bool    saveRunProtocol ( void );  // Save the Run Protocol
+      bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
       int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report
       int     writeReportItemToDB( US_DB2*, QString, int, US_ReportGMP::ReportItem ); 
 
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
+  
+      bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
+      bool    samplesReferencesWvlsMatch( QStringList& );
+      bool    matchRefSampleWvls( QString, QString, QStringList&);
+      bool    useReferenceNumbersSet( QStringList& );
+      bool    extinctionProfilesExist( QStringList& );
+      bool    validExtinctionProfile( QString, QList< double >,
+				      QList< double >, QStringList& );
 
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
-      
+      void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+
+      void    do_accept_reviewers( QMap< QString, QString >& );
+      void    cancel_reviewers( QMap< QString, QString >& );
+  
    signals:
-      void expdef_submitted( QMap < QString, QString > &protocol_details );
+      void expdef_submitted    ( QMap < QString, QString > &protocol_details );
+      void expdef_submitted_dev( QMap < QString, QString > &protocol_details );
 };
 
 //! \brief Experiment AnalysisProfile panel
@@ -925,10 +1009,13 @@ class US_ExperimentMain : public US_Widgets
       // \brief Update the list of protocols with a newly named entry
       bool        updateProtos( const QStringList );
 
+      void        setProtos   ( QStringList );
+
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
       US_AnaProfile   currAProf;   // Current AnaProfile controls
-
+      US_AnaProfile   loadAProf;   // Current AnaProfile controls
+  
       QPushButton* pb_next;
       QPushButton* pb_prev;
       QPushButton* pb_close;
@@ -947,12 +1034,21 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
+      bool    us_prot_dev_mode;
       bool    global_reset;
+      bool    us_abde_mode;
+
+  QMap <QString, QString> protocol_details_passed; 
       
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
+      void    set_abde_mode_aprofile( void );
+      void    unset_abde_mode_aprofile( void );
+      void    abde_sv_mode_change_reset_reports( QString  );
 
       QStringList instruments_in_use;
+      QStringList instruments_no_permit;
+  bool isOperatorAny;
 
       int tabHeight;
       int buttLHeight;
@@ -987,24 +1083,34 @@ class US_ExperimentMain : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+      void set_tabs_buttons_readonly( void );
+      void switch_to_run_manager( void );					
+					    
       
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
+      void submitted_protDev( QMap < QString, QString > & );
+
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
       void    exclude_used_instruments( QStringList &);
+      void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
 
       US_AnaProfile* get_aprofile( void );
-
+      US_AnaProfile* get_aprofile_loaded( void );
+      void set_loadAProf ( US_AnaProfile );
+  
       void back_to_pcsa( void );
 	
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
+      void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
-      void close_expsetup_msg( void ); 
+      void close_expsetup_msg( void );
+  void back_to_initAutoflow( void );
       
       
 };

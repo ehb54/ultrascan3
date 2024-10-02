@@ -102,8 +102,7 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 700, 600 );
-
+   setGeometry( global_Xpos, global_Ypos, 800, 600 );
 }
 
 US_Hydrodyn_Cluster_Status::~US_Hydrodyn_Cluster_Status()
@@ -133,7 +132,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
          ( tgz_files.size() ? "\n" : "" ) +
          tar_files.join("\n")
          ;
-      all_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+      all_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
    }
 
    for ( unsigned int i = 0; i < (unsigned int)all_files.size(); i++ )
@@ -154,7 +153,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
                                                         << files[ i ]
                                                         << "unknown"
                                                         << ""
-                                                        << QFileInfo( files[ i ] ).created().toString()
+                                                        << QFileInfo( files[ i ] ).birthTime().toString()
                                                         ) );
       }
    }
@@ -191,6 +190,11 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
                               << us_tr( "Additional Info" )
                               << us_tr( "Date created" )
                               );
+
+   lv_files->setColumnWidth( 0, 250 );
+   lv_files->setColumnWidth( 1, 120 );
+   lv_files->setColumnWidth( 2, 230 );
+   lv_files->setColumnWidth( 3, 80 );
 
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 

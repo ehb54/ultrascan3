@@ -25,6 +25,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRange             = &(mainw->currProto.rpRange);
+   rpSolut             = &(mainw->currProto.rpSolut);
+   
    mxrow               = 24;     // Maximum possible rows
    nrnchan             = 0;
    protoname           = mainw->currProto.protoname;
@@ -90,7 +92,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    // banners->addWidget( lb_hdr2,         row,   8,  1, 13 );
    // banners->addWidget( lb_hdr3,         row++, 21, 1, 21 );
 
-   QGridLayout* genL   = new QGridLayout();
+   //QGridLayout* genL   = new QGridLayout();
+   genL   = new QGridLayout();
    genL->setSpacing        ( 2 );
    genL->setContentsMargins( 2, 2, 2, 2 );
 
@@ -102,6 +105,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    QwtCounter*  ctradfr;
    QLabel*      lablto;
    QwtCounter*  ctradto;
+   QCheckBox*   ck_buff_spectrum;
+   
    QString swavln   = tr( "Select Wavelengths" );
    QString srngto   = tr( "to" );
    QFont   ckfont   = QFont( US_GuiSettings::fontFamily(),
@@ -139,7 +144,19 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       genL->addWidget( ctradfr, row,    9, 1, 3 );
       genL->addWidget( lablto,  row,   12, 1, 1 );
       genL->addWidget( ctradto, row++, 13, 1, 3 );
-
+      //genL->addWidget( ctradto, row,   13, 1, 3 );
+      
+      //abde
+      QLayout* lo_buff_spectrum  = us_checkbox( tr( "Buffer Spectrum" ), ck_buff_spectrum, false );
+      QWidget* containerW_buff_sp = new QWidget;
+      containerW_buff_sp->setLayout( lo_buff_spectrum );
+      ck_buff_spectrum   ->setObjectName( strow + ": ck_buff_spectrum" );
+      containerW_buff_sp ->setObjectName( strow + ": ck_buff_spectrum_container" );
+      connect( ck_buff_spectrum, SIGNAL( toggled     ( bool ) ),
+               this,           SLOT  ( buffer_spectrum_checked( bool ) ) );
+      // genL->addWidget( containerW_buff_sp, row++,  16, 1, 2 );
+      // containerW_buff_sp -> setVisible( false );
+      
       cclabl ->setVisible( is_vis );
       pbwavln->setVisible( is_vis );
       lbwlrng->setVisible( is_vis );
@@ -170,6 +187,10 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       cc_lrads << ctradfr;
       cc_hrads << ctradto;
       cc_lbtos << lablto;
+
+      //abde
+      cc_buff_sp_ck << ck_buff_spectrum;
+      cc_buff_sp    << containerW_buff_sp;
    }
 
 #if 0
@@ -188,7 +209,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
 
    panel->addLayout(banners);
    genL->setAlignment(Qt::AlignTop);
-
+         
    QScrollArea *scrollArea = new QScrollArea(this);
    QWidget *containerWidget = new QWidget;
    containerWidget->setLayout(genL);
@@ -197,6 +218,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    scrollArea->verticalScrollBar()->setFixedWidth(50);
 
    panel->addWidget(scrollArea);
+   
 
    //panel->addStretch();
 
@@ -230,6 +252,8 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
+      abde_buff.resize( nrnchan );
+      abde_mwl_deconv.resize( nrnchan );
 
       for ( int ii = 0; ii < oprof.count(); ii++ )
       {
@@ -253,8 +277,11 @@ DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ ku
 DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
             }
 
-            locrads[ kuv ]       = rpRange->chrngs[ kuv ].lo_rad;
-            hicrads[ kuv ]       = rpRange->chrngs[ kuv ].hi_rad;
+            locrads[ kuv ]             = rpRange->chrngs[ kuv ].lo_rad;
+            hicrads[ kuv ]             = rpRange->chrngs[ kuv ].hi_rad;
+
+	    abde_buff[ kuv ]           = rpRange->chrngs[ kuv ].abde_buffer_spectrum;
+	    abde_mwl_deconv[ kuv ]     = rpRange->chrngs[ kuv ].abde_mwl_deconvolution;
 
             if ( ++kuv >= nuvvis )  break;
          }
@@ -282,6 +309,8 @@ DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
+      abde_buff.resize( nrnchan );
+      abde_mwl_deconv.resize( nrnchan );
 DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < nrnchan; ii++ )
@@ -297,8 +326,11 @@ DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 DbgLv(1) << "EGRn: rbR:   ii jj " << ii << jj << "wavelen" << wavelen;
          }
 
-         locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
-         hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+         locrads[ ii ]        = rpRange->chrngs[ ii ].lo_rad;
+         hicrads[ ii ]        = rpRange->chrngs[ ii ].hi_rad;
+	 abde_buff[ ii ]      = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	 abde_mwl_deconv[ ii] = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+	 
 DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
@@ -326,14 +358,18 @@ DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
       swvlens.resize( ntchan );
       locrads.resize( ntchan );
       hicrads.resize( ntchan );
+      abde_buff.resize( ntchan );
+      abde_mwl_deconv.resize( ntchan );
       int kk              = nochan;
 
       for ( int ii = 0; ii < nrnchan_sv; ii++ )
       {
-         rchans [ kk ]    = rchans [ ii ];
-         swvlens[ kk ]    = swvlens[ ii ];
-         locrads[ kk ]    = locrads[ ii ];
-         hicrads[ kk ]    = hicrads[ ii ];
+         rchans [ kk ]         = rchans [ ii ];
+         swvlens[ kk ]         = swvlens[ ii ];
+         locrads[ kk ]         = locrads[ ii ];
+         hicrads[ kk ]         = hicrads[ ii ];
+	 abde_buff[ kk ]       = abde_buff[ ii ];
+	 abde_mwl_deconv[ kk ] = abde_mwl_deconv[ ii ];
          rchans [ ii ]    = "";
       }
    }
@@ -397,6 +433,8 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             swvlens[ ii ]       = swvlens[ ppx ];
             locrads[ ii ]       = locrads[ ppx ];
             hicrads[ ii ]       = hicrads[ ppx ];
+	    abde_buff[ ii ]     = abde_buff[ ppx ];
+	    abde_mwl_deconv[ ii ] = abde_mwl_deconv[ ppx ];
          }
          else
          {
@@ -404,6 +442,8 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
             locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
             hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+	    abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	    abde_mwl_deconv[ ii ] =  rpRange->chrngs[ ii ].abde_mwl_deconvolution;
          }
       }
    }
@@ -414,6 +454,8 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
      swvlens.resize( nrnchan );
      locrads.resize( nrnchan );
      hicrads.resize( nrnchan );
+     abde_buff.resize( nrnchan );
+     abde_mwl_deconv.resize( nrnchan );
 
      for ( int ii = 0; ii < nrnchan; ii++ )
       {
@@ -425,6 +467,8 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
          swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+	 abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	 abde_mwl_deconv[ ii ] =  rpRange->chrngs[ ii ].abde_mwl_deconvolution;
          qDebug() << "Test 1";
       }
    }
@@ -433,6 +477,8 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    swvlens.resize( nrnchan );
    locrads.resize( nrnchan );
    hicrads.resize( nrnchan );
+   abde_buff.resize( nrnchan );
+   abde_mwl_deconv.resize( nrnchan );
 }
 
 #if 0
@@ -556,6 +602,229 @@ void US_ExperGuiRanges::Wavelengths_class()
 
 }
 
+//Check for..
+bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelName, QStringList& msg_to_user,
+							       QString mode, int chrow )
+{
+  bool profiles_exist = false;
+  msg_to_user. clear();
+  
+  //DB
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) +  db.lastError() );
+      
+      return false;
+    }
+
+  //main params
+  QString channel;
+  QList< double > all_wvls;
+  int    nwavl;
+  bool   buff_req;
+  QString sol_id;
+  
+  if ( mode == "INIT" )
+    {
+      for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	{
+	  channel = rpRange->chrngs[ ii ].channel;
+	  if ( channel == channelName ) 
+	    {
+	      all_wvls = rpRange->chrngs[ ii ].wvlens;
+	      nwavl    = all_wvls.count();
+	      buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
+	      sol_id   = rpSolut->chsols[ii].sol_id;
+
+	      break;
+	    }
+	}
+    }
+  else if ( mode == "SETWVLS" )
+    {
+      channel  = channelName;
+      all_wvls = swvlens[ chrow ];
+      nwavl    = all_wvls.count();
+      buff_req = abde_buff[ chrow ];
+      sol_id   = rpSolut->chsols[ chrow ].sol_id;
+    }
+
+  qDebug() << "In CHECK SPECTRA" << "[" << mode << "]: channel, channelName, nwavl, buff_req, solID -- "
+	   << channel << channelName <<  nwavl <<  buff_req << sol_id;
+  
+  US_Solution*   solution = new US_Solution;
+  int solutionID = sol_id.toInt();
+  
+  int status = US_DB2::OK;
+  status = solution->readFromDB  ( solutionID, &db );
+  // Error reporting
+  if ( status == US_DB2::NO_BUFFER )
+    {
+      QMessageBox::information( this,
+				tr( "Attention" ),
+				tr( "The buffer this solution refers to was not found.\n"
+				    "Please restore and try again.\n" ) );
+      return false;
+    }
+  
+  else if ( status == US_DB2::NO_ANALYTE )
+    {
+      QMessageBox::information( this,
+				tr( "Attention" ),
+				tr( "One of the analytes this solution refers to was not found.\n"
+				    "Please restore and try again.\n" ) );
+      return false;
+    }
+  
+  else if ( status != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+			    tr( "Database returned the following error: \n" ) +  db.lastError() );
+      return false;
+    }
+  //End of reading Solution:
+  
+  //Reading Analytes
+  int num_analytes = solution->analyteInfo.size();
+  
+  if ( num_analytes > 1 )
+    {
+      profiles_exist = true;
+      msg_to_user << "2 or more analytes! Checking Spectra...";
+      
+      for (int i=0; i < num_analytes; ++i )
+	{
+	  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+	  QString a_name     = analyte.description;
+	  QString a_ID       = analyte.analyteID;
+	  QString a_GUID     = analyte.analyteGUID;
+	  
+	  qDebug() << "Solution "  << solution->solutionDesc
+		   << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+		   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+	  
+	  analyte.extinction.clear();
+	  analyte.load( true, a_GUID, &db );
+	  
+	  //QMap <double, double> extinction[ wavelength ] <=> value
+	  qDebug() << "[Analyte]Extinction Profile wvls: " 
+		   << analyte.extinction.keys();
+	  
+	  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	  QString a_desc = "ANALYTE: " + a_name;
+	  if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+	    profiles_exist = false;
+	}
+    }
+  else
+    msg_to_user << "1 analyte ONLY!";
+  
+  //End of reading Analytes
+  
+  //   //Reading Buffers
+  //   if ( buff_req ) //only if buffer spectrum required
+  //     {
+  //       US_Buffer buffer = solution->buffer;
+  //       QString b_name   = buffer.description;
+  //       QString b_ID     = buffer.bufferID;
+  //       qDebug() << "Solution "  << solution->solutionDesc
+  // 	       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+  
+  //       buffer.extinction.clear();
+  //       buffer.readFromDB( &db, b_ID );
+  
+  //       //QMap <double, double> extinction[ wavelength ] <=> value
+  //       qDebug() << "[Buffer]Extinction Profile wvls: " 
+  // 	       << buffer.extinction.keys();
+  
+  //       //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+  //       QString b_desc = "BUFFER: " + b_name;
+  //       if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+  // 	profiles_exist = false;
+  //     }
+  //   //End of reading Buffers
+  
+  qDebug() << "In CHECK SPECTRA: msg_to_user -- " << msg_to_user;
+  
+  return profiles_exist;
+}
+
+bool US_ExperGuiRanges::validExtinctionProfile( QString desc, QList< double > all_wvls,
+						QList< double > ext_prof, QStringList& msg_to_user )
+{
+  bool eprofile_ok;
+  QString msg;
+    
+  //ranges from protocol
+  int    nwavl_p    = all_wvls.count();
+  double lo_wavl_p  = all_wvls[ 0 ];
+  double hi_wavl_p  = all_wvls[ nwavl_p - 1 ];
+
+  //ranges in extinction profile
+  int    nwavl_e    = ext_prof.count();
+  if ( nwavl_e > 0 )
+    {
+      double lo_wavl_e  = ext_prof[ 0 ];
+      double hi_wavl_e  = ext_prof[ nwavl_e - 1 ];
+      
+      eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
+      eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
+
+      msg = "is out of range; ";
+    }
+  else //empty ext. profile
+    {
+      eprofile_ok = false;
+      msg = "does not exist; ";
+    }
+
+  //check existence of all wavelengths (for non-empty ext.prof.)
+  if ( nwavl_e > 0 )
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls.size(); ++i)
+	{
+	  double p_wvl = all_wvls[i];
+	  wvl_present[ p_wvl ] = false;
+	  for (int j=0; j<ext_prof.size(); j++)
+	    {
+	      double e_wvl = ext_prof[j];
+	      if ( p_wvl == e_wvl )
+		{
+		  wvl_present[ p_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      eprofile_ok = false;
+	      msg += "some wavelengths missing; ";
+	      break; 
+	    }
+	}
+    }
+  
+  //messages
+  if ( !eprofile_ok )
+    msg_to_user << QString(tr("%1: Extinction profile %2"))
+      .arg( desc )
+      .arg( msg );
+  
+  return eprofile_ok;
+}
+
+
+
 // Slot to select wavelengths using a dialog
 void US_ExperGuiRanges::selectWavelengths_manual()
 {
@@ -603,11 +872,38 @@ void US_ExperGuiRanges::selectWavelengths_manual()
    if ( kswavl == 0 )
       labwlr              = tr( "0 selected" );
    else if ( kswavl == 1 )
-      labwlr              = "1,  " + wlselec[ 0 ];
-   else
-      labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
-                            + tr( " to " ) + wlselec[ lswx ];
+     {
+       labwlr              = "1,  " + wlselec[ 0 ];
 
+       //abde: remove (if any) buff_spetr. widgets
+       if( mainw->us_abde_mode )
+	 {
+	   genL->removeWidget( cc_buff_sp[ chrow ] );
+	   cc_buff_sp[ chrow ]-> setVisible( false );
+
+	   //also, reset abde_buff[ ii ], abde_mwl_deconv[ chrow ]
+	   abde_buff[ chrow ]       = false;
+	   abde_mwl_deconv[ chrow ] = false;
+	 }
+     }
+   else
+     {
+       labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
+	 + tr( " to " ) + wlselec[ lswx ];
+       
+       //abde: setup buff_spectrum cks
+       QStringList msg_to_user;
+       if( mainw->us_abde_mode && iStwoOrMoreAnalytesSpectra_forChannel( cclabl, msg_to_user, "SETWVLS", chrow ) )
+	 {
+	   genL->addWidget( cc_buff_sp[ chrow ], chrow,  16, 1, 2 );
+	   cc_buff_sp[ chrow ]-> setVisible( true );
+	   qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ chrow ]->objectName();
+
+	   //set channel as MWL-deconvolution:
+	   abde_mwl_deconv[ chrow ] = true;
+	 }
+     }
+   
    cc_lrngs[ chrow ]->setText( labwlr );
 
    //ALEXEY
@@ -635,15 +931,41 @@ void US_ExperGuiRanges::selectWavelengths_manual()
    }
 DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
-   // Set check-state of Interference boxes in same-cell rows and reconnect
+   // Set check-state of Interference boxes in same-cell rows and reconnect : ALEXEY: here set of channel A is copied to B
    for ( int ii = 0; ii < ccrows.count(); ii++ )
    {
       int ccrow           = ccrows[ ii ];
       cc_lrngs[ ccrow ]->setText( labwlr );
 
+      QString cclabl_b    = cc_labls[ ccrow ]->text();
+
       swvlens[ ccrow ].clear();
       for ( int ii = 0; ii < kswavl; ii++ )
          swvlens[ ccrow ] << wlselec[ ii ].toDouble();
+
+      //abde: call buff_spectr. widget
+      if( mainw->us_abde_mode )
+	 {
+	   QStringList msg_to_user;
+	   if ( kswavl > 1 && iStwoOrMoreAnalytesSpectra_forChannel( cclabl_b, msg_to_user, "SETWVLS",  ccrow ) )
+	     {
+	       genL->addWidget( cc_buff_sp[ ccrow ], ccrow,  16, 1, 2 );
+	       cc_buff_sp[ ccrow ]-> setVisible( true );
+	       qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ ccrow ]->objectName();
+
+	       //set channel as MWL-deconvolution:
+	       abde_mwl_deconv[ ccrow ] = true;
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ccrow ] );
+	       cc_buff_sp[ ccrow ]-> setVisible( false );
+
+	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ccrow ]
+	       abde_buff[ ccrow ]       = false;
+	       abde_mwl_deconv[ ccrow ] = false;
+	     }
+	 }
    }
 
    // Update ScanCount info per stage, per wavelength
@@ -744,9 +1066,6 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
 
-      
-
-
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
@@ -827,7 +1146,6 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
       cb_scancount_int->addItem( scancount_stage_int );      
-      
    }
 
 }
@@ -901,11 +1219,38 @@ DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
    if ( kswavl == 0 )
       labwlr              = tr( "0 selected" );
    else if ( kswavl == 1 )
-      labwlr              = "1,  " + wlselec[ 0 ];
-   else
-      labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
-                            + tr( " to " ) + wlselec[ lswx ];
+     {
+       labwlr              = "1,  " + wlselec[ 0 ];
 
+       //abde: remove (if any) buff_spetr. widgets
+       if( mainw->us_abde_mode )
+	 {
+	   genL->removeWidget( cc_buff_sp[ chrow ] );
+	   cc_buff_sp[ chrow ]-> setVisible( false );
+
+	   //also, reset abde_buff[ ii ], abde_mwl_deconv[ chrow ]
+	   abde_buff[ chrow ]       = false;
+	   abde_mwl_deconv[ chrow ] = false;
+	 }
+     }
+   else
+     {
+       labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
+	 + tr( " to " ) + wlselec[ lswx ];
+
+       //abde: setup buff_spectrum cks
+       QStringList msg_to_user;
+       if( mainw->us_abde_mode && iStwoOrMoreAnalytesSpectra_forChannel( cclabl, msg_to_user, "SETWVLS", chrow) )
+	 {
+	   genL->addWidget( cc_buff_sp[ chrow ], chrow,  16, 1, 2 );
+	   cc_buff_sp[ chrow ]-> setVisible( true );
+	   qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ chrow ]->objectName();
+
+	   //set channel as MWL-deconvolution:
+	   abde_mwl_deconv[ chrow ] = true;
+	 }
+
+     }
    cc_lrngs[ chrow ]->setText( labwlr );
 DbgLv(1) << "EGRn: sW: labwlr" << labwlr << "swvlens" << swvlens;
 
@@ -934,15 +1279,41 @@ DbgLv(1) << "EGRn: sW: labwlr" << labwlr << "swvlens" << swvlens;
    }
 DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
-   // Set check-state of Interference boxes in same-cell rows and reconnect
+   // Set check-state of Interference boxes in same-cell rows and reconnect  :: ALEXEY: here set of channel A is copied to B
    for ( int ii = 0; ii < ccrows.count(); ii++ )
    {
       int ccrow           = ccrows[ ii ];
       cc_lrngs[ ccrow ]->setText( labwlr );
 
+      QString cclabl_b    = cc_labls[ ccrow ]->text();
+
       swvlens[ ccrow ].clear();
       for ( int ii = 0; ii < kswavl; ii++ )
          swvlens[ ccrow ] << wlselec[ ii ].toDouble();
+
+      //abde: setup buff_spectrum cks
+      if( mainw->us_abde_mode )
+	 {
+	   QStringList msg_to_user;
+	   if ( kswavl > 1 && iStwoOrMoreAnalytesSpectra_forChannel( cclabl_b, msg_to_user, "SETWVLS", ccrow ) )
+	     {
+	       genL->addWidget( cc_buff_sp[ ccrow ], ccrow,  16, 1, 2 );
+	       cc_buff_sp[ ccrow ]-> setVisible( true );
+	       qDebug() << "Manual wvls setup: adding [add]o_name " << cc_buff_sp[ ccrow ]->objectName();
+
+	       //set channel as MWL-deconvolution:
+	       abde_mwl_deconv[ ccrow ] = true;
+	     }
+	   else
+	     {
+	       genL->removeWidget( cc_buff_sp[ ccrow ] );
+	       cc_buff_sp[ ccrow ]-> setVisible( false );
+
+	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ccrow ]
+	       abde_buff[ ccrow ]       = false;
+	       abde_mwl_deconv[ ccrow ] = false;
+	     }
+	 }
    }
 
    // Update ScanCount info per stage, per wavelength
@@ -1304,6 +1675,16 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    }
 }
 
+// Slot to handle a change in the buff_spectrum requirement (abde)
+void US_ExperGuiRanges::buffer_spectrum_checked( bool checked )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString sname       = sobj->objectName();
+   chrow               = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "buffSpec: val" << checked << "row" << chrow;
+   abde_buff[ chrow ]  = ( checked );
+
+}
 
 // Class dialog object for selecting wavelengths
 

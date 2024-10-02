@@ -604,7 +604,7 @@ QStringList US_Hydrodyn_Saxs_Buffer_Conc::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;

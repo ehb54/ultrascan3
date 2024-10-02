@@ -26,9 +26,11 @@ qDebug() << "PU:l_all: dbP" << dbP;
       QStringList qry;
       qry << "get_protocol_desc" << inv_id;
       dbP->query( qry );
-qDebug() << "PU:l_all: qry" << qry;
-qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
-
+      
+      qDebug() << "PU:l_all: qry" << qry;
+      qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
+      qDebug() << "PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
+ 
       if ( dbP->lastErrno() != US_DB2::OK )
          return nrecs;
 
@@ -105,6 +107,53 @@ qDebug() << "PU:l_all:  protentry" << protentry;
 qDebug() << "PU:l_all: nrecs" << nrecs;
    return nrecs;
 }
+
+int US_ProtocolUtil::list_all_auto( QList< QStringList >& protdata,
+				    US_DB2* dbP )
+{
+  int nrecs        = 0;    // Count of records found
+  protdata.clear();        // Initialize list of entries
+
+qDebug() << "[AUTO] PU:l_all: dbP" << dbP;
+ if ( dbP != NULL )
+   {  // Read protocol records from the database
+     QString inv_id      = QString::number( US_Settings::us_inv_ID() );
+     QStringList qry;
+     qry << "get_protocol_desc_auto" << inv_id;
+     dbP->query( qry );
+     
+     qDebug() << "[AUTO] PU:l_all: qry" << qry;
+     qDebug() << "[AUTO] PU:l_all:  qry stat" << dbP->lastError();
+     qDebug() << "[AUTO] PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
+     
+     if ( dbP->lastErrno() != US_DB2::OK )
+       return nrecs;
+     
+     while ( dbP->next() )
+       {
+         QStringList protentry;
+         QString pdbid    = dbP->value( 0 ).toString();
+         QString pguid    = dbP->value( 1 ).toString();
+         QString pname    = dbP->value( 2 ).toString();
+         QDateTime date   = dbP->value( 5 ).toDateTime().toUTC();
+	 //         QString pdate    = US_Util::toUTCDatetimeText( date
+	 //                               .toString( Qt::ISODate ), true )
+	 //                               .section( " ", 0, 0 ).simplified();
+         QString pdate = US_Util::toUTCDatetimeText( date
+						     .toString( Qt::ISODate ), true )
+	   .section( ":", 0, 1 ) + " UTC";
+         protentry << pname << pdate << pdbid << pguid;
+	 qDebug() << "[AUTO] PU:l_all:  protentry" << protentry;
+	 
+         protdata  << protentry;
+         nrecs++;
+      }
+   }
+ qDebug() << "[AUTO] PU:l_all: nrecs" << nrecs;
+ return nrecs;
+}
+
+
 
 // Update the protocol data list with a new entry.
 //
@@ -417,6 +466,8 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       qry << "get_protocol_desc" << QString::number( invID_passed );
       dbP->query( qry );
 
+      qDebug() << "In US_ProtocolUtil::read_record_auto: DB NOT NULL; query -- " << qry;
+
       if ( dbP->lastErrno() != US_DB2::OK )
          return idprot;    // Error exit:  unable to read DB record
 
@@ -445,8 +496,13 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       }  // END: db records
    }  // END: from database
 
+   qDebug() << "In US_ProtocolUtil::read_record_auto 2:";
+   
    if ( idprot < 0 )
    {  // Find the record in a local file with a matching name
+
+     qDebug() << "In US_ProtocolUtil::read_record_auto 3:";
+     
       QString datdir      = US_Settings::dataDir() + "/projects/";
       datdir.replace( "\\", "/" );        // Possible Windows fix
       QStringList rfilt( "R*.xml" );      // "~/ultrascan/data/projects/R*.xml"
@@ -502,6 +558,9 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       }  // END: file loop
    }  // END: local disk
 
+   
+   qDebug() << "In US_ProtocolUtil::read_record_auto 4: idprot " << idprot ;
+   
    return idprot;
 }
 

@@ -15,6 +15,8 @@
 
 // #define UHSH_VAL_DEC 8
 
+// #define ALLOW_GUOS_CARUANAS
+
 void US_Hydrodyn_Saxs_Hplc::setupGUI()
 {
    int minHeight1 = 22;
@@ -24,7 +26,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cg_magenta.setBrush( QPalette::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
 
    /*
-     cg_magenta.setBrush( QPalette::Foreground, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QPalette::WindowText, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Button, QBrush( QColor( "blue" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Light, QBrush( QColor( "darkcyan" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Midlight, QBrush( QColor( "darkblue" ), Qt::SolidPattern ) );
@@ -229,6 +231,16 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( cb_eb );
    connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
 
+   cb_dots = new QCheckBox(this);
+   cb_dots->setText(us_tr("Dots "));
+   //width cb_dots->setMaximumWidth ( minHeight1 * 3 );
+   cb_dots->setChecked( false );
+   cb_dots->setMinimumHeight( minHeight1 );
+   cb_dots->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_dots->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_dots );
+   connect( cb_dots, SIGNAL( clicked() ), SLOT( set_dots() ) );
+
    pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
@@ -325,7 +337,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_conc_avg->setPalette( PALET_PUSHB );
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
-   pb_normalize = new QPushButton(us_tr("Normalize"), this);
+   pb_normalize = new QPushButton(us_tr("Conc. Norm."), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_normalize->setMinimumHeight(minHeight1);
    pb_normalize->setPalette( PALET_PUSHB );
@@ -360,6 +372,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_svd->setMinimumHeight(minHeight1);
    pb_svd->setPalette( PALET_PUSHB );
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
+
+   pb_create_ihashq = new QPushButton(us_tr("Make I#,I*(q)"), this);
+   pb_create_ihashq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_create_ihashq->setMinimumHeight(minHeight1);
+   pb_create_ihashq->setPalette( PALET_PUSHB );
+   connect(pb_create_ihashq, SIGNAL(clicked()), SLOT(create_ihashq()));
 
    pb_create_i_of_t = new QPushButton(us_tr("Make I(t)"), this);
    pb_create_i_of_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -774,6 +792,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_dist_zoomer->setTrackerPen(QPen(Qt::red));
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
 //   plot_ref = new QwtPlot( qs_plots );
@@ -883,6 +902,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
    plot_errors_zoomer->symmetric_rescale = true;
    connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
@@ -944,7 +964,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_errors_widgets.push_back( cb_plot_errors_rev );
    plot_errors_widgets.push_back( cb_plot_errors_sd );
    plot_errors_widgets.push_back( cb_plot_errors_pct );
-   plot_errors_widgets.push_back( cb_plot_errors_group );
+   // plot_errors_widgets.push_back( cb_plot_errors_group );
 
    hide_widgets( plot_errors_widgets, true );
 
@@ -1335,6 +1355,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_local_guos->setToolTip( us_tr( "Gaussian peak fit by Guos method" ) );
    connect(pb_gauss_local_guos, SIGNAL(clicked()), SLOT(gauss_local_guos()));
 
+#if !defined( ALLOW_GUOS_CARUANAS )
+   le_gauss_local_pts     ->hide();
+   pb_gauss_local_caruanas->hide();
+   pb_gauss_local_guos    ->hide();
+#endif
+
    pb_ggauss_start = new QPushButton(us_tr("Global Gaussians"), this);
    pb_ggauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_ggauss_start->setMinimumHeight(minHeight1);
@@ -1593,6 +1619,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_crop_vis->setPalette( PALET_PUSHB );
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
+   pb_crop_to_vis = new QPushButton(us_tr("Crop to Vis"), this);
+   pb_crop_to_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_to_vis->setMinimumHeight(minHeight1);
+   pb_crop_to_vis->setPalette( PALET_PUSHB );
+   connect(pb_crop_to_vis, SIGNAL(clicked()), SLOT(crop_to_vis()));
+
    pb_crop_zero = new QPushButton(us_tr("Crop Zeros"), this);
    pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_zero->setMinimumHeight(minHeight1);
@@ -1771,6 +1803,24 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       cb_ggauss_scroll_p_red->setPalette( PALET_NORMAL );
       AUTFBACK( cb_ggauss_scroll_p_red );
       connect( cb_ggauss_scroll_p_red, SIGNAL( clicked() ), SLOT( ggauss_scroll_p_red() ) );
+
+      cb_ggauss_scroll_smoothed = new QCheckBox(this);
+      cb_ggauss_scroll_smoothed->setText( us_tr( "Smoothed" ) );
+      cb_ggauss_scroll_smoothed->setEnabled( false );
+      cb_ggauss_scroll_smoothed->setChecked( false );
+      cb_ggauss_scroll_smoothed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      cb_ggauss_scroll_smoothed->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_ggauss_scroll_smoothed );
+      connect( cb_ggauss_scroll_smoothed, SIGNAL( clicked() ), SLOT( ggauss_scroll_smoothed() ) );
+
+      cb_ggauss_scroll_oldstyle = new QCheckBox(this);
+      cb_ggauss_scroll_oldstyle->setText( us_tr( "Raw fit" ) );
+      cb_ggauss_scroll_oldstyle->setEnabled( false );
+      cb_ggauss_scroll_oldstyle->setChecked( false );
+      cb_ggauss_scroll_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      cb_ggauss_scroll_oldstyle->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_ggauss_scroll_oldstyle );
+      connect( cb_ggauss_scroll_oldstyle, SIGNAL( clicked() ), SLOT( ggauss_scroll_oldstyle() ) );
    }
    // scale mode
 
@@ -3132,6 +3182,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_view );
    // files_widgets.push_back ( pb_movie );
    // files_widgets.push_back ( cb_eb );
+   // files_widgets.push_back ( cb_dots );
    // files_widgets.push_back ( pb_axis_x );
    // files_widgets.push_back ( pb_axis_y );
    // files_widgets.push_back ( pb_rescale );
@@ -3224,6 +3275,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       l_pbmode_main->addWidget( pb_axis_x );
       l_pbmode_main->addWidget( pb_axis_y );
       l_pbmode_main->addWidget( cb_eb );
+      l_pbmode_main->addWidget( cb_dots );
       l_pbmode_main->addWidget( pb_line_width );
       l_pbmode_main->addWidget( pb_color_rotate );
       l_pbmode_main->addWidget( pb_legend );
@@ -3233,6 +3285,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pbmode_main_widgets.push_back( pb_axis_x );
       pbmode_main_widgets.push_back( pb_axis_y );
       pbmode_main_widgets.push_back( cb_eb );
+      pbmode_main_widgets.push_back( cb_dots );
       pbmode_main_widgets.push_back( pb_line_width );
       pbmode_main_widgets.push_back( pb_color_rotate );
       pbmode_main_widgets.push_back( pb_legend );
@@ -3261,6 +3314,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
       l_pbmode_crop->addWidget( pb_crop_common );
       l_pbmode_crop->addWidget( pb_crop_vis );
+      l_pbmode_crop->addWidget( pb_crop_to_vis );
       l_pbmode_crop->addWidget( pb_crop_zero );
       l_pbmode_crop->addWidget( pb_crop_left );
       l_pbmode_crop->addWidget( pb_crop_undo );
@@ -3268,6 +3322,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
       pbmode_crop_widgets.push_back( pb_crop_common );
       pbmode_crop_widgets.push_back( pb_crop_vis );
+      pbmode_crop_widgets.push_back( pb_crop_to_vis );
       pbmode_crop_widgets.push_back( pb_crop_zero );
       pbmode_crop_widgets.push_back( pb_crop_left );
       pbmode_crop_widgets.push_back( pb_crop_undo );
@@ -3326,6 +3381,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_3->addWidget ( pb_add );
    hbl_file_buttons_3->addWidget ( pb_bin );
    hbl_file_buttons_3->addWidget ( pb_smooth );
+   hbl_file_buttons_3->addWidget ( pb_svd );
 
    // files_widgets.push_back ( pb_conc_avg );
    files_widgets.push_back ( pb_normalize );
@@ -3335,16 +3391,17 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // files_widgets.push_back ( pb_line_width );
    // files_widgets.push_back ( pb_color_rotate );
    files_expert_widgets.push_back ( pb_ag );
+   files_widgets.push_back ( pb_svd );
 
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
+   hbl_file_buttons_4->addWidget ( pb_create_ihashq );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
-   hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
 
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
-   files_widgets.push_back ( pb_svd );
+   files_widgets.push_back ( pb_create_ihashq );
    files_widgets.push_back ( pb_create_i_of_t );
    files_widgets.push_back ( pb_test_i_of_t );
    files_widgets.push_back ( pb_create_i_of_q );
@@ -3708,6 +3765,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_green );
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_yellow );
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_red );
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_smoothed );
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_oldstyle );
       hbl_ggauss_scroll->addWidget( pb_ggauss_results );
       hbl_ggauss_scroll->addWidget( pb_ggauss_as_curves );
    }
@@ -3913,6 +3972,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 //    plot_widgets.push_back( pb_remove_vis );
 //    plot_widgets.push_back( pb_crop_common );
 //    plot_widgets.push_back( pb_crop_vis );
+//    plot_widgets.push_back( pb_crop_to_vis );
 //    plot_widgets.push_back( pb_crop_zero );
 //    plot_widgets.push_back( pb_crop_left );
 //    plot_widgets.push_back( pb_crop_undo );
@@ -3938,9 +3998,11 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( le_gauss_fit_end );
    gaussian_widgets.push_back( pb_gauss_save );
 
+#if defined( ALLOW_GUOS_CARUANAS )   
    gaussian_widgets.push_back( le_gauss_local_pts );
    gaussian_widgets.push_back( pb_gauss_local_caruanas );
    gaussian_widgets.push_back( pb_gauss_local_guos );
+#endif
    
    gaussian_widgets.push_back( pb_gauss_as_curves );
    gaussian_widgets.push_back( lbl_blank1 );
@@ -3955,6 +4017,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( cb_ggauss_scroll_p_green );
    ggaussian_widgets.push_back( cb_ggauss_scroll_p_yellow );
    ggaussian_widgets.push_back( cb_ggauss_scroll_p_red );
+   ggaussian_widgets.push_back( cb_ggauss_scroll_smoothed );
+   ggaussian_widgets.push_back( cb_ggauss_scroll_oldstyle );
    ggaussian_widgets.push_back( pb_ggqfit );
    ggaussian_widgets.push_back( ggqfit_plot );
    ggaussian_widgets.push_back( cb_ggq_plot_chi2 );
@@ -3967,8 +4031,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( pb_gauss_fit );
    ggaussian_widgets.push_back( le_gauss_pos );
    ggaussian_widgets.push_back( le_gauss_pos_width );
-   // ggaussian_widgets.push_back( le_gauss_fit_start );
-   // ggaussian_widgets.push_back( le_gauss_fit_end );
+#warning these ggaussian fit start/end were hidden, likely for a reason
+   ggaussian_widgets.push_back( le_gauss_fit_start );
+   ggaussian_widgets.push_back( le_gauss_fit_end );
    ggaussian_widgets.push_back( pb_ggauss_rmsd );
    ggaussian_widgets.push_back( lbl_gauss_fit );
    ggaussian_widgets.push_back( pb_ggauss_results );
@@ -4100,6 +4165,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // timeshift_widgets.push_back( pb_remove_vis );
    // timeshift_widgets.push_back( pb_crop_common );
    // timeshift_widgets.push_back( pb_crop_vis );
+   // timeshift_widgets.push_back( pb_crop_to_vis );
    // timeshift_widgets.push_back( pb_crop_zero );
    // timeshift_widgets.push_back( pb_crop_left );
    // timeshift_widgets.push_back( pb_crop_undo );
@@ -4411,6 +4477,13 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
    }
 
+   // bool any_ihashq       = selected_files.filter( "_Ihashq_" ).size() > 0;
+   bool any_ihash        = selected_files.filter( "_Ihash" ).size() > 0;
+   bool all_rt           = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Rt_q" ).size();
+   bool all_ihasht       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihasht_q" ).size();
+   bool all_ihashq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Ihashq_" ).size();
+   bool all_istarq       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_Istarq_" ).size();
+   
    bool files_compatible = compatible_files( selected_files );
    bool files_are_time   = type_files      ( selected_files );
    //   bool one_conc_file    = files_selected_count == 1 && files_are_time && conc_files.count( last_selected_file );
@@ -4473,7 +4546,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true";
 
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
-   pb_timeshift          ->setEnabled( files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
+   pb_timeshift          ->setEnabled( (int64_t)files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
    pb_timescale          ->setEnabled( files_selected_count && files_are_time && conc_selected_count == files_selected_count );
    pb_gauss_mode         ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
@@ -4506,6 +4579,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
+   pb_create_ihashq      ->setEnabled( files_selected_count && files_compatible && !files_are_time & !any_ihash);
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
@@ -4543,6 +4617,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_movie              ->setEnabled( files_selected_count > 1 );
    cb_eb                 ->setEnabled( files_selected_count > 0 && files_selected_count < 10 );
+   cb_dots               ->setEnabled( files_selected_count > 0 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
    pb_rescale_y          ->setEnabled( files_selected_count > 0 );
    pb_ag                 ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
@@ -4633,6 +4708,11 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_crop_common      ->setEnabled( files_selected_count && files_compatible );
 
    pb_crop_vis         ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_crop_to_vis      ->setEnabled( 
                                     files_selected_count &&
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
@@ -4728,6 +4808,10 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
          plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title );
          plot_errors->setAxisTitle(QwtPlot::xBottom,  title );
       }
+      if ( !files_selected_count ) {
+         plot_dist  ->setAxisTitle(QwtPlot::xBottom,  "" );
+         plot_errors->setAxisTitle(QwtPlot::xBottom,  "" );
+      }
       plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
       // qDebug() << "::update_enables() plot_errors is " << ( plot_errors->isVisible() ? "visible" : "not visible" );
    }
@@ -4737,11 +4821,22 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       {
          title = us_tr( "Intensity [a.u.]" );
       } else {
-         if ( type_files( selected_files ) )
-         {
-            title = us_tr( "I(t) [a.u.]" );
+         if ( type_files( selected_files ) ) {
+            if ( all_rt ) {
+               title = us_tr( "R(theta, t) [cm^-1]" );
+            } else if ( all_ihasht ) {
+               title = us_tr( "I#(t) [g^2 cm^-3 mol^-1]" );
+            } else {
+               title = us_tr( "I(t) [a.u.]" );
+            }
          } else {
-            title = us_tr( "I(q) [a.u.]" );
+            if ( all_istarq ) {
+               title = us_tr( "I*(q) [g mol^-1]" );
+            } else if ( all_ihashq ) {
+               title = us_tr( "I#(q) [g^2 cm^-3 mol^-1]" );
+            } else {
+               title = us_tr( "I(q) [a.u.]" );
+            }
          }
       }
 
@@ -4750,6 +4845,9 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
          plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
       } else {
          plot_dist->setAxisTitle(QwtPlot::yLeft, title );
+      }
+      if ( !files_selected_count ) {
+         plot_dist->setAxisTitle(QwtPlot::yLeft, "" );
       }
    }
    model_enables();
@@ -4833,6 +4931,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_movie              ->setEnabled( false );
    pb_ag                 ->setEnabled( false );
    cb_eb                 ->setEnabled( false );
+   cb_dots               ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
    pb_rescale_y          ->setEnabled( false );
    pb_select_all_created ->setEnabled( false );
@@ -4845,6 +4944,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_remove_vis         ->setEnabled( false ); 
    pb_crop_common        ->setEnabled( false ); 
    pb_crop_vis           ->setEnabled( false ); 
+   pb_crop_to_vis        ->setEnabled( false ); 
    pb_crop_zero          ->setEnabled( false ); 
    pb_crop_left          ->setEnabled( false ); 
    pb_crop_undo          ->setEnabled( false );
@@ -5156,7 +5256,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
    for ( int i = 0; i < (int) files.size(); ++i )
    {
       int bead_count;
-      QStringList qsl0 = (models[ files[ i ] ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl0 = (models[ files[ i ] ] ).split( "\n" , Qt::SkipEmptyParts );
 
       if ( qsl0.size() < 1 )
       {
@@ -5165,7 +5265,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       }
          
       {
-         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          if ( qsl.size() < 1 )
          {
             editor_msg( "red", QString( us_tr( "Error: insufficient model info for file %1 [b]" ) ).arg( files[ i ] ) );
@@ -5190,7 +5290,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       {
          bms += "Pb ";
 
-         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
          if ( qsl.size() < 4 )
          {

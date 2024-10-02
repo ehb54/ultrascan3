@@ -10,8 +10,8 @@
 #define R_GC         8.314472e+07    //!< Ideal gas constant
 #define K0           273.15          //!< 0 degrees C in Kelvin
 #define K20          293.15          //!< 20 degrees C in Kelvin
-#define VISC_20W     1.00194         //!< Viscosity of water at 20 degrees C
-#define DENS_20W     0.998234        //!< Density of water at 20 degrees C
+#define VISC_20W     1.001600        //!< Viscosity of water at 20 degrees C
+#define DENS_20W     0.998213        //!< Density of water at 20 degrees C
 #define COMP_25W     4.6e-10         //!< Compressibility of water at 25 degrees C
 #define WATER_MW     18.01           //!< Molecular weight of water
 #define WATER_PH     7.0             //!< pH of water

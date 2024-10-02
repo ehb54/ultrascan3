@@ -123,7 +123,8 @@ int main (int argc, char **argv)
              "fasta         \tmax_line_length outfile pdb1 {pdb2 ... }\n"
              "              \tconvert listed .pdb's to a fasta formatted outputfile\n"
              "json          \tjson\n"
-             "              \tprocess commands from json provided as command line argument\n"
+             "              \tprocess commands from json provided as command line argument or as a json file\n"
+             "              \tinternal json commands support: align, pmrun, hydro, pat, ssbond as top level key\n"
              , argv[0]
              );
       exit(-1);
@@ -2464,7 +2465,15 @@ int main (int argc, char **argv)
 
       int p = 1;
       QString      json         = cmds[ p++ ];
-
+      if ( json.right(5) == ".json" ) {
+         QString contents;
+         QString error;
+         if ( !US_File_Util::getcontents( json, contents, error ) ) {
+            QTextStream( stderr ) << error << "\n";
+            exit(-3);
+         }
+         json = contents;
+      }
       US_Saxs_Util usu;
       cout << usu.run_json( json ).toLatin1().data() << endl;
       exit( 0 );

@@ -80,7 +80,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
       }
    }
 #endif
-
+   
    if ( !us_log )
    {
       us_log = new US_Log( QString( "runlog-%1.txt" ).arg( myrank ) );
@@ -105,20 +105,24 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
    }
 
    if ( !myrank &&
-        parameters.count( "_udphost" ) &&
+        parameters.count( "_udphostip" ) &&
         parameters.count( "_udpport" ) &&
         parameters.count( "_uuid" ) )
    {
       map < QString, QString > msging;
       msging[ "_uuid" ] = results[ "_uuid" ];
-      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (quint16) parameters[ "_udpport" ].toUInt() );
+      us_udp_msg = new US_Udp_Msg( parameters[ "_udphostip" ], (quint16) parameters[ "_udpport" ].toUInt() );
       us_udp_msg->set_default_json( msging );
+      cout << "udp active\n";
+   } else {
+      cout << "udp NOT active\n";
    }
 
    {
       QStringList supported;
       supported
-         << "pmrun";
+         << "pmrun"
+         << "iq";
       
       int count = 0;
       for ( int i = 0; i < (int) supported.size(); ++i )
@@ -147,6 +151,38 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
          }
          return true;
       }
+   }
+
+   if ( parameters.count( "iq" ) ) {
+      if ( !parameters.count( "file" ) ) {
+         if ( !myrank )
+         {
+            results[ "errors" ] = "json runtype iq requires file be defined";
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toLatin1().data() << endl << MPI_JSON_SNIP_END << flush;
+         }
+         return true;
+      }         
+      QString controlfile     = parameters[ "file" ];
+      if ( !run_iq_mpi( controlfile ) )
+      {
+         if ( !myrank )
+         {
+            cout << errormsg << endl;
+         }
+         if ( !myrank ) {
+            MPI_Abort( MPI_COMM_WORLD, 0 );
+         }
+         MPI_Finalize();
+         return false;
+      }
+      if ( !myrank ) {
+         // if ( us_udp_msg ) {
+         //    us_udp_msg->send_json( { { "_progressmsg", "Done" } } );
+         // }
+         MPI_Abort( MPI_COMM_WORLD, 0 );
+      }
+      MPI_Finalize();
+      return true;
    }
 
    if ( myrank )
@@ -378,7 +414,7 @@ void US_Saxs_Util::pm_mpi_worker()
 
             if ( use_errors )
             {
-               for ( int i = 0; i < msg.vsize; i++ )
+               for ( int i = 0; i < (int) msg.vsize; i++ )
                {
                   F[ i ] = d[ i ];
                   q[ i ] = d[ msg.vsize + i ];
@@ -386,7 +422,7 @@ void US_Saxs_Util::pm_mpi_worker()
                   e[ i ] = d[ 3 * msg.vsize + i ];
                }
             } else {
-               for ( int i = 0; i < msg.vsize; i++ )
+               for ( int i = 0; i < (int) msg.vsize; i++ )
                {
                   F[ i ] = d[ i ];
                   q[ i ] = d[ msg.vsize + i ];

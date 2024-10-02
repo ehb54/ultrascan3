@@ -146,6 +146,7 @@ class US_BufferGuiNew : public US_Widgets
    signals:
       void newBufAccepted( void );  //! New buffer accepted
       void newBufCanceled( void );
+      void use_db( bool DB ); //! /param DB True if DB is the new selection
 
    private:
 
@@ -159,6 +160,8 @@ class US_BufferGuiNew : public US_Widgets
       QPushButton*  pb_spectrum;
 
       QLabel*       lb_bselect;
+      QLabel*       lb_density;
+      QLabel*       lb_viscos;
 
       QLineEdit*    le_descrip;
       QLineEdit*    le_concen;
@@ -168,6 +171,8 @@ class US_BufferGuiNew : public US_Widgets
       QLineEdit*    le_compress;
 
       QCheckBox*    ck_manual;
+
+      QSlider*      sl_temp;
 
       QListWidget*  lw_allcomps;
       QListWidget*  lw_bufcomps;
@@ -182,7 +187,9 @@ class US_BufferGuiNew : public US_Widgets
 
       void new_description ();
       void add_component   ();
+      void create_new_buffer_component();
       void select_bcomp    ();
+      void select_water    ( QListWidgetItem* );
       void remove_bcomp    ( QListWidgetItem* );
       void recalc_density  ( void );
       void recalc_viscosity( void );
@@ -197,6 +204,9 @@ class US_BufferGuiNew : public US_Widgets
       void newCanceled     ( void );
       void write_db        ( void );
       void write_disk      ( void );
+      void update_db_disk  ( bool );
+      void calc_visc_dent_temp ( void );
+      void set_temp20 ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
    public slots:
@@ -381,6 +391,66 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       void editBufAccepted  ( void );
       void editBufCanceled  ( void );
 
+};
+
+
+class US_GUI_EXTERN US_BufferComponentRequerster : public US_WidgetsDialog {
+   Q_OBJECT
+
+   public:
+      US_BufferComponentRequerster(US_BufferComponent* comp_, QMap<QString, US_BufferComponent>&);
+
+   private:
+      QGridLayout* main;
+      US_BufferComponent* comp;
+      QMap<QString, US_BufferComponent> component_list;
+      QLabel *lb_description;
+      QLabel *lb_dens;
+      QLabel *lb_visc;
+      QLabel *lb_viscosity0;
+      QLabel *lb_density0;
+      QLineEdit *le_density0;
+      QLineEdit *le_viscosity0;
+      QLabel *lb_density1;
+      QLabel *lb_viscosity1;
+      QLineEdit *le_density1;
+      QLineEdit *le_viscosity1;
+      QLabel *lb_density2;
+      QLabel *lb_viscosity2;
+      QLineEdit *le_density2;
+      QLineEdit *le_viscosity2;
+      QLabel *lb_density3;
+      QLabel *lb_viscosity3;
+      QLineEdit *le_density3;
+      QLineEdit *le_viscosity3;
+      QLabel *lb_density4;
+      QLabel *lb_viscosity4;
+      QLineEdit *le_density4;
+      QLineEdit *le_viscosity4;
+      QLabel *lb_density5;
+      QLabel *lb_viscosity5;
+      QLineEdit *le_density5;
+      QLineEdit *le_viscosity5;
+      QLabel *lb_unit;
+      QLabel *lb_range;
+      QLabel *lb_range2;
+      QLabel *lb_name;
+      QLineEdit *le_name;
+      QLineEdit *le_lrange;
+      QLineEdit *le_urange;
+      QLineEdit *le_unit;
+      QGridLayout* gfbox;
+      QPushButton *pb_accept;
+      QCheckBox*    ck_gf;
+
+   private slots:
+      void cancelled(void);
+
+      void accept(void);
+
+      void edit(void);
+
+      void gf_ck(bool);
 };
 #endif
 

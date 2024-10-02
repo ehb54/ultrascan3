@@ -21,25 +21,14 @@
 #define setSamples(a,b,c)  setData(a,b,c)
 #endif
 
-// Main program
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_DDistr_Combine w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
 
 // US_DDistr_Combine class constructor
-US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
+US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
 {
+   this->a_mode = auto_mode;
+   
    // set up the GUI
    setWindowTitle( tr( "Combined Discrete Distributions:" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -414,7 +403,11 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
          tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
          tr( "Signal Concentration" ) );
 
-   data_plot1->setMinimumSize( 560, 400 );
+   if ( a_mode.isEmpty() )
+     data_plot1->setMinimumSize( 560, 400 );
+   else
+     data_plot1->setMinimumSize( 400, 400 );
+   
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
 	data_plot1->setCanvasBackground( QBrush(Qt::white) );
@@ -429,7 +422,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
    legend->setFont( sfont );
-   data_plot1->insertLegend( legend, QwtPlot::BottomLegend  ); 
+
+   if ( a_mode.isEmpty() )
+     data_plot1->insertLegend( legend, QwtPlot::BottomLegend  ); 
 
    rightLayout->addLayout( plot );
 
@@ -461,6 +456,85 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
 }
 
+//Load auto | GMP report
+QList< QStringList > US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList aDescrs_passed  )
+{
+  QStringList runids;
+  QStringList modelDescModified;
+  QStringList modelDescModifiedGuid;
+  
+  runids. clear();
+  aDescrs.clear();
+
+  runids  = runids_passed;
+  aDescrs = aDescrs_passed;
+
+  qDebug() << "load_auto in ddist_comb: runids, aDescrs -- " << runids << "\n" << aDescrs;
+
+  //create distros structure
+  update_distros();
+
+  runID = runids[ 0 ];
+  //model names
+  QString grunID = "Global-" + runID;
+  for ( int ii = 0; ii < distros.size(); ii++ )  
+    {
+      DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
+
+      if ( distros[ ii ].runID == runID  ||
+           distros[ ii ].runID.startsWith( grunID ) )
+	{  // Only (possibly) add item with matching run ID
+	  QString mdesc = distros[ ii ].mdescr;
+	  QString ddesc = distros[ ii ].ddescr;
+	  QString mguid = distros[ ii ].mGUID;
+	  
+	  // if ( mfilter )
+	  //   {  // If method-filtering, skip any item whose method is not checked
+	  //     QString meth = mdesc.section( ".", -1, -1 ).section( "_", -3, -3 );
+	  //     DbgLv(1) << "RunIDSel:    meth" << meth;
+	  //     if ( ! methods.contains( meth ) )  continue;
+	  //   }
+	  
+	  DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
+	  //lw_models->addItem( distribID( mdesc, ddesc ) );
+	  modelDescModified     << distribID( mdesc, ddesc );
+	  modelDescModifiedGuid << mguid;
+
+	  //qDebug() << "load_auto: distribID() -- " << distribID( mdesc, ddesc );
+	}
+    }
+
+  // //go over modelDescModified
+  // for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+  //   {
+  //     //here maybe a fiter by type|model
+  //     if ( modelDescModified[ ii ].contains("2DSA-IT") ) 
+  // 	model_select_auto ( modelDescModified[ ii ] ); 
+  //   }
+
+  QList < QStringList > modelsList; 
+  modelsList << modelDescModified << modelDescModifiedGuid;
+  
+  //return modelDescModified;
+  return modelsList;
+}
+
+//return pointer to data_plot1
+QwtPlot* US_DDistr_Combine::rp_data_plot1()
+{
+  return data_plot1;
+}
+
+//reset data_plot1
+void US_DDistr_Combine::reset_data_plot1()
+{
+  xtype   = 0;
+  pdistrs .clear();
+  pdisIDs .clear(); 
+  
+  reset_plot();
+}
+
 // Load data
 void US_DDistr_Combine::load( void )
 {
@@ -475,6 +549,10 @@ void US_DDistr_Combine::load( void )
             this,    SLOT( update_disk_db( bool ) ) );
    srdiag.exec();
 
+
+   qDebug() << "load in ddist_comb: runids, aDescrs -- " << runids << "\n" << aDescrs; 
+
+     
    int nrunids = runids.count();
    int nsprojs = cmb_svproj->count();
    if ( nrunids < 1 )   return;
@@ -832,6 +910,84 @@ void US_DDistr_Combine::reset_plot( void )
 
 }
 
+// Plot all data: for GMP Report
+void US_DDistr_Combine::plot_data_auto( QMap < QString, QString> c_parms )
+{
+  
+DbgLv(1) << "pDa:  xtype" << xtype;
+   dataPlotClear( data_plot1 );
+	data_plot1->setCanvasBackground( QBrush(Qt::white) );
+   QString titleY = tr( "Signal Concentration" );
+DbgLv(1) << "pDa:  titleY" << titleY;
+   QString titleP;
+   QString titleX;
+
+   if      ( xtype == 0 )
+   {
+      titleP = tr( "Discrete s20,W Distributions" );
+      titleX = tr( "Sedimentation Coefficient x 1.e+13 (20,W)" );
+   }
+   else if ( xtype == 1 )
+   {
+      titleP = tr( "Discrete Molecular Weight Distributions" );
+      titleX = tr( "Molecular Weight (Dalton)" );
+   }
+   else if ( xtype == 2 )
+   {
+      titleP = tr( "Discrete D20,W Distributions" );
+      titleX = tr( "Diffusion Coefficient (20,W)" );
+   }
+   else if ( xtype == 3 )
+   {
+      titleP = tr( "Discrete Frictional Ratio Distributions" );
+      titleX = tr( "Frictional Ratio (f/f0)" );
+   }
+   else if ( xtype == 4 )
+   {
+      titleP = tr( "Discrete Vbar Distributions" );
+      titleX = tr( "Partial Specific Volume (vbar)" );
+   }
+   else if ( xtype == 5 )
+   {
+      titleP = tr( "Discrete Log of Molecular Weight Distributions" );
+      titleX = tr( "Molecular Weight (Log, Dalton)" );
+   }
+DbgLv(1) << "pDa:  titleP" << titleP;
+DbgLv(1) << "pDa:  titleX" << titleX;
+   data_plot1->setTitle    ( titleP );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, titleX );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   titleY );
+   double plxmin = 1e+30;
+   double plxmax = -1e+30;
+
+   QStringList legend_texts;
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+      setColor( pdistrs[ ii ], ii );
+      plot_distr_auto ( pdistrs[ ii ], pdisIDs[ ii ], c_parms );
+
+      legend_texts << pdisIDs[ ii ];
+   }
+
+   //qDebug() << "LEGEND TEXT -- " <<  legend_texts;
+   //data_plot1->legend()->setVisible( false ); // <-- TEMP!!!!!
+   
+   //    for ( int jj = 0; jj < pdistrs[ ii ].xvals.size(); jj++ )
+   //    {
+   //       plxmin        = qMin( plxmin, pdistrs[ ii ].xvals[ jj ] );
+   //       plxmax        = qMax( plxmax, pdistrs[ ii ].xvals[ jj ] );
+   //    }
+   // }
+   // le_plxmin->disconnect();
+   // le_plxmax->disconnect();
+   // le_plxmin->setText( QString::number( plxmin ) );
+   // le_plxmax->setText( QString::number( plxmax ) );
+   // connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+   //    this, SLOT(envvalChange( ) ) );
+   // connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+   //    this, SLOT(envvalChange( ) ) );
+}
+
 // Plot all data
 void US_DDistr_Combine::plot_data( void )
 {
@@ -920,6 +1076,8 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    {
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
+      QwtSymbol* symbol = new QwtSymbol();
+      data_curv->setSymbol(symbol);
 
       ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv );
 
@@ -968,6 +1126,166 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    data_plot1->replot();
 
 }
+
+// Add a single distribution to the plot: copy for GMP Report
+void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap< QString, QString > c_parms )
+{
+  //Retrive comboPlot parameters (for s20):
+  double sigma_p = 0.01;
+  double xmin_p  = 1;
+  double xmax_p  = 10;
+  QString ranges_p;
+  
+  qDebug() << "c_ranges, begin -- " <<  c_parms[ "Ranges" ];
+  
+  QMap<QString, QString >::iterator jj;
+  for ( jj = c_parms.begin(); jj != c_parms.end(); ++jj )
+    {
+      if ( jj.key().contains( "Gaussian" ) )
+	sigma_p = jj.value().toDouble();
+      else if ( jj.key().contains( "Minimum" )  )
+	xmin_p = jj.value().toDouble();
+      else if ( jj.key().contains( "Maximum" ) )
+	xmax_p = jj.value().toDouble();
+      else if ( jj.key().contains( "Ranges" ) )
+	ranges_p = jj.value();
+    }
+
+  qDebug() << "In plot_distr_auto(): sigma_p, xmin_p, xmax_p, ranges_p -- "
+	   << sigma_p << xmin_p << xmax_p << ranges_p;
+    
+  //////////////////////////////////////////
+  
+   int  ndispt = ddesc.xvals.size();
+   double* xx  = ddesc.xvals.data();
+   double* yy  = ddesc.yvals.data();
+   QVector< double > xenv;
+   QVector< double > yenv;
+   QString str;
+   double minx=1e99, maxx=-1e99;
+DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
+
+   QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
+
+   if ( sigma_p > 0.0 )
+   {
+      data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
+      data_curv->setStyle( QwtPlotCurve::Lines );
+
+      ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
+
+      xx        = xenv.data();
+      yy        = yenv.data();
+      for (int i=0; i<xenv.size(); i++)
+      {
+         minx = qMin(minx, xenv[i]);
+         maxx = qMax(maxx, xenv[i]);
+      }
+   }
+   else
+   {
+      data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
+      data_curv->setStyle( QwtPlotCurve::Sticks );
+      for (int i=0; i<ddesc.xvals.size(); i++)
+      {
+         minx = qMin(minx, ddesc.xvals[i]);
+         maxx = qMax(maxx, ddesc.xvals[i]);
+      }
+   }
+
+   data_curv->setSamples( xx, yy, ndispt );
+   data_curv->setItemAttribute( QwtPlotItem::Legend, true ); 
+
+   
+   
+   // if (le_plxmin->text().toDouble() < minx) 
+   // {
+   //    minx = le_plxmin->text().toDouble();
+   // }
+   // if (le_plxmax->text().toDouble() > maxx) 
+   // {
+   //    maxx = le_plxmax->text().toDouble();
+   // }
+   // le_plxmin->disconnect();
+   // le_plxmax->disconnect();
+   // le_plxmin->setText(str.setNum(minx));
+   // le_plxmax->setText(str.setNum(maxx));
+   // connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+   //    this, SLOT(envvalChange() ) );
+   // connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+   //    this, SLOT(envvalChange() ) );
+
+
+   data_plot1->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft );
+   data_plot1->enableAxis      ( QwtPlot::xBottom, true );
+   data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
+   data_plot1->setCanvasBackground( QBrush(Qt::white) );
+
+   //add ranges ///////////////////////////////////////////////////////////
+   //Also, include info on vertical lines (integration limits) -- passed also from c_parms[ "integration_limits" ]
+
+   if ( !ranges_p.isEmpty() )
+     {
+       QStringList c_ranges = ranges_p.split(",");
+       qDebug() << "c_ranges, c_ranges.size() --" << c_ranges << c_ranges.size();
+       for (int i=0; i<c_ranges.size(); ++i )
+	 {
+	   double point1 = c_ranges[ i ].split(":")[0].toDouble();
+	   double point2 = c_ranges[ i ].split(":")[1].toDouble();
+	   
+	   qDebug() << "Ranges: " << point1 << point2;
+	   
+	   QwtPlotCurve* v_line_peak1;
+	   double r1[ 2 ];
+	   r1[ 0 ] = point1;
+	   r1[ 1 ] = point1;
+	   
+	   QwtPlotCurve* v_line_peak2;
+	   double r2[ 2 ];
+	   r2[ 0 ] = point2;
+	   r2[ 1 ] = point2;
+	   
+#if QT_VERSION < 0x050000
+	   QwtScaleDiv* y_axis = data_plot1->axisScaleDiv( QwtPlot::yLeft );
+#else
+	   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot1->axisScaleDiv( QwtPlot::yLeft ));
+#endif
+	   
+	   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+	   
+	   double v[ 2 ];
+	   v [ 0 ] = y_axis->upperBound() - padding;
+	   v [ 1 ] = y_axis->lowerBound();// + padding;
+	   
+	   QString vline_name1 = "Low"  + QString::number( i );
+	   QString vline_name2 = "High" + QString::number( i );
+	   
+	   v_line_peak1 = us_curve( data_plot1, vline_name1 );
+	   v_line_peak1 ->setSamples( r1, v, 2 );
+	   
+	   v_line_peak2 = us_curve( data_plot1, vline_name2 );
+	   v_line_peak2 ->setSamples( r2, v, 2 );
+
+	   //set unique color for current range pair
+	   possibleColors();              // Make sure possible colors exist
+
+	   int ncolors     = colors.size();
+	   int color_index = i;
+	   
+	   while ( color_index >= ncolors )
+	     color_index -= ncolors;
+	   
+	   QPen pen = QPen( QBrush( colors[ color_index ] ), 2.0, Qt::DotLine );
+	   v_line_peak1->setPen( pen );
+	   v_line_peak2->setPen( pen );
+	 }
+     }
+   
+   data_plot1->replot();
+
+}
+
 
 // Save the plot data
 void US_DDistr_Combine::save( void )
@@ -1311,6 +1629,61 @@ DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
    {
       cmb_svproj->setCurrentIndex( cmb_svproj->findText( runID ) );
    }
+}
+
+// Model distribution selected -- FOR GMP reporter | 6. REPORT
+QMap< QStringList, QList< QColor> > US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, QString > c_parms )
+{
+   QString          distrID = modelNameMod;
+   int              mdx     = distro_by_descr( distrID );
+   DbgLv(1) << "ModelSel_auto: model" << distrID << "mdx" << mdx;
+   DistrDesc*       ddesc   = &distros[ mdx ];
+
+   QList< QColor >  pdistrs_colors;
+   QMap < QStringList, QList< QColor > > s_type_map; 
+      
+   if ( ! pdisIDs.contains( distrID ) )
+   {  // If this distro not yet filled out, do so now
+
+      fill_in_desc( distros[ mdx ], pdistrs.size() );
+
+      pdistrs << *ddesc;     // Add to list of plotted distros
+      pdisIDs << distrID;    // Add to list of IDs of plotted distros
+
+      //pdistrs_colors <<  (*ddesc).  color; 
+   }
+
+   if ( ddesc->model.components.size() == 0 )
+   {
+      QMessageBox::critical( this, tr( "Zero-Components Model" ),
+            tr( "*ERROR* The selected model has zero components.\n"
+                "This selection is ignored" ) );
+      //return pdisIDs;
+      return  s_type_map;
+   }
+
+ 
+   plot_data_auto( c_parms );
+
+   pb_saveda->setEnabled( true );
+   pb_resetd->setEnabled( true );
+   pb_resetp->setEnabled( true );
+
+   te_status->setText( tr( "Count of plotted distributions: %1." )
+         .arg( pdistrs.count() ) );
+
+   //
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+     pdistrs_colors << pdistrs[ ii ]. color; 
+   }
+
+   s_type_map [ pdisIDs ] = pdistrs_colors;
+   
+   return s_type_map;
+   //return pdisIDs;
+   //ALEXEY: also need to return color corresponsing to each plotted curve: (QColor) pdistrs[ ii ].color
+   //Possibly, return a structure {QstringList pdisIDS, QList<QColor>  pdistrs[ ii ].color }
 }
 
 // Model distribution selected
@@ -2046,6 +2419,74 @@ DbgLv(1) << "  PX=Molec.Wt.log";
    }
 }
 
+// React to a change in the X type of plots
+QMap< QStringList, QList< QColor> > US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_parms )
+{
+   xtype      = type;
+
+   QList< QColor >  pdistrs_colors;
+   QMap < QStringList, QList< QColor > > other_type_map; 
+   
+   int npdis    = pdistrs.size();
+   if ( npdis > 0 )
+   {  // Re-do plot distros to account for X-type change
+      QList< DistrDesc >  wdistros;
+      DistrDesc           ddist;
+      DistrDesc*          pddist;
+
+      for ( int ii = 0; ii < npdis; ii++ )
+      {  // Build rudimentary plot distros without value arrays
+         pddist       = &pdistrs[ ii ];
+         ddist.runID  = pddist->runID;
+         ddist.mGUID  = pddist->mGUID;
+         ddist.mdescr = pddist->mdescr;
+         ddist.iters  = pddist->iters;
+         ddist.xtype  = xtype;
+         ddist.model  = pddist->model;
+         ddist.ddescr = pddist->ddescr;
+
+         wdistros << ddist;
+      }
+
+      pdistrs.clear();
+      pdisIDs.clear();
+
+      for ( int ii = 0; ii < npdis; ii++ )
+      {
+         pddist       = &wdistros[ ii ];
+         fill_in_desc( *pddist, ii );
+
+         pdistrs << *pddist;
+         pdisIDs << distribID( pddist->mdescr, pddist->ddescr );
+      }
+
+      le_plxmin->disconnect();
+      le_plxmax->disconnect();
+      le_plxmin->setText( "0" );
+      le_plxmax->setText( "0" );
+      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
+      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
+
+      plot_data_auto( c_parms );
+   }
+
+   //
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+     pdistrs_colors << pdistrs[ ii ]. color; 
+   }
+
+   other_type_map [ pdisIDs ] = pdistrs_colors;
+   
+   return other_type_map;
+   
+   //return pdisIDs;
+   //ALEXEY: also need to return color corresponsing to each plotted curve: (QColor) pdistrs[ ii ].color
+   //Possibly, return a structure {QstringList pdisIDS, QList<QColor>  pdistrs[ ii ].color }
+}
+
 // Change the contents of the distributions list based on list type change
 void US_DDistr_Combine::ltypeChanged()
 {
@@ -2118,6 +2559,109 @@ DbgLv(1) << "ED:  rng_xval arrsize xinc" << rng_xval << arrsize << xinc;
    // Populate envelope Ys with gaussian sums
    double pisqr     = sqrt( M_PI * 2.0 );
    double sigma     = ct_sigma->value();
+   sigma            = qMax( 0.0001, sigma );
+   double xterm     = 1.0 / ( sigma * rng_xval );
+   double zterm     = 1.0 / ( sigma * pisqr );
+
+   for ( int kk = 0; kk < arrsize; kk++ )
+   {  // Loop to compute envelope grid Y values
+      double xval_env  = xe[ kk ];                 // Envelope X value
+      double yval_env  = 0.0;                      // Initial envelope Y value
+
+      for ( int jj = 0; jj < vCount; jj++ )
+      {  // Accumulate Gaussian Y's from each solute
+         double xval_sol  = xv[ jj ];              // Solute X value
+         double yval_sol  = yv[ jj ];              // Solute Y value
+
+         double xdiff     = sq( ( xval_sol - xval_env ) * xterm );
+         double yfac      = exp( -0.5 * xdiff ) * zterm;
+         yval_env        += ( yfac * yval_sol );   // Sum envelope Y value
+      }
+
+      ye[ kk ]         = yval_env;                 // Store envelope Y value
+      env_sum         += ye[ kk ];                 // Build envelope sum
+   }
+
+   double scale     = con_sum / env_sum;    // Normalizing scale factor
+DbgLv(1) << "ED: csum esum scale " << con_sum << env_sum << scale;
+
+env_sum=0.0;
+double yemx=-1e+30;
+double xemx=-1e+30;
+   for ( int kk = 0; kk < arrsize; kk++ )
+   {  // Normalize Y values so integral is equal to total concentration
+      ye[ kk ]        *= scale;
+if(ye[kk]>yemx) { yemx=ye[kk]; xemx=xe[kk]; }
+env_sum+=ye[kk];
+   }
+DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum
+ << "xemx yemx" << xemx << yemx
+ << "sigma  vcount" << sigma << vCount;
+
+   return arrsize;                          // Return size of arrays
+}
+
+// Generate envelope data: copy for GMP Report
+int US_DDistr_Combine::envel_data_auto( 
+				       QVector< double >& xvals, QVector< double >& yvals,
+				       QVector< double >& xenvs, QVector< double >& yenvs,
+				       double sigma_passed, double xmin_passed, double xmax_passed )
+{
+   int     arrsize  = 300;
+   int     vCount   = xvals.size();
+   double  min_xval = 1.0e+50;
+   double  max_xval = -min_xval;
+   double  con_sum  = 0.0;
+   double  env_sum  = 0.0;
+   double* xv       = xvals.data();
+   double* yv       = yvals.data();
+
+   for ( int jj = 0; jj < vCount; jj++ )
+   {  // Get min,max of x values (e.g., sedimentation coefficients)
+      max_xval         = qMax( max_xval, xv[ jj ] );
+      min_xval         = qMin( min_xval, xv[ jj ] );
+      con_sum         += yv[ jj ];        // Accumulate total concentration
+   }
+
+   // Calculate values based on range
+   bool min_neg     = ( min_xval < 0.0 );
+   double rng_xval  = max_xval - min_xval;
+   double xval_pad  = rng_xval * 0.1;
+   min_xval         = min_xval - xval_pad;
+   min_xval         = min_neg ? min_xval : qMax( 0.0, min_xval );
+   //max_xval         = min_xval + rng_xval;
+   max_xval         = max_xval + xval_pad;
+   double minx      = le_plxmin->text().toDouble();
+   double maxx      = le_plxmax->text().toDouble();
+   min_xval         = ( minx != 0.0 ) ? minx : min_xval;
+   max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
+   rng_xval         = max_xval - min_xval;
+
+   //Use passed xmin/xmax values:           //ALEXEY <----------- here, use pre-defined parms!!!
+   min_xval = xmin_passed;
+   max_xval = xmax_passed;
+   rng_xval = max_xval - min_xval;
+
+   // Initialize envelope arrays
+   xenvs.fill( 0.0, arrsize );
+   yenvs.fill( 0.0, arrsize );
+   double* xe       = xenvs.data();
+   double* ye       = yenvs.data();
+   double  xinc     = rng_xval / (double)( arrsize - 1 );
+DbgLv(1) << "ED:  rng_xval arrsize xinc" << rng_xval << arrsize << xinc;
+
+   for ( int jj = 0; jj < arrsize; jj++ )
+   {  // Initialize envelope values
+      xe[ jj ]         = min_xval + xinc * (double)( jj );
+      ye[ jj ]         = 0.0;
+   }
+
+   // Populate envelope Ys with gaussian sums
+   double pisqr     = sqrt( M_PI * 2.0 );
+
+   //double sigma     = ct_sigma->value();
+   double sigma     = sigma_passed;           //ALEXEY <----------- here, use pre-defined parms!!!
+   
    sigma            = qMax( 0.0001, sigma );
    double xterm     = 1.0 / ( sigma * rng_xval );
    double zterm     = 1.0 / ( sigma * pisqr );

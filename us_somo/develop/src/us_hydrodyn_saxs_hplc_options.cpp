@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_hydrodyn_saxs_hplc_dctr.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_hydrodyn_saxs_hplc_parameters.h"
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -21,7 +22,7 @@ US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Options" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Options" ) );
 
    setupGUI();
 
@@ -39,9 +40,9 @@ US_Hydrodyn_Saxs_Hplc_Options::~US_Hydrodyn_Saxs_Hplc_Options()
 
 void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 {
-   int minHeight1  = 30;
+   int minHeight1  = 28;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : Options" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: HPLC/KIN : Options" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_LABEL );
@@ -285,7 +286,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 #endif
 
    pb_clear_gauss =  new QPushButton ( us_tr( "Clear cached Gaussian values" ), this );
-   pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1) );
    pb_clear_gauss -> setMinimumHeight( minHeight1 );
    pb_clear_gauss -> setPalette      ( PALET_PUSHB );
    connect( pb_clear_gauss, SIGNAL( clicked() ), SLOT( clear_gauss() ) );
@@ -301,6 +302,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    pb_detector->setMinimumHeight(minHeight1);
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
+
+   pb_saxs_hplc_parameters = new QPushButton(us_tr("SAXS Processing Parameters"), this);
+   pb_saxs_hplc_parameters->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_saxs_hplc_parameters->setMinimumHeight(minHeight1);
+   pb_saxs_hplc_parameters->setPalette( PALET_PUSHB );
+   connect(pb_saxs_hplc_parameters, SIGNAL(clicked()), SLOT(set_saxs_hplc_parameters()));
 
    pb_fasta_file = new QPushButton(us_tr("Load FASTA sequence from file"), this);
    pb_fasta_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -409,6 +416,46 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    }
    connect( le_guinier_qrgmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_guinier_qrgmax->setMinimumWidth( 60 );
+
+   cb_gg_smooth = new QCheckBox(this);
+   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Maximum smoothing points: "));
+   cb_gg_smooth->setEnabled( true );
+   cb_gg_smooth->setChecked( (*parameters)[ "hplc_cb_gg_smooth" ] == "true" );
+   cb_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_smooth->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_smooth );
+   connect( cb_gg_smooth, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   le_gg_smooth = new QLineEdit( this );    le_gg_smooth->setObjectName( "le_gg_smooth Line Edit" );
+   le_gg_smooth->setText( (*parameters)[ "hplc_gg_smooth" ] );
+   le_gg_smooth->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_gg_smooth->setPalette( PALET_NORMAL );
+   AUTFBACK( le_gg_smooth );
+   le_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qiv = new QIntValidator( 1, 50, le_gg_smooth );
+      le_gg_smooth->setValidator( qiv );
+   }
+   connect( le_gg_smooth, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_gg_smooth->setMinimumWidth( 60 );
+
+   cb_gg_cyclic = new QCheckBox(this);
+   cb_gg_cyclic->setText(us_tr( "Experimental: Global Gaussian Gaussian cyclic fit"));
+   cb_gg_cyclic->setEnabled( true );
+   cb_gg_cyclic->setChecked( (*parameters)[ "hplc_cb_gg_cyclic" ] == "true" );
+   cb_gg_cyclic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_cyclic->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_cyclic );
+   connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_gg_oldstyle = new QCheckBox(this);
+   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable legacy Gaussian fit display"));
+   cb_gg_oldstyle->setEnabled( true );
+   cb_gg_oldstyle->setChecked( (*parameters)[ "hplc_cb_gg_oldstyle" ] == "true" );
+   cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_gg_oldstyle->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gg_oldstyle );
+   connect( cb_gg_oldstyle, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    lbl_mwt_k = new QLabel(us_tr(" MW[RT] k : "), this);
    lbl_mwt_k -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -653,35 +700,71 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( cb_save_bl );
 
    background->addWidget( lbl_gaussian_type );
-   background->addWidget( rb_gauss );
-   background->addWidget( rb_gmg );
-   background->addWidget( rb_emg );
-   background->addWidget( rb_emggmg );
+
+   {
+      QHBoxLayout * hbl = new QHBoxLayout( 0 );
+      hbl->setContentsMargins( 0, 0, 0, 0 );
+      hbl->setSpacing( 0 );
+      
+      hbl->addWidget( rb_gauss );
+      hbl->addWidget( rb_gmg );
+      hbl->addWidget( rb_emg );
+      hbl->addWidget( rb_emggmg );
+
+      background->addLayout( hbl );
+   }
+
    {
       QGridLayout * gl_other = new QGridLayout( 0 ); gl_other->setContentsMargins( 0, 0, 0, 0 ); gl_other->setSpacing( 0 );
-      gl_other->addWidget         ( lbl_dist_max , 0, 0 );
-      gl_other->addWidget         ( le_dist_max  , 0, 1 );
+      int row = 0;
+      gl_other->addWidget         ( cb_gg_smooth , row, 0 );
+      gl_other->addWidget         ( le_gg_smooth , row, 1 );
+      ++row;
 
-      gl_other->addWidget         ( lbl_ampl_width_min , 1, 0 );
-      gl_other->addWidget         ( le_ampl_width_min  , 1, 1 );
+      gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
+      ++row;
 
-      gl_other->addWidget         ( cb_lock_min_retry       , 2, 0 );
-      gl_other->addWidget         ( le_lock_min_retry_mult  , 2, 1 );
+      gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
+      ++row;
 
-      gl_other->addWidget         ( cb_maxfpk_restart       , 3, 0 );
+      gl_other->addWidget         ( lbl_dist_max , row, 0 );
+      gl_other->addWidget         ( le_dist_max  , row, 1 );
+      ++row;
+
+      gl_other->addWidget         ( lbl_ampl_width_min , row, 0 );
+      gl_other->addWidget         ( le_ampl_width_min  , row, 1 );
+      ++row;
+
+      gl_other->addWidget         ( cb_lock_min_retry       , row, 0 );
+      gl_other->addWidget         ( le_lock_min_retry_mult  , row, 1 );
+      ++row;
+
+      gl_other->addWidget         ( cb_maxfpk_restart       , row, 0 );
       {
          QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          // hbl->addWidget     ( le_maxfpk_restart_tries );
          hbl->addWidget     ( le_maxfpk_restart_pct );
-         gl_other->addLayout( hbl , 3, 1 );
+         gl_other->addLayout( hbl , row, 1 );
       }
+
       background->addLayout( gl_other );
    }
 
    background->addWidget( pb_clear_gauss );
 
    background->addWidget( lbl_other_options );
-   background->addWidget( pb_detector );
+
+   {
+      QHBoxLayout * hbl = new QHBoxLayout( 0 );
+      hbl->setContentsMargins( 0, 0, 0, 0 );
+      hbl->setSpacing( 0 );
+      
+      hbl->addWidget( pb_detector );
+      hbl->addWidget( pb_saxs_hplc_parameters );
+      
+      background->addLayout( hbl );
+   }
+
    {
       QBoxLayout * bl_fasta = new QHBoxLayout( 0 );
       bl_fasta->setContentsMargins( 0, 0, 0, 0 );
@@ -701,29 +784,38 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    {
       QGridLayout * gl_other = new QGridLayout( 0 ); gl_other->setContentsMargins( 0, 0, 0, 0 ); gl_other->setSpacing( 0 );
 
-      gl_other->addWidget         ( lbl_zi_window , 0, 0 );
-      gl_other->addWidget         ( le_zi_window  , 0, 1 );
+      int row = 0;
 
-      gl_other->addWidget         ( cb_discard_it_sd_mult , 1, 0 );
-      gl_other->addWidget         ( le_discard_it_sd_mult , 1, 1 );
+      gl_other->addWidget         ( lbl_zi_window , row, 0 );
+      gl_other->addWidget         ( le_zi_window  , row, 1 );
 
-      gl_other->addWidget         ( cb_guinier_qrgmax , 2, 0 );
-      gl_other->addWidget         ( le_guinier_qrgmax , 2, 1 );
+      gl_other->addWidget         ( cb_discard_it_sd_mult , ++row, 0 );
+      gl_other->addWidget         ( le_discard_it_sd_mult , row, 1 );
 
-      gl_other->addWidget         ( lbl_mwt_k , 3, 0 );
-      gl_other->addWidget         ( le_mwt_k  , 3, 1 );
+      gl_other->addWidget         ( cb_makeiq_cutmax_pct , ++row, 0 );
+      gl_other->addWidget         ( le_makeiq_cutmax_pct , row, 1 );
 
-      gl_other->addWidget         ( lbl_mwt_c , 4, 0 );
-      gl_other->addWidget         ( le_mwt_c  , 4, 1 );
+      gl_other->addWidget         ( cb_guinier_qrgmax , ++row, 0 );
+      gl_other->addWidget         ( le_guinier_qrgmax , row, 1 );
 
-      gl_other->addWidget         ( lbl_mwt_qmax , 5, 0 );
-      gl_other->addWidget         ( le_mwt_qmax  , 5, 1 );
+      // gl_other->addWidget         ( cb_gg_smooth , ++row, 0 );
+      // gl_other->addWidget         ( le_gg_smooth , row, 1 );
 
-      gl_other->addWidget         ( cb_makeiq_cutmax_pct , 6, 0 );
-      gl_other->addWidget         ( le_makeiq_cutmax_pct , 6, 1 );
+      // ++row;  gl_other->addWidget ( cb_gg_cyclic , row, 0, 1, 2 );
 
-      gl_other->addWidget         ( cb_makeiq_avg_peaks , 7, 0 );
-      gl_other->addWidget         ( le_makeiq_avg_peaks , 7, 1 );
+      // ++row;  gl_other->addWidget ( cb_gg_oldstyle , row, 0, 1, 2 );
+
+      gl_other->addWidget         ( lbl_mwt_k , ++row, 0 );
+      gl_other->addWidget         ( le_mwt_k  , row, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_c , ++row, 0 );
+      gl_other->addWidget         ( le_mwt_c  , row, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_qmax , ++row, 0 );
+      gl_other->addWidget         ( le_mwt_qmax  , row, 1 );
+
+      gl_other->addWidget         ( cb_makeiq_avg_peaks , ++row, 0 );
+      gl_other->addWidget         ( le_makeiq_avg_peaks , row, 1 );
 
       background->addLayout( gl_other );
    }
@@ -759,21 +851,21 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    if ( !parameters->count( "expert_mode" ) )
    {
-      // lbl_baseline     ->hide();
-      // rb_linear        ->hide();
-      // rb_integral      ->hide();
-      // lbl_smooth       ->hide();
-      // le_smooth        ->hide();
-      // lbl_reps         ->hide();
-      // le_reps          ->hide();
-      // lbl_epsilon      ->hide();
-      // le_epsilon       ->hide();
+      // lbl_baseline           ->hide();
+      // rb_linear              ->hide();
+      // rb_integral            ->hide();
+      // lbl_smooth             ->hide();
+      // le_smooth              ->hide();
+      // lbl_reps               ->hide();
+      // le_reps                ->hide();
+      // lbl_epsilon            ->hide();
+      // le_epsilon             ->hide();
 
-      // lbl_gaussian_type->hide();
-      // rb_gauss         ->hide();
-      // rb_gmg           ->hide();
-      // rb_emg           ->hide();
-      // rb_emggmg        ->hide();
+      // lbl_gaussian_type      ->hide();
+      // rb_gauss               ->hide();
+      // rb_gmg                 ->hide();
+      // rb_emg                 ->hide();
+      // rb_emggmg              ->hide();
 
       lbl_ampl_width_min        ->hide();
       le_ampl_width_min         ->hide();
@@ -783,18 +875,75 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       // le_maxfpk_restart_tries   ->hide();
       le_maxfpk_restart_pct     ->hide();
 
-      lbl_i_power         ->hide();
-      le_i_power          ->hide();
+      lbl_i_power               ->hide();
+      le_i_power                ->hide();
+
+      pb_fasta_file             ->hide();
+      lbl_fasta_value           ->hide();
+      le_fasta_value            ->hide();
    }
 
-   cb_save_bl       ->hide();
-   lbl_start_region ->hide();
-   le_start_region  ->hide();
+   lbl_fasta_pH              ->hide();
+   le_fasta_pH               ->hide();
+   cb_save_bl                ->hide();
+   lbl_start_region          ->hide();
+   le_start_region           ->hide();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Options::quit()
 {
    close();
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Options::any_changes()
+{
+   QString gaussian_type = "";
+   if ( rb_gauss->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Saxs_Hplc::GAUSS );
+   } else if ( rb_gmg->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Saxs_Hplc::GMG );
+   } else if ( rb_emg->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Saxs_Hplc::EMG );
+   } else if ( rb_emggmg->isChecked() ) {
+      gaussian_type = QString( "%1" ).arg( US_Hydrodyn_Saxs_Hplc::EMGGMG );
+   }
+
+   return
+      (*parameters)[ "hplc_bl_linear"               ] != ( rb_linear              ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_bl_integral"             ] != ( rb_integral            ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_bl_save"                 ] != ( cb_save_bl             ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_bl_smooth"               ] != ( le_smooth              ->text() )
+      || (*parameters)[ "hplc_bl_start_region"         ] != ( le_start_region        ->text() )
+      || (*parameters)[ "hplc_bl_i_power"              ] != ( le_i_power             ->text() )
+      || (*parameters)[ "hplc_bl_reps"                 ] != ( le_reps                ->text() )
+      || (*parameters)[ "hplc_bl_epsilon"              ] != ( le_epsilon             ->text() )
+      || (*parameters)[ "hplc_cormap_maxq"             ] != ( le_cormap_maxq         ->text() )
+      || (*parameters)[ "hplc_cormap_alpha"            ] != ( le_cormap_alpha        ->text() )
+      || (*parameters)[ "hplc_zi_window"               ] != ( le_zi_window           ->text() )
+      || (*parameters)[ "hplc_cb_discard_it_sd_mult"   ] != ( cb_discard_it_sd_mult  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_discard_it_sd_mult"      ] != ( le_discard_it_sd_mult  ->text() )
+      || (*parameters)[ "hplc_cb_guinier_qrgmax"       ] != ( cb_guinier_qrgmax      ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_guinier_qrgmax"          ] != ( le_guinier_qrgmax      ->text() )
+      || (*parameters)[ "hplc_cb_gg_smooth"            ] != ( cb_gg_smooth  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_gg_smooth"               ] != ( le_gg_smooth  ->text() )
+      || (*parameters)[ "hplc_cb_gg_cyclic"            ] != ( cb_gg_cyclic  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_cb_gg_oldstyle"          ] != ( cb_gg_oldstyle  ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_dist_max"                ] != ( le_dist_max            ->text() )
+      || (*parameters)[ "guinier_mwt_k"                ] != ( le_mwt_k               ->text() )
+      || (*parameters)[ "guinier_mwt_c"                ] != ( le_mwt_c               ->text() )
+      || (*parameters)[ "guinier_mwt_qmax"             ] != ( le_mwt_qmax            ->text() )
+      || (*parameters)[ "hplc_cb_makeiq_cutmax_pct"    ] != ( cb_makeiq_cutmax_pct   ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_makeiq_cutmax_pct"       ] != ( le_makeiq_cutmax_pct   ->text() )
+      || (*parameters)[ "hplc_cb_makeiq_avg_peaks"     ] != ( cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_makeiq_avg_peaks"        ] != ( le_makeiq_avg_peaks    ->text() )
+      || (*parameters)[ "hplc_csv_transposed"          ] != ( cb_csv_transposed->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_ampl_width_min"          ] != ( le_ampl_width_min      ->text() )
+      || (*parameters)[ "hplc_lock_min_retry"          ] != ( cb_lock_min_retry->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_lock_min_retry_mult"     ] != ( le_lock_min_retry_mult ->text() )
+      || (*parameters)[ "hplc_maxfpk_restart"          ] != ( cb_maxfpk_restart->isChecked() ? "true" : "false" )
+      || (*parameters)[ "hplc_maxfpk_restart_pct"      ] != ( le_maxfpk_restart_pct  ->text() )
+      || (*parameters)[ "gaussian_type"                ] != ( gaussian_type )
+      ;
 }
 
 void US_Hydrodyn_Saxs_Hplc_Options::ok()
@@ -816,6 +965,10 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
    (*parameters)[ "hplc_cb_guinier_qrgmax"       ] = cb_guinier_qrgmax      ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_guinier_qrgmax"          ] = le_guinier_qrgmax      ->text();
+   (*parameters)[ "hplc_cb_gg_smooth"            ] = cb_gg_smooth  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_gg_smooth"               ] = le_gg_smooth  ->text();
+   (*parameters)[ "hplc_cb_gg_cyclic"            ] = cb_gg_cyclic  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_cb_gg_oldstyle"          ] = cb_gg_oldstyle  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_dist_max"                ] = le_dist_max            ->text();
    (*parameters)[ "guinier_mwt_k"                ] = le_mwt_k               ->text();
    (*parameters)[ "guinier_mwt_c"                ] = le_mwt_c               ->text();
@@ -865,6 +1018,24 @@ void US_Hydrodyn_Saxs_Hplc_Options::help()
 
 void US_Hydrodyn_Saxs_Hplc_Options::closeEvent( QCloseEvent *e )
 {
+   if ( any_changes() ) {
+      QMessageBox mb( this->windowTitle(), 
+                      us_tr("Attention:\nAre you sure you wish to discard your changes?"),
+                      QMessageBox::Information,
+                      QMessageBox::Yes | QMessageBox::Default,
+                      QMessageBox::Cancel | QMessageBox::Escape,
+                      QMessageBox::NoButton);
+      mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
+      switch(mb.exec())
+      {
+      case QMessageBox::Cancel:
+         {
+            e->ignore();
+            return;
+         }
+      }
+   }
 
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -881,6 +1052,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    le_epsilon              ->setEnabled( rb_integral->isChecked() );
    le_discard_it_sd_mult   ->setEnabled( cb_discard_it_sd_mult->isChecked() );
    le_guinier_qrgmax       ->setEnabled( cb_guinier_qrgmax->isChecked() );
+   le_gg_smooth            ->setEnabled( cb_gg_smooth->isChecked() );
    le_makeiq_cutmax_pct    ->setEnabled( cb_makeiq_cutmax_pct->isChecked() );
    le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
    if ( cb_makeiq_cutmax_pct->isEnabled() &&
@@ -940,6 +1112,59 @@ void US_Hydrodyn_Saxs_Hplc_Options::set_detector()
       ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri      = ( parameters.count( "ri" ) && parameters[ "ri" ] == "true" ) ? true : false;
       ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri_conv = parameters[ "ri_conv" ].toDouble();
       ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_uv_conv = parameters[ "uv_conv" ].toDouble();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Options::set_saxs_hplc_parameters()
+{
+   map < QString, QString > parameters;
+
+   parameters[ "saxs_hplc_param_frame_interval"           ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_frame_interval, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_g_conc"                   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_g_psv"                    ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_I0_exp"                   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_I0_theo"                  ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_diffusion_len"            ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_diffusion_len, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_electron_nucleon_ratio"   ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_electron_nucleon_ratio, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_nucleon_mass"             ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_nucleon_mass, 0, 'g', 8 );
+   parameters[ "saxs_hplc_param_solvent_electron_density" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density, 0, 'g', 8 );
+
+
+   US_Hydrodyn_Saxs_Hplc_Parameters *saxs_hplc_parameters = 
+      new US_Hydrodyn_Saxs_Hplc_Parameters(
+                                           this,
+                                           & parameters,
+                                           this );
+   US_Hydrodyn::fixWinButtons( saxs_hplc_parameters );
+   saxs_hplc_parameters->exec();
+   delete saxs_hplc_parameters;
+
+   if ( !parameters.count( "keep" ) )
+   {
+      update_enables();
+      return;
+   }
+
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc                   = parameters[ "saxs_hplc_param_g_conc"                   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_frame_interval           = parameters[ "saxs_hplc_param_frame_interval"           ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv                    = parameters[ "saxs_hplc_param_g_psv"                    ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp                   = parameters[ "saxs_hplc_param_I0_exp"                   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo                  = parameters[ "saxs_hplc_param_I0_theo"                  ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_diffusion_len            = parameters[ "saxs_hplc_param_diffusion_len"            ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_electron_nucleon_ratio   = parameters[ "saxs_hplc_param_electron_nucleon_ratio"   ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_nucleon_mass             = parameters[ "saxs_hplc_param_nucleon_mass"             ].toDouble();
+   ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density = parameters[ "saxs_hplc_param_solvent_electron_density" ].toDouble();
+
+   if ( parameters.count( "save" ) ) {
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_g_conc" ]         = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_conc );
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "saxs_hplc_param_frame_interval" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_frame_interval );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv                            = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_g_psv;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp                         = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_exp;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_theo                        = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_I0_theo;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.diffusion_len                  = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_diffusion_len;
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_electron_nucleon_ratio" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_electron_nucleon_ratio );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.nucleon_mass                   = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_nucleon_mass;
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density                = ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->saxs_hplc_param_solvent_electron_density;
    }
 }
 

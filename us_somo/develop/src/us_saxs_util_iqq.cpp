@@ -545,7 +545,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -970,6 +970,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
       if ( option == "tgzoutput" )
       {
 #if defined( USE_MPI )
+         if ( us_udp_msg ) {
+            us_udp_msg->send_json( { { "_progressmsg", "Assembling output" } } );
+         }
          if ( !nsa_mpi || !myrank )
          {
 #endif
@@ -989,6 +992,15 @@ bool US_Saxs_Util::read_control( QString controlfile )
 #if defined( USE_MPI )
          }
 #endif
+      }
+
+      if ( option == "dmdsupportfile" ) {
+         QString filename = control_parameters[ option ];
+         // static QRegExp rx_mol2 = QRegExp( "([^/ .]+)\\.mol2$" );
+         // if ( rx_mol2.indexIn( filename, 0 ) != -1 ) {
+         //    QString mol2 = rx_mol2.cap(1);
+         //    dmd_mol2.insert( mol2 );
+         // }
       }
 
       if ( option == "dmdstrippdb" )
@@ -1464,11 +1476,11 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
             QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          }
 
          if ( tokens.size() > 1 )
@@ -2236,7 +2248,7 @@ bool US_Saxs_Util::write_timings( QString file, QString msg )
    if ( f.open( QIODevice::WriteOnly ) )
    {
       QTextStream ts( &f );
-      ts << msg << endl;
+      ts << msg << Qt::endl;
       ts << timings;
       f.close();
       timings = "";

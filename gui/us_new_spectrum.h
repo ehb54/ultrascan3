@@ -1,4 +1,4 @@
-//! \file us_solution_gui.h
+//! \file us_new_spectrum.h
 #ifndef US_NEW_SPECTRUM_H
 #define US_NEW_SPECTRUM_H
 
@@ -14,69 +14,106 @@
 #include "us_extinction_gui.h"
 #include "us_extinctfitter_gui.h"
 
-
+//! \class US_NewSpectrum
+//! \brief Class to handle the creation of new spectrum data.
 class US_GUI_EXTERN US_NewSpectrum : public US_Widgets
 {
    Q_OBJECT
 
-   public:
-   
-   US_NewSpectrum(QString type, const QString &text, const QString &text_e280, US_Buffer*);
-   US_NewSpectrum(QString type, const QString &text, const QString &text_e280, US_Analyte*);
-   US_NewSpectrum(QString type, const QString &text, const QString &text_e280, US_Solution*);
+    public:
+        //! \brief Constructor for US_NewSpectrum with buffer.
+        //! \param type Type of spectrum.
+        //! \param text Description text.
+        //! \param text_e280 E280 text.
+        //! \param buffer Pointer to US_Buffer object.
+        US_NewSpectrum(QString type, const QString &text, const QString &text_e280, US_Buffer* buffer);
 
-      US_Buffer*   buffer;
-      US_Buffer*   tmp_buffer;
+        //! \brief Constructor for US_NewSpectrum with analyte.
+        //! \param type Type of spectrum.
+        //! \param text Description text.
+        //! \param text_e280 E280 text.
+        //! \param analyte Pointer to US_Analyte object.
+        US_NewSpectrum(QString type, const QString &text, const QString &text_e280, US_Analyte* analyte);
 
-      US_Analyte*   analyte;
-      US_Analyte*   tmp_analyte; 
-      
-      US_Solution*   solution;
-      US_Solution*   tmp_solution;
+        //! \brief Constructor for US_NewSpectrum with solution.
+        //! \param type Type of spectrum.
+        //! \param text Description text.
+        //! \param text_e280 E280 text.
+        //! \param solution Pointer to US_Solution object.
+        US_NewSpectrum(QString type, const QString &text, const QString &text_e280, US_Solution* solution);
 
-      US_Extinction*  w_spec;
-      QString        text, tmp_text;
-      QString        type, tmp_type;
-      QString        text_e280, tmp_text_e280;
+        US_Buffer*   buffer;          //!< Pointer to US_Buffer object.
+        US_Buffer*   tmp_buffer;      //!< Temporary buffer pointer.
 
-   signals:
-      void change_prot_e280( void );
+        US_Analyte*   analyte;        //!< Pointer to US_Analyte object.
+        US_Analyte*   tmp_analyte;    //!< Temporary analyte pointer.
 
-   private:
-      QPushButton*  pb_cancel;
-      QPushButton*  pb_manual;
-      QPushButton*  pb_uploadDisk;
-      QPushButton*  pb_uploadFit;
-      
-      QMap< double, double > loc_extinct;
-      
-   private slots:    
-      void cancel ( void );
-      void uploadDisk ( void );
-      void uploadFit  ( void );
-      void process_results( QMap < double, double > &xyz );
-      void add_spectrumDisk   ( void );
-      void readingspectra     (const QString&);
-      void entermanually      ( void );
+        US_Solution*   solution;      //!< Pointer to US_Solution object.
+        US_Solution*   tmp_solution;  //!< Temporary solution pointer.
+
+        US_Extinction*  w_spec;       //!< Pointer to US_Extinction object.
+        QString        text, tmp_text; //!< Description text and temporary text.
+        QString        type, tmp_type; //!< Type and temporary type.
+        QString        text_e280, tmp_text_e280; //!< E280 text and temporary E280 text.
+
+    signals:
+        //! \brief Signal emitted when the protein E280 value changes.
+        void change_prot_e280( void );
+
+    private:
+        QPushButton*  pb_cancel;        //!< Cancel button.
+        QPushButton*  pb_manual;        //!< Manual entry button.
+        QPushButton*  pb_uploadDisk;    //!< Upload from disk button.
+        QPushButton*  pb_uploadFit;     //!< Upload fit button.
+
+        QMap< double, double > loc_extinct; //!< Local extinction map.
+
+    private slots:
+        //! \brief Slot to handle cancel action.
+        void cancel ( void );
+
+        //! \brief Slot to handle upload from disk action.
+        void uploadDisk ( void );
+
+        //! \brief Slot to handle upload fit action.
+        void uploadFit  ( void );
+
+        //! \brief Slot to process results.
+        //! \param xyz Reference to QMap containing the results.
+        void process_results( QMap < double, double > &xyz );
+
+        //! \brief Slot to add spectrum from disk.
+        void add_spectrumDisk   ( void );
+
+        //! \brief Slot to read spectra.
+        //! \param filename Name of the file containing the spectra.
+        void readingspectra     (const QString& filename);
+
+        //! \brief Slot to enter data manually.
+        void entermanually      ( void );
 };
 
-// class to view spectrum
+//! \class US_ViewSpectrum
+//! \brief Class to view spectrum data.
 class US_ViewSpectrum : public US_Widgets
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-
+    public:
+        //! \brief Constructor for US_ViewSpectrum.
+        //! \param tmp_extinction Reference to QMap containing extinction data.
         US_ViewSpectrum(QMap<double,double>& tmp_extinciton);
-	
-	QMap <double, double> extinction;
-	US_Plot*	plotLayout;
-	QwtPlot	 	*data_plot;
-	
-	void plot_extinction();
-	
-   private:
-	
+
+        QMap <double, double> extinction; //!< Extinction data map.
+        US_Plot* plotLayout; //!< Layout for the plot.
+        QwtPlot* data_plot; //!< Pointer to the QwtPlot object.
+
+        //! \brief Function to plot the extinction data.
+        void plot_extinction();
+
+    private slots:
+        //! \brief Slot to save data to a CSV file.
+        void save_csv();
 };
 
 #endif

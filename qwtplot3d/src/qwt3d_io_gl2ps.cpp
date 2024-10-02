@@ -293,7 +293,7 @@ GLint Qwt3D::drawDevicePixels(GLsizei width, GLsizei height,
   if(format != GL_RGBA || type != GL_UNSIGNED_BYTE)
 		return GL2PS_ERROR;
 	
-	GLfloat* convertedpixel = (GLfloat*)malloc(3 * width * height * sizeof(GLfloat));
+	GLfloat* convertedpixel = (GLfloat*)malloc(3 * (long int) width * height * sizeof(GLfloat));
 	if (!convertedpixel)
 		return GL2PS_ERROR;
 	

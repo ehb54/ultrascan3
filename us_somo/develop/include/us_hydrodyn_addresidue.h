@@ -1,11 +1,6 @@
 #ifndef US_HYDRODYN_ADDRESIDUE_H
 #define US_HYDRODYN_ADDRESIDUE_H
 
-#include "us_hydrodyn_pdbdefs.h"
-#include "us.h"
-#include "us_extern.h"
-#include "us_util.h"
-
 #include <qgroupbox.h>
 #include <qradiobutton.h>
 #include <qwidget.h>
@@ -24,6 +19,12 @@
 //Added by qt3to4:
 #include <QCloseEvent>
 #include <math.h>
+
+#include "us.h"
+#include "us_hydrodyn_pdbdefs.h"
+#include "us_extern.h"
+#include "us_util.h"
+
 
 class US_AddResidue : public QWidget
 {
@@ -149,6 +150,10 @@ class US_AddResidue : public QWidget
       QString atom_filename, residue_filename;
       bool update_pKas( int atomno );
       void info_residue( const QString & msg );
+      void update_bead_hydrated_info();
+      void clear_bead_hydrated_info();
+
+      bool enable_assign_hydration;
 
    private slots:
       void add();
@@ -158,6 +163,7 @@ class US_AddResidue : public QWidget
       void select_residue_file();
       void read_residue_file(const QString &);
       void select_residue(int);
+      void residue_selection_changed();
       void select_r_atom(int);
       void select_r_bead(int);
       void select_bead_color(int);

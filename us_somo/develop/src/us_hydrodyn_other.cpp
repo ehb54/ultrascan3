@@ -117,6 +117,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
          closeAttnt(rasmol, "RASMOL");
       }
    }
+   clear_temp_dirs();
    e->accept();
    qApp->quit();
 }
@@ -587,7 +588,7 @@ void US_Hydrodyn::play_sounds(int type)
             {
 #if defined(USE_MPLAYER)
 	      QString cmd = QString("mplayer %1&").arg(sf).toLatin1().data();
-	      QTextStream( stdout ) << cmd << endl;
+	      QTextStream( stdout ) << cmd << Qt::endl;
 	      if ( system( qPrintable( cmd ) ) ) {};
 #else
 	      QSound::play(sf);
@@ -595,7 +596,7 @@ void US_Hydrodyn::play_sounds(int type)
             }
             else
             {
-               QTextStream( stdout ) << "Can't locate sound file " << sf << endl;
+               QTextStream( stdout ) << "Can't locate sound file " << sf << Qt::endl;
             }
          }
          break;
@@ -755,6 +756,55 @@ bool US_Hydrodyn::install_new_version()
 
    msg += us_tr("\nDo you wish to proceed?");
 
+   if ( init_configs_silently ) {
+      qDebug() << "init_configs_silently\n";
+      QDir qd;
+      US_File_Util ufu;
+      for ( unsigned int i = 0; i < names.size(); i++ )
+      {
+         if ( backup[i] )
+         {
+            printf("backing up %u (<%s> to <%s>\n", i, fcur[i].toLatin1().data(), fprev[i].toLatin1().data());
+            if (!qd.rename(fcur[i], fprev[i]) )
+            {
+               qDebug() << "a file write error occured";
+               exit(-1);
+            }
+         }
+         if ( install[i] )
+         {
+            printf("installing %u (<%s> to <%s>\n", i, fnew[i].toLatin1().data(), fcur[i].toLatin1().data());
+            if (!ufu.copy( fnew[i], fcur[i]) )
+            {
+               qDebug() << "a file write error occured";
+               exit(-1);
+            }
+            if ( names[ i ] == "config" && backup[ i ] ) {
+               read_config( fprev[ i ] );
+               QStringList                save_directory_history       = directory_history;
+               map < QString, QDateTime > save_directory_last_access   = directory_last_access;
+               map < QString, QString >   save_directory_last_filetype = directory_last_filetype;
+               read_config( fcur[ i ] );
+               directory_history       = save_directory_history;
+               directory_last_access   = save_directory_last_access;
+               directory_last_filetype = save_directory_last_filetype;
+               write_config( fcur[ i ] );
+            }
+         }
+      }
+      {
+         QString contents = REVISION;
+         QString error;
+         if ( !US_File_Util::putcontents( somorevision, contents, error ) ) {
+            qDebug() << "putcontents file:" << somorevision << " contents:'" << contents << "' error:" << error;
+         } else {
+            qDebug() << "Configs successfully created";
+         }
+      }
+
+      return false;
+   }
+
    switch( QMessageBox::warning( 
                                 0, 
                                 us_tr("New version detected"),
@@ -913,7 +963,8 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
                 !tmp.contains("Number of particle atoms") &&
                 !tmp.contains("Number of atoms written") &&
                 !tmp.contains("Filtered number of atoms") &&
-                !tmp.contains("Dummy atom radius")
+                !tmp.contains("Dummy atom radius") &&
+                !tmp.contains("Number of dummy atoms")
                 );
 
       if ( ts.atEnd() &
@@ -921,7 +972,8 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
            !tmp.contains("Number of particle atoms") &&
            !tmp.contains("Number of atoms written") &&
            !tmp.contains("Filtered number of atoms") &&
-           !tmp.contains("Dummy atom radius")
+           !tmp.contains("Dummy atom radius") &&
+           !tmp.contains("Number of dummy atoms")
            )
       {
          f.close();
@@ -1427,13 +1479,13 @@ void US_Hydrodyn::make_test_set()
             it != pair_summary.end();
             it++ )
       {
-         ts << "# " << it->first << endl;
+         ts << "# " << it->first << Qt::endl;
          ts << "residueatom ";
          for ( unsigned int i = 0; i < ( unsigned int ) it->second.size(); i++ )
          {
             ts << it->second[ i ] << " ";
          }
-         ts << endl;
+         ts << Qt::endl;
       }
       f.close();
    }

@@ -22,9 +22,10 @@
 <center>
 <h2>
 SOMO - Batch Operations Module:</h2>
-<h3><center>Last updated: October 2020 </center></h3><p>
+<h3>Last updated: June 2024 </center></h3><p>
 <p>
-<img SRC="somo-batch.png" ALT="SOMO Batch Operations Module">
+<center>
+<img SRC="somo-batch_new.png" ALT="SOMO Batch Operations Module">
 </center>
 <p>
 This module has been devised to allow the unattended processing of several files, from the generation of the bead models or of  multiple atomic-level conformations via a Discrete Molecular Dynamics (DMD) module, to the computation of several parameters (hydrodynamic, SAXS/SANS).<p>
@@ -46,27 +47,30 @@ supported by <b><i>US-SOMO</i></b>, PDB structures or bead models. If unwanted f
 </center>
 <p>
 In order to allow for the unattended operations, the files must be checked for compliance with the <b><i>US-SOMO</i></b> requirements.
-In particular, their residues must be defined in the <i>somo.residue</i> lookup table and must contain all atoms. However, starting from the May 2015 release,
-the parsing options have been set by default so to cope with incompleted/not coded residues, by the use of approximate methods (a detailed description of these options can be found <a href=somo_pdb_parsing.html>here</a>). Users can revert to the more stringent <i>List them and stop operation</i> or to the non-recommended <i>List them, skip (entire) residue and proceed</i> options.<br> 
+In particular, their residues must be defined in the <i>somo.residue</i> lookup table and must contain all atoms. However, starting from the May 2015 release, the parsing options have been set by default so to cope with incompleted/not coded residues, by the use of approximate methods (a detailed description of these options can be found <a href=somo_pdb_parsing.html>here</a>). Users can revert to the more stringent <i>List them and stop operation</i> or to the non-recommended <i>List them, skip (entire) residue and proceed</i> options.<br> 
 For bead models, they must match the overlap tolerance as set in the  <a href=somo_hydro.html>Hydrodynamic Computations Options</a> module if the <i>Calculate RB Hydrodynamics SMI</i> checkbox is selected (see below).<br>
 The uploaded files are therefore screened for compliance with the settings shown in the <b>Screen selected files:</b> panel, by pressing the <b><i>Screen Selected</i></b> button. The progress window on the right side reports the progress of the operations, and list the problems that might be found with the files, prompting for corrective action to be taken.<p>
 
 <hr>
 <center>
 <p>
-<img SRC="somo-batch3a.png" ALT="SOMO Batch Operations Module third panel">
+<img SRC="somo-batch3b.png" ALT="SOMO Batch Operations Module third panel">
 </center>
 <p>
 
 The sequence of batch operation is then set in the <b>Process selected files:</b> panel:<p>
 The alternative <i>Process Only First Model in PDBs with Multiple Models</i> and the <i>Process All Models in PDBs with Multiple Models</i> clickboxes control if just the first or all models should be processed in PDB files containing multiple models, like those derived from NMR studies. These options are active only if at least a PDB file is among the selected files.<br>
+In new releases produced after <span style="color:#CC0000">January 2023</span>, a temporary directory is automatically created in "...ultrascan/somo/tmp/" (check full path under different operating systems), where the multiple models contained in a NMR-style PDB file will be individually extracted before processing, saving a great deal of computer memory. The advancement of this process in reported in the <i>Progress window</i> on the right side. This temporary directory is then cleared and removed upon batch mode operations completion or halting.<p> 
+
+A new feature available since the <span style="color:#CC0000">July 2024</span> release is the possibility of calculating the <b><i>Fractal Dimension</i></b> of structures, by selecting the <i>Compute Fractal Dimension</i> checkbox. This new feature is fully described <a href="fractal_dimension_options.html">here</a>.<p>
+
 The <i>Run DMD</i> checkbox will enable <b><i>Discrete Molecular Dynamics (DMD)</b></i> runs to be carried on the selected files according to the DMD settings (see <a href="somo_cluster_dmd.html">here</a>).<p>
 The alternative <i>Build SoMo Bead Model</i>, <i>Build SoMo Overlap Bead Model</i> <i>Build AtoB (Grid) Bead Model</i>, and <i>Build vdW Overlap Bead Model</i> dictate which bead modeling procedure will be used to generate the models. These options are active only if at least a PDB file is among the selected files.<p>
 
 Next comes a series of checkboxes relating to SAXS (and in the future SANS) computations (<b>be sure to check the SAXS options currently selected using the <i>Saxs Options</i> button at the bottom of this panel before launching the computations</b>):<p>
 <i>Compute SAXS I(q)</i> will allow the computation of the scattering intensity <i>I</i>(<i>q</i>) vs the momentum transfer <i>q</i> curves for each model (see <a href="somo_saxs.html">here</a>). <br>
 <i>I(q) search</i> is an advanced feature that will allow varying the <i>Buffer electron density</i>, the <i>Scaling excluded volume</i>, and <i>WAT</i> (explicit hydration water molecules) <i>excluded volume</i> in a combined, stepwise manner until a best fit with an experimental curve is found. (see <a href="somo_SAXS_search.html">here</a>). <span style="color:#CC0000"><b>IMPORTANT:</b> This selection operates only on local machine computations! For performing an <i>I</i>(<i>q</i>) search on a cluster resource, use the <a href="somo_cluster_advanced_options.html"><b><i>Advanced options</i></b></a> feature under the <a href="somo_cluster.html"><b><i>Cluster</i></b></a> module</span>. <br>
-<i>Compute SAXS P(r)</i> will allow the computation of the distance distribution function P(<i>r</i>) vs <i>r</i> for each model (see <a href="somo_saxs.html">here</a>). <br>
+<i>Compute SAXS P(r)</i> will allow the computation of the distance distribution function <i>P</i>(<i>r</i>) vs <i>r</i> for each model (see <a href="somo_saxs.html">here</a>). <br>
 <i>Combined SAXS Results File</i> allows the generation of a single csv-formatted file containing all the computed data. A filename should be entered in the field provided.<br>
 <i>Create Individual Saxs Results File</i> will also produce individual computed SAXS results files. <br>
 <i>Compute I(q) average curves</i> and <i>Compute I(q) std deviation curves</i> become active only if the <i>Combined SAXS Results File</i> checkbox is enabled, and will append to the csv-formatted file extra line(s) containing average and standard deviation values calculated for all the I(<i>q</i>) curves. The <i>Only save average</i> checkbox will enable saving only the average curve.<br>
@@ -106,7 +110,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on October 1, 2020.
+Last modified on June 16, 2024
 </font>
 </body>
 </html>

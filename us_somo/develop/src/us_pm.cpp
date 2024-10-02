@@ -1439,7 +1439,7 @@ bool  US_PM::expand_types(
    QStringList qsl_types;
    {
       QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
-      qsl_types = (types ).split( rx , QString::SkipEmptyParts );
+      qsl_types = (types ).split( rx , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int) qsl_types.size(); ++i )

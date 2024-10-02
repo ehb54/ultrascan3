@@ -117,10 +117,10 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       }         
       errorno--;
 
-      // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts ).arg( char_files ) );
+      // qslt = (QString( "%1" ).split( "\n" , Qt::SkipEmptyParts ).arg( char_files ) );
       {
          QString qs = QString( "%1" ).arg( char_files );
-         qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+         qslt = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
    } else {
       // cout << QString("%1: extracting job files\n").arg( myrank ) << flush;
@@ -372,7 +372,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
             ts << "controlfile:\n";
             while( !tsc.atEnd() )
             {
-               ts << tsc.readLine() << endl;
+               ts << tsc.readLine() << Qt::endl;
             }
             ts << "end-controlfile\n";
             fc.close();
@@ -511,7 +511,7 @@ bool US_Saxs_Util::compute_1d_mpi()
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
       qs.trimmed();
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = npes * ( int ) ( qsl[ i ].toUInt() / npes );
@@ -1274,7 +1274,7 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {

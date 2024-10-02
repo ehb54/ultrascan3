@@ -28,7 +28,7 @@ class US_Hydrodyn_Zeno
    US_Hydrodyn_Zeno( 
                     hydro_options *         options,
                     hydro_results *         results,
-                    QProgressBar *          use_progress,
+                    mQProgressBar *         use_progress,
                     US_Hydrodyn *           us_hydrodyn
                     );
 
@@ -38,7 +38,8 @@ class US_Hydrodyn_Zeno
                vector < PDB_atom > *   bead_model,
                double              &   sum_mass,
                double              &   sum_volume,
-               QProgressBar *          use_progress,
+               const double        &   Rg,
+               mQProgressBar *         use_progress,
                bool                    keep_files = false,
                bool                    zeno_cxx = false,
                int                     threads = 1

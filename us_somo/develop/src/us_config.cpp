@@ -242,8 +242,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_frame = global_colors.cg_frame;  // Convenience
 
-   cg_frame.setColor( QPalette::Foreground, Qt::white );
-   cg_frame.setColor( QPalette::Background, global_colors.frames );
+   cg_frame.setColor( QPalette::WindowText, Qt::white );
+   cg_frame.setColor( QPalette::Window,     global_colors.frames );
    cg_frame.setColor( QPalette::Light,      global_colors.gray2 );
    cg_frame.setColor( QPalette::Dark,       global_colors.gray4 );
    cg_frame.setColor( QPalette::Mid,        Qt::cyan );
@@ -258,7 +258,7 @@ void US_Config::color_defaults()
    cg_pushb.setColor( QPalette::Dark,       global_colors.gray4 );
    cg_pushb.setColor( QPalette::Shadow,     Qt::black );
    // For splash screen window
-   cg_pushb.setColor( QPalette::Background, global_colors.pushb );
+   cg_pushb.setColor( QPalette::Window,     global_colors.pushb );
 
    QPalette& cg_pushb_disabled = global_colors.cg_pushb_disabled;  // Convenience
 
@@ -268,7 +268,7 @@ void US_Config::color_defaults()
    cg_pushb_disabled.setColor( QPalette::Dark,       global_colors.gray4 );
    cg_pushb_disabled.setColor( QPalette::Shadow,     Qt::black );
    // For splash screen shadow
-   cg_pushb_disabled.setColor( QPalette::Background, global_colors.pushb );
+   cg_pushb_disabled.setColor( QPalette::Window,     global_colors.pushb );
    cg_pushb_disabled.setColor( QPalette::Text,       global_colors.gray3 );
 
    QPalette& cg_pushb_active = global_colors.cg_pushb_active;  // Convenience
@@ -279,12 +279,12 @@ void US_Config::color_defaults()
    cg_pushb_active.setColor( QPalette::Dark,       global_colors.gray4 );
    cg_pushb_active.setColor( QPalette::Shadow,     Qt::black );
    // For splash screen shadow
-   cg_pushb_active.setColor( QPalette::Background, global_colors.pushb );
+   cg_pushb_active.setColor( QPalette::Window,     global_colors.pushb );
 
    QPalette& cg_label = global_colors.cg_label;  // Convenience
 
-   cg_label.setColor( QPalette::Foreground, Qt::white );
-   cg_label.setColor( QPalette::Background, global_colors.labels );
+   cg_label.setColor( QPalette::WindowText, Qt::white );
+   cg_label.setColor( QPalette::Window,     global_colors.labels );
    cg_label.setColor( QPalette::Light,      Qt::black );
    cg_label.setColor( QPalette::Dark,       Qt::black );
    cg_label.setColor( QPalette::Mid,        Qt::black );
@@ -293,7 +293,7 @@ void US_Config::color_defaults()
 
    QPalette& cg_label_warn = global_colors.cg_label_warn;  // Convenience
 
-   cg_label_warn.setColor( QPalette::Foreground, Qt::red );
+   cg_label_warn.setColor( QPalette::WindowText, Qt::red );
    cg_label_warn.setColor( QPalette::Button,     global_colors.labels );
    cg_label_warn.setColor( QPalette::Light,      Qt::black );
    cg_label_warn.setColor( QPalette::Dark,       Qt::black );
@@ -301,12 +301,12 @@ void US_Config::color_defaults()
    cg_label_warn.setColor( QPalette::Text,       Qt::red );
    cg_label_warn.setColor( QPalette::BrightText, Qt::red );
    cg_label_warn.setColor( QPalette::Base,       Qt::black );
-   cg_label_warn.setColor( QPalette::Background, Qt::black );
+   cg_label_warn.setColor( QPalette::Window,     Qt::black );
 
    QPalette& label_disabled = global_colors.cg_label_disabled; // Convenience
 
-   label_disabled.setColor( QPalette::Foreground, Qt::black );
-   label_disabled.setColor( QPalette::Background, global_colors.labels );
+   label_disabled.setColor( QPalette::WindowText, Qt::black );
+   label_disabled.setColor( QPalette::Window,     global_colors.labels );
    label_disabled.setColor( QPalette::Light,      Qt::black );
    label_disabled.setColor( QPalette::Dark,       Qt::black );
    label_disabled.setColor( QPalette::Mid,        Qt::black );
@@ -315,8 +315,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_edit = global_colors.cg_edit;  // Convenience
 
-   cg_edit.setColor( QPalette::Foreground,      Qt::black );
-   cg_edit.setColor( QPalette::Background,      Qt::white );
+   cg_edit.setColor( QPalette::WindowText,      Qt::black );
+   cg_edit.setColor( QPalette::Window,          Qt::white );
    cg_edit.setColor( QPalette::Light,           Qt::white );
    cg_edit.setColor( QPalette::Dark,            global_colors.gray );
    cg_edit.setColor( QPalette::Mid,             Qt::black );
@@ -332,7 +332,7 @@ void US_Config::color_defaults()
 
    QPalette& cg_edit_warn = global_colors.cg_edit_warn;  // Convenience
 
-   cg_edit_warn.setColor( QPalette::Foreground, Qt::red );
+   cg_edit_warn.setColor( QPalette::WindowText, Qt::red );
    cg_edit_warn.setColor( QPalette::Button,     Qt::white );
    cg_edit_warn.setColor( QPalette::Light,      Qt::black );
    cg_edit_warn.setColor( QPalette::Dark,       global_colors.gray );
@@ -340,12 +340,12 @@ void US_Config::color_defaults()
    cg_edit_warn.setColor( QPalette::Text,       Qt::red );
    cg_edit_warn.setColor( QPalette::BrightText, Qt::red );
    cg_edit_warn.setColor( QPalette::Base,       Qt::black );
-   cg_edit_warn.setColor( QPalette::Background, Qt::white );
+   cg_edit_warn.setColor( QPalette::Window,     Qt::white );
 
    QPalette& cg_dk_green = global_colors.cg_dk_green;  // Convenience
 
-   cg_dk_green.setColor( QPalette::Foreground, Qt::black );
-   cg_dk_green.setColor( QPalette::Background, global_colors.dk_green );
+   cg_dk_green.setColor( QPalette::WindowText, Qt::black );
+   cg_dk_green.setColor( QPalette::Window,     global_colors.dk_green );
    cg_dk_green.setColor( QPalette::Light,      Qt::white );
    cg_dk_green.setColor( QPalette::Dark,       global_colors.gray );
    cg_dk_green.setColor( QPalette::Mid,        Qt::black );
@@ -354,8 +354,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_dk_red = global_colors.cg_dk_red;  // Convenience
 
-   cg_dk_red.setColor( QPalette::Foreground, Qt::black );
-   cg_dk_red.setColor( QPalette::Background, global_colors.dk_red );
+   cg_dk_red.setColor( QPalette::WindowText, Qt::black );
+   cg_dk_red.setColor( QPalette::Window,     global_colors.dk_red );
    cg_dk_red.setColor( QPalette::Light,      Qt::white );
    cg_dk_red.setColor( QPalette::Dark,       global_colors.gray );
    cg_dk_red.setColor( QPalette::Mid,        Qt::black );
@@ -364,8 +364,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_green = global_colors.cg_green;  // Convenience
 
-   cg_green.setColor( QPalette::Foreground, Qt::white );
-   cg_green.setColor( QPalette::Background, Qt::green );
+   cg_green.setColor( QPalette::WindowText, Qt::white );
+   cg_green.setColor( QPalette::Window,     Qt::green );
    cg_green.setColor( QPalette::Light,      Qt::white );
    cg_green.setColor( QPalette::Dark,       global_colors.gray7 );
    cg_green.setColor( QPalette::Mid,        Qt::darkRed );
@@ -374,8 +374,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_red = global_colors.cg_red;  // Convenience
 
-   cg_red.setColor( QPalette::Foreground, Qt::red );
-   cg_red.setColor( QPalette::Background, Qt::black );
+   cg_red.setColor( QPalette::WindowText, Qt::red );
+   cg_red.setColor( QPalette::Window,     Qt::black );
    cg_red.setColor( QPalette::Light,      Qt::white );
    cg_red.setColor( QPalette::Dark,       global_colors.gray7 );
    cg_red.setColor( QPalette::Mid,        Qt::black );
@@ -384,8 +384,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_gray = global_colors.cg_gray;  // Convenience
 
-   cg_gray.setColor( QPalette::Foreground, Qt::black );
-   cg_gray.setColor( QPalette::Background, Qt::gray );
+   cg_gray.setColor( QPalette::WindowText, Qt::black );
+   cg_gray.setColor( QPalette::Window,     Qt::gray );
    cg_gray.setColor( QPalette::Light,      Qt::white );
    cg_gray.setColor( QPalette::Dark,       Qt::black );
    cg_gray.setColor( QPalette::Mid,        Qt::black );
@@ -394,8 +394,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_normal = global_colors.cg_normal;  // Convenience
 
-   cg_normal.setColor( QPalette::Foreground,      Qt::black );
-   cg_normal.setColor( QPalette::Background,      global_colors.gray3 );
+   cg_normal.setColor( QPalette::WindowText,      Qt::black );
+   cg_normal.setColor( QPalette::Window,          global_colors.gray3 );
    cg_normal.setColor( QPalette::Light,           Qt::white );
    cg_normal.setColor( QPalette::Dark,            global_colors.gray4 );
    cg_normal.setColor( QPalette::Mid,             global_colors.gray3 );
@@ -411,8 +411,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_plot = global_colors.cg_plot;  // Convenience
 
-   cg_plot.setColor( QPalette::Foreground,      Qt::black );
-   cg_plot.setColor( QPalette::Background,      global_colors.gray3 );
+   cg_plot.setColor( QPalette::WindowText,      Qt::black );
+   cg_plot.setColor( QPalette::Window,          global_colors.gray3 );
    cg_plot.setColor( QPalette::Light,           Qt::white );
    cg_plot.setColor( QPalette::Dark,            Qt::white );
    cg_plot.setColor( QPalette::Mid,             global_colors.gray5 );
@@ -428,8 +428,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_lcd = global_colors.cg_lcd;  // Convenience
 
-   cg_lcd.setColor( QPalette::Foreground, Qt::green );
-   cg_lcd.setColor( QPalette::Background, Qt::black );
+   cg_lcd.setColor( QPalette::WindowText, Qt::green );
+   cg_lcd.setColor( QPalette::Window,     Qt::black );
    cg_lcd.setColor( QPalette::Light,      Qt::green );
    cg_lcd.setColor( QPalette::Dark,       global_colors.frames );
    cg_lcd.setColor( QPalette::Mid,        Qt::cyan );
@@ -438,8 +438,8 @@ void US_Config::color_defaults()
 
    QPalette& cg_bunt = global_colors.cg_bunt;  // Convenience
 
-   cg_bunt.setColor( QPalette::Foreground, Qt::black );
-   cg_bunt.setColor( QPalette::Background, Qt::yellow );
+   cg_bunt.setColor( QPalette::WindowText, Qt::black );
+   cg_bunt.setColor( QPalette::Window,     Qt::yellow );
    cg_bunt.setColor( QPalette::Light,      Qt::white );
    cg_bunt.setColor( QPalette::Dark,       Qt::red );
    cg_bunt.setColor( QPalette::Mid,        Qt::cyan );
@@ -456,7 +456,9 @@ void US_Config::setDefault()
    config_list.browser = "/usr/bin/firefox";
 
 #ifdef WIN32
-   config_list.browser = "C:/Program Files/Internet Explorer/iexplore.exe";
+   // internet explorer is past EOL
+   // config_list.browser = "C:/Program Files (x86)/Internet Explorer/iexplore.exe";
+   config_list.browser = QSettings( "HKEY_CLASSES_ROOT\\http\\shell\\open\\command", QSettings::NativeFormat ).value( "Default" ).toString();
 #endif
 
 #ifdef MAC
@@ -532,6 +534,9 @@ void US_Config::setDefault()
 #if QT_VERSION >= 0x050000
    config_list.numThreads      = QThread::idealThreadCount();
 #endif
+   if ( config_list.numThreads > 16 ) {
+      config_list.numThreads = 16;
+   }
 }
 
 bool US_Config::read()
@@ -655,6 +660,9 @@ bool US_Config::read()
          else
          {
             return ( false );  // Bad numThreads
+         }
+         if ( config_list.numThreads > 16 ) {
+            config_list.numThreads = 16;
          }
       }
       if ( ! ts.atEnd() )

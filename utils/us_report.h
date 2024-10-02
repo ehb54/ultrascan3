@@ -295,7 +295,10 @@ class US_UTIL_EXTERN US_Report
       //! \returns  One of the US_Report error codes
       Status       saveFileDocuments   ( const QString&, const QStringList&,
                                          US_DB2*, int = 1, const QString = "" );
-
+      
+      Status       saveFileDocuments_auto  ( int, const QString&, const QStringList&,
+					     US_DB2*, int = 1, const QString = "" );
+      
       //! \brief Function to delete the specified report from the DB
       //! \param    reportID The database reportID of the report to delete
       //! \param    db       For database access, an open database connection

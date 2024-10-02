@@ -1,3 +1,4 @@
+//! \file us_xpn_data.h
 #ifndef US_XPN_DATA_H
 #define US_XPN_DATA_H
 
@@ -238,6 +239,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int     get_runid( QString );
 
       int     checkExpStatus( QString );
+      int     checkExpStatus_auto( QString, bool& );
       
       //! \brief Filter Runs information to exclude zero-data ones
       //! \param runInfo Reference for input/updated run info strings
@@ -249,6 +251,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param scantype Scan type ('A','F','I','W','S','C') to match
       //! \returns        Number of rows of match ScanData found
       int     scan_xpndata( const int, const QChar );
+      int     scan_xpndata_auto( const int, const QChar, bool&, QElapsedTimer );
 
       //! \brief Update the DB [AIFW]ScanData table information
       //! \param runId    Run ID to match
@@ -272,12 +275,14 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
       //! \returns        Status of import (true->imported OK)
       bool    import_data   ( const int, const int );
+      bool    import_data_auto   ( const int, const int, bool& );
 
       //! \brief Reimport ScanData from the postgres database
       //! \param runId    Run ID to match
       //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
       //! \returns        Status of reimport (false->reimport not needed)
       bool    reimport_data ( const int, const int );
+      bool    reimport_data_auto ( const int, const int, bool& );
 
       //! \brief Load XPN internal variables from loaded rawDatas
       //! \param allData Vector of loaded rawDatas

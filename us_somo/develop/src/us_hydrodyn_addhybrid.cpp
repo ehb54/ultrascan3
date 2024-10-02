@@ -287,7 +287,7 @@ void US_AddHybridization::add()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       cmb_hybrid->clear( );
-      str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
+      str1 = QString( us_tr(" Number of Hybridizations in File: %1" ) ).arg( hybrid_list.size() );
       QTextStream ts(&f);
       for (unsigned int i=0; i<hybrid_list.size(); i++)
       {
@@ -298,7 +298,7 @@ void US_AddHybridization::add()
             << "\t" << hybrid_list[i].scat_len
             << "\t" << hybrid_list[i].exch_prot
             << "\t" << hybrid_list[i].num_elect
-            << endl;
+            << Qt::endl;
          //         cout << "item: " << item << ", " << hybrid_list[i].name.toUpper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
          str1.sprintf("%d: ", i+1);
          str1 += hybrid_list[i].name.toUpper();
@@ -353,7 +353,8 @@ void US_AddHybridization::select_file()
          pb_select_saxs_file->setEnabled(true);
       }
    }
-   str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
+   str1 = QString( us_tr(" Number of Hybridizations in File: %1" ) ).arg( hybrid_list.size() );
+
    lbl_number_of_hybrids->setText(str1);
    pb_add->setEnabled(true);
    if (!hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
@@ -391,7 +392,7 @@ void US_AddHybridization::select_saxs_file()
                continue;
             }
             qs.trimmed();
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
             {
@@ -449,7 +450,7 @@ void US_AddHybridization::select_saxs_file()
          f.close();
       }
    }
-   str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
+   str1 = QString( us_tr( " Number of SAXS Entries in File: %1 " ) ).arg( saxs_list.size() );
    lbl_number_of_saxs->setText(str1);
    if (!hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
    {
@@ -498,7 +499,7 @@ void US_AddHybridization::select_hybrid(int val)
    le_scat_len->setText(str);
    str.sprintf("%d", hybrid_list[val].exch_prot);
    le_exch_prot->setText(str);
-   str.sprintf("%d", hybrid_list[val].num_elect);
+   str.sprintf("%3.0f", hybrid_list[val].num_elect);
    le_num_elect->setText(str);
    le_name->setText(hybrid_list[val].name.toUpper());
    unsigned int i;

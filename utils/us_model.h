@@ -1,3 +1,4 @@
+//! \file us_model.h
 #ifndef US_MODEL_H
 #define US_MODEL_H
 
@@ -55,6 +56,8 @@ class US_UTIL_EXTERN US_Model
       GlobalType   global;      //!< Global params used for model generation
       QStringList  mcixmls;     //!< Component MC iteration XML contents
       int          nmcixs;      //!< Number of MC component xmls (iterations)
+      QString      timeCreated;
+      QString      editDataUpdated;
 
       //! An integer to define the number of subgrids for a CUSTOMGRID needed
       //! for the 2DSA initialization or output components for DISCRETEGA

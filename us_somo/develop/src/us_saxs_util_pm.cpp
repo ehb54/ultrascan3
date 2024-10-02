@@ -9,10 +9,15 @@
 //Added by qt3to4:
 #include <QTextStream>
 #endif
+#include <tuple>
+
+#define TSO  QTextStream(stdout)
 
 QString US_Saxs_Util::run_json( QString & json )
 {
    // note: alternate version for mpi in in run_json_mpi() in us_saxs_util_pm_mpi.cpp
+   // TSO << "run json start\n";
+   // TSO << "parameters as string\n" << json << "\n";
 
    if ( !us_log )
    {
@@ -25,7 +30,8 @@ QString US_Saxs_Util::run_json( QString & json )
 
    map < QString, QString > parameters = US_Json::split( json );
    map < QString, QString > results;
-
+   // TSO << "parameters as json\n" << US_Json::compose( parameters ) << "\n";
+   
    for ( map < QString, QString >::iterator it = parameters.begin();
          it != parameters.end();
          ++it )
@@ -55,6 +61,8 @@ QString US_Saxs_Util::run_json( QString & json )
          << "pmrun"
 	 << "hydro"
 	 << "pat"
+	 << "align"
+	 << "ssbond"
 	;
       
       int count = 0;
@@ -79,6 +87,13 @@ QString US_Saxs_Util::run_json( QString & json )
        
    }
    
+   if ( parameters.count( "ssbond" ) ) {
+      if ( !run_ssbond( parameters, results ) ) {
+	   results[ "errors" ] += " run_ssbond failed:" + errormsg;
+	   //return US_Json::compose( results );
+      }
+   }
+
    if ( parameters.count( "pmrun" ) )
      {
        if ( !run_pm( parameters, results ) )
@@ -104,6 +119,15 @@ QString US_Saxs_Util::run_json( QString & json )
 	 {
 	   results[ "errors" ] += " pat failed:" + errormsg;
 	   //return US_Json::compose( results );
+	 }
+     }
+
+   if ( parameters.count( "align" ) )
+     {
+       if ( !run_align( parameters, results ) )
+	 {
+            results[ "errors" ] = " align failed:" + results[ "errors" ];
+            //return US_Json::compose( results );
 	 }
      }
    
@@ -150,7 +174,7 @@ bool US_Saxs_Util::run_pm(
       QStringList files_try;
       {
          QString qs = "\",\"";
-         files_try = (parameters[ "pmfiles" ] ).split( qs , QString::SkipEmptyParts );
+         files_try = (parameters[ "pmfiles" ] ).split( qs , Qt::SkipEmptyParts );
       }
       for ( int i = 0; i < (int) files_try.size(); ++i )
       {
@@ -551,7 +575,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
          ts << "controlfile:\n";
          while( !tsc.atEnd() )
          {
-            ts << tsc.readLine() << endl;
+            ts << tsc.readLine() << Qt::endl;
          }
          ts << "end-controlfile\n";
          fc.close();
@@ -772,7 +796,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -815,7 +839,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             QStringList qsl2;
             {
                QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
-               qsl2 = (qsl[ j ] ).split( rx , QString::SkipEmptyParts );
+               qsl2 = (qsl[ j ] ).split( rx , Qt::SkipEmptyParts );
             }
             if ( us_log )
             {
@@ -2242,5 +2266,623 @@ bool US_Saxs_Util::run_pm(
       }         
    }
 
+   return true;
+}
+
+static point tuple_point( tuple < double, double, double > t ) {
+   point pt;
+   pt.axis[0] = get<0>(t);
+   pt.axis[1] = get<1>(t);
+   pt.axis[2] = get<2>(t);
+   return pt;
+}
+
+bool US_Saxs_Util::run_align(
+                          map < QString, QString >           & parameters,
+                          map < QString, QString >           & results
+                          )
+{
+   QStringList required;
+   required 
+      << "from"
+      << "to"
+      << "out"
+      << "atoms"
+      << "cut"
+      ;
+   
+   // verify required
+   for ( int i = 0; i < (int) required.count(); ++i ) {
+      if ( !parameters.count( required[i] ) ) {
+         results[ "errors" ] += QString( "missing required parameter %1\n" ).arg( required[i] );
+      }
+   }
+
+   if ( results["errors"].length() ) {
+      return false;
+   }
+
+   bool quiet     = parameters.count( "quiet" )   != 0;
+
+   bool save      = parameters.count( "save" )    != 0;
+
+   bool frommap   = parameters.count( "frommap" ) != 0;
+
+   bool atter     = parameters.count( "atter" )   != 0;
+   QString atter_chainid = atter ? parameters[ "atter" ] : "";
+
+   bool adjcoords = parameters.count( "adjcoords" ) != 0 && parameters[ "adjcoords" ].toInt() != 0;
+
+   // get files
+   QStringList from;
+   QStringList to;
+
+   {
+      QString error;
+      QString contents;
+      if ( !US_File_Util::getcontents( parameters["from"], contents, error ) ) {
+         results[ "errors" ] += error;
+      }
+      from = contents.split( "\n" );
+   }
+   {
+      QString error;
+      QString contents;
+      if ( !US_File_Util::getcontents( parameters["to"], contents, error ) ) {
+         results[ "errors" ] += error;
+      }
+      to = contents.split( "\n" );
+   }
+   if ( results["errors"].length() ) {
+      return false;
+   }
+
+   int from_size = (int) from.size();
+   int to_size   = (int) to  .size();
+   QRegExp rx_atomhetatm = QRegExp( "^(ATOM|HETATM)$" );
+
+   // build frommap if requested
+   if ( frommap ) {
+      map < QString, QString > frommap_chains;
+      QStringList level0 = parameters[ "frommap" ].split( ";" ); // maps
+      for ( int i = 0; i < (int) level0.count(); ++i ) {
+         QStringList level1 = level0[i].split( ":" );
+         if ( level1.count() != 2 ) {
+            results[ "errors" ] += "frommap format must be orgchainID:newchainID{;..}\n";
+            return false;
+         }
+         if ( frommap_chains.count( level1[0] ) ) {
+            results[ "errors" ] += "frommap duplicate orgchainID specified\n";
+            return false;
+         }
+            
+         frommap_chains[ level1[0] ] = level1[1];
+      }
+      for ( int i = 0; i < from_size; ++i ) {
+         QString line = from[ i ];
+         auto fields = pdb_fields( line );
+         if ( fields[ "recname" ].contains( rx_atomhetatm ) &&
+              frommap_chains.count( fields[ "chainid" ] ) ) {
+            from[ i ] = line.mid( 0, 21 ) + frommap_chains[ fields[ "chainid" ] ] + line.mid( 22 );
+            if ( !quiet ) {
+               TSO
+                  << "-" << line << "\n"
+                  << "+" << from[ i ] << "\n"
+                  ;
+            }
+         }
+      }         
+   }
+
+   // parse atoms
+   set < QString > atoms; // format "ChainID:Residue:Atomname"
+   {
+      QStringList level0 = parameters[ "atoms" ].split( ";" ); // residues
+      for ( int i = 0; i < (int) level0.count(); ++i ) {
+         QStringList level1 = level0[i].split( ":" ); // chainid, res#, atomlist
+         if ( level1.count() != 3 ) {
+            results[ "errors" ] += QString( "incorrect atoms format, %1 should be chainid:resseq:atomname{,atomname,...}\n" ).arg( level0[i] );
+            continue;
+         }
+         QString chainid = level1[0];
+         QString resseq  = level1[1];
+         QStringList level2 = level1[2].split(",");
+         for ( int j = 0; j < (int) level2.count(); ++j ) {
+            QString key = QString( "%1:%2:%3" ).arg( chainid ).arg( resseq ).arg( level2[j] );
+            atoms.insert( key );
+         }
+      }
+   }
+   if ( results["errors"].length() ) {
+      return false;
+   }
+
+   if ( !quiet ) {
+      TSO << "full point list\n";
+   
+      for ( auto it = atoms.begin();
+            it != atoms.end();
+            ++it ) {
+         TSO << *it << "\n";
+      }
+   }
+
+   // build save information if requested
+   set < QString > save_keys;
+   QString save_chainid;
+   int save_resseq_start = 0;
+   int save_resseq_end   = 0;
+   if ( save ) {
+      QStringList save_parts = parameters[ "save" ].split( ":" );
+      if ( save_parts.count() != 2 ) {
+         results[ "errors" ] += "save format must be ChainID:startresseq-endresseq\n";
+         return false;
+      }
+      QStringList save_range = save_parts[1].split( "-" );
+      if ( save_range.count() != 2 ) {
+         results[ "errors" ] += "save format must be ChainID:startresseq-endresseq\n";
+         return false;
+      }
+      save_chainid      = save_parts[0];
+      save_resseq_start = save_range[0].toInt();
+      save_resseq_end   = save_range[1].toInt();
+      if ( save_resseq_start > save_resseq_end ) {
+         results[ "errors" ] += "save startresseq is greater than endresseq\n";
+         return false;
+      }
+      TSO << QString( "save info: chain '%1', range %2-%3\n" ).arg( save_chainid ).arg( save_resseq_start ).arg( save_resseq_end );
+   }
+      
+
+   
+   // build from/to atoms map
+   map < QString, tuple < double, double, double > > from_points;
+   map < QString, tuple < double, double, double > > to_points;
+   map < QString, tuple < double, double, double > > remapped_from_points;
+   tuple < double, double, double > adjcoords_mins;
+   
+   {   
+      for ( int i = 0; i < from_size; ++i ) {
+         QString line = from[ i ];
+         auto fields = pdb_fields( line );
+         if ( fields.count( "error" ) ) {
+            results[ "errors" ] += fields[ "error" ];
+            return false;
+         }
+         if ( fields[ "recname" ].contains( rx_atomhetatm ) ) {
+            QString key = QString( "%1:%2:%3" )
+               .arg( fields[ "chainid" ] )
+               .arg( fields[ "resseq" ] )
+               .arg( fields[ "name" ] );
+            if ( from_points.count( key ) ) {
+               results[ "errors" ] += QString( "from file %1 has duplicate chain:resseq:atom entry %2\n" ).arg( parameters["from"] ).arg( key );
+               return false;
+            }
+            from_points[ key ] = make_tuple(
+                                            fields[ "x" ].toDouble()
+                                            ,fields[ "y" ].toDouble()
+                                            ,fields[ "z" ].toDouble()
+                                            );
+         }
+      }            
+
+      for ( int i = 0; i < to_size; ++i ) {
+         QString line = to[ i ];
+         auto fields = pdb_fields( line );
+         if ( fields.count( "error" ) ) {
+            results[ "errors" ] += fields[ "error" ];
+            return false;
+         }
+         if ( fields[ "recname" ].contains( rx_atomhetatm ) ) {
+            QString key = QString( "%1:%2:%3" )
+               .arg( fields[ "chainid" ] )
+               .arg( fields[ "resseq" ] )
+               .arg( fields[ "name" ] );
+            if ( save &&
+                 fields[ "chainid" ] == save_chainid &&
+                 fields[ "resseq" ].toInt() >= save_resseq_start &&
+                 fields[ "resseq" ].toInt() <= save_resseq_end ) {
+               save_keys.insert( key );
+            }
+            if ( to_points.count( key ) ) {
+               results[ "errors" ] += QString( "to file %1 has duplicate chain:resseq:atom entry %2\n" ).arg( parameters["to"] ).arg( key );
+               return false;
+            }
+            to_points[ key ] = make_tuple(
+                                          fields[ "x" ].toDouble()
+                                          ,fields[ "y" ].toDouble()
+                                          ,fields[ "z" ].toDouble()
+                                          );
+         }
+      }            
+      
+   }      
+      
+   TSO << QString( "from_points size %1\nto_points size %2\n" ).arg( from_points.size() ).arg( to_points.size() );
+
+   // verify the keys exist
+
+   for ( auto it = atoms.begin();
+         it != atoms.end();
+         ++it ) {
+      if ( !from_points.count( *it ) ) {
+         results[ "errors" ] += QString( "from file %1 does not specifiy atom %2\n" ).arg( parameters["from"] ).arg( *it );
+      }
+      if ( !to_points.count( *it ) ) {
+         results[ "errors" ] += QString( "to file %1 does not specifiy atom %2\n" ).arg( parameters["to"] ).arg( *it );
+      }
+   }
+   if ( results["errors"].length() ) {
+      return false;
+   }
+
+   // if ( save ) {
+   //    TSO << "save_keys:\n";
+   //    for ( auto it = save_keys.begin();
+   //          it != save_keys.end();
+   //          ++it ) {
+   //       TSO << *it << "\n";
+   //    }
+   // }
+
+   // optional adjust all coordinates
+   
+
+   if ( adjcoords ) {
+      TSO << "adjusting coordinates to positive values active\n";
+      {
+         double min_x = 1e99;
+         double min_y = 1e99;
+         double min_z = 1e99;
+
+         for ( auto it = from_points.begin();
+               it != from_points.end();
+               ++it ) {
+            if ( min_x > get<0>(it->second) ) {
+               min_x = get<0>(it->second);
+            }
+            if ( min_y > get<1>(it->second) ) {
+               min_y = get<1>(it->second);
+            }
+            if ( min_z > get<2>(it->second) ) {
+               min_z = get<2>(it->second);
+            }
+         }
+         TSO << QString( "mins of from points [%1,%2,%3]\n" ).arg( min_x ).arg( min_y ).arg( min_z );
+         for ( auto it = from_points.begin();
+               it != from_points.end();
+               ++it ) {
+            get<0>(it->second) -= min_x;
+            get<1>(it->second) -= min_y;
+            get<2>(it->second) -= min_z;
+         }
+      }
+      {
+         double min_x = 1e99;
+         double min_y = 1e99;
+         double min_z = 1e99;
+
+         for ( auto it = to_points.begin();
+               it != to_points.end();
+               ++it ) {
+            if ( min_x > get<0>(it->second) ) {
+               min_x = get<0>(it->second);
+            }
+            if ( min_y > get<1>(it->second) ) {
+               min_y = get<1>(it->second);
+            }
+            if ( min_z > get<2>(it->second) ) {
+               min_z = get<2>(it->second);
+            }
+         }
+         TSO << QString( "mins of to points [%1,%2,%3]\n" ).arg( min_x ).arg( min_y ).arg( min_z );
+         for ( auto it = to_points.begin();
+               it != to_points.end();
+               ++it ) {
+            get<0>(it->second) -= min_x;
+            get<1>(it->second) -= min_y;
+            get<2>(it->second) -= min_z;
+         }
+         adjcoords_mins = make_tuple( min_x, min_y, min_z );
+      }
+   }
+
+   // print coordinates for the atom keys
+
+   if ( !quiet ) {
+      for ( auto it = atoms.begin();
+            it != atoms.end();
+            ++it ) {
+         TSO <<
+            QString( "%1 from [%2,%3,%4] to [%5,%6,%7]\n" )
+            .arg( *it )
+            .arg( get<0>( from_points[ *it ] ) )
+            .arg( get<1>( from_points[ *it ] ) )
+            .arg( get<2>( from_points[ *it ] ) )
+            .arg( get<0>( to_points  [ *it ] ) )
+            .arg( get<1>( to_points  [ *it ] ) )
+            .arg( get<2>( to_points  [ *it ] ) )
+            ;
+      }
+   }
+
+   // setup and run alignment
+
+   {
+      vector < point > transform_from;
+      vector < point > transform_to;
+      vector < point > apply_from;
+      vector < point > result;
+
+      point pt;
+
+      for ( auto it = atoms.begin();
+            it != atoms.end();
+            ++it ) {
+         pt.axis[ 0 ] = get<0>( from_points[ *it ] );
+         pt.axis[ 1 ] = get<1>( from_points[ *it ] );
+         pt.axis[ 2 ] = get<2>( from_points[ *it ] );
+         transform_from.push_back( pt );
+      
+         pt.axis[ 0 ] = get<0>( to_points[ *it ] );
+         pt.axis[ 1 ] = get<1>( to_points[ *it ] );
+         pt.axis[ 2 ] = get<2>( to_points[ *it ] );
+         transform_to.push_back( pt );
+      }
+
+      for ( auto it = from_points.begin();
+            it != from_points.end();
+            ++it ) {
+         pt.axis[ 0 ] = get<0>( it->second );
+         pt.axis[ 1 ] = get<1>( it->second );
+         pt.axis[ 2 ] = get<2>( it->second );
+         apply_from.push_back( pt );
+      }
+
+      // run align
+
+      if ( !atom_align(
+                       transform_from
+                       ,transform_to
+                       ,apply_from
+                       ,result ) ) {
+         results[ "errors" ] += errormsg;
+            return false;
+      }
+      TSO << "alignment success\n";
+
+      // populate remapped_from_points
+
+      {
+         int i = 0;
+         for ( auto it = from_points.begin();
+               it != from_points.end();
+               ++it ) {
+            remapped_from_points[ it->first ] = make_tuple(
+                                                           result[ i ].axis[ 0 ]
+                                                           ,result[ i ].axis[ 1 ]
+                                                           ,result[ i ].axis[ 2 ]
+                                                           );
+            ++i;
+         }
+      }
+      
+   }
+
+   // print coordinates of remapped points
+   if ( 1 || !quiet ) {
+      for ( auto it = from_points.begin();
+            it != from_points.end();
+            ++it ) {
+         if ( !atoms.count( it->first ) ) {
+            continue;
+         }
+         TSO <<
+            QString( "%1 from [%2,%3,%4] remapped as [%5,%6,%7] matching to point [%8,%9,%10] remapped dist %11\n" )
+            .arg( it->first )
+            .arg( get<0>( it->second ) )
+            .arg( get<1>( it->second ) )
+            .arg( get<2>( it->second ) )
+            .arg( get<0>( remapped_from_points[ it->first ] ) )
+            .arg( get<1>( remapped_from_points[ it->first ] ) )
+            .arg( get<2>( remapped_from_points[ it->first ] ) )
+            .arg( get<0>( to_points[ it->first ] ) )
+            .arg( get<1>( to_points[ it->first ] ) )
+            .arg( get<2>( to_points[ it->first ] ) )
+            .arg( dist( tuple_point( remapped_from_points[ it->first ] ),
+                        tuple_point( to_points[ it->first ] ) ) )
+            ;
+      }
+   }
+   
+   // adjcoords
+   if ( adjcoords ) {
+      for ( auto it = remapped_from_points.begin();
+            it != remapped_from_points.end();
+            ++it ) {
+         get<0>(it->second) += get<0>(adjcoords_mins);
+         get<1>(it->second) += get<1>(adjcoords_mins);
+         get<2>(it->second) += get<2>(adjcoords_mins);
+      }
+   }
+
+   // create replacement pdb atoms
+
+   QStringList rplc_atoms;
+
+   for ( int i = 0; i < from_size; ++i ) {
+      QString line = from[ i ];
+      auto fields = pdb_fields( line );
+      if ( fields.count( "error" ) ) {
+         results[ "errors" ] += fields[ "error" ];
+         return false;
+      }
+      if ( fields[ "recname" ].contains( rx_atomhetatm )
+           && fields[ "chainid" ] == parameters[ "cut" ]
+           ) {
+         QString key = QString( "%1:%2:%3" )
+            .arg( fields[ "chainid" ] )
+            .arg( fields[ "resseq" ] )
+            .arg( fields[ "name" ] );
+         if ( !save_keys.count( key ) ) {
+            QString outline =
+               QString( "%1%2%3%4%5" )
+               .arg( line.mid( 0, 30 ) )
+               .arg( get<0>( remapped_from_points[ key ] ), 8, 'f', 3 )
+               .arg( get<1>( remapped_from_points[ key ] ), 8, 'f', 3 )
+               .arg( get<2>( remapped_from_points[ key ] ), 8, 'f', 3 )
+               .arg( line.mid( 54 ) )
+               ;
+            rplc_atoms << outline;
+         }
+      }
+   }
+
+   if ( !quiet ) {
+      TSO << "replaced lines\n"
+          << rplc_atoms.join( "\n" )
+          << "\n" 
+         ;
+   }
+   
+   // distance report
+   if ( parameters.count( "dist" ) ) {
+      QStringList level0 = parameters[ "dist" ].split( ";" ); // residues
+      for ( int i = 0; i < (int) level0.count(); ++i ) {
+         QStringList level1 = level0[i].split( "-" ); // separate pairs
+         if ( level1.count() != 2 ) {
+            results[ "errors" ] += QString( "incorrect dist format, %1 should be chainid:resseq:atomname-chainid:resseq:atomname\n" ).arg( level0[i] );
+            continue;
+         }
+         QString key1 = level1[0];
+         QString key2 = level1[1];
+         // original distance key-key2
+         bool keys_ok = true;
+         if ( !atoms.count( key1 ) ) {
+            results[ "errors" ] += QString( "dist atoms must be in the mapped atoms, not found %1\n" ).arg( key1 );
+            keys_ok = false;
+         }
+         if ( !atoms.count( key2 ) ) {
+            results[ "errors" ] += QString( "dist atoms must be in the mapped atoms, not found %1\n" ).arg( key2 );
+            keys_ok = false;
+         }
+
+         if ( key1.left(1) == parameters[ "cut" ] ||
+              key2.left(1) != parameters[ "cut" ] ) {
+            results[ "errors" ] += QString( "first distance atom must be an non-cut chain, 2nd a cut chain. %1 %2\n" ).arg( key1 ).arg( key2 );
+            keys_ok = false;
+         }
+              
+         if ( !keys_ok ) {
+            continue;
+         }
+
+         {
+            float distorg = dist( tuple_point( from_points[ key1 ] ), tuple_point( from_points[ key2 ]          ) );
+            float distnew = dist( tuple_point( to_points[ key1 ] )  , tuple_point( remapped_from_points[ key2 ] ) );
+
+            TSO << QString( "pair %1-%2 original distance %3 transformed distance %4\n" )
+               .arg( key1 )
+               .arg( key2 )
+               .arg( distorg, 0, 'f', 3 )
+               .arg( distnew, 0, 'f', 3 )
+               ;
+         }
+      }
+   }
+      
+   if ( results["errors"].length() ) {
+      return false;
+   }
+
+
+   // take original pdb and build new one with replaced chain
+
+   QStringList out_lines;
+
+   {
+      bool cut_replaced = false;
+      QRegExp rx_linkconect = QRegExp( "^(LINK|CONECT)$" );
+
+      for ( int i = 0; i < to_size; ++i ) {
+         QString line = to[ i ];
+         auto fields = pdb_fields( line );
+         if ( fields.count( "error" ) ) {
+            results[ "errors" ] += fields[ "error" ];
+            return false;
+         }
+         if ( fields[ "recname" ].contains( rx_atomhetatm )
+              && fields[ "chainid" ] == parameters[ "cut" ]
+              ) {
+            QString key = QString( "%1:%2:%3" )
+               .arg( fields[ "chainid" ] )
+               .arg( fields[ "resseq" ] )
+               .arg( fields[ "name" ] );
+            if ( !cut_replaced && !atter ) {
+               out_lines << rplc_atoms;
+               cut_replaced = true;
+            }
+            if ( save_keys.count( key ) ) {
+               out_lines << line;
+            }
+            continue;
+         }
+         if ( atter
+              && fields[ "recname" ] == "TER"
+              && fields[ "chainid" ] == atter_chainid ) {
+               out_lines << rplc_atoms;
+               cut_replaced = true;
+         }
+         
+         if ( fields[ "recname" ].contains( rx_linkconect ) ) {
+            continue;
+         }
+         out_lines << line;
+      }
+      if ( !cut_replaced ) {
+         results[ "errors" ] += "Replacement atoms not added\n";
+         return false;
+      }
+   }
+
+
+   // redo atom numbers
+   {
+      int out_lines_size = (int) out_lines.size();
+      int serial = 1;
+      QStringList renumbered_out_lines;
+      
+      for ( int i = 0; i < out_lines_size; ++i ) {
+         QString line = out_lines[ i ];
+         auto fields = pdb_fields( line );
+         if ( fields.count( "error" ) ) {
+            results[ "errors" ] += fields[ "error" ];
+            return false;
+         }
+         if ( fields[ "recname" ].contains( rx_atomhetatm ) ) {
+            line = 
+               QString( "%1%2%3" )
+               .arg( line.mid( 0, 6 ) )
+               .arg( serial++, 5 )
+               .arg( line.mid( 11 ) )
+            ;
+         }
+         renumbered_out_lines << line;
+      }
+      out_lines = renumbered_out_lines;
+   }
+
+   // write out result
+   {
+      QString error;
+      QString contents = out_lines.join("\n") + "\n";
+      if ( !US_File_Util::putcontents( parameters["out"], contents, error ) ) {
+         results[ "errors" ] += error;
+         return false;
+      }
+      TSO << QString( "created output file %1\n" ).arg( parameters["out"] );
+   }
+   results.erase( "errors" );
+   
    return true;
 }

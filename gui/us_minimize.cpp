@@ -24,10 +24,10 @@ US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI) : US_Widgets(
 	plotGroup = 0;
    plotResiduals = false;
    autoconverge = false;
-	maxIterations = 1000;
+	maxIterations = 50000;
 	suspend_flag = false;
-	lambdaStart = 1.0e5;
-   lambdaStep = 10.0;
+	lambdaStart = 20.0;
+   lambdaStep = 1.05;
    tolerance =  (float) 1.0e-12;
    constrained = false;
 	nlsMethod = 0;
@@ -172,7 +172,7 @@ void US_Minimize::setup_GUI()
 	gl3->addWidget(cb_nlsalg, 2, 1);
 	lbl_lambdaStart = us_label(tr("Lambda Start:"));
 	gl3->addWidget(lbl_lambdaStart, 3, 0);
-   le_lambdaStart = us_lineedit("1.0000e+05", 1, false);
+   le_lambdaStart = us_lineedit("20.0", 1, false);
    connect(le_lambdaStart, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStart(const QString &)));
 	gl3->addWidget(le_lambdaStart, 3, 1);
 	pb_plottwo = us_pushbutton(tr(""));
@@ -180,14 +180,14 @@ void US_Minimize::setup_GUI()
 	lbl_lambdaStep = us_label(tr("Lambda Step Size:"));
 	gl3->addWidget(lbl_lambdaStep, 4, 0);
 	//le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
-	le_lambdaStep = us_lineedit("2.000", 1, false);
+	le_lambdaStep = us_lineedit("1.050", 1, false);
    connect(le_lambdaStep, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStep(const QString &)));
 	gl3->addWidget(le_lambdaStep, 4, 1);
 	pb_plotthree = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotthree, 4, 2);
 	lbl_maxIterations = us_label(tr("Maximum Iterations:"));
 	gl3->addWidget(lbl_maxIterations, 5, 0);
-   le_maxIterations = us_lineedit("1000", 1, false);
+   le_maxIterations = us_lineedit("50000", 1, false);
 	connect(le_maxIterations, SIGNAL(textChanged(const QString&)), SLOT(update_maxIterations(const QString &)));
 	gl3->addWidget(le_maxIterations, 5, 1);
 	pb_plotfour = us_pushbutton(tr(""));
@@ -270,8 +270,8 @@ void US_Minimize::updateQN(float **gamma, float **delta)
    {
       for (j=0; j<parameters; j++)
       {
-         information_matrix[i][j] = information_matrix[i][j] - hgammatranspose[i][j]/lambda
-            + ddtranspose[i][j]/deltagamma + lambda * vvtranspose[i][j];
+         information_matrix[i][j] = information_matrix[i][j] - (double) hgammatranspose[i][j]/lambda
+            + (double) ddtranspose[i][j]/deltagamma + (double) vvtranspose[i][j]*lambda;
       }
    }
    matrix->mmv(&temp, gamma, &information_matrix, parameters, parameters);
@@ -660,7 +660,7 @@ int US_Minimize::Fit()
          }
          for (unsigned int i=0; i<parameters; i++)
          {
-            guess[i] = guess[i] + search[i] * alpha;
+            guess[i] = guess[i] + search[i] * (double) alpha;
          }
          calc_model(guess);// updates solution, needed to calculate y_delta
          calc_jacobian();  // gives us jacobian matrix
@@ -755,17 +755,18 @@ int US_Minimize::Fit()
                if (nlsMethod == 0)
                {
 		 qDebug() << "Cholesky: "  ;
-                  if (showGuiFit)
+                  if (showGuiFit && !us_auto_mode )
                   {
                      QMessageBox message;
 							message.setWindowTitle(tr("Attention:"));
 							message.setText( tr("The Cholesky Decomposition of the\nInformation matrix failed due to a\nsingularity in the matrix.\n\nYou may achieve convergence by\nre-fitting the current data with\nnew initial parameter estimates."));
+
 							message.exec();
                   }
                }
                else
                {
-                  if (showGuiFit)
+                  if (showGuiFit && !us_auto_mode )
                   {
                      QMessageBox message;
 							message.setWindowTitle(tr("Attention:"));
@@ -845,7 +846,7 @@ int US_Minimize::Fit()
                //               qDebug() << "Alpha: " << st  ;
                for (unsigned int i=0; i<parameters; i++)
                {
-                  test_guess[i] = guess[i] + st * (float) B[i];
+                  test_guess[i] = guess[i] + st * B[i];
                   //                  test_guess[i] = guess[i] + lambda * (float) B[i];
                }
 					break;
@@ -878,7 +879,7 @@ int US_Minimize::Fit()
                }
                for (unsigned int i=0; i<parameters; i++)
                {
-                  test_guess[i] = guess[i] + st * (float) B[i];
+                  test_guess[i] = guess[i] + st * B[i];
                }
                break;
             }
@@ -1242,12 +1243,14 @@ float US_Minimize::linesearch(float **search, float f0)
       if (f2 < 0) return(0.0);
    }
 }
+
+
 float US_Minimize::calc_testParameter(float **search, float step)
 {
    float res;
    for (unsigned int i=0; i<parameters; i++)
    {
-      test_guess[i] = guess[i] + step * (*search)[i];
+      test_guess[i] = guess[i] + (double) step * (*search)[i];
       //qDebug() << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i]  ;
    }
    /*
@@ -1392,38 +1395,38 @@ void US_Minimize::update_nlsMethod(int item)
    {
    case 0:
       {
-         lambdaStart = 1.0e6;
-         lambdaStep = 10.0;
+         lambdaStart = 20.0;
+         lambdaStep = 1.05;
          if (GUI)
          {
             //lbl_status4->setText(tr("Levenberg-Marquardt Method selected..."));
-            le_lambdaStart->setText(" 1.0e+06");
-            le_lambdaStep->setText(" 10.0");
+            le_lambdaStart->setText(" 20.0");
+            le_lambdaStep->setText(" 1.05");
          }
          break;
       }
    case 1:
       {
-         lambdaStart =  (float) 1.0e-6;
-         lambdaStep = 2.0;
+         lambdaStart =  (float) 20.0;
+         lambdaStep = 1.05;
          if (GUI)
          {
             //lbl_status4->setText(tr("Modified Gauss Newton Method selected..."));           
-            le_lambdaStart->setText(" 1.0e-6");
-            le_lambdaStep->setText(" 2.0");
+            le_lambdaStart->setText(" 20.0");
+            le_lambdaStep->setText(" 1.05");
 
          }
          break;
       }
    case 2:
       {
-         lambdaStart = 1.0e6;
-         lambdaStep = 10.0;
+         lambdaStart = 20;
+         lambdaStep = 1.05;
          if (GUI)
          {
             //lbl_status4->setText(tr("Hybrid Method selected..."));
-            le_lambdaStart->setText(" 1.0e6");
-            le_lambdaStep->setText(" 10.0");
+            le_lambdaStart->setText(" 20.0");
+            le_lambdaStep->setText(" 1.05");
          }
          break;
       }

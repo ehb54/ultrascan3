@@ -5,6 +5,71 @@
 #include <QLabel>
 #include <QFocusEvent>
 
+static QTextStream& qStdOut()
+{
+   static QTextStream ts( stdout );
+   return ts;
+}
+
+mQTextEdit::mQTextEdit( QWidget *parent ) : QTextEdit( parent ) {
+   cli_progress = (bool *)0;
+   cli_prefix   = "unknown";
+   // qStdOut()    << "tso mQTextEdit constructor\n" << Qt::flush;
+}
+
+mQTextEdit::~mQTextEdit() {
+}
+
+void mQTextEdit::append( const QString & text ) {
+   // qDebug() << QString("mQTextEdit append %1").arg( text );
+   if ( cli_progress && *cli_progress ) {
+      qStdOut() << QString( "~texts %1 :\n%2\n~texte\n" ).arg( cli_prefix ).arg( text ) << Qt::flush;
+   }
+   emit QTextEdit::append( text );
+}
+
+void mQTextEdit::set_cli_progress( bool & cli_progress ) {
+   this->cli_progress = & cli_progress;
+}
+
+void mQTextEdit::set_cli_prefix( QString cli_prefix ) {
+   this->cli_prefix = cli_prefix;
+}
+
+mQProgressBar::mQProgressBar( QWidget *parent ) : QProgressBar( parent ) {
+   cli_progress = (bool *)0;
+   cli_prefix   = "unknown";
+   // qStdOut()    << "tso mQProgressBar constructor\n" << Qt::flush;
+}
+
+mQProgressBar::~mQProgressBar() {
+}
+
+void mQProgressBar::setValue( int val ) {
+   // qDebug() << QString("mQProgressBar setValue %1").arg(val);
+   if ( cli_progress && *cli_progress ) {
+      static QString lastprogress;
+      double progress = (double) val / (double) maximum();
+      if ( progress > 1 ) {
+         progress = 1;
+      }
+      QString newprogress = QString::number( progress, 'f', 2 );
+      if ( lastprogress != newprogress ) {
+         lastprogress = newprogress;
+         qStdOut() << QString( "~pgrs %1 : %2\n" ).arg( cli_prefix ).arg( newprogress ) << Qt::flush;
+      }
+   }
+   emit QProgressBar::setValue( val );
+}
+
+void mQProgressBar::set_cli_progress( bool & cli_progress ) {
+   this->cli_progress = & cli_progress;
+}
+
+void mQProgressBar::set_cli_prefix( QString cli_prefix ) {
+   this->cli_prefix = cli_prefix;
+}
+
 mQwtPlot::mQwtPlot( QWidget *parent ) : QwtPlot( parent ) {}
 mQwtPlot::~mQwtPlot() {}
 
@@ -79,52 +144,81 @@ void mQThread::usleep( unsigned long usecs )
    QThread::usleep( usecs );
 }
 
-void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets, bool hide, QWidget * do_resize )
-{
-   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); ++i )
-   {
-      hide ? widgets[ i ]->hide() : widgets[ i ]->show();
+void ShowHide::hide_widgets( const std::set < QWidget *> & widgets, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return hide_widgets( widgets, always_hide_widgets, hide, do_resize );
+}
+
+void ShowHide::hide_widgets( const std::set < QWidget *> & widgets,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide,
+                             QWidget * do_resize ) {
+   for ( auto const & widget : widgets ) {
+      hide || always_hide_widgets.count( widget ) ? widget->hide() : widget->show();
    }
-   if ( do_resize )
-   {
+   if ( do_resize ) {
        do_resize->resize( 0, 0 );
    }
 }
 
-void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize )
-{
-   if ( ( int )widgets.size() >= row )
-   {
+void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return hide_widgets( widgets, always_hide_widgets, hide, do_resize );
+}
+
+void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide, QWidget * do_resize ) {
+   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); ++i ) {
+      hide || always_hide_widgets.count( widgets[ i ] ) ? widgets[ i ]->hide() : widgets[ i ]->show();
+   }
+   if ( do_resize ) {
+       do_resize->resize( 0, 0 );
+   }
+}
+
+void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return hide_widgets( widgets, row, always_hide_widgets, hide, do_resize );
+}   
+
+void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets,
+                             int row,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide,
+                             QWidget * do_resize ) {
+   if ( ( int )widgets.size() >= row ) {
       return;
    }
-   for ( unsigned int i = 0; i < ( unsigned int )widgets[ row ].size(); ++i )
-   {
-      hide ? widgets[ row ][ i ]->hide() : widgets[ row ][ i ]->show();
+   for ( unsigned int i = 0; i < ( unsigned int )widgets[ row ].size(); ++i ) {
+      hide || always_hide_widgets.count( widgets[ row ][ i ] ) ? widgets[ row ][ i ]->hide() : widgets[ row ][ i ]->show();
    }
-   if ( do_resize )
-   {
+   if ( do_resize ) {
        do_resize->resize( 0, 0 );
    }
 }
 
-void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize )
-{
-   for ( int j = 0; j < (int) widgets.size(); ++j )
-   {
-      if ( j != row )
-      {
-         for ( int i = 0; i < (int) widgets[ j ].size(); ++i )
-         {
-            hide ? widgets[ j ][ i ]->hide() : widgets[ j ][ i ]->show();
+void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize ) {
+   std::set < QWidget * > always_hide_widgets;
+   return only_widgets( widgets, row, always_hide_widgets, hide, do_resize );
+}
+
+void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets,
+                             int row,
+                             const std::set < QWidget *> & always_hide_widgets,
+                             bool hide,
+                             QWidget * do_resize ) {
+   for ( int j = 0; j < (int) widgets.size(); ++j ) {
+      if ( j != row ) {
+         for ( int i = 0; i < (int) widgets[ j ].size(); ++i ) {
+            hide || always_hide_widgets.count( widgets[ row ][ i ] ) ? widgets[ j ][ i ]->hide() : widgets[ j ][ i ]->show();
          }
       }
    }
-   if ( do_resize )
-   {
+   if ( do_resize ) {
        do_resize->resize( 0, 0 );
    }
 }
-
 
 QStringList MQT::get_lb_qsl( QListWidget * lb, bool only_selected )
 {

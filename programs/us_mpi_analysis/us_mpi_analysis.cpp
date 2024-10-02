@@ -2166,9 +2166,9 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    QString fn        = runID + fileid;
    int lenfn         = fn.length();
 
-   if ( lenfn > 99 )
+   if ( lenfn > 96 )
    { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri         = runID.length() + 99 - lenfn;
+      int lenri         = runID.length() + 96 - lenfn;
       fn                = runID.left( lenri ) + fileid;
    }
 
@@ -2574,6 +2574,8 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString id        = model.typeText( subtype );
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
+   if ( max_iterations > 1  &&  mc_iterations == 1 )
+      id               += "-IT";
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ current_dataset ]->solute_type;
    double  vbar20    = data_sets[ current_dataset ]->vbar20;
@@ -2624,9 +2626,9 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    QString fn        = runID + fileid;
    int lenfn         = fn.length();
 
-   if ( lenfn > 99 )
+   if ( lenfn > 96 )
    { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri         = runID.length() + 99 - lenfn;
+      int lenri         = runID.length() + 96 - lenfn;
       fn                = runID.left( lenri ) + fileid;
    }
 

@@ -31,7 +31,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
-  QLabel* lb_hdr1          = us_banner( tr( "Analsyis Stages for All Triples" ) );
+  QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
   panel->addWidget(lb_hdr1);
 
   QHBoxLayout* buttons     = new QHBoxLayout();
@@ -56,7 +56,11 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   treeWidget->headerItem()->setText(1, "Analysis Stages");
 
   panel->addWidget(treeWidget);
-
+  //QScroller *scroller = QScroller::scroller(treeWidget);
+  //QScroller *scroller = QScroller::scroller(treeWidget->viewport());
+  //scroller->grabGesture(treeWidget, QScroller::MiddleMouseButtonGesture);
+  treeWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  
   setMinimumSize( 950, 450 );
   adjustSize();
 
@@ -64,15 +68,30 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // ---- Testing ----
+  // // // // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
-  // protocol_details[ "invID_passed" ] = QString("3");
-  // protocol_details[ "analysisIDs"  ] = QString( "125" );
+
+
+  // protocol_details[ "invID_passed" ] = QString("95");
+  // protocol_details[ "protocolName" ] = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3");
+  // protocol_details[ "aprofileguid" ] = QString("19a5ef33-0a1e-499e-95ef-45daac7bdcb7");
+  // protocol_details[ "filename" ]     = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3-run1963");
+  // protocol_details[ "analysisIDs"  ] = QString( "3657,3658");
+
+  // // //What's needed ////////////////////////////////////////////////////////
+  // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // invID              = protocol_details[ "invID_passed" ].toInt();
+
+  // FileName           = protocol_details[ "filename" ];
+  
+  // analysisIDs        = protocol_details[ "analysisIDs" ];
+  // /////////////////////////////////////////////////////////////////////
+
   
   // initPanel( protocol_details );
 
-  // -----------------
-  //Test of github's ssh key 2...
+  // // -----------------
 
 }
 
@@ -101,6 +120,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   FileName           = protocol_details[ "filename" ];
    
   analysisIDs        = protocol_details[ "analysisIDs" ];
+
+  autoflowStatusID   = protocol_details[ "statusID" ].toInt();
+  autoflowID_passed  = protocol_details[ "autoflowID" ].toInt();
 
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
   sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
@@ -256,6 +278,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
+      qDebug() << "GUI: job1run, job2run, job3run, job4run, job5run -- "
+	       << job1run << job2run << job3run << job4run << job5run;
 
       if ( triple_name_width > max_width )
        	max_width =  triple_name_width; 
@@ -492,7 +516,7 @@ void US_Analysis_auto::gui_update( )
 	  
 	  in_gui_update  = false;
 
-	  emit analysis_back_to_initAutoflow( );;
+	  emit analysis_back_to_initAutoflow( );
 	  
 	  return;
 	}
@@ -750,6 +774,13 @@ void US_Analysis_auto::gui_update( )
 	  //New case of automated 'FITMEN_AUTO' stage:
 	  if ( submitted.toString() == "FITMEN_AUTO" && Process_2dsafm[ triple_curr_key ] )
 	    {
+	      //What if submited stage still "FITMEN_AUTO" but nextWaitStatus="COMPLETE" ? (the submission daemon didn't yet updated submitted status...)
+	      //I.e., FITMEN_AUTO was processed BUT submission daemon still sees it in 'status' "FITMEN_AUTO" ?
+	      qDebug() << "FITMEN_AUTO: nextWaitStatus -- " << nextWaitStatus;
+	      if ( nextWaitStatus == "COMPLETE" || nextWaitStatus == "complete"
+		   || nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled" )
+		continue;
+	      
 	      //--- Check status of the FITMEN_AUTO | Entire Analysis for the triple 
 	      bool fitmen_auto_processed;
 	      fitmen_auto_processed = check_fitmen_status( requestID, stage_name );
@@ -776,8 +807,9 @@ void US_Analysis_auto::gui_update( )
 	      triple_info_map_auto[ "invID" ]           = QString::number(invID);
 	      triple_info_map_auto[ "filename" ]        = filename; // ALEXEY -- NOT 'FileName' for combined runs;
 
-	      no_fm_data_auto = false;
-	      have3val        = true;  
+	      fitmen_bad_vals   = false;
+	      no_fm_data_auto   = false;
+	      have3val          = true;  
 	      
 	      scan_dbase_auto      ( triple_info_map_auto );
 	      get_editProfile_copy ( triple_info_map_auto );
@@ -786,19 +818,16 @@ void US_Analysis_auto::gui_update( )
 	      if ( no_fm_data_auto )
 		{
 		  //triple_analysis_processed( );
-		  delete_jobs_at_fitmen( triple_curr_key );
+		  delete_jobs_at_fitmen( triple_info_map_auto );
 
 		  return;
 		}
 	      
 	      //Now, update editProfiles
-	      edit_update_auto     ( triple_info_map_auto );
-	      
-	      
+	      edit_update_auto  ( triple_info_map_auto );
+	      	      
 	      //End of automatic processing
 
-	      
-	      
 	      return;	      
 	    }
 	  // END of new automated 'FITMEN_AUTO' stage
@@ -837,6 +866,8 @@ void US_Analysis_auto::gui_update( )
 	      triple_info_map[ "invID" ]           = QString::number(invID);
 	      triple_info_map[ "filename" ]        = filename; // ALEXEY -- NOT 'FileName' for combined runs;
 	      
+	      fitmen_bad_vals   = false;
+	      	      
 	      FitMen = new US_FitMeniscus( triple_info_map );
 	      	      
 	      /** The following will block parent windows from closing BUT not from continuing timer execution ***/
@@ -851,6 +882,9 @@ void US_Analysis_auto::gui_update( )
 
 	      connect( FitMen, SIGNAL( triple_analysis_processed( ) ),
 		       this, SLOT( triple_analysis_processed( ) ) );
+
+	      // connect( FitMen, SIGNAL( bad_meniscus_values( QMap < QString, QString > & ) ),  //This will take care of BAD values
+	      // 	       this, SLOT( delete_jobs_at_fitmen( QMap < QString, QString > & ) ) );
 		      
 		       
 	      FitMen->show();
@@ -868,8 +902,16 @@ void US_Analysis_auto::gui_update( )
 	      if ( FitMen -> no_fm_data )
 		{
 		  FitMen->close();
-		  //triple_analysis_processed( );
-		  delete_jobs_at_fitmen( triple_curr_key );
+		  
+		  delete_jobs_at_fitmen( triple_info_map );
+		}
+
+	      if ( FitMen -> bad_men_vals )
+		{
+		  FitMen->close();
+		  fitmen_bad_vals = true;
+		  
+		  delete_jobs_at_fitmen( triple_info_map );
 		}
 
 	      return;
@@ -889,7 +931,8 @@ void US_Analysis_auto::gui_update( )
 	    current_stage_groupbox = groupbox_PCSA [ triple_curr ];
 
 	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
-	  if ( submitted.toString() == "FITMEN" && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
+	  if ( ( submitted.toString() == "FITMEN" || submitted.toString() == "FITMEN_AUTO" )
+	       && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
 	    {
 	      if ( groupbox_2DSA_IT.contains( triple_curr ) )
 		{
@@ -909,6 +952,9 @@ void US_Analysis_auto::gui_update( )
 	      curr_HPCAnalysisRequestID = "N/A";
 	      status_msg = "Job has been scheduled for deletion";
 	      status = "CANCELED";
+
+	      if ( fitmen_bad_vals  )
+		status = "FAILED";
 	      
 	      create_time = "N/A";
 	      update_time = "N/A";
@@ -991,7 +1037,11 @@ void US_Analysis_auto::gui_update( )
 			   At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
 			   If NO - stop timer, show Msg that everything completed.
 		      **/
-		      Completed_triples[ triple_curr_key ] = true;
+
+		      /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+		      //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
+		      /*******************************************************************************************/
+		      
 		      qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
 		      
 		    }
@@ -1005,7 +1055,9 @@ void US_Analysis_auto::gui_update( )
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
 
-		  Completed_triples[ triple_curr_key ] = true;
+		  /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+		  //Completed_triples[ triple_curr_key ] = true;
+		  /*******************************************************************************************/
 
 		  if ( status == "FAILED" || status == "failed" )
 		    {
@@ -1093,16 +1145,21 @@ void US_Analysis_auto::gui_update( )
 
       //Update autoflow record at Analysis completion
       update_autoflow_record_atAnalysis();
-      
-      QMessageBox::information( this,
-				tr( "All Triples Processed !" ),
-				msg_text  );
 
+      if ( failed_triples || canceled_triples )
+	{
+	  QMessageBox::information( this,
+				    tr( "All Triples Processed !" ),
+				    msg_text  );
+	}
+      
       in_gui_update  = false; 
       
-      //ALEXEY: Switch to next stage (Report) ?
-      
-      emit analysis_complete_auto( protocol_details_at_analysis );
+      //ALEXEY: Append with info on failed triples when bad_meniscus values:
+      protocol_details_at_analysis[ "failed" ] = "";
+
+      //ALEXEY: Switch to next stage (Report)
+      emit analysis_complete_auto( protocol_details_at_analysis );  
     }
 
   in_gui_update  = false; 
@@ -1982,9 +2039,9 @@ void US_Analysis_auto::simulateModel( )
   
   qDebug() << "SimMdl: speed_steps:" << simparams.speed_step.size();
   
-  QString mtyp = adv_vals[ "meshtype"  ];
-  QString gtyp = adv_vals[ "gridtype"  ];
-  QString bvol = adv_vals[ "bndvolume" ];
+  QString mtyp = adv_vals[ "meshtype"   ];
+  QString gtyp = adv_vals[ "gridtype"   ];
+  QString bvol = adv_vals[ "bandvolume" ];
   
   
   if ( gtyp.contains( "Constant" ) )
@@ -2288,20 +2345,28 @@ void US_Analysis_auto::show_results( )
 
    //distrib_plot_resids();        // plot residuals
 
-   // data_plot();                  // re-plot data+simulation
+   //data_plot();                  // re-plot data+simulation
 
-   // if ( rbmapd != 0 )
-   // {
-   //    bmd_pos  = rbmapd->pos();
-   //    rbmapd->close();
-   // }
 
-   rbmapd = new US_ResidsBitmap( resids );
-   // rbmapd->move( bmd_pos );
-   // rbmapd->show();
-
+   
    // plot3d();
 
+
+   // //ResBitMap
+   // if ( rbmapd != 0 )
+   //   {
+   //     // bmd_pos  = rbmapd->pos();
+   //     rbmapd->close();
+   //   }
+   
+   // rbmapd = new US_ResidsBitmap( resids );
+   // //rbmapd->move( bmd_pos );
+   // rbmapd->show();
+   // rbmapd->raise();
+   // //rbmapd->activateWindow();
+   // //////////////////////////////////////////
+
+   
    plotres();
    QApplication::restoreOverrideCursor();
 }
@@ -2423,7 +2488,9 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   resplotd = new US_ResidPlotFem( this, true );
+   //resplotd = new US_ResidPlotFem( this, true );
+   resplotd = new US_ResidPlotFem( this, QString("ANALYSIS") );
+
    //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    resplotd->setWindowFlags( Qt::Dialog );
@@ -2618,13 +2685,13 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   dbg_level  = US_Settings::us_debug();
 
-  adv_vals[ "simpoints" ] = "500";
-  adv_vals[ "bndvolume" ] = "0.015";
-  adv_vals[ "parameter" ] = "0";
-  adv_vals[ "modelnbr"  ] = "0";
-  adv_vals[ "meshtype"  ] = "ASTFEM";
-  adv_vals[ "gridtype"  ] = "Moving";
-  adv_vals[ "modelsim"  ] = "mean";
+  adv_vals[ "simpoints"  ] = "500";
+  adv_vals[ "bandvolume" ] = "0.015";
+  adv_vals[ "parameter"  ] = "0";
+  adv_vals[ "modelnbr"   ] = "0";
+  adv_vals[ "meshtype"   ] = "ASTFEM";
+  adv_vals[ "gridtype"   ] = "Moving";
+  adv_vals[ "modelsim"   ] = "mean";
 
   resids.clear();
   dataLoaded = false;
@@ -2851,12 +2918,13 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
 
 //Cancel all jobs if FITMEN for a channel was processed by other means: NO FM modles
-void US_Analysis_auto::delete_jobs_at_fitmen( QString triple_name )
+void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple_info )
 {
 
-  qDebug() << "At delete_jobs_at_fitmen: triple_name: " << triple_name;
-  
-  QString triple_n_copy = triple_name;
+  qDebug() << "At delete_jobs_at_fitmen: triple_name: " << triple_info[ "triple_name_key" ];
+
+  QString triple_name   = triple_info[ "triple_name_key" ];
+  QString triple_n_copy = triple_info[ "triple_name_key" ];
   QStringList triple_n_parts = triple_n_copy.split(".");
   QString channel_n = triple_n_parts[0] + "." + triple_n_parts[1];
 
@@ -2885,59 +2953,120 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QString triple_name )
 	  triple_list_affected << ana_details_affected[ "triple_name" ];
 	}
     }
-  
-  QMessageBox msg_delete;
-  msg_delete.setIcon(QMessageBox::Critical);
-  msg_delete.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
-  msg_delete.setWindowTitle(tr("Job Cancelation!"));
-  
-  QString msg_sys_text = QString("ATTENTION!\n\nThe FITMEN stage for triple %1 has been processed outside of the GMP framework. \nAll scheduled jobs will be canceled for this triple." )
-    .arg( triple_name );
-  
-  //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
-  msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
-    .arg( triple_list_affected.join(", ") );
-  
-  msg_delete.setText( msg_sys_text );
 
-  //QString msg_sys_text_info = QString("Do you want to proceed?");
-  //msg_delete.setInformativeText( msg_sys_text_info );
-  
-  QPushButton *Accept_sys    = msg_delete.addButton(tr("OK"),    QMessageBox::YesRole);
-  //QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
-  
-  msg_delete.exec();
-
-  if (msg_delete.clickedButton() == Accept_sys)
+  if ( !fitmen_bad_vals )
     {
-      //Send signal to autoflowAnalysis record ? 
-      qDebug() << "DELETION chosen !!";
-
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      QMessageBox msg_delete;
+      msg_delete.setIcon(QMessageBox::Critical);
+      msg_delete.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+      msg_delete.setWindowTitle(tr("Job Cancelation!"));
       
-      // Get the buffer data from the database
-      if ( db.lastErrno() != US_DB2::OK )
+      QString msg_sys_text = QString( tr( "ATTENTION!\n\nNo -FM models for triple %1 have been found. \n\n"
+					  "This means one of the following: \n"
+					  "1. No -FM models have been generated; \n"
+					  "2. The data have been analyzed outside of the GMP framework.\n\n"
+					  "All scheduled jobs will be canceled for this triple." ) )
+				      .arg( triple_name );
+            
+      //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+      if ( mwl_channel ) 
+	msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
+	  .arg( triple_list_affected.join(", ") );
+      
+      msg_delete.setText( msg_sys_text );
+      
+      //QString msg_sys_text_info = QString("Do you want to proceed?");
+      //msg_delete.setInformativeText( msg_sys_text_info );
+      
+      QPushButton *Accept_sys    = msg_delete.addButton(tr("OK"),    QMessageBox::YesRole);
+      //QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
+      
+      msg_delete.exec();
+      
+      if (msg_delete.clickedButton() == Accept_sys)
 	{
-	  QMessageBox::warning( this, tr( "Connection Problem" ),
-				tr( "Could not connect to database \n" ) +  db.lastError() );
-	  return;
+	  //Send signal to autoflowAnalysis record ? 
+	  qDebug() << "DELETION chosen !!";
+	  
+	  US_Passwd pw;
+	  US_DB2    db( pw.getPasswd() );
+	  
+	  // Get the buffer data from the database
+	  if ( db.lastErrno() != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Connection Problem" ),
+				    tr( "Could not connect to database \n" ) +  db.lastError() );
+	      return;
+	    }
+	  
+	  
+	  /** DEBUG **/
+	  // QMap <QString, QString > current_analysis;
+	  // current_analysis = read_autoflowAnalysis_record( &db, requestID );
+	  
+	  // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
+	  // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
+	  /* **********/
+	  
+	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+	  
 	}
-  
-  
-      /** DEBUG **/
-      // QMap <QString, QString > current_analysis;
-      // current_analysis = read_autoflowAnalysis_record( &db, requestID );
-      
-      // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
-      // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
-      /* **********/
-  
-      update_autoflowAnalysis_uponDeletion( &db, requestID );
-      update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
-   
     }
+  else
+    {
+      qDebug() << "DELETION DUE TO BAD Meniscus|Bottom values chosen !!";
+      qDebug() << "Reason for deletion -- " << triple_info[ "failed" ];
 
+      QMessageBox msg_delete_bad_vals;
+      msg_delete_bad_vals.setIcon(QMessageBox::Critical);
+      msg_delete_bad_vals.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+      msg_delete_bad_vals.setWindowTitle(tr("Job Cancelation!"));
+      
+      QString msg_sys_text_bv = QString( tr("ATTENTION!\n\n The meniscus fit for tiple %1 resulted in a best-fit value that lies outside "
+					    "of the considered range for the meniscus. "
+					    "This should not happen, unless: \n\n"
+					    "1. The initial meniscus was not selected correctly; \n"
+					    "2. The experimental data are non-ideal and cannot be modeled with the standard finite element model;\n"
+					    "3. The radial calibration of the instrument is incorrect. \n\n"
+					    "The user should examine the data manually and determine the cause for this discrepancy."
+					    "The automatic GMP processing for this triple cannot continue.\n"
+					    "All scheduled jobs will be canceled for this triple."
+					    ) ).arg( triple_name );
+	      
+      //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+      if ( mwl_channel ) 
+	msg_sys_text_bv += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
+	  .arg( triple_list_affected.join(", ") );
+      
+      msg_delete_bad_vals.setText( msg_sys_text_bv );
+      
+      //QString msg_sys_text_info = QString("Do you want to proceed?");
+      //msg_delete.setInformativeText( msg_sys_text_info );
+      
+      QPushButton *Accept_sys    = msg_delete_bad_vals.addButton(tr("OK"),    QMessageBox::YesRole);
+      //QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
+      
+      msg_delete_bad_vals.exec();
+      
+      if (msg_delete_bad_vals.clickedButton() == Accept_sys)
+	{
+	  US_Passwd pw;
+	  US_DB2    db( pw.getPasswd() );
+	  
+	  // Get the buffer data from the database
+	  if ( db.lastErrno() != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Connection Problem" ),
+				    tr( "Could not connect to database \n" ) +  db.lastError() );
+	      return;
+	    }
+	  
+	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+	}
+    }
+      
   //Restart timer:
   connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
   timer_update->start(5000);
@@ -2999,7 +3128,8 @@ void US_Analysis_auto::delete_job( QString triple_stage )
     .arg( triple_n )
     .arg( stage_n  );
 
-  if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+  //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+  if ( Process_2dsafm [ triple_n ] && mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) ) // don't we have to do this ONLY fro representative triple??
     msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, ongoing jobs for the following same-channel triples will be canceled as well: \n %1")
       .arg( triple_list_affected.join(",") );
   
@@ -3017,6 +3147,20 @@ void US_Analysis_auto::delete_job( QString triple_stage )
     {
       //Send signal to autoflowAnalysis record ? 
       qDebug() << "DELETION chosen !!";
+
+      //Dialog for a Comment, why triple(s) analyses are set for deletion:
+      bool ok;
+      QString msg = QString(tr("Put a comment describing reason for a STOP:"));
+      QString default_text = QString(tr("Reason for job CANCELLATION: "));
+      QString comment_t    = QInputDialog::getText( this,
+						    tr( "Reason for job CANCELLATION" ),
+						    msg, QLineEdit::Normal, default_text, &ok );
+
+      if ( !ok )
+	{
+	  return;
+	}
+      ////////////////////////////////////////////////////////////////////
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -3040,9 +3184,18 @@ void US_Analysis_auto::delete_job( QString triple_stage )
       update_autoflowAnalysis_uponDeletion( &db, requestID );
 
       // Now, if 2DSA or 2DSA-FM of the representative wvl in the MWL case: DELETE jobs for all other triples in a channel:
-      if ( Process_2dsafm [ triple_n ] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel ) 
-	update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+      QString other_chan_triples;
+      if ( Process_2dsafm [ triple_n ] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel )
+	{
+	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+
+	  if ( !triple_list_affected. isEmpty() )
+	    other_chan_triples = triple_list_affected.join(",");
+	}
       
+      //Also update autoflowStatus's "analysisCancel" JSON:
+      record_or_update_analysis_cancel_status( &db, triple_n, other_chan_triples, comment_t );
+           
     }
   else if ( msg_delete.clickedButton() == Cancel_sys )
     return;
@@ -3115,7 +3268,31 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   QString channel_name = triple_name_parts[0] + "." + triple_name_parts[1];
 
   qDebug() << "In update_statuses: triple_name_parts: " << triple_name_parts;
+
   
+  //Try for "FM_changed" || "FB_changed" keys in triple_info:
+  QString FMB_changed = triple_info. contains( "FMB_changed" ) ? triple_info[ "FMB_changed" ] : QString("");
+  
+  qDebug() << "In update_statuses: FMB_changed -- " << FMB_changed;
+
+  /* HOW to add && APPEND JSON in the DB ********
+
+  1. If field is empty, first add initial record:
+       UPDATE autoflowStatus set analysis='[{"2 / A / 260": "changed"}]' where ID=22;
+
+  2. If not empty (then and after)
+       UPDATE autoflowStatus set analysis=JSON_ARRAY_APPEND(analysis, '$', JSON_OBJECT('2 / B / 260', 'NO')) where ID=22;
+  **********************************************/
+ 
+  //Update autoflowStatus's 'analysis' field: per-channel (reference triple) basis, by whom:
+  US_Passwd pw;
+  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+    
+  record_or_update_analysis_meniscus_status( dbP, triple_curr_key, FMB_changed );
+  
+  
+  
+  // Now update autoflowAnalysis records:
   QStringList requestID_list; 
 
   if ( triple_curr_key.contains("Interference") )
@@ -3125,9 +3302,7 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
 
   qDebug() << "Channel_name, requestIDs to update: " << channel_name << requestID_list;
   
-  //Update
-  US_Passwd pw;
-  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+  
 
   // --- Before updating autoflowAnalysis records ---
   // --- MAKE sure that ALL original 2DSA stages for other wavelength in a channel (besides representative wvl) are completed
@@ -3140,6 +3315,136 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
 
   qDebug() << "Timer restarted after updating EditProfiles for channel -- " << channel_name;
 }
+
+
+//Keep track on meniscus (or bottom) deviations in FITMEN from the best fit:
+void US_Analysis_auto::record_or_update_analysis_cancel_status( US_DB2* db, QString triple_name, QString other_chan_triples, QString comment_t )
+{
+  // Check DB connection
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "Updating autoflowStatus's analysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qry.clear();
+
+  QString CancelTriples = triple_name;
+  if ( !other_chan_triples. isEmpty() )
+    CancelTriples += "," + other_chan_triples;
+  
+  QString CancelAction = "CANCELED, by " + fname + ", " + lname + "; COMMENT, " + comment_t;
+
+  if ( autoflowStatusID )
+    {
+      //update OR insert NEW Json
+      qry << "update_autoflowStatusAnalysisCancel_record"
+	  << QString::number( autoflowStatusID )
+	  << QString::number( autoflowID_passed )
+	  << CancelTriples
+	  << CancelAction;
+	  
+      db->query( qry );
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (Analysis {CANCELED triples}): "
+				"There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+      
+      return;
+    }
+  
+}
+
+
+//Keep track on meniscus (or bottom) deviations in FITMEN from the best fit:
+void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QString triple_name, QString FMB_changed )
+{
+  if ( FMB_changed.isEmpty() )
+    {
+      qDebug() << "FBM_changed EMPTY: It seems it's impossible to determine if meniscus| bottom was modified from the best FIT...";
+      return;
+    }
+    
+  // Check DB connection
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "Updating autoflowStatus's analysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
+      return;
+     }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN ANALYSIS, record autoflowStatus: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+  
+  QString analysisJson;   //  [{"6 / B / 260": "fitted"}]','6 / B / 260', 'fitted'
+   
+  QString analysisTriple = triple_name;
+  analysisTriple.replace( ".", " / ");
+
+  QString analysisAction = (FMB_changed == "YES") ? "modified" : "best fit selected";
+  analysisAction += ", by " + fname + ", " + lname;
+
+  // analysisJson += "[{";
+  // analysisJson += "\"" + analysisTriple + "\":\"" + analysisAction + "\"";  
+  // analysisJson += "}]";
+   
+  if ( autoflowStatusID )
+    {
+      //update OR insert NEW Json
+      qry << "update_autoflowStatusAnalysisFitmen_record"
+	  << QString::number( autoflowStatusID )
+	  << QString::number( autoflowID_passed )
+	// << analysisJson                            //ALEXEY: not needed with new proc.
+	  << analysisTriple
+	  << analysisAction;
+	  
+      db->query( qry );
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (Analysis {FMB}): There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+      
+      return;
+    }
+
+  return;
+}
+
 
 // slot to update autoflowAnalysis record at fitmen stage WHEN already treated from different session
 void US_Analysis_auto::editProfiles_updated_earlier ( void )
@@ -3185,6 +3490,8 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
   
   analysis_details = read_autoflowAnalysis_record(  &dbP, requestID );
 
+  qDebug() << "In check_fitmen 1: -- " << requestID << stageName;
+  
   if ( !analysis_details.size() )
     {
       //no record, so analysis completed/cancelled and already in the autoflowAnalysisHistory
@@ -3206,7 +3513,12 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
       QString status_gen     = analysis_details["status"];
       QString nextWaitStatus = analysis_details[ "nextWaitStatus" ] ;
       QString status_json    = analysis_details["status_json"];
-      
+
+      qDebug() << "In check_fitmen 2: -- "
+	       << status_gen     << "\n"
+	       << nextWaitStatus << "\n"
+	       << status_json ;
+        
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
 	{
@@ -3218,10 +3530,18 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
       
       //look for FITMEN | FITMEN_AUTO stage in "submitted" stages
       QString stage_name = submitted.toString();
+
+      qDebug() << "In check_fitmen 3: -- "
+	       << submitted.toString() <<  stageName;
+	
       if ( submitted.toString() == stageName )
 	{
+	  qDebug() << "In check_fitmen 4: ";
+	  
 	  if ( status_gen != "WAIT" )
 	    {
+	      qDebug() << "In check_fitmen 5: ";
+	      
 	      QMessageBox::information( this,
 					QString( tr( "%1 already processed" )).arg( stageName ),
 					QString( tr( "It appears that %1 stage has already been processed by "
@@ -3234,6 +3554,7 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
 	}
       else
 	{
+	  qDebug() << "In check_fitmen 6: ";
 	  //FITMEN | FITMEN_AUTO  is no in "submitted" stages anymore, so it's processed:
 	  QMessageBox::information( this,
 				    QString( tr( "%1 already processed" )).arg( stageName ),
@@ -3346,7 +3667,7 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   le_runID -> setObjectName("runID");
 
   //Delete button
-  QPushButton* pb_delete = new QPushButton( tr( "Delete" ) );
+  QPushButton* pb_delete = new QPushButton( tr( "Cancel" ) );
   pb_delete-> setObjectName("delete");
 
   //Overlay button
@@ -4910,6 +5231,7 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
                               " that you \"Cancel\" the \"Update Edit\"\n"
                               "and retry after setting a reasonable value." );
       }
+
    }
    else if ( botnew != 0.0  &&  botnew < BOTT_LOWVAL )
    {
@@ -4924,33 +5246,15 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
    if ( bad_vals )
    {
-      int response   = QMessageBox::critical( (QWidget*)this,
-                                               mhdr,
-                                               mmsg,
-                                               QMessageBox::Save,
-                                               QMessageBox::Cancel );
+     //cancel job && restart timer();
+     fitmen_bad_vals = true;
+     QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
+     triple_information[ "failed" ] = reason_for_failure;
+     delete_jobs_at_fitmen( triple_information );
 
-      if ( response == QMessageBox::Cancel )
-      {
-         QMessageBox::information( (QWidget*)this,
-                                   tr( "Canceled" ),
-                                   tr( "\"Update Edit\" has been canceled!" ) );
-
-	 //-- Revert autoflowAnalysisSatges back to 'unknown'
-	 QString requestID = triple_information[ "requestID" ];
-	 revert_autoflow_analysis_stages_record( requestID );
-	 //---------------------------------------------------//
-	 
-         return;
-      }
-      else
-      {
-         QMessageBox::information( (QWidget*)this,
-                                   tr( "Saving" ),
-                                   tr( "\"Update Edit\" will proceed!" ) );
-      }
+     return;
    }
-
+   
    mmsg           = "";
 
    //ALEXEY: Set progressDialog
@@ -4986,19 +5290,18 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 DbgLv(1) << " eupd:  mennew" << mennew << "lefval" << lefval << "botnew" << botnew;
 DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << ncmlin << ncblin;
 
-      if ( mennew >= lefval )
+      if ( mennew >= lefval )  //ALEXEY: HERE!!!!
       {
-         QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
-            tr( "The selected Meniscus value, %1 , extends into the data"
-                " range whose left-side value is %2 . This Edit update"
-                " cannot be performed!" ).arg( mennew ).arg( lefval ) );
-
-	 //-- Revert autoflowAnalysisSatges back to 'unknown'
-	 QString requestID = triple_information[ "requestID" ];
-	 revert_autoflow_analysis_stages_record( requestID );
-	 //---------------------------------------------------//
-	 
-         return;
+	//cancel job && restart timer();
+	fitmen_bad_vals = true;
+	QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+	  .arg( mennew )
+	  .arg( lefval );
+	
+	triple_information[ "failed" ] = reason_for_failure;
+	delete_jobs_at_fitmen( triple_information );
+	
+	return;
       }
 
       demval        = s_meni.length() - ncmval;  // Deltas old,new values
@@ -5153,13 +5456,19 @@ DbgLv(1) << " eupd:       edtext len" << edtext.length();
          }
 DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 
-         if ( mennew >= lefval )
+         if ( mennew >= lefval )  //ALEXEY: HERE !!!
          {
-            QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
-               tr( "The selected Meniscus value, %1 , extends into the data"
-                   " range whose left-side value is %2 . This Edit update"
-                   " cannot be performed!" ).arg( mennew ).arg( lefval ) );
-            continue;
+	    //cancel job && restart timer();
+	    fitmen_bad_vals = true;
+	    QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+	      .arg( mennew )
+	      .arg( lefval );
+	    
+	    triple_information[ "failed" ] = reason_for_failure;
+	    delete_jobs_at_fitmen( triple_information );
+
+	    return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
+            //continue;
          }
 
          demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings
@@ -5268,7 +5577,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
    //Set progress to max
    if ( progress_msg_fmb != NULL )
      {
-       progress_msg_fmb->setValue( progress_msg->maximum() );
+       progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
        progress_msg_fmb->close();
      }
 
@@ -5867,6 +6176,8 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
 
             // No need to remove noises from DB; model remove did that
          }
+
+	 //ALEXEY: crashed here!!!! After deleting noises
       }
    }
 

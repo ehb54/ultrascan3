@@ -370,3 +370,20 @@ qDebug() << "sRaDa: setBounding... zminr zmax" << zminr << zmax;
 qDebug() << "SD:sRaDa: RETURN:";
 }
 
+void US_SpectrogramData::value( int x, int y, double &x_out, double &y_out, double &z_out ) const {
+   x_out  = (double)x / xinc + xmin ;   // real x pixel position
+   y_out = ymax - (double)y / yinc;   // real y pixel position
+   int jx     = (int)x;               // integral x pixel
+   int jy     = (int)y;               // integral y pixel
+   int jr1    = jy * nxpsc + jx;       // overall raster position
+   int mxr    = nxypt - 1;             // max raster position index
+
+   if ( jr1 < 0  ||  jr1 > mxr )
+   {  // for x,y outside raster, return z-minimum
+      z_out = 0.0;
+      return;
+   }
+
+   z_out = rdata.at( jr1 );       // possible output value
+}
+

@@ -17,6 +17,8 @@
 #include "us_datafiles.h"
 #include "us_select_item.h"
 
+#include "../us_esigner_gmp/us_esigner_gmp.h"
+
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -48,8 +50,12 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connection_status = false;
    automode = false;
    usmode = false;
+   us_prot_dev_mode = false;
+   us_abde_mode = false;
+   
    global_reset = false;
    instruments_in_use.clear();
+   instruments_no_permit.clear();
    ScanCount_global       = 0;
    ScanCount_global_int   = 0;
    TotalWvlNum_global     = 0;
@@ -113,6 +119,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanUpload, SIGNAL( expdef_submitted( QMap < QString, QString > &) ),
             this,       SLOT  ( optima_submitted( QMap < QString, QString > & ) ) );
 
+   connect( epanUpload, SIGNAL( expdef_submitted_dev( QMap < QString, QString > &) ),
+            this,       SLOT  ( submitted_protDev( QMap < QString, QString > & ) ) );
+
    connect( epanAProfile->sdiag, SIGNAL( back_to_pcsa_signal() ),
             this,       SLOT  ( back_to_pcsa() ) );
 
@@ -125,9 +134,12 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )),
             this,        SLOT(   disable_tabs_buttons( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void )),
-              this,      SLOT(   enable_tabs_buttons_readonly( void ) ));
+	    this,      SLOT(   enable_tabs_buttons_readonly( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),
-              this,      SLOT(   enable_tabs_buttons( void ) ));
+	    this,      SLOT(   enable_tabs_buttons( void ) ));
+
+   connect( epanGeneral, SIGNAL( go_back_to_run_manager( void )),
+	    this,      SLOT( switch_to_run_manager( void ) ));
 
    //int min_width = tabWidget->tabBar()->width();
 
@@ -152,6 +164,13 @@ void US_ExperimentMain::back_to_pcsa( void )
   
 }
 
+
+void US_ExperimentMain::switch_to_run_manager( void )
+{
+  reset();
+
+  emit back_to_initAutoflow();
+}
      
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
@@ -229,6 +248,17 @@ US_AnaProfile* US_ExperimentMain::get_aprofile( )
   return &(epanAProfile->sdiag->currProf);
 }
 
+US_AnaProfile* US_ExperimentMain::get_aprofile_loaded( )
+{
+  return &(epanAProfile->sdiag->loadProf);
+}
+
+void US_ExperimentMain::set_loadAProf ( US_AnaProfile aprof_curr_read )
+{
+  epanAProfile->sdiag->loadProf = aprof_curr_read;
+}
+
+
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
 
@@ -247,18 +277,217 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
   reset();
 
   instruments_in_use.clear();
+  instruments_no_permit.clear();
+  isOperatorAny = true;
+  
   qDebug() << "OCCUPIED IINSTRUMENTS: " << occupied_instruments;
-
+  
   for ( int i=0; i < occupied_instruments.size(); i++)
     instruments_in_use << occupied_instruments[i];
 
+  //and re-init epanGeneral:
+  epanGeneral -> initPanel();
+
+  if ( !isOperatorAny )
+    {
+      emit close_expsetup_msg();
+      
+      //If UL<3 && not an operator (on any instrument), STOP!
+      QMessageBox * msg_instr_not_avail = new QMessageBox(this);
+      msg_instr_not_avail->setIcon(QMessageBox::Critical);
+      msg_instr_not_avail->setWindowTitle(tr("Optimas' Permissions NOT set!"));
+      msg_instr_not_avail->setText(tr( "<font color='red'><b>ATTENTION:</b></font> There are no permissions for the current user <br>"
+				       "to use Optima instruments from the list below: <br><br>"
+				       "<b>%1</b> <br><br>"
+				       "[Current user is NOT defined as an operator!]"
+				       "<br><br> The program will return to the Run Manager..."
+				       )
+				   .arg( instruments_no_permit. join(", ") ) );
+      
+      msg_instr_not_avail->exec();
+
+      reset();
+      emit back_to_initAutoflow();
+      //go_back_to_run_manager();
+
+      return;
+    }
+    
+  
   //Re-initialize Instruments based on  the passed excluded list
   epanRotor->setFirstLab();
 
   //qApp->processEvents();
   //msg_expsetup->close();
   emit close_expsetup_msg();
+
 }
+
+//Accepting protocol details from PROTOCOL DEV program:
+void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString > & protocol_details )
+{
+  reset();
+  
+  qDebug() << "PROTOCOL DEV MODE !!!: ";
+  us_prot_dev_mode = true;
+
+  QString pname     = protocol_details[ "protocolName" ];
+  int invID_passed  = protocol_details[ "invID_passed" ].toInt();
+
+  qDebug() << "In US_Exp: Protocol Name: "     << protocol_details[ "protocolName" ];
+  qDebug() << "In US_Exp: InvID: "             << protocol_details[ "invID_passed" ];
+  
+  //Now, load passed protocol with enabling ONLY 8. AProfile && 9. Submit tab
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  //Important: set investigator in US_Settings!!!
+  QStringList query;
+  query << "get_person_info" << protocol_details[ "invID_passed" ];
+  db.query( query );
+  db.next();
+  
+  QString firstName    = db.value( 0 ).toString();
+  QString lastName     = db.value( 1 ).toString();
+
+  QString s = lastName + ", " + firstName;
+  US_Settings::set_us_inv_name( s );
+  US_Settings::set_us_inv_ID( invID_passed );
+
+  QString inv_text = invID_passed + ": " +  US_Settings::us_inv_name();
+  currProto.investigator  = inv_text;
+  solutions_change = true;
+
+  //re-read protocol list for current investigator
+  QList< QStringList >  protocolsdata;
+  QStringList new_protlist;
+  US_ProtocolUtil::list_all( protocolsdata, &db );
+  
+  for ( int ii = 0; ii < protocolsdata.count(); ii++ )
+    new_protlist << protocolsdata[ ii ][ 0 ];
+
+  setProtos( new_protlist );
+  ////////////////////////////////////////////////////////////////////
+  
+  QString xmlstr( "" );
+  int protoID = US_ProtocolUtil::read_record_auto( pname, invID_passed,  &xmlstr, NULL, &db );
+      
+  //le_protocol->setText( pname );
+  currProto.protoID = protoID;
+  loadProto.protoID = protoID;
+  
+  // Now that we have a protocol XML, convert it to internal controls
+  QXmlStreamReader xmli( xmlstr );
+  loadProto.fromXml( xmli );
+  loadProto.protoID = protoID;
+  
+  // Initialize the current protocol from the loaded one; set temperature
+  currProto = loadProto;
+  epanGeneral -> loaded_proto = 1;
+  
+  qDebug() << "In load_protocol: currProto.investigator 1 --  " <<  currProto.investigator;
+
+  //set runName && label straight from the autoflow record:
+  currProto.runname   = protocol_details[ "experimentName" ];
+  currProto.exp_label = protocol_details[ "label" ];
+  
+  initPanels();
+  
+  qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
+
+  //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
+  US_AnaProfile aprof_curr_read   = *(get_aprofile());
+  set_loadAProf ( aprof_curr_read );
+  
+  //Making Read-only
+  set_tabs_buttons_readonly();
+
+  //copy protocol details params
+  protocol_details_passed.clear();
+  protocol_details_passed = protocol_details;
+  
+  emit close_expsetup_msg();
+}
+
+
+void US_ExperimentMain::set_abde_mode_aprofile( void )
+{
+  qDebug() << "[SETTING] ABDE MODE: ";
+  us_abde_mode = true;
+  epanAProfile->sdiag-> abde_mode_aprofile = true;
+  
+  //abde_sv_mode_change_reset_reports( "ABDE" ); 
+}
+
+void US_ExperimentMain::unset_abde_mode_aprofile( void )
+{
+  qDebug() << "[UNSETTING] ABDE MODE: ";
+  us_abde_mode = false;
+  epanAProfile->sdiag-> abde_mode_aprofile = false;
+  
+  //re-initialize respectively AProfile's report/reportItem portions
+  // abde_sv_mode_change_reset_reports( "SV" ); 
+  
+}
+
+//re-initialize respectively AProfile's report/reportItem portions
+void US_ExperimentMain::abde_sv_mode_change_reset_reports( QString exptype )
+{
+  bool abde_mode = ( exptype == "ABDE" ) ? true : false;
+  qDebug() << "in abde_sv_mode_change_reset_reports(): abde_mode ?" << abde_mode;
+  
+  //Aprofile
+  US_AnaProfile* aprof = get_aprofile();
+
+  //deal with general report  sets
+  
+
+  //deal with ch_reports
+  QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+  
+  for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+            
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString c_wvl = tri.key();
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].report_changed = false;;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].exp_time_changed = false;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].DBread = false;
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].interf_report_changed = false;
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].reportItems.clear();
+	  US_ReportGMP::ReportItem initItem;
+	  initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
+	  initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
+
+	  qDebug() << "type, method -- " << initItem.type << ", " << initItem.method;
+	  initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
+	  initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
+	  initItem.integration_val  = 0.57;
+	  initItem.tolerance        = 10;
+	  initItem.total_percent    = 95;
+	  initItem.combined_plot    = 1;
+	  initItem.ind_combined_plot  = 1;
+
+	  epanAProfile->sdiag->currProf.ch_reports[ chan_desc ] [ c_wvl ].reportItems.push_back( initItem );
+
+	}
+    }
+}
+
 
 void US_ExperimentMain::us_mode_passed( void )
 {
@@ -266,7 +495,11 @@ void US_ExperimentMain::us_mode_passed( void )
   usmode = true;
   this->tabWidget->removeTab(7);
   this->tabWidget->setTabText( 7, "8: Submit");
+  
 }
+
+
+	  
 
 void US_ExperimentMain::auto_mode_passed( void )
 {
@@ -283,6 +516,7 @@ void US_ExperimentMain::auto_mode_passed( void )
 
   this->pb_close->hide();
 
+  
 }
 
 // Reset parameters to their defaults
@@ -306,6 +540,20 @@ void US_ExperimentMain::us_exp_clear( QString &protocolName )
 
 // When run submitted to Optima
 void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_details )
+{
+  tabWidget->setCurrentIndex( 0 );
+  emit to_live_update( protocol_details );
+}
+
+// // [OLD - when starting from 4. EDIT ] When run submitted for ProtDev
+// void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_details )
+// {
+//   tabWidget->setCurrentIndex( 0 );
+//   emit to_editing_data( protocol_details );
+// }
+
+// When run submitted for ProtDev
+void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_details )
 {
   tabWidget->setCurrentIndex( 0 );
   emit to_live_update( protocol_details );
@@ -358,6 +606,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    ct_tedelay->setValue     ( 10 );
    ct_tedelay->adjustSize   ();
 
+   //IMPORTANT: set your own credentials (as in DB)
+   update_inv();
+   
    // Set up an approprate investigator text
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -427,6 +678,8 @@ for (int jj=0;jj<gxentrs.count();jj++)
             this,            SLOT(   check_empty_runname(const QString &) ) );
    connect( le_runid,        SIGNAL( editingFinished()  ),
             this,            SLOT(   run_name_entered() ) );
+   connect( le_label,        SIGNAL( editingFinished()  ),
+            this,            SLOT(   label_name_entered() ) );
    connect( pb_project,      SIGNAL( clicked()          ),
             this,            SLOT(   sel_project()      ) );
    connect( pb_investigator, SIGNAL( clicked()          ),
@@ -516,6 +769,14 @@ DbgLv(1) << "EGGe:  gP: prnames count" << prnames.count()
    return prnames.count();       // Return the current list count
 }
 
+// Sets a new protocol names list and data entries list
+void US_ExperGuiGeneral::setProtos( QStringList new_prnames )
+{
+  pr_names.clear();
+  pr_names = new_prnames; 
+}
+
+
 // Update protocol name list and data list from an entry
 bool US_ExperGuiGeneral::updateProtos( const QStringList prentry )
 {
@@ -526,6 +787,50 @@ bool US_ExperGuiGeneral::updateProtos( const QStringList prentry )
    protdata << prentry;          // Append to the data entries list
 
    return true;
+}
+
+// Verify valid label name (possible modify for valid-only characters)
+void US_ExperGuiGeneral::label_name_entered( void )
+{
+  QString lname     = le_label->text();
+  QString old_lname = lname;
+  bool changed      = false;
+  
+  /*** ALEXEY: RegExp COMMENTED OUT for now ****************************************/
+  /*
+  QRegExp rx( "[^A-Za-z0-9_-]" );
+  lname.replace( rx,  "_" );   //ALEXEY - we may use alpha-numeric only, but not nessessarily..
+  
+  if ( lname != old_lname )
+    {  // Report on invalid characters replaced
+      QMessageBox::warning( this,
+			    tr( "Label Changed" ),
+			    tr( "The label name has been changed. It may consist only\n"
+				"of alphanumeric characters or underscore or hyphen.\n"
+				"New label:\n  " )
+			    + lname );
+      changed           = true;
+    }
+  */
+  /***********************************************************************************/
+  
+  // Limit label's length to 60 characters
+  if ( lname.length() > 60 )
+    {
+      QMessageBox::warning( this,
+			    tr( "Label Name Too Long" ),
+			    tr( "The label name may be at most\n"
+				"60 characters in length." ) );
+      lname             = lname.left( 60 );
+      changed           = true;
+    }
+  qDebug() << "Exp:Gen:Label: changed" << changed;
+  
+  if ( changed )
+    {  // Replace runID in line edit box
+      le_label->setText( lname );
+      currProto->exp_label = lname;
+    }
 }
 
 // Verify valid run name (possible modify for valid-only characters)
@@ -590,11 +895,12 @@ void US_ExperGuiGeneral::sel_project( void )
 // Select DB investigator
 void US_ExperGuiGeneral::sel_investigator( void )
 {
-   int investID     = US_Settings::us_inv_ID();
+   int investID      = US_Settings::us_inv_ID();
    int old_investID  = investID;
 
    qDebug() << "Old invID: " << investID;
 
+   //US_Investigator* dialog = new US_Investigator( "AUTO", true, investID );
    US_Investigator* dialog = new US_Investigator( true, investID );
    check_user_level();
    dialog->override_permit( usr_enab );
@@ -610,6 +916,7 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
    DbgLv(1) << "User Level: " << US_Settings::us_inv_level();
    qDebug() << "NEW invID: " << investID;
+   //qDebug() << "InvID from currProto: " << currProto->investigator.split(":")[0];
 
 
    // ALEXEY: Re-read in summary information on all existing run protocols when user changed
@@ -626,7 +933,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
       US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
       US_ProtocolUtil::list_all( protdata, dbP );
-
+      //US_ProtocolUtil::list_all_auto( protdata, dbP );
+      
       for ( int ii = 0; ii < protdata.count(); ii++ )
          pr_names << protdata[ ii ][ 0 ];
 DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
@@ -674,7 +982,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
    check_runname();
 
-    qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
+   qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
 
 }
 
@@ -770,13 +1078,27 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
       mainw->currProto.runname = rname;
    loaded_proto = 1;
 
-   // If there is a linked AnalysisProfile, add it
-
+   //if ABDE protocol, or NOT
+   if ( mainw->currProto.rpRotor.exptype == "Buoyancy" )
+     {
+       mainw-> set_abde_mode_aprofile();
+       mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
+     }
+   else
+     {
+       mainw->unset_abde_mode_aprofile();
+       mainw-> abde_sv_mode_change_reset_reports( "SV" ); 
+     }
+   
    // Initialize all other panels using the new protocol
 
    qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
       
    mainw->initPanels();
+   // If there is a linked AnalysisProfile, copy to loadAProto!!!
+   //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
+   US_AnaProfile aprof_curr_read   = *(mainw->get_aprofile());
+   mainw->set_loadAProf ( aprof_curr_read );
 
    qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto->investigator;
    
@@ -807,17 +1129,18 @@ void US_ExperGuiGeneral::changed_protocol( void )
 
    if ( pr_names.contains( protoname )  ||  protoname.trimmed() == "" )
    {
-      QString msg          =
-         tr( "The protocol name given<br/>" )
-         +  "  ( <b>" + protoname + "</b> )<br/>"
-         + tr( "is already being used or empty.  It will need to be<br/>"
-               "changed if/when this protocol is saved.<br/><br/>"
-               "If you plan to make changes to this protocol,<br/>"
-               "it is suggested that you change it's name<br/>"
-               "(description text) at this time." );
-      QMessageBox::information( this,
-                                tr( "Duplicate Run Protocol Name" ),
-                                msg );
+     //The message below does NOT seem to be needed: 
+      // QString msg          =
+      //    tr( "The protocol name given<br/>" )
+      //    +  "  ( <b>" + protoname + "</b> )<br/>"
+      //    + tr( "is already being used or empty.  It will need to be<br/>"
+      //          "changed if/when this protocol is saved.<br/><br/>"
+      //          "If you plan to make changes to this protocol,<br/>"
+      //          "it is suggested that you change it's name<br/>"
+      //          "(description text) at this time." );
+      // QMessageBox::information( this,
+      //                           tr( "Duplicate Run Protocol Name" ),
+      //                           msg );
    }
    else
    {
@@ -886,14 +1209,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
 
-   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine, Operator and Experiment Type " ) );
+   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
    QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
    QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
 
-   QLabel*      lb_operator   = us_label( tr( "Select Operator:" ) );
+                lb_operator   = us_label( tr( "Select Operator:" ) );
                 cb_operator   = new QComboBox( this );
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
@@ -926,7 +1249,122 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
    genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
 
+   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
+
+   //[NEW] Add gui for assigning operator(s) && reviewer(s)
+   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
+      
+   lb_operator_reviewer_banner    = us_banner( tr( "Assign Operator and Reviewer(s) " ) );
+   QFontMetrics m (lb_operator_reviewer_banner -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   lb_operator_reviewer_banner  -> setFixedHeight  (1.5 * RowHeight);
+   
+   lb_choose_oper      = us_label( "Choose Operator:" );
+   lb_choose_rev       = us_label( "Choose Reviewer:" );
+   lb_choose_appr      = us_label( "Choose Approver:" );
+   lb_choose_sme       = us_label( "Choose SME:" );
+   lb_opers_to_assign  = us_label( "Operator List:" );
+   lb_revs_to_assign   = us_label( "Reviewer List:" );
+   lb_apprs_to_assign  = us_label( "Approver List:" );
+   lb_smes_to_assign   = us_label( "SME List:" );
+
+   pb_add_oper      = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_rev       = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_appr      = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
+   pb_add_sme       = us_pushbutton( tr( "Add to List" ) );
+   pb_remove_sme    = us_pushbutton( tr( "Remove Last" ) );
+
+   te_opers_to_assign    = us_textedit();
+   //te_opers_to_assign    ->setTextColor( Qt::blue );
+   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_opers_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_opers_to_assign, true );
+
+   te_revs_to_assign    = us_textedit();
+   //te_revs_to_assign    ->setTextColor( Qt::blue );
+   te_revs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_revs_to_assign, true );
+
+   te_apprs_to_assign    = us_textedit();
+   //te_apprs_to_assign    ->setTextColor( Qt::blue );
+   te_apprs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_apprs_to_assign, true );
+
+   te_smes_to_assign    = us_textedit();
+   //te_smes_to_assign    ->setTextColor( Qt::blue );
+   te_smes_to_assign    -> setFixedHeight  ( RowHeight * 3 );
+   te_smes_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
+					 US_GuiSettings::fontSize() - 1) );
+   us_setReadOnly( te_smes_to_assign, true );
+  
+   cb_choose_operator   = new QComboBox( this );
+   cb_choose_rev        = new QComboBox( this );
+   cb_choose_appr       = new QComboBox( this );
+   cb_choose_sme        = new QComboBox( this );
+
+   cb_choose_operator -> setObjectName("ChooseOper");
+   cb_choose_rev      -> setObjectName("ChooseRev");
+   cb_choose_appr     -> setObjectName("ChooseAppr");
+   cb_choose_sme      -> setObjectName("ChooseSme");
+   
+   row = 0;
+   //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
+   revOperGMPRunGrid -> addWidget( lb_operator_reviewer_banner,row++, 0, 1, 15 );
+   
+   revOperGMPRunGrid -> addWidget( lb_choose_oper,         row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_operator,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_oper,            row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_choose_rev,          row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_rev,          row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_rev,             row++,   13, 1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_opers_to_assign,     row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_opers_to_assign,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_oper,         row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_revs_to_assign,      row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_revs_to_assign,      row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_rev,          row++,   13, 1,  2 );
+
+   //Appr.
+   revOperGMPRunGrid -> addWidget( lb_choose_appr,         row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_appr,         row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_appr,            row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_choose_sme,         row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( cb_choose_sme,         row,     10,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_add_sme,            row++,   13,  1,  2 );
+
+
+   revOperGMPRunGrid -> addWidget( lb_apprs_to_assign,     row,     0,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_apprs_to_assign,     row,     2,  1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_appr,         row,     5,  1,  2 );
+
+   revOperGMPRunGrid -> addWidget( lb_smes_to_assign,      row,     8,  1,  2 );
+   revOperGMPRunGrid -> addWidget( te_smes_to_assign,      row,     10, 1,  3 );
+   revOperGMPRunGrid -> addWidget( pb_remove_sme,          row,     13, 1,  2 );
+   
+   
+   connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
+   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
+   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
+   connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
+   connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
+   connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
+   connect( pb_add_sme, SIGNAL( clicked() ), SLOT ( addSmetoList() ) );
+   connect( pb_remove_sme, SIGNAL( clicked() ), SLOT ( removeSmefromList() ) );
+   
    panel->addLayout( genL );
+   panel->addLayout( revOperGMPRunGrid ); 
    panel->addStretch();
 
    US_Passwd pw;
@@ -959,6 +1397,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    savePanel();
    changed         = false;
    message_instr_shown = false;
+
+   //hide Operator Info:
+   lb_operator -> hide();
+   cb_operator -> hide();
 
    initPanel();
 
@@ -1030,7 +1472,7 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
    //ALEXEY identify instruments & operators, fill Gui elements
    US_Rotor::Lab lab_selected;
    lab_selected.readDB( labID, dbP );
-   instruments = lab_selected.instruments;
+   instruments = lab_selected.instruments;   //ALEXEY: operators (per instrument) are read here
 
    //Instruments
    sl_optimas.clear();
@@ -1058,7 +1500,18 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
                }
             }
 
-            if ( !optima_in_use)
+	    //compare to instruments_no_permit (as operator for current user) List:
+	    bool optima_no_permit = false;
+	    for (int ll = 0; ll < mainw->instruments_no_permit.size(); ll++)
+            {
+               if ( instrument.name == mainw->instruments_no_permit[ll] )
+               {
+                  optima_no_permit = true;
+                  break;
+               }
+            }
+	    
+            if ( !optima_in_use && !optima_no_permit )
             {
                sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
                qDebug() << "ASSIGNING FREE INSTRUMENTS: " << instrument.name;
@@ -1122,12 +1575,41 @@ void US_ExperGuiRotor::changeOptima( int ndx )
    currentOperator = cb_operator->currentText();
    
    sl_operators.clear();
+   int inv_lev    = US_Settings::us_inv_level();
+   int inv_id     = US_Settings::us_inv_ID();
+
+   //Clear cb_choose_operator [assign] & rebuild
+   cb_choose_operator -> clear();
+   te_opers_to_assign -> clear();
+   
    QList< US_Rotor::Operator > operators = currentInstrument.operators;
    foreach ( US_Rotor::Operator oper, operators )
    {
       qDebug() << "Operator: " << oper.lname;
+
+      // //Here: if UL<3, enforce operator to be ONLY the current non-admin user:
+      // if ( inv_lev < 3 )
+      // 	{
+      // 	  if ( inv_id == oper.ID )
+      // 	    {
+      // 	      sl_operators << QString::number( oper.ID )
+      // 		+ ": " + oper.fname + " " + oper.lname;
+
+      // 	      break;
+      // 	    }
+      // 	}
+      // else
+      // 	{
+	  
+      // 	  sl_operators << QString::number( oper.ID )
+      // 	    + ": " + oper.fname + " " + oper.lname;
+      // 	}
+      
       sl_operators << QString::number( oper.ID )
-                      + ": " + oper.fname + " " + oper.lname;
+	+ ": " + oper.fname + " " + oper.lname;
+
+      
+      cb_choose_operator ->addItem( QString::number( oper.ID ) + ". " + oper.lname + ", " + oper.fname );
    }
    cb_operator->clear();
    cb_operator->addItems( sl_operators );
@@ -1217,6 +1699,24 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       QMessageBox::information( this,
          tr( "NOTE:  Rotor Changed" ),
          tr( "Cells and all subsequent tabs will be reset upon initialization."));
+
+
+      //Do actual reset:
+      /* e.g, for solutions:
+       rpSolut             = &(mainw->currProto.rpSolut);
+        {
+       nschan               = 0;
+       nuniqs               = 0;
+       chsols.clear();
+       solus .clear();
+       sids  .clear();
+       }
+      *******************/
+      mainw->currProto.rpSolut.nschan = 0;
+      mainw->currProto.rpSolut.nuniqs = 0;
+      mainw->currProto.rpSolut.chsols.clear();
+      mainw->currProto.rpSolut.solus .clear();
+      mainw->currProto.rpSolut.sids  .clear();
    }
 
    curr_rotor          = ndx;
@@ -1379,6 +1879,9 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_count            = us_spinbox();
    sb_count            ->setMinimum(1);  //ALEXEY BUG FIX
 
+   if ( mainw->automode && !mainw->usmode )
+     sb_count            ->setEnabled( false );
+   
    cb_prof             = new QComboBox( this );
    ct_speed            = us_counter( 2, 1000,  80000, 100 );
    ct_accel            = us_counter( 2,   50,   1000,  50 );
@@ -3865,6 +4368,8 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
       {
          comment       += ", " + mancmt;
          //comstrngs    <<  "," + mancmt;
+
+	 qDebug() << "Updated comment is: " << comment;
       }
    }
 
@@ -4078,18 +4583,21 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
          //                               : ( cc_osyss[ ii ]->button( 1 )->isChecked()
          //                                 ? cc_osyss[ ii ]->button( 1 )->text()
          //                                 : "" );
-	 //ALEXEY: set checked by default for UV/vis
-	 rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
-         rpOptic->chopts[ ii ].scan2   = ii > 3
-                                       ? notinst
-                                       : ( cc_osyss[ ii ]->button( 2 )->isChecked()
-                                         ? cc_osyss[ ii ]->button( 2 )->text()
-                                         : "" );
-         rpOptic->chopts[ ii ].scan3   = ii > 3
-                                       ? notinst
-                                       : ( cc_osyss[ ii ]->button( 3 )->isChecked()
-                                         ? cc_osyss[ ii ]->button( 3 )->text()
-                                         : "" );
+	 // //ALEXEY: set checked by default for UV/vis
+	 // rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
+         // rpOptic->chopts[ ii ].scan2   = ii > 3
+         //                               ? notinst
+         //                               : ( cc_osyss[ ii ]->button( 2 )->isChecked()
+         //                                 ? cc_osyss[ ii ]->button( 2 )->text()
+         //                                 : "" );
+         // rpOptic->chopts[ ii ].scan3   = ii > 3
+         //                               ? notinst
+         //                               : ( cc_osyss[ ii ]->button( 3 )->isChecked()
+         //                                 ? cc_osyss[ ii ]->button( 3 )->text()
+         //                                 : "" );
+	 rpOptic->chopts[ ii ].scan1   = "";
+	 rpOptic->chopts[ ii ].scan2   = "";
+	 rpOptic->chopts[ ii ].scan3   = "";
 #endif
       }
 DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";
@@ -4263,10 +4771,14 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    sdiag->currProf.protoID
                        = mainw->currProto.protoID;
    mainw->currAProf    = sdiag->currProf;
+   mainw->loadAProf    = sdiag->currProf;
 
+   sdiag->loadProf = sdiag->currProf;
+   
    qDebug() << "EXP_APROFILE_GUI -- FIRST intitialization: sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
    sdiag->show();
 }
+
 
 //Resize AnalysisProfile properly
 void US_ExperGuiAProfile::resizeEvent( QResizeEvent *event )
@@ -4433,8 +4945,10 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
             this,         SLOT  ( testConnection()   ) );
    connect( pb_saverp,    SIGNAL( clicked()          ),
             this,         SLOT  ( saveRunProtocol()  ) );
+
    connect( pb_submit,    SIGNAL( clicked()          ),
-            this,         SLOT  ( submitExperiment_confirm() ) );
+	    this,         SLOT  ( submitExperiment_confirm() ) );
+
    // connect( pb_submit,    SIGNAL( clicked()          ),
    //          this,         SLOT  ( submitExperiment() ) );
 
@@ -5055,6 +5569,8 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
       
       QMap < QString, US_ReportGMP > triple_reports = ri.value();
       QMap < QString, US_ReportGMP >::iterator tri;
+
+      int triple_count = 0;
       for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
 	{
 	  QString curr_guid = US_Util::new_guid();
@@ -5068,6 +5584,14 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
 		   << ri.key() << ": " << tri.key()
 		   << " -- " << reportID << " / "
 		   << curr_guid;
+
+	  ++triple_count;
+	  //For ABDE case, stop after recording the 1st-in-channel report:
+	  if (  mainw->us_abde_mode && triple_count == 1 )
+	    {
+	      qDebug() << "Exiting GMP Report DB writing after the 1st triple in a channel...";
+	      break;
+	    }
 	}
 
       //now, insert reportIDs && reportGUIDs for current channel:
@@ -5108,11 +5632,60 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   jsonMask += QString("\"exp_dur\":\"") + QString::number( exp_dur_bool ) + QString("\",");
 
   int integration_bool = report.integration_results_mask ? 1 : 0;
-  jsonMask += QString("\"integration\":\"") + QString::number( integration_bool ) + QString("\"");
+  jsonMask += QString("\"integration\":\"") + QString::number( integration_bool ) + QString("\",");
+
+  int plots_bool = report.plots_mask ? 1 : 0;
+  jsonMask += QString("\"plots\":\"") + QString::number( plots_bool ) + QString("\",");
+
+  //pseudo 3D plots
+  int pseudo3d_2dsait_s_ff0_bool = report.pseudo3d_2dsait_s_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_s_ff0\":\"") + QString::number( pseudo3d_2dsait_s_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsait_s_d_bool = report.pseudo3d_2dsait_s_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_s_d\":\"") + QString::number( pseudo3d_2dsait_s_d_bool ) + QString("\",");
+
+  int pseudo3d_2dsait_mw_ff0_bool = report.pseudo3d_2dsait_mw_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_mw_ff0\":\"") + QString::number( pseudo3d_2dsait_mw_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsait_mw_d_bool = report.pseudo3d_2dsait_mw_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_mw_d\":\"") + QString::number( pseudo3d_2dsait_mw_d_bool ) + QString("\",");
+
+
+  int pseudo3d_2dsamc_s_ff0_bool = report.pseudo3d_2dsamc_s_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_s_ff0\":\"") + QString::number( pseudo3d_2dsamc_s_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsamc_s_d_bool = report.pseudo3d_2dsamc_s_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_s_d\":\"") + QString::number( pseudo3d_2dsamc_s_d_bool ) + QString("\",");
+
+  int pseudo3d_2dsamc_mw_ff0_bool = report.pseudo3d_2dsamc_mw_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_mw_ff0\":\"") + QString::number( pseudo3d_2dsamc_mw_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsamc_mw_d_bool = report.pseudo3d_2dsamc_mw_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_mw_d\":\"") + QString::number( pseudo3d_2dsamc_mw_d_bool ) + QString("\",");
+
+
+  int pseudo3d_pcsa_s_ff0_bool = report.pseudo3d_pcsa_s_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_s_ff0\":\"") + QString::number( pseudo3d_pcsa_s_ff0_bool ) + QString("\",");
+
+  int pseudo3d_pcsa_s_d_bool = report.pseudo3d_pcsa_s_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_s_d\":\"") + QString::number( pseudo3d_pcsa_s_d_bool ) + QString("\",");
+
+  int pseudo3d_pcsa_mw_ff0_bool = report.pseudo3d_pcsa_mw_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_mw_ff0\":\"") + QString::number( pseudo3d_pcsa_mw_ff0_bool ) + QString("\",");
+
+  int pseudo3d_pcsa_mw_d_bool = report.pseudo3d_pcsa_mw_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_mw_d\":\"") + QString::number( pseudo3d_pcsa_mw_d_bool ) + QString("\",");
+
+  int pseudo3d_mask_bool = report.pseudo3d_mask ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_mask\":\"") + QString::number( pseudo3d_mask_bool ) + QString("\"");
   
   jsonMask += QString("}");
   
   //Save parent Report
+  QString wvl_to_db = QString::number( report.wavelength );
+  if ( mainw->us_abde_mode )
+    wvl_to_db = "-1";
+  
   QStringList qry;
   qry << "new_report"
       << reportGUID
@@ -5157,6 +5730,8 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
   QString int_value     =  QString::number( reportItem.integration_val ); 
   QString tolerance     =  QString::number( reportItem.tolerance );     
   QString total_percent =  QString::number( reportItem.total_percent );  
+  QString combined_plot =  QString::number( reportItem.combined_plot );
+  QString ind_combined_plot =  QString::number( reportItem.ind_combined_plot );  
   
   QStringList qry;
   qry << "new_report_item"
@@ -5169,6 +5744,8 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
       << int_value 
       << tolerance
       << total_percent
+      << combined_plot
+      << ind_combined_plot
     ;
     
   qDebug() << "Query: new_report_item: " << qry;
@@ -5193,7 +5770,35 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofname   = rpAprof->aprofname;
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
-   qDebug() << "IN Saving APRofile: aprof  -> rpeort_mask -- " << aprof->report_mask;
+   qDebug() << "IN Saving APRofile: aprof  -> report_mask -- " << aprof->report_mask;
+
+   //DEBUG: look at the ch_reports && it's items
+   QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+   for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      QString chan_desc = ri.key();
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString wvl_cc         = tri.key();
+	  US_ReportGMP report_cc = tri.value(); 
+	  qDebug() << "In saving: channel, wvl, Report --- "
+		   << chan_desc
+		   << wvl_cc;
+
+	  for ( int ii = 0; ii < report_cc.reportItems.size(); ii++ )
+	    {
+	      US_ReportGMP::ReportItem curr_reportItem = report_cc.reportItems[ ii ];
+	      qDebug() << "ReportItem # " << ii
+		       << "type -- "      << curr_reportItem.type
+		       << "method -- "    << curr_reportItem.method
+		       << "range_low -- " << curr_reportItem.range_low;
+	    }
+	}
+    }
+   //END DEBUG
      
    //save reports BEFORE writng down Aprofile's XML
    saveReports( aprof ); //<-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5237,6 +5842,7 @@ DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
 	  << aprof->aprofname
           << rpAprof->ap_xml
 	  << aprof->report_mask
+	  << aprof->combPlots_parms
 	;
       
       dbP->statusQuery( qry );
@@ -5246,16 +5852,23 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
  << dbP->lastError();
    }
 
-   
-   
-
    return;
 }
 
 // Slot to save the current Run Protocol
-void US_ExperGuiUpload::saveRunProtocol()
+bool US_ExperGuiUpload::saveRunProtocol()
 {
+  bool save_aborted = false;
 
+  qDebug() << "in saveRunProtoocl(): proto_svd, rps_differ -- " << proto_svd << rps_differ;
+  if ( proto_svd && !rps_differ )
+    {
+      qDebug() << "Protocol already saved && not changed since that...";
+      return save_aborted;
+    }
+      
+  qDebug() << "Peoceed with Saving protocol!";
+  
   if ( mainw->ScanCount_global > 1501 )
     {
       QMessageBox::critical( this,
@@ -5265,7 +5878,7 @@ void US_ExperGuiUpload::saveRunProtocol()
                                  "It must not exceed 1501. \n\n"
                                  "Please revise experiment parameters accordingly." )
                                 .arg( mainw->ScanCount_global ) );
-      return;
+      return save_aborted;
     }
 
   if ( mainw->ScanCount_global_int > 1501 )
@@ -5277,7 +5890,7 @@ void US_ExperGuiUpload::saveRunProtocol()
                                  "It must not exceed 1501. \n\n"
                                  "Please revise experiment parameters accordingly." )
 			     .arg( mainw->ScanCount_global_int ) );
-      return;
+      return save_aborted;
     }
 
   
@@ -5327,7 +5940,10 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
             tr( "Save Run Protocol Aborted" ),
             tr( "The save of a new Run Protocol record<br/>"
                 "has been aborted." ) );
-         return;
+
+	 save_aborted = true;
+	 
+         return save_aborted;
       }
    }
 
@@ -5394,24 +6010,33 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
          tr( "*ERROR* in Protocol Write" ),
          tr( "An error occurred in the attempt to save"
              " new protocol\n  %1\n  %2 ." ).arg( protoname ).arg( errmsg ) );
-      return;
+
+      return save_aborted;
    }
 
    // Update the full list of existing protocols
    QStringList prentry;                       // New protocol summary data
+   // QString pdate       = US_Util::toUTCDatetimeText(
+   //                          QDateTime::currentDateTime().toUTC()
+   //                          .toString( "yyyy/MM/dd HH:mm" ), true );
    QString pdate       = US_Util::toUTCDatetimeText(
-                            QDateTime::currentDateTime().toUTC()
-                            .toString( "yyyy/MM/dd HH:mm" ), true );
+						    QDateTime::currentDateTime().toUTC()
+						    .toString( "yyyy-MM-dd HH:mm" ), true );
+   // small bug fix above (UTC format, to be consistent with the format of existing records)
+
    QString protid      = ( dbP != NULL ) ? QString::number( idProt )
                          : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
    QString pguid       = currProto->protoGUID;
    prentry << protoname << pdate << protid << pguid;
 
+   qDebug() << "Updated proto list: " << prentry;
+   
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
 
-
+   qDebug() << "constructor parms: mainw->automode, have_run -- " << mainw->automode  << have_run;
+   
    if ( mainw->automode && !have_run)
      {
        QString mtitle_done    = tr( "Success" );
@@ -5424,6 +6049,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
        QString message_done   = tr( "Protocol has been successfully saved." );
        QMessageBox::information( this, mtitle_done, message_done );
      }
+
+   return save_aborted;
 }
 
 // Slot to read all Optima machines <------------------------------- // 
@@ -5489,9 +6116,19 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 }
 
 
+
+
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
+  // //DEBUG
+
+  // qDebug() << "InvestigatorID into autolfow -- " << QString::number(US_Settings::us_inv_ID());
+  // return;
+
+  //////////////////////////////////////////////////
+
+  
   // // ALEXEY: old way
   // QStringList dblist  = US_Settings::defaultXpnHost();
   // QString alias       = dblist[ 0 ];
@@ -5552,7 +6189,6 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	    saveRunProtocol();
 	    return;
 	  }
-	    
 	else if ( !mainw->automode && have_run && rps_differ )
 	  {
 	    saveRunProtocol();
@@ -5572,7 +6208,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       }
       
       return;
-    }  
+    } 
   // End checking chromatic aberration
   
   // Check for certificate license key and its expiraiton
@@ -5652,7 +6288,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	  msg_sys_text_info += QString( tr("Please check that your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
 					   "Submission of the experimental protocol is suspended until this condition is resolved." ));
 	}
-
+      
       msg_sys_text_info += QString( tr ("\n\nYou may choose to save the protocol into LIMS database.") );
       
       msgBox_sys_data.setText( msg_sys_text );
@@ -5666,7 +6302,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       
       if (msgBox_sys_data.clickedButton() == Accept_sys) {
 	qDebug() << "Saving protocol...";
-
+	
 	if ( mainw->automode && rps_differ )
 	  {
 	    //Disconnect link
@@ -5689,7 +6325,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	    QMessageBox::warning( this,
 				  tr( "No Changes in the Protocol" ),
 				  tr( "The protocol was not saved because there were no changes made to it.") );
-
+	    
 	    //Disconnect link
 	    link->disconnectFromServer();
 	    
@@ -5712,53 +6348,731 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	  
 	  QMessageBox::warning( this,
 				tr( "License Key Nearing Expiraiton" ),
-				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
+				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") )
+				.arg(daysToExpiration));
 	  
 	}
-
+      
       //Disconnect link
       link->disconnectFromServer();
     }
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
+  
+  if ( mainw->automode && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+  else if ( !mainw->automode && have_run && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+
+  // Address separately the case when un-changed protocol is not re-saved before submission to OptimaX:
+  // Ensure all (existing) autoflowReport records for this protocol have 'tripleDropped' SET to 'none'!!!!!
+  if ( !rps_differ )
+    {
+      US_AnaProfile* aprof_t = mainw->get_aprofile();
+      
+      QMap <QString, QString> channels_report_t;
+      QString aprofile_xml_t;
+
+      QStringList qry;
+      qry << "get_aprofile_info" << aprof_t->aprofGUID;
+      qDebug() << "Accessing AProfile, qry -- " << qry;
+      dbP->query( qry );
+      
+      while ( dbP->next() )
+	{
+	  aprofile_xml_t  = dbP->value( 2 ).toString();
+	}
+      
+      if ( !aprofile_xml_t.isEmpty() )
+	{
+	  QXmlStreamReader xmli( aprofile_xml_t );
+	  readAProfileBasicParms( xmli, channels_report_t );
+	}
+      
+      QMap<QString, QString>::iterator chan_rep;
+      for ( chan_rep = channels_report_t.begin(); chan_rep != channels_report_t.end(); ++chan_rep )
+	{
+	  QString chan_key  = chan_rep.key();
+	  QString reportIDs = chan_rep.value();
+	  qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+	  
+	  QStringList reportIDs_list = reportIDs.split(",");
+	  for (int i=0; i<reportIDs_list.size(); ++i)
+	    {
+	      qry. clear();
+	      QString rID = reportIDs_list[i];
+	      
+	      qry << "update_autoflow_report_at_import"
+		  << rID
+		  << QString("none");
+	      
+	      qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	      dbP->query( qry );
+	    }
+	}
+    }
+  // End of dealing with unchanged protocol /////////////////////////////////////////////////////////////
+
+  QMessageBox msgBox;
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  QString message_protocol = tr( "");
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
+
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+  QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
+
+  qDebug() << "oper,rev,appr,sme Lists -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
  
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+  QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
+    
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
 
-   if ( mainw->automode && rps_differ )
-     saveRunProtocol();
-   else if ( !mainw->automode && have_run && rps_differ )
-     {
-       //saveAnalysisProfile();
-       saveRunProtocol();
-     }
+  QString info_text = QString( tr ("<b>Run Name:</b> %1 <br> <b>Instrument:</b> %2 <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
+    .arg( currProto->runname )
+    .arg(alias)
+    .arg(dbhost)
+    .arg(dbport);
+  
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2 <br><br>"
+				  "<b>Assigner Approver(s):</b> <br>"
+				  "&emsp; %3"))
+	.arg( o_list )
+	.arg( r_list )
+	.arg( a_list );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING") || a_list. contains( "MISSING") )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Experiment <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s), reviewer(s) and/or approver(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
+    }
 
-   QMessageBox msgBox;
-   QString message_protocol = tr( "");
-   if ( rps_differ )
-      message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
-
-   QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
-
-   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
-   msgBox.setText( message_submission );
-   msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
-                              .arg(alias)
-                              .arg(dbhost)
-                              .arg(dbport));
-   msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
-   QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
-   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-
-   msgBox.setIcon(QMessageBox::Question);
-   msgBox.exec();
-
-   if (msgBox.clickedButton() == Accept) {
-     qDebug() << "Submitting...";
-     submitExperiment();
-   }
-   else if (msgBox.clickedButton() == Cancel){
-     return;
-   }
-   
+  msgBox.setInformativeText( info_text);  
+  msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
+ 
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept)
+    {
+      if ( !mainw->usmode )
+	{
+	  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) || a_list. contains( "MISSING" ) ) 
+	    {
+	      return;
+	    }
+	  else
+	    {
+	      //get user info:
+	      //get info on logged in user [submitter]:
+	      US_Passwd   pw;
+	      QString     masterPW  = pw.getPasswd();
+	      US_DB2      db( masterPW );  // New constructor
+	      QStringList qry;
+	      qry <<  QString( "get_user_info" );
+	      db.  query( qry );
+	      db. next();
+	      int u_ID        = db. value( 0 ).toInt();
+	      QString u_fname = db. value( 1 ).toString();
+	      QString u_lname = db. value( 2 ).toString();
+	      int u_lev       = db. value( 5 ).toInt();
+	      
+	      QString user_submitter = u_lname + ", " + u_fname;
+	      
+	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	      qDebug() << "Checking master password...";
+	      gmp_submitter_map.clear();
+	      US_Passwd   pw_at;
+	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+	      
+	      int submit_map_size = gmp_submitter_map.keys().size();
+	      qDebug() << "Submitter map: "
+		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		       << gmp_submitter_map.keys().isEmpty() 
+		       << gmp_submitter_map[ "User:" ]
+		       << gmp_submitter_map[ "Comment:" ]
+		       << gmp_submitter_map[ "Master Password:" ];
+	      
+	      //Enable GMP run submit ONLY if form was filled && password correct
+	      
+	      if ( submit_map_size > 0 ) 
+		{
+		  qDebug() << "Submitting GMP...";
+		  submitExperiment();
+		}
+	    }
+	}
+      else
+	{
+	  qDebug() << "Submitting R&D...";
+	  submitExperiment();
+	}
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    {
+      return;
+    }
+ 
 }
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_ExperGuiUpload::readAProfileBasicParms( QXmlStreamReader& xmli, QMap<QString, QString>& channels_report )
+{
+  channels_report. clear();
+  
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+
+//Confirm submission for EDIT & ANALYIS: US_ProtDev
+void US_ExperGuiUpload::submitExperiment_confirm_protDev()
+{
+  qDebug() << "IN submitExperiment_confirm_protDev() -- "
+	   << "mainw->automode, have_run, rps_differ "
+	   << mainw->automode <<  have_run <<  rps_differ;
+
+  QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+  
+  //Check for assigned revs/oper/appr/sme
+  QMessageBox msgBox;
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  QString message_protocol = tr( "");
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("A new DEVELOPMENT run will be created:");
+
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+  QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
+
+  qDebug() << "oper,rev,appr,sme Lists [PROTO-DEV] -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
+ 
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+  QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
+    
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
+
+  QString info_text = QString( tr ("<b>Dev. Run Name:</b> %1 <br> <b>Data Location:</b> %2 ")) // <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
+    .arg( currProto->runname )
+    .arg( protocol_details[ "OptimaName" ] );
+  //.arg(dbhost)
+  // .arg(dbport);
+  
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2 <br><br>"
+				  "<b>Assigner Approver(s):</b> <br>"
+				  "&emsp; %3"))
+	.arg( o_list )
+	.arg( r_list )
+	.arg( a_list );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING") || a_list. contains( "MISSING") )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Development run <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s), reviewer(s) and/or approver(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
+    }
+
+  msgBox.setInformativeText( info_text);  
+  msgBox.setWindowTitle(tr("Confirm Development Run Submission"));
+ 
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept)
+    {
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) || a_list. contains( "MISSING" ) ) 
+	{
+	  return;
+	}
+      else
+	{
+	  //get user info:
+	  //get info on logged in user [submitter]:
+	  US_Passwd   pw;
+	  QString     masterPW  = pw.getPasswd();
+	  US_DB2      db( masterPW );  // New constructor
+	  QStringList qry;
+	  qry <<  QString( "get_user_info" );
+	  db.  query( qry );
+	  db. next();
+	  int u_ID        = db. value( 0 ).toInt();
+	  QString u_fname = db. value( 1 ).toString();
+	  QString u_lname = db. value( 2 ).toString();
+	  int u_lev       = db. value( 5 ).toInt();
+	  
+	  QString user_submitter = u_lname + ", " + u_fname;
+	  
+	  //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	  qDebug() << "Checking master password...";
+	  gmp_submitter_map.clear();
+	  US_Passwd   pw_at;
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+	  
+	  int submit_map_size = gmp_submitter_map.keys().size();
+	  qDebug() << "Submitter map: "
+		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		   << gmp_submitter_map.keys().isEmpty() 
+		   << gmp_submitter_map[ "User:" ]
+		   << gmp_submitter_map[ "Comment:" ]
+		   << gmp_submitter_map[ "Master Password:" ];
+	  
+	  //Enable GMP run submit ONLY if form was filled && password correct
+	  
+	  if ( submit_map_size > 0 ) 
+	    {
+	      qDebug() << "Submitting [DEVELOPMENT] GMP...";
+	      
+	      //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
+	      QMessageBox msgBox_f;
+	      msgBox_f.setText(tr( "You are about to reinitialize the run based on the protocol:<br><br>" )
+			       + tr("<b>[OLD] Run Name:&emsp;</b>")  + protocol_details[ "protocolName" ]
+			       + tr("<br>")
+			       + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
+			       + tr("<br>") );
+	      
+	      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+					   + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
+					   + tr("and the processing flow will reinitialize from the EDIT stage. ")
+					   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+	      
+	      msgBox_f.setWindowTitle(tr("Run Reinitialization"));
+	      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+	      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole); 
+	      
+	      msgBox_f.setIcon(QMessageBox::Question);
+	      msgBox_f.exec();
+	      
+	      if (msgBox_f.clickedButton() == Cancel)
+		{
+		  return;
+		}
+	      else if (msgBox_f.clickedButton() == Confirm)
+		{
+		  //Clear data 
+		  clearData_protDev();
+		  //qApp->processEvents();
+		  
+		  //Now procceed
+		  if ( have_run && rps_differ )
+		    {
+		      if ( saveRunProtocol() )
+			return;
+		      
+		      //Now actually submit: make record in 'autoflow' table with 'DEV' flag
+		      submitExperiment_protDev();
+		    }
+		}
+	    }
+	}
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    {
+      return;
+    }
+}
+
+
+//  // [OLD - when starting from 4. EDIT ]  clear edit profiles, models noises
+//  void US_ExperGuiUpload::clearData_protDev()
+//  {
+//    QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+
+//    // Check DB connection
+//    US_Passwd pw;
+//    QString masterpw = pw.getPasswd();
+//    US_DB2* db = new US_DB2( masterpw );
+
+//    if ( db->lastErrno() != US_DB2::OK )
+//      {
+//        QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+//  			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+//        return;
+//      }
+
+//    int status;
+//    QStringList qry;
+
+//    //Get proper filename
+//    QString FileName = protocol_details[ "filename" ];
+//    QStringList fileNameList;
+//    fileNameList. clear();
+//    if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+//      fileNameList  = FileName.split(",");
+//    else
+//      fileNameList << FileName;
+
+//    /*** Iterate over fileNameList *********************************************/
+//    for ( int i=0; i<fileNameList.size(); ++i )
+//      {
+//        qry.clear();
+//        //get experimentID from 'experiment' table:
+//       qry << "get_experiment_info_by_runID"
+// 	  << fileNameList[ i ]
+// 	  << protocol_details[ "invID_passed" ];
+
+//       qDebug() << "clearData_protDev(), qry -- " << qry;
+      
+//       db->query( qry );
+//       db->next();
+//       QString expID  = db->value( 1 ).toString();
+      
+//       // Let's make sure it's not a calibration experiment in use
+//       qry. clear();
+//       qry << "count_calibration_experiments" << expID;
+//       int count = db->functionQuery( qry );
+//       qDebug() << "Cleaning Failed Run: calexp count" << count;
+      
+//       if ( count < 0 )
+// 	{
+// 	  qDebug() << "count_calibration_experiments( "
+// 		   << expID
+// 		   << " ) returned a negative count";
+// 	  return;
+// 	}
+      
+//       else if ( count > 0 )
+// 	{
+// 	  QMessageBox::information( this,
+// 				    tr( "Error" ),
+// 				    tr( "Cannot delete an experiment that is associated "
+// 					"with a rotor calibration\n" ) );
+// 	  return;
+// 	}
+      
+//       // Let's delete any pcsa_modelrecs records to avoid
+//       //  constraints problems
+//       qry. clear();
+//       qry << "delete_run_pcsa_recs"
+// 	  << fileNameList[ i ];
+//       status = db -> statusQuery( qry );
+//       qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
+//       //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
+      
+//       // Now delete editedData, models, noises, reports, 
+//       qry. clear();
+//       qry << "clear_data_for_experiment"
+// 	  << expID;
+//       status = db -> statusQuery( qry );
+//       qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
+      
+//       if ( status != US_DB2::OK )
+// 	{
+// 	  QMessageBox::information( this,
+// 				    tr( "Error / Warning" ),
+// 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+// 				    .arg( status ).arg( expID ) );
+// 	}
+//     }
+//   /** End Iterate over fileNameList ****************************************************************/
+// }
+
+
+// clear edit profiles, models noises
+void US_ExperGuiUpload::clearData_protDev()
+{
+
+  //Get proper filename
+  QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+  QString FileName = protocol_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+  
+  //show progress dialog
+  int progress_total = fileNameList.size()*6 + 1;
+  QProgressDialog* progress_msg = new QProgressDialog ("Cleaning Data for Current Run...", QString(), 0, progress_total, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Cleaning Data..."));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  int status;
+  QStringList qry;
+
+  int progress = progress_msg->value();
+
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
+    {
+      qry.clear();
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << protocol_details[ "invID_passed" ];
+
+      qDebug() << "clearData_protDev(), qry -- " << qry;
+      
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+            
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+	  progress_msg->close();
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+
+	  progress_msg->close();
+	  return;
+	}
+      
+      int status;
+      // Delete links between experiment and solutions
+      qry. clear();
+      qry << "delete_experiment_solutions"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del sols status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Same with cell table
+      qry. clear();
+      qry  << "delete_cell_experiments"
+	   << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del cells status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del pcsa_recs) for Run PRotDev(): del_exp stat" << status;
+      //deleteRunPcsaMrecs( db, protocol_details[ "invID_passed" ], protocol_details[ "filename" ] );
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
+      
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+       	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for Run PRotDev(): del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( status != US_DB2::OK )
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
+    }
+
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+  /** End Iterate over fileNameList ****************************************************************/
+}
+
+
+// Slot to submit for EDIT & ANALYSIS when US_ProtDev
+void US_ExperGuiUpload::submitExperiment_protDev()
+{
+  QMap< QString, QString > protocol_details = mainw->protocol_details_passed;
+
+  qDebug() << "PROT DETAILS COMPARISON: -- ";
+  qDebug() << "Old, New protocolName: "   << protocol_details[ "protocolName" ]   << ", " << currProto->protoname; 	  
+  qDebug() << "Old, New experimentName: " << protocol_details[ "experimentName" ] << ", " << currProto->runname;
+  qDebug() << "Old, New label: "          << protocol_details[ "label" ]          << ", " << currProto->exp_label;
+  qDebug() << "Old, New aprofileguid: "   << protocol_details[ "aprofileguid" ]   << ", " << currProto->protoGUID;
+  
+  protocol_details[ "protocolName" ]   = currProto->protoname;
+  protocol_details[ "experimentName" ] = currProto->runname;
+  protocol_details[ "label" ]          = currProto->exp_label;
+  //protocol_details[ "gmpRun" ]         = QString("NO");              //ALEXEY: state explicitly
+  protocol_details[ "gmpRun" ]         = QString("YES");              //ALEXEY: state explicitly
+  protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
+  protocol_details[ "devRecord" ]      = QString("YES");             //ALEXEY: state explicitly
+  
+  qDebug() << "PROTCOL DETAILS at submission: -- "
+	   << protocol_details[ "protocolName" ]   
+	   << protocol_details[ "CellChNumber" ]   
+	   << protocol_details[ "TripleNumber" ]   
+	   << protocol_details[ "duration" ]       
+	   << protocol_details[ "experimentName" ] 
+	   << protocol_details[ "experimentId" ]   
+	   << protocol_details[ "runID" ]          
+	   << protocol_details[ "status" ]         
+	   << protocol_details[ "dataPath" ]        
+	   << protocol_details[ "OptimaName" ]     
+	   << protocol_details[ "runStarted" ]     
+	   << protocol_details[ "invID_passed" ]   
+	   << protocol_details[ "correctRadii" ]   
+	   << protocol_details[ "expAborted" ]     
+	   << protocol_details[ "label" ]          
+	   << protocol_details[ "gmpRun" ]         
+    	   << protocol_details[ "filename" ]       
+	   << protocol_details[ "aprofileguid" ]   
+	   << protocol_details[ "analysisIDs" ]   
+	   << protocol_details[ "intensityID" ]   
+	   << protocol_details[ "statusID" ]      
+	   << protocol_details[ "failedID" ]                 //Attn: do NOT specify failed status: should be DEFAULT (NULL)   
+	   << protocol_details[ "operatorID" ]
+	   << protocol_details[ "devRecord" ];   
+
+  //Now add new autoflow record with the above params && flag 'DEV'!
+  add_autoflow_record_protDev( protocol_details );
+
+  qDebug() << "statusID, intensityID from protocol QMAp -- "
+	   << protocol_details[ "statusID" ]
+	   << protocol_details[ "intensityID" ] ;
+
+  emit expdef_submitted_dev( protocol_details );
+}
+
 
 // Slot to submit the experiment to the Optima DB
 void US_ExperGuiUpload::submitExperiment()
@@ -5839,6 +7153,7 @@ void US_ExperGuiUpload::submitExperiment()
       
       //get # cells with interference channels
       int ncells_interference = 0;
+      int nchannels_uvvis = 0;
       QStringList active_channels;
       for ( int kk = 0; kk < oprof.count(); kk++ )
       {
@@ -5852,6 +7167,9 @@ void US_ExperGuiUpload::submitExperiment()
 	     
 	     ++ncells_interference;
 	   }
+	 
+	 if ( oprof[ kk ].contains( uvvis ) )
+	   ++nchannels_uvvis;
       }
 
       // return;
@@ -6413,12 +7731,19 @@ void US_ExperGuiUpload::submitExperiment()
                if ( channel_cell.startsWith(QString::number(j+1)) )
                {
                   if ( channel_cell.contains("sample") )                                                     // <-- Channel A
-                     solname += ": A: " + sol_split[0] + ", "        // <-- solution name
-                        + sol_split[sol_split.size()-1] + "; ";             // <-- solution manual comment
+		    {
+		      // solname += ": A: " + sol_split[0] + ", "        // <-- solution name
+		      // 	+ sol_split[sol_split.size()-1] + "; ";  // <-- solution manual comment
+		      solname += ": A: " + solution + "; ";
+		    }
+		  
                   if ( channel_cell.contains("reference") )                                                  // <-- Channel B
-                     solname += "B: " + sol_split[0] + " "           // <-- solution name
-                        + sol_split[sol_split.size()-1];             // <-- solution manual comment
-               }
+		    {
+		      // solname += "B: " + sol_split[0] + ", "          // <-- solution name
+                      //   + sol_split[sol_split.size()-1];             // <-- solution manual comment
+		      solname += "B: " + solution;
+		    }
+	       }
             }
             solname += "\'";
             ////////////////////////////////
@@ -6713,12 +8038,18 @@ void US_ExperGuiUpload::submitExperiment()
 	   }
 	 else if ( !ncells_interference && nwavl_tot )  //Absorbance ONLY
 	   {
-	     protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     //protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     protocol_details[ "CellChNumber" ]   = QString::number( nchannels_uvvis ); 
 	     qDebug() << "UV: CellChNumber: " << protocol_details[ "CellChNumber" ];
 	   }
 	 else if ( ncells_interference && nwavl_tot )   // BOTH
 	   {
-	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) + QString(",RI:")  + QString::number(rpSolut->nschan);
+	     // QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	     //                       QString(",RI:")  + QString::number(rpSolut->nschan);
+
+	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	                           QString(",RI:")  + QString::number( nchannels_uvvis );
+
 	     protocol_details[ "CellChNumber" ] = cellnumber;
 
 	     qDebug() << "UV & ITF: cellnumber: " << cellnumber;
@@ -6727,8 +8058,9 @@ void US_ExperGuiUpload::submitExperiment()
     	   }
 	   
          protocol_details[ "duration" ]       = QString::number(Total_duration);
-         protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
-         protocol_details[ "correctRadii" ]   = QString("YES");
+         //protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID()); 
+	 protocol_details[ "invID_passed" ]   = currProto->investigator.split(":")[0];
+	 protocol_details[ "correctRadii" ]   = QString("YES");
          protocol_details[ "expAborted" ]     = QString("NO");
 
          protocol_details[ "label" ]          = currProto->exp_label;
@@ -6770,7 +8102,14 @@ void US_ExperGuiUpload::submitExperiment()
 	   }
 
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
+	 protocol_details[ "operatorID" ]   = QString::number( rpRotor->operID );
          //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
+
+	 //define exp.Type!!
+	 if ( mainw->us_abde_mode ) 
+	   protocol_details[ "expType" ] = "ABDE";
+	 else
+	   protocol_details[ "expType" ] = "VELOCITY";
       }
       else
       {
@@ -6806,10 +8145,32 @@ void US_ExperGuiUpload::submitExperiment()
 
    //Make 'autoflow' table record:
    if ( mainw->automode )
-     add_autoflow_record( protocol_details );
-   
+     {
+       add_autoflow_record( protocol_details );
+
+       /*** 
+	    Add audit trail who submitted - the owner himself OR an admin on his behalf
+       ***/
+       
+       
+ 
+     }
+      
+   //Finish, emit, switch to 2. LIVE_UPDATE
    emit expdef_submitted( protocol_details );
 }
+
+void US_ExperGuiUpload::do_accept_reviewers( QMap< QString, QString >& protocol_details  )
+{
+  emit expdef_submitted( protocol_details );
+}
+
+
+void US_ExperGuiUpload::cancel_reviewers( QMap< QString, QString >& protocol_details  )
+{
+  emit expdef_submitted( protocol_details );
+}
+
 
 // Read Protocol details
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
@@ -6828,38 +8189,766 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
                                      + db->lastError() );
       return;
    }
+
+   QStringList qry;
+   int autoflowID_returned = 0;
    
    if ( db != NULL )
    {
-      QStringList qry;
-      qry << "add_autoflow_record"
-          << protocol_details[ "protocolName" ]
-          << protocol_details[ "CellChNumber" ]
-          << protocol_details[ "TripleNumber" ]
-          << protocol_details[ "duration" ]
-          << protocol_details[ "experimentName" ]
-          << protocol_details[ "experimentId" ]
-          << protocol_details[ "OptimaName" ]
-          << protocol_details[ "invID_passed" ]
-          << protocol_details[ "label" ]
-          << protocol_details[ "gmpRun" ]
-          << protocol_details[ "aprofileguid" ] ;
+     qry. clear();
+     //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+     //greater of:
+     //- max(ID) autoflowHistory
+     //- current AUTO_INCREMENT
+     QString current_db = US_Settings::defaultDB().at(2);
+     qry << "set_autoflow_auto_increment" << current_db;
+     int auto_incr = db->statusQuery( qry );
+     qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+     
+     
+     //Now add autoflow record
+     qry.clear();
+     qry << "add_autoflow_record"
+	 << protocol_details[ "protocolName" ]
+	 << protocol_details[ "CellChNumber" ]
+	 << protocol_details[ "TripleNumber" ]
+	 << protocol_details[ "duration" ]
+	 << protocol_details[ "experimentName" ]
+	 << protocol_details[ "experimentId" ]
+	 << protocol_details[ "OptimaName" ]
+	 << protocol_details[ "invID_passed" ]
+	 << protocol_details[ "label" ]
+	 << protocol_details[ "gmpRun" ]
+	 << protocol_details[ "aprofileguid" ]
+	 << protocol_details[ "operatorID" ]
+         << protocol_details[ "expType" ];
+     
+     db->statusQuery( qry );
+     //db->query( qry );
+     
+     autoflowID_returned = db->lastInsertID();
+     //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
+        
+     qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+     
+   }
+   
+   if ( autoflowID_returned == 0 )
+     {
+       QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+			     tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+       return;
+     }
+   /*******************************************************************************/
+   
+   
+   /******************************************************************************/
+   //Also, create record in autoflowStages table:
+   qry. clear();
+   qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry );
+   /********************************************************************************/
 
-      db->statusQuery( qry );
-      //db->query( qry );
-      protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+   
+   /*******************************************************************************/
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+
+       for (int i=0; i<appr_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << appr_listList[i]; 
+	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
+	 } 
+
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       apprListJsonArray += "]";
+       smeListJsonArray  += "]";
+         
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
+
+       /********** THIS WILL NOT BE USED HERE **********************/
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /***************************************************************/
+       
+       
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int     u_ID    = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       //logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       logJsonFirstTime += "\"Comment\":\"";
+
+       //oper(s), rev(s), appr(s)
+       logJsonFirstTime += "Operator(s):" + oper_listList.join(",") + ";";
+       logJsonFirstTime += "Reviewer(s):" + rev_listList.join(",") + ";";
+       logJsonFirstTime += "Approver(s):" + appr_listList.join(","); // + ";";
+
+       logJsonFirstTime += "\"";
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << apprListJsonArray
+	   << smeListJsonArray
+	 // << eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
+     }
+}
+
+
+// Add autoflow record for ProtocolDev
+void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & protocol_details )
+{
+  
+   QString autoflowHistoryID = protocol_details[ "autoflowID" ];
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+                                  tr( "Read protocol: Could not connect to database \n" )
+                                     + db->lastError() );
+      return;
    }
 
-   qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+
+   QStringList qry;
+   int new_autoflowID = 0;
+   
+   if ( db != NULL )
+     {
+
+       qry. clear();
+      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+      //greater of:
+      //- max(ID) autoflowHistory
+      //- current AUTO_INCREMENT
+      QString current_db = US_Settings::defaultDB().at(2);
+      qry << "set_autoflow_auto_increment" << current_db;
+      int auto_incr = db->statusQuery( qry );
+      qDebug() << "ProtDev:: Autoflow table: AUTO_INCREMENT: " << auto_incr;
+      
+      //Now add autoflow record
+      qry.clear();
+      qry << "add_autoflow_record_dev"
+	  << protocol_details[ "protocolName" ]   
+	  << protocol_details[ "CellChNumber" ]   
+	  << protocol_details[ "TripleNumber" ]   
+	  << protocol_details[ "duration" ]       
+	  << protocol_details[ "experimentName" ] 
+	  << protocol_details[ "experimentId" ]   
+
+	// << protocol_details[ "runID" ]          
+	// << protocol_details[ "dataPath" ]        
+
+	  << protocol_details[ "OptimaName" ]     
+
+	// << protocol_details[ "runStarted" ]     
+
+	  << protocol_details[ "invID_passed" ]   
+
+	//  << protocol_details[ "correctRadii" ]   
+	//  << protocol_details[ "expAborted" ]     
+
+	  << protocol_details[ "label" ]          
+
+	//  << protocol_details[ "filename" ]       
+
+	  << protocol_details[ "aprofileguid" ]   
+	  << protocol_details[ "operatorID" ]
+	;   
+
+      qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;
+      db->statusQuery( qry );
+      //db->query( qry );
+      new_autoflowID = db->lastInsertID();
+      protocol_details[ "autoflowID" ] = QString::number( new_autoflowID );
+
+      if ( new_autoflowID == 0 )
+	{
+	  QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+				tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+	  return;
+	}
+   }
+
+   qDebug() << "ProtDev:: Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
 
    /***/
    //Also, create record in autoflowStages table:
-   QStringList qry_stages;
-   qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
-   db->statusQuery( qry_stages );
+   qry. clear();
+   qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry );
    /**/
+
+   // Also, mark parent autoflowHistroy record as devRecord:Processed
+   qry. clear();
+   qry << "mark_autoflowHistoryDevRun_Processed" << autoflowHistoryID;
+   db->query( qry );
+
+   //ALL Business for e-Sigs && audit trail && reporting:
+   /*******************************************************************************/
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+
+       for (int i=0; i<appr_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << appr_listList[i]; 
+	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
+	 } 
+
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       apprListJsonArray += "]";
+       smeListJsonArray  += "]";
+         
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
+
+       /********** THIS WILL NOT BE USED HERE **********************/
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /****************************************************************/
+
+       
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int     u_ID    = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << apprListJsonArray
+	   << smeListJsonArray
+	 //<< eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
+     }
    
 }
+
+// // [OLD - when starting from 4. EDIT ] Add autoflow record for ProtocolDev
+// void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & protocol_details )
+// {
+  
+//    // Check DB connection
+//    US_Passwd pw;
+//    QString masterpw = pw.getPasswd();
+//    US_DB2* db = new US_DB2( masterpw );
+
+//    if ( db->lastErrno() != US_DB2::OK )
+//    {
+//       QMessageBox::warning( this, tr( "Connection Problem" ),
+//                                   tr( "Read protocol: Could not connect to database \n" )
+//                                      + db->lastError() );
+//       return;
+//    }
+   
+//    if ( db != NULL )
+//    {
+//      int new_autoflowID = 0;
+//       QStringList qry;
+//       //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+//       //greater of:
+//       //- max(ID) autoflowHistory
+//       //- current AUTO_INCREMENT
+//       QString current_db = US_Settings::defaultDB().at(2);
+//       qry << "set_autoflow_auto_increment" << current_db;
+//       int auto_incr = db->statusQuery( qry );
+//       qDebug() << "ProtDev:: Autoflow table: AUTO_INCREMENT: " << auto_incr;
+      
+//       //Now add autoflow record
+//       qry.clear();
+//       qry << "add_autoflow_record_dev"
+// 	  << protocol_details[ "protocolName" ]   
+// 	  << protocol_details[ "CellChNumber" ]   
+// 	  << protocol_details[ "TripleNumber" ]   
+// 	  << protocol_details[ "duration" ]       
+// 	  << protocol_details[ "experimentName" ] 
+// 	  << protocol_details[ "experimentId" ]   
+// 	  << protocol_details[ "runID" ]          
+// 	//<< protocol_details[ "status" ]         // Will be set explicitly to 'EDIT_DATA'  
+// 	  << protocol_details[ "dataPath" ]        
+// 	  << protocol_details[ "OptimaName" ]     
+// 	  << protocol_details[ "runStarted" ]     
+// 	  << protocol_details[ "invID_passed" ]   
+// 	  << protocol_details[ "correctRadii" ]   
+// 	  << protocol_details[ "expAborted" ]     
+// 	  << protocol_details[ "label" ]          
+// 	// << protocol_details[ "gmpRun" ]        //Must be "NO", will be set explicitly   
+// 	  << protocol_details[ "filename" ]       
+// 	  << protocol_details[ "aprofileguid" ]   
+	
+// 	// << protocol_details[ "intensityID" ]  //later: read exisiting autoflowIntensity record, copy it into new record & prescribe newly generated autoflowID!!!
+	
+// 	  << protocol_details[ "operatorID" ]
+	
+// 	// << protocol_details[ "statusID" ]     //later: read exisiting autoflowStaus record, copy it into new record & prescribe newly generated autoflowID!!! 
+// 	// << protocol_details[ "failedID" ]     //Attn: do NOT specify failed status: should be DEFAULT (NULL)
+// 	// << protocol_details[ "devRecord" ]   //Attn: MUST be "YES", will be set explicitly     
+// 	;   
+
+//       qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;
+//       db->statusQuery( qry );
+//       //db->query( qry );
+//       new_autoflowID = db->lastInsertID();
+//       protocol_details[ "autoflowID" ] = QString::number( new_autoflowID );
+
+//       if ( new_autoflowID == 0 )
+// 	{
+// 	  QMessageBox::warning( this, tr( "New Autoflow Record Problem" ),
+// 				tr( "autoflow: There was a problem with creating a new autoflow record! \n" ) );
+// 	  return;
+// 	}
+
+//       /************ autoflowIntensity *****************************************************************/
+//       //read autoflowIntensity record by ID: protocol_details[ "intensityID" ]
+//       qry. clear();
+//       qry << "read_autoflow_intensity_record" << protocol_details[ "intensityID" ];
+//       db->query( qry );
+//       qDebug() << "readIntensity: qry -- " << qry;
+//       QString intensityJsonRI;
+
+//       if ( db->lastErrno() == US_DB2::OK )      // Intensity record exists
+// 	{
+// 	  while ( db->next() )
+// 	    {
+// 	      intensityJsonRI = db->value( 0 ).toString();
+// 	    }
+// 	}
+      
+//       //create new autoflowIntensity record & set what's read above && newly generated autoflowID!
+//       int autoflowIntensityID = 0;
+//       if ( ! intensityJsonRI.isEmpty() )
+// 	{
+// 	  qry.clear();
+// 	  qry << "new_autoflow_intensity_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << intensityJsonRI;
+	  
+// 	  autoflowIntensityID = db->functionQuery( qry );
+	  
+// 	  if ( !autoflowIntensityID )
+// 	    {
+// 	      QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
+// 				    tr( "ProtDev, autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
+	      
+// 	      return;
+// 	    }
+// 	}
+//       qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
+//       /*************************************************************************************************/
+      
+
+//       /************* autoflowStatus *********************************************************************/
+//       //read autoflowStatus record by ID: protocol_details[ "statusID" ]
+//       qry. clear();
+//       qry << "read_autoflow_status_record" <<  protocol_details[ "statusID" ];
+//       db->query( qry );
+//       qDebug() << "readStatus: qry -- " << qry;
+//       QString importRIJson, importRIts, importIPJson, importIPts;
+
+//       if ( db->lastErrno() == US_DB2::OK )    
+// 	{
+// 	  while ( db->next() )
+// 	    {
+// 	      importRIJson  = db->value( 0 ).toString();
+// 	      importRIts    = db->value( 1 ).toString();
+// 	      importIPJson  = db->value( 2 ).toString();
+// 	      importIPts    = db->value( 3 ).toString();
+
+// 	    }
+// 	}
+//       qDebug() << "importRIJson, importRIts, importIPJson, importIPts -- "
+// 	       << importRIJson << importRIts <<  importIPJson << importIPts;
+
+
+//       //create new autoflowStatus & set what's read above [import part!] && newly generated autoflowID!
+//       int autoflowStatusID = 0;
+//       qry. clear();
+
+//       if ( !importRIJson.isEmpty() && !importIPJson.isEmpty() )
+// 	{
+// 	  qry << "new_autoflowStatusRI_IP_dev_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << importRIJson
+// 	      << importRIts
+// 	      << importIPJson
+// 	      << importIPts;
+// 	}
+//       else if ( !importRIJson.isEmpty() && importIPJson.isEmpty() )
+// 	{
+// 	  qry << "new_autoflowStatusRI_dev_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << importRIJson
+// 	      << importRIts;
+// 	}
+//       else if ( importRIJson.isEmpty() && !importIPJson.isEmpty() )
+// 	{
+// 	  qry << "new_autoflowStatusIP_dev_record"
+// 	      << QString::number( new_autoflowID )
+// 	      << importIPJson
+// 	      << importIPts;
+// 	}
+
+//       qDebug() << "ProtDev: New autoflowStatus record, qry -- " << qry;
+      
+//       autoflowStatusID = db->functionQuery( qry );
+      
+//       if ( !autoflowStatusID || autoflowStatusID < 0 )
+// 	{
+// 	  QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+// 				tr( "ProtDev, autoflowStatus (IMPORT {RI,IP}): There was a problem creating a record in autoflowStatus table \n" ) + db->lastError() );
+	  
+// 	  return;
+// 	}
+//       qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+//       /*************************************************************************************************/
+      
+//       //set BOTH returned autoflowIntensity & statusID to the new autoflow record
+//       //Emulate updating at 3. IMPORT stage of GMP!!!
+//       qry.clear();
+//       qry << "update_autoflow_at_lims_import"
+// 	  << protocol_details[ "runID" ]
+// 	  << protocol_details[ "filename" ]
+// 	  << protocol_details[ "OptimaName" ]
+// 	  << QString::number( autoflowIntensityID )
+// 	  << QString::number( autoflowStatusID );
+      
+//       qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
+
+//       int status = db->statusQuery( qry );
+//       if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+// 	{
+// 	  QMessageBox::warning( this,
+// 				tr( "Autoflow Record Not Updated" ),
+// 				tr( "ProtDdev: No autoflow record\n"
+// 				    "associated with this experiment." ) );
+// 	  return;
+// 	}
+
+//       /**** Now, update protocol_details[ "statusID" ] && [ "intensityID" ] fields with the new ones ***/
+//       protocol_details[ "statusID" ]    = QString::number( autoflowStatusID );
+//       protocol_details[ "intensityID" ] = QString::number( autoflowIntensityID );
+      
+//       /*************************************************************************************************/
+      
+
+//       /* ALSO - CLEAN ALL DATA (Edit profiles, Models, Noises etc - look what's done when marking as "Failed".. )
+// 	 MAYBE performed at the beginnig of 2. EDIT.. 
+//        */
+//    }
+
+//    qDebug() << "ProtDev:: Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+
+//    /***/
+//    //Also, create record in autoflowStages table:
+//    QStringList qry_stages;
+//    qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+//    db->statusQuery( qry_stages );
+//    /**/
+   
+// }
+
+
+
+
 
 // Function to build a Json object and document holding experiment controls
 QString US_ExperGuiUpload::buildJson( void )

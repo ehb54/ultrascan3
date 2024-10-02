@@ -24,7 +24,7 @@ class US3i_Color : public US3i_widgets
   public:
     //! Construct the window to manage the user's color choices.
     //! The settings are saved for each user via \ref US_Settings.
-    US3i_Color( QWidget* = 0, Qt::WindowFlags = 0 );
+    US3i_Color( QWidget* = 0 );
     //! A destructor to clean up 
     //~US3i_Color();
 

@@ -51,7 +51,10 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
-   
+
+   auto_ref_scan = true;
+   first_time_plot_auto = true;
+      
    // Ensure data directories are there
    QDir dir;
    dir.mkpath( US_Settings::workBaseDir() );
@@ -172,7 +175,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = us_lineedit( "", 1, true );
+   le_runID2           = new US_LineEdit_RE( "", 1, true );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -462,6 +465,15 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
        pb_reset->hide();
        pb_close->hide();
+
+       //Hide scan exclusion controls
+       lb_scan    ->hide();
+       lb_from    ->hide();
+       ct_from    ->hide();
+       lb_to      ->hide();
+       ct_to      ->hide();
+       pb_exclude ->hide();
+       pb_include ->hide();         
        
      }
    
@@ -559,14 +571,50 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("2");
    // QString aprofileguid = QString("f873e8d6-6ec9-4db9-b17f-f51b21206719");
 
+   // //Single WVL
    // QString curdir   = QString("/home/alexey/ultrascan/imports/DaubnauD_ComEA_071421-run1163");
    // QString protname = QString("DaubnauD_ComEA_071421");
    // QString invid    = QString("104");
    // QString aprofileguid = QString("4b130961-40b3-4e23-91b7-34fa928bdc44");
+
+   // //MWL
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/JasonH_HHP1-comparison-MWL_041020-run724");
+   // QString protname = QString("JasonH_HHP1-comparison-MWL_041020");
+   // QString invid    = QString("29");
+   // QString aprofileguid = QString("fafe5452-eac9-44c6-b8e6-04b1b8b7e3d7");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/BreunigS_SLB3279_022123-run1895");
+   // QString protname = QString("BreunigS_SLB3279_022123");
+   // QString invid    = QString("152");
+   // QString aprofileguid = QString("d16f9f04-2a8b-4b6b-b08e-5652ee4dbc7e");
    
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/YeQ_Calpain3-cross-linked_021723-run1894");
+   // QString protname = QString("YeQ_Calpain3-cross-linked_021723");
+   // QString invid    = QString("94");
+   // QString aprofileguid = QString("b39b3969-c6a9-4c42-9b0b-869ac9136035");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/eGFP-DNA-MW-AUG2223-run1961");
+   // QString protname = QString("eGFP-DNA-MW-AUG2223");
+   // QString invid    = QString("165");
+   // QString aprofileguid = QString("b31d4669-a9f5-4488-a5e4-567bd0051679");
+
+    // QString curdir   = QString("/home/alexey/ultrascan/imports/11JAN2024-PAPBM1M2-Mabanglo-run1607");
+    // QString protname = QString("11JAN2024-PAPBM1M2-Mabanglo-test");
+    // QString invid    = QString("19");
+    // QString aprofileguid = QString("3fb72b82-6e93-4ecb-9d47-ecbf552f2234");
+   
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE_DemoData-Optima2-1209");
+   // QString protname = QString("ABDE_DemoAAV_1");
+   // QString invid    = QString("12");
+   // QString aprofileguid = QString("be10df3c-a567-4335-af26-59cb182c79b6");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE-Test-052124-run1693");
+   // QString protname = QString("ABDE-Test-052124-v2");
+   // QString invid    = QString("165");
+   // QString aprofileguid = QString("ff68a3ec-b526-4f52-851b-b6890bfea7de");
    
    // QMap < QString, QString > protocol_details;
-   // //protocol_details[ "status" ];
    // protocol_details[ "dataPath" ]       = curdir;
    // protocol_details[ "invID_passed" ]   = invid;
    // protocol_details[ "protocolName" ]   = protname;
@@ -576,12 +624,13 @@ DbgLv(1) << "CGui: reset complete";
    // //protocol_details[ "runID" ]          =  ;
    // protocol_details[ "label" ]          = QString("Some label");
    // protocol_details[ "aprofileguid" ]   = aprofileguid;
+   // protocol_details[ "CellChNumber" ]   = QString("6");
+   // protocol_details[ "expType" ]        = QString("ABDE");
 
-   
    // // /*********************************************************************************/
 
    
-   //import_data_auto( protocol_details ); 
+   // import_data_auto( protocol_details ); 
    
 
    qDebug() << "US_CONVERT: SET !"; 
@@ -593,6 +642,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+
+   auto_ref_scan = true;
+   first_time_plot_auto = true;
    
    // Ensure data directories are there
    QDir dir;
@@ -714,7 +766,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = us_lineedit( "", 1 );
+   le_runID2           = new US_LineEdit_RE( "", 1 );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -1116,6 +1168,8 @@ void US_ConvertGui::reset_auto( void )
    allData     .clear();
    outData     .clear();
    ExpData     .clear();
+
+   drop_operations. clear();
    if ( isMwl )
       mwl_data.clear();
    show_plot_progress = true;
@@ -1227,6 +1281,8 @@ void US_ConvertGui::resetAll_auto( void )
 
    reset_auto();
 
+   auto_ref_scan = true;
+   
    le_status->setText( tr( "(no data loaded)" ) );
    subsets.clear();
    reference_start = 0;
@@ -1315,6 +1371,19 @@ void US_ConvertGui::us_mode_passed( void )
 {
   qDebug() << "US_Convert:   US_MODE SIGNAL: ";
   usmode = true;
+
+  //Hide scan exclusion controls
+  lb_scan    ->setVisible( true );
+   
+  lb_from    ->setVisible( true );
+  ct_from    ->setVisible( true );
+  
+  lb_to      ->setVisible( true );
+  ct_to      ->setVisible( true );
+  
+  pb_exclude ->setVisible( true );
+  pb_include ->setVisible( true );         
+  
 }
 
 
@@ -1327,6 +1396,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   channels_to_drop   .clear();
   runTypes_map       .clear();
   runTypeList        .clear();
+
+  intensityJsonRI      .clear();
   
   // ALEXEY TO BE ADDED...
   /* 
@@ -1363,20 +1434,26 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   Exp_label         = details_at_live_update[ "label" ];
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
+  expType           = details_at_live_update[ "expType" ];
 
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
 
   qDebug() << "Exp_label: " << Exp_label;
+  qDebug() << "ExpType: "   << expType;
 
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
   
 
-  gmpRun_bool = false;
+  gmpRun_bool  = false;
+  protDev_bool = false;
   
   if ( details_at_live_update[ "gmpRun" ] == "YES" )
     gmpRun_bool = true;
+
+  if ( details_at_live_update[ "devRecord" ] == "YES" )
+    protDev_bool = true;
  
   
   impType     = getImports_auto( details_at_live_update[ "dataPath" ] );
@@ -1538,10 +1615,65 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      
      if( dataSavedOtherwise )
        return;
+
+     char chtype[ 3 ] = { 'R', 'A', '\0' };
+     strncpy( chtype, allData[ 0 ].type, 2 );
+     QString dataType = QString( chtype ).left( 2 );
+     qDebug() << "Data type -- " << dataType;
      
      readProtocol_auto();
      getLabInstrumentOperatorInfo_auto();
-     
+
+     //Auto-process reference scans
+     if ( dataType == "IP" )
+       auto_ref_scan = false;
+
+     //TEMPORARY !!!!
+     if ( dataType == "RI" && expType != "ABDE" )
+       {
+     	 // double low_ref  = 5.87 - 0.005;
+     	 // double high_ref = 5.87 + 0.005;
+	 
+	 centerpoint_ref_def = 5.87;
+	 plot_last_scans( centerpoint_ref_def );
+	 //process_reference_auto( centerpoint_ref_def );
+	 
+	 auto_ref_scan = true;
+	 
+	 QMessageBox msgBox;
+     	 msgBox.setText(QString( tr("ATTENTION: Reference scans will be defined automatically "
+				    "based on the guess value of %1cm for the air absorbance region above the meniscus.") ).
+			arg( centerpoint_ref_def ) );
+	 msgBox.setInformativeText( tr( "You may review and proceed with saving the data, "
+					"or choose to reset reference scans definitions by clicking 'Undo Reference Scans' "
+					"and subsequently defining them manually by clicking 'Define Reference Scans' button."));
+				    
+     	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+     	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
+     	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+      	 
+     	 msgBox.setIcon(QMessageBox::Question);
+     	 msgBox.exec();
+      
+     	 if (msgBox.clickedButton() == Automatic)
+	   {
+	     process_reference_auto( centerpoint_ref_def );
+	     first_time_plot_auto = false;
+	     return;
+	   }
+	 // else if (msgBox.clickedButton() == Manual) {
+     	 //   cancel_reference();
+     	 // }
+       }
+     //end of auto-processing reference range
+
+     //ABDE case
+     if ( expType == "ABDE")
+       {
+	 absorbance_conversion_abde();
+	 return;
+       }
+
      return;
    }
   
@@ -1608,6 +1740,7 @@ DbgLv(1) << "CGui: import: RTN";
 //Slot to process next optics type
 void US_ConvertGui::process_optics()
 {
+  intensityJsonRI    .clear();
   channels_to_drop   .clear();
   //read_aprofile_data_from_aprofile();
   
@@ -1631,13 +1764,61 @@ void US_ConvertGui::process_optics()
      
      if( dataSavedOtherwise )
        return;
+
+     char chtype[ 3 ] = { 'R', 'A', '\0' };
+     strncpy( chtype, allData[ 0 ].type, 2 );
+     QString dataType = QString( chtype ).left( 2 );
+     qDebug() << "Data type -- " << dataType;
      
      readProtocol_auto();
      getLabInstrumentOperatorInfo_auto();
+
+     //Auto-process reference scans
+     if ( dataType == "IP" )
+       auto_ref_scan = false;
+     
+     if ( dataType == "RI" && expType != "ABDE" )
+       {
+	 // double low_ref  = 5.87 - 0.005;
+	 // double high_ref = 5.87 + 0.005;
+
+	 centerpoint_ref_def = 5.87;
+	 plot_last_scans( centerpoint_ref_def );
+	 //process_reference_auto( centerpoint_ref_def );
+     	 
+	 auto_ref_scan = true;
+
+	 QMessageBox msgBox;
+	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
+	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
+	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
+	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+	 	 
+	 msgBox.setIcon(QMessageBox::Question);
+	 msgBox.exec();
+	 
+	 if (msgBox.clickedButton() == Automatic)
+	   {
+	     process_reference_auto( centerpoint_ref_def );
+	     first_time_plot_auto = false;
+	     return;
+	   }
+	 // else if (msgBox.clickedButton() == Manual) {
+	 //   cancel_reference();
+	 // }
+       } 
+     //end of auto-processing reference range
+
+     if ( expType == "ABDE" )
+       {
+	 absorbance_conversion_abde();
+	 return;
+       }
      
      return;
    }
-} 
+}
 
 
 // User pressed the import data button
@@ -1825,6 +2006,7 @@ DbgLv(1) << "CGui:iM:  runID runType" << runID << runType;
    // if runType has changed, let's clear out xml data too
 //   if ( oldRunType != runType ) ExpData.clear();
    le_runID2->setText( runID );
+   runID = le_runID2->text();
    le_runID ->setText( runID );
    le_dir   ->setText( currentDir );
    ExpData.runID = runID;
@@ -1941,7 +2123,6 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    qDebug() << "DEBUG for HEXAL: type_to_process: " << type_to_process;
    //*****************************************************//
 
-
    //Read AProfile here: IMPORTANT -- read only channels corresponding to current runType:
    read_aprofile_data_from_aprofile();
    
@@ -1971,8 +2152,16 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
       // Give it a new unique GUID, since we are making a copy
       QString uuidst = US_Util::new_guid();
       US_Util::uuid_parse( uuidst, (unsigned char*)&rdata.rawGUID );
-DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
-
+      DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
+      
+      //Correct/parse channels' description:
+      if ( !us_convert_auto_mode )
+	{
+	  qDebug() << "Description before: " <<  rdata.description;
+	  correct_description( rdata.description, QString::number( rdata.cell ), QString( rdata.channel ) );
+	  qDebug() << "Description after: " <<  rdata.description;
+	}
+      
       // Save the raw data for this triple
       allData << rdata;
 
@@ -2030,11 +2219,12 @@ DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " <<
 
        
    le_runID2->setText( runID );
+   runID = le_runID2->text();
    le_runID ->setText( runID );
    scanTolerance = 5.0;
 
      
-   if ( ! init_output_data() )
+   if ( ! init_output_data() )  //Copy of allData -> outData
       return;
 
    setTripleInfo();
@@ -2103,23 +2293,43 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
 
 
 //Correct description for double solution names
-QString US_ConvertGui::correct_description( QString & description )
+QString US_ConvertGui::correct_description( QString & description, QString cell, QString chan )
 {
-  QStringList desc_from_allData_A = (description.split(";")[0]).split(":");
-  QStringList desc_from_allData_B = (description.split(";")[1]).split(":");
+  QString desc_corrected;
+  if ( description.contains(";") && description.contains("A:") && description.contains("B:") )
+    {
+      //Format: "Cell 1: A: solname, comment; B: solname, comment"
+      QStringList desc_all = description.split(";");
+      QString desc_A = desc_all[0];
+      QString desc_B = desc_all[ desc_all.size()-1 ];
+      QStringList desc_from_allData_A = desc_A.split(":");
+      QStringList desc_from_allData_B = desc_B.split(":");
+      
+      // QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
+      // QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
+      // QString desc_corrected = desc_from_allData_A[0] + ":"  +
+      //                          desc_from_allData_A[1] + ": " +
+      //                          desc_chan_A + ";"             +
+      //                          desc_from_allData_B[0] + ": " +
+      //                          desc_chan_B;
+      
+      //QString desc_chan_A = desc_from_allData_A[2].simplified();
+      //QString desc_chan_B = desc_from_allData_B[1].simplified();
+      
+      QString desc_chan_A = desc_from_allData_A[ desc_from_allData_A.size() - 1 ].simplified();
+      QString desc_chan_B = desc_from_allData_B[ desc_from_allData_B.size() - 1 ].simplified();
+      desc_corrected      = desc_chan_A + " -- " + desc_chan_B;
+      
+      qDebug() << "DESC A: " << desc_chan_A;
+      qDebug() << "DESC B: " << desc_chan_B;
+      qDebug() << "DESC CORR: " << desc_corrected;
+      
+      if ( chan == "A" )
+	description = desc_chan_A;
+      if ( chan == "B" )
+	description = desc_chan_B;
+    }
   
-  QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
-  QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
-  QString desc_corrected = desc_from_allData_A[0] + ":"  +
-                           desc_from_allData_A[1] + ": " +
-                           desc_chan_A + ";"             +
-                           desc_from_allData_B[0] + ": " +
-                           desc_chan_B;
-  
-  // qDebug() << "DESC A: " << desc_chan_A;
-  // qDebug() << "DESC B: " << desc_chan_B;
-  // qDebug() << "DECS_CORRECTED: " << desc_corrected;
-
   return desc_corrected;
 }
   
@@ -2218,7 +2428,7 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
      if ( !us_convert_auto_mode ) //ALEXEY: do not enable edit runID && attach to slot 
        {
 	 us_setReadOnly( le_runID2, false );
-	 connect( le_runID2, SIGNAL( textEdited( QString ) ),
+     connect( le_runID2, SIGNAL( textUpdated( ) ),
 		  SLOT  ( runIDChanged(  )      ) );
        }
      else
@@ -2540,22 +2750,13 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 void US_ConvertGui::runIDChanged( void )
 {
    // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   QString new_runID = le_runID2->text();
-
-   if ( rx.indexIn( new_runID ) >= 0 )
-   {
-      runID = new_runID;
-      if ( runID.length() > 50 )
-      {
-         QMessageBox::warning( this,
-               tr( "RunID Name Too Long" ),
-               tr( "The runID name may be at most\n"
-                   "50 characters in length." ) );
-         runID = runID.left( 50 );
-      }
-      plot_titles();
+   if (outData.size() == 0){
+       le_runID2->clear();
+       return;
    }
+
+   runID = le_runID2->text();
+   plot_titles();
 
    // If the runID has changed, a number of other things need to change too,
    // for instance GUID's.
@@ -2564,7 +2765,7 @@ void US_ConvertGui::runIDChanged( void )
    ExpData.clear();
    foreach( US_Convert::TripleInfo tripinfo, all_tripinfo )
       tripinfo.clear();
-   le_runID2->setText( runID );
+//   le_runID2->setText( runID );
    le_runID ->setText( runID );
 
    saveStatus = NOT_SAVED;
@@ -2601,8 +2802,13 @@ void US_ConvertGui::readProtocol_auto( void )
    
    QString xmlstr( "" );
    //US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, &db );
-   US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID,  &xmlstr, NULL, &db );
+
+   qDebug() << "IN READ PROTOCOL --";
+   qDebug() << "ProtocolName_auto, ExpData.invID -- " << ProtocolName_auto << ExpData.invID;
    
+   int idProtocol_read = US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID,  &xmlstr, NULL, &db );
+
+   qDebug() << "idProtocol_read -- " << idProtocol_read;
    qDebug() << "Protocol READ !!! ";
     
    QXmlStreamReader xmli( xmlstr );
@@ -2626,13 +2832,18 @@ void US_ConvertGui::readProtocol_auto( void )
 	       ProtInfo.optimahost      = attr.value( "optima_host"  ).toString();
 	       ProtInfo.investigator    = attr.value( "investigator" ).toString();
 	       ProtInfo.temperature     = attr.value( "temperature"  ).toString().toDouble();
+
+	       qDebug() << ProtInfo.protname << ProtInfo.protGUID
+			<< ProtInfo.project  << ProtInfo.projectID
+			<< ProtInfo.optimahost << ProtInfo.investigator
+			<< ProtInfo.temperature;
 	     }
 	   
 	   else if ( ename == "rotor" )      { readProtocolRotor_auto( xmli ); }
 	   // else if ( ename == "speed" )      { rpSpeed.fromXml( xmli ); }
 	   else if ( ename == "cells" )      { readProtocolCells_auto( xmli ); }
 	   else if ( ename == "solutions" )  { readProtocolSolutions_auto( xmli ); }
-	   // else if ( ename == "optics" )     { rpOptic.fromXml( xmli ); }
+	   else if ( ename == "optics" )     { readProtocolOptics_auto( xmli ); }
 	   // else if ( ename == "ranges"  )    { rpRange.fromXml( xmli ); }
 	   // else if ( ename == "spectra" )    { rpRange.fromXml( xmli ); }
 	 }
@@ -2667,6 +2878,8 @@ bool US_ConvertGui::readProtocolRotor_auto( QXmlStreamReader& xmli )
 	    ProtInfo.ProtRotor.operID      = attr.value( "operid"       ).toString().toInt();
 	    ProtInfo.ProtRotor.exptype     = attr.value( "exptype"      ).toString();
 	    ProtInfo.ProtRotor.instID      = attr.value( "instid"       ).toString().toInt();
+
+	    qDebug() << "labID: " << ProtInfo.ProtRotor.labID << attr.value( "labid"       ).toString().toInt();
          }
 
          else
@@ -2698,6 +2911,8 @@ bool US_ConvertGui::readProtocolCells_auto( QXmlStreamReader& xmli )
 	      QXmlStreamAttributes attr = xmli.attributes();
 	      ProtInfo.ProtCells.ncell          = attr.value( "total_holes" ).toString().toInt();
 	      ProtInfo.ProtCells.nused          = attr.value( "used_holes"  ).toString().toInt();
+
+	      qDebug() << "Cells: " << ProtInfo.ProtCells.ncell  << attr.value( "total_holes" ).toString().toInt();
 	    }
 	  
 	  else if ( ename == "cell" )
@@ -2735,17 +2950,16 @@ bool US_ConvertGui::readProtocolSolutions_auto( QXmlStreamReader& xmli )
 
       if ( xmli.isStartElement() )
       {
-         if ( ename == "solution" )
-         {  // Accumulate each solution object
-            ChanSolu cs;
-            QXmlStreamAttributes attr = xmli.attributes();
-            cs.channel     = attr.value( "channel"      ).toString();
-            cs.solution    = attr.value( "name"         ).toString();
-            cs.sol_id      = attr.value( "id"           ).toString();
-            cs.ch_comment  = attr.value( "chan_comment" ).toString();
-            ProtInfo.ProtSolutions.chsols << cs;
-            //nschan++;
-         }
+	if ( ename == "solution" )
+	  {  // Accumulate each solution object
+	    ChanSolu cs;
+	    QXmlStreamAttributes attr = xmli.attributes();
+	    cs.channel     = attr.value( "channel"      ).toString();
+	    cs.solution    = attr.value( "name"         ).toString();
+	    cs.sol_id      = attr.value( "id"           ).toString();
+	    cs.ch_comment  = attr.value( "chan_comment" ).toString();
+	    ProtInfo.ProtSolutions.chsols << cs;
+	  }
       }
 
       bool was_end    = xmli.isEndElement();   // Just read was End of element?
@@ -2756,6 +2970,54 @@ bool US_ConvertGui::readProtocolSolutions_auto( QXmlStreamReader& xmli )
    }
    return ( ! xmli.hasError() );
 }
+
+
+bool US_ConvertGui::readProtocolOptics_auto( QXmlStreamReader& xmli )
+{
+  ProtInfo.ProtOptics.chopts.clear();
+
+  while( ! xmli.atEnd() )
+    {  // Read elements from optics portion of XML stream
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "optical_system" )
+	    {
+	      ChanOptics co;
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      co.channel      =  attr.value( "channel" ).toString();
+	      QString dt1     =  attr.value( "scan1"   ).toString();
+	      QString dt2     =  attr.value( "scan2"   ).toString();
+	      QString dt;
+	      
+	      if ( !dt1. isEmpty() ) //RI
+		{
+		  if ( dt2. isEmpty() ) 
+		    dt = "RI";
+		  else
+		    dt = "combined";
+		}
+	      else // not RI ( then IP by default but check...)
+		{
+		  dt = "IP";
+		  if ( dt2. isEmpty() )
+		    dt = "none";
+		}
+	      co.data_type   = dt;
+	      ProtInfo.ProtOptics.chopts << co;
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();   // Just read was End of element?
+      xmli.readNext();                         // Read the next element
+
+      if ( was_end  &&  ename == "optics" )    // Break after "</optics>"
+         break;
+    }
+  return ( ! xmli.hasError() );
+}
+
 
 
 void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
@@ -2919,6 +3181,21 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "Size ProtInfo.ProtCells.cells_used: " << ProtInfo.ProtCells.cells_used.size();
    qDebug() << "Size ProtInfo.ProtSolutions.chsols: " << ProtInfo.ProtSolutions.chsols.size();
 
+   //DEBUG ///////////////////////////////////////////////////////////////
+   for (int i = 0; i < out_tripinfo.size(); ++i )
+     {
+       qDebug() << "out_tripinfo[ " << i << " ]" <<  out_tripinfo[i].tripleDesc;
+     }
+   for (int i = 0; i < out_channels.size(); ++i )
+     {
+       qDebug() << "out_channels[ " << i << " ]" <<  out_channels[i];
+     }
+   for (int i = 0; i < out_triples.size(); ++i )
+     {
+       qDebug() << "out_triples[ " << i << " ]" <<  out_triples[i];
+     }  
+   ///////////////////////////////////////////////////////////////////////
+
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
    qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
    
@@ -2928,10 +3205,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    {
       qDebug() << "SOLUTION is READ in MWL mode !!! ";
       for (int i = 0; i < nchans; ++i )
-      {	   
+      {
+	// //ALEXEY: IMPORTANT -- check against dataType & what we wrote to ProtInfo.ProtSolutions.chsols[ i ].data_type:
+	// if ( ! isCorrectDataType( ProtInfo.ProtSolutions.chsols[ i ].channel, runType ) )
+	//   continue;
+
+	int index_curr = getProtSolIndex( out_channels[ i ], runType );
+	
          //Solution
-	 solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
-	 solution_auto.readFromDB(solutionID, &db);
+	 //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
+	solution_auto.readFromDB(solutionID, &db);
 
 	   qDebug() << "SOLS 0";
 
@@ -3014,8 +3298,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	    qDebug() << "SOLS 4";
 	    
 	   // Description
-	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-
+	   //triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+	    triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
+	    
 	   //ALEXEY: a problem here
 	   //outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
 
@@ -3060,15 +3345,29 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	 {
 	   for (int i = 0; i < ntrips; ++i )
 	     {
-	       int index_curr;
+	       // //ALEXEY: IMPORTANT -- check against dataType & what we wrote to ProtInfo.ProtSolutions.chsols[ i ].data_type:
+	       // if ( ! isCorrectDataType( ProtInfo.ProtSolutions.chsols[ i ].channel, runType ) )
+	       // 	 continue;
+
+	       int index_curr = getProtSolIndex( out_triples[ i ], runType );
+
+	       qDebug() << "index_curr -- " << index_curr;
 	       
-	       if ( runType == "IP" )
-		 index_curr = 2 * i;
-	       else
-		 index_curr = i;
+	       // int index_curr;
+	       
+	       // if ( runType == "IP" )
+	       // 	 index_curr = 2 * i;
+	       // else
+	       // 	 index_curr = i;
 		 
 	       //Solution
 	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
+
+	       // if ( runType == "IP" &&  ProtInfo.ProtSolutions.chsols[ i ].channel. contains( "reference [left]") )
+	       // 	 continue;
+	       
+	       //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       
 	       solution_auto.readFromDB(solutionID, &db);
 	       out_chaninfo[ i ].solution = solution_auto;
 	       out_tripinfo[ i ].solution = solution_auto;
@@ -3078,6 +3377,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       all_tripinfo[ i ].solution = solution_auto;  
 	       
 	       //Description
+	       //triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       outData[ i ]->description = triple_desc;
 
@@ -3134,9 +3434,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
 	   qDebug() << "nchans: " << nchans << ", ntrips: " << ntrips << "outData.size(): " << outData.size() << ", num_cent_holes: " << num_cent_holes;
 	   for (int i = 0; i < nchans; ++i )
-	     {	   
+	     {
+
+	       // if ( ! isCorrectDataType( ProtInfo.ProtSolutions.chsols[ i ].channel, runType ) )
+	       // 	 continue;
+
+	       int index_curr = getProtSolIndex( out_channels[ i ], runType );
+	       
 	       //Solution
-	       solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+
+	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
 	       solution_auto.readFromDB(solutionID, &db);  
 	   
 	       //Description
@@ -3210,6 +3518,55 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    enableSaveBtn_auto();
 }
 
+//get index of ProtInfo's Solutions based on channel name && data type:
+int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
+{
+  int index = 0;
+  channel_name.simplified();
+  channel_name.replace( " ", "" );
+
+  QStringList channelList = channel_name.split("/");
+  QString channel_name_mod = channelList[0] + " / " + channelList[1];
+  
+  qDebug() << "In getProtSolIndex():  channel_name_mod -- " <<  channel_name_mod; 
+  
+  for ( int i=0; i < ProtInfo.ProtSolutions.chsols.size(); ++i ) 
+    {
+      qDebug() << "ProtInfo.ProtSolutions.chsols[ i ].channel -- " << ProtInfo.ProtSolutions.chsols[ i ].channel;
+      if ( ProtInfo.ProtSolutions.chsols[ i ].channel. startsWith( channel_name_mod ) )
+	{
+	  index = i;
+	  break;
+	}
+    }
+
+  return index;
+}
+
+//Check for consistency btw channel's name, dataType, && optics system
+bool US_ConvertGui::isCorrectDataType( QString channel_name, QString dtype )
+{
+  bool isConsistent = true;
+  QString data_type_from_optics;
+  
+  for ( int i=0; i < ProtInfo.ProtOptics.chopts.size(); ++i ) 
+    {
+      if ( ProtInfo.ProtOptics.chopts[ i ].channel == channel_name )
+	{
+	  data_type_from_optics = ProtInfo.ProtOptics.chopts[ i ].data_type;
+	  break;
+	}
+    }
+
+  qDebug() << "In isCorrectDataType(): data_type_from_optics, dtype -- "
+	   << data_type_from_optics << ", " << dtype;
+  
+  if ( data_type_from_optics != dtype )
+    isConsistent = false;
+  
+  return isConsistent;
+}
+  
 // Function to generate a new guid for experiment, and associate with DB
 void US_ConvertGui::editRuninfo_auto( void )
 {
@@ -3674,7 +4031,7 @@ DbgLv(1) << "CGui: ldUS3Dk: RTN";
 }
 
 // Function to load an experiment from the DB
-void US_ConvertGui:: loadUS3DB( void )
+void US_ConvertGui::loadUS3DB( void )
 {
 DbgLv(1) << "CGui: ldUS3DB: IN";
    le_status->setText( tr( "Loading data from DB ..." ) );
@@ -3875,7 +4232,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
 void US_ConvertGui::getExpInfo( void )
 {
 DbgLv(1) << "CGui: gExpInf: IN";
-   ExpData.runID = le_runID -> text();
+   ExpData.runID = le_runID2 -> text();
 
    if ( disk_controls->db() )
    {
@@ -4167,6 +4524,11 @@ void US_ConvertGui::runDetails( void )
 
 void US_ConvertGui::changeDescription( void )
 {
+   if (runID.size() == 0){
+       le_description->clear();
+       return;
+   }
+
    if ( le_description->text().size() < 1 )
       le_description->setText( outData[ tripDatax ]->description );
 
@@ -4242,7 +4604,9 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // 	 le_description ->setText( outData[ tripDatax ]->description );
    //   }
    // else
-     le_description ->setText( outData[ tripDatax ]->description );
+
+   //ALEXEY: USE ::correct_description() here? plus make sure outData[ tripDatax ]->description IS changed?
+   le_description ->setText( outData[ tripDatax ]->description );
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
@@ -4635,6 +4999,7 @@ DbgLv(1) << "CGui:pSS: split CALL";
 // User pressed the Define reference button while analyzing intensity data
 void US_ConvertGui::define_reference( void )
 {
+/*
    if ( isMwl )
    {  // First insure that the full range of wavelengths are available
       //  for defining reference scans
@@ -4679,6 +5044,8 @@ DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
          if ( status == 0 ) return;
       }
    }
+*/
+   plot_last_scans( centerpoint_ref_def );
 
    connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                     SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
@@ -4686,12 +5053,97 @@ DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
    reference_start = 0.0;
    reference_end   = 0.0;
    pb_reference->setEnabled( false );
-   pb_cancelref->setEnabled( true );
+   lw_triple->setEnabled( false );
+   pb_lambnext->setEnabled( false );
+   pb_lambprev->setEnabled( false );
+   cb_lambplot->setEnabled( false );
+   cb_lambstop->setEnabled( false );
+   cb_lambstrt->setEnabled( false );
 
    step = REFERENCE;
+   le_status->setText(tr( "To select a radial point: (ctrl + left click) " ));
+}
+
+// Plot all channel's last scans to pick the reference point
+void US_ConvertGui::plot_last_scans( double cent_point )
+{
+   dataPlotClear( data_plot );
+   grid        = us_grid( data_plot );
+   double maxR = -1.0e99;
+   double minR =  1.0e99;
+   double maxV = -1.0e99;
+   double minV =  1.0e99;
+   for (int ii = 0; ii < lw_triple->count(); ii++){
+      int datax = out_chandatx[ ii ];
+      US_DataIO::RawData* currentData = outData.at(datax);
+      int nrpoints = currentData->pointCount();
+      US_DataIO::Scan scan = currentData->scanData.last();
+      DbgLv(1) << "Cell = " << currentData->cell << " , Channel = "
+               << currentData->channel << " , Wavelenght = " << scan.wavelength;
+      QVector< double > rvec( nrpoints );
+      QVector< double > vvec( nrpoints );
+      double* rr  = rvec.data();
+      double* vv  = vvec.data();
+      for ( int jj = 0; jj < nrpoints; jj++ )
+      {
+         rr[ jj ]    = currentData->radius( jj );
+         vv[ jj ]    = scan.rvalues[ jj ];
+         maxR = qMax( maxR, rr[ jj ] );
+         minR = qMin( minR, rr[ jj ] );
+         maxV = qMax( maxV, vv[ jj ] );
+         minV = qMin( minV, vv[ jj ] );
+      }
+      QString title = tr( "Raw Data at %1 / %2 / %3" ).arg(currentData->cell).
+                      arg(currentData->channel).arg(scan.wavelength);
+
+      QwtPlotCurve* curv = us_curve( data_plot, title );
+      curv->setPen(QColor(Qt::yellow));
+      curv->setSamples(rr, vv, nrpoints);
+   }
+
+   data_plot->setTitle( tr ("All Channels - First Wavelength - Last Scan"));
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
+   //Add v-line for 5.87 position as best guess (only first time!)
+   if (  us_convert_auto_mode && first_time_plot_auto )
+     {
+       QwtPlotCurve* v_line_peak;
+       double r[ 2 ];
+       r[ 0 ] = cent_point;
+       r[ 1 ] = cent_point;
+       
+#if QT_VERSION < 0x050000
+       QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+       QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
+#endif
+       
+       double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+       
+       double v[ 2 ];
+       v [ 0 ] = y_axis->upperBound() - padding;
+       v [ 1 ] = y_axis->lowerBound() + padding;
+       
+       QString vline_name = "V-Position";
+       
+       v_line_peak = us_curve( data_plot, vline_name );
+       v_line_peak ->setSamples( r, v, 2 );
+       
+       QPen pen = QPen( QBrush( Qt::red ), 2.0, Qt::DotLine );
+       v_line_peak->setPen( pen );
+     }
+     
+   show_plot_progress = false;
+   data_plot->replot();
+
 }
 
 // Select starting point of reference scan in intensity data
+/*
 void US_ConvertGui::start_reference( const QwtDoublePoint& p )
 {
    reference_start   = p.x();
@@ -4699,29 +5151,136 @@ void US_ConvertGui::start_reference( const QwtDoublePoint& p )
    draw_vline( reference_start );
    data_plot->replot();
 }
+*/
+
+/*
+// [ ORIG, 2-points] Select end point of reference scan in intensity data
+void US_ConvertGui::process_reference_auto( const double low, const double high )
+{
+  reference_start = low;
+  reference_end = high;;
+
+  data_plot->replot();
+  
+
+  // Calculate the averages for all triples
+  PseudoCalcAvg();
+
+  // Now that we have the averages, let's replot
+  Pseudo_reference_triple = tripListx;
+
+ 
+  // Default to displaying the first non-reference triple
+  for ( int trx = 0; trx < outData.size(); trx++ )
+    {
+      if ( trx != Pseudo_reference_triple )
+	{
+	  tripListx = trx;
+	  break;
+	}
+    }
+
+  if ( isMwl )
+   {
+      triple_index();
+      DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
+   }
+  lw_triple->setCurrentRow( tripListx );
+
+  
+  plot_current();
+  DbgLv(1) << "CGui: procref:  plot_current complete";
+  QApplication::restoreOverrideCursor();
+
+  pb_reference  ->setEnabled( false );
+  referenceDefined = true;
+  DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
+
+  // ALEXEY: just enable Save btn for autoflow 
+  lw_todoinfo->clear();
+  pb_saveUS3 ->setEnabled( true );
+  show_intensity_auto();
+    
+  enableRunIDControl( false );
+     
+  le_status->setText( tr( "The reference scans have been defined." ) );
+  qApp->processEvents();
+
+  qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
+}
+*/
+
+// NEW way, one point
+void US_ConvertGui::process_reference_auto( const double centerpoint )
+{
+  double dr = 0.01;
+  reference_start = centerpoint - dr;
+  reference_end = centerpoint + dr;
+
+  data_plot->replot();
+  
+  // Calculate the averages for all triples
+  //PseudoCalcAvg_av();
+  PseudoCalcAvg();
+  
+  // Now that we have the averages, let's replot
+  Pseudo_reference_triple = tripListx;
+
+ 
+  // Default to displaying the first non-reference triple
+  for ( int trx = 0; trx < outData.size(); trx++ )
+    {
+      if ( trx != Pseudo_reference_triple )
+	{
+	  tripListx = trx;
+	  break;
+	}
+    }
+
+  if ( isMwl )
+   {
+      triple_index();
+      DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
+   }
+  lw_triple->setCurrentRow( tripListx );
+
+  
+  plot_current();
+  DbgLv(1) << "CGui: procref:  plot_current complete";
+  QApplication::restoreOverrideCursor();
+
+  pb_reference  ->setEnabled( false );
+  referenceDefined = true;
+  DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
+
+  // ALEXEY: just enable Save btn for autoflow 
+  lw_todoinfo->clear();
+  pb_saveUS3 ->setEnabled( true );
+  show_intensity_auto();
+    
+  enableRunIDControl( false );
+     
+  le_status->setText( tr( "The reference scans have been defined." ) );
+  qApp->processEvents();
+
+  qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
+}
+
 
 // Select end point of reference scan in intensity data
 void US_ConvertGui::process_reference( const QwtDoublePoint& p )
 {
-   // Just in case we get a second click message right away
-   if ( fabs( p.x() - reference_start ) < 0.005 ) return;
+   double dr = 0.01;
+   reference_start = p.x() - dr;
+   reference_end = p.x() + dr;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    le_status->setText( tr( "The reference scans are being defined..." ) );
    qApp->processEvents();
-   reference_end = p.x();
    draw_vline( reference_end );
    data_plot->replot();
    picker        ->disconnect();
-
-   // Double check if min < max
-   if ( reference_start > reference_end )
-   {
-      double temp     = reference_start;
-      reference_start = reference_end;
-      reference_end   = temp;
-   }
 
    // Calculate the averages for all triples
    PseudoCalcAvg();
@@ -4760,13 +5319,14 @@ DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
      {
        lw_todoinfo->clear();
        pb_saveUS3 ->setEnabled( true );
+       show_intensity_auto();
      }
    else
      enableSaveBtn();
 
    enableRunIDControl( false );
      
-     le_status->setText( tr( "The reference scans have been defined." ) );
+   le_status->setText( tr( "The reference scans have been defined." ) );
    qApp->processEvents();
 
    qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
@@ -4790,11 +5350,25 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 
       case REFERENCE :
          // process reference scan
-         if ( reference_start == 0.0 )
-            start_reference( p );
+         process_reference( p );
 
-         else
-            process_reference( p );
+	 // if( us_convert_auto_mode )
+	 //   {
+	 //     show_intensity_auto();
+	 //   }
+/*
+	if ( reference_start == 0.0 )
+	  start_reference( p );
+	
+	else
+	  {
+	    process_reference( p );
+	    // if( us_convert_auto_mode )
+	    //   {
+	    // 	show_intensity_auto();
+	    //   }
+	  }
+*/
 
       default :
          break;
@@ -4802,8 +5376,9 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
    }
 }
 
-// Reference calculation for pseudo-absorbance
-void US_ConvertGui::PseudoCalcAvg( void )
+/*
+// Reference calculation for pseudo-absorbance: AVERAGE of Average (existing way in GMP report; needed..)
+void US_ConvertGui::PseudoCalcAvg_av( void )
 {
    if ( referenceDefined ) return;  // Average calculation has already been done
 
@@ -4837,8 +5412,14 @@ void US_ConvertGui::PseudoCalcAvg( void )
       }
 
       if ( count > 0 )
-         ExpData.RIProfile << sum / count;
-
+	{
+	  //ExpData.RIProfile << sum / count;
+	  
+	  if ( sum > 0 )
+	    ExpData.RIProfile << sum / count;
+	  else
+	    ExpData.RIProfile << 1.0; 
+	}
       else
          ExpData.RIProfile << 1.0;    // See the log10 function, later
 
@@ -4874,10 +5455,16 @@ void US_ConvertGui::PseudoCalcAvg( void )
    // Now calculate the pseudo-absorbance
    int ndxmax    = ExpData.RIProfile.size() - 1;
 
-   for ( int trx = 0; trx < outData.size(); trx++ )
+   // ATTENTION:
+   // below, goes over data for all triples && applies ExpData.RIProfile calculated for the reference triple only
+   // Ref. triple is (above): US_DataIO::RawData* referenceData = outData[ tripDatax ];
+   // triplDatax -- index of the currently selected triple
+   for ( int trx = 0; trx < outData.size(); trx++ )   
    {
       US_DataIO::RawData* currentData = outData[ trx ];
       int kcpoint   = currentData->pointCount();
+
+      //HERE: calculate ExpData.RIProfile for each triple..
 
       for ( int ss = 0; ss < currentData->scanCount(); ss++ )
       {
@@ -4911,6 +5498,277 @@ DbgLv(1) << "CGui:PCA: (7)referDef=" << referenceDefined;
    pb_reference->setEnabled( false );
    pb_cancelref->setEnabled( true );
 }
+*/
+
+// Reference calculation for pseudo-absorbance
+void US_ConvertGui::PseudoCalcAvg( void )
+{
+   lw_triple->setEnabled( true );
+   pb_lambnext->setEnabled( true );
+   pb_lambprev->setEnabled( true );
+   cb_lambplot->setEnabled( true );
+   cb_lambstop->setEnabled( true );
+   cb_lambstrt->setEnabled( true );
+
+   if ( referenceDefined ) return;  // Average calculation has already been done
+
+   if ( isMwl )
+   {  // Do calculations for each wavelength, if MWL
+         PseudoCalcAvgMWL();
+         return;
+   }
+
+   US_DataIO::RawData* referenceData = outData[ tripDatax ];
+   int ref_size = referenceData->pointCount();
+
+   for ( int ss = 0; ss < referenceData->scanCount(); ss++ )
+   {
+         US_DataIO::Scan* scan = &referenceData->scanData[ ss ];
+
+         int    rr     = 0;
+         int    count  = 0;
+         double sum    = 0.0;
+
+         while ( referenceData->radius( rr ) < reference_start  &&
+                rr < ref_size )
+             rr++;
+
+         while ( referenceData->radius( rr ) < reference_end  &&
+                rr < ref_size )
+         {
+             sum += scan->rvalues[ rr ];
+             count++;
+             rr++;
+         }
+
+         if ( count > 0 )
+         {
+             //ExpData.RIProfile << sum / count;
+
+             if ( sum > 0 )
+            ExpData.RIProfile << sum / count;
+             else
+            ExpData.RIProfile << 1.0;
+         }
+         else
+             ExpData.RIProfile << 1.0;    // See the log10 function, later
+
+   }
+
+   // Now average around excluded values
+   int lastGood  = 0;
+   int countBad  = 0;
+   for ( int ss = 0; ss < ExpData.RIProfile.size(); ss++ )
+   {
+         // In case there are adjacent excluded scans...
+         if ( allExcludes[ tripDatax ].contains( ss ) )
+             countBad++;
+
+         // Calculate average of before and after for intervening values
+         else if ( countBad > 0 )
+         {
+             double newAvg = ( ExpData.RIProfile[ lastGood ]
+                              + ExpData.RIProfile[ ss ] ) / 2.0;
+
+             for ( int rr = lastGood + 1; rr < ss; rr++ )
+            ExpData.RIProfile[ rr ] = newAvg;
+
+             countBad = 0;
+         }
+
+         // Normal situation -- value is not excluded
+         else
+             lastGood = ss;
+
+   }
+
+   // Now calculate the pseudo-absorbance
+   int ndxmax    = ExpData.RIProfile.size() - 1;
+
+   // ATTENTION:
+   // below, goes over data for all triples && applies ExpData.RIProfile calculated for the reference triple only
+   // Ref. triple is (above): US_DataIO::RawData* referenceData = outData[ tripDatax ];
+   // triplDatax -- index of the currently selected triple
+   for ( int trx = 0; trx < outData.size(); trx++ )
+   {
+         US_DataIO::RawData* currentData = outData[ trx ];
+         int kcpoint   = currentData->pointCount();
+
+         //HERE: calculate ExpData.RIProfile for each triple..
+
+         for ( int ss = 0; ss < currentData->scanCount(); ss++ )
+         {
+             US_DataIO::Scan* scan = &currentData->scanData[ ss ];
+
+             for ( int rr = 0; rr < kcpoint; rr++ )
+             {
+            double rvalue = scan->rvalues[ rr ];
+
+            // Protect against possible inf's and nan's, if a reading
+            // evaluates to 0 or wherever log function is undefined or -inf
+            if ( rvalue < 1.0 ) rvalue = 1.0;
+
+            // Check for boundary condition
+            int ndx        = qMin( ss, ndxmax );
+            double prval   = ExpData.RIProfile[ ndx ];
+            scan->rvalues[ rr ] = ( prval != 0.0 ) ?
+                                    log10( prval / rvalue ) : 0.0;
+             }
+         }
+
+         // Let's mark pseudo-absorbance as different from RI data,
+         //  since it needs some different processing in some places
+         isPseudo = true;
+   }
+
+   // Enable intensity plot
+   referenceDefined = true;
+   DbgLv(1) << "CGui:PCA: (7)referDef=" << referenceDefined;
+   pb_intensity->setEnabled( true );
+   pb_reference->setEnabled( false );
+   pb_cancelref->setEnabled( true );
+
+}
+
+
+//For ABDE: convert to absorbance based on AProfile's ref. chann/use ref. chann defs
+void US_ConvertGui::absorbance_conversion_abde( void )
+{
+  data_plot->replot();
+  
+  //Map of ref-to-outData
+  // QMap ref_to_outData< QString("1B232"),US_DataIO::RawData* >
+  QMap < QString, US_DataIO::RawData > ref_to_outData;
+  QMap < QString, QString > sample_to_ref;
+  for ( int ii = 0; ii < outData.size(); ii++)
+    {
+      QString cell     = QString::number( outData.at(ii)->cell );
+      QString channame = QString( outData.at(ii)->channel );
+      QString wvl = QString::number( outData.at(ii)->scanData.at(0).wavelength );
+
+      QString cellchan    = cell + channame;
+      QString cellchanwvl = cellchan + wvl;
+
+      qDebug() << "in absorbance_conversion_abde(): cell, channame, wvl, #,  out_triples -- "
+	       << cell << channame << wvl << ii << out_triples[ii];
+      //Output: in absorbance_conversion_abde(): cell, channame, wvl, #,  out_triples --  "3" "B" 290 179 "3 / B / 290"
+      
+      if ( channels_abde_refs[ cellchan ] > 0 )
+      	ref_to_outData[ cellchanwvl ] = *(outData[ii]);
+
+      //connect sample & ref by triple name (1A232)
+      if ( channels_abde_use_refs[ cellchan ] > 0 )
+      	{
+      	  int use_ref_num = channels_abde_use_refs[ cellchan ];
+      	  QMap<QString, int>::iterator rnr;
+      	  for ( rnr = channels_abde_refs.begin(); rnr != channels_abde_refs.end(); ++rnr )
+      	    {
+      	      if ( rnr.value() == use_ref_num ) 
+      		{
+      		  sample_to_ref[ cellchanwvl ] = rnr.key() + wvl;
+      		  break;
+      		}
+      	    }
+       
+      	}
+    }
+
+  //Debug
+  qDebug() << "ref_to_outData.keys() -- " << ref_to_outData.keys();
+  qDebug() << "sample_to_ref.keys() -- " << sample_to_ref.keys();
+  
+  //Now, go over outData again:
+  for ( int ii = 0; ii < outData.size(); ii++)
+    {
+      QString cell     = QString::number( outData.at(ii)->cell );
+      QString channame = QString( outData.at(ii)->channel );
+      QString wvl = QString::number( outData.at(ii)->scanData.at(0).wavelength );
+
+      QString cellchan    = cell + channame;
+      QString cellchanwvl = cellchan + wvl;
+
+      int ns = outData.at(ii)->scanData.size();
+
+      US_DataIO::RawData* currentData = outData[ ii ];
+      int kcpoint   = currentData->pointCount();
+
+      qDebug() << "in absorbance_conversion_abde(): cell, channame, wvl, #,  out_triples -- "
+	       << cell << channame << wvl << ii;
+
+      //Set correction vector to itself initially
+      QVector< QVector<double>> buffer_rvalues;
+      for ( int ss = 0; ss < currentData->scanCount(); ss++ )
+	buffer_rvalues << currentData->scanData.at( ss ).rvalues;
+      
+      //1. if NOT a reference itself:
+      if ( sample_to_ref.contains( cellchanwvl ))
+       	{
+       	  qDebug() << "Going to convert for triple -- " << cellchanwvl
+       		   << "with the reference triple -- " << sample_to_ref[ cellchanwvl ];
+      
+       	  //Check for matching Scan # in Sample & Ref.
+       	  qDebug() << "#Scans: ns_data, ns_ref -- "
+       		   << ns << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.size();
+
+       	  int ns_min = ns;
+       	  if (ns != ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.size())
+       	    {
+       	      qDebug() << "Number Scans Not Matched!";
+	      ns_min = qMin( ns,  ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.size() );
+       	      //return;
+       	    }
+      
+       	  buffer_rvalues. clear();
+	  for (int nsc = 0; nsc < ns_min; nsc++)
+	    {
+	      buffer_rvalues << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.at( nsc ).rvalues;
+	      //qDebug() << "Buffer vals [in Correction] " << ref_to_outData[ sample_to_ref[ cellchanwvl ] ].scanData.at( nsc ).rvalues;
+	    }
+	  //	}
+      //2. Refrence itself
+      // else
+      //  	{
+      //  	  for (int nsc = 0; nsc < ns; nsc++)
+      //  	    buffer_rvalues << outData.at(ii)->scanData.at( nsc ).rvalues;
+      //  	}
+
+	  for ( int ss = 0; ss < currentData->scanCount(); ss++ )
+	    {
+	      US_DataIO::Scan* scan = &currentData->scanData[ ss ];
+	      
+	      //qDebug() << "buffer_rvalues at log : " << buffer_rvalues.at( ss );
+	      
+	      for ( int rr = 0; rr < kcpoint; rr++ )
+		{
+		  double rvalue = scan->rvalues[ rr ];
+		  double val = buffer_rvalues.at(ss).at(rr) / rvalue;
+		  if (val <= 0)
+		    val = 1e-5;
+		  
+		  scan->rvalues[ rr ] = std::log10(val);
+		}
+	    }
+	}
+    }
+
+  plot_current();
+  QApplication::restoreOverrideCursor();
+
+  pb_reference  ->setEnabled( false );
+  referenceDefined = true;
+  
+  // ALEXEY: just enable Save btn for autoflow 
+  lw_todoinfo->clear();
+  pb_saveUS3 ->setEnabled( true );
+  //show_intensity_auto();
+    
+  enableRunIDControl( false );
+     
+  le_status->setText( tr( "[ABDE] Conversion to Absorbance Completed." ) );
+  qApp->processEvents();
+  
+}
+
 
 // Bring up a graph window showing the intensity profile
 void US_ConvertGui::show_intensity( void )
@@ -4965,8 +5823,131 @@ DbgLv(1) << "CGui: show_intensity  scn1 scnn" << scan_nbrs[0]
    qApp->processEvents();
 }
 
-// Un-do reference scans apply
-void US_ConvertGui::cancel_reference( void )
+//Modified fnc for autoflow
+void US_ConvertGui::show_intensity_auto( void )
+{
+   intensityJsonRI. clear();
+   intensityJsonRI += "{ \"Intensity\": ";
+
+
+   /**** dealin gwith RIMap -- reverted back to original way; so, not needed
+   // Iterate over RIProfileMap && group by a wavwlength: av. over triples with the same wavelength
+   // (NOT each scan -- too much information for GMP report!!)
+   QMap< QString, double > av_intensity_per_wvl;
+   QMap< QString, int >    av_intensity_per_wvl_counter;
+   QMap<QString, double>::iterator jj;
+   for ( jj = ExpData.RIProfileMap.begin(); jj != ExpData.RIProfileMap.end(); ++jj )
+     {
+       QString wavelength = QString::number( jj.key().split("-")[2].toInt() / 10 );
+
+       //test
+       
+       if ( wavelength == "504" ) 
+	 qDebug() << "RIMap: triple | intensity -- "
+		  << jj.key()
+		  << " | "
+		  << jj.value();
+
+       qDebug() << "Wavelength -- " << wavelength;
+       
+       av_intensity_per_wvl[ wavelength ] += jj.value();
+       ++av_intensity_per_wvl_counter[ wavelength ];
+     }
+
+   intensityJsonRI += "[{";
+   
+   QStringList wvls_keys = av_intensity_per_wvl.keys();
+   for ( int jjj=0; jjj<wvls_keys.size(); ++jjj )
+     {
+       double av_int_wvl = double( av_intensity_per_wvl[ wvls_keys[jjj] ] / av_intensity_per_wvl_counter[ wvls_keys[jjj] ] );
+       
+       // qDebug() << "Av. Intensity for wvl. " << wvls_keys[jjj] << " is: "
+       // 		<< av_int_wvl;
+
+       // qDebug() << "Scan count for wvl. " << wvls_keys[jjj] << " is: "
+       // 		<< av_intensity_per_wvl_counter[ wvls_keys[jjj] ];
+
+       intensityJsonRI += "\"" + wvls_keys[jjj] + "\"" + ":" + "\""  + QString::number( av_int_wvl ) + "\",";
+     }
+
+   intensityJsonRI.chop(1);
+   intensityJsonRI += "}]";
+   intensityJsonRI += "}";
+   **************************************************************************/
+
+   /*** OLD way of distinguishing MWL vs. single-wvl cases: ****/
+   QString triple = out_triples[ 0 ];
+   QVector< double > scan_nbrs;
+
+   if ( isMwl )
+   {  // For MWL, set special triple string and build scan numbers
+      int riscans    = ExpData.RI_nscans;
+      int riwvlns    = ExpData.RI_nwvlns;
+      triple      = out_channels[ 0 ] + " / "
+         + QString::number( ExpData.RIwvlns[ 0 ] ) + "-"
+         + QString::number( ExpData.RIwvlns[ riwvlns - 1 ] );
+
+      // Scan numbers are composite wavelength.scan
+      double scndiv  = 0.1;
+      double scnmax  = (double)riscans;
+      double scnfra  = scnmax * scndiv;
+      while ( scnfra > 0.999 )
+      {
+         scndiv        *= 0.1;
+         scnfra         = scnmax * scndiv;
+      }
+DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
+
+      intensityJsonRI += "[{";
+ 
+      for ( int ii = 0; ii < riwvlns; ii++ )
+      {
+         double wvbase  = (double)ExpData.RIwvlns[ ii ];
+
+	 qDebug() << "In show_intensity_auto: Mwl, wvl -- " << wvbase;
+
+	 double sum = 0.0;
+         for ( int jj = 0; jj < riscans; jj++ )
+         {
+            double scnnbr  = wvbase + scndiv * (double)( jj + 1 );
+            scan_nbrs << scnnbr;
+
+	    sum += ExpData.RIProfile[ ii*riscans + jj ];
+	    //qDebug() << "For wvl " << wvbase << ", scans are -- " << ExpData.RIProfile[ ii*riscans + jj ];
+          }
+	 double av_int =  double( sum / riscans );
+	 qDebug() << "MWL: For wvl " << wvbase << ", Av. Intensity is -- " << av_int;
+
+	 intensityJsonRI += "\"" + QString::number( wvbase ) + "\"" + ":" + "\""  + QString::number( av_int ) + "\",";
+      }
+      
+      intensityJsonRI.chop(1);
+      intensityJsonRI += "}]";
+   }
+   else
+     {  // For non-MWL, set scan numbers vector
+       double sum = 0.0;
+       for ( int ii = 0; ii < ExpData.RIProfile.size(); ii++ )
+	 {
+	   scan_nbrs << (double)( ii + 1 );
+	   sum += ExpData.RIProfile[ ii ];
+	 }
+       double av_int = double( sum / ExpData.RIProfile.size() );
+       qDebug() << "Non-MWL: Av. Intensity is -- " << av_int;
+       
+       intensityJsonRI += "\"" + QString::number( av_int ) + "\"";
+     }
+   
+
+   intensityJsonRI += "}";
+   qDebug() << "intensityJsonRI -- " << intensityJsonRI;
+
+   qApp->processEvents();
+}
+
+/*
+// Un-do reference scans apply: OLD way of dealing with Average of average {as required in GMP Report}
+void US_ConvertGui::cancel_reference_av( void )
 {
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "The reference scans are being canceled..." ) );
@@ -5048,6 +6029,10 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
 
    setTripleInfo();
 
+
+   //ALEXEY: set auto_ref_scan to FALSE
+   auto_ref_scan = false;
+
    pb_reference  ->setEnabled( true );
    pb_cancelref  ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
@@ -5061,11 +6046,117 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
    le_status->setText( tr( "The reference scans have been canceled." ) );
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
+
+}
+*/
+
+void US_ConvertGui::cancel_reference( void )
+{
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   le_status->setText( tr( "The reference scans are being canceled..." ) );
+   qApp->processEvents();
+   int wvoff    = 0;
+   int rscans   = ExpData.RI_nscans;
+
+   // Do the inverse operation and retrieve raw intensity data
+   for ( int ii = 0; ii < outData.size(); ii++ )
+   {
+       US_DataIO::RawData* currentData = outData[ ii ];
+
+       if ( isMwl )
+       {  // For MWL, profile is offset by wavelength
+         int iwavl    = out_triples[ ii ].section( " / ", 2, 2 ).toInt();
+         wvoff        = ExpData.RIwvlns.indexOf( iwavl );
+
+         if ( wvoff < 0 )
+         {
+            DbgLv(1) << "Triple " << out_triples[ ii ]
+                     << "has NO CORRESPONDING RI PROFILE POINT!!!";
+            wvoff        = 0;
+            QMessageBox::information( this,
+                                     tr( "Error" ),
+                                     tr( "Triple %1 has NO CORRESPONDING RI PROFILE POINT!!!" )
+                                         .arg( out_triples[ ii ] ) );
+            int kwavl    = 99999;
+
+            for ( int jj = 0; jj < ExpData.RI_nwvlns; jj++ )
+            {  // Find index of nearest wavelength
+               int jwavl    = qAbs( ExpData.RIwvlns[ jj ] - iwavl );
+
+               if ( jwavl < kwavl )
+               {
+             kwavl        = jwavl;
+             wvoff        = jj;
+               }
+            }
+         }
+       }
+
+       wvoff       *= rscans;
+       int kpoint   = currentData->pointCount();
+       int kscan    = currentData->scanCount();
+
+
+       if ( ExpData.RIProfile.size() )  //ALEXEY
+       {
+         for ( int jj = 0; jj < kscan; jj++ )
+         {
+            US_DataIO::Scan* scan  = &currentData->scanData[ jj ];
+            qDebug() << "jj: " << jj << ", Size of ExpData.RIProfile: " << ExpData.RIProfile.size() << ", wvoff: " << wvoff << ", jj+wvoff: " << jj+wvoff ;
+
+            double           rppro = ExpData.RIProfile[ jj + wvoff ];
+
+            for ( int kk = 0; kk < kpoint; kk++ )
+            {
+               double rvalue = scan->rvalues[ kk ];
+
+               scan->rvalues[ kk ] = rppro / pow( 10, rvalue );
+            }
+         }
+       }
+
+       qDebug() << "Test 2 After cycle";
+   }
+
+   qDebug() << "Test 3";
+
+   referenceDefined = false;
+   isPseudo         = false;
+   ExpData.RIProfile.clear();
+   reference_start  = 0.0;
+   reference_end    = 0.0;
+   DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
+
+   for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
+       all_tripinfo[ ii ].excluded = false;
+
+   setTripleInfo();
+
+
+   //ALEXEY: set auto_ref_scan to FALSE
+   auto_ref_scan = false;
+
+   pb_reference  ->setEnabled( true );
+   pb_cancelref  ->setEnabled( false );
+   pb_intensity  ->setEnabled( false );
+   tripListx = 0;
+   lw_triple->setCurrentRow( tripListx );
+
+   plot_current();
+
+   enableSaveBtn();
+
+   le_status->setText( tr( "The reference scans have been canceled." ) );
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
 }
 
 // Drop selected triples
 void US_ConvertGui::drop_reference( void )
 {
+  qDebug() << "runType -- " << runType;
+  
    QStringList selected;
    QStringList celchns;
 
@@ -5085,7 +6176,30 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
    // Modify triples or cell/channels and wavelengths for specified excludes
    if ( selsiz > 0 )
-   {
+     {
+       //check if there will be any data left: in principle, never realizes!!
+       if ( (out_triples.size() - selsiz) <= 0 )
+	 {
+	   int stat     = QMessageBox::warning( this,
+						tr( "All Data To Be Dropped" ),
+						tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+						    "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+						    "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+						    "NOTE: The program will be reset; you will no longer be able to process current run "
+						    "with this program<br>"),
+						tr( "&Proceed" ), tr( "&Cancel" ) );
+	   
+	   if ( stat != 0 ) 
+	     return;
+	   
+	   //delete autoflow record & return to Run Manager
+	   delete_autoflow_record();
+	   resetAll_auto();
+	   emit saving_complete_back_to_initAutoflow( );
+	   return;
+	 }
+       //End of preliminary check for remaining data
+     
       for ( int ss = 0; ss < selsiz; ss++ )
       {  // Mark selected triples as excluded
          int trx    = all_triples.indexOf( selected[ ss ] );
@@ -5124,7 +6238,42 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 								 "Otherwise, you should \"Cancel\".\n" ).arg( triple_name ).arg( celchn ),
 							     tr( "&Proceed" ), tr( "&Cancel" ) );
 		  
-		  if ( status != 0 ) return;
+		  if ( status != 0 )
+		    {
+		      //reset all .ecluded to false:
+		      for ( int trx = 0; trx < all_triples.size(); trx++ )
+			all_tripinfo[ trx ].excluded = false;
+		      return;
+		    }
+
+		  //Now check for remainig data using "cellchannel"
+		  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
+		    {
+		      int stat     = QMessageBox::warning( this,
+							   tr( "All Data To Be Dropped" ),
+							   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+							       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+							       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+							       "NOTE: The program will be reset; you will no longer be able to process current run "
+							       "with this program<br>"),
+							   tr( "&Proceed" ), tr( "&Cancel" ) );
+		      
+		      if ( stat != 0 )
+			{
+			  //reset all .ecluded to false:
+			  for ( int trx = 0; trx < all_triples.size(); trx++ )
+			    all_tripinfo[ trx ].excluded = false;
+			  return;
+			}
+		      
+		      //delete autoflow record & return to Run Manager
+		      //delete_autoflow_record();
+		      resetAll_auto();
+		      emit saving_complete_back_to_initAutoflow( );
+		      return;
+		    }
+		  //End of final check for remaining data
+		  
 
 		  //Mark channel to be dropped - for exclusion of the report
 		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
@@ -5145,6 +6294,25 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	    }
 	}
       //END of adiitional drop-out
+
+      
+      //Add small dialog for reason / comment to triples' drop:
+      if ( us_convert_auto_mode && !usmode )
+	{
+	  QString t_comment = comment_for_drop_dialog( "triple(s)" );
+	  if ( t_comment. isEmpty() )
+	    return;
+	  else
+	    {
+	      //write t_comment as follows:
+	      /** 
+		  QMap< QString, QMap < QString, QString > > drop_operations;
+		  drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
+	      **/
+	      drop_operations[ runType ][ "Triples" ] = t_comment;
+	    }
+	}
+          
       
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
@@ -5161,6 +6329,16 @@ DbgLv(1) << "DelTrip: bldout  RTN";
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
+
+   
 }
 
 //Check if triple is the reference one for a channel..
@@ -5208,6 +6386,10 @@ void US_ConvertGui::read_aprofile_data_from_aprofile()
   triple_to_edit     .clear();
   channels_to_drop   .clear();
   channels_report    .clear();
+
+  //ABDE
+  channels_abde_refs     .clear();
+  channels_abde_use_refs .clear();
   
   QString aprofile_xml;
   
@@ -5265,7 +6447,8 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		QString channel_name = attr.value( "channel" ).toString();
 		QString channel_desc = attr.value( "chandesc" ).toString();
 
-		QString opsys = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		QString opsys    = channel_desc.split(":")[1]; // UV/vis. or Interf.
+		QString chcell   = channel_desc.split(":")[0]; // 1A, 1B...
 
 		if ( runType_combined_IP_RI ) //combined run !
 		  {
@@ -5282,6 +6465,13 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 			//Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
 			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+
+			//ABDE
+			if ( attr.hasAttribute("abde_reference") )
+			  channels_abde_refs[ chcell ] = attr.value("abde_reference").toInt();
+			if ( attr.hasAttribute("abde_use_reference") )
+			  channels_abde_use_refs[ chcell ] = attr.value("abde_use_reference").toInt();
+			  
 		      }
 		    if ( opsys.contains("Interf") &&  type_to_process == "IP" )
 		      {
@@ -5296,6 +6486,12 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 			//Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
 			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+
+			//ABDE
+			if ( attr.hasAttribute("abde_reference") )
+			  channels_abde_refs[ chcell ] = attr.value("abde_reference").toInt();
+			if ( attr.hasAttribute("abde_use_reference") )
+			  channels_abde_use_refs[ chcell ] = attr.value("abde_use_reference").toInt();
 		      }
 		  }
 		else //1-type optics
@@ -5309,8 +6505,14 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		      channels_report[ channel_name ] = attr.value( "report_id" ).toString() ;
 			
 		    //Read what triple selected for editing:
-			if ( attr.hasAttribute("wvl_edit") )
-			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+		    if ( attr.hasAttribute("wvl_edit") )
+		      triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+
+		    //ABDE
+		    if ( attr.hasAttribute("abde_reference") )
+		      channels_abde_refs[ chcell ] = attr.value("abde_reference").toInt();
+		    if ( attr.hasAttribute("abde_use_reference") )
+		      channels_abde_use_refs[ chcell ] = attr.value("abde_use_reference").toInt();
 		  }
 		  
 	      }
@@ -5333,21 +6535,84 @@ bool US_ConvertGui::bool_flag( const QString xmlattr )
    return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
 }
 
+int US_ConvertGui::check_for_data_left( QString chann, QString type )
+{
+  int triples_to_exclude = 0;
+
+  if ( type == "channel" )
+    {
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	{  // Mark matching triples as excluded
+	  QString tchan = QString( all_triples[ trx ] )
+	    .section( "/", 1, 1 ).simplified();
+	  
+	  if ( tchan == chann )
+	    {
+	      ++triples_to_exclude;
+	    }
+	}
+    }
+
+  if ( type == "cellchannel" )
+    {
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	{  // Mark matching triples as excluded
+	  QString tcelchn = QString( all_triples[ trx ] )
+	    .section( "/", 0, 1 ).simplified();
+	  
+	  if ( tcelchn == chann )
+	    {
+	      ++triples_to_exclude;
+	    }
+	}
+    }
+  
+  
+  int triples_left = out_triples.size() - triples_to_exclude;
+
+  qDebug() << "In check_for_left_data(): triples_left: " << out_triples.size() << " - " << triples_to_exclude << " = " << triples_left;
+  
+  return triples_left;
+}
 
 // Drop the triples for the selected channel (all A's or B's) ('Drop All Channel 'A's')
 void US_ConvertGui::drop_channel()
 {
-   QString chann  = lw_triple->currentItem()->text()
+  QString chann  = lw_triple->currentItem()->text()
                     .section( "/", 1, 1 ).simplified();  // "A" or "B"  
-   int status     = QMessageBox::information( this,
-      tr( "Drop Triples with Selected Channel" ),
-      tr( "You have selected a list item that implies you wish to"
-          " drop triples that have channel '%1'\n\n"
-          "If that is what you intend, click \"Proceed\".\n\n"
-          "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
-      tr( "&Proceed" ), tr( "&Cancel" ) );
 
-   if ( status != 0 ) return;
+  //check if there will be any data left && check if AUTO constructor
+  if ( us_convert_auto_mode && check_for_data_left( chann, "channel" ) <= 0 )
+    {
+      int stat     = QMessageBox::warning( this,
+					   tr( "All Data To Be Dropped" ),
+					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "NOTE: The program will be reset; you will no longer be able to process current run "
+					       "with this program<br>"),
+					   tr( "&Proceed" ), tr( "&Cancel" ) );
+      
+      if ( stat != 0 ) 
+	return;
+
+      //delete autoflow record & return to Run Manager
+      delete_autoflow_record();
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow( );
+      return;
+    }
+  //End of checking for remaining triples
+  
+  int status     = QMessageBox::information( this,
+					     tr( "Drop Triples with Selected Channel" ),
+					     tr( "You have selected a list item that implies you wish to"
+						 " drop triples that have channel '%1'\n\n"
+						 "If that is what you intend, click \"Proceed\".\n\n"
+						 "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
+					     tr( "&Proceed" ), tr( "&Cancel" ) );
+  
+  if ( status != 0 ) return;
 
    //identify all dropped channels
    for (int ii = 0; ii < lw_triple->count(); ii++)
@@ -5372,6 +6637,24 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
       }
    }
 
+   //Add small dialog for reason / comment to triples' drop:
+   if ( us_convert_auto_mode && !usmode )
+     {
+       QString t_comment = comment_for_drop_dialog( "channel(s)" );
+       if ( t_comment. isEmpty() )
+	 return;
+       else
+	 {
+	   //write t_comment as follows:
+	   /** 
+	       QMap< QString, QMap < QString, QString > > drop_operations;
+	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
+	   **/
+	   drop_operations[ runType ][ "Channels" ] = t_comment;
+	 }
+     }
+   
+     
    build_output_data();        // Rebuild the output data controls
 
    build_lambda_ctrl();        // Rebuild lambda controls
@@ -5380,13 +6663,70 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
 }
+
+QString US_ConvertGui::comment_for_drop_dialog( QString drop_type )
+{
+  //Add small dialog for reason / comment to drop_type:
+  bool ok;
+  QString msg = QString(tr("Put a comment describing reason for ")) + drop_type + QString(tr(" DROP:"));
+  QString default_text = QString(tr("Reason for ")) + drop_type + QString(tr(" DROP:"));
+  QString title = QString(tr( "Reason for ")) + drop_type + QString(tr(" DROP" ));
+  QString comment_text = QInputDialog::getText( this,
+						title,
+						msg, QLineEdit::Normal, default_text, &ok );
+  
+  if ( !ok )
+    {
+      //Make sure that if user refused to provide comment, reset all:
+      comment_text . clear();
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	all_tripinfo[ trx ].excluded = false;
+    }
+
+  return comment_text;
+}
+
 
 // Drop the triples for the selected cell/channel ('Drop Selected Data')
 void US_ConvertGui::drop_cellchan()
 {
-   QString celchn = lw_triple->currentItem()->text()
-                    .section( "/", 0, 1 ).simplified();  // "1 / A"
+  QString celchn = lw_triple->currentItem()->text()
+    .section( "/", 0, 1 ).simplified();  // "1 / A"
+  
+  //check if there will be any data left && check if AUTO constructor
+  if ( us_convert_auto_mode && check_for_data_left( celchn, "cellchannel" ) <= 0 )
+    {
+      int stat     = QMessageBox::warning( this,
+					   tr( "All Data To Be Dropped" ),
+					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "NOTE: The program will be reset; you will no longer be able to process current run "
+					       "with this program<br>"),
+					   tr( "&Proceed" ), tr( "&Cancel" ) );
+      
+      if ( stat != 0 ) 
+	return;
+
+      //delete autoflow record & return to Run Manager
+      delete_autoflow_record();
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow( );
+      return;
+    }
+  //End of checking for remaining triples
+   
+
+   
    int status     = QMessageBox::information( this,
       tr( "Drop Triples of Selected Cell/Channel" ),
       tr( "You have selected a list item that implies you wish to"
@@ -5413,6 +6753,24 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
       }
    }
 
+   //Add small dialog for reason / comment to triples' drop:
+   if ( us_convert_auto_mode && !usmode )
+     {
+       QString t_comment = comment_for_drop_dialog( "selected channel" );
+       if ( t_comment. isEmpty() )
+	 return;
+       else
+	 {
+	   //write t_comment as follows:
+	   /** 
+	       QMap< QString, QMap < QString, QString > > drop_operations;
+	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
+	   **/
+	   drop_operations[ runType ][ "Selected Channel" ] = t_comment;
+	 }
+     }
+   
+   
    build_output_data();        // Rebuild the output data controls
 
    build_lambda_ctrl();        // Rebuild lambda controls
@@ -5421,6 +6779,13 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 }
 
 
@@ -5525,6 +6890,8 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
 	   	   
 	 }
      }
@@ -5572,7 +6939,7 @@ bool US_ConvertGui::isSaved_auto( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-    /***/
+  /***/
   //Check if saving already initiated
   if ( us_convert_auto_mode )
     {
@@ -5582,33 +6949,121 @@ void US_ConvertGui::saveUS3( void )
       qDebug() << "status_import_unique -- " << status_import_unique ;
 
       if ( !status_import_unique )
-	{
-	  QMessageBox::information( this,
-				    tr( "The Program State Updated / Being Updated" ),
-				    tr( "The program advanced or is advancing to the next stage!\n\n"
-					"This happened because you or different user "
-					"has already saved the data into DB using different program "
-					"session and the program is proceeding to the next stage. \n\n"
-					"The program will return to the autoflow runs dialog where "
-					"you can re-attach to the actual current stage of the run. "
-					"Please allow some time for the status to be updated.") );
-	  
-	  
-	  resetAll_auto();
-	  emit saving_complete_back_to_initAutoflow();
-	  return;
-	}
-      
+  	{
+  	  QMessageBox::information( this,
+  				    tr( "The Program State Updated / Being Updated" ),
+  				    tr( "The program advanced or is advancing to the next stage!\n\n"
+  					"This happened because you or different user "
+  					"has already saved the data into DB using different program "
+  					"session and the program is proceeding to the next stage. \n\n"
+  					"The program will return to the autoflow runs dialog where "
+  					"you can re-attach to the actual current stage of the run. "
+  					"Please allow some time for the status to be updated.") );
+  	  
+  	  
+  	  resetAll_auto();
+  	  emit saving_complete_back_to_initAutoflow();
+  	  return;
+  	}
+   
     }
   /****/
 
+    
+  qDebug() << "Save INIT 1: ";
+
+  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
+  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
+  dataSavedOtherwise = false;
+
+  pb_saveUS3 -> setEnabled( false );
+
+  // *** CHECK if all Optics types processed **** //
+  bool all_processed = true;
+  QMap<QString, int>::iterator os;
+  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+    {
+      if ( os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+  /////////////////////////////////////////////////////
+
   
+  if ( us_convert_auto_mode )
+    {
+      QMap < QString, QString > autoflow_details;
+      autoflow_details = read_autoflow_record( autoflowID_passed );
+
+      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
+      
+      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
+	{
+	  if ( runType_combined_IP_RI )
+	    {
+	      if ( !all_processed )
+		{
+		  QMessageBox::information( this,
+					    tr( "Data for Current Optical System Already Saved" ),
+					    tr( "It appears that the data for the current optical system are already saved!\n\n"
+						"The program will switch to processing the data for next optical system... " ));
+		  /***/
+		  //set autoflowStages record to "unknown" again !!
+		  revert_autoflow_stages_record( autoflowID_passed );
+		  /***/
+
+		  emit process_next_optics( );
+		  return;
+		}
+	      else
+		{
+		  QMessageBox::information( this,
+					    tr( "The Program State Updated / being Updated" ),
+					    tr( "The program advanced or is advancing to the next stage!\n\n"
+						"This happened because you or different user "
+						"has already saved the data into DB using different program "
+						"session and the program is proceeding to the next stage. \n\n"
+						"The program will return to the autoflow runs dialog where "
+						"you can re-attach to the actual current stage of the run. "
+						"Please allow some time for the status to be updated.") );
+		  
+		  resetAll_auto();
+		  emit saving_complete_back_to_initAutoflow();
+		  return;
+		}
+	    }
+	  else
+	    {
+	      QMessageBox::information( this,
+					tr( "The Program State Updated / being Updated" ),
+					tr( "The program advanced or is advancing to the next stage!\n\n"
+					    "This happened because you or different user "
+					    "has already saved the data into DB using different program "
+					    "session and the program is proceeding to the next stage. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "
+					    "Please allow some time for the status to be updated.") );
+	      
+	      resetAll_auto();
+	      emit saving_complete_back_to_initAutoflow();
+	      return;
+	    }
+	}
+    }
+    
+  /*************************************************************************************************************/
+  // We need to  insert submission form dialog (with password...)
+  //
+  // Then, we need to update autoflowReports' triple status 'DROPPED' to YES (above) here -- AFTER verifying if
+  // current optical system was saved
+  // 
+  /*************************************************************************************************************/
   
   //Now we need to go over dropped triples and/or entire channles & ensure this info is reflected in channels' autoflowReports
   if ( us_convert_auto_mode )
     {
-      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
-
       // Determine if we are using the database
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -5621,7 +7076,42 @@ void US_ConvertGui::saveUS3( void )
 	  return;
 	}
 
+      //Submitter Form with MP:
+      if ( !usmode && gmpRun_bool )
+	{
+	  QStringList qry1;
+	  qry1 <<  QString( "get_user_info" );
+	  dbP. query( qry1 );
+	  dbP. next();
+	  int u_ID        = dbP. value( 0 ).toInt();
+	  QString u_fname = dbP. value( 1 ).toString();
+	  QString u_lname = dbP. value( 2 ).toString();
+	  int u_lev       = dbP. value( 5 ).toInt();
+	  
+	  QString user_submitter = u_lname + ", " + u_fname;
+	  
+	  gmp_submitter_map.clear();
+	  US_Passwd   pw_at;
+	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run IMPORT Form", "Please fill out GMP run IMPORT form:", user_submitter );
+	  
+	  int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+	  qDebug() << "Submitter map: "
+		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+		   << gmp_submitter_map.keys().isEmpty() 
+		   << gmp_submitter_map[ "User:" ]
+		   << gmp_submitter_map[ "Comment:" ]
+		   << gmp_submitter_map[ "Master Password:" ];
+	  
+	  if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+	    {
+	      revert_autoflow_stages_record( autoflowID_passed );
+	      return;
+	    }
+	}
+      ////////////////////////////////////////////////////////////////////////////////////
+      
       // First, create a QMap relating excluded triples' tripleDesc and reportIDs:
+      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
       QMap<QString,QString> excluded_triple_to_reportID; 
       QMap<QString, QString>::iterator chan_rep;
       for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
@@ -5648,6 +7138,8 @@ void US_ConvertGui::saveUS3( void )
 		    }
 		}
 
+	      qDebug() << "GMP Report read: qry, wavelength  -- " << qry << ", " << Wavelength;
+	      
 	      //Now that we know triple-report's channel name && wavelength, go over excluded triples and update corresponding autoflowReport records.. 
 	      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
 		{
@@ -5672,7 +7164,6 @@ void US_ConvertGui::saveUS3( void )
 		    }
 		}
 	    }
-	  
 	}
 
       /***************************************************************/
@@ -5782,92 +7273,7 @@ void US_ConvertGui::saveUS3( void )
     }
   /////////////////////////////
   
-  
-
-  
-  qDebug() << "Save INIT 1: ";
-
-  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
-  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
-  dataSavedOtherwise = false;
-
-  pb_saveUS3 -> setEnabled( false );
-
-  // *** CHECK if all Optics types processed **** //
-  bool all_processed = true;
-  QMap<QString, int>::iterator os;
-  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
-    {
-      if ( os.value() )
-	{
-	  all_processed = false;
-	  break;
-	}
-    }
-  /////////////////////////////////////////////////////
-
-  
-  if ( us_convert_auto_mode )
-    {
-      QMap < QString, QString > autoflow_details;
-      autoflow_details = read_autoflow_record( autoflowID_passed );
-
-      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
-      
-      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
-	{
-	  if ( runType_combined_IP_RI )
-	    {
-	      if ( !all_processed )
-		{
-		  QMessageBox::information( this,
-					    tr( "Data for Current Optical System Already Saved" ),
-					    tr( "It appears that the data for the current optical system are already saved!\n\n"
-						"The program will switch to processing the data for next optical system... " ));
-		  /***/
-		  //set autoflowStages record to "unknown" again !!
-		  revert_autoflow_stages_record( autoflowID_passed );
-		  /***/
-
-		  emit process_next_optics( );
-		  return;
-		}
-	      else
-		{
-		  QMessageBox::information( this,
-					    tr( "The Program State Updated / being Updated" ),
-					    tr( "The program advanced or is advancing to the next stage!\n\n"
-						"This happened because you or different user "
-						"has already saved the data into DB using different program "
-						"session and the program is proceeding to the next stage. \n\n"
-						"The program will return to the autoflow runs dialog where "
-						"you can re-attach to the actual current stage of the run. "
-						"Please allow some time for the status to be updated.") );
-		  
-		  resetAll_auto();
-		  emit saving_complete_back_to_initAutoflow();
-		  return;
-		}
-	    }
-	  else
-	    {
-	      QMessageBox::information( this,
-					tr( "The Program State Updated / being Updated" ),
-					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happened because you or different user "
-					    "has already saved the data into DB using different program "
-					    "session and the program is proceeding to the next stage. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "
-					    "Please allow some time for the status to be updated.") );
-	      
-	      resetAll_auto();
-	      emit saving_complete_back_to_initAutoflow();
-	      return;
-	    }
-	}
-    }
-  
+ 
   // qDebug() << "ExpData: ";
 
   qDebug() << "ExpData.invID " << ExpData.invID;             
@@ -6022,12 +7428,12 @@ DbgLv(1) << "Writing to database";
          {
             saveUS3Disk();        // Save AUCs to disk
             writeTimeStateDisk(); // Save TimeState to disk
-DbgLv(1) << "Writing to disk";
+	    DbgLv(1) << "Writing to disk";
          }
       } // End of 'spx' for loop (counts for each speed step)
    } // End of 'else' loop for multispeed case
-
-
+   
+   
    // bool all_processed = true;
    // // *** CHECK if all Optics types processed **** //
    // QMap<QString, int>::iterator os;
@@ -6039,6 +7445,13 @@ DbgLv(1) << "Writing to disk";
    // 	   break;
    // 	 }
    //   }
+
+//Now, make a record on was the Reference Scan defined automatically (for "RI" type) && who did SAVE the data
+   if ( us_convert_auto_mode )
+     {
+       record_import_status( auto_ref_scan, runType );
+     }
+   
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -6091,18 +7504,35 @@ DbgLv(1) << "Writing to disk";
 		 }
 	       else
 		 {
-		   QMessageBox::information( this,
-					     tr( "Save is Complete" ),
-					     tr( "The save of all data and reports is complete." ) );
 
-		   //ALEXY: need to delete autoflow record here
-		   delete_autoflow_record();
-		   resetAll_auto();
-		   //emit saving_complete_back_to_exp( ProtocolName_auto );
-		   emit saving_complete_back_to_initAutoflow();
-		   return;
+		   if ( !protDev_bool ) // no GMP && no ProtDev()!!!!!!!!!!!!!
+		     {
+		       QMessageBox::information( this,
+						 tr( "Save is Complete" ),
+						 tr( "The save of all data and reports is complete." ) );
+		       
+		       //ALEXY: need to delete autoflow record here
+		       delete_autoflow_record();
+		       resetAll_auto();
+		       //emit saving_complete_back_to_exp( ProtocolName_auto );
+		       emit saving_complete_back_to_initAutoflow();
+		       return;
+		     }
+		   else    // no GMP BUT  ProtDev(), so proceed!!!!!!!!!!!!!
+		     {
+		       update_autoflow_record_atLimsImport();
+		       
+		       QMessageBox::information( this,
+						 tr( "Save is Complete" ),
+						 tr( "The save of all data and reports is complete.\n\n"
+						     "The program will switch to Editing stage." ) );
+		       
+		       resetAll_auto();
+		       emit saving_complete_auto( details_at_editing  );   
+		     }
 		 }
 	     }
+
 	   else                   // us_comproject BUT the run IS GMP, so proceed                    
 	     {
 	       if ( !dataSavedOtherwise )
@@ -6150,7 +7580,195 @@ DbgLv(1) << "Writing to disk";
      }
 }
 
-//Update autoflow record upon Editing compleation
+
+//Record RI or IP  status to autoflowStatus
+void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
+{
+  //Check if autoflowStatus record has been created at 2. LIVE_UPDATE already (by remotly SKIP stage &&|| STOP Optima signals):
+  qDebug() << "autoflowStatusID from 2. LIVE_UPDATE: " << details_at_editing[ "statusID" ]; 
+  
+  autoflowStatusID = 0;
+  QString importRI_Json;
+  QString importIP_Json;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN US_convert, record RI status: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+
+  //first, check if there is already a record in autoflowStatus with autoflowID == autoflowID_passed;
+  // that is a scenario for combined RI+IP type
+  // if there IS record, update it; otherwise create a new one..
+
+  qry << "get_autoflowStatus_id" << QString::number( autoflowID_passed );
+  autoflowStatusID = db->functionQuery( qry );
+
+  qDebug() << "autoflowStatusID from DB ;; from 2. LIVE_UPDATE: -- "
+	   << autoflowStatusID << " ;; "
+	   << details_at_editing[ "statusID" ];
+  qDebug() << "runtype -- "          << runtype;
+  
+  qry.clear();
+  
+  if ( runtype == "RI")
+    {
+      QString refScan = auto_ref ? QString("automated") : QString("manual");
+	
+      importRI_Json. clear();
+      importRI_Json += "{ \"Person\": ";
+
+      importRI_Json += "[{";
+      importRI_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      importRI_Json += "\"fname\":\""  + fname                     + "\",";
+      importRI_Json += "\"lname\":\""  + lname                     + "\",";
+      importRI_Json += "\"email\":\""  + email                     + "\",";
+      importRI_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      importRI_Json += "}],";
+
+      importRI_Json += "\"RefScan\": \"" + refScan + "\"";
+
+      //Now, add comment from SAVING form:
+      importRI_Json += ", \"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\"";      
+      
+      //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
+      if ( !drop_operations[ runType ]. isEmpty() )
+	{
+	  importRI_Json += ", \"Dropped\": ";
+	  importRI_Json += "[{";
+	  QMap<QString, QString>::iterator jj;
+	  for ( jj = drop_operations[ runType ].begin(); jj != drop_operations[ runType ].end(); ++jj )
+	    {
+	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
+	      importRI_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
+	    }
+	  importRI_Json.chop(1);
+	  importRI_Json += "}]";
+	}
+      //////////////////////////////////////////////////////////////////////////////////
+      
+      importRI_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusRI_record"
+	      << QString::number( autoflowID_passed )
+	      << importRI_Json;
+
+	  //qDebug() << "new_autoflowStatusRI_record qry -- " << qry;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusRI_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << importRI_Json;
+
+	  db->query( qry );
+	}
+    }
+
+  if ( runtype == "IP" )
+    {
+      QString refScan = auto_ref ? QString("automated") : QString("manual");
+      
+      importIP_Json. clear();
+      importIP_Json += "{ \"Person\": ";
+
+      importIP_Json += "[{";
+      importIP_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      importIP_Json += "\"fname\":\""  + fname                     + "\",";
+      importIP_Json += "\"lname\":\""  + lname                     + "\",";
+      importIP_Json += "\"email\":\""  + email                     + "\",";
+      importIP_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      importIP_Json += "}],";
+
+      importIP_Json += "\"RefScan\": \"" + refScan + "\"";
+
+      //Now, add comment from SAVING form:
+      importIP_Json += ", \"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\"";  
+
+      //Now check if there are comments on dropped {Triples, Channels, Selected Cahnnel}
+      if ( !drop_operations[ runType ]. isEmpty() )
+	{
+	  importIP_Json += ", \"Dropped\": ";
+	  importIP_Json += "[{";
+	  QMap<QString, QString>::iterator jj;
+	  for ( jj = drop_operations[ runType ].begin(); jj != drop_operations[ runType ].end(); ++jj )
+	    {
+	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
+	      importIP_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
+	    }
+	  importIP_Json.chop(1);
+	  importIP_Json += "}]";
+	}
+      //////////////////////////////////////////////////////////////////////////////////
+
+      importIP_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusIP_record"
+	      << QString::number( autoflowID_passed )
+	      << importIP_Json;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusIP_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << importIP_Json;
+
+	  db->query( qry );
+	}      
+    }
+
+  if ( !autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (IMPORT {RI,IP}): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+      
+      return;
+    }
+
+  qDebug() << "in record_import_status: importRI_Json,importIP_Json -- " << importRI_Json << "\n" << importIP_Json;
+} 
+
+
+//Update autoflow record upon Editing completion
 void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 {
   QString filename_toDB;
@@ -6176,11 +7794,52 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
      }
 
    QStringList qry;
+
+   //now, make a record in the autoflowIntensity table, return ID
+   int autoflowIntensityID = 0;
+   if ( ! intensityJsonRI.isEmpty() )
+     {
+       qry.clear();
+       qry << "new_autoflow_intensity_record"
+	   << QString::number( autoflowID_passed )
+	   << intensityJsonRI;
+       
+       autoflowIntensityID = db->functionQuery( qry );
+
+       if ( !autoflowIntensityID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
+				 tr( "autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
+
+	   return;
+	 }
+     }
+   qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
+   details_at_editing[ "intensityID" ] = QString::number( autoflowIntensityID );
+
+
+   //Now check if autoflowStatus record was created:
+   if ( !autoflowStatusID )
+     {
+       QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			     tr( "autoflowStatus (IMPORT {RI,IP}): There was a problem with creating a record in autoflowStatus table \n" ) );
+       
+       return;
+     }
+   qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+   details_at_editing[ "statusID" ] = QString::number( autoflowStatusID );
+   
+   
+   //finally, update autoflow record
+   qry.clear();
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
        << filename_toDB
-       << OptimaName;
+       << OptimaName
+       << QString::number( autoflowIntensityID )
+       << QString::number( autoflowStatusID );
 
+   qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
 
    int status = db->statusQuery( qry );
@@ -6193,7 +7852,6 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 				 "associated with this experiment." ) );
        return;
      }
-   
 }
 
 //Delete autoflow record upon Run abortion
@@ -7802,6 +9460,8 @@ DbgLv(1) << "rsL: InExcl RTN";
 DbgLv(1) << "rsL: PlCurr RTN";
 }
 
+
+
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
@@ -7817,13 +9477,34 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
    int tripx    = out_chandatx[ ccx ];
    nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
    ExpData.RI_nscans = refData->scanData.size();
-   ExpData.RI_nwvlns = nlambda;
+//   ExpData.RI_nwvlns = all_wavelength_tripx.size();
 DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
+
+   QMap<int, int> wvl_to_tripx;
+   for ( int wvx = 0; wvx < nlambda; wvx++ ) {
+      refData  = outData[ tripx ];
+      int wvl = refData->scanData.at(0).wavelength;
+      wvl_to_tripx[wvl] = tripx;
+      tripx++;
+   }
+   for ( int ii = 0; ii < outData.size(); ii++) {
+      // to make sure to take account half-wavelength lambda, each multiplies to 10
+      //      int wvl = qRound(outData.at(ii)->scanData.at(0).wavelength * 10);
+      int wvl = outData.at(ii)->scanData.at(0).wavelength;
+      if (wvl_to_tripx.contains(wvl)) {
+         continue;
+      }
+      wvl_to_tripx[wvl] = ii;
+DbgLv(1) << "PseCalcAvgMWL: added_lambda tripx " << wvl << ii;
+   }
+   ExpData.RI_nwvlns = wvl_to_tripx.size();
+DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << wvl_to_tripx.size();
 
    // Loop to calculate reference data for each wavelength,
    //  then apply it to all triples with that same wavelength.
-   for ( int wvx = 0; wvx < nlambda; wvx++ )
+   foreach ( int iwavl, wvl_to_tripx.keys())
    {
+      tripx        = wvl_to_tripx.value(iwavl);
       refData      = outData[ tripx ];
       ref_size     = refData->xvalues.size();
       int nscan    = refData->scanData.size();
@@ -7849,15 +9530,28 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
             rr++;
          }
 
-         double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
-         ri_prof           << rip_avg;
+
+	 //ALEXEY: check for non-positive data (sum):
+	 double rip_avg;
+	 //double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
+	 if ( count > 0 )
+	   {
+	     if ( sum > 0 )
+	       rip_avg =  sum / (double)count;
+	     else
+	       rip_avg = 1.0;
+	   }
+	 else
+	   rip_avg = 1.0;
+
+	 ri_prof           << rip_avg;
          ExpData.RIProfile << rip_avg;
 
       } // END: scan loop for reference triple
 
       int rip_size = ri_prof.size();
-      int iwavl    = exp_lambdas[ wvx ];
-DbgLv(1) << "PseCalcAvgMWL:  wvx" << wvx << "rsiz wavl" << rip_size << iwavl;
+//      int iwavl    = exp_lambdas[ wvx ];
+DbgLv(1) << "PseCalcAvgMWL:  wvx" << tripx << "rsiz wavl" << rip_size << iwavl;
       ExpData.RIwvlns << iwavl;
 
       // Now calculate the pseudo-absorbance for all cell/channel/this-lambda
@@ -7890,8 +9584,8 @@ DbgLv(1) << "PseCalcAvgMWL:  wvx" << wvx << "rsiz wavl" << rip_size << iwavl;
 
       } // END: cell-channel apply loop for one wavelength
 
-      tripx++;
-DbgLv(1) << "PseCalcAvgMWL:   tripx" << tripx;
+//      tripx++;
+//DbgLv(1) << "PseCalcAvgMWL:   tripx" << tripx;
    } // END: WaveLength loop
 
    isPseudo         = true;
@@ -7901,6 +9595,7 @@ DbgLv(1) << "CGui: (9)referDef=" << referenceDefined;
    pb_reference->setEnabled( false );
    pb_cancelref->setEnabled( true );
 }
+
 
 // Do MWL Gui setup after import or load of MWL data
 void US_ConvertGui::mwl_setup()
@@ -8184,46 +9879,78 @@ DbgLv(1) << "CGui:IOD: RETURN";
 // Build output data pointers and lists after new exclusions
 void US_ConvertGui::build_output_data()
 {
-DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
-   outData     .clear();   // Pointers to output data
-   out_tripinfo.clear();   // Output triple information objects
-   out_triples .clear();   // Output triple strings ("1 / A / 250")
-   out_chaninfo.clear();   // Output channel information objects
-   out_channels.clear();   // Output channel strings ("2 / B")
-   out_chandatx.clear();   // Triple start indexes for each channel
-   int outx       = 0;     // Output triple data index
+    DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
+    QVector< US_DataIO::RawData* > tempData = outData;
+    QList< US_Convert::TripleInfo > temp_tripinfo = out_tripinfo;
+    QStringList  temp_triples = out_triples;
+    QList< US_Convert::TripleInfo > temp_chaninfo = out_chaninfo;
+    QStringList  temp_channels = out_channels;
+    QList< int > temp_chandatx = out_chandatx;
+    outData.clear();   // Pointers to output data
+    out_tripinfo.clear();   // Output triple information objects
+    out_triples.clear();   // Output triple strings ("1 / A / 250")
+    out_chaninfo.clear();   // Output channel information objects
+    out_channels.clear();   // Output channel strings ("2 / B")
+    out_chandatx.clear();   // Triple start indexes for each channel
+    int outx = 0;     // Output triple data index
 
-   // Set up updated export-data pointers list and supporting output lists
-   for ( int trx = 0; trx < allData.size(); trx++ )
-   {
-      US_Convert::TripleInfo* tripinfo = &all_tripinfo[ trx ];
+    // Set up updated export-data pointers list and supporting output lists
+    for (int trx = 0; trx < allData.size(); trx++) {
+        US_Convert::TripleInfo *tripinfo = &all_tripinfo[trx];
 
-      if ( tripinfo->excluded )
-      {
-DbgLv(1) << "CGui: BOD:  trx" << trx << "EXCLUDED";
-         continue;
-      }
+        if (tripinfo->excluded) {
+            DbgLv(1) << "CGui: BOD:  trx" << trx << "EXCLUDED";
+            continue;
+        }
+        bool used_temp = false;
+        US_Convert::TripleInfo *ttripinfo;
+        int ttrx;
+        // check if the non-updated output data pointers and lists already contain the triple
+        for (int tttrx = 0; tttrx < tempData.size();tttrx++){
+            US_Convert::TripleInfo *tttripinfo = &temp_tripinfo[tttrx];
+            if (tttripinfo->tripleID==tripinfo->tripleID) {
+                // update export-data pointers and lists using the old export-data pointers and lists
+                DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << tttrx;
+                used_temp = true;
+                ttripinfo = tttripinfo;
+                ttrx = tttrx;
+                break;
+            }
+        }
+        QString triple;
+        QString celchn;
+        // update export-data pointers and lists using the raw data
+        if (!used_temp){
+            outData << &allData[trx];
 
-      outData      << &allData[ trx ];
+            triple = tripinfo->tripleDesc;
+            celchn = triple.section(" / ", 0, 1);
 
-      QString triple = tripinfo->tripleDesc;
-      QString celchn = triple.section( " / ", 0, 1 );
+            out_tripinfo << *tripinfo;
+            out_triples << triple;
+        }
+        else {
+            outData << tempData[ttrx];
 
-      out_tripinfo << *tripinfo;
-      out_triples  << triple;
+            triple = ttripinfo->tripleDesc;
+            celchn = triple.section(" / ", 0, 1);
 
-      if ( !isMwl  ||  ! out_channels.contains( celchn ) )
-      {
-         out_channels << celchn;
-         out_chaninfo << *tripinfo;
-         out_chandatx << outx;
-      }
-DbgLv(1) << "CGui: BOD:  trx" << trx << "add to out" << outx << triple;
+            out_tripinfo << *ttripinfo;
+            out_triples << triple;
+        }
 
-      outx++;
-   }
-DbgLv(1) << "CGui: BOD: outsz" << outData.size();
+        if (!isMwl || !out_channels.contains(celchn)) {
+            out_channels << celchn;
+            out_chaninfo << *tripinfo;
+            out_chandatx << outx;
+        }
+        DbgLv(1) << "CGui: BOD:  trx" << trx << "add to out" << outx << triple;
+
+        outx++;
+    }
+    DbgLv(1) << "CGui: BOD: outsz" << outData.size();
 }
+
 
 // Turn ct_tolerance connection on or off
 void US_ConvertGui::connectTolerance( bool setConnect )
@@ -8511,4 +10238,3 @@ DbgLv(1) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
    reset_lambdas();      // Make sure internal MWL lambdas are right
 
 }
-

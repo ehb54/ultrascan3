@@ -193,7 +193,7 @@ comparative_info US_Hydrodyn_Comparative::empty_comparative_info()
 {
    comparative_info ci;
    ci.ce_s = empty_comparative_entry("Sedimentation coefficient s [S]");
-   ci.ce_D = empty_comparative_entry("Translational diffusion coefficient D [cm/sec^2]");
+   ci.ce_D = empty_comparative_entry("Translational diffusion coefficient D [cm^2/sec]");
    ci.ce_sr = empty_comparative_entry("Stokes radius [nm]");
    ci.ce_fr = empty_comparative_entry("Frictional ratio");
    ci.ce_rg = empty_comparative_entry("Radius of gyration [nm] (from bead model)");
@@ -251,7 +251,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
 
 comparative_entry US_Hydrodyn_Comparative::deserialize_comparative_entry( QString qs )
 {
-   QStringList qsl = (qs).split( "|" , QString::SkipEmptyParts );
+   QStringList qsl = (qs).split( "|" , Qt::SkipEmptyParts );
    comparative_entry ce;
    if ( qsl.size() < 12 )
    {
@@ -296,14 +296,14 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
 {
    comparative_info ci = US_Hydrodyn_Comparative::empty_comparative_info();
    serial_error = "";
-   QStringList qsl = (qs).split( "\n" , QString::SkipEmptyParts );
+   QStringList qsl = (qs).split( "\n" , Qt::SkipEmptyParts );
    if ( qsl.size() < 8 )
    {
       cout << QString("qsl size %1 < 8 qs:<%2>\n").arg(qs,qsl.size());
       serial_error = us_tr("Error: invalid parameter file (too few lines)");
       return ci;
    }
-   QStringList qsl0 = (qsl[0]).split( "|" , QString::SkipEmptyParts );
+   QStringList qsl0 = (qsl[0]).split( "|" , Qt::SkipEmptyParts );
    if ( qsl0.size() < 4 )
    {
       serial_error = us_tr("Error: invalid parameter file (line 1 too short)");
@@ -3899,7 +3899,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
    {
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv1.header[i]);
    }
-   t << qs << endl;
+   t << qs << Qt::endl;
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
       qs = "";
@@ -3907,7 +3907,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(csv1.data[i][j]);
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
    editor->append(QString(us_tr("Saved csv file: %1\n")).arg(filename));
@@ -4429,7 +4429,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 
 bool US_Hydrodyn_Comparative::any_params_enabled()
 {
-   bool any_enabled;
+   bool any_enabled = false;
    for ( unsigned int i = 0; i < ce_names.size(); i++ )
    {
       if ( all_selected_csv_contain( *ce_map[ce_names[i]] ) )
@@ -4632,7 +4632,7 @@ QStringList US_Hydrodyn_Comparative::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;

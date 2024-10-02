@@ -51,7 +51,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
-   gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
+   gen_banner = us_banner( tr( "UltraScan R&D Data Acquisition Program" ) );
    //gen_banner = new QLabel;
    //gen_banner->setText("UltraScan GMP, v. 0.1");
    //gen_banner->setAlignment(Qt::AlignCenter);
@@ -118,7 +118,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    // tabWidget->setCornerWidget(m_exit, Qt::TopRightCorner);
    
    tabWidget->setCurrentIndex( curr_panx );
-   tabWidget->tabBar()->setFixedHeight(500);
+   tabWidget->tabBar()->setFixedHeight(400);
    //tabWidget->tabBar()->setFixedWidth(200);
    
    //icon_path = std::getenv("ULTRASCAN");
@@ -181,7 +181,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    int pos_x_offset = fm_t.width("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
-   int pos_y = (tabWidget->tabBar()->height())*1.12;
+   int pos_y = (tabWidget->tabBar()->height())*1.22;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
@@ -193,9 +193,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
        if ( i == 0 ) 
-	 tabWidget->tabBar()->setTabEnabled(i, true);
+   	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
-	 tabWidget->tabBar()->setTabEnabled(i, false);
+   	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
@@ -225,12 +225,14 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
    connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
+   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
@@ -256,6 +258,39 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 {
   //   dbg_level    = US_Settings::us_debug();
 
+  //update user-level as set in DB
+  US_Passwd   pw;
+  US_DB2      db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      //qDebug() << "USCFG: UpdInv: ERROR connect";
+      QMessageBox msgBox;
+      msgBox.setWindowTitle ("ERROR");
+      msgBox.setText("Error making the DB connection!");
+      msgBox.setIcon  ( QMessageBox::Critical );
+      msgBox.exec();
+     
+      exit( -1 );
+    }
+  
+  QStringList q( "get_user_info" );
+  db.query( q );
+  db.next();
+  
+  int ID        = db.value( 0 ).toInt();
+  QString fname = db.value( 1 ).toString();
+  QString lname = db.value( 2 ).toString();
+  int     level = db.value( 5 ).toInt();
+
+  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+  //if(ID<1) return;
+  
+  US_Settings::set_us_inv_name ( lname + ", " + fname );
+  US_Settings::set_us_inv_ID   ( ID );
+  US_Settings::set_us_inv_level( level );
+  //END OF user-level check/update
+  
   //-- Check if Database is selected in the DB preferences
   checkDataLocation();
   // --------------------------------------------------------
@@ -277,7 +312,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
-   gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
+   gen_banner = us_banner( tr( "UltraScan GMP" ) );
    //gen_banner = new QLabel;
    //gen_banner->setText("UltraScan GMP, v. 0.1");
    //gen_banner->setAlignment(Qt::AlignCenter);
@@ -321,9 +356,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanEditing         = new US_EditingGui ( this );
    epanAnalysis        = new US_AnalysisGui( this );
    epanReport          = new US_ReportStageGui  ( this );
+   epanSign            = new US_eSignaturesGui ( this );
       
-   //   statflag            = 0;
-
    // Add panels to the tab widget
    tabWidget->addTab( epanInit,      tr( "Manage Optima Runs"   ) );
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
@@ -332,14 +366,12 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->addTab( epanEditing,   tr( "4: Editing"  ) );
    tabWidget->addTab( epanAnalysis,  tr( "5: Analysis"  ) );
    tabWidget->addTab( epanReport,    tr( "6: Report"  ) );
-   //tabWidget->addTab( epanExit,      tr( "Close Program"  ) );
-
+   tabWidget->addTab( epanSign,      tr( "e-Signatures"  ) );
 
    
    tabWidget->setCurrentIndex( curr_panx );
-   tabWidget->tabBar()->setFixedHeight(500);
-   //tabWidget->tabBar()->setFixedWidth(200);
-
+   tabWidget->tabBar()->setFixedHeight(600);
+  
    //icon_path = std::getenv("ULTRASCAN");
    //qDebug() << "Path is: " << icon_path;
    //icon_path.append("/etc/"); 
@@ -358,7 +390,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
    //no hoover
-   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } QTabBar::tab:last:disabled {background: #90EE90;  min-width: 50;}  QTabBar::tab:last:selected {background: #556B2F; color: lightgray;  min-width: 50;}");
 
    //Close & Help
    cornerWidget = new QWidget(tabWidget);
@@ -392,7 +424,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    int pos_x_offset = fm_t.width("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
-   int pos_y = (tabWidget->tabBar()->height())*1.12;
+   int pos_y = (tabWidget->tabBar()->height())*1.08;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
@@ -400,12 +432,11 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
      
    main->addWidget( tabWidget );
 
-   
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
-       if ( i == 0 ) 
-    	 tabWidget->tabBar()->setTabEnabled(i, true);
+       if ( i == 0 )
+	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
     	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
@@ -442,13 +473,15 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
-   
+   connect( epanInit, SIGNAL( switch_to_esign_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
+   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
@@ -474,9 +507,21 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
 
    connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
-   
-   setMinimumSize( QSize( 1350, 800 ) );
+
+   //E-Signs
+   connect( epanReport, SIGNAL( switch_to_esign( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( pass_to_esign( QMap < QString, QString > & ) ),  epanSign, SLOT( do_esign( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_esigning() ),  epanSign, SLOT( reset_esigning( )  ) );
+
+   //Hide/disable eSigs tab:
+   this->tabWidget->removeTab(7);
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) }");
+   //this->tabWidget->setTabEnabled( 7, false );
+     
+   setMinimumSize( QSize( 1350, 850 ) );
    adjustSize();
+
+   
 
  }
 
@@ -488,16 +533,18 @@ void US_ComProjectMain::checkDataLocation( void )
 
   if ( US_Settings::default_data_location() == 2 ) //Disk 
     {
-      //data_location_disk = true;
+      data_location_disk = true;
       //window_closed = true;
       QMessageBox::warning( this, tr( "Data Location set to Disk" ),
 			    tr( "Please change Data Location to \"Database\" in the configuraiton of your database! \n" ) );
       
       exit(1);
-      // this->close();
     }
+  
   else if ( US_Settings::default_data_location() == 1 ) //DB
     {
+      data_location_disk = false;
+      
       //Check DB connection: exit if no connection..
       US_Passwd pw;
       QString masterpw = pw.getPasswd();
@@ -585,9 +632,14 @@ void US_ComProjectMain::initPanels( int  panx )
       if ( curr_panx == 6 )
 	{
 	  qDebug() << "Jumping from Report.";
-	  
 	  emit reset_reporting();
-	}      
+	}
+
+      if ( curr_panx == 7 )
+	{
+	  qDebug() << "Jumping from e-Signs.";
+	  emit reset_esigning();
+	}
       
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
@@ -675,6 +727,7 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
     window_closed = true;
 
     qDebug() << "Closing 1: ";
+    qDebug() << "data_location_disk: " <<  data_location_disk;
 
     if ( !data_location_disk )
       {
@@ -682,7 +735,11 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
 	emit us_comproject_closed();
 	close_initDialogue();
 	qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
+
+	qApp->processEvents();
       }
+
+    qApp->processEvents();
     
     event->accept();
 }
@@ -1058,6 +1115,40 @@ void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_d
    emit pass_to_report( protocol_details );
 }
 
+// Slot to switch to e-Signtab
+void US_ComProjectMain::switch_to_esign( QMap < QString, QString > & protocol_details )
+{
+  /**  BEFORE going to e-Signatures: Check if user is among operators|reviewers|approvers**/
+
+  /* 
+     Covered in list_all_autoflow_records():
+      -- isOperRev( user_id, autolfowId ): if false, run NOT shown in the GMP run list
+      Do we want to rather show all runs BUT not allow to switch to E-SIGN if ( !isOperRev( user_id, autolfowId )) ??
+  */
+  
+  /****************************************************************************************/
+  
+  tabWidget->setCurrentIndex( 7 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 7;
+  
+  // ALEXEY: Temporariy NOT lock here... Will need later
+  
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 7 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+  
+  
+  qApp->processEvents();
+  // ALEXEY: Make a record to 'autoflow' table: stage# = 4; 
+  
+  emit pass_to_esign( protocol_details );
+}
+
+
 
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
 void US_ComProjectMain::call_AutoflowDialogue( void )                           //<--- Entry point from main 
@@ -1277,7 +1368,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	    {
 	      if ( daysToExpiration > 0 )
 		{
-		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:")).arg( QChar(0x2022), alias );
+		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:\n")).arg( QChar(0x2022), alias );
 		  msg_sys_text_info += QString( tr("1. %1 is turned on\n"
 						   "2. the data acquisition server on %1 is running\n"
 						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is valid and not expired.\n")).arg( alias );
@@ -1415,6 +1506,9 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
 	occupied_instruments << autoflowdata[ i ][ 2 ];
     }
 
+  //ALEXEY: to allow queueing, I clear occupied instruments:
+  occupied_instruments.clear();
+  
   qDebug() << "Init Autoflow Records: DONE, occupied instruments: " << occupied_instruments;
 }
 
@@ -1449,7 +1543,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     }
   /* ---------------------------------------------------------------------------------------*/
     
-  if ( autoflow_records < 1 )
+  //if ( autoflow_records < 1 )
+  if ( autoflow_records < 1 || autoflowdata.size() < 1 ) //can be that for UL<3, autoflow runs from others are not shown
     {
       //ALEXEY: should close pdiag_autoflow if wasn't closed already
       initMsgNorecOpen = true;
@@ -1489,9 +1584,10 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        << "Run Name"
        << "Optima Name"
        << "Created"
-       << "Run Status"
+       << "Optima Run Status"
        << "Stage"
-       << "GMP";
+       << "GMP"
+       << "Failed";
   
   QString autoflow_btn;
 
@@ -1500,7 +1596,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   else
     autoflow_btn = "AUTOFLOW_GMP";
 
-  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
   connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
   pdiag_autoflow->setParent(this, Qt::Widget);
@@ -1534,6 +1630,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   qDebug() << "occupied_instruments.size(), instruments.size()" << occupied_instruments.size() << ", " <<  instruments.size();
   
+
+  //ALEXEY: clear occupied instr. as we decided on queueing...
+  occupied_instruments.clear();
   
   QString autoflow_id_selected("");
   
@@ -1579,6 +1678,16 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   
   int autoflowID = autoflow_id_selected.toInt();
   protocol_details = read_autoflow_record( autoflowID );
+
+  //Check if run selected still exists
+  if ( protocol_details.isEmpty() )
+    {
+      qDebug() << "Run does NOT exists!!! Updating list...";
+
+      //emit to_initAutoflow();
+      initAutoflowPanel();
+      return;
+    }
   
   protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
@@ -1596,8 +1705,11 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString filename     = protocol_details[ "filename" ];
   QString aprofileguid = protocol_details[ "aprofileguid" ];
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
-  
-  
+  QString statusID     = protocol_details[ "statusID" ];
+  QString failedID     = protocol_details[ "failedID" ];
+
+  QString expType      = protocol_details[ "expType" ];
+    
   QDir directory( currDir );
   
   qDebug() << "CURR DIRECTORY : "   << currDir;
@@ -1608,59 +1720,471 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
-  
-    
-  if ( stage == "LIVE_UPDATE" )
-    {
-      //do something
-      //switch_to_live_update( protocol_details );
+  qDebug() << "statusID: "      << protocol_details[ "statusID" ];
+  qDebug() << "failedID: str, INT --  "
+	   << protocol_details[ "failedID" ]
+	   << protocol_details[ "failedID" ].toInt();
 
-      emit switch_to_live_update_init( protocol_details );
+  qDebug() << "ExpType: " << expType;
+
+
+  //Re-attachment to FAILED GMP run
+  if ( failedID. toInt() != 0 )
+    {
+      // jump to 2. LIVE_UPDATE for now, i.e. re-initialize from scratch
+      qDebug() << "Re-initializing FAILED GMP rinID -- " << autoflowID;
       
-      return;
-    }
-  
-  if ( stage == "EDITING" )
-    {
-      //do something
-      //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-
-      if ( currDir.isEmpty() || !directory.exists() )
+      //read autoflowFailed record
+      QMap< QString, QString > failed_details = read_autoflow_failed_record( failedID );
+      
+      QMessageBox msgBox_f;
+      msgBox_f.setText(tr( "The selected GMP run is marked as FAILED:<br><br>" )
+		       + tr("<b>Run Name:&emsp;</b>") + ProtName
+		       + tr("<br>")
+		       + tr("<b>Failing stage:&emsp;</b> ") + failed_details[ "failedStage" ]
+		       + tr("<br>")
+		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
+		      		       
+      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, all existing data for this run will be deleted from DB, ")
+				   + tr("and the processing flow will reinitialize. ")
+				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+      
+      msgBox_f.setWindowTitle(tr("Reinitialization of Failed Run"));
+      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
+      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole);
+      
+      msgBox_f.setIcon(QMessageBox::Question);
+      msgBox_f.exec();
+      
+      if (msgBox_f.clickedButton() == Cancel)
 	{
-	  //switch_to_live_update( protocol_details );
+	  initAutoflowPanel();
+	  return;
+	}
+      else if (msgBox_f.clickedButton() == Confirm)
+	{
+	  qDebug() << "Choosing REINITIALIZATION!!!";
+
+	  //Delete and reset everything related to the run:
+	  /*
+	    1. revert 'liveUpdate, import, editing' fields in autolfowStages to DEFAULT 
+	    2. delete autoflowIntensity && autoflowStatus records
+	    3. ?? do we also delete immediately autoflowFailed record ??
+	    4. DELETE all exp. | rawData (maybe models, editedData etc.)
+	    5. delete autoflowHistory record (if was already created - ONLY case if REPORT was proceeded ?)
+	    6. Reset all autoflow record fields updated starting from LIVE_UPDATE
+	                 - dataPath
+			 - filename
+			 - intensityID
+			 - statusID
+			 - failedID (IF record in autoflowFailed deleted )
+			 - analysisIDs
+
+	  */
+	  
+	  
+	  do_run_tables_cleanup( protocol_details );
+
+	  do_run_data_cleanup( protocol_details );
+	  
+	  //Switch to 2. LIVE_UPDATE:
 	  emit switch_to_live_update_init( protocol_details );
+	  
+	  return;
 	}
-      else
+    }
+  // Normal re-attachement
+  else
+    {
+      //pdiag_autoflow -> close();
+      
+      if ( stage == "LIVE_UPDATE" )
 	{
-	  //switch_to_post_processing( protocol_details );
-	  emit switch_to_post_processing_init( protocol_details );
+	  //do something
+	  //switch_to_live_update( protocol_details );
+	  
+	  emit switch_to_live_update_init( protocol_details );
+	  
+	  return;
 	}
       
-     
-      return;
-    }
-  if ( stage == "EDIT_DATA" )
-    {
-      emit switch_to_editing_init( protocol_details );
-    }
-
-  if ( stage == "ANALYSIS" )
-    {
-      qDebug() << "To ANALYSIS SWITCH ";
-      emit switch_to_analysis_init( protocol_details );
+      if ( stage == "EDITING" )
+	{
+	  //do something
+	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
+	  
+	  if ( currDir.isEmpty() || !directory.exists() )
+	    {
+	      //switch_to_live_update( protocol_details );
+	      emit switch_to_live_update_init( protocol_details );
+	    }
+	  else
+	    {
+	      //switch_to_post_processing( protocol_details );
+	      emit switch_to_post_processing_init( protocol_details );
+	    }
+	  
+	  
+	  return;
+	}
+      if ( stage == "EDIT_DATA" )
+	{
+	  emit switch_to_editing_init( protocol_details );
+	}
       
-    }
-
-  if ( stage == "REPORT" )
-    {
-      qDebug() << "To REPORT SWITCH ";
-      emit switch_to_report_init( protocol_details );
+      if ( stage == "ANALYSIS" )
+	{
+	  qDebug() << "To ANALYSIS SWITCH ";
+	  emit switch_to_analysis_init( protocol_details );
+	  
+	}
       
-    }  
-  
-  //and so on...
+      if ( stage == "REPORT" )
+	{
+	  qDebug() << "To REPORT SWITCH ";
+	  emit switch_to_report_init( protocol_details );
+	  
+	}
+
+      if ( stage == "E-SIGNATURES" )
+	{
+	  qDebug() << "To E-SIGNS SWITCH ";
+	  emit switch_to_esign_init( protocol_details );
+	  
+	}
+
+      //and so on...
+    }
    
 }
+
+//Cleanup failed run for further re-initializaiton:
+void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  //reverting autoflowSatges
+  qry << "autoflow_stages_revert"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
+  //deleting autoflowIntensity Record
+  qry. clear();
+  qry << "delete_autoflow_intensity_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "intensityID" ];
+  db->query( qry );
+
+  //deleting autoflowStatus Record
+  qry. clear();
+  qry << "delete_autoflow_status_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "statusID" ];
+  db->query( qry );
+
+  //deleting autoflowFailed Record
+  qry. clear();
+  qry << "delete_autoflow_failed_record"
+      << run_details[ "autoflowID" ]
+      << run_details[ "failedID" ];
+  db->query( qry );
+
+  //set autoflowAnalysis records for deletion (status = 'CANCELED')
+  QStringList analysisIDs_list = run_details[ "analysisIDs" ].split(",");
+  for( int i=0; i < analysisIDs_list.size(); ++i )
+    {
+      QString requestID = analysisIDs_list[i];
+      
+      qry.clear();
+      qry << "update_autoflow_analysis_record_at_deletion"
+	  << QString("Canceled for Failed run, top-level")
+	  << requestID;
+      
+      db->query( qry );
+    }
+
+  //delete autoflowAnalysisHistory records for given autoflowID : 
+  qry.clear();
+  qry << "delete_autoflow_analysis_history_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //delete autoflowModelsLink records for given autoflowID :
+  qry.clear();
+  qry << "delete_autoflow_model_links_records_by_autoflowID"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+  
+  
+  //deleting autoflowHistory Record (if exists)
+  qry. clear();
+  qry << "delete_autoflow_history_record"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //Clean certain field in autoflow record for re-initializing from 2. LIVE_UPDATE
+  qry. clear();
+  qry << "update_autoflow_at_reset_live_update"
+      << run_details[ "autoflowID" ];
+  db->query( qry );
+
+  //Restore autoflowReports' records 'tripleDropped' to DEFAULT ('none')
+  // 1. Create reportIDs list from protocol's AProfile;
+  // 2. Go over reports in the autoflowReport table & SET 'tripleDropped' to 'none'  
+
+  channels_report. clear();
+  QString aprofile_xml;
+  
+  qry. clear();
+  qry << "get_aprofile_info" << run_details[ "aprofileguid" ];
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      aprofile_xml         = db->value( 2 ).toString();
+    }
+  
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readAProfileBasicParms_auto( xmli );
+    }
+
+  QMap<QString, QString>::iterator chan_rep;
+  for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
+    {
+      QString chan_key  = chan_rep.key();
+      QString reportIDs = chan_rep.value();
+      qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+      
+      QStringList reportIDs_list = reportIDs.split(",");
+      for (int i=0; i<reportIDs_list.size(); ++i)
+	{
+	  qry. clear();
+	  QString rID = reportIDs_list[i];
+	  
+	  qry << "update_autoflow_report_at_import"
+	      << rID
+	      << QString("none");
+	  
+	  qDebug() << "Reverting 'tripleDropped' autoflowReport record: query, rID -- " << qry << rID;
+	  db->query( qry );
+	}
+    }
+  
+}
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		//Channel Name
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+
+//Cleanup failed run's data for further re-initializaiton:
+void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_details )
+{
+
+  //Get proper filename
+  QString FileName = run_details[ "filename" ];
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+
+  //show progress dialog
+  int progress_total = fileNameList.size()*6 + 1;
+  QProgressDialog* progress_msg = new QProgressDialog ("Cleaning Data for Current Run...", QString(), 0, progress_total, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Cleaning Data..."));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
+  
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  int progress = progress_msg->value();
+  
+  /*** Iterate over fileNameList *********************************************/
+  for ( int i=0; i<fileNameList.size(); ++i )
+    {
+      qry.clear();
+      //get experimentID from 'experiment' table:
+      qry << "get_experiment_info_by_runID"
+	  << fileNameList[ i ]
+	  << run_details[ "invID_passed" ];
+
+      db->query( qry );
+      db->next();
+      QString expID  = db->value( 1 ).toString();
+      
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Let's make sure it's not a calibration experiment in use
+      qry. clear();
+      qry << "count_calibration_experiments" << expID;
+      int count = db->functionQuery( qry );
+      qDebug() << "Cleaning Failed Run: calexp count" << count;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( count < 0 )
+	{
+	  qDebug() << "count_calibration_experiments( "
+		   << expID
+		   << " ) returned a negative count";
+
+	  progress_msg->close();
+	  return;
+	}
+      
+      else if ( count > 0 )
+	{
+	  QMessageBox::information( this,
+				    tr( "Error" ),
+				    tr( "Cannot delete an experiment that is associated "
+					"with a rotor calibration\n" ) );
+	  progress_msg->close();
+	  return;
+	}
+
+      int status;
+      
+      // Delete links between experiment and solutions
+      qry. clear();
+      qry << "delete_experiment_solutions"
+	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del sols status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Same with cell table
+      qry. clear();
+      qry  << "delete_cell_experiments"
+	   << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Failed Run: del cells status" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      // Let's delete any pcsa_modelrecs records to avoid
+      //  constraints problems
+      //US_Experiment::deleteRunPcsaMrecs( db, run_details[ "invID_passed" ], run_details[ "filename" ] );
+      qry. clear();
+      qry << "delete_run_pcsa_recs"
+	  << fileNameList[ i ];
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data for Run PRotDev(): del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+
+      // Now delete editedData, models, noises, reports, 
+      qry. clear();
+      qry << "clear_data_for_experiment"
+       	  << expID;
+      status = db -> statusQuery( qry );
+      qDebug() << "Cleaning Data (del data) for FAILED run: del_exp stat" << status;
+
+      progress_msg->setValue( ++progress);
+      qApp->processEvents();
+      
+      if ( status != US_DB2::OK )
+       	{
+       	  QMessageBox::information( this,
+       				    tr( "Error / Warning" ),
+       				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+       				    .arg( status ).arg( expID ) );
+       	}
+      
+      // // Now delete the experiment and all existing rawData, 
+      // qry. clear();
+      // qry << "delete_experiment"
+      // 	  << expID;
+      // status = db -> statusQuery( qry );
+      // qDebug() << "Cleaning Failed Run: del_exp stat" << status;
+      
+      // if ( status != US_DB2::OK )
+      // 	{
+      // 	  QMessageBox::information( this,
+      // 				    tr( "Error / Warning" ),
+      // 				    db -> lastError() + tr( " (error=%1, expID=%2)" )
+      // 				    .arg( status ).arg( expID ) );
+      // 	}
+    }
+
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+  /** End Iterate over fileNameList ****************************************************************/
+}
+
 
 
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
@@ -1735,6 +2259,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
   // else
   //   pdiag_autoflow->pb_cancel->setEnabled( true );
 
+  //ALEXEY: also always clear occupied_instruments as we decide on queueing...
+  occupied_instruments. clear();
 
   qDebug() << "Define Another Exp. button reset";
 
@@ -1810,6 +2336,22 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
   autoflowdata.clear();
 
   QStringList qry;
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  dbP->query( qry );
+  
+  int user_id = 0;
+  
+  if ( dbP->next() )
+    user_id = dbP->value( 0 ).toInt();
+    
+  //now look at autpflow runs
+  qry.clear();
   qry << "get_autoflow_desc";
   dbP->query( qry );
 
@@ -1826,13 +2368,27 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       
       QDateTime time_started     = dbP->value( 11 ).toDateTime().toUTC();
 
+      QString invID              = dbP->value( 12 ).toString();
+      
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
+      QString ptime_created       = US_Util::toUTCDatetimeText( time_created
+								.toString( Qt::ISODate ), true )
+	                                                         .section( ":", 0, 1 ) + " UTC";
+      
       QString gmpRun             = dbP->value( 14 ).toString();
+      QString operatorID         = dbP->value( 16 ).toString();
+      QString failedID           = dbP->value( 17 ).toString();
+
+      qDebug() << "OperatorID -- " << operatorID;
+      qDebug() << "failedID -- "   << failedID;
       
       QDateTime local(QDateTime::currentDateTime());
 
-      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      //autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      autoflowentry << id << runname << optimaname  << ptime_created;
 
+      qDebug() << "1. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
+	
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
       else
@@ -1848,15 +2404,162 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
-      
-      autoflowdata  << autoflowentry;
-      nrecs++;
+
+      if ( failedID.toInt() )
+	autoflowentry << "YES";
+      else
+	autoflowentry << "NO";
+    
+
+      //Treat eSign separately: only show runs at this stage to reviewers && operator:
+      if ( status == "E-SIGNATURES" )
+	{
+	  // //taking care of UL=2, who owns a run, and thus, is an operator
+	  // if (  user_id && user_id == operatorID.toInt() )
+	  //   {
+	  //     autoflowdata  << autoflowentry;
+	  //     nrecs++;
+	  //   }
+
+	  //reviewers: check against new 'autoflowGMPReportEsign. statusSignJson["to_process"]' table's field: 
+	  if ( isOperRev( user_id, id ) )
+	    {
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	  
+	}
+      else
+	{
+	  //Check user level && GUID; if <3, check if the user is investigator
+	  if ( US_Settings::us_inv_level() < 3 )
+	    {
+	      qDebug() << "User level low: " << US_Settings::us_inv_level();
+	      qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+	      
+	      //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	      if ( user_id && user_id == invID.toInt() )
+		{
+		  autoflowdata  << autoflowentry;
+		  nrecs++;
+		}
+	    }
+	  else
+	    {
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+
+	      qDebug() << "2. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
+	    }
+	}
     }
 
   return nrecs;
 }
 
-    
+
+//Check for e-Signature stage, if the logged in user an operator || reviewer
+bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
+{
+  bool yesRev = false;
+
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+
+  if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return yesRev;
+     }
+
+  QStringList qry;
+  qry << "get_gmp_review_info_by_autoflowID" << autoflow_id;
+
+  db->query( qry );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    return yesRev;
+  
+  QString esign_id;
+  QString gmp_run_id;
+  QString autoflow_name ;
+  QString operator_list;
+  QString reviewers_list;
+  QString approvers_list;
+  QString eSignStatusJson;
+  QString eSignStatusAll;
+  QString createUpdateJsonLog;
+  
+  while ( db->next() )
+    {
+      esign_id             = db->value( 0 ).toString();    //INT
+      gmp_run_id           = db->value( 1 ).toString();    //INT
+      autoflow_name        = db->value( 2 ).toString();    //TEXT
+      operator_list        = db->value( 3 ).toString();    //json array [1 value for now]
+      reviewers_list       = db->value( 4 ).toString();    //json array
+      eSignStatusJson      = db->value( 5 ).toString();    //json
+      eSignStatusAll       = db->value( 6 ).toString();    //ENUM
+      createUpdateJsonLog  = db->value( 7 ).toString();    //json
+      approvers_list       = db->value( 8 ).toString();    //json array
+    }
+
+  //process 'reviewers_list' & 'operList' Json arrays:
+  QJsonDocument jsonDocRevList  = QJsonDocument::fromJson( reviewers_list.toUtf8() );
+  QJsonDocument jsonDocOperList = QJsonDocument::fromJson( operator_list .toUtf8() );
+  QJsonDocument jsonDocApprList = QJsonDocument::fromJson( approvers_list .toUtf8() );
+  
+  if ( !jsonDocRevList. isArray() || !jsonDocOperList. isArray() || !jsonDocApprList. isArray() )
+    {
+      qDebug() << "jsonDocRevList OR jsonDocOperList OR jsonDocApprList not a JSON Array!";
+      return yesRev;
+    }
+  
+  QJsonArray jsonDocRevList_array  = jsonDocRevList.array();
+  for (int i=0; i < jsonDocRevList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocRevList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  return true;
+	}
+    }
+
+  QJsonArray jsonDocOperList_array  = jsonDocOperList.array();
+  for (int i=0; i < jsonDocOperList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocOperList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  return true;
+	}
+    }
+
+  QJsonArray jsonDocApprList_array  = jsonDocApprList.array();
+  for (int i=0; i < jsonDocApprList_array.size(); ++i )
+    {
+      QString current_reviewer = jsonDocApprList_array[i].toString();
+      //uname =  oID + ": " + olname + ", " + ofname;
+      int current_reviewer_id = current_reviewer. section( ".", 0, 0 ).toInt();
+
+      if ( uID == current_reviewer_id )
+	{
+	  return true;
+	}
+    }
+ 
+  
+  return yesRev;
+}
+
+
 // Query autoflow for # records
 int US_InitDialogueGui::get_autoflow_records( void )
 {
@@ -1936,13 +2639,74 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
-	   	   
+	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
+	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
+	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
+	   protocol_details[ "operatorID" ]    = db->value( 23 ).toString();
+	   protocol_details[ "devRecord" ]     = db->value( 24 ).toString();
+	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	 }
+     }
+   else
+     {
+       QMessageBox::warning( this, tr( "No Run Exists" ),
+			     tr( "Selected run does not exists in the DB!  \n\n" )
+			     + db->lastError()
+			     + tr("\n\nThis means that the run either completed OR "
+				  "has been manually deleted.\n\n"
+				  "The Run List will be updated...") );
      }
 
    return protocol_details;
 }
 
+
+// Query autoflow for # records
+QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString failedID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> failed_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return failed_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_failed_record"
+       << failedID ;
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   failed_details[ "failedStage" ]    = db->value( 0 ).toString();
+	   failed_details[ "failedMsg" ]      = db->value( 1 ).toString();
+	   failed_details[ "failedTs" ]       = db->value( 2 ).toString();
+	 }
+     }
+   else
+     {
+       QMessageBox::warning( this, tr( "No autoflowFailed Record Exists" ),
+			     tr( "Selected record does not exists in the DB!  \n\n" )
+			     + db->lastError()
+			     + tr("\n\nThis means that the run either completed OR "
+				  "has been manually deleted.\n\n"
+				  "The Run List will be updated...") );
+     }
+
+   return failed_details;
+}
 
 
 
@@ -2044,6 +2808,10 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
+
+   //return automatically to Run Manager:
+   connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   
    
    sdiag->pb_close->setEnabled(false);  // Disable Close button
    offset = 0;
@@ -2098,6 +2866,11 @@ void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
   emit define_used_instruments( occupied_instruments );
 }
 
+
+void US_ExperGui::to_initAutoflow( void )
+{
+   emit switch_to_initAutoflow();
+}
 
 //When run is submitted to Optima & protocol details are passed .. 
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
@@ -2762,11 +3535,13 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
    main->addStretch();
 
    // Open US_Analysis_auto ...  
-   sdiag = new US_Reports_auto();
+   //sdiag = new US_Reports_auto();
+   sdiag = new US_ReporterGMP( "AUTO" );
    sdiag->setParent(this, Qt::Widget);
    
-   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
-
+   //connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
+   
    connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
 
    offset = 0;
@@ -2776,7 +3551,6 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
 
    sdiag->show();
    
-
 }
 
 void US_ReportStageGui::resizeEvent(QResizeEvent *event)
@@ -2820,5 +3594,95 @@ void US_ReportStageGui::reset_reporting( void )
 }
 
 
+//eSignatures
+US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
+  : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
 
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
 
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+   // // Open  ...  
+   sdiag = new US_eSignaturesGMP( "AUTO" );
+   sdiag->setParent(this, Qt::Widget);
+   
+   connect( this, SIGNAL( start_esign( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel_auto ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_esigning_passed( ) ), sdiag, SLOT(  reset_esign_panel (  )  ) );
+
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+}
+
+void US_eSignaturesGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+void US_eSignaturesGui::do_esign( QMap < QString, QString > & protocol_details )
+{
+  emit start_esign( protocol_details );
+}
+
+void US_eSignaturesGui::reset_esigning( void )
+{
+  emit reset_esigning_passed();
+}

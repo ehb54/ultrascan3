@@ -33,7 +33,7 @@ class US_EXTERN US3i_widgetsDialog : public QDialog
   public:
     //! \param w - Parent widget, normally not specified
     //! \param f - Window flags, normally not specified
-    US3i_widgetsDialog( QWidget*, Qt::WindowFlags = 0 );
+    US3i_widgetsDialog( QWidget* );
 
     //! Connect to global memory and make the values accessible.
     US3i_Global g;

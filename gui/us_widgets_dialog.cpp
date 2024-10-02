@@ -3,10 +3,12 @@
 #include "us_gui_settings.h"
 #include "us_images.h"
 
-US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f ) 
+
+US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_style ) 
    : QDialog( w, f )
 {
-  QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
+  if (set_style)
+      QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
 
   if ( ! g.isValid() )
   {

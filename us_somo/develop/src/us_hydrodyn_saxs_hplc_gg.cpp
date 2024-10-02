@@ -313,7 +313,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
             QString("").sprintf(
                                 "P value analysis summary:\n"
                                 " %5.1f%% P >= %.2f (%.1f%% P >= %.2f) + (%.1f%% %.2f > P >= %.2f) pairs\n"
-                                " %5.1f%% %.2f > P pairs\n"
+                                " %5.1f%% %.2f < P pairs\n"
                                 ,tot_c_pct * (double) (cormap_green + cormap_yellow )
                                 ,alpha_over_5
                                 ,tot_c_pct * (double) cormap_green
@@ -532,9 +532,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
    }
    ggqfit_plot_zoomer = new ScrollZoomer(ggqfit_plot->canvas());
    ggqfit_plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   ggqfit_plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   ggqfit_plot_zoomer->setTrackerPen(QPen(Qt::red));
 
    ggqfit_plot->replot();
 
@@ -800,4 +798,87 @@ void US_Hydrodyn_Saxs_Hplc::gauss_local_guos() {
    le_gauss_pos       ->setText( QString( "%1" ).arg( mu    ) );
    le_gauss_pos_width ->setText( QString( "%1" ).arg( sigma ) );
    le_gauss_pos_height->setText( QString( "%1" ).arg( amp   ) );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ) {
+   errormsg = "";
+
+   vector < vector < double > > Icm( 2 );
+   vector < vector < double > > rkl;
+   int                          N;
+   int                          S;
+   int                          C;
+
+   Icm[ 0 ] = I;
+   Icm[ 1 ] = G;
+
+   if ( !usu->cormap( q, Icm, rkl, N, S, C, P ) ) {
+      errormsg = usu->errormsg;
+      return false;
+   }
+
+   return true;
+}
+     
+bool US_Hydrodyn_Saxs_Hplc::pvalue( const QString & file, double &P, QString &errormsg ) {
+   errormsg = "";
+   
+   if ( !f_Is.count( file ) ||
+        !f_qs.count( file ) ) {
+      errormsg = QString( "Internal error: pvalue() %1 is missing from data" ).arg( file );
+      return false;
+   }
+
+   if ( !f_gaussians.count( file ) ) {
+      errormsg = QString( "Internal error: pvalue() %1 is missing gaussians" ).arg( file );
+      return false;
+   }
+
+   // trim to fit
+
+   vector < double > q;
+   vector < double > I;
+
+   double q_start = le_gauss_fit_start->text().toDouble();
+   double q_end   = le_gauss_fit_end  ->text().toDouble();
+
+   int qsize = (int) f_qs[ file ].size();
+   int Isize = (int) f_Is[ file ].size();
+
+   if ( qsize != Isize ) {
+      errormsg = QString( "Internal error: pvalue() %1 differing I & q sizes" ).arg( file );
+      return false;
+   }
+      
+   vector < vector < double > > Icm( 2 );
+
+   for ( int i = 0; i < qsize; ++i ) {
+      if ( f_qs[ file ][ i ] >= q_start 
+           && f_qs[ file ][ i ] <= q_end ) {
+         q.push_back( f_qs[ file ][ i ] );
+         Icm[0].push_back( f_Is[ file ][ i ] );
+      }
+   }
+         
+   if ( !q.size() ) {
+      errormsg = QString( "Error: pvalue() %1 empty q vector after range trim" ).arg( file );
+      return false;
+   }
+
+   // compute cormap p value
+   {
+      vector < vector < double > > rkl;
+      int                          N;
+      int                          S;
+      int                          C;
+
+      Icm[ 1 ] = compute_gaussian_sum( q, f_gaussians[ file ] );
+
+      if ( !usu->cormap( q, Icm, rkl, N, S, C, P ) ) {
+         errormsg = usu->errormsg;
+         return false;
+      }
+   }
+
+   return true;
 }

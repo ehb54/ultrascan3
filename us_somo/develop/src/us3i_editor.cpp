@@ -6,7 +6,7 @@
 #endif
 
 US3i_Editor::US3i_Editor( int menu, bool readonly, const QString& extension, 
-      QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )
+      QWidget* parent ) : QMainWindow( parent )
 {
    file_extension = extension;
    file_directory = US3i_Settings::dataDir();

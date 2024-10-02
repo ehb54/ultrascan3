@@ -1,4 +1,4 @@
-//! \brief us_math.h
+//! \brief us_math2.h
 #ifndef US_MATH_H
 #define US_MATH_H
 
@@ -19,6 +19,10 @@
 #ifndef swap_double
    // No need to protect a and b for swap
    #define swap_double(a,b) {double t = a; a=b; b=t;}
+#endif
+
+#ifndef DbgLv
+#define DbgLv(a) if(0 >= a)qDebug()
 #endif
 
 //! \brief A collecion of methematical routines.  All functions are static.
@@ -101,7 +105,7 @@ class US_UTIL_EXTERN US_Math2
       //! \param y Pointer to an array of y values
       //! \param slope       Pointer to location to return the line's slope
       //! \param intercept   Pointer to location to return the line's y intercept
-      //! \param sigma       Pointer to location to return the standard deviation 
+      //! \param sigma       Pointer to location to return the square root of the population variance (not related to the fit result)
       //! \param correlation Pointer to location to return the correlation
       //! \param arraysize   Input array size
       static double linefit   ( double**, double**, double*, double*, double*, 

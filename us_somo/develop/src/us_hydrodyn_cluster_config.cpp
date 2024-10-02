@@ -78,7 +78,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_cluster_id = new QLineEdit( this );    le_cluster_id->setObjectName( "csv_filename Line Edit" );
    le_cluster_id->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userid" ] );
    le_cluster_id->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_cluster_id->setMinimumWidth(150);
+   le_cluster_id->setMinimumWidth(250);
    le_cluster_id->setPalette( PALET_NORMAL );
    AUTFBACK( le_cluster_id );
    le_cluster_id->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -94,7 +94,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_cluster_pw = new QLineEdit( this );    le_cluster_pw->setObjectName( "csv_filename Line Edit" );
    le_cluster_pw->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userpw" ] );
    le_cluster_pw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_cluster_pw->setMinimumWidth(150);
+   le_cluster_pw->setMinimumWidth(250);
    le_cluster_pw->setPalette( PALET_NORMAL );
    AUTFBACK( le_cluster_pw );
    le_cluster_pw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -111,7 +111,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_cluster_pw2 = new QLineEdit( this );    le_cluster_pw2->setObjectName( "csv_filename Line Edit" );
    le_cluster_pw2->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userpw" ] );
    le_cluster_pw2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_cluster_pw2->setMinimumWidth(150);
+   le_cluster_pw2->setMinimumWidth(250);
    le_cluster_pw2->setPalette( PALET_NORMAL );
    AUTFBACK( le_cluster_pw2 );
    le_cluster_pw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -128,7 +128,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_cluster_email = new QLineEdit( this );    le_cluster_email->setObjectName( "csv_filename Line Edit" );
    le_cluster_email->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "useremail" ] );
    le_cluster_email->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_cluster_email->setMinimumWidth(150);
+   le_cluster_email->setMinimumWidth(250);
    le_cluster_email->setPalette( PALET_NORMAL );
    AUTFBACK( le_cluster_email );
    le_cluster_email->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -144,7 +144,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_submit_url = new QLineEdit( this );    le_submit_url->setObjectName( "csv_filename Line Edit" );
    le_submit_url->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "server" ] );
    le_submit_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_submit_url->setMinimumWidth(150);
+   le_submit_url->setMinimumWidth(250);
    le_submit_url->setPalette( PALET_NORMAL );
    AUTFBACK( le_submit_url );
    le_submit_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -162,7 +162,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_manage_url = new QLineEdit( this );    le_manage_url->setObjectName( "csv_filename Line Edit" );
    le_manage_url->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "manage" ] );
    le_manage_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_manage_url->setMinimumWidth(150);
+   le_manage_url->setMinimumWidth(250);
    le_manage_url->setPalette( PALET_NORMAL );
    AUTFBACK( le_manage_url );
    le_manage_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -233,6 +233,12 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    pb_delete_system->setPalette( PALET_PUSHB );
    connect(pb_delete_system, SIGNAL(clicked()), SLOT(delete_system()));
 
+   lbl_systems      ->hide();
+   lb_systems       ->hide();
+   pb_add_new       ->hide();
+   pb_edit          ->hide();
+   pb_delete_system ->hide();
+   
    pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);

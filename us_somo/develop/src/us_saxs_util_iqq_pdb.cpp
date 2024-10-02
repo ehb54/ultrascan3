@@ -103,17 +103,18 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                continue;
             }
             
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq_pdb 1) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                noticemsg += QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->name)
+                  .arg(this_atom_name)
                   .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name);
@@ -130,7 +131,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
             
             // this is probably correct but FoXS uses the saxs table excluded volume
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.atom_name = this_atom->name;
             new_atom.residue_name = use_resname;
@@ -766,12 +767,13 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                noticemsg += QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->name)
+                  .arg(this_atom_name)
                   .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name);
@@ -785,7 +787,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             // .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
             // ;
 
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.atom_name = this_atom->name;
             new_atom.residue_name = use_resname;
@@ -1243,19 +1245,20 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                noticemsg += QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
-                              .arg(this_atom->name)
+                              .arg(this_atom_name)
                               .arg(use_resname)
                               .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
             }
 
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.atom_name = this_atom->name;
             new_atom.residue_name = use_resname;
@@ -2452,7 +2455,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -2528,7 +2531,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {
@@ -2732,12 +2735,12 @@ bool US_Saxs_Util::compute_scale_excl_vol()
                {
                   if ( our_saxs_options.swh_excl_vol > 0e0 )
                   {
-                     our_saxs_options.iq_target_ev += our_saxs_options.swh_excl_vol * swh_count;
+                     our_saxs_options.iq_target_ev += (double) our_saxs_options.swh_excl_vol * swh_count;
                      scale_excl_vol_msgs += 
                         QString( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" )
                         .arg( our_saxs_options.swh_excl_vol )
                         .arg( swh_count )
-                        .arg( our_saxs_options.swh_excl_vol * swh_count );
+                        .arg( (double) our_saxs_options.swh_excl_vol * swh_count );
                   } else {
                      QString mapkey = "WAT|OW";
                      QString hybrid_name = residue_atom_hybrid_map[mapkey];
@@ -2836,18 +2839,19 @@ bool US_Saxs_Util::compute_scale_excl_vol()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq_pdb 2) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                scale_excl_vol_msgs += 
                   QString( "%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n" )
                   .arg( this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " " ) )
                   .arg( j + 1 )
-                  .arg( this_atom->name )
+                  .arg( this_atom_name )
                   .arg( use_resname )
                   .arg( this_atom->resSeq )
                   .arg( hybrid_name )
@@ -2859,7 +2863,7 @@ bool US_Saxs_Util::compute_scale_excl_vol()
             new_atom.hybrid_name = hybrid_name;
             
             // this is probably correct but FoXS uses the saxs table excluded volume
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.atom_name = this_atom->name;
             new_atom.residue_name = use_resname;

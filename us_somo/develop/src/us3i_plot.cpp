@@ -204,7 +204,7 @@ void US_Plot::zoom( bool on )
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
-      panner->setMouseButton( Qt::MidButton );
+      panner->setMouseButton( Qt::MiddleButton );
 
 #if QT_VERSION > 0x050000
       picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
@@ -295,7 +295,7 @@ void US_Plot::print( void )
    }
 
    printer.setCreator( "UltraScan" );
-   printer.setOrientation( QPrinter::Landscape );
+   printer.setPageOrientation( QPageLayout::Landscape );
 
    QPrintDialog dialog( &printer );
 
@@ -430,8 +430,7 @@ void US_PlotPushbutton::us3i_plotClicked( void )
    \param p            Parent widget
    \param f            Window Flags
 */
-US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US3i_widgetsDialog( p, f ) //( false, p, f )
+US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p ) : US3i_widgetsDialog( p ) //( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US3i_GuiSettings::frameColor() );
@@ -682,7 +681,7 @@ void US_PlotConfig::updateTitleFont( void )
    bool ok;
    QFont currentFont = plot->title().font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Title Font" ), 0 );
+                          tr( "Set Title Font" ) );
 
    if ( ok )
    {
@@ -813,7 +812,7 @@ void US_PlotConfig::updateLegendFont( void )
 
    bool ok;
    QFont newFont = QFontDialog::getFont( &ok, font, this,
-                       tr( "Set Legend Font" ), 0 );
+                       tr( "Set Legend Font" ) );
 
    if ( ok )
    {
@@ -949,8 +948,8 @@ void US_PlotConfig::gridConfigFinish( void )
    \param f           Widget flags
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
-      const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
-      : US3i_widgetsDialog( parent, f ) //( false, parent, f )
+      const QStringList& selected, QWidget* parent ) 
+      : US3i_widgetsDialog( parent ) //( false, parent, f )
 {
    plot          = currentPlot;
    selectedItems = selected;
@@ -1350,7 +1349,7 @@ void US_PlotCurveConfig::apply( void )
 //**** Custom class to display curve configuration  ********
 
 US_PlotLabel::US_PlotLabel( US_PlotCurveConfig* caller, 
-      QWidget* p, Qt::WindowFlags f  ) : QWidget( p, f )
+      QWidget* p ) : QWidget( p )
 {
    data  = caller;
    label = new QLabel;
@@ -1456,7 +1455,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US3i_widgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent ) : US3i_widgetsDialog( parent )//( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
@@ -1706,7 +1705,7 @@ void US_PlotAxisConfig::selectTitleFont( void )
    bool ok;
    QFont currentFont = plot->axisTitle( axis ).font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Title Font" ), 0 );
+                          tr( "Set Axis Title Font" ) );
 
    if ( ok )
    {
@@ -1735,7 +1734,7 @@ void US_PlotAxisConfig::selectScaleFont( void )
    bool ok;
    QFont currentFont = plot->axisFont( axis );
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Scale Font" ), 0 );
+                          tr( "Set Axis Scale Font" ) );
 
    if ( ok )
    {
@@ -1854,7 +1853,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US3i_widgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent ) : US3i_widgetsDialog( parent )//( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US3i_GuiSettings::frameColor() );
@@ -2145,9 +2144,9 @@ US_PlotPicker::US_PlotPicker( QwtPlot* plot )
 void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 {
    // Prevent spurious clicks
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 )
+   if ( last_click.isValid() || last_click.elapsed() > 300 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton ) 
@@ -2164,9 +2163,9 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 ) 
+   if ( last_click.isValid() || last_click.elapsed() > 300 ) 
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )
@@ -2181,10 +2180,10 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
    // Slow things down a bit
-   if ( last_click.isNull() || last_click.elapsed() > 100 )
+   if ( last_click.isValid() || last_click.elapsed() > 100 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )
@@ -2264,3 +2263,197 @@ void US_PlotChoices::config()
    close();
 }
 
+US_Plot_Colors::US_Plot_Colors( const QColor & background_color ) {
+   push_back_color_if_ok( background_color, Qt::yellow );
+   push_back_color_if_ok( background_color, Qt::green );
+   push_back_color_if_ok( background_color, Qt::cyan );
+   push_back_color_if_ok( background_color, Qt::blue );
+   push_back_color_if_ok( background_color, Qt::red );
+   push_back_color_if_ok( background_color, Qt::magenta );
+   push_back_color_if_ok( background_color, Qt::darkYellow );
+   push_back_color_if_ok( background_color, Qt::darkGreen );
+   push_back_color_if_ok( background_color, Qt::darkCyan );
+   push_back_color_if_ok( background_color, Qt::darkBlue );
+   push_back_color_if_ok( background_color, Qt::darkRed );
+   push_back_color_if_ok( background_color, Qt::darkMagenta );
+   push_back_color_if_ok( background_color, Qt::white );
+   push_back_color_if_ok( background_color, QColor( 240, 248, 255 ) ); /* Alice Blue */
+   push_back_color_if_ok( background_color, QColor( 250, 235, 215 ) ); /* Antique White */
+   push_back_color_if_ok( background_color, QColor( 0, 255, 255 ) ); /* Aqua* */
+   push_back_color_if_ok( background_color, QColor( 127, 255, 212 ) ); /* Aquamarine */
+   push_back_color_if_ok( background_color, QColor( 240, 255, 255 ) ); /* Azure */
+   push_back_color_if_ok( background_color, QColor( 245, 245, 220 ) ); /* Beige */
+   push_back_color_if_ok( background_color, QColor( 255, 228, 196 ) ); /* Bisque */
+   push_back_color_if_ok( background_color, QColor( 0, 0, 0 ) ); /* Black* */
+   push_back_color_if_ok( background_color, QColor( 255, 235, 205 ) ); /* Blanched Almond */
+   push_back_color_if_ok( background_color, QColor( 0, 0, 255 ) ); /* Blue* */
+   push_back_color_if_ok( background_color, QColor( 138, 43, 226 ) ); /* Blue-Violet */
+   push_back_color_if_ok( background_color, QColor( 165, 42, 42 ) ); /* Brown */
+   push_back_color_if_ok( background_color, QColor( 222, 184, 135 ) ); /* Burlywood */
+   push_back_color_if_ok( background_color, QColor( 95, 158, 160 ) ); /* Cadet Blue */
+   push_back_color_if_ok( background_color, QColor( 127, 255, 0 ) ); /* Chartreuse */
+   push_back_color_if_ok( background_color, QColor( 210, 105, 30 ) ); /* Chocolate */
+   push_back_color_if_ok( background_color, QColor( 255, 127, 80 ) ); /* Coral */
+   push_back_color_if_ok( background_color, QColor( 100, 149, 237 ) ); /* Cornflower Blue */
+   push_back_color_if_ok( background_color, QColor( 255, 248, 220 ) ); /* Cornsilk */
+   push_back_color_if_ok( background_color, QColor( 0, 255, 255 ) ); /* Cyan */
+   push_back_color_if_ok( background_color, QColor( 0, 0, 139 ) ); /* Dark Blue */
+   push_back_color_if_ok( background_color, QColor( 0, 139, 139 ) ); /* Dark Cyan */
+   push_back_color_if_ok( background_color, QColor( 184, 134, 11 ) ); /* Dark Goldenrod */
+   push_back_color_if_ok( background_color, QColor( 169, 169, 169 ) ); /* Dark Gray */
+   push_back_color_if_ok( background_color, QColor( 0, 100, 0 ) ); /* Dark Green */
+   push_back_color_if_ok( background_color, QColor( 189, 183, 107 ) ); /* Dark Khaki */
+   push_back_color_if_ok( background_color, QColor( 139, 0, 139 ) ); /* Dark Magenta */
+   push_back_color_if_ok( background_color, QColor( 85, 107, 47 ) ); /* Dark Olive Green */
+   push_back_color_if_ok( background_color, QColor( 255, 140, 0 ) ); /* Dark Orange */
+   push_back_color_if_ok( background_color, QColor( 153, 50, 204 ) ); /* Dark Orchid */
+   push_back_color_if_ok( background_color, QColor( 139, 0, 0 ) ); /* Dark Red */
+   push_back_color_if_ok( background_color, QColor( 233, 150, 122 ) ); /* Dark Salmon */
+   push_back_color_if_ok( background_color, QColor( 143, 188, 143 ) ); /* Dark Sea Green */
+   push_back_color_if_ok( background_color, QColor( 72, 61, 139 ) ); /* Dark Slate Blue */
+   push_back_color_if_ok( background_color, QColor( 47, 79, 79 ) ); /* Dark Slate Gray */
+   push_back_color_if_ok( background_color, QColor( 0, 206, 209 ) ); /* Dark Turquoise */
+   push_back_color_if_ok( background_color, QColor( 148, 0, 211 ) ); /* Dark Violet */
+   push_back_color_if_ok( background_color, QColor( 255, 20, 147 ) ); /* Deep Pink */
+   push_back_color_if_ok( background_color, QColor( 0, 191, 255 ) ); /* Deep Sky Blue */
+   push_back_color_if_ok( background_color, QColor( 105, 105, 105 ) ); /* Dim Gray */
+   push_back_color_if_ok( background_color, QColor( 30, 144, 255 ) ); /* Dodger Blue */
+   push_back_color_if_ok( background_color, QColor( 178, 34, 34 ) ); /* Firebrick */
+   push_back_color_if_ok( background_color, QColor( 255, 250, 240 ) ); /* Floral White */
+   push_back_color_if_ok( background_color, QColor( 34, 139, 34 ) ); /* Forest Green */
+   push_back_color_if_ok( background_color, QColor( 255, 0, 255 ) ); /* Fuschia* */
+   push_back_color_if_ok( background_color, QColor( 220, 220, 220 ) ); /* Gainsboro */
+   push_back_color_if_ok( background_color, QColor( 255, 250, 250 ) ); /* Ghost White */
+   push_back_color_if_ok( background_color, QColor( 255, 215, 0 ) ); /* Gold */
+   push_back_color_if_ok( background_color, QColor( 218, 165, 32 ) ); /* Goldenrod */
+   push_back_color_if_ok( background_color, QColor( 128, 128, 128 ) ); /* Gray* */
+   push_back_color_if_ok( background_color, QColor( 0, 128, 0 ) ); /* Green* */
+   push_back_color_if_ok( background_color, QColor( 173, 255, 47 ) ); /* Green-Yellow */
+   push_back_color_if_ok( background_color, QColor( 240, 255, 240 ) ); /* Honeydew */
+   push_back_color_if_ok( background_color, QColor( 255, 105, 180 ) ); /* Hot Pink */
+   push_back_color_if_ok( background_color, QColor( 205, 92, 92 ) ); /* Indian Red */
+   push_back_color_if_ok( background_color, QColor( 255, 255, 240 ) ); /* Ivory */
+   push_back_color_if_ok( background_color, QColor( 240, 230, 140 ) ); /* Khaki */
+   push_back_color_if_ok( background_color, QColor( 230, 230, 250 ) ); /* Lavender */
+   push_back_color_if_ok( background_color, QColor( 255, 240, 245 ) ); /* Lavender Blush */
+   push_back_color_if_ok( background_color, QColor( 124, 252, 0 ) ); /* Lawn Green */
+   push_back_color_if_ok( background_color, QColor( 255, 250, 205 ) ); /* Lemon Chiffon */
+   push_back_color_if_ok( background_color, QColor( 173, 216, 230 ) ); /* Light Blue */
+   push_back_color_if_ok( background_color, QColor( 240, 128, 128 ) ); /* Light Coral */
+   push_back_color_if_ok( background_color, QColor( 224, 255, 255 ) ); /* Light Cyan */
+   push_back_color_if_ok( background_color, QColor( 238, 221, 130 ) ); /* Light Goldenrod */
+   push_back_color_if_ok( background_color, QColor( 250, 250, 210 ) ); /* Light Goldenrod Yellow */
+   push_back_color_if_ok( background_color, QColor( 211, 211, 211 ) ); /* Light Gray */
+   push_back_color_if_ok( background_color, QColor( 144, 238, 144 ) ); /* Light Green */
+   push_back_color_if_ok( background_color, QColor( 255, 182, 193 ) ); /* Light Pink */
+   push_back_color_if_ok( background_color, QColor( 255, 160, 122 ) ); /* Light Salmon */
+   push_back_color_if_ok( background_color, QColor( 32, 178, 170 ) ); /* Light Sea Green */
+   push_back_color_if_ok( background_color, QColor( 135, 206, 250 ) ); /* Light Sky Blue */
+   push_back_color_if_ok( background_color, QColor( 132, 112, 255 ) ); /* Light Slate Blue */
+   push_back_color_if_ok( background_color, QColor( 119, 136, 153 ) ); /* Light Slate Gray */
+   push_back_color_if_ok( background_color, QColor( 176, 196, 222 ) ); /* Light Steel Blue */
+   push_back_color_if_ok( background_color, QColor( 255, 255, 224 ) ); /* Light Yellow */
+   push_back_color_if_ok( background_color, QColor( 0, 255, 0 ) ); /* Lime* */
+   push_back_color_if_ok( background_color, QColor( 50, 205, 50 ) ); /* Lime Green */
+   push_back_color_if_ok( background_color, QColor( 250, 240, 230 ) ); /* Linen */
+   push_back_color_if_ok( background_color, QColor( 255, 0, 255 ) ); /* Magenta */
+   push_back_color_if_ok( background_color, QColor( 128, 0, 0 ) ); /* Maroon* */
+   push_back_color_if_ok( background_color, QColor( 102, 205, 170 ) ); /* Medium Aquamarine */
+   push_back_color_if_ok( background_color, QColor( 0, 0, 205 ) ); /* Medium Blue */
+   push_back_color_if_ok( background_color, QColor( 186, 85, 211 ) ); /* Medium Orchid */
+   push_back_color_if_ok( background_color, QColor( 147, 112, 219 ) ); /* Medium Purple */
+   push_back_color_if_ok( background_color, QColor( 60, 179, 113 ) ); /* Medium Sea Green */
+   push_back_color_if_ok( background_color, QColor( 123, 104, 238 ) ); /* Medium Slate Blue */
+   push_back_color_if_ok( background_color, QColor( 0, 250, 154 ) ); /* Medium Spring Green */
+   push_back_color_if_ok( background_color, QColor( 72, 209, 204 ) ); /* Medium Turquoise */
+   push_back_color_if_ok( background_color, QColor( 199, 21, 133 ) ); /* Medium Violet-Red */
+   push_back_color_if_ok( background_color, QColor( 25, 25, 112 ) ); /* Midnight Blue */
+   push_back_color_if_ok( background_color, QColor( 245, 255, 250 ) ); /* Mint Cream */
+   push_back_color_if_ok( background_color, QColor( 255, 228, 225 ) ); /* Misty Rose */
+   push_back_color_if_ok( background_color, QColor( 255, 228, 181 ) ); /* Moccasin */
+   push_back_color_if_ok( background_color, QColor( 255, 222, 173 ) ); /* Navajo White */
+   push_back_color_if_ok( background_color, QColor( 0, 0, 128 ) ); /* Navy* */
+   push_back_color_if_ok( background_color, QColor( 253, 245, 230 ) ); /* Old Lace */
+   push_back_color_if_ok( background_color, QColor( 128, 128, 0 ) ); /* Olive* */
+   push_back_color_if_ok( background_color, QColor( 107, 142, 35 ) ); /* Olive Drab */
+   push_back_color_if_ok( background_color, QColor( 255, 165, 0 ) ); /* Orange */
+   push_back_color_if_ok( background_color, QColor( 255, 69, 0 ) ); /* Orange-Red */
+   push_back_color_if_ok( background_color, QColor( 218, 112, 214 ) ); /* Orchid */
+   push_back_color_if_ok( background_color, QColor( 238, 232, 170 ) ); /* Pale Goldenrod */
+   push_back_color_if_ok( background_color, QColor( 152, 251, 152 ) ); /* Pale Green */
+   push_back_color_if_ok( background_color, QColor( 175, 238, 238 ) ); /* Pale Turquoise */
+   push_back_color_if_ok( background_color, QColor( 219, 112, 147 ) ); /* Pale Violet-Red */
+   push_back_color_if_ok( background_color, QColor( 255, 239, 213 ) ); /* Papaya Whip */
+   push_back_color_if_ok( background_color, QColor( 255, 218, 185 ) ); /* Peach Puff */
+   push_back_color_if_ok( background_color, QColor( 205, 133, 63 ) ); /* Peru */
+   push_back_color_if_ok( background_color, QColor( 255, 192, 203 ) ); /* Pink */
+   push_back_color_if_ok( background_color, QColor( 221, 160, 221 ) ); /* Plum */
+   push_back_color_if_ok( background_color, QColor( 176, 224, 230 ) ); /* Powder Blue */
+   push_back_color_if_ok( background_color, QColor( 128, 0, 128 ) ); /* Purple* */
+   push_back_color_if_ok( background_color, QColor( 255, 0, 0 ) ); /* Red* */
+   push_back_color_if_ok( background_color, QColor( 188, 143, 143 ) ); /* Rosy Brown */
+   push_back_color_if_ok( background_color, QColor( 65, 105, 225 ) ); /* Royal Blue */
+   push_back_color_if_ok( background_color, QColor( 139, 69, 19 ) ); /* Saddle Brown */
+   push_back_color_if_ok( background_color, QColor( 250, 128, 114 ) ); /* Salmon */
+   push_back_color_if_ok( background_color, QColor( 244, 164, 96 ) ); /* Sandy Brown */
+   push_back_color_if_ok( background_color, QColor( 46, 139, 87 ) ); /* Sea Green */
+   push_back_color_if_ok( background_color, QColor( 255, 245, 238 ) ); /* Seashell */
+   push_back_color_if_ok( background_color, QColor( 160, 82, 45 ) ); /* Sienna */
+   push_back_color_if_ok( background_color, QColor( 192, 192, 192 ) ); /* Silver* */
+   push_back_color_if_ok( background_color, QColor( 135, 206, 235 ) ); /* Sky Blue */
+   push_back_color_if_ok( background_color, QColor( 106, 90, 205 ) ); /* Slate Blue */
+   push_back_color_if_ok( background_color, QColor( 112, 128, 144 ) ); /* Slate Gray */
+   push_back_color_if_ok( background_color, QColor( 255, 250, 250 ) ); /* Snow */
+   push_back_color_if_ok( background_color, QColor( 0, 255, 127 ) ); /* Spring Green */
+   push_back_color_if_ok( background_color, QColor( 70, 130, 180 ) ); /* Steel Blue */
+   push_back_color_if_ok( background_color, QColor( 210, 180, 140 ) ); /* Tan */
+   push_back_color_if_ok( background_color, QColor( 0, 128, 128 ) ); /* Teal* */
+   push_back_color_if_ok( background_color, QColor( 216, 191, 216 ) ); /* Thistle */
+   push_back_color_if_ok( background_color, QColor( 255, 99, 71 ) ); /* Tomato */
+   push_back_color_if_ok( background_color, QColor( 64, 224, 208 ) ); /* Turquoise */
+   push_back_color_if_ok( background_color, QColor( 238, 130, 238 ) ); /* Violet */
+   push_back_color_if_ok( background_color, QColor( 208, 32, 144 ) ); /* Violet-Red */
+   push_back_color_if_ok( background_color, QColor( 245, 222, 179 ) ); /* Wheat */
+   push_back_color_if_ok( background_color, QColor( 255, 255, 255 ) ); /* White* */
+   push_back_color_if_ok( background_color, QColor( 245, 245, 245 ) ); /* White Smoke */
+   push_back_color_if_ok( background_color, QColor( 255, 255, 0 ) ); /* Yellow* */
+   push_back_color_if_ok( background_color, QColor( 154, 205, 50 ) ); /* Yellow-Green */
+}   
+
+QColor US_Plot_Colors::color( size_t i ) {
+   return plot_colors[ i % plot_colors.size() ];
+}
+
+void US_Plot_Colors::rotate() {
+   std::vector < QColor >  new_plot_colors;
+
+   for ( size_t i = 1; i < plot_colors.size(); i++ ) {
+      new_plot_colors.push_back( plot_colors[ i ] );
+   }
+   new_plot_colors.push_back( plot_colors[ 0 ] );
+   plot_colors = new_plot_colors;
+}
+
+void US_Plot_Colors::push_back_color_if_ok( QColor bg, QColor set ) {
+   double sum = 
+      fabs( (float) bg.red  () - (float) set.red  () ) +
+      fabs( (float) bg.green() - (float) set.green() ) +
+      fabs( (float) bg.blue () - (float) set.blue () );
+   if ( sum > 150 )
+   {
+      if ( plot_colors.size() )
+      {
+         bg = plot_colors.back();
+         double sum = 
+            fabs( (float) bg.red  () - (float) set.red  () ) +
+            fabs( (float) bg.green() - (float) set.green() ) +
+            fabs( (float) bg.blue () - (float) set.blue () );
+         if ( sum > 100 )
+         {
+            plot_colors.push_back( set );
+         }
+      } else {
+         plot_colors.push_back( set );
+      }
+   }
+}

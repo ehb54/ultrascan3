@@ -36,6 +36,24 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
    wls_v = temp_wls_v;
    runs = 0;
    runs_percent = 0;
+   
+   us_auto_mode = false;
+     
+   projectName = temp_projectName;
+	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
+   connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
+}
+
+US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName,  bool *temp_fitting_widget, bool auto_mode ) : US_Minimize(temp_fitting_widget, true)
+{
+   guess = temp_guess;
+   parameters = temp_parameters;
+   order = temp_order;
+   wls_v = temp_wls_v;
+   runs = 0;
+   runs_percent = 0;
+
+   us_auto_mode = true;
 
      
    projectName = temp_projectName;
@@ -507,7 +525,9 @@ void US_ExtinctFitter::plot_overlays()
   // data_plot->updatePlot();      //no updatePlot() in new version
    pb_print->setEnabled(true);
 
+   qDebug() << "EMITTING get_yfit SIGNAL!!";
    emit get_yfit( v_all_xplot, v_all_yplot_fit );   // Send fitting data
+   emit get_variance ( le_variance->text().toDouble()  );
 }
 
 void US_ExtinctFitter::plot_residuals()

@@ -61,6 +61,17 @@ class US_ConvertGui : public US_Widgets
 
   private:
 
+      struct ChanOptics
+      {
+	QString     channel;
+	QString     data_type;
+      };
+      
+      struct ProtocolOptics
+      {
+	QVector< ChanOptics > chopts;
+      };
+	
       struct ChanSolu
       {
 	QString     channel;       //!< Channel name ("2 / A")
@@ -127,12 +138,14 @@ class US_ConvertGui : public US_Widgets
 	ProtocolRotor     ProtRotor;
 	ProtocolCells     ProtCells;
 	ProtocolSolutions ProtSolutions;
+	ProtocolOptics    ProtOptics;
 
       };
        
       ProtocolInfo ProtInfo;
 
       bool  us_convert_auto_mode;
+      QMap<QString, QString> gmp_submitter_map;
       
       enum { SPLIT, REFERENCE, NONE } step;
 
@@ -145,8 +158,15 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, int > runTypes_map;
       QString       type_to_process;
       QStringList   runTypeList;
+      QString       intensityJsonRI;
 
       QMap < int, bool > description_changed;
+
+      bool auto_ref_scan;
+      int  autoflowStatusID;
+ 
+      double   centerpoint_ref_def;
+  bool first_time_plot_auto;
       
       QString       runType;
       QString       oldRunType;
@@ -159,7 +179,7 @@ class US_ConvertGui : public US_Widgets
       QLineEdit*    le_investigator;
       QLineEdit*    le_status;
       QLineEdit*    le_runID;
-      QLineEdit*    le_runID2;
+      US_LineEdit_RE*    le_runID2;
       QLineEdit*    le_dir;
       QLineEdit*    le_description;
       QLineEdit*    le_solutionDesc;
@@ -278,6 +298,9 @@ class US_ConvertGui : public US_Widgets
       bool readProtocolRotor_auto ( QXmlStreamReader& );
       bool readProtocolCells_auto ( QXmlStreamReader& );
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
+      bool readProtocolOptics_auto ( QXmlStreamReader& );
+      bool isCorrectDataType( QString, QString );
+  int  getProtSolIndex( QString , QString);
 
       void read_aprofile_data_from_aprofile( void );
       bool readAProfileBasicParms_auto ( QXmlStreamReader& );
@@ -290,7 +313,9 @@ class US_ConvertGui : public US_Widgets
       QString AProfileGUID;
       QString Exp_label;
       bool    gmpRun_bool;
+      bool    protDev_bool;
       bool dataSavedOtherwise;
+      QString expType;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -298,7 +323,7 @@ class US_ConvertGui : public US_Widgets
 
       void update_autoflow_record_atLimsImport( void );
 
-      QString correct_description( QString& );
+  QString correct_description( QString&, QString, QString );
 
       
       void setTripleInfo   ( void );
@@ -306,10 +331,14 @@ class US_ConvertGui : public US_Widgets
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );
-      void start_reference  ( const QwtDoublePoint& );
+//      void start_reference  ( const QwtDoublePoint& );
       void process_reference( const QwtDoublePoint& );
-      void PseudoCalcAvg   ( void );
-      void PseudoCalcAvgMWL( void );
+  //void process_reference_auto( const double, const double );
+  void process_reference_auto( const double );
+  void PseudoCalcAvg   ( void );
+  void absorbance_conversion_abde( void );
+  //void PseudoCalcAvg_av  ( void );
+  void PseudoCalcAvgMWL( void );
       bool read            ( void );
       bool read            ( QString dir );
       bool convert         ( void );
@@ -325,6 +354,7 @@ class US_ConvertGui : public US_Widgets
       void draw_vline      ( double );
       void db_error        ( const QString& );
       void triple_index    ( void );
+      void plot_last_scans ( double );
 
       //US_Solution * solution_auto;
 
@@ -335,6 +365,11 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, bool >    channels_to_drop;
       QMap < QString, QString > channels_report;
       QMap < QString, QStringList >    triples_dropped_from_channel;
+  QMap < QString, QMap <QString, QString> > drop_operations;
+  //ABDE
+  QMap < QString, int >  channels_abde_refs;
+  QMap < QString, int >  channels_abde_use_refs;					   
+							   
 
   private slots:
       //! \brief Select the current investigator
@@ -398,16 +433,24 @@ class US_ConvertGui : public US_Widgets
       void cClick            ( const QwtDoublePoint& );
       void process_subsets   ( void );
       void define_reference  ( void );
+
       void show_intensity    ( void );
+      void show_intensity_auto ( void );
+
       void cancel_reference  ( void );
+  //void cancel_reference_av  ( void );
+      int  check_for_data_left ( QString, QString );
       void drop_reference    ( void );
       void drop_channel      ( void );
       void drop_cellchan     ( void );
+      QString comment_for_drop_dialog( QString );
       void saveUS3           ( void );
       int  saveUS3Disk       ( void );
       void saveUS3DB         ( void );
       void saveReportsToDB   ( void );
 
+      void record_import_status( bool, QString );
+      
       void resetAll          ( void );
       void resetAll_auto     ( void );
       void reset_limsimport_panel( void );

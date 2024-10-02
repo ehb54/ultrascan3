@@ -410,7 +410,7 @@ bool US_Saxs_Util::nsa_run()
                out_params[ "result computed delta rho from scaling"  ] = QString( "%1" ).arg( delta_rho_prime );
                out_params[ "result computed target rho from scaling" ] = QString( "%1" ).arg( delta_rho_prime - delta_rho );
             }
-            ts << endl << "__json:" << US_Json::compose( out_params ) << endl;
+            ts << Qt::endl << "__json:" << US_Json::compose( out_params ) << Qt::endl;
          }
 
          f.close();

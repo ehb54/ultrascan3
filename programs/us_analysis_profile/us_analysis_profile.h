@@ -22,6 +22,7 @@
 
 #include "us_scan_excl_gui.h"
 #include "us_report_general_gui.h"
+#include "us_combined_plots_parms_gui.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -68,6 +69,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       QSignalMapper  *signalMapper;
 
+      void set_abde_panel();
+
  
             
    private:
@@ -77,7 +80,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       // US_ReportGMP*     reportGMP;
       US_ReportGui*     reportGui;
       US_ScanExclGui*   scanExclGui;
-      US_ReportGenGui*  reportGenGui;  
+      US_ReportGenGui*  reportGenGui;
+      US_CombPlotsGui*  combPlotsGui;
+      
       
       US_Help  showHelp;
 
@@ -106,12 +111,31 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QLineEdit*   le_aproname;
       QLineEdit*   le_protname;
 
+  QLabel* lb_lcrat;
+  QLabel* lb_lctol;
+  QLabel* lb_daend;
+  QLabel* lb_mwvprefs;
+  
+  QLabel* lbl_dens_0;
+  QLabel* lbl_vbar;
+  QLabel* lbl_MW;
+  QLabel* lbl_refc;
+  QLabel* lbl_use_refc;
+
       QList< QLineEdit* >    le_channs;
       QList< QLineEdit* >    le_lcrats;
       QList< QLineEdit* >    le_lctols;
       QList< QLineEdit* >    le_ldvols;
       QList< QLineEdit* >    le_lvtols;
       QList< QLineEdit* >    le_daends;
+
+  QList< QLineEdit* >    le_dens0s;
+  QList< QLineEdit* >    le_vbars;
+  QList< QLineEdit* >    le_MWs;
+  //QList< QSpinBox* >     sb_ref_chs;
+  QList< QLineEdit* >    le_ref_chs;
+  QList< int > ref_numbers_list;
+  QList< QSpinBox* >     sb_use_ref_chs;
 
       QList< QCheckBox* >    ck_runs;
       QList< QCheckBox* >    ck_report_runs;
@@ -132,8 +156,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
-
-      
+			 
+  bool AProfIsIntiated;
+		      
    private slots:
       void  build_general_layout( void );
 
@@ -147,6 +172,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
       void  set_scan_ranges    ( void );
+      void  set_combplot_parms    ( void );
       void  set_gen_report_settings    ( void );
       void  apro_text_changed  ( void );
       void  prot_text_changed  ( void );
@@ -160,6 +186,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  apply_to_other_reports ( US_ReportGMP *  );
       void  update_excl_scans( QStringList & );
       void  update_gen_report_settings ( QString& );
+      void  update_combplots_settings  ( QString& );
       
  signals:
       void  set_tabs_buttons_inactive       ( void );
@@ -406,6 +433,8 @@ class US_AnalysisProfileGui : public US_Widgets
       int     xpnport;
       
       bool    automode;
+  bool abde_mode_aprofile;
+  
       void    auto_mode_passed( void ); 
       void    auto_name_passed( QString&, QString& ); 
       void    inherit_protocol( US_RunProtocol* );

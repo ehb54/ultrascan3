@@ -7,9 +7,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_hydrodyn_saxs_hplc_conc_csv_frames.h"
 #include "../include/us_lm.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
-#endif
 #include <qpalette.h>
 //Added by qt3to4:
 #include <QFrame>
@@ -17,6 +15,7 @@
 #include <QTextStream>
 #include <QMouseEvent>
 #include <QCloseEvent>
+#include "../include/us_plot_zoom.h"
 
 // #define JAC_VERSION
 
@@ -199,6 +198,12 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ] = "5";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] = "false";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ] = "3";
+   }
 
    baseline_ready_to_apply = false;
 
@@ -208,12 +213,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: SAXS HPLC"));
+   setWindowTitle(us_tr("US-SOMO: HPLC/KIN"));
    order_ascending = false;
    conc_widget     = false;
-#if QT_VERSION >= 0x040000
    legend_vis      = false;
-#endif
    usu             = new US_Saxs_Util();
 
    QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" );
@@ -240,7 +243,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    plot3d_flag     = false;
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    lbl_mode_title = (QLabel *) 0;
 
@@ -554,6 +557,18 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       load_file( dctr_file );
    }
 
+   QString saxs_hplc_params_file = 
+      USglobal->config_list.root_dir + QDir::separator() + "etc" + 
+      QDir::separator() + "somo_saxs_hplc_default_saxs_param.dat" ;
+
+   // set defaults always
+
+   reset_saxs_hplc_params();
+   
+   // if ( QFile( saxs_hplc_params_file ).exists() ) {
+   //    load_file( saxs_hplc_params_file );
+   // }
+
    blanks_end_s = 0e0;
    blanks_end_e = 0e0;
 
@@ -607,7 +622,7 @@ void US_Hydrodyn_Saxs_Hplc::help()
 void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
 {
    QMessageBox mb( this->windowTitle(), 
-                   us_tr("Attention:\nAre you sure you want to exit the HPLC SAXS window?"),
+                   us_tr("Attention:\nAre you sure you want to exit the HPLC/KIN window?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,
@@ -922,6 +937,8 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
    }
 
    // remove them now
+   lb_created_files->setUpdatesEnabled( false );
+
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_created_files->item( i )->text() ) )
@@ -931,13 +948,18 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
       }
    }
 
+   lb_created_files->setUpdatesEnabled( true );
+
+   lb_files->setUpdatesEnabled( false );
+
+   QString msg = "";
+
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_files->item( i )->text() ) )
       {
-         if ( !quiet )
-         {
-            editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
+         if ( !quiet ) {
+            msg += QString( us_tr( "Removed %1\n" ) ).arg( lb_files->item( i )->text() );
          }
          conc_files.erase( lb_files->item( i )->text() );
          if ( lbl_conc_file->text() == lb_files->item( i )->text() )
@@ -956,22 +978,45 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          //          {
          //             lbl_empty->setText( "" );
          //          }
-         f_qs_string.erase( lb_files->item( i )->text() );
-         f_qs       .erase( lb_files->item( i )->text() );
-         f_Is       .erase( lb_files->item( i )->text() );
-         f_errors   .erase( lb_files->item( i )->text() );
-         f_pos      .erase( lb_files->item( i )->text() );
-         f_name     .erase( lb_files->item( i )->text() );
-         f_is_time  .erase( lb_files->item( i )->text() );
-         f_gaussians.erase( lb_files->item( i )->text() );
-         f_psv      .erase( lb_files->item( i )->text() );
-         f_header   .erase( lb_files->item( i )->text() );
-         f_I0se     .erase( lb_files->item( i )->text() );
-         f_conc     .erase( lb_files->item( i )->text() );
-         f_extc     .erase( lb_files->item( i )->text() );
-         f_time     .erase( lb_files->item( i )->text() );
+         f_qs_string      .erase( lb_files->item( i )->text() );
+         f_qs             .erase( lb_files->item( i )->text() );
+         f_Is             .erase( lb_files->item( i )->text() );
+         f_errors         .erase( lb_files->item( i )->text() );
+         f_pos            .erase( lb_files->item( i )->text() );
+         f_name           .erase( lb_files->item( i )->text() );
+         f_is_time        .erase( lb_files->item( i )->text() );
+         f_gaussians      .erase( lb_files->item( i )->text() );
+         f_psv            .erase( lb_files->item( i )->text() );
+         f_header         .erase( lb_files->item( i )->text() );
+         f_I0se           .erase( lb_files->item( i )->text() );
+         f_conc           .erase( lb_files->item( i )->text() );
+         f_extc           .erase( lb_files->item( i )->text() );
+         f_time           .erase( lb_files->item( i )->text() );
+         f_diffusion_len  .erase( lb_files->item( i )->text() );
+         f_e_nucleon_ratio.erase( lb_files->item( i )->text() );
+         f_nucleon_mass   .erase( lb_files->item( i )->text() );
+         f_solvent_e_dens .erase( lb_files->item( i )->text() );
+         f_I0st           .erase( lb_files->item( i )->text() );
+         f_g_dndc         .erase( lb_files->item( i )->text() );
+         f_dndc           .erase( lb_files->item( i )->text() );
+         f_conc_units     .erase( lb_files->item( i )->text() );
+         f_ri_corr        .erase( lb_files->item( i )->text() );
+         f_ri_corrs       .erase( lb_files->item( i )->text() );
+         f_ref_index      .erase( lb_files->item( i )->text() );
+         f_fit_curve      .erase( lb_files->item( i )->text() );
+         f_fit_method     .erase( lb_files->item( i )->text() );
+         f_fit_q_ranges   .erase( lb_files->item( i )->text() );
+         f_fit_chi2       .erase( lb_files->item( i )->text() );
+         f_fit_sd_scale   .erase( lb_files->item( i )->text() );
+
          delete lb_files->takeItem( i );
       }
+   }
+
+   lb_files->setUpdatesEnabled( true );
+
+   if ( !quiet && !msg.isEmpty() ) {
+      editor_msg( "black", msg );
    }
 
    disable_updates = false;
@@ -992,6 +1037,8 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          conc_window->cancel();
       }
    }
+   qApp->processEvents();
+   repaint();
 }
 
 class hplc_sortable_qstring {
@@ -1124,7 +1171,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       bool reorder = true;
 
       QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
       // rx_cap.setMinimal( true );
 
       list < hplc_sortable_qstring > svals;
@@ -1154,12 +1202,16 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       for ( int i = 0; i < (int) filenames.size(); ++i )
       {
          QString tmp = filenames[ i ].mid( head.length() );
+         QString tmp_org = tmp;
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         QString tmp_mid = tmp;
 
          if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
          {
             tmp = rx_clear_nonnumeric.cap( 1 );
          }
+
+         QString tmp_clear = tmp;
 
          added_dp = false;
 
@@ -1175,6 +1227,22 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
             us_qdebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
 #endif
          }
+
+#ifdef DEBUG_LOAD_REORDER
+         us_qdebug( QString(
+                            "%1 tmp %2\n"
+                            " value %3\n"
+                            " tmp_org %4\n"
+                            " tmp_mid %5\n"
+                            " tmp_clear %6\n"
+                            )
+                    .arg( filenames[i] )
+                    .arg( tmp )
+                    .arg( tmp.toDouble() )
+                    .arg( tmp_org )
+                    .arg( tmp_mid ).arg( tmp_clear )
+                    );
+#endif
 
          if ( do_prepend )
          {
@@ -1494,10 +1562,14 @@ void US_Hydrodyn_Saxs_Hplc::select_all()
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      lb_files->item( i)->setSelected( !all_selected );
-   }
+   
+   !all_selected ? lb_files->selectAll() : lb_files->clearSelection();
+
+   // for ( int i = 0; i < lb_files->count(); i++ )
+   // {
+   //    lb_files->item( i)->setSelected( !all_selected );
+   // }
+
    disable_updates = false;
    plot_files();
    update_enables();
@@ -1543,6 +1615,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
                          "int|"
                          "txt|"
                          "csv|"
+                         "sprr|"
                          // "out|"
                          "ssaxs)$" );
 
@@ -1579,29 +1652,78 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    bool is_time = false;
 
-   bool   has_conc  = false;
-   double this_conc = 0e0;
-   bool   has_psv   = false;
-   double this_psv  = 0e0;
-   bool   has_I0se  = false;
-   double this_I0se = 0e0;
-   bool   has_time  = false;
-   double this_time = 0e0;
-   bool   has_extc  = false;
-   double this_extc = 0e0;
+   bool    has_conc                 = false;
+   double  this_conc                = 0e0;
+   bool    has_psv                  = false;
+   double  this_psv                 = 0e0;
+   bool    has_I0se                 = false;
+   double  this_I0se                = 0e0;
+   bool    has_I0st                 = false;
+   double  this_I0st                = 0e0;
+   bool    has_time                 = false;
+   double  this_time                = 0e0;
+   bool    has_extc                 = false;
+   double  this_extc                = 0e0;
+   bool    has_g_dndc               = false;
+   double  this_g_dndc              = 0e0;
+   bool    has_dndc                 = false;
+   double  this_dndc                = 0e0;
+   bool    has_conc_units           = false;
+   QString this_conc_units          = "";
+   bool    has_ref_index            = false;
+   double  this_ref_index           = 0e0;
+   bool    has_diffusion_len        = false;
+   double  this_diffusion_len       = 0e0;
+   bool    has_e_nucleon_ratio      = false;
+   double  this_e_nucleon_ratio     = 0e0;
+   bool    has_nucleon_mass         = false;
+   double  this_nucleon_mass        = 0e0;
+   bool    has_solvent_e_dens       = false;
+   double  this_solvent_e_dens      = 0e0;
+   bool    has_ri_corr              = false;
+   double  this_ri_corr             = 0e0;
+   bool    has_ri_corrs             = false;
+   QString this_ri_corrs            = "";
+   bool    has_fit_curve            = false;
+   QString this_fit_curve           = "";
+   bool    has_fit_method           = false;
+   QString this_fit_method          = "";
+   bool    has_fit_q_ranges         = false;
+   QString this_fit_q_ranges        = "";
+   bool    has_fit_chi2             = false;
+   double  this_fit_chi2            = 0e0;
+   bool    has_fit_sd_scale         = false;
+   double  this_fit_sd_scale        = 0e0;
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
-   if ( ext == "dat" )
+   if ( ext == "dat" ||
+        ext == "sprr" )
    {
-      QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_extc      ( "ExtC_or_DRIinc:\\s*(\\S+)(\\s|$)" );
-      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
-      {
+      QRegExp rx_conc               ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_conc_units         ( "Conc:\\s*\\S+\\s+(\\[\\S+\\])(\\s|$)" );
+      QRegExp rx_psv                ( " PSV:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_I0se               ( " I0se:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_I0st               ( " I0st:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_time               ( " Time:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_unit               ( " Units:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_extc               ( " (?:ExtC_or_DRIinc|ExtC):\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_g_dndc             ( " Global_dndc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_dndc               ( " dndc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ref_index          ( " Solvent refractive index:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_diffusion_len      ( " Diffusion Length:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_e_nucleon_ratio    ( " Electron/nucleon ratio Z/A:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_nucleon_mass       ( " Nucleon mass:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_solvent_e_dens     ( " Solvent e density:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ri_corr            ( " RI-Corr scatt\\. angle:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_ri_corrs           ( " RI-Corr scatt\\. angles:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_curve          ( " Fit curve:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_method         ( " Fit method:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_q_ranges       ( " Fit ranges:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_chi2           ( " Fit chi^2:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_fit_sd_scale       ( " Fit MALS SD mult:\\s*(\\S+)(\\s|$)" );
+      
+      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 ) {
          QString unitstr = rx_unit.cap( 1 ).toLower();
          bool ok = false;
          if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
@@ -1616,31 +1738,91 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
          }
       }
-      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 ) {
          has_conc  = true;
          this_conc = rx_conc.cap( 1 ).toDouble();
-         // cout << QString( "found conc %1\n" ).arg( this_conc );
+         // TSO << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_conc_units.indexIn( qv[ 0 ] ) != -1 ) {
+         has_conc_units  = true;
+         this_conc_units = rx_conc.cap( 1 );
+         // TSO << QString( "found conc %1\n" ).arg( this_conc );
+      }
+      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 ) {
          has_psv  = true;
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 ) {
          has_I0se  = true;
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
-      if ( rx_time.indexIn( qv[ 0 ] ) != -1 )
-      {
-         has_time  = true;
-         this_time = rx_time.cap( 1 ).toDouble();
+      if ( rx_I0st.indexIn( qv[ 0 ] ) != -1 ) {
+         has_I0st  = true;
+         this_I0st = rx_I0st.cap( 1 ).toDouble();
       }
-      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 )
-      {
+      if ( rx_time.indexIn( qv[ 0 ] ) != -1 ) {
+         has_time  = true;
+         this_time = rx_time.cap( 1 ).replace( "_", "." ).replace( QRegularExpression( "^0+" ), "0" ).toDouble();
+      }
+      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 ) {
          has_extc  = true;
          this_extc = rx_extc.cap( 1 ).toDouble();
+      }
+      if ( rx_g_dndc.indexIn( qv[ 0 ] ) != -1 ) {
+         has_g_dndc  = true;
+         this_g_dndc = rx_g_dndc.cap( 1 ).toDouble();
+      }
+      if ( rx_dndc.indexIn( qv[ 0 ] ) != -1 ) {
+         has_dndc  = true;
+         this_dndc = rx_dndc.cap( 1 ).toDouble();
+      }
+      if ( rx_fit_curve.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_curve  = true;
+         this_fit_curve = rx_fit_curve.cap( 1 );
+      }
+      if ( rx_fit_method.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_method  = true;
+         this_fit_method = rx_fit_method.cap( 1 );
+      }
+      if ( rx_fit_q_ranges.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_q_ranges  = true;
+         this_fit_q_ranges = rx_fit_q_ranges.cap( 1 );
+      }
+      if ( rx_fit_chi2.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_chi2  = true;
+         this_fit_chi2 = rx_fit_chi2.cap( 1 ).toDouble();
+      }
+      if ( rx_fit_sd_scale.indexIn( qv[ 0 ] ) != -1 ) {
+         has_fit_sd_scale  = true;
+         this_fit_sd_scale = rx_fit_sd_scale.cap( 1 ).toDouble();
+      }
+      if ( rx_diffusion_len.indexIn( qv[ 0 ] ) != -1 ) {
+         has_diffusion_len  = true;
+         this_diffusion_len = rx_diffusion_len.cap( 1 ).toDouble();
+      }
+      if ( rx_e_nucleon_ratio.indexIn( qv[ 0 ] ) != -1 ) {
+         has_e_nucleon_ratio  = true;
+         this_e_nucleon_ratio = rx_e_nucleon_ratio.cap( 1 ).toDouble();
+      }
+      if ( rx_nucleon_mass.indexIn( qv[ 0 ] ) != -1 ) {
+         has_nucleon_mass  = true;
+         this_nucleon_mass = rx_nucleon_mass.cap( 1 ).toDouble();
+      }
+      if ( rx_solvent_e_dens.indexIn( qv[ 0 ] ) != -1 ) {
+         has_solvent_e_dens  = true;
+         this_solvent_e_dens = rx_solvent_e_dens.cap( 1 ).toDouble();
+      }
+      if ( rx_ref_index.indexIn( qv[ 0 ] ) != -1 ) {
+         has_ref_index  = true;
+         this_ref_index = rx_ref_index.cap( 1 ).toDouble();
+      }
+      if ( rx_ri_corr.indexIn( qv[ 0 ] ) != -1 ) {
+         has_ri_corr  = true;
+         this_ri_corr = rx_ri_corr.cap( 1 ).toDouble();
+      }
+      if ( rx_ri_corrs.indexIn( qv[ 0 ] ) != -1 ) {
+         has_ri_corrs  = true;
+         this_ri_corrs = rx_ri_corrs.cap( 1 );
       }
    }
 
@@ -1655,6 +1837,59 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       is_time = true;
       use_units = 1.0;
    }
+
+   // if ( ext == "dat" && qv[ 0 ].contains( " SAXS_HPLC parameter file" ) )
+   // {
+   //    QRegExp rx_saxs_hplc_param_g_conc                  ( "^# __saxs_hplc_param_g_conc: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_g_psv                   ( "^# __saxs_hplc_param_g_psv: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_I0_exp                  ( "^# __saxs_hplc_param_I0_exp: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_I0_theo                 ( "^# __saxs_hplc_param_I0_theo: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_diffusion_len           ( "^# __saxs_hplc_param_diffusion_len: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_electron_nucleon_ratio  ( "^# __saxs_hplc_param_electron_nucleon_ratio: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_nucleon_mass            ( "^# __saxs_hplc_param_nucleon_mass: (\\S+)\\s*$" );
+   //    QRegExp rx_saxs_hplc_param_solvent_electron_density( "^# __saxs_hplc_param_solvent_electron_density: (\\S+)\\s*$" );
+
+   //    for ( int i = 1; i < (int) qv.size(); i++ ) {
+
+   //       if ( rx_saxs_hplc_param_g_conc.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_g_conc = rx_saxs_hplc_param_g_conc.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_g_psv.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_g_psv = rx_saxs_hplc_param_g_psv.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_I0_exp.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_I0_exp = rx_saxs_hplc_param_I0_exp.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_I0_theo.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_I0_theo = rx_saxs_hplc_param_I0_theo.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_diffusion_len.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_diffusion_len = rx_saxs_hplc_param_diffusion_len.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_electron_nucleon_ratio.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_electron_nucleon_ratio = rx_saxs_hplc_param_electron_nucleon_ratio.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_nucleon_mass.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_nucleon_mass = rx_saxs_hplc_param_nucleon_mass.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+   //       if ( rx_saxs_hplc_param_solvent_electron_density.indexIn( qv[ i ] ) != -1 ) {
+   //          saxs_hplc_param_solvent_electron_density = rx_saxs_hplc_param_solvent_electron_density.cap( 1 ).toDouble();
+   //          continue;
+   //       }
+
+   //       errormsg = QString( us_tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
+   //       return false;
+   //    }
+   //    errormsg = "";
+   //    return false;
+   // }
 
    if ( ext == "dat" && qv[ 0 ].contains( " Detector State file" ) )
    {
@@ -1700,11 +1935,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          return false;
       }
       QRegExp rx_spaces = QRegExp( "\\s+" ); 
-      QStringList headers = (qv[ 0 ] ).split( rx_spaces , QString::SkipEmptyParts );
+      QStringList headers = (qv[ 0 ] ).split( rx_spaces , Qt::SkipEmptyParts );
       int hsize = (int) headers.size();
       map < QString, vector < double > > uvs;
       for ( int i = 1; i < (int) qv.size(); ++i ) {
-         QStringList line = (qv[ i ] ).split( rx_spaces , QString::SkipEmptyParts );
+         QStringList line = (qv[ i ] ).split( rx_spaces , Qt::SkipEmptyParts );
          if ( (int) line.size() != hsize ) {
             errormsg = QString( us_tr( "Error: loading %1 line %2 tokens in line %3 != tokens in header %4" ) ).arg( filename ).arg( i + 1 ).arg( line.size() ).arg( headers.size() );
             return false;
@@ -1868,7 +2103,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       // first column is time
       qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" ).replace( ":", "_" ).replace( QRegExp( "\\_+" ), "_" ) ;
 
-      QStringList headers = (qv[ 0 ] ).split( "," , QString::SkipEmptyParts );
+      QStringList headers = (qv[ 0 ] ).split( "," , Qt::SkipEmptyParts );
       
       if ( !headers.size() ||
            !headers[ 0 ].toLower().contains( "time" ) )
@@ -1882,7 +2117,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       vector < QString > q_string;
       for ( int i = 1; i < (int) qv.size(); i++ )
       {
-         QStringList data = (qv[ i ] ).split( "," , QString::SkipEmptyParts );
+         QStringList data = (qv[ i ] ).split( "," , Qt::SkipEmptyParts );
          vector < double > this_csv_data;
          if ( data.size() )
          {
@@ -2115,11 +2350,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             
             gaussians.clear( );
 
-            // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+            // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
             QStringList tokens;
             {
                QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
 
             if ( tokens.size() != 2 )
@@ -2147,10 +2382,10 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             {
                if ( rx_end.indexIn( qv[ i ] ) == -1 )
                {
-                  // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+                  // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
                   {
                      QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -2191,11 +2426,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
             {
                if ( rx_end.indexIn( qv[ i ] ) == -1 )
                {
-                  // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+                  // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
                   QStringList tokens;
                   {
                      QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -2270,11 +2505,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
       gaussians.clear( );
       int i = 1;
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( tokens.size() != 2 )
@@ -2349,10 +2584,10 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
             if ( !this_gaussian.isEmpty() )
             {
-               // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+               // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
                {
                   QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                  tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+                  tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
                }
          
                if ( (int) tokens.size() != gaussian_type_size )
@@ -2393,13 +2628,15 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          {
             editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
          }
+         // create_unified_ggaussian_target(false); // core dumps!
+         // ggaussian_rmsd();
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
          {
-            // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+            // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
             {
                QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
          
             if ( (int) tokens.size() != gaussian_type_size )
@@ -2459,11 +2696,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       
       // cout << "line: <" << qv[ i ] << ">" << endl;
 
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > I_offset )
@@ -2540,19 +2777,67 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       f_gaussians  [ basename ] = tmp;
    }
    if ( has_conc ) {
-      f_conc       [ basename ] = this_conc;
+      f_conc            [ basename ] = this_conc;
+   }
+   if ( has_conc_units ) {
+      f_conc_units      [ basename ] = this_conc_units;
    }
    if ( has_psv ) {
-      f_psv        [ basename ] = this_psv;
+      f_psv             [ basename ] = this_psv;
    }
    if ( has_I0se ) {
-      f_I0se       [ basename ] = this_I0se;
+      f_I0se            [ basename ] = this_I0se;
+   }
+   if ( has_I0st ) {
+      f_I0st            [ basename ] = this_I0st;
    }
    if ( has_time ) {
-      f_time       [ basename ] = this_time;
+      f_time            [ basename ] = this_time;
    }      
    if ( has_extc ) {
-      f_extc       [ basename ] = this_extc;
+      f_extc            [ basename ] = this_extc;
+   }      
+   if ( has_g_dndc ) {
+      f_g_dndc          [ basename ] = this_g_dndc;
+   }      
+   if ( has_dndc ) {
+      f_dndc            [ basename ] = this_dndc;
+   }      
+   if ( has_ref_index ) {
+      f_ref_index       [ basename ] = this_ref_index;
+   }      
+   if ( has_diffusion_len ) {
+      f_diffusion_len   [ basename ] = this_diffusion_len;
+   }      
+   if ( has_e_nucleon_ratio ) {
+      f_e_nucleon_ratio [ basename ] = this_e_nucleon_ratio;
+   }      
+   if ( has_nucleon_mass ) {
+      f_nucleon_mass    [ basename ] = this_nucleon_mass;
+   }      
+   if ( has_solvent_e_dens ) {
+      f_solvent_e_dens  [ basename ] = this_solvent_e_dens;
+   }      
+   if ( has_ri_corr ) {
+      f_ri_corr         [ basename ] = this_ri_corr;
+   }      
+   if ( has_ri_corrs ) {
+      f_ri_corrs        [ basename ] = this_ri_corrs;
+   }      
+   if ( has_fit_curve ) {
+      f_fit_curve       [ basename ] = this_fit_curve;
+   }      
+   if ( has_fit_method ) {
+      f_fit_method      [ basename ] = this_fit_method;
+   }      
+   if ( has_fit_q_ranges ) {
+      f_fit_q_ranges    [ basename ] = this_fit_q_ranges;
+   }      
+   if ( has_fit_chi2 ) {
+      f_fit_chi2        [ basename ] = this_fit_chi2;
+   }      
+   if ( has_fit_sd_scale ) {
+      f_fit_sd_scale    [ basename ] = this_fit_sd_scale;
    }      
    return true;
 }
@@ -2581,23 +2866,8 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
 
    if ( f_qs.count( lbl_conc_file->text() ) )
    {
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_ref->insertCurve( "concentration" );
-      plot_ref->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "concentration" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#if QT_VERSION < 0x040000
-      plot_ref->setCurvePen( curve, QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
-      plot_ref->setCurveData( curve,
-                              (double *)&f_qs[ lbl_conc_file->text() ][ 0 ],
-                              (double *)&f_Is[ lbl_conc_file->text() ][ 0 ],
-                              f_qs[ lbl_conc_file->text() ].size()
-                              );
-#else
       curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
       curve->setSamples(
                      (double *)&f_qs[ lbl_conc_file->text() ][ 0 ],
@@ -2605,7 +2875,6 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
                      f_qs[ lbl_conc_file->text() ].size()
                      );
       curve->attach( plot_ref );
-#endif
       plot_dist->setAxisScale( QwtPlot::xBottom, f_qs[ lbl_conc_file->text() ][ 0 ], f_qs[ lbl_conc_file->text() ].back() );
       
       if ( !suppress_replot )
@@ -2994,7 +3263,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
          }
             
       }
-      ts << endl;
+      ts << Qt::endl;
 
       // lines
 
@@ -3019,7 +3288,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
                }
             }               
          }
-         ts << endl;
+         ts << Qt::endl;
       }
    } else {
       QStringList qline;
@@ -3151,24 +3420,81 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    QString use_conc;
    if ( concs.count( file ) && concs[ file ] != 0e0 )
    {
-      use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+      use_conc = QString( " Conc:%1 [mg/mL]" ).arg( concs[ file ] );
    } else {
       if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
       {
-         use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+         use_conc = QString( " Conc:%1 [mg/mL]" ).arg( f_conc[ file ] );
       }
    }
 
-   ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
-      .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
-      .arg( file )
-      .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
-      .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
-      .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
-      .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
-      .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
-      .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
-      ;
+   {
+      QString units = " q units:1/A";
+      if ( file.contains( "_Rt_q" ) ) {
+         units += " R(t) units:1/cm";
+      }
+      if ( file.contains( "_Ihasht_q" ) ) {
+         units += " I#(t) units:g^2/(cm^3*mol)";
+      }
+      if ( file.contains( "_Ihashq_" ) ) {
+         units += " I#(q) units:g^2/(cm^3*mol)";
+      }
+      if ( file.contains( "_Istarq_" ) ) {
+         units += " I*(q) units:g/mol";
+      }
+      if ( file.contains( "_Istart_" ) ) {
+         units += " I*(t) units:g/mol";
+      }
+      if ( conc_files.count( file ) ) {
+         units = "";
+      }
+
+      // ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
+      //    .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+      //    .arg( file )
+      //    .arg( units )
+      //    .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+      //    .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+      //    .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+      //    .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+      //    .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+      //    .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+      //    .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+      //    .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+      //    .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+      //    .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
+      //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+      //    ;
+      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
+         .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+         .arg( file )
+         .arg( units )
+         .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+         .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+         .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+         .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+         .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
+         .arg( !file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+         .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+         .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+         .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
+         .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+         .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+         .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+         .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
+         .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+         // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
+         .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
+         .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
+         .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
+         .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+         .arg( f_fit_curve.count( file ) ? QString( " Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
+         .arg( f_fit_method.count( file ) ? QString( " Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
+         .arg( f_fit_q_ranges.count( file ) ? QString( " Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
+         .arg( f_fit_chi2.count( file ) ? QString( " Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
+         .arg( f_fit_sd_scale.count( file ) ? QString( " Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
+         ;
+   }
 
    bool use_errors = ( f_errors.count( file ) && 
                        f_errors[ file ].size() > 0 );
@@ -3493,6 +3819,17 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, b
    double start_pos = le_gauss_fit_start->text().toDouble();
    double end_pos   = le_gauss_fit_end  ->text().toDouble();
    
+   if ( le_gauss_fit_start->text().isEmpty() ||
+        le_gauss_fit_start->text().toDouble() < f_qs[ file ][ 0 ] )
+   {
+      start_pos = f_qs[ file ][ 0 ];
+   }
+   if ( le_gauss_fit_end->text().isEmpty() ||
+        le_gauss_fit_end->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      end_pos = f_qs[ file ].back();
+   }
+
    if ( full ) {
       start_pos = f_qs[ file ][ 0 ];
       end_pos   = f_qs[ file ].back();
@@ -3643,7 +3980,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    list < double >      ql;
 
    QRegExp rx_cap( "(\\d+)_(\\d+)" );
-   QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+   // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
    // rx_cap.setMinimal( true );
 
 #ifdef USHC_TIMERS
@@ -3709,6 +4047,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       map < double , double > * Ivp;
       map < double , double > * evp;
 
+      bool frac_t_not_warned = true;
+
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); ++i )
       {
       
@@ -3719,19 +4059,34 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
             editor_msg( "red", QString( us_tr( "Internal error: request to use %1, but not found in data" ) ).arg( *qs ) );
          } else {
             QString tmp = qs->mid( head.length() );
+            QString tmp_org = tmp;
             tmp = tmp.mid( 0, tmp.length() - tail.length() );
+            QString tmp_mid = tmp;
             if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
             {
                tmp = rx_clear_nonnumeric.cap( 1 );
             }
+            QString tmp_clear = tmp;
 
             if ( rx_cap.indexIn( tmp ) != -1 )
             {
                tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
             }
             double timestamp = tmp.toDouble();
+            if ( frac_t_not_warned && timestamp != (double)((int) timestamp) ) {
+               QMessageBox::warning(
+                                    this,
+                                    this->windowTitle() + us_tr(": Make I(t)" ),
+                                    us_tr(
+                                          "Fractional times found. This has not been fully tested"
+                                          )
+                                    ,QMessageBox::Ok
+                                    );
+               frac_t_not_warned = false;
+            }
+               
 #ifdef DEBUG_LOAD_REORDER
-            us_qdebug( QString( "%1 tmp %2 value %3" ).arg( *qs ).arg( tmp ).arg( timestamp ) );
+            us_qdebug( QString( "%1 tmp %2 value %3 tmp_org %4 tmp_mid %5 tmp_clear %6" ).arg( *qs ).arg( tmp ).arg( timestamp ).arg( tmp_org ).arg( tmp_mid ).arg( tmp_clear ) );
 #endif
 
             Ivp = &(I_values[ timestamp ]);
@@ -4446,18 +4801,6 @@ void US_Hydrodyn_Saxs_Hplc::zoom_info()
 {
    if ( plot_dist_zoomer )
    {
-#if QT_VERSION < 0x040000
-      cout << QString( "zoomrect: %1 %2 %3 %4\n" )
-         .arg( plot_dist_zoomer->zoomRect().x1() )
-         .arg( plot_dist_zoomer->zoomRect().x2() )
-         .arg( plot_dist_zoomer->zoomRect().y1() )
-         .arg( plot_dist_zoomer->zoomRect().y2() );
-      cout << QString( "zoombase: %1 %2 %3 %4\n" )
-         .arg( plot_dist_zoomer->zoomBase().x1() )
-         .arg( plot_dist_zoomer->zoomBase().x2() )
-         .arg( plot_dist_zoomer->zoomBase().y1() )
-         .arg( plot_dist_zoomer->zoomBase().y2() );
-#else
       cout << QString( "zoomrect: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomRect().left() )
          .arg( plot_dist_zoomer->zoomRect().right() )
@@ -4468,7 +4811,6 @@ void US_Hydrodyn_Saxs_Hplc::zoom_info()
          .arg( plot_dist_zoomer->zoomBase().right() )
          .arg( plot_dist_zoomer->zoomBase().top() )
          .arg( plot_dist_zoomer->zoomBase().bottom() );
-#endif
    } else {
       cout << "no current zoomer\n";
    }
@@ -4488,17 +4830,10 @@ void US_Hydrodyn_Saxs_Hplc::plot_mouse( const QMouseEvent & /* me */ )
 
 void US_Hydrodyn_Saxs_Hplc::select_vis()
 {
-#if QT_VERSION < 0x040000
-   double zrx1  = plot_dist_zoomer->zoomRect().x1();
-   double zrx2  = plot_dist_zoomer->zoomRect().x2();
-   double zry1  = plot_dist_zoomer->zoomRect().y1();
-   double zry2  = plot_dist_zoomer->zoomRect().y2();
-#else
    double zrx1  = plot_dist_zoomer->zoomRect().left();
    double zrx2  = plot_dist_zoomer->zoomRect().right();
    double zry1  = plot_dist_zoomer->zoomRect().top();
    double zry2  = plot_dist_zoomer->zoomRect().bottom();
-#endif
    // find curves within zoomRect & select only them
    map < QString, bool > selected_files;
    for ( int i = 0; i < lb_files->count(); i++ )
@@ -4546,17 +4881,10 @@ void US_Hydrodyn_Saxs_Hplc::select_vis()
 
 void US_Hydrodyn_Saxs_Hplc::remove_vis()
 {
-#if QT_VERSION < 0x040000
-   double zrx1  = plot_dist_zoomer->zoomRect().x1();
-   double zrx2  = plot_dist_zoomer->zoomRect().x2();
-   double zry1  = plot_dist_zoomer->zoomRect().y1();
-   double zry2  = plot_dist_zoomer->zoomRect().y2();
-#else
    double zrx1  = plot_dist_zoomer->zoomRect().left();
    double zrx2  = plot_dist_zoomer->zoomRect().right();
    double zry1  = plot_dist_zoomer->zoomRect().top();
    double zry2  = plot_dist_zoomer->zoomRect().bottom();
-#endif
    // find curves within zoomRect & select only them
    cout << "select visible\n";
    QStringList selected_files;
@@ -4673,17 +5001,10 @@ void US_Hydrodyn_Saxs_Hplc::crop_left()
 
    // is the rectangle contained?
    if ( 
-#if QT_VERSION < 0x040000
-       minx < plot_dist_zoomer->zoomRect().x1() ||
-       maxx > plot_dist_zoomer->zoomRect().x2() ||
-       miny < plot_dist_zoomer->zoomRect().y1() ||
-       maxy > plot_dist_zoomer->zoomRect().y2() )
-#else
        minx < plot_dist_zoomer->zoomRect().left()  ||
        maxx > plot_dist_zoomer->zoomRect().right() ||
        miny < plot_dist_zoomer->zoomRect().top()   ||
        maxy > plot_dist_zoomer->zoomRect().bottom() )
-#endif
    {
       all_lefts_visible = false;
    }
@@ -4696,13 +5017,9 @@ void US_Hydrodyn_Saxs_Hplc::crop_left()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
-#if QT_VERSION < 0x040000
-      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
-      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
-#else
       double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
       double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
-#endif
+
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4734,23 +5051,6 @@ void US_Hydrodyn_Saxs_Hplc::crop_left()
       {
          newminy = 0e0;
       }
-#if QT_VERSION < 0x040000
-      dr.setX1( newminx );
-      dr.setY1( newminy );
-
-      if ( zdx > dx * 1.1 )
-      {
-         dr.setX2( newminx + zdx );
-      } else {         
-         dr.setX2( newminx + dx * 1.1 );
-      }
-      if ( zdy > dy * 1.1 )
-      {
-         dr.setY2( newminy + zdy );
-      } else {         
-         dr.setY2( newminy + dy * 1.1 );
-      }
-#else
       dr.setLeft( newminx );
       dr.setTop ( newminy );
 
@@ -4766,8 +5066,6 @@ void US_Hydrodyn_Saxs_Hplc::crop_left()
       } else {         
          dr.setBottom( newminy + dy * 1.1 );
       }
-#endif
-
       plot_dist_zoomer->zoom( dr );
       return;
    }
@@ -4904,17 +5202,10 @@ void US_Hydrodyn_Saxs_Hplc::crop_right()
 
    // is the rectangle contained?
    if ( 
-#if QT_VERSION < 0x040000
-       minx < plot_dist_zoomer->zoomRect().x1() ||
-       maxx > plot_dist_zoomer->zoomRect().x2() ||
-       miny < plot_dist_zoomer->zoomRect().y1() ||
-       maxy > plot_dist_zoomer->zoomRect().y2() )
-#else
        minx < plot_dist_zoomer->zoomRect().left()  ||
        maxx > plot_dist_zoomer->zoomRect().right() ||
        miny < plot_dist_zoomer->zoomRect().top()   ||
        maxy > plot_dist_zoomer->zoomRect().bottom() )
-#endif
    {
       all_rights_visible = false;
    }
@@ -4927,13 +5218,9 @@ void US_Hydrodyn_Saxs_Hplc::crop_right()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
-#if QT_VERSION < 0x040000
-      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
-      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
-#else
       double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
       double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
-#endif
+
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4965,23 +5252,6 @@ void US_Hydrodyn_Saxs_Hplc::crop_right()
       {
          newminy = 0e0;
       }
-#if QT_VERSION < 0x040000
-      dr.setX1( newminx );
-      dr.setY1( newminy );
-
-      if ( zdx > dx * 1.1 )
-      {
-         dr.setX2( newminx + zdx );
-      } else {         
-         dr.setX2( newminx + dx * 1.1 );
-      }
-      if ( zdy > dy * 1.1 )
-      {
-         dr.setY2( newminy + zdy );
-      } else {         
-         dr.setY2( newminy + dy * 1.1 );
-      }
-#else
       dr.setLeft( newminx );
       dr.setTop ( newminy );
 
@@ -4997,7 +5267,6 @@ void US_Hydrodyn_Saxs_Hplc::crop_right()
       } else {         
          dr.setBottom( newminy + dy * 1.1 );
       }
-#endif
 
       plot_dist_zoomer->zoom( dr );
       return;
@@ -5190,35 +5459,113 @@ void US_Hydrodyn_Saxs_Hplc::view()
             QString use_conc;
             if ( concs.count( file ) && concs[ file ] != 0e0 )
             {
-               use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+               use_conc = QString( " Conc:%1 [mg/mL]" ).arg( concs[ file ] );
             } else {
                if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
                {
-                  use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+                  use_conc = QString( " Conc:%1 [mg/mL]" ).arg( f_conc[ file ] );
                }
             }
 
-            text += QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
-               .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
-               .arg( file )
-               .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
-               .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
-               .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
-               .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
-               .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
-               .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
-               ;
+            {
+               QString units = " q units:1/A";
+               if ( file.contains( "_Rt_q" ) ) {
+                  units += " R(t) units:1/cm";
+               }
+               if ( file.contains( "_Ihasht_q" ) ) {
+                  units += " I#(t) units:g^2/(cm^3*mol)";
+               }
+               if ( file.contains( "_Ihashq_" ) ) {
+                  units += " I#(q) units:g^2/(cm^3*mol)";
+               }
+               if ( file.contains( "_Istarq_" ) ) {
+                  units += " I*(q) units:g/mol";
+               }
+               if ( file.contains( "_Istart_" ) ) {
+                  units += " I*(t) units:g/mol";
+               }
+               if ( conc_files.count( file ) ) {
+                  units = "";
+               }
+               
+               // text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
+               //    .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+               //    .arg( file )
+               //    .arg( units )
+               //    .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+               //    .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+               //    .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+               //    .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+               //    .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+               //    .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+               //    .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+               //    .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+               //    .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+               //    .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
+               //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+               //    ;
+
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
+                  .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+                  .arg( file )
+                  .arg( units )
+                  .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
+                  .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
+                  .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+                  .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+                  .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
+                  .arg( !file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+                  .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+                  .arg( !f_extc.count( file ) && f_g_dndc.count( file ) ? QString( " Global_dndc:%1 [ml/g]" ).arg( f_g_dndc[ file ] ) : QString( "" ) )
+                  .arg( f_extc.count( file ) && f_dndc.count( file ) ? QString( " dndc:%1 [ml/g]" ).arg( f_dndc[ file ] ) : QString( "" ) )
+                  .arg( f_diffusion_len.count( file ) ? QString( " Diffusion Length: %1 [cm]" ).arg( f_diffusion_len[ file ] ) : QString("") )
+                  .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
+                  .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
+                  .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
+                  .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+                  // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
+                  .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
+                  .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
+                  .arg( f_ref_index.count( file ) ? QString( " Solvent refractive index:%1"  ).arg( f_ref_index[ file ] ) : QString( "" ) )
+                  .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+                  .arg( f_fit_curve.count( file ) ? QString( " Fit curve:%1" ).arg( f_fit_curve[ file ] ) : QString( "" ) )
+                  .arg( f_fit_method.count( file ) ? QString( " Fit method:%1" ).arg( f_fit_method[ file ] ) : QString( "" ) )
+                  .arg( f_fit_q_ranges.count( file ) ? QString( " Fit q ranges:%1" ).arg( f_fit_q_ranges[ file ] ) : QString( "" ) )
+                  .arg( f_fit_chi2.count( file ) ? QString( " Fit chi^2:%1" ).arg( f_fit_chi2[ file ] ) : QString( "" ) )
+                  .arg( f_fit_sd_scale.count( file ) ? QString( " Fit MALS SD mult:%1" ).arg( f_fit_sd_scale[ file ] ) : QString( "" ) )
+                  ;
+            }
          }            
          // text += QString( us_tr( "US-SOMO Hplc output: %1\n" ) ).arg( file );
 
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
          
-         if ( use_errors )
+
+         if ( f_is_time.count( file ) && f_is_time[ file ] )
          {
-            text += "q                  \tI(q)         \tsd\n";
+            if ( conc_files.count( file ) ) {
+               if ( use_errors )
+               {
+                  text += "t                 \tc(t)         \tsd\n";
+               } else {
+                  text += "t                 \tc(t)\n";
+               }
+            } else {
+               if ( use_errors )
+               {
+                  text += "t                 \tI(t)         \tsd\n";
+               } else {
+                  text += "t                 \tI(t)\n";
+               }
+            }
          } else {
-            text += "q                  \tI(q)\n";
+            if ( use_errors )
+            {
+               text += "q                 \tI(q)         \tsd\n";
+            } else {
+               text += "q                 \tI(q)\n";
+            }
          }
 
          for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
@@ -5303,17 +5650,10 @@ void US_Hydrodyn_Saxs_Hplc::to_created( QString file )
 void US_Hydrodyn_Saxs_Hplc::crop_vis()
 {
    // find curves within zoomRect & select only them
-#if QT_VERSION < 0x040000
-   double minx = plot_dist_zoomer->zoomRect().x1();
-   double maxx = plot_dist_zoomer->zoomRect().x2();
-   double miny = plot_dist_zoomer->zoomRect().y1();
-   double maxy = plot_dist_zoomer->zoomRect().y2();
-#else
    double minx = plot_dist_zoomer->zoomRect().left();
    double maxx = plot_dist_zoomer->zoomRect().right();
    double miny = plot_dist_zoomer->zoomRect().top();
    double maxy = plot_dist_zoomer->zoomRect().bottom();
-#endif
 
    map < QString, bool > selected_files;
 
@@ -5387,7 +5727,7 @@ void US_Hydrodyn_Saxs_Hplc::crop_vis()
    
    editor_msg( "black",
                QString( us_tr( "Crop visible:\n"
-                            "Cropping out q-range of (%1:%2)\n" ) )
+                            "Cropping out range of (%1:%2)\n" ) )
                .arg( minx )
                .arg( maxx ) );
 
@@ -5453,27 +5793,122 @@ void US_Hydrodyn_Saxs_Hplc::crop_vis()
    }
 }
 
+void US_Hydrodyn_Saxs_Hplc::crop_to_vis()
+{
+   // find curves within zoomRect & select only them
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+
+   map < QString, bool > selected_files;
+
+   for ( int i = 0; i < lb_files->count(); i++ )
+   {
+      if ( lb_files->item( i )->isSelected() )
+      {
+         QString this_file = lb_files->item( i )->text();
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
+            {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy )
+               {
+                  selected_files[ this_file ] = true;
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() )
+   {
+      editor_msg( "red", us_tr( "Crop to visible: The current visible plot is empty" ) );
+      return;
+   }
+   
+   editor_msg( "black",
+               QString( us_tr( "Crop to visible:\n"
+                            "Cropping to a range of (%1:%2)\n" ) )
+               .arg( minx )
+               .arg( maxx ) );
+
+   crop_undo_data cud;
+   cud.is_left   = false;
+   cud.is_common = true;
+
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      // save undo data
+      cud.f_qs_string[ it->first ] = f_qs_string[ it->first ];
+      cud.f_qs       [ it->first ] = f_qs       [ it->first ];
+      cud.f_Is       [ it->first ] = f_Is       [ it->first ];
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         cud.f_errors   [ it->first ] = f_errors   [ it->first ];
+      }
+
+      vector < QString > new_q_string;
+      vector < double  > new_q;
+      vector < double  > new_I;
+      vector < double  > new_e;
+
+      for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
+      {
+         if ( f_qs[ it->first ][ i ] >= minx &&
+              f_qs[ it->first ][ i ] <= maxx )
+         {
+            new_q_string.push_back( f_qs_string[ it->first ][ i ] );
+            new_q       .push_back( f_qs       [ it->first ][ i ] );
+            new_I       .push_back( f_Is       [ it->first ][ i ] );
+
+            if ( f_errors.count( it->first ) &&
+                 f_errors[ it->first ].size() )
+            {
+               new_e       .push_back( f_errors   [ it->first ][ i ] );
+            }
+         }
+      }
+
+      f_qs_string[ it->first ] = new_q_string;
+      f_qs       [ it->first ] = new_q;
+      f_Is       [ it->first ] = new_I;
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         f_errors[ it->first ] = new_e;
+      }
+      to_created( it->first );
+   }
+   crop_undos.push_back( cud );
+   editor_msg( "blue", us_tr( "Crop to visible: done" ) );
+
+   update_files();
+
+   if ( plot_dist_zoomer &&
+        plot_dist_zoomer->zoomRectIndex() )
+   {
+      plot_dist_zoomer->zoom( -1 );
+   }
+}
+
 void US_Hydrodyn_Saxs_Hplc::legend()
 {
-#if QT_VERSION < 0x040000
-   if ( plot_dist->autoLegend() )
-   {
-      plot_dist->setAutoLegend( false );
-      plot_dist->enableLegend ( false, -1 );
-   } else {
-      plot_dist->setAutoLegend( true );
-      plot_dist->enableLegend ( true, -1 );
-   }
-#else
    legend_vis = !legend_vis;
    legend_set();
-#endif
 }
 
 void US_Hydrodyn_Saxs_Hplc::legend_set()
 {
-#if QT_VERSION >= 0x040000
-# if QT_VERSION >= 0x050000
+   US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
    if ( legend_vis ) {
       QwtLegend* legend_saxs = new QwtLegend;
       // legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -5481,18 +5916,7 @@ void US_Hydrodyn_Saxs_Hplc::legend_set()
    } else {      
       plot_dist->insertLegend( NULL );
    }
-# else
-   QwtPlotItemList ilist = plot_dist->itemList();
-   for ( int ii = 0; ii < ilist.size(); ii++ )
-   {
-      QwtPlotItem* plitem = ilist[ ii ];
-      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
-         continue;
-      plitem->setItemAttribute( QwtPlotItem::Legend, legend_vis );
-   }
-   plot_dist->legend()->setVisible( legend_vis );
-# endif
-#endif
+   upz.restore( !suppress_replot );
 }
 
 void US_Hydrodyn_Saxs_Hplc::similar_files()
@@ -5555,16 +5979,16 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -5580,12 +6004,10 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
 }
 
 void US_Hydrodyn_Saxs_Hplc::rename_from_context( const QPoint & pos ) {
-#if QT_VERSION >= 0x040000
    QListWidgetItem * lwi = lb_created_files->itemAt( pos );
    if ( lwi ) {
       return rename_created( lwi, pos );
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs_Hplc::rename_created( QListWidgetItem *lbi, const QPoint & )
@@ -5679,8 +6101,12 @@ void US_Hydrodyn_Saxs_Hplc::rename_created( QListWidgetItem *lbi, const QPoint &
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::normalize()
-{
+void US_Hydrodyn_Saxs_Hplc::normalize() {
+   set < QString > produced;
+   return normalize( produced );
+}
+
+void US_Hydrodyn_Saxs_Hplc::normalize( set < QString > & produced ) {
    QStringList files = all_selected_files();
    //    for ( int i = 0; i < lb_files->count(); i++ )
    //    {
@@ -5768,6 +6194,8 @@ void US_Hydrodyn_Saxs_Hplc::normalize()
             csv_conc.data[ i ][ 1 ] = "1";
          }
       }
+
+      produced.insert( norm_name );
 
       if ( conc_widget )
       {
@@ -6080,17 +6508,9 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          {
             if ( gaussian_pos + 2 == i && !le_gauss_fit_start->hasFocus() && !le_gauss_fit_end->hasFocus() )
             {
-#if QT_VERSION < 0x040000
-               plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::magenta, 2, DashDotDotLine));
-#else
                plotted_markers[ i ]->setLinePen( QPen( Qt::magenta, 2, Qt::DashDotDotLine ) );
-#endif
             } else {
-#if QT_VERSION < 0x040000
-               plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::blue, 2, DashDotDotLine));
-#else
                plotted_markers[ i ]->setLinePen( QPen( Qt::blue, 2, Qt::DashDotDotLine ) );
-#endif
             }
          }
          if ( !suppress_replot )
@@ -6182,17 +6602,9 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          {
             if ( gaussian_pos + 2 == i && !le_gauss_fit_start->hasFocus() && !le_gauss_fit_end->hasFocus() )
             {
-#if QT_VERSION < 0x040000
-               plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::magenta, 2, DashDotDotLine));
-#else
                plotted_markers[ i ]->setLinePen( QPen( Qt::magenta, 2, Qt::DashDotDotLine));
-#endif
             } else {
-#if QT_VERSION < 0x040000
-               plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::blue, 2, DashDotDotLine));
-#else
                plotted_markers[ i ]->setLinePen( QPen( Qt::blue, 2, Qt::DashDotDotLine));
-#endif
             }
          }
          if ( !suppress_replot )
@@ -6266,11 +6678,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       return;
    }
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
-#else
    plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
-#endif
 
    org_gaussians = gaussians;
 
@@ -6376,7 +6784,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_new()
       
    gaussian_pos = ( gaussians.size() / gaussian_type_size ) - 1;
    gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
-   gauss_add_gaussian( &(gaussians[ gaussian_pos * gaussian_type_size ]), Qt::green );
+   gauss_add_gaussian( &(gaussians[ (vector<double>::size_type) gaussian_pos * gaussian_type_size ]), Qt::green );
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    update_gauss_pos();
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -6664,28 +7072,16 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
                //    .arg( x[1] )
                //    .arg( y[1] )
                //    ;
-#if QT_VERSION < 0x040000
-               plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
-                                        (double *)&x[ 0 ],
-                                        (double *)&y[ 0 ],
-                                        2
-                                        );
-#else
                plotted_hlines[ gaussian_pos ]->setSamples(
                                                        (double *)&x[ 0 ],
                                                        (double *)&y[ 0 ],
                                                        2
                                                        );
-#endif
             }
          }
       }
       
-#if QT_VERSION < 0x040000
-      plot_dist->setMarkerPos( plotted_markers[ 2 + gaussian_pos ], text.toDouble(), 0e0 );
-#else
       plotted_markers[ 2 + gaussian_pos ]->setXValue( text.toDouble() );
-#endif
       if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
       {
          disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -6763,19 +7159,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
                //    .arg( x[1] )
                //    .arg( y[1] )
                //    ;
-#if QT_VERSION < 0x040000
-               plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
-                                        (double *)&x[ 0 ],
-                                        (double *)&y[ 0 ],
-                                        2
-                                        );
-#else
                plotted_hlines[ gaussian_pos ]->setSamples(
                                                        (double *)&x[ 0 ],
                                                        (double *)&y[ 0 ],
                                                        2
                                                        );
-#endif
             }
          }
       }
@@ -6906,11 +7294,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -6936,11 +7320,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -6966,24 +7346,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
 void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, 
                                               QColor color, 
                                               QString text, 
-#if QT_VERSION < 0x040000
-                                              int 
-#else
                                               Qt::Alignment
-#endif
                                               align )
 {
    int line_width = use_line_width < 3 ? ( use_line_width + 1 ) : use_line_width;
 
-#if QT_VERSION < 0x040000
-   long marker = plot_dist->insertMarker();
-   plot_dist->setMarkerLineStyle ( marker, QwtMarker::VLine );
-   plot_dist->setMarkerPos       ( marker, pos, 0e0 );
-   plot_dist->setMarkerLabelAlign( marker, align );
-   plot_dist->setMarkerPen       ( marker, QPen( color, line_width, DashDotDotLine));
-   plot_dist->setMarkerFont      ( marker, QFont("Courier", 11, QFont::Bold));
-   plot_dist->setMarkerLabelText ( marker, text );
-#else
    QwtPlotMarker * marker = new QwtPlotMarker;
    marker->setLineStyle       ( QwtPlotMarker::VLine );
    marker->setLinePen         ( QPen( color, line_width, Qt::DashDotDotLine ) );
@@ -6996,7 +7363,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos,
       marker->setLabel           ( qwtt );
    }
    marker->attach             ( plot_dist );
-#endif
    plotted_markers.push_back( marker );
 }   
 
@@ -7027,25 +7393,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
    //    .arg( y[1] )
    //    ;
 
-#if QT_VERSION < 0x040000
-   long curve;
-   curve = plot_dist->insertCurve( "hline" );
-   plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( "hline" );
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
    plotted_hlines.push_back( curve );
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-   plot_dist->setCurveData( curve,
-                            (double *)&x[ 0 ],
-                            (double *)&y[ 0 ],
-                            2
-                            );
-#else
    curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
    curve->setSamples(
                   (double *)&x[ 0 ],
@@ -7053,7 +7405,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
                   2
                   );
    curve->attach( plot_dist );
-#endif
 }   
 
 void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
@@ -7083,7 +7434,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
          } else {
             for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
             {
-               gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+               gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
             }
          }
       }
@@ -7091,23 +7442,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
       
    if ( !suppress_replot )
    {
-#if QT_VERSION >= 0x040000
       legend_set();
-#endif
       plot_dist->replot();
    }
 }
 
-
 void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
 {
-#if QT_VERSION < 0x040000
-   plot_dist->removeMarkers();
-#else
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
-#endif
 
-#if QT_VERSION >= 0x040000
    set < QwtPlotItem * > current_items;
    {
       const QwtPlotItemList &list = plot_dist->itemList();
@@ -7118,30 +7461,20 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
          // us_qdebug( QString( "item name %1 addr %2" ).arg( item->title().text() ).arg( (unsigned long) item ) );
       }
    }
-#endif
-
 
    for ( unsigned int i = 0; i < ( unsigned int )plotted_hlines.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_hlines[ i ] );
-#else
       if ( current_items.count( plotted_hlines[ i ] ) ) {
          plotted_hlines[ i ]->detach();
       }
-#endif
    }
    plotted_markers.clear( );
    plotted_hlines.clear( );
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
       if ( current_items.count( plotted_baseline[ i ] ) ) {
          plotted_baseline[ i ]->detach();
       }
-#endif
    }
    plotted_baseline.clear( );
 }
@@ -7207,22 +7540,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_replot_gaussian()
    }
 
    vector < double > x = f_qs[ wheel_file ];
-   vector < double > y = gaussian( &(gaussians[ gaussian_pos * gaussian_type_size ] ) );
+   vector < double > y = gaussian( &(gaussians[ (vector<double>::size_type) gaussian_pos * gaussian_type_size ] ) );
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( plotted_gaussians[ gaussian_pos ],
-                            (double *)&x[ 0 ],
-                            (double *)&y[ 0 ],
-                            x.size()
-                            );
-#else
    plotted_gaussians[ gaussian_pos ]->setSamples(
                                               (double *)&x[ 0 ],
                                               (double *)&y[ 0 ],
                                               x.size()
                                               );
 
-#endif
    replot_gaussian_sum();
 }
 
@@ -7232,25 +7557,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
    vector < double > x = f_qs[ wheel_file ];
    vector < double > y = gaussian( g );
 
-#if QT_VERSION < 0x040000
-   long curve;
-   curve = plot_dist->insertCurve( "gaussian" );
-   plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( "gaussian" );
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
    plotted_gaussians.push_back( curve );
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( curve, 
-                            (double *)&x[ 0 ],
-                            (double *)&y[ 0 ],
-                            x.size()
-                            );
-   plot_dist->setCurvePen( curve, QPen( color , use_line_width, Qt::DashLine ) );
-#else
    curve->setSamples(
                   (double *)&x[ 0 ],
                   (double *)&y[ 0 ],
@@ -7259,7 +7570,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
 
    curve->setPen( QPen( color, use_line_width, Qt::DashLine ) );
    curve->attach( plot_dist );
-#endif
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_init_gaussians()
@@ -7284,19 +7594,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 {
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussians.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_gaussians[ i ] );
-#else
       plotted_gaussians[ i ]->detach();
-#endif
    }
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussian_sum.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_gaussian_sum[ i ] );
-#else
       plotted_gaussian_sum[ i ]->detach();
-#endif
    }
 }
 
@@ -7419,22 +7721,14 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
    {
       for ( unsigned int j = 0; j < x.size(); j++ )
       {
-#if QT_VERSION < 0x040000
-         y[ j ] = plot_dist->curve( plotted_gaussians[ 0 ] )->sample( j ).y();
-#else
          y[ j ] = plotted_gaussians[ 0 ]->sample( j ).y();
-#endif
       }
 
       for ( unsigned int i = 1; i < plotted_gaussians.size(); i++ )
       {
          for ( unsigned int j = 0; j < x.size(); j++ )
          {
-#if QT_VERSION < 0x040000
-            y[ j ] += plot_dist->curve( plotted_gaussians[ i ] )->sample( j ).y();
-#else
             y[ j ] += plotted_gaussians[ i ]->sample( j ).y();
-#endif
          }
       }
    } else {
@@ -7444,25 +7738,11 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
       }
    }
 
-#if QT_VERSION < 0x040000
-   long curve;
-   curve = plot_dist->insertCurve( "gaussian_sum" );
-   plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( "gaussian_sum" );
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
    plotted_gaussian_sum.push_back( curve );
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( curve, 
-                            (double *)&x[ 0 ],
-                            (double *)&y[ 0 ],
-                            x.size()
-                            );
-   plot_dist->setCurvePen( curve, QPen( Qt::yellow , use_line_width, Qt::DashLine ) );
-#else
    curve->setSamples(
                   (double *)&x[ 0 ],
                   (double *)&y[ 0 ],
@@ -7471,7 +7751,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
 
    curve->setPen( QPen( Qt::yellow, use_line_width, Qt::DashLine ) );
    curve->attach( plot_dist );
-#endif
+
    replot_gaussian_sum();
 }
 
@@ -7491,11 +7771,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
    {
       for ( unsigned int j = 0; j < x.size(); j++ )
       {
-#if QT_VERSION < 0x040000
-         y[ j ] = plot_dist->curve( plotted_gaussians[ 0 ] )->sample( j ).y();
-#else
          y[ j ] = plotted_gaussians[ 0 ]->sample( j ).y();
-#endif
       }
    } else {
       for ( unsigned int j = 0; j < x.size(); j++ )
@@ -7508,28 +7784,16 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
    {
       for ( unsigned int j = 0; j < x.size(); j++ )
       {
-#if QT_VERSION < 0x040000
-         y[ j ] += plot_dist->curve( plotted_gaussians[ i ] )->sample( j ).y();
-#else
          y[ j ] += plotted_gaussians[ i ]->sample( j ).y();
-#endif
       }
    }
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( plotted_gaussian_sum[ 0 ],
-                            (double *)&x[ 0 ],
-                            (double *)&y[ 0 ],
-                            x.size()
-                            );
-#else
    plotted_gaussian_sum[ 0 ]->setSamples(
                                       (double *)&x[ 0 ],
                                       (double *)&y[ 0 ],
                                       x.size()
                                       );
 
-#endif
    double rmsd  = 0e0;
    double start = le_gauss_fit_start->text().toDouble();
    double end   = le_gauss_fit_end  ->text().toDouble();
@@ -8116,6 +8380,19 @@ map < QString, bool > US_Hydrodyn_Saxs_Hplc::all_files_map()
    return files;
 }
 
+int US_Hydrodyn_Saxs_Hplc::ggaussian_sel_no_gaussian_count() {
+   int sel_no_gaussian_count = 0;
+
+   QStringList files = all_selected_files();
+   
+   for ( int i = 0; i < (int) files.size(); ++i ) {
+      if ( !f_gaussians.count( files[i] ) ) {
+         ++sel_no_gaussian_count;
+      }
+   }
+   return sel_no_gaussian_count;
+}
+
 bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( bool check_against_global )
 {
    QStringList files = all_selected_files();
@@ -8612,22 +8889,22 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
 
    if ( detector_uv_conv != 0e0 )
    {
-      ts << "# __detector_uv: " << QString( "%1" ).arg( detector_uv_conv, 0, 'g', 8 ) << endl;
+      ts << "# __detector_uv: " << QString( "%1" ).arg( detector_uv_conv, 0, 'g', 8 ) << Qt::endl;
    }
    if ( detector_ri_conv != 0e0 )
    {
-      ts << "# __detector_ri: " << QString( "%1" ).arg( detector_ri_conv, 0, 'g', 8 ) << endl;
+      ts << "# __detector_ri: " << QString( "%1" ).arg( detector_ri_conv, 0, 'g', 8 ) << Qt::endl;
    }
    if ( detector_uv )
    {
-      ts << "# __detector_uv_set" << endl;
+      ts << "# __detector_uv_set" << Qt::endl;
    } 
    if ( detector_ri )
    {
-      ts << "# __detector_ri_set" << endl;
+      ts << "# __detector_ri_set" << Qt::endl;
    } 
 
-   ts << "# __gaussian_type: " << gaussian_type_tag << endl;
+   ts << "# __gaussian_type: " << gaussian_type_tag << Qt::endl;
 
    if ( stack_data.size() )
    {
@@ -8641,7 +8918,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          {
             if ( !it->second.isEmpty() )
             {
-               ts << it->second << endl;
+               ts << it->second << Qt::endl;
             }
          }
 
@@ -8656,7 +8933,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
                it != stack_data[ j ].conc_files.end();
                it++ )
          {
-            ts << *it << endl;
+            ts << *it << Qt::endl;
          }
 
          ts << "# __end\n";
@@ -8686,7 +8963,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          {
             if ( it->second.size() )
             {
-               ts << "# __f_gaussians: " << it->first << endl;
+               ts << "# __f_gaussians: " << it->first << Qt::endl;
                for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += gaussian_type_size )
                {
                   for ( int k = 0; k < gaussian_type_size; ++k )
@@ -8710,7 +8987,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
    {
       if ( !it->second.isEmpty() )
       {
-         ts << it->second << endl;
+         ts << it->second << Qt::endl;
       }
    }
 
@@ -8722,7 +8999,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          it != conc_files.end();
          it++ )
    {
-      ts << *it << endl;
+      ts << *it << Qt::endl;
    }
 
    ts << "# __end\n";
@@ -8750,7 +9027,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
          it != f_gaussians.end();
          it++ )
    {
-      ts << "# __f_gaussians: " << it->first << endl;
+      ts << "# __f_gaussians: " << it->first << Qt::endl;
       for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += gaussian_type_size )
       {
          for ( int k = 0; k < gaussian_type_size; ++k )
@@ -8762,13 +9039,13 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
       ts << "# __end\n";
    }      
 
-   ts << "# __dir: " << le_dir->text() << endl;
+   ts << "# __dir: " << le_dir->text() << Qt::endl;
    if ( cb_lock_dir->isChecked() )
    {
       ts << "# __lock_dir\n";
    }
 
-   ts << "# __created_dir: " << le_created_dir->text() << endl;
+   ts << "# __created_dir: " << le_created_dir->text() << Qt::endl;
 
    f.close();
    editor_msg( "blue", QString( us_tr( "State saved in file %1" ) ).arg( fn ) );

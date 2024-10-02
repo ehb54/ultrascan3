@@ -174,7 +174,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_xMin     = us_label( tr( "s (x 1e13) Minimum:" ) );
    lb_xMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_xMin     = us_counter( 3, -100000.0, 100000.0, 0.1 );
+   ct_xMin     = us_counter( 3, -500000.0, 500000.0, 0.1 );
    ct_xMin->setSingleStep( 1 );
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMin ( double ) ) );
@@ -182,7 +182,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_xMax     = us_label( tr( "s (x 1e13) Maximum:" ) );
    lb_xMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_xMax     = us_counter( 3, -100000.0, 100000.0, 0.1 );
+   ct_xMax     = us_counter( 3, -500000.0, 500000.0, 0.1 );
    ct_xMax->setSingleStep( 1 );
    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMax ( double ) ) );
@@ -2112,9 +2112,9 @@ void US_Grid_Editor::select_x_axis( int ival )
    // Axis types                   s    f/f0      mw   vbar     D     f
    const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
    const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   const double  xmins[] = { -100000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-   const double  xincs[] = {      0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
+   const double  xmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
+   const double  xmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
+   const double  xincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
    const QString xtitls[] = { tr( "s (x 1e13)" ),
                               tr( "f/f0-value" ),
                               tr( "mw-value" ),
@@ -2185,9 +2185,9 @@ void US_Grid_Editor::select_y_axis( int ival )
    // Axis types                   s    f/f0      mw   vbar     D     f
    const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
    const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
-   const double  ymins[] = { -100000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  ymaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-   const double  yincs[] = {      0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
+   const double  ymins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
+   const double  ymaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
+   const double  yincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
    const QString ytitls[] = { tr( "s (x 1e13)" ),
                               tr( "f/f0-value" ),
                               tr( "mw-value" ),
@@ -2256,9 +2256,9 @@ void US_Grid_Editor::select_y_axis( int ival )
 void US_Grid_Editor::select_fixed( const QString& fixstr )
 {
    // Axis types                   s    f/f0      mw   vbar     D     f
-   const double  zmins[] = { -100000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
-   const double  zmaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
-   const double  zincs[] = {      0.01,  0.01, 1000.0, 0.001, 1e+5, 1e+5 };
+   const double  zmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
+   const double  zmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
+   const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
    //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
 
    plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;

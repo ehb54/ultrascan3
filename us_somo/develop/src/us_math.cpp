@@ -4,7 +4,7 @@
 
 unsigned long square(int num)
 {
-   return num * num;
+   return (long) num * num;
 }
 
 float square(float num)
@@ -1049,7 +1049,9 @@ int nnls(
    else for(j=0; j<n; j++) w[j]=0.;
    *rnorm=sqrt(sm);
    /* Free working space, if it was allocated here */
-   if(wp==NULL) free(w); if(zzp==NULL) free(zz); if(indexp==NULL) free(index);
+   if(wp==NULL) free(w);
+   if(zzp==NULL) free(zz);
+   if(indexp==NULL) free(index);
    return(ret);
 } /* nnls_ */
 /****************************************************************************/
@@ -1248,3 +1250,41 @@ float int_vol_2sphere(float r1, float r2, float d) {
 
    return vol;
 }
+
+QString us_double_decimal_places( double x, int dp ) {
+   if ( QString( "%1" ).arg( x ).contains( "e" ) ) {
+      // punt for exponential form
+      return QString( "%1" ).arg( x );
+   }
+
+   double fact = (int) pow( 10, dp );
+
+   double xuse = (double)( ((int)((x * fact) + ( x > 0 ? 0.5 : -0.5 ))) / fact);
+   QString qs = QString( "%1").arg( xuse );
+   if ( qs.contains( "e" ) ) {
+      // punt for exponential form
+      return QString( "%1" ).arg( x );
+   }
+   if ( !dp ) {
+      // no decimal
+      return qs;
+   }
+
+   if ( !qs.contains( "." ) ) {
+      qs += ".";
+      for ( int i = 0; i < dp; ++i ) {
+         qs += "0";
+      }
+      return qs;
+   }
+
+   // how many zeros to add?
+
+   QString pastdp = qs;
+   pastdp.replace( QRegularExpression( "^[^.]*\\." ), "" );
+   int toadd = dp - (int) pastdp.length();
+   for ( int i = 0; i < toadd; ++i ) {
+      qs += "0";
+   }
+   return qs;
+};

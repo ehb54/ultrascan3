@@ -21,119 +21,137 @@ US_Write_Config::~US_Write_Config()
 bool US_Write_Config::write_config( struct Config config_list )
 {
    QString warning=us_tr("Warning"), message;
-   QDir temp_dir = config_list.help_dir;
-   if ( ! temp_dir.exists() )
    {
-      if ( ! temp_dir.mkdir( config_list.help_dir ) )
+      QDir temp_dir = config_list.help_dir;
+      if ( ! temp_dir.exists() )
       {
-         message = us_tr("Could not create the Help File Directory!\n\n"
-                      + config_list.help_dir + "\nPlease check your write permissions!");
+         if ( ! temp_dir.mkdir( config_list.help_dir ) )
+         {
+            message = us_tr("Could not create the Help File Directory!\n\n"
+                            + config_list.help_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
+      }
+   }
+
+   {
+      QDir temp_dir = config_list.root_dir;
+      if ( ! temp_dir.exists() )
+      {
+         if (!temp_dir.mkdir(config_list.root_dir ))
+         {
+            message = us_tr("Could not create the Root Directory!\n\n"
+                            + config_list.root_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
+      }
+   }
+
+   {
+      QDir temp_dir = config_list.data_dir;
+      if ( ! temp_dir.exists() )
+      {
+         if (!temp_dir.mkdir(config_list.data_dir ))
+         {
+            message = us_tr("Could not create the Data Directory!\n\n"
+                            + config_list.data_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
+      }
+   }
+      
+   {
+      QDir temp_dir = config_list.tmp_dir;
+      if ( ! temp_dir.exists() )
+      {
+         if (!temp_dir.mkdir(config_list.tmp_dir ))
+         {
+            message = us_tr("Could not create the Temporary Directory!\n\n"
+                            + config_list.tmp_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
+      }
+   }
+
+   {
+      QDir temp_dir = config_list.archive_dir;
+      if ( ! temp_dir.exists() )
+      {
+         if (!temp_dir.mkdir(config_list.archive_dir ))
+         {
+            message = us_tr("Could not create the Archive Directory!\n\n"
+                            + config_list.archive_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
+      }
+   }
+
+   {
+      QDir temp_dir = config_list.system_dir;
+      if ( ! temp_dir.exists() )
+      {
+         message = us_tr("The UltraScan System Directory could not be found!\n\n"
+                         + config_list.system_dir + "\nPlease check your settings!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
          return false;
       }
    }
 
-   temp_dir = config_list.root_dir;
-   if ( ! temp_dir.exists() )
    {
-      if (!temp_dir.mkdir(config_list.root_dir ))
+      QDir temp_dir = config_list.html_dir;
+      if ( ! temp_dir.exists() )
       {
-         message = us_tr("Could not create the Root Directory!\n\n"
-                      + config_list.root_dir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
+         if ( ! temp_dir.mkdir(config_list.html_dir ) )
+         {
+            message = us_tr("Could not create the Reports Directory!\n\n"
+                            + config_list.html_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
       }
    }
 
-   temp_dir = config_list.data_dir;
-   if ( ! temp_dir.exists() )
    {
-      if (!temp_dir.mkdir(config_list.data_dir ))
+      QDir temp_dir = config_list.result_dir;
+      if ( ! temp_dir.exists() )
       {
-         message = us_tr("Could not create the Data Directory!\n\n"
-                      + config_list.data_dir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
-      }
-   }
-
-   temp_dir = config_list.tmp_dir;
-   if ( ! temp_dir.exists() )
-   {
-      if (!temp_dir.mkdir(config_list.tmp_dir ))
-      {
-         message = us_tr("Could not create the Temporary Directory!\n\n"
-                      + config_list.tmp_dir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
-      }
-   }
-
-   temp_dir = config_list.archive_dir;
-   if ( ! temp_dir.exists() )
-   {
-      if (!temp_dir.mkdir(config_list.archive_dir ))
-      {
-         message = us_tr("Could not create the Archive Directory!\n\n"
-                      + config_list.archive_dir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
-      }
-   }
-
-   temp_dir = config_list.system_dir;
-   if ( ! temp_dir.exists() )
-   {
-      message = us_tr("The UltraScan System Directory could not be found!\n\n"
-                   + config_list.system_dir + "\nPlease check your settings!");
-      errorMessage(warning, message);
-      cerr << warning << ":\n" << message << endl;
-      return false;
-   }
-
-   temp_dir = config_list.html_dir;
-   if ( ! temp_dir.exists() )
-   {
-      if ( ! temp_dir.mkdir(config_list.html_dir ) )
-      {
-         message = us_tr("Could not create the Reports Directory!\n\n"
-                      + config_list.html_dir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
-      }
-   }
-
-   temp_dir = config_list.result_dir;
-   if ( ! temp_dir.exists() )
-   {
-      if ( ! temp_dir.mkdir( config_list.result_dir ) )
-      {
-         message = us_tr("Could not create the Results Directory!\n\n"
-                      + config_list.result_dir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
+         if ( ! temp_dir.mkdir( config_list.result_dir ) )
+         {
+            message = us_tr("Could not create the Results Directory!\n\n"
+                            + config_list.result_dir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
       }
    }
 
    QString rcfile = US_Config::get_home_dir() + USRC;
    QString rcdir  = US_Config::get_home_dir() + ETC_DIR;
-   temp_dir       = QDir( rcdir );
-   if ( ! temp_dir.exists() )
    {
-      if ( ! temp_dir.mkdir( rcdir ) )
+      QDir temp_dir       = QDir( rcdir );
+      if ( ! temp_dir.exists() )
       {
-         message = us_tr("Could not create the Configuration Directory!\n\n"
-                      + rcdir + "\nPlease check your write permissions!");
-         errorMessage(warning, message);
-         cerr << warning << ":\n" << message << endl;
-         return false;
+         if ( ! temp_dir.mkdir( rcdir ) )
+         {
+            message = us_tr("Could not create the Configuration Directory!\n\n"
+                            + rcdir + "\nPlease check your write permissions!");
+            errorMessage(warning, message);
+            cerr << warning << ":\n" << message << endl;
+            return false;
+         }
       }
    }
 

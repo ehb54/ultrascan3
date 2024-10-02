@@ -545,6 +545,8 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
 bool US_RunProtocol::RunProtoSpeed::SpeedStep::operator==
                   ( const SpeedStep& ss ) const
 {
+  qDebug() << "RP:SPEED: speed, ss.speed -- " << speed << ", " << ss.speed;
+  
    if ( speed    != ss.speed    ) return false;
    if ( accel    != ss.accel    ) return false;
    if ( duration != ss.duration ) return false;
@@ -967,6 +969,25 @@ bool US_RunProtocol::RunProtoRanges::fromXml( QXmlStreamReader& xmli )
             rng.lo_rad           = slorad.isEmpty() ? rng.lo_rad : slorad.toDouble();
             rng.hi_rad           = shirad.isEmpty() ? rng.hi_rad : shirad.toDouble();
 
+	    //abde: for backward compatibility:
+	    if (  attr.hasAttribute ("abde_buffer") )
+	      {
+		( attr.value( "abde_buffer" ) .toString().toInt() ) ?
+		  rng.abde_buffer_spectrum = true : rng.abde_buffer_spectrum = false;
+	      }
+	    else
+	      rng.abde_buffer_spectrum = false;
+
+	    if (  attr.hasAttribute ("abde_mwl_deconv") )
+	      {
+		( attr.value( "abde_mwl_deconv" ) .toString().toInt() ) ?
+		  rng.abde_mwl_deconvolution = true : rng.abde_mwl_deconvolution = false;
+	      }
+	    else
+	      rng.abde_mwl_deconvolution = false;
+	    
+	    //end of abde
+	    
             rng.wvlens.clear();
          }
 
@@ -1011,6 +1032,12 @@ bool US_RunProtocol::RunProtoRanges::toXml( QXmlStreamWriter& xmlo )
                               QString::number( chrngs[ ii ].lo_rad ) );
       xmlo.writeAttribute   ( "end_radius",
                               QString::number( chrngs[ ii ].hi_rad ) );
+      //abde
+      xmlo.writeAttribute   ( "abde_buffer",
+                              QString::number( int(chrngs[ ii ].abde_buffer_spectrum )) );
+      xmlo.writeAttribute   ( "abde_mwl_deconv",
+                              QString::number( int(chrngs[ ii ].abde_mwl_deconvolution )) );
+      
       for ( int jj = 0; jj < chrngs[ ii ].wvlens.count(); jj++ )
       {
          xmlo.writeStartElement( "wavelength" );
@@ -1032,6 +1059,8 @@ US_RunProtocol::RunProtoRanges::Ranges::Ranges()
    wvlens .clear();
    lo_rad               = 5.75;
    hi_rad               = 7.25;
+   abde_buffer_spectrum = false;
+   abde_mwl_deconvolution = false;
 }
 
 // RunProtoRanges::Ranges subclass Equality operator
@@ -1042,6 +1071,14 @@ bool US_RunProtocol::RunProtoRanges::Ranges::operator==
    if ( wvlens      != s.wvlens      ) return false;
    if ( lo_rad      != s.lo_rad      ) return false;
    if ( hi_rad      != s.hi_rad      ) return false;
+
+   //abde
+   int abde_buff1 = int( abde_buffer_spectrum );
+   int abde_buff2 = int( s.abde_buffer_spectrum );
+   if (abde_buff1 != abde_buff2) return false;
+
+   //as for 'abde_mwl_deconvolution':
+   //do not compare as this can change on fly && will be checked differently
 
    return true;
 }

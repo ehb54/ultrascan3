@@ -113,17 +113,16 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    lv_files->setEnabled(true);
    lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-#if QT_VERSION < 0x040000
-   lv_files->addColumn( us_tr( "Name" ) );
-   lv_files->addColumn( us_tr( "Date created" ) );
-   lv_files->addColumn( us_tr( "Size" ) );
-#else
    lv_files->setColumnCount( 3 );
    lv_files->setHeaderLabels( QStringList()
                               << us_tr( "Name" )
                               << us_tr( "Date created" )
                               << us_tr( "Size" ) );
-#endif   
+
+   lv_files->setColumnWidth( 0, 250 );
+   lv_files->setColumnWidth( 1, 220 );
+   lv_files->setColumnWidth( 2, 150 );
+
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
    
    pb_select_all = new QPushButton(us_tr("Select all"), this);
@@ -930,7 +929,7 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
       while( !tsi.atEnd() )
       {
          QString qs = tsi.readLine();
-         tso << qs << endl;
+         tso << qs << Qt::endl;
       }
 
       fi.close();
@@ -1063,7 +1062,7 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
          ( tgz_files.size() ? "\n" : "" ) +
          tar_files.join("\n")
          ;
-      files = (qs ).split( "\n" , QString::SkipEmptyParts );
+      files = (qs ).split( "\n" , Qt::SkipEmptyParts );
    }
 
    if ( set_lv_files )
@@ -1074,14 +1073,14 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
 #if QT_VERSION < 0x040000
          new QTreeWidgetItem( lv_files, 
                             files[ i ], 
-                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
+                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).birthTime().toString() ),
                             QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                             );
 #else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
-                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() )
+                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).birthTime().toString() )
                                                         << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                                                         ) );
 #endif

@@ -139,7 +139,7 @@ QString US_PM::test( QString name, QString oname )
                   {
                      break;
                   }
-                  QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                  QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                   if ( qsl.size() < 2 )
                   {
                      cout << QString( "error: data has only %1 parameters\n" ).arg( qsl.size() );

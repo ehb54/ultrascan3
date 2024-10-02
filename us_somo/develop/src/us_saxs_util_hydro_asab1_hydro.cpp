@@ -179,8 +179,8 @@ static float *asa = 0;             // [NMAX];
 
 static int nmax;
 static int nmax1;
-static QProgressBar *progress;
-static QTextEdit *editor;
+// static QProgressBar *progress;
+// static QTextEdit *editor;
 static asa_options *asa_opts;
 static hydro_results *results;
 static bool recheck;
@@ -188,12 +188,12 @@ static vector <PDB_atom *> active_atoms;
 
 //static US_Hydrodyn *us_hydrodyn;
 
-static void
-em(const char *s)
-{
-   puts(s);
-   fflush(stdout);
-}
+// static void
+// em(const char *s)
+// {
+//    puts(s);
+//    fflush(stdout);
+// }
 
 static void
 asab1_free_alloced()
@@ -350,10 +350,10 @@ us_hydrodyn_asab1_main_hydro(vector <PDB_atom *> use_active_atoms,
    int i, ii, l, j, s, kk, kkk, ini, contatom, contatom1, indCA, indC, indO;
    int posiz, massa = 0, check_asa = 0;
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel, asapep, asatot, perc, voltot;
-   char azoto[1];
+   char azoto[2];
    char carbonio0[3];
-   char carbonio1[2];
-   char carbonio2[3];
+   char carbonio1[3];
+   char carbonio2[4];
    //    char pippo[10];
    // char pluto[1];
    // int topolino;
@@ -1116,7 +1116,7 @@ us_hydrodyn_asab1_main_hydro(vector <PDB_atom *> use_active_atoms,
       for (l = 0; l < nat; l++)
       {
 	//printf("%d %.2f\n", l, asa[l]);
-         float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
+         // float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
          float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
 
          if ( isnan(asa[l]) )
@@ -3342,6 +3342,7 @@ assigntab(int xx)
          default:
             dd->m = 14;   /*C? */
          }
+         break;
       case ('A'):      /* MAN */
          dd->tab = arr1[k + 23];
          dd->vol = (float) 165.0;
@@ -3567,7 +3568,7 @@ static void
 ordcol()
 {
    char key[200];
-   char sp[3], fine[3];
+   char sp[4], fine[4];
    int i;
 
    fine[0] = 'S';

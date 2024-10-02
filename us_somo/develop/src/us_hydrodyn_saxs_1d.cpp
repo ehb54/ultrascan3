@@ -2930,7 +2930,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       {
          QString qs = ts.readLine();
          line++;
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          if ( qsl.size() != 3 )
          {
             f.close();
@@ -3362,7 +3362,7 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {

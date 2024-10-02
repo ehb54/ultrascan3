@@ -809,7 +809,7 @@ void US_Hydrodyn_Pdb_Tool::sel( QTreeWidget *lv )
 
    // make list of selections
 
-   QStringList sels = (text ).split( "," , QString::SkipEmptyParts );
+   QStringList sels = (text ).split( "," , Qt::SkipEmptyParts );
    set < int > to_sel;
 
    QRegExp rx_range( "(\\d+)-(\\d+)" );

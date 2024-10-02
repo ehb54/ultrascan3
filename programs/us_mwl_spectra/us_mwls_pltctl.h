@@ -4,7 +4,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_plot3d_xyz.h"
+#include "us_plot3d.h"
 #include "us_plot.h"
 #include "us_help.h"
 
@@ -22,16 +22,16 @@ class US_MwlSPlotControl : public US_WidgetsDialog
 
       //! \brief Function to return US_MwlSPlotControl's caller
       //! \returns Pointer to the QWidget that created this plot control
-      QWidget*      caller       ( void );
+      QWidget*      caller      ( void );
 
       //! \brief Force (re-)plot of currently specified 3-D plot
-      void          do_3dplot    ( void );
+      void          do_3dplot   ( void );
 
       //! \brief Return 3-d plot data widget pointer
-      QGLWidget*    data_3dplot  ( void );
+      QGLWidget*    data_3dplot ( void );
 
       //! \brief Return 3-d plot main widget pointer
-      US_Plot3Dxyz* widget_3dplot( void );
+      US_Plot3D* widget_3dplot  ( void );
 
    signals:
       //! \brief Signal emitted when this dialog has been closed.
@@ -48,9 +48,9 @@ class US_MwlSPlotControl : public US_WidgetsDialog
 
       QCheckBox*    ck_yrevrs;
 
-      QWidget*                 wparent;
-      QPointer< US_Plot3Dxyz > plot3d_w;
-      QVector< QVector3D >*    xyzdat;
+      QWidget*              wparent;
+      QPointer< US_Plot3D > plot3d_w;
+      QVector< QVector3D >* xyzdat;
 
       double        zscale;
       double        rxscale;

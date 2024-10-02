@@ -33,12 +33,15 @@ HEADERS      = \
                us_buffer_gui.h          \
                us_choice.h              \
                us_colorgradIO.h         \
+               us_combined_plots_parms_gui.h \
+               us_csv_loader.h \
                us_data_loader.h         \
                us_edit_spectrum.h       \
                us_editor.h              \
                us_editor_gui.h          \
                us_extinction_gui.h      \
                us_extinctfitter_gui.h   \
+               us_failed_gmp_run_gui.h  \
                us_gui_settings.h        \
                us_gui_util.h            \
                us_help.h                \
@@ -56,7 +59,6 @@ HEADERS      = \
                us_passwd.h              \
                us_plot.h                \
                us_plot3d.h              \
-               us_plot3d_xyz.h          \
                us_predict1.h            \
                us_project_gui.h         \
                us_properties.h          \
@@ -87,12 +89,15 @@ SOURCES      = \
                us_buffer_gui.cpp          \
                us_choice.cpp              \
                us_colorgradIO.cpp         \
+               us_combined_plots_parms_gui.cpp \
+               us_csv_loader.cpp \
                us_data_loader.cpp         \
                us_edit_spectrum.cpp       \
                us_editor.cpp              \
                us_editor_gui.cpp          \
                us_extinction_gui.cpp      \
                us_extinctfitter_gui.cpp   \
+               us_failed_gmp_run_gui.cpp  \
                us_gui_settings.cpp        \ 
                us_gui_util.cpp            \ 
                us_help.cpp                \
@@ -110,7 +115,6 @@ SOURCES      = \
                us_passwd.cpp              \
                us_plot.cpp                \
                us_plot3d.cpp              \
-               us_plot3d_xyz.cpp          \
                us_predict1.cpp            \
                us_project_gui.cpp         \
                us_properties.cpp          \

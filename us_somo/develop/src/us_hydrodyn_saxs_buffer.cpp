@@ -1976,7 +1976,8 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
             {
                bsub_error.resize( negative_pos );
             }
-         }            
+         }
+         break;
       case 1 : // use absolute value
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {
@@ -2477,6 +2478,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    }
 
    // remove them now
+   lb_created_files->setUpdatesEnabled( false );
+
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_created_files->item( i )->text() ) )
@@ -2486,11 +2489,17 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
       }
    }
 
+   lb_created_files->setUpdatesEnabled( true );
+
+   lb_files->setUpdatesEnabled( false );
+
+   QString msg = "";
+
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
       if ( selected_map.count( lb_files->item( i )->text() ) )
       {
-         editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
+         msg += QString( us_tr( "Removed %1\n" ) ).arg( lb_files->item( i )->text() );
          if ( lbl_buffer->text() == lb_files->item( i )->text() )
          {
             lbl_buffer->setText( "" );
@@ -2517,6 +2526,12 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
       }
    }
 
+   lb_files->setUpdatesEnabled( true );
+
+   if ( !msg.isEmpty() ) {
+      editor_msg( "black", msg );
+   }
+
    disable_updates = false;
    plot_files();
    if ( !lb_files->count() &&
@@ -2535,6 +2550,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          conc_window->cancel();
       }
    }
+   qApp->processEvents();
+   repaint();
 }
 
 class hplc_sortable_qstring {
@@ -3131,10 +3148,13 @@ void US_Hydrodyn_Saxs_Buffer::select_all()
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      lb_files->item( i)->setSelected( !all_selected );
-   }
+   !all_selected ? lb_files->selectAll() : lb_files->clearSelection();
+
+   // for ( int i = 0; i < lb_files->count(); i++ )
+   // {
+   //    lb_files->item( i)->setSelected( !all_selected );
+   // }
+
    disable_updates = false;
    plot_files();
    update_enables();
@@ -3278,11 +3298,11 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -6585,16 +6605,16 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -7079,7 +7099,8 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
             {
                bsub_error.resize( negative_pos );
             }
-         }            
+         }
+         break;
       case 1 : // use absolute value
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {

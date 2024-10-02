@@ -1,3 +1,4 @@
+//! \file us_run_protocol.h
 #ifndef US_RPROTOCOL_H
 #define US_RPROTOCOL_H
 
@@ -47,6 +48,12 @@ class US_UTIL_EXTERN US_RunProtocol
             int         absID;         //!< Abstract Rotor DB Id
 	    int         operID;
 	    int         instID;
+
+	    //assigned oper/rev lists
+	    QString operListAssign;
+	    QString revListAssign;
+	    QString apprListAssign;
+	    QString smeListAssign;
       };
 
       //! \brief Protocol Speed Steps controls class
@@ -244,6 +251,9 @@ class US_UTIL_EXTERN US_RunProtocol
                   QList< double >  wvlens;   //!< List of wavelengths
                   double           lo_rad;   //!< Low radius for channel
                   double           hi_rad;   //!< High radius for channel
+
+		  bool             abde_buffer_spectrum;
+		  bool             abde_mwl_deconvolution;
 
                   Ranges();
 

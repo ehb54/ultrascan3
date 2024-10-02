@@ -1343,7 +1343,7 @@ namespace vvv
          }
          vox = vox - int(cut*tenp/GRIDVOL);
       }
-      double cut = float(vox)*GRIDVOL;
+      double cut = (double) float(vox)*GRIDVOL;
       if(cut >= 100) {
          cerr << cut << flush;
       } else if(cut >= 10) {
@@ -1358,16 +1358,16 @@ namespace vvv
 
    /*********************************************/
    void printVolCout (int vox) {
-      long double vol = float(vox)*GRIDVOL;
+      long double vol = (long double)float(vox)*GRIDVOL;
       long double tenp;
       tenp = 1000000.0; //Millions
-      if(float(vox)*GRIDVOL > tenp) {
+      if((long double)float(vox)*GRIDVOL > tenp) {
          int cut = int((float(vox)/tenp)*GRIDVOL);
          cout << cut << flush;
          vox = vox - int(cut*tenp/GRIDVOL);
       }
       tenp = 1000.0; //Thousands
-      if(float(vox)*GRIDVOL > tenp) {
+      if((long double) float(vox)*GRIDVOL > tenp) {
          int cut = int((float(vox)/tenp)*GRIDVOL);
          if(cut >= 100 || vol < 100000) {
             cout << cut << flush;
@@ -1380,7 +1380,7 @@ namespace vvv
          }
          vox = vox - int(cut*tenp/GRIDVOL);
       }
-      double cut = float(vox)*GRIDVOL;
+      double cut = (double) float(vox)*GRIDVOL;
       if(cut >= 100 || vol < 1000) {
          cout << cut << flush;
       } else if(cut >= 10) {
@@ -1395,17 +1395,17 @@ namespace vvv
    };
 
    double GetVol(int vox) {
-      long double vol = float(vox)*GRIDVOL;
+      long double vol = (long double) float(vox)*GRIDVOL;
       long double tenp;
       tenp = 1000000.0; //Millions
       QString result;
-      if(float(vox)*GRIDVOL > tenp) {
+      if((long double) float(vox)*GRIDVOL > tenp) {
          int cut = int((float(vox)/tenp)*GRIDVOL);
          result += QString( "%1" ).arg( cut );
          vox = vox - int(cut*tenp/GRIDVOL);
       }
       tenp = 1000.0; //Thousands
-      if(float(vox)*GRIDVOL > tenp) {
+      if((long double) float(vox)*GRIDVOL > tenp) {
          int cut = int((float(vox)/tenp)*GRIDVOL);
          if(cut >= 100 || vol < 100000) {
             result += QString( "%1" ).arg( cut );
@@ -1418,7 +1418,7 @@ namespace vvv
          }
          vox = vox - int(cut*tenp/GRIDVOL);
       }
-      double cut = float(vox)*GRIDVOL;
+      double cut = (double) float(vox)*GRIDVOL;
       if(cut >= 100 || vol < 1000) {
          result += QString( "%1" ).arg( cut );
       } else if(cut >= 10) {
@@ -1762,23 +1762,24 @@ namespace vvv
       // ****************************************************
 
       //HEADER INFO
+      # define FMAX 256
       char file[256]; file[0] = '\0';
-      char ezdfile[256]; ezdfile[0] = '\0';
-      char pdbfile[256]; pdbfile[0] = '\0';
-      char mrcfile[256]; mrcfile[0] = '\0';
+      char ezdfile[FMAX+1]; ezdfile[0] = '\0';
+      char pdbfile[FMAX+1]; pdbfile[0] = '\0';
+      char mrcfile[FMAX+1]; mrcfile[0] = '\0';
       double PROBE=10.0;
 
       while(argc > 1 && argv[1][0] == '-') {
          if(argv[1][1] == 'i') {
-            sprintf(file,&argv[2][0]);
+            snprintf(file,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'p') {
             PROBE = atof(&argv[2][0]);
          } else if(argv[1][1] == 'o') {
-            sprintf(pdbfile,&argv[2][0]);
+            snprintf(pdbfile,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'e') {
-            sprintf(ezdfile,&argv[2][0]);
+            snprintf(ezdfile,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'm') {
-            sprintf(mrcfile,&argv[2][0]);
+            snprintf(mrcfile,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'g') {
             GRID = atof(&argv[2][0]);
          } else if(argv[1][1] == 'h') {

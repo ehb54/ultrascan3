@@ -1,3 +1,4 @@
+//! \file us_load_auc.h
 #ifndef US_LOAD_AUC_H
 #define US_LOAD_AUC_H
 
@@ -23,6 +24,11 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       //! \param wdir   A reference for the returned data working directory
       US_LoadAUC( bool, QVector< US_DataIO::RawData >&, QStringList&,
                   QString& );
+
+      US_LoadAUC( bool, QString, QVector< US_DataIO::RawData >&, QStringList&,
+                  QString& );
+
+      bool us_auto_mode; 
 
    signals:
       //! \brief A signal to tell the parent when the disk/db selection

@@ -1,12 +1,6 @@
 #ifndef US_HYDRODYN_ADDATOM_H
 #define US_HYDRODYN_ADDATOM_H
 
-#include "us_hydrodyn_pdbdefs.h"
-#include "us_hydrodyn_addhybrid.h"
-#include "us.h"
-#include "us_extern.h"
-#include "us_util.h"
-
 #include <qwidget.h>
 #include <qpushbutton.h>
 #include <qlineedit.h>
@@ -18,6 +12,13 @@
 //#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
+
+#include "us.h"
+#include "us_hydrodyn_pdbdefs.h"
+#include "us_hydrodyn_addhybrid.h"
+#include "us_extern.h"
+#include "us_util.h"
+
 
 class US_AddAtom : public QWidget
 {

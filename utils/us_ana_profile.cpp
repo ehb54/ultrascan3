@@ -26,6 +26,13 @@ US_AnaProfile::US_AnaProfile()
    lv_tolers << 10.0;
    data_ends << 7.0;
 
+   //abde
+   ld_dens_0s << 1.42;
+   gm_vbars   << 0.2661;
+   gm_mws     << 168.36;
+   ref_channels << 0;
+   ref_use_channels << 0;
+
    analysis_run << 1;
    report_run   << 1;
 
@@ -63,52 +70,174 @@ US_AnaProfile::US_AnaProfile()
       "\"D. Speed Parameters\":        \"1\","
       "\"E. Cell Centerpiece Usage\":  \"1\","
       "\"F. Solutions for Channels\":"
-               "["
-                  "{\"Solution Information\":  \"1\"},"
-                  "{\"Analyte Information\":   \"1\"},"
-                  "{\"Buffer  Information\":   \"1\"}"
-               "],"
+               "[{"
+                  "\"Solution Information\":  \"1\","
+                  "\"Analyte Information\":   \"1\","
+                  "\"Buffer Information\":    \"1\""
+               "}],"
       "\"G. Optical Systems\":         \"1\","
       "\"H. Ranges\":                  \"1\","
       "\"I. Scan Counts and Intervals for Optics\": \"1\","
       "\"J. Analysis Profile\":"
-               "["
-                  "{\"General Settings\":"
+               "[{"
+                  "\"General Settings\":"
                           "{"
                              "\"Channel General Settings\":            \"1\","
                              "\"Report Parameters (per-triple)\":      \"1\","
                              "\"Report Item Parameters (per-triple)\": \"1\""
-                           "}},"
-                   "{\"2DSA Controls\":" 
+                           "},"
+                   "\"2DSA Controls\":" 
                           "{"
                              "\"Job Flow Summary\":     \"1\","
                              "\"Per-Channel Profiles\": \"1\""
-                          "}},"
-                   "{\"PCSA Controls\":"
+                          "},"
+                   "\"PCSA Controls\":"
                           "{"
                               "\"Job Flow Summary\":     \"1\","
                               "\"Per-Channel Profiles\": \"1\""
-                          "}}"
+                          "}"
   
-               "]"
+               "}]"
    "}"
      ;
 
-    
+   //default JSON for combined plots global settings:
+   combPlots_parms =
+   "{"
+      "\"s,2DSA-IT\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"10\""
+                "}],"
+      "\"s,2DSA-MC\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"10\""
+                "}],"
+      "\"s,PCSA\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"10\""
+                "}],"
+      "\"D,2DSA-IT\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"0.000002\""
+                "}],"
+      "\"D,2DSA-MC\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"0.000002\""
+                "}],"
+      "\"D,PCSA\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"0.000002\""
+                "}],"
+      "\"f/f0,2DSA-IT\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"4\""
+                "}],"
+      "\"f/f0,2DSA-MC\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"4\""
+                "}],"
+      "\"f/f0,PCSA\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"4\""
+                "}],"
+      "\"MW,2DSA-IT\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"100000\""
+                "}],"
+      "\"MW,2DSA-MC\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"100000\""
+                "}],"
+      "\"MW,PCSA\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"1\","
+                  "\"Plot X Maximum\":    \"100000\""
+                "}],"
+      "\"Radius,raw\":"
+               "[{"
+                  "\"Envelope Gaussian Sigma\":  \"0.01\","
+                  "\"Plot X Minimum\":   \"5.8\","
+                  "\"Plot X Maximum\":    \"7.2\""
+                "}]"     
+   "}" 
+     ;
+   
 }
 
 // AnaProfile Equality operator
 bool US_AnaProfile::operator== ( const US_AnaProfile& ap ) const
 {
-   if ( aprofname    != ap.aprofname    )  return false;
-   if ( aprofGUID    != ap.aprofGUID    )  return false;
-   if ( protoname    != ap.protoname    )  return false;
-   if ( protoGUID    != ap.protoGUID    )  return false;
+  qDebug() << "RP:AnaProfile COMPARISON!! ";
 
-   if ( ap2DSA       != ap.ap2DSA  )  return false;
-   if ( apPCSA       != ap.apPCSA  )  return false;
+  //General
+  if ( aprofname    != ap.aprofname    )  return false;
+  if ( aprofGUID    != ap.aprofGUID    )  return false;
+  if ( protoname    != ap.protoname    )  return false;
+  if ( protoGUID    != ap.protoGUID    )  return false;
 
-   return true;
+  qDebug() << "[ANA comp] Gen1 OK";
+
+  qDebug() << "nchan: " << nchan << ap.nchan;
+  //if ( nchan        != ap.nchan        )  return false;
+							 
+  qDebug() << "[ANA comp] Gen2 OK";
+  
+  if ( lc_ratios    != ap.lc_ratios    )  return false;
+  if ( lc_tolers    != ap.lc_tolers    )  return false;
+  if ( l_volumes    != ap.l_volumes    )  return false;
+  if ( lv_tolers    != ap.lv_tolers    )  return false;
+  if ( data_ends    != ap.data_ends    )  return false;
+
+  qDebug() << "[ANA comp] Gen3 OK";
+
+  //abde
+  if ( ld_dens_0s   != ap.ld_dens_0s )  return false;
+  if ( gm_vbars     != ap.gm_vbars   )  return false;
+  if ( gm_mws       != ap.gm_mws     )  return false;
+  if ( ref_channels != ap.ref_channels  )  return false;
+  if ( ref_use_channels != ap.ref_use_channels  )  return false;
+
+  if ( scan_excl_begin  != ap.scan_excl_begin  )  return false;
+  if ( scan_excl_end    != ap.scan_excl_end    )  return false;
+  
+  if ( analysis_run    != ap.analysis_run  )  return false;
+  if ( report_run      != ap.report_run    )  return false;
+  if ( wvl_edit        != ap.wvl_edit      )  return false;
+  if ( replicates      != ap.replicates    )  return false;
+  if ( wvl_not_run     != ap.wvl_not_run   )  return false;
+  
+  if ( report_mask     != ap.report_mask   )  return false;
+  if ( combPlots_parms != ap.combPlots_parms ) return false;
+  
+  //2DSA controls
+  if ( ap2DSA       != ap.ap2DSA  )  return false;
+  //PCSA controls
+  if ( apPCSA       != ap.apPCSA  )  return false;
+  
+  return true;
 }
 
 // Write all current controls to an XML stream
@@ -193,6 +322,7 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "channel",  pchans  [ ii ] );
      xmlo.writeAttribute    ( "chandesc", chndescs[ ii ] );
 
+
      //Affected parms
      xmlo.writeAttribute    ( "load_concen_ratio",
    			QString::number( lc_ratios[ kk ] ) );
@@ -204,6 +334,17 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
    			QString::number( lv_tolers[ kk ] ) );
      xmlo.writeAttribute    ( "data_end",
    			QString::number( data_ends[ kk ] ) );
+
+     
+     //ABDE parms
+     xmlo.writeAttribute    ( "load_dens",
+   			QString::number( ld_dens_0s[ kk ] ) );
+     xmlo.writeAttribute    ( "grad_vbar",
+   			QString::number( gm_vbars[ kk ] ) );
+     xmlo.writeAttribute    ( "grad_mw",
+   			QString::number( gm_mws[ kk ] ) );
+     
+     
      //ALEXEY: analyse?
      xmlo.writeAttribute    ( "run",
    			QString::number( analysis_run[ kk ] ) );
@@ -211,7 +352,13 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      //ALEXEY: run report ?
      xmlo.writeAttribute    ( "run_report",
    			QString::number( report_run[ kk ] ) );
-    
+
+     //ABDE: reference, use_ref.
+     xmlo.writeAttribute    ( "abde_reference",
+   			QString::number( ref_channels[ kk ] ) );
+     xmlo.writeAttribute    ( "abde_use_reference",
+   			QString::number( ref_use_channels[ kk ] ) );
+
      
      //ALEXEY: wvl to edit
      xmlo.writeAttribute    ( "wvl_edit",
@@ -254,6 +401,16 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "replicate_group",       QString::number( replicates[ kk ] )    );
 
      //overlapping wvls:
+     //Debug:
+     QMap< QString, QStringList >::iterator wvl_overlap;
+     for ( wvl_overlap = channdesc_to_overlapping_wvls_main.begin(); wvl_overlap != channdesc_to_overlapping_wvls_main.end(); ++wvl_overlap )
+	{
+	  qDebug() << "In AProfile's toXML:  channdesc_to_overlapping_wvls_main QMap: " << wvl_overlap.key() << ", list of overlapping wvls: " << wvl_overlap.value();
+	}
+     qDebug() << "Current channel_alt name: " << chndescs_alt[ kk ];
+     //end debug
+     
+     
      QStringList repl_wvl_overlap = channdesc_to_overlapping_wvls_main [ chndescs_alt[ kk ] ];
      if ( !repl_wvl_overlap.isEmpty() )
        {
@@ -291,6 +448,13 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    lv_tolers.clear();
    data_ends.clear();
 
+   //abde
+   ld_dens_0s. clear();
+   gm_vbars.   clear();
+   gm_mws .    clear();
+   ref_channels. clear();
+   ref_use_channels. clear();
+
    analysis_run.clear();
    report_run  .clear();
    wvl_edit    .clear();
@@ -304,6 +468,9 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    scan_excl_end.  clear();
 
    replicates. clear();
+   replicates_to_channdesc_main. clear();
+   channdesc_to_overlapping_wvls_main. clear();
+   
    
    while( ! xmli.atEnd() )
    {
@@ -333,6 +500,21 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
             l_volumes << attr.value( "load_volume" ).toString().toDouble();
             lv_tolers << attr.value( "lv_tolerance" ).toString().toDouble();
             data_ends << attr.value( "data_end" ).toString().toDouble();
+
+	    //abde: for backward compatibility
+	    if ( attr.hasAttribute("load_dens") ) 
+	      ld_dens_0s << attr.value( "load_dens" ).toString().toDouble();
+	    else
+	      ld_dens_0s << 1.42;
+	    if ( attr.hasAttribute("grad_vbar") ) 
+	      gm_vbars   << attr.value( "grad_vbar" ).toString().toDouble();
+	    else
+	      gm_vbars << 0.2661;
+	    if ( attr.hasAttribute("grad_mw") ) 
+	      gm_mws     << attr.value( "grad_mw" ).toString().toDouble();
+	    else
+	      gm_mws  <<  168.36;
+
 	    //ALEXEY: for now -- put all checked; later will be 'run="1"' OR 'run="0"' field
 	    //analysis_run << 1;
 	    analysis_run << attr.value( "run" ).toString().toInt();
@@ -346,7 +528,18 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 		else
 		  report_run   << 0;
 	      }
-		
+
+	    //abde: for backward compatibility
+	    if ( attr.hasAttribute("abde_reference") )
+	      ref_channels << attr.value( "abde_reference" )  .toString().toInt();
+	    else
+	      ref_channels << 0;
+	      
+	    if ( attr.hasAttribute("abde_use_reference") )
+	      ref_use_channels << attr.value( "abde_use_reference" )  .toString().toInt();
+	    else
+	      ref_use_channels << 0;
+	    
 	    wvl_edit     << attr.value( "wvl_edit" ).toString().toInt();
 	    wvl_not_run  << attr.value( "wvl_not_run" ).toString();
 
@@ -384,8 +577,13 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	      replicates << attr.value( "replicate_group" )  .toString().toInt();
 	    else
 	      replicates << 0;
-	      
-	    
+
+	    if (  attr.hasAttribute ("replicate_wvl_overlap") )
+	      {
+		channdesc_to_overlapping_wvls_main[ channel_alt_desc ] = attr.value( "replicate_wvl_overlap" )  .toString().split(",");
+		qDebug() << "In AProfile's fromXML: channel_alt_desc:  " << channel_alt_desc
+			 << ", replicate_wvl_overlap -- " << attr.value( "replicate_wvl_overlap" )  .toString().split(",");
+	      }
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();
@@ -435,7 +633,24 @@ bool US_AnaProfile::AnaProf2DSA::operator==
                   ( const AnaProf2DSA& ap ) const
 {
    if ( nchan  != ap.nchan  ) return false;
+   //ALEXEY: add the rest of Job flow params to compare!
+   if ( fitrng    != ap.fitrng  )   return false;
+   if ( grpoints  != ap.grpoints  ) return false;
+   if ( j2rfiters != ap.j2rfiters ) return false;   
+   if ( rfiters   != ap.rfiters )   return false;  
+   if ( mciters   != ap.mciters  )  return false;   
+   if ( fmb       != ap.fmb  )      return false;
 
+   if ( job1run      != ap.job1run  ) return false;
+   if ( job2run      != ap.job2run  ) return false;
+   if ( job3run      != ap.job3run  ) return false;
+   if ( job4run      != ap.job4run  ) return false;
+   if ( job5run      != ap.job5run  ) return false;
+   if ( job3auto     != ap.job3auto  ) return false;
+
+   //& array of 2DSA controls per channel..
+   if ( parms     != ap.parms )     return false;
+   
    return true;
 }
 
@@ -723,10 +938,25 @@ US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
 bool US_AnaProfile::AnaProf2DSA::Parm2DSA::operator==
                  ( const Parm2DSA& p ) const
 {
-   bool same      = true;
-   same           = ( channel != p.channel ) ? false : same;
+  //bool same      = true;
+  //same           = ( channel != p.channel ) ? false : same;
+  
+  //return same;
 
-   return same;
+  if ( s_min    != p.s_min    ) return false;
+  if ( s_max    != p.s_max    ) return false;
+  if ( k_min    != p.k_min    ) return false;
+  if ( k_max    != p.k_max    ) return false;
+  if ( ff0_const  != p.ff0_const    ) return false;
+  if ( s_grpts    != p.s_grpts    ) return false;
+  if ( k_grpts    != p.k_grpts    ) return false;
+  if ( gridreps   != p.gridreps   ) return false;
+
+  if ( varyvbar  != p.varyvbar )  return false;
+  
+  if ( channel  != p.channel    ) return false;
+    
+  return true;
 }
 
 // AnaProfPCSA subclass constructor
@@ -741,9 +971,16 @@ US_AnaProfile::AnaProfPCSA::AnaProfPCSA()
 bool US_AnaProfile::AnaProfPCSA::operator== 
                   ( const AnaProfPCSA& ap ) const
 {
-   if ( nchan  != ap.nchan ) return false;
-
-   return true;
+  qDebug() << "RP:AnaProfPCSA: nchan, ap.nchan -- "     << nchan << ", " << ap.nchan;
+  qDebug() << "RP:AnaProfPCSA: job_run, ap.job_run -- " << job_run << ", " << ap.job_run;
+  
+  if ( nchan   != ap.nchan ) return false;
+  if ( job_run != ap.job_run ) return false;
+  
+  //& PCSA controls per channel
+  if ( parms  != ap.parms ) return false;
+  
+  return true;
 }
 
 // Read all current Cells controls from an XML stream
@@ -969,10 +1206,33 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
 bool US_AnaProfile::AnaProfPCSA::ParmPCSA::operator==
                  ( const ParmPCSA& p ) const
 {
-   bool same      = true;
-   same           = ( channel != p.channel ) ? false : same;
+  // bool same      = true;
+  // same           = ( channel != p.channel ) ? false : same;
+  
+  // return same;
 
-   return same;
+  if ( x_min   != p.x_min    ) return false;
+  if ( x_max   != p.x_max    ) return false;
+  if ( y_min   != p.y_min    ) return false;
+  if ( y_max   != p.y_max    ) return false;
+  if ( z_value   != p.z_value    ) return false;
+  if ( tr_alpha   != p.tr_alpha   ) return false;
+  if ( varcount   != p.varcount  ) return false;
+  if ( grf_iters   != p.grf_iters ) return false;
+  if ( creso_pts   != p.creso_pts ) return false;
+  if ( noise_flag   != p.noise_flag ) return false;
+  if ( treg_flag   != p.treg_flag ) return false;
+  if ( mc_iters   != p.mc_iters ) return false;
+  
+  if ( channel   != p.channel    ) return false;
+  if ( curv_type   != p.curv_type    ) return false;
+  if ( x_type   != p.x_type    ) return false;
+  if ( y_type   != p.y_type    ) return false;
+  if ( z_type   != p.z_type    ) return false;
+  if ( noise_type   != p.noise_type   ) return false;
+  if ( treg_type   != p.treg_type   ) return false;
+  
+  return true;
 }
 
 

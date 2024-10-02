@@ -1,3 +1,4 @@
+//! \file us_ddist_combine.h
 #ifndef US_DDIST_COMBO_H
 #define US_DDIST_COMBO_H
 
@@ -17,8 +18,18 @@ class US_DDistr_Combine : public US_Widgets
    Q_OBJECT
 
    public:
-      US_DDistr_Combine();
+      //US_DDistr_Combine();
+      US_DDistr_Combine( QString = QString("") );
 
+      QList< QStringList > load_auto( QStringList, QStringList  );
+      QMap< QStringList, QList< QColor> >      model_select_auto   ( QString, QMap < QString, QString >  );
+      QwtPlot* rp_data_plot1();
+      void     reset_data_plot1();
+      QMap< QStringList, QList< QColor> >      changedPlotX_auto ( int,  QMap < QString, QString >);
+      QString a_mode;
+
+      
+      
    private:
 
       // Distribution description object
@@ -157,10 +168,18 @@ class US_DDistr_Combine : public US_Widgets
       void save           ( void );
       void reset_data     ( void );
       void reset_plot     ( void );
+
       void plot_data      ( void );
+      void plot_data_auto ( QMap < QString, QString > );
+      
       void plot_distr     ( DistrDesc, QString );
+      void plot_distr_auto( DistrDesc, QString, QMap < QString, QString > );
+      
       void runid_select   ( int );
+
       void model_select   ( int );
+      
+      
       void setColor       ( DistrDesc&, int );
       void possibleColors ( void );
       int  distro_by_descr( QString& );
@@ -182,6 +201,9 @@ class US_DDistr_Combine : public US_Widgets
       bool equivalent        ( double, double, double );
       int  envel_data( QVector< double >&, QVector< double >&,
                        QVector< double >&, QVector< double >& );
+      int  envel_data_auto( QVector< double >&, QVector< double >&,
+			    QVector< double >&, QVector< double >&,
+			    double, double, double );
 
       void help(      void )
       { showHelp.show_help( "ddist_combine.html" ); };

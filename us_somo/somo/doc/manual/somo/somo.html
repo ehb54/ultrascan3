@@ -21,27 +21,36 @@
 <hr>
 <center>
 <h2>
-SOMO - Solution Modeler (Bead and SAXS/SANS Modeler for NMR and X-ray structures):</h2>
+SOMO - SOlution MOdeler: bead and SAXS/SANS modeler for (bio)macromolecular structures</h2>
 </center>
 <p>
-<h3><center>Last updated: March 2021 </center></h3><p>
-
-The SOMO (SOlution MOdeller) module of UltraScan (<b><i>US-SOMO</i></b>) initially contained only a bead modelling utility that was originally developed by the Rocco and Byron labs, respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST, Genova, Italy) and at the University of Glasgow (Glasgow, Scotland, UK). The original code was mainly written by B. Spotorno, G. Tassara, N. Rai and M. Nollmann. The <i><b>SoMo</b></i> bead modeling utilities in SOMO are based on a reduced representation of a biomacromolecule, starting from its atomic coordinates (PDB format, mmCIF compatibility is planned), as a set of beads of different radii, from which the hydrodynamic properties in the rigid-body frame can be calculated, after overlaps between beads are removed, using the Garcia de la Torre-Bloomfield  "supermatrix inversion" (<b><i>SMI</i></b>) approach (Garc&iacute;a de la Torre and Bloomfield, Q. Rev. Biophys. 14:81-139, 1981). The reduced representation is afforded by grouping together atoms and substituting them with a bead of the same volume, appropriately positioned. Importantly, the volume of the water of hydration theoretically bound to each group of atoms can be then added to each bead. The overlaps between the beads are then removed in sequential steps, but preserving as much as possible the original surface envelope of the bead model. The method was fully validated and reported in the literature (Rai et al., Structure 13:723-734, 2005; Brookes et al., Eur. Biophys. J., 39:423-435, 2010; Brookes et al., Macromol. Biosci. 10:746-753, 2010). Among the main advantages of this method over shell-modelling and grid-based procedures are a better treatment of the hydration water and the preservation of a direct correspondence between beads and original residues. For instance, the latter feature could be used to include flexibility effects into the computations. Furthermore, by identifying and excluding from the hydrodynamic computations beads that are buried and thus not "in contact" with the solvent, a large span in the size of the structures that can be analysed with this method without loss of precision is obtained: originally, structures from 5K to 450K were successfully studied, and the steady increase in the available computer power have and is continuosly expanding this range .<br>
+<h3><center>Last updated: June 2024 </center></h3><p>
+<p>
+<h3><b>Overview and History</b></h3>
+<p>
+The SOMO (SOlution MOdeller) module of UltraScan (<b><i>US-SOMO</i></b>) initially contained only a bead modelling utility that was originally developed by the Rocco and Byron labs, respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST, Genova, Italy) and at the University of Glasgow (Glasgow, Scotland, UK). The original code was mainly written by B. Spotorno, G. Tassara, N. Rai and M. Nollmann. The <i><b>SoMo</b></i> bead modeling utilities in SOMO are based on a reduced representation of a biomacromolecule, starting from its atomic coordinates (PDB format, mmCIF compatibility is still planned as of June 2024...), as a set of beads of different radii, from which the hydrodynamic properties in the rigid-body frame can be calculated, after overlaps between beads are removed, using the Garcia de la Torre-Bloomfield  "supermatrix inversion" (<b><i>SMI</i></b>) approach (Garc&iacute;a de la Torre and Bloomfield, Q. Rev. Biophys. 14:81-139, 1981). The reduced representation is afforded by grouping together atoms and substituting them with a bead of the same volume, appropriately positioned. Importantly, the volume of the water of hydration theoretically bound to each group of atoms can be then added to each bead. The overlaps between the beads are then removed in sequential steps, but preserving as much as possible the original surface envelope of the bead model. The method was fully validated and reported in the literature (Rai et al., Structure 13:723-734, 2005; Brookes et al., Eur. Biophys. J., 39:423-435, 2010; Brookes et al., Macromol. Biosci. 10:746-753, 2010). Among the main advantages of this method over shell-modelling and grid-based procedures are a better treatment of the hydration water and the preservation of a direct correspondence between beads and original residues. For instance, the latter feature could be used to include flexibility effects into the computations. Furthermore, by identifying and excluding from the hydrodynamic computations beads that are buried and thus not "in contact" with the solvent, a large span in the size of the structures that can be analysed with this method without loss of precision is obtained: originally, structures from 5K to 450K were successfully studied, and the steady increase in the available computer power is continuosly expanding this range .<br>
 Subsequently, we have also improved the original AtoB grid method (Byron, Biophys. J. 72:408-415, 1997), which was already included within <b><i>US-SOMO</i></b>, by adding the theoretical hydration, accessible surface area screening, and a better preservation of the original surface. The possibility of changing the grid size in the improved AtoB could be very useful to study very large structures and complexes.<br>
-Later on, in <b><i>US-SOMO</i></b> was added an alternative, at the time far more computationally intensive method of calculating the hydrodynamics based on the analogy that exists between certain hydrodynamic and electrostatic properties, <b><i>ZENO</i></b> (see Douglas, Some Applications of Fractional Calculus to Polymer Science, Adv. Chem. Phys. 102:121-191, 1997; Douglas et al., Hydrodynamic friction and the capacitance of arbitrarily shaped objects, Phys. Rev. E 49:5319-5331, 1994; Mansfield et al., Intrinsic Viscosity and the Electric Polarizability of Arbitrarily Shaped Objects, Phys. Rev. E, 64:61401-61416, 2001; <a href="https://zeno.nist.gov/">https://zeno.nist.gov/</a>). Then, in May 2014 an interface and an analysis modulus for the boundary elements method <b><i>BEST</i></b> [S.R. Aragon, A precise boundary element method for macromolecular transport properties. J. Comp.Chem., 25, 1191-1205 (2004); S.R. Aragon and D.K. Hahn, Precise boundary element computation of proteins transport properties: Diffusion tensors, specific volume and hydration, Biophysical Journal, 91:1591-1603 (2006)] were implemented within US-SOMO.<br><br>
+Later on, in <b><i>US-SOMO</i></b> was added an alternative, at the time far more computationally intensive method of calculating the hydrodynamics based on the analogy that exists between certain hydrodynamic and electrostatic properties, <b><i>ZENO</i></b> (see Douglas, Some Applications of Fractional Calculus to Polymer Science, Adv. Chem. Phys. 102:121-191, 1997; Douglas et al., Hydrodynamic friction and the capacitance of arbitrarily shaped objects, Phys. Rev. E 49:5319-5331, 1994; Mansfield et al., Intrinsic Viscosity and the Electric Polarizability of Arbitrarily Shaped Objects, Phys. Rev. E, 64:61401-61416, 2001; <a href="https://zeno.nist.gov/">https://zeno.nist.gov/</a>). Then, in May 2014 an interface and an analysis modulus for the boundary elements method <b><i>BEST</i></b> [S.R. Aragon, A precise boundary element method for macromolecular transport properties. J. Comp.Chem., 25, 1191-1205 (2004); S.R. Aragon and D.K. Hahn, Precise boundary element computation of proteins transport properties: Diffusion tensors, specific volume and hydration, Biophysical Journal, 91:1591-1603, 2006] were implemented within US-SOMO.<br><br>
 
 In 2015, a comprehensive study was conducted to compare various hydrodynamic modeling approaches (Rocco and Byron, Computing translational diffusion and sedimentation coefficients: an evaluation of experimental data and programs., Eur. Biophys. J. 44:417-431, 2015, Erratum http://dx.doi.org/10.1007/s00249-015-1058-1; see also Rocco and Byron, Hydrodynamic Modeling and Its Application in AUC, Methods Enzymol. 562:81-108, 2015). The methods tested were <i><b>SoMo</b></i> with computations using either the <i><b>SMI</b></i> or <i><b>ZENO</b></i> approaches, <i><b>AtoB</b></i> with 5 and 2 &Aring; grid sizes and <i><b>SMI</b></i> computations, <i><b>BEST</b></i>, all under the US-SOMO implementation, and, externally, <i><b>HYDROPRO</b></i> (Ortega, A., D. Amor&oacute;s, and J. Garc&iacute;a de la Torre. Prediction of hydrodynamic and other solution properties of rigid proteins from atomic- and residue-level models. Biophys. J. 101:892-898, 2011). The results indicated that, on average, <i><b>BEST</b></i> and <i><b>HYDROPRO</b></i> tend to underestimate the translational frictional properties by &#126;-3 and -4%, respectively, while <i><b>SoMo</b></i> using either the <i><b>SMI</b></i> or <i><b>ZENO</b></i> approaches overestimates them slightly less (&#126;+2%). The best results using the <i><b>SMI</b></i> approach were obtained by <i><b>AtoB</b></i> with  a 5 &Aring; grid size, &#126;+0.5. However, a combination of <i><b>SoMo</b></i> bead models <i>without</i> overlap removal and <i><b>ZENO</b></i> computations performed even better, with  &#126;0% average discrepancy and all results within &plusmn;4%, not far from the average experimental error of &plusmn;&#126;3%. For these reasons, starting from the May 2015 <b><i>US-SOMO</i></b> release, this combination was directly offered among the bead modeling hydrodynamic computations options.<p>
 
-More recently, a new implementation of the <i><b>ZENO</b></i> method, completely rewritten in the C++ language instead of Fortran, with greatly improved serial performance and able to utilize the multi-core capabilities of modern processors, thus allowing computational times shorter by a factor of ~100, was produced at NIST (Juba et al., J. Res. Natl. Inst. Stand. Technol. 122:1-2, 2017). This new <i><b>ZENO</b></i> code was implemented into <b><i>US-SOMO</i></b>, but it could be distributed only with Linux system executables. This was due to the <b><i>US-SOMO</i></b> underlying architecture which relied on the Qt3 now obsolete libraries. A major rewriting effort was then done, to recode <b><i>US-SOMO</i></b> under the up-to-date Qt5 framework. This has allowed us to introduce a new bead model generating option, which we call <span style="color:#CC0000">"<b>van der Waals (vdW) with overlaps</b>"</span>. The <b>vdW with overlaps</b> method allows generating a bead model where each atom present in the PDB file (except, by default, H<sub>2</sub>O molecules) is represented by a bead whose radius is equal to the atom's van der Waals radius as listed in the <i>somo.residue</i> table (see below). If water molecules are associated to any particular atom in the <i>somo.residue</i> table, their volume is calculated and added to that derived from the atom's van der Waals radius, and a final bead radius is then recomputed. No overlap removal is performed, and the <i><b>ZENO</b></i> method could then be used to compute the hydrodynamic parameters. While this direct method as so far implemented matches slightly worse the experimental parameters of the test proteins (Brookes and Rocco, Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite. Eur. Biophys. J. 47:855-864, 2018), it opens up some interesting possibilities, such as using structures explicitly hydrated by Molecular Dynamics simulations. The <b>vdW with overlaps</b> method is under active development.<br><p>
+In <span style="color:#CC0000">2017</span>, a new implementation of the <i><b>ZENO</b></i> method, completely rewritten in the C++ language instead of Fortran, with greatly improved serial performance and able to utilize the multi-core capabilities of modern processors, thus allowing computational times shorter by a factor of ~100, was produced at NIST (Juba et al., J. Res. Natl. Inst. Stand. Technol. 122:1-2, 2017). This new <i><b>ZENO</b></i> code was implemented into <b><i>US-SOMO</i></b>, but it could be distributed only with Linux system executables. This was due to the <b><i>US-SOMO</i></b> underlying architecture which relied on the Qt3 now obsolete libraries. A major rewriting effort was then done, to recode <b><i>US-SOMO</i></b> under the up-to-date Qt5 framework. This has allowed us to introduce a new bead model generating option, which we call <span style="color:#CC0000">"<b>van der Waals (vdW) with overlaps</b>"</span>. The <b>vdW with overlaps</b> method allows generating a bead model where each atom present in the PDB file (except, by default, H<sub>2</sub>O molecules) is represented by a bead whose radius is equal to the atom's van der Waals radius as listed in the <i>somo.residue</i> table (see below). If water molecules are associated to any particular atom in the <i>somo.residue</i> table, their volume is calculated and added to that derived from the atom's van der Waals radius, and a final bead radius is then recomputed. No overlap removal is performed, and the <i><b>ZENO</b></i> method could then be used to compute the hydrodynamic parameters. While this direct method originally matched slightly worse the experimental parameters of the test proteins (Brookes and Rocco, Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite. Eur. Biophys. J. 47:855-864, 2018), it opens up some interesting possibilities, such as using structures explicitly hydrated by Molecular Dynamics simulations. The <b>vdW with overlaps</b> method is under active development, and <span style="color:#CC0000">new features</span> bringing its performance on par and even better than those described in the above-mentioned paper have been added for the <span style="color:#CC0000">July 2024</span> release (Brookes and Rocco, manuscript in preparation).<br><p>
 
-Even more recently, a new computational method that could handle bead models with <i>overlapping beads of different size</i> has been presented (Zuk et al., GRPY: an accurate bead method for calculation of hydrodynamic properties of rigid biomacromolecules,  Biophys. J. 115:782-800, 2018). <b><i>GRPY</i></b> (<i>Generalized Rotne-Prager-Yamakawa</i>) works in the same framework as the <b><i>SMI</i></b> method, while solving the long-standing issue of overlaps between beads of different sizes and providing robust estimates of the intrinsic viscosity and the rotational diffusion coefficients (the latter are not computed by <b><i>ZENO</i></b>), but is rather more computationally intensive. A non-parallel <b><i>GRPY</i></b> code is now made available within <b><i>US-SOMO</i></b> as an additional computational option, and a full implementation allowing multi-core parallel processing in underway (<span style="color:#CC0000">February 2021</span>).<br>
+In <span style="color:#CC0000">2018</span>, a new computational method that could handle bead models with <i>overlapping beads of different size</i> has been presented (Zuk et al., GRPY: an accurate bead method for calculation of hydrodynamic properties of rigid biomacromolecules,  Biophys. J. 115:782-800, 2018). <b><i>GRPY</i></b> (<i>Generalized Rotne-Prager-Yamakawa</i>) works in the same framework as the <b><i>SMI</i></b> method, while solving the long-standing issue of overlaps between beads of different sizes and providing robust estimates of the intrinsic viscosity and the rotational diffusion coefficients (the latter are not computed by <b><i>ZENO</i></b>), but is rather more computationally intensive. A non-parallel <b><i>GRPY</i></b> code was made available within <b><i>US-SOMO</i></b> as an additional computational option, and a full implementation allowing multi-core parallel processing is now available for all operating systems from the <span style="color:#CC0000">July 2024</span> release.<br>
 <span style="color:#CC0000">Importantly</span>, the <b><i>GRPY</i></b> availability has allowed us to re-examine the performance of the <b><i>SMI</i></b> method for what concerns models with non-overlapping beads. While small differences were found for the <i>translational diffusion</i> properties computations, we are sorry to report that the <b><i>SMI</i></b> calculations of the <i>rotational diffusion</i> and the <i>intrinsic viscosity</i> did not match the state-of-the-art <b><i>GRPY</i></b> results for simple bead models (linear arrays, compact  arrays, round arrays, all with equal radius) test structures, with up to 40% differences for the <i>rotational diffusion</i> properties. This failure directly stems from the inadequacy of the so-called "volume correction" that was originally developed by J. Garc&iacute;a de la Torre and collaborators and that is implemented in the <b><i>SMI</i></b> routines (see Spotorno et al., Eur. Biophys. J. 25:373-384, 1997; Erratum 26:417, 1997). While the Garc&iacute;a de la Torre group has subsequently introduced improvements for the computation of the <i>rotational diffusion</i> and the <i>intrinsic viscosity</i> (see Garc&iacute;a de la Torre et al., Improved calculation of rotational diffusion and intrinsic viscosity of bead models for macromolecules and nanoparticles. J. Phys. Chem. B 111, 955-961, 2007), it turns out that these can be applied only for non-overlapping beads of <b>equal size</b>. Therefore, from the <span style="color:#CC0000">February 2021</span> <b><i>US-SOMO</i></b> release, the <b><i>SMI</i></b> method hydrodynamic computations output will <span style="color:#CC0000">NOT</span> report anymore the <i>rotational diffusion</i> properties and the <i>intrinsic viscosity</i> values. Users interested in these calculations can utilize the state-of-the-art <b><i>GRPY</i></b> method, that is, however, computationally demanding, or, limited to the <i>intrinsic viscosity</i> calculation, the <b><i>ZENO</i></b> method, that can handle large structures. <br><p>
+
+Importantly, the availability of parallel <b><i>GRPY</i></b> and the <b><i>vdW models</i></b> has allowed us to test in detail the performance of the <b><i>ZENO</i></b> method. We found that the <b><i>ZENO</i></b> calculation of <i>D<sub>t</i><sub>(20,w)</sub> constantly produced relatively larger (&#126;+1-2%) values than those computed by <b><i>GRPY</i></b> for our test set of 25 protein structures. We could track a dependency on the "<i>skin thickness</i>" parameter in the <b><i>ZENO</i></b> calculations, that correlated linearly, although not perfectly, with the radius of gyration <i>R<sub>g</sub></i> of those proteins. Surface roughness appeared also to be a factor, but calculations of a proxy for this feature, the mass or surface fractal dimensions (<i><b>D<sub>m</sub></i></b> and <i><b>D<sub>s</sub></i></b>) did not produce any useful correlation. Incidentally, stemming from this work the calculations of <b><i>D<sub>m</sub></i></b> and <b><i>D<sub>s</sub></i></b> can now be performed as an option on loading a (bio)-macromolecular structure in <b><i>US-SOMO</b></i>. Using more elongated structures (derived from the fibrinogen main body crystal structure 3GHG.pdb) we found that the <b><i>ZENO</i></b> skin-dependence of the differences with the <b><i>GRPY</i></b> calculations reached a plateau at <i>R<sub>g</sub></i> values of 50-60 &Aring;. The <i>R<sub>g</sub></i>-dependence of this entire dataset of 33 protein structures was fitted with a sigmoid, and using this skin thickness heuristic dependence reduced the discrepancy between <b><i>GRPY</i></b> and <b><i>ZENO</i></b> calculated <i>D<sub>t</i><sub>(20,w)</sub> values to an average of 0.5&plusmn;0.22% (range &plusmn;0.6%) (Brookes and Rocco, manuscript in preparation). This heuristic <b><i>ZENO</i></b> skin value calculation is now offered as a <b><i>default</i></b> option from the <span style="color:#CC0000">July 2024</span> release of <b><i>US-SOMO</i></b>. <br><p>
+
 
 <b><i>US-SOMO</i></b> also includes a fully functional Small-Angle X-ray or Neutron Scattering (SAXS/SANS) simulator module, which works on either the original atomic structure, or on a bead model, and has enhanced experimental data processing capabilities. In the modeling area, several methods are offered for the computation of SAXS and SANS <i>I(q)</i> vs. <i>q</i> curves. Some of these methods require explicit hydration of the PDB structure(s), which should be presently externally provided. A pairwise-distance distribution function <i>P(r)</i> vs. <i>r</i> computation starting from a PDB structure is fully operational for both SAXS and SANS, and includes a graphical mapping utility to visualize which residues in the structure are contributing to specified distance ranges. An indirect Fourier transform Bayesian algorithm, based on the work by Hansen (Hansen, J. Appl. Crystallogr. 33:1415-1421, 2000; Hansen, J. Appl. Crystallogr. 41:436-445, 2008), has been implemented for the computation of the pairwise distance distribution function from SAS data.<br>
 In the experimental data processing area, a novel <a href="somo_saxs_hplc.html"><span style="color:#CC0000">HPLC-SAXS data
 processing utility</span></a> has been implemented, which starts with the transformation of a time series of <i>I(q)</i> vs.
 <i>q</i> frames into a series of time chromatograms <i>I(t)</i> vs. <i>t</i> for each <i>q</i> value. A check of the baselines, potentially revealing capillary fouling due to the accumulation of material on its walls, can then be performed, and corrections applied. In case of overlapping or not baseline-resolved peaks, Single Value Decomposition (SVD) can be applied on the original or baseline-corrected data, the latter after automatic back-generation of the <i>I(q)</i> vs. <i>q</i> frames, to identify how many components are present in the data. Global Gaussian analysis/decomposition can then be performed on the <i>I(t)</i> vs. <i>t</i> for each <i>q</i> value dataset, followed by back-generation of the  <i>I(q)</i> vs. <i>q</i> frames for each Gaussian peak. Several improvements are present in this area from the <span style="color:#CC0000">June 2015 release</span>, like an integral baseline evaluation/subtraction procedure, with immediate testing of the results in the <i>I(q)</i> vs. <i>q</i> space, the possibility of peak decomposition using non-symmetrical Gaussian functions, an improved treatment of concentration detector data, and a tool to evaluate the data-associated errors, when necessary, from the baseline fluctuations.<br> 
-The <span style="color:#CC0000">Guinier analysis</span> of experimental <i>I(q)</i> vs. <i>q</i> curves offers the determination of the overall <i>z</i>-average square radius of gyration <i>&lt;R<sub>g</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w</i>-average molecular weight <i>&lt;M&gt;<sub>w</sub></i> from global Guinier, of the  <i>z</i>-average square cross-section radius of gyration <i>&lt;R<sub>c</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w/z</i>-average mass per unit length <i>&lt;M/L&gt;<sub>w</sub></i> for rod-like macromolecules, and of the <i>z</i>-average square transverse radius of gyration <i>&lt;R<sub>t</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w/z</i>-average mass per unit area <i>&lt;M/A&gt;<sub>w</sub></i> for disk-like marcomolecules. <p>
+
+The <span style="color:#CC0000">Guinier analysis</span> of experimental <i>I(q)</i> vs. <i>q</i> curves offers the determination of the overall <i>z</i>-average square radius of gyration <i>&lt;R<sub>g</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w</i>-average molecular weight <i>&lt;M&gt;<sub>w</sub></i> from global Guinier, of the  <i>z</i>-average square cross-section radius of gyration <i>&lt;R<sub>c</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w/z</i>-average mass per unit length <i>&lt;M/L&gt;<sub>w</sub></i> for rod-like macromolecules, and of the <i>z</i>-average square transverse radius of gyration <i>&lt;R<sub>t</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w/z</i>-average mass per unit area <i>&lt;M/A&gt;<sub>w</sub></i> for disk-like marcomolecules.<br> 
+
+From the <span style="color:#CC0000">July 2024</span> <b><i>US-SOMO</i></b> release, modules to analyse Multi-Angle Light Scattering (<b><i>MALS</i></b>) data and integrate them with in-parallel or sequentially collected <b><i>SAXS</b></i> data have been added.<br>
+<p>
 
 The batch operations module includes supercomputing access, with an interface to Discrete Molecular Dynamics (DMD) programs (Dokholyan, NV, Buldyrev, SV, Stanley, HE, and EI Shaknovich. Discrete molecular dynamics studies of the folding of a protein-like model. (1998) Folding & Design 3:577-587; Ding F, Dokholyan NV. Emergence of protein fold families through rational design. Public Library of Science Comput Biol. (2006) 2(7):e85). Starting from the <span style="color:#CC0000">May 2014 release</span>, you will also find the implementation on a supercompute cluster of the boundary-elements hydrodynamic computations <b><i>BEST</i></b> [S.R. Aragon, A precise boundary element method for macromolecular transport properties. J. Comp.Chem., 25, 1191-1205 (2004); S.R. Aragon and D.K. Hahn, Precise boundary element computation of proteins transport properties: Diffusion tensors, specific volume and hydration, Biophysical Journal, 91:1591-1603 (2006)], and the relative interfaces in <b><i>US-SOMO</i></b> to set-up the analysis parameters and analyze the computations results.<p>
 
@@ -52,18 +61,20 @@ Other features include a model classifier in which calculated parameters can be 
 <h3><b>General description:</b></h3>
 <p>
 <P>
-The program main window contains an upper bar from which all the options governing its operations can be controlled, and a main panel for program execution. However, due to its high level of sophistication, properly setting all the available options can be non-trivial for the general user. Therefore, the <b><i>US-SOMO</i></b> module is distributed with pre-defined default options that should allow the direct conversion of a PDB-formatted biomacromolecular structure file into a bead model, and the computation of its hydrodynamic properties, without the need of accessing the advanced options menus. In particular, the <b>SoMo</b> approach is based on properly defining the atoms and residues found in PDB files, and the rules allowing their conversion into beads. The <b><i>US-SOMO</i></b> distribution includes the definition of all the standard amino acids, nucleotides, carbohydrates, and common prosthetic groups and co-factors, but this list is by no means exhaustive, and the need to code for "new" residues is not a remote possibility. As this operation can be demanding, notwithstanding the user-friendly GUIs governing it, the pre-defined set of options includes approximate methods to deal with either missing atoms within coded residues, and/or not yet coded residues. Starting from the May 2015 release, the default option is to <b>generate</b> a single bead for each non-coded residue using <b>average</b> parameters. When non-coded residues are found, a pop-up panel will alert the user and present as options (<i>i</i>) to continue with the <b>approximate method</b>; (<i>ii</i>) to <b>skip</b> non-coded residues (<b>not recommended</b>), or (<i>iii</i>)  to <b>halt operations</b> and then take proper action like coding for the new residue. For coded residues with missing atoms, since most often this is due to lack of crystallographic data, the <b>default</b> option is now to use the <b>complete residue</b>'s bead(s), appropriately positioned (again, a pop-up panel will warn of such instances and present
-the alternative <b>skip</b> (<b>not recommended</b>) or <b>halt operations</b> options). Obviously, there's <b>no cure</b> for completely missing residues, which will have to be built in the original structure for reliable results, since the structure should contain all residues and atoms that are present in the "real" macromolecule studied in solution. Therefore, for best performance all residues should be properly coded in the <b><i>US-SOMO</i></b> tables (see below).
+The program main window contains an upper bar from which all the options governing its operations can be controlled, and a main panel for program execution. However, due to its high level of sophistication, properly setting all the available options can be non-trivial for the general user. Therefore, the <b><i>US-SOMO</i></b> module is distributed with pre-defined default options that should allow the direct conversion of a PDB-formatted biomacromolecular structure file into a bead model, and the computation of its hydrodynamic properties, without the need of accessing the advanced options menus. In particular, the workhorse <b>SoMo</b> approach, either with or without overlaps removal (the latter now being the preferred option since the <b><i>ZENO</i></b> and <b><i>GRPY</i></b> implementation)   is based on properly defining the atoms and residues found in PDB files, and the rules allowing their conversion into beads. These rules also apply for the <b>vdW</b> bead models. The <b><i>US-SOMO</i></b> distribution includes the definition of all the standard amino acids, nucleotides, carbohydrates, and common prosthetic groups and co-factors, but this list is by no means exhaustive, and the need to code for "new" residues is not a remote possibility. As this operation can be demanding, notwithstanding the user-friendly GUIs governing it, the pre-defined set of options includes approximate methods to deal with either missing atoms within coded residues, and/or not yet coded residues. Starting from the May 2015 release, the default option for <b>SoMo</b> models is to <b>generate</b> a single bead for each non-coded residue using <b>average</b> parameters. When non-coded residues are found, a pop-up panel will alert the user and present as options (<i>i</i>) to continue with the <b>approximate method</b>; (<i>ii</i>) to <b>skip</b> non-coded residues (<b>not recommended</b>), or (<i>iii</i>)  to <b>halt operations</b> and then take proper action like coding for the new residue. For coded residues with missing atoms, since most often this is due to lack of crystallographic data, the <b>SoMo</b> bead modeling method <b>default</b> option is now to use the <b>complete residue</b>'s bead(s), appropriately positioned (again, a pop-up panel will warn of such instances and present the alternative <b>skip</b> (<b>not recommended</b>) or <b>halt operations</b> options). Obviously, there's <b>no cure</b> for completely missing residues, which will have to be built in the original structure for reliable results, since the structure should contain all residues and atoms that are present in the "real" macromolecule studied in solution. This applies also for missing atoms if <b>vdW</b> models are to be used. Therefore, for best performance all residues should be properly coded in the <b><i>US-SOMO</i></b> tables (see below).
 <p>
 <p>
+<center>
 <table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
-<center>
-<td><center><img SRC="somo-main0.png" ALT="Main SOMO Screen"></td>
-</tr> 
-</center>
-<td align=justify>
 
+<td><center><img SRC="somo-main0new.png" ALT="Main SOMO Screen"></td>
+</tr> 
+
+<td align=justify>
+</table>
+</center>
+<p>
 <p>
 
 <p><b>SOMO Program:</b>
@@ -71,11 +82,12 @@ the alternative <b>skip</b> (<b>not recommended</b>) or <b>halt operations</b> o
 These functions control the execution of the <b><i>US-SOMO</i></b> program, whose progress is recorded in the right-side main window (in the pictures that follow below, excerpts of the messages during the model building and hydrodynamic computation phases starting from the 1HEL.pdb hen white lysozyme structure will be shown). They are divided in three subpanels controlling operations that deal with the primary PDB file (<b>PDB Functions:</b>), operations relating the generation of bead models (<b>Bead Model Functions:</b>), and the computation of the hydrodynamic parameters (<b>Hydrodynamic Calculations:</b>).
 Note that the buttons that can be actuated at a given stage of operations are identified with black labels, while not-actuable buttons are identified with <span style="color:#CC0000">red labels</span>. This color scheme can be changed from the <i>System Configuration</i> menu accessisble form the <b>Configuration</b> pull-down menu in the top bar.<p>
 
-
-<tr>
 <center>
-<td><center><img SRC="Somo_PDB_functions_September2020.png" ALT="SOMO PDB Functions Screen"></td>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=10 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="Somo_PDB_functions_July2024.png" ALT="SOMO PDB Functions Screen"></td>
 </tr> 
+</table>
 </center>
 <td align=justify>
 
@@ -83,7 +95,7 @@ Note that the buttons that can be actuated at a given stage of operations are id
 <b>PDB Functions:</b><br>
 On launching, <b><i>US-SOMO</i></b> will automatically load the last used lookup table (<i><b>default:</i></b> <i>somo.residue</i>), where all the informations needed to convert the residues present in atomic structures into beads are stored. To select a different lookup table, click on <i><b>Select Lookup Table</b></i>. You can create multiple
 lookup tables for different conditions. The lookup table needs to contain all atoms and residues present in the (macro)molecule to be loaded in the next step. By default, <b><i>US-SOMO</i></b> will automatically load the last used <i>*.residue</i> table.<br>
-A new feature present since the <span style="color:#CC0000">February 2021</span> release is the presence of two additional fields for the temperature <i>T</i> (<i><b>default:</i> 20 &deg;C</b>) and the <i>pH</i> (<i><b>default:</i> 7.00</b>; if this number is modified, rechecking the checkbox associated with this entry will restore the default value) at which some calculations are then performed (see below) and some properties are defined. In particular, the <i>pH</i> controls the ionization state of atoms that can either gain or loose a proton, such as the <b>NH<sub>2</sub></b> amino group or one of the oxygens in the <b>COOH</b> carboxy group. This in turn affects the <i>molecular weight</i> and the <i>hydration</i> of the residue, and for this reason new fields were added in the <i>somo.residue</i> table allowing to enter the <i>pK<sub>a</sub></i> of an atom and the hydration values at the <i>pH</i> extremes of 0 and 14 (see <a href="somo_residue.html">here</a>). For a chosen <i>pH</i>, the Henderson-Hasselbalch Equation (see Po and Senoza, J. Chem. Educ. 78:1499-1503, 2001) is used to find the relative proportions of protonated/deprotonated species for each ionizable atom for which a <i>pK<sub>a</sub></i> is defined within a residue (for polyprotic species a system of Henderson-Hasselbalch equations is solved). Basically, for the dissociation of an acid <i>HA</i> into <i>A<sup>-</sup></i> and a proton you have:<p>
+A new feature available since the <span style="color:#CC0000">February 2021</span> release is the presence of two additional fields for the temperature <i>T</i> (<i><b>default:</i> 20 &deg;C</b>) and the <i>pH</i> (<i><b>default:</i> 7.00</b>; if this number is modified, rechecking the checkbox associated with this entry will restore the default value) at which some calculations are then performed (see below) and some properties are defined. In particular, the <i>pH</i> controls the ionization state of atoms that can either gain or loose a proton, such as the <b>NH<sub>2</sub></b> amino group or one of the oxygens in the <b>COOH</b> carboxy group. This in turn affects the <i>molecular weight</i> and the <i>hydration</i> of the residue, and for this reason new fields were added in the <i>somo.residue</i> table allowing to enter the <i>pK<sub>a</sub></i> of an atom and the hydration values at the <i>pH</i> extremes of 0 and 14 (see <a href="somo_residue.html">here</a>). For a chosen <i>pH</i>, the Henderson-Hasselbalch Equation (see Po and Senoza, J. Chem. Educ. 78:1499-1503, 2001) is used to find the relative proportions of protonated/deprotonated species for each ionizable atom for which a <i>pK<sub>a</sub></i> is defined within a residue (for polyprotic species a system of Henderson-Hasselbalch equations is solved). Basically, for the dissociation of an acid <i>HA</i> into <i>A<sup>-</sup></i> and a proton you have:<p>
 
  &emsp;    &ensp;log<sub>10</sub> <i>[A<sup>-</sup>]</i>/<i>[HA]</i> = <i>pH</i> - <i>pK<sub>a</sub></i> <p>
     
@@ -93,8 +105,8 @@ If one considers <i>[A<sup>-</sup>] = I </i>, the ionized fraction, then <i>[HA]
 
  &emsp;    &ensp;10<sup>(<i>pH-pK<sub>a</sub></i>)</sup> = <i>I/(1-I)</i>  <p>      
 
-Therefore, we can calculate the fraction of protons bound to each ionizable atom and the fraction of hydration waters associated with it as a function of the entered <i>pH</i>. From the proton counts, summation over the entire protein allows to calculate the overall <i>anhydrous Molecular Weight</i> and the <i>net charge</i> at the entered  <i>pH</i>. The Henderson-Hasselbach equation is also used in an iterative way over all ionizable atoms to find the isoelectric point of the (bio)macromolecule under examination. These values are now reported in the progress window after loading a PDB structure.<br>
-As for <i>T</i>, note that by default the hydrodynamic calculations are always performed at "standard conditions" (water at 20 &deg;C), irrespective of the <i>T</i> value set here. However, temperature and buffer conditions can by changed in the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>) module.<br>
+In this way, we can calculate the fraction of protons bound to each ionizable atom and the fraction of hydration waters associated with it as a function of the entered <i>pH</i>. From the proton counts, summation over the entire protein allows to calculate the overall <i>anhydrous Molecular Weight</i> and the <i>net charge</i> at the entered  <i>pH</i>. The Henderson-Hasselbach equation is also used in an iterative way over all ionizable atoms to find the isoelectric point of the (bio)macromolecule under examination. These values are now reported in the progress window after loading a PDB structure.<br>
+As for <i>T</i>, note that by default the hydrodynamic calculations are always performed at "standard conditions" (water at 20 &deg;C), irrespective of the <i>T</i> value set here. However, temperature and buffer conditions can by changed in the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>) module.<p>
 Two alternative options are available to load an atomic structure, such as those derived from NMR, X-ray crystallography, or cryo-EM data, the <i><b>Batch Mode Operation</b></i> (see <a href="somo_batch.html">here</a>), or the standard <i><b>Load Single PDB File</b></i>.
 Selecting a PBD file will also automatically call the molecular visualization program <i>RasMol</i> (Sayle RA, Milner-White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376, 1995) which will display the structure(s) in a pop-up window. For <i>Linux</i>-based systems, <i>RasMol</i> needs to be installed in
 <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit machines, and <pre><b>$ULTRASCAN/bin64</b></pre>
@@ -103,25 +115,43 @@ http://www.bernstein-plus-sons.com/software/rasmol/</a> (recommended, there it's
 http://openrasmol.org/#Software</a>.<p>
 <p>
 
-<tr>
 <center>
+<table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
 <td><center><img SRC="somo-main1.png" ALT="Main SOMO Screen after loading PDB"></td>
 </tr> 
+</table>
 </center>
 <td align=justify>
 
 <p>
-As shown in the picture above, besides visualizing the structure, the HEADER and TITLE fields of the PDB file will be displayed in the progress window, followed by a list of identified disulfide bonds between CYS residues, if any. This is a feature that was already present but was never made operational until the <span style="color:#CC0000">February 2021</span> release. It's active now by default, but can be turned off from the <a href=somo_pdb_parsing.html>PDB parsing</a> pull-down menu, where the cut-off distance (<i><b>default</i>: 2.5 &Aring;</b>) can also be changed. Importantly, if unpaired CYS residues are identified, their name will be changed to "CYH", for which a special entry is defined in the <i>somo.residue</i> table, since some molecular properties slightly differ between free cysteines and disulfide-bonded cystines. The residues sequence in both three- and one-letter codes (both "CYS" and "CYH" are reported as "C" there) is then displayed, followed, as shown in the picture below, by a summary of each reside count, percentage, and its associated, pH-dependent theoretical waters of hydration and the corresponding global hydration (g/g, i.e. g water/g protein), and by a list of various molecular properties calculated for the model: number of disulfide bonds, number of free SH, molecular weight, molar volume, partial specific volume (vbar) calculated at the specified T and the one that will be used in the hydrodynamic calculations, anhydrous SAXS excluded volume, anhydrous and hdrated molecular volumes computed from vbar and the global hydration (using the water molecular volume as defined in the <a href=somo_misc.html> Miscellaneous Options panel</a>), number of electrons, number of protons (pH-dependent), net charge at the specified pH, isoelectric point, and the average electron density:
+As shown in the picture above, besides visualizing the structure, the HEADER and TITLE fields of the PDB file will be displayed in the progress window, followed by a list of identified disulfide bonds between CYS residues, if any. This is a feature that was already present but was never made operational until the <span style="color:#CC0000">February 2021</span> release. It's active now by default, but can be turned off from the <a href=somo_pdb_parsing.html>PDB parsing</a> pull-down menu, where the cut-off distance (<i><b>default</i>: 2.5 &Aring;</b>) can also be changed. Importantly, if unpaired CYS residues are identified, their name will be changed to "CYH", for which a special entry is defined in the <i>somo.residue</i> table, since some molecular properties slightly differ between free cysteines and disulfide-bonded cystines. The residues sequence in both three- and one-letter codes (both "CYS" and "CYH" are reported as "C" in the latter) is then displayed, followed, as shown in the picture below, by a summary of each reside count, percentage, and its associated, pH-dependent theoretical waters of hydration and the corresponding global hydration (g/g, i.e. g water/g protein), and by a list of various molecular properties calculated for the model: number of disulfide bonds, number of free SH, molecular weight, molar volume, partial specific volume (vbar) calculated at the specified T and the one that will be used in the hydrodynamic calculations, anhydrous SAXS excluded volume, anhydrous and hydrated molecular volumes computed from vbar and the global hydration (using the water molecular volume as defined in the <a href=somo_misc.html> Miscellaneous Options panel</a>), number of electrons, number of protons (pH-dependent), net charge at the specified pH, isoelectric point, and the average electron density:
 
 <p>
 
 <tr>
 <center>
+<table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <td><center><img SRC="somo-main2b.png" ALT="Cont. Main SOMO Screen after loading PDB"></td>
 </tr> 
+</table>
 </center>
 <td align=justify>
 <p>
+
+Note: from the <span style="color:#CC0000">July 2024</span> <b><i>US-SOMO</i></b> release, if the calculation of the <b><i>Fractal Dimension</b></i> has been enabled from the <i>Fractal Dimension Options</i> in the <b><i>SOMO</i></b> list of pull-down menus (see <a href="#pulldownSOMO_id">here</a>), the results will be shown after the other parameters in the main progress window, as in the image below for the mass fractal dimension <i>D<sub>m</sub></i> calculations:<p>
+
+<tr>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
+<td><center><img SRC="Fractal dimension_results_noRg_over_D.png" ALT="Fractal dimension calculations report without Rg/Dm or Ds"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+This option is fully described <a href="fractal_dimension_options.html">here</a>. <p>
 
 If problems are encountered with the selected PDB file, like the presence of non-coded residues or missing atoms within coded residues, they will be reported in the progress window either as <i>warnings</i> or <i>errors</i>. Starting from the May 2015 release, if <b>non-coded residues</b> or <b>coded residues with missing atoms</b> are found,
 a pop-up panel will appear warning of the occurence and offering the alternative options to <b>continue</b> using approximate methods, <b>skip</b> the whole residue, or <b>stop</b> the program execution, waiting for corrective action to be taken.<br>
@@ -134,41 +164,46 @@ or multiple models by holding the <i>crtl</i> key while clicking on the models' 
 all models). If multiple models are selected, all subsequent operations (except the SAXS/SANS options)
 are carried out sequentially on the selected models.<br>
 To allow for a quick re-calculation of molecular properties after changing <i>T</i> or <i>pH</i>, a new <b><i>Reload</i></b> button is now present next to the <b><i>Load Single PDB File</b></i> button. On pressing it, the last used PDB file will be reloaded.<br>
-Pressing the <i><b>SAXS/SANS Functions</b></i> button will take you to the SAXS/SANS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data (see <a href="somo_saxs.html">here</a>). The SAXS/SANS module is in an advanced state but still under constant development (as of September 2020).<br>
-Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b></a> utility of the <a href="somo_batch.html"><b><i>Batch Mode/Cluster Operation</b></i> </a> module. The <b><i>BD</i></b> button, not yet available in this release (February 2021), will allow running a Brownian dynamics simulation.<p>
+Pressing the <i><b>SAXS/SANS/MALS Functions</b></i> button will take you to the SAXS/SANS/MALS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data (see <a href="somo_saxs.html">here</a>). The SAXS/SANS/MALS module is in an advanced state but still under constant development (as of June 2024).<br>
+Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b></a> utility of the <a href="somo_batch.html"><b><i>Batch Mode/Cluster Operation</b></i> </a> module. The <b><i>BD</i></b> button, still not yet available in this release (July 2024), will allow running a Brownian dynamics simulation.<p>
+
 
 <p>
 
 <tr>
 <center>
-<td><center><img SRC="Somo_BeadModel_functions_October2020.png" ALT="SOMO Screen"></td>
+<table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
+<td><center><img SRC="Somo_BeadModel_functions_June2024.png" ALT="SOMO Screen"></td>
 </tr> 
+</table>
+</center>
 <td align=justify>
 
 <p>
 <b>Bead Model Functions:</b><br>
 Once a model structure (or multiple model structures in the case of NMR-style formatted data) are selected, the <i><b>Build SoMo Bead Model</b></i>,
-<i><b>Build AtoB (Grid) Bead Model</b></i>, <i><b>Build SoMo Overlap Bead Model</b></i>, and <i><b>Build vdW Overlap Bead Model</b></i> buttons will also become active, offering alternative ways of generating a bead model. In particular, the third option, which will generate a <i>SoMo</i>-type bead model with overlaps without then removing them, is a new addition made available starting from the May 2015 release, reflecting the conclusions of an extensive examination of all the hydrodynamic modeling/computational methods then available (Rocco and Byron,  Eur. Biophys. J. 44:417-431, 2015). The fourth option, still under active development, has been added with the January 2018 release, and allows generating a bead model where each atom present in the PDB file is represented by a bead whose radius is equal to the atom's van der Waals radius as listed in the <i>somo.residue</i> table. If water molecules are associated to any particulat atom in the <i>somo.residue</i> table, their volume is taken into account in the definition of the bead's radius. Note that if the latter two bead modeling methods are chosen, the <b><i>SMI</i></b> method will not be available, and only the <b><i>ZENO</i></b> and <b><i>GRPY</i></b> computational methods could be used (see below).<br>
-In the <b>Bead Model suffix</b> field you can enter a tag that will be added to the bead model filename,
-which is automatically generated from the PDB filename by adding "_1" and the extension ".bead_model".
-In addition, the <i>Add auto-generated suffix</i> checkbox is selected by <b>default</b> (it can be deselected), and the corresponding field above is populated with a series of alphanumeric characters specifying the main options chosen during bead models generation. These characters will be also added to the bead model filename, to allow for a quick identification of the options used in its generation. Thus, "A20" stands for a residues' ASA cutoff threshold of 20 &Aring; (<b>default</b>), "R50" stands for a bead's ASA re-check cutoff threshold of 50% of its total surface area (<b>default</b>) (see <a href=somo_asa.html>here</a>), "hi" signifies hierarchical overlap reduction in all stages (alternatively, "sy" stands for synchronous overlap reduction), and "OT" means that the outward translation option during overlap removal of exposed side-chain beads is active (see <a href=somo_overlap.html>here</a> and <a href=somo_grid_overlap.html>here</a>).<br>
-The "-so" suffix is added if the <i><b>Build SoMo Bead Model</b></i> button is then pressed, while the "-a2b" suffix is instead added if the <i><b>Build AtoB (Grid) Bead Model</b></i> button is pressed. In this case, the suffix symbols also include "G<i>n</i>" for the grid resolution, with <i>n</i> the actual value, and "hy" if the atomic-level hydration option is active (see <a href=somo_grid.html>here</a>). If the <i><b>Build SoMo Overlap Bead Model</b></i> is chosen, only the residues' and beads' recheck ASA cut-offs ("<i>A</i>" and "<i>R</i>" values) will be added, with extension "-so_ovlp". If the <i><b>Build vdW Overlap Bead Model</b></i> is chosen, the extension will be "-vdw" and no bead-generation methods symbols will be added, since they have no meaning in this case. However, if the <b><i>GRPY</b></i> hydrodynamic computations method is then utilized, and if the <b><i>Exclude</i></b> checkbox is selected for the "<i>Inclusion of Buried Beads in the Hydrodynamic Calculations (For GRPY)</i>" option in the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a> panel, the "<i>R</i>" suffix (beads' ASA % re-check cutoff threshold) and a "<i>PR</i>" suffix (ASA probe radius size, &Aring;) will be added with the used values (see <a href=somo_asa.html>here</a>). Finally, the last entry in the suffix field reports the pH at which the model was generated (the pH affects the hydration values at the atomic level).<br>
-Upon loading a PDB file and if the <i>Add auto-generated suffix</i> checkbox is not de-selected, the corresponding field will show the three current strings available for <i>SoMo without overlaps</i>, <i>AtoB</i>, and <i>SoMo with overlaps</i> bead models. If any of the options coded in the strings are changed, the field will be automatically updated. The final string will appear once a bead model generation operation is launched. Note that you can keep processing a loaded PDB file after changing any of the various model-building options (see below). If the <i>Overwrite existing filenames</i> checkbox is selected, existing filenames will be overwritten without a warning. Otherwise, a pop up menu will instead appear offering alternative options (see <a href="somo_file.html">here</a>). The <i>Overwrite existing filenames</i> checkbox is automatically selected for batch mode operations.<br>
+<i><b>Build AtoB (Grid) Bead Model</b></i>, <i><b>Build SoMo Overlap Bead Model</b></i>, and <i><b>Build vdW Overlap Bead Model</b></i> buttons will also become active, offering alternative ways of generating a bead model. In particular, the third option, which will generate a <i>SoMo</i>-type bead model with overlaps without then removing them, is an addition made available starting from the May 2015 release, reflecting the conclusions of an extensive examination of all the hydrodynamic modeling/computational methods then available (Rocco and Byron,  Eur. Biophys. J. 44:417-431, 2015). The fourth option, still under active development, has been added with the January 2018 release, and allows generating a bead model where each atom present in the PDB file is represented by a bead whose radius is equal to the atom's van der Waals radius as listed in the <i>somo.residue</i> table. If water molecules are associated to any particulat atom in the <i>somo.residue</i> table, their volume is taken into account in the definition of the bead's radius. As of <span style="color:#CC0000">July 2024</span>, tests with an extended set of proteins have provided evidence that the <b><i>vdW with Ovelaps</i></b> models can now reproduce accurately their translational diffusion, rotational diffusion, and intrinsic viscosity parameters, although the exact details of the hydrated beads positioning are still under evaluation (Brookes and Rocco, manuscript in preparation). Note that if the latter two bead modeling methods are chosen, the <b><i>SMI</i></b> method will not be available, and only the <b><i>ZENO</i></b> and <b><i>GRPY</i></b> computational methods could be used (see below).<br>
+In the <b>Bead Model suffix</b> field you can enter a tag that will be added to the bead model filename, which is automatically generated from the PDB filename by adding "_1" and the extension ".bead_model".<br>
+In addition, the <i>Add auto-generated suffix</i> checkbox is selected by <b>default</b> (it can be deselected), and the corresponding field above is populated with a series of alphanumeric characters specifying the main options chosen during bead models generation. These characters will be also added to the bead model filename, to allow for a quick identification of the options used in its generation. Thus, "A20" stands for a residues' ASA cutoff threshold of 20 &Aring; (<b>default</b>), "R50" stands for a bead's ASA re-check cutoff threshold of 50% of its total surface area (<b>default</b>) (see <a href=somo_asa.html>here</a>), "hi" signifies hierarchical overlap reduction in all stages (alternatively, "sy" stands for synchronous overlap reduction), and "OT" means that the outward translation option during overlap removal of exposed side-chain beads is active (see <a href=somo_overlap.html>here</a> and <a href=somo_grid_overlap.html>here</a>).  <br>
+The "-so" suffix is added if the <i><b>Build SoMo Bead Model</b></i> button is then pressed, while the "-a2b" suffix is instead added if the <i><b>Build AtoB (Grid) Bead Model</b></i> button is pressed. In this case, the suffix symbols also include "G<i>n</i>" for the grid resolution, with <i>n</i> the actual value, and "hy" if the atomic-level hydration option is active (see <a href=somo_grid.html>here</a>). If the <i><b>Build SoMo Overlap Bead Model</b></i> is chosen, only the residues' and beads' recheck ASA cut-offs ("<i>A</i>" and "<i>R</i>" values) will be added, with extension "-so_ovlp". If the <i><b>Build vdW Overlap Bead Model</b></i> is chosen, suffixes will start with "OT<i>x_y</i>", where "<i>x_y</i>" reports the OT multiplier if different from 0 (see <a href=somo_vdw_overlap.html>here</a>), and then they will include the ASA probe radius used to identify exposed <i>atoms</i> to be hydrated ("<i>PR#_#</i>, with #_# the radius value in &Aring;) and the threshold accessible surface area thus computed for each hydratable atom ("<i>TH#</i>", with "#" the value in &Aring;<sup>2</sup>) (see <a href=somo_asa.html>here</a>). The extension will be "-vdw" and no other bead-generation methods symbols will be added, since they have no meaning in this case. However, if the <b><i>GRPY</b></i> hydrodynamic computations method is then utilized, and if the <b><i>Exclude</i></b> checkbox is selected for the "<i>Inclusion of Buried Beads in the Hydrodynamic Calculations (For GRPY)</i>" option in the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a> panel, the "<i>R#</i>" suffix (beads' ASA % re-check cutoff threshold) and a "<i>PR#_#</i>" suffix (ASA probe radius size, &Aring;) will be added with the used values (see <a href=somo_asa.html>here</a>). Finally, the last entry in the suffix field reports the pH at which the model was generated (the pH affects the hydration values at the atomic level).<br>
+Upon loading a PDB file and if the <i>Add auto-generated suffix</i> checkbox is not de-selected, the corresponding field will show the four current strings available for <i>SoMo without overlaps</i>, <i>AtoB</i>, <i>SoMo with overlaps</i>, and <i>vdW with overlaps</i> bead models. If any of the options coded in the strings are changed, the field will be automatically updated. The final string will appear once a bead model generation operation is launched. Note that you can keep processing a loaded PDB file after changing any of the various model-building options (see below). If the <i>Overwrite existing filenames</i> checkbox is selected, existing filenames will be overwritten without a warning. Otherwise, a pop up menu will instead appear offering alternative options (see <a href="somo_file.html">here</a>). The <i>Overwrite existing filenames</i> checkbox is automatically selected for batch mode operations.<br>
 The bead model generation progress of the loaded 1HEL.PDB file using the <i><b>Build SoMo Overlap Bead Model</b></i> is shown in the image below:
 
 <p>
 
 <tr>
 <center>
+<table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <td><center><img SRC="somo-main3.png" ALT="Cont. Main SOMO Screen after loading PDB"></td>
 </tr> 
+</table>
 </center>
 <td align=justify>
 <p>
 
 A fifth button, <i><b>Grid Existing Bead Model</b></i>, will operate the AtoB grid routine on a <i>previously generated</i> bead model. This button is not available until a PDB file has been processed with any of the bead modeling primary options (see above),  or until a previously-generated bead model file has been loaded (see below). If this operation is launched, the "-a2bg" suffix is automatically added to the filename of the new bead model.<br>
-Since model building can take some time, depending on the settings and especially for large structures, selecting the <b>Automatic Calculate Hydrodynamics</b> checkbox will allow the direct computation of the hydrodynamic parameters as soon as the model(s) generation has been completed (the default method is <b><i>SMI</i></b> for models without overlaps, and <i><b>ZENO</b></i> for models with overlaps; these choices will be made user-selectable in a future release). If this checkbox is not selected (<b>default</b> option), at the end of the model building phase the progress bar will be at 100% and the bead model(s) can be visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> (recommended, comparing the original structure with the bead model could reveal previously unforeseen problems; <span style="color:#CC0000">Warning: if multiple models have been generated, such as from an NMR-style file, pressing <i><b>Visualize Bead Model</b></i> will open multiple RasMol windows, one for each model!</span>).<br>
-The results of the accessible surface area (ASA) computations (see below) can also be visualized in a pop-up window by clicking on the <i><b>View ASA Results</b></i> button; this file also includes the computation of the radius of gyration (R<sub>g</sub>) directly from the atomic coordinates of the structure. A just-generated or previously-generated bead model file can also be opened inside a text editor by pressing the <b><i>View Bead Model File</b></i> button.<p>
+Since model building can take some time, depending on the settings and especially for large structures, selecting the <b>Automatic Calculate Hydrodynamics</b> checkbox will allow the direct computation of the hydrodynamic parameters as soon as the model(s) generation has been completed (the default method is <i><b>ZENO</b></i>, but it is user-selectable in the <a href=somo_misc.html> <b><i>Miscellaneous Options</b></i></a> module.). If this checkbox is not selected (<b>default</b> option), at the end of the model building phase the progress bar will be at 100% and the bead model(s) can be visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> (recommended, comparing the original structure with the bead model could reveal previously unforeseen problems; <span style="color:#CC0000">Warning: if multiple models have been generated, such as from an NMR-style file, pressing <i><b>Visualize Bead Model</b></i> will open multiple RasMol windows, one for each model!</span>).<br>
+The results of the accessible surface area (ASA) computations (see below) can also be visualized in a pop-up window by clicking on the <i><b>View ASA Results</b></i> button; this file also includes the computation of the radius of gyration (<i>R<sub>g</sub></i>) directly from the atomic coordinates of the structure. A just-generated or previously-generated bead model file can also be opened inside a text editor by pressing the <b><i>View Bead Model File</b></i> button.<p>
 
 Alternatively, you can load one or multiple previously-generated bead model by clicking
 on either the <i><b>Batch Mode/Cluster Operation</b></i> (see <a href="somo_batch.html">here</a>)
@@ -178,11 +213,14 @@ was (were) generated/saved in the <b><i>US-SOMO</i></b> format, the various sett
 although using the improved AtoB routine on the original PDB file while increasing the grid size (<i><b>Build AtoB (Grid) Bead Model</b></i>) seems to produce much better results. By selecting different file types extensions, other type of bead models can also be loaded, like the old <i>BEAMS</i>-format models, or <i>DAMMIN/DAMMIF</i>-generated models. In this case, a <a href="somo_Dammin_Dammif_bead_model_properties.html">pop-up panel</a> appears requesting entering the partial specific volume and molecular weight of the model. The <i><b>SAXS/SANS Functions</b></i> button present in this subpanel will allow to perform SAXS-or SANS-related simulations directly on the currently loaded bead model. (see <a href="somo_saxs.html">here</a>). <p>
 </table>
 <p>
+
+<center>
 <table BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
-<center>
+
 <td><center><img SRC="somo-Hydrodynamic_calculations_September2020.png" ALT="Bead Model Functions Screen"></td>
 </tr> 
+</table>
 </center>
 <td align=justify>
 <p>
@@ -191,8 +229,10 @@ The hydrodynamic parameters can then be determined in the <b>rigid-body (RB) app
 
 <tr>
 <center>
+<table BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <td><center><img SRC="somo-main4.png" ALT="Cont. Main SOMO Screen after loading PDB"></td>
-</tr> 
+</tr>
+</table>
 </center>
 <td align=justify>
 <p>
@@ -211,11 +251,13 @@ Finally, by pressing the <b><i>Model classifier</i></b> button, you will access 
 
 </table>
 <p>
+<center>
 <table BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
-<center>
+
 <td><center><img SRC="somo-bottom_bar.png" ALT="SOMO bottom bar"></td>
 </tr> 
+</table>
 </center>
 <td align=justify>
 <p>
@@ -241,17 +283,21 @@ PDB<br>
 Configuration</b></i>
 <p>
 <p>
-<table BORDER CELLSPACING=5 CELLPADDING=5>
-<tr>
+
 <p>
 <i><b>Lookup Tables:</b></i>
 <p>
 <p>
 <p>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=6>
+<tr>
 <td><center><img SRC="somo-tab1a.png" ALT="Lookup Tables"></td>
 </tr>
-<tr>
+</table>
+</center>
 <td align=justify>
+<p>
 From this pull-down menu, you can call four different sub-menus controlling
 the four tables containing the definitions of the atoms and residues found in
 PDB files, and their SAXS coefficients.<br>
@@ -295,15 +341,21 @@ the properties of the existing ones. The use of this module is described in
 </tr>
 </table>
 <p>
+
+<div id="pulldownSOMO_id"></div>
+
 <b><i>SOMO:</i></b>
 <p>
-
-<table BORDER CELLSPACING=5 CELLPADDING=5>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=6>
 <tr>
 <td><center><img SRC="somo-tab2.png" ALT="Modify SOMO Options"></td>
 </tr>
+</table>
+</center>
 <tr>
 <td align=justify>
+<p>
 From this pull-down menu, you can access various panels where you can set all the available options for different steps in the program. These options are saved in a system wide config file <pre>$ULTRASCAN/etc/somo.config</pre>
 Every time you close the SOMO program, the currently defined options will be saved in <pre>$HOME/ultrascan/etc/somo.config</pre> where they will be reloaded from upon startup.
 <ul>
@@ -330,21 +382,17 @@ and handle the various issues related to bead overlap elimination in the <i>AtoB
 A detailed description of this module can be found <a href=somo_grid_overlap.html>here</a>.
 
 <li>
+<b>vdW Overlap Parameters:</b> In this new module you can set the parameters for fine-tuning the direct hydration of the van der Waals (vdW) bead models, such as the amount of outward translation (OT), which is the only option currently offered in non-expert mode. The method used to perform the OT, and settings affecting the calculation of the SAXS <i>P</i>(<i>r</i>) vs. <i>r</i> from the hydrated vdW bead models are still a work in progress as of <span style="color:#CC0000">July 2024</span>. A detailed description of this module can be found <a href=somo_vdW.html>here</a>.
+
+<li>
 <b>Hydrodynamic Calculations:</b> This module allows you to change solvent and temperature conditions (valid for all computation methods) and to select the options for calculating the hydrodynamic parameters of the bead models using the standard Garcia de la Torre-Bloomfield supermatrix inversion (<b><i>SMI</i></b>) method and, partially, the new <b><i>GRPY</b></i> method. A detailed description of this module can be found <a href=somo_hydro.html>here</a>.
 
 <li>
 <b>Hydrodynamic Calculations Zeno:</b> This module allows you to change the specific options for calculating the hydrodynamic parameters of the bead models using the <b><i>ZENO</i></b> method. A detailed description of this module can be found <a href=somo_hydro_zeno.html>here</a>.
 
 <li>
-<b>Miscellaneous Options:</b> This module allows you to either automatically
-compute from the composition or manually enter the partial specific volume
-of your molecule, and to define the volume used for the hydration water
-molecules (water of hydration has different properties than "bulk" water).
-Another option controls the disabling of the <i>peptide bond rule</i> used by
-the <b><i>SoMo</i></b> method to place the main-chain beads. In addition, this module contains
-the "average" parameters used by the <i>Automatic Bead Builder</i> to generate
-a single bead for non-coded residues (see <a href=somo_pdb_parsing.html>here</a>).
-A detailed description of this module can be found <a href=somo_misc.html> here</a>.
+<b>Miscellaneous Options:</b> This module allows you to either automatically compute from the composition or manually enter the partial specific volume of your molecule, and to define the volume used for the hydration water molecules (water of hydration has different properties than "bulk" water). Another option controls the disabling of the <i>peptide bond rule</i> used by the <b><i>SoMo</i></b> method to place the main-chain beads. In addition, this module contains the "average" parameters used by the <i>Automatic Bead Builder</i> to generate a single bead for non-coded residues (see <a href=somo_pdb_parsing.html>here</a>).<br>
+Other controls such as disabling the parallel <b><i>GRPY</b></i> execution can be found in this module. A detailed description of this module can be found <a href=somo_misc.html> here</a>.
 
 <li>
 <b>Bead Model Output:</b> This module allows you to control the options for
@@ -362,6 +410,10 @@ be found <a href=somo_grid.html>here</a>.
 
 <li>
 <b>SAXS/SANS Options:</b> This entry will open a new window from which various subpanels can be accessed containing the settings of the many SAXS/SANS-related operations. A detailed description of these modules can be found <a href=somo_saxs_options.html>here</a>. 
+
+<li>
+<b>Fractal Dimension Options:</b> This module, available from the <span style="color:#CC0000">July 2024</span> release, allows setting the automatic calculation of the fractal dimension of an atomic structure upon loading. The settings will be also employed in the <i><b>Batch Mode Operation</b></i> if its checkbox is selected (see <a href="somo_batch.html">here</a>). The module is fully described <a href="fractal_dimension_options.html">here</a>.
+
 </ul>
 </td>
 </tr>
@@ -369,11 +421,13 @@ be found <a href=somo_grid.html>here</a>.
 <p>
 <b><i>MD:</i></b>
 <p>
-
-<table BORDER CELLSPACING=5 CELLPADDING=5>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=6>
 <tr>
 <td><center><img SRC="somo-tab3.png" ALT="Modify SOMO Options"></td>
 </tr>
+</table>
+</center>
 <tr>
 <td align=justify>
 
@@ -405,10 +459,13 @@ From this pull-down menu, it will be possible in the future to access two option
 <b><i>PDB Options:</i></b>
 <p>
 
-<table BORDER CELLSPACING=5 CELLPADDING=5>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=6>
 <tr>
 <td><center><img SRC="somo-tab3a.png" ALT="Modify PDB Parsing Options"></td>
 </tr>
+</table>
+</center>
 <tr>
 <td align=justify>
 <p>
@@ -437,10 +494,14 @@ used by RasMol. A detailed description of this module can be found <a href=somo_
 <b><i>Configurations:</i></b>
 <p>
 
-<table BORDER CELLSPACING=5 CELLPADDING=5>
+<p>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=6>
 <tr>
 <td><center><img SRC="somo-tab4b.png" ALT="Modify SOMO Options"></td>
 </tr>
+</table>
+</center>
 <tr>
 <td align=justify>
 
@@ -505,7 +566,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 18, 2021.
+Last modified on June 16, 2024.
 </font>
 </body>
 </html>

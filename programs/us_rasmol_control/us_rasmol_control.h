@@ -1,3 +1,4 @@
+//! \file us_rasmol_ctrl.h
 #ifndef US_RASMOL_CTRL_H
 #define US_RASMOL_CTRL_H
 
@@ -10,31 +11,52 @@
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< dbg_level-conditioned qDebug()
 
+/**
+ * @class US_RasmolControl
+ * @brief The US_RasmolControl class provides a user interface to control Rasmol visualization.
+ */
 class US_RasmolControl : public US_Widgets
 {
-   Q_OBJECT
+    Q_OBJECT
 
-   public:
-      US_RasmolControl();
+    public:
+        /**
+         * @brief Constructor for US_RasmolControl.
+         */
+        US_RasmolControl();
 
-   private:
-      US_WindowMessage*    winmsgs;
+    private:
+        US_WindowMessage*    winmsgs;       //!< Window messages
 
-      QComboBox*           cb_intname;
-      QComboBox*           cb_commcmd;
+        QComboBox*           cb_intname;    //!< Combo box for interpreter names
+        QComboBox*           cb_commcmd;    //!< Combo box for command commands
 
-      QTextEdit*           te_status;
+        QTextEdit*           te_status;     //!< Text edit for status
 
-      QLineEdit*           le_sendcmd;
+        QLineEdit*           le_sendcmd;    //!< Line edit for sending commands
 
-      QPushButton*         pb_listints;
-      QPushButton*         pb_close;
-      QPushButton*         pb_sendcmd;
+        QPushButton*         pb_listints;   //!< Button to list interpreters
+        QPushButton*         pb_close;      //!< Close button
+        QPushButton*         pb_sendcmd;    //!< Button to send commands
 
-      int                  dbg_level;
-   private slots:
-      void list_interps   ( void );
-      void send_command   ( void );
-      void choose_command ( const QString& );
+        int                  dbg_level;     //!< Debug level
+
+    private slots:
+                /**
+                 * @brief Slot to list interpreters.
+                 */
+                void list_interps(void);
+
+        /**
+         * @brief Slot to send a command.
+         */
+        void send_command(void);
+
+        /**
+         * @brief Slot to choose a command from the combo box.
+         * @param command The command chosen
+         */
+        void choose_command(const QString& command);
 };
-#endif
+
+#endif // US_RASMOL_CTRL_H

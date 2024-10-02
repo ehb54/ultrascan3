@@ -9,7 +9,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_mwl_data.h"
-#include "us_plot3d_xyz.h"
+#include "us_plot3d.h"
 #include "us_model.h"
 
 class US_MwlSpectra : public US_Widgets
@@ -23,14 +23,14 @@ class US_MwlSpectra : public US_Widgets
 
   private:
      QPointer< US_MwlSPlotControl > p3d_ctld;    //!< Pointer to 3D control
-     QPointer< US_Plot3Dxyz >       p3d_pltw;    //!< Pointer to 3D plot window
-
+     QPointer< US_Plot3D >          p3d_pltw;    //!< Pointer to 3D plot window
+     QList< US_Model >              loadedmodels;      //!< model list
      QVector< QVector3D >           mdlxyz;      //!< Models 3D data vector
      QVector< QVector3D >           xyzdat;      //!< Normalized 3D data vector
      QVector< QVector3D >           p3dxyz;      //!< Plot-3D data vector
      QVector< QVector< double > >   concdat;     //!< All 2D plot data vectors
      QVector< double >              yvals3d;     //!< Y values for 3D plot
-
+     int                            xtype;
      US_Disk_DB_Controls*           dkdb_cntrls; //!< Disk/DB controls
 
      QVector< double > pltxvals;    //!< Current plot's X (wvl) values
@@ -38,7 +38,7 @@ class US_MwlSpectra : public US_Widgets
      QVector< double > sedcoes;     //!< Loaded s values (x 1e+13)
      QVector< int >    lambdas;     //!< Loaded wavelengths
 
-     QStringList    mdescs;         //!< List of descriptions of models loaded
+     QStringList    mdescs;         //!< List of descriptions of models loaded for current
      QStringList    pfilts;         //!< List of prefilter names
 
      US_Help        showHelp;
@@ -72,6 +72,14 @@ class US_MwlSpectra : public US_Widgets
      QPushButton*   pb_svplot;
      QPushButton*   pb_svmovie;
 
+     QRadioButton*  rb_pltsw;
+     QRadioButton*  rb_pltDw;
+     QRadioButton*  rb_pltMW;
+     QRadioButton*  rb_pltff0;
+     QRadioButton*  rb_pltvb;
+     QRadioButton*  rb_pltMWl;
+
+
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
 
@@ -80,7 +88,8 @@ class US_MwlSpectra : public US_Widgets
      QString        m_tpart;
      QString        m_apart;
      QString        mfilter;
-
+     QString        xaxis;
+     QString        xlegend;
      int            nsedcos;
      int            nlambda;
      int            npoint;
@@ -106,8 +115,8 @@ class US_MwlSpectra : public US_Widgets
 
      bool           have_rngs;
 
-     double         se_min;
-     double         se_max;
+     double         x_min;
+     double         x_max;
      double         wl_min;
      double         wl_max;
      double         co_min;
@@ -156,6 +165,8 @@ class US_MwlSpectra : public US_Widgets
      void   final_stats    ( QVector< int >&,    QVector< double >&,
                              QVector< double >&, QVector< double >&,
                              QVector< double >& );
+     void   changedPlotX   ( bool );
+     double comp_value     ( const US_Model::SimulationComponent*, int );
      void   help           ( void )
      { showHelp.show_help( "mwl_spectra.html" ); };
 };

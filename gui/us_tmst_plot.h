@@ -23,6 +23,16 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       //! \param tspath  TimeState (.tmst) full path file name
       US_TmstPlot( QWidget*, const QString );
 
+      QStringList timestamp_data_dkeys ( );
+      QVector< QVector< double > > timestamp_data_dvals( );
+      QMap< QString, double > timestamp_data_mins ( );
+      QMap< QString, double > timestamp_data_maxs ( );
+      QMap< QString, double > timestamp_data_avgs ( );
+      QMap < QString, QMap< QString, double >>  timestamp_data_avgs_stdd_first_scan ( );
+
+      //! \brief Return a QwtPlot pointer for the upper plot
+      QwtPlot* rp_data_plot1( QString );
+
    private:
       QwtPlot*      data_plot1;             //!< Upper plot (specific key)
       QwtPlot*      data_plot2;             //!< Lower plot (combined)

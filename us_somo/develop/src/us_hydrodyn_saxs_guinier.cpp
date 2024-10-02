@@ -109,7 +109,7 @@ static void write_csv_data( QFile * f, QString I_tag )
 
    for ( int i = 0; i <= maxlen; ++i )
    {
-      ts << out[ i ].join(",") << endl;
+      ts << out[ i ].join(",") << Qt::endl;
    }
 
    f->close();
@@ -268,7 +268,7 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
       QString head = US_Pdb_Util::qstring_common_head( qsl_plotted_iq_names, true );
       QString tail = US_Pdb_Util::qstring_common_tail( qsl_plotted_iq_names, true );
       QRegExp rx_cap( "(\\d+)_(\\d+)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
 
       for ( unsigned int i = 0; 
             i < plotted_Iq.size();
@@ -630,6 +630,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 
    bool use_SD_weighting = our_saxs_options->guinier_use_sd;
    bool use_guinier_outlier_reject = our_saxs_options->guinier_outlier_reject;
+   bool istarq = qsl_plotted_iq_names[ i ].contains( "_Istarq_" );
+   bool ihashq = qsl_plotted_iq_names[ i ].contains( "_Ihashq_" );
 
    if ( use_SD_weighting )
    {
@@ -1087,6 +1089,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          
          // us_qdebug( QString( "plotted q.size() %1" ).arg( plotted_q[ i ].size() ) );
 
+
          // tainer mw method
          double Vct;
          double Qrt;
@@ -1096,38 +1099,40 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          QString notest;
          QString warningt;
 
-         if ( US_Saxs_Util::mwt( 
-                                plotted_q[ i ],
-                                plotted_I[ i ],
-                                Rg,
-                                sigb,
-                                I0,
-                                siga,
-                                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) ?
-                                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k" ].toDouble() : 0e0,
-                                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_c" ) ?
-                                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c" ].toDouble() : 0e0,
-                                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_qmax" ) ?
-                                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax" ].toDouble() : 0e0,
-                                Vct,
-                                Qrt,
-                                mwt,
-                                mwt_sd,
-                                messagest,
-                                notest,
-                                warningt
-                                 ) )
-         {
-            report += 
-               QString("")
-               .sprintf( 
-                        " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
-                        Vct,
-                        Qrt,
-                        mwt
-                         ) + notest;
-         } else {
-            report += us_tr( " MW(Vc) could not compute " + messagest + " " + notest );
+         if ( !istarq && !ihashq ) {
+            if ( US_Saxs_Util::mwt( 
+                                   plotted_q[ i ],
+                                   plotted_I[ i ],
+                                   Rg,
+                                   sigb,
+                                   I0,
+                                   siga,
+                                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) ?
+                                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k" ].toDouble() : 0e0,
+                                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_c" ) ?
+                                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c" ].toDouble() : 0e0,
+                                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_qmax" ) ?
+                                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax" ].toDouble() : 0e0,
+                                   Vct,
+                                   Qrt,
+                                   mwt,
+                                   mwt_sd,
+                                   messagest,
+                                   notest,
+                                   warningt
+                                    ) )
+            {
+               report += 
+                  QString("")
+                  .sprintf( 
+                           " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
+                           Vct,
+                           Qrt,
+                           mwt
+                            ) + notest;
+            } else {
+               report += us_tr( " MW(Vc) could not compute " + messagest + " " + notest );
+            }
          }
 
          // curtis mw method
@@ -1140,7 +1145,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          QString messagesc;
          QString notesc;
 
-         if ( started_in_expert_mode )
+         if ( started_in_expert_mode && !istarq && !ihashq )
          {
             if (
                 ((US_Hydrodyn *)us_hydrodyn)->saxs_util->mwc( 
@@ -1287,21 +1292,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                ;
          }
 
-         csvlog += 
-            QString( 
-                    "%1,"
-                    "%2,"
-                    "%3,"
-                    "%4,"
-                    )
-            .arg( Vct )
-            .arg( Qrt )
-            .arg( mwt )
-            .arg( notest )
-            ;
-
-         if ( started_in_expert_mode )
-         {
+         if ( !istarq && !ihashq ) {
             csvlog += 
                QString( 
                        "%1,"
@@ -1309,11 +1300,27 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                        "%3,"
                        "%4,"
                         )
-               .arg( Vcc )
-               .arg( Qrc )
-               .arg( mwc )
-               .arg( notesc )
+               .arg( Vct )
+               .arg( Qrt )
+               .arg( mwt )
+               .arg( notest )
                ;
+
+            if ( started_in_expert_mode )
+            {
+               csvlog += 
+                  QString( 
+                          "%1,"
+                          "%2,"
+                          "%3,"
+                          "%4,"
+                           )
+                  .arg( Vcc )
+                  .arg( Qrc )
+                  .arg( mwc )
+                  .arg( notesc )
+                  ;
+            }
          }
 
          csvlog += "\n";
@@ -3439,7 +3446,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                x[ 0 ] = x[ 1 ] = ( cb_guinier->isChecked() ? q2[ k ] : q[k] );
                y[ 0 ] = pElow[ k ] > 0e0 ? pElow[ k ] : I[ k ];
                y[ 1 ] = pEhigh[ k ];
-               QwtPlotCurve * curve = new QwtPlotCurve( "eb." + qsl_plotted_iq_names[ i ] );
+               QwtPlotCurve * curve = new QwtPlotCurve( UPU_EB_PREFIX + qsl_plotted_iq_names[ i ] );
                curve->setStyle( QwtPlotCurve::Lines );
                curve->setPen  ( QPen( plot_colors[ i % plot_colors.size() ], ERRORBAR_WIDTH, Qt::SolidLine ) );
                curve->setSamples ( x, y, 2 );

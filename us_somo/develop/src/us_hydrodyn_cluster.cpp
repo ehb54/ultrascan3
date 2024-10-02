@@ -184,7 +184,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
             ( tgz_files.size() ? "\n" : "" ) +
             tar_files.join("\n")
             ;
-         submitted_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+         submitted_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
 
       for ( unsigned int i = 0; i < (unsigned int) submitted_files.count(); i++ )
@@ -221,7 +221,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
             ( tgz_files.size() ? "\n" : "" ) +
             tar_files.join("\n")
             ;
-         completed_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+         completed_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
       
       for ( unsigned int i = 0; i < (unsigned int) completed_files.count(); i++ )
@@ -1801,6 +1801,28 @@ void US_Hydrodyn_Cluster::dmd()
    US_Hydrodyn::fixWinButtons( hcd );
    hcd->exec();
    delete hcd;
+   if ( ((US_Hydrodyn *)us_hydrodyn)->dmd_failed_validation ) {
+      QStringList errors;
+      for ( auto it = ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.begin();
+            it != ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.end();
+            ++it ) {
+         if ( it->second.count( "errors" ) ) {
+            errors << it->first + " : " + it->second[ "errors" ].join( "\n" );
+         }
+      }
+               
+      QMessageBox::warning(
+                           this
+                           ,us_tr( windowTitle() )
+                           ,us_tr("There were errors found preventing DMD from running:\n" + errors.join("\n") )
+                           ,QMessageBox::Ok
+                           ,QMessageBox::NoButton
+                           ,QMessageBox::NoButton
+                           );
+
+      QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
+      return;
+   }
    update_enables();
    update_validator();
 }
@@ -2032,7 +2054,8 @@ QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files, 
       << "DMD_NA_allatom.par"
       << "PRO_RNA_MOL.DMDParam"
       << "allatom.par"
-      << "medutop.pro";
+      << "medutop.pro"
+      ;
 
    QString out;
    for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
@@ -2714,7 +2737,7 @@ bool US_Hydrodyn_Cluster::read_config()
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -3263,7 +3286,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                if ( !already_added.count( selected_files[ i ] ) )
                {
                   source_files << selected_files[ i ];
-                  already_added[ selected_files[ i ] ]++;
+                  already_added[ selected_files[ i ] ] = true;
                }
             }            
          }
@@ -3289,7 +3312,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      if ( !already_added.count( it->second ) )
                      {
                         base_source_files << it->second;
-                        already_added[ it->second ]++;
+                        already_added[ it->second ] = true;
                      }
                   } else {
                      out += 
@@ -3299,7 +3322,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      if ( !already_added.count( it->second ) )
                      {
                         source_files << it->second;
-                        already_added[ it->second ]++;
+                        already_added[ it->second ] = true;
                      }
                   }
                }
@@ -3325,7 +3348,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      if ( !already_added.count( selected_files[ j ] ) )
                      {
                         source_files_to_clear << selected_files[ j ];
-                        already_added[ selected_files[ j ] ]++;
+                        already_added[ selected_files[ j ] ] = true;
                         if ( 
                             cluster_additional_methods_modes.count( "additional_processing_per_file" ) &&
                             cluster_additional_methods_modes[ "additional_processing_per_file" ].count( methods[ m ] ) )
@@ -3927,7 +3950,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
                if ( !already_added.count( selected_files[ i ] ) )
                {
                   source_files << selected_files[ i ];
-                  already_added[ selected_files[ i ] ]++;
+                  already_added[ selected_files[ i ] ] = true;
                }
             }            
          }
@@ -3951,7 +3974,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
                   if ( !already_added.count( it->second ) )
                   {
                      source_files << it->second;
-                     already_added[ it->second ]++;
+                     already_added[ it->second ] = true;
                   }
                }
             }
@@ -4249,7 +4272,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    QStringList qsl_pmtypes;
    {
       QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
-      qsl_pmtypes = (pmtypes ).split( rx , QString::SkipEmptyParts );
+      qsl_pmtypes = (pmtypes ).split( rx , Qt::SkipEmptyParts );
    }
    for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
    {
@@ -4798,7 +4821,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
             editor_msg( "red", QString( us_tr( "Error: can not create directives file: %1" ) ).arg( f_directives.fileName() ) );
          } else {
             QTextStream ts( &f_directives );
-            ts << QString( "%1" ).arg( cluster_additional_methods_job_multiplier[ "best" ] - 1 ) << endl;
+            ts << QString( "%1" ).arg( cluster_additional_methods_job_multiplier[ "best" ] - 1 ) << Qt::endl;
             f_directives.close();
             source_files << f_directives.fileName();
          }

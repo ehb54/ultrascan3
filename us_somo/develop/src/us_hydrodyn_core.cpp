@@ -167,8 +167,8 @@ static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 
    float sfact =
       sqrt(
-           (*r1 + *r2) * (*r1 + *r2) *
-           ((*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) -
+           (double)(*r1 + *r2) * (*r1 + *r2) *
+           ((double)(*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) -
 
              2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) +
 
@@ -1475,15 +1475,31 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_residue.molvol = misc.avg_volume * atom_counts[count_idx];
                         // new_residue.asa = misc.avg_asa * atom_counts[count_idx];
                         new_residue.asa = 0;
-                        new_residue.vbar = misc.avg_vbar;
+                        new_residue.vbar       = misc.avg_vbar;
+                        new_residue.vbar_at_pH = misc.avg_vbar;
                         new_residue.r_atom.clear( );
                         new_residue.r_bead.clear( );
+
                         new_bead.hydration = (unsigned int)(misc.avg_hydration * atom_counts[count_idx] + .5);
                         new_bead.color = 10;         // light green
                         new_bead.placing_method = 0; // cog
                         new_bead.chain = 1;          // side chain
                         new_bead.volume = misc.avg_volume * atom_counts[count_idx];
                         new_bead.mw = misc.avg_mass * atom_counts[count_idx];
+// #define DEBUG_ABB_VBAR
+#if defined( DEBUG_ABB_VBAR )
+                        QTextStream( stdout )
+                           << "--------------------------------------------------------------------------------\n"
+                           << "residue     : " << j << "\n"
+                           << "avg_volume  : " << misc.avg_volume << "\n"
+                           << "count_idx   : " << count_idx << "\n"
+                           << "atom_counts : " << atom_counts[count_idx] << "\n"
+                           << "molvol      : " << new_residue.molvol << "\n"
+                           << "bead.vol    : " << new_bead.volume << "\n"
+                           << "mw          : " << new_bead.mw << "\n"
+                           ;
+#endif
+
                         new_bead.ionized_mw_delta = 0;
                         new_residue.r_bead.push_back(new_bead);
                         multi_residue_map[new_residue.name].push_back(residue_list.size());
@@ -1585,11 +1601,16 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         }
                      }
             
-                     new_atom.name = (this_atom->name == "OXT" ? "OXT'" : this_atom->name);
-                     new_atom.hybrid.name = this_atom->name;
-                     new_atom.hybrid.mw = misc.avg_mass;
+                     new_atom.name                    = (this_atom->name == "OXT" ? "OXT'" : this_atom->name);
+                     new_atom.hybrid.name             = this_atom->name;
+                     new_atom.hybrid.mw               = misc.avg_mass;
                      new_atom.hybrid.ionized_mw_delta = 0;
-                     new_atom.hybrid.radius = misc.avg_radius;
+                     new_atom.hybrid.radius           = misc.avg_radius;
+                     new_atom.hybrid.scat_len         = 0;
+                     new_atom.hybrid.saxs_name        = "ABB";
+                     new_atom.hybrid.num_elect        = misc.avg_num_elect;
+                     new_atom.hybrid.protons          = misc.avg_protons;
+                     
                      new_atom.bead_assignment = current_bead_assignment; 
                      new_atom.positioner = true;
                      new_atom.serial_number = residue_list[respos].r_atom.size();
@@ -1615,8 +1636,25 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         }
                         if ( !residue_atom_hybrid_map.count( mapkey ) &&
                              residue_atom_abb_hybrid_map.count( atom_to_add.name ) ) {
-                           residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
+                           // should use ABB atoms hybridization
+                           // residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
                            // us_qdebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( residue_atom_abb_hybrid_map[atom_to_add.name ] ) );
+                           residue_atom_hybrid_map[ mapkey ] = "ABB";
+                           {
+                              QString mapkey_no_nc = QString("%1|%2").arg(this_atom->resName).arg(atom_to_add.name);
+                              residue_atom_hybrid_map[ mapkey_no_nc ] = "ABB";
+                           }
+                           residue_atom_hybrid_map[ mapkey ] = "ABB";
+                           if ( !saxs_util->hybrid_map.count( "ABB" ) ) {
+                              saxs_util->hybrid_map[ "ABB" ] = new_atom.hybrid;
+                           }
+                           {
+                              QString atom_map_key = new_atom.name + "~ABB";
+                              if ( !saxs_util->atom_map.count( atom_map_key ) ) {
+                                 saxs_util->atom_map[ atom_map_key ] = new_atom;
+                              }
+                           }
+                           us_qdebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( "ABB" ) );
                         }
                      }
                   }
@@ -2069,14 +2107,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       QTextStream ts(&f);
       for (unsigned int i=0; i<residue_list.size(); i++)
       {
-         ts << residue_list[i].comment << endl;
+         ts << residue_list[i].comment << Qt::endl;
          ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
             << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
             << "\t" << residue_list[i].asa
             << "\t" << residue_list[i].r_atom.size()
             << "\t" << residue_list[i].r_bead.size()
-            << "\t" << residue_list[i].vbar << endl;
+            << "\t" << residue_list[i].vbar << Qt::endl;
          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
          {
             ts << residue_list[i].r_atom[j].name.toUpper()
@@ -2087,7 +2125,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                << "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
                << "\t" << residue_list[i].r_atom[j].serial_number 
                << "\t" << residue_list[i].r_atom[j].hydration
-               << endl;
+               << Qt::endl;
          }
          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
          {
@@ -2095,7 +2133,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                << "\t" << residue_list[i].r_bead[j].color
                << "\t" << residue_list[i].r_bead[j].placing_method
                << "\t" << residue_list[i].r_bead[j].chain
-               << "\t" << residue_list[i].r_bead[j].volume << endl;
+               << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
          }
          str1.sprintf("%d: ", i+1);
          str1 += residue_list[i].name.toUpper();
@@ -2559,10 +2597,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                this_atom->ionized_mw_delta = residue_list[respos].r_atom[atompos].hybrid.ionized_mw_delta;
 
                // if ( this_atom->p_residue ) {
-               //    // QTextStream( stdout ) << "**************************************** p_residue set " << endl;
+               //    // QTextStream( stdout ) << "**************************************** p_residue set " << Qt::endl;
                //    this_atom->ionized_mw_delta = this_atom->p_residue->r_atom[atompos].hybrid.ionized_mw_delta;
                // } else {
-               //    // QTextStream( stdout ) << "**************************************** p_residue NOT set " << endl;
+               //    // QTextStream( stdout ) << "**************************************** p_residue NOT set " << Qt::endl;
                // }
                   
                // if ( this_atom->ionized_mw_delta != 0 ) {
@@ -2570,7 +2608,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                //                          << this_atom->ionized_mw_delta
                //                          << " respos " << respos
                //                          << " atompos " << atompos
-               //                          << endl
+               //                          << Qt::endl
                //       ;
                // }
                   
@@ -4755,7 +4793,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
    }
 
    if(asa.method == 1) {
-      // surfracer
+      // ASAB1
       editor->append("Computing ASA via ASAB1\n");
       qApp->processEvents();
       if (stopFlag)
@@ -7466,7 +7504,7 @@ double US_Hydrodyn::total_volume_of_bead_model( vector < PDB_atom > &bead_model 
    {
       if ( bead_model[ i ].active ) 
       {
-         tot_vol += bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius;
+         tot_vol += (double) bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius;
       }
    }
    return tot_vol * pi43;

@@ -1010,15 +1010,15 @@ std::istream& operator>>(std::istream &s, Array2D<T> &A)
 
     s >> M >> N;
 
-	Array2D<T> B(M,N);
+    Array2D<T> B(M,N);
 
     for (int i=0; i<M; i++)
-        for (int j=0; j<N; j++)
-        {
-            s >>  B[i][j];
-        }
-
-	A = B;
+       for (int j=0; j<N; j++)
+       {
+          s >>  B[i][j];
+       }
+    
+    A = B;
     return s;
 }
 
@@ -1546,14 +1546,14 @@ std::istream& operator>>(std::istream &s, Array3D<T> &A)
 
     s >> M >> N >> K;
 
-	Array3D<T> B(M,N,K);
+    Array3D<T> B(M,N,K);
 
     for (int i=0; i<M; i++)
-        for (int j=0; j<N; j++)
-			for (int k=0; k<K; k++)
-            	s >>  B[i][j][k];
+       for (int j=0; j<N; j++)
+          for (int k=0; k<K; k++)
+             s >>  B[i][j][k];
 
-	A = B;
+    A = B;
     return s;
 }
 
@@ -3395,15 +3395,15 @@ std::istream& operator>>(std::istream &s, Fortran_Array2D<T> &A)
 
     s >> M >> N;
 
-	Fortran_Array2D<T> B(M,N);
+    Fortran_Array2D<T> B(M,N);
 
     for (int i=1; i<=M; i++)
-        for (int j=1; j<=N; j++)
-        {
-            s >>  B(i,j);
-        }
+       for (int j=1; j<=N; j++)
+       {
+          s >>  B(i,j);
+       }
 
-	A = B;
+    A = B;
     return s;
 }
 
@@ -3808,14 +3808,14 @@ std::istream& operator>>(std::istream &s, Fortran_Array3D<T> &A)
 
     s >> M >> N >> K;
 
-	Fortran_Array3D<T> B(M,N,K);
+    Fortran_Array3D<T> B(M,N,K);
 
     for (int i=1; i<=M; i++)
-        for (int j=1; j<=N; j++)
-			for (int k=1; k<=K; k++)
-            	s >>  B(i,j,k);
+       for (int j=1; j<=N; j++)
+          for (int k=1; k<=K; k++)
+             s >>  B(i,j,k);
 
-	A = B;
+    A = B;
     return s;
 }
 

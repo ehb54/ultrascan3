@@ -159,18 +159,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq_sh_1) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red",
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->name)
+                           .arg(this_atom_name)
                            .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
@@ -191,11 +192,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 //             cout << QString("atom %1 hybrid %2 excl vol %3 by hybrid radius %4\n")
 //                .arg(this_atom->name)
 //                .arg(this_atom->hybrid_name)
-//                .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
+//                .arg(atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol)
 //                .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
 //                ;
 
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
             if ( use_WAT_Tf &&
                  this_atom->resName == "WAT" &&
                  this_atom->tempFactor ) {

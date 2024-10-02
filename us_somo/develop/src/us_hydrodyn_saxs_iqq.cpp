@@ -66,12 +66,12 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                {
                   if ( our_saxs_options->swh_excl_vol > 0e0 )
                   {
-                     our_saxs_options->iq_target_ev += our_saxs_options->swh_excl_vol * swh_count;
+                     our_saxs_options->iq_target_ev += (double) our_saxs_options->swh_excl_vol * swh_count;
                      editor_msg( "blue", 
                                  QString( us_tr( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
                                  .arg( our_saxs_options->swh_excl_vol )
                                  .arg( swh_count )
-                                 .arg( our_saxs_options->swh_excl_vol * swh_count ) );
+                                 .arg( (double) our_saxs_options->swh_excl_vol * swh_count ) );
                   } else {
                      QString mapkey = "WAT|OW";
                      QString hybrid_name = residue_atom_hybrid_map[mapkey];
@@ -187,18 +187,19 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq 1) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red", 
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->name)
+                           .arg(this_atom_name)
                            .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
@@ -220,9 +221,9 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             new_atom.hybrid_name = hybrid_name;
             
             // this is probably correct but FoXS uses the saxs table excluded volume
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
-            new_atom.atom_name = this_atom->name;
+            new_atom.atom_name = this_atom_name;
             new_atom.residue_name = use_resname;
 
             if ( our_saxs_options->use_somo_ff )
@@ -399,18 +400,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq 2) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red",
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->name)
+                           .arg(this_atom_name)
                            .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
@@ -438,7 +440,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
             
             // this is probably correct but FoXS uses the saxs table excluded volume
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
             if ( use_WAT_Tf &&
                  this_atom->resName == "WAT" &&
                  this_atom->tempFactor ) {
@@ -1028,7 +1030,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                   pr_n.resize(hist.size());
                   for ( unsigned int i = 0; i < hist_pr.size(); i++) 
                   {
-                     r[i] = i * delta_pr;
+                     r[i] = (double) i * delta_pr;
                      pr[i] = (double) hist_pr[i];
                      pr_n[i] = (double) hist_pr[i];
                   }
@@ -1092,7 +1094,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             pr_n.resize(hist_pr.size());
             for ( unsigned int i = 0; i < hist_pr.size(); i++) 
             {
-               r[i] = i * delta_pr;
+               r[i] = (double) i * delta_pr;
                pr[i] = (double) hist_pr[i];
                pr_n[i] = (double) hist_pr[i];
             }
@@ -1124,7 +1126,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          pr.resize(hist_pr.size());
          for ( unsigned int i = 0; i < hist_pr.size(); i++) 
          {
-            r[i] = i * delta_pr;
+            r[i] = (double)i * delta_pr;
             pr[i] = (double) hist_pr[i];
 #if defined(PR_DEBUG)
             printf("%e %e\n", r[i], pr[i]);
@@ -1138,6 +1140,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
 
          plot_one_pr( r, pr, te_filename2->text() );
+         compute_rg_to_progress( r, pr, te_filename2->text() );
          
       } // compute_pr
 
@@ -1591,18 +1594,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq 3) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red", 
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->name)
+                           .arg(this_atom_name)
                            .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
@@ -1620,14 +1624,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                continue;
             }
 
+#if defined( DEBUG_SAXS )
             cout << QString("atom %1 hybrid %2 excl vol %3 by hybrid radius %4\n")
-               .arg(this_atom->name)
+               .arg(this_atom_name)
                .arg(this_atom->hybrid_name)
-               .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
+               .arg(atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol)
                .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
                ;
-
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+#endif
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
             if ( use_WAT_Tf &&
                  this_atom->resName == "WAT" &&
                  this_atom->tempFactor ) {
@@ -1693,6 +1698,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
+            // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
             {
@@ -1887,7 +1893,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       cout << endl;
 #endif
       saxs saxsH = saxs_map["H"];
-      cout << "hi\n";
       cout << QString( "atoms.size() %1\n" ).arg( atoms.size() );
       if ( !atoms.size() )
       {
@@ -1897,7 +1902,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
       // spec calc for now
       {
+#if defined( DEBUG_SAXS )
          cout << "atomname pos h n ve\n";
+#endif
          vector < double > n;
          vector < double > v;
 
@@ -1914,6 +1921,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                           atoms[ i ].hydrogens,
                           0e0,
                           0e0 );
+#if defined( DEBUG_SAXS )
             cout << QString( "%1 %2 %3 %4 %5\n" )
                .arg( atoms[ i ].saxs_name )
                .arg( i )
@@ -1921,6 +1929,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                .arg( this_n )
                .arg( atoms[ i ].excl_vol )
                ;
+#endif
             n.push_back( this_n );
             v.push_back( atoms[ i ].excl_vol );
          }
@@ -2637,12 +2646,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
-               cout << "error: atom_map missing for hybrid_name "
+               cout << "error: (saxs_iqq 4) atom_map missing for hybrid_name "
                     << hybrid_name 
                     << " atom name "
-                    << this_atom->name
+                    << this_atom_name
                     << endl;
                editor_msg( "red",
                            QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
@@ -2666,7 +2676,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                continue;
             }
 
-            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.atom_name = this_atom->name;
             new_atom.residue_name = use_resname;
@@ -2708,6 +2718,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
+            // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
             {
@@ -3582,6 +3593,8 @@ double US_Hydrodyn_Saxs::compute_ff(
    //   cout << QString( "compute_ff q %1 q_o_4pi2 %2\n" ).arg( q ).arg( q_o_4pi2 );
    // cout << "compute_ff: saxs_name:" << sa.saxs_name << endl;
 
+   // #define UHSI_COMPUTE_FF_DEBUG
+
 #if defined( UHSI_COMPUTE_FF_DEBUG )
    cout << QString( "compute_ff: q: %1 nr:%2 na:%3 naf:%4 h:%5 use_somo_ff %6 alt_ff %7\n" )
       .arg( q )
@@ -3801,7 +3814,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -3877,7 +3890,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {

@@ -7,6 +7,7 @@
 #include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_failed_gmp_run_gui.h"
 
 //! \brief Class for simple table widget display of
 //!        a list of item columns.
@@ -17,15 +18,18 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    const int def_sort )
    : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
 {
-   multi_sel         = false;
-   deleted_button    = false;
-   autoflow_button   = false;
-   autoflow_da       = false;
-   selxP             = aselxP;
-   selxsP            = NULL;
-   sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
-                                        : Qt::AscendingOrder;
-   sort_col          = qAbs( def_sort ) - 1;
+   multi_sel           = false;
+   deleted_button      = false;
+   autoflow_button     = false;
+   autoflow_gmp_report = false;
+   set_unset_failed_button_autoflow = false;
+   autoflow_dev        = false;
+   autoflow_da         = false;
+   selxP               = aselxP;
+   selxsP              = NULL;
+   sort_ord            = ( def_sort < 0 ) ? Qt::DescendingOrder
+                                          : Qt::AscendingOrder;
+   sort_col            = qAbs( def_sort ) - 1;
 
    build_layout( titl );
 
@@ -45,6 +49,9 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    deleted_button_autoflow    = false;
    autoflow_button   = false;
    autoflow_da       = false;
+   autoflow_gmp_report = false;
+   set_unset_failed_button_autoflow = false;
+   autoflow_dev     = false;
    
    
    if ( !add_label.isEmpty() )
@@ -55,12 +62,26 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	 {
 	   autoflow_button = true;
 	   deleted_button_autoflow  = true;
+	   set_unset_failed_button_autoflow = true;
 	 }
+       if ( add_label == "AUTOFLOW_DEV" )
+	 {
+	   autoflow_button = true;
+	   deleted_button_autoflow  = true;
+	   //set_unset_failed_button_autoflow = true;
+	   set_unset_failed_button_autoflow = true;
+	   autoflow_dev = true;
+	 }
+       
        if ( add_label == "AUTOFLOW_DA" )
 	 {
 	   autoflow_button = true;
 	   deleted_button_autoflow  = true;
 	   autoflow_da     = true;
+	 }
+       if( add_label == "AUTOFLOW_GMP_REPORT")
+	 {
+	   autoflow_gmp_report = true;	   
 	 }
      }
    
@@ -125,12 +146,23 @@ void US_SelectItem::build_layout( const QString titl )
        p.setColor(QPalette::Base, Qt::lightGray);
        p.setColor(QPalette::Text, Qt::darkRed);
        le_info->setPalette(p);
-       
-       le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
-			    "<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
-			    "<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
-			    "<ul><li>Finally, records can be deleted (\"Delete Record\"). Use with caution</ul></li>" ));
 
+       if ( autoflow_dev )
+	 {
+	   le_info->setText(tr( "Information on one or more developmental runs based on previously completed experiments is available."
+				"<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Development Run to Follow\"</ul></li>"
+				"<ul><li>Alternatively, you can click \"Setup New Development Run\" to modify an existing analysis protocol and re-analyze data</ul></li>"
+				"<ul><li>Records can be deleted (\"Delete Record\"). NOTE that deleted runs cannot be monitored with this program</ul></li>"
+				"<ul><li>Finally, selected record can be marked as \"Failed\". The program will re-initialize the run from the 3. IMPORT stage</ul></li>"));
+	 }
+       else
+	 {
+	   le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
+				"<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
+				"<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
+				"<ul><li>Records can be deleted (\"Delete Record\"). NOTE that deleted runs cannot be monitored with this program</ul></li>"
+				"<ul><li>Finally, selected record can be marked as \"Failed\". The program will re-initialize the run from the 3. IMPORT stage</ul></li>"));
+	 }
        
        le_info->setFont(le_info_font);
        main->addWidget( le_info );
@@ -185,15 +217,24 @@ void US_SelectItem::build_layout( const QString titl )
 
    QString cancel_pb_label( tr("Cancel") );
    if ( autoflow_button )
-     cancel_pb_label = tr("Define Another Experiment");
-          
+     {
+       if ( autoflow_dev )
+	 cancel_pb_label = tr("Setup New Development Run");
+       else
+	 cancel_pb_label = tr("Define Another Experiment");
+     }  
    //QPushButton* pb_cancel = us_pushbutton( cancel_pb_label  );
 
    pb_cancel = us_pushbutton( cancel_pb_label  );
    
    QString accept_pb_label( tr( "Select Item" ) );
    if ( autoflow_button )
-     accept_pb_label = tr("Select Optima Run to Follow");
+     {
+       if ( autoflow_dev )
+	 accept_pb_label = tr("Select Development Run to Follow");
+       else
+	 accept_pb_label = tr("Select Optima Run to Follow");
+     }
    
    QPushButton* pb_accept = us_pushbutton( multi_sel ?
                                            tr( "Select Item(s)" ) :
@@ -202,22 +243,29 @@ void US_SelectItem::build_layout( const QString titl )
    
    QPushButton* pb_delete          = us_pushbutton( tr( "Delete Item" ) );
    QPushButton* pb_delete_autoflow = us_pushbutton( tr( "Delete Record" ) );
+
+   QPushButton* pb_mark_unmark_failed_autoflow = us_pushbutton( tr( "Mark/Unmark Run as Failed" ) );
    
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_delete );
    buttons->addWidget( pb_delete_autoflow );
    buttons->addWidget( pb_accept );
+   buttons->addWidget( pb_mark_unmark_failed_autoflow );
 
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
    connect( pb_delete, SIGNAL( clicked() ), SLOT( deleted() ) );
    connect( pb_delete_autoflow, SIGNAL( clicked() ), SLOT( deleted_autoflow() ) );
+   connect( pb_mark_unmark_failed_autoflow, SIGNAL( clicked() ), SLOT( set_unset_failed_autoflow() ) );
 
    if ( !deleted_button )
      pb_delete->hide();
 
    if ( !deleted_button_autoflow )
      pb_delete_autoflow->hide();
+
+   if ( !set_unset_failed_button_autoflow )
+     pb_mark_unmark_failed_autoflow->hide();
 
    
    main->addLayout( buttons );
@@ -258,6 +306,7 @@ void US_SelectItem::list_data()
    nitems              = items.count();
    itemlist.clear();
 
+   qDebug() << "have_search " << have_search;
    qDebug() << "LIST DATA 1";
 
    for ( int ii = 0; ii < nitems; ii++ )
@@ -291,7 +340,13 @@ void US_SelectItem::list_data()
       nrows            = 0;
       for ( int ii = 0; ii < mxrows; ii++ )
       {  // Bump therow count for each item name matching the filter
-         QString iname    = itemlist.at( ii );
+         //QString iname    = itemlist.at( ii );
+	 QString iname;
+	 if ( autoflow_button || autoflow_gmp_report)
+	   iname = items[ ii ][ 1 ];  // Search by runID
+	 else
+	   iname    = itemlist.at( ii );
+	 
          if ( iname.contains( dsearch, Qt::CaseInsensitive ) )
             nrows++;
       }
@@ -310,11 +365,19 @@ void US_SelectItem::list_data()
    int kk           = 0;
    for ( int ii = 0; ii < mxrows; ii++ )
    {  // Propagate list widget with labels
-      QString iname    = itemlist.at( ii );
+      // QString iname    = itemlist.at( ii );
+
+     QString iname;
+     if ( autoflow_button || autoflow_gmp_report )
+       iname = items[ ii ][ 1 ];  // Search by runID
+     else
+       iname    = itemlist.at( ii );
 
       qDebug() << "LIST DATA 4a";
       qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       qDebug() << "LIST DATA 4ab";
+
+      qDebug() << "have_search, iname, dsearch -- " << have_search << iname << dsearch;
       
       // Skip where name does not match the filter
       if ( have_search  &&
@@ -322,12 +385,13 @@ void US_SelectItem::list_data()
          continue;
 
       // Set the column 0 name field
-      tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
+      //tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
+      tw_data->setItem( kk, 0, new QTableWidgetItem( items[ ii ][ 0 ] ) );
 
       //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       
       //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
-      if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
+      if ( autoflow_da && items[ ii ][ ncols - 2 ] == "YES" ) 
 	{
 	  //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
 	  tw_data->item( kk, 0)->setFlags(Qt::NoItemFlags);
@@ -348,11 +412,17 @@ void US_SelectItem::list_data()
 
 
 	 //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
-	 if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
+	 if ( autoflow_da && items[ ii ][ ncols - 2 ] == "YES" ) 
 	   {
 	     tw_data->item( kk, jj)->setFlags(Qt::NoItemFlags);
 	     // //tw_data->item( kk, 0)->setForeground(QBrush(QColor(250,0,0)));
 	     tw_data->item( kk, jj)->setForeground(QBrush(Qt::gray));
+	   }
+
+	 //For GMP's "Failed" field:
+	 if ( !autoflow_da && autoflow_button && items[ ii ][ ncols - 1 ] == "YES" )
+	   {
+	     tw_data->item( kk, jj)->setForeground(QBrush(Qt::red));
 	   }
       }
 
@@ -418,8 +488,18 @@ void US_SelectItem::accepted()
 
    }
 
+   
    accept();        // Signal that selection was accepted
+
    close();
+      
+   // if ( !autoflow_button ) 
+   //   close();
+   // else
+   //   {
+   //     qDebug() << "Do not close for now...";
+   //     this->show();
+   //   }
 }
 
 
@@ -591,6 +671,20 @@ void US_SelectItem::deleted()
    //Attempt protocol deletion:
    qDebug() << "Prtotcol ID to delete: ID, name: " << ProtID << ", " << items[ ProtRow ][ 0 ];
 
+   //Here, check if the protocol part of the autoflow || autoflowHistory tables:
+   //If YES, inform of inability to delete, return:
+   bool isRequired = check_protocol_for_autoflow( ProtID, items[ ProtRow ][ 0 ] );
+   if ( isRequired )
+     {
+       QMessageBox::information( this, tr( "Protocol Cannot be Deleted" ),
+				 tr( "The Protocol:\n\n"
+				     "\"%1\"\n\n"
+				     "can NOT be deleted since it is required by the GMP framework!" )
+				 .arg( items[ ProtRow ][ 0 ] ) );
+       
+       return;
+     }
+   
    int response = QMessageBox::question( this,
 					 tr( "Delete Protocol?" ),
 					 tr( "You have selected the following Protocol to delete:\n    \"" )
@@ -630,4 +724,230 @@ void US_SelectItem::deleted()
 			     msg );
    
    emit accept_deletion();        // Signal to pass to us_experiment to update (re-read reduced) protdata
+}
+
+
+//Check if the protocol part of GMP framework
+bool US_SelectItem::check_protocol_for_autoflow( QString pID, QString pName )
+{
+  bool isRequired = false;
+  int  protNumber = 0;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  QStringList q;
+  q  << QString( "check_protocol_for_autoflow" ) 
+     << pName;
+
+  protNumber  = db -> functionQuery( q );
+
+  protNumber ? isRequired = true : isRequired = false;
+  
+  return isRequired;
+}
+
+
+
+
+void US_SelectItem::set_unset_failed_autoflow()
+{
+   QList< QTableWidgetItem* > selitems = tw_data->selectedItems();
+   
+   int     AutoflowRow;
+   QString AutoflowID;
+   if ( selitems.size() == 0 )
+     {
+       QMessageBox::information( this,
+				 tr( "No Autoflow Record Selected" ),
+				 tr( "You have not selected any auflow record.\nSelect or Cancel" ) );
+       return;
+     }
+
+   // Return the index to the selected item
+   QTableWidgetItem* twi  = selitems.at( 0 );
+   int irow          = twi->row();
+   failed_run_row    = irow;
+   twi               = tw_data->item( irow, 0 );
+   
+   AutoflowRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
+   
+   AutoflowID = items[ AutoflowRow ][ 0 ];
+
+   //
+   qDebug() << "Autoflow ID to set/uset as FAILED: AutoflowRow, ID, name, run status: "
+	    << AutoflowRow << ", " << AutoflowID << ", " << items[ AutoflowRow ][ 1 ] << ", " << items[ AutoflowRow ][ 4 ];
+
+   //Check current status:
+   US_Passwd pw;
+   US_DB2* db = new US_DB2( pw.getPasswd() );
+   
+   QStringList q( "" );
+   q.clear();
+   q << "read_autoflow_record" << AutoflowID;
+   db->query( q );
+   
+   QMap <QString, QString> protocol_details;
+   
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   protocol_details[ "protocolName" ]   = db->value( 0 ).toString();
+	   protocol_details[ "CellChNumber" ]   = db->value( 1 ).toString();
+	   protocol_details[ "TripleNumber" ]   = db->value( 2 ).toString();
+	   protocol_details[ "duration" ]       = db->value( 3 ).toString();
+	   protocol_details[ "experimentName" ] = db->value( 4 ).toString();
+	   protocol_details[ "experimentId" ]   = db->value( 5 ).toString();
+	   protocol_details[ "runID" ]          = db->value( 6 ).toString();
+	   protocol_details[ "status" ]         = db->value( 7 ).toString();
+           protocol_details[ "dataPath" ]       = db->value( 8 ).toString();   
+	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
+	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
+	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
+
+	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
+	   protocol_details[ "label" ]          = db->value( 15 ).toString();
+	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
+
+	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
+	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
+	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
+	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
+	   protocol_details[ "failedID" ]      = db->value( 22 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	 }
+     }
+
+   protocol_details[ "autoflowID" ] = AutoflowID;
+   QString failedID = protocol_details[ "failedID" ];
+   
+   QString current_mark = "<font color='green'><b>NOT FAILED</b></font>";
+   QString new_mark     = "<font color='red'><b>FAILED</b></font>";
+   QString add_msg      = "This implies the run will be re-started from stage <b>3. IMPORT</b> upon next re-attachment.";
+   bool isFailed = false;
+   if ( failedID. toInt() != 0 )
+     {
+       current_mark = "<font color='red'><b>FAILED</b></font>";
+       new_mark     = "<font color='green'><b>NOT FAILED</b></font>";
+       isFailed     = true;
+
+       add_msg      = "";
+     }
+
+   QMessageBox msgBox;
+   msgBox.setText(tr( "You have selected to change the status for the following run:<br><br>" )
+		  + tr("<b>ID:&emsp;</b>") + items[ AutoflowRow ][ 0 ]
+		  + tr("<br>")
+		  + tr("<b>Name:&emsp;</b>") + items[ AutoflowRow ][ 1 ]
+		  + tr("<br>")
+		  + tr("<b>Current Status:&emsp;</b> ") + current_mark
+		  + tr("<br><br> If proceeded, it will be marked as %1. %2").arg( new_mark ).arg( add_msg )
+		  + tr( "<br><br>Proceed?" ));
+   //msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if deleted, this run cannot be monitored with this program anymore!</font>");
+   msgBox.setWindowTitle(tr("Mark/UnMark Autoflow Record as FAILED"));
+   QPushButton *Confirm   = msgBox.addButton(tr("Proceed"), QMessageBox::YesRole);
+   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+   msgBox.setIcon(QMessageBox::Question);
+   msgBox.exec();
+    
+   if (msgBox.clickedButton() == Cancel) 
+     return;
+   else if (msgBox.clickedButton() == Confirm)
+     {
+
+       if ( !isFailed )
+	 {
+	   //Setting as FAILED: additional info (reason, stage) can be specified:
+	   if (  protocol_details[ "gmpRun" ] == "YES " )
+	     {
+	       US_FailedRunGui * fdiag = new US_FailedRunGui( protocol_details );
+	       connect( fdiag, SIGNAL( failed_status_set() ), this, SLOT( show_autoflow_run_as_failed() ));
+	       fdiag -> show();
+	     }
+	   else // For non-GMP: just repeat as for GMP, but create "empty" autoflowFailed record & attach to the autoflow 
+	     {
+	       int autoflowFailedID = 0;
+	       q.clear();
+	       q << "new_autoflow_failed_record"
+		 << AutoflowID
+		 << "N/A"
+		 << "reason: non-GMP";
+	       
+	       autoflowFailedID = db->functionQuery( q );
+	       
+	       if ( !autoflowFailedID )
+		 {
+		   QMessageBox::warning( this, tr( "AutoflowFailed Record Problem" ),
+					 tr( "autoflowFailed: There was a problem with creating a record in autoflowFailed table \n" ) );
+		   
+		   return;
+		 }
+	       
+	       //update 'failed' in autoflow:
+	       q.clear();
+	       q << "update_autoflow_failedID"
+		 << AutoflowID
+		 << QString::number( autoflowFailedID );
+	       
+	       qDebug() << "Query for update_autoflow_failedID -- " << q;
+	       
+	       int status = db->statusQuery( q );
+	       
+	       if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+		 {
+		   QMessageBox::warning( this,
+					 tr( "Autoflow's failedID field Not Updated" ),
+					 tr( "No autoflow record\n"
+					     "associated with this experiment." ) );
+		   return;
+		 }
+	       
+	       show_autoflow_run_as_failed();
+	     }
+	 }
+       else
+	 {
+	   //Reverting to NOT FAILED (deleting autoflowFailed record && setting 'failedID' in autoflow to DEFAULT):
+	   q.clear();
+	   q << "delete_autoflow_failed_record"
+	     << AutoflowID
+	     << failedID;
+	   db->query( q );
+
+
+	   //set Run Manager's record back to black, last item to "NO"
+	   int last_col = ncols - 1;
+	   qDebug() << "Resetting Failed to NOT Failed: irow, ncols-1 -- "
+		    << irow
+		    << last_col;
+	   tw_data->item( irow, last_col )->setText(QString("NO"));
+
+	   for ( int jj = 1; jj < ncols; jj++ )
+	     {
+	       tw_data->item( irow, jj)->setForeground(QBrush(Qt::black));
+	     }
+	 }
+       
+     }
+}
+
+//Slot to depict records in GMP's Run Manager as failed (in red, and "YES")
+void US_SelectItem::show_autoflow_run_as_failed( void )
+{
+  int last_col = ncols - 1;
+  qDebug() << "Setting as Failed: failed_run_row, ncols-1 -- "
+	   << failed_run_row
+	   << last_col;
+  tw_data->item( failed_run_row, last_col )->setText(QString("YES"));
+  
+  for ( int jj = 1; jj < ncols; jj++ )
+    {
+      tw_data->item( failed_run_row, jj)->setForeground(QBrush(Qt::red));
+    }
 }

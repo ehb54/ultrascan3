@@ -203,7 +203,7 @@ class US_EXTERN US_Gzip
 #define Freq fc.freq
 #define Code fc.code
 #define Dad  dl.dad
-#define Len  dl.len
+#define GZLen  dl.len
 
 #define HEAP_SIZE ( 2 * L_CODES + 1 )
 

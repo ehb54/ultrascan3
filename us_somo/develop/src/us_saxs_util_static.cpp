@@ -85,11 +85,11 @@ bool US_Saxs_Util::read_sas_data(
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -10894,7 +10894,7 @@ bool US_Saxs_Util::sscaling_fit(
    return true;
 }
 
-bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
+bool US_Saxs_Util::is_nonzero_vector( const vector < double > &v )
 {
    bool non_zero = v.size() > 0;
    for ( unsigned int i = 0; i < v.size(); i++ )
@@ -10906,6 +10906,22 @@ bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
       }
    }
    return non_zero;
+}
+
+bool US_Saxs_Util::is_zero_vector( const vector < double > &v )
+{
+   if ( !v.size() ) {
+      return true; // empty vector is zero vector
+   }
+   
+   bool is_zero = true;
+   for ( unsigned int i = 0; i < v.size(); i++ ) {
+      if ( v[ i ] != 0e0 ) {
+         is_zero = false;
+         break;
+      }
+   }
+   return is_zero;
 }
 
 bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line_size )
@@ -10995,7 +11011,7 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
             QStringList qsl;
             {
                QString qs2 = qs.left(20);
-               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
             if ( qsl.size() == 1 )
             {
@@ -11341,7 +11357,7 @@ int US_Saxs_Util::us_usleep( unsigned int usec ) {
 #else
 #  if defined( WIN32 )
 int US_Saxs_Util::us_usleep( unsigned int usec ) {
-   _sleep( usec / 1000 );
+   Sleep( usec / 1000 );
    return 1;
 }
 #  else 
@@ -11376,7 +11392,7 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
 
    return 1e0;
 }
-#if QT_VERSION >= 0x040000
+
 US_EXPORT QString us_tr( QString qs ) {
    return QObject::tr( qPrintable( qs ) );
 }
@@ -11392,4 +11408,294 @@ US_EXPORT void us_qdebug( QString qs ) {
 US_EXPORT FILE * us_fopen( QString f, const char *mode ) {
    return fopen( qPrintable( f ), mode );
 }
-#endif
+
+map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
+   map < QString, QString > result;
+
+   result[ "recname" ] = pdb_line.mid( 0, 6 ).trimmed();
+
+   // pdb data from https://www.wwpdb.org/documentation/file-format-content/format33
+
+   if ( result[ "recname" ] == "TER" ) {
+      result[ "serial"    ] = pdb_line.mid(  6, 5 ).trimmed();
+      result[ "resname"   ] = pdb_line.mid( 17, 3 ).trimmed();
+      result[ "chainid"   ] = pdb_line.mid( 21, 1 ).trimmed();
+      result[ "resseq"    ] = pdb_line.mid( 22, 4 ).trimmed();
+   } else if ( result[ "recname" ] == "LINK" ) {
+      result[ "name1"     ] = pdb_line.mid( 12, 4 ).trimmed();
+      result[ "resname1"  ] = pdb_line.mid( 17, 3 ).trimmed();
+      result[ "chainid1"  ] = pdb_line.mid( 21, 1 ).trimmed();
+      result[ "resseq1"   ] = pdb_line.mid( 22, 4 ).trimmed();
+      result[ "name2"     ] = pdb_line.mid( 42, 4 ).trimmed();
+      result[ "resname2"  ] = pdb_line.mid( 47, 3 ).trimmed();
+      result[ "chainid2"  ] = pdb_line.mid( 51, 1 ).trimmed();
+      result[ "resseq2"   ] = pdb_line.mid( 52, 4 ).trimmed();
+      result[ "length"    ] = pdb_line.mid( 73, 5 ).trimmed();
+   } else if ( result[ "recname" ] == "ATOM" ||
+               result[ "recname" ] == "HETATM" ) {
+      result[ "serial"    ] = pdb_line.mid(  6, 5 ).trimmed();
+      result[ "name"      ] = pdb_line.mid( 12, 4 ).trimmed();
+      result[ "resname"   ] = pdb_line.mid( 17, 3 ).trimmed();
+      result[ "chainid"   ] = pdb_line.mid( 21, 1 ).trimmed();
+      result[ "resseq"    ] = pdb_line.mid( 22, 4 ).trimmed();
+      result[ "x"         ] = pdb_line.mid( 30, 8 ).trimmed();
+      result[ "y"         ] = pdb_line.mid( 38, 8 ).trimmed();
+      result[ "z"         ] = pdb_line.mid( 46, 8 ).trimmed();
+      result[ "element"   ] = pdb_line.mid( 76, 2 ).trimmed();
+   } else if ( result[ "recname" ] == "REMARK" ) {
+      result[ "remarknum" ] = pdb_line.mid(  7, 3 ).trimmed();
+      result[ "contents"  ] = pdb_line.mid( 11    ).trimmed();
+      if ( result[ "remarknum" ] == "766" ) {
+         if ( result[ "contents" ].contains( QRegExp( "^DMD LINK RANGE " ) ) ) {
+            QStringList dmdlinkinfo = result[ "contents" ].mid( 15 ).trimmed().split( QRegExp( " +" ) );
+            if ( dmdlinkinfo.size() == 2 ) {
+               bool ok;
+               if ( dmdlinkinfo[ 0 ] == "PERCENT" ) {
+                  result[ "dmdlinkpercent" ] = dmdlinkinfo[ 1 ];
+                  result[ "dmdlinkpercent" ].toFloat( &ok );
+                  if ( !ok ) {
+                     result[ "error" ] = "REMARK 766 DMD LINK RANGE PERCENT not provided a valid number:\n" + pdb_line;
+                  }
+               } else {
+                  result[ "dmdlinkstart" ] = dmdlinkinfo[ 0 ];
+                  result[ "dmdlinkend"   ] = dmdlinkinfo[ 1 ];
+                  result[ "dmdlinkstart" ].toFloat( &ok );
+                  if ( ok ) {
+                     result[ "dmdlinkend"   ].toFloat( &ok );
+                  }
+                  if ( !ok ) {
+                     result[ "error" ] = "REMARK 766 DMD LINK RANGE not provided a valid pair of numbers:\n" + pdb_line;
+                  }
+               }                  
+            } else {
+               result[ "error" ] = "REMARK 766 DMD LINK RANGE WRONG FORMAT:\n" + pdb_line;
+            }               
+         } else {
+            result[ "error" ] = "REMARK 766 UNKNOWN FORMAT:\n" + pdb_line;
+         }
+      }
+   }
+
+   return result;
+}
+
+bool US_Saxs_Util::calc_chisq(
+                              const vector < double > & x,
+                              const vector < double > & y,
+                              const vector < double > & sds,
+                              int                     parameters,
+                              double                  & chisq,
+                              double                  & nchi,
+                              QString                 & errors
+                              ) {
+   errors = "not yet implemented";
+   if ( x.size() != y.size() ) {
+      errors = QString( "Compute Chi2: Incompatible vector sizes for chi2 computation %1 %1\n" ).arg( x.size() ).arg( y.size() );
+      return false;
+   }
+   if ( x.size() != sds.size() ) {
+      errors = QString( "Compute Chi2: Incompatible vector error sizes for chi2 computation %1 %1\n" ).arg( x.size() ).arg( sds.size() );
+      return false;
+   }
+   if ( !is_nonzero_vector( sds ) ) {
+      errors = QString( "Compute Chi2: Errors have zero values, can not compute\n" );
+      return false;
+   }
+      
+   int size = (int) x.size();
+   int df   = size - parameters;
+
+   if ( df < 1 ) {
+      errors = QString( "Compute Chi2: Vector must have at least length %1, can not compute" ).arg( parameters + 1 );
+      return false;
+   }
+
+   chisq = 0;
+   for ( int i = 0; i < size; ++i ) {
+      chisq += pow( ( y[i] - x[i] ) / sds[i], 2 );
+   }
+   nchi = sqrt( chisq / df );
+
+   return true;
+}
+
+bool US_Saxs_Util::compute_rg_from_pr(
+                                      const vector < double >  & r
+                                      ,const vector < double > & pr
+                                      ,double                  & Rg
+                                      ,QString                 & errormsg
+                                      ) {
+   if ( r.size() != pr.size() ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : vector lengths differ r[%1]!=pr[%2]" ) )
+         .arg( r.size() )
+         .arg( pr.size() )
+         ;
+      return false;
+   }
+   
+   if ( r.size() < 2 ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : provided vectors too small [%1]" ) )
+         .arg( r.size() )
+         ;
+      return false;
+   }
+   
+   int pts = (int) r.size();
+
+   double intgrl_r2_pr = 0;
+   double intgrl_pr    = 0;
+   
+   double dr           = r[1] - r[0];
+
+   for ( int i = 0; i < pts; ++i ) {
+      intgrl_r2_pr += r[i]*r[i]*pr[i]*dr;
+      intgrl_pr    += pr[i]*dr;
+   }
+
+   if ( intgrl_pr <= 0 ) {
+      errormsg =
+         QString( us_tr( "compute_rg_from_pr() : integral of p(r) [%1] is zero or negative" ) )
+         .arg( intgrl_pr )
+         ;
+      return false;
+   }
+
+   Rg = sqrt( intgrl_r2_pr / ( 2.0 * intgrl_pr ) );
+   return true;
+}
+
+bool US_Saxs_Util::average( 
+                           const vector < vector < double > > & ys,
+                           vector < double > & y_avg,
+                           vector < double > & y_sd,
+                           QString & error_msg
+                            ) {
+   size_t ys_size = ys.size();
+
+   if ( !ys_size ) {
+      error_msg = "average() : no vectors provided";
+      return false;
+   }
+
+   size_t y_size = ys[ 0 ].size();
+
+   vector < double > y_sum( y_size, 0 );
+   vector < double > y_sum2( y_size, 0 );
+
+   for ( auto const & y : ys ) {
+      if ( y.size() != y_size ) {
+         error_msg = "average() : vectors have different lengths";
+         return false;
+      }
+      for ( size_t i = 0; i < y_size; ++i ) {
+         y_sum[ i ]  += y[ i ];
+         y_sum2[ i ] += y[ i ] * y[ i ];
+      }         
+   }
+
+   // calc average
+   
+   y_avg = y_sum;
+   {
+      double ys_size_recip = 1e0 / (double) ys_size;
+      for ( auto & v : y_avg ) {
+         v *= ys_size_recip;
+      }
+   }
+
+   y_sd.resize( y_size );
+
+   // calc sd
+   if ( ys_size > 1 ) {
+      double n = (double) ys_size;
+      double n_m_1 = n - 1;
+      double n_recip = 1/n;
+      double n_m_1_recip = 1/n_m_1;
+      
+      for ( size_t i = 0; i < y_size; ++i ) {
+         // qDebug() << QString( "y_sum2[%1]=%2 y_sum[%1]=%3 n %4 n_m_1 %5 n_recip %6 n_m_1_recip %7" )
+         //    .arg( i )
+         //    .arg( y_sum2[i] )
+         //    .arg( y_sum[i] )
+         //    .arg( n )
+         //    .arg( n_m_1 )
+         //    .arg( n_recip )
+         //    .arg( n_m_1_recip )
+         //    ;
+            
+         y_sd[ i ] = sqrt( n_m_1_recip * ( y_sum2[ i ] - n_recip * ( y_sum[ i ] * y_sum[ i ] ) ) );
+      }
+   } else {
+      y_sd.clear();
+   }
+
+   return true;
+}
+
+bool US_Saxs_Util::crop(
+                        const vector < double >  & x
+                        ,const vector < double > & y
+                        ,double                    x_min
+                        ,double                    x_max
+                        ,vector < double >       & x_cropped
+                        ,vector < double >       & y_cropped
+                        ,QString                 & errormsg
+                        ) {
+   x_cropped.clear();
+   y_cropped.clear();
+
+   size_t size = x.size();
+   if ( y.size() != x.size() ) {
+      errormsg = "crop() x & y have different lengths";
+      return false;
+   }
+
+   for ( size_t i = 0; i < size; ++i ) {
+      if ( x[i] >= x_min && x[i] <= x_max ) {
+         x_cropped.push_back( x[i] );
+         y_cropped.push_back( y[i] );
+      }
+   }
+
+   return true;
+}
+
+bool US_Saxs_Util::transpose_vvd(
+                                 const vector < vector < double > > & x
+                                 ,vector < vector < double > >      & y
+                                 ,QString                           & errormsg
+                                 ) {
+   y.clear();
+   size_t rows = x.size();
+
+   if ( !rows ) {
+      errormsg = "transpose() zero rows in data";
+      return false;
+   }
+
+   size_t cols = x[0].size();
+   
+   if ( !cols ) {
+      errormsg = "transpose() empty row 0";
+      return false;
+   }
+
+   for ( const auto & row : x ) {
+      if ( row.size() != cols ) {
+         errormsg = "transpose() varying row length";
+         return false;
+      }
+   }   
+
+   y.resize( cols);
+
+   for ( size_t i = 0; i < rows; ++i ) {
+      for ( size_t j = 0; j < cols; ++j ) {
+         y[ j ].push_back( x[ i ][ j ] );
+      }
+   }
+
+   return true;
+}

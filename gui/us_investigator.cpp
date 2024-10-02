@@ -13,6 +13,7 @@
 US_Investigator::US_Investigator( bool signal, int inv )
    : US_WidgetsDialog( 0, 0 )
 {
+  us_inv_auto_mode = false;
    signal_wanted = signal;
 
    setPalette( US_GuiSettings::frameColor() );
@@ -210,9 +211,220 @@ US_Investigator::US_Investigator( bool signal, int inv )
    }
 }
 
+//Alternative Constructor for GMP:1.EXP.
+US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
+   : US_WidgetsDialog( 0, 0 )
+{
+  us_inv_auto_mode = true;
+   
+  signal_wanted = signal;
+
+   setPalette( US_GuiSettings::frameColor() );
+   setWindowTitle( tr( "Manage Investigators" ) );
+   setAttribute( Qt::WA_DeleteOnClose );
+
+   int row = 0;
+   QGridLayout* main = new QGridLayout( this );
+   main->setContentsMargins( 2, 2, 2, 2 );
+   main->setSpacing( 2 );
+
+   // Search last name
+   QLabel* lb_search = us_label( tr( "Search:" ) );
+   main->addWidget( lb_search, row, 0 );
+
+   le_search = us_lineedit();
+   connect( le_search, SIGNAL( textChanged( const QString& ) ), 
+                       SLOT  ( limit_names( const QString& ) ) );
+   main->addWidget( le_search, row++, 1 );
+
+   // List widget
+   lw_names = us_listwidget();
+   connect( lw_names, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
+                      SLOT  ( get_inv_data     ( QListWidgetItem* ) ) );
+   main->addWidget( lw_names, row, 0, 4, 2 );
+   row += 4;
+
+   QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
+   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   main->addWidget( lb_DB, row++, 0, 1, 2 );
+
+   // Investigator ID
+   QLabel* lb_invID = us_label( tr( "Investigator ID:" ) );
+   main->addWidget( lb_invID, row, 0 );
+
+   le_invID = us_lineedit();
+   le_invID->setReadOnly( true );
+   main->addWidget( le_invID, row++, 1 );
+
+   // Investigator ID
+   QLabel* lb_invGuid = us_label( tr( "Global Identifier:" ) );
+   main->addWidget( lb_invGuid, row, 0 );
+
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+   le_invGuid = us_lineedit();
+   le_invGuid->setReadOnly( true );
+   le_invGuid->setPalette ( gray );
+   main->addWidget( le_invGuid, row++, 1 );
+
+   if ( US_Settings::us_debug() == 0 )
+   {
+      lb_invGuid->setVisible( false );
+      le_invGuid->setVisible( false );
+   }
+
+   // Last Name
+   QLabel* lb_lname = us_label( tr( "Last Name:" ) );
+   main->addWidget( lb_lname, row, 0 );
+
+   le_lname = us_lineedit();
+   main->addWidget( le_lname, row++, 1 );
+
+   // First Name
+   QLabel* lb_fname = us_label( tr( "First Name:" ) );
+   main->addWidget( lb_fname, row, 0 );
+
+   le_fname = us_lineedit();
+   main->addWidget( le_fname, row++, 1 );
+
+   // Address
+   QLabel* lb_address = us_label( tr( "Address:" ) );
+   main->addWidget( lb_address, row, 0 );
+
+   le_address = us_lineedit();
+   main->addWidget( le_address, row++, 1 );
+
+   // City
+   QLabel* lb_city = us_label( tr( "City:" ) );
+   main->addWidget( lb_city, row, 0 );
+
+   le_city = us_lineedit();
+   main->addWidget( le_city, row++, 1 );
+
+   // State
+   QLabel* lb_state = us_label( tr( "State:" ) );
+   main->addWidget( lb_state, row, 0 );
+
+   le_state = us_lineedit();
+   main->addWidget( le_state, row++, 1 );
+
+   // Zip
+   QLabel* lb_zip = us_label( tr( "Zip:" ) );
+   main->addWidget( lb_zip, row, 0 );
+
+   le_zip = us_lineedit();
+   main->addWidget( le_zip, row++, 1 );
+
+   // Phone
+   QLabel* lb_phone = us_label( tr( "Phone:" ) );
+   main->addWidget( lb_phone, row, 0 );
+
+   le_phone = us_lineedit();
+   main->addWidget( le_phone, row++, 1 );
+
+   // Email
+   QLabel* lb_email = us_label( tr( "Email:" ) );
+   main->addWidget( lb_email, row, 0 );
+
+   le_email = us_lineedit();
+
+   // Make the line edit entries a little wider than the default
+   QFontMetrics fm( le_email->font() );
+   le_email->setMinimumWidth( fm.maxWidth() * 10 );
+
+   main->addWidget( le_email, row++, 1 );
+
+   // Organization
+   QLabel* lb_org = us_label( tr( "Organization:" ) );
+   main->addWidget( lb_org, row, 0 );
+
+   le_org = us_lineedit();
+   main->addWidget( le_org, row++, 1 );
+
+   // Pushbuttons
+   QHBoxLayout* buttons1 = new QHBoxLayout;
+   pb_queryDB = us_pushbutton( tr( "Query DB" ) );
+   connect( pb_queryDB, SIGNAL( clicked() ), SLOT( queryDB() ) );
+   buttons1->addWidget( pb_queryDB, row );
+
+   pb_update = us_pushbutton( tr( "Update DB" ), false );
+   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
+   buttons1->addWidget( pb_update, row++ );
+   main->addLayout( buttons1, row++, 0, 1, 2 );
+
+   // Button row 
+   QBoxLayout* buttons2 = new QHBoxLayout;
+ 
+   pb_reset = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   buttons2->addWidget( pb_reset );
+ 
+   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
+   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   buttons2->addWidget( pb_help );
+   
+   int lev = US_Settings::us_inv_level();
+
+   if ( signal_wanted )
+   {
+      QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+      connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+      buttons2->addWidget( pb_cancel );
+
+      pb_close = us_pushbutton( tr( "Accept" ) );
+      //pb_close->setEnabled( user_permit  ||  lev > 2 );
+   }
+   else
+      pb_close = us_pushbutton( tr( "Close" ) );
+   
+   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   buttons2->addWidget( pb_close );
+    
+   main->addLayout( buttons2, row++, 0, 1, 2 );
+   reset();
+   queryDB();
+
+   // Get last investigator ID if it is not passed
+   // Will return -1 if it has not been set
+   if ( inv < 0 ) inv = US_Settings::us_inv_ID();
+
+   if ( inv > -1 )
+   {
+      for ( int i = 0; i < investigators.size(); i++ )
+      {
+         if ( investigators[ i ].invID == inv )
+         {
+            get_inv_data( lw_names->item( i ) );
+            break;
+         }
+      }
+   }
+
+   //user_permit   = false;
+   user_permit   = true;
+   
+   // // Disable GUI elements where login user not admin
+   // if ( lev < 3 )
+   // {
+   //    pb_queryDB->setEnabled( false );
+   //    pb_update ->setEnabled( false );
+   //    pb_reset  ->setEnabled( false );
+   //    le_search ->setEnabled( false );
+   // }
+}
+// END of alternative Constructor ///////////////////////////////
+
 void US_Investigator::override_permit( bool is_enab )
 {
    user_permit   = is_enab;
+
+   if ( us_inv_auto_mode )
+     {
+       user_permit = true;
+       is_enab     = true;
+     }
 
    if ( is_enab )
    {
@@ -259,8 +471,11 @@ qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
       data.firstName = db.value( 2 ).toString();
 
       // Only add to investigator list if admin login or login-inv match
-      if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
-         continue;
+      // if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
+      //    continue;
+
+      if ( !user_permit  &&  lev < 3  &&  inv != data.invID && !us_inv_auto_mode )
+	continue;
 
       investigators << data;
 

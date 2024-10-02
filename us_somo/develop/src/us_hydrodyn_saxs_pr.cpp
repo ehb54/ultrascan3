@@ -18,6 +18,17 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
    QString msg = QString(us_tr(" Enter values for total molecular weight: "));
    QString source = "";
    bool found = false;
+   // QTextStream(stdout) << QString( "saxs::get_mw() remember_mw:\n" );
+   // for ( auto it = remember_mw->begin();
+   //       it != remember_mw->end();
+   //       ++it ) {
+   //    QTextStream(stdout) << it->first << " " << it->second << " source:";
+   //    if ( (*remember_mw_source).count(it->first) ) {
+   //       QTextStream(stdout) << (*remember_mw_source)[it->first];
+   //    }
+   //    QTextStream(stdout) << "\n";
+   // }
+   
    if ( (*remember_mw).count(filename) )
    {
       mw = (*remember_mw)[filename];
@@ -102,8 +113,13 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
    return mw;
 }
 
-void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw )
-{
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw ) {
+   qDebug() << "normalize_pr() old style call, DEPRECATE!";
+   vector < double > pre(r.size(),0);
+   return normalize_pr( r, pr, &pre, mw );
+}
+
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , vector < double > *pre, double mw ) {
    if ( !our_saxs_options->normalize_by_mw )
    {
       mw = 1e0;
@@ -122,11 +138,16 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
          max = (*pr)[i];
       }
    }
-   if ( max > 0e0 )
-   {
-      for ( unsigned int i = 0; i < pr->size(); i++ )
-      {
-         (*pr)[i] /= max;
+   if ( max > 0e0 ) {
+      if ( pre->size() && pre->size() == pr->size() ) {
+         for ( unsigned int i = 0; i < pr->size(); i++ ) {
+            (*pr)[i]  /= max;
+            (*pre)[i] /= max;
+         }
+      } else {
+         for ( unsigned int i = 0; i < pr->size(); i++ ) {
+            (*pr)[i] /= max;
+         }
       }
    }
 #else
@@ -143,9 +164,15 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
       if ( area > 0e0 )
       {
          area /= mw;
-         for ( unsigned int i = 0; i < pr->size(); i++ )
-         {
-            (*pr)[i] /= area;
+         if ( pre->size() && pre->size() == pr->size() ) {
+            for ( unsigned int i = 0; i < pr->size(); i++ ) {
+               (*pr) [i] /= area;
+               (*pre)[i] /= area;
+            }
+         } else {
+            for ( unsigned int i = 0; i < pr->size(); i++ ) {
+               (*pr) [i] /= area;
+            }
          }
       }
       // cout << "normalize_pr area " << area << "\n" << flush;
@@ -166,9 +193,11 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    }
    if ( area > 0e0 )
    {
+
       for ( unsigned int i = 0; i < pr->size(); i++ )
       {
-         (*pr)[i] *= pr->size() / area ;
+         (*pr )[i] *= pr->size() / area ;
+         (*pre)[i] *= pr->size() / area ;
       }
    }
    // cout << "normalize_pr area " << area << "\n" << flush;
@@ -186,6 +215,12 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
 
 void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr )
 {
+   qDebug() << "check_pr_grid() old style call, DEPRECATE!";
+   vector < double > pr_error;
+   return check_pr_grid( r, pr, pr_error );
+}
+
+void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr, vector < double > &pr_error ) {
    if ( r.size() < 3 )
    {
       return;
@@ -254,21 +289,56 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
       r  = org_r;
       pr = org_pr;
    }
+   
+   vector < double > new_pr;
+   if ( !interpolate( new_r, r, pr, new_pr ) ) {
+      editor_msg( "red", us_tr( "Error attempting to interpolate" ) );
+      return;
+   }
 
-   US_Saxs_Util usu;
-   vector < double > y2;
-   usu.natural_spline( r, pr, y2 );
+   // US_Saxs_Util usu;
+   // vector < double > y2;
+   // usu.natural_spline( r, pr, y2 );
 
-   vector < double > new_pr( new_r.size() );
+   // vector < double > new_pr( new_r.size() );
 
-   for ( unsigned int i = 0; i < new_r.size(); i++ )
-   {
-      if ( !usu.apply_natural_spline( r, pr, y2, new_r[ i ], new_pr[ i ] ) )
-      {
-         editor_msg( "red", usu.errormsg );
+   // for ( unsigned int i = 0; i < new_r.size(); i++ )
+   // {
+   //    if ( !usu.apply_natural_spline( r, pr, y2, new_r[ i ], new_pr[ i ] ) )
+   //    {
+   //       editor_msg( "red", usu.errormsg );
+   //       editor_msg( "red", us_tr( "Error attempting to interpolate" ) );
+   //       return;
+   //    }
+   // }
+
+   if ( pr_error.size() ) {
+      if ( r.size() != pr_error.size() ) {
+         editor_msg( "red", us_tr( "Error r pr_error length mismatch" ) );
+         return;
+      }
+         
+      vector < double > new_pr_error;
+      if ( !interpolate( new_r, r, pr_error, new_pr_error ) ) {
          editor_msg( "red", us_tr( "Error attempting to interpolate" ) );
          return;
       }
+
+      // vector < double > y2;
+      // usu.natural_spline( r, pr_error, y2 );
+
+      // vector < double > new_pr_error( new_r.size() );
+      
+      // for ( unsigned int i = 0; i < new_r.size(); i++ )
+      // {
+      //    if ( !usu.apply_natural_spline( r, pr_error, y2, new_r[ i ], new_pr_error[ i ] ) )
+      //    {
+      //       editor_msg( "red", usu.errormsg );
+      //       editor_msg( "red", us_tr( "Error attempting to interpolate" ) );
+      //       return;
+      //    }
+      // }
+      pr_error = new_pr_error;
    }
 
    r = new_r;
@@ -276,12 +346,16 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
    return;
 }
 
-
 bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, double &internal_contrast )
 {
    double conc;
    double psv;
    double I0_std_exp;
+
+   if ( name.contains( QRegularExpression( "_Istarq_" ) ) ) {
+      MW = I0_exp;
+      return true;
+   }
 
 #if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
@@ -290,6 +364,17 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
 #else
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
+
+   if ( conc == 0e0 ) {
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
+      MW = 0e0;
+      return false;
+   }
+
+   if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
+      MW = I0_exp / (conc * 1e-3);
+      return true;
+   }
 
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
@@ -315,12 +400,6 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
       return false;
    }
 
-   if ( conc == 0e0 )
-   {
-      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
-      MW = 0e0;
-      return false;
-   }
 
    double guinier_electron_nucleon_ratio =
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_electron_nucleon_ratio" ) ?
@@ -373,6 +452,11 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    double psv;
    double I0_std_exp;
 
+   if ( name.contains( QRegularExpression( "_Istarq_" ) ) ) {
+      ML = I0_exp / M_PI;
+      return true;
+   }
+
 #if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;
@@ -381,12 +465,23 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
 
+   if ( conc == 0e0 ){
+      errormsg = us_tr( "Error: Concentration is 0, can not compute ML" );
+      ML = 0e0;
+      return false;
+   }
+
+   if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
+      ML = I0_exp / (conc * 1e-3) / M_PI;
+      return true;
+   }
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute ML" );
          ML = 0e0;
          return false;
       }
@@ -397,17 +492,11 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute ML" );
       ML = 0e0;
       return false;
    }
 
-   if ( conc == 0e0 )
-   {
-      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
-      ML = 0e0;
-      return false;
-   }
 
    double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : psv;
 
@@ -466,6 +555,11 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
    double psv;
    double I0_std_exp;
 
+   if ( name.contains( QRegularExpression( "_Istarq_" ) ) ) {
+      MA = I0_exp / (2. * M_PI);
+      return true;
+   }
+
 #if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;
@@ -474,12 +568,23 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
    get_conc_csv_values( name, conc, psv, I0_std_exp );
 #endif
 
+   if ( conc == 0e0 ) {
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MA" );
+      MA = 0e0;
+      return false;
+   }
+
+   if ( name.contains( QRegularExpression( "_Ihashq_" ) ) ) {
+      MA = I0_exp / (conc * 1e-3) / (2. * M_PI);
+      return true;
+   }
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MA" );
          MA = 0e0;
          return false;
       }
@@ -490,14 +595,7 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
-      MA = 0e0;
-      return false;
-   }
-
-   if ( conc == 0e0 )
-   {
-      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MA" );
       MA = 0e0;
       return false;
    }
@@ -800,3 +898,357 @@ bool US_Hydrodyn_Saxs::get_conc_csv_values( QString name, double &conc, double &
 
    return false;
 }
+
+
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn_Saxs::pr_info2( const QString & msg ) {
+   pr_info( msg, true );
+}
+
+void US_Hydrodyn_Saxs::pr_info( const QString & msg, bool detail ) {
+
+   TSO
+      << "==== pr_info( " << msg << " ) ==== START ====\n"
+      << QString(
+                 "plotted_r.size()                          %1\n"
+                 "plotted_pr.size()                         %2\n"
+                 "plotted_pr_error.size()                   %3\n"
+                 "plotted_pr_not_normalized.size()          %4\n"
+                 "plotted_pr_not_normalized_error.size()    %5\n"
+                 "plotted_pr_mw.size()                      %6\n"
+                 "qsl_plotted_pr_names.size()               %7\n"
+                 )
+
+      .arg(plotted_r.size())
+      .arg(plotted_pr.size())
+      .arg(plotted_pr_error.size())
+      .arg(plotted_pr_not_normalized.size())
+      .arg(plotted_pr_not_normalized_error.size())
+      .arg(plotted_pr_mw.size())
+      .arg(qsl_plotted_pr_names.size())
+      ;
+
+   list < int > sizes;
+   sizes.push_back( (int) plotted_r.size() );
+   sizes.push_back( (int) plotted_pr.size() );
+   sizes.push_back( (int) plotted_pr_error.size() );
+   sizes.push_back( (int) plotted_pr_not_normalized.size() );
+   sizes.push_back( (int) plotted_pr_not_normalized_error.size() );
+   sizes.push_back( (int) qsl_plotted_pr_names.size() );
+   sizes.sort();
+
+   vector < double > emptyv;
+
+   for ( int i = 0; i < sizes.back(); ++i ) {
+      if ( detail ) {
+         US_Vector::printvector5(
+                                 QString( "entry %1 mw %2 plotted_r,_pr,_pr_error,_pr_nn,pr_nn_error" )
+                                 .arg( (int) qsl_plotted_pr_names.size() > i ? qsl_plotted_pr_names[i] : QString( "?" ) )
+                                 .arg( (int) plotted_pr_mw.size() > i ? plotted_pr_mw[i] : -1 )
+                                 ,(int) plotted_r.size() > i ? plotted_r[i] : emptyv
+                                 ,(int) plotted_pr.size() > i ? plotted_pr[i] : emptyv
+                                 ,(int) plotted_pr_error.size() > i ? plotted_pr_error[i] : emptyv
+                                 ,(int) plotted_pr_not_normalized.size() > i ? plotted_pr_not_normalized[i] : emptyv
+                                 ,(int) plotted_pr_not_normalized_error.size() > i ? plotted_pr_not_normalized_error[i] : emptyv
+                                 )
+            ;
+      } else {
+         TSO <<
+            QString(
+                    "entry %1 [%8]: r %2 pr %3 pr_error %4 pr_nn %5 pr_nn_e %6 pr_mw %7\n"
+                    )
+            .arg( i )
+            .arg( (int) plotted_r.size() > i ? (int) plotted_r[i].size() : -1 )
+            .arg( (int) plotted_pr.size() > i ? (int) plotted_pr[i].size() : -1 )
+            .arg( (int) plotted_pr_error.size() > i ? (int) plotted_pr_error[i].size() : -1 )
+            .arg( (int) plotted_pr_not_normalized.size() > i ? (int) plotted_pr_not_normalized[i].size() : -1 )
+            .arg( (int) plotted_pr_not_normalized_error.size() > i ? (int) plotted_pr_not_normalized_error[i].size() : -1 )
+            .arg( (int) plotted_pr_mw.size() > i ? plotted_pr_mw[i] : -1 )
+            .arg( (int) qsl_plotted_pr_names.size() > i ? qsl_plotted_pr_names[i] : QString( "?" ) )
+            ;
+      }         
+   }
+
+   TSO
+      << "==== pr_info( " << msg << " ) ==== END ====\n"
+      ;
+}
+
+bool US_Hydrodyn_Saxs::pr_to_iq() {
+   TSO << "US_Hydrodyn_Saxs::pr_to_iq() slot not yet implemented\n";
+   errormsg = "";
+   if ( qsl_plotted_pr_names.size() == 0 ) {
+      errormsg = us_tr( "No P(r) curves plotted\n" );
+      editor_msg( "red", errormsg );
+      return false;
+   }
+   if ( qsl_plotted_pr_names.size() == 1 ) {
+      return pr_to_iq( 0, qsl_plotted_pr_names[0] );
+   }
+   
+   QString source = "";
+   {
+      bool ok;
+      source = US_Static::getItem(
+                                  us_tr("Compute I(q)")
+                                  ,us_tr("Select the P(r) curve to calculate I(q)" )
+                                  ,qsl_plotted_pr_names, 
+                                  0, 
+                                  false, 
+                                  &ok,
+                                  this );
+      if ( ok ) {
+         // user selected an item and pressed OK
+      } else {
+         return false;
+      }
+   }
+
+   if ( source.isEmpty() ) {
+      return false;
+   }
+
+   for ( int pos = 0; pos < (int)qsl_plotted_pr_names.size(); ++pos ) {
+      if ( source == qsl_plotted_pr_names[pos] ) {
+         return pr_to_iq( pos, source );
+      }
+   }
+
+   errormsg =
+      QString( us_tr( "Internal error, could not find source '%1' in plotted names\n" ) )
+      .arg( source )
+      ;
+      
+   editor_msg( "red", errormsg );
+   return false;
+}
+
+bool US_Hydrodyn_Saxs::pr_to_iq( int pos, QString name ) {
+   errormsg = "";
+   TSO << QString( "pr_to_iq( %1 )\n" ).arg( pos );
+
+   if (
+       (int) plotted_pr.size() <= pos
+       || (int) plotted_r.size() <= pos
+       ) {
+      errormsg = QString( "pr_to_iq:: pos %1 not available\n" );
+      pr_info( errormsg );
+      return false;
+   }
+   
+   vector < double > *r  = &plotted_r[pos];
+   vector < double > *pr = &plotted_pr[pos];
+
+   int r_points = (int) r->size();
+
+   if ( r->size() < 2 ) {
+      errormsg = QString( "pr_to_iq:: curve has insufficient points\n" );
+      pr_info( errormsg );
+      return false;
+   }
+      
+   double dr = (*r)[1] - (*r)[0];
+
+   TSO << QString( "pr_to_iq:: dr %1\n" ).arg( dr );
+   
+   int q_points = 
+      (int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+
+   if ( our_saxs_options->iq_exact_q )
+   {
+      editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
+      if ( !exact_q.size() ){
+         editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+         exact_q.resize( q_points );
+         for ( int j = 0; j < q_points; j++ ) {
+            exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+         }
+      } else {
+         q_points = ( int ) exact_q.size();
+      }
+   }
+   
+   vector < double > q( q_points ); 
+   vector < double > I( q_points ); 
+
+   if ( our_saxs_options->iq_exact_q ) {
+      q = exact_q;
+      q_points = q.size();
+   } else {
+      for ( int i = 0; i < q_points; i++ ) {
+         q[i] = our_saxs_options->start_q + i * our_saxs_options->delta_q;
+      }
+   }      
+
+   // calc for i = 0 first
+   {
+      int i = 0;
+      I[i] = 0;
+
+      for ( int j = 0; j < r_points; j++ ) {
+         I[i] += (*pr)[j];
+      }
+      I[i] *= dr; // no modulation needed..., q[0] == 0
+   }
+
+   // and then the rest
+   for ( int i = 1; i < q_points; ++i ) {
+      {
+         int j = 0;
+         I[i] += (*pr)[j];
+      }
+
+      double qr;
+      for ( int j = 1; j < r_points; j++ ) {
+         qr = q[i] * (*r)[j];
+         I[i] += (*pr)[j] * (( fabs(qr) < 1e-16 ) ? 1.0 : sin(qr) / qr);
+      }
+      I[i] *=
+         dr
+         * exp( - our_saxs_options->fast_modulation * q[i] * q[i] )
+         ;
+   }
+
+   // US_Vector::printvector2( "source r, pr", *r, *pr );
+
+   // US_Vector::printvector2( "computed q, I", q, I );
+   
+   // setup scaling
+
+   {
+      QString scaling_target = "";
+      set_scaling_target( scaling_target );
+   
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         rescale_iqq_curve( scaling_target, q, I );
+      }
+   }
+   
+   plot_one_iqq( q, I, name );
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs::pr_to_iq( const map < double, double > & pr_exact, QString name ) {
+   errormsg = "";
+   TSO << QString( "pr_to_iq( pr_exact, \"%1\" )\n" ).arg( name );
+
+   if (
+       ! pr_exact.size()
+       ) {
+      errormsg = QString( "pr_to_iq:: empty exact\n" );
+      pr_info( errormsg );
+      return false;
+   }
+
+   int q_points = 
+      (int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+
+   if ( our_saxs_options->iq_exact_q )
+   {
+      editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
+      if ( !exact_q.size() ){
+         editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+         exact_q.resize( q_points );
+         for ( int j = 0; j < q_points; j++ ) {
+            exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+         }
+      } else {
+         q_points = ( int ) exact_q.size();
+      }
+   }
+   
+   vector < double > q( q_points ); 
+   vector < double > I( q_points ); 
+
+   if ( our_saxs_options->iq_exact_q ) {
+      q = exact_q;
+      q_points = q.size();
+   } else {
+      for ( int i = 0; i < q_points; i++ ) {
+         q[i] = our_saxs_options->start_q + i * our_saxs_options->delta_q;
+      }
+   }      
+
+   for ( int i = 0; i < q_points; ++i ) {
+      double qr;
+      for ( auto it = pr_exact.begin();
+            it != pr_exact.end();
+            ++it ) {
+         qr = q[i] * it->first;
+         I[i] += it->second * (( fabs(qr) < 1e-16 ) ? 1.0 : sin(qr) / qr);
+      }
+      I[i] *=
+         exp( - our_saxs_options->fast_modulation * q[i] )
+         ;
+   }
+
+   // US_Vector::printvector2( "source r, pr", *r, *pr );
+
+   // US_Vector::printvector2( "computed q, I", q, I );
+   
+   // setup scaling
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->batch_widget && ((US_Hydrodyn *)us_hydrodyn)->batch_window->batch_job_running ) {
+      if ( plotted_I.size() == 1 && plotted_I[0].size() && I[0] ) {
+         double scale = plotted_I[0][0] / I[0];
+         TSO << "Auto scaling to the one Iq target scale:" << scale << "\n";
+         for ( int i = 0; i < q_points; ++i ) {
+            I[i] *= scale;
+         }
+         if ( plotted_q[0] == q ) {
+            TSO << "Q grids match!\n";
+            // create subtracted curve & save the difference curve
+            vector < double > Idiff = plotted_I[0];
+            QString qsdiff;
+            QString qspct;
+            for ( int i = 0; i < q_points; ++i ) {
+               Idiff[i] -= I[i];
+               qsdiff += QString( "%1 %2\n" ).arg( q[i] ).arg( Idiff[i] );
+               if ( plotted_I[0][i] ) {
+                  Idiff[i] /= plotted_I[0][i];
+               }
+               qspct += QString( "%1 %2\n" ).arg( q[i] ).arg( 100 * Idiff[i] );
+            }
+            QString error;
+            QString diffname = name + "_Idiff.dat";
+            QString pctname = name + "_Idiffpct.dat";
+            if ( !US_File_Util::putcontents( diffname, qsdiff, error ) ) {
+               TSO << "Error: writing " << diffname << "\n";
+            } else {
+               TSO << QString( "wrote diff file: %1%2%3\n").arg( QDir::currentPath() ).arg( QDir::separator() ).arg( diffname );
+            }
+            if ( !US_File_Util::putcontents( pctname, qspct, error ) ) {
+               TSO << "Error: writing " << diffname << "\n";
+            } else {
+               TSO << QString( "wrote diff pct file: %1%2%3\n").arg( QDir::currentPath() ).arg( QDir::separator() ).arg( pctname );
+            }
+         } else {
+            TSO << "Q grids DO NOT match :(\n";
+         }
+      }
+   } else {
+      QString scaling_target = "";
+      set_scaling_target( scaling_target );
+
+      TSO << "Scaling target " << scaling_target << "\n";
+   
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         rescale_iqq_curve( scaling_target, q, I );
+      }
+   }
+   
+   
+
+   plot_one_iqq( q, I, name );
+
+   return true;
+}
+

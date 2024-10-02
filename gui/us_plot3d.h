@@ -8,6 +8,7 @@
 #include "us_plot.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
+#include "qwt3d_types.h"
 #include "qwt3d_surfaceplot.h"
 #include "qwt3d_function.h"
 #include "qwt3d_plot.h"
@@ -16,6 +17,8 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif
 
+using namespace Qwt3D;
+
 //! \brief A class to provide a window for a qwtplot3d surface plot
 
 class US_GUI_EXTERN US_Plot3D : public QMainWindow
@@ -23,16 +26,45 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
    Q_OBJECT
 
    public:
-      //! \brief Contructor for surface plot class
+      //! \brief Constructor for surface plot class
       //! \param p  A pointer to the parent widget of this one
       //! \param m  A pointer to the model whose data is to be plotted
-      US_Plot3D( QWidget* = NULL, US_Model* = NULL );
+      US_Plot3D( QWidget* = NULL, US_Model* = NULL, QVector< QVector3D >* = NULL );
+
+      //! \brief Public function to set plot titles
+      //! \param wndt  Window title
+      //! \param pltt  Plot title
+      //! \param xat   X annotation title
+      //! \param yat   Y annotation title
+      //! \param zat   Z annotation title
+      void setTitles    ( QString, QString, QString, QString, QString );
 
       //! \brief Public function to set 3 coordinate type flags
       //! \param tx  The type flag for X (1=MW, 2=s, ...)
       //! \param ty  The type flag for Y
       //! \param tz  The type flag for Z
       void setTypes     ( int, int, int );
+
+      //! \brief Set dimension value types and calculate data ranges
+      void calculateAxes( void );
+
+      //! \brief Public function to reset the plot title
+      //! \param pltt  Plot title
+      void setPlotTitle ( QString );
+
+
+
+      //! \brief Public function to set plot control parameters
+      //! \param a_gridx  Grid resolution in the X direction
+      //! \param a_gridy  Grid resolution in the Y direction
+      //! \param x_scale  Relative X scale factor
+      //! \param y_scale  Relative Y scale factor (negative to reverse Y)
+      //! \param z_scale  Z scale factor
+      //! \param a_alpha  Alpha factor (0.0 to ignore and do contour)
+      //! \param a_beta   Beta factor
+      void setParameters( int, int, double = 1.0, double = 1.0, double = 1.0,
+                          double = 0.0, double = 0.0 );
+
       //! \brief Public function to set plot control parameters
       //! \param z_scale  Z scale factor
       //! \param a_gridr  Grid resolution
@@ -42,11 +74,25 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \param y_scale  Relative Y scale factor
       void setParameters( double, double, double, double,
                           double = 1.0, double = 1.0 );
+
+      //! \brief Public function to load new data
+      //! \param d  A pointer to a new vector of x,y,z data to be plotted
+      void reloadData   ( QVector< QVector3D >* );
+
       //! \brief Public function to (re)calculate Z values at fixed increments
       //! \param zdat     Z data vector of vectors
       void calculateData( QVector< QVector< double > >& );
+
+      //! \brief Public function to (re)calculate data Z values
+      void calculateData( void );
+
       //! \brief Public function to replot the 3D data
       void replot       ( void );
+
+      //! \brief Public function to replot the 3D data
+      //! \param hold_color A flag of whether to hold colors constant
+      void replot       ( bool );
+
       //! \brief Public function to return the data widget pointer
       //! \return Pointer to the GL data widget
       QGLWidget* dataWidgetP( void );
@@ -56,6 +102,9 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \return          Flag if save was successful
       bool save_plot( const QString, const QString );
 
+   signals:
+      //! \brief A signal emitted when this dialog has been closed.
+      void has_closed( void );
 
    private:
       QWidget*      centralWidget;
@@ -136,7 +185,11 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
 
       bool          have_ed;
       bool          skip_plot;
+      bool          reverse_y;
+      bool          triples_in;
 
+      int           nrows_i;
+      int           ncols_i;
       int           nrows;
       int           ncols;
       int           typex;
@@ -147,6 +200,7 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       int           redrawWait;
       int           dbg_level;
 
+      int           data_points; //!< Number of original data points
       double        xmin;
       double        xmax;
       double        ymin;
@@ -176,20 +230,22 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       QTimer*       timer;
 
       QVector< QVector< double > > zdata;
+      QVector< QVector< Triple > > tdata;
 
       Qwt3D::SurfacePlot*          dataWidget;
 
    protected:
       US_Model*     model;     //!< model to plot in 3 dimensions
+      QVector< QVector3D >*        xyzdat;
 
-   signals:
-      void    has_closed( void );
 
    protected slots:
       void    closeEvent( QCloseEvent* );
 
    private slots:
 
+      void    calculateContour( void );
+      void    calculatePoints ( void );
       void    std_button(   void );
       void    light_button( void );
       void    ifmt_chosen(  int  );
@@ -240,7 +296,11 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       void    pick_capt_fn(  void );
       void    reset_fonts(   void );
       void    dump_contents( void );
-
+      void    clean_title  ( QString& );
+      void    clear_2dvect ( QVector< QVector< double > >& );
+      void    clear_2dvect ( QVector< QVector< Triple > >& );
+      void    alloc_2dvect ( QVector< QVector< double > >&, int, int );
+      void    alloc_2dvect ( QVector< QVector< Triple > >&, int, int );
       QString xyAxisTitle( int, double );
       QString zAxisTitle(  int );
       void    setStandardView( void );
@@ -249,6 +309,23 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       void    createToolBar(   void );
       double  comp_value( US_Model::SimulationComponent*, int, double );
 
+};
+
+class ReversedScale : public LinearScale
+{
+   public:
+      Scale* clone() const { return new ReversedScale; }
+
+      QString ticLabel( unsigned int idx ) const
+      {
+         unsigned int s = majors_p.size();
+         if ( idx < s )
+         {
+            return QString::number( majors_p[ s - idx - 1 ] );
+         }
+
+         return QString( "" );
+      }
 };
 #endif
 

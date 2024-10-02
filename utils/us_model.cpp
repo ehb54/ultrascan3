@@ -89,7 +89,9 @@ US_Model::US_Model()
    analysis        = MANUAL;
    global          = NONE;
    nmcixs          = 0;
-
+   timeCreated     = "";
+   editDataUpdated = "";
+   
    coSedSolute     = -1;
    modelGUID   .clear();
    editGUID    .clear();
@@ -1002,7 +1004,8 @@ int US_Model::load( const QString& id, US_DB2* db )
    if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
 
    db->next();
-   QByteArray contents = db->value( 2 ).toString().toLatin1();
+   QByteArray contents  = db->value( 2 ).toString().toLatin1();
+   timeCreated = db->value( 6 ).toString();
 
    // Read the model file into an array in memory
    QXmlStreamReader xml( contents );

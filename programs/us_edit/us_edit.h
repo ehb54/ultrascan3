@@ -26,7 +26,8 @@ class US_Edit : public US_Widgets
 	 // New constructor for automated read/upload/update
 	 US_Edit(QString auto_mode);
 
-	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir );
+	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currChInd, int plotind );
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
@@ -98,6 +99,8 @@ class US_Edit : public US_Widgets
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
       QMap< QString, QStringList> editProfile_scans_excl;
+      QMap< QString, bool> automatic_meniscus;
+      QMap< QString, QString> manual_edit_comments;
 
       QStringList        centparms_info;
       QMap< int, QStringList>  centerpieceParameters;
@@ -113,7 +116,8 @@ class US_Edit : public US_Widgets
       
 
       QMap < QString, QString > details_at_editing_local;
-
+      QMap < QString, QString > gmp_submitter_map;
+  
       //2DSA
       bool        job1run;         //!< Run 1 (2dsa) run flag
       bool        job2run;         //!< Run 2 (2dsa_fm) run flag
@@ -159,7 +163,9 @@ class US_Edit : public US_Widgets
 
       QVector < int > iwavl_edit_ref;
       QVector < int > iwavl_edit_ref_index;
-      QVector < int > triple_plot_first_time; 
+      QVector < int > triple_plot_first_time;
+
+      QMap < QString, bool > edited_triples_abde;
       
       QStringList        trip_rpms;
       QStringList        celchns;
@@ -290,7 +296,7 @@ class US_Edit : public US_Widgets
       int                nwaveln;
       int                nwavelo;
       int                maxwavl;
-      int                nrpoint;
+      // int                nrpoint;
       int                ncelchn;
       int                ntriple;
 
@@ -306,6 +312,7 @@ class US_Edit : public US_Widgets
       QVector< QVector< int > >     wavelns_i;
 
       QVector< QVector< double > >  rdata;
+      QVector< QVector< double > >  rdata_xvals;
 
       QString filename_runID_passed;
       QString filename_runID_auto;
@@ -313,6 +320,8 @@ class US_Edit : public US_Widgets
       QString idInv_auto;
       QString ProtocolName_auto;
       int     autoflowID_passed;
+      int     autoflowStatusID;
+      QString autoflow_expType;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
@@ -381,11 +390,15 @@ class US_Edit : public US_Widgets
       QString compose_json( bool );
 
       void delete_autoflow_record ( void );
+
+      void record_edit_status( QMap< QString, bool>, QString );
       
       bool isSet_to_analyse( QString, QString  );
       bool isSet_to_analyse_triple( QString, QString  );
       bool isSet_to_edit_triple( QString, QString );
       bool isSet_edit_info_for_channel( QString, QString );
+      void set_data_over_lamda();
+      void xaxis_wavl_wgts_on( bool );
       
    private slots:         
       void load              ( void );
@@ -448,10 +461,13 @@ class US_Edit : public US_Widgets
       void write_triple      ( void );
       void write_mwl         ( void );
 
+      void setUnsetSaveBttn_abde( void );
+  
       void manual_edit_auto  ( void );
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
+  QString get_rawDataGUID( US_DB2*, QString, QString );
       
       void review_edits      ( void );
       

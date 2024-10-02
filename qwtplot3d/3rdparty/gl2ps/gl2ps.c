@@ -532,13 +532,13 @@ static void gl2psListRealloc(GL2PSlist *list, GLint n)
   if(n <= 0) return;
   if(!list->array){
     list->nmax = n;
-    list->array = (char*)gl2psMalloc(list->nmax * list->size);
+    list->array = (char*)gl2psMalloc((long int) list->nmax * list->size);
   }
   else{
     if(n > list->nmax){
       list->nmax = ((n - 1) / list->incr + 1) * list->incr;
       list->array = (char*)gl2psRealloc(list->array,
-                                        list->nmax * list->size);
+                                     (long int) list->nmax * list->size);
     }
   }
 }
@@ -771,11 +771,11 @@ static GL2PSimage *gl2psCopyPixmap(GL2PSimage *im)
 
   switch(image->format){
   case GL_RGBA:
-    size = image->height * image->width * 4 * sizeof(GLfloat);
+    size = (long) image->height * image->width * 4 * sizeof(GLfloat);
     break;
   case GL_RGB:
   default:
-    size = image->height * image->width * 3 * sizeof(GLfloat);
+    size = (long) image->height * image->width * 3 * sizeof(GLfloat);
     break;
   }
 
@@ -2630,8 +2630,8 @@ static void gl2psPrintPostScriptImagemap(GLfloat x, GLfloat y,
   
   gl2psPrintf("gsave\n");
   gl2psPrintf("%.2f %.2f translate\n", x, y);
-  gl2psPrintf("%d %d scale\n%d %d\ntrue\n", width, height,width, height); 
-  gl2psPrintf("[ %d 0 0 -%d 0 %d ] {<", width, height);
+  gl2psPrintf("%d %d scale\n%d %d\ntrue\n", width, height,width, height);
+  gl2psPrintf("[ %d 0 0 -%d 0 %d ] {<", width, height, height);
   for(i = 0; i < size; i++){
     gl2psWriteByte(*imagemap);
     imagemap++;
@@ -4179,7 +4179,7 @@ static int gl2psPrintPDFShaderStreamDataCoord(GL2PSvertex *vertex,
   /* The Shader stream in PDF requires to be in a 'big-endian'
      order */
     
-  if(GL2PS_ZERO(dx*dy)){
+  if(GL2PS_ZERO((double)dx*dy)){
     offs += (*action)(0, 4);
     offs += (*action)(0, 4);
   }

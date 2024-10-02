@@ -13,6 +13,8 @@
 #include <QBoxLayout>
 #include <QCloseEvent>
 
+#define CLUSTER_OVERRIDE_NPROC 1
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
@@ -100,12 +102,13 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    }
 
    update_files();
+   lb_systems->item(0)->setSelected( true );
    update_enables();
 
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 700, 600 );
+   setGeometry( global_Xpos, global_Ypos, 800, 600 );
 }
 
 US_Hydrodyn_Cluster_Submit::~US_Hydrodyn_Cluster_Submit()
@@ -133,7 +136,7 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
          ( tgz_files.size() ? "\n" : "" ) +
          tar_files.join("\n")
          ;
-      all_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+      all_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
    }
 
    for ( unsigned int i = 0; i < ( unsigned int ) all_files.size(); i++ )
@@ -156,14 +159,14 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
 #if QT_VERSION < 0x040000
          new QTreeWidgetItem( lv_files, 
                             files[ i ], 
-                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
+                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).birthTime().toString() ),
                             QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                             );
 #else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
-                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() )
+                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).birthTime().toString() )
                                                         << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                                                         ) );
 #endif
@@ -201,12 +204,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lv_files->setEnabled(true);
    lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-#if QT_VERSION < 0x040000
-   lv_files->addColumn( us_tr( "Name" ) );
-   lv_files->addColumn( us_tr( "Created" ) );
-   lv_files->addColumn( us_tr( "Size" ) );
-   lv_files->addColumn( us_tr( "Status" ) );
-#else
    lv_files->setColumnCount( 4 );
    lv_files->setHeaderLabels( QStringList()
                               << us_tr( "Name" )
@@ -214,7 +211,11 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
                               << us_tr( "Size" )
                               << us_tr( "Status" )
                               );
-#endif   
+
+   lv_files->setColumnWidth( 0, 250 );
+   lv_files->setColumnWidth( 1, 220 );
+   lv_files->setColumnWidth( 2, 150 );
+   lv_files->setColumnWidth( 3, 80 );
 
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
@@ -230,7 +231,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lb_systems->setMinimumHeight(minHeight1 * 
                                 ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() > 8 ?
                                   8 : ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() ) );
-   lb_systems->setMinimumWidth( 500 );
    lb_systems->setPalette( PALET_EDIT );
    AUTFBACK( lb_systems );
    lb_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -244,11 +244,14 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
       lb_systems->addItem( it->first );
    }
 
+
    lb_systems->setCurrentItem( lb_systems->item(0) );
-   lb_systems->item(0)->setSelected( false);
+   lb_systems->item(0)->setSelected( false );
    lb_systems->setSelectionMode( QAbstractItemView::SingleSelection );
    // lb_systems->setColumnMode( QListBox::FitToWidth );
    connect( lb_systems, SIGNAL( itemSelectionChanged() ), SLOT( systems() ) );
+   lb_systems->hide();
+   lbl_systems->hide();
 
    pb_select_all = new QPushButton(us_tr("Select all jobs"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -712,10 +715,10 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
       + QString( "&id=%1"              ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
       + QString( "&resource=%1"        ).arg( selected_system_name )
       + QString( "&host=%1"            ).arg( stage_url )
-      + QString( "&np=%1"              ).arg( processor_count )
+      + QString( "&np=%1"              ).arg( CLUSTER_OVERRIDE_NPROC ) // processor_count )
       + QString( "&queue=%1"           ).arg( selected_system[ "queue" ].isEmpty() ? "" : QString( "%1" ).arg( selected_system[ "queue" ] ) )
       + QString( "&wall=%1"            ).arg( selected_system[ "runtime" ].toUInt() )
-      + QString( "&param=%1"           ).arg( job_type )
+      + QString( "&param=json"         )
       + QString( "&dir=%1"             ).arg( target_dir )
       + QString( "&file=%1"            ).arg( file )
       + QString( "&_uuid=%1"           ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
@@ -726,8 +729,9 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
    // build json input
    {
       map < QString, QString > body_map;
-      body_map[ "numproc" ] = QString( "%1" ).arg( processor_count );
-      body_map[ "param"   ] = job_type;
+      body_map[ "numproc" ] = QString( "%1" ).arg( CLUSTER_OVERRIDE_NPROC ); // processor_count );
+      body_map[ "param"   ] = "json";
+      body_map[ job_type  ] = "1";
       body_map[ "file"    ] = file;
       body = US_Json::compose( body_map );
    }

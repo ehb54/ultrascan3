@@ -134,7 +134,7 @@ class US_PlotConfig : public US3i_widgetsDialog
 
    public:
       //! \param current_plot - The plot to be configured
-      US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotConfig( QwtPlot*, QWidget* = 0 );
 
    //signals:
       //! \brief A signal to tell the parent that the window is closed
@@ -188,8 +188,7 @@ class US_PlotCurveConfig : public US3i_widgetsDialog
    friend class US_PlotLabel;
 
    public:
-      US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = 0, 
-            Qt::WindowFlags = 0 );
+     US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = 0 );
 
    //signals:
       //! \brief A signal to tell the parent that the window is closed
@@ -240,7 +239,7 @@ class US_PlotLabel : public QWidget
       //! \param caller - Parent configuration window
       //! \param p      - Parent widget, generally can be the default
       //! \param f      - Window flags to be passed, normally the default
-      US_PlotLabel( US_PlotCurveConfig*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotLabel( US_PlotCurveConfig*, QWidget* = 0 );
       
    private:
       US_PlotCurveConfig* data;
@@ -256,7 +255,7 @@ class US_PlotAxisConfig : public US3i_widgetsDialog
    Q_OBJECT
 
    public:
-      US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
+     US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0 );
       
    //signals:
       //! \brief A signal to ensure the parent knows the window is closed.
@@ -307,7 +306,7 @@ class US_PlotGridConfig : public US3i_widgetsDialog
    Q_OBJECT
 
    public:
-      US_PlotGridConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
+     US_PlotGridConfig( QwtPlot*, QWidget* = 0 );
       ~US_PlotGridConfig() {};
 
    //signals:
@@ -388,5 +387,19 @@ class US_EXTERN US_PlotChoices : public QDialog
       void svg();
       void png();
 };
+
+#include <vector>
+
+class US_Plot_Colors {
+ public:
+   US_Plot_Colors( const QColor & background_color ); // background_color to try and avoid low contrast
+   QColor color( size_t i );
+   void rotate();
+
+ private:
+   void                   push_back_color_if_ok( QColor bg, QColor set );
+   std::vector < QColor > plot_colors;
+};
+
 #endif
 

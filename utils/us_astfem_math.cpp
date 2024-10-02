@@ -928,7 +928,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             // Make sure we don't overrun bounds:
             if ( simscan == nsscan )
             {  // Sim scan count has exceeded limit
-               if ( sltime >= eftime )
+               if ( sltime <= e_time )
                {  // Output a message if time ranges overlap
                   qDebug() << "simulation time scan[" << simscan << "]: "
                            << simdata.scan[ simscan - 1 ].time
@@ -938,12 +938,14 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                   qDebug() << "The simulated data does not cover the entire "
                               "experimental time range and ends too early!\n"
                               "exiting...\n";
+		  // exit(-1);
                }
 
 #ifdef NO_DB
                //MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
-               exit( -1 );
+               simscan--;
+	       break;
             }
          }
 

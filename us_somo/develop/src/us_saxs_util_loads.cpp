@@ -365,7 +365,7 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
             continue;
          }
          qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -1062,6 +1062,14 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
       //   printError(us_tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
    }
 
+   if ( cystine_residues.count( temp_atom.resName ) ) {
+      sulfur_pdb_chain_atom_idx[ temp_atom.chainID ][ temp_atom.resSeq ].push_back( (unsigned int)( temp_chain->atom.size() - 1 ) );
+      if ( sulfur_atoms.count( temp_atom.name ) ) {
+         sulfur_coordinates.push_back( temp_atom.coordinate );
+         sulfur_pdb_line   .push_back( str1 );
+      }
+   }
+
    return(flag);
 }
 
@@ -1230,11 +1238,11 @@ bool US_Saxs_Util::calc_mw()
                   {
                      Rg2 += this_atom->mw * 
                         ( 
-                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                          ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                          ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                          ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                          );
                   }
@@ -1376,7 +1384,7 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
    {
       // split it->second to double
       //      us_qdebug( QString( "vcm json first <%1>\n second <%2>\n" ).arg( it->first ).arg( it->second ) );
-      QStringList qsl = (it->second ).split( "," , QString::SkipEmptyParts );
+      QStringList qsl = (it->second ).split( "," , Qt::SkipEmptyParts );
       if ( vcm.count( it->first ) )
       {
          vcm[ it->first ].clear( );

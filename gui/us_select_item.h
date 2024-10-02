@@ -66,11 +66,15 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       bool           deleted_button_autoflow; //If Delete Autoflow button is present
       bool           autoflow_button; //If autoflow, Cancel becomes define another Experiment
       bool           autoflow_da;  // If called by non-GMP us_comproject (DA)
+      bool           autoflow_gmp_report;
+      bool           set_unset_failed_button_autoflow;
+      bool           autoflow_dev;
       
       Qt::SortOrder  sort_ord;    //!< Default sort order flag
       int            sort_col;    //!< Default sort column
       int            nitems;      //!< Number of items (rows)
       int            ncols;       //!< Number of columns (hdrs.count())
+      int            failed_run_row;
 
    private slots:
       void build_layout   ( const QString );
@@ -79,12 +83,15 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       void cancelled      ( void );
       void accepted       ( void );
       void deleted        ( void );
+      bool check_protocol_for_autoflow( QString, QString );
       void deleted_autoflow ( void );
+      void set_unset_failed_autoflow ( void );
+      void show_autoflow_run_as_failed( void );
       void help           ( void )
       { showHelp.show_help( "select_item.html" ); };
 
    signals:
       void accept_deletion( void );
-      void accept_autoflow_deletion( void ); 
+      void accept_autoflow_deletion( void );
 };
 #endif

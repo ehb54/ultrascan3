@@ -39,18 +39,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Saxs;
+
    public:
       US_Hydrodyn_Saxs_Residuals(
                                  bool *saxs_residuals_widget,
                                  unsigned int width,
                                  QString title,
                                  vector < double > r,
-                                 vector < double > difference,
+                                 // vector < double > difference,
                                  vector < double > residuals,
                                  vector < double > target,
-                                 bool plot_residuals,
-                                 bool plot_difference,
-                                 bool plot_as_percent,
+                                 vector < double > error,
+                                 // bool plot_residuals,
+                                 // bool plot_difference,
+                                 // bool plot_as_percent,
+                                 // bool use_errors,
                                  unsigned int pen_width,
                                  QWidget *p = 0, 
                                  const char *name = 0
@@ -62,28 +66,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       QString title;
       bool *saxs_residuals_widget;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < double > r;
-      vector < double > difference;
+      // vector < double > difference;
       vector < double > residuals;
       vector < double > target;
+      vector < double > error;
 
-      vector < double > difference_pct;
+      // vector < double > difference_pct;
       vector < double > residuals_pct;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
+      // vector < double > difference_div_sd;
+      vector < double > residuals_div_sd;
 
       bool              plot_residuals;
       bool              plot_difference;
       bool              plot_as_percent;
+      bool              use_errors;
 
       US_Config         *USglobal;
 
@@ -91,24 +89,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 
       mQwtPlot          *plot;
       US_Plot           *usp_plot;
+
+
    private slots:
       void usp_config_plot( const QPoint & );
 
    private:
       ScrollZoomer      *plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid       *grid;
-#endif
 
       QCheckBox         *cb_plot_residuals;
       QCheckBox         *cb_plot_difference;
       QCheckBox         *cb_plot_as_percent;
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 
       QPushButton        *pb_help;
       QPushButton        *pb_cancel;

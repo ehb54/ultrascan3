@@ -34,7 +34,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 QString *csv_filename,
                                 bool *save_original_data,
                                 bool *run_nnls,
+                                bool *nnls_plot_contrib,
+                                bool *nnls_csv,
                                 bool *run_best_fit,
+                                bool *use_SDs_for_fitting,
                                 QString *nnls_target,
                                 bool *clear_plot_first,
                                 bool expert_mode,
@@ -60,7 +63,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QCheckBox   *cb_save_original_data;
 
       QCheckBox   *cb_run_nnls;
+      QCheckBox   *cb_nnls_plot_contrib;
+      QCheckBox   *cb_nnls_csv;
       QCheckBox   *cb_run_best_fit;
+      QCheckBox   *cb_use_SDs_for_fitting;
       QCheckBox   *cb_clear_plot_first;
       QLabel      *lbl_nnls_target;
 
@@ -89,7 +95,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QString *csv_filename;
       bool *save_original_data;
       bool *run_nnls;
+      bool *nnls_plot_contrib;
+      bool *nnls_csv;
       bool *run_best_fit;
+      bool *use_SDs_for_fitting;
       QString *nnls_target;
       bool *clear_plot_first;
       bool expert_mode;
@@ -110,7 +119,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       void update_csv_filename(const QString &);
       void set_save_original_data();
       void set_run_nnls();
+      void set_nnls_plot_contrib();
+      void set_nnls_csv();
       void set_run_best_fit();
+      void set_use_SDs_for_fitting();
       void set_clear_plot_first();
 
       void select_all();

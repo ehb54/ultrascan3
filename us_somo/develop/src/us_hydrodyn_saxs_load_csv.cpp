@@ -21,7 +21,10 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QString *csv_filename,
                                                      bool *save_original_data,
                                                      bool *run_nnls,
+                                                     bool *nnls_plot_contrib,
+                                                     bool *nnls_csv,
                                                      bool *run_best_fit,
+                                                     bool *use_SDs_for_fitting,
                                                      QString *nnls_target,
                                                      bool *clear_plot_first,
                                                      bool expert_mode,
@@ -30,27 +33,30 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      const char *
                                                      ) : QDialog( p )
 {
-   this->msg = msg;
-   this->qsl_names = qsl_names;
-   this->qsl_sel_names = qsl_sel_names;
-   this->qsl = qsl;
-   this->loaded_filename = loaded_filename;
-   this->create_avg = create_avg;
-   this->create_std_dev = create_std_dev;
-   this->only_plot_stats = only_plot_stats;
-   this->save_to_csv = save_to_csv;
-   this->csv_filename = csv_filename;
-   this->save_original_data = save_original_data;
-   this->run_nnls = run_nnls;
-   this->run_best_fit = run_best_fit;
-   this->nnls_target = nnls_target;
-   this->clear_plot_first = clear_plot_first;
-   this->expert_mode = expert_mode;
-   this->us_hydrodyn = us_hydrodyn;
+   this->msg                  = msg;
+   this->qsl_names            = qsl_names;
+   this->qsl_sel_names        = qsl_sel_names;
+   this->qsl                  = qsl;
+   this->loaded_filename      = loaded_filename;
+   this->create_avg           = create_avg;
+   this->create_std_dev       = create_std_dev;
+   this->only_plot_stats      = only_plot_stats;
+   this->save_to_csv          = save_to_csv;
+   this->csv_filename         = csv_filename;
+   this->save_original_data   = save_original_data;
+   this->run_nnls             = run_nnls;
+   this->nnls_plot_contrib    = nnls_plot_contrib;
+   this->nnls_csv             = nnls_csv;
+   this->run_best_fit         = run_best_fit;
+   this->use_SDs_for_fitting  = use_SDs_for_fitting;
+   this->nnls_target          = nnls_target;
+   this->clear_plot_first     = clear_plot_first;
+   this->expert_mode          = expert_mode;
+   this->us_hydrodyn          = us_hydrodyn;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle("Load CSV style SAXS results");
+   setWindowTitle("Load, manage and process SAS data");
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;
@@ -65,6 +71,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
 {
    int minWidth1 = 600;
    int minHeight1 = 30;
+   int minHeight1dl = 40;
    int minHeight2 = 30;
 
    lbl_info = new QLabel(msg, this);
@@ -152,25 +159,55 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
       cb_run_nnls->setText(us_tr("NNLS fit"));
       cb_run_nnls->setEnabled(true);
       cb_run_nnls->setChecked(*run_nnls);
-      cb_run_nnls->setMinimumHeight(minHeight1);
+      cb_run_nnls->setMinimumHeight(minHeight1dl);
       cb_run_nnls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       cb_run_nnls->setPalette( PALET_NORMAL );
       AUTFBACK( cb_run_nnls );
       connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
       
+      cb_nnls_plot_contrib = new QCheckBox(this);
+      cb_nnls_plot_contrib->setText(us_tr("NNLS plot\ncontributing data"));
+      cb_nnls_plot_contrib->setEnabled(true);
+      cb_nnls_plot_contrib->setChecked(*nnls_plot_contrib);
+      cb_nnls_plot_contrib->setMinimumHeight(minHeight1dl);
+      cb_nnls_plot_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_nnls_plot_contrib->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_nnls_plot_contrib );
+      connect(cb_nnls_plot_contrib, SIGNAL(clicked()), this, SLOT(set_nnls_plot_contrib()));
+
+      cb_nnls_csv = new QCheckBox(this);
+      cb_nnls_csv->setText(us_tr("Save NNLS CSV"));
+      cb_nnls_csv->setEnabled(true);
+      cb_nnls_csv->setChecked(*nnls_csv);
+      cb_nnls_csv->setMinimumHeight(minHeight1dl);
+      cb_nnls_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_nnls_csv->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_nnls_csv );
+      connect(cb_nnls_csv, SIGNAL(clicked()), this, SLOT(set_nnls_csv()));
+      
       cb_run_best_fit = new QCheckBox(this);
       cb_run_best_fit->setText(us_tr("Best fit"));
       cb_run_best_fit->setEnabled(true);
       cb_run_best_fit->setChecked(*run_best_fit);
-      cb_run_best_fit->setMinimumHeight(minHeight1);
+      cb_run_best_fit->setMinimumHeight(minHeight1dl);
       cb_run_best_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       cb_run_best_fit->setPalette( PALET_NORMAL );
       AUTFBACK( cb_run_best_fit );
       connect(cb_run_best_fit, SIGNAL(clicked()), this, SLOT(set_run_best_fit()));
       
+      cb_use_SDs_for_fitting = new QCheckBox(this);
+      cb_use_SDs_for_fitting->setText(us_tr("Use SD in fit\n(if present)"));
+      cb_use_SDs_for_fitting->setEnabled(true);
+      cb_use_SDs_for_fitting->setChecked(*use_SDs_for_fitting);
+      cb_use_SDs_for_fitting->setMinimumHeight(minHeight1dl);
+      cb_use_SDs_for_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_use_SDs_for_fitting->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_use_SDs_for_fitting );
+      connect(cb_use_SDs_for_fitting, SIGNAL(clicked()), this, SLOT(set_use_SDs_for_fitting()));
+
       pb_select_target = new QPushButton(us_tr("Select Target"), this);
       pb_select_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-      pb_select_target->setMinimumHeight(minHeight1);
+      pb_select_target->setMinimumHeight(minHeight1dl);
       pb_select_target->setPalette( PALET_PUSHB );
       connect(pb_select_target, SIGNAL(clicked()), SLOT(select_target()));
 
@@ -255,7 +292,10 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    {
       QHBoxLayout * hbl_nnls_best_fit = new QHBoxLayout; hbl_nnls_best_fit->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls_best_fit->setSpacing( 0 );
       hbl_nnls_best_fit->addWidget(cb_run_nnls);
+      hbl_nnls_best_fit->addWidget(cb_nnls_plot_contrib);
+      hbl_nnls_best_fit->addWidget(cb_nnls_csv);
       hbl_nnls_best_fit->addWidget(cb_run_best_fit);
+      hbl_nnls_best_fit->addWidget(cb_use_SDs_for_fitting);
 
       QHBoxLayout * hbl_nnls = new QHBoxLayout; hbl_nnls->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls->setSpacing( 0 );
       hbl_nnls->addLayout(hbl_nnls_best_fit);
@@ -273,7 +313,8 @@ void US_Hydrodyn_Saxs_Load_Csv::select_all()
    // if there are any, not selected, select all
    // if all are selected, unselect all
    bool select_all = false;
-
+   disconnect(lb_names, SIGNAL(itemSelectionChanged()), 0, 0 );
+   
    // are any unselected ?
    for ( int i = 0; i < lb_names->count(); i++ )
    {
@@ -284,14 +325,18 @@ void US_Hydrodyn_Saxs_Load_Csv::select_all()
       }
    }
 
-   for ( int i = 0; i < lb_names->count(); i++ )
-   {
-      lb_names->item(i)->setSelected( select_all);
-   }
+   select_all ? lb_names->selectAll() : lb_names->clearSelection();
+
+   // for ( int i = 0; i < lb_names->count(); i++ )
+   // {
+   //    lb_names->item(i)->setSelected( select_all);
+   // }
    if ( select_all )
    {
       lb_names->scrollToItem( lb_names->item(lb_names->count() - 1) );
    }
+   connect(lb_names, SIGNAL(itemSelectionChanged()), SLOT(update_selected()));
+   emit update_selected();
 }
 
 void US_Hydrodyn_Saxs_Load_Csv::ok()
@@ -330,20 +375,77 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
       {
          map_sel_names[*it] = true;
       }
+
+      // create normed versions on-the-fly if MW is non-zero
+      QStringList qsl_pr_normed;
+      for ( QStringList::iterator it = qsl->begin();
+            it != qsl->end();
+            it++ ) {
+         if ( it == qsl->begin() ) {
+            qsl_pr_normed << *it;
+            continue;
+         }
+         QStringList qsl_tmp = (*it).split( "," );
+
+         if ( qsl_tmp.size() > 4 ) {
+            double this_mw   = qsl_tmp[1].toDouble();
+            double this_area = qsl_tmp[2].toDouble();
+            // QTextStream(stdout) << QString( "save pr this mw %1 area %2\n" ).arg( this_mw ).arg( this_area );
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r)\"" ) {
+               // QTextStream(stdout) << "ok to make P(r) normed\n";
+               QStringList this_pr_normed;
+               this_pr_normed
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_normed << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_normed.join(",");
+               continue;
+            }
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r) sd\"" ) {
+               QStringList this_pr_error;
+               this_pr_error
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed sd\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_error << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_error.join(",");
+               continue;
+            }
+            if ( this_mw <= 0 || this_area <= 0 ) {
+               qsl_pr_normed << *it;
+            }
+         }
+      }
       
       // find max length & build a 2d array of values
       unsigned int max_len = 0;
       vector < vector < QString > > array2d_to_save;
-      for ( QStringList::iterator it = qsl->begin();
-               it != qsl->end();
+      for ( QStringList::iterator it = qsl_pr_normed.begin();
+               it != qsl_pr_normed.end();
                it++ )
       {
          QStringList qsl_tmp = (*it).split( "," );
          if ( qsl_tmp.size() )
          {
-            if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) &&
-                 ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" ) )
-            {
+            // QTextStream(stdout) << "before array_to_save line: " << *it << "\n";
+            
+            if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl_pr_normed.begin() )
+                 // && ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" )
+                 ) {
+               // QTextStream(stdout) << "array_to_save accepted\n";
                vector < QString > array_to_save;
                // cout << "ok: " << qsl_tmp[0] << endl;
                if ( max_len < (unsigned int)qsl_tmp.count() )
@@ -356,7 +458,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                {
                   array_to_save.push_back(*it2);
                }
-               // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
+               // QTextStream(stdout) << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
                array2d_to_save.push_back(array_to_save);
             }
          }
@@ -427,20 +529,61 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
          map_sel_names[*it] = true;
       }
       
+      // create normed versions on-the-fly if MW is non-zero
+
+      QStringList qsl_pr_normed;
+
       // find max length & build a 2d array of values
       for ( QStringList::iterator it = qsl->begin();
-               it != qsl->end();
-               it++ )
-      {
+            it != qsl->end();
+            it++ ) {
          QStringList qsl_tmp = (*it).split( "," );
-         if ( qsl_tmp.size() ) 
-         {
-            if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
-            {
+         if ( qsl_tmp.size() > 4 ) {
+            if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) {
                fprintf(of, "%s\n", (*it).toLatin1().data());
+            }
+            double this_mw   = qsl_tmp[1].toDouble();
+            double this_area = qsl_tmp[2].toDouble();
+            // QTextStream(stdout) << QString( "save pr this mw %1 area %2\n" ).arg( this_mw ).arg( this_area );
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r)\"" ) {
+               // QTextStream(stdout) << "ok to make P(r) normed\n";
+               QStringList this_pr_normed;
+               this_pr_normed
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_normed << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_normed.join(",");
+            }
+            if ( this_mw > 0 &&
+                 this_area > 0 &&
+                 qsl_tmp[3] == "\"P(r) sd\"" ) {
+               QStringList this_pr_error;
+               this_pr_error
+                  << qsl_tmp[0]
+                  << qsl_tmp[1]
+                  << qsl_tmp[1]
+                  << "\"P(r) normed sd\""
+                  ;
+               for ( int i = 4; i < (int) qsl_tmp.size(); ++i ) {
+                  this_pr_error << QString("%1").arg( qsl_tmp[i].toDouble() * this_mw / this_area );
+               }
+               qsl_pr_normed << this_pr_error.join(",");
             }
          }
       }
+
+      if ( qsl_pr_normed.size() ) {
+         // QTextStream(stdout) << "adding pr_normed lines\n";
+         fprintf(of, "\n%s\n", qsl_pr_normed.join("\n").toLatin1().data());
+      }
+
       fclose(of);
       QMessageBox::information( this, "UltraScan",
                                 QString(us_tr("Created the output file:\n") + "%1").arg(fname));
@@ -528,6 +671,19 @@ void US_Hydrodyn_Saxs_Load_Csv::set_run_nnls()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Load_Csv::set_nnls_csv()
+{
+   *nnls_csv = cb_nnls_csv->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_nnls_plot_contrib()
+{
+   *nnls_plot_contrib = cb_nnls_plot_contrib->isChecked();
+   update_enables();
+}
+
+
 void US_Hydrodyn_Saxs_Load_Csv::set_run_best_fit()
 {
    *run_best_fit = cb_run_best_fit->isChecked();
@@ -541,6 +697,12 @@ void US_Hydrodyn_Saxs_Load_Csv::set_run_best_fit()
          lbl_nnls_target->setText("");
       }
    }
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_use_SDs_for_fitting()
+{
+   *use_SDs_for_fitting = cb_use_SDs_for_fitting->isChecked();
    update_enables();
 }
 
@@ -601,5 +763,12 @@ void US_Hydrodyn_Saxs_Load_Csv::update_enables()
    pb_save_selected->setEnabled(qsl_sel_names->size());
    pb_ok->setEnabled( qsl_sel_names->size() );
    cb_clear_plot_first->setEnabled( qsl_sel_names->size() );
+   cb_nnls_csv->setEnabled( cb_run_nnls->isChecked() );
+   if ( !cb_run_nnls->isChecked() ) {
+      cb_nnls_csv->setChecked( false );
+      *nnls_csv = false;
+   }
+   cb_use_SDs_for_fitting->setEnabled( cb_run_nnls->isChecked() || cb_run_best_fit->isChecked() );
+   cb_nnls_plot_contrib->setEnabled( cb_run_nnls->isChecked() );
 }
 

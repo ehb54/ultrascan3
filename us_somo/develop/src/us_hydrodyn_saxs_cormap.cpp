@@ -1149,27 +1149,27 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
    QTextStream ts( &f );
 
    ts 
-      << "\"PVP Analysis\""  << endl
+      << "\"PVP Analysis\""  << Qt::endl
       ;
 
    ts
-      << QString( "\"P value matrix Rows, Columns:\",%1,%2" ).arg( pvaluepairs.size() ).arg( pvaluepairs.size() ? pvaluepairs.front().size() : 0 ) << endl;
+      << QString( "\"P value matrix Rows, Columns:\",%1,%2" ).arg( pvaluepairs.size() ).arg( pvaluepairs.size() ? pvaluepairs.front().size() : 0 ) << Qt::endl;
 
    for ( int i = 0; i < (int) pvaluepairs.size(); ++i ) {
       for ( int j = 0; j < (int) pvaluepairs[ i ].size(); ++j ) {
          ts << pvaluepairs[ i ][ j ] << ",";
       }
-      ts << endl;
+      ts << Qt::endl;
    }
    
    ts << "\"Selected Files:\"";
    for ( int i = 0; i < (int) selected_files.size(); ++i ) {
       ts << ",\"" << selected_files[ i ] << '"';
    }
-   ts << endl;
+   ts << Qt::endl;
 
    ts
-      << "\"Parameter\",\"Value\"," << parameters.size() << endl
+      << "\"Parameter\",\"Value\"," << parameters.size() << Qt::endl
       ;
 
 
@@ -1178,7 +1178,7 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
          ++it ) {
       ts << '"' << it->first << "\",\"" 
          << it->second.replace( "\n", "__cr__" ).replace( "\"", "__dqt__" )
-         << '"' << endl;
+         << '"' << Qt::endl;
    }
 
    f.close();

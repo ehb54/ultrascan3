@@ -25,6 +25,9 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 {
    this->save = save;
    this->us_hydrodyn = us_hydrodyn;
+
+   ((US_Hydrodyn *)us_hydrodyn)->save_params_force_results_name( *save );
+
    // build vectors, maps
    {
       vector < QString > expert_mode_data =
@@ -81,8 +84,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
             "results.D20w", 
-            "Translational diffusion coefficient D [cm/sec^2]",
-            "Translational diffusion coefficient D [cm/sec^2]",
+            "Translational diffusion coefficient D [cm^2/sec]",
+            "Translational diffusion coefficient D [cm^2/sec]",
 
             "__BREAK__",
 
@@ -179,26 +182,25 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Centre of diffusion [ X, Y, Z ] [nm]",
             "Centre of diffusion [ X, Y, Z ] [nm]",
 
-            "cen_of_visc_x",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
+            // "cen_of_visc_x",
+            // "Centre of viscosity [ X, Y, Z ] [nm]",
+            // "Centre of viscosity [ X, Y, Z ] [nm]",
 
-            "unc_int_visc",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
+            // "unc_int_visc",
+            // "Uncorrected intrinsic viscosity [cm^3/g]",
+            // "Uncorrected intrinsic viscosity [cm^3/g]",
 
-            "unc_einst_rad",
-            "Uncorrected Einstein's radius [nm]",
-            "Uncorrected Einstein's radius [nm]",
+            // "unc_einst_rad",
+            // "Uncorrected Einstein's radius [nm]",
+            // "Uncorrected Einstein's radius [nm]",
 
-            "cor_int_visc",
-            "Corrected intrinsic viscosity [cm^3/g]",
-            "Corrected intrinsic viscosity [cm^3/g]",
+            // "cor_int_visc",
+            // "Corrected intrinsic viscosity [cm^3/g]",
+            // "Corrected intrinsic viscosity [cm^3/g]",
 
-            "cor_einst_rad",
-            "Corrected Einstein's radius [nm]",
-            "Corrected Einstein's radius [nm]",
-
+            // "cor_einst_rad",
+            // "Corrected Einstein's radius [nm]",
+            // "Corrected Einstein's radius [nm]",
 
             "__SECTION__",
             "Additional ZENO results:",
@@ -224,8 +226,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Frictional ratio s.d.", 
 
             "results.viscosity_sd", 
-            "Intrisic viscosity s.d.", 
-            "Intrisic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
 
             "dt_d0",
             "Dt/d0",
@@ -243,8 +245,12 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Dimensionless intrinsic viscosity s.d.",
             "Dimensionless intrinsic viscosity s.d.",
 
+            "zeno_skin_thickness",
+            "Skin Thickness",
+            "Skin Thickness",
+
             "__SECTION__",
-            "Additional SMI/GRPY results:",
+            "Additional GRPY results:",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
@@ -299,6 +305,21 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
+            "Additional vdW results:",
+
+            "vdw_theo_waters",
+            "vdW Theoretical waters",
+            "vdW Theoretical waters",
+
+            "vdw_exposed_residues",
+            "vdW Exposed residues",
+            "vdW Exposed residues",
+
+            "vdw_exposed_waters",
+            "vdW Exposed waters",
+            "vdW Exposed waters",
+
+            "__SECTION__",
             "Solvent conditions:",
 
             "hydro.solvent_name", 
@@ -328,7 +349,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results:",
+            "ASA results and options:",
 
             "__BREAK__",
 
@@ -339,6 +360,77 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "results.asa_rg_neg", 
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
+
+            "hydrate_probe_radius",
+            "ASA Hydrate probe radius [A]",
+            "ASA Hydrate probe radius [A]",
+
+            "hydrate_threshold",
+            "ASA Hydrate Threshold [A^2]",
+            "ASA Hydrate Threshold [A^2]",
+
+            "vdw_grpy_probe_radius",
+            "ASA vdW+GRPY Probe Radius [A]",
+            "ASA vdW+GRPY Probe Radius [A]",
+
+            "vdw_grpy_threshold",
+            "ASA vdW+GRPY Threshold [%]",
+            "ASA vdW+GRPY Threshold [%]",
+
+            "__SECTION__",
+            "Fractal Dimension:",
+
+            "fractal_dimension_parameters",
+            "Fractal dimension parameters",
+            "Fractal dimension parameters",
+
+            "fractal_dimension",
+            "Fractal dimension",
+            "Fractal dimension",
+
+            "fractal_dimension_sd",
+            "Fractal dimension s.d.",
+            "Fractal dimension s.d.",
+
+            "fractal_dimension_wtd",
+            "Fractal dimension weighted average",
+            "Fractal dimension weighted average",
+
+            "fractal_dimension_wtd_sd",
+            "Fractal dimension weighted average s.d.",
+            "Fractal dimension weighted average s.d.",
+
+            "fractal_dimension_wtd_wtd",
+            "Fractal dimension weighted weighted average",
+            "Fractal dimension weighted weighted average",
+
+            "fractal_dimension_wtd_wtd_sd",
+            "Fractal dimension weighted weighted average s.d.",
+            "Fractal dimension weighted weighted average s.d.",
+
+            "rg_over_fractal_dimension",
+            "Rg / Fractal dimension",
+            "Rg / Fractal dimension",
+
+            "rg_over_fractal_dimension_sd",
+            "Rg / Fractal dimension s.d.",
+            "Rg / Fractal dimension s.d.",
+
+            "rg_over_fractal_dimension_wtd",
+            "Rg / Fractal dimension weighted average",
+            "Rg / Fractal dimension weighted average",
+
+            "rg_over_fractal_dimension_wtd_sd",
+            "Rg / Fractal dimension weighted average s.d.",
+            "Rg / Fractal dimension weighted average s.d.",
+
+            "rg_over_fractal_dimension_wtd_wtd",
+            "Rg / Fractal dimension weighted weighted average",
+            "Rg / Fractal dimension weighted weighted average",
+
+            "rg_over_fractal_dimension_wtd_wtd_sd",
+            "Rg / Fractal dimension weighted weighted average s.d.",
+            "Rg / Fractal dimension weighted weighted average s.d.",
 
             "__END__"
          };
@@ -397,8 +489,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
             "results.D20w", 
-            "Translational diffusion coefficient D [cm/sec^2]",
-            "Translational diffusion coefficient D [cm/sec^2]",
+            "Translational diffusion coefficient D [cm^2/sec]",
+            "Translational diffusion coefficient D [cm^2/sec]",
 
             "__BREAK__",
 
@@ -519,8 +611,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Frictional ratio s.d.", 
 
             "results.viscosity_sd", 
-            "Intrisic viscosity s.d.", 
-            "Intrisic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
+            "Intrinsic viscosity s.d.", 
 
             "dt_d0",
             "Dt/d0",
@@ -537,6 +629,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "dimless_eta_sd",
             "Dimensionless intrinsic viscosity s.d.",
             "Dimensionless intrinsic viscosity s.d.",
+
+            "zeno_skin_thickness",
+            "Skin Thickness",
+            "Skin Thickness",
 
             "__SECTION__",
             "Additional GRPY results:",
@@ -594,6 +690,21 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
+            "Additional vdW results:",
+
+            "vdw_theo_waters",
+            "vdW Theoretical waters",
+            "vdW Theoretical waters",
+
+            "vdw_exposed_residues",
+            "vdW Exposed residues",
+            "vdW Exposed residues",
+
+            "vdw_exposed_waters",
+            "vdW Exposed waters",
+            "vdW Exposed waters",
+
+            "__SECTION__",
             "Solvent conditions:",
 
             "hydro.solvent_name", 
@@ -623,7 +734,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results:",
+            "ASA results and options:",
 
             "__BREAK__",
 
@@ -635,10 +746,85 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
             "Radius of gyration (-r) [A] (from PDB atomic structure)",
 
+            // "hydrate_probe_radius",
+            // "ASA Hydrate probe radius [A]",
+            // "ASA Hydrate probe radius [A]",
+
+            // "hydrate_threshold",
+            // "ASA Hydrate Threshold [A^2]",
+            // "ASA Hydrate Threshold [A^2]",
+
+            "vdw_grpy_probe_radius",
+            "ASA vdW+GRPY Probe Radius [A]",
+            "ASA vdW+GRPY Probe Radius [A]",
+
+            "vdw_grpy_threshold",
+            "ASA vdW+GRPY Threshold [%]",
+            "ASA vdW+GRPY Threshold [%]",
+
+            "__SECTION__",
+            "Fractal Dimension:",
+
+            "fractal_dimension_parameters",
+            "Fractal dimension parameters",
+            "Fractal dimension parameters",
+
+            "fractal_dimension",
+            "Fractal dimension",
+            "Fractal dimension",
+
+            "fractal_dimension_sd",
+            "Fractal dimension s.d.",
+            "Fractal dimension s.d.",
+
+            "fractal_dimension_wtd",
+            "Fractal dimension weighted average",
+            "Fractal dimension weighted average",
+
+            "fractal_dimension_wtd_sd",
+            "Fractal dimension weighted average s.d.",
+            "Fractal dimension weighted average s.d.",
+
+            "fractal_dimension_wtd_wtd",
+            "Fractal dimension weighted weighted average",
+            "Fractal dimension weighted weighted average",
+
+            "fractal_dimension_wtd_wtd_sd",
+            "Fractal dimension weighted weighted average s.d.",
+            "Fractal dimension weighted weighted average s.d.",
+
+            "rg_over_fractal_dimension",
+            "Rg / Fractal dimension",
+            "Rg / Fractal dimension",
+
+            "rg_over_fractal_dimension_sd",
+            "Rg / Fractal dimension s.d.",
+            "Rg / Fractal dimension s.d.",
+
+            "rg_over_fractal_dimension_wtd",
+            "Rg / Fractal dimension weighted average",
+            "Rg / Fractal dimension weighted average",
+
+            "rg_over_fractal_dimension_wtd_sd",
+            "Rg / Fractal dimension weighted average s.d.",
+            "Rg / Fractal dimension weighted average s.d.",
+
+            "rg_over_fractal_dimension_wtd_wtd",
+            "Rg / Fractal dimension weighted weighted average",
+            "Rg / Fractal dimension weighted weighted average",
+
+            "rg_over_fractal_dimension_wtd_wtd_sd",
+            "Rg / Fractal dimension weighted weighted average s.d.",
+            "Rg / Fractal dimension weighted weighted average s.d.",
+
             "__END__"
          };
    
-      vector < QString > data = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ? expert_mode_data : non_expert_mode_data;
+      // vector < QString > data = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ? expert_mode_data : non_expert_mode_data;
+      // always use expert mode ... if expert_mode fields are selected and run in non expert mode, causes issues.
+      // perhaps rethink thin
+#warning expert mode forced to avoid field switch issues
+      vector < QString > data = expert_mode_data;
       
       field.clear( );
       descriptive_name.clear( );
@@ -1238,6 +1424,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          continue;
       }
 
+      if ( field[i] == "zeno_skin_thickness" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.zeno_skin_thickness);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 4;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
       if ( field[i] == "hydro.solvent_name" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_name);
@@ -1305,6 +1500,155 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          field_to_format[field[i]] = 'g';
          continue;
       }
+
+      if ( field[i] == "vdw_theo_waters" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_theo_waters);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "vdw_exposed_residues" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_exposed_residues);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "vdw_exposed_waters" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_exposed_waters);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "hydrate_probe_radius" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydrate_probe_radius);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "hydrate_threshold" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydrate_threshold);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "vdw_grpy_probe_radius" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_grpy_probe_radius);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+      if ( field[i] == "vdw_grpy_threshold" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.vdw_grpy_threshold);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "fractal_dimension_parameters" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_parameters);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
+         continue;
+      }
+      if ( field[i] == "fractal_dimension" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "fractal_dimension_wtd_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.fractal_dimension_wtd_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd_wtd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_wtd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+      if ( field[i] == "rg_over_fractal_dimension_wtd_wtd_sd" ) {
+         field_to_save_data[field[i]] = (void *)&(save->data.rg_over_fractal_dimension_wtd_wtd_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+
    }
 
    this->save_widget = save_widget;
@@ -1815,6 +2159,8 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    save_data sum = zero;
    save_data sum2 = zero;
    save_data count = zero; // note counts may be different for n/a fields;
+   save_data vmin = zero;
+   save_data vmax = zero;
 
    QString tmp_qstring;
    bool tmp_bool;
@@ -1842,23 +2188,24 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             tmp_qstring = *((QString *)(field_to_save_data[field[i]]));
 
             save->data = sum;
+            // 2023-08-30 disable name list in average & sd
             if ( j )
             {
-               *((QString *)(field_to_save_data[field[i]])) += ", ";
+               // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
                *((QString *)(field_to_save_data[field[i]])) = us_tr("Average: ");
             }
-            *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
+            // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum = save->data;
 
             save->data = sum2;
             if ( j )
             {
-               *((QString *)(field_to_save_data[field[i]])) += ", ";
+               // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
                *((QString *)(field_to_save_data[field[i]])) = us_tr("Standard deviation: ");
             }
-            *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
+            // 2023-08-30 *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum2 = save->data;
 
             break;
@@ -1891,6 +2238,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             (*((float *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
+            save->data = vmin;
+            if ( !j || *((float *)(field_to_save_data[field[i]])) > tmp_float ) {
+               *((float *)(field_to_save_data[field[i]])) = tmp_float;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((float *)(field_to_save_data[field[i]])) < tmp_float ) {
+               *((float *)(field_to_save_data[field[i]])) = tmp_float;
+            }
+            vmax = save->data;
+
             break;
          case DT_DOUBLE        :
             save->data = (*data)[j];
@@ -1907,6 +2266,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             save->data = count;
             (*((double *)(field_to_save_data[field[i]])))++;
             count = save->data;
+
+            save->data = vmin;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            vmax = save->data;
 
             break;
          case DT_INT           :
@@ -1925,6 +2296,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             (*((int *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
+            save->data = vmin;
+            if ( !j || *((int *)(field_to_save_data[field[i]])) > tmp_int ) {
+               *((int *)(field_to_save_data[field[i]])) = tmp_int;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((int *)(field_to_save_data[field[i]])) < tmp_int ) {
+               *((int *)(field_to_save_data[field[i]])) = tmp_int;
+            }
+            vmax = save->data;
+
             break;
          case DT_UNSIGNED_INT  :
             save->data = (*data)[j];
@@ -1941,6 +2324,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             save->data = count;
             (*((unsigned int *)(field_to_save_data[field[i]])))++;
             count = save->data;
+
+            save->data = vmin;
+            if ( !j || *((unsigned int *)(field_to_save_data[field[i]])) > tmp_uint ) {
+               *((unsigned int *)(field_to_save_data[field[i]])) = tmp_uint;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((unsigned int *)(field_to_save_data[field[i]])) < tmp_uint ) {
+               *((unsigned int *)(field_to_save_data[field[i]])) = tmp_uint;
+            }
+            vmax = save->data;
 
             break;
 
@@ -1968,6 +2363,32 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             (*((double *)(field_to_save_data[field[i]]) + 2))++;
             count = save->data;
 
+            save->data = vmin;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 1) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 1) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 2) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 2) = tmp_double;
+            }
+            vmin = save->data;
+
+
+            save->data = vmax;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 1) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 1) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 2) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 2) = tmp_double;
+            }
+            vmax = save->data;
+
+
             break;
          case DT_DOUBLE_NA     :
             save->data = (*data)[j];
@@ -1987,6 +2408,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
                save->data = count;
                (*((double *)(field_to_save_data[field[i]])))++;
                count = save->data;
+
+               save->data = vmin;
+               if ( !j || *((double *)(field_to_save_data[field[i]])) > tmp_double ) {
+                  *((double *)(field_to_save_data[field[i]])) = tmp_double;
+               }
+               vmin = save->data;
+
+               save->data = vmax;
+               if ( !j || *((double *)(field_to_save_data[field[i]])) < tmp_double ) {
+                  *((double *)(field_to_save_data[field[i]])) = tmp_double;
+               }
+               vmax = save->data;
             }
             break;
          }
@@ -2012,12 +2445,24 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_float = *((float *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((float *)(field_to_save_data[field[i]])) = 
-            sqrt(fabs((*((float *)(field_to_save_data[field[i]])) - tmp_float * tmp_float * tmp_count_float) / 
-            (tmp_count_float - 1)));
-         sum2 = save->data;
-                  
+         {
+            save->data = vmin;
+            float tmp_vmin = *((float *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            float tmp_vmax = *((float *)(field_to_save_data[field[i]]));
+         
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((float *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((float *)(field_to_save_data[field[i]])) = 
+                  sqrt(fabs((*((float *)(field_to_save_data[field[i]])) - tmp_float * tmp_float * tmp_count_float) / 
+                            (tmp_count_float - 1)));
+            }
+            sum2 = save->data;
+         }
+         
          break;
       case DT_DOUBLE        :
          save->data = count;
@@ -2028,12 +2473,23 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_double = *((double *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((double *)(field_to_save_data[field[i]])) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double  )
-            / (tmp_count_double - 1)));
-         sum2 = save->data;
-         
+         {
+            save->data = vmin;
+            double tmp_vmin = *((double *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            double tmp_vmax = *((double *)(field_to_save_data[field[i]]));
+
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((double *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]])) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double  )
+                            / (tmp_count_double - 1)));
+            }
+            sum2 = save->data;
+         }
          break;
       case DT_INT           :
          save->data = count;
@@ -2044,11 +2500,23 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_int = *((int *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((int *)(field_to_save_data[field[i]])) = 
-            (*((int *)(field_to_save_data[field[i]])) - tmp_int * tmp_int * tmp_count_int) 
-            / (tmp_count_int - 1);
-         sum2 = save->data;
+         {
+            save->data = vmin;
+            int tmp_vmin = *((int *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            int tmp_vmax = *((int *)(field_to_save_data[field[i]]));
+
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((int *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((int *)(field_to_save_data[field[i]])) = 
+                  (*((int *)(field_to_save_data[field[i]])) - tmp_int * tmp_int * tmp_count_int) 
+                  / (tmp_count_int - 1);
+            }
+            sum2 = save->data;
+         }
          
          break;
       case DT_UNSIGNED_INT  :
@@ -2060,11 +2528,23 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_uint = *((unsigned int *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((unsigned int *)(field_to_save_data[field[i]])) = 
-            (*((unsigned int *)(field_to_save_data[field[i]])) - tmp_uint * tmp_uint * tmp_count_uint) 
-            / (tmp_count_uint - 1);
-         sum2 = save->data;
+         {
+            save->data = vmin;
+            unsigned int tmp_vmin = *((unsigned int *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            unsigned int tmp_vmax = *((unsigned int *)(field_to_save_data[field[i]]));
+
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((unsigned int *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((unsigned int *)(field_to_save_data[field[i]])) = 
+                  (*((unsigned int *)(field_to_save_data[field[i]])) - tmp_uint * tmp_uint * tmp_count_uint) 
+                  / (tmp_count_uint - 1);
+            }
+            sum2 = save->data;
+         }
          
          break;
          
@@ -2081,17 +2561,42 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_double_3 = *((double *)(field_to_save_data[field[i]]) + 2);
          sum = save->data;
          
-         save->data = sum2;
-         *((double *)(field_to_save_data[field[i]])) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
-            / (tmp_count_double - 1)));
-         *((double *)(field_to_save_data[field[i]]) + 1) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 1) - tmp_double_2 * tmp_double_2 * tmp_count_double)
-            / (tmp_count_double - 1)));
-         *((double *)(field_to_save_data[field[i]]) + 2) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 2) - tmp_double_3 * tmp_double_3 * tmp_count_double)
-            / (tmp_count_double - 1)));
-         sum2 = save->data;
+         {
+            save->data = vmin;
+            double tmp_vmin0 = *((unsigned int *)(field_to_save_data[field[i]]));
+            double tmp_vmin1 = *((unsigned int *)(field_to_save_data[field[i]]) + 1);
+            double tmp_vmin2 = *((unsigned int *)(field_to_save_data[field[i]]) + 2);
+
+            save->data = vmax;
+            double tmp_vmax0 = *((unsigned int *)(field_to_save_data[field[i]]));
+            double tmp_vmax1 = *((unsigned int *)(field_to_save_data[field[i]]) + 1);
+            double tmp_vmax2 = *((unsigned int *)(field_to_save_data[field[i]]) + 2);
+
+            save->data = sum2;
+            if ( tmp_vmin0 == tmp_vmax0 ) {
+               *((double *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]])) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
+                            / (tmp_count_double - 1)));
+            }
+            if ( tmp_vmin1 == tmp_vmax1 ) {
+               *((double *)(field_to_save_data[field[i]]) + 1) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]]) + 1) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 1) - tmp_double_2 * tmp_double_2 * tmp_count_double)
+                            / (tmp_count_double - 1)));
+            }
+            
+            if ( tmp_vmin2 == tmp_vmax2 ) {
+               *((double *)(field_to_save_data[field[i]]) + 2) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]]) + 2) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 2) - tmp_double_3 * tmp_double_3 * tmp_count_double)
+                            / (tmp_count_double - 1)));
+            }
+            sum2 = save->data;
+         }
          
          break;
       case DT_DOUBLE_NA     :
@@ -2106,11 +2611,24 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             tmp_double = *((double *)(field_to_save_data[field[i]]));
             sum = save->data;
          
-            save->data = sum2;
-            *((double *)(field_to_save_data[field[i]])) = 
-               sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
-               / (tmp_count_double - 1)));
-            sum2 = save->data;
+            {
+               save->data = vmin;
+               double tmp_vmin = *((double *)(field_to_save_data[field[i]]));
+
+               save->data = vmax;
+               double tmp_vmax = *((double *)(field_to_save_data[field[i]]));
+
+               save->data = sum2;
+               if ( tmp_vmin == tmp_vmax ) {
+                  *((double *)(field_to_save_data[field[i]])) = 0;
+               } else {
+                  save->data = sum2;
+                  *((double *)(field_to_save_data[field[i]])) = 
+                     sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
+                               / (tmp_count_double - 1)));
+               }
+               sum2 = save->data;
+            }
          }
          break;
       }
@@ -2504,6 +3022,30 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.zeno_eta_prefactor_sd = 0e0;
    data.zeno_mep              = 0e0;
    data.zeno_mep_sd           = 0e0;
+
+   data.hydrate_probe_radius  = 0e0;
+   data.hydrate_threshold     = 0e0;
+   data.vdw_grpy_probe_radius = -1e0; // default NA
+   data.vdw_grpy_threshold    = -1e0; // default NA
+   data.vdw_theo_waters       = 0e0;
+   data.vdw_exposed_residues  = 0e0;
+   data.vdw_exposed_waters    = 0e0;
+
+   data.fractal_dimension_parameters         = "";
+   data.fractal_dimension                    = -1;
+   data.fractal_dimension_sd                 = -1;
+   data.fractal_dimension_wtd                = -1;
+   data.fractal_dimension_wtd_sd             = -1;
+   data.fractal_dimension_wtd_wtd            = -1;
+   data.fractal_dimension_wtd_wtd_sd         = -1;
+   data.rg_over_fractal_dimension            = -1;
+   data.rg_over_fractal_dimension_sd         = -1;
+   data.rg_over_fractal_dimension_wtd        = -1;
+   data.rg_over_fractal_dimension_wtd_sd     = -1;
+   data.rg_over_fractal_dimension_wtd_wtd    = -1;
+   data.rg_over_fractal_dimension_wtd_wtd_sd = -1;
+
+   data.zeno_skin_thickness  = 0e0;
 
    return data;
 }

@@ -18,7 +18,6 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 #include <math.h>
 #include <stdlib.h>
 #include <vector>
-   using namespace std;
 
 // needed for getpid() to randomize with
 #ifdef UNIX
@@ -45,8 +44,8 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 #define AVOGADRO 6.022140857e+23
 #endif
 
-#ifndef R
-#define R 8.314472e+07
+#ifndef Rbar
+#define Rbar 8.314472e+07
 #endif
 
 #ifndef K0
@@ -72,7 +71,9 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 #include <drivers.h>
 #endif
 
+
 #include "us_matrix.h"
+   using namespace std;
 
    struct peptide
    {
@@ -199,6 +200,8 @@ int __fpclassifyf (float x);
 #endif // WIN32
 
 float int_vol_2sphere(float r1, float r2, float d);
+
+QString us_double_decimal_places( double x, int dp );
 
 #endif
 

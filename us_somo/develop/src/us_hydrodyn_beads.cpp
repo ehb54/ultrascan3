@@ -14,6 +14,7 @@
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_hydrodyn_pat.h"
+#include "../include/us_hydrodyn_asab1.h"
 
 #define SLASH        "/"
 #define DOTSOMO      ""
@@ -26,6 +27,7 @@ int US_Hydrodyn::calc_somo_o()
 
 int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 {
+   progress->set_cli_prefix( "bm" );
    citation_build_bead_model( no_ovlp_removal ? "somo-overlaps" : "somo-no-overlaps" );
    {
       int models_selected = 0;
@@ -81,7 +83,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    no_ovlp_removal ? append_options_log_somo_ovlp() : append_options_log_somo();
    display_default_differences();
    bead_model_suffix = getExtendedSuffix(false, true, no_ovlp_removal );
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(true);
@@ -146,7 +148,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
             model_vector[ current_model ].asa_rg_pos = results.asa_rg_pos;
             model_vector[ current_model ].asa_rg_neg = results.asa_rg_neg;
             // qDebug() << "us_hydrodyn::calc_somo() current_model " << current_model << " asa_rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
-            
+
             somo_processed[current_model] = 1;
             if ( asa.recheck_beads ) // && !no_ovlp_removal )
             {
@@ -212,9 +214,23 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    pb_vdw_beads->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      no_ovlp_removal ? calc_zeno_hydro() : calc_hydro();
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         no_ovlp_removal ? 
+            calc_zeno_hydro() : calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
    } 
    else
    {
@@ -336,7 +352,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    }
 
    bead_model_suffix = getExtendedSuffix(false, false, no_ovlp_removal);
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(false);
@@ -876,7 +892,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                   le_bead_model_file->setText( filename );
 
                   write_bead_model( 
-                                   somo_dir + SLASH + filename +
+                                   get_somo_dir() + SLASH + filename +
                                    QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                                    DOTSOMO, 
                                    &bead_model,
@@ -930,10 +946,23 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      calc_hydro();
-   }
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
+   } 
    else
    {
       play_sounds(1);
@@ -986,7 +1015,7 @@ int US_Hydrodyn::calc_grid()
    }
 
    bead_model_suffix = getExtendedSuffix(false, false) + "g";
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(false);
@@ -1231,7 +1260,7 @@ int US_Hydrodyn::calc_grid()
 
             le_bead_model_file->setText( filename );
 
-            write_bead_model(somo_dir + SLASH +
+            write_bead_model(get_somo_dir() + SLASH +
                              filename +
                              QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                              DOTSOMO, &bead_model);
@@ -1276,10 +1305,23 @@ int US_Hydrodyn::calc_grid()
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      calc_hydro();
-   }
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
+   } 
    else
    {
       play_sounds(1);
@@ -1359,7 +1401,7 @@ int US_Hydrodyn::calc_vdw_beads()
    //    }
    // }
    bead_model_suffix = getExtendedSuffix( false, false, true, true );
-   le_bead_model_suffix->setText( bead_model_suffix );
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
 
    if ( !overwrite )
    {
@@ -1434,9 +1476,20 @@ int US_Hydrodyn::calc_vdw_beads()
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_stop_calc->setEnabled(false);
-   if ( calcAutoHydro )
-   {
-      calc_zeno_hydro();
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
    } else {
       play_sounds(1);
    }
@@ -1455,9 +1508,20 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    // info_mw( "create_vdw_beads() start : model_vector[current_model]", model_vector[current_model], true );
    error_string = "";
    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
-   double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
-   double vdw_ot_d = vdw_ot_dpct * 0.01;
+   // double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+   // double vdw_ot_d = vdw_ot_dpct * 0.01;
    // us_qdebug( QString( "vdw ot mult %1, additional water decrease percent %2" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ) );
+   bool vdw_ot_alt = gparams.count( "vdw_ot_alt" ) && gparams[ "vdw_ot_alt" ] == "true";
+
+   if ( vdw_ot_alt ) {
+      editor_msg( "darkred", us_tr( "OT alternate method selected but not yet implemented\n" ) );
+      return -1;
+   }
+      
+   if ( model_vector_has_hydration_differences( model_vector ) ) {
+      editor_msg( "darkred", us_tr( "WARNING: PDB contains residues with bead hydration without atomic hydration,\nvdW models should not be used a they rely on atomic hydration\n\n" ) );
+   }
+
    point com;
    com.axis[ 0 ] = 0;
    com.axis[ 1 ] = 0;
@@ -1484,6 +1548,11 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
    bool hydrate = !any_wats;
 
+// #warning hydration off
+//    hydrate = false;
+//    vdw_ot_mult = 0;
+//    editor_msg( "red", "hydration off for testing\n" );
+
    if ( !quiet ) 
    {
       editor->append("Creating vdW beads from atomic model\n");
@@ -1492,11 +1561,78 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
 
    bead_model.clear( );
 
-   if ( vdw_ot_mult ) {
-      editor_msg( "black", QString( us_tr( "Using OT multiplier %1\nStart CoM calculation.\n" ) ).arg( vdw_ot_mult ) );
+   // compute ASA for hydration
+   {
+      vector < PDB_atom * > active_atoms;
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+            active_atoms.push_back( this_atom );
+         }
+      }
+      progress->reset();
       qApp->processEvents();
+      int retval;
+      {
+         float save_radius = asa.probe_radius;
+         asa.probe_radius  = asa.hydrate_probe_radius; 
 
+         retval = us_hydrodyn_asab1_main(active_atoms,
+                                         &asa,
+                                         &results,
+                                         false,
+                                         progress,
+                                         editor,
+                                         this
+                                         );
+         asa.probe_radius  = save_radius;
+      }         
+
+      if ( retval )
+      {
+         editor->append("Errors found during ASA calculation\n");
+         progress->reset();
+         qApp->processEvents();
+         if (stopFlag)
+         {
+            return -1;
+         }
+         switch ( retval )
+         {
+         case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
+            {
+               printError("US_HYDRODYN_ASAB1 encountered a memory allocation error");
+               return US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC;
+               break;
+            }
+         default:
+            {
+               printError("US_HYDRODYN_ASAB1 encountered an unknown error");
+               // unknown error
+               return -1;
+               break;
+            }
+         }
+      }
+   }
+
+   if ( vdw_ot_mult ) {
       hydro_radius = pow( ( 3e0 / ( 4e0 * M_PI ) ) * misc.hydrovol, 1e0 / 3e0 );
+      if ( vdw_ot_alt ) {
+         editor_msg( "black", us_tr( "OT alternate method active\n" ) );
+      }
+      editor_msg( "black"
+                  ,QString(
+                           us_tr(
+                                 "Using OT multiplier %1 hydrodynamic radius %2 multiplied %3\n"
+                                 "Start global CoM calculation.\n"
+                                 )
+                           )
+                  .arg( vdw_ot_mult )
+                  .arg( hydro_radius )
+                  .arg( hydro_radius * vdw_ot_mult )
+                  );
+      qApp->processEvents();
       
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
          for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
@@ -1525,7 +1661,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          editor_msg( "black", QString( us_tr( "CoM computed as [%1,%2,%3]\n" ).arg( com.axis[ 0 ] ).arg( com.axis[ 1 ] ).arg( com.axis[ 2 ] ) ) );
       } else {
          editor_msg( "red", QString( us_tr( "Error computing CoM, OT turned off.\n" ) ) );
-         return -1;
+         vdw_ot_mult = 0;
       }         
    }
 
@@ -1534,7 +1670,40 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       gparams.count( "use_WAT_Tf_pdb" ) &&
       gparams[ "use_WAT_Tf_pdb" ] == "true";
 
+   bool use_vdw_inflate = 
+      gparams.count( "vdw_inflate" ) &&
+      gparams.count( "vdw_inflate_multiplier" ) &&
+      gparams[ "vdw_inflate_mult" ] != "1" &&
+      gparams[ "vdw_inflate" ] == "true";
+
+   double vdw_inflate_mult = 1;
+   if ( use_vdw_inflate ) {
+      vdw_inflate_mult = gparams[ "vdw_inflate_multiplier" ].toDouble();
+      editor_msg( "dark red", us_tr( QString( "WARNING: beads are inflated by a factor of %1" ).arg( vdw_inflate_mult ) ) );
+   }
+
+   // redo summary info
+   class summary_info {
+   public: 
+      int     count;
+      double  theo_waters;
+      int     count_exposed;
+      double  theo_waters_exposed;
+      summary_info() {
+         count               = 0;
+         count_exposed       = 0;
+         theo_waters         = 0;
+         theo_waters_exposed = 0;
+      };
+   };
+
+   map < QString, summary_info > summary_infos;
+   summary_info next_summary_info;
+   bool         summary_info_exposed_counted = false;
+
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+      QString last_resSeq;
+
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
          PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
@@ -1545,6 +1714,12 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          if ( !this_atom->p_atom) {
             editor_msg( "red", QString( us_tr( "Internal error: p_atom not set!, contact the developers" ) ) );
             return -1;
+         }
+
+         if ( last_resSeq != this_atom->resSeq ) {
+            ++summary_infos[ this_atom->resName ].count;
+            last_resSeq = this_atom->resSeq;
+            summary_info_exposed_counted = false;
          }
 
          // QTextStream( stdout )
@@ -1572,6 +1747,25 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             .arg( use_atom_name )
             ;
 
+         double saxs_excl_vol;
+         {
+            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            if ( this_atom->name == "OXT" ) {
+               mapkey = "OXT|OXT";
+            }
+            if ( !residue_atom_hybrid_map.count( mapkey ) ) {
+               editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
+               return -1;
+            }
+            QString hybrid_name = residue_atom_hybrid_map[mapkey];
+            QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) ) {
+               editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
+               return -1;
+            }
+            saxs_excl_vol = atom_map[this_atom_name + "~" + hybrid_name].saxs_excl_vol;
+         }
+
          // QTextStream( stdout ) << "vdwf: res_idx is " << res_idx << " " << endl;
          
          if ( vdwf.count( res_idx ) ) {
@@ -1583,27 +1777,36 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             this_vdwf.ionized_mw_delta = this_atom->p_atom->hybrid.ionized_mw_delta;
             this_vdwf.r                = this_atom->p_atom->hybrid.radius;
             this_vdwf.w                = this_atom->p_atom->hydration;
-            
+            this_vdwf.e                = this_atom->p_atom->hybrid.num_elect;
+            summary_infos[ this_atom->resName ].theo_waters += this_vdwf.w;
+            if ( this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
+               summary_infos[ this_atom->resName ].theo_waters_exposed += this_vdwf.w;
+               if ( !summary_info_exposed_counted ) {
+                  ++summary_infos[ this_atom->resName ].count_exposed;
+                  summary_info_exposed_counted = true;
+               }
+            }
+
             if ( this_atom->resName == "WAT" ) {
                this_vdwf.mw = 0.0;
             }
             tmp_atom.bead_coordinate = this_atom->coordinate;
-            if ( hydrate && this_vdwf.w ) {
+            if ( hydrate && this_vdwf.w && this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
                double use_vdw_ot_mult = vdw_ot_mult;
-               if ( this_vdwf.w > 1 ) {
-                  use_vdw_ot_mult -= vdw_ot_mult * vdw_ot_d * ( this_vdwf.w - 1 );
-                  if ( use_vdw_ot_mult < 0e0 ) {
-                     use_vdw_ot_mult = 0e0;
-                  }
-               }
+               // if ( this_vdwf.w > 1 ) {
+               //    use_vdw_ot_mult -= vdw_ot_mult * vdw_ot_d * ( this_vdwf.w - 1 );
+               //    if ( use_vdw_ot_mult < 0e0 ) {
+               //       use_vdw_ot_mult = 0e0;
+               //    }
+               // }
                // us_qdebug( QString( "original ot mult %1, waters %2, decreased multiplier %3" ).arg( vdw_ot_mult ).arg( this_vdwf.w ).arg( use_vdw_ot_mult ) );
                if ( use_vdw_ot_mult ) {
                   tmp_atom.bead_coordinate = saxs_util->plus( tmp_atom.bead_coordinate, saxs_util->scale( saxs_util->normal( saxs_util->minus( this_atom->coordinate, com ) ), use_vdw_ot_mult * hydro_radius ) );
                }
             } else {
-               tmp_atom.bead_computed_radius = this_vdwf.r;
+               tmp_atom.bead_computed_radius = this_vdwf.r * vdw_inflate_mult;
                if (
                    use_WAT_Tf &&
                    this_atom->resName == "WAT" &&
@@ -1626,6 +1829,12 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.bead_mw                   = this_vdwf.mw;
             tmp_atom.bead_ionized_mw_delta     = this_vdwf.ionized_mw_delta;
             tmp_atom.bead_color                = this_vdwf.color;
+            // #warning recolored for hydration
+            // tmp_atom.bead_color = hydrate && this_vdwf.w ? 1 : 6;
+            // #warning recolored for ASA testing
+            // tmp_atom.bead_color                = this_atom->asa >= asa.hydrate_threshold ? 6 : 8;
+            tmp_atom.bead_recheck_asa          = this_atom->asa;
+            tmp_atom.num_elect                 = this_vdwf.e;
             tmp_atom.exposed_code              = 1;
             tmp_atom.all_beads                 .clear( );
             tmp_atom.active                    = true;
@@ -1633,6 +1842,12 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.resName                   = this_atom->resName;
             tmp_atom.iCode                     = this_atom->iCode;
             tmp_atom.chainID                   = this_atom->chainID;
+            tmp_atom.saxs_excl_vol             = saxs_excl_vol;
+            if ( this_atom->asa >= asa.hydrate_threshold && this_vdwf.w ) {
+               tmp_atom.bead_hydration            = this_vdwf.w;
+            } else {
+               tmp_atom.bead_hydration            = 0;
+            }
             tmp_atom.saxs_data.saxs_name       = "";
             tmp_atom.bead_model_code = QString( "%1.%2.%3.%4.%5" )
                .arg( this_atom->serial )
@@ -1642,10 +1857,20 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                .arg( this_atom->resSeq )
                ;
 
-            this_atom->mw               = tmp_atom.mw;
-            this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
-            this_atom->radius           = tmp_atom.radius;
-            
+            // QTextStream(stdout) << QString( "atom name %1 resname %2 asa %3 bead_asa %4 ref_asa %5 bead_recheck_asa %6\n" )
+            //    .arg( tmp_atom.name )
+            //    .arg( tmp_atom.resName )
+            //    .arg( this_atom->asa )
+            //    .arg( this_atom->bead_asa )
+            //    .arg( this_atom->ref_asa )
+            //    .arg( this_atom->bead_recheck_asa )
+            //    ;
+
+#warning commented out the next three lines, likely side effects ... were they added for some purpose?
+            // this_atom->mw               = tmp_atom.mw;
+            // this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
+            // this_atom->radius           = tmp_atom.radius;
+
             bead_model.push_back(tmp_atom);
          } else {
             editor_msg( "red", QString( "Residue atom pair %1 unknown in vdwf.json" ).arg( res_idx ) );
@@ -1654,10 +1879,60 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       }
    }      
 
+   {
+      QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
+      editor_msg( "black", courier,
+                  "Atomic level pH dependent hydration:\n"
+                  "Residue  Count   Percent  Theo. wat  Exp. sites  Exp. theo. wat\n"
+                  );
+
+      summary_info summary_totals;
+      for ( auto it = summary_infos.begin();
+            it != summary_infos.end();
+            ++it ) {
+         summary_totals.count               += it->second.count;
+         summary_totals.theo_waters         += it->second.theo_waters;
+         summary_totals.count_exposed       += it->second.count_exposed;
+         summary_totals.theo_waters_exposed += it->second.theo_waters_exposed;
+      }
+
+      for ( auto it = summary_infos.begin();
+            it != summary_infos.end();
+            ++it ) {
+         editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5     %6\n" )
+                     .arg( it->first, -7 )
+                     .arg( it->second.count, -6 )
+                     .arg( QString( "%1%" )
+                           .arg( floor( 100 * 100.0 * (double) it->second.count / (double) summary_totals.count ) / 100, 0, 'g', 3 ), -6 )
+                     .arg( it->second.theo_waters, -9, 'f', 0 )
+                     .arg( it->second.count_exposed, -7 )
+                     .arg( it->second.theo_waters_exposed, 0, 'f', 0 )
+                     );
+      }
+      
+      editor_msg( "black", courier, QString( "%1  %2  %3   %4  %5     %6\n" )
+                  .arg( "Total", -7 )
+                  .arg( summary_totals.count, -6 )
+                  .arg( QString( "%1%" )
+                        .arg( floor( 100 * 100.0 * (double) summary_totals.count / (double) summary_totals.count ) / 100, 0, 'g', 3 ), -6 )
+                  .arg( summary_totals.theo_waters, -9, 'f', 0 )
+                  .arg( summary_totals.count_exposed, -7 )
+                  .arg( summary_totals.theo_waters_exposed, 0, 'f', 0 )
+                  );
+
+      if ( bead_model.size() ) {
+         bead_model[0].is_vdw                   = "vdw";
+         bead_model[0].vdw_theo_waters          = QString( "%1" ).arg( summary_totals.theo_waters, 0, 'f', 0 ).toDouble();
+         bead_model[0].vdw_count_exposed        = summary_totals.count_exposed;
+         bead_model[0].vdw_theo_waters_exposed  = QString( "%1" ).arg( summary_totals.theo_waters_exposed, 0, 'f', 0 ).toDouble();
+         bead_model[0].asa_hydrate_probe_radius = asa.hydrate_probe_radius;
+         bead_model[0].asa_hydrate_threshold    = asa.hydrate_threshold;
+      }
+   }
+
    if ( WAT_Tf_used ) {
       editor_msg( "dark blue", QString( us_tr( "Notice: %1 WATs using PDB's Tf radius recognized\n" ) ).arg( WAT_Tf_used ) );
    }
-
 
    // if we wanted to compute asa at bead model generation
    // if ( !hydro.bead_inclusion ) {
@@ -1685,6 +1960,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
    
    // qDebug() << "US_Hydrodyn::create_vdw_beads() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
+
 
    bead_models[ current_model ] = bead_model;
    somo_processed[ current_model ] = 1;
@@ -2162,8 +2438,8 @@ void US_Hydrodyn::hullrad_finalize() {
             hullrad_results.rs_sd             = sqrt( fabs( ( hullrad_results2.rs          - hullrad_results.rs          * hullrad_results.rs          * num ) * numdecinv ) );
             hullrad_results.rg_sd             = sqrt( fabs( ( hullrad_results2.rg          - hullrad_results.rg          * hullrad_results.rg          * num ) * numdecinv ) );
             hullrad_results.ff0_sd            = sqrt( fabs( ( hullrad_results2.ff0         - hullrad_results.ff0         * hullrad_results.ff0         * num ) * numdecinv ) );
-            hullrad_results.used_beads_sd     = sqrt( fabs( ( hullrad_results2.used_beads  - hullrad_results.used_beads  * hullrad_results.used_beads  * num ) * numdecinv ) );
-            hullrad_results.total_beads_sd    = sqrt( fabs( ( hullrad_results2.total_beads - hullrad_results.total_beads * hullrad_results.total_beads * num ) * numdecinv ) );
+            hullrad_results.used_beads_sd     = sqrt( fabs( ( (double) hullrad_results2.used_beads  - (double) hullrad_results.used_beads  * (double) hullrad_results.used_beads  * num ) * numdecinv ) );
+            hullrad_results.total_beads_sd    = sqrt( fabs( ( (double) hullrad_results2.total_beads - (double) hullrad_results.total_beads * (double) hullrad_results.total_beads * num ) * numdecinv ) );
             
             results = hullrad_results;
          }
@@ -2343,11 +2619,11 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
          {
             found_model = true;
             model_count++;
-            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , QString::SkipEmptyParts ) );
+            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
             QStringList qsl;
             {
                QString qs2 = qs.left( 20 );
-               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
             QString model_name;
             if ( qsl.size() == 1 )

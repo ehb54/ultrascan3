@@ -1,5 +1,5 @@
 #ifndef US_LICENSE_H
-#define US_LINCESE_H
+#define US_LICENSE_H
 
 // QT defs:
 

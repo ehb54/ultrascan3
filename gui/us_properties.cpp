@@ -153,8 +153,9 @@ US_Properties::US_Properties( US_Model& mod, int access )
    // Pushbuttons
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Cancel" ) );
-   QPushButton* pb_accept   = us_pushbutton( tr( "Accept" ) );
-
+   //QPushButton* pb_accept   = us_pushbutton( tr( "Accept" ) );
+   pb_accept   = us_pushbutton( tr( "Accept" ) );
+   
    // Main layout
    int row = 0;
    main->addWidget( pb_new,         row,   0, 1, 2 );
@@ -261,6 +262,12 @@ US_Properties::US_Properties( US_Model& mod, int access )
    clear_entries();
    update_lw();
    checkbox();
+}
+
+void US_Properties::disable_gui( void )
+{
+  pb_accept-> setEnabled(false);
+
 }
 
 void US_Properties::clear_entries( void )
@@ -415,13 +422,13 @@ void US_Properties::set_oligomer( double oligomer )
 
    sc->mw /= sc->oligomer;  // Get monomer mw
    sc->mw *= oligomer;             // Now adjust for new oligomer count
-   le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
+   le_mw->setText( QString::number( sc->mw, 'e', 8 ) );
 
    us_setReadOnly( le_mw, !ck_mw->isChecked() );
 
    sc->extinction /= sc->oligomer;
    sc->extinction *= oligomer;
-   le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
+   le_extinction->setText( QString::number( sc->extinction, 'e', 8 ) );
 
    sc->oligomer    = (int) oligomer;
 
@@ -519,7 +526,7 @@ void US_Properties::edit_vbar( void )
 
    if ( keep_standard() )  // Change from standard values?
    {
-      le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
+      le_vbar->setText( QString::number( sc->vbar20, 'e', 8 ) );
       return;
    }
 
@@ -628,31 +635,31 @@ void US_Properties::select_shape( int shape )
    switch ( shape )
    {
       case US_Model::PROLATE:
-         le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'e', 3 ));
-         le_s   ->setText(  QString::number( hydro_data.prolate.s,    'e', 4 ));
-         le_D   ->setText(  QString::number( hydro_data.prolate.D,    'e', 4 ));
-         le_f   ->setText(  QString::number( hydro_data.prolate.f,    'e', 4 ));
+         le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'e', 8 ));
+         le_s   ->setText(  QString::number( hydro_data.prolate.s,    'e', 8 ));
+         le_D   ->setText(  QString::number( hydro_data.prolate.D,    'e', 8 ));
+         le_f   ->setText(  QString::number( hydro_data.prolate.f,    'e', 8 ));
          break;
 
       case US_Model::OBLATE:
-         le_f_f0->setText(  QString::number( hydro_data.oblate.f_f0, 'e', 3 ) );
-         le_s   ->setText(  QString::number( hydro_data.oblate.s,    'e', 4 ) );
-         le_D   ->setText(  QString::number( hydro_data.oblate.D,    'e', 4 ) );
-         le_f   ->setText(  QString::number( hydro_data.oblate.f,    'e', 4 ) );
+         le_f_f0->setText(  QString::number( hydro_data.oblate.f_f0, 'e', 8 ) );
+         le_s   ->setText(  QString::number( hydro_data.oblate.s,    'e', 8 ) );
+         le_D   ->setText(  QString::number( hydro_data.oblate.D,    'e', 8 ) );
+         le_f   ->setText(  QString::number( hydro_data.oblate.f,    'e', 8 ) );
          break;
 
       case US_Model::ROD:
-         le_f_f0->setText(  QString::number( hydro_data.rod.f_f0, 'e', 3 ) );
-         le_s   ->setText(  QString::number( hydro_data.rod.s,    'e', 4 ) );
-         le_D   ->setText(  QString::number( hydro_data.rod.D,    'e', 4 ) );
-         le_f   ->setText(  QString::number( hydro_data.rod.f,    'e', 4 ) );
+         le_f_f0->setText(  QString::number( hydro_data.rod.f_f0, 'e', 8 ) );
+         le_s   ->setText(  QString::number( hydro_data.rod.s,    'e', 8 ) );
+         le_D   ->setText(  QString::number( hydro_data.rod.D,    'e', 8 ) );
+         le_f   ->setText(  QString::number( hydro_data.rod.f,    'e', 8 ) );
          break;
       
       default:  //SPHERE
-         le_f_f0->setText(  QString::number( hydro_data.sphere.f_f0, 'e', 3 ) );
-         le_s   ->setText(  QString::number( hydro_data.sphere.s,    'e', 4 ) );
-         le_D   ->setText(  QString::number( hydro_data.sphere.D,    'e', 4 ) );
-         le_f   ->setText(  QString::number( hydro_data.sphere.f,    'e', 4 ) );
+         le_f_f0->setText(  QString::number( hydro_data.sphere.f_f0, 'e', 8 ) );
+         le_s   ->setText(  QString::number( hydro_data.sphere.s,    'e', 8 ) );
+         le_D   ->setText(  QString::number( hydro_data.sphere.D,    'e', 8 ) );
+         le_f   ->setText(  QString::number( hydro_data.sphere.f,    'e', 8 ) );
          break;
    }
 
@@ -677,7 +684,7 @@ void US_Properties::set_molar( void )
    else
       sc->molar_concentration = 0.0;
 
-   le_molConc->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
+   le_molConc->setText( QString::number( sc->molar_concentration, 'e', 8 ) );
 }
 
 void US_Properties::clear_guid( void )
@@ -794,13 +801,13 @@ void US_Properties::update( int /* row */ )
    inUpdate = true;
 
    // Set vbar
-   le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
+   le_vbar->setText( QString::number( sc->vbar20, 'e', 8 ) );
 
    // Set extinction and concentration
-   le_extinction ->setText( QString::number( sc->extinction, 'e', 4 ));
+   le_extinction ->setText( QString::number( sc->extinction, 'e', 8 ));
 
-   le_molConc    ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
-   le_sigConc    ->setText( QString::number( sc->signal_concentration,'e', 4 ));
+   le_molConc    ->setText( QString::number( sc->molar_concentration, 'e', 8 ));
+   le_sigConc    ->setText( QString::number( sc->signal_concentration,'e', 8 ));
    
    // Update hydro data
    hydro_data.mw          = sc->mw;
@@ -821,13 +828,13 @@ void US_Properties::update( int /* row */ )
    }
 
    // Set characteristics
-   le_mw   ->setText( QString::number( sc->mw   , 'e', 3 ) );
-   le_f_f0 ->setText( QString::number( sc->f_f0 , 'e', 3 ) );
-   le_s    ->setText( QString::number( sc->s    , 'e', 4 ) );
-   le_D    ->setText( QString::number( sc->D    , 'e', 4 ) );
-   le_f    ->setText( QString::number( sc->f    , 'e', 4 ) );
-   le_sigma->setText( QString::number( sc->sigma, 'e', 4 ) );
-   le_delta->setText( QString::number( sc->delta, 'e', 4 ) );
+   le_mw   ->setText( QString::number( sc->mw   , 'e', 8 ) );
+   le_f_f0 ->setText( QString::number( sc->f_f0 , 'e', 8 ) );
+   le_s    ->setText( QString::number( sc->s    , 'e', 8 ) );
+   le_D    ->setText( QString::number( sc->D    , 'e', 8 ) );
+   le_f    ->setText( QString::number( sc->f    , 'e', 8 ) );
+   le_sigma->setText( QString::number( sc->sigma, 'e', 8 ) );
+   le_delta->setText( QString::number( sc->delta, 'e', 8 ) );
 
    // Set load_co indication
    ( sc->c0.radius.size() > 0 ) ? pb_load_c0->setIcon( check )
@@ -932,12 +939,12 @@ void US_Properties::new_hydro( US_Analyte ad )
          break;
    }
 
-   le_extinction->setText( QString::number( exval, 'e', 4 ) );
+   le_extinction->setText( QString::number( exval, 'e', 8 ) );
    sc->extinction = exval;
 
    // Set vbar(20), mw
-   le_mw  ->setText( QString::number( hydro_data.mw,   'e', 3 ) );
-   le_vbar->setText( QString::number( hydro_data.vbar, 'e', 4 ) );
+   le_mw  ->setText( QString::number( hydro_data.mw,   'e', 8 ) );
+   le_vbar->setText( QString::number( hydro_data.vbar, 'e', 8 ) );
 
    sc->mw          = hydro_data.mw;
    sc->vbar20      = hydro_data.vbar;
@@ -1112,11 +1119,11 @@ void US_Properties::calculate( void )
    US_Model::calc_coefficients( model.components[ row ] );
 
    // fill in text boxes with given and calculated coefficients
-   le_mw  ->setText( QString::number( sc->mw  , 'e', 3 ) );
-   le_f_f0->setText( QString::number( sc->f_f0, 'e', 3 ) );
-   le_s   ->setText( QString::number( sc->s   , 'e', 4 ) );
-   le_D   ->setText( QString::number( sc->D   , 'e', 4 ) );
-   le_f   ->setText( QString::number( sc->f   , 'e', 4 ) );
+   le_mw  ->setText( QString::number( sc->mw  , 'e', 8 ) );
+   le_f_f0->setText( QString::number( sc->f_f0, 'e', 8 ) );
+   le_s   ->setText( QString::number( sc->s   , 'e', 8 ) );
+   le_D   ->setText( QString::number( sc->D   , 'e', 8 ) );
+   le_f   ->setText( QString::number( sc->f   , 'e', 8 ) );
 
    // search to see if present component is a product
    bool is_prod  = false;

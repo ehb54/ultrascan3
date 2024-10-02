@@ -168,7 +168,7 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
    QStringList qsl;
    {
       QRegExp rx = QRegExp( "\\s*(\\s|,|;)\\s*" );
-      qsl = (s ).split( rx , QString::SkipEmptyParts );
+      qsl = (s ).split( rx , Qt::SkipEmptyParts );
    }
 
    // us_qdebug( qsl.join("\n") + QString( "\n" ) );

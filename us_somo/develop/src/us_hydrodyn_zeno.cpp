@@ -1,9 +1,10 @@
 #include "../include/us_hydrodyn_zeno.h"
 //Added by qt3to4:
 #include <QTextStream>
+#include "../include/us_unicode.h"
 
 US_Hydrodyn  * zeno_us_hydrodyn;
-static QProgressBar * zeno_progress;
+static mQProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 static US_Udp_Msg  * zeno_us_udp_msg;
 
@@ -13429,7 +13430,7 @@ zeno_main(
 US_Hydrodyn_Zeno::US_Hydrodyn_Zeno( 
                                    hydro_options *         options,
                                    hydro_results *         results,
-                                   QProgressBar *          use_progress,
+                                   mQProgressBar *         use_progress,
                                    US_Hydrodyn *           us_hydrodyn
                                    )
 {
@@ -13469,7 +13470,8 @@ bool US_Hydrodyn_Zeno::run(
                            vector < PDB_atom > *   bead_model,
                            double              &   sum_mass,
                            double              &   sum_volume,
-                           QProgressBar        *   use_progress,
+                           const double        &   Rg,
+                           mQProgressBar       *   use_progress,
                            bool                    keep_files,
                            bool                    zeno_cxx,
                            int                     threads
@@ -13549,9 +13551,22 @@ bool US_Hydrodyn_Zeno::run(
                                               "nm" : "A" );
 
    // add skin thickness
-   if ( options->zeno_surface_thickness > 0.0 )
-   {
-      tso << QString( "st        %1\n"    ).arg( options->zeno_surface_thickness );
+   if ( options->zeno_surface_thickness_from_rg ) {
+      // linear
+      // double st = options->zeno_surface_thickness_from_rg_a + options->zeno_surface_thickness_from_rg_b * Rg;
+
+      // sigmoid
+      double st = options->zeno_surface_thickness_from_rg_a / ( 1 + exp( -( Rg - options->zeno_surface_thickness_from_rg_b ) / options->zeno_surface_thickness_from_rg_c ) );
+
+      qDebug() << QString( "Rg %1 st %2\n" ).arg( Rg ).arg( st );
+      if ( st > 0 ) {
+         tso << QString( "st        %1\n"    ).arg( st );
+      }
+   } else {
+      if ( options->zeno_surface_thickness > 0.0 )
+      {
+         tso << QString( "st        %1\n"    ).arg( options->zeno_surface_thickness );
+      }
    }
 
    fout.close();
@@ -13720,6 +13735,7 @@ bool US_Hydrodyn_Zeno::run(
 bool US_Hydrodyn::calc_zeno()
 {
    // cout << "calc zeno\n";
+   progress->set_cli_prefix( "ch" );
 
    if ( !hydro.zeno_zeno &&
         !hydro.zeno_interior &&
@@ -13934,6 +13950,7 @@ bool US_Hydrodyn::calc_zeno()
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
+            double used_skin_thickness = 0e0;
             if ( zeno_mm ) {
                progress->setValue( models_procd++ );
             }
@@ -13968,6 +13985,31 @@ bool US_Hydrodyn::calc_zeno()
 
                fname = fname.replace( QRegExp( "\\.(zno)$" ), "" );
 
+               if ( hydro.zeno_surface_thickness_from_rg ) {
+                  // linear
+                  // double st = hydro.zeno_surface_thickness_from_rg_a + hydro.zeno_surface_thickness_from_rg_b * model_vector[ current_model ].asa_rg_pos;
+                  // sigmoid
+                  double st = hydro.zeno_surface_thickness_from_rg_a / ( 1 + exp( -( model_vector[ current_model ].asa_rg_pos - hydro.zeno_surface_thickness_from_rg_b ) / hydro.zeno_surface_thickness_from_rg_c ) );
+                  editor_msg(
+                             "darkblue"
+                             ,QString( us_tr( "Computed skin thickness for model %1 from Rg %2 [%3] is %4 [%5]\n" ) )
+                             .arg( current_model + 1 )
+                             .arg( model_vector[ current_model ].asa_rg_pos, 0, 'f', 3 )
+                             .arg( UNICODE_ANGSTROM )
+                             .arg( st, 0, 'f', 3 )
+                             .arg( UNICODE_ANGSTROM )
+                             );
+                  if ( st <= 0 ) {
+                     editor_msg( "red", us_tr( "NOTICE: zero or negative computed skin thickness will be ignored, reverting to ZENO default\n" ) );
+                  } else {
+                     used_skin_thickness = st;
+                  }
+               } else {
+                  if ( hydro.zeno_surface_thickness >= 0 ) {
+                     used_skin_thickness = hydro.zeno_surface_thickness;
+                  }
+               }
+
                US_Timer           us_timers;
                us_timers          .clear_timers();
                us_timers.init_timer( "compute zeno" );
@@ -13980,6 +14022,7 @@ bool US_Hydrodyn::calc_zeno()
                           &bead_models[ current_model ], 
                           sum_mass,
                           sum_volume,
+                          model_vector[ current_model ].asa_rg_pos,
                           zeno_mm ? mprogress : progress,
                           true,
                           zeno_cxx,
@@ -14035,7 +14078,31 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.total_beads           = bead_models [ current_model ].size();
                   this_data.results.vbar                  = use_vbar( model_vector[ current_model ].vbar );
                   this_data.con_factor                    = pow(10.0, this_data.hydro.unit + 9);
+                  this_data.zeno_skin_thickness           = used_skin_thickness;
                   
+                  if ( bead_models[ current_model ].size() &&
+                       bead_models[ current_model ][0].is_vdw == "vdw" ) {
+                     this_data.hydrate_probe_radius          = bead_models[ current_model ][0].asa_hydrate_probe_radius;
+                     this_data.hydrate_threshold             = bead_models[ current_model ][0].asa_hydrate_threshold;
+                     this_data.vdw_theo_waters               = bead_models[ current_model ][0].vdw_theo_waters;
+                     this_data.vdw_exposed_residues          = bead_models[ current_model ][0].vdw_count_exposed;
+                     this_data.vdw_exposed_waters            = bead_models[ current_model ][0].vdw_theo_waters_exposed;
+                  }
+
+                  this_data.fractal_dimension_parameters         = model_vector[ current_model ].fractal_dimension_parameters;
+                  this_data.fractal_dimension                    = model_vector[ current_model ].fractal_dimension;
+                  this_data.fractal_dimension_sd                 = model_vector[ current_model ].fractal_dimension_sd;
+                  this_data.fractal_dimension_wtd                = model_vector[ current_model ].fractal_dimension_wtd;
+                  this_data.fractal_dimension_wtd_sd             = model_vector[ current_model ].fractal_dimension_wtd_sd;
+                  this_data.fractal_dimension_wtd_wtd            = model_vector[ current_model ].fractal_dimension_wtd_wtd;
+                  this_data.fractal_dimension_wtd_wtd_sd         = model_vector[ current_model ].fractal_dimension_wtd_wtd_sd;
+                  this_data.rg_over_fractal_dimension            = model_vector[ current_model ].rg_over_fractal_dimension;
+                  this_data.rg_over_fractal_dimension_sd         = model_vector[ current_model ].rg_over_fractal_dimension_sd;
+                  this_data.rg_over_fractal_dimension_wtd        = model_vector[ current_model ].rg_over_fractal_dimension_wtd;
+                  this_data.rg_over_fractal_dimension_wtd_sd     = model_vector[ current_model ].rg_over_fractal_dimension_wtd_sd;
+                  this_data.rg_over_fractal_dimension_wtd_wtd    = model_vector[ current_model ].rg_over_fractal_dimension_wtd_wtd;
+                  this_data.rg_over_fractal_dimension_wtd_wtd_sd = model_vector[ current_model ].rg_over_fractal_dimension_wtd_wtd_sd;
+
                   bead_model = bead_models[ current_model ];
                   // bead_check( false, true, true );
                   this_data.results.asa_rg_pos            = model_vector[ current_model ].asa_rg_pos;
@@ -14421,7 +14488,7 @@ bool US_Hydrodyn::calc_zeno()
                         // double alt_s20w = 
                         //    1e13 * ( this_data.results.mass * this_data.results.D20w * 
                         //             ( 1e0 - ( this_data.results.vbar * use_solvent_dens() ) ) ) /
-                        //    ( R * ( this_data.hydro.temperature + K0 ) );
+                        //    ( Rbar * ( this_data.hydro.temperature + K0 ) );
                         // us_qdebug( QString( "s20w old way %1, dt way %2\n" ).arg( this_data.results.s20w ).arg( alt_s20w ) );
                      }
                   
@@ -14455,13 +14522,13 @@ bool US_Hydrodyn::calc_zeno()
                         for ( unsigned int i = 0; i < bead_model.size(); ++i )
                         {
                            PDB_atom *this_atom = &(bead_model[i]);
-                           Rg2 += ( this_atom->bead_mw + this_atom->bead_ionized_mw_delta ) * 
+                           Rg2 += (double) ( this_atom->bead_mw + this_atom->bead_ionized_mw_delta ) * 
                               ( 
-                               ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                               (double) ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                                ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                               ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                               (double) ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                                ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                               ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                               (double) ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                                ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                                 );
                         }
@@ -14554,6 +14621,10 @@ bool US_Hydrodyn::calc_zeno()
                      add_to_zeno += pH_msg();
                      add_to_zeno += vbar_msg( model_vector[ current_model ].vbar, true );
                      add_to_zeno += visc_dens_msg( true );
+                     if ( hydro.zeno_surface_thickness_from_rg ) {
+                        add_to_zeno += QString( "Computed skin thickness: %1\n" )
+                           .arg( hydro.zeno_surface_thickness_from_rg_a + hydro.zeno_surface_thickness_from_rg_b * model_vector[ current_model ].Rg );
+                     }
                      
                      if ( hydro.mass_correction ) {
                         add_to_zeno += QString( "Manually corrected MW: %1 [Da]\n" ).arg( hydro.mass );
@@ -14590,7 +14661,7 @@ bool US_Hydrodyn::calc_zeno()
                            .arg( this_data.results.viscosity_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.viscosity_sd ) : "" )
                            .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
                            .arg( this_data.tra_fric_coef_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.tra_fric_coef_sd ) : "" )
-                           .arg( QString( "" ).sprintf( "%4.2e cm/sec^2", this_data.results.D20w ) )
+                           .arg( QString( "" ).sprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
                            .arg( this_data.results.D20w_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.D20w_sd ) : "" )
                            ;
 
@@ -14763,8 +14834,8 @@ bool US_Hydrodyn::calc_zeno()
             zeno_results.rs_sd             = sqrt( fabs( ( zeno_results2.rs          - zeno_results.rs          * zeno_results.rs          * num ) * numdecinv ) );
             zeno_results.rg_sd             = sqrt( fabs( ( zeno_results2.rg          - zeno_results.rg          * zeno_results.rg          * num ) * numdecinv ) );
             zeno_results.ff0_sd            = sqrt( fabs( ( zeno_results2.ff0         - zeno_results.ff0         * zeno_results.ff0         * num ) * numdecinv ) );
-            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - zeno_results.used_beads  * zeno_results.used_beads  * num ) * numdecinv ) );
-            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - zeno_results.total_beads * zeno_results.total_beads * num ) * numdecinv ) );
+            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - (double) zeno_results.used_beads  * zeno_results.used_beads  * num ) * numdecinv ) );
+            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - (double) zeno_results.total_beads * zeno_results.total_beads * num ) * numdecinv ) );
             
             results = zeno_results;
          }

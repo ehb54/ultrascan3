@@ -40,7 +40,7 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
    for ( unsigned int i = 0; i < (unsigned int) qsl_text.size(); i++ )
    {
       QString qs = qsl_text[ i ].trimmed();
-      QStringList line = (qs ).split( rx_split , QString::SkipEmptyParts );
+      QStringList line = (qs ).split( rx_split , Qt::SkipEmptyParts );
       if ( line.size() > 1 )
       {
          lines.push_back( line );
@@ -485,7 +485,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
          it != concs.end();
          it++ )
    {
-      QStringList qsl = (it->first ).split( rx_nondigit , QString::SkipEmptyParts );
+      QStringList qsl = (it->first ).split( rx_nondigit , Qt::SkipEmptyParts );
       // cout << QString( "ref <%1>  qsl: <%2>\n" )
       // .arg( it->first )
       // .arg( qsl.join( ":" ) );

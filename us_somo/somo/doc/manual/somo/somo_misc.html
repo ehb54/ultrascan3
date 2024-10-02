@@ -23,46 +23,48 @@
 <h2>
 SOMO - Miscellaneous Options Module:</h2>
 <p>
-<h3><center>Last updated: September 2020 </center></h3><p>
+<h3><center>Last updated: June 2024 </center></h3><p>
 <p>
-<img SRC="somo-misc1.png" ALT="SOMO Miscellaneous Options Screen">
+<img SRC="somo-misc1New.png" ALT="SOMO Miscellaneous Options Screen">
 </center>
 <p>
 
-In this module, you can set some options affecting both the model building and the hydrodynamic computations stages. The <i><b>Calculate vbar</b></i> checkbox allows the computation of the <i>partial specific volume (vbar)</i> in standard
+In this module, you can set some options affecting both the model building and the hydrodynamic computations stages. The <i><b>Calculate vbar</b></i> checkbox allows the computation of the <i>partial specific volume (vbar)</i> [cm<sup>3</sup>/g] in standard
 conditions (water @ 20&deg;C) of the structure from its composition, using the residues' values stored in the <a href= "somo-residue-0.png">residue table</a> (default: <b>active</b>).<br>
-The <b><i>Covolume [cm^3/mol]:</i></b> field controls the addition of a covolume term (see Durchschlag and Zipper, Progr. Colloid. Polym. Sci. 94:20-39, 1994) to the calculation of the molar volume of an entire PDB structure, independently of how many chains it is composed from. Since this term was first added in the calculation of relatively small molecules (e.g., amino acids), and, as stated in the Durchschlag and Zipper paper quoted above "In the case of polymers the contribution of Vcv has to be neglected if the volume of the monomeric unit is to be calculated", we chose to add it just once per protein structure, although this is a matter of debate. (<b>default</b>: <b>12.4 cm<sup>3</sup>/mol</b>)<br>
+The <b><i>Covolume [cm<sup>3</sup>/mol]:</i></b> field controls the addition of a covolume term (see Durchschlag and Zipper, Progr. Colloid. Polym. Sci. 94:20-39, 1994) to the calculation of the molar volume of an entire PDB structure, independently of how many chains it is composed from. Since this term was first added in the calculation of relatively small molecules (e.g., amino acids), and, as stated in the Durchschlag and Zipper paper quoted above "In the case of polymers the contribution of Vcv has to be neglected if the volume of the monomeric unit is to be calculated", we chose to add it just once per protein structure, although this is a matter of debate. (<b>default</b>: <b>12.4 cm<sup>3</sup>/mol</b>)<br>
 
-Alternatively, a <i>vbar</i> value (<i>vbar(ent)</i>, either computed by other means or measured) can be entered in the <i><b>Enter a vbar value (cm^3/g)</b></i> field. For instance, if a significant number of non-coded or incomplete residues are skipped when parsing the PDB file, the computed <i>vbar</i> could be not correct; likewise, if the <a href=somo_pdb_parsing.html><b>Automatic Bead Builder </b></a> is used for non-coded residues, the <i>vbar</i> could also be incorrect. In these cases, entering an experimental value will be the best option. Importantly, the temperature <i>T(ent)</i> at which the entered <i>vbar(ent)</i> has been measured/computed must be entered in the <b><i>Vbar measured/computed at T=&deg;C:</i></b> field. The <i>vbar(ent)</i> and <i>T(ent)</i> values will be then used by the <a href=somo_hydro.html><b><i>Hydrodynamic Computation Options</i></b></a> module to calculate an operational <i>vbar</i> valid for the temperature conditions to which the hydrodynamic computations are referred. If a <i>vbar</i> value is entered in this field (and the <i><b>Calculate vbar</b></i> checkbox is deselected), a message will be displayed in the progress window ("ATTENTION: vbar = ") when the model is being built. This should avoid the use of incorrect external <i>vbar</i>
-values resulting by inadvertently leaving the <i><b>Calculate vbar</b></i> checkbox deselected from a previous model-generating session. <br>The <i><b>Select vbar</b></i> button will instead load a <i>vbar</i> value calculated from protein sequence by using the <a href=vbar.html>UltraScan vbar calculation routine</a>. WARNING: whenever possible, use <b>experimental</b> <i>vbar</i> values, as many factors can affect its computation!!!! The routines provided here should be
-considered just as a best approximation in absence of experimental data.
+Alternatively, a <i>vbar</i> value (<i>vbar(ent)</i>, either computed by other means or measured) can be entered in the <i><b>Enter a vbar value [cm<sup>3</sup>/g]</b></i> field. For instance, if a significant number of non-coded or incomplete residues are skipped when parsing the PDB file, the computed <i>vbar</i> could be not correct; likewise, if the <a href=somo_pdb_parsing.html><b>Automatic Bead Builder </b></a> is used for non-coded residues, the <i>vbar</i> could also be incorrect. In these cases, entering an experimental value will be the best option. Importantly, the temperature <i>T(ent)</i> at which the entered <i>vbar(ent)</i> has been measured/computed must be entered in the <b><i>Vbar measured/computed at T=[&deg;C]:</i></b> field. The <i>vbar(ent)</i> and <i>T(ent)</i> values will be then used by the <a href=somo_hydro.html><b><i>Hydrodynamic Computation Options</i></b></a> module to calculate an operational <i>vbar</i> valid for the temperature conditions to which the hydrodynamic computations are referred. If a <i>vbar</i> value is entered in this field (and the <i><b>Calculate vbar</b></i> checkbox is deselected), a message will be displayed in the progress window ("ATTENTION: vbar = ") when the model is being built. This should avoid the use of incorrect external <i>vbar</i>
+values resulting by inadvertently leaving the <i><b>Calculate vbar</b></i> checkbox deselected from a previous model-generating session. <br>The <i><b>Select vbar</b></i> button will instead load a <i>vbar</i> value calculated from protein sequence by using the <a href=vbar.html>UltraScan vbar calculation routine</a>. WARNING: whenever possible, use <b>experimental</b> <i>vbar</i> values, as many factors can affect its computation!!!! The routines provided here should be considered just as a best approximation in absence of experimental data.
 <p>
-The <i><b>Hydration Water Vol. (A^3)</b></i> field sets the volume of the water of hydration molecules, which has been found (Gerstein and Chothia, Proc. Natl. Acad. Sci. USA 93:10167-10172, 1996) to be on average 24.5 &Aring;<sup>3</sup>,
+The <i><b>Hydration Water Vol. [&Aring;<sup>3</sup>]</b></i> field sets the volume of the water of hydration molecules, which has been found (Gerstein and Chothia, Proc. Natl. Acad. Sci. USA 93:10167-10172, 1996) to be on average 24.5 &Aring;<sup>3</sup>,
 different from that of either bulk (29.7 &Aring;<sup>3</sup>) or isolated (11.5 &Aring;<sup>3</sup>) water molecules (<b>default</b>: <b>24.041 &Aring;<sup>3</sup></b>).
 <p>
-The <i><b>Enable Peptide Bond Rule</b></i> checkbox controls if the <i>peptide bond rule</i> is used by the SoMo method. With this rule, the peptide bond segment is used for the main chain beads of a protein structure. These beads are thus positioned at the cog of the (CA-C-O)<sub>n</sub>-(N)<sub>(n+1)</sub> atoms, except when PRO is the (n+1) residue. In this case, the peptide bond bead is positioned at the cog of the (CA-C-O)<sub>n</sub> atoms. Additional rules control the generation of the OXT bead and of the first N atom at the beginning of each protein chain. All these rules are controlled by "special" residues in the <i>somo.residue</i> table. To gain total control over the positioning, volumes and masses
-of every bead, the <i><b>Enable Peptide Bond Rule</b></i> checkbox should be <b>deselected</b>. In this case, the descriptions present in the <i>somo.residue</i> table are fully effective. (<b>default</b>: <b>selected</b>). 
+The <i><b>Enable Peptide Bond Rule</b></i> checkbox controls if the <i>peptide bond rule</i> is used by the <i>SoMo</i> method. With this rule, the peptide bond segment is used for the main chain beads of a protein structure. These beads are thus positioned at the center of gravity (c.o.g.) of the (CA-C-O)<sub>n</sub>-(N)<sub>(n+1)</sub> atoms, except when PRO is the (n+1) residue. In this case, the peptide bond bead is positioned at the c.o.g. of the (CA-C-O)<sub>n</sub> atoms. Additional rules control the generation of the OXT bead and of the first N atom at the beginning of each protein chain. All these rules are controlled by "special" residues in the <i>somo.residue</i> table. To gain total control over the positioning, volumes and masses of every bead, the <i><b>Enable Peptide Bond Rule</b></i> checkbox should be <b>deselected</b>. In this case, the descriptions present in the <i>somo.residue</i> table are fully effective. (<b>default</b>: <b>selected</b>). 
 <p>
 The <b>Average Parameters for Automatic Bead Builder:</b> submenu contains a series of fields governing the <i>average parameters</i> that will be used by the <i>Automatic Bead Builder</i> routine when this option is selected (see
 <a href=somo_pdb_parsing.html>here</a>) for non-coded residues.<br> 
 
 <ul>
 <li>
-<b><i>Average atomic radius (A):</i></b>. This is the radius used by the ASA routines (see <a href=somo_asa.html>here</a>) to compute the <i>accessible surface area</i> of the non-coded residue. The <b>default</b> value <b>(1.68 &Aring;)</b> was derived by averaging the atomic radii of the C,O,P,N,S elements present in the original (April 2009) version of the default <i>somo.atom</i> table. Averaging over <b>all</b> elements produced essentially the same value, 1.67 &Aring;.
+<b><i>Average atomic radius [&Aring;]:</i></b> this is the radius used by the ASA routines (see <a href=somo_asa.html>here</a>) to compute the <i>accessible surface area</i> of the non-coded residue. The <b>default</b> value <b>(1.68 &Aring;)</b> was derived by averaging the atomic radii of the C,O,P,N,S elements present in the January 2023 version of the default <i>somo.atom</i> table. Averaging over <b>all</b> elements produced a slightly lower value, 1.63 &Aring;.
 
 <li>
-<b><i>Average atomic mass (Da):</i></b>. This is an average atomic mass for atoms within non-coded residues used in the computation of the total mass of the model. The <b>default</b> value <b>(16 Da)</b> was derived by averaging the atomic masses of the C,O,P,N,S elements present in the original (April 2009) version of the default <i>somo.atom</i> table. Including <b>all</b> elements produced a slightly larger value, 17.6 Da. In any case, we strongly suggest to enter a global value in the <i>Total Mass of Model</i> field in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> panel when dealing with structures containing non-coded residues.
-
-
-<li>
-<b><i>Average atomic hydration:</i></b>. This value will be multiplied by the number of atoms present in the non-coded residue to determine an hydration number (which will be rounded to the closest integer). The volume calculated from this hydration number multiplied by the <i>hydration water volume</i> (see above) will be added to the anhydrous bead volume (see below) to determine the final volume of the bead. The <b>default</b> value <b>(0.4)</b> is a compromise between the value derived for amino acids and carbohydrates (0.3) and that for nucleotides/nucleosides and prosthetic groups, 0.5. These number were calculated by averaging the hydration number of a bead divided by the number of atoms assigned to it for the beads defined in the original (April 2009) version of the default <i>somo.residue</i> table. This value should perhaps be adapted to the kind of non-coded residue(s) being roughly modeled by the <i>Automatic Bead Builder</i>.
+<b><i>Average atomic mass (Da):</i></b> this is an average atomic mass for atoms within non-coded residues used in the computation of the total mass of the model. The <b>default</b> value <b>(14.5 Da)</b> was derived by averaging the atomic masses of the C,O,P,N,S elements present in the the January 2023 version of the default <i>somo.atom</i> table (with implicit hydrogens counted). Including <b>all</b> elements produced a slightly larger value, 16.4 Da. In any case, we strongly suggest to enter a global value in the <i>Total Mass of Model</i> field in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> panel when dealing with structures containing non-coded residues.
 
 <li>
-<b><i>Average bead/atom volume:</i></b>. This value will be multiplied by the number of atoms present in the non-coded residue to determine the anhydrous volume of the bead that will represent them, to which the volume of the water of hydration will be then added (see above). The <b>default</b> value <b>(15.3 &Aring;<sup>3</sup>)</b>  was derived by averaging the bead volume divided by the number of atoms assigned to it for each bead present in the original (April 2009) version of the default <i>somo.residue</i> table. Volumes by categories are: 17.8 &Aring;<sup>3</sup> for amino acids,
-15.3 &Aring;<sup>3</sup> for carbohdrates, 14.7 &Aring;<sup>3</sup> for nucleotides/nucleosides, and 11.8 &Aring;<sup>3</sup> for prosthetic groups.
+<b><i>Average atomic number of electrons:</i></b> used for computing the isoelectric point and net charge as a function of pH, and in the <i>P</i>(<i>r</i>) vs. <i>r</i> computations in the SAXS-framework. As for the two entries above, this average (7.7) was derived from the C,O,P,N,S elements present in the the January 2023 version of the default <i>somo.atom</i> table. This includes the charged and not-charged species for ionizable groups (<i>e.g.</i>, -OH and -O<sup>-</sup>). Counting all elements produced an 8.5 value.
 
 <li>
-<b><i>Average Residue vbar:</i></b>. This value will be used in the computation of the global <i>vbar</i> of the model. The <b>default</b> value <b>(0.72 cm<sup>3</sup>/g)</b> is that of the average protein. It could be changed when dealing with other kind of biomacromolecules. In any case, we strongly suggest to enter a global (better if experimental) value for <i>vbar</i> in the <b><i>Enter vbar:</i></b> field above when dealing with structures containing non-coded residues.
+<b><i>Average atomic number of protons:</i></b> used for computing the isoelectric point and net charge as a function of pH. As above, this average (7.7) was derived from the C,O,P,N,S elements present in the the January 2023 version of the default <i>somo.atom</i> table. This included the charged and not-charged species for ionizable groups (<i>e.g.</i>, -NH2 and -NH3<sup>+</sup>). Counting all elements produced an 8.5 value.
+
+<li>
+<b><i>Average atomic hydration:</i></b> this value will be multiplied by the number of atoms present in the non-coded residue to determine an hydration number (which will be rounded to the closest integer). The volume calculated from this hydration number multiplied by the <i>hydration water volume</i> (see above) will be added to the anhydrous bead volume (see below) to determine the final volume of the bead. The <b>default</b> value <b>(0.4)</b> is a compromise between the value derived for amino acids and carbohydrates (0.3) and that for nucleotides/nucleosides and prosthetic groups, 0.5. These number were calculated by averaging the hydration number of a bead divided by the number of atoms assigned to it for the beads defined in the original (April 2009) version of the default <i>somo.residue</i> table. This value should perhaps be adapted to the kind of non-coded residue(s) being roughly modeled by the <i>Automatic Bead Builder</i>.
+
+<li>
+<b><i>Average bead/atom volume [&Aring;<sup>3</sup>]:</i></b> this value will be multiplied by the number of atoms present in the non-coded residue to determine the anhydrous volume of the bead that will represent them, to which the volume of the water of hydration will be then added (see above). The <b>default</b> value <b>(15.3 &Aring;<sup>3</sup>)</b>  was derived by averaging the bead volume divided by the number of atoms assigned to it for each bead present in the original (April 2009) version of the default <i>somo.residue</i> table. Volumes by categories are: 17.8 &Aring;<sup>3</sup> for amino acids, 15.3 &Aring;<sup>3</sup> for carbohdrates, 14.7 &Aring;<sup>3</sup> for nucleotides/nucleosides, and 11.8 &Aring;<sup>3</sup> for prosthetic groups.
+
+<li>
+<b><i>Average Residue vbar [cm<sup>3</sup>/g]:</i></b> this value will be used in the computation of the global <i>vbar</i> of the model. The <b>default</b> value <b>(0.72 cm<sup>3</sup>/g)</b> is that of the average protein. It could be changed when dealing with other kind of biomacromolecules. In any case, we strongly suggest to enter a global (better if experimental) value for <i>vbar</i> in the <b><i>Enter vbar:</i></b> field above when dealing with structures containing non-coded residues.
 
 </ul>
 <p>
@@ -70,11 +72,11 @@ The <b>Bead model controls</b> are user-defined parameters that were introduced 
 
 <ul>
 <li>
-<b><i>Target electron density (A<sup>-3</sup>):</b></i> 
+<b><i>Target electron density [&Aring;<sup>-3</sup>]:</b></i> 
 Set this value to the electron density of the structure.  
 
 <li>
-<b><i>Target volume (A<sup>3</sup>):</b></i> 
+<b><i>Target volume [&Aring;<sup>3</sup>]:</b></i> 
 Set this value to the volume of the structure.
 
 <li>
@@ -89,7 +91,32 @@ When set, all beads will be forced to have the same radius value.
 </ul>
 <p><p>
 <b>Other Options:</b><p>
-In May 2014 we added a new method for the computation of the hydrodynamic parameters starting from an atomic-level structure, the boundary elements approach <b><i>BEST</i></b> [S.R. Aragon, A precise boundary element method for macromolecular transport properties. J. Comp.Chem., 25, 1191-1205 (2004); S.R. Aragon and D.K. Hahn, Precise boundary element computation of proteins transport properties: Diffusion tensors, specific volume and hydration, Biophysical Journal, 91:1591-1603 (2006)]. This method necessitates a properly formatted atomic radii and names file for its ancillary program <b><i>MSROLL</i></b>, and the one provided with the original <b><i>BEST</i></b> program is directly made available within the <b>US-SOMO</b> implementation ("<i>best.radii</i>"). Users wishing to utilize instead the atomic radii and names as listed in the <b><i>US-SOMO</i></b> <i>somo.residue</i> file can generate a properly formatted file compatible with <b><i>BEST</i></b> by selecting the <i><b>Create MSROLL atomic radii and names file on load residue file</i></b> checkbox here, and re-launch <b><i>US-SOMO</i></b>. 
+<ul>
+<li>
+In May 2014 we added a new method for the computation of the hydrodynamic parameters starting from an atomic-level structure, the boundary elements approach <b><i>BEST</i></b> [S.R. Aragon, A precise boundary element method for macromolecular transport properties. J. Comp.Chem., 25, 1191-1205 (2004); S.R. Aragon and D.K. Hahn, Precise boundary element computation of proteins transport properties: Diffusion tensors, specific volume and hydration, Biophysical Journal, 91:1591-1603 (2006)]. This method necessitates a properly formatted atomic radii and names file for its ancillary program <b><i>MSROLL</i></b>, and the one provided with the original <b><i>BEST</i></b> program is directly made available within the <b>US-SOMO</b> implementation ("<i>best.radii</i>"). Users wishing to utilize instead the atomic radii and names as listed in the <b><i>US-SOMO</i></b> <i>somo.residue</i> file can generate a properly formatted file compatible with <b><i>BEST</i></b> by selecting the <i><b>Create MSROLL atomic radii and names file on load residue file</i></b> checkbox here, and re-launch <b><i>US-SOMO</i></b>.<p>
+
+<li>
+In 2018, we added the <b><i>GRPY</b></i> very accurate but computationally-intensive method for calculating the hydrodynamic properties of models with overlapping beads of different size (see <i>History</i> in the <a href=somo.html><b><i>Main US-SOMO Help</i></b></a>). A non-parallel <b><i>GRPY</i></b> code was made available at that time, severely limiting speed and size of the models that could be processed. A full implementation allowing multi-core parallel processing is now available for all operating systems from the <span style="color:#CC0000">July 2024</span> release. Select the <i><b>Enable Parallel GRPY</i></b> checkbox to use this option (<b>default: not selected</b>).<p>
+
+<li>
+<b><i>Method used when automatically calculate hydrodynamics is checked</i></b> in the <b><i>Hydrodynamic Calculations</i></b> section of the <b><i>US-SOMO</i></b> main section. A pull down menu will let you choose between three options:
+<p>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=10>
+<tr>
+<td><center><img SRC="somo-misc_autoCalc_selection.png" ALT="SOMO Automatic Calculate Hydrodynamic method selection"></td>
+</tr>
+</table>
+</center>
+<tr>
+<p>
+
+    &emsp;<i>SMI or ZENO if overlaps present (legacy)</i><br>
+    &emsp;<i>ZENO</i><br>
+    &emsp;<i>GRPY</i><p>
+<b><i>ZENO</i></b> is the <b>Default option</b> because it allows computing the hydrodynamic parameters of bead models irrespective of their size and of the presence/absence of overlaps. The use of <b><i>SMI</i></b> is discouraged, and <b><i>GRPY</i></b> can be unable to run (crash) depending on the user's computer characteristics and size (number of used beads) of the model.<p>
+</ul>
+
 
 <hr>
 <font face="helvetica" size="-1">
@@ -106,7 +133,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 8, 2020.
+Last modified on June 13, 2024.
 </font>
 </body>
 </html>

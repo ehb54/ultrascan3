@@ -17,6 +17,8 @@
 
 using namespace std;
 
+#define UPU_EB_PREFIX "#e#"
+
 class US_EXTERN US_Plot_Util
 {
  public:
@@ -25,6 +27,13 @@ class US_EXTERN US_Plot_Util
                             QString & errors,
                             QString & messages
                             );
+   static void eb_handling( 
+                           vector < QString >                   titles,
+                           vector < vector < double > >         x,
+                           vector < vector < double > >         y,
+                           map < QString, vector < double > > & e
+                            );
+   
    static void plotinfo(
                         QString  name,
                         QwtPlot * plot

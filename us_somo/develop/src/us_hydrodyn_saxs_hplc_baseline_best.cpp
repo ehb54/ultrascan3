@@ -29,7 +29,7 @@ US_Hydrodyn_Saxs_Hplc_Baseline_Best::US_Hydrodyn_Saxs_Hplc_Baseline_Best(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: HPLC SAXS Baseline Best Region Analysis" ) +
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN Baseline Best Region Analysis" ) +
                ( parameters.count( "name" ) ? QString( " : %1" ).arg( parameters[ "name" ] ) : QString( "" ) ) );
 
    plot_zoomer         = ( ScrollZoomer * )0;
@@ -467,7 +467,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_ec_msg( QString msg, QTextEdit 
       e = editor;
    }
    QColor save_color = e->textColor();
-   QStringList qsl = (msg ).split( "~~" , QString::SkipEmptyParts );
+   QStringList qsl = (msg ).split( "~~" , Qt::SkipEmptyParts );
 
    QRegExp rx_color( "^_(\\S+)_$" );
 
@@ -1085,9 +1085,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             
          plot_zoomer = new ScrollZoomer( plot->canvas());
          plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-         plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+         plot_zoomer->setTrackerPen(QPen(Qt::red));
          // connect( plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
       }
       
@@ -1401,9 +1399,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             
             hb_plot_zoomer = new ScrollZoomer( hb_plot->canvas());
             hb_plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-            hb_plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+            hb_plot_zoomer->setTrackerPen(QPen(Qt::red));
             // connect( hb_plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( hb_plot_zoomed( const QRectF & ) ) );
          }
       }

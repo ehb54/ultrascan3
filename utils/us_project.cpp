@@ -314,6 +314,82 @@ int US_Project::saveToDB( US_DB2* db )
    return US_DB2::OK;
 }
 
+// Function to save project information to db
+int US_Project::saveToDB_auto( int invID_passed, US_DB2* db )
+{
+   // Save it to disk too
+   saveToDisk();
+
+   // Check for GUID in database
+   projectID = 0;
+   QStringList q( "get_projectID_from_GUID" );
+   q << projectGUID;
+   db->query( q );
+
+   int db_status = db->lastErrno();
+   if ( db_status == US_DB2::OK )
+   {
+      // Edit existing project entry
+      db->next();
+      projectID = db->value( 0 ).toInt();
+      q.clear();
+      q  << "update_project2"
+         << QString::number( projectID )
+         << projectGUID
+         << goals
+         << molecules
+         << purity
+         << expense
+         << bufferComponents
+         << saltInformation
+         << AUC_questions
+         << expDesign
+         << notes
+         << projectDesc
+         << status;
+
+      db->statusQuery( q );
+   }
+
+   else if ( db_status == US_DB2::NOROWS )
+   {
+      // Create new project entry
+      q.clear();
+      q  << "new_project2"
+         << projectGUID
+         << goals
+         << molecules
+         << purity
+         << expense
+         << bufferComponents
+         << saltInformation
+         << AUC_questions
+         << expDesign
+         << notes
+         << projectDesc
+         << status
+	 << QString::number( invID_passed ); //ALEXEY: passed invID, NOT the US_Settings ::us_inv_ID()
+
+
+      db->statusQuery( q );
+      projectID = db->lastInsertID();
+   }
+
+   else   // unspecified error
+   {
+      qDebug() << "MySQL error: " << db->lastError();
+      return db_status;
+   }
+
+   if ( projectID == 0 )        // double check
+      return US_DB2::NO_PROJECT;
+
+   saveStatus = BOTH;
+
+   return US_DB2::OK;
+}
+
+
 // Function to delete a project from disk
 void US_Project::deleteFromDisk( void )
 {

@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QtSvg>
 #include "us_plot.h"
+#include "us_images.h"
 #if QT_VERSION > 0x050000
 #include <QtPrintSupport>
 #include "us_colorgradIO.h"
@@ -30,7 +31,6 @@
 #include "qwt_scale_map.h"
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
-
 
 US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
    : QwtPlotZoomer( xAxis, yAxis, canvas )
@@ -80,13 +80,26 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnZoom->setCheckable( true );
    btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnZoom->setFont( buttonFont );
+   btnZoom->setIconSize ( QSize( 20, 20 ) );
+   btnZoom->setFixedSize( QSize( 40, 50 ) );
    connect( btnZoom, SIGNAL( toggled( bool ) ), SLOT( zoom( bool ) ) );
+
+   QToolButton* btnCSV = new QToolButton( toolBar );
+   btnCSV->setText( "CSV" );
+   btnCSV->setIcon( US_Images::getIcon( US_Images::TABLE ) );
+   btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnCSV->setFont( buttonFont );
+   btnCSV->setIconSize ( QSize( 20, 20 ) );
+   btnCSV->setFixedSize( QSize( 40, 50 ) );
+   connect( btnCSV, SIGNAL( clicked() ), SLOT( csv() ) );
 
    QToolButton* btnPrint = new QToolButton( toolBar );
    btnPrint->setText( "Print" );
    btnPrint->setIcon( QIcon( QPixmap( print_xpm ) ) );
    btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPrint->setFont( buttonFont );
+   btnPrint->setIconSize ( QSize( 20, 20 ) );
+   btnPrint->setFixedSize( QSize( 40, 50 ) );
    connect( btnPrint, SIGNAL( clicked() ), SLOT( print() ) );
 
    QToolButton* btnSVG = new QToolButton( toolBar );
@@ -94,6 +107,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnSVG->setIcon( QIcon( QPixmap( vec_xpm ) ) );
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnSVG->setFont( buttonFont );
+   btnSVG->setIconSize ( QSize( 20, 20 ) );
+   btnSVG->setFixedSize( QSize( 40, 50 ) );
    connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
 
    QToolButton* btnPNG = new QToolButton( toolBar );
@@ -101,6 +116,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnPNG->setIcon( QIcon( QPixmap( ras_xpm ) ) );
    btnPNG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPNG->setFont( buttonFont );
+   btnPNG->setIconSize ( QSize( 20, 20 ) );
+   btnPNG->setFixedSize( QSize( 40, 50 ) );
    connect( btnPNG, SIGNAL( clicked() ), SLOT( png() ) );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
@@ -108,6 +125,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnConfig->setIcon(QIcon( QPixmap( configure_32_xpm ) ) );
    btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnConfig->setFont( buttonFont );
+   btnConfig->setIconSize ( QSize( 20, 20 ) );
+   btnConfig->setFixedSize( QSize( 40, 50 ) );
    connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
 
    btnCMap                = new QToolButton( toolBar );
@@ -121,6 +140,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    connect( btnCMap,   SIGNAL( clicked() ), SLOT( colorMap() ) );
 
    toolBar->addWidget( btnZoom   );
+   toolBar->addWidget( btnCSV    );
    toolBar->addWidget( btnPrint  );
    toolBar->addWidget( btnSVG    );
    toolBar->addWidget( btnPNG    );
@@ -224,9 +244,13 @@ void US_Plot::zoom( bool on )
 #if QT_VERSION < 0x050000
       connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
                        SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
+      connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ),
+              this  , SLOT   ( scale_yRight ( QwtDoubleRect ) ) );
 #else
       connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ), 
                        SIGNAL ( zoomedCorners( QRectF        ) ) );
+      connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ),
+              this  , SLOT   ( scale_yRight ( QRectF        ) ) );
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
@@ -247,6 +271,15 @@ void US_Plot::zoom( bool on )
       picker->setRubberBandPen( QColor( Qt::green ) );
       picker->setRubberBand   ( QwtPicker::CrossRubberBand );
       picker->setTrackerPen   ( QColor( Qt::white ) );
+      plot->setAxisAutoScale(QwtPlot::yRight, true);
+      yLeftRange.fill(0, 2);
+      yLeftRange[0] = plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
+      yLeftRange[1] = plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
+      yRightRange.fill(0, 2);
+      if (plot->axisEnabled(QwtPlot::yRight)){
+         yRightRange[0] = plot->axisScaleDiv(QwtPlot::yRight).lowerBound();
+         yRightRange[1] = plot->axisScaleDiv(QwtPlot::yRight).upperBound();
+      }
    }
    
    panner->setEnabled( on );
@@ -258,10 +291,29 @@ void US_Plot::zoom( bool on )
 
    if ( ! on  &&  zoomer != NULL )
    {
+      zoomer->disconnect();
       delete picker;
       delete panner;
       delete zoomer;
       zoomer = NULL;
+   }
+}
+
+void US_Plot::csv( void )
+{
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
+   QString fileName = QFileDialog::getSaveFileName( plot, 
+      tr( "Export File Name" ), reportDir, 
+                                                     tr( "CSV Documents (*.csv)" ) );
+
+   if ( ! fileName.isEmpty() )
+   {
+        if ( fileName.right( 4 ) != ".csv" ) fileName += ".csv";
+
+        US_GuiUtil::save_csv( fileName, plot );
    }
 }
 
@@ -271,8 +323,8 @@ void US_Plot::svg( void )
    QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
 
-   QString fileName = QFileDialog::getSaveFileName( plot, 
-      tr( "Export File Name" ), reportDir, 
+   QString fileName = QFileDialog::getSaveFileName( plot,
+      tr( "Export File Name" ), reportDir,
       tr( "SVG Documents (*.svgz)" ) );
 
    if ( ! fileName.isEmpty() )
@@ -457,6 +509,24 @@ void US_Plot::quit( void )
 }
 */
 
+#if QT_VERSION < 0x050000
+void US_Plot::scale_yRight ( QwtDoubleRect ){}
+#else
+void US_Plot::scale_yRight ( QRectF rect ){
+   if (! plot->axisEnabled ( QwtPlot::yRight )){
+      return;
+   }
+   double dyL = yLeftRange.at(1) - yLeftRange.at(0);
+   double ys_0 = (rect.top() - yLeftRange.at(0)) / dyL;
+   double ys_1 = (rect.bottom() - yLeftRange.at(0)) / dyL;
+   double dyR = yRightRange.at(1) - yRightRange.at(0);
+   double y_0 = ys_0 * dyR + yRightRange.at(0);
+   double y_1 = ys_1 * dyR + yRightRange.at(0);
+   plot->setAxisScale( QwtPlot::yRight, y_0, y_1 );
+   plot->replot();
+}
+#endif
+
 ////////////////////////////////////////
 
 US_PlotPushbutton::US_PlotPushbutton( const QString& labelString, 
@@ -488,7 +558,7 @@ void US_PlotPushbutton::us_plotClicked( void )
    \param f            Window Flags
 */
 US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US_WidgetsDialog( p, f ) //( false, p, f )
+  Qt::WindowFlags f ) : US_WidgetsDialog( p, f , false) //( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US_GuiSettings::frameColor() );
@@ -559,6 +629,8 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // set bg color
    QColor   c = plot->canvasBackground();
+   qDebug() << "Plot Config INIT: canvas color -- " << c.name(QColor::HexRgb);
+   global_canvas_color = c; //ALEXEY
    QPalette palette = US_GuiSettings::plotColor();
    palette.setColor( QPalette::Active  , QPalette::Window, c );
    palette.setColor( QPalette::Inactive, QPalette::Window, c );
@@ -573,7 +645,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
 
    // Row 5
    QLabel* lb_margin      = us_label( tr( "Border Margin:" ) );
-   QComboBox* cmbb_margin = us_comboBox();
+   cmbb_margin = us_comboBox();
    
    for ( int i = 2; i <= 30; i += 2 )  
    {  
@@ -588,8 +660,16 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    }
    else
    {
-      kk            = style.mid( kk ).toInt();
-      kk            = qMax( 0, ( kk / 2 - 1 ) );
+     QString padding_v = style.mid( kk ).split(": ")[1];
+     padding_v. simplified();
+     padding_v.indexOf( "px" ); 
+     // qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
+     // qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+     
+     kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+             
+     // kk            = style.mid( kk ).toInt();
+     kk            = qMax( 0, ( kk / 2 - 1 ) );
    }
    cmbb_margin->setCurrentIndex( kk );
    connect( cmbb_margin, SIGNAL( activated   ( int ) ), 
@@ -717,6 +797,25 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    
    main->addWidget( pb_curve, row++, 0, 1, 3 );
 
+   //Row 12a
+   QLabel* lb_plot_profile = us_banner( tr( "----- Plot Profile -----" ) );
+   lb_plot_profile->setFixedHeight( 40 );
+   
+   main->addWidget( lb_plot_profile, row++, 0, 1, 3 );
+
+   //Row 12b
+   QPushButton* pb_loadProfile = us_pushbutton( tr( "Load Plot Profile" ) );
+   connect( pb_loadProfile, SIGNAL( clicked() ), SLOT( loadPlotProfile() ) );
+
+   QPushButton* pb_saveProfile = us_pushbutton( tr( "Save Plot Profile" ) );
+   connect( pb_saveProfile, SIGNAL( clicked() ), SLOT( savePlotProfile() ) );
+
+   QBoxLayout* profile_settings = new QHBoxLayout();
+   profile_settings->addWidget( pb_loadProfile );
+   profile_settings->addWidget( pb_saveProfile );
+
+   main->addLayout( profile_settings, row++, 0, 1, 3 );
+   
    // Row 13
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
@@ -758,11 +857,17 @@ void US_PlotConfig::selectCanvasColor( void )
    QPalette pal     = lb_showCanvasColor->palette();
    QColor   current = pal.color( QPalette::Active, QPalette::Window );
    QColor   col     = QColorDialog::getColor( current, this, tr( "Select canvas color" ) );
+
+   qDebug() << "Canvas Color Selected: " << col;
    
    if ( col.isValid() )
    {
       pal.setColor( QPalette::Window, col );
       lb_showCanvasColor->setPalette( pal );
+      
+      //global_canvas_palette = pal;
+      global_canvas_color = col;   //ALEXEY
+      
 #if QT_VERSION > 0x050000
       plot->setCanvasBackground( QBrush( col ) );
 #else
@@ -770,6 +875,9 @@ void US_PlotConfig::selectCanvasColor( void )
 #endif
       plot->replot();
    }
+
+   
+   qDebug() << "Canvas Color Selected in Plot(): " << plot->canvasBackground();
 }
 
 /*!  \brief Change the frame color */
@@ -793,9 +901,15 @@ void US_PlotConfig::selectFrameColor( void )
 */
 void US_PlotConfig::selectMargin( int index )
 {
-   //plot->setMargin( ( index + 1 ) * 2 );
-   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
-         .arg( ( index + 1 ) * 2 ) );
+////   plot->setMargin( ( index + 1 ) * 2 );
+//   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+//         .arg( ( index + 1 ) * 2 ) );
+
+//   QString style = plot->styleSheet();
+//   qDebug() << "In ::selectMargin() Plot's style -- " << style;
+
+   int padding = ( index + 1 ) *  2;
+   plot->setContentsMargins(padding, padding, padding, padding);
 }
 
 /*!  \brief Change the plot legend position
@@ -906,11 +1020,601 @@ void US_PlotConfig::updateAxis( int axis )
 
 }
 
+/* Load/Save Plot's profile 
+ */
+QFont US_PlotConfig::jsonToFont(QJsonObject font_obj){
+    QFont font;
+    foreach (const QString& key, font_obj.keys()) {
+        QString value = font_obj.value(key).toString();
+        if (key.compare(tr("Family"), Qt::CaseInsensitive) == 0)
+            font.setFamily(value);
+        else if (key.compare(tr("Size"), Qt::CaseInsensitive) == 0)
+            font.setPointSize(value.toInt());
+        else if (key.compare(tr("Weight"), Qt::CaseInsensitive) == 0)
+            font.setWeight(static_cast<QFont::Weight>(QMetaEnum::fromType<QFont::Weight>().
+                                                      keyToValue(value.toUtf8())));
+        else if (key.compare(tr("Style"), Qt::CaseInsensitive) == 0)
+            font.setStyle(static_cast<QFont::Style>(QMetaEnum::fromType<QFont::Style>().
+                                                    keyToValue(value.toUtf8())));
+        else if (key.compare(tr("Underline"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                font.setUnderline(true);
+            else
+                font.setUnderline(false);
+        } else if (key.compare(tr("Strike Out"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                font.setStrikeOut(true);
+            else
+                font.setStrikeOut(false);
+        }
+    }
+
+    qDebug() << "Loaded font info:";
+    qDebug() << "Size: " << font.pointSize();
+    qDebug() << "Weight: " << QString::fromUtf8(QMetaEnum::fromType<QFont::Weight>().valueToKey(font.weight()));
+    qDebug() << "Style: " << QString::fromUtf8(QMetaEnum::fromType<QFont::Style>().valueToKey(font.style()));
+    QString font_underline = font.underline() ? "true" : "false";
+    QString font_strikeout = font.strikeOut() ? "true" : "false";
+    qDebug() << "Underline: " << font_underline;
+    qDebug() << "Strikeout: " << font_strikeout;
+    qDebug() << "Family: " << font.family();
+    return font;
+}
+
+QMap<QString, bool> US_PlotConfig::parseGridJson( QJsonObject grid_obj, QPen* pen){
+    QMap<QString, bool> out;
+    out["Vertical"] = false;
+    out["Horizontal"] = false;
+    QString value;
+    foreach (const QString& key, grid_obj.keys()) {
+        value = grid_obj.value(key).toString();
+        if (key.compare(tr("Style"), Qt::CaseInsensitive) == 0)
+            pen->setStyle(static_cast<Qt::PenStyle>(QMetaEnum::fromType<Qt::PenStyle>().
+                                                 keyToValue(value.toUtf8())));
+        else if (key.compare(tr("Width"), Qt::CaseInsensitive) == 0)
+            pen->setWidth(value.toInt());
+        else if (key.compare(tr("Vertical"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                out["Vertical"] = true;
+        }else if (key.compare(tr("Horizontal"), Qt::CaseInsensitive) == 0){
+            if (value.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                out["Horizontal"] = true;
+        }
+    }
+    return out;
+}
+
+void US_PlotConfig::setTitleJson(QJsonObject title_obj){
+    QFont font;
+    QString text;
+    foreach (const QString& key, title_obj.keys()) {
+        QJsonValue value = title_obj.value(key);
+        if (key.compare(tr("Text"), Qt::CaseInsensitive) == 0)
+            text = value.toString();
+        else if (key.compare(tr("Font"), Qt::CaseInsensitive) == 0)
+            font = jsonToFont(value.toObject());
+    }
+    le_titleText->setText(text);
+    le_titleFont->setText( font.family() + ", "
+                           + QString::number( font.pointSize() ) + tr( " points" ) );
+    QwtText p_title = plot->title();
+    p_title.setText(text);
+    p_title.setFont(font);
+    plot->setTitle(p_title);
+}
+
+void US_PlotConfig::setGridJson( QJsonObject grid_obj){
+
+    int ngrid = 0;
+    // Get the grid - if it exists
+    QwtPlotItemList list = plot->itemList();
+    QwtPlotGrid*  grid = NULL;
+
+    for ( int i = 0; i< list.size(); i++ )
+    {
+       if ( list[i]->rtti() == QwtPlotItem::Rtti_PlotGrid )
+       {
+          ngrid++;
+          if ( ngrid == 1 )
+             grid = dynamic_cast<QwtPlotGrid*>( list[ i ] );
+          else
+             list[ i ]->detach();
+       }
+    }
+    // Add an inactive grid if necessary
+    if ( grid == NULL )
+    {
+       grid = new QwtPlotGrid;
+       grid->enableX   ( false );
+       grid->enableY   ( false );
+       grid->enableXMin( false );
+       grid->enableYMin( false );
+       grid->attach( plot );
+    }
+
+    QJsonObject json_obj;
+    if (grid_obj.contains(tr("Major"))){
+        json_obj = grid_obj.value(tr("Major")).toObject();
+        QPen pen = grid->majorPen();
+        QPen* pp = &pen;
+        QMap<QString, bool> states;
+        states = parseGridJson(json_obj, pp);
+        grid->enableX(states["Vertical"]);
+        grid->enableY(states["Horizontal"]);
+    } else if (grid_obj.contains(tr("Minor"))){
+        json_obj = grid_obj.value(tr("Minor")).toObject();
+        QPen pen = grid->minorPen();
+        QPen* pp = &pen;
+        QMap<QString, bool> states;
+        states = parseGridJson(json_obj, pp);
+        grid->enableXMin(states["Vertical"]);
+        grid->enableYMin(states["Horizontal"]);
+    }
+    plot->replot();
+}
+
+void US_PlotConfig::setAxisJson( int axis_id, QJsonObject axis_obj){
+
+    foreach (const QString& key, axis_obj.keys()) {
+        QJsonValue value = axis_obj.value(key);
+        if (key.compare(tr("Enable"), Qt::CaseInsensitive) == 0){
+            QString axis_enable = value.toString();
+            bool state = false;
+            if (axis_enable.compare(tr("true"), Qt::CaseInsensitive) == 0)
+                state = true;
+            plot->enableAxis(axis_id, state);
+        } else if (key.compare(tr("Title"), Qt::CaseInsensitive) == 0){
+            QJsonObject json_obj = value.toObject();
+            QwtText title = plot->axisTitle( axis_id );
+            foreach (const QString& kk, json_obj.keys()) {
+                QJsonValue value = json_obj.value(kk);
+                if (kk.compare(tr("Text"), Qt::CaseInsensitive) == 0)
+                    title.setText(value.toString());
+                else if (kk.compare(tr("Color"), Qt::CaseInsensitive) == 0)
+                    title.setColor(QColor(Qt::black));
+                else if (kk.compare(tr("Font"), Qt::CaseInsensitive) == 0)
+                    title.setFont(jsonToFont(value.toObject()));
+            }
+            plot->setAxisTitle( axis_id, title );
+        } else if (key.compare(tr("Tick Color"), Qt::CaseInsensitive) == 0){
+//            QPalette axisPalette = plot->axisWidget( axis_id )->palette();
+//            axisPalette.setColor( QPalette::Text, QColor(value.toString()) );
+//            plot->axisWidget( axis_id )->setPalette( axisPalette );
+            continue;
+        } else if (key.compare(tr("Scale"), Qt::CaseInsensitive) == 0){
+            QJsonObject json_obj = value.toObject();
+            int attributes = 0;
+            double lower_bound = 0;
+            double upper_bound = 0;
+            double step_size = 0;
+            double reference = 0;
+            bool auto_scale = true;
+//            QPalette palette = plot->axisWidget( axis_id )->palette();
+//            bool linear = true;
+//            bool logarithmic = false;
+//            QFont font = plot->axisFont( axis_id );
+            QFont font;
+            foreach (const QString& kk, json_obj.keys()) {
+                QJsonValue value = json_obj.value(kk);
+                if (kk.compare(tr("Autoscale"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("false", Qt::CaseInsensitive) == 0)
+                        auto_scale = false;
+                } else if (kk.compare(tr("Color"), Qt::CaseInsensitive) == 0){
+//                    palette.setColor( QPalette::Text, QColor(value.toString()));
+                    continue;
+                } else if (kk.compare(tr("Floating Endpoints"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::Floating;
+                } else if (kk.compare(tr("Include Reference"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::IncludeReference;
+                } else if (kk.compare(tr("Inverted"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::Inverted;
+                } else if (kk.compare(tr("Symmetric"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        attributes |= (int)QwtScaleEngine::Symmetric;
+                } else if (kk.compare(tr("Lower Bound"), Qt::CaseInsensitive) == 0){
+                    lower_bound = value.toString().toDouble();
+                } else if (kk.compare(tr("Upper Bound"), Qt::CaseInsensitive) == 0){
+                    upper_bound = value.toString().toDouble();
+                } else if (kk.compare(tr("Step Size"), Qt::CaseInsensitive) == 0){
+                    step_size = value.toString().toDouble();
+                } else if (kk.compare(tr("Font"), Qt::CaseInsensitive) == 0){
+                    font = jsonToFont(value.toObject());
+                } else if (kk.compare(tr("Linear"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        continue; //linear = true;
+                } else if (kk.compare(tr("Logarithmic"), Qt::CaseInsensitive) == 0){
+                    if (value.toString().compare("true", Qt::CaseInsensitive) == 0)
+                        continue; //logarithmic = true;
+                } else if (kk.compare(tr("Reference"), Qt::CaseInsensitive) == 0){
+                    reference = value.toString().toDouble();
+                }
+            }
+
+            plot->setAxisFont( axis_id, font );
+//            plot->axisWidget( axis_id )->setPalette( palette );
+            if (auto_scale)
+                plot->setAxisAutoScale(axis_id);
+            else
+                plot->setAxisScale( axis_id, lower_bound, upper_bound, step_size);
+            plot->axisScaleEngine( axis_id )->setReference( reference );
+            plot->axisScaleEngine( axis_id )->setAttributes( (QwtScaleEngine::Attribute)attributes );
+            plot->replot();
+        }
+    }
+
+}
+
+
+void US_PlotConfig::loadPlotProfile( void )
+{
+  qDebug() << "Loading Plot's profile -- ";
+
+  QString canvas_color, frame_color, border_margin;
+  QString legend_pos;
+  QJsonObject title_obj, grid_obj, axes_obj;
+  
+  //open local file
+  QString dirPath    = US_Settings::etcDir();
+  QString p_filename = QFileDialog::getOpenFileName( this,
+						     tr("Open Plot's Profile"),
+						     dirPath,
+						     tr("Profile Files (*.json)") );
+
+  QFile json_plot_profile( p_filename );
+  if (json_plot_profile.open(QIODevice::ReadOnly))
+    {
+      QByteArray bytes = json_plot_profile.readAll();
+      json_plot_profile.close();
+      
+      QJsonParseError jsonError;
+      QJsonDocument document = QJsonDocument::fromJson( bytes, &jsonError );
+      if( jsonError.error != QJsonParseError::NoError )
+	{
+       	  qDebug() << "Reading JSON Plot profile failed: " << jsonError.errorString();//.toStdString();
+	  qDebug() << "Bytes: " << bytes;
+       	  return;
+	}
+      if( document.isObject() )
+	{
+	  QJsonObject json_obj = document.object();
+
+      foreach(const QString& key, json_obj.keys()){
+	      QJsonValue value = json_obj.value(key);
+
+          if (key.compare(tr("Title"), Qt::CaseInsensitive) == 0)
+               title_obj = value.toObject();
+          else if (key.compare(tr("Canvas Color"), Qt::CaseInsensitive) == 0)
+              canvas_color = value.toString();
+          else if (key.compare(tr("Frame Color"), Qt::CaseInsensitive) == 0)
+              frame_color = value.toString();
+          else if (key.compare(tr("Border Margin"), Qt::CaseInsensitive) == 0)
+              border_margin = value.toString();
+          else if (key.compare(tr("Legend Position"), Qt::CaseInsensitive) == 0)
+              legend_pos = value.toString();
+          else if (key.compare(tr("Grid"), Qt::CaseInsensitive) == 0)
+              grid_obj = value.toObject();
+          else if (key.compare(tr("Axes"), Qt::CaseInsensitive) == 0)
+              axes_obj = value.toObject();
+	    }
+	}
+    }
+
+  qDebug() << "Loaded Plot Profile -- "
+//	   << "Title: "           << p_title
+	   << ", Canvas Color: "  << canvas_color
+	   << ", Frame Color: "   << frame_color
+       << ", Border Margin: " << border_margin;
+//	   << ", Title Font (Family, Size): (" << p_title_font_family << ", " << p_title_font_size << ")";
+
+  
+  //set plot's parameters
+  //1. Title
+  if (! title_obj.isEmpty())
+      setTitleJson(title_obj);
+  
+  //2. Border Margin
+  plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+		       .arg( border_margin ) );
+
+  int kk = border_margin.toInt();;
+  kk  = qMax( 0, ( kk / 2 - 1 ) );
+  cmbb_margin->setCurrentIndex( kk );
+
+  //3. Frame Color
+  QColor col_frame   = QColor( frame_color );
+  QPalette pal_frame;
+  
+  if ( col_frame.isValid() )
+    {
+      pal_frame.setColor( QPalette::Active  , QPalette::Window, col_frame );
+      pal_frame.setColor( QPalette::Inactive, QPalette::Window, col_frame );
+      lb_showFrameColor->setPalette( pal_frame );
+      plot->setPalette( pal_frame );
+    }
+  
+  //4. Canvas Color
+  QColor col_canvas     = QColor( canvas_color );
+  QPalette pal_canvas;
+  
+  if ( col_canvas.isValid() )
+    {
+      pal_canvas.setColor( QPalette::Window, col_canvas );
+      lb_showCanvasColor->setPalette( pal_canvas );
+      
+      global_canvas_color = col_canvas;   //ALEXEY
+      
+#if QT_VERSION > 0x050000
+      plot->setCanvasBackground( QBrush( col_canvas ) );
+#else
+      plot->setCanvasBackground( col_canvas );
+#endif
+      plot->replot();
+    }
+
+  //5. Legend Position
+  cmbb_legendPos->setCurrentText(legend_pos);
+  selectLegendPos(cmbb_legendPos->currentIndex());
+
+  //6. Grid
+  if (! grid_obj.isEmpty())
+      setGridJson(grid_obj);
+
+  //7. Axes Config
+  foreach (const QString& key, axes_obj.keys()) {
+      QJsonObject value = axes_obj.value(key).toObject();
+      if (key.compare(tr("xBottom"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::xBottom, value);
+      else if (key.compare(tr("xTop"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::xTop, value);
+      else if (key.compare(tr("yLeft"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::yLeft, value);
+      else if (key.compare(tr("yRight"), Qt::CaseInsensitive) == 0)
+          setAxisJson(QwtPlot::yRight, value);
+
+  }
+
+}
+
+QJsonObject US_PlotConfig::getAxisJson(int axis_id){
+
+    QJsonObject axis_obj;
+
+    QString axis_enable = plot->axisEnabled(axis_id) ? tr("true") : tr("false");
+    axis_obj.insert(tr("Enable"), axis_enable);
+
+    QwtText title = plot->axisTitle( axis_id );
+    QJsonObject title_obj;
+    title_obj.insert(tr("Text"), title.text());
+    title_obj.insert("Font", getFontJson(title.font()));
+    title_obj.insert("Color", title.color().name(QColor::HexRgb));
+    axis_obj.insert("Title", title_obj);
+
+    QString tick_color = plot->axisWidget(axis_id)->palette().color(QPalette::Window).name(QColor::HexRgb);
+    axis_obj.insert("Tick Color", tick_color);
+
+    QJsonObject scale_obj;
+    scale_obj.insert("Font", getFontJson(plot->axisFont(axis_id)));
+    scale_obj.insert("Color", plot->axisWidget(axis_id)->palette().
+                     color(QPalette::Text).name());
+    QString lb = QString::number(plot->axisScaleDiv(axis_id).lowerBound());
+    QString ub = QString::number(plot->axisScaleDiv(axis_id).upperBound());
+    QString ss = QString::number(plot->axisStepSize(axis_id));
+    scale_obj.insert("Lower Bound", lb);
+    scale_obj.insert("Upper Bound", ub);
+    scale_obj.insert("Step Size", ss);
+    double reference = plot->axisScaleEngine(axis_id)->reference();
+    scale_obj.insert("Reference", QString::number(reference));
+
+    int attributes = (int)plot->axisScaleEngine(axis_id)->attributes();
+    QString floating = (attributes & QwtScaleEngine::Floating) ? tr("true") : tr("false");
+    QString inverted = (attributes & QwtScaleEngine::Inverted) ? tr("true") : tr("false");
+    QString inc_ref = (attributes & QwtScaleEngine::IncludeReference) ? tr("true") : tr("false");
+    QString symmetric = (attributes & QwtScaleEngine::Symmetric) ? tr("true") : tr("false");
+    QString autoscale = (plot->axisAutoScale(axis_id)) ? tr("true") : tr("false");
+    scale_obj.insert("Floating Endpoints", floating);
+    scale_obj.insert("Inverted", inverted);
+    scale_obj.insert("Include Reference", inc_ref);
+    scale_obj.insert("Symmetric", symmetric);
+    scale_obj.insert("Autoscale", autoscale);
+
+    QString linear, log;
+    QwtScaleEngine *engine = plot->axisScaleEngine(axis_id);
+    if (dynamic_cast<QwtLogScaleEngine*>(engine)) {
+        log = "true";
+        linear = "false";
+    } else {
+        log = "false";
+        linear = "true";
+    }
+    scale_obj.insert("Linear", log);
+    scale_obj.insert("Logarithmic", linear);
+
+    axis_obj.insert("Scale", scale_obj);
+    return axis_obj;
+
+}
+
+
+QJsonObject US_PlotConfig::getGridJson(){
+    QJsonObject grid_obj;
+
+    QJsonObject major_obj;
+    QJsonObject minor_obj;
+
+    int ngrid = 0;
+    // Get the grid - if it exists
+    QwtPlotItemList list = plot->itemList();
+    QwtPlotGrid*  grid = NULL;
+
+    for ( int i = 0; i< list.size(); i++ )
+    {
+       if ( list[i]->rtti() == QwtPlotItem::Rtti_PlotGrid )
+       {
+          ngrid++;
+          if ( ngrid == 1 )
+             grid = dynamic_cast<QwtPlotGrid*>( list[ i ] );
+          else
+             list[ i ]->detach();
+       }
+    }
+    // Add an inactive grid if necessary
+    if ( grid == NULL )
+    {
+       grid = new QwtPlotGrid;
+       grid->enableX   ( false );
+       grid->enableY   ( false );
+       grid->enableXMin( false );
+       grid->enableYMin( false );
+       grid->attach( plot );
+    }
+
+    QString major_x_state = grid->xEnabled() ? tr("true") : tr("false");
+    QString major_y_state = grid->yEnabled() ? tr("true") : tr("false");
+    QString minor_x_state = grid->xMinEnabled() ? tr("true") : tr("false");
+    QString minor_y_state = grid->yMinEnabled() ? tr("true") : tr("false");
+
+    QPen pen = grid->majorPen();
+    QString major_style = QString::fromUtf8(QMetaEnum::fromType<Qt::PenStyle>().
+                                            valueToKey(pen.style()));
+    QString major_width = QString::number(pen.width());
+    pen = grid->minorPen();
+    QString minor_style = QString::fromUtf8(QMetaEnum::fromType<Qt::PenStyle>().
+                                            valueToKey(pen.style()));
+    QString minor_width = QString::number(pen.width());
+
+    major_obj.insert("Horizontal", major_y_state);
+    major_obj.insert("Vertical", major_x_state);
+    major_obj.insert("Width", major_width);
+    major_obj.insert("Style", major_style);
+
+    minor_obj.insert("horizontal", minor_y_state);
+    minor_obj.insert("Vertical", minor_x_state);
+    minor_obj.insert("Width", minor_width);
+    minor_obj.insert("Style", minor_style);
+
+    grid_obj.insert("Major", major_obj);
+    grid_obj.insert("Minor", minor_obj);
+
+    return grid_obj;
+}
+
+QJsonObject US_PlotConfig::getFontJson(QFont font){
+    QJsonObject font_obj;
+    QString font_size = QString::number( font.pointSize() );
+    QString font_weight = QString::fromUtf8(QMetaEnum::fromType<QFont::Weight>().
+                                              valueToKey(font.weight()));
+    QString font_style = QString::fromUtf8(QMetaEnum::fromType<QFont::Style>().
+                                             valueToKey(font.style()));
+    QString font_underline = font.underline() ? "true" : "false";
+    QString font_strikeout = font.strikeOut() ? "true" : "false";
+    font_obj.insert("Family", font.family());
+    font_obj.insert("Size", font_size);
+    font_obj.insert("Weight", font_weight);
+    font_obj.insert("Style", font_style);
+    font_obj.insert("Underline", font_underline);
+    font_obj.insert("Strike Out", font_strikeout);
+    return font_obj;
+}
+
+void US_PlotConfig::savePlotProfile( void )
+{
+  qDebug() << "Saving Plot's current profile -- ";
+  QJsonObject profile_obj;
+
+  /* Sections ******************************************************/
+  //title
+
+  QJsonObject title_font_obj = getFontJson(plot->title().font());
+
+  QJsonObject title_obj;
+  title_obj.insert("Text", plot->title().text());
+  title_obj.insert("Font", title_font_obj);
+  profile_obj.insert("Title", title_obj);
+
+  //frame & Canvas color
+  QString  frame_color = plot->palette().color( QPalette::Active, QPalette::Window ).name(QColor::HexRgb);
+  qDebug() << "Plot's Frame Color Name: "      << frame_color;
+  profile_obj.insert("Frame Color", frame_color);
+
+  QString canvas_color = plot->canvasBackground().name(QColor::HexRgb);
+  qDebug() << "Plot's Canvas Color Name: "      << canvas_color;
+  profile_obj.insert("Canvas Color", canvas_color);
+
+  //Border Margin
+  QString style = plot->styleSheet();
+  qDebug() << "Plot's style -- " << style;
+  int     kk    = style.indexOf( "padding:" );
+  if ( kk < 0 )
+    {
+      kk            = 0;
+    }
+  else
+    {
+      QString padding_v = style.mid( kk ).split(": ")[1];
+      padding_v.simplified();
+      padding_v.indexOf( "px" ); 
+      qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
+      qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+      
+      kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
+    }
+  profile_obj.insert("Border Margin", QString::number(kk));
+
+  //Legend position
+  profile_obj.insert("Legend Position", cmbb_legendPos->currentText());
+
+  // Grid config
+  QJsonObject grid_config = getGridJson();
+  profile_obj.insert("Grid", grid_config);
+
+  //Axes config
+  QJsonObject Axes_config;
+
+  QJsonObject yLeft_config = getAxisJson(QwtPlot::yLeft);
+  Axes_config.insert(tr("yLeft"), yLeft_config);
+
+  QJsonObject yRight_config = getAxisJson(QwtPlot::yRight);
+  Axes_config.insert(tr("yRight"), yRight_config);
+
+
+  QJsonObject xBottom_config = getAxisJson(QwtPlot::xBottom);
+  Axes_config.insert(tr("xBottom"), xBottom_config);
+
+  QJsonObject xTop_config = getAxisJson(QwtPlot::xTop);
+  Axes_config.insert(tr("xTop"), xTop_config);
+
+  profile_obj.insert("Axes", Axes_config);
+
+  
+  /* End of Sections ******************************************************/
+
+  //save to local file
+  QString dirPath    = US_Settings::etcDir();
+  QString p_filename = QFileDialog::getSaveFileName( this,
+						     tr("Save Plot's Profile"),
+						     dirPath,
+						     tr("Profile Files (*.json)") );
+  p_filename.contains( ".json") ? p_filename += "" : p_filename += ".json";
+  QFile json_plot_profile( p_filename );
+  if (json_plot_profile.open(QFile::WriteOnly | QFile::Truncate))
+    {
+      QJsonDocument jsonDoc;
+      jsonDoc.setObject(profile_obj);
+      json_plot_profile.write(jsonDoc.toJson());
+    }
+  
+}
+
 /*!  \brief Open US_PlotConfig dialog for changing the 
             selected curves elements
 */
 void US_PlotConfig::updateCurve( void )
 {
+  qDebug() << "1. In Update Selected Curve: plot's canvas backgound color -- " << plot->canvasBackground();
+  
    if ( lw_curves->selectedItems().count() == 0 )
    {
       QMessageBox::information( this,
@@ -931,7 +1635,12 @@ void US_PlotConfig::updateCurve( void )
    for ( int i = 0; i < items.count(); i++ )
       selected << items[i]->text();
 
-   curveWidget = new US_PlotCurveConfig( plot, selected );
+   qDebug() << "SELECTED Curves -- " << selected;
+   qDebug() << "2. In Update Selected Curve: plot's canvas backgound color -- " << plot->canvasBackground();
+
+   //curveWidget = new US_PlotCurveConfig( plot, selected );
+   curveWidget = new US_PlotCurveConfig( plot, selected, this  ); //ALEXEY - call curves' Config widget with explicitly defining parent (::US_PlotConfig)
+
    //curveWidget->setAttribute( Qt::WA_DeleteOnClose );
    //connect( curveWidget, SIGNAL( curveConfigClosed( void ) ),
    //                      SLOT  ( curveConfigFinish( void ) ) );
@@ -1007,16 +1716,32 @@ void US_PlotConfig::gridConfigFinish( void )
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
       const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
-      : US_WidgetsDialog( parent, f ) //( false, parent, f )
+      : US_WidgetsDialog( parent, f , false) //( false, parent, f )
 {
+  plotConfigW = (US_PlotConfig*)parent;         //ALEXEY: access to parent's US_PlotConfig
+  qDebug() << "In parent US_PlotConfig widget, plot canvas Color is: " << plotConfigW -> global_canvas_color;
+   
+   qDebug() << "0. In US_PlotCurveConfig() Constructor: (current)plot's canvas Color -- " << currentPlot->canvasBackground();
+  
    plot          = currentPlot;
+   //ALEXEY: for some reason, plot's canvas background color is lost here: needs to reset to what has been selected in US_PlotConfig::
+#if QT_VERSION > 0x050000
+   plot->setCanvasBackground( QBrush( plotConfigW -> global_canvas_color ) );
+#else
+   plot->setCanvasBackground(  plotConfigW -> global_canvas_color );
+#endif
+   
    selectedItems = selected;
 
+   qDebug() << "1. In US_PlotCurveConfig() Constructor: plot's canvas Color -- " << plot->canvasBackground();
+   
    // Keep out of the way
    //move( pos() + QPoint( plot->rect().width(), 0 ) );
 
    setWindowTitle( tr( "Curve Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
+
+   qDebug() << "2. In US_PlotCurveConfig() Constructor: plot's canvas Color -- " << plot->canvasBackground();
 
    // Find the first curve selected
    QwtPlotItemList list = plot->itemList();
@@ -1179,6 +1904,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    {
       symbolStyle = selSymbol->style();
 
+      qDebug() << "Curves props constr.: symbolStyle -- " << symbolStyle;
       for ( int i = 0; i < symbolStyles.size(); i++ )
       {
          if ( symbolStyles [ i ] == symbolStyle )
@@ -1190,8 +1916,9 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    }
    else
    {
-      cmbb_symbolStyle->setCurrentIndex( 0 );
-      selSymbol             = new QwtSymbol;
+     qDebug() << "Curves props constr.: NULL ";
+     cmbb_symbolStyle->setCurrentIndex( 0 );
+     selSymbol             = new QwtSymbol();
    }
 
    connect( cmbb_symbolStyle, SIGNAL( currentIndexChanged( int ) ), 
@@ -1293,6 +2020,9 @@ void US_PlotCurveConfig::curveStyleChanged( int index )
 void US_PlotCurveConfig::symbolStyleChanged( int index )
 {
    int style  = cmbb_symbolStyle->itemData( index ).toInt();
+
+   qDebug() << "Curve's SymbolStyle " << cmbb_symbolStyle->itemData( index ) << ", Type: " << cmbb_symbolStyle->itemData( index ).typeName();
+   qDebug() << "Curve's SymbolStyle (int): index, style -- " << index << ", " << style; 
    symbolStyle = static_cast< QwtSymbol::Style > ( style );
    lb_sample2->update(); 
 }
@@ -1349,6 +2079,7 @@ void US_PlotCurveConfig::apply( void )
 #else
    QwtSymbol *oldSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
 #endif
+
    oldSymbol             = ( oldSymbol != NULL ) ? oldSymbol : new QwtSymbol;
    QPen      symbolPen   = oldSymbol->pen();
    QBrush    symbolBrush = oldSymbol->brush();
@@ -1361,8 +2092,8 @@ void US_PlotCurveConfig::apply( void )
 
    QSize symbolSize( sb_symbolWidth->value(), sb_symbolHeight->value() );
    
-   QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,
-                                         symbolPen,   symbolSize );
+   // QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,           //ALEXEY:: new Symbol object will be initialized inside the cycle !!!
+   //                                       symbolPen,   symbolSize );
 
    palette = lb_showCurveColor->palette();
    QPen      curvePen( palette.color( QPalette::Window ) );
@@ -1371,8 +2102,9 @@ void US_PlotCurveConfig::apply( void )
    
    QwtPlotItemList list = plot->itemList(); // All items
 
-   int j = 0;
+   //int j = 0;                                               //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
 
+   qDebug() << "Plot Curve Config: just before list() / selectedlist iteration:  ";
    // Iterate through the selected curves
    for ( int i = 0; i < selectedItems.size(); i++ )
    {
@@ -1380,11 +2112,14 @@ void US_PlotCurveConfig::apply( void )
       QString title = selectedItems[ i ];
       title.replace( QRegExp( "^\\(\\d+\\) " ), "" );
 
-      // There is no need to reiterate over the full list
+      qDebug() << "Plot Curve Config: for selectItem -- " << title;
+
+      // There is no need to reiterate over the full list     //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
       // This assumes the selected list and the full list
       // are in the same order
 
-      for ( /* no intitalizer */; j < list.size(); j++ )
+      //for ( /* no intitalizer */; j < list.size(); j++ )    //ALEXEY: that is NOT true: user can select curves in arbitrary order!!!!
+      for ( int j = 0; j < list.size(); j++ )
       {
          if ( list[ j ]->rtti() != QwtPlotItem::Rtti_PlotCurve ) continue;
          if ( list[ j ]->title() == title )
@@ -1392,15 +2127,48 @@ void US_PlotCurveConfig::apply( void )
             QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* > ( list[ j ] );
             if ( selectedItems.size() == 1 ) 
                curve->setTitle( le_curveTitle->text() );
- 
-            curve->setSymbol( newSymbol );
-            curve->setPen   ( curvePen );
-            curve->setStyle ( curveStyle );
+
+	    qDebug() << "Plot Curve Config: for allItems -- " << (list[ j ]->title()).text();
+	    if ( curve->symbol() !=  NULL ) 
+	      qDebug() << "Current Symbol -- " << curve->symbol()->style();
+
+	    QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,             //ALEXEY: defining a new symbol must be witnin !!! caused crash before
+						  symbolPen,   symbolSize );
+	    
+	    //if ( !symbolStyle || symbolStyle ==  QwtSymbol::NoSymbol )
+	    if ( symbolStyle ==  QwtSymbol::NoSymbol )
+	      {
+		qDebug() << "No symbolStyle selected in the first place, setting to ::NoSymbol -- ";
+		newSymbol = NULL;
+	      }
+	    
+	    if ( newSymbol != NULL )
+	      qDebug() << "newSymbol: pen, brush, size, style -- "
+		       << newSymbol->pen()
+		       << newSymbol->brush()
+		       << newSymbol->size()
+		       << newSymbol->style();
+	    
+	    curve->setSymbol( newSymbol );  //ALEXEY: this caused crash when plot->detachItems() from all apps (when ::NoSymbol style OR ...)
+	    // Also, crashed when multiple curves selected && pressing "Apply" more than one time (even while changing the symbol type...)
+	    // ATTN: crashed only when applied to the 2nd curve in a selected list! When only 1 curve selected, all good -- was wrong (heap) memory allocation!!
+	    qDebug() << "Plot Curve Config: for allItems parms SET Symbol-- " << (list[ j ]->title()).text();
+	    
+	    curve->setPen   ( curvePen );
+	    qDebug() << "Plot Curve Config: for allItems parms SET Pen-- " << (list[ j ]->title()).text();
+
+	    curve->setStyle ( curveStyle );
+	    qDebug() << "Plot Curve Config: for allItems parms SET Style-- " << (list[ j ]->title()).text();
+
+	    qDebug() << "Plot Curve Config: for allItems parms SET ALL -- " << (list[ j ]->title()).text();
             break;
          }
       }
 
    }
+
+   
+   qDebug() << "Plot Curve Config: just before replot() ";
    plot->replot();
 }
 
@@ -1513,7 +2281,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags , false)//( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
@@ -1911,7 +2679,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags , false)//( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );

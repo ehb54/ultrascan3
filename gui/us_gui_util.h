@@ -13,6 +13,11 @@
 #define dataPlotClear(a) a->clear()
 #endif
 #include "qwt_plot.h"
+#include "qwt_plot_curve.h"
+#include "qwt_series_data.h"
+#include <qwt_plot_spectrogram.h>
+#include <qwt_raster_data.h>
+#include <qwt_matrix_raster_data.h>
 #include "us_extern.h"
 
 //! \brief General GUI utilities for UltraScan
@@ -43,6 +48,13 @@ class US_GUI_EXTERN US_GuiUtil
       //! \param plot     A pointer to the plot to save
       //! \returns A status flag:  0 if all-ok
       static int save_png( const QString&, const QwtPlot* );
+
+   //! \brief Save a plot to a CSV file
+   //!
+   //! \param filename Full path name of the file to produce
+   //! \param plot     A pointer to the plot to save
+   //! \returns A status flag:  0 if all-ok
+   static int save_csv( const QString&, const QwtPlot* );
 
 };
 #endif

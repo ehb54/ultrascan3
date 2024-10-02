@@ -488,7 +488,7 @@ void US_AddSaxs::add()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       cmb_saxs->clear( );
-      str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
+      str1 = QString( us_tr( " Number of SAXS Entries in File: %1" ) ).arg( saxs_list.size() );
       QTextStream ts(&f);
       ts << qSetRealNumberPrecision(8);
       for (unsigned int i=0; i<saxs_list.size(); i++)
@@ -503,7 +503,7 @@ void US_AddSaxs::add()
             << saxs_list[i].a[3] << "\t"
             << saxs_list[i].b[3] << "\t"
             << saxs_list[i].c << "\t"
-            << saxs_list[i].volume << endl;
+            << saxs_list[i].volume << Qt::endl;
          if ( saxs_list[i].a5[0] &&
               saxs_list[i].b5[0] ) {
             ts << saxs_list[i].saxs_name.toUpper() << "\t"
@@ -518,14 +518,14 @@ void US_AddSaxs::add()
                << saxs_list[i].a5[4] << "\t"
                << saxs_list[i].b5[4] << "\t"
                << saxs_list[i].c5 << "\t"
-               << saxs_list[i].volume << endl;
+               << saxs_list[i].volume << Qt::endl;
          }
          str1.sprintf("%d: ", i+1);
          str1 += saxs_list[i].saxs_name.toUpper();
          cmb_saxs->addItem(str1);
       }
       f.close();
-      lbl_number_of_saxs->setText( QString().sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size() ) );
+      lbl_number_of_saxs->setText( QString( us_tr( " Number of SAXS Entries in File: %1" ) ).arg( saxs_list.size() ) );
    }
    else
    {
@@ -555,7 +555,7 @@ void US_AddSaxs::select_file()
          QTextStream ts(&f);
          while (!ts.atEnd())
          {
-            QStringList qsl = ( ts.readLine() ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = ( ts.readLine() ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 ) {
                saxs_map[ qsl[0] ].saxs_name = qsl[pos++];
@@ -601,7 +601,7 @@ void US_AddSaxs::select_file()
          }
       }
    }
-   str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
+   str1 = QString( us_tr( " Number of SAXS Entries in File: %1" ) ).arg( saxs_list.size() );
    lbl_number_of_saxs->setText(str1);
    pb_add->setEnabled(true);
 }
@@ -611,17 +611,17 @@ void US_AddSaxs::select_file()
 #define LD  "------------------------------------------------------------\n"
 
 void US_AddSaxs::info_saxs( const QString & msg, const struct saxs & saxs ) {
-   TSO << LEQ << "info_saxs(): " << saxs.saxs_name << " " << msg << endl;
+   TSO << LEQ << "info_saxs(): " << saxs.saxs_name << " " << msg << Qt::endl;
    TSO << LD << "4 term gaussians:\n";
    for ( int i = 0; i < 4; ++i ) {
-      TSO << "\ta & b [" << i << "] = " << saxs.a[i] << " & " << saxs.b[i] << endl;
+      TSO << "\ta & b [" << i << "] = " << saxs.a[i] << " & " << saxs.b[i] << Qt::endl;
    }      
-   TSO << "\tc & volume = " << saxs.c << " & " << saxs.volume << endl;
+   TSO << "\tc & volume = " << saxs.c << " & " << saxs.volume << Qt::endl;
    TSO << LD << "5 term gaussians:\n";
    for ( int i = 0; i < 5; ++i ) {
-      TSO << "\ta & b [" << i << "] = " << saxs.a5[i] << " & " << saxs.b5[i] << endl;
+      TSO << "\ta & b [" << i << "] = " << saxs.a5[i] << " & " << saxs.b5[i] << Qt::endl;
    }      
-   TSO << "\tc5 = " << saxs.c5 << endl;
+   TSO << "\tc5 = " << saxs.c5 << Qt::endl;
 }
 
 void US_AddSaxs::update_saxs_name(const QString &str)

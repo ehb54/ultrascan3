@@ -147,6 +147,100 @@ DbgLv(1) << "TP:mn:   p1size" << p1size << "p2size" << p2size;
 DbgLv(1) << "TP:mn:   resized" << size() << "lw size" << lw_datinfo->size();
 }
 
+
+//public funcitons to access GMP-related parms
+QStringList US_TmstPlot::timestamp_data_dkeys( )
+{
+  return dkeys;
+}
+
+QVector< QVector< double > > US_TmstPlot::timestamp_data_dvals( )
+{
+  return dvals;
+}
+
+QMap< QString, double >  US_TmstPlot::timestamp_data_mins ( )
+{
+  return dmins;
+}
+
+QMap< QString, double >  US_TmstPlot::timestamp_data_maxs ( )
+{
+  return dmaxs;
+}
+
+QMap< QString, double >  US_TmstPlot::timestamp_data_avgs ( )
+{
+  return davgs;
+}
+
+QMap < QString, QMap< QString, double >>  US_TmstPlot::timestamp_data_avgs_stdd_first_scan ( )
+{
+  QMap < QString, QMap< QString, double > > davgs_stdd_first_scan;
+
+  s_start = true;  // X axis starts at scan 1
+  
+  for ( int i=0; i < dkeys.size(); ++i )
+    {
+      QString pkey = dkeys[ i ];
+      int ky       = dkeys.indexOf( pkey );       // Y data index
+
+      // Accumulate X,Y points
+      nplpts       = point_indexes();
+      
+      //Average:
+      double y_avg_val = 0;
+      double yy_first  = 0;
+      double yy_last   = 0;
+      for ( int jj = 0; jj < nplpts; jj++ )
+	{
+	  int jt       = pntxs[ jj ];
+	  //xx[ jj ]     = dvals[ kx ][ jt ];
+	  //yy[ jj ]     = dvals[ ky ][ jt ];
+
+	  if ( jj == 0 )
+	    yy_first = dvals[ ky ][ jt ];
+	  if ( jj ==  nplpts - 1 )
+	    yy_last = dvals[ ky ][ jt ];
+	  
+	  y_avg_val   +=  dvals[ ky ][ jt ];
+	}
+   
+      double scalea_cut  = 1.0 / (double)nplpts;             // Averaging scale
+      y_avg_val         *= scalea_cut;
+
+      qDebug() << "[auto] Plot for: " << pkey  << "; First value of Y: " << yy_first;
+      qDebug() << "[auto] Plot for: " << pkey  << "; Last value of Y: "  << yy_last;
+      qDebug() << "[auto] Plot for: " << pkey  << "; # of points: "      << nplpts;
+      qDebug() << "[auto] Plot for: " << pkey  << "; First data index: " << pntxs[ 0 ];
+      qDebug() << "[auto] Plot for: " << pkey  << "; Average: "          << y_avg_val;
+
+      //Standard Deviation:
+      double std_dev = 0;
+      double sum_mean_dev_sq = 0;
+      for ( int jj = 0; jj < nplpts; jj++ )
+	{
+	  int jt       = pntxs[ jj ];
+
+	  sum_mean_dev_sq += (dvals[ ky ][ jt ] - y_avg_val) * (dvals[ ky ][ jt ] - y_avg_val); 
+	}
+      
+      //std_dev = sqrt( sum_mean_dev_sq * scalea_cut );
+      sum_mean_dev_sq *= scalea_cut;
+      std_dev = pow( double(sum_mean_dev_sq), double(0.5) );
+      
+      //Fill the Map:
+      QMap < QString, double > keys_data;
+      keys_data[ "Avg"  ] = y_avg_val;
+      keys_data[ "Stdd" ] = std_dev;
+      davgs_stdd_first_scan[ pkey ] = keys_data;
+    }
+  
+  
+  return davgs_stdd_first_scan;
+}
+
+
 // Plot the data (both key-specific and combined)
 void US_TmstPlot::plot_data()
 {
@@ -214,7 +308,8 @@ void US_TmstPlot::plot_kdata()
    // Accumulate X,Y points
    nplpts       = point_indexes();
 
-
+   //double y_avg_val = 0;
+   
    for ( int jj = 0; jj < nplpts; jj++ )
    {
       int jt       = pntxs[ jj ];
@@ -224,8 +319,18 @@ void US_TmstPlot::plot_kdata()
       smax         = qMax( smax, xx[ jj ] );
       ymin         = qMin( ymin, yy[ jj ] );
       ymax         = qMax( ymax, yy[ jj ] );
+
+      //y_avg_val   += yy[ jj ];
    }
 
+   //double scalea_cut  = 1.0 / (double)nplpts;             // Averaging scale
+   //y_avg_val         *= scalea_cut;
+      
+   // qDebug() << "Plot for: " << pkey  << "; First value of Y: " << yy[ 0 ];
+   // qDebug() << "Plot for: " << pkey  << "; Last value of Y: "  << yy[ nplpts - 1 ];
+   // qDebug() << "Plot for: " << pkey  << "; # of points: "      << nplpts;
+   // qDebug() << "Plot for: " << pkey  << "; Average: "          << y_avg_val;
+   
 DbgLv(1) << "TP:plkd   smin smax" << smin << smax << "xkey" << xkey << "kx ks" << kx << ks;
    data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax );
 
@@ -249,6 +354,16 @@ DbgLv(1) << "TP:plkd   smin smax" << smin << smax << "xkey" << xkey << "kx ks" <
 
    data_plot1->replot();
 }
+
+
+// Return a pointer to the QwtPlot for the upper plot
+QwtPlot* US_TmstPlot::rp_data_plot1( QString p_type )
+{
+  //set to Temp. OR any other type
+  cb_pltkey -> setCurrentIndex(cb_pltkey->findText( p_type ));
+  return data_plot1;
+}
+
 
 // Plot the combined data
 void US_TmstPlot::plot_cdata()

@@ -72,7 +72,7 @@ QPoint US3i_Global::global_position( void )
 void US3i_Global::setPasswd( const QString& pw )
 {
   read_global();
-  strncpy( global.passwd, pw.toLatin1().constData(), sizeof global.passwd );
+  strncpy( global.passwd, pw.toLatin1().constData(), sizeof global.passwd - 1 );
   write_global();
 }
 

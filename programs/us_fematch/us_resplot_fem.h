@@ -22,8 +22,9 @@ class US_ResidPlotFem : public US_WidgetsDialog
    public:
       //! \param parent A pointer to the parent widget of this one
       //! \param auto_mode Auto mode flag
-      US_ResidPlotFem( QWidget* = NULL, bool auto_mode = false );
-
+      //US_ResidPlotFem( QWidget* = NULL, bool auto_mode = false );
+      US_ResidPlotFem( QWidget* = NULL, QString = QString("") );
+   
       //! \brief Force a specific plot in the lower plot
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise
       void set_plot( int );
@@ -34,7 +35,10 @@ class US_ResidPlotFem : public US_WidgetsDialog
       //! \brief Return a QwtPlot pointer for the lower plot
       QwtPlot* rp_data_plot2();
 
-      bool a_mode;
+      //bool a_mode;
+      QString a_mode;
+
+      
 
    private:
       QHBoxLayout*  mainLayout;

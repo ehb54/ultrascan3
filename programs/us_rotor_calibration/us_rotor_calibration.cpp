@@ -1520,20 +1520,20 @@ void US_RotorCalibration::calc_6channel(void)
    QVector <double> edge_measured;
    QVector <double> edge_known;
    QVector <double> edge_sigma;
-   edge_known.push_back(5.711);
-   edge_known.push_back(5.929);
-   edge_known.push_back(6.025);
-   edge_known.push_back(6.097);
-   edge_known.push_back(6.237);
-   edge_known.push_back(6.308);
-   edge_known.push_back(6.425);
+   edge_known.push_back(5.700);
+   edge_known.push_back(5.930);
+   edge_known.push_back(6.020);
+   edge_known.push_back(6.100);
+   edge_known.push_back(6.230);
+   edge_known.push_back(6.310);
+   edge_known.push_back(6.410);
    edge_known.push_back(6.550);
-   edge_known.push_back(6.658);
-   edge_known.push_back(6.728);
-   edge_known.push_back(6.868);
-   edge_known.push_back(6.939);
-   edge_known.push_back(7.077);
-   edge_known.push_back(7.146);
+   edge_known.push_back(6.650);
+   edge_known.push_back(6.730);
+   edge_known.push_back(6.860);
+   edge_known.push_back(6.940);
+   edge_known.push_back(7.070);
+   edge_known.push_back(7.150);
    for (k=0; k<bounds.size(); k++) // bounds equals the number of edges
    {
       sum=0.0;

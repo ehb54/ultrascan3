@@ -8,6 +8,13 @@
 #endif
 
 // QT defs:
+#include <QtCore>
+#include <QtWidgets>
+#include <math.h>
+#include <time.h>
+#include <map>
+#include <set>
+#include <qregexp.h>
 
 #include "us_util.h"
 #include "us_math.h"
@@ -15,11 +22,6 @@
 #include "us_gzip.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_asa.h"
-#include <math.h>
-#include <time.h>
-#include <map>
-#include <set>
-#include <qregexp.h>
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
 #include "us_json.h"
@@ -134,6 +136,7 @@ class US_EXTERN US_Saxs_Util
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Cluster_Dmd;
 
       US_Saxs_Util();
       ~US_Saxs_Util();
@@ -472,6 +475,17 @@ class US_EXTERN US_Saxs_Util
 
       static double calc_rmsd( vector < double > v1,  vector < double > v2 );
       static double calc_nrmsd( vector < double > v1,  vector < double > v2 ); // normalized rmsd is rmsd divided by the range (of v2) time 100 (for percent)
+
+      static bool calc_chisq(
+                             const vector < double > & x,
+                             const vector < double > & y,
+                             const vector < double > & sds,
+                             int                     parameters,
+                             double                  & chisq,
+                             double                  & nchi,
+                             QString                 & errors
+                             );
+
       static bool calc_chisq1( vector < double > bins,
                                vector < double > ebins,
                                unsigned int      &df,
@@ -726,7 +740,8 @@ class US_EXTERN US_Saxs_Util
       // for systems with errors, these are assumed to be experimental data it is only acceptible going
       // to a coarser grid, otherwise an error will result with error_msg set
 
-      static bool is_nonzero_vector( vector < double > &v ); // returns true if all non-zero
+      static bool is_nonzero_vector( const vector < double > &v ); // returns true if all non-zero
+      static bool is_zero_vector( const vector < double > &v ); // returns true if all zero
 
       bool interpolate_iqq_by_case( vector < double > from_grid,
                                     vector < double > from_data,
@@ -742,6 +757,22 @@ class US_EXTERN US_Saxs_Util
                  double            max_q,
                  vector < double > &to_data,
                  vector < double > &to_errors );
+
+      static bool crop(
+                       const vector < double >  & x
+                       ,const vector < double > & y
+                       ,double                    x_min
+                       ,double                    x_max
+                       ,vector < double >       & x_cropped
+                       ,vector < double >       & y_cropped
+                       ,QString                 & errormsg
+                       );
+
+      static bool transpose_vvd(
+                                const vector < vector < double > > & x
+                                ,vector < vector < double > >      & y
+                                ,QString                           & errormsg
+                                );
 
       bool read_control( QString controlfile );
 
@@ -861,8 +892,14 @@ class US_EXTERN US_Saxs_Util
                                                           unsigned int      points
                                                           );
                                                              
-
       bool         align_test();
+
+      static bool                                     average( 
+                                                             const vector < vector < double > > & ys,
+                                                             vector < double > & y_avg,
+                                                             vector < double > & y_sd,
+                                                             QString & error_msg
+                                                              );
 
       static bool  read_sas_data( 
                                  QString             filename,
@@ -1020,6 +1057,11 @@ class US_EXTERN US_Saxs_Util
                         map < QString, QString >           & results
                        );
 
+      bool run_align   (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
       //bool screen_pdb( QString, bool display_pdb = false, bool skip_clear_issue = false );
       void read_residue_file();
       bool screen_pdb(QString filename, bool  parameters_set_first_model); //, bool display_pdb, bool skipclearissue );
@@ -1061,6 +1103,36 @@ class US_EXTERN US_Saxs_Util
       static int us_usleep( unsigned int usec );
 
    private:
+
+   // distance threshold check support
+      bool run_ssbond   (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                        );
+
+      void SS_setup();                              // called once to setup any persistant distance threshold structures
+      void SS_init();                               // called during load pdb to setup any processing structures
+      void SS_apply( struct PDB_model & model,
+                     QString & ssbond_data ); // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
+      void SS_change_residue(                       // change the residue of an entry to target_residue
+                             struct PDB_model & model
+                             ,const QString & line
+                             ,const QString target_residue
+                                                );  
+      
+      set < QString >                                           cystine_residues;
+      set < QString >                                           sulfur_atoms;
+
+      vector < QString >                                        sulfur_pdb_line;
+      vector < point   >                                        sulfur_coordinates;
+
+      map < QString, map < QString, vector < unsigned int > > > sulfur_pdb_chain_atom_idx;
+      map < QString, vector < unsigned int > >                  sulfur_pdb_chain_idx;
+
+      map < int, int >                                          sulfur_paired;
+      
+      // end distance threshold check support
+
 
       // double       minusoneoverfourpisq;
       // unsigned int exponential_terms;
@@ -1212,6 +1284,13 @@ class US_EXTERN US_Saxs_Util
       double compute_gsm_exponentials_f( our_vector *v );
 
       bool c2check( QString a, QString b );
+
+      static bool compute_rg_from_pr(
+                                     const vector < double >  & r
+                                     ,const vector < double > & pr
+                                     ,double                  & Rg
+                                     ,QString                 & errormsg
+                                     );
 
    private:
       // exponential gsm:
@@ -1509,6 +1588,42 @@ class US_EXTERN US_Saxs_Util
       QStringList  experimental_grids;
       bool         process_one_iqq();
 
+      // dmd hetatm mol2 support structures:
+      map < QString, QString >              dmd_mol2_res;         // newly assigned residue name to original residue name
+      map < QString, map < int, int > >     dmd_chain;            // maps chain id and residue number to dmd's chain number
+      map < QString, map < int, int > >     dmd_res;              // maps chain id and residue number to dmd's residue number
+      map < QString, map < int, int > >     dmd_res_link;         // maps chain id and residue number to dmd's residue number for links
+      map < QString, map < int, QString > > dmd_org_chain;        // maps chain id and residue number to pdb's original chain number
+      map < QString, map < int, int > >     dmd_org_res;          // maps chain id and residue number to pdb's original residue number
+      QStringList                           dmd_pdb_add_back;     // lines to restore to pdbs - REMARKs etc, not ATOMs or HETATMs
+      map < QString, QStringList >          dmd_pdb_prepare_reports; // for easy GUI display
+      map < QString, set < int > >          dmd_chain_is_hetatm;  // maps chain id and residue number to hetatm status
+
+      // dmd for truncated base name
+      QString                               dmd_basename;
+
+      // dmd hetatm mol2 support routines:
+      void                              dmd_clear();                                   // clears data structures 
+      QString                           dmd_next_res( const QString & source );        // returns a unique residuename and updates dmd_mol2
+      bool                              dmd_pdb_prepare( QStringList & qsl_pdb
+                                                         ,QStringList & qsl_pdb_removed
+                                                         ,QStringList & qsl_link_constraints
+                                                         ,bool production_run = true );
+                                                                                       // process HETATM, LINK and renumbering
+      bool                              dmd_pdb_prepare( QString & pdb ); // utility, non-production version
+
+      bool                              dmd_pdb_restore( const QStringList & qsl_pdb
+                                                         ,QStringList & qsl_pdb_restored
+                                                         ,bool add_back = true );
+                                                                                      // restore HETATM, LINK and renumbering
+                                                                                      // add_back will add back dmd link & remark 766s
+
+      // dmd fix position of HETATM
+      QString                           dmd_fix_hetatm_name_pos( const QString & qs );
+      QStringList                       dmd_fix_hetatm_name_pos( const QStringList & qsl );
+
+      static map < QString, QString >   pdb_fields( const QString & pdb_line );
+      
       bool         strip_pdb( 
                              QString & pdb_stripped,
                              const QString & pdb,
@@ -1522,6 +1637,11 @@ class US_EXTERN US_Saxs_Util
       bool         calc_saxs_iq_native_hybrid_bead_model();
       bool         run_iqq_bead_model();
 
+      bool         dmd_run_with_log( const QString & tag
+                                     ,const QString & cmd
+                                     ,const QString & log
+                                     );
+      
       static float mw_to_volume( float mw, float vbar );
 
       // gp stuff

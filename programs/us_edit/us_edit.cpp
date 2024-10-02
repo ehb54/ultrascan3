@@ -274,7 +274,8 @@ pb_plateau->setVisible(false);
 //QLineEdit* 
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton* 
-   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
 
    lb_dataEnd     = us_label(      tr( "Data End:" ), -1 );
 //QLineEdit* 
@@ -312,7 +313,7 @@ pb_plateau->setVisible(false);
 
    //pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    pb_write       = us_pushbutton( tr( "Save Edit Profiles" ), false );
-   pb_emanual     = us_pushbutton( tr( "Edit Profiles Manually" ), false );
+   pb_emanual     = us_pushbutton( tr( "Edit Currently Selected Profile Manually" ), false );
    
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
@@ -555,8 +556,7 @@ pb_plateau->setVisible(false);
        rb_custom      ->hide();
        rb_radius      ->hide();
        rb_waveln      ->hide();
-       
-       
+
      }
    
 
@@ -673,17 +673,72 @@ pb_plateau->setVisible(false);
    // // details[ "protocolName" ] = QString("GabirH_NetUnc-050921_MW");
 
    // details[ "invID_passed" ] = QString("104");
-   // details[ "filename" ]     = QString("DubnauD_ComEA-DNA_MW1_092221-run1201");
-   // details[ "protocolName" ] = QString("DubnauD_ComEA-DNA_MW1_092221");
+   // details[ "filename" ]     = QString("DubnauD_ComEA-14pbDNA_5-1_100621-run1233");
+   // details[ "protocolName" ] = QString("DubnauD_ComEA-14pbDNA_5-1_100621");
+
+   // details[ "invID_passed" ] = QString("77");
+   // details[ "filename" ]     = QString("Johnson_C_EWS_10uM_20uM_NaPi_MES_01-13-22-run1242");
+   // details[ "protocolName" ] = QString("Johnson_C_EWS_10uM_20uM_NaPi_MES_01-13-22");
+
+
+   // //Borries: combined RI + IP run
+   // details[ "invID_passed" ] = QString("2");
+   // details[ "filename" ]     = QString("MW-AUC-IF_test_031622-run1270-IP,MW-AUC-IF_test_031622-run1270-RI");
+   // details[ "protocolName" ] = QString("MW-AUC-IF_test_031622");
+
+   // // //Run: lazeB_AUC3_PRS4-3_Day7_082522-run1372 (missinf EDIT PROFILES)
+   // details[ "invID_passed" ] = QString("154");
+   // details[ "filename" ]     = QString("BlazeB_AUC3_PRS4-3_Day7_082522-run1372");
+   // details[ "protocolName" ] = QString("BlazeB_AUC3_PRS4-3_Day7_082522");
+   // details[ "statusID" ]     = QString("46");
+   // details[ "autoflowID" ]   = QString("671");
+
+   // details[ "invID_passed" ] = QString("166");
+   // details[ "filename" ]     = QString("HuberS_bCAll-DNSA_012623-run1879");
+   // details[ "protocolName" ] = QString("HuberS_bCAll-DNSA_012623");
+   // details[ "statusID" ]     = QString("116");
+   // details[ "autoflowID" ]   = QString("814");
+
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("AAV396_CsCl-46kRpm_21APRIL23-run1916");
+   // details[ "protocolName" ] = QString("AAV396_CsCl-46kRpm_21APRIL23");
+   // details[ "statusID" ]     = QString("148");
+   // details[ "autoflowID" ]   = QString("866");
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("eGFP-DNA-MW-08OCT23-run1981");
+   // details[ "protocolName" ] = QString("eGFP-DNA-MW-08OCT23");
+   // details[ "statusID" ]     = QString("231");
+   // details[ "autoflowID" ]   = QString("1002");
+   // details[ "runID" ]        = QString("1981");
+   // details[ "OptimaName" ]   = QString("Optima 1");
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("GMPMeniscusFitTest_6MAY24-run2023");
+   // details[ "protocolName" ] = QString("GMPMeniscusFitTest_6MAY24v2");
+   // details[ "statusID" ]     = QString("334");
+   // details[ "autoflowID" ]   = QString("1140");
+   // details[ "runID" ]        = QString("2023");
+   // details[ "OptimaName" ]   = QString("Optima 1");
+   // details[ "expType" ]      = QString("VELOCITY");  
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("ABDE-Test-052124-run1693");
+   // details[ "protocolName" ] = QString("ABDE-Test-052124-v2");
+   // details[ "statusID" ]     = QString("341");
+   // details[ "autoflowID" ]   = QString("1152");
+   // details[ "runID" ]        = QString("1693");
+   // details[ "OptimaName" ]   = QString("Optima 2");  
+   // details[ "expType" ]      = QString("ABDE");  
    
    // load_auto( details );
-   
-
+  
 }
 
 
 // AUTO: Constructor for manual processing 
-US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir  ) : US_Widgets()
+US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currenChtInd, int plotind ) : US_Widgets()
 {
  
    check        = US_Images::getIcon( US_Images::CHECK );
@@ -863,6 +918,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
+
+
    // Edit controls 
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
 
@@ -879,9 +936,18 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
-   pb_airGap->setHidden( true );
+   pb_airGap->setVisible( false );
+   lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
+
+   
+   // // Air Gap (hidden by default)
+   // pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   // le_airGap = us_lineedit( "", 1, true );
+   // pb_airGap->setHidden( true );
+   // le_airGap->setHidden( true );
 
    // Data range
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
@@ -902,7 +968,8 @@ pb_plateau->setVisible(false);
 //QLineEdit* 
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton* 
-   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
 //QLineEdit* 
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel* 
@@ -1072,7 +1139,7 @@ pb_plateau->setVisible(false);
    // buttons->addWidget( pb_accept );
 
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
-   pb_pass    = us_pushbutton( tr( "Accept" ), false );
+   pb_pass    = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
    
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( close()  ) );
    connect( pb_pass,   SIGNAL( clicked()    ),
@@ -1083,8 +1150,9 @@ pb_plateau->setVisible(false);
 
 
 
-   // -- Hide some buttons ----
-      
+   // -- Hide && || disable some buttons ----
+
+   cb_triple      -> setEnabled( false );
    pb_investigator->hide();
    le_investigator->hide();
    pb_load        ->hide(); 
@@ -1092,7 +1160,7 @@ pb_plateau->setVisible(false);
    pb_report      ->hide();
    lb_gaps        ->hide();
    ct_gaps        ->hide();
-
+   pb_nextChan    ->hide();
    
    lb_scan        ->hide();
    lb_from        ->hide();
@@ -1121,31 +1189,6 @@ pb_plateau->setVisible(false);
    // pb_reset       ->hide();
    // pb_help        ->hide();
    // pb_accept      ->hide();
-
-   //MWL
-   lb_mwlctl      ->hide();
-   lb_ldelta      ->hide();
-   ct_ldelta      ->hide();
-   lb_lstart      ->hide();
-   lb_lend        ->hide();
-   lb_lplot       ->hide();
-   cb_lplot       ->hide();
-   cb_lstart      ->hide();
-   cb_lend        ->hide();
-   le_ltrng       ->hide();
-   le_lxrng       ->hide();
-   pb_custom      ->hide();
-   pb_incall      ->hide();
-   pb_larrow      ->hide();
-   pb_rarrow      ->hide();
-   //lo_writemwl    ->hide();
-   ck_writemwl    ->hide();
-   	 
-   rb_lrange      ->hide();
-   rb_custom      ->hide();
-   rb_radius      ->hide();
-   rb_waveln      ->hide();
-   
    
    //---------------------
    
@@ -1179,13 +1222,30 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   qDebug() << "US_Edit manual setup 1";
+   
    reset();
+
+   qDebug() << "US_Edit manual setup 2";
 
    //Load already selected data
    this->allData    = allData;
    this->triples    = triples;
    this->workingDir = workingDir;
+
+   qDebug() << "US_Edit manual setup 3";
    load_manual_auto();
+   qDebug() << "US_Edit manual setup 4";
+   
+   //pre-select channel passed from main window:
+   cb_triple->setCurrentIndex( currenChtInd );
+   qDebug() << "US_Edit manual setup 5";
+   new_triple( currenChtInd );
+   qDebug() << "US_Edit manual setup 6";
+   cb_lplot ->setCurrentIndex( plotind );
+   qDebug() << "US_Edit manual setup 7";
+   show_mwl_controls( false );
+   qDebug() << "US_Edit manual setup 8";
 }
 
 
@@ -1385,8 +1445,10 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
-   pb_airGap->setHidden( true );
+   pb_airGap->setVisible( false );
+   lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
 
    // Data range
@@ -1408,7 +1470,8 @@ pb_plateau->setVisible(false);
 //QLineEdit* 
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton* 
-   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
 //QLineEdit* 
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel* 
@@ -1633,6 +1696,8 @@ void US_Edit::sel_investigator( void )
 // Reset parameters to their defaults
 void US_Edit::reset( void )
 {
+
+  qDebug() << "reset 1";
    changes_made = false;
    floatingData = false;
 
@@ -1679,16 +1744,21 @@ void US_Edit::reset( void )
 
    cb_triple->disconnect();
 
+   qDebug() << "reset 2";
+   
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
    v_line = NULL;
    pick     ->disconnect();
 
+   qDebug() << "reset 3";
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid = us_grid( data_plot );
+   qDebug() << "reset 4";
    data_plot->replot();
-
+   qDebug() << "reset 5";
+   
    // Disable pushbuttons
    pb_details     ->setEnabled( false );
 
@@ -1721,6 +1791,7 @@ void US_Edit::reset( void )
    
    ck_writemwl    ->setEnabled( false );
 
+   qDebug() << "reset 6";
    // Remove icons
    pb_meniscus    ->setIcon( QIcon() );
    pb_airGap      ->setIcon( QIcon() );
@@ -1733,6 +1804,8 @@ void US_Edit::reset( void )
 
    pb_float       ->setIcon( QIcon() );
 
+   qDebug() << "reset 61";
+
    editLabel     .clear();
    data.scanData .clear();
    includes      .clear();
@@ -1741,6 +1814,8 @@ void US_Edit::reset( void )
    triples       .clear();
    cb_triple    ->clear();
    cb_rpms      ->disconnect();
+
+   qDebug() << "reset 62";
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
@@ -1764,12 +1839,31 @@ void US_Edit::reset( void )
    rb_radius    ->setChecked( true );
    rb_waveln    ->setChecked( false );
    pb_custom    ->setEnabled( false );
+   qDebug() << "reset 63";
+   if (pb_airGap != nullptr)
+   {
+     pb_airGap->setHidden( true );
+   }
+   qDebug() << "reset 64";
+   if (le_airGap != nullptr)
+   {
+     le_airGap->setHidden( true );
+   }
+   qDebug() << "reset 65";
+   if (lb_airGap != nullptr)
+   {
+      lb_airGap->setHidden( true );
+   }
+   qDebug() << "reset 7";
    connect_mwl_ctrls( true );
-
+   qDebug() << "reset 8";
+   
    set_pbColors( NULL );
    lb_triple->setText( tr( "Cell / Channel / Wavelength" ) );
+   qDebug() << "reset 9";
 
    show_mwl_controls( false );
+   qDebug() << "reset 10";
 }
 
 // Reset parameters for a new triple
@@ -2026,6 +2120,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   autoflowID_passed   = details_at_editing[ "autoflowID" ].toInt();
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
+  autoflowStatusID    = details_at_editing[ "statusID" ].toInt();
+  autoflow_expType    = details_at_editing[ "expType" ];
       
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
@@ -2063,11 +2159,23 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
     
   ///////////////////////////////////////////////////////////////////////
   
-  qDebug() << "autoflowID: " << autoflowID_passed;
+  qDebug() << "autoflowID, intensityID, autoflowStatusID : " << autoflowID_passed << details_at_editing[ "intensityID" ] << autoflowStatusID;
   qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_passed << ", " << idInv_auto;
 
   process_optics_auto();
 
+  //Hide some gui elements for "ABDE"
+  if ( autoflow_expType == "ABDE" )
+    {
+      lb_baseline -> hide();
+      le_baseline -> hide();
+      lb_plateau  -> hide();
+      le_plateau  -> hide();
+
+      lb_odlim    -> hide();
+      ct_odlim    -> hide();
+    }
+  
 }
 
 //Slot to process optics type...
@@ -2076,11 +2184,16 @@ void US_Edit::process_optics_auto( )
   all_loaded = false;
   editProfile.clear();
   editProfile_scans_excl.clear();
+  automatic_meniscus.clear();
+  manual_edit_comments. clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
   iwavl_edit_ref_index.clear();
   triple_plot_first_time.clear();
+
+  //abde
+  edited_triples_abde. clear();
   
   //Read centerpiece names from protocol:
   centerpiece_names.clear();
@@ -2187,7 +2300,9 @@ DbgLv(1) << "Ld: runtype" << runtype;
    }
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
-   rawc_wvlns.sort();
+   QMap<int, QString> m;
+   for (const auto& s : rawc_wvlns) m[s.toInt()] = s;
+   rawc_wvlns = QStringList(m.values());
    rawi_wvlns.clear();
    toti_wvlns.clear();
 
@@ -2459,6 +2574,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       {  // Save lambdas for each cell; flag if any cell-to-cell differences
          QVector< int > wvs;
          nwavelo      = mwl_data.lambdas( wvs, ccx );
+         std::sort( wvs.begin(), wvs.end());
          wavelns_i << wvs;
 
          if ( nwavelo != maxwavl )
@@ -2495,6 +2611,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       expd_radii .clear();
       expc_wvlns .clear();
       nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+      std::sort(expi_wvlns.begin(), expi_wvlns.end());
 DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
 
       // Initialize export wavelength lists for first channel
@@ -2517,68 +2634,70 @@ DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
       cb_lend  ->setCurrentIndex( lastx );
 DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 
-      edata         = &allData[ 0 ];
-      nrpoint       = edata->pointCount();
-      int nscan     = edata->scanCount();
-      for ( int trx = 0; trx < allData.size(); trx++ )
-         nscan         = qMax( nscan, allData[ trx ].scanCount() );
-      int ndset     = ncelchn * nrpoint;
-      int ndpoint   = nscan * maxwavl;
-DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
- << ndset << ndpoint;
+//       edata         = &allData[ 0 ];
+//       nrpoint       = edata->pointCount();
+//       int nscan     = edata->scanCount();
+//       for ( int trx = 0; trx < allData.size(); trx++ )
+//          nscan         = qMax( nscan, allData[ trx ].scanCount() );
+//       int ndset     = ncelchn * nrpoint;
+//       int ndpoint   = nscan * maxwavl;
+// DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
+//  << ndset << ndpoint;
 
-      for ( int ii = 0; ii < nrpoint; ii++ )
-      {  // Update the list of radii that may be plotted
-         expd_radii << data.xvalues[ ii ];
-         expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
-      }
-DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
+//       for ( int ii = 0; ii < nrpoint; ii++ )
+//       {  // Update the list of radii that may be plotted
+//          expd_radii << data.xvalues[ ii ];
+//          expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+//       }
+// DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
-      QVector< double > wrdata;
-      wrdata.fill( 0.0, ndpoint );
-      rdata .clear();
-DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+//       QVector< double > wrdata;
+//       wrdata.fill( 0.0, ndpoint );
+//       rdata .clear();
+// DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
 
-      for ( int ii = 0; ii < ndset; ii++ )
-      {  // Initialize the data vector that has wavelength as the x-axis
-         rdata << wrdata;
-      }
-DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+//       for ( int ii = 0; ii < ndset; ii++ )
+//       {  // Initialize the data vector that has wavelength as the x-axis
+//          rdata << wrdata;
+//       }
+// DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
 
-      // Update wavelength-x-axis data vector with amplitude data points
-      // The input has (ncelchn * nwaveln) data sets, each of which
-      //   contains (nscan * nrpoint) data points.
-      // The output has (ncelchn * nrpoint) data sets, each of which
-      //   contains (nscan * nwaveln) data points.
-      int trx       = 0;
+//       // Update wavelength-x-axis data vector with amplitude data points
+//       // The input has (ncelchn * nwaveln) data sets, each of which
+//       //   contains (nscan * nrpoint) data points.
+//       // The output has (ncelchn * nrpoint) data sets, each of which
+//       //   contains (nscan * nwaveln) data points.
+//       int trx       = 0;
 
-      for ( int ccx = 0; ccx < ncelchn; ccx++ )
-      {  // Handle each triple of AUC data
-         lambdas_by_cell( ccx );                      // Lambdas in cell
+//       for ( int ccx = 0; ccx < ncelchn; ccx++ )
+//       {  // Handle each triple of AUC data
+//          lambdas_by_cell( ccx );                      // Lambdas in cell
 
-         for ( int jwx = 0; jwx < nwaveln; jwx++ )
-         {  // Each wavelength in the current cell
-            edata         = &allData[ trx ];               // Triple data
-            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
-            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+//          for ( int jwx = 0; jwx < nwaveln; jwx++ )
+//          {  // Each wavelength in the current cell
+//             edata         = &allData[ trx ];               // Triple data
+//             int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
+//             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+// DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-            for ( int scx = 0; scx < edata->scanCount(); scx++ )
-            {  // Each scan of a triple
-               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
-               int odx       = ccx * nrpoint;         // Output dataset index
-               int opx       = scx * maxwavl + wvx;   // Output point index
-DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
-               for ( int rax = 0; rax < nrpoint; rax++ )
-               {  // Store ea. radius data point as a wavelength point in a scan
-                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
-               } // END: radius points loop
-            } // END: scans loop
+//             for ( int scx = 0; scx < edata->scanCount(); scx++ )
+//             {  // Each scan of a triple
+//                US_DataIO::Scan* scan  = &edata->scanData[ scx ];
+//                int odx       = ccx * nrpoint;         // Output dataset index
+//                int opx       = scx * maxwavl + wvx;   // Output point index
+// DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+//                for ( int rax = 0; rax < nrpoint; rax++ )
+//                {  // Store ea. radius data point as a wavelength point in a scan
+//                   rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
+//                } // END: radius points loop
+//             } // END: scans loop
 
-            trx++;
-         } // END: input triples loop
-      } // END: input celchn loop
-DbgLv(1) << "IS-MWL:    Triples loop complete";
+//             trx++;
+//          } // END: input triples loop
+//       } // END: input celchn loop
+// DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+      set_data_over_lamda();
 
 DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       lb_triple->setText( tr( "Cell / Channel" ) );
@@ -2704,6 +2823,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    
    //for ( int trx = 0; trx < triples.size(); trx++ )
+   //Go over triples: for IP-MWL data, find reference wvl
+   //find auto-meniscus porisions
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
      {
        QString triple_name = cb_triple->itemText( trx );
@@ -2728,6 +2849,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	 {
 	   qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
 	   qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ trx ].size();
+
+	   mwl_data.lambdas( expi_wvlns, trx );
+	   std::sort(expi_wvlns.begin(), expi_wvlns.end());
 	   //Debug
 	   for ( int g=0; g < expi_wvlns.size(); ++g )
 	     qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
@@ -2786,6 +2910,18 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	     }
 	   
 	   data_index   = mwl_data.data_index( iwavl_edit_ref[ trx ], trx );
+
+	   //Debug
+	   for (int kk=0; kk<iwavl_edit_ref.size(); ++kk )
+	     qDebug() << "isMWL: Ref wvl -- "  << iwavl_edit_ref[ kk ];
+
+	   QVector< int > wvs_temp;
+	   int num_wvls =  mwl_data.lambdas( wvs_temp, trx );
+      std::sort(wvs_temp.begin(), wvs_temp.end());
+	   qDebug() << "#Wvls for " << triple_name << trx << ": " << num_wvls;
+	   for (int rr=0; rr<wvs_temp.size(); ++rr )
+	     qDebug() << "wvls ARE -- "  << wvs_temp[ rr ];
+	   
 	 }
        else
 	 index_data_auto( trx );
@@ -2843,6 +2979,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
+
+	   //automatic meniscus Map, per channel
+	   automatic_meniscus[ triple_name ] = true;
 
 
 	   //Fill out editProfile_scans_excl MAP:
@@ -2943,6 +3082,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
 
+	   //automatic meniscus Map, per channel
+	   automatic_meniscus[ triple_name ] = true;
+
 	   //Fill out editProfile_scans_excl MAP:
 	   QMap<QString, QStringList>::const_iterator ci = aprof_channel_to_scans.constBegin();
 	   while (ci != aprof_channel_to_scans.constEnd())
@@ -2958,7 +3100,15 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
 	   qDebug() << triple_name  << ", " << triple_info;
 	 }
+
+       if ( autoflow_expType == "ABDE" )
+	 {
+	   edited_triples_abde[ triple_name ] = false;
+	   automatic_meniscus[ triple_name ]  = false;
+	 }
      }
+   //[FINISHED] Go over triples: for IP-MWL data, find reference wvl
+   //[FINISHED] find auto-meniscus porisions
 
    if ( editProfile.count() == cb_triple->count() )
      all_loaded = true;
@@ -2975,13 +3125,15 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      //if (  dataType != "IP" )
      new_triple_auto( 0 );                  //ALEXEY <--- here does NOT applies the gap removal
 
-   pb_write->setEnabled( true );
+   if ( autoflow_expType == "ABDE" )
+     pb_write->setEnabled( false );
+   else
+     pb_write->setEnabled( true );
    pb_emanual->setEnabled( true );
    pb_undo ->setEnabled( false ); 
 
    le_status->setText( tr( "Edit controls set" ) );
-   
-   // /************** END OF TESTING ****************************************/   
+
 }
 
 void US_Edit::reset_editdata_panel( void )
@@ -3282,7 +3434,7 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 
 	   qDebug() << "job2run: " << job2run;
          }
-	else if ( ename == "job_fitmen" )
+	else if ( ename == "job_fitmen" || ename == "job_fitmen_auto" )
 	  {
             QXmlStreamAttributes attr = xmli.attributes();
             job3run        = bool_flag( attr.value( "run" ).toString() );
@@ -3666,7 +3818,10 @@ double US_Edit::find_meniscus_auto()
   double meniscus_init = sqrt( bottom_db*bottom_db - ( aprofile_volume*360/(1000*pathlength_db*angle_db*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
   
   qDebug() << "Meniscus_init: " << meniscus_init << ", " << bottom_db << ", " << pathlength_db << ", " << angle_db << ", " << M_PI;
-    
+
+  //HARD CODED [for now?]:
+  meniscus_init = 5.87; //Edge of the cell -- NEEDS TESTING
+  
   double meniscus_av = 0;
 
   // Scan Data Processing...
@@ -3693,9 +3848,14 @@ double US_Edit::find_meniscus_auto()
 
       //int indexRight  = data.xindex( range_right );
       //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
-      int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
-      
-      // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
+      //int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
+
+      //int indexRight  = data.xindex( range_right );
+      //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0!!!
+      int indexRight  = data.xindex( meniscus_init + ( range_right - meniscus_init )/2.0 );   
+
+      qDebug() << "data.xindex( range_right ) = " << data.xindex( range_right );
+      qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
 	
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
@@ -4052,7 +4212,9 @@ DbgLv(1) << "Ld: runtype" << runtype;
    }
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
-   rawc_wvlns.sort();
+   QMap<int, QString> m;
+   for (const auto& s : rawc_wvlns) m[s.toInt()] = s;
+   rawc_wvlns = QStringList(m.values());
    rawi_wvlns.clear();
    toti_wvlns.clear();
 
@@ -4318,6 +4480,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       {  // Save lambdas for each cell; flag if any cell-to-cell differences
          QVector< int > wvs;
          nwavelo      = mwl_data.lambdas( wvs, ccx );
+         std::sort( wvs.begin(), wvs.end() );
          wavelns_i << wvs;
 
          if ( nwavelo != maxwavl )
@@ -4354,6 +4517,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       expd_radii .clear();
       expc_wvlns .clear();
       nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+      std::sort( expi_wvlns.begin(), expi_wvlns.end() );
 DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
 
       // Initialize export wavelength lists for first channel
@@ -4376,68 +4540,133 @@ DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
       cb_lend  ->setCurrentIndex( lastx );
 DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 
-      edata         = &allData[ 0 ];
-      nrpoint       = edata->pointCount();
-      int nscan     = edata->scanCount();
-      for ( int trx = 0; trx < allData.size(); trx++ )
-         nscan         = qMax( nscan, allData[ trx ].scanCount() );
-      int ndset     = ncelchn * nrpoint;
-      int ndpoint   = nscan * maxwavl;
-DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
- << ndset << ndpoint;
+      // edata         = &allData[ 0 ];
+      // nrpoint       = edata->pointCount();
+//       int nscan     = edata->scanCount();
+//       for ( int trx = 0; trx < allData.size(); trx++ )
+//          nscan         = qMax( nscan, allData[ trx ].scanCount() );
+//       int ndset     = ncelchn * nrpoint;
+//       int ndpoint   = nscan * maxwavl;
+// DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
+//  << ndset << ndpoint;
 
-      for ( int ii = 0; ii < nrpoint; ii++ )
-      {  // Update the list of radii that may be plotted
-         expd_radii << data.xvalues[ ii ];
-         expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
-      }
-DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
+//       for ( int ii = 0; ii < nrpoint; ii++ )
+//       {  // Update the list of radii that may be plotted
+//          expd_radii << data.xvalues[ ii ];
+//          expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+//       }
+// DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
-      QVector< double > wrdata;
-      wrdata.fill( 0.0, ndpoint );
-      rdata .clear();
-DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
 
-      for ( int ii = 0; ii < ndset; ii++ )
-      {  // Initialize the data vector that has wavelength as the x-axis
-         rdata << wrdata;
-      }
-DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+
+      set_data_over_lamda();
+
+
+//       QVector< double > wrdata;
+//       wrdata.fill( 0.0, ndpoint );
+//       rdata .clear();
+// DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+
+//       for ( int ii = 0; ii < ndset; ii++ )
+//       {  // Initialize the data vector that has wavelength as the x-axis
+//          rdata << wrdata;
+//       }
+// DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
 
       // Update wavelength-x-axis data vector with amplitude data points
       // The input has (ncelchn * nwaveln) data sets, each of which
       //   contains (nscan * nrpoint) data points.
       // The output has (ncelchn * nrpoint) data sets, each of which
       //   contains (nscan * nwaveln) data points.
-      int trx       = 0;
+//       int trx       = 0;
+//       int trx_b     = 0;
+//       rdata.clear();
+//       for ( int ccx = 0; ccx < ncelchn; ccx++ )
+//       {  // Handle each triple of AUC data
+//          lambdas_by_cell( ccx );                      // Lambdas in cell
+//          trx_b = trx;
+//          int min_xval = -100000000;
+//          int max_xval =  100000000;
+//          int dx       = -1000;
+//          for ( int jwx = 0; jwx < nwaveln; jwx++ )
+//          {
+//             edata         = &allData[ trx ];               // Triple data
+//             min_xval = qMax(min_xval, static_cast<int> (qRound(edata->xvalues.first() * 1000)));
+//             max_xval = qMin(max_xval, static_cast<int> (qRound(edata->xvalues.last() * 1000)));
+//             double d = edata->xvalues.at(1) - edata->xvalues.at(0);
+//             dx = qMax(dx, static_cast<int> (qRound(d * 1000)));
+//             trx++;
+//          }
+//          QVector< double > xvals;
+//          int xx = min_xval;
+//          while (xx <= max_xval)
+//          {
+//             xvals << xx / 1000.0;
+//             xx += dx;
+//          }
 
-      for ( int ccx = 0; ccx < ncelchn; ccx++ )
-      {  // Handle each triple of AUC data
-         lambdas_by_cell( ccx );                      // Lambdas in cell
+//          rdata_xvals << xvals;
+//          trx = trx_b;
+//          // order of sorting data:
+//          int nscans = allData[trx].scanCount();
+//          int ndp = xvals.size() * nwaveln * nscans;
+//          QVector< double > yvals(ndp, 0);
+//          QVector< int > xvals_pos(nwaveln, 0);
 
-         for ( int jwx = 0; jwx < nwaveln; jwx++ )
-         {  // Each wavelength in the current cell
-            edata         = &allData[ trx ];               // Triple data
-            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
-            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+//          for (int ii = 0; ii < xvals.size(); ii++)
+//          {
+//             trx = trx_b;
+//             int txval = static_cast<int>(qRound(xvals.at(ii) * 1000));
+//             for ( int jj = 0; jj < nwaveln; jj++ )
+//             {  // Each wavelength in the current cell
+//                 edata         = &allData[ trx ];               // Triple data
+//                 int iwavl     = rawi_wvlns[ jj ];             // Wavelength value
+//                 int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+//                 DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-            for ( int scx = 0; scx < edata->scanCount(); scx++ )
-            {  // Each scan of a triple
-               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
-               int odx       = ccx * nrpoint;         // Output dataset index
-               int opx       = scx * maxwavl + wvx;   // Output point index
-DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
-               for ( int rax = 0; rax < nrpoint; rax++ )
-               {  // Store ea. radius data point as a wavelength point in a scan
-                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
-               } // END: radius points loop
-            } // END: scans loop
+//                 int rpidx = -1;
+//                 for ( int kk = xvals_pos.at(jj); kk < edata->pointCount(); kk++)
+//                 {
+//                     int cxval = static_cast<int>(qRound(edata->xvalues.at(kk) * 1000));
+//                     if ( cxval == txval ) {
+//                         rpidx = kk;
+//                         xvals_pos[jj] = kk;
+//                         break;
+//                     }
+//                 }
+//                 if ( rpidx == -1 ) {
+//                     xvals_pos[jj] = edata->pointCount();
+//                     trx++;
+//                     continue;
+//                 }
 
-            trx++;
-         } // END: input triples loop
-      } // END: input celchn loop
-DbgLv(1) << "IS-MWL:    Triples loop complete";
+//                 int idx_ii = ii * nwaveln * nscans;
+//                 for ( int ss = 0; ss < nscans; ss++ )
+//                 {
+//                     double yval = edata->scanData.at(ss).rvalues.at(rpidx);
+//                     int idx_ss = ss * nwaveln;
+//                     int idx_wv = idx_ii + idx_ss + jj;
+//                     yvals[idx_wv] = yval;
+//                 }
+
+//                 trx++;
+//             } // END: input triples loop
+//          }
+//          rdata << yvals;
+//       }
+// DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+
+
+
+
+
+
+
+
+
+
+
 
 DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       lb_triple->setText( tr( "Cell / Channel" ) );
@@ -4598,7 +4827,9 @@ DbgLv(1) << "Ld: runtype" << runtype;
    }
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
-   rawc_wvlns.sort();
+   QMap<int, QString> m;
+   for (const auto& s : rawc_wvlns) m[s.toInt()] = s;
+   rawc_wvlns = QStringList(m.values());
    rawi_wvlns.clear();
    toti_wvlns.clear();
 
@@ -4864,6 +5095,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       {  // Save lambdas for each cell; flag if any cell-to-cell differences
          QVector< int > wvs;
          nwavelo      = mwl_data.lambdas( wvs, ccx );
+         std::sort( wvs.begin(), wvs.end() );
          wavelns_i << wvs;
 
          if ( nwavelo != maxwavl )
@@ -4900,6 +5132,7 @@ DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
       expd_radii .clear();
       expc_wvlns .clear();
       nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+      std::sort( expi_wvlns.begin(), expi_wvlns.end() );
 DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
 
       // Initialize export wavelength lists for first channel
@@ -4922,68 +5155,70 @@ DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
       cb_lend  ->setCurrentIndex( lastx );
 DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 
-      edata         = &allData[ 0 ];
-      nrpoint       = edata->pointCount();
-      int nscan     = edata->scanCount();
-      for ( int trx = 0; trx < allData.size(); trx++ )
-         nscan         = qMax( nscan, allData[ trx ].scanCount() );
-      int ndset     = ncelchn * nrpoint;
-      int ndpoint   = nscan * maxwavl;
-DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
- << ndset << ndpoint;
+      set_data_over_lamda();
 
-      for ( int ii = 0; ii < nrpoint; ii++ )
-      {  // Update the list of radii that may be plotted
-         expd_radii << data.xvalues[ ii ];
-         expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
-      }
-DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
+//       edata         = &allData[ 0 ];
+//       nrpoint       = edata->pointCount();
+//       int nscan     = edata->scanCount();
+//       for ( int trx = 0; trx < allData.size(); trx++ )
+//          nscan         = qMax( nscan, allData[ trx ].scanCount() );
+//       int ndset     = ncelchn * nrpoint;
+//       int ndpoint   = nscan * maxwavl;
+// DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
+//  << ndset << ndpoint;
 
-      QVector< double > wrdata;
-      wrdata.fill( 0.0, ndpoint );
-      rdata .clear();
-DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+//       for ( int ii = 0; ii < nrpoint; ii++ )
+//       {  // Update the list of radii that may be plotted
+//          expd_radii << data.xvalues[ ii ];
+//          expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+//       }
+// DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
-      for ( int ii = 0; ii < ndset; ii++ )
-      {  // Initialize the data vector that has wavelength as the x-axis
-         rdata << wrdata;
-      }
-DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+//       QVector< double > wrdata;
+//       wrdata.fill( 0.0, ndpoint );
+//       rdata .clear();
+// DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
 
-      // Update wavelength-x-axis data vector with amplitude data points
-      // The input has (ncelchn * nwaveln) data sets, each of which
-      //   contains (nscan * nrpoint) data points.
-      // The output has (ncelchn * nrpoint) data sets, each of which
-      //   contains (nscan * nwaveln) data points.
-      int trx       = 0;
+//       for ( int ii = 0; ii < ndset; ii++ )
+//       {  // Initialize the data vector that has wavelength as the x-axis
+//          rdata << wrdata;
+//       }
+// DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
 
-      for ( int ccx = 0; ccx < ncelchn; ccx++ )
-      {  // Handle each triple of AUC data
-         lambdas_by_cell( ccx );                      // Lambdas in cell
+//       // Update wavelength-x-axis data vector with amplitude data points
+//       // The input has (ncelchn * nwaveln) data sets, each of which
+//       //   contains (nscan * nrpoint) data points.
+//       // The output has (ncelchn * nrpoint) data sets, each of which
+//       //   contains (nscan * nwaveln) data points.
+//       int trx       = 0;
 
-         for ( int jwx = 0; jwx < nwaveln; jwx++ )
-         {  // Each wavelength in the current cell
-            edata         = &allData[ trx ];               // Triple data
-            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
-            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+//       for ( int ccx = 0; ccx < ncelchn; ccx++ )
+//       {  // Handle each triple of AUC data
+//          lambdas_by_cell( ccx );                      // Lambdas in cell
 
-            for ( int scx = 0; scx < edata->scanCount(); scx++ )
-            {  // Each scan of a triple
-               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
-               int odx       = ccx * nrpoint;         // Output dataset index
-               int opx       = scx * maxwavl + wvx;   // Output point index
-DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
-               for ( int rax = 0; rax < nrpoint; rax++ )
-               {  // Store ea. radius data point as a wavelength point in a scan
-                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
-               } // END: radius points loop
-            } // END: scans loop
+//          for ( int jwx = 0; jwx < nwaveln; jwx++ )
+//          {  // Each wavelength in the current cell
+//             edata         = &allData[ trx ];               // Triple data
+//             int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
+//             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+// DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-            trx++;
-         } // END: input triples loop
-      } // END: input celchn loop
-DbgLv(1) << "IS-MWL:    Triples loop complete";
+//             for ( int scx = 0; scx < edata->scanCount(); scx++ )
+//             {  // Each scan of a triple
+//                US_DataIO::Scan* scan  = &edata->scanData[ scx ];
+//                int odx       = ccx * nrpoint;         // Output dataset index
+//                int opx       = scx * maxwavl + wvx;   // Output point index
+// DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+//                for ( int rax = 0; rax < nrpoint; rax++ )
+//                {  // Store ea. radius data point as a wavelength point in a scan
+//                   rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
+//                } // END: radius points loop
+//             } // END: scans loop
+
+//             trx++;
+//          } // END: input triples loop
+//       } // END: input celchn loop
+// DbgLv(1) << "IS-MWL:    Triples loop complete";
 
 DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       lb_triple->setText( tr( "Cell / Channel" ) );
@@ -5051,7 +5286,94 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    qDebug() << "baseline: "   << baseline;
 }
 
+void US_Edit::set_data_over_lamda() {
+   int trx       = 0;
+   int trx_b     = 0;
+   rdata.clear();
+   for ( int ccx = 0; ccx < ncelchn; ccx++ )
+   {  // Handle each triple of AUC data
+      lambdas_by_cell( ccx );                      // Lambdas in cell
+      trx_b = trx;
+      int min_xval = -100000000;
+      int max_xval =  100000000;
+      int dx       = -1000;
+      for ( int jwx = 0; jwx < nwaveln; jwx++ )
+      {
+         edata         = &allData[ trx ];               // Triple data
+         min_xval = qMax(min_xval, static_cast<int> (qRound(edata->xvalues.first() * 1000)));
+         max_xval = qMin(max_xval, static_cast<int> (qRound(edata->xvalues.last() * 1000)));
+         double d = edata->xvalues.at(1) - edata->xvalues.at(0);
+         dx = qMax(dx, static_cast<int> (qRound(d * 1000)));
+         trx++;
+      }
+      QVector< double > xvals;
+      int xx = min_xval;
+      while (xx <= max_xval)
+      {
+         xvals << xx / 1000.0;
+         xx += dx;
+      }
 
+      rdata_xvals << xvals;
+      trx = trx_b;
+      // order of sorting data:
+      int nscans = allData[trx].scanCount();
+      int ndp = xvals.size() * nwaveln * nscans;
+      QVector< double > yvals(ndp, 0);
+      QVector< int > xvals_pos(nwaveln, 0);
+
+      for (int ii = 0; ii < xvals.size(); ii++)
+      {
+         trx = trx_b;
+         int txval = static_cast<int>(qRound(xvals.at(ii) * 1000));
+         for ( int jj = 0; jj < nwaveln; jj++ )
+         {  // Each wavelength in the current cell
+            edata         = &allData[ trx ];               // Triple data
+            int iwavl     = rawi_wvlns[ jj ];             // Wavelength value
+            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+            DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+
+            int rpidx = -1;
+            for ( int kk = xvals_pos.at(jj); kk < edata->pointCount(); kk++)
+            {
+               int cxval = static_cast<int>(qRound(edata->xvalues.at(kk) * 1000));
+               if ( cxval == txval ) {
+                  rpidx = kk;
+                  xvals_pos[jj] = kk;
+                  break;
+               }
+            }
+            if ( rpidx == -1 ) {
+               xvals_pos[jj] = edata->pointCount();
+               trx++;
+               continue;
+            }
+
+            int idx_ii = ii * nwaveln * nscans;
+            for ( int ss = 0; ss < nscans; ss++ )
+            {
+               double yval = edata->scanData.at(ss).rvalues.at(rpidx);
+               int idx_ss = ss * nwaveln;
+               int idx_wv = idx_ii + idx_ss + jj;
+               yvals[idx_wv] = yval;
+            }
+
+            trx++;
+         } // END: input triples loop
+      }
+      rdata << yvals;
+   }
+   DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+   expc_radii.clear();
+   expd_radii.clear();
+   foreach (double xval, rdata_xvals.at(0)) {
+       expc_radii << QString::number(xval);
+       expd_radii << xval;
+   }
+
+
+}
 
 
 // Set pushbutton colors
@@ -6311,10 +6633,23 @@ DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwavelo << recndx;
 DbgLv(1) << "PlMwl:    outData size" << outData.size();
 DbgLv(1) << "PlMwl:    expc_wvlns size" << expc_wvlns.size();
       data                = *outData[ data_index ];
+
+      qDebug() << "IN_edit_1";
+      
       recvalu             = expi_wvlns.at( recndx );
+
+      qDebug() << "IN_edit_2";
       svalu               = expc_wvlns.at( recndx );
+
+      qDebug() << "IN_edit_3";
 QString dcell=QString::number(data.cell);
+
+ qDebug() << "IN_edit_4";
+ 
 QString dchan=QString(QChar(data.channel));
+
+ qDebug() << "IN_edit_5";
+ 
 QString dwavl=QString::number(data.scanData[0].wavelength);
 DbgLv(1) << "PlMwl:     c triple" << scell << schan << svalu
  << "d triple" << dcell << dchan << dwavl;
@@ -6322,8 +6657,8 @@ DbgLv(1) << "PlMwl:     c triple" << scell << schan << svalu
 
    else
    {
-      index               = ccx * nrpoint + recndx;
-DbgLv(1) << "PlMwl:   x-w index cc nr rx" << index << ccx << nrpoint << recndx;
+      // index               = ccx * nrpoint + recndx;
+// DbgLv(1) << "PlMwl:   x-w index cc nr rx" << index << ccx << nrpoint << recndx;
       data                = *outData[ 0 ];
       rectype             = tr( "Radius" );
       recvalu             = expd_radii.at( recndx );
@@ -6338,23 +6673,50 @@ DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
                        + QString( QChar( data.type[ 1 ] ) );
 
    le_info->setText( runID + "  (" + desc + ")" );
+   QString plot_type;
+   if ( dataType == "RA" )
+   {
+      plot_type = "Radial Absorbance Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
+   }
+   else if ( dataType == "RI" )
+   {
+      plot_type = "Pseudo Absorbance Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
+   }
+   else if ( dataType == "IP" )
+   {
 
+      plot_type = "Radial Interference Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fringes " ) );
+
+      // Enable Air Gap
+      pb_airGap->setHidden( false );
+      le_airGap->setHidden( false );
+   }
+   else if ( dataType == "FI" )
+   {
+      plot_type = "Fluorescence Intensity Data\n";
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fluorescence Intensity " ) );
+   }
+   else
+      plot_type = "File type not recognized";
    // Plot Title
-   QString     title   = tr( "Pseudo Absorbance Data\n"
+   QString     title   = tr( "%6"
                              "Run ID: %1\n"
                              "Cell: %2  Channel: %3  %4: %5" )
                          .arg( runID ).arg( scell ).arg( schan )
-                         .arg( rectype ).arg( svalu );
+                         .arg( rectype ).arg( svalu ).arg( plot_type );
 DbgLv(1) << "PlMwl:  title" << title;
 
    data_plot->setTitle    ( title );
-   data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
+
 
    data_plot->detachItems ( QwtPlotItem::Rtti_PlotCurve ); 
    v_line = NULL;
 
    int     nscan  = data.scanData.size();
-   int     npoint = xaxis_radius ? nrpoint : nwavelo;
+   int     npoint = data.pointCount();
    int     ptxs   = 0;
 
    if ( step != MENISCUS  &&  xaxis_radius )
@@ -6426,38 +6788,36 @@ DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    {  // Build plot of radius record with wavelength points
 DbgLv(1) << "PlMwl:    START xa_WAV";
       data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Wavelength (nm)" ) );
-      QVector< double > wrdata = rdata[ index ];
-      int     dpx    = 0;
+      int ccx = cb_triple->currentIndex();
+      rvec.clear();
 
-      for ( int ii = 0; ii < nscan; ii++ )
-      {
-         if ( ! includes.contains( ii ) ) continue;
-
-         for ( int jj = 0; jj < npoint; jj++ )
-         {
-            rr[ jj ] = expi_wvlns[ jj ];
-            valueV   = qMin( maxOD, wrdata[ dpx++ ] );
-            vv[ jj ] = valueV;
-
-            maxR     = qMax( maxR, rr[ jj ] );
-            minR     = qMin( minR, rr[ jj ] );
-            maxV     = qMax( maxV, valueV );
-            minV     = qMin( minV, valueV );
-
-            if ( valueV > odlimit )
-               kodlim++;
-         }
-
-         US_DataIO::Scan*  scn = &data.scanData[ ii ];
-         QString ctitle = tr( "Raw Data at " )
-            + QString::number( scn->seconds ) + tr( " seconds" )
-            + " #" + QString::number( ii );
-
-         QwtPlotCurve* cc = us_curve( data_plot, ctitle );
-         cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         cc->setSamples( rr, vv, npoint );
+      foreach (int rwvl, rawi_wvlns) {
+          rvec << rwvl;
+          minR = qMin(minR, static_cast<double>(rwvl));
+          maxR = qMax(maxR, static_cast<double>(rwvl));
       }
-DbgLv(1) << "PlMwl:      END xa_WAV  kodlim odlimit" << kodlim << odlimit;
+      rr = rvec.data();
+      int rpidx = cb_lplot->currentIndex();
+      int npoints = cb_lplot->count();
+      int nscans = rdata.at(ccx).size() / nwaveln / npoints;
+
+      QVector< double > vvcec_all = rdata.at(ccx);
+      int idx_ii = rpidx * nwaveln * nscans;
+      for ( int ss = 0; ss < nscans; ss++) {
+         int idx_ss = ss * nwaveln;
+         vvec.clear();
+         for (int jj = 0; jj < nwaveln; jj++) {
+            int idx = idx_ii + idx_ss + jj;
+            double val = vvcec_all.at(idx);
+            maxV     = qMax( maxV, val );
+            minV     = qMin( minV, val );
+            vvec << val;
+         }
+         vv = vvec.data();
+         QwtPlotCurve* cc = us_curve( data_plot, tr("Scan %1").arg(ss) );
+         cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+         cc->setSamples( rr, vv, nwaveln );
+      }
    }
 
    // Reset the scan curves within the new limits
@@ -7183,6 +7543,10 @@ void US_Edit::new_triple_auto( int index )
   
   qDebug() << "NEW_TRIPLE_AUTO: triple_index: " << triple_index;
 
+  QString triple_name = cb_triple->itemText( triple_index );
+  //qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
+  //qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ triple_index ].size();
+  
 
   // Remove Spike: Icon/Enable
   if ( editProfile[ cb_triple->currentText() ].count() > 6 )
@@ -7282,6 +7646,7 @@ DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
 
       QVector< int > wvs;
       mwl_data.lambdas( wvs, triple_index );
+      std::sort( wvs.begin(), wvs.end() );
       lambda_new_list ( wvs );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
                               " raw index increment %5" )
@@ -7461,6 +7826,34 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    qDebug() << "In new_triple_auto: ref_wvl_index -- " << iwavl_edit_ref_index[ triple_index ];
    cb_lplot->setCurrentIndex( iwavl_edit_ref_index[ triple_index ] );
    ////////////////////////////////////////////////////
+
+
+   //Here, take into account excluded scans on per triple basis
+   int scanExcl_begin_ind = editProfile_scans_excl[ cb_triple->currentText() ][0].toInt();
+   int scanExcl_end_ind   = editProfile_scans_excl[ cb_triple->currentText() ][1].toInt();
+
+   qDebug() << "IN new_Triple_auto(): triple -- " << cb_triple->currentText() 
+   	    << "ScanBegin -- " << scanExcl_begin_ind
+   	    << "ScanEnd -- "   << scanExcl_end_ind ;
+
+   qDebug() << "Includes size before remove: " << includes.size();
+   //for ( int i = 0; i < includes.size(); ++i  )
+   //  qDebug() << "Includes after remove: " << includes[ i ];
+   
+   for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
+     {
+       includes.removeFirst();
+     }
+   //end of the scan set
+   for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
+     {
+       includes.removeLast();
+     }
+
+   qDebug() << "Includes size after remove: " << includes.size();
+   //for ( int i = 0; i < includes.size(); ++i  )
+   //  qDebug() << "Includes after remove: " << includes[ i ];
+   ///////////////////////////////////////////////////////////
    
    replot();
 DbgLv(1) << "EDT:NewTr: DONE";
@@ -7471,8 +7864,17 @@ DbgLv(1) << "EDT:NewTr: DONE";
 //qDebug() << "Triple: " << triple << ", cb_triple_text: " << cb_triple->currentText();
 //qDebug() << editProfile[ triple ] << ", " <<  editProfile[ cb_triple->currentText() ];
 
+ 
+ 
  if ( all_loaded ) 
    {
+     if ( autoflow_expType == "ABDE" )
+       {
+	 setUnsetSaveBttn_abde();
+	 if( !edited_triples_abde[ cb_triple->currentText() ] )  
+	   return;
+       }
+     
      qDebug() << "NEW_TRIPLE_AUTO: all_loaded: " << all_loaded;
 
      qDebug() << "NEW_TRIPLE_AUTO: editProfile.count(): " << editProfile.count();
@@ -7620,6 +8022,7 @@ DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
 
       QVector< int > wvs;
       mwl_data.lambdas( wvs, triple_index );
+      std::sort( wvs.begin(), wvs.end() );
       lambda_new_list ( wvs );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
                               " raw index increment %5" )
@@ -7671,11 +8074,12 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
-   pb_airGap   ->setEnabled( true );
-   pb_noise    ->setEnabled( true );
-   pb_spikes   ->setEnabled( true );
+   pb_airGap   ->setEnabled( false );
+   pb_noise    ->setEnabled( false );
+   pb_spikes   ->setEnabled( false );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
+   pb_float    ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    all_edits    = false;
@@ -8053,6 +8457,8 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	   	   
 	 }
      }
@@ -8063,7 +8469,12 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 // Call manuall editor
 void US_Edit::manual_edit_auto( void )
 {
-  sdiag = new US_Edit( allData, triples, workingDir );
+  int currChIndex = cb_triple->currentIndex();
+  //int plotInd = index_data();
+  int plotInd = plotndx;
+  qDebug() << "IN manual_edit_auto( void ), plotInd -- " << plotInd;
+  
+  sdiag = new US_Edit( allData, triples, workingDir, currChIndex, plotInd );
   /** The following will block parent windows from closing BUT not from continuing timer execution ***/
   sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   sdiag->setWindowModality(Qt::ApplicationModal);
@@ -8071,7 +8482,7 @@ void US_Edit::manual_edit_auto( void )
 
   connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
 	   this,  SLOT( update_triple_edit_params (  QMap < QString, QStringList > &) ) );
-  
+
   sdiag->show();
 }
 
@@ -8085,14 +8496,61 @@ void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edi
   qDebug() << "In update_triple_edit_params: t_name -- " << t_name;
   qDebug() << "In update_triple_edit_params: editProfile[ t_name ] -- " << editProfile[ t_name ];
 
+  automatic_meniscus[ t_name ] = false;
+
+  //Put a comment, why this triple was processed manually IF NOT "ABDE"
+  if ( autoflow_expType != "ABDE" )
+    {
+      bool ok;
+      QString msg = QString(tr("Put a comment on MANUAL editing :"));
+      QString default_text = QString(tr("Reason for MANUAL editing: "));
+      QString comment_t    = QInputDialog::getText( this,
+						    tr( "Reason for MANUAL editing" ),
+						    msg, QLineEdit::Normal, default_text, &ok );
+      
+      if ( !ok )
+	{
+	  return;
+	}
+      
+      manual_edit_comments[ t_name ] = comment_t;
+    }
+  else
+    {
+      edited_triples_abde[ t_name ] = true;
+      setUnsetSaveBttn_abde();
+    }
+      
+  ///////////////////////////////////////////////////////
+
   new_triple_auto( 0 ); 
+}
+
+//for ABDE, check if all triples were processed & enable/diable Save
+void US_Edit::setUnsetSaveBttn_abde( void )
+{
+  bool all_processed = true;
+  QMap<QString, bool>::iterator os;
+  for ( os = edited_triples_abde.begin(); os != edited_triples_abde.end(); ++os )
+    {
+      if ( !os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+
+  pb_write -> setEnabled( all_processed );
 }
 
 // Save edit profile(s)
 void US_Edit::write_auto( void )
 {
+  // //TEMP: DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+  // record_edit_status( automatic_meniscus, dataType );
+  // exit(1);
   
-  /****/
+  /****  TEMP1 **/
   //--- Check if saving already initiated
   int status_edit_unique;
   status_edit_unique = read_autoflow_stages_record( autoflowID_passed );
@@ -8103,22 +8561,22 @@ void US_Edit::write_auto( void )
     {
 
       QMessageBox::information( this,
-				tr( "The Program State Updated / Being Updated" ),
-				tr( "The program advanced or is advancing to the next stage!\n\n"
-				    "This happened because you or different user "
-				    "has already saved edit profiles into DB using different program "
-				    "session and the program is proceeding to the next stage. \n\n"
-				    "The program will return to the autoflow runs dialog where "
-				    "you can re-attach to the actual current stage of the run. "
-				    "Please allow some time for the status to be updated.") );
-      
-      
+  				tr( "The Program State Updated / Being Updated" ),
+  				tr( "The program advanced or is advancing to the next stage!\n\n"
+  				    "This happened because you or different user "
+  				    "has already saved edit profiles into DB using different program "
+  				    "session and the program is proceeding to the next stage. \n\n"
+  				    "The program will return to the autoflow runs dialog where "
+  				    "you can re-attach to the actual current stage of the run. "
+  				    "Please allow some time for the status to be updated.") );
+   
+   
       reset();
       emit back_to_initAutoflow( );
       return;
     }
     //-------------------------------------------
-  /****/
+  /***/
   
   pb_write       ->setEnabled( false );
 
@@ -8212,66 +8670,67 @@ void US_Edit::write_auto( void )
       channels_all << triple_parts[0] + "." + triple_parts[1];
     }
   //-----------------------------------------------------------------//
-  
-  if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
-    {
-      if ( runType_combined_IP_RI )
-	{
-	  if ( !all_processed )
-	    {
-	      QMessageBox::information( this,
-					tr( "Edit Profiles for Current Optical System Already Saved" ),
-					tr( "It appears that edit profiles for the current optical system are already saved!\n\n"
-					    "The program will switch to processing data for the next optical system... " ));
 
-	      cb_triple->disconnect();
+  /*** TEMP1 **/
+   if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
+     {
+       if ( runType_combined_IP_RI )
+   	{
+   	  if ( !all_processed )
+   	    {
+   	      QMessageBox::information( this,
+   					tr( "Edit Profiles for Current Optical System Already Saved" ),
+   					tr( "It appears that edit profiles for the current optical system are already saved!\n\n"
+   					    "The program will switch to processing data for the next optical system... " ));
 
-	      /***/
-	      //set autoflowStages record to "unknown" again !!
-	      revert_autoflow_stages_record( autoflowID_passed );
-	      /****/
-	      
-	      reset();
-	      emit process_next_optics( );
-	      return;
-	    }
-	  else
-	    {
-	      QMessageBox::information( this,
-					tr( "The Program State Updated / Being Updated" ),
-					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happened because you or different user "
-					    "has already saved edit profiles into DB using different program "
-					    "session and the program is proceeding to the next stage. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "
-					    "Please allow some time for the status to be updated.") );
-	      
-	      
-	      reset();
-	      emit back_to_initAutoflow( );
-	      return;
-	    }
-	}
-      else
-	{
-	  QMessageBox::information( this,
-				    tr( "The Program State Updated / Being Updated" ),
-				    tr( "The program advanced or is advancing to the next stage!\n\n"
-					"This happend because you or different user "
-					"has already saved edit profiles into DB using different program "
-					"session and the program is proceeding to the next stage. \n\n"
-					"The program will return to the autoflow runs dialog where "
-					"you can re-attach to the actual current stage of the run. "
-					"Please allow some time for the status to be updated.") );
-	  
-	  
-	  reset();
-	  emit back_to_initAutoflow( );
-	  return;
-	}
-    }
-  
+   	      cb_triple->disconnect();
+
+   	      
+   	      //set autoflowStages record to "unknown" again !!
+   	      revert_autoflow_stages_record( autoflowID_passed );
+   	      
+   	      
+   	      reset();
+   	      emit process_next_optics( );
+   	      return;
+   	    }
+   	  else
+   	    {
+   	      QMessageBox::information( this,
+   					tr( "The Program State Updated / Being Updated" ),
+   					tr( "The program advanced or is advancing to the next stage!\n\n"
+   					    "This happened because you or different user "
+   					    "has already saved edit profiles into DB using different program "
+   					    "session and the program is proceeding to the next stage. \n\n"
+   					    "The program will return to the autoflow runs dialog where "
+   					    "you can re-attach to the actual current stage of the run. "
+   					    "Please allow some time for the status to be updated.") );
+   	      
+   	      
+   	      reset();
+   	      emit back_to_initAutoflow( );
+   	      return;
+   	    }
+   	}
+       else
+   	{
+   	  QMessageBox::information( this,
+   				    tr( "The Program State Updated / Being Updated" ),
+   				    tr( "The program advanced or is advancing to the next stage!\n\n"
+   					"This happend because you or different user "
+   					"has already saved edit profiles into DB using different program "
+   					"session and the program is proceeding to the next stage. \n\n"
+   					"The program will return to the autoflow runs dialog where "
+   					"you can re-attach to the actual current stage of the run. "
+   					"Please allow some time for the status to be updated.") );
+   	  
+   	  
+   	  reset();
+   	  emit back_to_initAutoflow( );
+   	  return;
+   	}
+     }
+  /***/
   
   /*******************************************************/
   
@@ -8291,7 +8750,50 @@ void US_Edit::write_auto( void )
       }
    }
 
-   qDebug() << "START Saving"; 
+   
+   /*************************************************************************************************************/
+   // We need to  insert submission form dialog (with password...)
+   /*************************************************************************************************************/
+   QStringList qry1;
+   qry1 <<  QString( "get_user_info" );
+   dbP-> query( qry1 );
+   dbP-> next();
+   int u_ID        = dbP-> value( 0 ).toInt();
+   QString u_fname = dbP-> value( 1 ).toString();
+   QString u_lname = dbP-> value( 2 ).toString();
+   int u_lev       = dbP-> value( 5 ).toInt();
+   
+   QString user_submitter = u_lname + ", " + u_fname;
+   
+   gmp_submitter_map.clear();
+   US_Passwd   pw_at;
+   gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run EDIT Form", "Please fill out GMP run EDIT form:", user_submitter );
+   
+   int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+   qDebug() << "Submitter map: "
+	    << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+	    << gmp_submitter_map.keys().isEmpty() 
+	    << gmp_submitter_map[ "User:" ]
+	    << gmp_submitter_map[ "Comment:" ]
+	    << gmp_submitter_map[ "Master Password:" ];
+   
+   if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+     {
+       revert_autoflow_stages_record( autoflowID_passed );
+       pb_write       ->setEnabled( true );
+
+       //DEBUG 
+       for ( int i = 0; i < channels_all.size(); ++i  )
+	 qDebug() << "[NO COMMMENT] BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i];
+       for ( int j = 0; j < triples_all_optics.size(); ++j )
+	 qDebug() << "[NO COMMNET] BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j];
+       //END DEBUG
+       
+       return;
+     }
+   /*************************************************************************************************************/
+   
+   qDebug() << "NOW, START Saving"; 
 
 
    /* TEMPORARY ***/
@@ -8375,6 +8877,12 @@ void US_Edit::write_auto( void )
 
    // Check If all Optical Systems processed:::::::::::::::::::::::::::::
    qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed;
+
+
+   //Now, make a record on was the Reference Scan defined automatically (for "RI" type) && who did SAVE the data
+   record_edit_status( automatic_meniscus, dataType );
+   
+   //////////////////////////////////////////////////////////////
    
    if ( !all_processed )
      {
@@ -8390,23 +8898,33 @@ void US_Edit::write_auto( void )
    ////////////////////////////////////////////////////////////////////
 
    // Now, remove duplicates from channels array, fill QMap keeping track on if reference wavelength set for each channel (if MWL) 
-   channels_all.removeDuplicates();
-
+   channels_all       .removeDuplicates();
+   triples_all_optics .removeDuplicates(); //Absence of this caused incorrect analyses list: need to test!!!
+   
+     
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
-       qDebug() << channels_all[i];
+       qDebug() << "BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i];
        isSet_ref_wvl[ channels_all[i] ] = false;
      }
 
+   //DEBUG
+   for ( int j = 0; j < triples_all_optics.size(); ++j )
+     qDebug() << "BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j];
+   
+   
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
    QStringList AnalysisIDs;
    
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
+       qDebug() << "AUTOFLOW_ANALYSIS: channel name -- " << channels_all[i];
        for ( int j = 0; j < triples_all_optics.size(); ++j )
 	 {
 	   if ( triples_all_optics[j].contains( channels_all[i] ) )
 	     {
+	       qDebug() << "AUTOFLOW_ANALYSIS: triple " << triples_all_optics[j] <<  " ,containing channel " <<  channels_all[i];
+	       
 	       int ID = 0;
 	       QString json_status;
 	       
@@ -8425,7 +8943,7 @@ void US_Edit::write_auto( void )
 		       qDebug() << triples_all_optics[j] << json_status;
 
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
-
+		       
 		       if (ID)
 			 create_autoflowAnalysisStages_record( dbP, ID );
 		     }
@@ -8469,7 +8987,7 @@ void US_Edit::write_auto( void )
 				   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 				 }
 			     }
-			   //No informaiton os specifi triple to edit -- select 1st triple in a channel as default
+			   //No informaiton on specifi triple to edit -- select 1st triple in a channel as default
 			   else
 			     {
 			       json_status = compose_json( true );
@@ -8538,6 +9056,120 @@ void US_Edit::write_auto( void )
    emit edit_complete_auto( details_at_editing_local  );   
 }
 
+//Record statuses of the auto/manual meniscus determinaiton, on per-channel basis
+void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dtype )
+{
+  //DEBUG
+  qDebug() << "Data Type: " << dtype;
+  QMap<QString, bool>::iterator os;
+  for ( os = auto_meniscus.begin(); os != auto_meniscus.end(); ++os )
+    qDebug() << "For channel " << os.key() << ", meniscus determined automatically? " << os.value();
+  //END DEBUG
+
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN US_edit_AUTO, record status: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+
+  QString editRI_IP_Json;
+  editRI_IP_Json. clear();
+  editRI_IP_Json += "{ \"Person\": ";
+  
+  editRI_IP_Json += "[{";
+  editRI_IP_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+  editRI_IP_Json += "\"fname\":\""  + fname                     + "\",";
+  editRI_IP_Json += "\"lname\":\""  + lname                     + "\",";
+  editRI_IP_Json += "\"email\":\""  + email                     + "\",";
+  editRI_IP_Json += "\"level\":\""  + QString::number( level )  + "\"";
+  editRI_IP_Json += "}],";
+
+  //Now, add comment from SAVING form:
+  editRI_IP_Json += "\"Comment when SAVED\": \"" + gmp_submitter_map[ "Comment:" ] + "\",";      
+
+  //Meniscus
+  editRI_IP_Json += "\"Meniscus\": ";
+  editRI_IP_Json += "[{";
+  
+  for ( os = auto_meniscus.begin(); os != auto_meniscus.end(); ++os )
+    {
+      QString meniscus_method = os.value() ? QString("automated") : QString("manual");
+      
+      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method;
+
+      if ( !os.value() )
+	{
+	  editRI_IP_Json += ", Comment: " + manual_edit_comments[ os.key() ] + "\",";
+	}
+      else
+	editRI_IP_Json += "\",";
+    }
+  
+  editRI_IP_Json.chop(1);
+  editRI_IP_Json += "}]";
+  
+  editRI_IP_Json += "}";
+
+  qDebug() << "in record_edit_status: editRI_IP_Json  -- " << editRI_IP_Json;
+  
+  if ( autoflowStatusID )
+    {
+      //update
+      if ( dtype == "RI" )
+	{
+	  qry << "update_autoflowStatusEditRI_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << editRI_IP_Json;
+	  
+	  db->query( qry );
+	}
+
+      if ( dtype == "IP" )
+	{
+	  qry << "update_autoflowStatusEditIP_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << editRI_IP_Json;
+	  
+	  db->query( qry );
+	}
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (EDIT {RI,IP}): There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+      
+      return;
+    }
+}
+
+
 //Delete autoflow record 
 void US_Edit::delete_autoflow_record( void )
 {
@@ -8545,9 +9177,9 @@ void US_Edit::delete_autoflow_record( void )
   QString OptimaName        = details_at_editing_local[ "OptimaName" ]; 
 
   // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -8730,7 +9362,7 @@ QString US_Edit::compose_json( bool fm_stage )
     json += QString("\"2DSA\",");
   if (job2run && fm_stage )
     json += QString("\"2DSA_FM\",");
-  if (job3run )
+  if ( job3run )
     {
       if ( job3auto ) 
 	json += QString("\"FITMEN_AUTO\",");
@@ -8814,17 +9446,30 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
   //      return autoflowAnalysisID;
   //    }
 
+
+  //first, check max(requestID) in the autoflowAnalysisHistory table && set AUTO_INCREMENT in the autoflowAnalysis table to:
+  //greater of:
+  //- max(ID) autoflowAnalysisHistory
+  //- current AUTO_INCREMENT
+  QStringList qry;
+  QString current_db = US_Settings::defaultDB().at(2);
+  qry << "set_autoflowAnalysis_auto_increment" << current_db;
+  int auto_incr = db->statusQuery( qry );
+  qDebug() << "AutoflowAnalysis table: AUTO_INCREMENT: " << auto_incr;
+
+  //Now add autoflowAnalysis record 
    QString status =  QString("Saving AutoflowAnalysis Profile for Triple %1").arg( tripleName );
    le_status->setText( status );
    qApp->processEvents();
    
-   QStringList qry;
+   qry.clear();
    qry << "new_autoflow_analysis_record"
        << tripleName
        << filename_runID_auto
        << AProfileGUID
        << idInv_auto
-       << status_json;
+       << status_json
+       << QString::number( autoflowID_passed );
  
    qDebug() << "AutoflowAnalysis Record for triple: " << tripleName;
    qDebug() << "Query: " << qry;
@@ -10076,6 +10721,7 @@ void US_Edit::lselect_range_on( bool checked )
 DbgLv(1) << "lselect range checked" << checked;
    if ( checked )
    {
+      lambdas_by_cell();
       connect_mwl_ctrls( false );
       ct_ldelta->setValue( 1 );
       cb_lstart->setCurrentIndex( 0 );
@@ -10098,6 +10744,7 @@ void US_Edit::lselect_custom_on( bool checked )
 DbgLv(1) << "lselect custom checked" << checked;
    if ( checked )
    {
+      lambdas_by_cell();
       connect_mwl_ctrls( false );
       ct_ldelta->setValue( 1 );
       cb_lstart->setCurrentIndex( 0 );
@@ -10126,8 +10773,24 @@ DbgLv(1) << "ldelta_value  value" << value;
 // Lambda Start has changed
 void US_Edit::lambda_start_value( int value )
 {
-   slambda     = cb_lstart->itemText( value ).toInt();
-DbgLv(1) << "lambda_start_value  value" << value << slambda;
+   int new_slambda = cb_lstart->itemText( value ).toInt();
+   if ( new_slambda == slambda ) // check if new start is same as current start -> skip every update
+   {
+      return;
+   }
+   else if ( new_slambda > elambda ) // check if new start is greater than end
+   {
+      // if so, set start to end
+      slambda = elambda;
+      elambda = new_slambda;
+      cb_lstart->setCurrentIndex( cb_lstart->findText( QString::number( slambda ) ) );
+      cb_lend  ->setCurrentIndex( cb_lend  ->findText( QString::number( elambda ) ) );
+   }
+   else
+   {
+      slambda     = cb_lstart->itemText( value ).toInt();
+   }
+   DbgLv(1) << "lambda_start_value  value" << value << slambda;
 
    reset_plot_lambdas();
 }
@@ -10135,8 +10798,24 @@ DbgLv(1) << "lambda_start_value  value" << value << slambda;
 // Lambda End has changed
 void US_Edit::lambda_end_value( int value )
 {
-   elambda     = cb_lend  ->itemText( value ).toInt();
-DbgLv(1) << "lambda_end_value  value" << value << elambda;
+   int new_elambda = cb_lend->itemText( value ).toInt();
+   if ( new_elambda == elambda ) // check if new end is same as current end -> skip every update
+   {
+      return;
+   }
+   else if ( new_elambda < slambda ) // check if new end is less than start
+   {
+      // if so, set end to start
+      elambda = slambda;
+      slambda = new_elambda;
+      cb_lstart->setCurrentIndex( cb_lstart->findText( QString::number( slambda ) ) );
+      cb_lend  ->setCurrentIndex( cb_lend  ->findText( QString::number( elambda ) ) );
+   }
+   else
+   {
+      elambda     = cb_lend  ->itemText( value ).toInt();
+   }
+   DbgLv(1) << "lambda_end_value  value" << value << elambda;
 
    reset_plot_lambdas();
 }
@@ -10190,10 +10869,55 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
                      : tr( " from custom selections." ) ) );
 
    mwl_data.set_lambdas( expi_wvlns, triple_index );
+   std::sort( expi_wvlns.begin(), expi_wvlns.end() );
 DbgLv(1) << "rpl: set_lambdas() complete.  trx" << triple_index;
 
    reset_outData();
 DbgLv(1) << "rpl: reset_outData() complete";
+}
+
+// turn on and off scan control widgets and lambda widgets as switching to x axis wavelength
+void US_Edit::xaxis_wavl_wgts_on( bool on )
+{
+   rb_lrange->setDisabled( on );
+   rb_custom->setDisabled( on );
+   pb_incall->setDisabled( on );
+   ct_ldelta->setDisabled( on );
+   pb_incall->setDisabled( on );
+   cb_lstart->setDisabled( on );
+   cb_lend->setDisabled( on );
+   pb_custom->setDisabled( on );
+
+   ct_from->setDisabled( on );
+   ct_to->setDisabled( on );
+   pb_excludeRange->setDisabled( on );
+   pb_edit1->setDisabled( on );
+   pb_exclusion->setDisabled( on );
+   pb_include->setDisabled( on );
+
+   if ( ! on ) {
+      int from = ct_from->value();
+      int to = ct_to->value();
+      if ( from == 0 )
+         pb_edit1  ->setEnabled( false );
+      else
+         pb_edit1  ->setEnabled( true );
+
+      if ( to == 0 )
+         pb_excludeRange->setEnabled( false );
+      else
+         pb_excludeRange->setEnabled( true );
+
+      if ( rb_custom->isChecked() ) {
+          ct_ldelta->setDisabled( true );
+          pb_custom->setEnabled( true );
+      } else {
+          ct_ldelta->setEnabled( true );
+          pb_custom->setEnabled( true );
+      }
+
+   }
+
 }
 
 // X-axis has been changed to Radius or Wavelength
@@ -10211,6 +10935,8 @@ DbgLv(1) << "xaxis_radius_on  checked" << checked;
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
       cb_lplot->setCurrentIndex( expc_wvlns.size() / 2 );
+
+      xaxis_wavl_wgts_on( false );
    }
 }
 
@@ -10225,10 +10951,19 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
 
       cb_lplot->disconnect();
       cb_lplot->clear();
+      int ccx = cb_triple->currentIndex();
+      expc_radii.clear();
+      expd_radii.clear();
+      foreach (double xval, rdata_xvals.at(ccx)) {
+          expc_radii << QString::number(xval);
+          expd_radii << xval;
+      }
       cb_lplot->addItems( expc_radii );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
       cb_lplot->setCurrentIndex( expc_radii.size() / 2 );
+
+      xaxis_wavl_wgts_on( true );
    }
 }
 
@@ -10323,6 +11058,8 @@ DbgLv(1) << "lambda_plot_next  clicked";
 
    pb_larrow->setEnabled     ( true );
    cb_lplot ->setCurrentIndex( plotndx );
+
+   qDebug() << "plotndx = " << plotndx;
 }
 
 // Custom Lambdas has been clicked
@@ -10421,6 +11158,16 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl_auto( int trx )
 {
+  
+  US_Passwd pw;
+  US_DB2* dbP            = new US_DB2( pw.getPasswd() );
+
+  if ( dbP->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + dbP->lastError() );
+      return;
+    }
 
   // triple_index = trx;
 
@@ -10544,7 +11291,7 @@ void US_Edit::write_mwl_auto( int trx )
    QVector< int > current_wvlns;
    QStringList current_wvlns_list;
    int curr_wvls_count = mwl_data.lambdas( current_wvlns, trx );
-
+   std::sort(current_wvlns.begin(), current_wvlns.end());
    //wvlns to list
    for ( int wvx = 0; wvx < curr_wvls_count; wvx++ )
      {
@@ -10556,9 +11303,9 @@ void US_Edit::write_mwl_auto( int trx )
    QString schan    = celchn.section( "/", 1, 1 ).simplified();
    QString tripbase = scell + " / " + schan + " / ";
    int     idax     = triples.indexOf( tripbase + current_wvlns_list[ 0 ] ); 
-   int     odax     = index_data_auto( trx, 0 );                                
+   //int     odax     = index_data_auto( trx, 0 );                             //CORRECT! {first odax in a triple}                                
 
-   qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
+   //qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
 
    QString filebase = files[ idax ].section( ".",  0, -6 )
                     + "." + editLabel + "."
@@ -10566,17 +11313,21 @@ void US_Edit::write_mwl_auto( int trx )
                     + "." + scell + "." + schan + ".";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
+   QString filebase_qry   = files[ idax ].section( ".",  0, -6 );
+   QString triplename_qry = scell + "." + schan + ".";
+   
    // Loop to output a file/db-record for each wavelength of the cell/channel
-
    for ( int wvx = 0; wvx < current_wvlns_list.size(); wvx++ )           //ALEXEY: needs to be looped over channels, not only current channel
    {
       QString swavl    = current_wvlns_list[ wvx ];
       QString triple   = tripbase + swavl;
       QString filename = filebase + swavl + ".xml";
       idax             = triples.indexOf( triple );
-      odax             = index_data_auto( trx, wvx );                             // Correct ?
+      //odax             = index_data_auto( trx, wvx );                             // Correct ? NOT!!! Got you !!
 
-      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename;
+      
+      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename
+		<< ", trx " << trx << ", wvx " << wvx; // << ", odax " << odax;
 
       QString editGUID = editGUIDs[ idax ];
 
@@ -10586,8 +11337,17 @@ void US_Edit::write_mwl_auto( int trx )
          editGUIDs.replace( idax, editGUID );
       }
 
-      QString rawGUID  = US_Util::uuid_unparse(
-            (unsigned char*)outData[ odax ]->rawGUID );
+
+      //ALEXEY: instead -- get rawDataGUID based on query:
+      // select rawDataGUID from rawData where filename like '%MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985%2.A.260%';
+      // filename: MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985.23102502280.RI.2.A.260.xml
+      QString triplename_qry_wvl = triplename_qry + swavl;
+
+      QString rawGUID = get_rawDataGUID( dbP, filebase_qry, triplename_qry_wvl );
+
+      qDebug() << "rawGUID -- " <<rawGUID;
+      // QString rawGUID  = US_Util::uuid_unparse(
+      //       (unsigned char*)outData[ odax ]->rawGUID );
 
 
       // Output the edit XML file
@@ -10624,6 +11384,9 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
          if ( wrstat != 0 )
             return;
       }  // END:  DB output
+
+      //++odax;      //Got you!!
+      
    }  // END:  wavelength-in-cellchannel loop
 
    // QApplication::restoreOverrideCursor();
@@ -10636,6 +11399,32 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 
    if ( runType_combined_IP_RI ) 
      cb_triple->disconnect();
+}
+
+//get rawDataGUID based on filebase && triple names
+QString US_Edit::get_rawDataGUID( US_DB2* db, QString filebase_qry, QString triplename_qry )
+{
+
+  QString rawID   = QString("");
+  QString rawGUID = QString("");
+  
+  QStringList qry;
+  qry << "get_rawDataGUID_from_filename" << filebase_qry << triplename_qry;
+  qDebug() << "get_rawDataGUID_from_filename QRY -- " << qry;
+  db->query( qry );
+  
+  while ( db->next() )
+    {
+      rawID   = db->value( 0 ).toString();
+      rawGUID = db->value( 1 ).toString();
+    }
+
+  if ( rawGUID.isEmpty() )
+    qDebug() << "EMPTY rawID,rawGUID!!";
+
+  qDebug() << "rawDataID, GUID -- " << rawID << ", " << rawGUID;
+
+  return rawGUID;
 }
 
 
@@ -10727,6 +11516,7 @@ void US_Edit::write_mwl()
 
    QVector< int > oldi_wvlns;
    int     kwavelo  = mwl_data.lambdas( oldi_wvlns );
+   std::sort(oldi_wvlns.begin(), oldi_wvlns.end());
    int     nwavelo  = expi_wvlns.count();
    int     wvx;
    bool    chg_lamb = ( kwavelo != nwavelo );
@@ -10746,7 +11536,7 @@ void US_Edit::write_mwl()
    if ( chg_lamb )
    {  // If wavelengths have changed, save new list and rebuild some vectors
       mwl_data.set_lambdas( expi_wvlns );  // Save new lambdas for channel
-
+      std::sort( expi_wvlns.begin(), expi_wvlns.end() );
       reset_outData();
    }
 
@@ -10908,7 +11698,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	    xml.writeEndElement  ();
 	  }
 	//end of the scan set
-       	for ( int ii = data.scanData.size() - scanExcl_begin_ind; ii < data.scanData.size(); ii++ )
+       	for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
 	  {
 	    xml.writeStartElement( "exclude" );
 	    xml.writeAttribute   ( "scan", QString::number( ii ) );
@@ -11255,6 +12045,8 @@ int US_Edit::index_data( int wvx )
    {  // For MWL, compute data index from wavelength and triple indexes
       if ( wvx < 0 )
       {  // For the default case, use the current wavelength index
+         if ( ! xaxis_radius ) return 0;
+
          plotndx      = cb_lplot->currentIndex();
          int iwavl    = expi_wvlns[ plotndx ];
          data_index   = mwl_data.data_index( iwavl, triple_index );
@@ -11512,6 +12304,7 @@ DbgLv(1) << "rsoD: aDa size" << allData.size() << "ncelchn" << ncelchn;
       lambdas_by_cell( ccx );
        
       int kwvln   = mwl_data.lambdas( ex_wvlns, ccx );
+      std::sort(ex_wvlns.begin(), ex_wvlns.end());
 DbgLv(1) << "rsoD: ccx kwv" << ccx << kwvln << ex_wvlns.size()
  << "nwv ccoff" << nwaveln << ccoff;
 
@@ -11539,6 +12332,8 @@ int US_Edit::lambdas_by_cell( int trx )
    if ( lrng_bycell )
    {
       rawi_wvlns = wavelns_i[ ccx ];
+      // sort rawi_wvlns
+      std::sort( rawi_wvlns.begin(), rawi_wvlns.end() );
       nwaveln    = rawi_wvlns.count();
       rawc_wvlns.clear();
 
@@ -11651,8 +12446,8 @@ void US_Edit::save_report_auto( const QString rtext, const QString rptfpath,
       freport.runID    = runID;
 
       // Write the report record to the database
-      int st = freport.saveFileDocuments( pfdir,  rfiles, dbP,
-                                          idEdit, tripdesc );
+      int st = freport.saveFileDocuments_auto( idInv_auto.toInt(), pfdir,  rfiles, dbP,   //include invID explicitly
+					       idEdit, tripdesc );
 
       if ( st != US_DB2::OK )
       {

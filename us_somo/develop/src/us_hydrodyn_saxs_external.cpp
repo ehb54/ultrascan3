@@ -82,10 +82,9 @@ void US_Hydrodyn_Saxs::editor_msg( const char * color, const char * bgcolor, QSt
 
 // -------------------- IFT ------------------------------
 
-void US_Hydrodyn_Saxs::call_ift()
+void US_Hydrodyn_Saxs::call_ift( bool rerun )
 {
    us_qdebug( "ift()" );
-
    if ( external_running ) {
       US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
                             QString( us_tr("Please wait until the running job completes" ) ) );
@@ -99,42 +98,49 @@ void US_Hydrodyn_Saxs::call_ift()
    }
 
    // check for zero error data, only add non-zero
-   ift_to_process.clear( );
-   for ( int i = 0; i < (int) qsl_plotted_iq_names.size(); ++i ) {
-      if ( !plotted_iq_names_to_pos.count( qsl_plotted_iq_names[ i ] ) ) {
-         editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
-         return;
-      }
-
-      int ift_pos = plotted_iq_names_to_pos[ qsl_plotted_iq_names[ i ] ];
-
-      if ( (int) plotted_q.size() <= ift_pos ||
-           (int) plotted_I.size() <= ift_pos ||
-           (int) plotted_I_error.size() <= ift_pos ) {
-         editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
-         return;
-      }
-
-      if ( plotted_I_error[ ift_pos ].size() != plotted_I[ ift_pos ].size() ) {
-         editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has no errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
-         continue;
-      }
-      if ( !US_Saxs_Util::is_nonzero_vector( plotted_I_error[ ift_pos ] ) ) {
-         editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has some zero value errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
-         continue;
-      }
-      ift_to_process << qsl_plotted_iq_names[ i ];
-   }
-
-   if ( !ift_to_process.size() ) {
+   if ( rerun && !ift_to_process.size() ) {
       US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
-                            QString( us_tr("No I(q) curves with full errors available to process.\nCheck text area for details." ) ) );
+                            QString( us_tr("Nothing selected to process" ) ) );
       return;
    }
+      
+   if ( !rerun ) {
+      ift_to_process.clear( );
+      for ( int i = 0; i < (int) qsl_plotted_iq_names.size(); ++i ) {
+         if ( !plotted_iq_names_to_pos.count( qsl_plotted_iq_names[ i ] ) ) {
+            editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
+            return;
+         }
 
-   if ( ift_to_process.size() > 1) {
-      bool ok;
-      QString res = US_Static::getItem(
+         int ift_pos = plotted_iq_names_to_pos[ qsl_plotted_iq_names[ i ] ];
+
+         if ( (int) plotted_q.size() <= ift_pos ||
+              (int) plotted_I.size() <= ift_pos ||
+              (int) plotted_I_error.size() <= ift_pos ) {
+            editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
+            return;
+         }
+
+         if ( plotted_I_error[ ift_pos ].size() != plotted_I[ ift_pos ].size() ) {
+            editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has no errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
+            continue;
+         }
+         if ( !US_Saxs_Util::is_nonzero_vector( plotted_I_error[ ift_pos ] ) ) {
+            editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has some zero value errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
+            continue;
+         }
+         ift_to_process << qsl_plotted_iq_names[ i ];
+      }
+
+      if ( !ift_to_process.size() ) {
+         US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
+                                QString( us_tr("No I(q) curves with full errors available to process.\nCheck text area for details." ) ) );
+         return;
+      }
+
+      if ( ift_to_process.size() > 1) {
+         bool ok;
+         QString res = US_Static::getItem(
                                           us_tr("US-SOMO SAXS IFT")
                                           ,us_tr( "Select the curve you wish to process:" )
                                           ,ift_to_process
@@ -144,11 +150,12 @@ void US_Hydrodyn_Saxs::call_ift()
                                           ,this
                                           );
                                   
-      if ( !ok ) {
-         return;
+         if ( !ok ) {
+            return;
+         }
+         ift_to_process.clear( );
+         ift_to_process << res;
       }
-      ift_to_process.clear( );
-      ift_to_process << res;
    }
 
    // make sure program exists
@@ -209,6 +216,14 @@ void US_Hydrodyn_Saxs::call_ift()
    }
 
    ift_parameters.clear( );
+   if ( rerun ) {
+      ift_parameters[ "rerun" ] = "true";
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         ift_parameters[ "overwriteoff" ] = "true";
+         ((US_Hydrodyn *) us_hydrodyn )->overwrite = true;
+         qDebug() << "****> overwrite on";
+      }
+   }
    ift_last_processed = ift_to_process[ 0 ];
    if ( !plotted_iq_names_to_pos.count( ift_last_processed ) ) {
       editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( ift_last_processed ) );
@@ -257,6 +272,10 @@ void US_Hydrodyn_Saxs::call_ift()
 void US_Hydrodyn_Saxs::ift_process_next() {
    
    if ( !ift_to_process.size() ) {
+      if ( ift_parameters.count( "overwriteoff" ) && ift_parameters[ "overwriteoff" ] == "true" ) {
+         ((US_Hydrodyn *) us_hydrodyn )->overwrite = false;
+         qDebug() << "****> overwrite off";
+      }
       return;
    }
 
@@ -459,6 +478,63 @@ void US_Hydrodyn_Saxs::ift_readFromStderr()
    //  qApp->processEvents();
 }
    
+bool US_Hydrodyn_Saxs::last_pr_rebin_save(
+                                          const QString & header
+                                          ,const QString & rxstr
+                                          ,QStringList & created_files
+                                          ) {
+   vector < double > rebin_r;
+   // new bin
+   for ( double x = 0; x <= plotted_r.back().back(); x += our_saxs_options->bin_size ) {
+      rebin_r.push_back( x );
+   }
+   vector < double > rebin_pr;
+   vector < double > rebin_sd;
+
+   interpolate( plotted_r.back(), rebin_r, plotted_pr.back(), rebin_pr );
+   interpolate( plotted_r.back(), rebin_r, plotted_pr_error.back(), rebin_sd );
+               
+   // US_Vector::printvector3( "rebin'd r,pr,sd", rebin_r, rebin_pr, rebin_sd );
+
+   QString dest_rebin =
+      USglobal->config_list.root_dir
+      + "/somo/saxs/"
+      + QString( "%1" )
+      .arg( ift_last_processed ).replace( QRegExp( rxstr )
+                                          , QString("_bin%1_%2ift.dat" )
+                                          .arg( our_saxs_options->bin_size )
+                                          .arg( cb_normalize->isChecked() ? "normed_" : "" )
+                                          )
+      ;
+
+   qDebug() << "dest_rebin: " << dest_rebin;
+
+   QStringList rebin_pr_contents;
+   for ( int i = 0; i < (int)rebin_r.size(); ++i ) {
+      rebin_pr_contents << QString( "%1 %2 %3" )
+         .arg( rebin_r[i], 0, 'g', 9 )
+         .arg( rebin_pr[i], 0, 'g', 9 )
+         .arg( rebin_sd[i], 0, 'g', 9 )
+         ;
+   }
+
+   QString rebin_pr_out = header + rebin_pr_contents.join( "\n" ) + "\n";
+   if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+      dest_rebin = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest_rebin, 0, this );
+   }
+   {
+      QString error;
+      if ( !US_File_Util::putcontents( dest_rebin, rebin_pr_out, error ) ) {
+         editor_msg( "red", error );
+         return false;
+      } else {
+         created_files << dest_rebin;
+      }
+   }
+   return true;
+}
+
+
 void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
 {
    //   for ( int i = 0; i < 10000; i++ )
@@ -514,13 +590,107 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    }
 
    QStringList created_files;
+   QString rxstr = "\\..*$";
+   if ( !ift_last_processed.contains( QRegExp( rxstr ) ) ) {
+      rxstr = "$";
+   }
 
    // p(r) file
+#define PR_ZERO_SD_MULTIPLIER 1e-3
+
    if ( files.count( caps[ 2 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift.sprr" );
-      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+
       double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+      cb_normalize->setChecked( mw != -1 );
+
+      vector < double > r;
+      vector < double > pr;
+      vector < double > pre;
+
+      // adjust to create non-zero sds and get/put contents
+      QString prcontents;
+      QString prcontents_normed;
+      QString error;
+      bool ok_to_replace = false;
+      if ( !US_File_Util::getcontents( files[ caps[ 2 ] ], prcontents, error ) ) {
+         editor_msg( "red", error );
+      } else {
+         QStringList qsl = prcontents.split( "\n" ).replaceInStrings( QRegExp( "^\\s*" ), "" );
+            
+         // QTextStream( stdout ) << "--- pr contents ---\n";
+         double min_sd = 1e99;
+         double min_pr = 1e99;
+         for ( int i = 0; i < qsl.size(); ++i ) {
+            QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+            // QTextStream( stdout ) << line.join( " " ) << Qt::endl;
+            if ( line.size() < 3 ) {
+               continue;
+            } else {
+               r  .push_back( line[0].toDouble() );
+               pr .push_back( line[1].toDouble() );
+               pre.push_back( line[2].toDouble() );
+               
+               double this_pr = line[1].toDouble();
+               if ( this_pr > 0 && min_pr > this_pr ) {
+                  min_pr = this_pr;
+               }
+
+               double this_sd = line[2].toDouble();
+               if ( this_sd > 0 && min_sd > this_sd ) {
+                  min_sd = this_sd;
+               }
+               // QTextStream( stdout ) << QString( "this_pr %1 min_pr %2 this_sd %3 min_sd %4\n" ).arg( this_pr ).arg( min_pr ).arg( this_sd ).arg( min_sd );
+            }
+         }
+         // QTextStream( stdout ) << "--- end pr contents ---\n";
+         if ( min_pr == 1e99 && min_sd == 1e99 ) {
+            editor_msg( "red", "no data apparent in generated P(r)" );
+         } else {
+            ok_to_replace = true;
+            double zero_sd;
+            if ( min_sd != 1e99 ) {
+               zero_sd = min_sd * PR_ZERO_SD_MULTIPLIER;
+            } else {
+               zero_sd = min_pr * PR_ZERO_SD_MULTIPLIER * 1e-2;
+            }
+            // replace contents
+            QStringList newcontents;
+            QStringList newcontents_normed;
+            for ( int i = 0; i < qsl.size(); ++i ) {
+               QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+               if ( line.size() < 3 ) {
+                  continue;
+               } else {
+                  if ( line[2].toDouble() == 0 ) {
+                     line[2] = QString( "%1" ).arg( zero_sd );
+                     pre [i] = zero_sd;
+                  }
+                  newcontents << line.join( " " );
+               }
+            }
+            prcontents        = newcontents.join( "\n" ) + "\n";
+
+            if ( mw != -1 ) {
+               // US_Vector::printvector3( QString( "ift %1 pr r, pr, pre" ).arg( , r, pr, pre );
+               normalize_pr( r, &pr, &pre, mw );
+               for ( int i = 0; i < (int)r.size(); ++i ) {
+                  newcontents_normed << QString( "%1 %2 %3" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+               }
+               prcontents_normed = newcontents_normed.join( "\n" ) + "\n";
+            }
+               
+            // QTextStream( stdout ) << "--- new pr contents ---\n";
+            // QTextStream( stdout ) << prcontents;
+            // QTextStream( stdout ) << "--- end new pr contents ---\n";
+         }
+      }
+         
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.sprr" );
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      }
+
       QString header =
          QString( "# IFT P(r) from " + ift_last_processed + "%1\nR\tP(r)\tSD\n" )
          .arg(
@@ -530,20 +700,56 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
               )
          ;
 
-      US_File_Util ufu;
-      if ( !ufu.copy( files[ caps[ 2 ] ], dest, true, header ) ) {
-         editor_msg( "red", ufu.errormsg );
+      if ( ok_to_replace ) {
+         prcontents = header + prcontents;
+         QString error;
+         if ( !US_File_Util::putcontents( dest, prcontents, error ) ) {
+            editor_msg( "red", error );
+         } else {
+            created_files << dest;
+            if ( prcontents_normed.isEmpty() || !cb_normalize->isChecked() ) {
+               cb_normalize->setChecked( false );
+               load_pr( false, dest, mw == -1e0 );
+               last_pr_rebin_save( header, rxstr, created_files );
+            }
+         }            
+         if ( !prcontents_normed.isEmpty() ) {
+            prcontents_normed = header + prcontents_normed;
+            QString dest_normed = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.dat" );
+            if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+               dest_normed = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest_normed, 0, this );
+            }
+            if ( !US_File_Util::putcontents( dest_normed, prcontents_normed, error ) ) {
+               editor_msg( "red", error );
+            } else {
+               created_files << dest_normed;
+               if ( cb_normalize->isChecked() ) {
+                  load_pr( false, dest_normed, mw == -1e0 );
+               } else {
+                  load_pr( false, dest, mw == -1e0 );
+               }
+               last_pr_rebin_save( header, rxstr, created_files );
+            }
+         }
       } else {
-         created_files << dest;
-         load_pr( false, dest, mw == -1e0 );
+         US_File_Util ufu;
+         if ( !ufu.copy( files[ caps[ 2 ] ], dest, true, header ) ) {
+            editor_msg( "red", ufu.errormsg );
+         } else {
+            created_files << dest;
+            load_pr( false, dest, mw == -1e0 );
+            last_pr_rebin_save( header, rxstr, created_files );
+         }
       }
    }
 
    // "out" file
    if ( files.count( caps[ 0 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift_summary.txt" );
-      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift_summary.txt" );
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      }
       US_File_Util ufu;
       if ( !ufu.copy( files[ caps[ 0 ] ], dest, true ) ) {
          editor_msg( "red", ufu.errormsg );
@@ -555,14 +761,18 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    // fit file
    if ( files.count( caps[ 4 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_fit.ssaxs" );
-      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_fit.ssaxs" );
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      }
       US_File_Util ufu;
       if ( !ufu.copy( files[ caps[ 4 ] ], dest, true, "# IFT I(q) fitting from " + ift_last_processed + "\nq\tI(q)\tSD\n" ) ) {
          editor_msg( "red", ufu.errormsg );
       } else {
          created_files << dest;
-         load_saxs( dest, false, ift_last_processed );
+         if ( !ift_parameters.count( "rerun" ) || ift_parameters[ "rerun" ] != "true" ) {
+            load_saxs( dest, false, ift_last_processed );
+         }
       }
    }
 
@@ -795,7 +1005,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       "bin"
 #endif
       + SLASH
-      + "crysol" 
+      + ( our_saxs_options->crysol_version_3 ? "crysol3" : "crysol" )
 #if defined(WIN32)
       + ".exe"
 #endif      
@@ -919,7 +1129,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             }
             if ( found_model )
             {
-               ts2 << qs << endl;
+               ts2 << qs << Qt::endl;
                if ( qs.left( 6 ) == "ENDMDL" )
                {
                   break;
@@ -930,7 +1140,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          while ( !ts.atEnd() )
          {
             qs = ts.readLine();
-            ts2 << qs << endl;
+            ts2 << qs << Qt::endl;
             if ( qs.left( 6 ) == "ENDMDL" )
             {
                break;
@@ -1101,7 +1311,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
                return -1;
             }
             QTextStream ts( &f );
-            ts << crysol_manual_input.join( "\n" ) << endl;
+            ts << crysol_manual_input.join( "\n" ) << Qt::endl;
             f.close();
          }
 
@@ -1126,7 +1336,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
                return -1;
             }
             QTextStream ts( &f );
-            ts << cmd << endl;
+            ts << cmd << Qt::endl;
             f.close();
 
             crysol = new QProcess( this );
@@ -1204,59 +1414,52 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    } else {
       crysol = new QProcess( this );
       crysol->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-      crysol->addArgument( prog );
-
-      crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
-
-      crysol->addArgument( "/sm" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
-
-      crysol->addArgument( "/ns" );
-      crysol->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-
-      crysol->addArgument( "/dns" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->water_e_density ) );
-
-      crysol->addArgument( "/dro" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
-
-      crysol->addArgument( "/lm" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
-      
-      crysol->addArgument( "/fb" );
-      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
-
-      if ( our_saxs_options->crysol_explicit_hydrogens )
       {
-         crysol->addArgument( "/eh" );
-      }
-#else
-      {
-         args
-            << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb )
+         if ( our_saxs_options->crysol_version_3 ) {
+            if ( our_saxs_options->crysol_water_dummy_beads ) {
+               args
+                  << "--shell=water"
+                  ;
+            }
+            args
+               << QString("--smax=%1").arg( our_saxs_options->end_q )
+               << QString("--ns=%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
+               << QString("--dns=%1").arg( our_saxs_options->water_e_density )
+               << QString("--dro=%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
+               << QString("--lm=%1").arg( our_saxs_options->sh_max_harmonics )
+               << QString("--fb=%1").arg( our_saxs_options->sh_fibonacci_grid_order )
+               ;
 
-            << "/sm"
-            <<  QString("%1").arg( our_saxs_options->end_q )
+            if ( our_saxs_options->crysol_explicit_hydrogens ) {
+               args << "--explicit-hydrogens";
+            }
+            args << QFileInfo( use_pdb ).fileName();
+         } else {
+            args
+               << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb )
+
+               << "/sm"
+               <<  QString("%1").arg( our_saxs_options->end_q )
          
-            << "/ns"
-            << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
+               << "/ns"
+               << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q))
 
-            << "/dns"
-            << QString("%1").arg( our_saxs_options->water_e_density )
+               << "/dns"
+               << QString("%1").arg( our_saxs_options->water_e_density )
 
-            << "/dro"
-            << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
+               << "/dro"
+               << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast )
 
-            << "/lm"
-            << QString("%1").arg( our_saxs_options->sh_max_harmonics )
+               << "/lm"
+               << QString("%1").arg( our_saxs_options->sh_max_harmonics )
       
-            << "/fb"
-            << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order )
-            ;
+               << "/fb"
+               << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order )
+               ;
 
-         if ( our_saxs_options->crysol_explicit_hydrogens ) {
-            args << "/eh";
+            if ( our_saxs_options->crysol_explicit_hydrogens ) {
+               args << "/eh";
+            }
          }
 
          if ( U_EXPT &&
@@ -1280,7 +1483,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             }
          }
       }
-#endif
    }
    connect( crysol, SIGNAL(readyReadStandardOutput()), this, SLOT(crysol_readFromStdout()) );
    connect( crysol, SIGNAL(readyReadStandardError()), this, SLOT(crysol_readFromStderr()) );
@@ -1523,7 +1725,12 @@ void US_Hydrodyn_Saxs::crysol_finishup()
       type = ".fit";
    }
 
-   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00" + type;
+   QString created_dat;
+   if ( our_saxs_options->crysol_version_3 ) {
+      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + type;
+   } else {
+      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + "00" + type;
+   }
 
    // us_qdebug( "created_dat: " + created_dat );
 
@@ -1680,7 +1887,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
       while ( !ts.atEnd() )
       {
          qs = ts.readLine();
-         ts2 << qs << endl;
+         ts2 << qs << Qt::endl;
       }
       f.close();
       f2.close();

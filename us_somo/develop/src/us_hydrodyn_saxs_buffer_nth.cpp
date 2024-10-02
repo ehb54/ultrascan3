@@ -1253,7 +1253,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::save_dat()
 
       for ( int j = 0; j < (int) plotted_x[ i ].size(); ++j )
       {
-         ts << plotted_x[ i ][ j ] << " " << plotted_y[ i ][ j ] << endl;
+         ts << plotted_x[ i ][ j ] << " " << plotted_y[ i ][ j ] << Qt::endl;
       }
 
       f.close();

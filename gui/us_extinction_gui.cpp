@@ -259,6 +259,9 @@ US_Extinction::US_Extinction() : US_Widgets()
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
+   //lambdaLimitLeft = 5.0;
+   //lambdaLimitRight = 1500.0;
+    
    lambda_min = 1000;
    lambda_max = -1000;
    odCutoff = 3.0;
@@ -414,70 +417,57 @@ US_Extinction::US_Extinction() : US_Widgets()
    main->setColumnStretch(1, 5);
 }
 
+// void US_Extinction::add_wavelength(void)
+// {
+//   QStringList files;
+//   QFile f;
+  
+//   QFileDialog dialog (this);
+//   //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
+
+//   dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
+    
+//   dialog.setFileMode(QFileDialog::ExistingFiles);
+//   dialog.setViewMode(QFileDialog::Detail);
+//   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+  
+//   QString work_dir_data  = US_Settings::dataDir();
+//   //qDebug() << work_dir_data;
+//   //dialog.setDirectory(work_dir_data);
+
+//   qDebug() << current_path;
+//   current_path = current_path.isEmpty() ? work_dir_data : current_path;
+
+//   dialog.setDirectory(current_path);
+//   qDebug() << current_path;
+
+//   if(dialog.exec())
+//     {
+//       QDir d = dialog.directory();
+//       current_path = d.absolutePath();
+//       files = dialog.selectedFiles();
+//       reading(files);
+//     }
+// }
+
 void US_Extinction::add_wavelength(void)
 {
-  QStringList files;
-  QFile f;
-  
-  QFileDialog dialog (this);
-  //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
-
-  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-    
-  dialog.setFileMode(QFileDialog::ExistingFiles);
-  dialog.setViewMode(QFileDialog::Detail);
-  //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
-  
-  QString work_dir_data  = US_Settings::dataDir();
-  //qDebug() << work_dir_data;
-  //dialog.setDirectory(work_dir_data);
-
-  qDebug() << current_path;
-  current_path = current_path.isEmpty() ? work_dir_data : current_path;
-
-  dialog.setDirectory(current_path);  
-  qDebug() << current_path;
-
-  if(dialog.exec())
-    {
-      QDir d = dialog.directory();
-      current_path = d.absolutePath();
-      files = dialog.selectedFiles();
-      reading(files);
-    }
-}
-
-void US_Extinction::reading(QStringList sl)
-{
-   QString fileName, str, str1, extension;
-   int position;
-   for (QStringList::const_iterator  it=sl.begin(); it!=sl.end(); ++it)
-   {
-      fileName = *it;
-      position = fileName.lastIndexOf(".");
-      str = fileName.mid(position+2, 1);
-      if(str.compare ("i") == 0 || str.compare ("I") == 0)
-      {
-         lambdaLimitLeft = 200.0;
-         odCutoff = 1.0e5;
-         le_lambdaLimitLeft->setText(str.sprintf(" %2.3f", lambdaLimitLeft));
-         le_odCutoff->setText(str.sprintf(" %2.3e", odCutoff));
-         data_plot->setTitle(tr("Intensity Profile"));
-      }
-      if(!fileName.isEmpty())
-      {
-         filenames.push_back(fileName);
-	 loadScan(fileName);
-      }
-   } 
-   le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
-   le_lambdaLimitRight->setText(str1.sprintf(" %2.1f", lambda_max));
-   ct_coefficient->setValue(280);
-   ct_coefficient->setRange(lambda_min,lambda_max);
-
+   QString filter = "csv files (*.csv);;dat files (*.dat);;text files (*.txt);;dsp files (*.dsp);; wa files (*.wa)";
+   QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
+                                                US_Settings::dataDir(), filter);
+   if (fpath.isEmpty()) {
+      return;
+   }
+   QString note = "1st Column -> WAVELENGTH ; Others -> OD";
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
+   int state = csv_loader->exec();
+   if (state != QDialog::Accepted) return;
+   US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+   if (csv_data.columnCount() < 2) return;
+   loadScan(csv_data);
    update_data();
-   //plot();
 }
+
 bool US_Extinction::isComment(const QString &str)
 {
    QString teststr = str, str1, str2;
@@ -497,105 +487,107 @@ bool US_Extinction::isComment(const QString &str)
       return(true);
    }
 }
-bool US_Extinction::loadScan(const QString &fileName)
+bool US_Extinction::loadScan(US_CSV_Loader::CSV_Data& csv_data)
 {
-   QString str1;
-   QStringList strl;
-   float temp_x, temp_y;
-   WavelengthScan wls;
-   QFile f(fileName);
-   wls.v_readings.clear();
-   QFileInfo fi(fileName);
-   wls.filePath = fi.filePath();
-   wls.fileName = fi.fileName();
-   //reads in files until the end of the file
-   if(f.open(QIODevice::ReadOnly | QIODevice::Text))
-   {
-      int row = 0;
-      QTextStream ts(&f);
-      wls.description = ts.readLine();
-      while(!ts.atEnd())
-      {
-         bool flag1 = true;
-   
-         //true while text information is not a number
-         if(flag1 && !ts.atEnd())
-         {
-            str1 = ts.readLine();
-         }
-         else
-         {
-            flag1 = false;
-         }
-         str1 = str1.simplified();
-         str1 = str1.replace("\"", " ");
-         str1 = str1.replace(",", " ");
-         strl = str1.split(" ");
-         temp_x = strl.at(0).toFloat();
-         temp_y = strl.at(1).toFloat();
-	 
-	 
-         if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
-         {
-	   qDebug() << temp_x << ", " << temp_y;
-            Reading r = {temp_x, temp_y};
-            wls.v_readings.push_back(r);
-            lambda_max = max(temp_x, lambda_max);  
-            lambda_min = min (temp_x, lambda_min);
-         }
-      }
-      f.close();
-      qDebug() << "Inside LAOD 1";
+   QRegularExpression re;
+   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+   QRegularExpressionMatch match;
 
-      if(wls.v_readings.size() < 10)
-      {
-         //QMessageBox msg1 = US_LongMessageBox("Ultrascan Error", "This wavelength doesn't have\n enough usable points - scan not loaded", this);
+   QString str1;
+   QMap < QString, WavelengthScan >  Wvs_to_descr_map;
+
+   int nc_loaded = 0;
+   if (lw_file_names->count() > 0) {
+      QString text = lw_file_names->item(lw_file_names->count() - 1)->text();
+      re.setPattern("^[(](\\d+)[)].+");
+      match = re.match(text);
+      if (match.hasMatch()) {
+         nc_loaded = match.captured(1).toInt();
       }
-      qDebug() << "Inside LAOD 11, wls.v_readings.at(0).lambda: " << wls.v_readings.at(0).lambda;
+   }
+
+   QFileInfo file_info(csv_data.filePath());
+   QStringList header = csv_data.header();
+   int ncols = csv_data.columnCount();
+   int nrows = csv_data.rowCount();
+
+   QVector<double> xvals = csv_data.columnAt(0);
+   for (int ii = 1; ii < ncols; ii++) {
+      int column = nc_loaded + ii ;
+      QString key = tr("Column_%1").arg(column);
+      QString desc = tr("(%1) %2").arg(column).arg(header.at(ii));
+      Wvs_to_descr_map [ key ].description = desc;
+      Wvs_to_descr_map [ key ].fileName = file_info.fileName();
+      Wvs_to_descr_map [ key ].filePath = file_info.filePath();
+      QVector<double> yvals = csv_data.columnAt(ii);
+      for (int jj = 0; jj < nrows; jj++) {
+         float xt = xvals.at(jj);
+         float yt = yvals.at(jj);
+         if(xt >= lambdaLimitLeft && yt <= odCutoff && xt <= lambdaLimitRight) {
+            Reading r = {xt, yt};
+            Wvs_to_descr_map [ key ].v_readings.push_back(r);
+            lambda_max = max(xt, lambda_max);
+            lambda_min = min (xt, lambda_min);
+         }
+      }
+   }
+
+   le_lambdaLimitLeft->setText(str1.asprintf(" %2.1f", lambda_min));
+   le_lambdaLimitRight->setText(str1.asprintf(" %2.1f", lambda_max));
+   ct_coefficient->setValue(280);
+   ct_coefficient->setRange(lambda_min,lambda_max);
+
+   qDebug() << "Inside LOAD 1";
+
+   //Now, iterate over Wvs_to_descr_map:
+   qDebug() << "Size of the Wvs_to_descr_map: " << Wvs_to_descr_map. keys() << Wvs_to_descr_map. keys(). size();
+
+   QMap < QString, WavelengthScan >::iterator mm;
+   for ( mm =  Wvs_to_descr_map.begin(); mm !=  Wvs_to_descr_map.end(); ++mm )
+   {
+      WavelengthScan wls = Wvs_to_descr_map[ mm.key() ];
+
       if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
       {//we need to reverse the order of entries
          WavelengthScan wls2;
          wls2.v_readings.clear();
-	 qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
+         qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
          for(int i=(wls.v_readings.size() - (unsigned int) 1); i >=0; i--)
          {
-	   qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
+            qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
             Reading temp = {wls.v_readings.at(i).lambda, wls.v_readings.at(i).od};
             wls2.v_readings.push_back(temp);
          }
-	 qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
+         qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
          wls.v_readings.clear();
-	 
+
          for(unsigned int i = 0; i < (unsigned int)wls2.v_readings.size(); i++)
          {
-	   qDebug() << "i: " << i;
+            qDebug() << "i: " << i;
             Reading temp2 = {wls2.v_readings.at(i).lambda, wls2.v_readings.at(i).od};
             wls.v_readings.push_back(temp2);
          }
-	 qDebug() << "Inside LAOD 1cc";
+         qDebug() << "Inside LAOD 1cc";
       }
 
       qDebug() << "Inside LAOD 2";
 
       v_wavelength.push_back(wls);
-      str1.sprintf("Scan %d: ", v_wavelength.size());
-      str1 += wls.fileName + ", ";
-      str1 += wls.description;
-      lw_file_names->insertItem(row, str1);
-      row++;
-      str1 = "";
-   }
-   else
-   {
-      //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
+      CustomListWidgetItem* item = new CustomListWidgetItem();
+      item->setText(wls.description);
+      item->setData(Qt::UserRole, v_wavelength.size() - 1);
+      lw_file_names->addItem(item);
    }
 
    v_wavelength_original = v_wavelength;
    qDebug() << "Size of Wvl in LOAD_SCAN: " << v_wavelength.size();
 
-   return(true);
+   lw_file_names->sortItems();
    
+   return(true);
+
 }
+
 void US_Extinction::plot()
 {
    QVector<QVector<double> > x_plot, y_plot;
@@ -642,7 +634,7 @@ void US_Extinction::plot()
       s->setPen(QPen(Qt::blue));
       s->setBrush(QBrush(Qt::yellow));
       s->setSize(10);
-      title = v_wavelength.at(m).fileName;
+      title = v_wavelength.at(m).description;
       c = us_curve(data_plot, title);
       c->setSymbol(s);
       c->setStyle(QwtPlotCurve::NoCurve);
@@ -667,7 +659,7 @@ void US_Extinction::plot()
       for(int m = 0; m < xfit_data.size(); m++)
 	{
 	  QwtPlotCurve* fitdata;
-	  fitdata = us_curve(data_plot, title);
+	  fitdata = us_curve(data_plot, title + "-fit");
 	  fitdata->setPen(QPen(Qt::cyan));
 	  double* xx_ffit = (double*)xfit_data.at(m).data();
 	  double* yy_ffit = (double*)yfit_data.at(m).data();
@@ -784,7 +776,12 @@ void US_Extinction::update_data(void)
 
 void US_Extinction::listToCurve(void)
 {
+   
+   
    QString selectedName = lw_file_names->currentItem()->text();
+
+   qDebug() << "listToCurve() CALLED; size of v_curve -- "  << v_curve.size();
+   
    QwtPlotCurve* c_select;
    c_select = NULL;
    QwtSymbol *s_old = new QwtSymbol;
@@ -800,8 +797,9 @@ void US_Extinction::listToCurve(void)
 
    foreach(QwtPlotCurve* c, v_curve)
    {
-      if(selectedName.contains(c->title().text()))
+     if(selectedName.contains(c->title().text()))
       {
+	qDebug() << "selectedName, c->title().text() -- " <<  selectedName << ", " << c->title().text();
          c_select = c;
       }
    }
@@ -1024,11 +1022,12 @@ void US_Extinction::perform_global(void)
   //     return;
   //  }
    fitting_widget = false;
+   //order = 100;
    parameters = order * 3 + v_wavelength.size();
    fitparameters = new double [parameters];
    for (int i=0; i<v_wavelength.size(); i++)
    {
-      fitparameters[i] = 0.3;
+      fitparameters[i] = 0.3;  
    }
    float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
 
@@ -1039,9 +1038,26 @@ void US_Extinction::perform_global(void)
       // spread out the peaks
       fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
       fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+      //fitparameters[v_wavelength.size() + (i * 3) + 2] = 0.015;           // Sigma
    }
    //opens the fitting GUI
 
+   //DEBUG
+   qDebug() << "order, parameters, projectName, fitting_widget "
+	    << order << parameters << projectName << fitting_widget;
+
+   //DEBUG
+   for( int i=0; i< v_wavelength .size(); i++)
+     {
+       WavelengthScan w_t = v_wavelength[ i ];
+       for ( int j=0; j < w_t.v_readings.size(); j++ )
+	 {
+	   qDebug() << "Raw Data [SET "<< i+1 << " ]: X, Y -- "
+		    << w_t. v_readings[ j ]. lambda
+		    << w_t. v_readings[ j ]. od;
+	 }
+     }
+   //END DEBUG
    
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
                                   projectName, &fitting_widget);
@@ -1049,8 +1065,14 @@ void US_Extinction::perform_global(void)
    connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
 
    fitter->setParent(this, Qt::Window);
-   fitter->show();
- 
+
+   /*  TEMPORARY For run in background **/
+    fitter->show();
+    // fitter->Fit();
+    // fitted = true;
+    // plot();
+   /*************************************/
+   
    fitted = true;
    //causes the fitted line to plot after the fitting widget is closed
    connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
@@ -1315,3 +1337,24 @@ void US_Extinction::help(void)
 
 }
 
+bool CustomListWidgetItem::operator<(const QListWidgetItem& other) const {
+   QRegularExpression re;
+   re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+   QRegularExpressionMatch match;
+   re.setPattern("^[(](\\d+)[)].+");
+   match = re.match(this->text());
+   int this_id = -1;
+   int other_id = -1;
+   if (match.hasMatch()) {
+      this_id = match.captured(1).toInt();
+   }
+   match = re.match(other.text());
+   if (match.hasMatch()) {
+      other_id = match.captured(1).toInt();
+   }
+   if (this_id != -1 && other_id != -1) {
+      return this_id < other_id;
+   } else {
+      return this->text().length() < other.text().length();
+   }
+}

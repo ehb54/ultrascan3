@@ -44,6 +44,7 @@ struct advanced_config
    bool debug_5;
    bool debug_6;
    bool debug_7;
+   int  temp_dir_threshold_mb;
 };
 
 class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
@@ -70,6 +71,8 @@ class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
       QCheckBox *cb_expert_mode;
       QCheckBox *cb_experimental_threads;
       QCheckBox *cb_experimental_renum;
+      QLabel    *lbl_temp_dir_threshold_mb;
+      QLineEdit *le_temp_dir_threshold_mb;
       QCheckBox *cb_debug_1;
       QCheckBox *cb_debug_2;
       QCheckBox *cb_debug_3;
@@ -85,6 +88,7 @@ class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
       void set_auto_calc_somo();
       void set_auto_show_hydro();
       void set_pbr_broken_logic();
+      void set_temp_dir_threshold_mb( const QString &);
       void set_use_sounds();
       void set_expert_mode();
       void set_experimental_threads();

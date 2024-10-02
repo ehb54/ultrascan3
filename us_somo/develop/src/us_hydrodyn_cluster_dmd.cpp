@@ -15,11 +15,7 @@
 
 #define SLASH QDir::separator()
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
+#define TSO QTextStream( stdout )
 
 US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
                                                csv &csv1,
@@ -52,6 +48,60 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
 
    sync_csv_with_selected();
 
+   // check pdbs
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->dmd_failed_validation = false;
+      ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.clear();
+      US_Saxs_Util *us = ((US_Hydrodyn *)us_hydrodyn)->saxs_util;
+
+      for ( int i = 0; i < (int)((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ ) {
+         QString full_filename = ((US_Hydrodyn_Cluster *)cluster_window)->selected_files[ i ];
+         QString filename      = QFileInfo( full_filename ).fileName();
+         if ( !us->dmd_pdb_prepare( full_filename ) ) {
+            ((US_Hydrodyn *)us_hydrodyn)->dmd_failed_validation = true;
+            qDebug() << "dmd_pdb_prepare() : errors : " << us->errormsg << Qt::endl;
+            ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports[ filename ] = us->dmd_pdb_prepare_reports;
+            ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports[ filename ][ "errors" ] << us->errormsg;
+            if ( !us->noticemsg.isEmpty() ) {
+               ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports[ filename ][ "notice" ] << us->noticemsg;
+            }
+         } else {
+            ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports[ filename ] = us->dmd_pdb_prepare_reports;
+            dmd_chain          [ filename ] = us->dmd_chain;
+            dmd_res_link       [ filename ] = us->dmd_res_link;
+            dmd_chain_is_hetatm[ filename ] = us->dmd_chain_is_hetatm;
+         }            
+      }
+      if ( ((US_Hydrodyn *)us_hydrodyn)->dmd_failed_validation ) {
+         QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
+         return;
+      }
+      for ( auto it = ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.begin();
+            it != ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.end();
+            ++it ) {
+         editor_msg( "black", "" );
+         editor_msg( "black", "Reports for " + it->first + ":" );
+         for ( auto it2 = it->second.begin();
+               it2 !=  it->second.end();
+               ++it2 ) {
+            if ( it2->second.size() ) {
+               editor_msg( "black", it2->first + ":" );
+               editor_msg( "black", it2->second.join("\n") );
+            }
+         }
+         editor_msg( "black", "" );
+      }            
+   }
+
+   for ( map < QString, bool >::iterator it = selected_map.begin();
+         it != selected_map.end();
+         it++ ) {
+      if ( !setup_residues( it->first ) ) {
+         continue;
+      }
+      residue_summary( it->first );
+   }
+   
    dmd_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster" + SLASH + "dmd";
    QDir dir1( dmd_dir );
    if ( !dir1.exists() )
@@ -82,7 +132,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
       csv_width = 1000;
    }
 
-   // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
+   // TSO << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 400 + csv_height );
    update_enables();
@@ -647,8 +697,8 @@ void US_Hydrodyn_Cluster_Dmd::copy()
    }
    // editor_msg( "black", QString( "csv copy has %1 rows" ).arg( csv_copy.data.size() ) );
 
-   // cout << "csv1 after copy():\n" << csv_to_qstring( csv1 ) << endl;
-   // cout << "csv_copy after copy():\n" << csv_to_qstring( csv_copy ) << endl;
+   // TSO << "csv1 after copy():\n" << csv_to_qstring( csv1 ) << Qt::endl;
+   // TSO << "csv_copy after copy():\n" << csv_to_qstring( csv_copy ) << Qt::endl;
 
    update_enables();
 }
@@ -678,8 +728,8 @@ void US_Hydrodyn_Cluster_Dmd::paste()
          pos++;
       }
    }
-   // cout << "csv1 after paste():\n" << csv_to_qstring( csv1 ) << endl;
-   // cout << "csv_copy after paste():\n" << csv_to_qstring( csv_copy ) << endl;
+   // TSO << "csv1 after paste():\n" << csv_to_qstring( csv1 ) << Qt::endl;
+   // TSO << "csv_copy after paste():\n" << csv_to_qstring( csv_copy ) << Qt::endl;
    reload_csv();
    update_enables();
 }
@@ -1054,7 +1104,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
    csv_new.num_data.clear( );
    csv_new.prepended_names.clear( );
 
-   map < QString, bool > selected_map;
+   selected_map.clear();
    map < QString, bool > present_map;
    
    full_filenames.clear( );
@@ -1111,7 +1161,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
       {
          continue;
       }
-      residue_summary( it->first );
+      // residue_summary( it->first );
 
       if ( !present_map.count( it->first ) )
       {
@@ -1148,21 +1198,21 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
 
 QStringList US_Hydrodyn_Cluster_Dmd::csv_parse_line( QString qs )
 {
-   // cout << QString("csv_parse_line:\ninital string <%1>\n").arg(qs);
+   // TSO << QString("csv_parse_line:\ninital string <%1>\n").arg(qs);
    QStringList qsl;
    if ( qs.isEmpty() )
    {
-      // cout << QString("csv_parse_line: empty\n");
+      // TSO << QString("csv_parse_line: empty\n");
       return qsl;
    }
    if ( !qs.contains(",") )
    {
-      // cout << QString("csv_parse_line: one token\n");
+      // TSO << QString("csv_parse_line: one token\n");
       qsl << qs;
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;
@@ -1198,7 +1248,7 @@ QStringList US_Hydrodyn_Cluster_Dmd::csv_parse_line( QString qs )
    {
       qsl << token;
    }
-   // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
+   // TSO << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
    return qsl;
 }
 
@@ -1264,7 +1314,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          QString      chain_id   = line.mid( 21, 1 );
          unsigned int residue_no = line.mid( 22, 4 ).trimmed().toUInt();
          QString      this_key   = chain_id + line.mid( 22, 4 ).trimmed();
-         // cout << QString( "line <%1> chain id <%2> key <%3>\n" ).arg( line.left(30) ).arg( chain_id ).arg( this_key );
+         // TSO << QString( "line <%1> chain id <%2> key <%3>\n" ).arg( line.left(30) ).arg( chain_id ).arg( this_key );
 
          if ( last_key.isEmpty() ||
               this_key != last_key )
@@ -1311,7 +1361,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    for ( unsigned int i = 0; i < (unsigned int)residues_chain[ filename ].size(); i++ )
    {
       QString key           = filename + ":" + residues_chain[ filename ][ i ];
-      // cout << "in residues_chain: " << key << endl;
+      // TSO << "in residues_chain: " << key << Qt::endl;
       unsigned int this_pos = residues_number[ filename ][ i ];
       if ( last_chain != residues_chain[ filename ][ i ] )
       {
@@ -1322,7 +1372,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          residues_range_end  [ key      ].push_back( this_pos );
          residues_range_chain    [ filename ].push_back( key );
          residues_range_chain_pos[ filename ].push_back( residues_range_start[ key ].size() - 1 );
-         // cout << "in residues_chain - pushback: " << key << " chain " << residues_chain[ filename ][ i ] << endl;
+         // TSO << "in residues_chain - pushback: " << key << " chain " << residues_chain[ filename ][ i ] << Qt::endl;
          last_chain = residues_chain[ filename ][ i ];
          continue;
       }
@@ -1345,7 +1395,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
 void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
 {
-   // cout << "residue summary: " << filename << endl;
+   // TSO << "residue summary: " << filename << Qt::endl;
    if ( !residues_chain.count( filename ) )
    {
       editor_msg( "red", QString( us_tr( "Internal Error: filename %1 not prepared for summary" ) ).arg( filename ) );
@@ -1357,7 +1407,7 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
    {
       QString key = residues_range_chain[ filename ][ i ];
       QString chain_id = key.right( 1 );
-      // cout << "key " << key << endl;
+      // TSO << "key " << key << Qt::endl;
       if ( !residues_range_start.count( key ) )
       {
          editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 not prepared for summary" ) ).arg( filename ).arg( key ) );
@@ -1386,13 +1436,58 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
       // for ( unsigned int j = 0; j < residues_range_start[ key ].size(); j++ )
       // {
       pos++;
-      editor_msg( "dark blue", QString( us_tr( "%1: Chain %2 [%3] residue range: %4 - %5\n" ) )
-                  .arg( filename )
-                  .arg( chain_id )
-                  .arg( pos )
-                  .arg( residues_range_start[ key ][ residues_range_chain_pos[ filename ][ i ] ] )
-                  .arg( residues_range_end  [ key ][ residues_range_chain_pos[ filename ][ i ] ] )
-                  );
+
+      int resseq_start = (int) residues_range_start[ key ][ residues_range_chain_pos[ filename ][ i ] ];
+      int resseq_end   = (int) residues_range_end  [ key ][ residues_range_chain_pos[ filename ][ i ] ];
+      
+      bool is_hetatm =
+         dmd_chain_is_hetatm[ filename ].count( chain_id ) &&
+         dmd_chain_is_hetatm[ filename ][ chain_id ].count( resseq_start ) > 0;
+      if ( is_hetatm ) {
+         bool ok = true;
+         if ( !dmd_chain   .count( filename ) ||
+              !dmd_res_link.count( filename ) ) {
+            editor_msg(
+                       "dark red",
+                       QString( us_tr( "Error: Internal. dmd_native_range() Could not find %1 in maps" ) )
+                       .arg( filename )
+                       );
+            ok = false;
+         }
+
+         if ( !dmd_chain   [ filename ].count( chain_id ) ||
+              !dmd_res_link[ filename ].count( chain_id ) ) {
+            editor_msg(
+                       "dark red",
+                       QString( us_tr( "Error: Internal. dmd_native_range() Could not find %1 chain %2 in maps" ) )
+                       .arg( filename )
+                       .arg( chain_id )
+                       );
+            ok = false;
+         }
+
+         int dmd_chain_start = ok ? dmd_chain[ filename ][ chain_id ][ resseq_start ] : -1;
+         int dmd_chain_end   = ok ? dmd_chain[ filename ][ chain_id ][ resseq_end   ] : -1;
+
+         editor_msg( "dark blue", QString( us_tr( "%1: Chain %2 [%3] residue range: %4 - %5\n" ) )
+                     .arg( filename )
+                     .arg( chain_id )
+                     .arg( dmd_chain_start == dmd_chain_end ?
+                           QString( "%1" ).arg( dmd_chain_start ) :
+                           QString( "%1-%2" ).arg( dmd_chain_start ).arg( dmd_chain_end ) )
+                     .arg( residues_range_start[ key ][ residues_range_chain_pos[ filename ][ i ] ] )
+                     .arg( residues_range_end  [ key ][ residues_range_chain_pos[ filename ][ i ] ] )
+                     );
+      } else {
+         editor_msg( "dark blue", QString( us_tr( "%1: Chain %2 [%3] residue range: %4 - %5\n" ) )
+                     .arg( filename )
+                     .arg( chain_id )
+                     .arg( pos )
+                     .arg( residues_range_start[ key ][ residues_range_chain_pos[ filename ][ i ] ] )
+                     .arg( residues_range_end  [ key ][ residues_range_chain_pos[ filename ][ i ] ] )
+                     );
+      }
+         
       // }
    }
 }
@@ -1415,10 +1510,10 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
    QStringList qsl;
    {
       QRegExp rx = QRegExp( "\\s*(\\s|,|;)+\\s*" );
-      qsl = (static_range ).split( rx , QString::SkipEmptyParts );
+      qsl = (static_range ).split( rx , Qt::SkipEmptyParts );
    }
 
-   cout << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );
+   TSO << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );
 
    QRegExp rx ( "^(|.):(\\d+)(-(\\d+)|)$" );
 
@@ -1499,7 +1594,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
          }
          unsigned int chain_pos        = residues_range_chain_pos[ filename ][ j         ];
          unsigned int this_chain_start = residues_range_start    [ key      ][ chain_pos ];
-         unsigned int this_chain_base  = this_chain_start;
+         // unsigned int this_chain_base  = this_chain_start;
          unsigned int this_chain_end   = residues_range_end      [ key      ][ chain_pos ];
          if ( this_chain_start < start_residue )
          {
@@ -1511,15 +1606,29 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
          }
          if ( this_chain_start <= this_chain_end )
          {
-            native_range += QString( "%1%2.%3.*" )
-               .arg( native_range.isEmpty() ? "" : "," )
-               .arg( pos )
-               .arg( this_chain_start < this_chain_end ? 
-                     QString( "%1-%2" )
-                     .arg( this_chain_start - this_chain_base + 1 )
-                     .arg( this_chain_end   - this_chain_base + 1 ) :
-                     QString( "%1" ).arg( this_chain_start - this_chain_base + 1 ) )
-               ;
+            {
+               QString dmd_static;
+               if ( !dmd_native_range(
+                                      filename,
+                                      chain_id,
+                                      (int) this_chain_start,
+                                      (int) this_chain_end,
+                                      dmd_static
+                                      ) ) {
+                  continue;
+               }
+               native_range += ( native_range.isEmpty() ? "" : "," ) + dmd_static;
+            }
+            
+            // native_range += QString( "%1%2.%3.*" )
+            //    .arg( native_range.isEmpty() ? "" : "," )
+            //    .arg( pos )
+            //    .arg( this_chain_start < this_chain_end ? 
+            //          QString( "%1-%2" )
+            //          .arg( this_chain_start - this_chain_base + 1 )
+            //          .arg( this_chain_end   - this_chain_base + 1 ) :
+            //          QString( "%1" ).arg( this_chain_start - this_chain_base + 1 ) )
+            //    ;
             for ( unsigned int k = this_chain_start; k <= this_chain_end; k++ )
             {
                used_bits[ k ]++;
@@ -1556,5 +1665,84 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
       return false;
    }
    t_csv->setItem( row, 11, new QTableWidgetItem( native_range ) );
+   return true;
+}
+
+bool US_Hydrodyn_Cluster_Dmd::dmd_native_range( const QString & filename,
+                                                const QString & chainid,
+                                                const int resseq_start,
+                                                const int resseq_end,
+                                                QString & dmd_static ) {
+   dmd_static = "";
+
+   if ( !dmd_chain   .count( filename ) ||
+        !dmd_res_link.count( filename ) ) {
+      editor_msg(
+                 "dark red",
+                 QString( us_tr( "Error: Internal. dmd_native_range() Could not find %1 in maps" ) )
+                 .arg( filename )
+                 );
+      return false;
+   }
+
+   if ( !dmd_chain   [ filename ].count( chainid ) ||
+        !dmd_res_link[ filename ].count( chainid ) ) {
+      editor_msg(
+                 "dark red",
+                 QString( us_tr( "Error: Internal. dmd_native_range() Could not find %1 chain %2 in maps" ) )
+                 .arg( filename )
+                 .arg( chainid )
+                 );
+      return false;
+   }
+
+   if ( !dmd_chain   [ filename ][ chainid ].count( resseq_start ) ||
+        !dmd_res_link[ filename ][ chainid ].count( resseq_start ) ) {
+      editor_msg(
+                 "dark red",
+                 QString( us_tr( "Error: Internal. dmd_native_range() Could not find %1 chain %2 residue %3 (start) in maps" ) )
+                 .arg( filename )
+                 .arg( chainid )
+                 .arg( resseq_start )
+                 );
+      return false;
+   }
+
+   if ( !dmd_chain   [ filename ][ chainid ].count( resseq_end ) ||
+        !dmd_res_link[ filename ][ chainid ].count( resseq_end ) ) {
+      editor_msg(
+                 "dark red",
+                 QString( us_tr( "Error: Internal. dmd_native_range() Could not find %1 chain %2 residue %3 (end) in maps" ) )
+                 .arg( filename )
+                 .arg( chainid )
+                 .arg( resseq_end )
+                 );
+      return false;
+   }
+
+   int dmd_chain_start = dmd_chain   [ filename ][ chainid ][ resseq_start ];
+   int dmd_chain_end   = dmd_chain   [ filename ][ chainid ][ resseq_end   ];
+   int dmd_res_start   = dmd_res_link[ filename ][ chainid ][ resseq_start ];
+   int dmd_res_end     = dmd_res_link[ filename ][ chainid ][ resseq_end   ];
+   bool is_hetatm      =
+      dmd_chain_is_hetatm[ filename ].count( chainid ) &&
+      dmd_chain_is_hetatm[ filename ][ chainid ].count( resseq_start ) > 0;
+
+   if ( dmd_chain_start == dmd_chain_end ) {
+      dmd_static += QString( "%1" ).arg( dmd_chain_start );
+   } else {
+      dmd_static += QString( "%1-%2" ).arg( dmd_chain_start ).arg( dmd_chain_end );
+   }
+   dmd_static += ".";
+   if ( is_hetatm ) {
+      dmd_static += "1";
+   } else {
+      if ( dmd_res_start == dmd_res_end ) {
+         dmd_static += QString( "%1" ).arg( dmd_res_start );
+      } else {
+         dmd_static += QString( "%1-%2" ).arg( dmd_res_start ).arg( dmd_res_end );
+      }
+   }
+   dmd_static += ".*";
    return true;
 }

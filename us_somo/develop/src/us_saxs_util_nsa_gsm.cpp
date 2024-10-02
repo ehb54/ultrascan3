@@ -336,11 +336,11 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 
       if(evenn) {
          switch(queries) {
-         case 8 : i->d[(6 * N_2) - 1] = 0;
-         case 7 :
-         case 6 : i->d[(4 * N_2) - 1] = 0;
-         case 5 :
-         case 4 : i->d[(2 * N_2) - 1] = 0; 
+         case 8 : i->d[(6 * N_2) - 1] = 0; [[fallthrough]];
+         case 7 : [[fallthrough]];
+         case 6 : i->d[(4 * N_2) - 1] = 0; [[fallthrough]];
+         case 5 : [[fallthrough]];
+         case 4 : i->d[(2 * N_2) - 1] = 0;  [[fallthrough]];
          default : break;
          }
       }
@@ -736,11 +736,11 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 
       if(evenn) {
          switch(queries) {
-         case 8 : i->d[(6 * N_2) - 1] = 0;
-         case 7 :
-         case 6 : i->d[(4 * N_2) - 1] = 0;
-         case 5 :
-         case 4 : i->d[(2 * N_2) - 1] = 0; 
+         case 8 : i->d[(6 * N_2) - 1] = 0; [[fallthrough]];
+         case 7 : [[fallthrough]];
+         case 6 : i->d[(4 * N_2) - 1] = 0; [[fallthrough]];
+         case 5 : [[fallthrough]];
+         case 4 : i->d[(2 * N_2) - 1] = 0; [[fallthrough]];
          default : break;
          }
       }
@@ -1188,11 +1188,11 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 
       if(evenn) {
          switch(queries) {
-         case 8 : v_p->d[(6 * N_2) - 1] = 0;
-         case 7 :
-         case 6 : v_p->d[(4 * N_2) - 1] = 0;
-         case 5 :
-         case 4 : v_p->d[(2 * N_2) - 1] = 0; 
+         case 8 : v_p->d[(6 * N_2) - 1] = 0; [[fallthrough]];
+         case 7 : [[fallthrough]];
+         case 6 : v_p->d[(4 * N_2) - 1] = 0; [[fallthrough]];
+         case 5 : [[fallthrough]];
+         case 4 : v_p->d[(2 * N_2) - 1] = 0; [[fallthrough]];
          default : break;
          }
       }

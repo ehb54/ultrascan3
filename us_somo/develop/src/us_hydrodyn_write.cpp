@@ -30,6 +30,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
          "yellow",       // 14 yellow
          "red",          // 15 red
       };
+#define COLORMAP_SIZE 16
 
 #if defined(DEBUG)
    printf("write bead spt %s\n", fname.toLatin1().data()); fflush(stdout);
@@ -91,7 +92,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
 
    for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
-         if ((*model)[i].bead_color >= (sizeof(colormap) / sizeof(char))) {
+         if ((*model)[i].bead_color >= COLORMAP_SIZE ) {
             printf("ERROR: bead color for bead %u is to large %u\n",
                    (*model)[i].serial,
                    get_color(&(*model)[i])); fflush(stdout);
@@ -304,7 +305,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
 
    QString fstring_somo =
-      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.6f\t%d\t%s\t%.4f\n").
+      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.6f\t%d\t%s\t%.4f\t%f\t%.4f\t%f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts).
@@ -521,7 +522,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
             residues = use_model[i]->residue_list;
          }
          summary_mw += use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta;
-         // QTextStream( stdout ) << "bead ref " << i << " mw " << use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta << endl;
+         // QTextStream( stdout ) << "bead ref " << i << " mw " << use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta << Qt::endl;
 
          if (fsomo) {
             fprintf(fsomo,
@@ -533,7 +534,10 @@ void US_Hydrodyn::write_bead_model( QString fname,
                     use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta,
                     get_color(use_model[i]),
                     residues.toLatin1().data(),
-                    use_model[i]->bead_recheck_asa
+                    use_model[i]->bead_recheck_asa,
+                    use_model[i]->num_elect,
+                    use_model[i]->saxs_excl_vol,
+                    use_model[i]->bead_hydration
                     );
          }
          if (fbeams) {
@@ -585,7 +589,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
               "Field contents:\n"
               "  Line 1: Number of beads, Global partial specific volume\n"
               "  From line 2 on: X, Y, Z coordinates, Radius, Mass, Color coding, "
-              "Correspondence with original residues, ASA\n"
+              "Correspondence with original residues, ASA, electrons, scattering_factor, hydration waters\n"
 
               "\n"
               "Bead Model Output:\n"
@@ -612,6 +616,24 @@ void US_Hydrodyn::write_bead_model( QString fname,
       }
       qDebug() << "write bead model total mw " << summary_mw;
 
+      if ( model->size() && (*model)[0].is_vdw == "vdw" ) {
+         QString qs =
+            QString(
+                    "\nvdW model parameters:\n"
+                    "  Hydrate probe radius   [A] : %1\n"
+                    "  Hydrate threshold    [A^2] : %2\n"
+                    "  Theoretical waters         : %3\n"
+                    "  Exposed residues           : %4\n"
+                    "  Theoretical waters exposed : %5\n"
+                    )
+            .arg( (*model)[0].asa_hydrate_probe_radius )
+            .arg( (*model)[0].asa_hydrate_threshold )
+            .arg( (*model)[0].vdw_theo_waters, 0, 'f', 0 )
+            .arg( (*model)[0].vdw_count_exposed )
+            .arg( (*model)[0].vdw_theo_waters_exposed, 0, 'f', 0 )
+            ;
+         fputs(( qs.toLatin1().data() ), fsomo );
+      }         
       fclose(fsomo);
    }
    if (fbeams) {
@@ -797,7 +819,7 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv1.header[i]);
    }
 
-   t << qs << endl;
+   t << qs << Qt::endl;
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
@@ -806,7 +828,7 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(csv1.data[i][j]);
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
 }
@@ -879,3 +901,71 @@ void US_Hydrodyn::write_dati1_pat_bead_model( QString filename,
 
    write_bead_model( filename, &bm, US_HYDRODYN_OUTPUT_SOMO );
 }
+
+bool US_Hydrodyn::write_pdb_from_model(
+                                       const PDB_model & model
+                                       ,QString & errors
+                                       ,QString & writtenname
+                                       ,const QString & headernote
+                                       ,const QString & suffix
+                                       ,const QString & filename
+                                       ) {
+   QString fname = filename.isEmpty() ? pdb_file : filename;
+   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" );
+   fname += suffix + ".pdb";
+
+   if ( !overwrite && QFile::exists( fname ) )
+   {
+      fname = fileNameCheck( fname, 0, this );
+   }
+
+   QFile f( fname );
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      errors = QString( us_tr("can not open file %1 for writing" ) ).arg( fname );
+      return false;
+   }
+
+   writtenname = fname;
+
+   QString pdb_header =
+      QString( "HEADER  US-SOMO %1 File %2\n" ).arg( headernote ).arg( QFileInfo( fname ).fileName() );
+
+   map < QString, bool > chains_used;
+
+   QString pdb_text = "";
+
+   for (unsigned int j = 0; j < (unsigned int) model.molecule.size (); j++) {
+      for (unsigned int k = 0; k < (unsigned int) model.molecule[j].atom.size (); k++) {
+         PDB_atom *this_atom = (PDB_atom *)&(model.molecule[j].atom[k]);
+
+         pdb_text +=
+            QString("")
+            .sprintf(     
+                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                     this_atom->serial,
+                     this_atom->orgName.toLatin1().data(),
+                     this_atom->resName.toLatin1().data(),
+                     this_atom->chainID.toLatin1().data(),
+                     this_atom->resSeq.toUInt(),
+                     this_atom->coordinate.axis[ 0 ],
+                     this_atom->coordinate.axis[ 1 ],
+                     this_atom->coordinate.axis[ 2 ],
+                     this_atom->occupancy,
+                     this_atom->tempFactor,
+                     this_atom->element.toLatin1().data()
+                     );
+      }
+   }
+
+   QTextStream ts( &f );
+   ts << pdb_header
+      << pdb_text
+      << "TER\n"
+      << "END\n"
+      ;
+   f.close();
+
+   return true;
+}   
+   

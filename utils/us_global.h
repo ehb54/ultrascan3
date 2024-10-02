@@ -122,6 +122,10 @@ class US_UTIL_EXTERN US_Global
 
     void read_global ( void );
     void write_global( void );
+
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+    void *shmbuf;
+#endif
 };
 
 #endif

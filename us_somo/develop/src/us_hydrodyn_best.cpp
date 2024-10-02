@@ -47,7 +47,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
    setWindowTitle( us_tr( "US-SOMO: BEST results analysis tool" ) );
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    plot_data_zoomer      = (ScrollZoomer *) 0;
 
@@ -1950,7 +1950,7 @@ void US_Hydrodyn_Best::save_results()
    // us_qdebug( loaded_csv_trimmed.join( "\n" ) );
    // us_qdebug( out.join( "\n" ) );
    QTextStream ts( &f );
-   ts << out.join( "\n" ) << endl;
+   ts << out.join( "\n" ) << Qt::endl;
    f.close();
 
    connect( lb_data, SIGNAL( itemSelectionChanged() ), SLOT( data_selected() ) );
@@ -2314,15 +2314,15 @@ void US_Hydrodyn_Best::join_results()
       f_in.close();
    }
 
-   ts_out << ",,\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\",\"Points removed (largest number of triangles is point 1)\"" << endl;
+   ts_out << ",,\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\",\"Points removed (largest number of triangles is point 1)\"" << Qt::endl;
 
    for (  map < QString, QStringList >::iterator it = output.begin();
           it != output.end();
           ++it )
    {
       ts_out << "\n";
-      ts_out << ",,\"" + it->first + "\"" << endl;
-      ts_out << it->second.join( "\n" ) << endl;
+      ts_out << ",,\"" + it->first + "\"" << Qt::endl;
+      ts_out << it->second.join( "\n" ) << Qt::endl;
    }
 
    f_out.close();

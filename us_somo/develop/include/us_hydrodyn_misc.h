@@ -29,6 +29,12 @@
 
 using namespace std;
 
+enum CALC_HYDRO_METHOD : int {
+   AUTO_CALC_HYDRO_SMI    = 1
+   ,AUTO_CALC_HYDRO_ZENO   = 2
+   ,AUTO_CALC_HYDRO_GRPY   = 3
+      };
+
 struct misc_options
 {
    double vbar;
@@ -44,6 +50,8 @@ struct misc_options
    double avg_volume;
    double avg_radius;
    double avg_vbar;
+   double avg_num_elect;
+   double avg_protons;
 
    double target_e_density;  // non zero 
    double target_volume;
@@ -52,6 +60,11 @@ struct misc_options
    bool   hydro_supc;
    bool   hydro_zeno;
    bool   export_msroll;
+   bool   export_ssbond;
+
+   bool   parallel_grpy;
+
+   enum   CALC_HYDRO_METHOD auto_calc_hydro_method;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
@@ -83,6 +96,8 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QLabel *lbl_avg_hydration;
       QLabel *lbl_avg_volume;
       QLabel *lbl_avg_vbar;
+      QLabel *lbl_avg_num_elect;
+      QLabel *lbl_avg_protons;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -98,6 +113,8 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QwtCounter *cnt_avg_hydration;
       QwtCounter *cnt_avg_volume;
       QwtCounter *cnt_avg_vbar;
+      QwtCounter *cnt_avg_num_elect;
+      QwtCounter *cnt_avg_protons;
 
       QLabel    *lbl_bead_model_controls;
       QLabel    *lbl_target_e_density;
@@ -122,11 +139,19 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       QLabel    *lbl_other;
       QCheckBox *cb_export_msroll;
+      QCheckBox *cb_export_ssbond;
+      QCheckBox *cb_parallel_grpy;
       QLabel    *lbl_vdw_ot_mult;
       QLineEdit *le_vdw_ot_mult;
       QLabel    *lbl_vdw_ot_dpct;
       QLineEdit *le_vdw_ot_dpct;
+      QCheckBox *cb_vdw_ot_alt;
+      QCheckBox *cb_vdw_saxs_water_beads;
+      QCheckBox *cb_vdw_saxs_skip_pr0pair;
 
+      QLabel    *lbl_auto_calc_hydro_method;
+      QComboBox *cmb_auto_calc_hydro_method;
+      
    private slots:
 
       void setupGUI();
@@ -142,6 +167,9 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       void update_avg_hydration(double);
       void update_avg_volume(double);
       void update_avg_vbar(double);
+      void update_avg_num_elect(double);
+      void update_avg_protons(double);
+      void update_auto_calc_hydro_method();
       
       void update_target_e_density(const QString &);
       void update_target_volume(const QString &);
@@ -153,6 +181,11 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       void update_vdw_ot_mult(const QString &);
       void update_vdw_ot_dpct(const QString &);
+
+      void set_vdw_ot_alt();
+      void set_vdw_saxs_water_beads();
+      void set_vdw_saxs_skip_pr0pair();
+
       void set_set_target_on_load_pdb();
       void set_equalize_radii();
 
@@ -160,6 +193,8 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       // void set_hydro_zeno();
 
       void set_export_msroll();
+      void set_export_ssbond();
+      void set_parallel_grpy();
 
       void cancel();
       void help();

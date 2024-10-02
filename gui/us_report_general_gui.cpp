@@ -18,6 +18,7 @@
 US_ReportGenGui::US_ReportGenGui( QString reportMask ) : US_Widgets()
 {
   this->reportMask = reportMask;
+  abde_mode = false;
   
   QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMask.toUtf8() );
   json = jsonDoc.object();
@@ -103,6 +104,14 @@ US_ReportGenGui::US_ReportGenGui( QString reportMask ) : US_Widgets()
   genL           = NULL;
   lower_buttons  = NULL;
 
+  build_layout();
+}
+
+
+//ABDE
+void US_ReportGenGui::abde_mode_passed( void )
+{
+  abde_mode = true;
   build_layout();
 }
 
@@ -218,7 +227,7 @@ void US_ReportGenGui::build_layout( void )
 		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
 		}
 	      //2DSA analysis
-	      if( analysisItemName.contains("2DSA") )
+	      if( analysisItemName.contains("2DSA")  )
 		{
 		  int checked_2dsa = 0;
 		  for ( int ia2=0; ia2 < analysis2DSAItems.size(); ++ia2 )
@@ -247,7 +256,7 @@ void US_ReportGenGui::build_layout( void )
 		}
 
 	      //PCSA analysis
-	      if( analysisItemName.contains("PCSA") )
+	      if( analysisItemName.contains("PCSA")  )
 		{
 		  int checked_pcsa = 0;
 		  for ( int iap=0; iap < analysisPCSAItems.size(); ++iap )
@@ -273,6 +282,7 @@ void US_ReportGenGui::build_layout( void )
 		    }
 		  else
 		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
+
 		}
 	    }
 	  if ( checked_childs )
@@ -291,6 +301,25 @@ void US_ReportGenGui::build_layout( void )
 	}
     }
 
+  //ABDE
+  if ( abde_mode )
+    {
+      for ( const auto& i : analysisItem.keys() )
+	{
+	  if ( i.contains("2DSA") ||i.contains("PCSA")  )
+	    analysisItem[ i ]-> setHidden( true );
+	}
+      
+      //2DSA
+      for ( const auto& i : analysis2DSAItem.keys() )
+	analysis2DSAItem [ i ]-> setHidden( true );
+      
+      //PCSA
+      for ( const auto& i : analysisPCSAItem.keys() )
+	analysisPCSAItem [ i ]-> setHidden( true );
+    }
+		  
+  
   
   treeWidget->expandAll();    
   treeWidget->resizeColumnToContents( 0 );
@@ -346,6 +375,70 @@ void US_ReportGenGui::build_layout( void )
   
 }
 
+//get Item's children
+void US_ReportGenGui::get_item_childs( QList< QTreeWidgetItem* > & children_list, QTreeWidgetItem* item)
+{
+  children_list << item;
+  
+  int children = item->childCount();
+  for ( int i = 0; i < children; ++i )
+    get_item_childs( children_list, item->child(i) ); 
+}
+
+//What to check/uncheck upon change in items status
+void US_ReportGenGui::changedItem( QTreeWidgetItem* item, int col )
+{
+  //we deal with col 0 only
+  if ( col != 0  ) 
+    return;
+
+  //disconnect
+  item -> treeWidget() -> disconnect();
+
+  //go over children: recursive search for all children down the tree
+  int children = item->childCount();
+  QList< QTreeWidgetItem* > children_list;
+
+  for( int i = 0; i < children; ++i )
+    get_item_childs( children_list, item->child(i) ); 
+
+  for ( int i = 0; i < children_list.size(); ++i )
+    children_list[ i ] -> setCheckState( 0, (Qt::CheckState) item->checkState(0) );
+
+  //Go over parents
+  QTreeWidgetItem* parent_item = item->parent();
+  QList< QTreeWidgetItem* > parents_list;
+  QTreeWidgetItem* current_p_item = new QTreeWidgetItem;
+  
+  while ( parent_item )
+    {
+      parents_list << parent_item;
+      current_p_item = parent_item;
+      parent_item  = current_p_item -> parent();
+    }
+  
+  for( int j = 0; j < parents_list.size(); ++j )
+    {
+      int checked_children = 0;
+      int parent_item_children = parents_list[ j ] ->childCount();
+      for( int jj = 0; jj < parent_item_children; ++jj )
+	{
+	  if ( int( parents_list[ j ]->child( jj )->checkState(0) ) )
+	    ++checked_children;
+	}
+      
+      if ( checked_children )
+	parents_list[ j ]->setCheckState( 0, Qt::Checked );
+      else
+	parents_list[ j ]->setCheckState( 0, Qt::Unchecked );
+    }
+
+  //reconnect
+  connect( item -> treeWidget(), SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+	   this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+}
+
+/*
 //What to check/uncheck upon change in items status
 void US_ReportGenGui::changedItem( QTreeWidgetItem* item, int col )
 {
@@ -409,8 +502,89 @@ void US_ReportGenGui::changedItem( QTreeWidgetItem* item, int col )
 	}
     }
 }
+*/
+
+//Save selection to JSON string & emit signal
+void US_ReportGenGui::gui_to_parms( void )
+{
+  //tree-to-json: genTree && json-to-genMask structure
+  QString mask_edited = tree_to_json ( topItem );
+  //parse_edited_gen_mask_json( mask_edited, genMask_edited );  // <-- not here, will be in the analysis program
+
+  emit update_details( mask_edited );
+  
+  // //DEBUG
+  // exit(1);
+}
+
+//
+void US_ReportGenGui::get_children_to_json( QString& mask_edited, QTreeWidgetItem* item )
+{
+  for( int i = 0; i < item->childCount(); ++i )
+    {
+      mask_edited += "\"" + item->child(i)->text(1).trimmed() + "\":";
+      
+      int children_lev2 = item->child(i)->childCount();
+      if ( !children_lev2 )
+	{
+	  mask_edited += "\"" + QString::number( int(item->child(i)->checkState(0)) ) + "\"";
+	  if ( i != item->childCount()-1 )
+	    mask_edited += ",";
+	}
+      else
+	{
+	  mask_edited += "{";
+	  get_children_to_json( mask_edited, item->child(i) );
+	  mask_edited += "},";
+	}
+    }
+
+  //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
+  mask_edited.replace(",},","},");  
+}
 
 
+//transform arbitraty-level tree to JSON
+QString US_ReportGenGui::tree_to_json( QMap < QString, QTreeWidgetItem * > topLevItems )
+{
+  QString mask_edited;
+  mask_edited += "{";
+  
+  QMap < QString, QTreeWidgetItem * >::iterator top;
+  for ( top = topLevItems.begin(); top != topLevItems.end(); ++top )
+    {
+      mask_edited += "\"" + top.key().trimmed() + "\":";
+      int children_lev1 = top.value()->childCount();
+      if ( !children_lev1 )
+	{
+	  mask_edited += "\"" + QString::number( int(top.value()->checkState(0)) ) + "\",";
+	}
+      else
+	{
+	  mask_edited += "[{";
+	  
+	  //here we need to generalize for any tree nestedness: recursive
+	  get_children_to_json( mask_edited, top.value() );
+
+	  mask_edited += "}],";
+	}
+    }
+
+  //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
+  mask_edited.replace(",}],","}],"); 
+  QString to_replace = "}],";
+  QString new_substr = "}]";
+  mask_edited.replace( mask_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
+
+  mask_edited += "}";
+
+  qDebug() << "Edited Mask: " << mask_edited;
+
+  return mask_edited;
+}
+
+
+/*
 //Save selection to JSON string & emit signal
 void US_ReportGenGui::gui_to_parms( void )
 {
@@ -482,6 +656,8 @@ void US_ReportGenGui::gui_to_parms( void )
   
   emit update_details( mask_edited );
 }
+*/
+
 
 void US_ReportGenGui::cancel_selection( void )
 {

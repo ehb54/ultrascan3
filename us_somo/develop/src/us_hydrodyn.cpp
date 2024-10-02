@@ -23,6 +23,8 @@
 #include "../include/us_revision.h"
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_best.h"
+#include "../include/us_ffd.h"
+#include "../include/us_hydrodyn_vdw_overlap.h"
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include <qregexp.h>
 #include <qfont.h>
@@ -61,6 +63,11 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
+// #define AVG_TEST
+#if defined( AVG_TEST )
+# include "../include/us_average.h"
+#endif
+
 // #define PINV_TEST
 #if defined( PINV_TEST )
 #include "../include/us_svd.h"
@@ -80,12 +87,229 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 // #define GRID_HYDRATE_DEBUG
 
 // static bool no_rr;
+// #define EIGEN_TEST
+#if defined( EIGEN_TEST )
+# include "../include/us_eigen.h"
+#endif
+
+// #define AVGSD_TEST
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
+                         QString gui_script_file,
+                         bool    init_configs_silently,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
+   us_container_grpy = (US_Container_Grpy *)0;
+   grpy_parallel_pulled = false;
+   
+   stopFlag = false;
+   
+#if defined( AVG_TEST )
+   US_Average avg;
+   avg.test();
+   // exit(-1);
+#endif
+
+#if defined( AVGSD_TEST )
+   {
+      vector < vector < double > > ys =
+         {
+            { 1 }
+            ,{ 2 }
+            ,{ 3 }
+            ,{ 4 }
+            ,{ 5 }
+         };
+      vector < double > y_avg;
+      vector < double > y_sd;
+      QString error_msg;
+
+      for ( auto const & y : ys ) {
+         US_Vector::printvector( "y", y );
+      }
+      US_Saxs_Util::average( ys, y_avg, y_sd, error_msg );
+      US_Vector::printvector2( "avg, sd", y_avg, y_sd );
+      qDebug() << error_msg;
+   }
+   exit(-1);
+#endif
+      
+
+#if defined( EIGEN_TEST )
+   {
+      US_Eigen eigen;
+      eigen.test();
+      /*
+      vector < double > x =
+         {
+            0.00228835,
+            0.00236877,
+            0.00242899,
+            0.00247294,
+            0.00228047,
+            0.00250852,
+            0.00273657,
+            0.00296461
+         };
+
+      vector < double > y = {
+         473426.37,
+         469031.56,
+         457997.95,
+         460234.26,
+         1112054,
+         1167329,
+         930548.5,
+         850115
+      };
+
+      vector < double > e = {
+         50.64054,
+         90.27224,
+         156.1049,
+         251.0008,
+         967975.4,
+         418368.3,
+         257145.3,
+         188731.4
+      };
+      */
+
+      vector < double > x =
+         {
+      1, 2, 3, 4, 5, 6, 7
+         };
+
+      // 1.37, .254, 3.26, .55
+      vector < double > y = {
+      5.434
+         ,19.318
+         ,46.322
+         ,89.746
+         ,152.89
+         ,239.054
+         ,351.538
+      };
+
+      vector < double > e = {
+      1,1,1,1,1,1,1
+      };
+      
+      vector < double > coeff;
+      double            chi2;
+      int               degree = 5;
+   
+      US_Vector::printvector3( "data for fitting, q,I,e", x, y, e );
+
+# define TSO QTextStream(stdout)
+      
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_SVD_JACOBI );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_JACOBI chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "g" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_SVD_BDC );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_BDC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "h" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "i" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_COL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_COL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "j" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_FULL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_FULL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "k" );
+      eigen.polyfit( x, y, e, degree, coeff, chi2, EIGEN_NORMAL);
+      US_Vector::printvector( QString( "coefficients EIGEN_NORMALC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "l" );
+
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_SVD_JACOBI );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_JACOBI chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "gp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_SVD_BDC );
+      US_Vector::printvector( QString( "coefficients EIGEN_SVD_BDC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "hp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "ip" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_COL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_COL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "jp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_HOUSEHOLDER_QR_PIVOT_FULL );
+      US_Vector::printvector( QString( "coefficients EIGEN_HOUSEHOLDER_QR_PIVOT_FULL chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "kp" );
+      eigen.polyfit( x, y, degree, coeff, chi2, EIGEN_NORMAL);
+      US_Vector::printvector( QString( "coefficients EIGEN_NORMALC chi2 %1" ).arg( chi2 ), coeff );
+      TSO << eigen.gnuplot_poly( coeff, "lp" );
+      
+      // if ( eigen.evaluate_polynomial( coeff, 0.002, 0.003, 100, x, y ) ) {
+      //    US_Vector::printvector2( "fitting curve", x, y );
+      // } else {
+      //    qDebug() << eigen.errors();
+      // }
+   }
+   exit(-1);
+#endif
+
+   // #define FFD_TEST
+
+#if defined( FFD_TEST )
+# define TSO QTextStream(stdout)
+   US_FFD ffd(5);
+   US_Saxs_Util usu;
+   if ( !usu.select_saxs_file( US_Config::get_home_dir() + "etc" + SLASH + "somo.saxs_atoms" ) ) {
+      TSO << usu.errormsg << "\n";
+   } else {
+      TSO << "select_saxs_file OK\n";
+      TSO << "usu.saxs_list.size() " << usu.saxs_list.size() << "\n";
+      if ( !ffd.set_saxs_coeffs( usu.saxs_list ) ) {
+         TSO << ffd.errormsg << "\n";
+      } else {
+         // TSO << ffd.list_saxs_coeffs();
+      }
+      ffd.set_q_grid( 0, 1, .0005 );
+      TSO << "calc_fq()\n";
+      if ( !ffd.calc_fq() ) {
+         TSO << ffd.errormsg << "\n";
+      } else {
+         TSO << "calc_fq() OK\n";
+         if ( !ffd.calc_fifjq() ) {
+            TSO << ffd.errormsg << "\n";
+         } else {
+            TSO << "calc_fifjq() OK\n";
+         }
+      }
+      // ffd.test();
+   }
+   exit(-1);
+#endif
+
+// #define DP_TEST
+
+#if defined( DP_TEST )
+   {
+      QTextStream tso(stdout);
+
+      tso << "dp test\n";
+
+      vector < double > vals = { 0, 1, 1.2, 1.23, 1.234, 1.2345, 1.55555, 1e10, -5.2736 };
+      vector < int >    dps  = { 0, 1, 2, 3 };
+
+      for ( int i = 0; i < (int)dps.size(); ++i ) {
+         for ( int j = 0; j < (int)vals.size(); ++j ) {
+            tso << QString( "decimal places %1, value %2, converted %3\n" )
+               .arg( dps[i] )
+               .arg( vals[j] )
+               .arg( us_double_decimal_places( vals[j], dps[i] ) )
+               ;
+         }
+      }
+   }
+   
+#endif
+
    // #define PROCESS_TEST
+
 #if defined( PROCESS_TEST )
    QProcess * process = new QProcess( this );
    QString prog = "/usr/lib/rasmol/rasmol.16";
@@ -106,6 +330,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       exit(-1);
    }
       
+   gui_script = false;
+
    gparams[ "use_pH" ] == "true";
    
    qDebug() << "rasmol no display WAIT****************";
@@ -117,6 +343,16 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    delete process;
    exit(0);
 #endif
+
+   this->init_configs_silently = init_configs_silently;
+
+   if ( !gui_script_file.isEmpty() ) {
+      qDebug() << "script active " << gui_script_file;
+      this->gui_script_file = gui_script_file;
+      gui_script = true;
+   } else {
+      gui_script = false;
+   }
 
 #if defined( PINV_TEST )
    qDebug() << "PINV_TEST";
@@ -271,6 +507,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_no_model_selected = false;
    last_bead_model = "";
 
+   misc.auto_calc_hydro_method = AUTO_CALC_HYDRO_ZENO;
+
    SS_setup();
 
    // no_rr = false;
@@ -335,89 +573,92 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO Solution Bead Modeler"));
-   advanced_config.auto_view_pdb = true;
-   advanced_config.scroll_editor = false;
-   advanced_config.auto_calc_somo = false;
-   advanced_config.auto_show_hydro = false;
-   advanced_config.pbr_broken_logic = true;
-   advanced_config.use_sounds = false;
-   advanced_config.expert_mode = false;
+   advanced_config.auto_view_pdb        = true;
+   advanced_config.scroll_editor        = false;
+   advanced_config.auto_calc_somo       = false;
+   advanced_config.auto_show_hydro      = false;
+   advanced_config.pbr_broken_logic     = true;
+   advanced_config.use_sounds           = false;
+   advanced_config.expert_mode          = false;
    advanced_config.experimental_threads = false;
-   advanced_config.experimental_renum = false;
-   advanced_config.debug_1 = false;
-   advanced_config.debug_2 = false;
-   advanced_config.debug_3 = false;
-   advanced_config.debug_4 = false;
-   advanced_config.debug_5 = false;
-   advanced_config.debug_6 = false;
-   advanced_config.debug_7 = false;
-   atom_widget                     = false;
-   best_widget                     = false;
-   residue_widget                  = false;
-   hybrid_widget                   = false;
-   saxs_widget                     = false;
-   saxs_options_widget             = false;
-   sas_options_saxs_widget         = false;
-   sas_options_sans_widget         = false;
-   sas_options_curve_widget        = false;
-   sas_options_bead_model_widget   = false;
-   sas_options_hydration_widget    = false;
-   sas_options_guinier_widget      = false;
-   sas_options_xsr_widget          = false;
-   sas_options_misc_widget         = false;
-   sas_options_experimental_widget = false;
-   saxs_plot_widget                = false;
-   asa_widget = false;
-   misc_widget = false;
-   grid_widget = false;
-   hydro_widget = false;
-   hydro_zeno_widget = false;
-   overlap_widget = false;
-   grid_overlap_widget = false;
-   bead_output_widget = false;
-   results_widget = false;
-   pdb_visualization_widget = false;
-   pdb_parsing_widget = false;
-   advanced_config_widget = false;
-   saxs_search_widget = false;
-   saxs_screen_widget = false;
-   saxs_buffer_widget = false;
-   saxs_hplc_widget = false;
-   saxs_1d_widget = false;
-   saxs_2d_widget = false;
-   bd_widget = false;
-   bd_options_widget = false;
-   dmd_options_widget = false;
-   anaflex_options_widget = false;
-   batch_widget = false;
-   save_widget = false;
-   comparative_widget = false;
+   advanced_config.experimental_renum   = false;
+   advanced_config.debug_1              = false;
+   advanced_config.debug_2              = false;
+   advanced_config.debug_3              = false;
+   advanced_config.debug_4              = false;
+   advanced_config.debug_5              = false;
+   advanced_config.debug_6              = false;
+   advanced_config.debug_7              = false;
+   atom_widget                          = false;
+   best_widget                          = false;
+   residue_widget                       = false;
+   hybrid_widget                        = false;
+   saxs_widget                          = false;
+   saxs_options_widget                  = false;
+   sas_options_saxs_widget              = false;
+   sas_options_sans_widget              = false;
+   sas_options_curve_widget             = false;
+   sas_options_bead_model_widget        = false;
+   sas_options_hydration_widget         = false;
+   sas_options_guinier_widget           = false;
+   sas_options_xsr_widget               = false;
+   sas_options_misc_widget              = false;
+   sas_options_experimental_widget      = false;
+   saxs_plot_widget                     = false;
+   fractal_dimension_options_widget     = false;
+   asa_widget                           = false;
+   misc_widget                          = false;
+   vdw_overlap_widget                   = false;
+   grid_widget                          = false;
+   hydro_widget                         = false;
+   hydro_zeno_widget                    = false;
+   overlap_widget                       = false;
+   grid_overlap_widget                  = false;
+   bead_output_widget                   = false;
+   results_widget                       = false;
+   pdb_visualization_widget             = false;
+   pdb_parsing_widget                   = false;
+   advanced_config_widget               = false;
+   saxs_search_widget                   = false;
+   saxs_screen_widget                   = false;
+   saxs_buffer_widget                   = false;
+   saxs_hplc_widget                     = false;
+   saxs_1d_widget                       = false;
+   saxs_2d_widget                       = false;
+   bd_widget                            = false;
+   bd_options_widget                    = false;
+   dmd_options_widget                   = false;
+   anaflex_options_widget               = false;
+   batch_widget                         = false;
+   save_widget                          = false;
+   comparative_widget                   = false;
    if ( !install_new_version() )
    {
       exit(0);
    }
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
-   calcAutoHydro = false;
-   overwrite = false;
-   overwrite_hydro = false;
-   saveParams = false;
-   setSuffix = true;
-   guiFlag = true;
-   bead_model_selected_filter = "";
-   residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
-   editor = (QTextEdit *)0;
+
+   calcAutoHydro                        = false;
+   overwrite                            = false;
+   overwrite_hydro                      = false;
+   saveParams                           = false;
+   setSuffix                            = true;
+   guiFlag                              = true;
+   bead_model_selected_filter           = "";
+   residue_filename                     = US_Config::get_home_dir() + "etc/somo.residue";
+   editor                               = (mQTextEdit *)0;
 
 #if QT_VERSION >= 0x040000
-   gparams[ "zeno_cxx" ] = "true";
+   gparams[ "zeno_cxx" ]                = "true";
 #endif
 
-   last_saxs_search_csv.name = "__empty__";
-   last_saxs_screen_csv.name = "__empty__";
-   last_saxs_buffer_csv.name = "__empty__";
-   last_saxs_hplc_csv.name = "__empty__";
+   last_saxs_search_csv.name            = "__empty__";
+   last_saxs_screen_csv.name            = "__empty__";
+   last_saxs_buffer_csv.name            = "__empty__";
+   last_saxs_hplc_csv.name              = "__empty__";
 
-   misc.restore_pb_rule = false;
+   misc.restore_pb_rule                 = false;
 
    if ( saxs_options.default_hybrid_filename.isEmpty() ) {
       saxs_options.default_hybrid_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hybrid";
@@ -740,12 +981,20 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       us_qdebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
    }
 #endif
+
+#warning - perhaps add select_atom_file() to input selections
+
+   select_atom_file( US_Config::get_home_dir() + "etc/somo.atom" );
+   clear_temp_dirs();
+
+   if ( gui_script ) {
+      emit gui_script_run();
+   }
 }
 
 US_Hydrodyn::~US_Hydrodyn()
 {
 }
-
 
 void US_Hydrodyn::setupGUI()
 {
@@ -763,12 +1012,14 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(us_tr("&ASA Calculation"), this, SLOT(show_asa()));
    somo_options->insertItem(us_tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
    somo_options->insertItem(us_tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
+   somo_options->insertItem(us_tr("&vdW Overlap Parameters"), this, SLOT(show_vdw_overlap()));
    somo_options->insertItem(us_tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
    somo_options->insertItem(us_tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options()));
    somo_options->insertItem(us_tr("&Miscellaneous Options"), this, SLOT(show_misc()));
    somo_options->insertItem(us_tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(us_tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
    somo_options->insertItem(us_tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
+   somo_options->insertItem(us_tr("&Fractal Dimension Options"), this, SLOT(show_fractal_dimension_options()));
 
  //   md_options = new Q3PopupMenu;
    // md_options->insertItem(us_tr("&DMD Options"), this, SLOT(show_dmd_options()));
@@ -863,6 +1114,10 @@ void US_Hydrodyn::setupGUI()
          connect( qa, SIGNAL( triggered() ), this, SLOT(show_grid_overlap()));
       }
       {
+         QAction *qa = submenu->addAction( us_tr("&vdW Overlap Parameters" ) );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_vdw_overlap()));
+      }
+      {
          QAction *qa = submenu->addAction( us_tr("&Hydrodynamic Calculations") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(show_hydro()));
       }
@@ -885,6 +1140,10 @@ void US_Hydrodyn::setupGUI()
       {
          QAction *qa = submenu->addAction( us_tr("SA&XS/SANS Options") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(show_saxs_options()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Fractal Dimension Options" ) );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_fractal_dimension_options()));
       }
       menu->addMenu( submenu );
    }
@@ -1146,7 +1405,7 @@ void US_Hydrodyn::setupGUI()
    lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model Suffix:"), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_bead_model_prefix->setMinimumHeight(minHeight1);
+   lbl_bead_model_prefix->setMinimumHeight( minHeight1 * 2 );
    lbl_bead_model_prefix->setPalette( PALET_LABEL );
    AUTFBACK( lbl_bead_model_prefix );
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -1169,22 +1428,23 @@ void US_Hydrodyn::setupGUI()
 
    le_bead_model_prefix = new QLineEdit( this );    le_bead_model_prefix->setObjectName( "bead_model_prefix Line Edit" );
    le_bead_model_prefix->setText(us_tr(""));
-   le_bead_model_prefix->setMinimumHeight(minHeight1);
+   le_bead_model_prefix->setMinimumHeight( minHeight1 * 2 );
    le_bead_model_prefix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_prefix->setPalette( PALET_EDIT );
    AUTFBACK( le_bead_model_prefix );
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
-   le_bead_model_suffix = new QLineEdit( this );    le_bead_model_suffix->setObjectName( "bead_model_suffix Line Edit" );
+   le_bead_model_suffix = new QTextEdit( this );    le_bead_model_suffix->setObjectName( "bead_model_suffix Line Edit" );
    le_bead_model_suffix->setText(us_tr(""));
-   le_bead_model_suffix->setMinimumHeight(minHeight1);
+   le_bead_model_suffix->setMinimumHeight( minHeight1 * 2 );
    le_bead_model_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_suffix->setPalette( PALET_EDIT );
    AUTFBACK( le_bead_model_suffix );
    le_bead_model_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_bead_model_suffix->setReadOnly(true);
-
+   le_bead_model_suffix->setFixedHeight( minHeight1 * 2 );
+   
    pb_somo = new QPushButton(us_tr("Build SoMo Bead Model"), this);
    Q_CHECK_PTR(pb_somo);
    pb_somo->setMinimumHeight(minHeight1);
@@ -1196,7 +1456,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo_o = new QPushButton(us_tr("Build SoMo Overlap Bead Model"), this);
    Q_CHECK_PTR(pb_somo_o);
    pb_somo_o->setMinimumHeight(minHeight1);
-   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    pb_somo_o->setEnabled(false);
    pb_somo_o->setPalette( PALET_PUSHB );
    connect(pb_somo_o, SIGNAL(clicked()), SLOT(calc_somo_o()));
@@ -1210,7 +1470,7 @@ void US_Hydrodyn::setupGUI()
    connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
 #endif
 
-   pb_pdb_saxs = new QPushButton(us_tr("SAXS/SANS Functions"), this);
+   pb_pdb_saxs = new QPushButton(us_tr("SAXS/SANS/MALS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
    pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1218,7 +1478,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
-   pb_bead_saxs = new QPushButton(us_tr("SAXS/SANS Functions"), this);
+   pb_bead_saxs = new QPushButton(us_tr("SAXS/SANS/MALS Functions"), this);
    Q_CHECK_PTR(pb_bead_saxs);
    pb_bead_saxs->setMinimumHeight(minHeight1);
    pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1407,6 +1667,14 @@ void US_Hydrodyn::setupGUI()
    pb_bd->setPalette( PALET_PUSHB );
    connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
 
+   pb_fractal_dimension = new QPushButton(us_tr("FD"), this);
+   Q_CHECK_PTR(pb_fractal_dimension);
+   pb_fractal_dimension->setMinimumHeight(minHeight1);
+   pb_fractal_dimension->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_fractal_dimension->setPalette( PALET_PUSHB );
+   connect(pb_fractal_dimension, SIGNAL(clicked()), SLOT(fractal_dimension()));
+   pb_fractal_dimension->hide();
+   
    // ***** bd *******
    //   pb_bd_prepare = new QPushButton(us_tr("Create Browflex files"), this);
    //   pb_bd_prepare->setMinimumHeight(minHeight1);
@@ -1508,19 +1776,23 @@ void US_Hydrodyn::setupGUI()
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   progress = new QProgressBar( this );
+   progress = new mQProgressBar( this );
    progress->setPalette( PALET_NORMAL );
+   progress->set_cli_progress( cli_progress );
    AUTFBACK( progress );
    progress->reset();
 
-   mprogress = new QProgressBar( this );
+   mprogress = new mQProgressBar( this );
    mprogress->setPalette( PALET_NORMAL );
+   mprogress->set_cli_progress( cli_progress );
    AUTFBACK( mprogress );
    mprogress->reset();
    mprogress->hide();
 
-   editor = new QTextEdit(this);
+   editor = new mQTextEdit(this);
    editor->setPalette( PALET_NORMAL );
+   editor->set_cli_progress( cli_progress );
+   editor->set_cli_prefix  ( "somo" );
    editor->setReadOnly(true);
    editor->setMinimumWidth(600);
 
@@ -1620,7 +1892,13 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_dmd_run, j, 0);
    j++;
-   background->addWidget(pb_bd, j, 0);
+   {
+      QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_fractal_dimension );
+      hbl->addWidget( pb_bd );
+      background->addLayout(hbl, j, 0);
+   }
+   // background->addWidget(pb_bd, j, 0);
    j++;
    background->addWidget( lbl_info2 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -1993,6 +2271,23 @@ void US_Hydrodyn::show_misc()
    update_vbar();
 }
 
+void US_Hydrodyn::show_vdw_overlap() {
+   if ( vdw_overlap_widget ) {
+      if (vdw_overlap_window->isVisible()) {
+         vdw_overlap_window->raise();
+      } else {
+         vdw_overlap_window->show();
+      }
+      return;
+   } else {
+      vdw_overlap_window = new US_Hydrodyn_Vdw_Overlap( &misc, &vdw_overlap_widget, this );
+      fixWinButtons( vdw_overlap_window );
+      vdw_overlap_window->show();
+   }
+   update_vbar();
+}
+
+
 void US_Hydrodyn::show_saxs_options()
 {
    if (saxs_options_widget)
@@ -2268,7 +2563,7 @@ void US_Hydrodyn::write_config()
    case QMessageBox::Yes : 
       break;
    case QMessageBox::No : 
-      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , somo_dir , "*.config" , 0 );
+      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , US_Config::get_home_dir() + "etc" , "*.config" , 0 );
       break;
    default :
       return;
@@ -2362,6 +2657,11 @@ void US_Hydrodyn::select_residue_file()
 
 void US_Hydrodyn::reload_pdb()
 {
+   // {
+   //    qDebug() << "test write pdb";
+   //    QString errors;
+   //    write_pdb_from_model( model_vector[current_model], errors, "my header note", "my_suffex", "outputfile" );
+   // }
    citation_load_pdb();
    if ( advanced_config.debug_1 )
    {
@@ -2431,6 +2731,7 @@ void US_Hydrodyn::reload_pdb()
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
+   fractal_dimension( true );
 }
 
 void US_Hydrodyn::clear_pdb_info( QString /* msg */ ) {
@@ -2955,6 +3256,8 @@ void US_Hydrodyn::load_pdb()
    //    select_model(0);
    // }
 
+   fractal_dimension( true );
+
    if ( dmd_options.pdb_static_pairs )
    {
       dmd_static_pairs();
@@ -3008,10 +3311,10 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    le_pdb_file->setText( QDir::toNativeSeparators( filename ) );
 
    bead_model_suffix = "";
-   le_bead_model_suffix->setText( bead_model_suffix );
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
 
 #if defined(START_RASMOL)
-   if ( display_pdb ) {
+   if ( display_pdb && advanced_config.auto_view_pdb ) {
       model_viewer( filename );
    }
 #endif
@@ -3032,6 +3335,18 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    {
       return false;
    }
+   if ( batch_widget
+        && batch_window->batch_job_running
+        && model_vector_has_hydration_differences( model_vector ) ) {
+      batch_window->editor_msg( "darkred",
+                                QString(
+                                        us_tr(
+                                              "Screening: %1 : WARNING: PDB contains residues with bead hydration without atomic hydration,\nvdW models should not be used as they rely on atomic hydration\n"
+                                              )
+                                        ).arg( filename )
+                                );
+   }
+
 #if defined( DEBUG_TESTING_JML )
    us_qdebug( "extra reset0" );
    reset_chain_residues( &model_vector[0]);
@@ -3318,129 +3633,6 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
          }
       }
       fclose(f);
-   }
-}
-
-void US_Hydrodyn::load_bead_model()
-{
-   QString use_dir = 
-      path_load_bead_model.isEmpty() ?
-      somo_dir :
-      path_load_bead_model;
-
-   select_from_directory_history( use_dir, this );
-
-   QString filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "Bead models (*.bead_model *.BEAD_MODEL);;"
-                                                   "BEAMS (*.beams *.BEAMS);;"
-                                                   "DAMMIN/DAMMIF/DAMAVER (*.pdb)" , &bead_model_selected_filter );
-
-
-   if ( !filename.isEmpty() )
-   {
-      path_load_bead_model = QFileInfo(filename).absolutePath();
-   }
-
-   if ( QFileInfo(filename).fileName().contains(" ") )
-   {
-      printError(us_tr("Filenames containing spaces are not currently supported.\n"
-                    "Please rename the file to remove spaces."));
-      return;
-   }
-
-   if (!filename.isEmpty())
-   {
-      add_to_directory_history( filename );
-      citation_load_bead_model( filename );
-
-      options_log = "";
-      pb_somo->setEnabled(false);
-      pb_somo_o->setEnabled(false);
-      pb_visualize->setEnabled(false);
-      pb_equi_grid_bead_model->setEnabled(false);
-      pb_calc_hydro->setEnabled(false);
-      pb_calc_zeno->setEnabled(false);
-      pb_calc_grpy->setEnabled( false);
-      pb_calc_hullrad->setEnabled( false );
-      pb_show_hydro_results->setEnabled(false);
-      pb_grid_pdb->setEnabled(false);
-      pb_vdw_beads->setEnabled(false);
-      pb_grid->setEnabled(false);
-      bead_model_prefix = "";
-      le_bead_model_prefix->setText(bead_model_prefix);
-      bead_model_suffix = "";
-
-      if (results_widget)
-      {
-         results_window->close();
-         delete results_window;
-         results_widget = false;
-      }
-
-      bead_model_file = filename;
-      le_bead_model_file->setText( QDir::toNativeSeparators( filename ) );
-
-      if ( is_dammin_dammif(filename) &&
-           advanced_config.auto_view_pdb ) 
-      {
-#if defined(START_RASMOL)
-         model_viewer( filename );
-#endif
-      }
-
-      bool only_overlap = false;
-      if (!read_bead_model(filename, only_overlap ))
-      {
-         bool so_ovlp = QFileInfo( filename ).completeBaseName().contains( "so_ovlp" );
-         us_qdebug( QString( "load bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
-         state = BEAD_MODEL_LOADED;
-         pb_visualize->setEnabled(true);
-         pb_equi_grid_bead_model->setEnabled(true);
-         pb_calc_hydro->setEnabled( !so_ovlp );
-         pb_calc_zeno->setEnabled(true);
-         pb_calc_grpy->setEnabled( true );
-         pb_calc_hullrad->setEnabled( true );
-         pb_grid->setEnabled(true);
-         pb_bead_saxs->setEnabled(true);
-         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-         pb_pdb_saxs->setEnabled(false);
-         bd_anaflex_enables(false);
-         pb_somo     ->setEnabled( false );
-         pb_somo_o   ->setEnabled( false );
-         pb_somo     ->setEnabled( false );
-         pb_grid_pdb ->setEnabled( false );
-         pb_vdw_beads->setEnabled( false );
-      }
-      else
-      {
-         if ( only_overlap )
-         {
-            state = BEAD_MODEL_LOADED;
-            pb_visualize->setEnabled(true);
-            pb_equi_grid_bead_model->setEnabled(true);
-            pb_calc_hydro->setEnabled( false );
-            pb_calc_zeno->setEnabled( true );
-            pb_calc_grpy->setEnabled( true );
-            pb_calc_hullrad->setEnabled( true );
-            pb_grid->setEnabled(true);
-            pb_bead_saxs->setEnabled(true);
-            pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-            pb_pdb_saxs->setEnabled(false);
-            bd_anaflex_enables(false);
-            pb_somo     ->setEnabled( false );
-            pb_somo_o   ->setEnabled( false );
-            pb_somo     ->setEnabled( false );
-            pb_grid_pdb ->setEnabled( false );
-            pb_vdw_beads->setEnabled( false );
-
-         } else {            
-            pb_visualize->setEnabled(true);
-            pb_equi_grid_bead_model->setEnabled(true);
-            pb_bead_saxs->setEnabled(false);
-            pb_rescale_bead_model->setEnabled(false);
-            pb_pdb_saxs->setEnabled(true);
-         }
-      }
-      // bead_model_prefix = "";
    }
 }
 
@@ -3796,7 +3988,7 @@ int US_Hydrodyn::do_calc_hydro()
       progress->reset();
       return -1;
    }
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    // qDebug() << "us_hydrodyn::do_calc_hydro()_rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
 
    int retval = us_hydrodyn_supc_main(&results,
@@ -4132,7 +4324,7 @@ void US_Hydrodyn::stop_calc()
    if ( grpy_running && grpy && grpy->state() == QProcess::Running )
    {
       grpy->terminate();
-      QTimer::singleShot( 1000, grpy, SLOT( kill() ) );
+      QTimer::singleShot( 10000, grpy, SLOT( kill() ) );
    }
    pb_stop_calc->setEnabled(false);
 }
@@ -4255,7 +4447,9 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
               !saxs_options.multiply_iq_by_atomic_volume )
          {
             if ( dammix_remember_mw[QFileInfo(filename).fileName()] != 
-                 model_vector[selected_models[0]].mw )
+                 model_vector[selected_models[0]].mw
+                 && ( !batch_widget ||
+                      !batch_window->batch_job_running ) )
             {
                switch ( QMessageBox::question(this, 
                                               us_tr("UltraScan Notice"),
@@ -4292,7 +4486,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
             }
          } else {
             dammix_remember_mw[QFileInfo(filename).fileName()] =
-               model_vector[selected_models[0]].mw;
+               model_vector[selected_models[0]].mw + model_vector[selected_models[0]].ionized_mw_delta;
             dammix_remember_mw_source[QFileInfo(filename).fileName()] =
                "computed from pdb";
          }
@@ -4370,16 +4564,17 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
          filename = "unknown";
       }
       
-      printf("selected models size %u bead_models.size %u\n",
+      printf("selected models size %u bead_models.size %u beads in selected_models[0] %u\n",
              (unsigned int)bead_models.size(),
-             (unsigned int)selected_models.size()
+             (unsigned int)selected_models.size(),
+             (unsigned int)bead_models[selected_models[0]].size()
              );
 
       // compute mw
       float tmp_mw = 0.0;
       for ( unsigned int i = 0; i < bead_models[selected_models[0]].size(); i++ )
       {
-         tmp_mw += bead_models[selected_models[0]][i].bead_mw;
+         tmp_mw    += bead_models[selected_models[0]][i].bead_mw + bead_models[selected_models[0]][i].bead_ionized_mw_delta;
       }
 
       if ( tmp_mw != 0.0 &&
@@ -4488,20 +4683,24 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
 
    if ( vdw ) {
       result += result.length() ? "-" : "";
+      bead_model_suffix = "";
       {
          double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
          double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+         bool vdw_ot_alt = gparams.count( "vdw_ot_alt" ) && gparams[ "vdw_ot_alt" ] == "true";
          if ( vdw_ot_mult ) {
             if ( vdw_ot_dpct ) {
-               result += QString( "OT%1DP%2-vdw").arg( vdw_ot_mult ).arg( vdw_ot_dpct );
+               bead_model_suffix += QString( "OT%1%2DP%3_").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ).replace( ".", "_" );
             } else {
-               result += QString( "OT%1-vdw").arg( vdw_ot_mult );
+               bead_model_suffix += QString( "OT%1%2_").arg( vdw_ot_alt ? "alt" : "" ).arg( vdw_ot_mult ).replace( ".", "_" );
             }
-         } else {
-            result += bead_model_suffix = "vdw";
          }
+         bead_model_suffix += QString( "PR%1_TH%2_" ).arg( asa.hydrate_probe_radius ).arg( asa.hydrate_threshold ).replace( ".", "_" );
+         bead_model_suffix += QString( "pH%1").arg( hydro.pH ).replace( ".", "_" );
+         bead_model_suffix += "-vdw";
       }
-      result += QString( "pH%1").arg( hydro.pH );
+      result += bead_model_suffix;
+
       return result;
    }
 
@@ -4621,7 +4820,7 @@ void US_Hydrodyn::setHydroFile()
             new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
             if ( file != new_file )
             {
-               le_bead_model_suffix->setText(bead_model_suffix);
+               le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                any_changes = true;
             }
 
@@ -4632,7 +4831,7 @@ void US_Hydrodyn::setHydroFile()
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -4668,7 +4867,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -4679,7 +4878,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
                // frmc = us_fopen(QString("%1.rmc").arg(fname).toLatin1().data(), "w");
@@ -4692,7 +4891,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -4704,7 +4903,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
                if ( file != new_file )
                {
-                  le_bead_model_suffix->setText(bead_model_suffix);
+                  le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
                   any_changes = true;
                }
             }
@@ -5194,7 +5393,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    }
 
    bead_model_suffix = getExtendedSuffix(false, false).replace( "a2b", QString( "eqm%1" ).arg( dR ).replace( ".","_" ) ) + "g";
-   le_bead_model_suffix->setText(bead_model_suffix);
+   le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
    if ( !overwrite )
    {
       setSomoGridFile(false);
@@ -5303,12 +5502,23 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
    pb_stop_calc->setEnabled(false);
-   if (calcAutoHydro)
-   {
-      calc_hydro();
-   }
-   else
-   {
+   if (calcAutoHydro) {
+      switch ( misc.auto_calc_hydro_method ) {
+      case AUTO_CALC_HYDRO_SMI :
+         calc_hydro();
+         break;
+      case AUTO_CALC_HYDRO_ZENO :
+         calc_zeno_hydro();
+         break;
+      case AUTO_CALC_HYDRO_GRPY :
+         calc_grpy_hydro();
+         break;
+      default :
+         editor_msg( "red", us_tr( "No known hydrodynamic method set for automatic hydrodynamic calculations\n"
+                                   "Check SOMO->Miscellaneous Options->Automatically calculate hydrodynamics method" ) );
+         break;
+      }
+   } else {
       play_sounds(1);
    }
 

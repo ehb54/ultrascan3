@@ -1,0 +1,95 @@
+# Profile include file for local use
+#  Copy file to local.pri and change variables to match your installation
+
+DEBUGORRELEASE  = release 
+
+unix {
+  # Local flags
+
+  #If you want your compiles to do a globus run on bcf, uncomment the following lines:
+  # Be sure to add the environment variable MAKEFLAGS=-j44
+#  QMAKE_CXXFLAGS_RELEASE = -O3
+#  QMAKE_CFLAGS_RELEASE   = -O3
+  QMAKE_CXXFLAGS += -Wno-unused-local-typedefs
+
+  QWTPATH     = /qwt-6.1.6
+  QWTLIB      = -L../../lib -L../lib -L$$QWTPATH/lib -lqwtplot3d -lqwt -lGLU
+  MYSQLDIR    = /usr/lib64/mysql
+  MYSQLPATH   = /usr/include/mysql
+  QWT3D       = ../qwtplot3d
+  X11LIB      = -L/lib/x86_64-linux-gnu -lXau -lX11
+  INCLUDEPATH += $$QWTPATH/src
+
+  # For supercomputer back ends, we only need us_utils but we also
+  # build us_db to satisfy link requirements.  To avoid needing
+  # libmysqlclient and libqca, define the following 
+
+  DEFINES   += NO_DB
+  # MPI path and libs for comet
+##  QMAKE_CC   = icpc
+##  QMAKE_CXX  = icpc
+  INCLUDEPATH   += /usr/include/x86_64-linux-gnu/mpich/
+  MPILIBS    = -L/usr/lib/x86_64-linux-gnu -lmpich
+}
+
+win32 {
+  CONFIG      += core
+##  CONFIG      += console
+
+  # QWT3D is right for libraries, but gui apps need ../$$QWT3D
+  # due to us3 directory structure
+
+  ULOC        = c:/msys64/usr/local
+  QWT3D       = ../qwtplot3d
+  QTPATH      = $$ULOC/qt/5.7.1
+  QWTPATH     = $$ULOC/qwt/6.1.4
+  MINGWDIR    = c:/msys64/mingw64/x86_64-w64-mingw32
+  DEPDIR      = $$QTPATH/../qt5_deps
+  OPENSSL     = $$ULOC/openssl_1.0.2d
+  MYSQLPATH   = $$ULOC/mysql-5.7.13-winx64
+  QTMYSQLPATH = $$QTPATH/plugins/sqldrivers
+  QMAKESPEC   = win32-g++
+  SINGLEDIR   = $$QTPATH/addons/qtsingleapplication-2.6_1-opensource/src/
+  INCLUDEPATH += $$QWTPATH/include
+  
+  contains( DEBUGORRELEASE, debug ) {
+    QWTLIB      = $$QWTPATH/lib/libqwtd.a
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.a
+  } else {
+    QWTLIB      = $$QWTPATH/lib/libqwt.a
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.lib
+  }
+
+  #  __LCC__ is needed on W32 to make mysql headers include the right W32 includes
+  DEFINES    += __LCC__
+  DEFINES    += QT_SHAREDMEMORY
+  DEFINES    += QT_SYSTEMSEMAPHORE
+}
+
+macx {
+  BUILDBASE   = $us3
+  QWTPATH     = /usr/local/qwt-6.1.4
+  QWTLIB      = -L$$QWTPATH/lib -lqwt
+  CONFIG      += x86_64
+  DEFINES     += MAC OSX
+  INCLUDEPATH += ../qwtplot3d/include
+  INCLUDEPATH += ../../qwtplot3d/include
+  INCLUDEPATH += /usr/X11R6/include
+  INCLUDEPATH += ../Frameworks/QtCore.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtGui.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtOpenGL.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtSvg.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtXml.framework/Headers
+  INCLUDEPATH += ../../Frameworks/QtCore.framework/Headers
+  INCLUDEPATH += ../../Frameworks/QtGui.framework/Headers
+  INCLUDEPATH += ../../Frameworks/QtOpenGL.framework/Headers
+  INCLUDEPATH += ../../Frameworks/QtSvg.framework/Headers
+  INCLUDEPATH += ../../Frameworks/QtXml.framework/Headers
+  LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
+  LIBS	      += -lssl -lcrypto -lqwtplot3d
+  LIBS	      += -framework QtOpenGL
+  MYSQLPATH   = /usr/local/mysql
+  MYSQLDIR    = $$MYSQLPATH/lib
+  X11LIB      = -L/usr/X11R6/lib -lXau -lX11
+}
+

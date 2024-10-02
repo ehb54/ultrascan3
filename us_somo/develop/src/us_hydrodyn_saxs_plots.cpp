@@ -7,12 +7,22 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
+#define TSO QTextStream(stdout)
+
+void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name, bool skip_mw ) {
+   qDebug() << "plot_one_pr() old style pr call, DEPRECATE!";
+   vector < double > pr_error;
+   return plot_one_pr( r, pr, pr_error, name, skip_mw );
 }
 
-void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name, bool skip_mw )
-{
+void US_Hydrodyn_Saxs::plot_one_pr(
+                                   vector < double > r
+                                   ,vector < double > pr
+                                   ,vector < double > pr_error
+                                   ,QString name
+                                   ,bool /* skip_mw */
+                                   ,bool do_replot
+                                   ) {
    if ( r.size() < pr.size() )
    {
       pr.resize(r.size());
@@ -22,11 +32,31 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
       r.resize(pr.size());
    }
 
-   plotted_r.push_back(r);
+   if ( pr_error.size() ) {
+      
+      if ( pr_error.size() < pr.size()
+           || US_Saxs_Util::is_zero_vector( pr_error ) ) {
+         pr_error.clear();
+      } else {
+         pr_error.resize( pr.size() );
+      }
+   }
 
-   plotted_pr_not_normalized.push_back(pr);
-   plotted_pr_mw.push_back( skip_mw ? -1e0 : get_mw( name, false, true ) );
+   set_pr_sd( r, pr, pr_error );
+   crop_pr_tail( r, pr, pr_error );
 
+   plotted_r                      .push_back(r);
+   plotted_pr_not_normalized      .push_back(pr);
+   plotted_pr_not_normalized_error.push_back(pr_error);
+
+   // skip_mw = !cb_normalize->isChecked();
+
+   plotted_pr_mw.push_back(
+                           cb_normalize->isChecked()
+                           ? get_mw( name, false, true )
+                           : -1e0
+                           );
+   
    if ( plotted_pr_mw.back() == -1 ) {
       plotted_pr_mw.back() = 1;
       cb_normalize->setChecked( false );
@@ -34,10 +64,13 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(r, &pr, get_mw(name));
+      normalize_pr(r, &pr, &pr_error, get_mw(name, do_replot));
    }
 
-   plotted_pr.push_back(pr);
+   plotted_pr                     .push_back(pr);
+   plotted_pr_error               .push_back(pr_error);
+
+
    QString plot_name = name;
    int extension = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
@@ -48,16 +81,57 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
                   
-   QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-   curve->setStyle( QwtPlotCurve::Lines );
+   {
+      if ( cb_pr_eb->isChecked() && pr_error.size() && pr_error.size() == r.size() ) {
+         {
+            QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+            curve->setStyle( QwtPlotCurve::NoCurve );
+            curve->setSamples(
+                              (double *)&( r[ 0 ] ), 
+                              (double *)&( pr[ 0 ] ),
+                              (int)r.size()
+                              );
+            curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 6 + pen_width * 1, Qt::SolidLine ) );
+            QwtSymbol sym;
+            sym.setStyle(QwtSymbol::Diamond);
+            sym.setSize( pen_width );
+            sym.setPen(QPen(plot_colors[p % plot_colors.size()]));
+            sym.setBrush(Qt::white);
+            curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
+            curve->attach( plot_pr );
+         }
 
-   curve->setSamples(
-                  (double *)&( r[ 0 ] ), 
-                  (double *)&( pr[ 0 ] ),
-                  (int)r.size()
-                  );
-   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
-   curve->attach( plot_pr );
+         for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+            QwtPlotCurve *curve = new QwtPlotCurve( UPU_EB_PREFIX + name );
+            vector < double > eb_x(2, r[i]);
+            vector < double > eb_y(2);
+            eb_y[0] = pr[i] - pr_error[i];
+            eb_y[1] = pr[i] + pr_error[i];
+         
+            curve->setStyle( QwtPlotCurve::Lines );
+
+            curve->setSamples(
+                              (double *)&( eb_x[ 0 ] ), 
+                              (double *)&( eb_y[ 0 ] ),
+                              2
+                              );
+            curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+            curve->setItemAttribute( QwtPlotItem::Legend, false );
+            curve->attach( plot_pr );
+         }
+      } else {
+         QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+         curve->setStyle( QwtPlotCurve::Lines );
+
+         curve->setSamples(
+                           (double *)&( r[ 0 ] ), 
+                           (double *)&( pr[ 0 ] ),
+                           (int)r.size()
+                           );
+         curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+         curve->attach( plot_pr );
+      }
+   }
 
    if ( plot_pr_zoomer )
    {
@@ -75,15 +149,21 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plot_pr_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
    plot_pr_zoomer->setTrackerPen( QPen( Qt::red ) );
 
-   plot_pr->replot();
+   if ( do_replot ) {
+      plot_pr->replot();
+   }
                   
    if ( !plotted )
    {
       plotted = true;
-      editor->append("P(r) plot legend:\n");
+      if ( do_replot ) {
+         editor->append("P(r) plot legend:\n");
+      }
    }
 
-   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
+   if ( do_replot ) {
+      editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
+   }
 
    // to save to csv, write just contributing models?, target, model & residual
    // don't forget to make target part of it even if it isn't selected.
@@ -136,17 +216,30 @@ void US_Hydrodyn_Saxs::set_plot_pr_range( double &minx,
    {
       if ( plotted_pr[ i ].size() )
       {
+         bool has_error = plotted_pr_error[ i ].size() == plotted_pr[ i ].size();
          double this_miny = plotted_pr[ i ][ 0 ];
          double this_maxy = plotted_pr[ i ][ 0 ];
-         for ( unsigned int j = 1; j < plotted_pr[ i ].size(); j++ )
-         {
-            if ( this_miny > plotted_pr[ i ][ j ] )
-            {
-               this_miny = plotted_pr[ i ][ j ];
+         if ( has_error ) {
+            this_miny -= plotted_pr_error[ i ][ 0 ];
+            this_maxy += plotted_pr_error[ i ][ 0 ];
+         }
+         if ( has_error ) {
+            for ( unsigned int j = 1; j < plotted_pr[ i ].size(); j++ ) {
+               if ( this_miny > plotted_pr[ i ][ j ] - plotted_pr_error[ i ][ j ] ) {
+                  this_miny = plotted_pr[ i ][ j ] - plotted_pr_error[ i ][ j ] ;
+               }
+               if ( this_maxy < plotted_pr[ i ][ j ] + plotted_pr_error[ i ][ j ] ) {
+                  this_maxy = plotted_pr[ i ][ j ] + plotted_pr_error[ i ][ j ];
+               }
             }
-            if ( this_maxy < plotted_pr[ i ][ j ] )
-            {
-               this_maxy = plotted_pr[ i ][ j ];
+         } else {
+            for ( unsigned int j = 1; j < plotted_pr[ i ].size(); j++ ) {
+               if ( this_miny > plotted_pr[ i ][ j ] ) {
+                  this_miny = plotted_pr[ i ][ j ];
+               }
+               if ( this_maxy < plotted_pr[ i ][ j ] ){
+                  this_maxy = plotted_pr[ i ][ j ];
+               }
             }
          }
          if ( any_y_set )
@@ -230,7 +323,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             par[ 8 ] = saxsC.c;
             ffe = compute_exponential_f( 2e0, (const double *)&(par[ 0 ] ) );
          }
-         cout << QString( "ff computes %1 ffe computes %2\n" ).arg( ffv ).arg( ffe );
+         TSO << QString( "ff computes %1 ffe computes %2\n" ).arg( ffv ).arg( ffe );
       }
 #endif                     
       if ( is_zero_vector( I_error ) )
@@ -293,7 +386,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             double            nnorm4;
             double            nnorm5;
             US_Saxs_Util usu;
-            cout << "compute exponentials\n" << flush;
+            TSO << "compute exponentials\n" << flush;
             editor_msg( "blue", us_tr( "Computing 4 & 5 term exponentials" ) );
             QMessageBox::information( this, 
                                       us_tr( "US-SOMO: Compute structure factors : start computation" ),
@@ -313,7 +406,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                            ) )
             {
                editor_msg( "red", usu.errormsg );
-               cout << usu.errormsg << endl;
+               TSO << usu.errormsg << endl;
             } else {
                nnorm4 = norm4 / q.size();
                nnorm5 = norm5 / q.size();
@@ -385,7 +478,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   qs4 += QString( " %1" ).arg( coeff4[ i ] );
                }
                qs4 += QString( " %1" ).arg( coeff4[ 0 ] );
-               cout << "Terms4: " << qs4 << endl;
+               TSO << "Terms4: " << qs4 << endl;
                editor_msg( "dark blue", QString( "Exponentials 4 terms norm %1 nnorm %2 (%3): %4" )
                            .arg( norm4 )
                            .arg( nnorm4 )
@@ -399,7 +492,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   qs5 += QString( " %1" ).arg( coeff5[ i ] );
                }
                qs5 += QString( " %1" ).arg( coeff5[ 0 ] );
-               cout << "Terms5: " << qs5 << endl;
+               TSO << "Terms5: " << qs5 << endl;
                editor_msg( "dark blue", QString( "Exponentials 5 terms norm %1 nnorm %2 (%3): %4" )
                            .arg( norm5 )
                            .arg( nnorm5 )
@@ -494,7 +587,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                            ok = false;
                            filename = QFileDialog::getSaveFileName( this , us_tr( "US-SOMO: Compute structure factors : save data" ) , org_filename , "*.saxs_atoms *.SAXS_ATOMS" );
 
-                           cout << QString( "filename is %1\n" ).arg( filename );
+                           TSO << QString( "filename is %1\n" ).arg( filename );
                            if ( !filename.isEmpty() )
                            {
                               f.setFileName( filename );
@@ -551,7 +644,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                  << saxs_list[i].a[3] << "\t"
                                  << saxs_list[i].b[3] << "\t"
                                  << saxs_list[i].c << "\t"
-                                 << saxs_list[i].volume << endl;
+                                 << saxs_list[i].volume << Qt::endl;
                               ts << saxs_list[i].saxs_name.toUpper() << "\t"
                                  << saxs_list[i].a5[0] << "\t"
                                  << saxs_list[i].b5[0] << "\t"
@@ -564,7 +657,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                  << saxs_list[i].a5[4] << "\t"
                                  << saxs_list[i].b5[4] << "\t"
                                  << saxs_list[i].c5 << "\t"
-                                 << saxs_list[i].volume << endl;
+                                 << saxs_list[i].volume << Qt::endl;
                            }
                            f.close();
                            if ( our_saxs_options->default_saxs_filename != filename )
@@ -1585,7 +1678,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
    {
       if ( pts_removed.count( x[ i ] ) )
       {
-         // cout << QString( "do plot resid errs: %1 %2\n"  ).arg( x[ i ] ).arg( e[ i ] );
+         // TSO << QString( "do plot resid errs: %1 %2\n"  ).arg( x[ i ] ).arg( e[ i ] );
          QwtPlotMarker* marker = new QwtPlotMarker;
          marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
          marker->setValue( x[ i ], e[ i ] );
@@ -1620,22 +1713,51 @@ void US_Hydrodyn_Saxs::pp()
            saxs_iqq_residuals_widgets.count( it->first ) &&
            saxs_iqq_residuals_widgets[ it->first ] &&
            it->second->plot ) {
-         plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
+         use_plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
       }
    }
 
-   if ( !US_Plot_Util::printtofile( fn, plot_info, errors, messages ) )
+   if ( saxs_residuals_widget ) {
+      use_plot_info[ "US-SOMO SAXS PRR Residuals" ] = saxs_residuals_window->plot;
+   }
+
+   // save and restore flags since SD errorbars duplicate Err. Maybe should remove sd errorbars flag or mirror
+   bool eb_set = cb_eb                  ->isChecked();
+   bool sd_set = cb_resid_show_errorbars->isChecked();
+   
+   if ( eb_set || sd_set ) {
+      cb_eb                  ->setChecked( true );
+      cb_resid_show_errorbars->setChecked( false );
+      set_eb();
+      set_resid_show_errorbars();
+   }
+
+   if ( !US_Plot_Util::printtofile( fn, use_plot_info, errors, messages ) )
    {
       editor_msg( "red", errors );
    } else {
       editor_msg( "blue", messages );
    }
+
+   cb_eb                  ->setChecked( eb_set );
+   cb_resid_show_errorbars->setChecked( sd_set );
+   set_eb();
+   set_resid_show_errorbars();
+
 }
 
 void US_Hydrodyn_Saxs::set_eb() 
 {
    // us_qdebug( "set_eb(), calling set_guinier()" );
    set_guinier();
+}
+
+void US_Hydrodyn_Saxs::set_pr_eb() 
+{
+   bool had_legend = pr_legend_vis;
+   pr_replot();
+   pr_legend_vis = had_legend;
+   set_pr_legend();
 }
 
 void US_Hydrodyn_Saxs::set_width() 
@@ -1725,4 +1847,402 @@ void US_Hydrodyn_Saxs::resid_resized() {
    // qDebug() << "resid_resized";
    plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
    plot_resid->replot();
+}
+
+void US_Hydrodyn_Saxs::pr_replot() {
+
+   // save plot info
+   
+   vector < vector < double > > save_plotted_pr                      = plotted_pr;
+   vector < vector < double > > save_plotted_pr_error                = plotted_pr_error;
+   vector < vector < double > > save_plotted_pr_not_normalized       = plotted_pr_not_normalized;
+   vector < vector < double > > save_plotted_pr_not_normalized_error = plotted_pr_not_normalized_error;
+   vector < vector < double > > save_plotted_r                       = plotted_r;
+   vector < float >             save_plotted_pr_mw                   = plotted_pr_mw;
+   QStringList                  save_qsl_plotted_pr_names            = qsl_plotted_pr_names;
+
+   // clear plots
+   clear_plot_pr( true );
+   
+   // replot with plot_one_pr ...
+
+   for ( int i = 0; i < (int) save_plotted_r.size(); ++i ) {
+      plot_one_pr(
+                  save_plotted_r[i]
+                  ,save_plotted_pr[i]
+                  ,save_plotted_pr_error[i]
+                  ,save_qsl_plotted_pr_names[i]
+                  ,true
+                  ,false
+                  );
+   }
+
+   plot_pr->replot();
+}
+
+void US_Hydrodyn_Saxs::set_pr_sd(
+                                 vector < double > & r
+                                 ,vector < double > & pr
+                                 ,vector < double > & pr_error
+                                 ) {
+   if ( !pr_error.size() ) {
+      // no errors
+      return;
+   }
+
+   if ( !r.size() ) {
+      qDebug() << "error set_pr_sd() r is empty";
+      return;
+   }
+
+   if ( r.size() != pr.size() || r.size() != pr_error.size() ) {
+      qDebug() << "error set_pr_sd() r,pr,pr_error size mismatch";
+      return;
+   }
+
+   for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+      if ( pr_error[i] < 0 ) {
+         qDebug() << "error set_pr_sd() negative pr_error!";
+      }
+   }
+
+   // 1st deal with r == 0
+   if (
+       r[0] == 0
+       && pr[0] == 0
+       && pr_error[0] == 0
+       ) {
+      list < double > sd_gz;
+      for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+         if ( pr_error[i] > 0 ) {
+            sd_gz.push_back( pr_error[i] );
+         }
+      }
+      sd_gz.sort();
+      pr_error[0] = sd_gz.front() * 1e-3;
+   }
+
+   // 2nd deal with tail
+   prop_pr_sd_tail( pr_error, (int) pr_error.size() );
+   
+   // 3rd check for internal zeros
+   {
+      bool has_non_pos_sds = false;
+      for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+         if ( pr_error[i] <= 0 ) {
+            has_non_pos_sds = true;
+         }
+      }
+      if ( has_non_pos_sds ) {
+         // use natural spline
+         US_Saxs_Util usu;
+         vector < double > y2;
+         vector < double > r_nz;
+         vector < double > pr_error_nz;
+         for ( int i = 0; i < (int) r.size(); ++i ) {
+            if ( pr_error[i] > 0 ) {
+               r_nz       .push_back( r[i] );
+               pr_error_nz.push_back( pr_error[ i ] );
+            }
+         }
+         usu.natural_spline( r_nz, pr_error_nz, y2 );
+         for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+            if ( pr_error[i] <= 0 ) {
+               double new_pr_sd;
+               if ( !usu.apply_natural_spline( r_nz, pr_error_nz, y2, r[i], new_pr_sd ) ) {
+                  qDebug() <<  "error set_pr_sd() error applying natural spline";
+               } else {
+                  pr_error[i] = new_pr_sd;
+               }
+            }
+         }
+         
+         // verify natural spline worked
+         has_non_pos_sds = false;
+         for ( int i = 0; i < (int) pr_error.size(); ++i ) {
+            if ( pr_error[i] <= 0 ) {
+               has_non_pos_sds = true;
+            }
+         }
+         if ( has_non_pos_sds ) {
+            qDebug() <<  "error set_pr_sd() still has non positive SDs after natural spline!";
+            return;
+         }
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs::crop_pr_tail(
+                                    vector < double > & r
+                                    ,vector < double > & pr
+                                    ,vector < double > & pr_error
+                                    ) {
+   bool pop_pr_error = pr_error.size() != 0;
+   
+   while( pr.size() > 1 && pr.back() == 0 && *std::prev( pr.end(), 2 ) == 0 ) {
+      r       .pop_back();
+      pr      .pop_back();
+      if ( pop_pr_error ) {
+         pr_error.pop_back();
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs::prop_pr_sd_tail(
+                                       vector < double > & pr_error
+                                       ,unsigned int len
+                                       ) {
+   if ( !pr_error.size() ) {
+      // no errors
+      return;
+   }
+
+   // take care of any existing trailing zero sds
+
+   if ( pr_error.back() == 0 ) {
+      // find last non-zero
+      double last_nz_sd = 0;
+      for ( int i = (int) pr_error.size() - 1; i > 0; --i ) {
+         if ( pr_error[i] > 0 ) {
+            last_nz_sd = pr_error[i];
+            break;
+         }
+      }
+      if ( last_nz_sd == 0 ) {
+         qDebug() << "error set_pr_sd() could not find nonzero sd";
+         return;
+      }
+            
+      for ( int i = (int) pr_error.size() - 1; i > 0; --i ) {
+         if ( pr_error[i] == 0 ) {
+            pr_error[i] = last_nz_sd;
+         } else {
+            break;
+         }
+      }
+   }
+
+   // resize to requested len using sd value
+   pr_error.resize( len, pr_error.back() );
+}
+
+void US_Hydrodyn_Saxs::pad_pr_plotted() {
+   // sets all to max size
+   qDebug() << "pad_pr_plotted() - not yet";
+   // possible reinterpolate to common grid (current bin size?)
+   // then pad tails with 0s and apply sds
+
+   if ( !plotted_r.size() ) {
+      return;
+   }
+   if ( plotted_r[0].size() < 2 ) {
+      qDebug() << "error - unexpected r grid on curve 0";
+      return;
+   }
+
+   double max_r      = plotted_r[0].back();
+   double r_grid     = plotted_r[0][1] - plotted_r[0][0];
+   bool needs_interp = false;
+   // bool matches_bin  = r_grid == (double)our_saxs_options->bin_size;
+   int max_grid_pos  = 0;
+
+   for ( int i = 1; i < (int) plotted_r.size(); ++i ) {
+      if ( plotted_r[i].size() < 2 ) {
+         qDebug() << "error - unexpected r grid on curve " << i;
+         return;
+      }
+
+      if ( max_r < plotted_r[i].back() ) {
+         max_r = plotted_r[i].back();
+         max_grid_pos = i;
+      }
+      
+      if ( !needs_interp ) {
+         double this_r_grid = plotted_r[i][1] - plotted_r[i][0];
+         if ( this_r_grid != r_grid ) {
+            needs_interp = true;
+         }
+      }
+   }
+
+   if ( needs_interp ) {
+      qDebug() << "need to interpolate, not padded";
+      editor_msg( "darkred", "Loaded curves have varying r spacing, interpolating all to current bin size\n" );
+      
+      vector < vector < double > > new_r                      (plotted_r.size());
+      vector < vector < double > > new_pr                     (plotted_r.size());
+      vector < vector < double > > new_pr_error               (plotted_r.size());
+      vector < vector < double > > new_pr_not_normalized      (plotted_r.size());
+      vector < vector < double > > new_pr_not_normalized_error(plotted_r.size());
+
+      bool ok = true;
+
+      for ( int i = 0; i < (int) plotted_r.size(); ++i ) {
+         if ( plotted_r[i].size() > 2 ) {
+            for ( double r = 0; r <= plotted_r[i].back(); r += (double)our_saxs_options->bin_size ) {
+               new_r[i].push_back( r );
+            }
+
+            if ( !interpolate( new_r[i], plotted_r[i], plotted_pr[i], new_pr[i]) ) {
+               editor_msg( "red", QString( "Error interpolating p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+               ok = false;
+               break;
+            }
+
+            if ( plotted_pr_error[i].size() ) {
+               if ( !interpolate( new_r[i], plotted_r[i], plotted_pr_error[i], new_pr_error[i] ) ) {
+                  ok = false;
+                  break;
+               }
+            }
+            
+            if ( !interpolate( new_r[i], plotted_r[i], plotted_pr_not_normalized[i], new_pr_not_normalized[i] ) ) {
+               ok = false;
+               break;
+            }
+
+            if ( plotted_pr_not_normalized_error[i].size() ) {
+               if ( !interpolate( new_r[i], plotted_r[i], plotted_pr_not_normalized_error[i], new_pr_not_normalized_error[i] ) ) {
+                  ok = false;
+                  break;
+               }
+            }
+         }
+      }
+      
+      if ( !ok ) {
+         editor_msg( "red", QString( "Error interpolating p(r) grid to current binsize %1\n" ).arg( our_saxs_options->bin_size ) );
+         return;
+      } else {
+         plotted_r                       = new_r;
+         plotted_pr                      = new_pr;
+         plotted_pr_error                = new_pr_error;
+         plotted_pr_not_normalized       = new_pr_not_normalized;
+         plotted_pr_not_normalized_error = new_pr_not_normalized_error;
+
+         max_r      = plotted_r[0].back();
+         r_grid     = plotted_r[0][1] - plotted_r[0][0];
+         needs_interp = false;
+         // matches_bin  = r_grid == (double)our_saxs_options->bin_size;
+         max_grid_pos  = 0;
+
+         for ( int i = 1; i < (int) plotted_r.size(); ++i ) {
+            if ( plotted_r[i].size() < 2 ) {
+               qDebug() << "error - unexpected r grid on curve " << i;
+               return;
+            }
+
+            if ( max_r < plotted_r[i].back() ) {
+               max_r = plotted_r[i].back();
+               max_grid_pos = i;
+            }
+      
+            if ( !needs_interp ) {
+               double this_r_grid = plotted_r[i][1] - plotted_r[i][0];
+               if ( this_r_grid != r_grid ) {
+                  needs_interp = true;
+               }
+            }
+         }
+      }
+
+      if ( needs_interp ) {
+         editor_msg( "red", QString( "error: incompatible r spacing after interpolation\n" ) );
+         return;
+      }
+   }
+
+   int max_size = (int) plotted_r[ max_grid_pos ].size();
+
+   for ( int i = 0; i < (int) plotted_r.size(); ++i ) {
+      plotted_r[i] = plotted_r[ max_grid_pos ];
+      plotted_pr[i].resize( max_size, 0 );
+      prop_pr_sd_tail( plotted_pr_error[i], max_size );
+      plotted_pr_not_normalized[i].resize( max_size, 0 );
+      prop_pr_sd_tail( plotted_pr_not_normalized_error[i], max_size );
+   }
+}
+
+void US_Hydrodyn_Saxs::clear_plot_pr( bool full_clear ) {
+   if ( full_clear ) {
+      plotted_pr                     .clear();
+      plotted_pr_error               .clear();
+      plotted_pr_not_normalized      .clear();
+      plotted_pr_not_normalized_error.clear();
+      plotted_r                      .clear();
+      plotted_pr_mw                  .clear();
+      qsl_plotted_pr_names           .clear();
+      dup_plotted_pr_name_check      .clear();
+      plot_pr->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_pr->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+      plot_pr->replot();
+      pr_legend_vis = false;
+      set_pr_legend();
+      return;
+   }
+   // if plotted data with errors & those without errors exist, clear those without errors
+   // if only plotted data with errors exist, drop the last one
+
+   bool save_pr_legend_vis = pr_legend_vis;
+   
+   int total_pr = (int) plotted_pr.size();
+   if ( total_pr <= 1 ) {
+      return clear_plot_pr( true );
+   }
+   
+   if (
+       (int) plotted_r.size() != total_pr
+       || (int) plotted_pr_error.size() != total_pr
+       || (int) plotted_pr_not_normalized.size() != total_pr
+       || (int) plotted_pr_not_normalized_error.size() != total_pr
+       || (int) plotted_pr_mw.size() != total_pr
+       || (int) qsl_plotted_pr_names.size() != total_pr ) {
+      qDebug() << "internal inconsistency, clearing all!";
+      return clear_plot_pr( true );
+   }
+
+   vector < int > pr_with_error_index;
+
+   for ( int i = 0; i < total_pr; ++i ) {
+      if ( plotted_pr_error[i].size() == plotted_r[i].size() ) {
+         pr_with_error_index.push_back( i );
+      }
+   }
+   
+   if ( !pr_with_error_index.size() ) {
+      // nothing with error, clear all
+      return clear_plot_pr( true );
+   }      
+
+   bool save_pr_eb                           = cb_pr_eb->isChecked();
+   auto save_plotted_pr                      = plotted_pr;
+   auto save_plotted_pr_error                = plotted_pr_error;
+   auto save_plotted_pr_not_normalized       = plotted_pr_not_normalized;
+   auto save_plotted_pr_not_normalized_error = plotted_pr_not_normalized_error;
+   auto save_plotted_r                       = plotted_r;
+   auto save_plotted_pr_mw                   = plotted_pr_mw;
+   auto save_qsl_plotted_pr_names            = qsl_plotted_pr_names;
+   auto save_dup_plotted_pr_name_check       = dup_plotted_pr_name_check;
+
+   if ( (int) pr_with_error_index.size() == total_pr ) {
+      pr_with_error_index.pop_back();
+   }
+
+   clear_plot_pr( true );
+   
+   cb_pr_eb->setChecked( save_pr_eb );
+
+   for ( int i = 0; i < (int) pr_with_error_index.size(); ++i ) {
+      plot_one_pr(
+                  save_plotted_r[pr_with_error_index[i]]
+                  ,save_plotted_pr[pr_with_error_index[i]]
+                  ,save_plotted_pr_error[pr_with_error_index[i]]
+                  ,save_qsl_plotted_pr_names[pr_with_error_index[i]]
+                  ,true
+                  ,false
+                  );
+   }
+
+   plot_pr->replot();
+   pr_legend_vis = save_pr_legend_vis;
+   set_pr_legend();
 }

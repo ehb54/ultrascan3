@@ -31,8 +31,55 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    vector < QString > model_names;
    model_names.push_back( "1" );
 
+   bool         read_vdw                       = false;
+   double       read_vdw_theo_waters           = -1;
+   int          read_vdw_count_exposed         = -1;
+   double       read_vdw_theo_waters_exposed   = -1;
+   float        read_asa_hydrate_probe_radius  = -1;
+   float        read_asa_hydrate_threshold     = -1;
+
    if ( ftype == "bead_model" )
    {
+      // check for vdw data
+      {
+         QStringList qsl;
+         qDebug() << "check for vdw data";
+         US_File_Util ufu;
+         
+         if ( ufu.read( filename, qsl ) && qsl.filter( "vdW model parameters:" ).size() ) {
+            QStringList qsl_check = qsl.filter( QRegularExpression( "^  (Hydrate probe radius|Hydrate threshold|Theoretical waters|Exposed|Theoretical waters exposed).*:" ) );
+            if ( qsl_check.size() == 5 ) {
+               double res[qsl_check.size()];
+               for ( int i = 0; i < (int) qsl_check.size(); ++i ) {
+                  res[i] = qsl_check[i].replace( QRegularExpression( "^.*: " ), "" ).toDouble();
+               }
+               read_vdw_theo_waters           = res[0];
+               read_vdw_count_exposed         = (int)res[1];
+               read_vdw_theo_waters_exposed   = res[2];
+               read_asa_hydrate_probe_radius  = (float)res[3];
+               read_asa_hydrate_threshold     = (float)res[4];
+               read_vdw                       = true;
+
+               QTextStream( stdout )
+                  << "vdw data found in bead model\n"
+                  << "-----------\n"
+                  << "read_vdw_theo_waters : " << read_vdw_theo_waters << "\n"
+                  << "read_vdw_count_exposed : " << read_vdw_count_exposed << "\n"
+                  << "read_vdw_theo_waters_exposed : " << read_vdw_theo_waters_exposed << "\n"
+                  << "read_asa_hydrate_probe_radius : " << read_asa_hydrate_probe_radius << "\n"
+                  << "read_asa_hydrate_threshold : " << read_asa_hydrate_threshold << "\n"
+                  << "-----------\n"
+                  ;
+                  
+            } else {
+               qDebug() << "vdw bead model, but missing data\n";
+            } 
+         } else {
+            qDebug() << "not a vdw bead model with generating data\n";
+         }
+      }
+
+
       if ( f.open( QIODevice::ReadOnly ) )
       {
          bool so_ovlp = QFileInfo( f ).completeBaseName().contains( "so_ovlp" );
@@ -113,6 +160,32 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return linepos;
             }
             if (!ts.atEnd()) {
+               ts >> tmp_atom.bead_asa;
+            } else {
+               tmp_atom.bead_asa = 0;
+            }
+            if (!ts.atEnd()) {
+               ts >>  tmp_atom.num_elect;
+            }
+            else
+            {
+               tmp_atom.num_elect = 0;
+            }
+            if (!ts.atEnd()) {
+               ts >>  tmp_atom.saxs_excl_vol;
+            }
+            else
+            {
+               tmp_atom.saxs_excl_vol = 0;
+            }
+            if (!ts.atEnd()) {
+               ts >> tmp_atom.bead_hydration;
+            }
+            else
+            {
+               tmp_atom.bead_hydration = 0;
+            }
+            if (!ts.atEnd()) {
                QString tmp_string;
                // strip extra fields
                tmp_string = ts.readLine();
@@ -143,6 +216,16 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
             bead_model.push_back(tmp_atom);
          }
+         if ( read_vdw && bead_model.size() ) {
+            bead_model[0].is_vdw                   = "vdw";
+            bead_model[0].vdw_theo_waters          = read_vdw_theo_waters;
+            bead_model[0].vdw_count_exposed        = read_vdw_count_exposed;
+            bead_model[0].vdw_theo_waters_exposed  = read_vdw_theo_waters_exposed;
+            bead_model[0].asa_hydrate_probe_radius = read_asa_hydrate_probe_radius;
+            bead_model[0].asa_hydrate_threshold    = read_asa_hydrate_threshold;
+            qDebug() << "loaded vdw parameters";
+         }
+
          QFont save_font = editor->currentFont();
          QFont new_font = QFont("Courier");
          new_font.setStretch(75);
@@ -211,7 +294,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                               .arg( ssaxs.size() ) );
                } else {
                   saxs tmp_saxs;
-                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -234,7 +317,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( ssaxs.size() == 2 )
                      {
-                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
                         if ( qsl.size() != 14 )
                         {
@@ -329,7 +412,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
-                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -352,7 +435,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( (unsigned int) bsaxs.size() > j + 1 )
                      {
-                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                         if ( tmp_saxs.saxs_name != qsl[ 1 ].toUpper() )
                         {
                            editor_msg( "red", us_tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
@@ -379,7 +462,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.vcoeff.clear( );
                      if ( do_bsaxsv )
                      {
-                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                         QTextStream( stdout ) << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
                         for ( int i = 2; i < (int) qsl.size() - 1; i++ )
                         {
@@ -721,11 +804,15 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          bool damfilt5 = (qsl.filter("Filtered number of atoms").count() > 0 &&
                           qsl.filter("Atomic Radius").count() );
 
+         bool em2dam = (qsl.filter("Number of dummy atoms").count() > 0 &&
+                        qsl.filter("Dummy atom radius").count());
+
          if ( !damaver &&
               !dammin &&
               !dammif &&
               !damfilt &&
-              !damfilt5
+              !damfilt5 &&
+              !em2dam
               )
          {
             editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase' or 'Number of particle atoms' of 'Number of atoms written'\n");
@@ -904,6 +991,31 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             radius = rx.cap(1).toFloat();
          }
 
+         if ( em2dam ) {
+            puts("em2dam");
+            
+            do {
+               tmp = ts.readLine();
+               ++linepos;
+            } while ( !ts.atEnd() && 
+                      !tmp.toLower().contains("dummy atom radius") );
+               
+            if ( ts.atEnd() )
+            {
+               editor->append("Error in EM2DAM file: couldn't find 'Dummy atom radius'\n");
+               return 1;
+            }
+            
+            rx.setPattern("dummy atom radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            
+            if ( rx.indexIn(tmp.toLower()) == -1 ) 
+            {
+               editor->append("Error EM2DAM DAMFILT file: couldn't find radius in 'Dummy atom radius' line\n");
+               return 1;
+            }
+            radius = rx.cap(1).toFloat();
+         }
+
          if ( saxs_options.dummy_atom_pdbs_in_nm )
          {
             radius *= 10.0;
@@ -911,7 +1023,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
          radius *= (float) unit_mult;
 
-         editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT model atom radius %1 Angstrom\n").arg(radius));
+         editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT/EM2DAM model atom radius %1 Angstrom\n").arg(radius));
          
          // enter MW and PSV
          float mw = loaded_mw;
@@ -920,8 +1032,6 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          bool remember = true;
          bool use_partial = false;
          QString partial = filename;
-         // QString msg = QString(us_tr("\n  DAMMIN/DAMMIF file %1  \n  Enter values for vbar and total molecular weight:  \n"))
-         // .arg(filename);
          QString msg = QString(us_tr(" Enter values for vbar and total molecular weight: "));
 
          bool found = false;
@@ -1178,8 +1288,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          {
             bead_model_suffix = "damfilt";
          }
+         if ( em2dam )
+         {
+            bead_model_suffix = "em2dam";
+         }
 
-         le_bead_model_suffix->setText(bead_model_suffix);
+         le_bead_model_suffix->setText( "<center>" + bead_model_suffix + "</center>" );
+
          if ( do_write_bead_model && model_count == 1 ) 
          {
             if ( !overwrite )
@@ -1209,3 +1324,125 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    return -2;
 }
 
+void US_Hydrodyn::load_bead_model()
+{
+   QString use_dir = 
+      path_load_bead_model.isEmpty() ?
+      somo_dir :
+      path_load_bead_model;
+
+   select_from_directory_history( use_dir, this );
+
+   QString filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "Bead models (*.bead_model *.BEAD_MODEL);;"
+                                                   "BEAMS (*.beams *.BEAMS);;"
+                                                   "DAMMIN/DAMMIF/DAMAVER (*.pdb)" , &bead_model_selected_filter );
+
+
+   if ( !filename.isEmpty() )
+   {
+      path_load_bead_model = QFileInfo(filename).absolutePath();
+   }
+
+   if ( QFileInfo(filename).fileName().contains(" ") )
+   {
+      printError(us_tr("Filenames containing spaces are not currently supported.\n"
+                    "Please rename the file to remove spaces."));
+      return;
+   }
+
+   if (!filename.isEmpty())
+   {
+      add_to_directory_history( filename );
+      citation_load_bead_model( filename );
+
+      options_log = "";
+      pb_somo->setEnabled(false);
+      pb_somo_o->setEnabled(false);
+      pb_visualize->setEnabled(false);
+      pb_equi_grid_bead_model->setEnabled(false);
+      pb_calc_hydro->setEnabled(false);
+      pb_calc_zeno->setEnabled(false);
+      pb_calc_grpy->setEnabled( false);
+      pb_calc_hullrad->setEnabled( false );
+      pb_show_hydro_results->setEnabled(false);
+      pb_grid_pdb->setEnabled(false);
+      pb_vdw_beads->setEnabled(false);
+      pb_grid->setEnabled(false);
+      bead_model_prefix = "";
+      le_bead_model_prefix->setText(bead_model_prefix);
+      bead_model_suffix = "";
+
+      if (results_widget)
+      {
+         results_window->close();
+         delete results_window;
+         results_widget = false;
+      }
+
+      bead_model_file = filename;
+      le_bead_model_file->setText( QDir::toNativeSeparators( filename ) );
+
+      if ( is_dammin_dammif(filename) &&
+           advanced_config.auto_view_pdb ) 
+      {
+#if defined(START_RASMOL)
+         model_viewer( filename );
+#endif
+      }
+
+      bool only_overlap = false;
+      if (!read_bead_model(filename, only_overlap ))
+      {
+         bool so_ovlp = QFileInfo( filename ).completeBaseName().contains( "so_ovlp" );
+         us_qdebug( QString( "load bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
+         state = BEAD_MODEL_LOADED;
+         pb_visualize->setEnabled(true);
+         pb_equi_grid_bead_model->setEnabled(true);
+         pb_calc_hydro->setEnabled( !so_ovlp );
+         pb_calc_zeno->setEnabled(true);
+         pb_calc_grpy->setEnabled( true );
+         pb_calc_hullrad->setEnabled( true );
+         pb_grid->setEnabled(true);
+         pb_bead_saxs->setEnabled(true);
+         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+         pb_pdb_saxs->setEnabled(false);
+         bd_anaflex_enables(false);
+         pb_somo     ->setEnabled( false );
+         pb_somo_o   ->setEnabled( false );
+         pb_somo     ->setEnabled( false );
+         pb_grid_pdb ->setEnabled( false );
+         pb_vdw_beads->setEnabled( false );
+      }
+      else
+      {
+         if ( only_overlap )
+         {
+            state = BEAD_MODEL_LOADED;
+            pb_visualize->setEnabled(true);
+            pb_equi_grid_bead_model->setEnabled(true);
+            pb_calc_hydro->setEnabled( false );
+            pb_calc_zeno->setEnabled( true );
+            pb_calc_grpy->setEnabled( true );
+            pb_calc_hullrad->setEnabled( true );
+            pb_grid->setEnabled(true);
+            pb_bead_saxs->setEnabled(true);
+            pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+            pb_pdb_saxs->setEnabled(false);
+            bd_anaflex_enables(false);
+            pb_somo     ->setEnabled( false );
+            pb_somo_o   ->setEnabled( false );
+            pb_somo     ->setEnabled( false );
+            pb_grid_pdb ->setEnabled( false );
+            pb_vdw_beads->setEnabled( false );
+
+         } else {            
+            pb_visualize->setEnabled(true);
+            pb_equi_grid_bead_model->setEnabled(true);
+            pb_bead_saxs->setEnabled(false);
+            pb_rescale_bead_model->setEnabled(false);
+            pb_pdb_saxs->setEnabled(true);
+         }
+      }
+      // bead_model_prefix = "";
+   }
+}

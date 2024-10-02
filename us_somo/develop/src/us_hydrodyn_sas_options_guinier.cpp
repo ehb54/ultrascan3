@@ -54,7 +54,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_qRgmax = new QLineEdit(this);
    le_qRgmax->setValidator( new QDoubleValidator( le_qRgmax) );
-   ( (QDoubleValidator *)le_qRgmax->validator() )->setRange( 0.5, 3, 3 );
+   ( (QDoubleValidator *)le_qRgmax->validator() )->setRange( 0.5, 3, 6 );
    le_qRgmax->setText( QString( "%1" ).arg( (*saxs_options).qRgmax ) );
    le_qRgmax->setEnabled(true);
    le_qRgmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -76,7 +76,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_cs_qRgmax = new QLineEdit(this);
    le_cs_qRgmax->setValidator( new QDoubleValidator( le_cs_qRgmax) );
-   ( (QDoubleValidator *)le_qRgmax->validator() )->setRange( 0.5, 3, 3 );
+   ( (QDoubleValidator *)le_qRgmax->validator() )->setRange( 0.5, 3, 6 );
    le_cs_qRgmax->setText( QString( "%1" ).arg( (*saxs_options).cs_qRgmax ) );
    le_cs_qRgmax->setEnabled(true);
    le_cs_qRgmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -92,7 +92,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_Rt_qRtmax = new QLineEdit(this);
    le_Rt_qRtmax->setValidator( new QDoubleValidator( le_Rt_qRtmax) );
-   ( (QDoubleValidator *)le_Rt_qRtmax->validator() )->setRange( 0.5, 3, 3 );
+   ( (QDoubleValidator *)le_Rt_qRtmax->validator() )->setRange( 0.5, 3, 6 );
    le_Rt_qRtmax->setText( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "guinier_qRtmax" ) ? ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_qRtmax" ] : "" );
    le_Rt_qRtmax->setEnabled(true);
    le_Rt_qRtmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -108,7 +108,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_cs_qstart = new QLineEdit(this);
    le_cs_qstart->setValidator( new QDoubleValidator( le_cs_qstart ) );
-   ( (QDoubleValidator *)le_cs_qstart->validator() )->setRange( 0, 1, 3 );
+   ( (QDoubleValidator *)le_cs_qstart->validator() )->setRange( 0, 1, 6 );
    le_cs_qstart->setText( QString( "%1" ).arg( (*saxs_options).cs_qstart ) );
    le_cs_qstart->setEnabled(true);
    le_cs_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -124,7 +124,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_cs_qend = new QLineEdit(this);
    le_cs_qend->setValidator( new QDoubleValidator( le_cs_qend ) );
-   ( (QDoubleValidator *)le_cs_qend->validator() )->setRange( 0, 1, 3 );
+   ( (QDoubleValidator *)le_cs_qend->validator() )->setRange( 0, 1, 6 );
    le_cs_qend->setText( QString( "%1" ).arg( (*saxs_options).cs_qend ) );
    le_cs_qend->setEnabled(true);
    le_cs_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -141,7 +141,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_qstart = new QLineEdit(this);
    le_qstart->setValidator( new QDoubleValidator( le_qstart ) );
-   ( (QDoubleValidator *)le_qstart->validator() )->setRange( 0, 1, 3 );
+   ( (QDoubleValidator *)le_qstart->validator() )->setRange( 0, 1, 6 );
    le_qstart->setText( QString( "%1" ).arg( (*saxs_options).qstart ) );
    le_qstart->setEnabled(true);
    le_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -157,7 +157,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    le_qend = new QLineEdit(this);
    le_qend->setValidator( new QDoubleValidator( le_qend ) );
-   ( (QDoubleValidator *)le_qend->validator() )->setRange( 0, 1, 3 );
+   ( (QDoubleValidator *)le_qend->validator() )->setRange( 0, 1, 6 );
    le_qend->setText( QString( "%1" ).arg( (*saxs_options).qend ) );
    le_qend->setEnabled(true);
    le_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -369,7 +369,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_diffusion_len );
    connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
 
-   lbl_electron_nucleon_ratio = new QLabel(us_tr(" Nucleon/electron ratio A/Z : "), this);
+   lbl_electron_nucleon_ratio = new QLabel(us_tr(" Electron/nucleon ratio Z/A : "), this);
    lbl_electron_nucleon_ratio->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_electron_nucleon_ratio->setPalette( PALET_LABEL );
    AUTFBACK( lbl_electron_nucleon_ratio );

@@ -20,7 +20,7 @@ map < QString, QString > US_Json::split( QString qs )
    bool in_bracket = false;
    bool in_brace = false;
    
-   bool in_bracket_quote = false;
+   // bool in_bracket_quote = false;
 
    QString tok1;
    QString tok2;

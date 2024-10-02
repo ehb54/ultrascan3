@@ -16,6 +16,10 @@ class US_GUI_EXTERN US_ReportGenGui: public US_Widgets
       US_ReportGenGui( QString );
       ~US_ReportGenGui() {};
 
+      //abde
+      bool abde_mode;
+      void abde_mode_passed( void );
+
    signals:
       void update_details( QString& );
       
@@ -59,6 +63,9 @@ class US_GUI_EXTERN US_ReportGenGui: public US_Widgets
 
       void build_layout( void );
       void gui_to_parms( void );
+      void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
+      void get_children_to_json( QString &, QTreeWidgetItem* );
+      QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
       
    private slots:
       void changedItem   ( QTreeWidgetItem*, int );

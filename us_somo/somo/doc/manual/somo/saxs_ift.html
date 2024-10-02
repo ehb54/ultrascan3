@@ -29,7 +29,13 @@
 <center>
 <h2>
 Indirect Fourier Transform (IFT) Module:</h2></center>
-<h3><center>Last updated: January 2018</center></h3><p>
+<h3><center>Last updated: June 2024</center></h3><p>
+
+<h3><center>Notice</center></h3>
+
+<p class="iucr-body-text-western"><span lang="en-US">
+The full screen  images showing the <b><i>US-SOMO: SAS Functions</b></i> module have <span style="color:#CC0000">NOT</span> been updated to reflect the additional buttons for the new functions available from the <span style="color:#CC0000">July 2024 release</span>, as they not affect the detailed description of the <b><i>IFT</b></i> module as originally reported (see below).
+
 <h3><center>Synopsis</center></h3>
 
 <p class="iucr-body-text-western"><span lang="en-US">
@@ -39,7 +45,7 @@ Indirect Fourier Transform (IFT) Module:</h2></center>
       <a href=http://bayesapp.org/&#126;bayes/upload/ift/ift2.pdf>J. Appl. Cryst. (2008) 41, 436-445</a>;
       <a href=http://igm.fys.ku.dk/&#126;steen/jac45_566.pdf>J. Appl. Cryst. (2012). 45, 566-567</a>;
       <a href=http://igm.fys.ku.dk/&#126;steen/jac_47_1469.pdf>J. Appl. Cryst. (2014). 47, 1469-1471</a></i>)
-    The method of Glatter (Glatter, O. (1977). J. Appl. Cryst. 10), requires prior estimates of Dmax and a regularization parameter.  Steen introduced methods to
+    The method of Glatter (Glatter, O. (1977). J. Appl. Cryst. 10), requires prior estimates of Dmax and a regularization parameter.  Hansen introduced methods to
     determine these parameters automatically using Bayesian Analysis methods. 
     Further details about the program can be found in the above references.
     </div>
@@ -56,7 +62,8 @@ Indirect Fourier Transform (IFT) Module:</h2></center>
 <p>
   If you have multiple SAS curves loaded with experimental errors, a window will appear asking you to choose which one to process:
   <center><img src=ift_choose.png id="iftchoose" alt="IFT window file chooser"></center>
-</p>
+<p>
+However, starting from the <span style="color:#CC0000">July 2022 intermediate release</span>, it is now possible to sequentially process multiple <i>I</i>(<i>q</i>) datasets with the IFT method, utilizing the <a href=somo_saxs_load_csv.html>SOMO SAXS/SANS Load, manage, and process SAS data</a> module.
 <p>
   After pressing the IFT button, the IFT window will appear:
   <center><img src=ift_2.png id="ift" alt="IFT parameters"></center>
@@ -235,7 +242,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on January 10, 2018.
+Last modified on June 14, 2024. Description of the IFT module as of June 29, 2022.
 </font>
 </body>
 </html>

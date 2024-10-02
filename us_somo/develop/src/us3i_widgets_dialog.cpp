@@ -3,8 +3,8 @@
 #include "us3i_gui_settings.h"
 #include "us3i_images.h"
 
-US3i_widgetsDialog::US3i_widgetsDialog( QWidget* w, Qt::WindowFlags f ) 
-   : QDialog( w, f )
+US3i_widgetsDialog::US3i_widgetsDialog( QWidget* w ) 
+   : QDialog( w )
 {
   QApplication::setStyle( QStyleFactory::create( US3i_GuiSettings::guiStyle() ) );
 
@@ -175,7 +175,7 @@ QGridLayout* US3i_widgetsDialog::us_checkbox(
   QFontMetrics fm( font );
  
   QLabel* lb_spacer = new QLabel;
-  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
   
@@ -207,7 +207,7 @@ QGridLayout* US3i_widgetsDialog::us_radiobutton(
   QFontMetrics fm( font );
 
   QLabel* lb_spacer = new QLabel;
-  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
@@ -323,7 +323,7 @@ QwtCounter* US3i_widgetsDialog::us_counter( int buttons, double low, double high
   // Set min,curr width based on current value and high-value sizes
   int ncv    = int( log10( value ) ) + 1;
   ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  int widv   = fm.width( QString( "12345678901234" ).left( ncv ) );
+  int widv   = fm.horizontalAdvance( QString( "12345678901234" ).left( ncv ) );
   counter->adjustSize();
   int mwidth = widv * 2 + totwid;
   counter->setMinimumWidth( mwidth );

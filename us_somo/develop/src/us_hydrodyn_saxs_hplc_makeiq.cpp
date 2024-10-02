@@ -19,6 +19,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
+#define TSO QTextStream(stdout)
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
 // #define UHSH_VAL_DEC 8
@@ -56,6 +57,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
@@ -233,10 +235,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
    // bool   normalize_by_conc = false;
    bool   conc_ok           = false;
 
-   double conv = 0e0;
-   double psv  = 0e0;
-   double I0se = 0e0;
-   double conc_repeak = 1e0;
+   double conv         = 0e0;
+   double psv          = 0e0;
+   double I0se         = 0e0;
+   bool   I0se_process = false;
+   double conc_repeak  = 1e0;
    
    vector < double > conc_spline_x;
    vector < double > conc_spline_y;
@@ -271,6 +274,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          use_conc = false;
       }
 
+      istarq_mode = ISTARQ_NONE;
+
       if ( use_conc ) {
          if ( !any_detector ) {
             if ( parameters.count( "error" ) ) {
@@ -279,8 +284,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
                parameters[ "error" ] = "\nYou must select a detector type";
             }
          }
-         parameters[ "ngmode" ] = "true";
-         parameters[ "gaussians" ] = "1";
+         parameters[ "ngmode" ]            = "true";
+         parameters[ "gaussians" ]         = "1";
+         parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
+
+         // Istarq bits
+      
+         istarq_mode                    = ISTARQ_CONC_POINTWISE;
+         parameters[ "istarq_ok" ]      = "true";
+         parameters[ "istarq_message" ] =
+            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
+            .arg( lbl_conc_file->text() )
+                                    ;
+         
          US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
             new US_Hydrodyn_Saxs_Hplc_Ciq(
                                           this,
@@ -294,6 +310,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
             progress->reset();
             update_enables();
             return false;
+         }
+
+         if ( !parameters.count( "make_istarq" )
+              || parameters[ "make_istarq" ] != "true" ) {
+            istarq_mode = ISTARQ_NONE;
          }
 
          conv = parameters.count( "conv 0" ) ? parameters[ "conv 0" ].toDouble() : 0e0;
@@ -345,7 +366,53 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
             conc_spline_y[ i ] *= detector_conv / ( conc_repeak * conv );
          }
          usu->natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2 );
+      } else {
+         if ( saxs_hplc_param_g_conc
+              && saxs_hplc_param_g_psv ) {
+            istarq_mode                    = ISTARQ_CONC_GLOBAL;
+            parameters[ "istarq_ok" ]      = "true";
+            parameters[ "istarq_message" ] =
+               QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL] and psv %2 [mL/g]?" ) )
+               .arg( saxs_hplc_param_g_conc )
+               .arg( saxs_hplc_param_g_psv )
+               ;
+
+            parameters[ "ngmode" ]            = "true";
+            parameters[ "gaussians" ]         = "0";
+            parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
+         
+            US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
+               new US_Hydrodyn_Saxs_Hplc_Ciq(
+                                             this,
+                                             & parameters,
+                                             this );
+            US_Hydrodyn::fixWinButtons( hplc_ciq );
+            hplc_ciq->exec();
+            delete hplc_ciq;
+
+            if ( !parameters.count( "go" ) ) {
+               progress->reset();
+               update_enables();
+               return false;
+            }
+            if ( !parameters.count( "make_istarq" )
+                 || parameters[ "make_istarq" ] != "true" ) {
+               istarq_mode = ISTARQ_NONE;
+            }
+
+            psv = saxs_hplc_param_g_psv;
+            if ( parameters.count( "I0se" ) ) {
+               I0se = parameters[ "I0se" ].toDouble();
+               if ( parameters.count( "I0se_process" ) ) {
+                  I0se_process = parameters[ "I0se_process" ] == "true";
+               }
+            }
+         }
       }
+   }
+
+   if ( istarq_mode != ISTARQ_NONE ) {
+      head += "_SAXS_Istarq_";
    }
 
    running = true;
@@ -400,11 +467,59 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       // vector < double > G_recon;
 
       vector < double > this_used_pcts;
-      double conc_factor = 0e0;
+      double conc_factor        = 0e0;
+      double istarq_norm_factor = 0e0;
+      
       if ( conc_ok ) {
          if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
             editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
             conc_factor = 0e0;
+         } else {
+            if ( istarq_mode == ISTARQ_CONC_POINTWISE ) {
+               // TSO << "istarq ISTARQ_CONC_POINTWISE\n";
+
+               istarq_norm_factor =
+                  AVOGADRO /
+                  ( conc_factor
+                    * 1e-3
+                    * pow( 
+                          saxs_hplc_param_diffusion_len
+                          * ( 1e0
+                              / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                              - ( psv * 1e24 * saxs_hplc_param_solvent_electron_density )
+                              )
+                          , 2e0 )
+                    )
+                  ;
+
+               if ( I0se_process ) {
+                  // TSO << "I0se_process\n";
+                  istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+                  // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
+               }
+            }
+         }
+      }
+
+      if ( istarq_mode == ISTARQ_CONC_GLOBAL ) {
+         istarq_norm_factor =
+            AVOGADRO /
+            ( saxs_hplc_param_g_conc
+              * 1e-3
+              * pow( 
+                    saxs_hplc_param_diffusion_len
+                    * ( 1e0
+                        / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                        - ( saxs_hplc_param_g_psv * 1e24 * saxs_hplc_param_solvent_electron_density )
+                        )
+                    , 2e0 )
+              )
+            ;
+
+         if ( I0se_process ) {
+            // TSO << "I0se_process\n";
+            istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+            // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
          }
       }
 
@@ -451,6 +566,17 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          e      .push_back( tmp_e );
       } // for each file
          
+      // istarq bits
+      if ( istarq_mode != ISTARQ_NONE && istarq_norm_factor ) {
+         for ( int i = 0; i < (int) I.size(); ++i ) {
+            I[i] *= istarq_norm_factor;
+         }
+         for ( int i = 0; i < (int) e.size(); ++i ) {
+            e[i] *= istarq_norm_factor;
+         }
+      }
+      
+
       if ( mode_testiq )
       {
          testiq_created_names.push_back( name );
@@ -479,6 +605,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          f_conc      [ name ] = conc_ok ? conc_factor : 0e0;
          f_psv       [ name ] = conc_ok ? psv : 0e0;
          f_I0se      [ name ] = conc_ok ? I0se : 0e0;
+         if ( istarq_mode == ISTARQ_CONC_GLOBAL ) {
+            // TSO <<
+            //    QString( "ISTARQ_CONC_GLOBAL name %1 conc %2 psv%3 I0se %4\n" )
+            //    .arg( name )
+            //    .arg( saxs_hplc_param_g_conc )
+            //    .arg( saxs_hplc_param_g_psv )
+            //    .arg( I0se )
+            //    ;
+            f_conc      [ name ] = saxs_hplc_param_g_conc;
+            f_psv       [ name ] = saxs_hplc_param_g_psv;
+            f_I0se      [ name ] = I0se;
+         }
+
          f_time      [ name ] = tv[ t ];
          if ( conc_ok && conv ) {
             f_extc      [ name ] = conv;
@@ -537,6 +676,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    if ( !ggaussian_compatible( false ) )
    {
@@ -749,6 +889,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    vector < double > conv;
    vector < double > psv ;
    double            I0se = 0e0;
+   bool              I0se_process = false;
    
    double conc_repeak = 1e0;
    
@@ -881,6 +1022,42 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       parameters[ "hplc_cb_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ];
       parameters[ "hplc_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ];
       
+      // Istarq bits
+      
+      istarq_mode = ISTARQ_NONE;
+      
+      if ( no_conc ) {
+         istarq_mode                    = ISTARQ_NONE;
+         parameters[ "istarq_ok" ]      = "false";
+         parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: a concentration curve must be set when Gaussians are defined" );
+
+         // if ( saxs_hplc_param_g_conc
+         //      && saxs_hplc_param_g_psv ) {
+         //    istarq_mode                    = ISTARQ_CONC_GLOBAL;
+         //    parameters[ "istarq_ok" ]      = "true";
+         //    parameters[ "istarq_message" ] =
+         //       QString( us_tr( "Make I*(q) using the globally defined concentration %1 [mg/mL] and psv %2 [mL/g]?" ) )
+         //       .arg( saxs_hplc_param_g_conc )
+         //       .arg( saxs_hplc_param_g_psv )
+         //       ;
+         // } else {
+         //    istarq_mode                    = ISTARQ_NONE;
+         //    parameters[ "istarq_ok" ]      = "false";
+         //    parameters[ "istarq_message" ] = us_tr( "Make I*(q) not available: no concentration nor psv data available" );
+         // }
+      } else {
+         istarq_mode                    = ISTARQ_CONC_POINTWISE;
+         parameters[ "istarq_ok" ]      = "true";
+         parameters[ "istarq_message" ] =
+            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
+            .arg( lbl_conc_file->text() )
+            ;
+      }         
+
+      parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
+
+      // TSO << US_Vector::qs_mapqsqs( "hplc_ciq parameters before ciq", parameters );
+
       US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
          new US_Hydrodyn_Saxs_Hplc_Ciq(
                                        this,
@@ -889,6 +1066,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       US_Hydrodyn::fixWinButtons( hplc_ciq );
       hplc_ciq->exec();
       delete hplc_ciq;
+      // TSO << US_Vector::qs_mapqsqs( "hplc_ciq parameters after ciq", parameters );
       
       //       cout << "parameters:\n";
       //       for ( map < QString, QString >::iterator it = parameters.begin();
@@ -935,11 +1113,26 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          return false;
       }
 
+      if ( !parameters.count( "make_istarq" )
+           || parameters[ "make_istarq" ] != "true" ) {
+         istarq_mode = ISTARQ_NONE;
+      }
+
       if ( parameters.count( "make_ng" ) &&
            parameters[ "make_ng" ] == "true" )
       {
+         if ( istarq_mode != ISTARQ_NONE ) {
+            editor_msg( "red", "make istarq not implemented without gaussians yet\n" );
+            progress->reset();
+            update_enables();
+            return false;
+         }
          progress->reset();
          return create_i_of_q_ng( files );
+      }
+
+      if ( istarq_mode != ISTARQ_NONE ) {
+         head += "_SAXS_Istarq_";
       }
 
       if ( !no_conc )
@@ -961,6 +1154,9 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       if ( parameters.count( "I0se" ) )
       {
          I0se = parameters[ "I0se" ].toDouble();
+         if ( parameters.count( "I0se_process" ) ) {
+            I0se_process = parameters[ "I0se_process" ] == "true";
+         }
       }
 
       if ( sd_from_difference )
@@ -1430,10 +1626,23 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       }
    }
    
+   // TSO <<
+   //    QString(
+   //            "conc_ok %1\n"
+   //            "normalize_by_conc %2\n"
+   //            "iqstar conc pw%3\n"
+   //            "I0se_process %4\n"
+   //            )
+   //    .arg( conc_ok ? "true" : "false" )
+   //    .arg( normalize_by_conc ? "true" : "false" )
+   //    .arg( istarq_mode == ISTARQ_CONC_POINTWISE ? "true" : "false" )
+   //    .arg( I0se_process ? "true" : "false" )
+   //    ;
 
    for ( unsigned int t = 0; t < tv.size(); t++ )
    {
       progress->setValue( files.size() + t ); progress->setMaximum( files.size() + tv.size() );
+      qApp->processEvents();
       // for each gaussian 
       vector < double > gsI;
       vector < double > gse;
@@ -1444,6 +1653,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       // for "sd by differece"
       vector < vector < double > > used_pcts;
       vector < QString >           used_names;
+      map < QString, double >      istarq_norm_factors;
 
       for ( unsigned int g = 0; g < num_of_gauss; g++ )
       {
@@ -1464,12 +1674,53 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          // build up an I(q)
          double conc_factor = 0e0;
          double norm_factor = 1e0;
+         double istarq_norm_factor = 0e0;
          QString qs_fwhm;
          if ( ( conc_ok || normalize_by_conc ) && concs[ g ][ t ] > 0e0 )
          {
             // us_qdebug( QString( "ciq conc stuff" ) );
             conc_factor = concs[ g ][ t ];
             norm_factor = 1e0 / conc_factor;
+
+            if ( istarq_mode == ISTARQ_CONC_POINTWISE ) {
+               // TSO << "istarq ISTARQ_CONC_POINTWISE\n";
+               norm_factor = 1e0;
+
+               istarq_norm_factor =
+                  AVOGADRO /
+                  ( concs[ g ][ t ]
+                    * 1e-3
+                    * pow( 
+                          saxs_hplc_param_diffusion_len
+                          * ( 1e0
+                              / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                              - ( psv[ g ] * 1e24 * saxs_hplc_param_solvent_electron_density )
+                              )
+                          , 2e0 )
+                    )
+                  ;
+
+               if ( I0se_process ) {
+                  // TSO << "I0se_process\n";
+                  istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+                  // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
+               }
+
+               // TSO <<
+               //    QString( "g = %1 t = %2 tv[%2] = %3 norm factor = %4\n" )
+               //    .arg( g )
+               //    .arg( t )
+               //    .arg( tv[t] )
+               //    .arg( istarq_norm_factor )
+               //    ;
+               
+            }
+            // TSO <<
+            //    QString( "t %1 g %2 norm_factor after istarq adj %3\n" )
+            //    .arg( t )
+            //    .arg( g )
+            //    .arg( istarq_norm_factor )
+            //    ;
 
             double detector_conv = 0e0;
             if ( detector_uv )
@@ -1509,6 +1760,28 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
          }
 
+         if ( istarq_mode == ISTARQ_CONC_GLOBAL ) {
+            istarq_norm_factor =
+               AVOGADRO /
+               ( saxs_hplc_param_g_conc
+                 * 1e-3
+                 * pow( 
+                       saxs_hplc_param_diffusion_len
+                       * ( 1e0
+                           / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass )
+                           - ( saxs_hplc_param_g_psv * 1e24 * saxs_hplc_param_solvent_electron_density )
+                           )
+                       , 2e0 )
+                 )
+               ;
+
+            if ( I0se_process ) {
+               // TSO << "I0se_process\n";
+               istarq_norm_factor *= saxs_hplc_param_I0_theo / I0se;
+               // TSO << QString( "I0se_process true, multiple %1\n" ).arg( saxs_hplc_param_I0_theo / I0se );
+            }
+         }
+
          QString name = head + QString( "%1%2%3_pk%4%5_t%6" )
             .arg( save_gaussians  ? "_G" : "" )
             .arg( (any_bl || any_bi)   ? "_bs" : "" )
@@ -1531,6 +1804,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
             name = use_name;
          }
+
 
          // cout << QString( "name %1\n" ).arg( name );
 
@@ -1718,13 +1992,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
          }
 
-
-         if ( normalize_by_conc && norm_factor != 1e0 )
+         if ( normalize_by_conc && istarq_mode == ISTARQ_NONE && norm_factor != 1e0 )
          {
-            for ( unsigned int i = 0; i < use_I.size(); i++ )
+            for ( unsigned int i = 0; i < use_I.size(); ++i )
             {
                use_I[ i ] *= norm_factor;
             }
+            // TSO << QString( "use_I scaled by %1\n" ).arg( norm_factor );
          }
 
          if ( sd_from_difference )
@@ -1847,6 +2121,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                }
             }
          }
+
+         // TSO <<
+         //    QString( "name %1 istarq_norm_factor %2\n" )
+         //    .arg( name )
+         //    .arg( istarq_norm_factor )
+         //    ;
+         istarq_norm_factors[ name ] = istarq_norm_factor;
+
       } // for each gaussian
 
       if ( sd_from_difference )
@@ -1982,7 +2264,27 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                f_errors   [ used_names[ i ] ] = use_e;
             }
          }
-      }         
+      }
+
+      // istarq 
+
+      if ( istarq_mode != ISTARQ_NONE ) {
+         for ( auto it = istarq_norm_factors.begin();
+               it != istarq_norm_factors.end();
+               ++it ) {
+            if ( f_Is.count( it->first ) ) {
+               for ( int i = 0; i < (int) f_Is[ it->first ].size(); ++i ) {
+                  f_Is[ it->first ][ i ] *= it->second;
+               }
+            }
+            if ( f_errors.count( it->first ) ) {
+               for ( int i = 0; i < (int) f_errors[ it->first ].size(); ++i ) {
+                  f_errors[ it->first ][ i ] *= it->second;
+               }
+            }
+         }
+      }
+                  
       if ( !mode_testiq && save_sum )
       {
          if ( save_gaussians )
@@ -2034,13 +2336,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       for ( unsigned int i = 0; i < (unsigned int) avg_peaks_names.size(); ++i ) {
          if ( avg_peaks_names[ i ].size() ) {
             set_selected( avg_peaks_names[ i ] );
-            // then average, normalize
+            // then average
             avg( all_selected_files(), QString( peak_tag ) );
-            if ( conc_ok ) {
-               set < QString > last_selected;
-               last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
-               set_selected( last_selected );
-               normalize();
+            if ( conc_ok && istarq_mode == ISTARQ_NONE ) {
+               // normalize selected, then average again 
+               set < QString > norm_names;
+               normalize( norm_names );
+               set_selected( norm_names );
+               avg( all_selected_files(), QString( peak_tag ) );
+               remove_files( norm_names );
+               // set < QString > last_selected;
+               // last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
+               // set_selected( last_selected );
+               // normalize();
                final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
             } else {
                final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
@@ -2069,13 +2377,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( bool do_init )
+bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( bool do_init, bool only_init_unset )
 {
    QStringList files = all_selected_files();
-   return create_unified_ggaussian_target( files, do_init );
+   return create_unified_ggaussian_target( files, do_init, only_init_unset );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files, bool do_init )
+bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files, bool do_init, bool only_init_unset )
 {
    unified_ggaussian_ok = false;
 
@@ -2098,7 +2406,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    if ( do_init )
    {
       unified_ggaussian_errors_skip = false;
-      if ( !initial_ggaussian_fit( files ) )
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+           && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
+         editor_msg( "darkred", QString( "Experimental smoothing points %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
+      }
+
+      if ( !initial_ggaussian_fit( files, only_init_unset ) )
       {
          progress->reset();
          return false;
@@ -2471,12 +2786,27 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    return true;
 }
 
+// #define GG_DEBUG
+
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
 {
+
+#if defined(GG_DEBUG)
+   TSO << "================================================================================\n";
+   TSO << QString( "compute_f_gaussians %1\n" ).arg( file );
+   TSO << "--------------------------------------------------------------------------------\n";
+#endif
+
+   if (
+       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
+       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true"
+       ) {
+      editor_msg( "darkRed", us_tr( "Experimental: Global Gaussian Gaussian cyclic fit - active\n" ) );
+   }
    // us_qdebug( QString( "compute_f_gaussians %1" ).arg( file ) );
    // take current gaussians & compute for this curve
    // find peak of curve
-   US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
+   // US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
 
    vector < double > save_q;
    vector < double > save_I;
@@ -2513,8 +2843,8 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       if ( !f_qs[ file ].size() )
       {
          saved = false;
-         f_qs[ file ] = save_q;
-         f_Is[ file ] = save_I;
+         f_qs[ file ]     = save_q;
+         f_Is[ file ]     = save_I;
          f_errors[ file ] = save_e;
       }
       // US_Vector::printvector( QString( "cfg as %1 q" ).arg( file ), f_qs[ file ] );
@@ -2522,20 +2852,279 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       // US_Vector::printvector( QString( "cfg as %1 e" ).arg( file ), f_errors[ file ] );
    }
 
-   double peak;
-   if ( !get_peak( file, peak ) )
-   {
-      if ( saved )
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_oldstyle" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_oldstyle" ] == "true" ) {
+      bool cyclic_on =
+         ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
+         ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true";
+      bool smooth_on = 
+         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+         && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+         && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+         && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0
+         ;
+
+      if ( cyclic_on || smooth_on ) {
+         ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] = "false";
+         ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_smooth" ] = "false";
+
+         // process "oldstyle" fit and save
+
+         vector < double > save_gaussians   = gaussians;
+         vector < double > save_f_gaussians = f_gaussians[ file ];
+
+         if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+            editor_msg( "red", QString( us_tr( "Error: computing Gaussians for %1" ) ).arg( file ) );
+            return false;
+         }
+
+         vector < double > gsum = compute_gaussian_sum( f_qs[file], f_gaussians[ file ] );
+
+         add_oldstyle( file
+                       ,f_qs[ file ]
+                       ,gsum );
+                       
+         gaussians           = save_gaussians;
+         f_gaussians[ file ] = save_f_gaussians;
+      
+         if ( cyclic_on ) {
+            ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] = "true";
+         }         
+         if ( smooth_on ) {
+            ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_smooth" ] = "true";
+         }
+      }
+   }
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
+        && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
+      if ( !saved ) {
+         saved = true;
+
+         save_q = f_qs[ file ];
+         save_I = f_Is[ file ];
+         save_e = f_errors[ file ];
+      }
+
+      vector < double > save2_q = f_qs[ file ];
+      vector < double > save2_I = f_Is[ file ];
+      vector < double > save2_e = f_errors[ file ];
+
+      int smoothing = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt();
+
+      int best_smoothing = 0;
+      double best_pvalue;
+
+      // get initial fit
+
+#if defined(GG_DEBUG)
+      TSO << QString( "******** get initial fit %1\n" ).arg( file );
+#endif
+      if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+         editor_msg( "red", QString( "Error computing gaussians %1 [a]" ).arg( file ) );
+         f_qs[ file ]     = save_q;
+         f_Is[ file ]     = save_I;
+         f_errors[ file ] = save_e;
+         return false;
+      }         
+
+      vector < double > bestg         = f_gaussians[ file ];
+      vector < double > bestsmoothedI; // = f_Is[ file ];
+
+      // vector < vector < double > > bestgs_debug;
+
+      // bestgs_debug.push_back( bestg );
+
+      // get initial fit p value
       {
-         f_qs[ file ] = save_q;
-         f_Is[ file ] = save_I;
+         double P;
+         QString errormsg;
+      
+         if ( pvalue( file, P, errormsg ) ) {
+            editor_msg( "darkblue", QString( "%1 pvalue %2\n" ).arg( file ).arg( P ) );
+         } else {
+            editor_msg( "red", QString( "%1 pvalue compute failed %2\n" ).arg( file ).arg( errormsg ) );
+            f_qs[ file ]     = save_q;
+            f_Is[ file ]     = save_I;
+            f_errors[ file ] = save_e;
+            return false;
+         }
+         best_pvalue = P;
+      }
+
+      // qDebug() << QString( "gg smoothing %1 s %2 p %3" ).arg( file ).arg( 0 ).arg( best_pvalue );
+
+      // check smoothing for improvement
+
+      for ( int s = 1; s <= smoothing; ++s ) {
+         f_qs[ file ]     = save2_q;
+         f_Is[ file ]     = save2_I;
+         f_errors[ file ] = save2_e;
+
+         vector < double > smoothed_I;
+
+         if ( usu->smooth( f_Is[ file ], smoothed_I, s ) ) {
+            f_Is[ file ] = smoothed_I;
+         } else {
+            editor_msg( "red", QString( "Error smoothing %1 : %2" ).arg( file ).arg( usu->errormsg ) );
+            return false;
+         }
+
+#if defined(GG_DEBUG)
+         TSO << QString( "******** get smoothing fit %1 %2\n" ).arg( s ).arg( file );
+#endif
+
+         if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+            f_qs[ file ]     = save_q;
+            f_Is[ file ]     = save_I;
+            f_errors[ file ] = save_e;
+            editor_msg( "red", QString( "Error computing gaussians %1 [b]" ).arg( file ) );
+            return false;
+         }         
+
+         // bestgs_debug.push_back( f_gaussians[ file ] );
+
+         // get p value
+         {
+            double P;
+            QString errormsg;
+      
+            f_qs[ file ]     = save2_q;
+            f_Is[ file ]     = save2_I;
+            f_errors[ file ] = save2_e;
+
+            if ( pvalue( file, P, errormsg ) ) {
+               editor_msg( "darkblue", QString( "%1 pvalue %2\n" ).arg( file ).arg( P ) );
+            } else {
+               editor_msg( "red", QString( "%1 pvalue compute failed %2\n" ).arg( file ).arg( errormsg ) );
+               return false;
+            }
+            if ( best_pvalue < P ) {
+               best_pvalue    = P;
+               best_smoothing = s;
+               bestg          = f_gaussians[ file ];
+               bestsmoothedI  = smoothed_I;
+
+            }
+            // qDebug() << QString( "gg smoothing %1 s %2 p %3" ).arg( file ).arg( s ).arg( P );
+         }
+      }
+
+      f_gaussians[ file ] = bestg;
+
+      if ( best_smoothing > 0 ) {
+         // qDebug() << QString( "gg smoothing %1 best s %2 p %3" ).arg( file ).arg( best_smoothing ).arg( best_pvalue );
+         add_plot(
+                  QString( "%1-sm%2" ).arg( file ).arg( best_smoothing )
+                  ,f_qs[ file ]
+                  ,bestsmoothedI
+                  ,f_errors[ file ]
+                  ,true
+                  ,false
+                  );
+         add_smoothed(
+                      file
+                      ,f_qs[ file ]
+                      ,bestsmoothedI
+                      ,best_smoothing
+                      );
+                        
+         // add_plot_gaussian( file, QString( "sm%1-g" ).arg( best_smoothing ) );
+         // to debug them all
+         // vector < double > save_g = f_gaussians[ file ];
+         // for ( int i = 0; i < (int) bestgs_debug.size(); ++i ) {
+         //    f_gaussians[file] = bestgs_debug[i];
+         //    add_plot_gaussian( file, QString( "g_s%1" ).arg( i ) );
+         // }
+         // f_gaussians[ file ] = save_g;
+      }
+
+      f_qs[ file ]     = save_q;
+      f_Is[ file ]     = save_I;
+      f_errors[ file ] = save_e;
+
+      return true;
+   }
+
+#if defined(GG_DEBUG)
+   TSO << QString( "******* get final fit %1\n" ).arg( file );
+#endif
+
+   if ( !compute_f_gaussians_trial( file, hplc_fit_widget ) ) {
+      if ( saved ) {
+         f_qs[ file ]     = save_q;
+         f_Is[ file ]     = save_I;
          f_errors[ file ] = save_e;
       }         
       return false;
+   }         
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool only_init_unset ) {
+   wheel_file = files[ 0 ];
+
+   // us_qdebug( "creating fit window" );
+
+   US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
+      new US_Hydrodyn_Saxs_Hplc_Fit(
+                                    this,
+                                    false,
+                                    this
+                                    );
+   US_Hydrodyn::fixWinButtons( hplc_fit_window );
+
+   hplc_fit_window->update_hplc = false;
+
+   clear_smoothed();
+   clear_oldstyle();
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
+      progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
+      qApp->processEvents();
+#if defined(GG_DEBUG)
+      us_qdebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
+#endif
+      
+      if ( !only_init_unset || !f_gaussians.count( files[ i ] ) ) {
+         if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) ) {
+            return false;
+         }
+      }
    }
 
-   // printvector( "cfg: org_gauss", org_gaussians );
+   delete hplc_fit_window;
+
+   list_smoothed();
    
+   return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::add_plot_gaussian( const QString &file, const QString &tag ) {
+   add_plot(
+            QString( "%1-%2" ).arg( file ).arg( tag )
+            ,f_qs[ file ]
+            ,compute_gaussian_sum( f_qs[ file ], f_gaussians[ file ] )
+            ,true
+            ,false
+            );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget ) {
+   // printvector( "cfg: org_gauss", org_gaussians );
+#if defined(GG_DEBUG)
+   TSO << "--------------------------------------------------------------------------------\n";
+   TSO << QString( "compute_f_gaussians_trial %1\n" ).arg( file );
+   TSO << "--------------------------------------------------------------------------------\n";
+#endif
+   double peak;
+   if ( !get_peak( file, peak ) ) {
+      return false;
+   }
+
    double gmax = compute_gaussian_peak( file, org_gaussians );
    
    double scale = peak / gmax;   
@@ -2571,18 +3160,49 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
    // vector < double > tmp_gs = gaussians;
 
+   US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
+
    fit->redo_settings();
    fit->gaussians_undo.clear( );
    fit->gaussians_undo.push_back( gaussians );
-   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
 
    fit->cb_fix_center    ->setChecked( true );
    fit->cb_fix_width     ->setChecked( true );
    fit->cb_fix_amplitude ->setChecked( false );
    fit->cb_fix_dist1     ->setChecked( true );
    fit->cb_fix_dist2     ->setChecked( true );
+
+   // QTextStream(stdout) << QString( "compute_f_gaussians_trial number of gaussians %1\n" ).arg( fit->cb_fix_curves.size() );
+#if defined(GG_DEBUG)
+   QTextStream(stdout) << QString( "epsilon is %1\n" ).arg( fit->le_epsilon->text() );
+#endif
+
+   if (
+       ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
+       ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true"
+       ) {
+      // QTextStream(stdout) << QString( "Experimental: Global Gaussian Gaussian cyclic fit - active - %1\n" ).arg( file );
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         for ( int j = 0; j < (int) fit->cb_fix_curves.size(); ++j ) {
+            fit->cb_fix_curves[j]->setChecked( i != j );
+         }
+#if defined(GG_DEBUG)
+         TSO << QString( "******** fit %1 fix %2\n" ).arg( file ).arg( i + 1 );
+#endif
+         fit->lm();
+      }
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         fit->cb_fix_curves[i]->setChecked( false );
+      }
+   }
+
+   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
+      
    // fit initial amplitudes
    // us_qdebug( "call first lm fit in compute_f_gaussians" );
+#if defined(GG_DEBUG)
+   TSO << QString( "fit %1 fit all centers mobile\n" ).arg( file );
+#endif
    fit->lm();
    // us_qdebug( "return from first lm fit in compute_f_gaussians" );
    // US_Vector::printvector2( "compute_f_gaussians: gaussians before, after", tmp_gs, gaussians );
@@ -2594,6 +3214,9 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
         ( dist1_active && !cb_fix_dist1->isChecked() ) ||
         ( dist2_active && !cb_fix_dist2->isChecked() ) )
    {
+#if defined(GG_DEBUG)
+      TSO << QString( "fit %1 fit 'open'?\n" ).arg( file );
+#endif
       // us_qdebug( "call second lm fit in compute_f_gaussians" );
       fit->cb_fix_width     ->setChecked( cb_fix_width->isChecked() );
       fit->cb_fix_dist1     ->setChecked( cb_fix_dist1->isChecked() );
@@ -2602,46 +3225,483 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       // us_qdebug( "return from second lm fit in compute_f_gaussians" );
       // printvector( "cfg: after fit2 gaussians", gaussians );
    }
-
+   
    f_gaussians[ file ] = gaussians;
    gaussians = org_gaussians;
-   if ( saved )
-   {
-      f_qs[ file ] = save_q;
-      f_Is[ file ] = save_I;
-      f_errors[ file ] = save_e;
-   }         
+
    return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
+void US_Hydrodyn_Saxs_Hplc::clear_smoothed() {
+   f_qs_smoothed.clear();
+   f_Is_smoothed.clear();
+   f_best_smoothed_smoothing.clear();
+}
+   
+void US_Hydrodyn_Saxs_Hplc::list_smoothed() {
+   TSO << "list_smoothed():\n";
+   for ( auto it = f_qs_smoothed.begin();
+         it != f_qs_smoothed.end();
+         ++it ) {
+      TSO << QString( "%1 smoothing %2 data points %3\n" )
+         .arg( it->first )
+         .arg( f_best_smoothed_smoothing[ it->first ] )
+         .arg( it->second.size() )
+         ;
+   }
+}
+            
+void US_Hydrodyn_Saxs_Hplc::add_smoothed(
+                                         const QString            & name
+                                         ,const vector < double > & q
+                                         ,const vector < double > & I
+                                         ,int                       best_smoothing
+                                         ) {
+   f_qs_smoothed[ name ]             = q;
+   f_Is_smoothed[ name ]             = I;
+   f_best_smoothed_smoothing[ name ] = best_smoothing;
+}
+
+void US_Hydrodyn_Saxs_Hplc::clear_oldstyle() {
+   f_qs_oldstyle.clear();
+   f_Is_oldstyle.clear();
+}
+   
+void US_Hydrodyn_Saxs_Hplc::list_oldstyle() {
+   TSO << "list_oldstyle():\n";
+   for ( auto it = f_qs_oldstyle.begin();
+         it != f_qs_oldstyle.end();
+         ++it ) {
+      TSO << QString( "%1 oldstyle data points %2\n" )
+         .arg( it->first )
+         .arg( it->second.size() )
+         ;
+   }
+}
+            
+void US_Hydrodyn_Saxs_Hplc::add_oldstyle(
+                                         const QString            & name
+                                         ,const vector < double > & q
+                                         ,const vector < double > & I
+                                         ) {
+   f_qs_oldstyle[ name ]             = q;
+   f_Is_oldstyle[ name ]             = I;
+}
+
+
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( set < QString > & fileset, double t_min, double t_max )
 {
-   wheel_file = files[ 0 ];
-
-   // us_qdebug( "creating fit window" );
-
-   US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
-      new US_Hydrodyn_Saxs_Hplc_Fit(
-                                    this,
-                                    false,
-                                    this
-                                    );
-   US_Hydrodyn::fixWinButtons( hplc_fit_window );
-
-   hplc_fit_window->update_hplc = false;
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   QStringList files;
+   for ( set < QString >::iterator it = fileset.begin();
+         it != fileset.end();
+         ++it )
    {
-      progress->setValue( i ); progress->setMaximum( files.size() * 1.2 );
-      qApp->processEvents();
-      us_qdebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
-      
-      if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) )
+      files << *it;
+   }
+   return create_ihashq( files, t_min, t_max );
+}
+
+void US_Hydrodyn_Saxs_Hplc::create_ihashq()
+{
+   disable_all();
+
+   QStringList files = all_selected_files();
+   create_ihashq( files );
+
+
+   update_enables();
+}
+
+#define TSO QTextStream(stdout)
+
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max ) {
+
+   // reset_saxs_hplc_params();
+
+   // 1st verify parameters
+   {
+      vector < QString > labels =
+         {
+            "Partial specific volume [mL/g]:"
+            ,"Diffusion length [cm]:"
+            ,"Electron/nucleon ratio Z/A:"
+            ,"Nucleon mass [g]:"
+            ,"Solvent electron density [e A^-3]:"
+         };
+
+      vector < double > values =
+         {
+            saxs_hplc_param_g_psv
+            ,saxs_hplc_param_diffusion_len
+            ,saxs_hplc_param_electron_nucleon_ratio
+            ,saxs_hplc_param_nucleon_mass
+            ,saxs_hplc_param_solvent_electron_density
+         };
+
+      QStringList qsl;
+      qsl <<
+         "<b>SAXS Processing parameters</b>"
+         "<hr>"
+         "<table border=1 bgcolor=#FFF cellpadding=1.5>"
+         ;
+
+      for ( int i = 0; i < (int) labels.size(); ++i ) {
+         qsl <<
+            QString( "<tr><td>%1</td><td>%2</td></tr>" )
+            .arg( us_tr( labels[i] ) )
+            .arg( values[i] )
+            ;
+      }
+
+      qsl <<
+         "</table>"
+         ;
+
+      switch ( QMessageBox::question(this, 
+                                     windowTitle() + us_tr( " : Make I#,I*(q)" )
+                                     ,qsl.join("")
+                                     + QString(
+                                               us_tr( 
+                                                     "<hr>"
+                                                     "Accept these processing parameters?"
+                                                     "<br>"
+                                                     "<hr>"
+                                                     "<i>Adjust values in Options->SAXS Processing Parameters</i>"
+                                                      )
+                                               )
+                                     ) )
       {
+      case QMessageBox::Yes : 
+         break;
+      default:
          return false;
+         break;
+      }
+      
+   }
+
+   QString     head   = qstring_common_head( files, true );
+   QString     tail   = qstring_common_tail( files, true );
+   QStringList frames = get_frames( files, head, tail );
+
+   // TSO << "create_ihashq: get_frames:\n" + frames.join("\n") + "\n";
+
+   // "on-the-fly" dialogs
+   
+   // exposure times
+   {
+      QDialog dialog(this);
+      dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#,I*(q)" ) );
+      // Use a layout allowing a label next to each field
+      dialog.setMinimumWidth( 200 );
+
+      QFormLayout form(&dialog);
+
+      // Add some text above the fields
+      form.addRow( new QLabel(
+                              us_tr(
+                                    "Convert frames to time\n"
+                                    "Fill out the values below and click OK\n"
+                                    "Click CANCEL to skip frame to time conversion\n"
+                                    )
+                              ) );
+
+      // Add the lineEdits with their respective labels
+      QList<QLineEdit *> fields;
+   
+      vector < QString > labels =
+         {
+            us_tr( "Starting time [s]:" )
+            ,us_tr( "Exposure time [s]:" )
+            ,us_tr( "Frame interval [s]:" )
+         };
+
+
+      vector < double > defaults =
+         {
+            0
+            ,0
+            ,1
+         };
+
+      for( int i = 0; i < (int) labels.size(); ++i ) {
+         QLineEdit *lineEdit = new QLineEdit( &dialog );
+         lineEdit->setValidator( new QDoubleValidator(this) );
+         form.addRow( labels[i], lineEdit );
+         lineEdit->setText( QString( "%1" ).arg( defaults[i] ) );
+         fields << lineEdit;
+      }
+
+      // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+      QDialogButtonBox buttonBox(
+                                 QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                 ,Qt::Horizontal
+                                 ,&dialog
+                                 );
+      form.addRow(&buttonBox);
+      QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+      QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+      // Show the dialog as modal
+      if (dialog.exec() == QDialog::Accepted) {
+         // If the user didn't dismiss the dialog, do something with the fields
+         double start_time     = fields[0]->text().toDouble();
+         double exposure_time  = fields[1]->text().toDouble();
+         double frame_interval = fields[2]->text().toDouble();
+
+         for ( auto & frame : frames ) {
+            frame = QString( "%1" ).arg(
+                                        start_time
+                                        + frame.toDouble() * ( exposure_time + frame_interval )
+                                        + 0.5 * exposure_time
+                                        );
+         }
       }
    }
 
-   delete hplc_fit_window;
+   TSO << "create_ihashq: frames before padding:\n" + frames.join("\n") + "\n";
+
+   // pad frames
+   for ( auto & frame : frames ) {
+      double whole, frac;
+      frac = std::modf( fabs( frame.toDouble() ), &whole );
+      if ( signbit( frame.toDouble() ) ) {
+         frame = QString( "t-%1%2" )
+            .arg( pad_zeros( whole, (int) (frames.back().toDouble() + .5) ) )
+            .arg( QString( "%1" ).arg( frac ).replace( QRegularExpression( "^(-|)0" ), "" ) )
+            ;
+      } else {
+         frame = QString( "t%1%2" )
+            .arg( pad_zeros( whole, (int) (frames.back().toDouble() + .5) * 10 ) )
+            .arg( QString( "%1" ).arg( frac ).replace( QRegularExpression( "^0" ), "" ) )
+            ;
+      }
+   }
+
+   TSO << "create_ihashq: frames after padding:\n" + frames.join("\n") + "\n";
+
+   double i0_norm = 1;
+   double i0se    = 1;
+   double i0st    = 1;
+
+   // i0 normalization
+   {
+      bool try_again;
+      do {
+         try_again = false;
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#,I*(q)" ) );
+         // Use a layout allowing a label next to each field
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 us_tr(
+                                       "Use I0 standards for normalization\n"
+                                       "Fill out the values below and click OK\n"
+                                       "Click CANCEL if your data is already normalized\n"
+                                       )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QLineEdit *> fields;
+   
+         vector < QString > labels =
+            {
+               us_tr( "I0 standard experimental [a.u.]:" )
+               ,us_tr( "I0 standard theoretical [a.u.]:" )
+            };
+
+
+         vector < double > defaults =
+            {
+               saxs_hplc_param_I0_exp
+               ,saxs_hplc_param_I0_theo
+            };
+
+         for( int i = 0; i < (int) labels.size(); ++i ) {
+            QLineEdit *lineEdit = new QLineEdit( &dialog );
+            lineEdit->setValidator( new QDoubleValidator(this) );
+            lineEdit->setText( QString( "%1" ).arg( defaults[i] ) );
+            form.addRow( labels[i], lineEdit );
+            fields << lineEdit;
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            // If the user didn't dismiss the dialog, do something with the fields
+
+            if ( fields[1]->text().toDouble() == 0 ) {
+               try_again = true;
+            } else {
+               i0se = fields[0]->text().toDouble();
+               i0st = fields[1]->text().toDouble();
+               i0_norm =
+                  fields[1]->text().toDouble()
+                  / fields[0]->text().toDouble()
+                  ;
+            }
+         }
+      } while ( try_again );
+   }
+   
+   // conc
+   double conc_mult = 1e3;
+
+   bool istarq = false;
+
+   {
+      bool try_again;
+      do {
+         try_again = false;
+         QDialog dialog(this);
+         dialog.setWindowTitle( windowTitle() + us_tr( ": Make I#,I*(q)" ) );
+         // Use a layout allowing a label next to each field
+         dialog.setMinimumWidth( 200 );
+
+         QFormLayout form(&dialog);
+
+         // Add some text above the fields
+         form.addRow( new QLabel(
+                                 us_tr(
+                                       "Enter a concentration to produce I*(q)\n"
+                                       "Fill out the concentration below and click OK\n"
+                                       "Click CANCEL to produce I#(q)\n"
+                                       )
+                                 ) );
+
+         // Add the lineEdits with their respective labels
+         QList<QLineEdit *> fields;
+   
+         vector < QString > labels =
+            {
+               us_tr( "Concentration [mg/mL]:" )
+            };
+
+
+         for( int i = 0; i < (int) labels.size(); ++i ) {
+            QLineEdit *lineEdit = new QLineEdit( &dialog );
+            lineEdit->setValidator( new QDoubleValidator(this) );
+            form.addRow( labels[i], lineEdit );
+            fields << lineEdit;
+         }
+
+         // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+         QDialogButtonBox buttonBox(
+                                    QDialogButtonBox::Ok | QDialogButtonBox::Cancel
+                                    ,Qt::Horizontal
+                                    ,&dialog
+                                    );
+         form.addRow(&buttonBox);
+         QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+         QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+         // Show the dialog as modal
+         if (dialog.exec() == QDialog::Accepted) {
+            // If the user didn't dismiss the dialog, do something with the fields
+
+            if ( fields[0]->text().toDouble() == 0 ) {
+               try_again = true;
+            } else {
+               conc_mult = fields[0]->text().toDouble();
+               istarq    = true;
+            }
+         }
+      } while ( try_again );
+   }
+   
+   QMessageBox::information( this,
+                             windowTitle() + us_tr( ": Make I#,*(q)" ),
+                             us_tr( QString( istarq ? "I*(q)" : "I#(q)" ) + " will be produced" )
+                             );
+   
+   double internal_contrast = 
+      saxs_hplc_param_diffusion_len * 
+      ( 1e0 / ( saxs_hplc_param_electron_nucleon_ratio * saxs_hplc_param_nucleon_mass ) - saxs_hplc_param_g_psv * ( 1e24 * saxs_hplc_param_solvent_electron_density ) );
+   
+   double I0mult = i0_norm * AVOGADRO / ( conc_mult * 1e-3) / ( internal_contrast * internal_contrast );
+
+   TSO <<
+      QString(
+              "diffusion len     %1\n"
+              "electron nucleon  %2\n"
+              "nucleon mass      %3\n"
+              "psv               %4\n"
+              "solvent e density %5\n"
+              "internal contrast %6\n"
+              "I0_mult           %7\n"
+              "I0_norm           %8\n"
+              "conc_mult         %9\n"
+              )
+      .arg( saxs_hplc_param_diffusion_len )
+      .arg( saxs_hplc_param_electron_nucleon_ratio )
+      .arg( saxs_hplc_param_nucleon_mass )
+      .arg( saxs_hplc_param_g_psv )
+      .arg( saxs_hplc_param_solvent_electron_density )
+      .arg( internal_contrast )
+      .arg( I0mult )
+      .arg( i0_norm )
+      .arg( conc_mult )
+      ;
+
+   set < QString > hash_names;
+
+   for ( unsigned int i = 0; i < (unsigned int)files.size(); ++i ) {
+      QString name  = files[i];
+      QString frame = frames[i];
+
+      QString hash_name = head + ( istarq ? "_Istarq_" : "_Ihashq_" ) + frame + tail;
+      
+      if ( !f_Is.count( name ) ) {
+         editor_msg( "red", QString( "Internal error: missing data for %1\n" ).arg( name ) );
+      }
+      
+      vector < double > hash_I = f_Is[ name ];
+      vector < double > hash_e = f_errors[ name ];
+
+      bool use_errors = hash_e.size() == hash_I.size();
+
+      if ( use_errors ) {
+         for ( int i = 0; i < (int) hash_I.size(); ++i ) {
+            hash_I[i] *= I0mult;
+            hash_e[i] *= I0mult;
+         }
+         add_plot( hash_name, f_qs[ name ], hash_I, hash_e, false, false );
+      } else {
+         for ( int i = 0; i < (int) hash_I.size(); ++i ) {
+            hash_I[i] *= I0mult;
+         }
+         add_plot( hash_name, f_qs[ name ], hash_I, false, false );
+      }
+
+      if ( istarq ) {
+         f_conc[ last_created_file ] = conc_mult;
+      }
+
+      f_psv            [ last_created_file ] = saxs_hplc_param_g_psv;
+      f_diffusion_len  [ last_created_file ] = saxs_hplc_param_diffusion_len;
+      f_e_nucleon_ratio[ last_created_file ] = saxs_hplc_param_electron_nucleon_ratio;
+      f_nucleon_mass   [ last_created_file ] = saxs_hplc_param_nucleon_mass;
+      f_solvent_e_dens [ last_created_file ] = saxs_hplc_param_solvent_electron_density;
+      f_I0se           [ last_created_file ] = i0se;
+      f_I0st           [ last_created_file ] = i0st;
+      
+      hash_names.insert( last_created_file );
+   }
+
+   set_selected( hash_names );
+         
    return true;
 }

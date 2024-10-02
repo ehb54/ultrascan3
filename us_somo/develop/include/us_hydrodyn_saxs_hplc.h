@@ -110,6 +110,11 @@ struct hplc_stack_data
    map < QString, double >             f_conc;
    map < QString, double >             f_extc;
    map < QString, double >             f_time;
+   map < QString, double >             f_diffusion_len;
+   map < QString, double >             f_e_nucleon_ratio;
+   map < QString, double >             f_nucleon_mass;
+   map < QString, double >             f_solvent_e_dens;
+   map < QString, double >             f_I0st;
 
    map < QString, bool >               created_files_not_saved;
    QStringList                         files;
@@ -159,6 +164,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                      vector < double > errors,
                      bool              is_time = false,
                      bool              replot  = true );
+
+      void add_plot_gaussian(
+                             const QString     & file,
+                             const QString     & tag
+                             );
 
    private:
 #if QT_VERSION < 0x040000
@@ -239,6 +249,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton          * rb_pbmode_none;
       void                    pbmode_select( pbmodes mode );
 
+      enum istarq_modes {
+         ISTARQ_NONE
+         ,ISTARQ_CONC_GLOBAL
+         ,ISTARQ_CONC_POINTWISE
+      };
+
+      istarq_modes istarq_mode;
+
  private slots:
 
       void set_pbmode_main( );
@@ -250,6 +268,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void set_pbmode_none( );
 
  private:
+
+      double        saxs_hplc_param_frame_interval;
+      double        saxs_hplc_param_g_conc;
+      double        saxs_hplc_param_g_psv;
+      double        saxs_hplc_param_I0_exp;
+      double        saxs_hplc_param_I0_theo;
+      double        saxs_hplc_param_diffusion_len;
+      double        saxs_hplc_param_electron_nucleon_ratio;
+      double        saxs_hplc_param_nucleon_mass;
+      double        saxs_hplc_param_solvent_electron_density;
 
       csv           csv1;
 
@@ -285,6 +313,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_movie;
       QPushButton   *pb_ag;
       QCheckBox     *cb_eb;
+      QCheckBox     *cb_dots;
       QPushButton   *pb_rescale;
       QPushButton   *pb_rescale_y;
 
@@ -312,6 +341,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
+      QPushButton   *pb_create_ihashq;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
@@ -474,6 +504,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox     *cb_ggauss_scroll_p_green;
       QCheckBox     *cb_ggauss_scroll_p_yellow;
       QCheckBox     *cb_ggauss_scroll_p_red;
+      QCheckBox     *cb_ggauss_scroll_smoothed;
+      QCheckBox     *cb_ggauss_scroll_oldstyle;
 
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
@@ -508,6 +540,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_remove_vis;
       QPushButton   *pb_crop_zero;
       QPushButton   *pb_crop_vis;
+      QPushButton   *pb_crop_to_vis;
       QPushButton   *pb_crop_common;
       QPushButton   *pb_crop_left;
       QPushButton   *pb_crop_undo;
@@ -692,6 +725,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
 
+      void                                normalize( set < QString > & produced );
       int                                 guinier_scroll_pos;
       void                                guinier_scroll_highlight( int pos );
 
@@ -852,7 +886,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, vector < double > >  f_errors;
       map < QString, vector < double > >  f_gaussians;
       map < QString, unsigned int >       f_pos;
-
       map < QString, QString >            f_name;
       map < QString, QString >            f_header;
       map < QString, bool >               f_is_time;
@@ -861,6 +894,46 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, double >             f_conc;
       map < QString, double >             f_extc;
       map < QString, double >             f_time;
+      map < QString, double >             f_diffusion_len;
+      map < QString, double >             f_e_nucleon_ratio;
+      map < QString, double >             f_nucleon_mass;
+      map < QString, double >             f_solvent_e_dens;
+      map < QString, double >             f_I0st;
+      map < QString, double >             f_g_dndc;
+      map < QString, double >             f_dndc;
+      map < QString, QString >            f_conc_units;
+      map < QString, double >             f_ri_corr;
+      map < QString, QString >            f_ri_corrs;
+      map < QString, double >             f_ref_index;
+      map < QString, QString >            f_fit_curve;
+      map < QString, QString >            f_fit_method;
+      map < QString, QString >            f_fit_q_ranges;
+      map < QString, double >             f_fit_chi2;
+      map < QString, double >             f_fit_sd_scale;
+
+      // for displaying last smoothing in gg scroll mode
+      map < QString, vector < double > >  f_qs_smoothed;
+      map < QString, vector < double > >  f_Is_smoothed;
+      map < QString, int >                f_best_smoothed_smoothing;
+      void                                clear_smoothed(); // resets the smoothing data
+      void                                list_smoothed();  // reports on smoothing
+      void                                add_smoothed(
+                                                       const QString            & name
+                                                       ,const vector < double > & q
+                                                       ,const vector < double > & I
+                                                       ,int                       best_smoothing
+                                                       );
+
+      // for displaying oldstyle in gg scroll mode
+      map < QString, vector < double > >  f_qs_oldstyle;
+      map < QString, vector < double > >  f_Is_oldstyle;
+      void                                clear_oldstyle(); // resets the oldstyle data
+      void                                list_oldstyle();  // reports on oldstyle
+      void                                add_oldstyle(
+                                                       const QString            & name
+                                                       ,const vector < double > & q
+                                                       ,const vector < double > & I
+                                                       );
 
       map < QString, bool >               created_files_not_saved;
 
@@ -903,6 +976,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < unsigned int >             unified_ggaussian_q_start;        // the start q pos - one for each curve
       vector < unsigned int >             unified_ggaussian_q_end;          // the end q pos   - one for each curve
 
+      int                                 ggaussian_sel_no_gaussian_count();
+
       map < QString, vector < double > >  org_f_gaussians;
 
       vector < double >                   compute_gaussian( vector < double > t, vector < double > g );
@@ -921,6 +996,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       // the cormap p values from pairwise comparisons
 
+      bool                                pvalue( const vector < double > &q, vector < double > &I, vector < double > &G, double &P, QString &errormsg ); // compute pvalue comparing 2 curves
+      bool                                pvalue( const QString & file, double &P, QString &errormsg ); // compute pvalue comparing I with Gaussians
+      
       map < QString, bool >               all_files_map();
 
       void                                update_plot_errors( vector < double > &grid, 
@@ -951,6 +1029,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void usp_config_ggqfit_plot( const QPoint & );
 
    private:
+      void                                reset_saxs_hplc_params();
+
       ScrollZoomer                      * ggqfit_plot_zoomer;
       QwtPlotGrid                       * ggqfit_plot_grid;
 
@@ -996,9 +1076,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                                unified_ggaussian_errors_skip;
       bool                                unified_ggaussian_ok;
 
-      bool                                initial_ggaussian_fit( QStringList & files );
-      bool                                create_unified_ggaussian_target( bool do_init = true );
-      bool                                create_unified_ggaussian_target( QStringList & files, bool do_init = true );
+      bool                                initial_ggaussian_fit( QStringList & files, bool only_init_unset = false );
+      bool                                create_unified_ggaussian_target( bool do_init = true, bool only_init_unset = false );
+      bool                                create_unified_ggaussian_target( QStringList & files, bool do_init = true, bool only_init_unset = false );
       double                              ggaussian_rmsd( bool normchi = true );
       bool                                ggaussian_compatible( bool check_against_global = true );
       bool                                ggaussian_compatible( QStringList & files, bool check_against_global = true );
@@ -1102,6 +1182,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         create_i_of_q_ng( set < QString > & fileset,
                                                      double t_min = -1e99,
                                                      double t_max = 1e99 );
+      bool                         create_ihashq( QStringList files,
+                                                  double t_min = -1e99,
+                                                  double t_max = 1e99 );
+      bool                         create_ihashq( set < QString > & fileset,
+                                                  double t_min = -1e99,
+                                                  double t_max = 1e99 );
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files, bool quiet = false );
@@ -1257,6 +1343,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         baseline_test_pos( int pos );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
+      bool                         compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget );
 
       bool                         ggauss_recompute();
 
@@ -1458,6 +1545,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void view();
       void movie();
       void set_eb();
+      void set_dots();
       void rescale();
       void rescale_y();
       void rescale_y_plot_errors();
@@ -1469,6 +1557,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void smooth();
       void svd();
       void repeak();
+      void create_ihashq();
       void create_i_of_t();
       void test_i_of_t();
       void create_i_of_q();
@@ -1562,6 +1651,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_scroll_p_green       ();
       void ggauss_scroll_p_yellow      ();
       void ggauss_scroll_p_red         ();
+      void ggauss_scroll_smoothed      ();
+      void ggauss_scroll_oldstyle      ();
 
       bool gg_fit_replot               ();
 
@@ -1679,6 +1770,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void crop_left                   ();
       void crop_common                 ();
       void crop_vis                    ();
+      void crop_to_vis                 ();
       void crop_zero                   ();
       void crop_undo                   ();
       void crop_right                  ();

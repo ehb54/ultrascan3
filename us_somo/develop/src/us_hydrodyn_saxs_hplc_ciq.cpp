@@ -19,7 +19,7 @@ US_Hydrodyn_Saxs_Hplc_Ciq::US_Hydrodyn_Saxs_Hplc_Ciq(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Make I(q)" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC/KIN : Make I(q)" ) );
 
    setupGUI();
    update_enables();
@@ -38,10 +38,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 {
 
    QPalette qcg_normal_redtext = USglobal->global_colors.cg_normal;
-   qcg_normal_redtext.setColor( QPalette::Foreground, Qt::red );
+   qcg_normal_redtext.setColor( QPalette::WindowText, Qt::red );
 
-   // qcg_normal_redtext.setColor( QPalette::Background, Qt::yellow );
-   //   qcg_normal_redtext.setColor( QPalette::Foreground, Qt::dRed );
+   // qcg_normal_redtext.setColor( QPalette::Window, Qt::yellow );
+   //   qcg_normal_redtext.setColor( QPalette::WindowText, Qt::dRed );
    // qcg_normal_redtext.setColor( QPalette::Base      , Qt::cyan );
    qcg_normal_redtext.setColor( QPalette::Text      , Qt::red );
    // qcg_normal_redtext.setColor( QPalette::Button    , Qt::red );
@@ -50,7 +50,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    int minHeight1  = 30;
    int minHeight2  = 25;
 
-   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: SAXS HPLC : Make I(q) without Gaussians" ) :  us_tr( "US-SOMO: SAXS HPLC : Make I(q)" ), this );
+   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: HPLC/KIN : Make I(q) without Gaussians" ) :  us_tr( "US-SOMO: HPLC/KIN : Make I(q)" ), this );
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
@@ -271,8 +271,20 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       cb_normalize->hide();
    }
 
+   cb_istarq = new QCheckBox(this);
+   cb_istarq->setText( parameters->count( "istarq_message" ) ? (*parameters)[ "istarq_message" ] : QString("") );
+   cb_istarq->setEnabled( parameters->count( "istarq_ok" ) && (*parameters)[ "istarq_ok" ] == "true" );
+   connect( cb_istarq, SIGNAL( clicked() ), SLOT( set_istarq() ) );
+   cb_istarq->setChecked( false );
+   cb_istarq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_istarq->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_istarq );
+   if ( !parameters->count( "istarq_ok" ) ) {
+      cb_istarq->hide();
+   }
+
    cb_I0se = new QCheckBox(this);
-   cb_I0se->setText( us_tr( "I0 standard experimental value (a.u.) : " ) );
+   cb_I0se->setText( us_tr( "Data already normalized. I0 standard experimental value (a.u.) : " ) );
    cb_I0se->setEnabled( true );
    connect( cb_I0se, SIGNAL( clicked() ), SLOT( set_I0se() ) );
    cb_I0se->setChecked( true );
@@ -353,6 +365,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_conc->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conc );
    lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ));
+   if ( !parameters->count( "gaussians" ) || (*parameters)["gaussians"] == "0" ) {
+      lbl_conc->hide();
+   }
 
    pb_global =  new QPushButton ( us_tr( "Duplicate Gaussian 1 values globally" ), this );
    pb_global -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -377,12 +392,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_conv->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conv );
    lbl_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   if ( !parameters->count( "gaussians" ) || (*parameters)["gaussians"] == "0" ) {
+      lbl_conv->hide();
+   }
 
    lbl_psv = new QLabel( us_tr( "Partial specific volume (ml/g)" ), this );
    lbl_psv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_psv->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_psv );
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   if ( !parameters->count( "gaussians" ) || (*parameters)["gaussians"] == "0" ) {
+      lbl_psv->hide();
+   }
 
    for ( unsigned int i = 0; i < (* parameters)[ "gaussians" ].toUInt(); i++ )
    {
@@ -494,7 +515,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    }
 
    vbl->addWidget( cb_normalize );
-
+   vbl->addWidget( cb_istarq );
 
    QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
 
@@ -626,8 +647,15 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
 
    if ( cb_I0se->isChecked() )
    {
+      (*parameters)[ "I0se" ] = "1";
+      (*parameters)[ "I0se_process" ] = "false";
+   } else {
       (*parameters)[ "I0se" ] = le_I0se->text();
+      (*parameters)[ "I0se_process" ] = "true";
    }
+
+   (*parameters)[ "make_istarq" ] = cb_istarq->isChecked() ? "true" : "false";
+
    close();
 }
 
@@ -661,8 +689,21 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_istarq()
+{
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_I0se()
 {
+   le_I0se->setText( cb_I0se->isChecked()
+                     ? QString( "1" )
+                     : (
+                        (*parameters).count( "hplc_param_I0_exp" )
+                        ? (*parameters)[ "hplc_param_I0_exp" ]
+                        : "1"
+                        )
+                     );
    update_enables();
 }
 
@@ -779,9 +820,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
 
    le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
 
-   le_I0se->setEnabled( cb_I0se->isChecked() );
-
+   le_I0se->setEnabled( !cb_I0se->isChecked() );
    pb_go->setEnabled( !no_go );
+
+   if ( parameters->count( "error" ) ) {
+      if ( cb_istarq->isChecked() ) {
+         cb_I0se->show();
+         le_I0se->show();
+      } else {
+         cb_I0se->hide();
+         le_I0se->hide();
+      }
+   }         
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::ws_hide( vector < QWidget * > ws, bool hide )

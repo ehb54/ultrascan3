@@ -40,10 +40,10 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("US-SOMO: SAXS HPLC SVD"));
+   setWindowTitle(us_tr("US-SOMO: HPLC/KIN SVD"));
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    efa_range_processing = false;
    
@@ -1308,9 +1308,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_data_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
@@ -1772,7 +1770,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::to_hplc()
 {
    if ( !ush_win->saxs_hplc_widget )
    {
-      editor_msg( "red", us_tr( "US-SOMO SAXS HPLC window has been closed" ) );
+      editor_msg( "red", us_tr( "US-SOMO HPLC/KIN window has been closed" ) );
       return;
    }
 
@@ -2502,9 +2500,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_data_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
@@ -4282,9 +4278,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 
@@ -5059,7 +5053,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc_Svd::autocor( vector < vector < double >
 #if defined( DEBUG_AUTOCOR_DETAIL )
    {
       QTextStream ts( stdout );
-      ts << "US_Hydrodyn_Saxs_Hplc_Svd::autocor A" << endl;
+      ts << "US_Hydrodyn_Saxs_Hplc_Svd::autocor A" << Qt::endl;
       for ( int i = 0; i < rows; ++i ) {
          ts << i << ":";
          for ( int j = 0; j < cols; ++j ) {
@@ -5491,7 +5485,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start( double ) {
    // {
    //    QTextStream ts( stdout );
    //    for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
-   //       ts << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start SV " << i << " val " << efa_range_start[ i ]->value() << endl;
+   //       ts << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start SV " << i << " val " << efa_range_start[ i ]->value() << Qt::endl;
    //    }
    //    if ( efa_range_processing ) {
    //       ts << "early return, processing\n";
@@ -5589,17 +5583,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_efas_ranges() {
 void US_Hydrodyn_Saxs_Hplc_Svd::efa_info( QString tag ) {
    QTextStream ts( stdout );
 
-   ts << " efa_info: " << tag << " : efa_lsv.size() : " << efa_lsv.size() << endl;
+   ts << " efa_info: " << tag << " : efa_lsv.size() : " << efa_lsv.size() << Qt::endl;
 
    for ( int i = 0; i < (int) efa_lsv.size(); ++i ) {
-      ts << " efa_info: " << tag << ": efa_lsv[ " << i << " ].size() : " << efa_lsv[ i ].size() << endl;
+      ts << " efa_info: " << tag << ": efa_lsv[ " << i << " ].size() : " << efa_lsv[ i ].size() << Qt::endl;
    }
 
    
-   ts << " efa_info: " << tag << " : efa_rsv.size() : " << efa_rsv.size() << endl;
+   ts << " efa_info: " << tag << " : efa_rsv.size() : " << efa_rsv.size() << Qt::endl;
 
    for ( int i = 0; i < (int) efa_rsv.size(); ++i ) {
-      ts << " efa_info: " << tag << ": efa_rsv[ " << i << " ].size() : " << efa_rsv[ i ].size() << endl;
+      ts << " efa_info: " << tag << ": efa_rsv[ " << i << " ].size() : " << efa_rsv[ i ].size() << Qt::endl;
    }
 
 }      
@@ -6213,7 +6207,7 @@ def runExplicitEFARotation(M, D, failed, C, V_bar, T, niter, tol, force_pos):
          }
       }
 
-      ts << "i = " << i << endl;
+      ts << "i = " << i << Qt::endl;
       SVD::cout_vvd( "V_i_0", V_i_0 );
 
       int vi0rowsize = (int) V_i_0.size();
@@ -6405,7 +6399,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
    SVD::cout_vvd( "efa_decomp before call V_bar", V_bar );
    {
       QTextStream ts( stdout );
-      ts << "efa_decomp before call num_sv " << num_sv << endl;
+      ts << "efa_decomp before call num_sv " << num_sv << Qt::endl;
    }
 
    vector < int >     force_pos( num_sv );

@@ -4,8 +4,14 @@
 #include <QTextStream>
 
 bool US_Saxs_Util::run_pat(
+#if  defined( CMDLINE ) // to silence compiler warning
+
                            map < QString, QString >           & parameters,
                            map < QString, QString >           & results
+#else
+                           map < QString, QString >           &,
+                           map < QString, QString >           &
+#endif
                            )
 {
 #if  defined( CMDLINE )

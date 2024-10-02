@@ -104,6 +104,7 @@ class US_XpnDataViewer : public US_Widgets
      bool inExport;
 
      int autoflowID_passed;
+     int autoflowStatusID;
      
      QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
 
@@ -156,7 +157,7 @@ class US_XpnDataViewer : public US_Widgets
      QStringList    sl_optimas;          // New
      QLineEdit*     le_optima_connected; //New
      
-     QLineEdit*     le_runID;
+     US_LineEdit_RE*     le_runID;
      QLineEdit*     le_lrange;
      QLineEdit*     le_status;
      QLineEdit*     le_colmap;
@@ -278,6 +279,7 @@ class US_XpnDataViewer : public US_Widgets
      
      bool           in_reload_data_init;
      bool           in_reload_all_data;
+     bool           in_reload_all_data_set_gui;
      bool           in_reload_check_sysdata;
      bool           in_reload_end_processes;
      bool           in_reload_end_process_all_data_avail;
@@ -326,6 +328,7 @@ class US_XpnDataViewer : public US_Widgets
      QMap < QString, QString > details_at_live_update; 
 
      bool           experimentAborted;
+     bool           experimentAborted_remotely;
      
      int            ElapsedTimeOffset;
 
@@ -339,7 +342,8 @@ class US_XpnDataViewer : public US_Widgets
      //Sys_server
      void   stop_optima( void );
      void   skip_optima_stage( void );
-
+  void   record_live_update_status( QString, QString);
+  
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
@@ -354,7 +358,7 @@ class US_XpnDataViewer : public US_Widgets
      void   end_process_all_data_avail ( void );
      
      void   reloadData_auto     ( void );
-     int    CheckExpComplete_auto( QString & );
+  int    CheckExpComplete_auto( QString &, bool & );
      void   update_autoflow_runId_timeStarted( void );
      int    read_timeElapsed_offset( void );
      void   delete_autoflow_record( void );

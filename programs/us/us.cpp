@@ -53,6 +53,7 @@ int main( int argc, char* argv[] )
 
   application.initialize();
 #else
+  qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
 #endif
@@ -93,6 +94,51 @@ int main( int argc, char* argv[] )
   }
 
   // License is OK.  Start up.
+  
+  //Sync User-level with that set in DB //////////////////////////////////////////
+  //If DB set ?
+  QList<QStringList> DB_list = US_Settings::databases();
+  QStringList defaultDB      = US_Settings::defaultDB();
+  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
+    {
+      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
+            
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      
+      if ( db.lastErrno() != US_DB2::OK )
+        {
+	  QMessageBox msgBox;
+          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
+          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+          msgBox.setIcon  ( QMessageBox::Critical );
+          msgBox.exec();
+      
+          //exit( -1 );
+        }
+      else
+	{
+      
+	  QStringList q( "get_user_info" );
+	  db.query( q );
+	  db.next();
+	  
+	  int ID        = db.value( 0 ).toInt();
+	  QString fname = db.value( 1 ).toString();
+	  QString lname = db.value( 2 ).toString();
+	  int     level = db.value( 5 ).toInt();
+	  
+	  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+	  //if(ID<1) return;
+	  
+	  US_Settings::set_us_inv_name ( lname + ", " + fname );
+	  US_Settings::set_us_inv_ID   ( ID );
+	  US_Settings::set_us_inv_level( level );
+	}
+    }
+  
+  //END OF user-level sync//////////////////////////////////////
+  
   US_Win w;
   w.show();
 #if QT_VERSION < 0x050000
@@ -194,21 +240,26 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ),    this );
-  addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet" ),   velocity );
-  addMenu(  P_GRIDEDIT , tr( "C&ustom 2-D Grid Editor" ),          velocity );
-  addMenu(  P_2DSA     , tr( "&2-D Spectrum Analysis" ),           velocity );
-  addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis" ),
-                                                                   velocity );
-  addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
-  addMenu(  P_DMGAINIT , tr( "Initialize Discrete Model &Genetic Algorithm" ),
-                                                                   velocity );
-  addMenu(  P_SECOND   , tr( "Second &Moment" ),                   velocity );
-  addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );
-  addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );
-  addMenu(  P_FEMSTAT  , tr( "FE Model &Statistics" ),             velocity );
-  addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ), velocity );
-  addMenu(  P_RAMP     , tr( "Speed &Ramp Analysis" ),             velocity );
-  
+  addMenu(  P_FEMA     , tr( "&Finite Element Model Viewer" ),                          velocity );
+  addMenu(  P_2DSA     , tr( "&2-Dimensional Spectrum Analysis (2DSA)" ),               velocity );
+  addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ),                     velocity );
+  addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm (GA)" ),                    velocity );
+  addMenu(  P_DMGAINIT , tr( "Initialize Discrete Model &Genetic Algorithm (DMGA)" ),   velocity );
+  addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis (PCSA)" ),  velocity );
+  addMenu(  P_GRIDEDIT , tr( "C&ustom Grid Editor (CG)" ),              velocity );
+  addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet (vHW)" ),  velocity );
+  addMenu(  P_DCDT     , tr( "&Time Derivative (dC/dt)" ),              velocity );
+  addMenu(  P_SECOND   , tr( "Second &Moment" ),                        velocity );
+  velocity->addSeparator();
+  addMenu(  P_RMSD     , tr( "&Query Model RMSDs" ),                velocity );
+  addMenu(  P_FEMSTAT  , tr( "FE Model &Statistics" ),              velocity );
+  addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ),  velocity );
+  addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), velocity );
+  addMenu(  P_DDCOMB   , tr( "Combine Discrete Distrib&utions"   ), velocity );
+  addMenu(  P_INTCOMB  , tr( "Combine I&ntegral Distributions"   ), velocity );
+  addMenu(  P_GLOMODL  , tr( "Create Glo&bal Model"              ), velocity );
+  addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), velocity );
+
 #ifdef EQUI_MENU
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
   addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
@@ -222,34 +273,33 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   QMenu* multiwave   = new QMenu( tr( "&Multiwavelength" ),   this );
-  QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
-  addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
-  addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
-  
+  QMenu* spectrum    = new QMenu( tr( "&Spectral Analysis" ),   this );
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
+  addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
+  addMenu(  P_LEGDATA  , tr( "&Convert Optima Data (Beckman tar.gz) " ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
-#if 0    // temporarily disable Create Experiment until truly ready
-  addMenu(  P_CEXPERI  , tr( "Create E&xperiment"                ), utilities );
-#endif
   addMenu(  P_FDSMAN   , tr( "FDS File &Manager"                 ), utilities );
-  addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
+  addMenu(  P_PSEUDO_ABS  , tr( "&Pseudo-Absorbance"             ), utilities );
+  addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
+  utilities->addSeparator();
+  addMenu(  P_ABDE_FIT , tr( "&ABDE Analysis"                    ), utilities );
+  addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum );
+  addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum );
   utilities->addMenu(spectrum);
+  addMenu(  P_RAMP     , tr( "Speed &Ramp Analysis"              ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
   addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
-  addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), utilities );
-  addMenu(  P_DDCOMB   , tr( "Combine Discrete Distrib&utions"   ), utilities );
-  addMenu(  P_INTCOMB  , tr( "Combine I&ntegral Distributions"   ), utilities );
-  addMenu(  P_GLOMODL  , tr( "Create Glo&bal Model"              ), utilities );
-  addMenu(  P_VIEWCFA  , tr( "View Ra&w CFA Data"                ), utilities );
-  addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
-  addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
-  addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
+
+  // addMenu(  P_GMPRPT   , tr( "&GMP Report Generator and Viewer"  ), utilities );
+#if 0    // temporarily disable Create Experiment until truly ready
+  addMenu(  P_CEXPERI  , tr( "Create E&xperiment"                ), utilities );
+#endif
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
-  addMenu(  P_VIEWMSS ,  tr( "View MWL &S-Spectra"               ), multiwave );
+  addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
   addMenu(  P_MWSPECF ,  tr( "MWL Species Fit"                   ), multiwave );
   addMenu(  P_MWFSIMU ,  tr( "Optima MWL Fit Simulation"         ), multiwave );
 
@@ -264,6 +314,13 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                                                    simulation );
   addMenu(  P_SOMO,   tr( "S&OMO Bead Modeling"                 ), simulation );
   addMenu(  P_SOMOCONFIG,   tr( "S&OMO Configuration"           ), simulation );
+
+  QMenu* gmp = new QMenu( tr( "&GMP" ),  this );
+  addMenu(  P_GMPACQ,   tr( "&Data Acquisition Routine" ), gmp );
+  addMenu(  P_PROTOCOL, tr( "&Protocol Development" ),     gmp );
+  addMenu(  P_GMPRPT,   tr( "&GMP Report Generator and Viewer"  ), gmp );
+  addMenu(  P_ESIGN,    tr( "&e-Signature Assignment" ),   gmp );
+  addMenu(  P_AUDIT,    tr( "&Audit Trail" ),              gmp );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
@@ -302,6 +359,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( multiwave   );
   menuBar()->addMenu( simulation  );
+  menuBar()->addMenu( gmp         );
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 
@@ -326,7 +384,12 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
    splash();
    statusBar()->showMessage( tr( "Ready" ) );
 
-   notice_check();              // Check for any notices pending
+   // get notices if available
+   if ( US_Settings::default_data_location() != 2 ) {
+      // notices only if location is database
+      connect( &notices_get_url, SIGNAL( downloaded() ), this, SLOT( notices_ready() ), Qt::UniqueConnection );
+      notices_get_url.get("https://ultrascan.aucsolutions.com/notices.json");
+   }
 }
 
 US_Win::~US_Win()
@@ -439,9 +502,10 @@ void US_Win::launch( int index )
    index        -= P_CONFIG;
    QString pname = p[ index ].name;
 
-   // At each launch, check for notices if last check was over 24 hours ago
-   if ( ln_time.secsTo( QDateTime::currentDateTime() ) > trig_secs )
-      notice_check();
+   // notice_check now handled by SLOT notices_ready()
+   // // At each launch, check for notices if last check was over 24 hours ago
+   // if ( ln_time.secsTo( QDateTime::currentDateTime() ) > trig_secs ) {
+   //    notice_check();
 
   if ( p[ index ].maxRunCount <= p[ index ].currentRunCount && 
        p[ index ].maxRunCount > 0 ) 
@@ -676,7 +740,7 @@ void US_Win::help( int index )
             " * Minji Kim\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
-            " * Konrad Löhr\n"
+            " * Konrad LÃ¶hr\n"
             " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"
@@ -716,7 +780,7 @@ void US_Win::help( int index )
 
     case HELP_NOTICES:
       ln_time    = ln_time.addYears( -1 );
-      notice_check();
+      notices_get_url.get("https://ultrascan.aucsolutions.com/notices.json");
       break;
 
     default:
@@ -770,182 +834,324 @@ void US_Win::apply_prefs()
    show();
 }
 
+// Deprecated, saving the code as there is some time logic
 // Check for posted US3 notices
-bool US_Win::notice_check()
-{
-   bool do_abort     = false;                         // Default: no abort
-   int  level        = 0;                             // Max level: information
-   QDateTime pn_time = ln_time;                       // Previous check time
-   ln_time           = QDateTime::currentDateTime();  // Reset last notice time
+// bool US_Win::notice_check()
+// {
+//    bool do_abort     = false;                         // Default: no abort
+//    int  level        = 0;                             // Max level: information
+//    QDateTime pn_time = ln_time;                       // Previous check time
+//    ln_time           = QDateTime::currentDateTime();  // Reset last notice time
 
-   if ( US_Settings::default_data_location() == 2 )
-      return do_abort;      // If default data location is Disk, do not bother
+//    if ( US_Settings::default_data_location() == 2 )
+//       return do_abort;      // If default data location is Disk, do not bother
 
    
 
-//do_abort=true;
-//level=2;
-   // Query notice table in the us3_notice database
-   US_Passwd pw;
-   US_DB2    db;
-   QString   host  ( "ultrascan.aucsolutions.com" );
-   QString   dbname( "us3_notice" );
-   QString   user  ( "us3_notice" );
-   QString   passwd( "us3_notice" );
-   QString   errmsg;
+// //do_abort=true;
+// //level=2;
+//    // Query notice table in the us3_notice database
+//    US_Passwd pw;
+//    US_DB2    db;
+//    QString   host  ( "ultrascan.aucsolutions.com" );
+//    QString   dbname( "us3_notice" );
+//    QString   user  ( "us3_notice" );
+//    QString   passwd( "us3_notice" );
+//    QString   errmsg;
 
-   // First do a quick connection test
-   QTcpSocket tsock;
-   tsock.connectToHost( host, 3306 );
-   tsock.waitForConnected( 2000 );  // Give it two seconds
-qDebug() << "US:NOTE: socket state" << tsock.state();
-   if ( ! tsock.isValid()  ||
-        tsock.state() == QAbstractSocket::UnconnectedState )
-   {  // Abort immediately if connection not possible (host? port?)
-qDebug() << "US:NOTE: Quick test host connect FAILED";
-      return do_abort;
+//    // First do a quick connection test
+//    QTcpSocket tsock;
+//    tsock.connectToHost( host, 3306 );
+//    tsock.waitForConnected( 2000 );  // Give it two seconds
+// qDebug() << "US:NOTE: socket state" << tsock.state();
+//    if ( ! tsock.isValid()  ||
+//         tsock.state() == QAbstractSocket::UnconnectedState )
+//    {  // Abort immediately if connection not possible (host? port?)
+// qDebug() << "US:NOTE: Quick test host connect FAILED";
+//       return do_abort;
+//    }
+//    else
+//    {  // Disconnect if connection possible
+//    tsock.disconnectFromHost();
+// qDebug() << "US:NOTE: Quick test host connect WORKED";
+//    }
+
+//    // Then, do the full connection
+//    if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
+//    {
+// qDebug() << "US:NOTE: Unable to connect" << errmsg;
+//       return do_abort;
+//    }
+
+//    QString query( "SELECT type, revision, message, lastUpdated"
+//                   " FROM us3_notice.notice;" );
+//    db.rawQuery( query );
+
+//    // If no notices in the database, return now with no notice pop-up
+//    if ( db.lastErrno() != US_DB2::OK  ||  db.numRows() == 0 )
+//    {
+// qDebug() << "US:NOTE: No DB notices" << db.lastError()
+//  << "numRows" << db.numRows();
+//       return do_abort; 
+//    }
+
+//    // Otherwise accumulate notices and associated type,revision,time
+//    QStringList  msgs;
+//    QStringList  types;
+//    QStringList  revs;
+//    QList< int > irevs;
+//    QDateTime   time_d;
+//    QMap< QString, QString > typeMap;
+//    typeMap[ "info" ] = tr( "Information" );
+//    typeMap[ "warn" ] = tr( "Warning"     );
+//    typeMap[ "crit" ] = tr( "Critical"    );
+//    QString srev     = US_Version  + "."
+//                     + QString( REVISION ).section( ":", 1, 1 ).simplified();
+// qDebug() << "US:NOTE: srev" << srev;
+//    int    nnotice   = 0;
+//    int    nn_info   = 0;
+//    int    nn_warn   = 0;
+//    int    nn_crit   = 0;
+//    int    i_rev     = 0;
+
+//    while ( db.next() )
+//    {
+//       nnotice++;
+
+//       QString type     = db.value( 0 ).toString();
+//       QString mrev     = db.value( 1 ).toString();
+//       QString msg      = db.value( 2 ).toString();
+//       QDateTime time_m = db.value( 3 ).toDateTime();
+// qDebug() << "US:NOTE: mrev(1)" << mrev;
+//       mrev             = srev.left( 3 ) + mrev.mid( 3 );
+// qDebug() << "US:NOTE: mrev(2)" << mrev;
+
+//       if ( type == "info" )       nn_info++;
+//       else if ( type == "warn" )  nn_warn++;
+//       else if ( type == "crit" )  nn_crit++;
+
+//       int    m_rev     = QString( mrev ).replace( ".", "" ).toInt();
+//       i_rev            = qMax( i_rev,  m_rev  );
+
+//       if ( nnotice == 1 )
+//       {
+//         time_d           = time_m;
+//       }
+//       else
+//       {
+//         time_d           = time_m.secsTo( time_d ) > 0
+//                            ? time_d : time_m;
+//       }
+
+// #if QT_VERSION > 0x050000
+//       if ( type == "warn"  &&  msg.contains( "revision 3.3" ) )
+//       {
+//         msg              = msg.replace( "revision 3.3", "revision 3.5" );
+//       }
+//       if ( type == "warn"  &&  msg.contains( "revision 3.5" ) )
+//       {
+//         msg              = msg.replace( "revision 3.5", "revision 4.0" );
+//       }
+// #endif
+//       types << type;
+//       revs  << mrev;
+//       irevs << m_rev;
+//       msgs  << msg;
+//    }
+
+//    // If current revision is at or beyond max in records, skip pop-up
+//    int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
+
+// qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
+//    if ( s_rev > i_rev )
+//       return do_abort;
+
+//    // If lastest message time earlier than last notice time, skip pop-up
+//    int n_dif        = (int)time_d.secsTo( pn_time );
+// qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
+//    if ( n_dif > 0 )
+//       return do_abort;
+
+//    // Build notice message
+//    level             = ( nn_warn > 0 ) ? 1 : level;
+//    level             = ( nn_crit > 0 ) ? 2 : level;
+//    QString msg_note  = tr( "UltraScan III notices posted  (" ) 
+//                      + time_d.toString( "yyyy/MM/dd" ) + "):\n\n";
+
+//    bool empty_msg    = true;
+
+//    double sys_version  = US_Version.toDouble();
+//    int    sys_revision = QString( REVISION ).toInt();
+   
+//    for ( int ii = 0; ii < nnotice; ii++ )
+//    {
+//       double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
+//       double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
+
+//       // // Skip messages for warn/crit same revision or any earlier than current
+//       // if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
+//       //      irevs[ ii ] < s_rev )     continue;
+
+//       // Skip messages where message version.revision is less than our version.revision
+//       if ( sys_version > msg_version ||
+//            ( sys_version == msg_version &&
+//              sys_revision > msg_revision ) ) {
+//          continue;
+//       }
+
+//       // Add current message to full text
+//       msg_note         += typeMap[ types[ ii ] ] + " for release "
+//                        + revs[ ii ] + ":\n"
+//                        + msgs[ ii ] + "\n";
+
+//       empty_msg        = false;
+      
+//       // Critical from later revision than current means an abort
+//       if ( types[ ii ] == "crit" )   do_abort = true;
+//    }
+
+//    if ( do_abort )
+//    {  // Append an additional note if an abort is happening
+//       msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
+//       empty_msg        = false;
+//    }
+
+//    if ( !empty_msg ) {
+//       // Display notices at level of highest level currently set
+//       QWidget* wthis    = (QWidget*)this;
+//       if (      level == 0 )
+//          QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
+//       else if ( level == 1 )
+//          QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
+//       else if ( level == 2 )
+//          QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
+//    }
+
+//    // Abort if that is indicated
+//    if ( do_abort )
+//       exit( -77 );
+
+//    return do_abort;
+// }
+
+void US_Win::notices_ready() {
+   qDebug() << "notices_ready()";
+
+   QByteArray notices_bytearray = notices_get_url.downloadedData();
+   if ( notices_bytearray.isEmpty() ) {
+      qDebug() << "notices_ready(): notices are empty";
+      return;
    }
-   else
-   {  // Disconnect if connection possible
-   tsock.disconnectFromHost();
-qDebug() << "US:NOTE: Quick test host connect WORKED";
+
+   // qDebug() << QString( notices_bytearray );
+
+   QJsonParseError parseError;
+   QJsonDocument notices_jdoc;
+   notices_jdoc = QJsonDocument::fromJson( notices_bytearray, &parseError );
+   if ( parseError.error != QJsonParseError::NoError ) {
+      qWarning() << "notices_ready(): JSON parse error at " << parseError.offset << ":" << parseError.errorString();
+      return;
+   }
+      
+   if ( notices_jdoc.isEmpty() ) {
+      qDebug() << "notices_ready(): notices are empty";
+      return;
    }
 
-   // Then, do the full connection
-   if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
-   {
-qDebug() << "US:NOTE: Unable to connect" << errmsg;
-      return do_abort;
+   if ( !notices_jdoc.isArray() ) {
+      qWarning() << "notices_ready(): top level JSON is not an array";
+      QTextStream( stdout ) << notices_jdoc.toJson() << "\n";
+      return;
    }
 
-   QString query( "SELECT type, revision, message, lastUpdated"
-                  " FROM us3_notice.notice;" );
-   db.rawQuery( query );
+   QJsonArray notices_jarray = notices_jdoc.array();
+   
+   QStringList msgs;
+   QStringList revs;
+   QStringList types;
 
-   // If no notices in the database, return now with no notice pop-up
-   if ( db.lastErrno() != US_DB2::OK  ||  db.numRows() == 0 )
-   {
-qDebug() << "US:NOTE: No DB notices" << db.lastError()
- << "numRows" << db.numRows();
-      return do_abort; 
+   bool do_abort     = false;                         // Default: no abort
+   int level         = 0;
+   int nn_info       = 0;
+   int nn_warn       = 0;
+   int nn_crit       = 0;
+
+   for ( auto it = notices_jarray.constBegin();
+         it != notices_jarray.constEnd();
+         ++it
+         ) {
+      const QJsonObject obj = it->toObject();
+      if ( !obj.contains("message" ) || !obj.contains("revision" ) || !obj.contains("type") ) {
+         qWarning() << "notices_ready(): JSON array element does not contain message, type & revision keys, skipping";
+         continue;
+      }
+      msgs  << obj["message"].toString();
+      revs  << obj["revision"].toString();
+      types << obj["type"].toString();
+
+      if ( types.back() == "info" )       nn_info++;
+      else if ( types.back() == "warn" )  nn_warn++;
+      else if ( types.back() == "crit" )  nn_crit++;
    }
 
-   // Otherwise accumulate notices and associated type,revision,time
-   QStringList  msgs;
-   QStringList  types;
-   QStringList  revs;
-   QList< int > irevs;
-   QDateTime   time_d;
+   // Build notice message
    QMap< QString, QString > typeMap;
    typeMap[ "info" ] = tr( "Information" );
    typeMap[ "warn" ] = tr( "Warning"     );
    typeMap[ "crit" ] = tr( "Critical"    );
-   QString srev     = US_Version  + "."
-                    + QString( REVISION ).section( ":", 1, 1 ).simplified();
-qDebug() << "US:NOTE: srev" << srev;
-   int    nnotice   = 0;
-   int    nn_info   = 0;
-   int    nn_warn   = 0;
-   int    nn_crit   = 0;
-   int    i_rev     = 0;
 
-   while ( db.next() )
-   {
-      nnotice++;
-
-      QString type     = db.value( 0 ).toString();
-      QString mrev     = db.value( 1 ).toString();
-      QString msg      = db.value( 2 ).toString();
-      QDateTime time_m = db.value( 3 ).toDateTime();
-qDebug() << "US:NOTE: mrev(1)" << mrev;
-      mrev             = srev.left( 3 ) + mrev.mid( 3 );
-qDebug() << "US:NOTE: mrev(2)" << mrev;
-
-      if ( type == "info" )       nn_info++;
-      else if ( type == "warn" )  nn_warn++;
-      else if ( type == "crit" )  nn_crit++;
-
-      int    m_rev     = QString( mrev ).replace( ".", "" ).toInt();
-      i_rev            = qMax( i_rev,  m_rev  );
-
-      if ( nnotice == 1 )
-      {
-        time_d           = time_m;
-      }
-      else
-      {
-        time_d           = time_m.secsTo( time_d ) > 0
-                           ? time_d : time_m;
-      }
-
-#if QT_VERSION > 0x050000
-      if ( type == "warn"  &&  msg.contains( "revision 3.3" ) )
-      {
-        msg              = msg.replace( "revision 3.3", "revision 3.5" );
-      }
-      if ( type == "warn"  &&  msg.contains( "revision 3.5" ) )
-      {
-        msg              = msg.replace( "revision 3.5", "revision 4.0" );
-      }
-#endif
-      types << type;
-      revs  << mrev;
-      irevs << m_rev;
-      msgs  << msg;
-   }
-
-   // If current revision is at or beyond max in records, skip pop-up
-   int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
-
-qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
-   if ( s_rev > i_rev )
-      return do_abort;
-
-   // If lastest message time earlier than last notice time, skip pop-up
-   int n_dif        = (int)time_d.secsTo( pn_time );
-qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
-   if ( n_dif > 0 )
-      return do_abort;
-
-   // Build notice message
    level             = ( nn_warn > 0 ) ? 1 : level;
    level             = ( nn_crit > 0 ) ? 2 : level;
-   QString msg_note  = tr( "UltraScan III notices posted  (" ) 
-                     + time_d.toString( "yyyy/MM/dd" ) + "):\n\n";
+   QString msg_note  = tr( "UltraScan III notices posted :<br><br>" );
+   bool empty_msg    = true;
 
-   for ( int ii = 0; ii < nnotice; ii++ )
+   double sys_version  = US_Version.toDouble();
+   int    sys_revision = QString( REVISION ).toInt();
+   
+   for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {
-      // Skip messages for warn/crit same revision or any earlier than current
-      if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
-           irevs[ ii ] < s_rev )     continue;
+      double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
+      double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
+
+      // Skip messages where message version.revision is less than our version.revision
+      if ( sys_version > msg_version ||
+           ( sys_version == msg_version &&
+             sys_revision > msg_revision ) ) {
+         continue;
+      }
 
       // Add current message to full text
       msg_note         += typeMap[ types[ ii ] ] + " for release "
-                       + revs[ ii ] + ":\n"
-                       + msgs[ ii ] + "\n";
+                       + revs[ ii ] + ":<br>"
+                       + msgs[ ii ] + "<br>";
 
+      empty_msg        = false;
+      
       // Critical from later revision than current means an abort
-      if ( types[ ii ] == "crit" )   do_abort = true;
+      if ( types[ ii ] == "crit" ) {
+         do_abort = true;
+      }
    }
 
    if ( do_abort )
    {  // Append an additional note if an abort is happening
-      msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
+      msg_note         += tr( "<br><br>*** US3 Abort: UPDATE REQUIRED!!! ***<br>" );
+      empty_msg        = false;
    }
 
-   // Display notices at level of highest level currently set
-   QWidget* wthis    = (QWidget*)this;
-   if (      level == 0 )
-      QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
-   else if ( level == 1 )
-      QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
-   else if ( level == 2 )
-      QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
+   if ( !empty_msg ) {
+      // Display notices at level of highest level currently set
+      QWidget* wthis    = (QWidget*)this;
+      if (      level == 0 )
+         QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
+      else if ( level == 1 )
+         QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
+      else if ( level == 2 )
+         QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
+   }
 
    // Abort if that is indicated
-   if ( do_abort )
+   if ( do_abort ) {
       exit( -77 );
-
-   return do_abort;
+   }
 }
-

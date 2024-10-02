@@ -1,3 +1,4 @@
+//! \file us_dmga_init.h
 #ifndef US_DMGA_INIT_H
 #define US_DMGA_INIT_H
 

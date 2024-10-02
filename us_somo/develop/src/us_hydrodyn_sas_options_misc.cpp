@@ -180,6 +180,16 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    AUTFBACK( cb_disable_iq_scaling );
    connect(cb_disable_iq_scaling, SIGNAL(clicked()), this, SLOT(set_disable_iq_scaling()));
 
+   cb_disable_nnls_scaling = new QCheckBox(this);
+   cb_disable_nnls_scaling->setText(us_tr("Disable NNLS scaling *experimental*"));
+   cb_disable_nnls_scaling->setEnabled(true);
+   cb_disable_nnls_scaling->setChecked((*saxs_options).disable_nnls_scaling);
+   cb_disable_nnls_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_disable_nnls_scaling->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_disable_nnls_scaling );
+   connect(cb_disable_nnls_scaling, SIGNAL(clicked()), this, SLOT(set_disable_nnls_scaling()));
+   cb_disable_nnls_scaling->hide();
+
    cb_iqq_scale_chi2_fitting = new QCheckBox(this);
    cb_iqq_scale_chi2_fitting->setText(us_tr("Chi^2 fitting"));
    cb_iqq_scale_chi2_fitting->setEnabled(true);
@@ -188,6 +198,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cb_iqq_scale_chi2_fitting->setPalette( PALET_NORMAL );
    AUTFBACK( cb_iqq_scale_chi2_fitting );
    connect(cb_iqq_scale_chi2_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_scale_chi2_fitting()));
+   cb_iqq_scale_chi2_fitting->hide();
 
    cb_iqq_kratky_fit = new QCheckBox(this);
    cb_iqq_kratky_fit->setText(us_tr("Kratky fit"));
@@ -199,13 +210,14 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    connect(cb_iqq_kratky_fit, SIGNAL(clicked()), this, SLOT(set_iqq_kratky_fit()));
 
    cb_ignore_errors = new QCheckBox(this);
-   cb_ignore_errors->setText(us_tr("Do not use experimental errors in Iq fits"));
+   cb_ignore_errors->setText(us_tr("Do not use experimental errors in Iq and Pr fits"));
    cb_ignore_errors->setEnabled(true);
    cb_ignore_errors->setChecked((*saxs_options).ignore_errors);
    cb_ignore_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_ignore_errors->setPalette( PALET_NORMAL );
    AUTFBACK( cb_ignore_errors );
    connect(cb_ignore_errors, SIGNAL(clicked()), this, SLOT(set_ignore_errors()));
+   cb_ignore_errors->hide();
 
    lbl_swh_excl_vol = new QLabel(us_tr(" Excluded volume WAT [A^3]: "), this);
    lbl_swh_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -305,6 +317,28 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    le_iqq_scale_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_iqq_scale_maxq, SIGNAL(textChanged(const QString &)), SLOT(update_iqq_scale_maxq(const QString &)));
 
+   cb_nnls_zero_list = new QCheckBox(this);
+   cb_nnls_zero_list->setText(us_tr("List zero contribution entries in NNLS fits"));
+   cb_nnls_zero_list->setEnabled(true);
+   cb_nnls_zero_list->setChecked(
+                                 ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?
+                                 ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] == "true" : false
+                                 );
+
+   cb_nnls_zero_list->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_nnls_zero_list->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_nnls_zero_list );
+   connect(cb_nnls_zero_list, SIGNAL(clicked()), this, SLOT(set_nnls_zero_list()));
+
+   cb_trunc_pr_dmax_target = new QCheckBox(this);
+   cb_trunc_pr_dmax_target->setText(us_tr("Truncate P(r) fits to Dmax of target "));
+   cb_trunc_pr_dmax_target->setEnabled(true);
+   cb_trunc_pr_dmax_target->setChecked((*saxs_options).trunc_pr_dmax_target);
+   cb_trunc_pr_dmax_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_trunc_pr_dmax_target->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_trunc_pr_dmax_target );
+   connect(cb_trunc_pr_dmax_target, SIGNAL(clicked()), this, SLOT(set_trunc_pr_dmax_target()));
+
    pb_clear_mw_cache = new QPushButton(us_tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_mw_cache->setMinimumHeight(minHeight1);
@@ -380,6 +414,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
 
    QHBoxLayout * hbl_various_1 = new QHBoxLayout; hbl_various_1->setContentsMargins( 0, 0, 0, 0 ); hbl_various_1->setSpacing( 0 );
    hbl_various_1->addWidget(cb_disable_iq_scaling);
+   hbl_various_1->addWidget(cb_disable_nnls_scaling);
    hbl_various_1->addWidget(cb_iqq_scale_chi2_fitting);
    background->addLayout( hbl_various_1 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -422,6 +457,12 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    hbl_iqq_scaling->addWidget(le_iqq_scale_minq);
    hbl_iqq_scaling->addWidget(le_iqq_scale_maxq);
    background->addLayout( hbl_iqq_scaling , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
+
+   background->addWidget( cb_nnls_zero_list, j, 0, 1, 2 );
+   j++;
+
+   background->addWidget( cb_trunc_pr_dmax_target, j, 0, 1, 2 );
    j++;
 
    {
@@ -612,6 +653,12 @@ void US_Hydrodyn_SasOptionsMisc::set_disable_iq_scaling()
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsMisc::set_disable_nnls_scaling()
+{
+   (*saxs_options).disable_nnls_scaling = cb_disable_nnls_scaling->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SasOptionsMisc::set_iqq_scale_chi2_fitting()
 {
    (*saxs_options).iqq_scale_chi2_fitting = cb_iqq_scale_chi2_fitting->isChecked();
@@ -628,6 +675,17 @@ void US_Hydrodyn_SasOptionsMisc::set_ignore_errors()
 {
    (*saxs_options).ignore_errors = cb_ignore_errors->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_trunc_pr_dmax_target()
+{
+   (*saxs_options).trunc_pr_dmax_target = cb_trunc_pr_dmax_target->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_nnls_zero_list()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] = cb_nnls_zero_list->isChecked() ? "true" : "false";
 }
 
 void US_Hydrodyn_SasOptionsMisc::update_scale_excl_vol(double val)

@@ -120,13 +120,13 @@ static FILE *ris;
  static FILE *interout;
 #endif
 
-static char molecola[SMAX];
-static char ragcol[SMAX];
-static char risultati[SMAX];
+static char molecola[SMAX+1];
+static char ragcol[SMAX+1];
+static char risultati[SMAX+1];
 static QString qs_risultati;
-static char molecola_nb[SMAX];
-static char fil001[SMAX];
-// static char corresp[SMAX];
+static char molecola_nb[SMAX+1];
+static char fil001[SMAX+1];
+// static char corresp[SMAX+1];
 // static char data_stp;
 
 static int numero_sfere;
@@ -348,7 +348,9 @@ static void calcqij();
 static void calcR();
 static void calcD();
 static void secondo(long double b, long double c);
+#if defined( DEBUG_EV )
 static void terzo(long double b, long double c, long double d);
+#endif
 static void visco();
 #if defined(TSUDA_DOUBLESUM)
 static void tsuda();
@@ -561,23 +563,23 @@ supc_alloc()
 static int
 supc_alloc_2()
 {
-   a = (float *) malloc(nat * 3 * nat * 3 * sizeof(float));
+   a = (float *) malloc((double) nat * 3 * nat * 3 * sizeof(float));
    if (!a)
    {
       supc_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
-   memset(a, 0, nat * 3 * nat * 3 * sizeof(float));
+   memset(a, 0, (double) nat * 3 * nat * 3 * sizeof(float));
 
-   q = (float *) malloc(nat * nat * 9 * sizeof(float));
+   q = (float *) malloc((double)nat * nat * 9 * sizeof(float));
    if (!q)
    {
       supc_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
-   memset(q, 0, nat * nat * 9 * sizeof(float));
+   memset(q, 0, (double) nat * nat * 9 * sizeof(float));
    return 0;
 }
 
@@ -622,7 +624,7 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
    timer = time(NULL);
    tblock = localtime(&timer);
    strcpy(tempo, asctime(tblock));
-   sscanf(tempo, "%s %s %d %s %s\n", day, month, numday, hour, anno);
+   if ( 5 == sscanf(tempo, "%s %s %d %s %s\n", day, month, numday, hour, anno) ) {};
    /* annov=strtol(anno,NULL,0); */
    anno[0] = anno[2];
    anno[1] = anno[3];
@@ -986,7 +988,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       intestazione();
       printf("\n\n** Compiled for %d beads **\n\n", nmax);
       printf("\n\n\n** Insert number of models to analyze (max=100) :___ ");
-      scanf("%d", &num);
+      if ( 1 == scanf("%d", &num) ){};
       getchar();
    }
 
@@ -995,14 +997,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf("\n - Sequential files?\n");
       printf(" 1) Yes\n 2) No\n\n");
       printf(" Your choice ? (1/2) :__ ");
-      scanf("%d", &cdmolix);
+      if ( 1 == scanf("%d", &cdmolix) ){};
       if (cdmolix == 1)
       {
          printf("\n-Enter filename prefix  ");
-         scanf("%s", fil001);
+         if ( 1 == scanf("%s", fil001) ){};
          getchar();
          printf("\n-Enter first file number   ");
-         scanf("%d", &num001);
+         if ( 1 == scanf("%d", &num001) ){};
          numor = 1;
       }
       r1 = 'y';
@@ -1049,7 +1051,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          intestazione();
          printf("\n\n\n** Number of models to analyze:___ %d", num);
          printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
-         scanf("%s", &r1);
+         if ( 1 == scanf("%s", &r1) ){};
          getchar();
       }
    }
@@ -1059,7 +1061,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    a50:
       flag_mem = 1;
       printf("\n** Insert the name of results' file :___ ");
-      scanf("%s", risultati);
+      if ( 1 == scanf("%s", risultati) ){};
       getchar();
    }
 
@@ -1075,7 +1077,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf(" 2) Overwrite existing file\n");
       printf(" 3) Create new file\n\n");
       printf("** Select (1/2/3) :___ ");
-      scanf("%d", &fe);
+      if ( 1 == scanf("%d", &fe) ){};
       getchar();
       fclose(new_mol);
       if (fe == 2)
@@ -1089,7 +1091,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       {
          goto a50;
          /*      printf("** Insert the name of results file :___ ");
-                 scanf("%s",risultati);
+                 if ( 1 == scanf("%s",risultati) ){};
                  getchar();  */
       }
    }
@@ -1105,7 +1107,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    printf("- - )   angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
    printf("\n** Insert the conversion factor :___ ");
 
-   scanf("%f", &fconv);
+   if ( 1 == scanf("%f", &fconv) ){};
    fconv1 = 1.0 / fconv;
 
    while ((cd != 1) && (cd != 2))
@@ -1114,7 +1116,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf("\n- Reference System :\n\n");
       printf(" 1) Cartesian Origin \n 2) Diffusion Center\n\n");
       printf(" Select (1/2) :___ ");
-      scanf("%d", &cd);
+      if ( 1 == scanf("%d", &cd) ){};
       getchar();
    }
 
@@ -1125,7 +1127,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf(" 1) STICK boundary condition (6*M_PI*ETAo)\n");
       printf(" 2) SLIP boundary condition (4*M_PI*ETAo)\n\n");
       printf(" Select (1/2) :___ ");
-      scanf("%d", &cc);
+      if ( 1 == scanf("%d", &cc) ){};
       getchar();
    }
 
@@ -1136,14 +1138,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf(" 1) Automatic (Total volume of the beads)\n");
       printf(" 2) Manual    (From keyboard)\n\n");
       printf(" Select (1/2) :___ ");
-      scanf("%d", &volcor);
+      if ( 1 == scanf("%d", &volcor) ){};
       getchar();
    }
 
    if (volcor == 2)
    {
       printf("\n\n\n- Insert value of the volume : ");
-      scanf("%f", &volcor1);
+      if ( 1 == scanf("%f", &volcor1) ){};
    }
 
    while ((mascor != 1) && (mascor != 2))
@@ -1153,14 +1155,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf(" 1) Automatic (Masses from file) \n");
       printf(" 2) Manual    (Total Mass from Keyboard)\n\n");
       printf(" Select (1/2) :___ ");
-      scanf("%d", &mascor);
+      if ( 1 == scanf("%d", &mascor) ){};
       getchar();
    }
 
    if (mascor == 2)
    {
       printf("\n\n\n- Insert value of mass : ");
-      scanf("%f", &mascor1);
+      if ( 1 == scanf("%f", &mascor1) ){};
    }
 
    while ((sfecalc != 1) && (sfecalc != 2))
@@ -1170,7 +1172,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf(" 1) ALL beads\n");
       printf(" 2) Color Code Selection (Beads Color Coded \"6\" will be excluded)\n\n");
       printf(" Select (1/2) :___ ");
-      scanf("%d", &sfecalc);
+      if ( 1 == scanf("%d", &sfecalc) ){};
       getchar();
       if ((sfecalc == 2) && (volcor == 1))
       {
@@ -1184,7 +1186,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          printf(" 2) The intrinsic viscosity correction only\n");
          printf(" 3) Both corrections\n\n");
          printf(" Select (0/1/2/3) :___ ");
-         scanf("%d", &colorsixf);
+         if ( 1 == scanf("%d", &colorsixf) ){};
          getchar();
 
       }
@@ -1324,7 +1326,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       /* Check for file existence and selects whole or part of the models for sequential files only   */
       if (cdmolix == 1) // never true in our case, cdmolix == 2
       {
-         sprintf(molecola, "%s%d", fil001, num001);
+         {
+            char newf[SMAX - 12];
+            strncpy( newf, fil001, SMAX-13 );
+            newf[SMAX-13] = 0;
+            snprintf(molecola, SMAX, "%s%d", newf, num001);
+         }
          num001 = num001 + 1;
          mol = us_fopen(molecola, "r");
          while (mol == NULL)
@@ -1332,10 +1339,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             printf("\n");
             printf("The Model(s) do not exist!!!\n");
             printf("Insert the models' correct prefix :___");
-            if ( scanf("%s", molecola) ){};
+            if ( 1 == scanf("%s", molecola) ){};
             mol = us_fopen(molecola, "r");
          }
-         if ( fscanf(mol, "%d", &nat) ) {};
+         if ( 1 == fscanf(mol, "%d", &nat) ) {};
          fclose(mol);
          if (k == 0)
          {
@@ -1344,7 +1351,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             while ((prima < 0) || (prima > (nat - 1)))
             {
                printf("%s", "** Insert FIRST BEAD # to be included:___");
-               if ( scanf("%d", &prima) ) {};
+               if ( 1 == scanf("%d", &prima) ) {};
                getchar();
                printf("\n");
             }
@@ -1352,7 +1359,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             while ((ultima < prima) || (ultima > nat))
             {
                printf("%s", "** Insert LAST BEAD # to be included:___");
-               if ( scanf("%d", &ultima) ) {};
+               if ( 1 == scanf("%d", &ultima) ) {};
                getchar();
                printf("\n");
             }
@@ -1388,7 +1395,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          {
             printf("\n** Insert file name of the model to be analyzed :___ ");
          }
-         if ( scanf("%s", molecola) ) {};
+         if ( 1 == scanf("%s", molecola) ) {};
          getchar();
 
          init_da_a();
@@ -1470,7 +1477,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       }
 
 #if defined(CREATE_TOT_MOL)
-      if ( fscanf(tot_mol, "%f", &raflag) ) {};
+      if ( 1 == fscanf(tot_mol, "%f", &raflag) ) {};
 #else
       raflag = raggio_v[k];
 #endif
@@ -2040,8 +2047,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             vol_mas = pesmol;
          }
 
-         VIM += vis * correz * pow(fconv, 3);
-         temp = vis * correz * pow(fconv, 3);
+         VIM += (double) vis * correz * pow(fconv, 3);
+         temp = (double) vis * correz * pow(fconv, 3);
          VIM2 += pow(temp, 2.0f);
 
          RE += 1.0E7 * pow((0.3 * pesmol * vis / (M_PI * AVO)), 0.333333) * fconv;
@@ -2143,7 +2150,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                printf("  Select (0/1) : ");
             }
 
-            if ( scanf("%d", &scelta) ) {};
+            if ( 1 == scanf("%d", &scelta) ) {};
             getchar();
 
             if (scelta == 1)
@@ -2293,7 +2300,7 @@ vedimatrici()
       printf("\n  0)  Back\n");
 
       printf("\n  Select(0/8) : ");
-      if ( scanf("%d", &mtt) ) {};
+      if ( 1 == scanf("%d", &mtt) ) {};
       getchar();
 
       switch (mtt)
@@ -2665,14 +2672,14 @@ stampa_ris()
    {
       us_qdebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
       printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
-      supc_results->rg = ro * fconv;
+      supc_results->rg = (double) ro * fconv;
       printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
    }
    else
    {
       us_qdebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
       printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
-      supc_results->rg = ro * fconv;
+      supc_results->rg = (double) ro * fconv;
    }
 
    printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
@@ -2708,7 +2715,7 @@ stampa_ris()
    }
 
    if ( us_hydrodyn->advanced_config.expert_mode ) {
-      printf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY     = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
+      printf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY     = ", (double) vis * correz * pow(fconv, 3), "[cm^3/g]");
 
       einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
@@ -2725,9 +2732,9 @@ stampa_ris()
             qDebug() << "method 1 avg - use asa vol " << asa_vol[ active_model ];
             double use_vol = asa_vol[ active_model ];
             printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
-                   (vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
-            supc_results->viscosity = (vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3);
-            einst = pow(0.3 * vol_mas * (vis * correz + vis3 * use_vol / vol_mas) / ( M_PI * AVO), 0.33333);
+                   ((double) vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+            supc_results->viscosity = ((double) vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3);
+            einst = pow(0.3 * vol_mas * ((double) vis * correz + vis3 * use_vol / vol_mas) / ( M_PI * AVO), 0.33333);
             einst = 1E7 * einst;
             // printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
             printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
@@ -2867,6 +2874,20 @@ mem_ris(int model)
    // qDebug() << "us_hydrodyn_supc::mem_ris(" << model << ") asa_rg +/- " << this_data.results.asa_rg_pos << " " << this_data.results.asa_rg_neg;
    this_data.hydro_res = "";
    this_data.proc_time = (double)(supc_timers.times[ "compute smi" ]) / 1e3;
+
+   this_data.fractal_dimension_parameters          = (*model_vector)[ model_idx[ model ] ].fractal_dimension_parameters;
+   this_data.fractal_dimension                     = (*model_vector)[ model_idx[ model ] ].fractal_dimension;
+   this_data.fractal_dimension_sd                  = (*model_vector)[ model_idx[ model ] ].fractal_dimension_sd;
+   this_data.fractal_dimension_wtd                 = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd;
+   this_data.fractal_dimension_wtd_sd              = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd_sd;
+   this_data.fractal_dimension_wtd_wtd             = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd_wtd;
+   this_data.fractal_dimension_wtd_wtd_sd          = (*model_vector)[ model_idx[ model ] ].fractal_dimension_wtd_wtd_sd;
+   this_data.rg_over_fractal_dimension             = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension;
+   this_data.rg_over_fractal_dimension_sd          = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_sd;
+   this_data.rg_over_fractal_dimension_wtd         = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd;
+   this_data.rg_over_fractal_dimension_wtd_sd      = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd_sd;
+   this_data.rg_over_fractal_dimension_wtd_wtd     = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd_wtd;
+   this_data.rg_over_fractal_dimension_wtd_wtd_sd  = (*model_vector)[ model_idx[ model ] ].rg_over_fractal_dimension_wtd_wtd_sd;
 
    QString hydro_res;
    QString hydro_format_string;
@@ -3074,14 +3095,14 @@ mem_ris(int model)
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;         
       }
-      this_data.use_beads_vol =  volcor1 * pow(fconv, 3.0f);
+      this_data.use_beads_vol =  (double) volcor1 * pow(fconv, 3.0f);
    }
    if (volcor == 2)
    {
       hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.use_beads_vol =  volcor1 * pow(fconv, 3.0f);
+      this_data.use_beads_vol =  (double) volcor1 * pow(fconv, 3.0f);
    }
 
    // hydro_res.sprintf("%s%.2f [nm^2]\n", "- Used BEADS ASA          = ", used_asa[model]);
@@ -3317,8 +3338,8 @@ mem_ris(int model)
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       
-      this_data.results.rg = ro * fconv;
-      hydro_res.sprintf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", rou * fconv, "[nm]");
+      this_data.results.rg = (double) ro * fconv;
+      hydro_res.sprintf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", (double) rou * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
@@ -3327,7 +3348,7 @@ mem_ris(int model)
       hydro_res.sprintf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.results.rg = ro * fconv;
+      this_data.results.rg = (double) ro * fconv;
    }
    hydro_res.sprintf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
@@ -3359,16 +3380,16 @@ mem_ris(int model)
            "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.cen_of_res_x = roR[0] * fconv;
-   this_data.cen_of_res_y = roR[1] * fconv;
-   this_data.cen_of_res_z = roR[2] * fconv;
+   this_data.cen_of_res_x = (double) roR[0] * fconv;
+   this_data.cen_of_res_y = (double) roR[1] * fconv;
+   this_data.cen_of_res_z = (double) roR[2] * fconv;
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.cen_of_mass_x = xm * fconv;
-   this_data.cen_of_mass_y = ym * fconv;
-   this_data.cen_of_mass_z = zm * fconv;
+   this_data.cen_of_mass_x = (double) xm * fconv;
+   this_data.cen_of_mass_y = (double) ym * fconv;
+   this_data.cen_of_mass_z = (double) zm * fconv;
 
    if (cd == 2)
    {
@@ -3376,18 +3397,18 @@ mem_ris(int model)
               roD[2] * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.cen_of_diff_x = roD[0] * fconv;
-      this_data.cen_of_diff_y = roD[1] * fconv;
-      this_data.cen_of_diff_z = roD[2] * fconv;
+      this_data.cen_of_diff_x = (double) roD[0] * fconv;
+      this_data.cen_of_diff_y = (double) roD[1] * fconv;
+      this_data.cen_of_diff_z = (double) roD[2] * fconv;
    }
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
            "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.cen_of_visc_x = vc[0] * fconv;
-   this_data.cen_of_visc_y = vc[1] * fconv;
-   this_data.cen_of_visc_z = vc[2] * fconv;
+   this_data.cen_of_visc_x = (double) vc[0] * fconv;
+   this_data.cen_of_visc_y = (double) vc[1] * fconv;
+   this_data.cen_of_visc_z = (double) vc[2] * fconv;
 
    if (mascor == 2)
    {
@@ -3408,7 +3429,7 @@ mem_ris(int model)
       hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY      = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.unc_int_visc = vis * correz * pow(fconv, 3.0f);
+      this_data.unc_int_visc = (double) vis * correz * pow(fconv, 3.0f);
 
       einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
@@ -3419,20 +3440,20 @@ mem_ris(int model)
       hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS        = ", einst * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.unc_einst_rad = einst * fconv;
+      this_data.unc_einst_rad = (double) einst * fconv;
 
       if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
       {
          if ( hydro_use_avg_for_volume ) {
             double use_vol = asa_vol[ active_model ];
             hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
-                              (vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+                              ((double)vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
             create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
             this_data.hydro_res += hydro_res;
-            this_data.results.viscosity =  (vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3);
-            this_data.cor_int_visc = (vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3);
+            this_data.results.viscosity =  ((double) vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3);
+            this_data.cor_int_visc = ((double) vis * correz + vis3 * use_vol / vol_mas) * pow(fconv, 3);
 
-            einst = pow(0.3 * vol_mas * (vis * correz + vis3 * use_vol / vol_mas) / ( M_PI * AVO), 0.33333);
+            einst = pow(0.3 * vol_mas * ((double) vis * correz + vis3 * use_vol / vol_mas) / ( M_PI * AVO), 0.33333);
             einst = 1E7 * einst;
             // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
             // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
@@ -3441,7 +3462,7 @@ mem_ris(int model)
             hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
             create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
             this_data.hydro_res += hydro_res;
-            this_data.cor_einst_rad = einst * fconv;
+            this_data.cor_einst_rad = (double) einst * fconv;
          } else {
             // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
             hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
@@ -3460,7 +3481,7 @@ mem_ris(int model)
             hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
             create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
             this_data.hydro_res += hydro_res;
-            this_data.cor_einst_rad = einst * fconv;
+            this_data.cor_einst_rad = (double) einst * fconv;
          }
       }
       else
@@ -3482,7 +3503,7 @@ mem_ris(int model)
          hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
-         this_data.cor_einst_rad = einst * fconv;
+         this_data.cor_einst_rad = (double) einst * fconv;
       }
 
 #if defined(TSUDA_DOUBLESUM)
@@ -3690,7 +3711,7 @@ mem_ris(int model)
       hydro_res.sprintf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.rel_times_tau_m = taom * pow(fconv, 3.0f);
+      this_data.rel_times_tau_m = (double) taom * pow(fconv, 3.0f);
 
       hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
@@ -4162,15 +4183,15 @@ out_inter()
 
    interout = us_fopen("ofraxon", "r");
 
-   if ( fscanf(interout, "%d", &n) ) {};
-   if ( fscanf(interout, "%f", &raggio) ) {};
-   if ( fscanf(interout, "%s", ramaco) ) {};
+   if ( 1 == fscanf(interout, "%d", &n) ) {};
+   if ( 1 == fscanf(interout, "%f", &raggio) ) {};
+   if ( 1 == fscanf(interout, "%s", ramaco) ) {};
 
    for (i = 0; i < n; i++)
    {
-      if ( fscanf(interout, "%f", &dtn[i].x) ) {};
-      if ( fscanf(interout, "%f", &dtn[i].y) ) {};
-      if ( fscanf(interout, "%f", &dtn[i].z) ) {};
+      if ( 1 == fscanf(interout, "%f", &dtn[i].x) ) {};
+      if ( 1 == fscanf(interout, "%f", &dtn[i].y) ) {};
+      if ( 1 == fscanf(interout, "%f", &dtn[i].z) ) {};
    }
 
 #if defined(DEBUG_WW)
@@ -4199,7 +4220,7 @@ mem_mol()
    char risp1, risp2, risp3;
  a100:
    printf("\n\n** Insert file name for coordinates :___ ");
-   if ( scanf("%s", nmolecola) ) {};
+   if ( 1 == scanf("%s", nmolecola) ) {};
    getchar();
 
    new_mol1 = us_fopen(nmolecola, "r");
@@ -4209,7 +4230,7 @@ mem_mol()
       printf("\n");
       printf("*** CAUTION : File already exists ! ***\n");
       printf("** Do you want change the file name ? (y/n) :___ ");
-      if ( scanf("%s", &risp2) ) {};
+      if ( 1 == scanf("%s", &risp2) ) {};
       getchar();
       fclose(new_mol1);
       if ((risp2 == 'y') || (risp2 == 'Y'))
@@ -4219,7 +4240,7 @@ mem_mol()
    if (nat == numero_sfere)
    {
       printf("** Same File Name r_m_c ? (y/n) :___ ");
-      if ( scanf("%s", &risp1) ) {};
+      if ( 1 == scanf("%s", &risp1) ) {};
       getchar();
    }
 
@@ -4230,7 +4251,7 @@ mem_mol()
    {
    a150:
       printf("** Insert file name r_m_c :___ ");
-      if ( scanf("%s", nragcol) ) {};
+      if ( 1 == scanf("%s", nragcol) ) {};
       getchar();
       new_mol1 = us_fopen(nragcol, "r");
 
@@ -4239,7 +4260,7 @@ mem_mol()
          printf("\n");
          printf("*** CAUTION : File already exists ! ***\n");
          printf("** Do you want change the file name ? (y/n) :___ ");
-         if ( scanf("%s", &risp3) ) {};
+         if ( 1 == scanf("%s", &risp3) ) {};
          getchar();
          fclose(new_mol1);
          if ((risp3 == 'y') || (risp3 == 'Y'))
@@ -4250,9 +4271,9 @@ mem_mol()
    else
    {
       mol = us_fopen(molecola, "r");
-      if ( fscanf(mol, "%d", &n) ) {};
-      if ( fscanf(mol, "%f", &raggio) ) {};
-      if ( fscanf(mol, "%s", nragcol) ) {};
+      if ( 1 == fscanf(mol, "%d", &n) ) {};
+      if ( 1 == fscanf(mol, "%f", &raggio) ) {};
+      if ( 1 == fscanf(mol, "%s", nragcol) ) {};
       fclose(mol);
       raflag = raggio; // ?? ==
    }
@@ -4364,7 +4385,7 @@ autovalori()
 {
 
    int a1, a2;
-   long double b, c, d;
+   long double b, c; // unused : d;
    long double a[3][3];
    // long slip;
 
@@ -4789,7 +4810,7 @@ relax_rigid_calc()
 #endif
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
-           if ( scanf("%s",&pluto1) ) {};
+           if ( 1 == scanf("%s",&pluto1) ) {};
            getchar();    */
 
    for (a = 0; a < 3; a++)
@@ -4811,7 +4832,7 @@ relax_rigid_calc()
          a = (int) 2.0;
 
       /*      printf("\nCaso 1, valore a= %d\n",a);
-              if ( scanf("%s",&pluto1) ) {};
+              if ( 1 == scanf("%s",&pluto1) ) {};
               getchar();    */
    }
 
@@ -4827,7 +4848,7 @@ relax_rigid_calc()
          a = (int) 2.0;
 
       /*            printf("\nCaso 2, valore a= %d\n",a);
-                    if ( scanf("%s",&pluto1) ) {};
+                    if ( 1 == scanf("%s",&pluto1) ) {};
                     getchar();    */
    }
 
@@ -4843,7 +4864,7 @@ relax_rigid_calc()
          a = (int) 2.0;
 
       /*      printf("\nCaso 3, valore a= %d\n",a);
-              if ( scanf("%s",&pluto1) ) {};
+              if ( 1 == scanf("%s",&pluto1) ) {};
               getchar();     */
    }
 
@@ -4885,7 +4906,7 @@ relax_rigid_calc()
 
    {
       /*      printf("\nCaso 4, valore a= %d\n",a);
-              if ( scanf("%s",&pluto1) ) {};
+              if ( 1 == scanf("%s",&pluto1) ) {};
               getchar();      */
 
       ddd[0] = ddr[0];
@@ -4968,7 +4989,7 @@ relax_rigid_calc()
       /*      printf("\n%s%d%s%f\n","Tao[",a,"] = ",tao[a]);     */
       tao[a] = 1.0 / tao[a];
       /*      printf("\n%s%d%s%Lg\n","Tao[",a,"] = ",tao[a]);
-              if ( scanf("%s",&pluto1) ) {};
+              if ( 1 == scanf("%s",&pluto1) ) {};
               getchar();       */
    }
 
@@ -5191,12 +5212,12 @@ init_da_a()
       printf("\n");
       printf("** The Model does NOT exist !!\n");
       printf("** Insert the correct name :___");
-      if ( scanf("%s", molecola) ) {};
+      if ( 1 == scanf("%s", molecola) ) {};
       mol = us_fopen(molecola, "r");
    }
 
-   if ( fscanf(mol, "%d", &nat) ) {};
-   if ( fscanf(mol, "%f", &raggio) ) {};
+   if ( 1 == fscanf(mol, "%d", &nat) ) {};
+   if ( 1 == fscanf(mol, "%f", &raggio) ) {};
 
    fclose(mol);
 #endif
@@ -5215,7 +5236,7 @@ init_da_a()
    while ((prima < 0) || (prima > (nat - 1)))
    {
       printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
-      if ( scanf("%d", &prima) ) {};
+      if ( 1 == scanf("%d", &prima) ) {};
       getchar();
       printf("\n");
    }
@@ -5224,7 +5245,7 @@ init_da_a()
    while ((ultima < prima) || (ultima > nat))
    {
       printf("%s", "** Insert LAST BEAD # to be included :___ ");
-      if ( scanf("%d", &ultima) ) {};
+      if ( 1 == scanf("%d", &ultima) ) {};
       getchar();
       printf("\n");
    }
@@ -5259,11 +5280,11 @@ initarray(int k)
    memset(temp, 0, 34);
 
 #if defined(CREATE_TOT_MOL)
-   if ( fscanf(tot_mol, "%s", molecola) ) {};
+   if ( 1 == fscanf(tot_mol, "%s", molecola) ) {};
    strcpy(ricorda, molecola);
-   if ( fscanf(tot_mol, "%d", &nat) ) {};
-   if ( fscanf(tot_mol, "%d", &prima) ) {};
-   if ( fscanf(tot_mol, "%d", &ultima) ) {};
+   if ( 1 == fscanf(tot_mol, "%d", &nat) ) {};
+   if ( 1 == fscanf(tot_mol, "%d", &prima) ) {};
+   if ( 1 == fscanf(tot_mol, "%d", &ultima) ) {};
 #else
    strcpy(molecola, molecola_v[k].toLatin1().data());
    strcpy(ricorda, molecola);
@@ -5300,8 +5321,8 @@ initarray(int k)
 
 #if defined(DEBUG_FILES)
    mol = us_fopen(molecola, "r");
-   if ( fscanf(mol, "%d", &nat) ) {};
-   if ( fscanf(mol, "%f", &raggio) ) {};
+   if ( 1 == fscanf(mol, "%d", &nat) ) {};
+   if ( 1 == fscanf(mol, "%f", &raggio) ) {};
    printf("!! opening molecola == '%s' nat == %d raggio == %f\n",
           molecola, nat, raggio);
 #endif
@@ -5309,18 +5330,18 @@ initarray(int k)
 
    if (raggio == 0.0)      /* Variable hydrated radii only */
    {
-      if ( fscanf(mol, "%s", ragcol) ) {};
+      if ( 1 == fscanf(mol, "%s", ragcol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         if ( fscanf(mol, "%f", &dt[i].x) ) {};
-         if ( fscanf(mol, "%f", &dt[i].y) ) {};
-         if ( fscanf(mol, "%f", &dt[i].z) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
-         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( 1 == fscanf(rmc, "%d", &dt[i].col) ) {};
       }
 #if defined(DEBUG_WW)
       for (i = 0; i < nat; i++) {
@@ -5341,19 +5362,19 @@ initarray(int k)
    if (raggio == -1.0)      /* Variable hydrated and unhydrated radii */
    {
 
-      if ( fscanf(mol, "%s", ragcol) ) {};
+      if ( 1 == fscanf(mol, "%s", ragcol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         if ( fscanf(mol, "%f", &dt[i].x) ) {};
-         if ( fscanf(mol, "%f", &dt[i].y) ) {};
-         if ( fscanf(mol, "%f", &dt[i].z) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].ru) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
-         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].ru) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( 1 == fscanf(rmc, "%d", &dt[i].col) ) {};
       }
       fclose(rmc);
       goto a1200;
@@ -5363,9 +5384,9 @@ initarray(int k)
    {
 
 #if defined(DEBUG_FILES)
-      if ( fscanf(mol, "%s", ragcol) ) {};
+      if ( 1 == fscanf(mol, "%s", ragcol) ) {};
 
-      if ( fscanf(mol, "%f", &partvol) ) {};
+      if ( 1 == fscanf(mol, "%f", &partvol) ) {};
       printf("!! partvol %f vbar %f %s %f\n", 
              partvol, (*model_vector)[model_idx[active_model]].vbar,
              us_hydrodyn->misc.compute_vbar ? "computed-vbar" : "user vbar",
@@ -5440,12 +5461,12 @@ initarray(int k)
          {
             float fx, fy, fz, fr, fm;
             int fc;
-            if ( fscanf(mol, "%f", &fx) ) {};
-            if ( fscanf(mol, "%f", &fy) ) {};
-            if ( fscanf(mol, "%f", &fz) ) {};
-            if ( fscanf(rmc, "%f", &fr) ) {};
-            if ( fscanf(rmc, "%f", &fm) ) {};
-            if ( fscanf(rmc, "%d", &fc) ) {};
+            if ( 1 == fscanf(mol, "%f", &fx) ) {};
+            if ( 1 == fscanf(mol, "%f", &fy) ) {};
+            if ( 1 == fscanf(mol, "%f", &fz) ) {};
+            if ( 1 == fscanf(rmc, "%f", &fr) ) {};
+            if ( 1 == fscanf(rmc, "%f", &fm) ) {};
+            if ( 1 == fscanf(rmc, "%d", &fc) ) {};
             printf("!!(%f %f %f) %f %f %f %f %f %d\n",
                    (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0],
                    dt[i].x, fx,
@@ -5473,21 +5494,21 @@ initarray(int k)
    if (raggio == -3.0)      /* Variable hydrated and unhydrated radii and psv */
    {
 
-      if ( fscanf(mol, "%s", ragcol) ) {};
+      if ( 1 == fscanf(mol, "%s", ragcol) ) {};
 
-      if ( fscanf(mol, "%f", &partvol) ) {};
+      if ( 1 == fscanf(mol, "%f", &partvol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         if ( fscanf(mol, "%f", &dt[i].x) ) {};
-         if ( fscanf(mol, "%f", &dt[i].y) ) {};
-         if ( fscanf(mol, "%f", &dt[i].z) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].ru) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
-         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].ru) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( 1 == fscanf(rmc, "%d", &dt[i].col) ) {};
       }
 
       fclose(rmc);
@@ -5497,20 +5518,20 @@ initarray(int k)
    if (raggio == -4.0)      /* Variable hydrated radii and bead-aminoacids correspondence */
    {
 
-      if ( fscanf(mol, "%s", ragcol) ) {};
+      if ( 1 == fscanf(mol, "%s", ragcol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         if ( fscanf(mol, "%f", &dt[i].x) ) {};
-         if ( fscanf(mol, "%f", &dt[i].y) ) {};
-         if ( fscanf(mol, "%f", &dt[i].z) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
-         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( 1 == fscanf(rmc, "%d", &dt[i].col) ) {};
          dt[i].cor = (char *) malloc(10 * sizeof(char));
-         if ( fscanf(rmc, "%s", dt[i].cor) ) {};
+         if ( 1 == fscanf(rmc, "%s", dt[i].cor) ) {};
       }
 
       fclose(rmc);
@@ -5520,22 +5541,22 @@ initarray(int k)
    if (raggio == -5.0)      /* Variable hydrated radii, bead-aminoacids correspondence and psv */
    {
 
-      if ( fscanf(mol, "%s", ragcol) ) {};
+      if ( 1 == fscanf(mol, "%s", ragcol) ) {};
 
-      if ( fscanf(mol, "%f", &partvol) ) {};
+      if ( 1 == fscanf(mol, "%f", &partvol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         if ( fscanf(mol, "%f", &dt[i].x) ) {};
-         if ( fscanf(mol, "%f", &dt[i].y) ) {};
-         if ( fscanf(mol, "%f", &dt[i].z) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
-         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
-         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( 1 == fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( 1 == fscanf(rmc, "%d", &dt[i].col) ) {};
          dt[i].cor = (char *) malloc(10 * sizeof(char));
-         if ( fscanf(rmc, "%s", dt[i].cor) ) {};
+         if ( 1 == fscanf(rmc, "%s", dt[i].cor) ) {};
       }
 
       fclose(rmc);
@@ -5547,9 +5568,9 @@ initarray(int k)
       vt = 1;
       for (i = 0; i < nat; i++)
       {
-         if ( fscanf(mol, "%f", &dt[i].x) ) {};
-         if ( fscanf(mol, "%f", &dt[i].y) ) {};
-         if ( fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( 1 == fscanf(mol, "%f", &dt[i].z) ) {};
          dt[i].r = raggio;
          dt[i].m = (float) 1.0;
          dt[i].col = 1;
@@ -6185,7 +6206,7 @@ sigmarRcalc1()
    QString hydro_msg = "";
    interm = 0.0;
    /*      printf("%d%d\n\n volcor,colorsixf",volcor,"   ",colorsixf);
-           if ( scanf("%d",&test) ) {};
+           if ( 1 == scanf("%d",&test) ) {};
            getchar();  */
    if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3))) {
       interm = interm1;   /* total vol. of beads, buried included */
@@ -6282,7 +6303,7 @@ overlap()
                    (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)
             printf("\n** Do you want to proceed anyway? (y/n) ");
-            if ( scanf("%s", &r5) ) {};
+            if ( 1 == scanf("%s", &r5) ) {};
             getchar();
             if ((r5 == 'y') || (r5 == 'Y'))
             {
@@ -6541,6 +6562,7 @@ secondo(long double b, long double c)
 
 }
 
+#if defined( DEBUG_EV )
 // terzo.c
 
 static void
@@ -6642,6 +6664,7 @@ terzo(long double b, long double c, long double d)
 
    ;
 }
+#endif
 
 // visc.c
 
@@ -7074,7 +7097,7 @@ main()
    do
    {
       printf("\n\n\n** Insert number of beads to use? :  ");
-      if ( scanf("%d", &use_nmax) ) {};
+      if ( 1 == scanf("%d", &use_nmax) ) {};
    }
    while (use_nmax < 1);
    us_hydro_supc_main(use_nmax);

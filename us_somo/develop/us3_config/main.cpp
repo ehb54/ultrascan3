@@ -94,6 +94,7 @@ int main ( int argc, char **argv )
 
       return a.exec();
    }
+   return 0;
 }
 
 void USconfig_check::debug( const QString& str )

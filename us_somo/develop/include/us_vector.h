@@ -21,11 +21,13 @@ class US_Vector
    static void printvector( QString qs, vector < int > x );
    static void printvector( QString qs, vector < QString > & x );
    static void printvector( QString qs, vector < double > x, int digits = 8 );
-   static void printvector2( QString qs, vector < double > x, vector < double > y, int digits = 8 );
-   static void printvector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits = 8 );
-   static void printvector2( QString qs, vector < int > x, vector < int > y );
+   static void printvector2( QString qs, vector < double > x, vector < double > y, int digits = 8, unsigned int limit = 0 );
+   static void printvector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits = 8, unsigned int limit = 0 );
+   static void printvector4( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, int digits = 8, unsigned int limit = 0 );
+   static void printvector5( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, vector < double > t, int digits = 8, unsigned int limit = 0 );
+   static void printvector7( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, vector < double > t, vector < double > u, vector < double > v, int digits = 8, unsigned int limit = 0 );
    static void printvector( QString qs, vector < bool > x );
-
+   static void printvector2( QString qs, vector < int > x, vector < int > y );
    static QString qs_vector( QString qs, vector < unsigned int > x );
    static QString qs_vector( QString qs, vector < int > x );
    static QString qs_vector( QString qs, vector < double > x, int digits = 8, int newline = 0 );
@@ -39,6 +41,10 @@ class US_Vector
    static QString qs_vector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits = 8 );
    static QString qs_vector4( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, int digits = 8 );
    static QString qs_vector_vector( QString qs, vector < vector < double > > m, int digits = 8 );
+
+   static QString qs_mapqsqs( QString qs, map < QString, QString > & x );
+   static QString qs_mapqsfloat( QString qs, map < QString, float > & x );
+   static QString qs_mapqsdouble( QString qs, map < QString, double > & x );
 
    static vector < double > intersection( vector < double > &x, vector < double > &y );
    static vector < double > intersection( vector < vector < double > > &x );

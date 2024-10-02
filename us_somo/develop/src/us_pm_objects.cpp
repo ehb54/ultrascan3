@@ -927,7 +927,8 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
    double normx;
    double normy;
    double normz;
-   double theta;
+   // to be added back if ever revisited
+   // double theta;
 
    switch( model_pos )
    {
@@ -938,7 +939,7 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
       normx   = 1e0;
       normy   = 0e0;
       normz   = 0e0;
-      theta   = 0e0;
+      // theta   = 0e0;
       break;
    default:
       centerx = params[ ofs++ ];
@@ -947,7 +948,7 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
       normx   = params[ ofs++ ];
       normy   = params[ ofs++ ];
       normz   = params[ ofs++ ];
-      theta   = params[ ofs++ ];
+      // theta   = params[ ofs++ ];
       break;
    }
 

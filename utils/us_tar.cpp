@@ -149,6 +149,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 
 void US_Tar::process_dir( const QString& path, QStringList& all )
 {
+  qDebug() << "In process dir: path -- " << path;
    QDir                  dir( path );
    QStringList           files = dir.entryList( QDir::Files | QDir::NoSymLinks );
    QStringList::Iterator it    = files.begin();
@@ -156,7 +157,7 @@ void US_Tar::process_dir( const QString& path, QStringList& all )
    // Add the files
    while(  it != files.end() )
    {
-      all << path + "/" +  *it;
+     all << path + "/" +  *it;
       it++;
    }
 
@@ -477,7 +478,7 @@ void US_Tar::flush_buffer( void )
 }
 
 ///////////////////////////
-int US_Tar::extract( const QString& archive, QStringList* list )
+int US_Tar::extract( const QString& archive, QStringList* list, const QString& outpath)
 {
    /* 1. Open the archve
     * 2. while header is not null
@@ -503,6 +504,16 @@ int US_Tar::extract( const QString& archive, QStringList* list )
    
    QStringList dirs;
    vector<int> times;
+
+   QDir outdir;
+   if (outpath.isEmpty()) {
+      outdir = QDir(".");
+   } else {
+      outdir = QDir(outpath);
+   }
+   if (! outdir.exists()) {
+      outdir.mkpath(outdir.absolutePath());
+   }
 
    try
    {
@@ -580,9 +591,9 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          if ( directory )
          {
             QDir f( "." );
-            if ( ! f.exists( filename ) ) 
+            if ( ! f.exists( outdir.absoluteFilePath( filename ) ) )
             {
-               bool success = f.mkdir( filename );
+               bool success = f.mkpath(outdir.absoluteFilePath( filename ) );
                if ( ! success ) throw TAR_MKDIRFAILED;
             }
 
@@ -592,8 +603,14 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          }
          else // It's a file.  Create it.
          {
+            const QString absfpath = outdir.absoluteFilePath( filename );
+            QFileInfo finfo( absfpath );
+            QDir dir = finfo.absoluteDir();
+            if ( ! dir.exists() ) {
+               dir.mkdir( dir.absolutePath() );
+            }
             int flags = O_WRONLY | O_CREAT | O_BINARY | O_TRUNC;
-            ofd = open( filename.toLatin1().constData(), flags, 0644 );
+            ofd = open( absfpath.toLatin1().constData(), flags, 0644 );
             if ( ofd < 0 ) throw TAR_WRITEERROR;
 
             // Copy from archive to file

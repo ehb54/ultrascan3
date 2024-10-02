@@ -26,19 +26,7 @@
 
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
-// main program
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
 
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_Pseudo3D_Combine w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 // qSort LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
@@ -142,7 +130,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smin   = us_label( tr( "Plot Limit s Minimum:" ) );
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_smin   = us_counter( 3, -10000.0, 10000.0, 1.0 );
+   ct_plt_smin   = us_counter( 3, -100000.0, 100000.0, 1.0 );
    ct_plt_smin->setSingleStep( 1 );
    connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smin( double ) ) );
@@ -150,7 +138,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smax   = us_label( tr( "Plot Limit s Maximum:" ) );
    lb_plt_smax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_smax   = us_counter( 3, -100.0, 10000.0, 10.0 );
+   ct_plt_smax   = us_counter( 3, -100.0, 100000.0, 10.0 );
    ct_plt_smax->setSingleStep( 1 );
    connect( ct_plt_smax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smax( double ) ) );
@@ -393,6 +381,11 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    reset();
 }
 
+void US_Pseudo3D_Combine::reset_auto( void )
+{
+  reset();
+}
+
 void US_Pseudo3D_Combine::reset( void )
 {
    dataPlotClear( data_plot );
@@ -443,11 +436,11 @@ void US_Pseudo3D_Combine::reset( void )
 
    plt_smin   = 1.0;
    plt_smax   = 10.0;
-   ct_plt_smin->setRange( -1000.0, 10000.0 );
+   ct_plt_smin->setRange( -1000.0, 100000.0 );
    ct_plt_smin->setSingleStep( 0.01 );
    ct_plt_smin->setValue( plt_smin );
    ct_plt_smin->setEnabled( false );
-   ct_plt_smax->setRange(   -100.0, 10000.0 );
+   ct_plt_smax->setRange(  -100.0, 100000.0 );
    ct_plt_smax->setSingleStep( 0.01 );
    ct_plt_smax->setValue( plt_smax );
    ct_plt_smax->setEnabled( false );
@@ -808,7 +801,7 @@ void US_Pseudo3D_Combine::load_distro()
 
    if ( dialog.exec() != QDialog::Accepted )
       return;  // no selection made
-
+   
    need_save  = false;
 
    for ( int jj = 0; jj < models.count(); jj++ )
@@ -823,6 +816,45 @@ void US_Pseudo3D_Combine::load_distro()
    pb_rmvdist->setEnabled( models.count() > 0 );
 
    update_curr_distr( (double)system.size() );
+}
+
+//Modified copy for GMP
+void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_t_r_id )
+{
+   // get a model description or set of descriptions for distribution data
+   QList< US_Model > models;
+   QStringList       mdescs;
+   bool              loadDB = dkdb_cntrls->db();
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   
+   US_ModelLoader dialog( true, mfilter, models, mdescs, pfilts, invID_passed );
+
+   dialog. accepted_auto ( m_t_r_id );
+
+   qDebug() << "In load_distro(): mdescs -- " << mdescs;
+   
+   need_save  = false;
+   QApplication::restoreOverrideCursor();
+   
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // load each selected distribution model
+      load_distro( models[ jj ], mdescs[ jj ] );
+   }
+
+   curr_distr = system.size() - 1;
+   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+   ct_curr_distr->setEnabled( true );
+   ct_curr_distr->setValue( curr_distr + 1 );
+   pb_rmvdist->setEnabled( models.count() > 0 );
+
+   update_curr_distr( (double)system.size() );
+}
+
+//return pointer to data_plot
+QwtPlot* US_Pseudo3D_Combine::rp_data_plot()
+{
+  return data_plot;
 }
 
 void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
@@ -1338,17 +1370,31 @@ qDebug() << "Remove Distros";
    plot_data();
 }
 
+// Select coordinate for horizontal axis: copy for GMP
+void US_Pseudo3D_Combine::select_x_axis_auto( int ival )
+{
+  select_x_axis( ival );
+}
+
+// Select coordinate for vertical axis: copy for GMP
+void US_Pseudo3D_Combine::select_y_axis_auto( int ival )
+{
+  select_y_axis( ival );
+}
+
 // Select coordinate for horizontal axis
 void US_Pseudo3D_Combine::select_x_axis( int ival )
 {
    const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f"  };
    const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
    const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   const double  xmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
+   const double  xmins[] = { -100000.0,  1.0,    0.0,  0.01, 1e-9, 1e-9 };
+   const double  xmaxs[] = {  100000.0, 50.0,  1e+10,  3.00, 1e-5, 1e-5 };
    const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
 
    plot_x     = ival;
+
+   qDebug() << "Pseudo3D: x_axis changed: ival,  xlabs[ plot_x ] -- " << ival <<  xlabs[ plot_x ];
 
    lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
                        + tr( " Minimum:" ) );
@@ -1381,12 +1427,14 @@ void US_Pseudo3D_Combine::select_y_axis( int ival )
    const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar",    "D", "f"  };
    const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60,     0.0, 1e-8 };
    const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80,    30.0, 1e-7 };
-   const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01,     0.0, 1e-9 };
-   const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 10000.0, 1e-5 };
+   const double  ymins[] = { -100000.0,  1.0,    0.0,  0.01,     0.0, 1e-9 };
+   const double  ymaxs[] = {  100000.0, 50.0,  1e+10,  3.00,100000.0, 1e-5 };
    const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01,    0.01, 1e-9 };
 
    plot_y     = ival;
 qDebug() << "select-y: plot_y" << plot_y;
+
+   qDebug() << "Pseudo3D: y_axis changed: ival,  ylabs[ plot_y ] -- " << ival <<  ylabs[ plot_y ];
 
    lb_plt_kmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
                        + tr( " Minimum:" ) );
