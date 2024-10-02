@@ -14,20 +14,26 @@ public:
     US_Archive() {};
 
     //! \brief Method to extract archive file (Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip).
-    //! \param filename Path to archive file. Output directory is taken from the path of the archive file unless it is set directly using setPath() method.
-    //! \return A boolean to verify the success of the extraction
+    //! \param archivePath Path to the archive file. Extracted data path is taken from the the archive file path unless it is set directly using setPath() method.
+    //! \return True if file extraction is completed, false otherwise.
     bool extract(const QString&);
 
+    //! \brief Method to extract archive file (Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip).
+    //! \param archivePath Path to the archive file.
+    //! \param outputPath  Path to where the extracted data will be saved.
+    //! \return True if file extraction is completed, false otherwise.
+    bool extract(const QString&, const QString&);
+
     //! \brief Method to compress files and folders into an archive file.
-    //! \param list list of all files and folders need to be compressed.
-    //! \param filename The output archive filename. The output path is taken from the path of the first item.
-    //! After compression is complete, this parameter stores the path of the archive file.
+    //! \param sourcePathList  List of all files and folders need to be compressed. No need to put the contents of each folder. This program finds them recursively.
+    //! \param archiveFilename Archive filename. The output path is taken from the first item.
+    //! After compression is complete, this parameter stores the path to the archive file.
     //! Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip
-    //! \return A boolean to verify the success of the compression
+    //! \return True if compression is completed, false otherwise.
     bool compress(const QStringList&, QString&);
 
-    //! \brief Method to set the path to store extracted data.
-    //! \param Path
+    //! \brief Method to set the path where the extracted data will be saved.
+    //! \param outputPath
     void setPath(const QString&);
 
     //! \brief Method to receive the error string.

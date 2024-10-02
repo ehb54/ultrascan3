@@ -100,6 +100,12 @@ bool US_Archive::extract(const QString& filename) {
     return true;
 }
 
+bool US_Archive::extract(const QString& filename, const QString& path) {
+    setPath(path);
+    bool result = extract(filename);
+    return result;
+}
+
 bool US_Archive::compress(const QStringList& list, QString& filename) {
     absolute_paths.clear();
     relative_paths.clear();
