@@ -1814,16 +1814,18 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       if ( stage == "EDITING" )
 	{
 	  //do something
-	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-	  
-	  if ( ( currDir.isEmpty() || !directory.exists() ) && instName. contains("Optima") )
+	  if ( currDir.isEmpty() || !directory.exists()  )
 	    {
-	      //switch_to_live_update( protocol_details );
-	      emit switch_to_live_update_init( protocol_details );
+	      if ( instName. contains("Optima") )
+		emit switch_to_live_update_init( protocol_details );
+	      else // disk Data
+		{
+		  QMessageBox::warning( this, tr( "Data Absent on Disk!" ),
+					tr( "No data associated with this run is found on the disk! \n" ) );
+		}
 	    }
 	  else
 	    {
-	      //switch_to_post_processing( protocol_details );
 	      emit switch_to_post_processing_init( protocol_details );
 	    }
 	  
