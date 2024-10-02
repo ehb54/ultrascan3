@@ -6240,7 +6240,8 @@ void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
   msgBox.setText( message_submission );
   QString info_text;
-  
+
+  qDebug() << "mainw->usmode: " << mainw->usmode;
   if ( !mainw->usmode )
     {
       info_text  += QString( tr(  "<br><br>"
@@ -6264,9 +6265,9 @@ void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 				);
 	}
     }
-
+  
   msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
- 
+  msgBox.setInformativeText( info_text);  
   msgBox.setIcon(QMessageBox::Question);
   msgBox.exec();
   
@@ -7290,7 +7291,7 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "duration" ]       = QString::number(Total_duration);
 
   protocol_details[ "invID_passed" ]   = currProto->investigator.split(":")[0];
-  protocol_details[ "correctRadii" ]   = QString("YES");
+  protocol_details[ "correctRadii" ]   = QString("YES");                           //<--- will it be "NO" ? (no Optima...)
   protocol_details[ "expAborted" ]     = QString("NO");
   protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
   //define exp.Type
@@ -8589,6 +8590,8 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
          /***
 	     status    'EDITING' will be set in stored proc!
 	     corrRadii 'NO'      will be set in stored proc!
+	     //// <------- Should we add
+	     protocol_details[ "correctRadii" ] = "NO"; ???
 	  ***/
 
      qDebug() << "[autoflow_record dataDisk, qry: ] "
