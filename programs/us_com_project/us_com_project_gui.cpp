@@ -1711,6 +1711,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString failedID     = protocol_details[ "failedID" ];
 
   QString expType      = protocol_details[ "expType" ];
+  QString instName     = protocol_details[ "OptimaName" ]; 
     
   QDir directory( currDir );
   
@@ -1815,7 +1816,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  //do something
 	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
 	  
-	  if ( currDir.isEmpty() || !directory.exists() )
+	  if ( ( currDir.isEmpty() || !directory.exists() ) && instName. contains("Optima") )
 	    {
 	      //switch_to_live_update( protocol_details );
 	      emit switch_to_live_update_init( protocol_details );
