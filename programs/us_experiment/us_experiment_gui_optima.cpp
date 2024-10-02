@@ -122,6 +122,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanUpload, SIGNAL( expdef_submitted_dev( QMap < QString, QString > &) ),
             this,       SLOT  ( submitted_protDev( QMap < QString, QString > & ) ) );
 
+   connect( epanUpload, SIGNAL( expdef_submitted_dataDisk( QMap < QString, QString > &) ),
+            this,       SLOT  ( submitted_dataDisk( QMap < QString, QString > & ) ) );
+
    connect( epanAProfile->sdiag, SIGNAL( back_to_pcsa_signal() ),
             this,       SLOT  ( back_to_pcsa() ) );
 
@@ -557,6 +560,13 @@ void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_d
 {
   tabWidget->setCurrentIndex( 0 );
   emit to_live_update( protocol_details );
+}
+
+// When run submitted for Data from Disk
+void US_ExperimentMain::submitted_dataDisk( QMap < QString, QString > &protocol_details )
+{
+  tabWidget->setCurrentIndex( 0 );
+  emit to_import( protocol_details );
 }
 
 // Panel for run and other general parameters
@@ -7224,10 +7234,141 @@ void US_ExperGuiUpload::clearData_protDev()
 // Slot to submit GMP run with Disk Data
 void US_ExperGuiUpload::submitExperiment_dataDisk()
 {
-  //TO DO:
-  /*
+  /* IMPORTANT!
     Add filepath to the autoflow record:
+    Add stage 'EDITING'
    */
+  QMap< QString, QString > protocol_details;
+
+  //dataPath
+  protocol_details[ "dataPath" ]       = rpRotor->importDataDisk;
+  //stage/status
+  protocol_details[ "status" ]         = "EDITING";   // <--- ADD explicitly!
+  //optimaName
+  protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
+  //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
+  
+  protocol_details[ "protocolName" ]   = currProto->protoname;
+  QString runname = mainw->currProto.runname;
+  protocol_details[ "experimentName" ] = runname;
+  protocol_details[ "label" ]          = currProto->exp_label;
+  //GMP type
+  QString gmpRun_str = (mainw->usmode)? "NO" : "YES";
+  protocol_details[ "gmpRun" ]         = gmpRun_str;
+  protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
+
+  //compute duration: Get # satges, cells
+  int nstages = sibIValue( "speeds",  "nspeeds" );
+  int tem_delay_sec = int((mainw->currProto.temeq_delay)*60);         // delay in sec (longevity) of the dummy equlibration stage
+  int nstages_size;
+  nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
+  //Total duration
+  bool is_dummy_dur = false;
+  int curr_stage_dur;
+  int Total_duration = tem_delay_sec;
+  for (int i=0; i<nstages_size; i++)
+    {
+      if (i==0 && tem_delay_sec)
+	{
+	  is_dummy_dur = true;
+	  continue;                // skip dummy stage for AbsScanParams
+	}
+      
+      if (is_dummy_dur)
+	curr_stage_dur = i - 1;
+      else
+	curr_stage_dur = i;
+      
+      qDebug() << "index i: " << i << ", curr_stage_DUR: " << curr_stage_dur;
+      
+      Total_duration += rpSpeed->ssteps[ curr_stage_dur ].duration;
+      Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay_stage;
+      Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay;
+      //ALEXEY: do we need also delays to first scans for abs/interference into total duration?
+    }
+  
+  protocol_details[ "duration" ]       = QString::number(Total_duration);
+
+  protocol_details[ "invID_passed" ]   = currProto->investigator.split(":")[0];
+  protocol_details[ "correctRadii" ]   = QString("YES");
+  protocol_details[ "expAborted" ]     = QString("NO");
+  protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
+  //define exp.Type
+  QString exp_t = ( mainw->us_abde_mode ) ? "ABDE" : "VELOCITY";
+  protocol_details[ "expType" ] = exp_t;
+  
+  //protocol_details[ "experimentId" ]   = QString::number(ExpDefId);    // NULL  
+  
+  //Now, ranges, cells, triples
+  int nwavl_tot = 0;
+  for ( int kk = 0; kk < rpRange->nranges; kk++ )
+    nwavl_tot  += rpRange->chrngs[ kk ].wvlens.count();
+
+  //Opt system check, what cells will be uvvis and/or interference
+  QStringList oprof   = sibLValue( "optical", "profiles" );
+  QString uvvis       = tr( "UV/visible" );
+  QString rayleigh    = tr( "Rayleigh Interference" );
+  
+  //get # cells with interference channels
+  int ncells_interference = 0;
+  int nchannels_uvvis = 0;
+  QStringList active_channels;
+  for ( int kk = 0; kk < oprof.count(); kk++ )
+    {
+      if ( oprof[ kk ].contains( rayleigh ) )
+	{
+	  if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
+	    {
+	      qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	      active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	    }
+	  
+	  ++ncells_interference;
+	}
+      
+      if ( oprof[ kk ].contains( uvvis ) )
+	++nchannels_uvvis;
+    }
+  
+  //CELLS & TRIPLES: when interference ? (divide by 2!!! )
+  if ( ncells_interference !=0 && nwavl_tot == 0 )                          //Interference ONLY
+    {
+      protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 ));
+      qDebug() << "ITF: CellChNumber: " << protocol_details[ "CellChNumber" ];
+      protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 ));
+      qDebug() << "ITF: TripleNumber: " << protocol_details[ "TripleNumber" ];
+    }
+  else if ( ncells_interference == 0 && nwavl_tot != 0 )                    //Absorbance ONLY
+    {
+      protocol_details[ "CellChNumber" ]   = QString::number( nchannels_uvvis ); 
+      qDebug() << "UV: CellChNumber: " << protocol_details[ "CellChNumber" ];
+      protocol_details[ "TripleNumber" ]   = QString::number(nwavl_tot);
+      qDebug() << "UV: TripleNumber: " << protocol_details[ "TripleNumber" ];	     
+    }
+  else if ( ncells_interference !=0  && nwavl_tot !=0  )                     // BOTH
+    {
+      QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	QString(",RI:")  + QString::number( nchannels_uvvis );
+      
+      protocol_details[ "CellChNumber" ] = cellnumber;
+      
+      qDebug() << "UV & ITF: cellnumber: " << cellnumber;
+      qDebug() << "UV & ITF: CellChNumber: " << protocol_details[ "CellChNumber" ];
+
+      QString triplenumber = QString("IP:") + QString::number(1 * int(ncells_interference/2 )) +
+	QString(",RI:")  + QString::number(nwavl_tot);    
+
+      protocol_details[ "TripleNumber" ] = triplenumber;
+
+      qDebug() << "UV & ITF: triplenumber: " << triplenumber;
+      qDebug() << "UV & ITF: TripleNumber: " << protocol_details[ "TripleNumber" ];
+    }
+
+  //create parent autoflow record:
+  add_autoflow_record_dataDisk( protocol_details );
+
+  //emit proper signal -> switch to 3. IMPORT
+  emit expdef_submitted_dataDisk( protocol_details );
 }
 
 
@@ -8364,9 +8505,6 @@ void US_ExperGuiUpload::submitExperiment()
        /*** 
 	    Add audit trail who submitted - the owner himself OR an admin on his behalf
        ***/
-       
-       
- 
      }
       
    //Finish, emit, switch to 2. LIVE_UPDATE
@@ -8385,7 +8523,298 @@ void US_ExperGuiUpload::cancel_reviewers( QMap< QString, QString >& protocol_det
 }
 
 
-// Read Protocol details
+// autoflow record for Data from Disk
+void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & protocol_details )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+                                  tr( "Read protocol: Could not connect to database \n" )
+                                     + db->lastError() );
+      return;
+   }
+
+   QStringList qry;
+   int autoflowID_returned = 0;
+
+      if ( db != NULL )
+   {
+     qry. clear();
+     //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+     //greater of:
+     //- max(ID) autoflowHistory
+     //- current AUTO_INCREMENT
+     QString current_db = US_Settings::defaultDB().at(2);
+     qry << "set_autoflow_auto_increment" << current_db;
+     int auto_incr = db->statusQuery( qry );
+     qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+     
+     /* SET THE FOLLOWING:
+	1. dataPath   = protocol_details[ "dataPath" ]
+	2. status     = protocol_details[ "status" ]      (which is 'EDITING' i.e. 3. IMPORT )
+	3. optimaName = protocol_details[ "OptimaName" ]  (i chose 'dataDisk' but see how it affects... )
+
+	Question:
+	 -- What to do with
+	     protocol_details[ "correctRadii" ] ? SET to "NO" ?
+      */
+
+     
+     //Now add autoflow record
+     qry.clear();
+     qry << "add_autoflow_record_datadisk"
+	 << protocol_details[ "protocolName" ]
+	 << protocol_details[ "CellChNumber" ]
+	 << protocol_details[ "TripleNumber" ]
+	 << protocol_details[ "duration" ]
+	 << protocol_details[ "experimentName" ]
+       
+       // << protocol_details[ "experimentId" ]  NULL DEFAULT
+       
+	 << protocol_details[ "invID_passed" ]
+	 << protocol_details[ "label" ]
+	 << protocol_details[ "gmpRun" ]
+	 << protocol_details[ "aprofileguid" ]
+	 << protocol_details[ "operatorID" ]
+         << protocol_details[ "expType" ]
+
+	 << protocol_details[ "dataPath" ]
+	 << protocol_details[ "OptimaName" ];  // Optima 'name' will be set to 'dataDisk'
+
+         /***
+	     status    'EDITING' will be set in stored proc!
+	     corrRadii 'NO'      will be set in stored proc!
+	  ***/
+
+     qDebug() << "[autoflow_record dataDisk, qry: ] "
+	      << qry;
+     
+     db->statusQuery( qry );
+     //db->query( qry );
+     
+     autoflowID_returned = db->lastInsertID();
+     //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
+        
+     qDebug() << "[DataDisk]Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+     
+   }
+   
+   if ( autoflowID_returned == 0 )
+     {
+       QMessageBox::warning( this, tr( "[DataDisk]New Autoflow Record Problem" ),
+			     tr( "[DataDisk]autoflow: There was a problem with creating a new autoflow record! \n" ) );
+       return;
+     }
+   /*******************************************************************************/
+   
+   
+   /******************************************************************************/
+   //Also, create record in autoflowStages table:
+   qry. clear();
+   qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry );
+   /********************************************************************************/
+
+   
+   /*******************************************************************************/
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+
+       for (int i=0; i<appr_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << appr_listList[i]; 
+	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
+	 } 
+
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       apprListJsonArray += "]";
+       smeListJsonArray  += "]";
+         
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
+
+       /********** THIS WILL NOT BE USED HERE **********************/
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /***************************************************************/
+             
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int     u_ID    = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       //logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       logJsonFirstTime += "\"Comment\":\"";
+
+       //oper(s), rev(s), appr(s)
+       logJsonFirstTime += "Operator(s):" + oper_listList.join(",") + ";";
+       logJsonFirstTime += "Reviewer(s):" + rev_listList.join(",") + ";";
+       logJsonFirstTime += "Approver(s):" + appr_listList.join(","); // + ";";
+
+       logJsonFirstTime += "\"";
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << apprListJsonArray
+	   << smeListJsonArray
+	 // << eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
+     }
+
+   
+}
+
+// Standard autoflow record
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
 {
   qDebug() << "GMPRUN FIELD: " << protocol_details[ "gmpRun" ];

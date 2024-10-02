@@ -230,6 +230,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
@@ -2805,6 +2806,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
+   connect( sdiag, SIGNAL( to_import( QMap < QString, QString > & ) ),
+	    this,  SLOT( to_import( QMap < QString, QString > & ) ) );
+
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
@@ -2876,6 +2880,12 @@ void US_ExperGui::to_initAutoflow( void )
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
 {
   emit switch_to_live_update( protocol_details );
+}
+
+//When run is submitted with Data from Disk.. 
+void US_ExperGui::to_import( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_import( protocol_details );
 }
 
 //When US_Experiment is closed
