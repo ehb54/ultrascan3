@@ -1822,6 +1822,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 		{
 		  QMessageBox::warning( this, tr( "Data Absent on Disk!" ),
 					tr( "No data associated with this run is found on the disk! \n" ) );
+		  emit to_initAutoflow();
+		  return;
 		}
 	    }
 	  else
