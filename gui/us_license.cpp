@@ -311,6 +311,10 @@ void US_License::load_current( void )
     validation  = license [ 12 ];
     expiration  = license [ 13 ];
   }
+  // Force unused fields to "n/a"
+  address     = "n/a";
+  zip         = "n/a";
+  phone       = "n/a";
 
   update_screen();
 }
@@ -391,7 +395,6 @@ void US_License::update( void )
        lastname    == ""  ||
        institution == ""  ||
        state       == ""  ||
-       zip         == ""  ||
        email       == ""  )
   {
     QMessageBox::information ( this, 
