@@ -1711,7 +1711,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString failedID     = protocol_details[ "failedID" ];
 
   QString expType      = protocol_details[ "expType" ];
-  QString instName     = protocol_details[ "OptimaName" ]; 
+  QString instName     = protocol_details[ "OptimaName" ];
+  QString dataSource   = protocol_details[ "dataSource" ];
     
   QDir directory( currDir );
   
@@ -1816,7 +1817,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  //do something
 	  if ( currDir.isEmpty() || !directory.exists()  )
 	    {
-	      if ( instName. contains("Optima") )
+	      if ( instName. contains("Optima") && dataSource == "INSTRUMENT" )
 		emit switch_to_live_update_init( protocol_details );
 	      else // disk Data
 		{
@@ -2655,6 +2656,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
 	 }
      }
    else

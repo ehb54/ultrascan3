@@ -7248,6 +7248,7 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   //optimaName
   protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
   //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
+  protocol_details[ "dataSource" ]     = "dataDiskAUC";  //<-- for now
   
   protocol_details[ "protocolName" ]   = currProto->protoname;
   QString runname = mainw->currProto.runname;
@@ -8585,7 +8586,8 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
          << protocol_details[ "expType" ]
 
 	 << protocol_details[ "dataPath" ]
-	 << protocol_details[ "OptimaName" ];  // Optima 'name' will be set to 'dataDisk'
+	 << protocol_details[ "OptimaName" ]  // Optima 'name' will be set to 'dataDisk'
+	 << protocol_details[ "dataSource" ]; // will be set to 'dataDiskAUC' or other...
 
          /***
 	     status    'EDITING' will be set in stored proc!

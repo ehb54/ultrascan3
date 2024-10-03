@@ -1435,7 +1435,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
   expType           = details_at_live_update[ "expType" ];
-
+  dataSource        = details_at_live_update[ "dataSource" ];
+  
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
 
@@ -1513,7 +1514,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   /* ----------------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialog for academic:
   //if ( correctRadii == "NO" )
-  if ( details_at_live_update[ "correctRadii" ] == "NO" )
+  if ( details_at_live_update[ "correctRadii" ] == "NO" && dataSource != "INSTRUMENT" )
     {
       if ( !usmode ) // us_comproject
 	{
@@ -6892,6 +6893,7 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
 	   	   
 	 }
      }
