@@ -1106,7 +1106,7 @@ qDebug() << "CVT:Adj: t_acc rate" << t_acc << rate;
    //  omega^2t offset is based on the value at the new zone start.
    double azdur      = (double)qRound( speedsteps[ 0 ].rotorspeed / 400.0 );
    double t_offs     = t1 - azdur;
-   double azwrate    = sq( rate * M_PI / 30.0 );
+   double azwrate    = sq( speedsteps[ 0 ].rotorspeed * 0.5 * M_PI / 30.0 );
    double w_offs     = w2t - ( w2 * ( t2 - t1 ) ) - ( azwrate * azdur );
 qDebug() << "CVT:Adj: azdur azwrate" << azdur << azwrate << "t_offs w_offs"
  << t_offs << w_offs;
