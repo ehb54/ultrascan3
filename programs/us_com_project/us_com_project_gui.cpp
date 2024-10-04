@@ -1830,6 +1830,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	    }
 	  else
 	    {
+	      qDebug() << "DataDisk, proceeding...";
 	      emit switch_to_post_processing_init( protocol_details );
 	    }
 	  
