@@ -2,12 +2,17 @@
 #include "archive_entry.h"
 #include "archive.h"
 
-bool US_Archive::extract(const QString& filename) {
+bool US_Archive::extract(const QString& filename, const QString& path) {
 
     QDir dir;
-    if (outpath.isEmpty()) {
-        QFileInfo fino(filename);
+    QFileInfo fino(filename);
+    QString outpath = path.trimmed();
+    if (outpath.isEmpty() || outpath.compare(".") == 0) {
         dir.setPath(fino.absolutePath());
+    } else if (outpath.startsWith("..")) {
+        dir.setPath(fino.absolutePath());
+        QString p = dir.absoluteFilePath(outpath);
+        dir.setPath(p);
     } else {
         dir.setPath(outpath);
     }
@@ -100,15 +105,13 @@ bool US_Archive::extract(const QString& filename) {
     return true;
 }
 
-bool US_Archive::extract(const QString& filename, const QString& path) {
-    setPath(path);
-    bool result = extract(filename);
-    return result;
-}
-
 bool US_Archive::compress(const QStringList& list, QString& filename) {
     absolute_paths.clear();
     relative_paths.clear();
+    if (list.isEmpty()) {
+        error = "US_Archive: Error: Empty list";
+        return false;
+    }
 
     struct archive *archive;
     archive = archive_write_new();
@@ -117,6 +120,16 @@ bool US_Archive::compress(const QStringList& list, QString& filename) {
     QFileInfo finfo;
     finfo.setFile(filename);
     QString extention = finfo.completeSuffix();
+    QDir dir;
+    if (finfo.path().compare(".") == 0 || finfo.path().startsWith("..")) {
+        finfo.setFile(list.first());
+        finfo.makeAbsolute();
+        dir.setPath(finfo.absolutePath());
+    } else {
+        dir.setPath(finfo.absolutePath());
+    }
+    dir.makeAbsolute();
+    filename = dir.absoluteFilePath(filename);
 
     // Check archive format
     int result;
@@ -157,7 +170,6 @@ bool US_Archive::compress(const QStringList& list, QString& filename) {
         return false;
     }
 
-    QDir dir;
     // List all files and directories
     for (int ii = 0; ii < list.size(); ii++) {
         finfo.setFile(list.at(ii));
@@ -168,9 +180,6 @@ bool US_Archive::compress(const QStringList& list, QString& filename) {
             error = "US_Archive: Error: item not exist: " + absolute;
             archive_write_free(archive);
             return false;
-        }
-        if (ii == 0) {
-            dir.setPath(finfo.absolutePath());
         }
         if (finfo.isFile()) {
             absolute_paths << absolute;
@@ -186,8 +195,6 @@ bool US_Archive::compress(const QStringList& list, QString& filename) {
     }
 
     // Create archive file
-    dir.makeAbsolute();
-    filename = dir.absoluteFilePath(filename);
     result = archive_write_open_filename(archive, filename.toUtf8().constData());
     if (result != ARCHIVE_OK) {
         error = QObject::tr("US_Archive: Error: Failed to create archive file: %1").arg(archive_error_string(archive));
@@ -250,10 +257,6 @@ void US_Archive::list_files(const QString& abs_path, const QString& base_dir) {
             relative_paths << rel_dir;
         }
     }
-}
-
-void US_Archive::setPath(const QString& path) {
-    outpath = path;
 }
 
 QString US_Archive::getError() {

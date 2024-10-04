@@ -14,27 +14,18 @@ public:
     US_Archive() {};
 
     //! \brief Method to extract archive file (Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip).
-    //! \param archivePath Path to the archive file. Extracted data path is taken from the the archive file path unless it is set directly using setPath() method.
-    //! \return True if file extraction is completed, false otherwise.
-    bool extract(const QString&);
-
-    //! \brief Method to extract archive file (Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip).
     //! \param archivePath Path to the archive file.
-    //! \param outputPath  Path to where the extracted data will be saved.
+    //! \param outputPath  Path to where extracted data will be saved. Default is the path where the archive file is located.
     //! \return True if file extraction is completed, false otherwise.
-    bool extract(const QString&, const QString&);
+    bool extract(const QString&, const QString& = "");
 
     //! \brief Method to compress files and folders into an archive file.
-    //! \param sourcePathList  List of all files and folders need to be compressed. No need to put the contents of each folder. This program finds them recursively.
-    //! \param archiveFilename Archive filename. The output path is taken from the first item.
+    //! \param sourcePathList List of all files and folders need to be compressed. No need to list the contents of folders.
+    //! \param archivePath    If only the filename is given, the output path is taken from the first one. Otherwise, the archive file will be saved in the given path.
     //! After compression is complete, this parameter stores the path to the archive file.
     //! Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip
     //! \return True if compression is completed, false otherwise.
     bool compress(const QStringList&, QString&);
-
-    //! \brief Method to set the path where the extracted data will be saved.
-    //! \param outputPath
-    void setPath(const QString&);
 
     //! \brief Method to receive the error string.
     //! \return Error string.
@@ -52,8 +43,6 @@ signals:
     void itemAdded (const QString&, const QString&);
 
 private:
-
-    QString outpath;
     QString error;
     QStringList absolute_paths;
     QStringList relative_paths;
