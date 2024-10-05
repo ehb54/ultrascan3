@@ -2139,7 +2139,19 @@ DbgLv(1) << "EGCe:inP:   ii" << ii << "kused" << kused << "is_used" << is_used;
 
 DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
    nused               = kused;
+
+
+   // //TEST
+   // if ( rpRotor->importData )
+   //   init_cells_data_import();
 }
+
+// void US_ExperGuiCells::init_cells_data_import()
+// {
+//   qDebug() << "Init cells for dataDisk!";
+
+  
+// }
 
 // Save Cells panel controls when about to leave the panel
 void US_ExperGuiCells::savePanel()

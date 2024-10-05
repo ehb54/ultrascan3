@@ -25,6 +25,8 @@
 #include "us_hardware.h"
 #include "us_select_runs.h"
 #include "us_link_ssl.h"
+#include "../us_convert/us_convert.h"
+#include "us_dataIO.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -152,10 +154,14 @@ class US_ExperGuiRotor : public US_WidgetsDialog
          { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
       bool message_instr_shown;
+      QList< US_Convert::TripleInfo >    all_tripinfo;
+    
 
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRotor*  rpRotor;        // Rotor protocol
+      US_RunProtocol::RunProtoCells* rpCells;
+  
       US_Help  showHelp;
       QComboBox* cb_lab;                              // Lab combo box
       QComboBox* cb_rotor;                            // Rotor combo box
@@ -245,6 +251,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
   void importDisk( void );
   void importDiskChecked( bool );
+  void build_protocol_for_data_import( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values

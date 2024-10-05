@@ -2191,12 +2191,6 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
       all_tripinfo << tripinfo;
    }
 
-   //Debug
-   for( int i=0; i< all_tripinfo.size(); ++i)
-     qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
-
-   //End Debug
-
    // *** set key/value in the type_map for processed type to 0 && reset type_to_process ****//
    if ( runType_combined_IP_RI )
      runTypes_map[ type_to_process ] = 0;

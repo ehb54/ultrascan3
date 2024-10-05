@@ -16,6 +16,7 @@
 #include "us_crypto.h"
 #include "us_datafiles.h"
 #include "us_select_item.h"
+#include "../us_convert/us_convert.h"
 
 #include "../us_esigner_gmp/us_esigner_gmp.h"
 
@@ -89,8 +90,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->setCurrentIndex( curr_panx );
 
    //tabWidget->tabBar()->setEnabled(false);
-
-
+ 
    // Add bottom buttons
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
@@ -1439,6 +1439,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    pb_importDisk   -> hide();
    le_dataDiskPath -> hide();
    importDataPath = "";
+   if ( mainw->us_prot_dev_mode )
+     ck_disksource->hide();
      
    initPanel();
 
@@ -1487,9 +1489,86 @@ void US_ExperGuiRotor::importDisk( void )
   QDir readDir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
   readDir.makeAbsolute();
   if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing "/"
-     
+
+  //Now, infer triples from the raw data being uploaded
+  QStringList nameFilters = QStringList( "*.auc" );
+  QStringList files =  readDir.entryList( nameFilters,
+					  QDir::Files | QDir::Readable, QDir::Name );
+
+  all_tripinfo.clear();
+
+  for ( int trx = 0; trx < files.size(); trx++ )
+    {
+      QString fname  = files[ trx ];
+      QString fpath  = dir + fname;
+
+      US_DataIO::RawData     rdata;
+      US_Convert::TripleInfo tripinfo;
+
+      // Get a raw data from an auc file
+      US_DataIO::readRawData( fpath, rdata );
+
+      // Save triple information
+      QString triple   = QString::number( rdata.cell ) + " / "
+	+ QString( rdata.channel ) + " / "
+	+ QString::number( qRound( rdata.scanData[ 0 ].wavelength ) );
+      tripinfo.tripleID    = trx + 1;
+      tripinfo.tripleDesc  = triple;
+      tripinfo.description = rdata.description;
+      tripinfo.channelID   = trx + 1;
+
+      all_tripinfo << tripinfo;
+    }
+
+  //End triples inquiry
+  
+  //Build protocol based on read-in channels, triples, ranges...
+  build_protocol_for_data_import( );
+
+  //Maybe insert informing dialog (on channels, ranges)??
+
+  //set up dir path
   le_dataDiskPath   ->setText( dir );
   importDataPath = dir;
+}
+
+// for dataImport
+void US_ExperGuiRotor::build_protocol_for_data_import( )
+{
+  // rpSpeed             = &(mainw->currProto.rpSpeed);
+  rpCells             = &(mainw->currProto.rpCells);
+  // rpSolut             = &(mainw->currProto.rpSolut);
+  // rpOptic             = &(mainw->currProto.rpOptic);
+  // rpRange             = &(mainw->currProto.rpRange);
+  // rpSubmt             = &(mainw->currProto.rpSubmt);
+
+  //channels list
+  QStringList chann_list;
+  for( int i=0; i< all_tripinfo.size(); ++i)
+    {
+      qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
+      chann_list << all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
+    }
+  chann_list. removeDuplicates();
+  qDebug() << "List of unique channels -- " << chann_list;
+  
+  // rpCells->ncell          = attr.value( "total_holes" ).toString().toInt();
+  // rpCells->nused          = attr.value( "used_holes"  ).toString().toInt();
+
+  rpCells->used. clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoCells::CellUse cu;
+      cu.cell        = chann_list[i].toInt();
+      cu.centerpiece = "Epon 2-channel standard";
+      cu.windows     = "quartz";
+      //cu.cbalance    = ?;
+      rpCells-> used << cu;
+    }
+  rpCells->nused = chann_list.size();
+
+  //do we need to initPanels() ?
+  mainw->initPanels();
 }
 
 // Slot for change in Lab selection
