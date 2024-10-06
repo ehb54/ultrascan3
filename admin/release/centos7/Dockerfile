@@ -49,6 +49,7 @@ RUN yum install -y telnet
 RUN yum install -y $apt_python_version
 RUN yum install -y rsync
 RUN yum install -y glib2-devel postgresql-devel at-spi2-core-devel libjpeg-devel fontconfig-devel 
+RUN yum install -y libarchive-devel
 
 # bits to ease development/testing
 

@@ -49,6 +49,7 @@ RUN dnf install -y telnet
 RUN dnf install -y $apt_python_version
 RUN dnf install -y rsync
 RUN dnf install -y glib2-devel postgresql-devel at-spi2-core-devel libjpeg-devel fontconfig-devel 
+RUN dnf install -y libarchive-devel
 
 # bits to ease development/testing
 
