@@ -254,7 +254,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
   void importDisk( void );
   void importDiskChecked( bool );
-  void build_protocol_for_data_import( void );
+  void build_protocol_for_data_import( QString );
+  void importDisk_cleanProto( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values

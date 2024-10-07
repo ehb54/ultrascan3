@@ -1460,6 +1460,8 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
 {
   qDebug() << "In checking ck_importDisk; checked, !checked = "
 	   << checked << !checked;
+
+  importDisk_cleanProto();
     
   pb_importDisk   -> setVisible( checked );
   le_dataDiskPath -> setVisible( checked );
@@ -1474,6 +1476,32 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
       importDataPath = "";
       le_dataDiskPath ->setText("");
     }
+}
+
+//Clean all internals for protocol
+void US_ExperGuiRotor::importDisk_cleanProto()
+{
+  // rpSpeed             = &(mainw->currProto.rpSpeed);
+  rpCells             = &(mainw->currProto.rpCells);
+  rpSolut             = &(mainw->currProto.rpSolut);
+  rpOptic             = &(mainw->currProto.rpOptic);
+  rpRange             = &(mainw->currProto.rpRange);
+  // rpSubmt             = &(mainw->currProto.rpSubmt);
+
+  rpCells->nused     = 0;
+  rpCells->used. clear();
+  
+  rpSolut-> nschan   = 0;
+  rpSolut-> chsols.clear();
+  rpSolut->nuniqs    = 0;
+  rpSolut->solus.clear();
+  rpSolut->sids .clear();
+
+  rpOptic->nochan     = 0;
+  rpOptic-> chopts.clear();
+
+  rpRange-> nranges   = 0;
+  rpRange-> chrngs.clear();
 }
 
 // Import from disk
@@ -1526,10 +1554,13 @@ void US_ExperGuiRotor::importDisk( void )
       all_tripinfo << tripinfo;
     }
 
+  QString fname    = files[ 0 ];
+  QString runType  = QString( fname ).section( ".", -5, -5 );
+
   //End triples inquiry
   
   //Build protocol based on read-in channels, triples, ranges...
-  build_protocol_for_data_import( );
+  build_protocol_for_data_import( runType );
 
   //Maybe insert informing dialog (on channels, ranges)??
 
@@ -1539,16 +1570,16 @@ void US_ExperGuiRotor::importDisk( void )
 }
 
 // for dataImport
-void US_ExperGuiRotor::build_protocol_for_data_import( )
+void US_ExperGuiRotor::build_protocol_for_data_import( QString runType )
 {
   qDebug() << "Building protocol for dataImport:";
   
-  // rpSpeed             = &(mainw->currProto.rpSpeed);
-  rpCells             = &(mainw->currProto.rpCells);
-  rpSolut             = &(mainw->currProto.rpSolut);
-  rpOptic             = &(mainw->currProto.rpOptic);
-  rpRange             = &(mainw->currProto.rpRange);
-  // rpSubmt             = &(mainw->currProto.rpSubmt);
+  // // rpSpeed             = &(mainw->currProto.rpSpeed);
+  // rpCells             = &(mainw->currProto.rpCells);
+  // rpSolut             = &(mainw->currProto.rpSolut);
+  // rpOptic             = &(mainw->currProto.rpOptic);
+  // rpRange             = &(mainw->currProto.rpRange);
+  // // rpSubmt             = &(mainw->currProto.rpSubmt);
 
   //Get centerpieces names
   QStringList cpnames_t   = mainw->childLValue( "general", "centerpieces" );
@@ -1629,18 +1660,24 @@ void US_ExperGuiRotor::build_protocol_for_data_import( )
   //[OPTICS:] Clear && Fill in
   rpOptic->nochan     = 0;
   rpOptic-> chopts.clear();
+  QString scan1_str, scan2_str, scan3_str;
+  if ( runType == "RI" )
+    scan1_str = "UV/visible";
+  else if ( runType == "IP" )
+    scan2_str = "Rayleigh Interference";
+  
   for ( int i=0; i<chann_list.size(); ++i)
     {
       US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
       os_a.channel   = chann_list[i] + " / A, sample [right]";
-      os_a.scan1     = "UV/visible";
-      os_a.scan2     = "";
-      os_a.scan3     = "";
+      os_a.scan1     = scan1_str;
+      os_a.scan2     = scan2_str;
+      os_a.scan3     = scan3_str;
 
       os_b.channel   = chann_list[i] + " / B, reference [left]";
-      os_b.scan1     = "UV/visible";
-      os_b.scan2     = "";
-      os_b.scan3     = "";
+      os_b.scan1     = scan1_str;
+      os_b.scan2     = scan2_str;
+      os_b.scan3     = scan3_str;
 
       rpOptic->chopts << os_a;
       rpOptic->chopts << os_b;
