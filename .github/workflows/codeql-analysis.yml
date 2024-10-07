@@ -86,6 +86,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install libarchive
+        run: |
+          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -135,6 +138,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install libarchive
+        run: |
+          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
