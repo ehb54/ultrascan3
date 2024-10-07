@@ -159,8 +159,11 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
    private:
       US_ExperimentMain*   mainw;
-      US_RunProtocol::RunProtoRotor*  rpRotor;        // Rotor protocol
-      US_RunProtocol::RunProtoCells* rpCells;
+      US_RunProtocol::RunProtoRotor*      rpRotor;        // Rotor protocol
+      US_RunProtocol::RunProtoCells*      rpCells;
+      US_RunProtocol::RunProtoSolutions*  rpSolut;
+      US_RunProtocol::RunProtoOptics*     rpOptic;  
+      US_RunProtocol::RunProtoRanges*     rpRange;  
   
       US_Help  showHelp;
       QComboBox* cb_lab;                              // Lab combo box
@@ -522,6 +525,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       QMap <int, bool> solution_comment_init;
       int      mxrow;                           // Max rows (24)
       //QVector< QComboBox* >    cc_solus;        // Solution choice pointers
+      QMap<QString,QString> get_solutions_public( void );
       
    private:
       US_ExperimentMain*   mainw;
@@ -1124,6 +1128,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile( void );
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
+      QMap< QString, QString> get_all_solution_names( void );
   
       void back_to_pcsa( void );
 	

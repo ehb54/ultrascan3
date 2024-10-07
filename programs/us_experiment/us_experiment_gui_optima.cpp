@@ -246,6 +246,12 @@ void US_ExperimentMain::reset( void )
 
 }
 
+QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
+{
+  
+  return epanSolutions->get_solutions_public();
+}  
+
 US_AnaProfile* US_ExperimentMain::get_aprofile( )
 {
   return &(epanAProfile->sdiag->currProf);
@@ -1535,40 +1541,148 @@ void US_ExperGuiRotor::importDisk( void )
 // for dataImport
 void US_ExperGuiRotor::build_protocol_for_data_import( )
 {
+  qDebug() << "Building protocol for dataImport:";
+  
   // rpSpeed             = &(mainw->currProto.rpSpeed);
   rpCells             = &(mainw->currProto.rpCells);
-  // rpSolut             = &(mainw->currProto.rpSolut);
-  // rpOptic             = &(mainw->currProto.rpOptic);
-  // rpRange             = &(mainw->currProto.rpRange);
+  rpSolut             = &(mainw->currProto.rpSolut);
+  rpOptic             = &(mainw->currProto.rpOptic);
+  rpRange             = &(mainw->currProto.rpRange);
   // rpSubmt             = &(mainw->currProto.rpSubmt);
 
-  //channels list
+  //Get centerpieces names
+  QStringList cpnames_t   = mainw->childLValue( "general", "centerpieces" );
+  qDebug() << "cpnames_t: " << cpnames_t;
+
+  //Get solutions names & IDs
+  QMap< QString, QString > solutions_t   = mainw->get_all_solution_names();
+  qDebug() << "solutions_t [names]: "         << solutions_t.keys();
+  qDebug() << "solutions_t [ID of the 1st]: " << solutions_t[solutions_t.keys()[0]];
+   
+  //[FROM  DATA IMPORTED:] Channels' list, channel-to-wavelength ranges 
   QStringList chann_list;
+  QMap < QString, QStringList > chann_to_wvls;
   for( int i=0; i< all_tripinfo.size(); ++i)
     {
       qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
-      chann_list << all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
+      QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
+      QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
+      QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified(); 
+      chann_list << channumber;
+      chann_to_wvls[ channame ] << wvl;
     }
   chann_list. removeDuplicates();
-  qDebug() << "List of unique channels -- " << chann_list;
+  qDebug() << "List of unique channel numbers -- " << chann_list;
+  qDebug() << "List of unique channel names   -- " << chann_to_wvls.keys();
   
-  // rpCells->ncell          = attr.value( "total_holes" ).toString().toInt();
-  // rpCells->nused          = attr.value( "used_holes"  ).toString().toInt();
 
+  //[CELLS:] Clear && Fill in
+  rpCells->nused         = 0;
   rpCells->used. clear();
   for ( int i=0; i<chann_list.size(); ++i)
     {
       US_RunProtocol::RunProtoCells::CellUse cu;
       cu.cell        = chann_list[i].toInt();
-      cu.centerpiece = "Epon 2-channel standard";
-      cu.windows     = "quartz";
+      cu.centerpiece = cpnames_t[0]; // <-- US_RunProtocol::RunProtoSolutions*  rpSolut; 
+      cu.windows     = "quartz";     // <-- hard code ?
       //cu.cbalance    = ?;
       rpCells-> used << cu;
     }
   rpCells->nused = chann_list.size();
 
-  //do we need to initPanels() ?
-  mainw->initPanels();
+  //[SOLS:] Clear && Fill in the 1st in the list
+  rpSolut-> nschan   = 0;
+  rpSolut-> chsols.clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoSolutions::ChanSolu cs_a, cs_b;
+      cs_a.channel  = chann_list[i] + " / A, sample [right]";
+      cs_a.solution = solutions_t.keys()[0];
+      cs_a.sol_id   = solutions_t[solutions_t.keys()[0]];
+      //comment?
+      
+      cs_b.channel  = chann_list[i] + " / B, reference [left]";
+      cs_b.solution = solutions_t.keys()[0];
+      cs_b.sol_id   = solutions_t[solutions_t.keys()[0]];
+      //comment?
+      
+      rpSolut->chsols << cs_a;
+      rpSolut->chsols << cs_b;
+    }
+  rpSolut->nschan    = chann_list.size()*2;
+  rpSolut->nuniqs    = 0;
+  rpSolut->solus.clear();
+  rpSolut->sids .clear();
+  
+  for ( int ii = 0; ii < rpSolut->nschan; ii++ )
+    {
+      QString sdesc   = rpSolut->chsols[ ii ].solution;
+      
+      if ( ! rpSolut->solus.contains( sdesc ) )
+	{  // Update unique solutions list and correspond Id list
+	  rpSolut->solus << sdesc;
+	  rpSolut->sids  << rpSolut->chsols[ ii ].sol_id;
+	  rpSolut->nuniqs++;
+	}
+    }
+
+  //[OPTICS:] Clear && Fill in
+  rpOptic->nochan     = 0;
+  rpOptic-> chopts.clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
+      os_a.channel   = chann_list[i] + " / A, sample [right]";
+      os_a.scan1     = "UV/visible";
+      os_a.scan2     = "";
+      os_a.scan3     = "";
+
+      os_b.channel   = chann_list[i] + " / B, reference [left]";
+      os_b.scan1     = "UV/visible";
+      os_b.scan2     = "";
+      os_b.scan3     = "";
+
+      rpOptic->chopts << os_a;
+      rpOptic->chopts << os_b;
+    }
+  rpOptic->nochan = chann_list.size()*2;
+  
+  //[RANGES:] Clear && Fill in
+  rpRange-> nranges       = 0;
+  rpRange-> chrngs.clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoRanges::Ranges rng_a, rng_b;
+
+      //A channel
+      rng_a.channel = chann_list[i] + " / A, sample [right]";
+      rng_a.lo_rad  = 5.75;
+      rng_a.hi_rad  = 7.25;
+      for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
+	{
+	  double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
+	  rng_a.wvlens << wvl_c;
+	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
+	}
+
+      //B channel
+      rng_b.channel = chann_list[i] + " / B, reference [left]";
+      rng_b.lo_rad  = 5.75;
+      rng_b.hi_rad  = 7.25;
+      for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
+      	{
+      	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
+      	  rng_b.wvlens << wvl_c;
+      	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+      	}
+
+      rpRange->chrngs << rng_a;
+      rpRange->chrngs << rng_b;
+    }
+  rpRange-> nranges = chann_list.size()*2;
+    
+  //Now, we *CAN* initPanels(): make sure all above is properly set!!!
+  //mainw->initPanels();
 }
 
 // Slot for change in Lab selection
@@ -3847,6 +3961,11 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
 
 DbgLv(1) << "EGSo:main: call initPanel()";
    initPanel();
+}
+
+QMap< QString, QString> US_ExperGuiSolutions::get_solutions_public()
+{
+  return solu_ids;
 }
 
 //Function to clear solution's comment when colution changed
