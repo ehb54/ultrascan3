@@ -1145,7 +1145,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
    public slots:
       void update_progress( int, int );
       void show_zeno_options();
-      void display_default_differences();
+      void display_default_differences( bool update_bead_model_suffix = true );
       void clear_display();
       void reload_pdb();
       int  calc_somo( bool no_ovlp_removal = false );     // compute asa and then refine bead_model

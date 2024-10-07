@@ -4159,7 +4159,7 @@ QString US_Hydrodyn::default_differences_saxs_options()
    return str;
 }
 
-void US_Hydrodyn::display_default_differences()
+void US_Hydrodyn::display_default_differences( bool update_bead_model_suffix )
 {
    QString str =
       default_differences_main() +
@@ -4179,21 +4179,23 @@ void US_Hydrodyn::display_default_differences()
    {
       editor_msg( "dark green", "\nAll options set to default values\n");
    }
-   le_bead_model_suffix->setText(
-                                 setSuffix
-                                 ? (
-                                    "<center>"
-                                    + getExtendedSuffix(true, true)
-                                    + " / "
-                                    + getExtendedSuffix(true, false)
-                                    + "</center>"
-                                    + "<center>"
-                                    + getExtendedSuffix(true, true, true)
-                                    + " / "
-                                    + getExtendedSuffix(true, true, true, true ) 
-                                    + "</center>"
-                                    )
-                                 : "");
+   if ( update_bead_model_suffix ) {
+      le_bead_model_suffix->setText(
+                                    setSuffix
+                                    ? (
+                                       "<center>"
+                                       + getExtendedSuffix(true, true)
+                                       + " / "
+                                       + getExtendedSuffix(true, false)
+                                       + "</center>"
+                                       + "<center>"
+                                       + getExtendedSuffix(true, true, true)
+                                       + " / "
+                                       + getExtendedSuffix(true, true, true, true ) 
+                                       + "</center>"
+                                       )
+                                    : "");
+   }
 }
 
 void US_Hydrodyn::config()
