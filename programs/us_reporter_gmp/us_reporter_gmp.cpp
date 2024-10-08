@@ -3457,9 +3457,12 @@ void US_ReporterGMP::generate_report( void )
             
       //Update autoflow record with 'E-SIGNATURES'
       qry. clear();
+      // qry << "update_autoflow_at_report"
+      // 	  << runID
+      // 	  << optimaName;
       qry << "update_autoflow_at_report"
-	  << runID
-	  << optimaName;
+	  << AutoflowID_auto;
+      
       //db->query( qry );
       
       int status = db->statusQuery( qry );

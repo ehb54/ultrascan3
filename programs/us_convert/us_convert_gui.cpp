@@ -7834,12 +7834,18 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    
    //finally, update autoflow record
    qry.clear();
+   // qry << "update_autoflow_at_lims_import"
+   //     << runID_numeric
+   //     << filename_toDB
+   //     << OptimaName
+   //     << QString::number( autoflowIntensityID )
+   //     << QString::number( autoflowStatusID );
+
    qry << "update_autoflow_at_lims_import"
-       << runID_numeric
        << filename_toDB
-       << OptimaName
        << QString::number( autoflowIntensityID )
-       << QString::number( autoflowStatusID );
+       << QString::number( autoflowStatusID )
+       << QString::number( autoflowID_passed );
 
    qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
@@ -7872,9 +7878,11 @@ void US_ConvertGui::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << runID_numeric
-       << OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << runID_numeric
+   //     << OptimaName;
+   qry  << "delete_autoflow_record_by_id" 
+	<< QString::number( autoflowID_passed );
 
    //db->query( qry );
 

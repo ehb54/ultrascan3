@@ -1935,9 +1935,11 @@ void US_XpnDataViewer::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << RunID_to_retrieve
-       << OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << RunID_to_retrieve
+   //     << OptimaName;
+   qry << "delete_autoflow_record_by_id"
+       << QString::number( autoflowID_passed );
 
    //db->query( qry );
 

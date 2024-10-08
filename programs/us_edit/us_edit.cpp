@@ -9189,9 +9189,11 @@ void US_Edit::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << runID_numeric
-       <<  OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << runID_numeric
+   //     <<  OptimaName;
+   qry << "delete_autoflow_record_by_id"
+       << QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -9403,10 +9405,13 @@ void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisI
    //   }
 
    QStringList qry;
+   // qry << "update_autoflow_at_edit_data"
+   //     << runID_numeric
+   //     << AnalysisIDsString
+   //     << OptimaName;
    qry << "update_autoflow_at_edit_data"
-       << runID_numeric
        << AnalysisIDsString
-       << OptimaName;
+       << QString::number( autoflowID_passed );
 
    qDebug() << "Updating Autoflow tables with analysisIDs!!!";
    qDebug() << "query: " << qry;
