@@ -139,7 +139,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       void        setFirstLab( void );
-      
+      void        reset_dataSource_public( void );
+  
            
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -163,7 +164,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       US_RunProtocol::RunProtoCells*      rpCells;
       US_RunProtocol::RunProtoSolutions*  rpSolut;
       US_RunProtocol::RunProtoOptics*     rpOptic;  
-      US_RunProtocol::RunProtoRanges*     rpRange;  
+      US_RunProtocol::RunProtoRanges*     rpRange;
+      US_RunProtocol::RunProtoAProfile*   rpAprof;
   
       US_Help  showHelp;
       QComboBox* cb_lab;                              // Lab combo box
@@ -1130,6 +1132,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      void reset_dataDisk( void );
   
       void back_to_pcsa( void );
 	

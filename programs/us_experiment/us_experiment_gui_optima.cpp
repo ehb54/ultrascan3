@@ -171,7 +171,7 @@ void US_ExperimentMain::back_to_pcsa( void )
 void US_ExperimentMain::switch_to_run_manager( void )
 {
   reset();
-
+  
   emit back_to_initAutoflow();
 }
      
@@ -213,6 +213,8 @@ void US_ExperimentMain::reset( void )
 
   epanGeneral->resetPanel();
 
+  //Also, reset source of data at 2. Lab/Rotor to default (not from Disk!)
+  reset_dataDisk();
 
   /*
   // Reset General panel
@@ -244,6 +246,11 @@ void US_ExperimentMain::reset( void )
   epanAProfile->initPanel();
   */
 
+}
+
+void US_ExperimentMain::reset_dataDisk()
+{
+  epanRotor->reset_dataSource_public();
 }
 
 QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
@@ -1206,6 +1213,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
+   // rpSpeed             = &(mainw->currProto.rpSpeed);
+   rpCells             = &(mainw->currProto.rpCells);
+   rpSolut             = &(mainw->currProto.rpSolut);
+   rpOptic             = &(mainw->currProto.rpOptic);
+   rpRange             = &(mainw->currProto.rpRange);
+   rpAprof             = &(mainw->currProto.rpAprof);
+   // rpSubmt             = &(mainw->currProto.rpSubmt);
+
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1455,13 +1470,20 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 }
 
 
+//
+void US_ExperGuiRotor::reset_dataSource_public( void )
+{
+  ck_disksource ->setChecked( false );
+  importDataPath = "";
+}
+
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
 {
   qDebug() << "In checking ck_importDisk; checked, !checked = "
 	   << checked << !checked;
 
-  importDisk_cleanProto();
+  //importDisk_cleanProto();
     
   pb_importDisk   -> setVisible( checked );
   le_dataDiskPath -> setVisible( checked );
@@ -1481,13 +1503,16 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
 //Clean all internals for protocol
 void US_ExperGuiRotor::importDisk_cleanProto()
 {
-  // rpSpeed             = &(mainw->currProto.rpSpeed);
-  rpCells             = &(mainw->currProto.rpCells);
-  rpSolut             = &(mainw->currProto.rpSolut);
-  rpOptic             = &(mainw->currProto.rpOptic);
-  rpRange             = &(mainw->currProto.rpRange);
-  // rpSubmt             = &(mainw->currProto.rpSubmt);
+  mainw->currProto.runname       = "";
+  mainw->currProto.protoname     = "";
+  mainw->currProto.exp_label     = "";
+  mainw->currProto.protoGUID     = QString( "00000000-0000-0000-0000-000000000000" );
+  mainw->currProto.temperature   = 20.0;
+  mainw->currProto.temeq_delay   = 10.0;
 
+  // mainw->currProto = US_RunProtocol();
+  // mainw->loadProto = US_RunProtocol();
+  
   rpCells->nused     = 0;
   rpCells->used. clear();
   
@@ -1502,6 +1527,13 @@ void US_ExperGuiRotor::importDisk_cleanProto()
 
   rpRange-> nranges   = 0;
   rpRange-> chrngs.clear();
+
+  //mainw->loadProto = mainw->currProto;
+  
+  //mainw->currAProf = US_AnaProfile();
+  //mainw->loadAProf = US_AnaProfile();
+  //mainw->loadAProf = US_AnaProfile();
+  //epanAProfile->reset_sdiag();
 }
 
 // Import from disk
@@ -1574,12 +1606,7 @@ void US_ExperGuiRotor::build_protocol_for_data_import( QString runType )
 {
   qDebug() << "Building protocol for dataImport:";
   
-  // // rpSpeed             = &(mainw->currProto.rpSpeed);
-  // rpCells             = &(mainw->currProto.rpCells);
-  // rpSolut             = &(mainw->currProto.rpSolut);
-  // rpOptic             = &(mainw->currProto.rpOptic);
-  // rpRange             = &(mainw->currProto.rpRange);
-  // // rpSubmt             = &(mainw->currProto.rpSubmt);
+  importDisk_cleanProto();
 
   //Get centerpieces names
   QStringList cpnames_t   = mainw->childLValue( "general", "centerpieces" );
