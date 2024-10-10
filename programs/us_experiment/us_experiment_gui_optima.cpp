@@ -1562,6 +1562,7 @@ void US_ExperGuiRotor::importDisk( void )
 					  QDir::Files | QDir::Readable, QDir::Name );
 
   all_tripinfo.clear();
+  runTypes_map.clear();
 
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -1582,17 +1583,28 @@ void US_ExperGuiRotor::importDisk( void )
       tripinfo.tripleDesc  = triple;
       tripinfo.description = rdata.description;
       tripinfo.channelID   = trx + 1;
-
+      tripinfo.tripleFilename = fname;
+	
       all_tripinfo << tripinfo;
+
+      //Now runTypes
+      QString runType    = QString( fname ).section( ".", -5, -5 );
+      QString channumber = tripinfo.tripleDesc.split(" / ")[0].simplified();
+      runTypes_map[ channumber ] << runType;
     }
 
-  QString fname    = files[ 0 ];
-  QString runType  = QString( fname ).section( ".", -5, -5 );
-
+  //Remove duplicates in runTypes_map
+  for (int i=0; i<runTypes_map.keys().size(); ++i )
+    {
+      runTypes_map[ runTypes_map.keys()[i] ].removeDuplicates();
+      qDebug() << "Channel: " << runTypes_map.keys()[i]
+	       << ", types: " << runTypes_map[ runTypes_map.keys()[i] ];
+    }
+  
   //End triples inquiry
   
   //Build protocol based on read-in channels, triples, ranges...
-  build_protocol_for_data_import( runType );
+  build_protocol_for_data_import( runTypes_map );
 
   //Maybe insert informing dialog (on channels, ranges)??
 
@@ -1602,7 +1614,7 @@ void US_ExperGuiRotor::importDisk( void )
 }
 
 // for dataImport
-void US_ExperGuiRotor::build_protocol_for_data_import( QString runType )
+void US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringList> runTypes )
 {
   qDebug() << "Building protocol for dataImport:";
   
@@ -1627,7 +1639,10 @@ void US_ExperGuiRotor::build_protocol_for_data_import( QString runType )
       QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
       QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified(); 
       chann_list << channumber;
-      chann_to_wvls[ channame ] << wvl;
+
+      QString runType    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
+      if ( runType == "RI" )
+	chann_to_wvls[ channame ] << wvl;
     }
   chann_list. removeDuplicates();
   qDebug() << "List of unique channel numbers -- " << chann_list;
@@ -1687,14 +1702,19 @@ void US_ExperGuiRotor::build_protocol_for_data_import( QString runType )
   //[OPTICS:] Clear && Fill in
   rpOptic->nochan     = 0;
   rpOptic-> chopts.clear();
-  QString scan1_str, scan2_str, scan3_str;
-  if ( runType == "RI" )
-    scan1_str = "UV/visible";
-  else if ( runType == "IP" )
-    scan2_str = "Rayleigh Interference";
-  
   for ( int i=0; i<chann_list.size(); ++i)
     {
+      //decide on optics types
+      QString scan1_str, scan2_str, scan3_str;
+      QStringList ops_types = runTypes[ chann_list[i] ];
+      for (int j=0; j<ops_types.size(); ++j )
+	{
+	  if ( ops_types[j] == "RI" )
+	    scan1_str = "UV/visible";
+	  else if ( ops_types[j] == "IP" )
+	    scan2_str = "Rayleigh Interference";
+	}
+      
       US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
       os_a.channel   = chann_list[i] + " / A, sample [right]";
       os_a.scan1     = scan1_str;

@@ -156,6 +156,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
       bool message_instr_shown;
       QList< US_Convert::TripleInfo >    all_tripinfo;
+      QMap <QString, QStringList> runTypes_map;
     
 
    private:
@@ -256,7 +257,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
   void importDisk( void );
   void importDiskChecked( bool );
-  void build_protocol_for_data_import( QString );
+  void build_protocol_for_data_import( QMap< QString, QStringList > );
   void importDisk_cleanProto( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
