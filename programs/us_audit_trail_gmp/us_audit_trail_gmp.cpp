@@ -151,8 +151,8 @@ void US_auditTrailGMP::loadGMPReport( void )
   //read 'data' .tar.gz for autoflowGMPReport record:
   if ( gmpReport_runname_selected_c.  contains("combined") )
     {
-      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
-      gmpReport_runname_selected. simplified();
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0]. simplified();
+      //gmpReport_runname_selected. simplified();
     }
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
