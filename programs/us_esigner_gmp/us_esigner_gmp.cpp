@@ -651,8 +651,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
   //read 'data' .tar.gz for autoflowGMPReport record:
   if ( gmpReport_runname_selected_c.  contains("combined") )
     {
-      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
-      gmpReport_runname_selected. simplified();
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0]. simplified();
+      //gmpReport_runname_selected. simplified();
     }
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
@@ -3237,8 +3237,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
   //Correct name for 'combined' runs:
   if ( gmpReport_runname_selected_c.  contains("combined") )
     {
-      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
-      gmpReport_runname_selected. simplified();
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0]. simplified();
+      //gmpReport_runname_selected. simplified();
     }
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
@@ -3388,8 +3388,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   //read 'data' .tar.gz for autoflowGMPReport record:
   if ( gmpReport_runname_selected_c.  contains("combined") )
     {
-      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
-      gmpReport_runname_selected. simplified();
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0]. simplified();
+      //gmpReport_runname_selected. simplified();
     }
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
