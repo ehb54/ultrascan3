@@ -1028,12 +1028,15 @@ void US_ReporterGMP::check_for_missing_models ( void )
 QString US_ReporterGMP::missing_models_msg( void )
 {
   QString models_str;
+  int num_dropped_triples = 0;
+  int num_total_missed_triples = 0;
 
   QMap < QString, QStringList >::iterator mmm;
   for ( mmm = Triple_to_ModelsMissing.begin(); mmm != Triple_to_ModelsMissing.end(); ++mmm )
     {
       if ( !mmm.value().isEmpty() )
 	{
+	  ++num_total_missed_triples;
 	  //check if missing models because of triple dropped
 	  bool isDropped = false;
 	  QString c_triple = mmm.key();
@@ -1044,12 +1047,13 @@ QString US_ReporterGMP::missing_models_msg( void )
 	      d_triple.replace(".","");
 	      if ( c_triple == d_triple )
 		{
+		  ++num_dropped_triples;
 		  isDropped = true;
 		  break;
 		}
 	    }
 	  
-	  //compose
+	  //compose : Do we want to report on dropped triples at all ?
 	  models_str += mmm.key() + ", missing models: " + mmm.value().join(", ");
 	  if( isDropped )
 	    models_str += "<font color='red'> [triple dropped]</font>";
@@ -1057,8 +1061,13 @@ QString US_ReporterGMP::missing_models_msg( void )
 	  models_str += "<br>";
 	}
     }
-  
-  if ( !models_str.isEmpty() )
+
+  qDebug() << "Number of total missing triples; Number of dropped triples -- "
+	   << num_total_missed_triples << "; " << num_dropped_triples;
+
+  // Do we want to report on dropped triples at all ?
+  // Do ONLY dropped triples trigger report to be non-GMP ?
+  if ( !models_str.isEmpty() & num_total_missed_triples != num_dropped_triples ) 
     GMP_report = false;
   
   return models_str;
@@ -1133,6 +1142,13 @@ void US_ReporterGMP::check_models ( int autoflowID )
     {
       QString channel_desc_alt = chndescs_alt[ i ];
       QString channel_desc     = chndescs[ i ];
+
+      //check if channel meant to be analyzed/reported
+      int analysis_to_be_run = analysis_runs[ i ];
+      int report_to_be_run   = report_runs[ i ];
+
+      if ( analysis_to_be_run == 0 || report_to_be_run == 0 )
+	continue;
 
       QList < double > chann_wvls    = ch_wvls[ channel_desc_alt ];
       int chann_wvl_number           = chann_wvls.size();
@@ -1382,8 +1398,8 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   //read 'data' .tar.gz for autoflowGMPReport record:
   if ( gmpReport_runname_selected_c.  contains("combined") )
     {
-      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0];
-      gmpReport_runname_selected. simplified();
+      gmpReport_runname_selected = gmpReport_runname_selected_c.split("(")[0]. simplified();
+      //gmpReport_runname_selected. simplified();
     }
   else
     gmpReport_runname_selected = gmpReport_runname_selected_c;
@@ -1978,6 +1994,9 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   chndescs               = currAProf.chndescs;
   //Channel alt_descriptions
   chndescs_alt           = currAProf.chndescs_alt;
+  //Channel run/analysis_run
+  analysis_runs          = currAProf.analysis_run;
+  report_runs            = currAProf.report_run;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
   //Channel wavelengths
