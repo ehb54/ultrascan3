@@ -171,7 +171,7 @@ void US_auditTrailGMP::loadGMPReport( void )
   AProfileGUID = p_details[ "aprofileguid" ];
   qDebug() << "AProfileGUID: " << AProfileGUID;
   
-  p_details[ "gmp_runname" ] = gmpReport_runname_selected_c;
+  p_details[ "gmp_runname" ] = gmpReport_runname_selected;
   initPanel_auto( p_details );
 
   // Print PDF && enable View:
