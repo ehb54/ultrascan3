@@ -49,6 +49,7 @@ RUN apt-get install -y x11-apps
 RUN apt-get install -y telnet
 RUN apt-get install -y $apt_python_version
 RUN apt-get install -y rsync
+RUN apt-get install -y libarchive-dev
 
 # bits to ease development/testing
 

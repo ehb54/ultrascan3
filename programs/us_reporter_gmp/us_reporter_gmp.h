@@ -78,6 +78,8 @@ class US_ReporterGMP : public US_Widgets
         US_AnaProfile::AnaProfPCSA cAPp;    //!< PCSA analysis profile
         QStringList chndescs;               //!< Channel descriptions
         QStringList chndescs_alt;           //!< Alternative channel descriptions
+        QList<int> analysis_runs;           //!< Analysis runs  
+        QList<int> report_runs;             //!< Report runs
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports_internal; //!< Internal channel reports
         QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths

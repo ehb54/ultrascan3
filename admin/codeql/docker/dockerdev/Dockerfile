@@ -23,6 +23,7 @@ RUN apt-get install -y xorg
 RUN apt-get install -y x11-apps
 RUN apt-get install -y telnet
 RUN apt-get install -y cmake
+RUN apt-get install -y libarchive-dev
 
 # qt
 RUN apt-get install -y qtbase5-dev
