@@ -4543,6 +4543,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
    }
 
+   bool all_scaled       = files_selected_count && files_selected_count == (unsigned int) selected_files.filter( "_scaled_" ).size();
+
    baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true";
 
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
@@ -4575,7 +4577,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    // pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
-   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && ( !files_are_time || all_scaled ) );
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
