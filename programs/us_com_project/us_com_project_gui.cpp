@@ -2044,7 +2044,8 @@ void US_InitDialogueGui::do_create_autoflowStatus_for_failedRun( QMap < QString,
   
   qDebug() << "[FAILED run init]: new_autoflowStatusGMPCreate_record qry -- " << qry;
   
-  int autoflowStatusID = db->functionQuery( qry );
+  int autoflowStatusID = 0;
+  autoflowStatusID = db->functionQuery( qry );
   
   if ( !autoflowStatusID )
     {
