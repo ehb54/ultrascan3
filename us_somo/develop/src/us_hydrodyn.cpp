@@ -2019,7 +2019,7 @@ void US_Hydrodyn::set_expert( bool expert )
 {
    if ( expert )
    {
-      //      pb_best->show();
+      // pb_best->show();
 #if QT_VERSION < 0x040000
       lookup_tables->insertItem(us_tr("Make test set"), this, SLOT( make_test_set() ) );
 #endif

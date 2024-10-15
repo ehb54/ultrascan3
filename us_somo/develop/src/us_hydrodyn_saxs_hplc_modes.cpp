@@ -7022,6 +7022,16 @@ void US_Hydrodyn_Saxs_Hplc::timeshift()
 
       double minq_ref  = f_qs[ selected_files[ 0 ] ][ 0 ];
       double maxq_ref  = f_qs[ selected_files[ 0 ] ].back();
+
+      for ( auto file : selected_files ) {
+         if ( minq_ref > f_qs[ file ][ 0 ] ) {
+            minq_ref = f_qs[ file ][ 0 ];
+         }
+         if ( maxq_ref < f_qs[ file ].back() ) {
+            maxq_ref = f_qs[ file ].back();
+         }
+      }
+
       double range_ref  = maxq_ref  - minq_ref;
 
       // double minq_w    = minq_ref - maxq_conc;
