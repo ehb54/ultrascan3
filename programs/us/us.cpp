@@ -773,7 +773,7 @@ void US_Win::help( int index )
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( REVISION ) );
+            "E-mail: contact@aucsolutions.com" ).arg( US_Version ).arg( REVISION ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
