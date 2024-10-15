@@ -603,7 +603,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox    * cb_testiq_from_gaussian;
 
       QLabel                *    lbl_testiq_gaussians;
-      QButtonGroup         *    bg_testiq_gaussians;
+      QButtonGroup          *    bg_testiq_gaussians;
       QRadioButton          *    rb_testiq_from_i_t;
       QHBoxLayout           *    hbl_testiq_gaussians;
       vector < QRadioButton * >  rb_testiq_gaussians;
@@ -724,6 +724,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void usp_config_guinier_plot_summary( const QPoint & );
 
    private:
+
+      QString                             gaussian_info( const vector < double > & gaussians, const QString & msg = "" );
 
       void                                normalize( set < QString > & produced );
       int                                 guinier_scroll_pos;

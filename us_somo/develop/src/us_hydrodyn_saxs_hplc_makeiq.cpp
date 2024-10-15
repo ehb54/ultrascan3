@@ -1237,6 +1237,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
       double conc_area;
 
+      QTextStream( stdout ) << gaussian_info( ref_gaussians, "create_i_of_q(): Reference" ) << "\n";
+      editor_msg( "darkblue", gaussian_info( ref_gaussians, "Concentration " ) + "\n" );
+      QTextStream( stdout ) << gaussian_info( conc_gaussians, "create_i_of_q():, Concentration" ) << "\n";
+      editor_msg( "darkblue", gaussian_info( conc_gaussians, "Concentration " ) + "\n" );
+
       for ( unsigned int i = 0; i < ( unsigned int )conv.size(); i++ )
       {
          tmp_gc[ 0 ] = conc_gaussians[ 0 + i * gaussian_type_size ];
@@ -1280,6 +1285,9 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       }
       // us_qdebug( US_Vector::qs_vector3( "conc, ref, new conc", conc_gaussians, ref_gaussians, new_conc_gaussians ) );
       conc_gaussians = new_conc_gaussians;
+      QTextStream( stdout ) << gaussian_info( conc_gaussians, "create_i_of_q():, Adjusted Concentration" ) << "\n";
+      editor_msg( "darkblue", gaussian_info( conc_gaussians, "Adjusted Concentration " ) + "\n" );
+
       add_plot( lbl_conc_file->text() + "_sas_adjusted" , tv, compute_gaussian_sum( tv, conc_gaussians), true, false );
    }
 

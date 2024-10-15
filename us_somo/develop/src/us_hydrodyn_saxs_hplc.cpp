@@ -6694,6 +6694,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    // gaussian_mode = true;
    mode_select( MODE_GAUSSIAN );
 
+   QTextStream( stdout ) << gaussian_info( gaussians, "gauss_start()" ) << "\n";
+   editor_msg( "darkblue", gaussian_info( gaussians, "Initial " ) + "\n" );
+
    running               = true;
 
    // this must be wrong:!! ***************, units do not make sense

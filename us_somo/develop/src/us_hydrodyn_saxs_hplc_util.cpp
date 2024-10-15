@@ -5365,3 +5365,35 @@ void US_Hydrodyn_Saxs_Hplc::reset_saxs_hplc_params() {
    saxs_hplc_param_solvent_electron_density = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density, 0, 'f', 4 ).toDouble();
 }
    
+QString US_Hydrodyn_Saxs_Hplc::gaussian_info( const vector < double > & gs, const QString & msg ) {
+   double tot_area = 0e0;
+   vector < double > g_area;
+   for ( size_t g = 0; g < gs.size(); g += gaussian_type_size )
+   {
+      g_area.push_back( gs[ g + 0 ] * gs[ g + 2 ] * M_SQRT2PI );
+      tot_area += g_area.back();
+   }
+
+   QStringList qsl_result;
+
+   QString use_msg = msg;
+   if ( !use_msg.isEmpty() ) {
+      use_msg += " ";
+   }
+
+   for ( size_t g = 0; g < gs.size(); g += gaussian_type_size )
+   {
+      qsl_result <<
+         QString( "%1Gaussian %2: center %3; height %4; width %5; area %6; % of total %7" ) 
+         .arg( use_msg )
+         .arg( (g/ gaussian_type_size) + 1 )
+         .arg( gs[ g + 1 ] )
+         .arg( gs[ g + 0 ] )
+         .arg( gs[ g + 2 ] )
+         .arg( g_area[ g/gaussian_type_size ] )
+         .arg( tot_area != 0e0 ? 100e0 * g_area[ g/gaussian_type_size ] / tot_area : 0e0 )
+         ;
+   }
+
+   return qsl_result.join( "\n" );
+}

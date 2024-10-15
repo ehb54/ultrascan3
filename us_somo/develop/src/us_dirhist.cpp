@@ -73,6 +73,7 @@ void US_Dirhist::setupGUI()
       for ( int i = 0; i < (int) history->size(); ++i )
       {
          t_hist->setItem( i, 0, new QTableWidgetItem( (*history)[ i ] ) );
+         t_hist->item( i, 0 )->setTextAlignment( Qt::AlignRight );
          {
             QString toset =
                last_access->count( (*history)[ i ] )
