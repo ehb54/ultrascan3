@@ -405,6 +405,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_advanced->setMinimumHeight(minHeight1);
    pb_advanced->setPalette( PALET_PUSHB );
    connect(pb_advanced, SIGNAL(clicked()), SLOT(advanced()));
+#warning us_hydrodyn_cluster_advanced currently crashes in setupGUI when initializing t_csv->item( i, i )
+   pb_advanced->setEnabled( false );
 
    pb_submit_pkg = new QPushButton(us_tr("Submit jobs for processing"), this);
    pb_submit_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
