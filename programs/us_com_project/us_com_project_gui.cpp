@@ -2400,7 +2400,12 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       qDebug() << "1. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
 	
       if ( time_started.toString().isEmpty() )
-	autoflowentry << QString( tr( "NOT STARTED" ) );
+	{
+	  if ( optimaname. contains("Optima") ) 
+	    autoflowentry << QString( tr( "NOT STARTED" ) );
+	  else
+	    autoflowentry << QString( tr( "N/A" ) );
+	}
       else
 	{
 	  if ( status == "LIVE_UPDATE" )
