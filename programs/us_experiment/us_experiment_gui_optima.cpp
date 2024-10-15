@@ -248,6 +248,11 @@ void US_ExperimentMain::reset( void )
 
 }
 
+void US_ExperimentMain::get_importDisk_data( QString d_type, QMap< QString, QStringList> & f_data )
+{
+  epanRotor->get_chann_ranges_public( d_type, f_data );
+}
+
 void US_ExperimentMain::reset_dataDisk()
 {
   epanRotor->reset_dataSource_public();
@@ -1477,6 +1482,18 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   importDataPath = "";
 }
 
+void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, QStringList>& f_data )
+{
+  f_data. clear();
+  
+  if ( d_type == "ranges" )
+    f_data = channs_ranges;
+  else if ( d_type == "runTypes" )
+    f_data =  runTypes_map;
+  else
+    qDebug() << "Unsupported type of dataDisk!";
+}
+
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
 {
@@ -1561,9 +1578,10 @@ void US_ExperGuiRotor::importDisk( void )
   QStringList files =  readDir.entryList( nameFilters,
 					  QDir::Files | QDir::Readable, QDir::Name );
 
-  all_tripinfo.clear();
-  runTypes_map.clear();
-
+  all_tripinfo. clear();
+  runTypes_map. clear();
+  channs_ranges.clear();
+  
   for ( int trx = 0; trx < files.size(); trx++ )
     {
       QString fname  = files[ trx ];
@@ -1604,17 +1622,55 @@ void US_ExperGuiRotor::importDisk( void )
   //End triples inquiry
   
   //Build protocol based on read-in channels, triples, ranges...
-  build_protocol_for_data_import( runTypes_map );
+  channs_ranges = build_protocol_for_data_import( runTypes_map );
 
   //Maybe insert informing dialog (on channels, ranges)??
-
+  QString msg_wvls;
+  for( int i=0; i<channs_ranges.keys().size(); ++i ) 
+    {
+      QString ch_c    = channs_ranges.keys()[ i ];
+      QString o_types = runTypes_map[ ch_c.left(1) ]
+	. join(",")
+	. replace("RI","UV/vis.")
+	. replace("IP","Interf.");
+      msg_wvls += ch_c;
+	
+      QStringList wvls = channs_ranges[ ch_c ];
+      QString wvl_min, wvl_max;
+      int wvl_count;
+      if ( !wvls.isEmpty() )
+	{
+	  wvl_min = wvls[0];
+	  wvl_max = wvls[wvls.size() - 1];
+	  wvl_count   = wvls.size();
+	  
+	  msg_wvls += ", #wvls: " + QString::number(wvl_count) + " (from " + wvl_min + " to " + wvl_max + ")";
+	}
+       msg_wvls += ", optics: " + o_types + "<br>";
+    }
+  
+  QMessageBox * msg_dataRead = new QMessageBox(this);
+  msg_dataRead->setIcon(QMessageBox::Information);
+  msg_dataRead->setWindowTitle(tr("Raw Data from Disk Read"));
+  msg_dataRead->setText(tr( "Raw data from disk uploaded!<br><br>"
+			    "The following information was identified and propagated into the current protocol:<br><br>"
+			    "<b>Channels / Ranges / Optics:</b><br>"
+			    "<b>%1</b><br>"
+			    "<font color='red'><b>NOTE:</b></font> "
+			    "This information will be regenerated upon new data-from-disk or protocol upload."
+			    )
+			.arg( msg_wvls ) 
+			);
+  
+  msg_dataRead->exec();
+  
   //set up dir path
   le_dataDiskPath   ->setText( dir );
   importDataPath = dir;
 }
 
 // for dataImport
-void US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringList> runTypes )
+QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringList> runTypes )
 {
   qDebug() << "Building protocol for dataImport:";
   
@@ -1767,6 +1823,8 @@ void US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringLis
     
   //Now, we *CAN* initPanels(): make sure all above is properly set!!!
   //mainw->initPanels();
+
+  return chann_to_wvls;
 }
 
 // Slot for change in Lab selection

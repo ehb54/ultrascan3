@@ -3918,6 +3918,32 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
 
+   //[DataFromDisk] Check that channels & ranges correspond to those is protocol:
+   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       qDebug() << "Submit::init: DataDISK ";
+       QStringList msg_to_user;
+       if ( !protocolToDataDisk( msg_to_user ) )
+       	 {
+       	   pb_submit->setEnabled( false );
+       	   pb_saverp->setEnabled( false );
+
+       	   //msg_to_user.removeDuplicates();
+
+	   QMessageBox::critical( this,
+       				  tr( "ATTENTION: Protocol Incorrectly Set" ),
+       				  msg_to_user.join("\n") +
+       				  tr("\n\nProtocol does not correspond to the uploaded data! "
+				     "\nIt appears the protocol was modified from it's original state\n"
+				     "corresponding to the uploaded from disk data. \n"
+				     "Please re-upload data using 2. Lab/Rotor tab and do not modify "
+				     "Cells, Optics, and Ranges settings!\n\n"
+       				     "Saving protocol and run submission are not possible "
+       				     "until this problem is resolved."));
+	 }
+     }
+   
+   
    //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
    //If not, inform user, disable "Submit"/"Save Protocol" buttons
    if ( mainw->us_abde_mode )
@@ -4009,6 +4035,120 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    // 	    << ncells_interference << ", " << nchannels_uvvis;
    qDebug() << "Data Disk ? " << rpRotor->importData;
    qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
+}
+
+bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
+{
+  bool all_matches = true;
+  msg_to_user. clear();
+
+  //Cells, Optics  & Ranges
+  QMap < QString, QStringList > runTypes_from_dataDisk, chann_ranges_from_dataDisk;
+  mainw->get_importDisk_data( "runTypes", runTypes_from_dataDisk );
+  mainw->get_importDisk_data( "ranges", chann_ranges_from_dataDisk );
+  QStringList chann_numbers_from_dataDisk  = runTypes_from_dataDisk.keys();
+
+  QStringList channames_from_dataDisk;
+  for ( int i=0; i<chann_ranges_from_dataDisk.keys().size(); ++i )
+    {
+      QString channame_c = chann_ranges_from_dataDisk.keys()[i];
+      if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
+	channames_from_dataDisk << channame_c;
+    }
+  
+  //Cells
+  if ( chann_numbers_from_dataDisk.size() != rpCells->used.size() )
+    {
+      msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Cells are mismatched!";
+      return false;
+    }
+  for ( int ii = 0; ii < rpCells->used.size(); ii++ )
+    {
+      if ( !chann_numbers_from_dataDisk.contains( QString::number( rpCells->used[ ii ].cell ) ) )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Cells are mismatched!";
+	  return false;
+	}
+    }
+
+  //Optics
+  if ( chann_numbers_from_dataDisk.size()*2 != rpOptic->chopts.size() )
+    {
+      msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Optics cahnnels are mismatched!";
+      return false;
+    }
+  for ( int ii = 0; ii < rpOptic->chopts.size(); ii++ )
+    {
+      QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+	  return false;
+	}
+
+      QStringList r_types;
+      if ( !rpOptic->chopts[ii].scan1 . isEmpty() )
+	r_types << "RI";
+      if ( !rpOptic->chopts[ii].scan2 . isEmpty() )
+	r_types << "IP";
+
+      QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
+      qSort( r_types );
+      qSort( r_types_fromDisk );
+      qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
+      qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
+      if ( r_types != r_types_fromDisk )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Optics Types for channels " + ch_num + " are mismatched!";
+	  return false;
+	}
+      
+    }
+
+  //Ranges
+  if ( channames_from_dataDisk.size() != rpRange->nranges )
+    {
+      msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Range channels are mismatched!";
+      return false;
+    }
+  
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel     = rpRange->chrngs[ ii ].channel;
+      QString chan_red    = channel.split(",")[0].replace(" / ","").trimmed();
+
+      if ( !channames_from_dataDisk.contains( chan_red ) )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Range channels are mismatched!";
+	  return false;
+	}
+
+      QList<double> all_wvls = rpRange->chrngs[ ii ].wvlens;
+      int nwavl              = all_wvls.count();
+
+      //#wvls match
+      if ( nwavl != chann_ranges_from_dataDisk[ chan_red ].size() )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Wvls# for Range channel " +  chan_red + " are mismatched!";
+	  return false;
+	}
+
+      //exact match
+      QStringList all_wvls_list;
+      for ( const auto& c_wvl : all_wvls )
+	all_wvls_list << QString::number( c_wvl);
+
+      qDebug() << "DataDisk Wvl for chann: " << chan_red << chann_ranges_from_dataDisk[ chan_red ];
+      qDebug() << "Protocol Wvl for chann: " << chan_red << all_wvls_list;
+
+      if ( all_wvls_list != chann_ranges_from_dataDisk[ chan_red ] )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Wvls for channel " +  chan_red + " are mismatched!";
+	  return false;
+	}
+    }
+  
+  return all_matches;
 }
 
 bool US_ExperGuiUpload::samplesReferencesWvlsMatch( QStringList& msg_to_user )

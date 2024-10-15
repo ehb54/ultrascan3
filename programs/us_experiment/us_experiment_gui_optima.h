@@ -140,7 +140,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        savePanel( void );
       void        setFirstLab( void );
       void        reset_dataSource_public( void );
-  
+      void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
+   
            
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -157,6 +158,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       bool message_instr_shown;
       QList< US_Convert::TripleInfo >    all_tripinfo;
       QMap <QString, QStringList> runTypes_map;
+      QMap <QString, QStringList> channs_ranges;
     
 
    private:
@@ -257,7 +259,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
   void importDisk( void );
   void importDiskChecked( bool );
-  void build_protocol_for_data_import( QMap< QString, QStringList > );
+  QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
   void importDisk_cleanProto( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
@@ -935,6 +937,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
   
       bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
+      bool    protocolToDataDisk( QStringList& );
       bool    samplesReferencesWvlsMatch( QStringList& );
       bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
@@ -1134,6 +1137,7 @@ class US_ExperimentMain : public US_Widgets
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
       void reset_dataDisk( void );
+      void  get_importDisk_data( QString,  QMap< QString, QStringList>& );
   
       void back_to_pcsa( void );
 	
