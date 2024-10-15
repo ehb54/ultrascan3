@@ -1073,14 +1073,14 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
 #if QT_VERSION < 0x040000
          new QTreeWidgetItem( lv_files, 
                             files[ i ], 
-                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).birthTime().toString() ),
+                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() ),
                             QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                             );
 #else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
-                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).birthTime().toString() )
+                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() )
                                                         << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                                                         ) );
 #endif
