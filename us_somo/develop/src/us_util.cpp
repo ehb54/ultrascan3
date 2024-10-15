@@ -287,11 +287,11 @@ void getFooter(QString *footer)
    date = QDate::currentDate();
    QString year;
    year.sprintf("%d", date.year());
-   *footer = "<hr><font face=helvetica size=-1>\nUltraScan Software Contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>\n";
+   *footer = "<hr><font face=helvetica size=-1>\nUltraScan Software Contact: <a href=mailto:contact@aucsolutions.com>Borries Demeler</a>\n";
    *footer += "<br>\nThis document has been generated with the <i><b>UltraScan II</i></b> Data Analysis Software distribution.\n<br>\n";
    *footer += "All rights reserved, Copyright " + year + " <a href=http://www.uthscsa.edu>The University of";
    *footer += "Texas Health Science Center at San Antonio</a>.\n<br>UltraScan Home Page: ";
-   *footer += "<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>\n<p>\n";
+   *footer += "<a href=http://www.ultrascan.aucsolutions.com>http://www.ultrascan.aucsolutions.com</a>\n<p>\n";
    *footer += "This report was generated on " + date.toString() + "\n</font></body>\n</html>";
 }
 
