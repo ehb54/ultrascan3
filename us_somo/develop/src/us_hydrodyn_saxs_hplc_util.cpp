@@ -5384,16 +5384,24 @@ QString US_Hydrodyn_Saxs_Hplc::gaussian_info( const vector < double > & gs, cons
    for ( size_t g = 0; g < gs.size(); g += gaussian_type_size )
    {
       qsl_result <<
-         QString( "%1Gaussian %2: center %3; height %4; width %5; area %6; % of total %7" ) 
+         QString( "%1Gaussian %2: center %3; height %4; width %5; skew1 %6; skew2 %7; area %8; % of total %9" ) 
          .arg( use_msg )
-         .arg( (g/ gaussian_type_size) + 1 )
+         .arg( ( g / gaussian_type_size ) + 1 )
          .arg( gs[ g + 1 ] )
          .arg( gs[ g + 0 ] )
          .arg( gs[ g + 2 ] )
+         .arg( gaussian_type_size > 3 ? QString( "%1" ).arg( gs[ g + 3 ] ) : "n/a" )
+         .arg( gaussian_type_size > 4 ? QString( "%1" ).arg( gs[ g + 4 ] ) : "n/a" )
          .arg( g_area[ g/gaussian_type_size ] )
          .arg( tot_area != 0e0 ? 100e0 * g_area[ g/gaussian_type_size ] / tot_area : 0e0 )
          ;
    }
 
+   qsl_result <<
+      QString( "%1Gaussian total area %2" )
+      .arg( use_msg )
+      .arg( tot_area )
+      ;
+   
    return qsl_result.join( "\n" );
 }
