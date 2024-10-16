@@ -73,7 +73,7 @@ void US_Dirhist::setupGUI()
       for ( int i = 0; i < (int) history->size(); ++i )
       {
          t_hist->setItem( i, 0, new QTableWidgetItem( (*history)[ i ] ) );
-         t_hist->item( i, 0 )->setTextAlignment( Qt::AlignRight );
+         t_hist->item( i, 0 )->setTextAlignment( Qt::AlignRight | Qt::AlignVCenter );
          {
             QString toset =
                last_access->count( (*history)[ i ] )
@@ -112,6 +112,7 @@ void US_Dirhist::setupGUI()
             }
             t_hist->setItem( i, 4, new QTableWidgetItem( type + qs ) );
          }
+         t_hist->setRowHeight( i, minHeight1 * 1.4 );
       }
    }
    t_hist->setSelectionMode( QAbstractItemView::MultiSelection );t_hist->setSelectionBehavior( QAbstractItemView::SelectRows );
