@@ -1,7 +1,7 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 #include "us_astfem_math.h"
-#include "us_tar.h"
+#include "us_archive.h"
 #include "us_memory.h"
 #include "us_sleep.h"
 #include "us_util.h"
@@ -172,11 +172,12 @@ DbgLv(0) << "work_dir=" << work_dir;
       DbgLv(0) << "Us_Mpi_Analysis  " << REVISION;
 
       // Unpack the input tarfile
-      US_Tar tar;
-
-      int result = tar.extract( tarfile );
-
-      if ( result != TAR_OK ) abort( "Could not unpack " + tarfile );
+      US_Archive archive;
+      bool ok = archive.extract( tarfile );
+      if ( !ok ) {
+         QString error = archive.getError();
+         abort( "Could not unpack\n " + error + "\n" + tarfile );
+      }
 
       // Create a dedicated output directory and make sure it's empty
       // During testing, it may not always be empty
@@ -2481,8 +2482,14 @@ DbgLv(0) << my_rank << ":       model2.description" << model2.description;
    }
 
    // Create the archive file containing all outputs
-   US_Tar tar;
-   tar.create( "analysis-results.tar", files );
+   US_Archive archive;
+   QString filename = "analysis-results.tar";
+   bool ok = archive.compress( files, filename );
+   if ( !ok ) {
+      QString error = archive.getError();
+      abort( "Could not compress files\n " + error + "\n" + filename );
+   }
+
 for(int jf=0;jf<files.size();jf++)
  DbgLv(0) << my_rank << "   tar file" << jf << ":" << files[jf];
 

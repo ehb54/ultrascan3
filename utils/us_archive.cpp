@@ -2,8 +2,12 @@
 #include "archive_entry.h"
 #include "archive.h"
 
-bool US_Archive::extract(const QString& filename, const QString& path) {
+bool US_Archive::extract(const QString& filename, const QString& path, QStringList* file_list) {
 
+    if ( file_list != nullptr ) {
+        file_list->clear();
+    }
+    QStringList file_list_in;
     QDir dir;
     QFileInfo fino(filename);
     QString outpath = path.trimmed();
@@ -89,6 +93,7 @@ bool US_Archive::extract(const QString& filename, const QString& path) {
                 }
                 file.close();
                 emit itemExtracted(entry_path, target.absoluteFilePath());
+                file_list_in << target.absoluteFilePath();
             } else {
                 error = "US_Archive: Error: Failed to open file: " + target.absolutePath();
                 archive_read_close(archive);
@@ -102,6 +107,9 @@ bool US_Archive::extract(const QString& filename, const QString& path) {
 
     archive_read_close(archive);
     archive_read_free(archive);
+    if ( file_list != nullptr) {
+        file_list->append(file_list_in);
+    }
     return true;
 }
 
