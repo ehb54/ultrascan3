@@ -3292,7 +3292,8 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
    double spdelta   = fabs(cspeed - pspeed);               // Speed delta          <-- In case there is deceleration..
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
-   double delaylow  = qCeil( spdelta / ( accel == 0.0 ? 1.0 : accel ) );      // Low seconds delay
+#warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
+   double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
 
    //Uv-vis
    QList< int > dhms;
