@@ -420,7 +420,7 @@ void US_MwlSpeciesSim::set_parameters( void )
    double tim_val      = 0.0;
    double w2t_val      = 0.0;
    double aspeed       = 0.0;
-   double rpm_inc      = rspeed / qCeil( rspeed / (accel==0.0?1.0:accel) );
+   double rpm_inc      = rspeed / qCeil( rspeed / ( accel == 0.0 ? 1.0 : accel ) );
 
    while ( aspeed < rspeed )
    {  // Walk time and omega2t through acceleration zone
