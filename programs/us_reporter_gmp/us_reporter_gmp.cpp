@@ -5081,7 +5081,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
   int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
   int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+  int tf_aend   = ( rspeed + accel1 - 1 ) / (accel1==0?1:accel1);
   
   qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
 	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"

@@ -1321,10 +1321,10 @@ DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
             //qDebug()<<"accln times"<<ssp.time_e_accel<< ss_c<<ss_p<<rs_c<<rs_p ;
             double tmi_accel = 1.0;
             // only back off one time intervall if there are more than one time interval with acceleration
-            if ( naintvs > 1 ) 
+            if ( naintvs > 1 )
             {
                // Back off 1 intervall of acceleration
-               sum_accel    -= accel_p;   
+               sum_accel    -= accel_p;
                tmi_accel     = (double)( naintvs - 1 );
             }
             ssp.acceleration = sum_accel   // Average acceleration

@@ -9785,7 +9785,7 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
       int tf_scan      = speedsteps[ 0 ].time_first;
       int accel1       = (int)qRound( rate );
       int rspeed       = speedsteps[ 0 ].rotorspeed;
-      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+      int tf_aend      = ( rspeed + accel1 - 1 ) / (accel1==0?1:accel1);
 
       QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"
