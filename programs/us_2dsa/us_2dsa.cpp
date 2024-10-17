@@ -1122,7 +1122,7 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
    int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
    int rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
-   int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+   int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
    int accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
 DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
  << rspeed << accel1 << tf_aend << tf_scan
