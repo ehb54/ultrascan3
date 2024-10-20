@@ -3,7 +3,6 @@ UltraScan III
 Copyright 1989 - 2024
 
 Copyright � 1989?2021 Borries Demeler, Ph.D.
-Copyright � 1997?2021 The University of Montana
 All rights reserved.
 
 UltraScan is free software; you can redistribute it and/or modify it under the

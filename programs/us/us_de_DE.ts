@@ -336,12 +336,6 @@ For more information, please visit:
 http://www.ultrascan.aucsolutions.com/
 
 The author can be reached at:
-The University of Texas Health Science Center
-Department of Biochemistry
-7703 Floyd Curl Drive
-San Antonio, Texas 78229-3900
-voice: (210) 567-6592
-Fax:   (210) 567-6595
 E-mail: borries.demeler@umontana.edu</source>
         <translation type="unfinished"></translation>
     </message>
