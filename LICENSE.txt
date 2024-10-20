@@ -1,8 +1,7 @@
 UltraScan is licensed under the LGPL v3 license.
 
 Copyright ©  Borries Demeler, Ph.D.
-The University of Texas
-****************************************************************************************
+***************************************************************************************
 
 GNU LESSER GENERAL PUBLIC LICENSE
 

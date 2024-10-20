@@ -5,7 +5,7 @@
 #SBATCH -n 1024          # total number of mpi tasks requested
 #SBATCH -p normal          # queue (partition) -- normal, development, etc.
 #SBATCH -t 02:00:00           # run time (hh:mm:ss)
-#SBATCH --mail-user=emre@biochem.uthscsa.edu
+#SBATCH --mail-user=emre.brookes@umt.edu
 #SBATCH --mail-type=begin  # email me when the job starts
 #SBATCH --mail-type=end    # email me when the job finishes
 

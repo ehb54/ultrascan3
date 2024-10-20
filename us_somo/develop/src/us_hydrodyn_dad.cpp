@@ -1683,7 +1683,7 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
                QMessageBox::warning( this, 
                                      windowTitle()+ us_tr( ": Add files" ),
                                      us_tr( "I am having a problem decoding the frame numbers or q values from the file names\n"
-                                         "Please email a list of the file names you are trying to load to emre@biochem.uthscsa.edu" ) );
+                                         "Please email a list of the file names you are trying to load to emre.brookes@umt.edu" ) );
                return;
             }
             tmp = prepend_tmp + tmp;

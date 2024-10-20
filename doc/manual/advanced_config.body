@@ -9,7 +9,7 @@
     in an advanced mode. Certain applications can benefit from use of more
     than one thread. These variations are governed by the configuration values
     that are set in this panel. Actual values should be set only under the
-    guidance of UTHSCSA software developers, since meanings of settings vary
+    guidance of software developers, since meanings of settings vary
     considerably from application to application.</p>
 
     <p class='center'> <img src="images/advanced_config.png" alt='Advanced

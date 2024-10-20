@@ -68,11 +68,11 @@ echo $LD_LIBRARY_PATH
 or
 ldconfig -v | grep ultrascan
 
-Contact: Borries Demeler (demeler@biochem.uthscsa.edu)
+Contact: Borries Demeler (borries.demeler@umontana.edu)
 
 This document is part of the UltraScan Software Documentation
 distribution.  The latest version of this document can always be found at:
 
-      http://www.ultrascan.uthscsa.edu
+      http://www.ultrascan.aucsolutions.edu
 
-Last modified on February 16, 2005
+Last modified on October 20, 2024
