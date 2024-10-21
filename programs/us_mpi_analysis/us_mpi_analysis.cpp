@@ -874,11 +874,11 @@ if ( my_rank == 0 ) {
    {
       US_SolveSim::DataSet*  dset    = data_sets[ ee ];
       // Do a quick test of the speed step implied by TimeState
-      int tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
-      int accel1    = dset.simparams.speed_step[ 0 ].acceleration;
-      int rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
+      int tf_scan   = dset->simparams.speed_step[ 0 ].time_first;
+      int accel1    = dset->simparams.speed_step[ 0 ].acceleration;
+      int rspeed    = dset->simparams.speed_step[ 0 ].rotorspeed;
       int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
-      int accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
+      int accel2    = dset->simparams.sim_speed_prof[ 0 ].acceleration;
       if ( my_rank == 0 ){
          DbgLv(1) << "DSM: ssck: rspeed accel1 tf_aend tf_scan"
                  << rspeed << accel1 << tf_aend << tf_scan
