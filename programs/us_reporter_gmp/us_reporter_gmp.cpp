@@ -5420,12 +5420,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   
   for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
     {
-
+      QString triplesname_mod = triplesname;
+      if ( triplesname.contains("Interference") )
+	triplesname_mod = triplesname_mod.replace( "Interference" , "660");
+      
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model;
-      qDebug() << "INDCOMBO_3: " <<  modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
+      
       //fiter by type|model
-      if ( modelDescModified[ ii ].contains( triplesname.replace("Interference","660") ) &&
+      if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
 	   modelDescModified[ ii ].contains( stage_model ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
