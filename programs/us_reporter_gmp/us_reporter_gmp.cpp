@@ -7520,12 +7520,15 @@ QString US_ReporterGMP::calc_replicates_averages( void )
       for( int i=0; i<all_wvls.size(); ++i )
 	{
 	  QString curr_triple = all_wvls[ i ];
-	  QString curr_chann  = all_wvls[ i ].split(".")[0];
+	  QString curr_chann  = all_wvls[ i ].split(".")[0];  
 	  QString curr_wvl    = all_wvls[ i ].split(".")[1];
 
 	  unique_wvls               << curr_wvl;
 	  unique_channels           << curr_chann;
-	  same_wvls_chann_map[ curr_wvl ] << curr_chann;
+
+	  //here, add to list FULL channel desc, e.g. "1A:Iterf.", or "1A:UV/vis."
+	  //same_wvls_chann_map[ curr_wvl ] << curr_chann; //BEFORE
+	  same_wvls_chann_map[ curr_wvl ] << curr_chann + ":" + ch_alt_desc.split(":")[1]; //Will this work?
 	}
       
       unique_wvls.     removeDuplicates();
@@ -7663,13 +7666,17 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	{
 	  QString channel_desc_alt = chndescs_alt[ j ];
 
-	  //For now, do not consider IP type!!!
-	  if ( channel_desc_alt.contains("Interf") ) 
-	    continue;
+	  // //For now, do not consider IP type!!!
+	  // if ( channel_desc_alt.contains("Interf") ) 
+	  //   continue;
 	  
-	  if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
+	  //if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
+	  if ( channel_desc_alt .contains( channs_for_wvl[ i ] ) )  
 	    {
-	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, wvl -- " << channel_desc_alt << u_wvl;
+	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, channs_for_wvl[ i ], wvl -- "
+		       << channel_desc_alt
+		       << channs_for_wvl[ i ]
+		       << u_wvl;
 
 	      //Select US_ReportGMP for channel in a Replicate group && representative wvl!
 	      reportGMP = ch_reports[ channel_desc_alt ][ u_wvl ];
@@ -7677,6 +7684,7 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	      break;
 	    }
 	}
+            
       //then pick report's ReportItem corresponding to the passed ref_report_item:
       int report_items_number = reportGMP. reportItems.size();
       for ( int kk = 0; kk < report_items_number; ++kk )
