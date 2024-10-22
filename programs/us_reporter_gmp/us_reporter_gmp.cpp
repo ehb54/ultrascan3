@@ -7512,6 +7512,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
     {
       QString ch_alt_desc  = chw.key();
       QStringList all_wvls = chw.value();
+      QString o_type       = ch_alt_desc.split(":")[1];
 
       QStringList unique_wvls;
       QStringList unique_channels;
@@ -7528,7 +7529,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
 	  //here, add to list FULL channel desc, e.g. "1A:Iterf.", or "1A:UV/vis."
 	  //same_wvls_chann_map[ curr_wvl ] << curr_chann; //BEFORE
-	  same_wvls_chann_map[ curr_wvl ] << curr_chann + ":" + ch_alt_desc.split(":")[1]; //Will this work?
+	  same_wvls_chann_map[ curr_wvl ] << curr_chann + ":" + o_type; //Will this work?
 	}
       
       unique_wvls.     removeDuplicates();
@@ -7536,9 +7537,10 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
       QString replicate_group_number = get_replicate_group_number( ch_alt_desc );
       
-      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2] </h3>\n" )
+      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2 (%3)] </h3>\n" )
 	.arg( replicate_group_number )
-	.arg( unique_channels.join(",") );
+	.arg( unique_channels.join(",") )
+	.arg( o_type );
       
       
       //iterate over unique wvls
@@ -7548,7 +7550,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
 	  QString replicate_subgroup_triples;
 	  for ( int jj=0; jj < same_wvls_chann_map[ u_wvl ].size(); ++jj )
-	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ] + "." + u_wvl + ",";
+	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ].split(":")[0] + "." + u_wvl + ",";
 
 	  replicate_subgroup_triples.chop(1);
 	  
