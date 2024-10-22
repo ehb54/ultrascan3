@@ -5356,6 +5356,11 @@ bool US_ReporterGMP::modelGuidExistsForStage_ind( QString triple_n, QString mode
       QString c_triple_n =  Array_of_tripleNames[ i ];
       c_triple_n. replace(".","");
 
+      qDebug() << "IN modelGuidExistsForStage_ind(): triple_n, c_triple_n, model  -- "
+	       << triple_n << c_triple_n << model;
+      qDebug() << "IN modelGuidExistsForStage_ind(): mguid, Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ][ model ] -- "
+	       << mguid << Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ][ model ];
+      
       if ( c_triple_n == triple_n )
 	{
 	  QMap< QString, QString > tmapguid =  Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ];
