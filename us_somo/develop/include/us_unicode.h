@@ -9,6 +9,10 @@
 #define UNICODE_ALPHA_QS QString( "%1" ).arg( UNICODE_ALPHA )
 #define UNICODE_LAMBDA u8"\u03BB"
 #define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
+#define UNICODE_TAU u8"\u03C4"
+#define UNICODE_TAU_QS QString( "%1" ).arg( UNICODE_TAU )
+#define UNICODE_DELTA u8"\u0394"
+#define UNICODE_DELTA_QS QString( "%1" ).arg( UNICODE_DELTA )
 #define UNICODE_SUPER_2 u8"\u00B2"
 #define UNICODE_SUPER_2_QS QString( "%1" ).arg( UNICODE_SUPER_2 )
 #define UNICODE_SUPER_3 u8"\u00B3"

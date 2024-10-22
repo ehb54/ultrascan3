@@ -817,6 +817,82 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void           rgc_calc_rg();
 
+      // broaden
+
+      QPushButton                      * pb_broaden;
+
+      QLabel                           * lbl_broaden_msg;
+
+      QLabel                           * lbl_broaden_tau;
+      mQLineEdit                       * le_broaden_tau_start;
+      mQLineEdit                       * le_broaden_tau;
+      mQLineEdit                       * le_broaden_tau_end;
+
+      QLabel                           * lbl_broaden_deltat;
+      mQLineEdit                       * le_broaden_deltat_start;
+      mQLineEdit                       * le_broaden_deltat;
+      mQLineEdit                       * le_broaden_deltat_end;
+
+      QLabel                           * lbl_broaden_kernel_end;
+      mQLineEdit                       * le_broaden_kernel_end;
+
+      QLabel                           * lbl_broaden_kernel_deltat;
+      mQLineEdit                       * le_broaden_kernel_deltat;
+      
+      QComboBox                        * cb_broaden_kernel_type;
+
+      QPushButton                      * pb_broaden_fit;
+      QPushButton                      * pb_broaden_minimize;
+      QPushButton                      * pb_broaden_reset;
+
+      void                               broaden_enables();
+      void                               broaden_done( bool save );
+      
+      set < QString >                    broaden_org_selected;
+      QStringList                        broaden_names;
+      set < QString >                    broaden_created;
+                                                             
+      void                               broaden_plot( bool replot = true );
+      void                               broaden_clear_plot();
+      void                               broaden_compute_one();
+                                                       
+ private slots:
+
+      void                               broaden();
+      void                               broaden_fit();
+      void                               broaden_minimize();
+      void                               broaden_reset();
+
+      void                               broaden_tau_start_text( const QString & );
+      void                               broaden_tau_start_focus( bool );
+
+      void                               broaden_tau_text( const QString & );
+      void                               broaden_tau_focus( bool );
+
+      void                               broaden_tau_end_text( const QString & );
+      void                               broaden_tau_end_focus( bool );
+
+      void                               broaden_deltat_start_text( const QString & );
+      void                               broaden_deltat_start_focus( bool );
+
+      void                               broaden_deltat_text( const QString & );
+      void                               broaden_deltat_focus( bool );
+
+      void                               broaden_deltat_end_text( const QString & );
+      void                               broaden_deltat_end_focus( bool );
+
+      void                               broaden_kernel_end_text( const QString & );
+      void                               broaden_kernel_end_focus( bool );
+
+      void                               broaden_kernel_deltat_text( const QString & );
+      void                               broaden_kernel_deltat_focus( bool );
+
+      void                               broaden_kernel_type_index();
+      
+ private:
+
+      set < QWidget * >                   always_hide_widgets;
+
       // simulate
       QPushButton  * pb_simulate;
 
@@ -1067,6 +1143,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QWidget * >                guinier_widgets;
       vector < QWidget * >                testiq_widgets;
       vector < vector < QWidget * > >     pb_row_widgets;
+      vector < QWidget * >                broaden_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -1225,6 +1302,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
          ,MODE_GUINIER
          ,MODE_TESTIQ
          ,MODE_WYATT
+         ,MODE_BROADEN
       };
 
       modes                        current_mode;
@@ -1422,8 +1500,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                       scale_applied_q_max;
 
       set < QString >              scale_last_created;
-      void                         set_selected        ( set < QString > &, bool do_replot = true );
-      void                         set_created_selected( set < QString > &, bool do_replot = true );
+      bool                         set_selected        ( const QStringList &, bool do_replot = true );
+      bool                         set_selected        ( const set < QString > &, bool do_replot = true );
+      bool                         set_created_selected( const set < QString > &, bool do_replot = true );
 
       map < QString, vector <double > > scale_q;
       map < QString, vector <double > > scale_I;
