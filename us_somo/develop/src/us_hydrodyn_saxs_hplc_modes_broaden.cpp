@@ -217,7 +217,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
 
    // remove old broadened curve if present
    if ( broaden_names.size() == 3 ) {
-      set < QString > tmp_names = {  broaden_names[2] };
+      conc_files.erase( broaden_names[2] ); // doesn't remove_files() do this?
+      set < QString > tmp_names = { broaden_names[2] };
       remove_files( tmp_names );
       // arg, no resize for QStringList
       // broaden_names.resize( 2 );
@@ -263,6 +264,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
    
    add_plot( fname, ts, broadened, true, false );
    broaden_names << last_created_file;
+   conc_files.insert( last_created_file );
 
    set_selected( broaden_names );
    
