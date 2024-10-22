@@ -627,11 +627,11 @@ void US_Win::help( int index )
 
             " * Nikolay Dokholyan\n"
             " * Jose Garcia de la Torre\n"
-				" * Haram Kim\n"
-				" * Minji Kim\n"
+			" * Haram Kim\n"
+			" * Minji Kim\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
-				" * Konrad Löhr\n"
+			" * Konrad LÃ¶hr\n"
             " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"
@@ -652,18 +652,12 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1  (DEVELOPMENT)\n"
             "%2\n"
-            "Copyright 1989 - 2018\n"
-            "Borries Demeler and the University of Texas System\n\n"
+            "Copyright 1989 - 2024\n"
+            "Borries Demeler\n\n"
             "For more information, please visit:\n"
-            "http://www.ultrascan.uthscsa.edu/\n\n"
+            "http://www.ultrascan.aucsolutions.com/\n\n"
             "The author can be reached at:\n"
-            "The University of Texas Health Science Center\n"
-            "Department of Biochemistry\n"
-            "7703 Floyd Curl Drive\n"
-            "San Antonio, Texas 78229-3900\n"
-            "voice: (210) 767-3332\n"
-            "Fax:   (210) 567-6595\n"
-            "E-mail: demeler@biochem.uthscsa.edu" ).arg( US_Version ).arg( REVISION ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( REVISION ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -740,7 +734,7 @@ bool US_Win::notice_check()
    // Query notice table in the us3_notice database
    US_Passwd pw;
    US_DB2    db;
-   QString   host  ( "uslims3.uthscsa.edu" );
+   QString   host  ( "uslims3.aucsolutions.edu" );
    QString   dbname( "us3_notice" );
    QString   user  ( "us3_notice" );
    QString   passwd( "us3_notice" );
