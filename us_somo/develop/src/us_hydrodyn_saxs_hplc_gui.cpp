@@ -1,6 +1,8 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_unicode.h"
+#include "../include/us_band_broaden.h"
 // #include <qsplitter.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -2819,6 +2821,152 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_rgc_g_qrange->setEnabled( false );
    le_rgc_g_qrange->setReadOnly( true );
 
+   // broaden
+
+   pb_broaden = new QPushButton(us_tr("Broaden"), this);
+   pb_broaden->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_broaden->setMinimumHeight(minHeight1);
+   pb_broaden->setPalette( PALET_PUSHB );
+   connect(pb_broaden, SIGNAL(clicked()), SLOT(broaden()));
+   pb_broaden->setEnabled( false );
+   
+   lbl_broaden_msg = new QLabel( "Some fit message" , this );
+   lbl_broaden_msg->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_broaden_msg->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_msg );
+   lbl_broaden_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   
+   lbl_broaden_tau = new QLabel( " " + UNICODE_TAU_QS + " :" , this );
+   lbl_broaden_tau->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_tau->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_tau );
+   lbl_broaden_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_broaden_tau_start = new mQLineEdit( this );    le_broaden_tau_start->setObjectName( "le_broaden_tau_start Line Edit" );
+   le_broaden_tau_start->setText( "1.5" );
+   le_broaden_tau_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_tau_start->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_tau_start );
+   le_broaden_tau_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_tau_start->setEnabled( false );
+   connect( le_broaden_tau_start, SIGNAL( focussed ( bool ) ), SLOT( broaden_tau_start_focus( bool ) ) );
+
+   le_broaden_tau = new mQLineEdit( this );    le_broaden_tau->setObjectName( "le_broaden_tau Line Edit" );
+   le_broaden_tau->setText( "2" );
+   le_broaden_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_tau->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_tau );
+   le_broaden_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_tau->setEnabled( false );
+   connect( le_broaden_tau, SIGNAL( focussed ( bool ) ), SLOT( broaden_tau_focus( bool ) ) );
+
+   le_broaden_tau_end = new mQLineEdit( this );    le_broaden_tau_end->setObjectName( "le_broaden_tau_end Line Edit" );
+   le_broaden_tau_end->setText( "5" );
+   le_broaden_tau_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_tau_end->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_tau_end );
+   le_broaden_tau_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_tau_end->setEnabled( false );
+   connect( le_broaden_tau_end, SIGNAL( focussed ( bool ) ), SLOT( broaden_tau_end_focus( bool ) ) );
+
+   lbl_broaden_deltat = new QLabel( " " + UNICODE_DELTA_QS + "t :" , this );
+   lbl_broaden_deltat->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_deltat->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_deltat );
+   lbl_broaden_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_broaden_deltat_start = new mQLineEdit( this );    le_broaden_deltat_start->setObjectName( "le_broaden_deltat_start Line Edit" );
+   le_broaden_deltat_start->setText( "0" );
+   le_broaden_deltat_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_deltat_start->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_deltat_start );
+   le_broaden_deltat_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_deltat_start->setEnabled( false );
+   connect( le_broaden_deltat_start, SIGNAL( focussed ( bool ) ), SLOT( broaden_deltat_start_focus( bool ) ) );
+
+   le_broaden_deltat = new mQLineEdit( this );    le_broaden_deltat->setObjectName( "le_broaden_deltat Line Edit" );
+   le_broaden_deltat->setText( "0" );
+   le_broaden_deltat->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_deltat->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_deltat );
+   le_broaden_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_deltat->setEnabled( false );
+   connect( le_broaden_deltat, SIGNAL( focussed ( bool ) ), SLOT( broaden_deltat_focus( bool ) ) );
+
+   le_broaden_deltat_end = new mQLineEdit( this );    le_broaden_deltat_end->setObjectName( "le_broaden_deltat_end Line Edit" );
+   le_broaden_deltat_end->setText( "9999" );
+   le_broaden_deltat_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_deltat_end->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_deltat_end );
+   le_broaden_deltat_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_deltat_end->setEnabled( false );
+   connect( le_broaden_deltat_end, SIGNAL( focussed ( bool ) ), SLOT( broaden_deltat_end_focus( bool ) ) );
+
+   lbl_broaden_kernel_end = new QLabel( us_tr( "Kernel end :" ), this );
+   lbl_broaden_kernel_end->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_kernel_end->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_kernel_end );
+   lbl_broaden_kernel_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_broaden_kernel_end = new mQLineEdit( this );    le_broaden_kernel_end->setObjectName( "le_broaden_kernel_end Line Edit" );
+   le_broaden_kernel_end->setText( "100" );
+   le_broaden_kernel_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_kernel_end->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_kernel_end );
+   le_broaden_kernel_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_kernel_end->setEnabled( false );
+   connect( le_broaden_kernel_end, SIGNAL( focussed ( bool ) ), SLOT( broaden_kernel_end_focus( bool ) ) );
+
+   lbl_broaden_kernel_deltat = new QLabel( us_tr( QString( " %1t :" ).arg( UNICODE_DELTA ) ) , this );
+   lbl_broaden_kernel_deltat->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_kernel_deltat->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_kernel_deltat );
+   lbl_broaden_kernel_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_broaden_kernel_deltat = new mQLineEdit( this );    le_broaden_kernel_deltat->setObjectName( "le_broaden_kernel_deltat Line Edit" );
+   le_broaden_kernel_deltat->setText( "0.1" );
+   le_broaden_kernel_deltat->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_kernel_deltat->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_kernel_deltat );
+   le_broaden_kernel_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_kernel_deltat->setEnabled( false );
+   connect( le_broaden_kernel_deltat, SIGNAL( focussed ( bool ) ), SLOT( broaden_kernel_deltat_focus( bool ) ) );
+
+   cb_broaden_kernel_type = new QComboBox( this );
+   cb_broaden_kernel_type->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_broaden_kernel_type );
+   cb_broaden_kernel_type->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_broaden_kernel_type->setEnabled(true);
+   cb_broaden_kernel_type->setMinimumHeight( minHeight1 );
+   cb_broaden_kernel_type->setMaxVisibleItems( 1 );
+
+   cb_broaden_kernel_type->addItem( US_Band_Broaden::kernel_type_name( US_Band_Broaden::BAND_BROADEN_KERNEL_EXPONENTIAL ), US_Band_Broaden::BAND_BROADEN_KERNEL_EXPONENTIAL );
+   cb_broaden_kernel_type->addItem( US_Band_Broaden::kernel_type_name( US_Band_Broaden::BAND_BROADEN_KERNEL_GAUSSIAN )   , US_Band_Broaden::BAND_BROADEN_KERNEL_GAUSSIAN );
+
+   connect( cb_broaden_kernel_type, SIGNAL( currentIndexChanged( QString ) ), SLOT( broaden_kernel_type_index( ) ) );
+   cb_broaden_kernel_type->setCurrentIndex( 0 );
+
+   pb_broaden_fit = new QPushButton(us_tr("Fit"), this);
+   pb_broaden_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_broaden_fit->setMinimumHeight(minHeight1);
+   pb_broaden_fit->setPalette( PALET_PUSHB );
+   connect(pb_broaden_fit, SIGNAL(clicked()), SLOT(broaden_fit()));
+   pb_broaden_fit->setEnabled( false );
+   
+   pb_broaden_minimize = new QPushButton(us_tr("Minimize"), this);
+   pb_broaden_minimize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_broaden_minimize->setMinimumHeight(minHeight1);
+   pb_broaden_minimize->setPalette( PALET_PUSHB );
+   connect(pb_broaden_minimize, SIGNAL(clicked()), SLOT(broaden_minimize()));
+   pb_broaden_minimize->setEnabled( false );
+   
+   pb_broaden_reset = new QPushButton(us_tr("Reset"), this);
+   pb_broaden_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_broaden_reset->setMinimumHeight(minHeight1);
+   pb_broaden_reset->setPalette( PALET_PUSHB );
+   connect(pb_broaden_reset, SIGNAL(clicked()), SLOT(broaden_reset()));
+   pb_broaden_reset->setEnabled( false );
+   
    // simulate
 
    pb_simulate = new QPushButton(us_tr("Simulate"), this);
@@ -3339,12 +3487,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       l_pbmode_conc->addWidget( lbl_conc_file );
       l_pbmode_conc->addWidget( pb_timeshift );
       l_pbmode_conc->addWidget( pb_timescale );
+      l_pbmode_conc->addWidget( pb_broaden );
       
       pbmode_conc_widgets.push_back( pb_repeak );
       pbmode_conc_widgets.push_back( pb_conc_file );
       pbmode_conc_widgets.push_back( lbl_conc_file );
       pbmode_conc_widgets.push_back( pb_timeshift );
       pbmode_conc_widgets.push_back( pb_timescale );
+      pbmode_conc_widgets.push_back( pb_broaden );
    }
 
    QBoxLayout * l_pbmode_sd = new QHBoxLayout();
@@ -3809,6 +3959,34 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_gauss2->addWidget         ( pb_gauss_as_curves      , 0, ofs++ );
    }
 
+   // broaden
+   QBoxLayout * vbl_broaden = new QVBoxLayout( 0 ); vbl_broaden->setContentsMargins( 0, 0, 0, 0 ); vbl_broaden->setSpacing( 0 );
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_broaden_tau );
+      hbl->addWidget( le_broaden_tau_start );
+      hbl->addWidget( le_broaden_tau );
+      hbl->addWidget( le_broaden_tau_end );
+      hbl->addWidget( lbl_broaden_deltat );
+      hbl->addWidget( le_broaden_deltat_start );
+      hbl->addWidget( le_broaden_deltat );
+      hbl->addWidget( le_broaden_deltat_end );
+      vbl_broaden->addLayout( hbl );
+   }      
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( lbl_broaden_kernel_end );
+      hbl->addWidget( le_broaden_kernel_end );
+      hbl->addWidget( lbl_broaden_kernel_deltat );
+      hbl->addWidget( le_broaden_kernel_deltat );
+      hbl->addWidget( cb_broaden_kernel_type );
+      hbl->addWidget( pb_broaden_fit );
+      hbl->addWidget( pb_broaden_minimize );
+      hbl->addWidget( pb_broaden_reset );
+      vbl_broaden->addLayout( hbl );
+   }      
+   vbl_broaden->addWidget( lbl_broaden_msg );
+
    QHBoxLayout * hbl_baseline = new QHBoxLayout(); hbl_baseline->setContentsMargins( 0, 0, 0, 0 ); hbl_baseline->setSpacing( 0 );
    // hbl_baseline->addWidget( pb_baseline_start   );
    hbl_baseline->addWidget( pb_bb_cm_inc );
@@ -3863,6 +4041,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
    vbl_plot_group->addLayout ( vbl_pm );
+   vbl_plot_group->addLayout ( vbl_broaden );
    vbl_plot_group->addLayout ( hbl_ggauss_scroll );
    vbl_plot_group->addLayout ( gl_gauss );
    // vbl_plot_group->addLayout ( hbl_gauss2 );
@@ -3871,7 +4050,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( hbl_wyatt );
 
    vbl_plot_group->addWidget ( le_dummy );
-
 
 //    QBoxLayout * hbl_files_plot = new QHBoxLayout(); hbl_files_plot->setContentsMargins( 0, 0, 0, 0 ); hbl_files_plot->setSpacing( 0 );
 //    // hbl_files_plot->addLayout( vbl_files );
@@ -3925,6 +4103,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_editor_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_editor_widgets" ] == "false" ? false : true );
    //   hide_widgets( created_files_widgets,
    //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_creaded_files_widgets" ] == "false" ? false : true );
+
+   always_hide_widgets.insert( {
+         pb_broaden_minimize
+      } );
 
    mode_setup_widgets();
 }
@@ -4172,6 +4354,32 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // timeshift_widgets.push_back( pb_crop_right );
    // timeshift_widgets.push_back( pb_legend );
 
+   // broaden_widgets;
+
+   // broaden_widgets.push_back( lbl_blank1 );
+   // broaden_widgets.push_back( pb_wheel_dec );
+   // broaden_widgets.push_back( qwtw_wheel );
+   // broaden_widgets.push_back( pb_wheel_inc );
+   // broaden_widgets.push_back( lbl_wheel_pos );
+   // broaden_widgets.push_back( le_dummy );
+   broaden_widgets.push_back( lbl_broaden_tau );
+   broaden_widgets.push_back( le_broaden_tau_start );
+   broaden_widgets.push_back( le_broaden_tau );
+   broaden_widgets.push_back( le_broaden_tau_end );
+   broaden_widgets.push_back( lbl_broaden_deltat );
+   broaden_widgets.push_back( le_broaden_deltat_start );
+   broaden_widgets.push_back( le_broaden_deltat );
+   broaden_widgets.push_back( le_broaden_deltat_end );
+   broaden_widgets.push_back( lbl_broaden_kernel_end );
+   broaden_widgets.push_back( le_broaden_kernel_end );
+   broaden_widgets.push_back( lbl_broaden_kernel_deltat );
+   broaden_widgets.push_back( le_broaden_kernel_deltat );
+   broaden_widgets.push_back( cb_broaden_kernel_type );
+   broaden_widgets.push_back( pb_broaden_fit );
+   broaden_widgets.push_back( pb_broaden_minimize );
+   broaden_widgets.push_back( pb_broaden_reset );
+   broaden_widgets.push_back( lbl_broaden_msg );
+
    // testiq_widgets;
 
    testiq_widgets.push_back( lbl_testiq_q_range );
@@ -4321,24 +4529,25 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
 {
    // QSize cur_size = plot_dist->size();
 
-   ShowHide::hide_widgets( plot_widgets );
-   ShowHide::hide_widgets( gaussian_widgets );
-   ShowHide::hide_widgets( gaussian_4var_widgets );
-   ShowHide::hide_widgets( gaussian_5var_widgets );
-   ShowHide::hide_widgets( ggaussian_widgets );
-   ShowHide::hide_widgets( ggaussian_4var_widgets );
-   ShowHide::hide_widgets( ggaussian_5var_widgets );
-   ShowHide::hide_widgets( wyatt_widgets );
-   ShowHide::hide_widgets( blanks_widgets );
-   ShowHide::hide_widgets( baseline_widgets );
-   ShowHide::hide_widgets( scale_widgets );
-   ShowHide::hide_widgets( timeshift_widgets );
-   ShowHide::hide_widgets( testiq_widgets );
-   ShowHide::hide_widgets( guinier_widgets );
-   ShowHide::hide_widgets( rgc_widgets );
-   ShowHide::hide_widgets( pm_widgets );
-   ShowHide::hide_widgets( ggqfit_widgets );
-   ShowHide::hide_widgets( wheel_below_widgets );
+   ShowHide::hide_widgets( plot_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( gaussian_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( gaussian_4var_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( gaussian_5var_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( ggaussian_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( ggaussian_4var_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( ggaussian_5var_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( wyatt_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( blanks_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( baseline_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( scale_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( timeshift_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( broaden_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( testiq_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( guinier_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( rgc_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( pm_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( ggqfit_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets );
 
    switch ( current_mode )
    {
@@ -4346,10 +4555,10 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
       {
          lbl_wheel_pos->setText( "" ); 
          mode_title( "" ); 
-         ShowHide::hide_widgets( plot_widgets      , false ); 
+         ShowHide::hide_widgets( plot_widgets, always_hide_widgets, false ); 
          for ( int i = 0; i < (int) pb_row_widgets.size(); ++i )
          {
-            ShowHide::hide_widgets( pb_row_widgets[ i ], false );
+            ShowHide::hide_widgets( pb_row_widgets[ i ], always_hide_widgets, false );
          }
       }
       break;
@@ -4357,40 +4566,41 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    case MODE_GAUSSIAN  : 
       {
          mode_title( pb_gauss_start->text() );
-         ShowHide::hide_widgets( gaussian_widgets  , false );
+         ShowHide::hide_widgets( gaussian_widgets, always_hide_widgets, false );
          switch ( gaussian_type_size )
          {
-         case 4 : ShowHide::hide_widgets( gaussian_4var_widgets , false ); break;
-         case 5 : ShowHide::hide_widgets( gaussian_5var_widgets , false ); break;
+         case 4 : ShowHide::hide_widgets( gaussian_4var_widgets, always_hide_widgets , false ); break;
+         case 5 : ShowHide::hide_widgets( gaussian_5var_widgets, always_hide_widgets , false ); break;
          default : break;
          }
-         ShowHide::only_widgets( pb_row_widgets, 1 );
+         ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );
       }
       break;
 
    case MODE_GGAUSSIAN : 
       {
          mode_title( pb_ggauss_start->text() );
-         ShowHide::hide_widgets( ggaussian_widgets , false );
+         ShowHide::hide_widgets( ggaussian_widgets, always_hide_widgets, false );
          switch ( gaussian_type_size )
          {
-         case 4 : ShowHide::hide_widgets( ggaussian_4var_widgets , false ); break;
-         case 5 : ShowHide::hide_widgets( ggaussian_5var_widgets , false ); break;
+         case 4 : ShowHide::hide_widgets( ggaussian_4var_widgets, always_hide_widgets, false ); break;
+         case 5 : ShowHide::hide_widgets( ggaussian_5var_widgets, always_hide_widgets, false ); break;
          default : break;
          }            
-         ShowHide::only_widgets( pb_row_widgets, 1 );
+         ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );
       }
       break;
 
-   case MODE_WYATT     : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_BLANKS    : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_TIMESHIFT : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
-   case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_TESTIQ    : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets   , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
-   case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
+   case MODE_WYATT     : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets     , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets );break;
+   case MODE_BLANKS    : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets    , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets );break;
+   case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets );break;
+   case MODE_TIMESHIFT : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets );break;
+   case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );break;
+   case MODE_TESTIQ    : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets    , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );break;
+   case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets   , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );break;
+   case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );break;
+   case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 1, always_hide_widgets );break;
+   case MODE_BROADEN   : mode_title( pb_broaden->text() );        ShowHide::hide_widgets( broaden_widgets   , always_hide_widgets, false ); ShowHide::only_widgets( pb_row_widgets, 0, always_hide_widgets );break;
    default : us_qdebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -4547,6 +4757,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_timeshift          ->setEnabled( (int64_t)files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
+   pb_broaden            ->setEnabled( (int64_t)files_selected_count - conc_selected_count == 1 && files_compatible && files_are_time && conc_files.size() );
    pb_timescale          ->setEnabled( files_selected_count && files_are_time && conc_selected_count == files_selected_count );
    pb_gauss_mode         ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
@@ -4867,7 +5078,7 @@ void US_Hydrodyn_Saxs_Hplc::model_enables()
 {
    if ( lb_model_files->count() )
    {
-      ShowHide::hide_widgets( model_widgets, false );
+      ShowHide::hide_widgets( model_widgets, always_hide_widgets, false );
       pb_model_select_all->setEnabled( true );
       lb_model_files     ->setEnabled( true );
       bool any_model_selected           = false;
@@ -4889,7 +5100,7 @@ void US_Hydrodyn_Saxs_Hplc::model_enables()
       pb_model_remove->setEnabled( any_model_selected );
       pb_model_save  ->setEnabled( any_model_selected_not_saved );
    } else {
-      ShowHide::hide_widgets( model_widgets, true );
+      ShowHide::hide_widgets( model_widgets, always_hide_widgets, true );
    }      
 }
 
@@ -4961,6 +5172,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    lb_created_files      ->setEnabled( false );
 
    pb_timeshift          ->setEnabled( false );
+   pb_broaden            ->setEnabled( false );
    pb_timescale          ->setEnabled( false );
 
    pb_gauss_mode         ->setEnabled( false );
@@ -5551,31 +5763,31 @@ void US_Hydrodyn_Saxs_Hplc::set_pbmode_none() {
 
 void US_Hydrodyn_Saxs_Hplc::pbmode_select( pbmodes mode ) {
 
-   ShowHide::hide_widgets( pbmode_main_widgets, true );
-   ShowHide::hide_widgets( pbmode_sel_widgets, true );
-   ShowHide::hide_widgets( pbmode_crop_widgets, true );
-   ShowHide::hide_widgets( pbmode_conc_widgets, true );
-   ShowHide::hide_widgets( pbmode_sd_widgets, true );
-   ShowHide::hide_widgets( pbmode_fasta_widgets, true );
+   ShowHide::hide_widgets( pbmode_main_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_sel_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_crop_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_conc_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_sd_widgets, always_hide_widgets, true );
+   ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, true );
 
    switch ( mode ) {
    case PBMODE_MAIN :
-      ShowHide::hide_widgets( pbmode_main_widgets, false );
+      ShowHide::hide_widgets( pbmode_main_widgets, always_hide_widgets, false );
       break;
    case PBMODE_SEL :
-      ShowHide::hide_widgets( pbmode_sel_widgets, false );
+      ShowHide::hide_widgets( pbmode_sel_widgets, always_hide_widgets, false );
       break;
    case PBMODE_CROP :
-      ShowHide::hide_widgets( pbmode_crop_widgets, false );
+      ShowHide::hide_widgets( pbmode_crop_widgets, always_hide_widgets, false );
       break;
    case PBMODE_CONC :
-      ShowHide::hide_widgets( pbmode_conc_widgets, false );
+      ShowHide::hide_widgets( pbmode_conc_widgets, always_hide_widgets, false );
       break;
    case PBMODE_SD :
-      ShowHide::hide_widgets( pbmode_sd_widgets, false );
+      ShowHide::hide_widgets( pbmode_sd_widgets, always_hide_widgets, false );
       break;
    case PBMODE_FASTA :
-      ShowHide::hide_widgets( pbmode_fasta_widgets, false );
+      ShowHide::hide_widgets( pbmode_fasta_widgets, always_hide_widgets, false );
       break;
    case PBMODE_NONE :
       break;

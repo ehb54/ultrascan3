@@ -2750,41 +2750,49 @@ double US_Hydrodyn_Saxs_Hplc::tot_intensity( QString &file, double q_min, double
    return tot_i;
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_selected( set < QString > & to_select, bool do_replot )
-{
-   disable_updates = true;
-   lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->count(); i++ )
-   {
-      if ( to_select.count( lb_files->item( i )->text() ) )
-      {
-         lb_files->item( i)->setSelected( true );
-      }
+bool US_Hydrodyn_Saxs_Hplc::set_selected( const QStringList & to_select_qsl, bool do_replot ) {
+   set < QString > to_select;
+   for ( auto name : to_select_qsl ) {
+      to_select.insert( name );
    }
-
-   disable_updates = false;
-   if ( do_replot )
-   {
-      plot_files();
-   }
+   return set_selected( to_select, do_replot );
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_created_selected( set < QString > & to_select, bool do_replot )
-{
+bool US_Hydrodyn_Saxs_Hplc::set_selected( const set < QString > & to_select, bool do_replot ) {
+   disable_updates = true;
+   lb_files->clearSelection();
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_files->count(); i++ ) {
+      if ( to_select.count( lb_files->item( i )->text() ) ) {
+         lb_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
+         // qDebug() << "set_selected() : to plot " << lb_files->item( i )->text();
+      }
+   }
+
+   disable_updates = false;
+   if ( do_replot ) {
+      plot_files();
+   }
+   return missing.size() == 0;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::set_created_selected( const set < QString > & to_select, bool do_replot ) {
    disable_updates = true;
    lb_created_files->clearSelection();
-   for ( int i = 0; i < (int)lb_created_files->count(); i++ )
-   {
-      if ( to_select.count( lb_created_files->item( i )->text() ) )
-      {
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_created_files->count(); i++ ) {
+
+      if ( to_select.count( lb_created_files->item( i )->text() ) ) {
          lb_created_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
       }
    }
    disable_updates = false;
-   if ( do_replot )
-   {
+   if ( do_replot ) {
       plot_files();
    }
+   return missing.size() == 0;
 }
 
 void US_Hydrodyn_Saxs_Hplc::artificial_gaussians()

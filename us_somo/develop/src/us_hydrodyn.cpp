@@ -78,6 +78,11 @@
 #endif
 // #define USE_H
 
+#define BROADEN_TEST
+#if defined( BROADEN_TEST )
+#include "../include/us_band_broaden.h"
+#endif
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
@@ -104,7 +109,13 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    grpy_parallel_pulled = false;
    
    stopFlag = false;
-   
+
+#if defined( BROADEN_TEST ) && defined( BROADEN_TESTING )
+   US_Band_Broaden ubb;
+   ubb.test();
+   exit( -1 );
+#endif
+
 #if defined( AVG_TEST )
    US_Average avg;
    avg.test();

@@ -122,6 +122,7 @@ SOURCES *= \
 #  us_astfem_rsa.cpp \
 #  us_astfem_sim.cpp \
 #  us_average.cpp \
+        src/us_band_broaden.cpp \
 #  us_buffer.cpp \
 #  us_calendar.cpp \ 
 #  us_clipdata.cpp \ 
@@ -421,6 +422,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_hplc_stack.cpp \
         src/us_hydrodyn_saxs_hplc_modes.cpp \
         src/us_hydrodyn_saxs_hplc_modes_bb.cpp \
+        src/us_hydrodyn_saxs_hplc_modes_broaden.cpp \
         src/us_hydrodyn_saxs_hplc_modes_wheel.cpp \
         src/us_hydrodyn_saxs_hplc_makeiq.cpp \
         src/us_hydrodyn_saxs_hplc_parameters.cpp \
@@ -621,6 +623,7 @@ HEADERS *= \
 #  us_astfem_rsa.h \
 #  us_astfem_sim.h \
 #  us_average.h \
+        include/us_band_broaden.h \
 #  us_buffer.h \
 #  us_calendar.h \
 #  us_clipdata.h \
