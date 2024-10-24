@@ -855,6 +855,43 @@ if ( my_rank == 0 ) {
       }
    }
 
+   // If debug text modifies SetSpeedLowA value, apply it
+   int lo_ss_acc = 250;
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedLowA=" ) )
+      {
+         lo_ss_acc        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+         if ( my_rank == 0 ){
+            DbgLv(1) << "DSM: SetSpeedLowA:    SetSpeedLowA" << lo_ss_acc;
+         }
+      }
+   }
+
+   // Check for low acceleration in every dataset
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   {
+      US_SolveSim::DataSet*  dset    = data_sets[ ee ];
+      // Do a quick test of the speed step implied by TimeState
+      int tf_scan   = dset->simparams.speed_step[ 0 ].time_first;
+      int accel1    = dset->simparams.speed_step[ 0 ].acceleration;
+      int rspeed    = dset->simparams.speed_step[ 0 ].rotorspeed;
+      int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
+      int accel2    = dset->simparams.sim_speed_prof[ 0 ].acceleration;
+      if ( my_rank == 0 ){
+         DbgLv(1) << "DSM: ssck: rspeed accel1 tf_aend tf_scan"
+                 << rspeed << accel1 << tf_aend << tf_scan
+                 << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
+      }
+      if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
+      {
+         DbgLv(0) << "rank: " << my_rank << "  Dataset " << ee << " Name: " << dset->run_data.runID <<
+                  " likely bad Timestate. Implied acceleration: " << accel1 <<
+                  " accel end: " << tf_aend << "s. First scan: " << tf_scan << "s.";
+      }
+   }
+
    double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
    double  x_max = parameters[ "x_max" ].toDouble() * 1.0e-13;
    s_max         = ( s_max == 0.0 ) ? x_max : s_max;
