@@ -3262,7 +3262,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 
    // tbd. qs += vbar_msg( model->vbar );
 
-   header << "SAXS excluded volume (anhydrous) [" << UNICODE_ANGSTROM << "^3]";
+   header << "SAXS excluded volume (anhydrous) [" + UNICODE_ANGSTROM_QS + "^3]";
    data   << QString( "%1" ).arg( model->volume );
    
    
@@ -3280,9 +3280,9 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
    // }
 
    header
-      << "Anh. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
-      << "Hyd. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
-      << "Radius of gyration [" << UNICODE_ANGSTROM << "]"
+      << "Anh. Molecular vol. (from vbar) [" + UNICODE_ANGSTROM_QS + "^3]"
+      << "Hyd. Molecular vol. (from vbar) [" + UNICODE_ANGSTROM_QS + "^3]"
+      << "Radius of gyration [" + UNICODE_ANGSTROM_QS + "]"
       << "Number of electrons"
       << "Number of protons"
       << "Net charge"
@@ -3302,7 +3302,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
       ;      
       
    if ( model->volume ) {
-      header << "Average electron density [" << UNICODE_ANGSTROM << "^-3]";
+      header << "Average electron density [" + UNICODE_ANGSTROM_QS + "^-3]";
       data   << QString( "%1" ).arg( model->num_elect / model->volume, 0, 'f', 3 );
    }
 
