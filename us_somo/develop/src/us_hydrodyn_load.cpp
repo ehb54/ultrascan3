@@ -3247,7 +3247,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 
    header
       << "Calculation done at pH"
-      << "Molecular weight [Da]"
+      << "Molecular mass [Da]"
       ;
    data
       << QString( "%1" ).arg( le_pH->text() )
@@ -3288,6 +3288,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
       << "Net charge"
       << "Isoelectric point"
       << "Hydration [g/g]"
+      << "Partial specific volume [cm^3/g]"
       ;
 
    data
@@ -3299,6 +3300,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
       << QString( "%1" ).arg( model->protons - model->num_elect, 0, 'f', 1 )
       << QString( "%1" ).arg( model->isoelectric_point, 0, 'f', 2 )
       << QString( "%1" ).arg( model->hydration_gg, 0, 'g', 3 )
+      << QString( "%1" ).arg( tc_vbar( model->vbar ), 0, 'g', 3 )
       ;      
       
    if ( model->volume ) {
