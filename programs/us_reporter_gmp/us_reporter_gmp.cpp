@@ -5489,6 +5489,11 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 0, c_parms );
+		  /***
+		      in ABOVE's c_parms["Minimum"/"Maximum"], are uniformly set for "s" type !!!
+		      NOT by per-triple basis! 
+		  ****/
+		  
 		  
 		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
 		  imgComb02File.replace( svgext, pngext ); 
