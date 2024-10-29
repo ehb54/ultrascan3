@@ -5383,9 +5383,10 @@ bool US_ReporterGMP::modelGuidExistsForStage_ind( QString triple_n, QString mode
 //Individual Combined Plots
 void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, QString stage_model )
 {
+  QString triplesname_passed = triplesname_p;
   QString filename_passed = get_filename( triplesname_p );
   QString triplesname = triplesname_p.replace(".","");
-  
+
   sdiag_combplot = new US_DDistr_Combine( "REPORT" );
   QStringList runIDs_single;
     
@@ -5420,19 +5421,29 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   
   for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
     {
-      QString triplesname_mod = triplesname;
+      QString triplesname_mod  = triplesname;
+      QString triplesname_chann;                   //Should be "1A:UV/vis." OR "1A:Interf."
+
       if ( triplesname.contains("Interference") )
-	triplesname_mod = triplesname_mod.replace( "Interference" , "660");
+	{
+	  triplesname_mod   = triplesname_mod.replace( "Interference" , "660");
+	  triplesname_chann = triplesname_passed.split(".")[0] + triplesname_passed.split(".")[1] + ":Interf.";
+	}
+      else
+	triplesname_chann = triplesname_passed.split(".")[0] + triplesname_passed.split(".")[1] + ":UV/vis.";
       
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
-      qDebug() << "INDCOMBO_2: " << triplesname << stage_model;
-      
+      qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
+          
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
 	   modelDescModified[ ii ].contains( stage_model ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
+
+	  //compose map of [{"s_ranges","k_ranges"}, etc] from cAP2 & cAPp (for given channel & model!!!)
+	  QMap< QString, QStringList > sim_ranges = find_sim_ranges( triplesname_chann, stage_model );  
 
 	  QString t_m = "s," + stage_model;
 	  QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
@@ -5484,17 +5495,19 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
 		  c_parms[ "Ranges" ] = ranges.join(",");
+
+		  qDebug() << "s-type: sim_ranges.keys(), sim_ranges[\"s_ranges\"] -- "
+			   << sim_ranges.keys()
+			   << sim_ranges["s_ranges"];
+		  if ( sim_ranges. contains("s_ranges") )
+		    c_parms[ "s_ranges" ] = sim_ranges["s_ranges"].join(",");
+		  	    
 		  
 		  //qDebug() << "over models: c_params -- " << c_params;
 		  
 		  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 0, c_parms );
-		  /***
-		      in ABOVE's c_parms["Minimum"/"Maximum"], are uniformly set for "s" type !!!
-		      NOT by per-triple basis! 
-		  ****/
-		  
-		  
+		 		  
 		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
 		  imgComb02File.replace( svgext, pngext ); 
 		  CombPlotsFileNames << imgComb02File;
@@ -5549,6 +5562,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
 		  c_parms[ "Ranges" ] = ranges.join(",");
+
+		  if ( sim_ranges. contains("k_ranges") )
+		    c_parms[ "k_ranges" ] = sim_ranges["k_ranges"].join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
 		  
@@ -5571,6 +5587,50 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   qApp->processEvents();
 }
 
+//pull s_ranges, k_ranges from AProfile
+QMap< QString, QStringList > US_ReporterGMP::find_sim_ranges( QString chann_desc, QString model )
+{
+  QMap < QString, QStringList > sim_ranges;
+
+  qDebug() << "[in find_sim_ranges()1] -- " << chann_desc << model;
+  
+  if ( model. contains("2DSA") )
+    {
+      //2DSA
+      for (int i=0; i<cAP2.parms.size(); ++i )
+	{
+	  QString channame = cAP2.parms[i].channel;
+	  qDebug() << "channame -- " << channame;
+	  
+	  if ( channame. contains( chann_desc ) )
+	    {
+	      sim_ranges[ "s_ranges" ] << QString::number( cAP2.parms[i].s_min )
+				       << QString::number( cAP2.parms[i].s_max );
+	      sim_ranges[ "k_ranges" ] << QString::number( cAP2.parms[i].k_min )
+				       << QString::number( cAP2.parms[i].k_max );
+	      break;
+	    }
+	}
+    }
+  else if ( model. contains("PCSA") )
+    {
+      //PCSA
+      for (int i=0; i<cAPp.parms.size(); ++i )
+	{
+	  QString channame = cAPp.parms[i].channel;
+	  if ( channame == chann_desc )
+	    {
+	      sim_ranges[ "s_ranges" ] << QString::number( cAPp.parms[i].x_min )
+				       << QString::number( cAPp.parms[i].x_max );
+	      sim_ranges[ "y_ranges" ] << QString::number( cAPp.parms[i].y_min )
+				       << QString::number( cAPp.parms[i].y_max );
+	      break;
+	    }
+	}
+    }
+
+  return sim_ranges;
+}
 
 //Combined Plots
 void US_ReporterGMP::process_combined_plots ( QString filename_passed )

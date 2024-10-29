@@ -568,6 +568,7 @@ class US_ReporterGMP : public US_Widgets
         bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
         void process_combined_plots(QString); //!< Process combined plots
         void process_combined_plots_individual(QString, QString); //!< Process combined plots (individual)
+        QMap< QString, QStringList > find_sim_ranges( QString, QString );
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
