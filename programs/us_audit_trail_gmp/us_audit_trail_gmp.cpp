@@ -624,7 +624,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       QLabel* lb_time         = us_label( tr("Initiation Time:") );
       lb_time->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
       QLabel* lb_time1        = us_label( tr("Initiated on:") );
-      QLineEdit* le_time1     = us_lineedit( createdGMPrunts, 0, true );
+      QLineEdit* le_time1     = us_lineedit( createdGMPrunts + " (UTC)", 0, true );
 
       row=0;
       genL2 -> addWidget( lb_time,      row++,   0,  1,  6  );
@@ -805,7 +805,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      QLabel* lb_time_o1        = us_label( tr("Type:") );
 	      QLineEdit* le_time_o1     = us_lineedit( status_map[ "Remote Operation" ][ "type"], 0, true );
 	      QLabel* lb_time_o2        = us_label( tr("Performed on:") );
-	      QLineEdit* le_time_o2     = us_lineedit( operation_types_live_update_ts[ im.key() ], 0, true );
+	      QLineEdit* le_time_o2     = us_lineedit( operation_types_live_update_ts[ im.key() ] + " (UTC)", 0, true );
 	      
 	      row=0;
 	      genL2 -> addWidget( lb_time_o,      row++,   0,  1,  6  );
@@ -959,7 +959,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_time_ref1        = us_label( tr("Ref. Scan Method:") );
 	  QLineEdit* le_time_ref1     = us_lineedit( status_map[ "RefScan" ][ "type"], 0, true );
 	  QLabel* lb_time_ref2        = us_label( tr("Data Saved on:") );
-	  QLineEdit* le_time_ref2     = us_lineedit( data_types_import_ts[ im.key() ], 0, true );
+	  QLineEdit* le_time_ref2     = us_lineedit( data_types_import_ts[ im.key() ] + " (UTC)", 0, true );
 	  
 	  row=0;
 	  genL2 -> addWidget( lb_time_ref,      row++,   0,  1,  6  );
@@ -1245,7 +1245,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_ts         = us_label( tr("Edit Profiles Saved on:") );
 	  lb_ts->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	  QLabel* lb_ts1        = us_label( tr("TimeStamp:") );
-	  QLineEdit* le_ts1     = us_lineedit( data_types_edit_ts[ im.key() ], 0, true );
+	  QLineEdit* le_ts1     = us_lineedit( data_types_edit_ts[ im.key() ] + " (UTC)", 0, true );
 	  
 	  row=0;
 	  genL3 -> addWidget( lb_ts,      row++,   0,  1,  6  );
@@ -1362,7 +1362,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      QLabel* lb_men3        = us_label( tr("Performed by:") );
 	      QLineEdit* le_men3     = us_lineedit( performed_by, 0, true );
 	      QLabel* lb_men4        = us_label( tr("TimeStamp:") );
-	      QLineEdit* le_men4     = us_lineedit( when, 0, true );
+	      QLineEdit* le_men4     = us_lineedit( when + " (UTC)", 0, true );
 	      
 	      genL1 -> addWidget( lb_men1,     row,     1,  1,  2  );
 	      genL1 -> addWidget( le_men1,     row,     3,  1,  3  );
@@ -1428,7 +1428,7 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      QLabel* lb_canc3        = us_label( tr("Reason:") );
 	      QLineEdit* le_canc3     = us_lineedit( reason, 0, true );
 	      QLabel* lb_canc4        = us_label( tr("TimeStamp:") );
-	      QLineEdit* le_canc4     = us_lineedit( when, 0, true );
+	      QLineEdit* le_canc4     = us_lineedit( when + " (UTC)", 0, true );
 	      
 	      
 	      genL1 -> addWidget( lb_canc1,     row,     1,  1,  2  );
@@ -2396,7 +2396,7 @@ void US_auditTrailGMP::assemble_GMP_init( QMap< QString, QMap < QString, QString
 			   
 			   "<table style=\"margin-left:25px\">"
 			   "<tr>"
-			   "<td> Initiated at:     %1 </td>"
+			   "<td> Initiated at:     %1 (UTC)</td>"
 			   "</tr>"
 			   "</table>"
 			   )
@@ -2460,7 +2460,7 @@ void US_auditTrailGMP::assemble_GMP_live_update( QMap< QString, QMap < QString, 
 		       "<table style=\"margin-left:25px\">"
 		       "<tr>"
 		       "<td> Type:             %1 </td> "
-		       "<td> Performed at:     %2 </td>"
+		       "<td> Performed at:     %2 (UTC)</td>"
 		       "</tr>"
 		       "</table>"
 		       )
@@ -2529,7 +2529,7 @@ void US_auditTrailGMP::assemble_GMP_import( QMap< QString, QMap < QString, QStri
 		       "<table style=\"margin-left:25px\">"
 		       "<tr>"
 		       "<td> Ref. Scan Method:  %1 </td> "
-		       "<td> Data Saved at:     %2 </td>"
+		       "<td> Data Saved at:     %2 (UTC)</td>"
 		       "</tr>"
 		       "</table>"
 		       )
@@ -2620,7 +2620,7 @@ void US_auditTrailGMP::assemble_GMP_editing( QMap< QString, QMap < QString, QStr
 		       "</table>"
 		       
 		       "<table style=\"margin-left:25px\">"
-		       "<tr><td> %1 </td>"
+		       "<tr><td> %1 (UTC)</td>"
 		       "</table>"
 		       )
     .arg( oper_ts )           //1
@@ -2679,7 +2679,7 @@ void US_auditTrailGMP::assemble_GMP_analysis_fitmen( QMap < QString, QString > a
 			   "<td> Channel:  %1, </td>"
 			   "<td>           %2, </td>"
 			   "<td> by:       %3, </td>"
-			   "<td> at:       %4  </td>"
+			   "<td> at:       %4 (UTC)</td>"
 			   "</tr>"
 						       )
 	.arg( mfa.key()   )     //1
@@ -2740,7 +2740,7 @@ void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString 
 			       "<td> Reason:             %3, </td>"
 			       "</tr>"
 			       "<tr>"
-			       "<td> When:               %4  </td>"
+			       "<td> When:               %4  (UTC)</td>"
 			       "</tr>"
 						       )
 	    .arg( cj.key()   )      //1

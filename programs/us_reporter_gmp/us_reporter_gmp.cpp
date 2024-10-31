@@ -6316,7 +6316,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   
 			   "<table style=\"margin-left:25px\">"
 			   "<tr>"
-			   "<td> Initiated at:     %1 </td>"
+			   "<td> Initiated at:     %1 (UTC) </td>"
 			   "</tr>"
 			   "</table>"
 			   )
@@ -6407,7 +6407,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   "<table style=\"margin-left:25px\">"
 			   "<tr>"
 			   "<td> Type:             %1 </td> "
-			   "<td> Performed at:     %2 </td>"
+			   "<td> Performed at:     %2 (UTC) </td>"
 			   "</tr>"
 			   "</table>"
 			   )
@@ -6513,7 +6513,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   "<table style=\"margin-left:25px\">"
 			   "<tr>"
 			   "<td> Ref. Scan Method:  %1 </td> "
-			   "<td> Data Saved at:     %2 </td>"
+			   "<td> Data Saved at:     %2 (UTC)</td>"
 			   "</tr>"
 			   "</table>"
 			   )
@@ -6682,11 +6682,11 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       //Edit Profiles Saved:
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Edit Profiles Saved at: </i></b> </caption>"
+			   "<caption align=left> <b><i>Edit Profiles Saved on: </i></b> </caption>"
 			   "</table>"
 			   
 			   "<table style=\"margin-left:25px\">"
-			   "<tr><td> %1 </td>"
+			   "<tr><td> %1 (UTC)</td>"
 			   "</table>"
 			   )
 	.arg( data_types_edit_ts[ im.key() ] )           //1
@@ -6753,7 +6753,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			       "<td> Channel:  %1, </td>"
 			       "<td>           %2, </td>"
 			       "<td> by:       %3, </td>"
-			       "<td> at:       %4  </td>"
+			       "<td> at:       %4  (UTC)</td>"
 			       "</tr>"
 						       )
 	    .arg( mfa.key()   )     //1
@@ -6816,7 +6816,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			       "<td> Reason:             %3, </td>"
 			       "</tr>"
 			       "<tr>"
-			       "<td> When:               %4  </td>"
+			       "<td> When:               %4 (UTC) </td>"
 			       "</tr>"
 						       )
 	    .arg( cj.key()   )      //1
@@ -11692,8 +11692,8 @@ void US_ReporterGMP::get_current_date()
   
   // current_date = dNow.toString( fmt );
   
-  QDateTime date = QDateTime::currentDateTime();
-  current_date = date.toString("MM/dd/yyyy hh:mm:ss");
+  QDateTime date = QDateTime::currentDateTimeUtc();
+  current_date = date.toString("MM/dd/yyyy hh:mm:ss") + " (UTC)";
 
   qDebug() << "Current date -- " << current_date;
 }

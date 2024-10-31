@@ -4682,8 +4682,8 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
   current_esignee += "{\"Comment\":\"" + comment_esignee + "\",";
 
   //TimeDate fro current e-signee:
-  QDateTime date = QDateTime::currentDateTime();
-  QString timedate_esignee = date.toString("MM-dd-yyyy hh:mm:ss");
+  QDateTime date = QDateTime::currentDateTimeUtc();
+  QString timedate_esignee = date.toString("MM-dd-yyyy hh:mm:ss") + " (UTC)";
   current_esignee += "\"timeDate\":\"" + timedate_esignee + "\"}}";
   
   if (  esigned_array.size() == 0 || !esigned_array.size() )
