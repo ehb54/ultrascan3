@@ -5356,6 +5356,11 @@ bool US_ReporterGMP::modelGuidExistsForStage_ind( QString triple_n, QString mode
       QString c_triple_n =  Array_of_tripleNames[ i ];
       c_triple_n. replace(".","");
 
+      qDebug() << "IN modelGuidExistsForStage_ind(): triple_n, c_triple_n, model  -- "
+	       << triple_n << c_triple_n << model;
+      qDebug() << "IN modelGuidExistsForStage_ind(): mguid, Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ][ model ] -- "
+	       << mguid << Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ][ model ];
+      
       if ( c_triple_n == triple_n )
 	{
 	  QMap< QString, QString > tmapguid =  Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ];
@@ -5415,11 +5420,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   
   for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
     {
-
+      QString triplesname_mod = triplesname;
+      if ( triplesname.contains("Interference") )
+	triplesname_mod = triplesname_mod.replace( "Interference" , "660");
+      
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model;
+      
       //fiter by type|model
-      if ( modelDescModified[ ii ].contains( triplesname ) &&
+      if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
 	   modelDescModified[ ii ].contains( stage_model ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
@@ -7512,6 +7521,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
     {
       QString ch_alt_desc  = chw.key();
       QStringList all_wvls = chw.value();
+      QString o_type       = ch_alt_desc.split(":")[1];
 
       QStringList unique_wvls;
       QStringList unique_channels;
@@ -7520,12 +7530,15 @@ QString US_ReporterGMP::calc_replicates_averages( void )
       for( int i=0; i<all_wvls.size(); ++i )
 	{
 	  QString curr_triple = all_wvls[ i ];
-	  QString curr_chann  = all_wvls[ i ].split(".")[0];
+	  QString curr_chann  = all_wvls[ i ].split(".")[0];  
 	  QString curr_wvl    = all_wvls[ i ].split(".")[1];
 
 	  unique_wvls               << curr_wvl;
 	  unique_channels           << curr_chann;
-	  same_wvls_chann_map[ curr_wvl ] << curr_chann;
+
+	  //here, add to list FULL channel desc, e.g. "1A:Iterf.", or "1A:UV/vis."
+	  //same_wvls_chann_map[ curr_wvl ] << curr_chann; //BEFORE
+	  same_wvls_chann_map[ curr_wvl ] << curr_chann + ":" + o_type; //Will this work?
 	}
       
       unique_wvls.     removeDuplicates();
@@ -7533,9 +7546,10 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
       QString replicate_group_number = get_replicate_group_number( ch_alt_desc );
       
-      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2] </h3>\n" )
+      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2 (%3)] </h3>\n" )
 	.arg( replicate_group_number )
-	.arg( unique_channels.join(",") );
+	.arg( unique_channels.join(",") )
+	.arg( o_type );
       
       
       //iterate over unique wvls
@@ -7545,7 +7559,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
 	  QString replicate_subgroup_triples;
 	  for ( int jj=0; jj < same_wvls_chann_map[ u_wvl ].size(); ++jj )
-	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ] + "." + u_wvl + ",";
+	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ].split(":")[0] + "." + u_wvl + ",";
 
 	  replicate_subgroup_triples.chop(1);
 	  
@@ -7663,13 +7677,17 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	{
 	  QString channel_desc_alt = chndescs_alt[ j ];
 
-	  //For now, do not consider IP type!!!
-	  if ( channel_desc_alt.contains("Interf") ) 
-	    continue;
+	  // //For now, do not consider IP type!!!
+	  // if ( channel_desc_alt.contains("Interf") ) 
+	  //   continue;
 	  
-	  if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
+	  //if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
+	  if ( channel_desc_alt .contains( channs_for_wvl[ i ] ) )  
 	    {
-	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, wvl -- " << channel_desc_alt << u_wvl;
+	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, channs_for_wvl[ i ], wvl -- "
+		       << channel_desc_alt
+		       << channs_for_wvl[ i ]
+		       << u_wvl;
 
 	      //Select US_ReportGMP for channel in a Replicate group && representative wvl!
 	      reportGMP = ch_reports[ channel_desc_alt ][ u_wvl ];
@@ -7677,6 +7695,7 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	      break;
 	    }
 	}
+            
       //then pick report's ReportItem corresponding to the passed ref_report_item:
       int report_items_number = reportGMP. reportItems.size();
       for ( int kk = 0; kk < report_items_number; ++kk )
