@@ -25,6 +25,7 @@ TRANSLATIONS = $${TARGET}_DE_de.ts
 
 HEADERS      = us_ana_profile.h   \
                us_analyte.h       \
+               us_archive.h       \
                us_astfem_math.h   \
                us_astfem_rsa.h    \
                us_buffer.h        \
@@ -76,6 +77,7 @@ HEADERS      = us_ana_profile.h   \
 
 SOURCES      = us_ana_profile.cpp   \
                us_analyte.cpp       \
+               us_archive.cpp       \
                us_astfem_math.cpp   \
                us_astfem_rsa.cpp    \
                us_buffer.cpp        \

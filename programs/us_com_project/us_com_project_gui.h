@@ -127,6 +127,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
     void do_run_tables_cleanup( QMap< QString, QString > );
     void do_run_data_cleanup( QMap< QString, QString > );
+    void do_create_autoflowStatus_for_failedRun( QMap< QString, QString > );
     bool readAProfileBasicParms_auto ( QXmlStreamReader& );
       
  protected:

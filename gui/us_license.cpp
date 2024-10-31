@@ -25,13 +25,13 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   // Banner
   QLabel* banner = us_banner( 
-     tr( "UltraScan III Registration\nPlease enter all fields" ) );
+     tr( "Please enter all fields" ) );
 
   banner->setGeometry( 
-      QRect( xpos, ypos, width, spacing + 2 * rowHeight ) );
+      QRect( xpos, ypos, width, spacing + rowHeight ) );
 
   // Row 1 - Name
-  ypos += rowHeight * 3 + spacing;
+  ypos += rowHeight + 2 * spacing;
 
   QLabel* firstname = us_label( tr( "Name (first, last):" ), 0, QFont::Bold );
   firstname->setGeometry( xpos, ypos, buttonw, rowHeight );
@@ -85,20 +85,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   connect( le_institution, SIGNAL( textChanged       ( const QString& ) ), 
                            SLOT  ( update_institution( const QString& ) ) );
 
-  // Row 4 - Address
-  xpos = spacing;
-  ypos += rowHeight + spacing;
-
-  QLabel* address = us_label( tr( "Address:" ), 0, QFont::Bold );
-  address->setGeometry( xpos, ypos, buttonw, rowHeight );
-
-  xpos += buttonw + spacing;
-
-  le_address =  us_lineedit( "" );
-  le_address->setGeometry( xpos, ypos, full_buttonw, rowHeight );
-  connect( le_address, SIGNAL( textChanged   ( const QString& ) ), 
-                       SLOT  ( update_address( const QString& ) ) );
-
   // Row 5 - City/State/Zip
   xpos = spacing;
   ypos += rowHeight + spacing;
@@ -139,31 +125,12 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += mediumColumn + spacing + 10; // Adjust
 
-  QLabel* zip = us_label( tr( "Zip:" ), 0, QFont::Bold );
-  zip->setGeometry( xpos, ypos, smallColumn, rowHeight );
-
-  xpos += smallColumn + spacing;
-
-  le_zip = us_lineedit( "" );
-  le_zip->setGeometry( xpos, ypos, mediumColumn, rowHeight );
-  connect( le_zip, SIGNAL( textChanged( const QString& ) ), 
-                   SLOT  ( update_zip ( const QString& ) ) );
-
-  // Row 6 - Phone/License Type/Version
-  xpos  = spacing;
-  ypos += rowHeight + spacing;
+  //xpos  = spacing;
+ // ypos += rowHeight + spacing;
   
-  QLabel* phone = us_label( tr( "Phone Number:" ), 0, QFont::Bold );
-  phone->setGeometry( xpos, ypos, buttonw, rowHeight );
+ // xpos += spacing + buttonw;
 
-  xpos += spacing + buttonw;
-
-  le_phone = us_lineedit( "" );;
-  le_phone->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( le_phone, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_phone( const QString& ) ) );
-
-  xpos += buttonw + spacing;
+ // xpos += buttonw + spacing;
 
   QLabel* lb_licensetype = us_label( tr( "License:" ), 0, QFont::Bold );
   lb_licensetype->setGeometry( xpos, ypos, smallColumn, rowHeight );
@@ -179,13 +146,8 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   connect( cbb_licensetype, SIGNAL( currentIndexChanged( const QString& ) ), 
                             SLOT  ( update_licensetype ( const QString& ) ) );
   
-  xpos += mediumColumn + spacing + 10; // Adjust
-
-  lbl_version = us_label( tr( "Version:" ), 0, QFont::Bold );
-  lbl_version->setGeometry( xpos, ypos, smallColumn, rowHeight );
-
   xpos  = spacing;
-  ypos += 2 * rowHeight + spacing;
+  ypos += rowHeight + spacing;
 
   QLabel* status = us_banner( tr( "License Status" ) );
   status->setGeometry( QRect( xpos, ypos, width, spacing + rowHeight ) );
@@ -211,7 +173,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   // Row 8 - Expiration
   xpos  = spacing;
-  ypos += rowHeight + 2 * spacing;
+  ypos += rowHeight + spacing;
   
   lbl_expiration = us_label( "Expiration:", 0, QFont::Bold );
   lbl_expiration->setGeometry( xpos, ypos, buttonw, rowHeight );
@@ -225,7 +187,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   // Row 9 - Version
   xpos  = spacing;
-  ypos += rowHeight + 2 * spacing;
+  ypos += rowHeight + spacing;
 
   lbl_valid = us_label( "UltraScan III Version:", 0, QFont::Bold );
   lbl_valid->setGeometry( xpos, ypos, buttonw, rowHeight );
@@ -313,11 +275,11 @@ void US_License::load_current( void )
   lastname    = "";
   firstname   = "";
   institution = "";
-  address     = "";
+  address     = "n/a";
   city        = "";
   state       = "NON-US";
-  zip         = "";
-  phone       = "";
+  zip         = "n/a";
+  phone       = "n/a";
   email       = "";
   version     = US_Version;  // us_defines.h
   validation  = "";
@@ -349,6 +311,10 @@ void US_License::load_current( void )
     validation  = license [ 12 ];
     expiration  = license [ 13 ];
   }
+  // Force unused fields to "n/a"
+  address     = "n/a";
+  zip         = "n/a";
+  phone       = "n/a";
 
   update_screen();
 }
@@ -358,10 +324,7 @@ void US_License::update_screen( void )
   le_firstname   ->setText( firstname   );
   le_lastname    ->setText( lastname    );
   le_institution ->setText( institution );
-  le_address     ->setText( address     );
   le_city        ->setText( city        );
-  le_zip         ->setText( zip         );
-  le_phone       ->setText( phone       );
   le_email       ->setText( email       );
 
   le_platform    ->setText( platform + " / " + os );
@@ -431,10 +394,7 @@ void US_License::update( void )
   if ( firstname   == ""  ||
        lastname    == ""  ||
        institution == ""  ||
-       address     == ""  ||
        state       == ""  ||
-       zip         == ""  ||
-       phone       == ""  ||
        email       == ""  )
   {
     QMessageBox::information ( this, 
@@ -493,7 +453,7 @@ void US_License::update( void )
                   + "&licensetype=" + licensetype;
 //qDebug() << "requesting update";
   // Send request
-  QString url     = "https://ultrascan.aucsolutions.com/update-license.php";
+  QString url     = "https://ultrascan.aucsolutions.com/update-license-new.php";
   US_HttpPost* transmit = new US_HttpPost( url, req );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( update_response      ( const QString& ) ) );
