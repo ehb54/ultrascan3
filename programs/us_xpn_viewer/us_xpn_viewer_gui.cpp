@@ -3479,7 +3479,7 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    qApp->processEvents();  //ALEXEY: maybe this will help
    DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
 
-
+   /****** REVERSE TO GUI refreshing *********************************************************************
    //First time setting Optics types counter //////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
@@ -3496,22 +3496,24 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
 		this,         SLOT  ( changeOptics_auto(  )       ));
      }
    // END of [First time setting Optics types counter] /////////////////////////////////////
-  
-   
-   // cb_optsys->disconnect();
-   // cb_optsys->clear();
-   // DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
-   
-   // cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
-   // DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
-   // cb_optsys->setCurrentIndex( optndx_auto );
-   // DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
-   
-   // // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-   // //          this,         SLOT  ( changeOptics( )            ) );
+   *******************************************************************************************************/
 
+   /********* OLDER code *************************************************/
+   cb_optsys->disconnect();
+   cb_optsys->clear();
+   DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
+   
+   cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
+   DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
+   cb_optsys->setCurrentIndex( optndx_auto );
+   DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+   
    // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-   //          this,         SLOT  ( changeOptics_auto(  )       ));
+   //          this,         SLOT  ( changeOptics( )            ) );
+
+   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeOptics_auto(  )       ));
+   /*** END of an older code **********************************************/
    
    DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
 
@@ -3552,7 +3554,7 @@ DbgLv(1) << "RDa: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "RDa: nscan" << nscan << "npoint" << npoint;
 DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 
- 
+   /****** REVERSE TO GUI refreshing *********************************************************************
    //First time setting Cell/Channs counter //////////////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
@@ -3564,14 +3566,17 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 		this,         SLOT  ( changeCellCh(            ) ) );
      }
    //END of [First time setting Cell/Channs counter ] //////////////////////////////////////////////
+   ********************************************************************************************************/
 
- 
-   // cb_cellchn->disconnect();                                      
-   // cb_cellchn->clear();
-   // cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
-   // connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-   //          this,         SLOT  ( changeCellCh(            ) ) );
+   /********* OLDER code **************************************************************/
+   cb_cellchn->disconnect();                                      
+   cb_cellchn->clear();
+   cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh(            ) ) );
+   /*** END of an older code ***********************************************************/
 
+   
    nlambda      = xpn_data->lambdas_raw( lambdas );               // ALEXEY  lambdas
    int wvlo     = lambdas[ 0 ];
    int wvhi     = lambdas[ nlambda - 1 ];
@@ -3611,6 +3616,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    in_reload_auto      = false;
 
    // Ok to enable some buttons now
+   /****** REVERSE TO GUI refreshing *********************************************************************
    //First time enabling Controls ///////////////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
@@ -3619,10 +3625,12 @@ DbgLv(1) << "RDa: allData size" << allData.size();
        in_reload_all_data_set_gui = true;
      }
    //ENF of [First time enabling Controls ] //////////////////////////////////////////////
-
+   *******************************************************************************************************/
    
-   // enableControls();                                    //ALEXEY ...and actual plotting data
-
+   /** OLDER WAY *******************************************************************************/
+   enableControls();                                    //ALEXEY ...and actual plotting data
+   /** END of OLDER WAY ************************************************************************/
+   
    if ( combinedOptics )
      {
        qDebug() << "CellChNumber, cellchans.count() for runType " <<  runType << ": " << CellChNumber_map[ runType ].toInt() << ", " << cellchans.count();
