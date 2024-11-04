@@ -1225,6 +1225,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    rpRange             = &(mainw->currProto.rpRange);
    rpAprof             = &(mainw->currProto.rpAprof);
    // rpSubmt             = &(mainw->currProto.rpSubmt);
+   ra_data_type = false;
 
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1267,6 +1268,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
 		pb_importDisk   = us_pushbutton( tr( "Import Data" ) );
 		le_dataDiskPath = us_lineedit( "", 0, true );
+
+		ck_absorbance_t = new QCheckBox( tr("Absorbance Data:"), this );
+		ck_absorbance_t ->setAutoFillBackground( true );
+		ck_absorbance_t ->setChecked( false );
 		
 		
 
@@ -1300,6 +1305,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( ck_disksource,     row++,   0, 1, 4 );
    genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
    genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
+   genL->addWidget( ck_absorbance_t,   row++,   1, 1, 1 );
 
 
    //connect checkbox & import
@@ -1464,6 +1470,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    //hide import Disk for now
    pb_importDisk   -> hide();
    le_dataDiskPath -> hide();
+   ck_absorbance_t ->hide();
    importDataPath = "";
    if ( mainw->us_prot_dev_mode )
      ck_disksource->hide();
@@ -1478,7 +1485,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 //
 void US_ExperGuiRotor::reset_dataSource_public( void )
 {
-  ck_disksource ->setChecked( false );
+  ck_disksource   ->setChecked( false );
+  ck_absorbance_t ->setChecked( false );
   importDataPath = "";
 }
 
@@ -1504,6 +1512,7 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
     
   pb_importDisk   -> setVisible( checked );
   le_dataDiskPath -> setVisible( checked );
+  ck_absorbance_t -> setVisible( checked );
 
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
@@ -1513,7 +1522,9 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
   if ( !checked )
     {
       importDataPath = "";
-      le_dataDiskPath ->setText("");
+      le_dataDiskPath -> setText("");
+      ck_absorbance_t -> setChecked( false );
+      ra_data_type = false;
     }
 }
 
@@ -1551,6 +1562,7 @@ void US_ExperGuiRotor::importDisk_cleanProto()
   //mainw->loadAProf = US_AnaProfile();
   //mainw->loadAProf = US_AnaProfile();
   //epanAProfile->reset_sdiag();
+
 }
 
 // Import from disk
@@ -1581,7 +1593,10 @@ void US_ExperGuiRotor::importDisk( void )
   all_tripinfo. clear();
   runTypes_map. clear();
   channs_ranges.clear();
-  
+  unique_runTypes. clear();
+  ra_data_type = false;
+  ck_absorbance_t ->setChecked( false );
+    
   for ( int trx = 0; trx < files.size(); trx++ )
     {
       QString fname  = files[ trx ];
@@ -1609,12 +1624,30 @@ void US_ExperGuiRotor::importDisk( void )
       QString runType    = QString( fname ).section( ".", -5, -5 );
       QString channumber = tripinfo.tripleDesc.split(" / ")[0].simplified();
       runTypes_map[ channumber ] << runType;
+      unique_runTypes << runType;
     }
 
   //Remove duplicates in runTypes_map
+  unique_runTypes .removeDuplicates();
+  //first, uncheck "absorbance" type
+  if ( !ck_absorbance_t->isChecked() ) 
+    ck_absorbance_t ->setChecked( false );
+  //next, check if "RA" (and only) type, set checked
+  qDebug() << "unique_runTypes -- " << unique_runTypes;
+  if ( unique_runTypes.size() == 1 && unique_runTypes[0] == "RA")
+    {
+      ck_absorbance_t ->setChecked( true );
+      ra_data_type = true;
+    }
+  
   for (int i=0; i<runTypes_map.keys().size(); ++i )
     {
       runTypes_map[ runTypes_map.keys()[i] ].removeDuplicates();
+      if ( ra_data_type )
+	{
+	  runTypes_map[ runTypes_map.keys()[i] ].clear();
+	  runTypes_map[ runTypes_map.keys()[i] ] << "RI";
+	}
       qDebug() << "Channel: " << runTypes_map.keys()[i]
 	       << ", types: " << runTypes_map[ runTypes_map.keys()[i] ];
     }
@@ -1629,6 +1662,10 @@ void US_ExperGuiRotor::importDisk( void )
   for( int i=0; i<channs_ranges.keys().size(); ++i ) 
     {
       QString ch_c    = channs_ranges.keys()[ i ];
+
+      if ( ra_data_type && ch_c. contains("B") )
+	continue;
+	
       QString o_types = runTypes_map[ ch_c.left(1) ]
 	. join(",")
 	. replace("RI","UV/vis.")
@@ -1673,7 +1710,7 @@ void US_ExperGuiRotor::importDisk( void )
 QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringList> runTypes )
 {
   qDebug() << "Building protocol for dataImport:";
-  
+
   importDisk_cleanProto();
 
   //Get centerpieces names
@@ -1697,7 +1734,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       chann_list << channumber;
 
       QString runType    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
-      if ( runType == "RI" )
+      if ( runType == "RI" || runType == "RA" )
 	chann_to_wvls[ channame ] << wvl;
     }
   chann_list. removeDuplicates();
@@ -1729,13 +1766,12 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       cs_a.solution = solutions_t.keys()[0];
       cs_a.sol_id   = solutions_t[solutions_t.keys()[0]];
       //comment?
-      
+      rpSolut->chsols << cs_a;
+
       cs_b.channel  = chann_list[i] + " / B, reference [left]";
       cs_b.solution = solutions_t.keys()[0];
       cs_b.sol_id   = solutions_t[solutions_t.keys()[0]];
       //comment?
-      
-      rpSolut->chsols << cs_a;
       rpSolut->chsols << cs_b;
     }
   rpSolut->nschan    = chann_list.size()*2;
@@ -1804,19 +1840,18 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	  rng_a.wvlens << wvl_c;
 	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
 	}
+      rpRange->chrngs << rng_a;
 
       //B channel
       rng_b.channel = chann_list[i] + " / B, reference [left]";
       rng_b.lo_rad  = 5.75;
       rng_b.hi_rad  = 7.25;
       for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
-      	{
-      	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
-      	  rng_b.wvlens << wvl_c;
-      	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
-      	}
-
-      rpRange->chrngs << rng_a;
+	{
+	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
+	  rng_b.wvlens << wvl_c;
+	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+	}
       rpRange->chrngs << rng_b;
     }
   rpRange-> nranges = chann_list.size()*2;
@@ -3997,6 +4032,7 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSolut             = &(mainw->currProto.rpSolut);
+   rpRotor             = &(mainw->currProto.rpRotor);
    mxrow               = 24;     // Maximum possible rows
    nchant              = 0;
    nchanf              = 0;
@@ -4242,10 +4278,11 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
 
                if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
                   srchans << channel + ", sample [right]";
-               else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) )
+               else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) && !rpRotor->importData_absorbance_t )
                   srchans << channel  + ", reference [left]";
                else
-                  srchans << channel;
+		 if ( !rpRotor->importData_absorbance_t )
+		   srchans << channel;
             }
          }
       }
@@ -7588,7 +7625,9 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   //optimaName
   protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
   //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
-  protocol_details[ "dataSource" ]     = "dataDiskAUC";  //<-- for now
+
+  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance"; 
+  protocol_details[ "dataSource" ]     = dataSourceType;  //<-- for now
   
   protocol_details[ "protocolName" ]   = currProto->protoname;
   QString runname = mainw->currProto.runname;

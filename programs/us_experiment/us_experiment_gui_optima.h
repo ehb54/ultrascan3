@@ -159,7 +159,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QList< US_Convert::TripleInfo >    all_tripinfo;
       QMap <QString, QStringList> runTypes_map;
       QMap <QString, QStringList> channs_ranges;
-    
+      QStringList unique_runTypes;
+      bool ra_data_type;
 
    private:
       US_ExperimentMain*   mainw;
@@ -180,6 +181,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
   QCheckBox* ck_disksource;
+  QCheckBox* ck_absorbance_t;
   QPushButton* pb_importDisk;
   QLineEdit *  le_dataDiskPath;
       
@@ -536,6 +538,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoSolutions*  rpSolut;
+      US_RunProtocol::RunProtoRotor*      rpRotor; 
       US_Help  showHelp;
       int      dbg_level;
       //int      mxrow;                           // Max rows (24)
