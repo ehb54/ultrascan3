@@ -1313,6 +1313,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 	    this,           SLOT  ( importDiskChecked( bool ) ) );
    connect( pb_importDisk,      SIGNAL( clicked()       ),
 	    this,           SLOT(   importDisk()        ) );
+   connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
+	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1500,6 +1502,22 @@ void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, Q
     f_data =  runTypes_map;
   else
     qDebug() << "Unsupported type of dataDisk!";
+}
+
+void US_ExperGuiRotor::dataDiskAbsChecked( bool checked )
+{
+  if ( !checked && ra_data_type )
+    {
+      //issue warning
+      QMessageBox::warning( this,
+			    tr( "NOTE:  RA data type!" ),
+			    tr( "It appears that upload from disk data is RA type. \n"
+				"This checkbox cannot be unchecked because this action \n"
+				"will cause improper operation."
+				));
+
+      ck_absorbance_t -> setChecked( true );
+    }
 }
 
 // Check import disk
@@ -1694,7 +1712,7 @@ void US_ExperGuiRotor::importDisk( void )
 			    "<b>Channels / Ranges / Optics:</b><br>"
 			    "<b>%1</b><br>"
 			    "<font color='red'><b>NOTE:</b></font> "
-			    "This information will be regenerated upon new data-from-disk or protocol upload."
+			    "This information will be regenerated upon new data-from-disk, or protocol upload."
 			    )
 			.arg( msg_wvls ) 
 			);

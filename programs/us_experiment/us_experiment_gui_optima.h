@@ -261,6 +261,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
   void importDisk( void );
   void importDiskChecked( bool );
+  void dataDiskAbsChecked( bool );
   QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
   void importDisk_cleanProto( void );
       
