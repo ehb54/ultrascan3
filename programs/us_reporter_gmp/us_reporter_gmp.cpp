@@ -591,6 +591,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ] ;
+  dataSource         = protocol_details[ "dataSource" ] ;
 
   QString full_runname = protocol_details[ "filename" ];
   FullRunName_auto = runName + "-run" + runID;
@@ -1588,6 +1589,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ];
+  dataSource         = protocol_details[ "dataSource" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -1926,7 +1928,8 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "devRecord" ]      = db->value( 24 ).toString();
 	   protocol_details[ "gmpReviewID" ]    = db->value( 25 ).toString();
 
-	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
 	 }
      }
 
@@ -9745,6 +9748,9 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
   QString apprs_a = get_assigned_oper_revs( jsonDocApprList );
 
+  QString run_id = ( dataSource == "INSTRUMENT" ) ? runID : "N/A";
+  QString instr_name = ( dataSource == "INSTRUMENT" ) ? currProto. rpRotor.instrname : "dataDisk";
+  
   html_operator = tr(     
     "<h3 align=left>Optima Machine/Operator </h3>"
       "<table>"
@@ -9757,8 +9763,8 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       "</table>"
     "<hr>"
 				  )
-    .arg( currProto. rpRotor.instrname )   //1
-    .arg( runID )                          //2
+    .arg( instr_name )                     //1
+    .arg( run_id )                         //2
     //.arg( currProto. rpRotor.opername  )   //3 <-- OLD, incorrect
     .arg( opers_a  )                       //3
     .arg( revs_a  )                        //4
