@@ -1628,11 +1628,11 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" )
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1777,10 +1777,10 @@ void US_ConvertGui::process_optics()
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" && expType != "ABDE" )
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance")
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
