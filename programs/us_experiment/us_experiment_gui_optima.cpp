@@ -1622,6 +1622,7 @@ void US_ExperGuiRotor::importDisk( void )
   runTypes_map. clear();
   channs_ranges.clear();
   unique_runTypes. clear();
+  run_details  .clear();
   ra_data_type = false;
   ck_absorbance_t ->setChecked( false );
     
@@ -1716,21 +1717,36 @@ void US_ExperGuiRotor::importDisk( void )
 	  wvl_max = wvls[wvls.size() - 1];
 	  wvl_count   = wvls.size();
 	  
-	  msg_wvls += ", #wvls: " + QString::number(wvl_count) + " (from " + wvl_min + " to " + wvl_max + ")";
+	  msg_wvls += "; #wvls: " + QString::number(wvl_count) + " (from " + wvl_min + " to " + wvl_max + ")";
 	}
-       msg_wvls += ", optics: " + o_types + "<br>";
+       msg_wvls += "; optics: " + o_types + "<br>";
     }
   
+  //Run Details
+  QString msg_run_details = run_details["RPM"] + " RPM; ";
+  int run_duration        = run_details["Time"].toInt();
+  int  rd_hours     = (int)qFloor( run_duration / 3600.0 );
+  int  rd_mins      = (int)qRound( ( run_duration - rd_hours * 3600.0 ) / 60.0 );
+  QString hh        = "h";
+  QString rd_str    = QString().sprintf( "%d %s %02d m", rd_hours, hh.toLatin1().data(), rd_mins );
+  msg_run_details  += rd_str + "; ";
+  QString scanCount = run_details["ScanCount"];
+  msg_run_details  += scanCount;
+    
+  //msg  box
   QMessageBox * msg_dataRead = new QMessageBox(this);
   msg_dataRead->setIcon(QMessageBox::Information);
   msg_dataRead->setWindowTitle(tr("Raw Data from Disk Read"));
   msg_dataRead->setText(tr( "Raw data from disk uploaded!<br><br>"
 			    "The following information was identified and propagated into the current protocol:<br><br>"
+			    "<b>Rotor Speed / Run Length / {Data Type: #Scans}</b><br>"
+			    "<b>%1</b><br><br>"
 			    "<b>Channels / Ranges / Optics:</b><br>"
-			    "<b>%1</b><br>"
+			    "<b>%2</b><br>"
 			    "<font color='red'><b>NOTE:</b></font> "
-			    "This information will be regenerated upon new data-from-disk, or protocol upload."
+			    "This information will be cleared and regenerated upon new data-from-disk, or the protocol upload."
 			    )
+			.arg( msg_run_details )
 			.arg( msg_wvls ) 
 			);
   
@@ -1968,7 +1984,7 @@ void US_ExperGuiRotor::runDetails( void )
                                                 tripleDescriptions );
 
    //set everything for rpSpeed
-   QMap<QString, QString> run_details = dialog->get_params_public();
+   run_details = dialog->get_params_public();
    qDebug() << "[RUN DETAILS]: RPM = " << run_details["RPM"];
    qDebug() << "[RUN DETAILS]: Run length = " << run_details["Time"];
    qDebug() << "[RUN DETAILS]: Scan Count = " << run_details["ScanCount"];

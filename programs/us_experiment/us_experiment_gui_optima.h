@@ -164,7 +164,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QMap <QString, QStringList> channs_ranges;
       QStringList unique_runTypes;
       bool ra_data_type;
-      bool isMwl;  
+      bool isMwl;
+      QMap<QString, QString> run_details;
   
       QVector< US_DataIO::RawData >      allData;      //!< All loaded data
       QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
