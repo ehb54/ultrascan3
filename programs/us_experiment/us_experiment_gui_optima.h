@@ -27,6 +27,8 @@
 #include "us_link_ssl.h"
 #include "../us_convert/us_convert.h"
 #include "us_dataIO.h"
+#include "us_simparms.h"
+#include "us_mwl_data.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -156,15 +158,32 @@ class US_ExperGuiRotor : public US_WidgetsDialog
          { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
       bool message_instr_shown;
-      QList< US_Convert::TripleInfo >    all_tripinfo;
+      QString runID;
+      QString runType;
       QMap <QString, QStringList> runTypes_map;
       QMap <QString, QStringList> channs_ranges;
       QStringList unique_runTypes;
       bool ra_data_type;
-
+      bool isMwl;  
+  
+      QVector< US_DataIO::RawData >      allData;      //!< All loaded data
+      QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
+      QList< US_Convert::TripleInfo >    all_tripinfo; //!< all triple info
+      QList< US_Convert::TripleInfo >    out_tripinfo; //!< output triple info
+      QList< US_Convert::TripleInfo >    all_chaninfo; //!< all channel info
+      QList< US_Convert::TripleInfo >    out_chaninfo; //!< output channel info
+      QStringList                        all_triples;  //!< all triple strings
+      QStringList                        all_channels; //!< all channel strings
+      QStringList                        out_triples;  //!< out triple strings
+      QStringList                        out_channels; //!< out channel strings
+      QList< int >                       out_chandatx; //!< chn.start data index
+      US_MwlData    mwl_data;                  //!< MWL data object
+      QVector< SP_SPEEDPROFILE >         speedsteps;   //!< Speed steps
+  
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRotor*      rpRotor;        // Rotor protocol
+      US_RunProtocol::RunProtoSpeed*      rpSpeed;  
       US_RunProtocol::RunProtoCells*      rpCells;
       US_RunProtocol::RunProtoSolutions*  rpSolut;
       US_RunProtocol::RunProtoOptics*     rpOptic;  
@@ -189,7 +208,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QVector< US_Rotor::Rotor >             rotors;  // All rotors in lab
       QVector< US_Rotor::AbstractRotor >     arotors; // All abstract rotors
       QVector< US_Rotor::RotorCalibration >  calibs;  // Calibrations of rotor
-      QList  < US_Rotor::Instrument >       instruments; 
+      QList  < US_Rotor::Instrument >       instruments;
 
       US_Rotor::Instrument     currentInstrument; 
 	
@@ -264,6 +283,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
   void dataDiskAbsChecked( bool );
   QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
   void importDisk_cleanProto( void );
+  bool init_output_data  ( void );
+  void runDetails        ( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values

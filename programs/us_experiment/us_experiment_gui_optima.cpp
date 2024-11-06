@@ -16,6 +16,8 @@
 #include "us_crypto.h"
 #include "us_datafiles.h"
 #include "us_select_item.h"
+#include "us_gui_util.h"
+#include "us_run_details2.h"
 #include "../us_convert/us_convert.h"
 
 #include "../us_esigner_gmp/us_esigner_gmp.h"
@@ -1218,7 +1220,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
-   // rpSpeed             = &(mainw->currProto.rpSpeed);
+   rpSpeed             = &(mainw->currProto.rpSpeed);
    rpCells             = &(mainw->currProto.rpCells);
    rpSolut             = &(mainw->currProto.rpSolut);
    rpOptic             = &(mainw->currProto.rpOptic);
@@ -1558,6 +1560,10 @@ void US_ExperGuiRotor::importDisk_cleanProto()
 
   // mainw->currProto = US_RunProtocol();
   // mainw->loadProto = US_RunProtocol();
+
+  rpSpeed->ssteps.clear();
+  rpSpeed->ssteps << US_RunProtocol::RunProtoSpeed::SpeedStep();
+  rpSpeed->nstep  = rpSpeed->ssteps.size(); //only 1
   
   rpCells->nused     = 0;
   rpCells->used. clear();
@@ -1575,7 +1581,6 @@ void US_ExperGuiRotor::importDisk_cleanProto()
   rpRange-> chrngs.clear();
 
   //mainw->loadProto = mainw->currProto;
-  
   //mainw->currAProf = US_AnaProfile();
   //mainw->loadAProf = US_AnaProfile();
   //mainw->loadAProf = US_AnaProfile();
@@ -1607,7 +1612,12 @@ void US_ExperGuiRotor::importDisk( void )
   QStringList nameFilters = QStringList( "*.auc" );
   QStringList files =  readDir.entryList( nameFilters,
 					  QDir::Files | QDir::Readable, QDir::Name );
-
+  //set currentDir
+  importDataPath = dir;
+  
+  //clear all internals
+  isMwl        = false;
+  allData     .clear();
   all_tripinfo. clear();
   runTypes_map. clear();
   channs_ranges.clear();
@@ -1626,6 +1636,9 @@ void US_ExperGuiRotor::importDisk( void )
       // Get a raw data from an auc file
       US_DataIO::readRawData( fpath, rdata );
 
+      // Save the raw data for this triple
+      allData << rdata;
+      
       // Save triple information
       QString triple   = QString::number( rdata.cell ) + " / "
 	+ QString( rdata.channel ) + " / "
@@ -1639,12 +1652,16 @@ void US_ExperGuiRotor::importDisk( void )
       all_tripinfo << tripinfo;
 
       //Now runTypes
-      QString runType    = QString( fname ).section( ".", -5, -5 );
+      QString runType_t    = QString( fname ).section( ".", -5, -5 );
       QString channumber = tripinfo.tripleDesc.split(" / ")[0].simplified();
-      runTypes_map[ channumber ] << runType;
-      unique_runTypes << runType;
+      runTypes_map[ channumber ] << runType_t;
+      unique_runTypes << runType_t;
     }
 
+  QString fname_1 = files[ 0 ];
+  runType         = QString( fname_1 ).section( ".", -5, -5 );
+  runID           = QString( fname_1 ).section( ".",  0, -6 );
+  
   //Remove duplicates in runTypes_map
   unique_runTypes .removeDuplicates();
   //first, uncheck "absorbance" type
@@ -1720,9 +1737,298 @@ void US_ExperGuiRotor::importDisk( void )
   msg_dataRead->exec();
   
   //set up dir path
-  le_dataDiskPath   ->setText( dir );
-  importDataPath = dir;
+  le_dataDiskPath   ->setText( importDataPath );
 }
+
+// Initialize output data pointers and lists
+bool US_ExperGuiRotor::init_output_data()
+{
+   bool success   = true;
+   bool have_trip = ( all_tripinfo.size() == allData.size() );
+   qDebug() << "[in init_output_data()]:  have_trip" << have_trip;
+   if ( ! have_trip )
+      all_tripinfo.clear();
+   outData     .clear();
+   all_chaninfo.clear();
+   all_triples .clear();
+   all_channels.clear();
+   out_tripinfo.clear();
+   out_chaninfo.clear();
+   out_triples .clear();
+   out_channels.clear();
+   out_chandatx.clear();
+
+   // Set up initial export-data pointers list and all/out lists
+   for ( int trx = 0; trx < allData.size(); trx++ )
+   {
+      US_DataIO::RawData*    edata    = &allData[ trx ];
+      US_Convert::TripleInfo tripinfo;
+      US_Convert::TripleInfo chaninfo;
+
+      outData      << edata;
+
+      if ( have_trip )
+         tripinfo = all_tripinfo[ trx ];
+
+      char chtype[ 3 ] = { 'R', 'A', '\0' };
+      strncpy( chtype, allData[ trx ].type, 2 );
+      QString dataType = QString( chtype ).left( 2 );
+      qDebug() << "dataType -- " << dataType;
+      
+      QString triple   = QString::number( edata->cell ) + " / "
+         + QString( edata->channel ) + " / "
+         + ( ! runType.contains( "W" )
+             ? QString::number( qRound( edata->scanData[ 0 ].wavelength ) )
+             : tripinfo.tripleDesc.section( " / ", 2, 2 ) );
+      QString celchn   = triple.section( " / ", 0, 1 );
+      int     chanID   = all_channels.indexOf( celchn ) + 1;
+      chanID           = ( chanID < 1 ) ? ( all_channels.count() + 1 ) : chanID;
+      tripinfo.tripleID    = trx + 1;
+      tripinfo.tripleDesc  = triple;
+      tripinfo.description = edata->description;
+      tripinfo.channelID   = chanID;
+      tripinfo.tripleFilename = dataType;
+      tripinfo.excluded    = false;
+      chaninfo             = tripinfo;
+      chaninfo.tripleDesc  = celchn;
+DbgLv(1) << "CGui:IOD: trx" << trx << "triple" << triple;
+
+      if ( have_trip )
+         all_tripinfo[ trx ] = tripinfo;
+      else
+         all_tripinfo << tripinfo;
+      out_tripinfo << tripinfo;
+      all_triples  << triple;
+      out_triples  << triple;
+
+      if ( ! all_channels.contains( celchn )  ||  runType.contains( "W" ) )
+      {
+         all_channels << celchn;
+         all_chaninfo << chaninfo;
+         out_channels << celchn;
+         out_chaninfo << chaninfo;
+         out_chandatx << trx;
+DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
+      }
+   }
+
+   // Save a vector of speed steps read or computed from the data scans
+   char chtype[ 3 ] = { 'R', 'A', '\0' };
+   strncpy( chtype, allData[ 0 ].type, 2 );
+   QString dataType = QString( chtype ).left( 2 );
+   int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
+                                                               speedsteps );
+   int     nspeedc  = 0;
+   bool low_accel   = false;
+   double rate      = 400.0;
+DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
+
+   if ( nspeed == 0 )
+   {  // Compute speed steps from all raw auc data
+      US_SimulationParameters::computeSpeedSteps( allData, speedsteps );
+      nspeedc          = speedsteps.size();
+      nspeed           = nspeedc;
+DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
+
+      // Check to see if implied 1st acceleration is too low
+#define DSS_LO_ACC 250.0 // default SetSpeedLowAccel
+      // if ( impType != 2 )  // Check if not imported AUC
+      // {
+      //    QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
+      //    double ss_lo_acc = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
+      //    low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
+      // }
+   }
+
+   // Report problematic 1st speed step
+   if ( low_accel )
+   {
+      int tf_scan      = speedsteps[ 0 ].time_first;
+      int accel1       = (int)qRound( rate );
+      int rspeed       = speedsteps[ 0 ].rotorspeed;
+      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+
+      QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
+                         "The acceleration implied is %1 rpm/sec.<br/>"
+                         "The acceleration zone ends at %2 seconds,<br/>"
+                         "with a first scan time of %3 seconds.<br/><br/>"
+                         "<b>You should rerun the experiment without<br/>"
+                         "any interim constant speed, and then<br/>"
+                         "you should reimport the data.</b>" )
+                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( wmsg );
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+            QMessageBox::YesRole    );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+      if ( msgBox.clickedButton() == bAbort )
+      {  // Abort the import of this data
+         QApplication::restoreOverrideCursor();
+         qApp->processEvents();
+         //reset();
+         return false;
+      }
+      else
+      {  // Modify times and omegas of this data, then proceed to import
+         int status = US_Convert::adjustSpeedstep( allData, speedsteps );
+DbgLv(1) << "CGui:IOD: adjSS stat" << status;
+      }
+   }
+
+   // MultiWaveLength if channels and triples counts differ
+   isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
+   if ( isMwl  &&  ( all_tripinfo.count() / all_chaninfo.count() ) < 4 )
+   {  // If less than 4 wavelengths, treat as non-MWL
+      isMwl            = false;
+      all_chaninfo     = all_tripinfo;
+      out_chaninfo     = out_tripinfo;
+      out_chandatx.clear();
+
+      for ( int jj = 0; jj < out_tripinfo.count(); jj++ )
+         out_chandatx << jj;
+DbgLv(1) << "CGui:IOD:    isMwl" << isMwl << "ac.count at.count oc.count"
+ << all_chaninfo.count() << all_tripinfo.count() << out_chaninfo.count();
+   }
+
+   if ( isMwl )
+   {  // If MWL, update speed steps
+DbgLv(1) << "CGui:IOD:   updSS call";
+      QVector< SP_SPEEDPROFILE > testss = speedsteps;
+      int nstest    = mwl_data.update_speedsteps( testss );
+      if ( nstest > 0 )
+      {
+         nspeed        = nstest;
+         speedsteps    = testss;
+      }
+      else if ( nstest < 0 )
+      {
+         QMessageBox::critical( this,
+            tr( "Invalid MWL Speedsteps" ),
+            tr( "The \"set_speed\" values in MWRS files have"
+                " resulted in too many speed steps or steps"
+                " where speeds decrease.\n\nImport is ABORTED!!" ) );
+         success       = false;
+         //resetAll();
+      }
+DbgLv(1) << "CGui:IOD:    updSS nspeed nstest nspeedc"
+ << nspeed << nstest << nspeedc << "ss0  timf omgf"
+ << speedsteps[0].time_first << speedsteps[0].w2t_first;
+   }
+
+   else
+   {  // Else complete channel lists
+      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
+      {
+         QString triple = all_tripinfo[ trx ].tripleDesc;
+DbgLv(1) << "CGui:IOD:     trx" << trx << "triple" << triple;
+         all_chaninfo[ trx ].tripleDesc = triple;
+         out_chaninfo[ trx ].tripleDesc = triple;
+      }
+DbgLv(1) << "CGui:IOD:   nspeed" << nspeed << "sp0.rspeed sp0.avspeed"
+ << nspeed << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
+   }
+
+DbgLv(1) << "CGui:IOD: RETURN";
+   return success;
+}
+
+//get raw data details
+void US_ExperGuiRotor::runDetails( void )
+{
+   // Create data structures for US_RunDetails2
+   QStringList tripleDescriptions;
+   QVector< US_DataIO::RawData >  currentData;
+
+   if ( isMwl )
+   {  // For MWL, only pass the 1st data set of each cell/channel
+      for ( int ii = 0; ii < out_chaninfo.size(); ii++ )
+      {
+         currentData        << *outData[ out_chandatx[ ii ] ];
+         QString celchn      = out_chaninfo[ ii ].tripleDesc;
+         celchn              = celchn.section( " / ", 0, 1 );
+         tripleDescriptions << celchn;
+      }
+   }
+
+   else
+   {  // For most data, pass all (non-excluded) triples
+      for ( int ii = 0; ii < out_tripinfo.size(); ii++ )
+      {
+         currentData        << *outData[ ii ];
+         tripleDescriptions << out_tripinfo[ ii ].tripleDesc;
+      }
+   }
+
+   US_RunDetails2* dialog = new US_RunDetails2( currentData, runID, importDataPath,
+                                                tripleDescriptions );
+
+   //set everything for rpSpeed
+   QMap<QString, QString> run_details = dialog->get_params_public();
+   qDebug() << "[RUN DETAILS]: RPM = " << run_details["RPM"];
+   qDebug() << "[RUN DETAILS]: Run length = " << run_details["Time"];
+   qDebug() << "[RUN DETAILS]: Scan Count = " << run_details["ScanCount"];
+
+   QString scanCount_per_dataType = run_details["ScanCount"];
+   QStringList scanCount_per_dataTypeList;
+   if ( scanCount_per_dataType.contains(",") )
+     scanCount_per_dataTypeList = scanCount_per_dataType.split(",");
+   else
+     scanCount_per_dataTypeList << scanCount_per_dataType;
+
+
+   
+   int curssx = 0;
+   rpSpeed->ssteps[ curssx ].duration     = run_details["Time"].toDouble();
+   rpSpeed->ssteps[ curssx ].speed        = run_details["RPM"] .toDouble();
+   //rpSpeed->ssteps[ curssx ].accel;
+   //rpSpeed->ssteps[ curssx ].delay_stage;
+
+   //UV/vis.
+   //rpSpeed->ssteps[ curssx ].delay;
+   for ( int i=0; i< scanCount_per_dataTypeList.size(); ++i )
+     {
+       QString dt_scans = scanCount_per_dataTypeList[i];
+       if ( dt_scans. contains("RI:") || dt_scans. contains("RA:") )
+	 rpSpeed->ssteps[ curssx ].scanintv  = int(run_details["Time"].toDouble() / dt_scans.split(":")[1].toDouble());
+       else if ( dt_scans. contains("IP:") )
+	 rpSpeed->ssteps[ curssx ].scanintv_int  = int(run_details["Time"].toDouble() / dt_scans.split(":")[1].toDouble());
+     }
+   
+   //Interf.
+   //rpSpeed->ssteps[ curssx ].delay_int;
+   //rpSpeed->ssteps[ curssx ].scanintv_int;
+
+   /*** DEBUG ****/
+   for ( int ii = 0; ii < rpSpeed ->nstep; ii++ )
+     {
+       qDebug() << ii << rpSpeed->ssteps[ ii ].speed;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].accel;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].duration;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].delay_stage;
+
+       //UV/vis.
+       qDebug() << ii << "UV/vis.";
+       qDebug() << ii << rpSpeed->ssteps[ ii ].delay;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv_min;
+       
+       //interference
+       qDebug() << ii << "Interf.";
+       qDebug() << ii << rpSpeed->ssteps[ ii ].delay_int;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv_int;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv_int_min;
+     }
+   /*************/
+
+   //Test
+   //dialog->exec();
+}
+
 
 // for dataImport
 QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringList> runTypes )
@@ -1751,8 +2057,8 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified(); 
       chann_list << channumber;
 
-      QString runType    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
-      if ( runType == "RI" || runType == "RA" )
+      QString runType_t    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
+      if ( runType_t == "RI" || runType_t == "RA" )
 	chann_to_wvls[ channame ] << wvl;
     }
   chann_list. removeDuplicates();
@@ -1873,7 +2179,14 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       rpRange->chrngs << rng_b;
     }
   rpRange-> nranges = chann_list.size()*2;
-    
+
+  //run Details: Initiate data arrays for getting runInfo:
+  if ( ! init_output_data() )  
+    qDebug() << "[in build_protocol_for_data_import()]: could not init_output_data()!!!";
+
+  //Get Run Info
+  runDetails();
+  
   //Now, we *CAN* initPanels(): make sure all above is properly set!!!
   //mainw->initPanels();
 
