@@ -9140,7 +9140,7 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   if ( autoflowStatusID )
     {
       //update
-      if ( dtype == "RI" )
+      if ( dtype == "RI" || dtype == "RA" )
 	{
 	  qry << "update_autoflowStatusEditRI_record"
 	      << QString::number( autoflowStatusID )
@@ -9163,7 +9163,8 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   else
     {
       QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
-			    tr( "autoflowStatus (EDIT {RI,IP}): There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+			    tr( "autoflowStatus (EDIT {RI|RA,IP}): There was a problem with identifying "
+				"a record in autoflowStatus table for a given run! \n" ) );
       
       return;
     }

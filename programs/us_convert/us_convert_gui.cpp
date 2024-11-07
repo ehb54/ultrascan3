@@ -7644,7 +7644,7 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   
   qry.clear();
   
-  if ( runtype == "RI")
+  if ( runtype == "RI" || runtype == "RA" )
     {
       QString refScan = auto_ref ? QString("automated") : QString("manual");
 	
