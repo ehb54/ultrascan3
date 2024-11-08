@@ -6584,6 +6584,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( status_map[ "Person" ][ "level" ] )                   //5
 	;
 
+      QString ref_scan_method = ( dataSource. contains( "Absorbance" ) ) ? "N/A" : status_map[ "RefScan" ][ "type"];
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
 			   "<caption align=left> <b><i>Reference Scan, Data Saving: </i></b> </caption>"
@@ -6596,7 +6597,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   "</tr>"
 			   "</table>"
 			   )
-	.arg( status_map[ "RefScan" ][ "type"] )     //1
+	.arg( ref_scan_method )                      //1
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
       

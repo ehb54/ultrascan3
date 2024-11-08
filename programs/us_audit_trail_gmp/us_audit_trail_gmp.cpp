@@ -359,6 +359,9 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //GMP Run Name
   gmpRunName_passed = protocol_details["gmp_runname"];
 
+  //dataSource
+  dataSource        = protocol_details["dataSource"];
+  
   //init HTML
   initHTML();
   
@@ -957,7 +960,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	  QLabel* lb_time_ref         = us_label( tr("Reference Scan, Data Saving:") );
 	  lb_time_ref->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 	  QLabel* lb_time_ref1        = us_label( tr("Ref. Scan Method:") );
-	  QLineEdit* le_time_ref1     = us_lineedit( status_map[ "RefScan" ][ "type"], 0, true );
+	  QString ref_scan_method     = ( dataSource. contains( "Absorbance" ) ) ? "N/A" : status_map[ "RefScan" ][ "type"];
+	  QLineEdit* le_time_ref1     = us_lineedit( ref_scan_method, 0, true );
 	  QLabel* lb_time_ref2        = us_label( tr("Data Saved on:") );
 	  QLineEdit* le_time_ref2     = us_lineedit( data_types_import_ts[ im.key() ] + " (UTC)", 0, true );
 	  
@@ -1727,6 +1731,7 @@ QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID 
 	   protocol_details[ "gmpReviewID" ]    = db->value( 25 ).toString();
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
 	 }
      }
 
@@ -2537,6 +2542,7 @@ void US_auditTrailGMP::assemble_GMP_import( QMap< QString, QMap < QString, QStri
     .arg( status_map[ "Person" ][ "level" ] )                   //5
     ;
 
+  QString ref_scan_method = ( dataSource. contains( "Absorbance" ) ) ? "N/A" : status_map[ "RefScan" ][ "type"];
   html_assembled += tr(
 		       "<table style=\"margin-left:10px\">"
 		       "<caption align=left> <b><i>Reference Scan, Data Saving: </i></b> </caption>"
@@ -2549,8 +2555,8 @@ void US_auditTrailGMP::assemble_GMP_import( QMap< QString, QMap < QString, QStri
 		       "</tr>"
 		       "</table>"
 		       )
-    .arg( status_map[ "RefScan" ][ "type"] )     //1
-    .arg( oper_ts  )                             //2
+    .arg( ref_scan_method )     //1
+    .arg( oper_ts  )            //2
     ;
   
   html_assembled += tr(

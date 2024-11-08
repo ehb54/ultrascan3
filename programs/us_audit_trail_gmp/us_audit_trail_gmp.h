@@ -56,6 +56,7 @@ class US_auditTrailGMP : public US_Widgets
         QMap<QString, QString> eSign_details_auto; //!< Details of eSign for auto section.
         bool p_2dsa_run_fitmen; //!< Flag for 2DSA run fitmen.
         bool p_2dsa_auto_fitmen; //!< Flag for 2DSA auto fitmen.
+        QString dataSource;
 
         int RowHeight; //!< Height of the row.
         QString html_assembled; //!< Assembled HTML content.
