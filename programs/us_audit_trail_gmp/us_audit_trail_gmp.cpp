@@ -2103,23 +2103,39 @@ QMap < QString, QString > US_auditTrailGMP::parse_autoflowStatus_analysis_json( 
   QMap <QString, QString>  status_map;
 
   QJsonDocument jsonDoc = QJsonDocument::fromJson( statusJson.toUtf8() );
-  //QJsonObject json_obj  = jsonDoc.object();
-
-  QJsonArray json_array  = jsonDoc.array();
-  qDebug() << "IN ANALYSIS_JSON: " << json_array;
-
-  for (int i=0; i < json_array.size(); ++i )
+  
+  if ( jsonDoc. isArray() )
     {
-      foreach(const QString& key, json_array[ i ].toObject().keys())
+      QJsonArray json_array  = jsonDoc.array();
+      qDebug() << "IN ANALYSIS_JSON [ARRAY]: " << json_array;
+      
+      for (int i=0; i < json_array.size(); ++i )
 	{
-	  QJsonValue value = json_array[ i ].toObject().value(key);
-      	  qDebug() << "ANALYSIS_JSON: key, value: " << key << value.toString();
+	  foreach(const QString& key, json_array[ i ].toObject().keys())
+	    {
+	      QJsonValue value = json_array[ i ].toObject().value(key);
+	      qDebug() << "ANALYSIS_JSON [ARRAY]: key, value: " << key << value.toString();
+	      
+	      status_map[ key ] = value.toString();
+	    }
+	}
+    }
+  else if ( jsonDoc. isObject() )
+    {
+      QJsonObject json_obj  = jsonDoc.object();
+      qDebug() << "IN ANALYSIS_JSON [OBJECT]: " << json_obj;
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  qDebug() << "ANALYSIS_JSON [OBJECT]: key, value: " << key << value;
 
 	  status_map[ key ] = value.toString();
 	}
     }
-
+    
   return status_map;
+  
 }
 
 //display oper/revs/appr.

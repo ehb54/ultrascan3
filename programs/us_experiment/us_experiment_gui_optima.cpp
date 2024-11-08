@@ -1315,8 +1315,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 	    this,           SLOT  ( importDiskChecked( bool ) ) );
    connect( pb_importDisk,      SIGNAL( clicked()       ),
 	    this,           SLOT(   importDisk()        ) );
-   connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
-	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
+   // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
+   // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1474,7 +1474,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    //hide import Disk for now
    pb_importDisk   -> hide();
    le_dataDiskPath -> hide();
-   ck_absorbance_t ->hide();
+   ck_absorbance_t -> hide();
+   ck_absorbance_t -> setEnabled( false );
    importDataPath = "";
    if ( mainw->us_prot_dev_mode )
      ck_disksource->hide();
