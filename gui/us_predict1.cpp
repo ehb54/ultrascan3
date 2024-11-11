@@ -99,7 +99,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
                              SLOT  ( viscosity  ( const QString& ) ) );
       controls->addWidget( le_viscosity, c_row++, 1 );
    }
-
+   US_Math2::data_correction( temperature, solution );
    QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20" ) + DEGC + ")" );
    connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
    controls->addWidget( pb_vbar, c_row, 0 );
@@ -241,21 +241,22 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    main->addLayout( top );
    
    QGridLayout* values = new QGridLayout;
-   
-   QLabel* titles[ 8 ];
+
    
    titles[ 0 ] = us_label( tr( "Model:" ) );
-   titles[ 1 ] = us_label( "s (sec)" );
-   titles[ 2 ] = us_label( "D (cm<sup>2</sup>/sec)" );
+   titles[ 1 ] = us_label( "s<sub>app</sub> (S)" );
+   titles[ 2 ] = us_label( "D<sub>app</sub> (cm<sup>2</sup>/sec)" );
    titles[ 3 ] = us_label( "f" );
    titles[ 4 ] = us_label( "f / f0" );
    titles[ 5 ] = us_label( "a (<span>&Aring;</span>)" );
    titles[ 6 ] = us_label( "b (<span>&Aring;</span>)" );
-   titles[ 7 ] = us_label( tr( "Volume " ) + "(&Aring;<sup>3</sup>)" );
+   titles[ 7 ] = us_label( tr( "Volume" ) + " (&Aring;<sup>3</sup>)" );
+   titles[ 8 ] = us_label( "s<sub>20,w</sub> (S)" );
+   titles[ 9 ] = us_label( "D<sub>20,w</sub> (cm<sup>2</sup>/sec)" );
 
    int row = 0;
 
-   for ( int i = 0; i < 8; i++ )
+   for ( int i = 0; i < 10; i++ )
    {
       titles[ i ]->setAlignment( Qt::AlignCenter );
       values->addWidget( titles[ i ], row, i );
@@ -268,7 +269,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    lb_oblate [ 0 ] = us_label( tr( "Oblate:" ) );
    lb_rod    [ 0 ] = us_label( tr( "Long Rod:" ) );
 
-   for ( int i = 0; i < 8; i++ )
+   for ( int i = 0; i < 10; i++ )
    {
       if ( i > 0 )
       {
@@ -508,6 +509,44 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
    //debug();
 }
 
+void US_Predict1::calc_column( const QString& name, const QString& unit, int column_index, double sphere_val,
+                               double prolate_val, double oblate_val, double rod_val, double multiplier)
+{
+   double min_value = min( min( sphere_val, prolate_val ), min( oblate_val, rod_val ) ) * multiplier;
+   double max_value = max( max( sphere_val, prolate_val ), max( oblate_val, rod_val ) ) * multiplier;
+   int log_min = (int) ( log10( min_value ) ) ;
+   int log_max = (int) ( log10( max_value ) ) ;
+   int power_of_ten = 1e+0;
+   char format_char = 'g';
+   if ( abs( log_min - log_max ) <= 1 )
+   {
+      power_of_ten = log_max;
+      format_char = 'f';
+   }
+   else
+   {
+      power_of_ten = log_min;
+   }
+   power_of_ten *= -1;
+   if ( qFabs(max_value * multiplier * (double)pow(10, power_of_ten)) < 1 )
+   {
+      power_of_ten += (power_of_ten != 0) ? power_of_ten / abs( power_of_ten ) : 1;
+   }
+
+   titles[ column_index ] ->setText( name + ((unit.isEmpty())?"":" (" + unit + ")" ));
+
+   if ( power_of_ten != 0 )
+   {
+      titles[ column_index ] ->setText( name + " (" + QString("e%1%2").
+         arg(power_of_ten > 0 ? '+' : '-').arg(qFabs(power_of_ten),2,'f', 0, '0') + ((unit.isEmpty())?"":" " + unit) + ")" );
+   }
+   lb_sphere [ column_index ]->setText( QString::number( sphere_val * multiplier * (double)pow(10, power_of_ten), format_char, 4 ) );
+   lb_prolate[ column_index ]->setText( QString::number( prolate_val * multiplier * (double)pow(10, power_of_ten), format_char, 4 ) );
+   lb_oblate [ column_index ]->setText( QString::number( oblate_val * multiplier * (double)pow(10, power_of_ten), format_char, 4 ) );
+   lb_rod    [ column_index ]->setText( QString::number( rod_val * multiplier * (double)pow(10, power_of_ten), format_char, 4 ) );
+
+}
+
 void US_Predict1::update()
 {
    allparams.mw          = mw;
@@ -519,37 +558,35 @@ void US_Predict1::update()
    
    allparams.calculate( temperature );
 
-   lb_sphere[ 1 ] ->setText( QString::number( allparams.sphere.s      , 'e', 4 ) );
-   lb_sphere[ 2 ] ->setText( QString::number( allparams.sphere.D      , 'e', 4 ) );
-   lb_sphere[ 3 ] ->setText( QString::number( allparams.sphere.f      , 'e', 4 ) ); 
-   lb_sphere[ 4 ] ->setText( QString::number( allparams.sphere.f_f0   , 'f', 4 ) );
-   lb_sphere[ 5 ] ->setText( QString::number( allparams.sphere.a      , 'e', 4 ) );
-   lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.b      , 'e', 4 ) );
-   lb_sphere[ 7 ] ->setText( QString::number( allparams.sphere.volume , 'e', 4 ) );
+   // fill every column with the calculated values
+   calc_column( "s<sub>app</sub>", "S", 1,
+                allparams.sphere.s, allparams.prolate.s, allparams.oblate.s, allparams.rod.s,
+                1e+13 / solution.s20w_correction );
+   calc_column( "D<sub>app</sub>", "cm<sup>2</sup>/sec", 2,
+                allparams.sphere.D, allparams.prolate.D, allparams.oblate.D, allparams.rod.D,
+                1 / solution.D20w_correction );
+   calc_column( "f", "", 3,
+                allparams.sphere.f, allparams.prolate.f, allparams.oblate.f, allparams.rod.f,
+                1 );
+   calc_column( "f / f0", "", 4,
+                allparams.sphere.f_f0, allparams.prolate.f_f0, allparams.oblate.f_f0, allparams.rod.f_f0,
+                1 );
+   calc_column( "a", "<span>&Aring;</span>", 5,
+                allparams.sphere.a, allparams.prolate.a, allparams.oblate.a, allparams.rod.a,
+                1 );
+   calc_column( "b", "<span>&Aring;</span>", 6,
+                allparams.sphere.b, allparams.prolate.b, allparams.oblate.b, allparams.rod.b,
+                1 );
+   calc_column( "Volume", "<span>&Aring;<sup>3</sup></span>", 7,
+                allparams.sphere.volume, allparams.prolate.volume, allparams.oblate.volume, allparams.rod.volume,
+                1 );
+   calc_column( "s<sub>20,w</sub>", "S", 8,
+                allparams.sphere.s, allparams.prolate.s, allparams.oblate.s, allparams.rod.s,
+                1e+13 );
+   calc_column( "D<sub>20,w</sub>", "cm<sup>2</sup>/sec", 9,
+                allparams.sphere.D, allparams.prolate.D, allparams.oblate.D, allparams.rod.D,
+                1 );
 
-   lb_prolate[ 1 ]->setText( QString::number( allparams.prolate.s     , 'e', 4 ) );
-   lb_prolate[ 2 ]->setText( QString::number( allparams.prolate.D     , 'e', 4 ) );
-   lb_prolate[ 3 ]->setText( QString::number( allparams.prolate.f     , 'e', 4 ) ); 
-   lb_prolate[ 4 ]->setText( QString::number( allparams.prolate.f_f0  , 'f', 4 ) );
-   lb_prolate[ 5 ]->setText( QString::number( allparams.prolate.a     , 'e', 4 ) );
-   lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.b     , 'e', 4 ) );
-   lb_prolate[ 7 ]->setText( QString::number( allparams.prolate.volume, 'e', 4 ) );
-
-   lb_oblate[ 1 ] ->setText( QString::number( allparams.oblate.s      , 'e', 4 ) );
-   lb_oblate[ 2 ] ->setText( QString::number( allparams.oblate.D      , 'e', 4 ) );
-   lb_oblate[ 3 ] ->setText( QString::number( allparams.oblate.f      , 'e', 4 ) ); 
-   lb_oblate[ 4 ] ->setText( QString::number( allparams.oblate.f_f0   , 'f', 4 ) );
-   lb_oblate[ 5 ] ->setText( QString::number( allparams.oblate.a      , 'e', 4 ) );
-   lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.b      , 'e', 4 ) );
-   lb_oblate[ 7 ] ->setText( QString::number( allparams.oblate.volume , 'e', 4 ) );
-
-   lb_rod[ 1 ]    ->setText( QString::number( allparams.rod.s         , 'e', 4 ) );
-   lb_rod[ 2 ]    ->setText( QString::number( allparams.rod.D         , 'e', 4 ) );
-   lb_rod[ 3 ]    ->setText( QString::number( allparams.rod.f         , 'e', 4 ) ); 
-   lb_rod[ 4 ]    ->setText( QString::number( allparams.rod.f_f0      , 'f', 4 ) );
-   lb_rod[ 5 ]    ->setText( QString::number( allparams.rod.a         , 'e', 4 ) );
-   lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 4 ) );
-   lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 4 ) );
    if ( signal ) emit changed();
 }
 
