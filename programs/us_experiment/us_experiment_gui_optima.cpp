@@ -1613,6 +1613,16 @@ void US_ExperGuiRotor::importDisk( void )
   QStringList nameFilters = QStringList( "*.auc" );
   QStringList files =  readDir.entryList( nameFilters,
 					  QDir::Files | QDir::Readable, QDir::Name );
+  //check for .auc presence
+  if ( files. size() == 0 )
+    {
+      QMessageBox::warning( this,
+			    tr( "NO .AUC DATA DETECTED!" ),
+			    tr( "No .auc data detected in the selected directory... \n"
+				));
+      return;
+    }
+  
   //set currentDir
   importDataPath = dir;
   
