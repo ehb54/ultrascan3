@@ -5512,7 +5512,21 @@ void US_ConvertGui::PseudoCalcAvg( void )
 
    if ( referenceDefined ) return;  // Average calculation has already been done
 
-   if ( isMwl )
+   bool is_mwl_data = false;
+   int temp_wvl = -1;
+   for ( int ii = 0; ii < outData.size(); ii++) {
+      int wvl = qRound(outData.at(ii)->scanData.first().wavelength);
+      if ( temp_wvl == -1) {
+         temp_wvl = wvl;
+         continue;
+      }
+      if ( temp_wvl != wvl) {
+         is_mwl_data = true;
+         break;
+      }
+   }
+
+   if ( is_mwl_data )
    {  // Do calculations for each wavelength, if MWL
          PseudoCalcAvgMWL();
          return;
@@ -6058,12 +6072,13 @@ void US_ConvertGui::cancel_reference( void )
    int wvoff    = 0;
    int rscans   = ExpData.RI_nscans;
 
+   int nwl_rip = ExpData.RIwvlns.size();
    // Do the inverse operation and retrieve raw intensity data
    for ( int ii = 0; ii < outData.size(); ii++ )
    {
        US_DataIO::RawData* currentData = outData[ ii ];
 
-       if ( isMwl )
+       if ( nwl_rip > 1 )
        {  // For MWL, profile is offset by wavelength
          int iwavl    = out_triples[ ii ].section( " / ", 2, 2 ).toInt();
          wvoff        = ExpData.RIwvlns.indexOf( iwavl );
@@ -6079,7 +6094,7 @@ void US_ConvertGui::cancel_reference( void )
                                          .arg( out_triples[ ii ] ) );
             int kwavl    = 99999;
 
-            for ( int jj = 0; jj < ExpData.RI_nwvlns; jj++ )
+            for ( int jj = 0; jj < ExpData.RIwvlns.size(); jj++ )
             {  // Find index of nearest wavelength
                int jwavl    = qAbs( ExpData.RIwvlns[ jj ] - iwavl );
 
@@ -9475,43 +9490,40 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
    int ref_size = refData->xvalues.size();
    int ccx      = tripListx;
    int tripx    = out_chandatx[ ccx ];
-   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
    ExpData.RI_nscans = refData->scanData.size();
-//   ExpData.RI_nwvlns = all_wavelength_tripx.size();
 DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
 
-   QMap<int, int> wvl_to_tripx;
-   for ( int wvx = 0; wvx < nlambda; wvx++ ) {
-      refData  = outData[ tripx ];
-      int wvl = refData->scanData.at(0).wavelength;
-      wvl_to_tripx[wvl] = tripx;
-      tripx++;
-   }
+   QVector<int> unified_lambdas;
+   QVector<int> unified_lambdas_tripx;
+   int counter = 0;
+   QVector<int> argsort;
+
    for ( int ii = 0; ii < outData.size(); ii++) {
-      // to make sure to take account half-wavelength lambda, each multiplies to 10
-      //      int wvl = qRound(outData.at(ii)->scanData.at(0).wavelength * 10);
-      int wvl = outData.at(ii)->scanData.at(0).wavelength;
-      if (wvl_to_tripx.contains(wvl)) {
+      int wvl = qRound( outData.at(ii)->scanData.first().wavelength );
+      if (unified_lambdas.contains(wvl)) {
          continue;
       }
-      wvl_to_tripx[wvl] = ii;
+      unified_lambdas << wvl;
+      unified_lambdas_tripx << ii;
+      argsort << counter++;
 DbgLv(1) << "PseCalcAvgMWL: added_lambda tripx " << wvl << ii;
    }
-   ExpData.RI_nwvlns = wvl_to_tripx.size();
-DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << wvl_to_tripx.size();
+   ExpData.RI_nwvlns = unified_lambdas.size();
+DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << unified_lambdas.size();
 
+   std::sort( argsort.begin(), argsort.end(), [&unified_lambdas] (int a, int b) {
+                       return  unified_lambdas.at(a) < unified_lambdas.at(b); } );
    // Loop to calculate reference data for each wavelength,
    //  then apply it to all triples with that same wavelength.
-   foreach ( int iwavl, wvl_to_tripx.keys())
+   for ( int ii = 0; ii < argsort.size(); ii++)
    {
-      tripx        = wvl_to_tripx.value(iwavl);
+      int iwavl    = unified_lambdas.at(argsort.at(ii));
+      tripx        = unified_lambdas_tripx.at(argsort.at(ii));
       refData      = outData[ tripx ];
-      ref_size     = refData->xvalues.size();
-      int nscan    = refData->scanData.size();
       ri_prof.clear();
 
       // Get the reference profile for the current wavelength
-      for ( int ss = 0; ss < nscan; ss++ )
+      for ( int ss = 0; ss < ExpData.RI_nscans; ss++ )
       {
          US_DataIO::Scan* scan = &refData->scanData[ ss ];
 
