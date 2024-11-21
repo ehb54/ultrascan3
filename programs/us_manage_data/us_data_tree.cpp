@@ -1017,7 +1017,7 @@ DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
 	 QString rFilename = ddesc.description.split(".")[0].simplified();
 	 qDebug() << "Filename of the run: " << rFilename;
 
-	 if ( ddesc.recType == 1 || ddesc.recType == 2 ) // raw OR editedData
+	 if ( ddesc.recType == 1 || ddesc.recType == 2 || ddesc.recType == 3 || ddesc.recType == 4) // all types
 	   {
 	     bool isRequired = check_filename_for_autoflow( rFilename );
 	     if ( isRequired )
