@@ -232,7 +232,7 @@ void US_Astfem_Sim::init_simparams( void )
    sp.delay_minutes     =( double)(sp.rotorspeed/(60.0*sp.acceleration));// Minimum delay ie. time to accelerate the rotor
    simparams.speed_step << sp;
 
-   simparams.simpoints         = 500;    // Initialized number of radial grid points
+   simparams.simpoints         = 200;    // Initialized number of radial grid points
    simparams.radial_resolution = 0.001;  // Increment in radial experimental grid
    simparams.meshType          = US_SimulationParameters::ASTFEM; // Used for solver option
    simparams.gridType          = US_SimulationParameters::MOVING; // Used for grid option
