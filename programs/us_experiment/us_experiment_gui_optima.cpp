@@ -260,6 +260,13 @@ void US_ExperimentMain::reset_dataDisk()
   epanRotor->reset_dataSource_public();
 }
 
+void US_ExperimentMain::initCells()
+{
+  epanRotor->savePanel();
+  epanCells->initPanel();
+  epanCells->savePanel();
+}
+
 QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
 {
   
@@ -1228,6 +1235,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    rpAprof             = &(mainw->currProto.rpAprof);
    // rpSubmt             = &(mainw->currProto.rpSubmt);
    ra_data_type = false;
+   ra_data_sim  = false;
 
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1268,7 +1276,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 		ck_disksource ->setAutoFillBackground( true );
 		ck_disksource ->setChecked( false );
 
-		pb_importDisk   = us_pushbutton( tr( "Import Data" ) );
+		pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
 		le_dataDiskPath = us_lineedit( "", 0, true );
 
 		ck_absorbance_t = new QCheckBox( tr("Absorbance Data:"), this );
@@ -1493,6 +1501,8 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   ck_disksource   ->setChecked( false );
   ck_absorbance_t ->setChecked( false );
   importDataPath = "";
+  ra_data_type = false;
+  ra_data_sim  = false;
 }
 
 void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, QStringList>& f_data )
@@ -1546,6 +1556,34 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
       le_dataDiskPath -> setText("");
       ck_absorbance_t -> setChecked( false );
       ra_data_type = false;
+      ra_data_sim  = false;
+    }
+  else
+    {
+      QMessageBox msgBox;
+      msgBox.setIcon(QMessageBox::Critical);
+      msgBox.setWindowTitle(tr("Check Rotor Selected:"));
+      
+      QString msg_text      = QString("Currently selected rotor: \n\n %1").arg( cb_rotor ->currentText() );
+      QString msg_text_info = QString("Did you select the correct rotor? ");
+            
+      msgBox.setText( msg_text );
+      msgBox.setInformativeText( msg_text_info );
+      
+      QPushButton *Accept_r   = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+      QPushButton *Cancel_r   = msgBox.addButton(tr("No"),  QMessageBox::RejectRole);
+
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() == Accept_r)
+	{
+	  
+	}
+      else if (msgBox.clickedButton() == Cancel_r)
+	{
+	  ck_disksource   ->setChecked( false );
+	  return;
+	}
     }
 }
 
@@ -1582,10 +1620,9 @@ void US_ExperGuiRotor::importDisk_cleanProto()
   rpRange-> chrngs.clear();
 
   //mainw->loadProto = mainw->currProto;
-  //mainw->currAProf = US_AnaProfile();
-  //mainw->loadAProf = US_AnaProfile();
-  //mainw->loadAProf = US_AnaProfile();
-  //epanAProfile->reset_sdiag();
+  // mainw->currAProf = US_AnaProfile();
+  // mainw->loadAProf = US_AnaProfile();
+  //mainw->epanAProfile->reset_sdiag();
 
 }
 
@@ -1635,6 +1672,7 @@ void US_ExperGuiRotor::importDisk( void )
   unique_runTypes. clear();
   run_details  .clear();
   ra_data_type = false;
+  ra_data_sim  = false;
   ck_absorbance_t ->setChecked( false );
     
   for ( int trx = 0; trx < files.size(); trx++ )
@@ -1655,6 +1693,14 @@ void US_ExperGuiRotor::importDisk( void )
       QString triple   = QString::number( rdata.cell ) + " / "
 	+ QString( rdata.channel ) + " / "
 	+ QString::number( qRound( rdata.scanData[ 0 ].wavelength ) );
+
+      qDebug() << "triple # trx -- " << triple;
+      if ( triple. contains("/ S /") )
+	{
+	  ra_data_sim = true;
+	  triple = triple.replace("/ S /","/ A /");
+	}
+      
       tripinfo.tripleID    = trx + 1;
       tripinfo.tripleDesc  = triple;
       tripinfo.description = rdata.description;
@@ -1700,6 +1746,36 @@ void US_ExperGuiRotor::importDisk( void )
     }
   
   //End triples inquiry
+
+  //Before building protocol, check for correct ROTOR
+  if ( !rotorForUploadedData() )
+    {
+      //msg
+      QMessageBox::critical( this,
+			     tr( "NOTE:  Rotor not Selected Correctly!" ),
+			     tr( "Rotor does not match, please select a different rotor!" ) );
+
+      //clean
+      importDataPath = "";
+      le_dataDiskPath -> setText("");
+      ck_absorbance_t -> setChecked( false );
+      ra_data_type = false;
+      ra_data_sim  = false;
+
+      isMwl        = false;
+      allData     .clear();
+      all_tripinfo. clear();
+      runTypes_map. clear();
+      channs_ranges.clear();
+      unique_runTypes. clear();
+      run_details  .clear();
+
+      importDisk_cleanProto();
+      
+      //return
+      return;
+    }
+  
   
   //Build protocol based on read-in channels, triples, ranges...
   channs_ranges = build_protocol_for_data_import( runTypes_map );
@@ -1743,20 +1819,25 @@ void US_ExperGuiRotor::importDisk( void )
   msg_run_details  += rd_str + "; ";
   QString scanCount = run_details["ScanCount"];
   msg_run_details  += scanCount;
+
+  //Sim/Raw ?
+  QString data_sim_raw = ( ra_data_sim ) ? "Simulated" : "Raw";
     
+  
   //msg  box
   QMessageBox * msg_dataRead = new QMessageBox(this);
   msg_dataRead->setIcon(QMessageBox::Information);
-  msg_dataRead->setWindowTitle(tr("Raw Data from Disk Read"));
-  msg_dataRead->setText(tr( "Raw data from disk uploaded!<br><br>"
+  msg_dataRead->setWindowTitle(tr("%1 Data from Disk Read").arg( data_sim_raw ));
+  msg_dataRead->setText(tr( "%1 data from disk uploaded!<br><br>"
 			    "The following information was identified and propagated into the current protocol:<br><br>"
 			    "<b>Rotor Speed / Run Length / {Data Type: #Scans}</b><br>"
-			    "<b>%1</b><br><br>"
+			    "<b>%2</b><br><br>"
 			    "<b>Channels / Ranges / Optics:</b><br>"
-			    "<b>%2</b><br>"
+			    "<b>%3</b><br>"
 			    "<font color='red'><b>NOTE:</b></font> "
 			    "This information will be cleared and regenerated upon new data-from-disk, or the protocol upload."
 			    )
+			.arg( data_sim_raw )
 			.arg( msg_run_details )
 			.arg( msg_wvls ) 
 			);
@@ -1766,6 +1847,34 @@ void US_ExperGuiRotor::importDisk( void )
   //set up dir path
   le_dataDiskPath   ->setText( importDataPath );
 }
+
+//Check for rotor fpr uploaded data
+bool US_ExperGuiRotor::rotorForUploadedData()
+{
+  bool isRotor = true;
+
+  int nholes = sibIValue( "rotor", "nholes" );
+  QStringList chann_list;
+  for( int i=0; i< all_tripinfo.size(); ++i)
+    {
+      QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
+      chann_list << channumber;
+    }
+  chann_list. removeDuplicates();
+
+  for( int i=0; i< chann_list.size(); ++i)
+    {
+      int chann_number = chann_list[i].toInt();
+      if ( chann_number > nholes )
+	{
+	  isRotor = false;
+	  break;
+	}
+    }
+  
+  return isRotor;
+}
+
 
 // Initialize output data pointers and lists
 bool US_ExperGuiRotor::init_output_data()
@@ -2081,7 +2190,11 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
       QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
       QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
-      QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified(); 
+      QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified();
+      qDebug() << "Wvl, ra_data_sim: " << wvl << ra_data_sim;
+      if ( ra_data_sim && wvl.toInt() < 200 )
+	wvl = QString::number(280);
+      
       chann_list << channumber;
 
       QString runType_t    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
@@ -2102,7 +2215,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       cu.cell        = chann_list[i].toInt();
       cu.centerpiece = cpnames_t[0]; // <-- US_RunProtocol::RunProtoSolutions*  rpSolut; 
       cu.windows     = "quartz";     // <-- hard code ?
-      //cu.cbalance    = ?;
+      cu.cbalance    = "";           // <-- put always empty for Cells initPanel not to treat as counterbalance!
       rpCells-> used << cu;
     }
   rpCells->nused = chann_list.size();
@@ -2508,9 +2621,14 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
 
    if ( !first_time_init  && !mainw->global_reset  &&  changed  &&  ( curr_rotor != ndx ) )
    {
-      QMessageBox::information( this,
-         tr( "NOTE:  Rotor Changed" ),
-         tr( "Cells and all subsequent tabs will be reset upon initialization."));
+
+     QString str_m = tr( "Cells and all subsequent tabs will be reset upon initialization.");
+     if ( ck_disksource->isChecked() && !importDataPath.isEmpty() )
+       str_m += tr("\n\nNOTE: All protocol parameters associated with the uploaded-from-disk data will be reset; "
+		   "Data wil need to be re-uploaded.");
+     QMessageBox::information( this,
+			       tr( "NOTE:  Rotor Changed" ),
+			       str_m );
 
 
       //Do actual reset:
@@ -2529,6 +2647,20 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       mainw->currProto.rpSolut.chsols.clear();
       mainw->currProto.rpSolut.solus .clear();
       mainw->currProto.rpSolut.sids  .clear();
+
+      //uncheck if not unchecked
+      if (ck_disksource->isChecked())
+	{
+	  importDataPath = "";
+	  le_dataDiskPath -> setText("");
+	  ck_absorbance_t -> setChecked( false );
+	  ra_data_type = false;
+	  ra_data_sim  = false;
+
+	  importDisk_cleanProto();
+	}
+      //to remember chosen rotor
+      mainw->initCells();
    }
 
    curr_rotor          = ndx;

@@ -164,6 +164,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QMap <QString, QStringList> channs_ranges;
       QStringList unique_runTypes;
       bool ra_data_type;
+      bool ra_data_sim;
       bool isMwl;
       QMap<QString, QString> run_details;
   
@@ -286,6 +287,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
   void importDisk_cleanProto( void );
   bool init_output_data  ( void );
   void runDetails        ( void );
+  bool rotorForUploadedData ( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values
@@ -1162,6 +1164,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      void initCells( void );
       void reset_dataDisk( void );
       void  get_importDisk_data( QString,  QMap< QString, QStringList>& );
   
