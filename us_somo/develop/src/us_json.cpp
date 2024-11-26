@@ -236,6 +236,25 @@ QString US_Json::compose( map < QString, QString > &mqq )
    return result;
 }
 
+bool US_Json::decode_array_to_vector_double( const QString & str, vector < double > & result, QString & /* errormsg */ ) {
+   result.clear();
+
+   QStringList qsl = str.split( "," );
+   for ( auto const & v : qsl ) {
+      result.push_back( v.toDouble() );
+   }
+   return true;
+}
+
+QString US_Json::encode_vector_double( const vector < double > & data ) {
+   QString result = "[";
+   for ( auto const & d : data ) {
+      result += QString( "%1," ).arg( d, 0, 'g', 8 );
+   }
+   result.chop( 1 );
+   return result + "]";
+}
+
 US_Udp_Msg::US_Udp_Msg( QString host, quint16 port )
 {
    this->host = host;

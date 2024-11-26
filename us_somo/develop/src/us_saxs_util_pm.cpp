@@ -63,6 +63,7 @@ QString US_Saxs_Util::run_json( QString & json )
 	 << "pat"
 	 << "align"
 	 << "ssbond"
+         << "interpolate"
 	;
       
       int count = 0;
@@ -130,6 +131,15 @@ QString US_Saxs_Util::run_json( QString & json )
             //return US_Json::compose( results );
 	 }
      }
+
+   if ( parameters.count( "interpolate" ) )
+     {
+       if ( !run_interpolate( parameters, results ) )
+	 {
+            results[ "errors" ] = " interpolate failed:" + results[ "errors" ];
+            //return US_Json::compose( results );
+	 }
+     }
    
    
    // if ( us_log )
@@ -155,6 +165,65 @@ bool US_Saxs_Util::screen_pdb(QString, bool) { return false; };
 bool US_Saxs_Util::set_default(map < QString, QString > & , map < QString, QString > & ) { return false; };
 
 #endif
+
+bool US_Saxs_Util::run_interpolate(
+                                   map < QString, QString >           & parameters,
+                                   map < QString, QString >           & results
+                                   ) {
+   QStringList required;
+   required
+      << "from_x"
+      << "from_y"
+      << "to_x"
+      ;
+
+   for ( auto const & req : required ) {
+      if ( !parameters.count( req ) ) {
+         results[ "errors" ] = req + " not specified";
+         return false;
+      }
+   }
+
+   vector < double > from_x;
+   vector < double > from_y;
+   vector < double > from_e;
+   vector < double > to_x;
+   vector < double > to_y;
+   vector < double > to_e;
+
+   if ( !US_Json::decode_array_to_vector_double( parameters[ "from_x" ], from_x, results[ "errors" ] )
+        || !US_Json::decode_array_to_vector_double( parameters[ "from_y" ], from_y, results[ "errors" ] )
+        || !US_Json::decode_array_to_vector_double( parameters[ "to_x" ], to_x, results[ "errors" ] )
+        ) {
+      return false;
+   }
+
+   if ( !linear_interpolate( from_x, from_y, to_x, to_y ) ) {
+      results[ "errors" ] = errormsg;
+      return false;
+   }
+
+   results[ "to_y" ] = US_Json::encode_vector_double( to_y );
+
+   if ( parameters.count( "from_e" ) ) {
+      if ( !US_Json::decode_array_to_vector_double( parameters[ "from_e" ], from_e, results[ "errors" ] ) ) {
+         return false;
+      }
+      // interpolate using errors
+      if ( !linear_interpolate( from_x, from_e, to_x, to_e ) ) {
+         results[ "errors" ] = errormsg;
+         return false;
+      }
+      results[ "to_e" ] = US_Json::encode_vector_double( to_e );
+   }
+   
+   // US_Vector::printvector3( "from_x, from_y, from_e", from_x, from_y, from_e );
+   // US_Vector::printvector3( "to_x, to_y, to_e", to_x, to_y, to_e );
+   if ( results.count( "errors" ) && !results[ "errors" ].length() ) {
+      results.erase( "errors" );
+   }
+   return true;
+}
 
 bool US_Saxs_Util::run_pm(
                           map < QString, QString >           & parameters,
