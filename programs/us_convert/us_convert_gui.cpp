@@ -2206,7 +2206,7 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    runID         = QString( fname ).section( ".",  0, -6 );
 
    //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
-   if ( dataSource != "INSTRUMENT" )
+   if ( dataSource != "INSTRUMENT" && us_convert_auto_mode )
      runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
    
    if ( runType_combined_IP_RI )
@@ -7805,16 +7805,20 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 
    //now, make a record in the autoflowIntensity table, return ID
    int autoflowIntensityID = 0;
+   qDebug() << "[in update_autoflow_record_atLimsImport()] intensityJsonRI -- " << intensityJsonRI;
    if ( ! intensityJsonRI.isEmpty() )
      {
        qry.clear();
        qry << "new_autoflow_intensity_record"
 	   << QString::number( autoflowID_passed )
 	   << intensityJsonRI;
-       
-       autoflowIntensityID = db->functionQuery( qry );
 
-       if ( !autoflowIntensityID )
+       qDebug() << "qry new_autoflow_intensity_record -- " << qry;
+              
+       autoflowIntensityID = db->functionQuery( qry );
+       qDebug() << "[after qry] autoflowIntensityID -- " << autoflowIntensityID;
+
+       if ( !autoflowIntensityID || autoflowIntensityID == 0 || autoflowIntensityID < 1 )
 	 {
 	   QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
 				 tr( "autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
@@ -7976,6 +7980,8 @@ int US_ConvertGui::saveUS3Disk( void )
    status = ExpData.saveToDisk( out_tripinfo, runType, runID, dirname,
                                 speedsteps );
 
+   qDebug() << "saveDisk: xml status -- " << status;
+   
    // How many files should have been written?
    int fileCount = out_tripinfo.size();
 DbgLv(1) << "SV:   fileCount" << fileCount;
@@ -8030,7 +8036,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
       if ( referenceDefined )
       {
          status = ExpData.saveRIDisk( runID, dirname );
-DbgLv(1) << "SV:   saveRIDisk status" << status;
+	 qDebug() << "SV:   saveRIDisk status" << status;
 
          if ( status == US_Convert::CANTOPEN )
          {
@@ -8067,6 +8073,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : refDef" << referenceDefined;
    }
 else
 DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
+
 
    // Insure that we have a TimeState record locally for this run
    le_status->setText( tr( "Writing Time State to disk..." ) );
@@ -8239,7 +8246,7 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    
    qDebug() << "AFTER checkDiskData(): ExpData.invID = " << ExpData.invID;
    
-DbgLv(1) << "Status from SaveUs3DB" << status;
+   qDebug() << "Status from SaveUs3DB" << status;
    // Save a flag for need to repeat the disk write later
    bool repeat_disk = ( status == US_DB2::NO_RAWDATA );
 
@@ -8306,13 +8313,13 @@ DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
  qDebug() << "BEFORE saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    status = saveUS3Disk();
-DbgLv(1) << "DBSv: Status after saveUS3Disk()" << status;
+   qDebug() << "DBSv: Status after saveUS3Disk()" << status;
 
- qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
+   qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    if ( status != US_Convert::OK )
      {
-       qDebug() << "Status : " << status;
+       qDebug() << "Status : " << status;                  //HERE it prematurely quits!!! Cannot write timestamp to DISK
        return;
      }
 DbgLv(1) << "DBSv:  local files saved";
