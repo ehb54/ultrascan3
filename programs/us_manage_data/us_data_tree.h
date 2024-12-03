@@ -122,6 +122,10 @@ class US_DataTree : public QObject
         //! \return Status code of the operation
         int do_actions( QString action, QString text );
 
+        bool check_filename_for_autoflow( QString );
+        bool is_modelIDs_from_autoflow  ( QString );
+        bool parse_models_desc_json( QStringList, QString );
+
         //! \brief Get the action text
         //! \param action Action to perform
         //! \param text Action text

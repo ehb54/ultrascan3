@@ -14,10 +14,11 @@ public:
     US_Archive() {};
 
     //! \brief Method to extract archive file (Supported files: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip).
-    //! \param archivePath Path to the archive file.
-    //! \param outputPath  Path to where extracted data will be saved. Default is the path where the archive file is located.
+    //! \param archivePath    Path to the archive file.
+    //! \param outputPath     Path to where extracted data will be saved. Default is the path where the archive file is located.
+    //! \param outputFileList The optional output list of extracted files.
     //! \return True if file extraction is completed, false otherwise.
-    bool extract(const QString&, const QString& = "");
+    bool extract(const QString&, const QString& = "", QStringList* = nullptr);
 
     //! \brief Method to compress files and folders into an archive file.
     //! \param sourcePathList List of all files and folders need to be compressed. No need to list the contents of folders.

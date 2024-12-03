@@ -86,10 +86,11 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
       QLineEdit*     le_max_x;
 
       QLabel*        lb_info;
-      QLabel*        lb_sphere [ 8 ];
-      QLabel*        lb_prolate[ 8 ];
-      QLabel*        lb_oblate [ 8 ];
-      QLabel*        lb_rod    [ 8 ];
+      QLabel*        titles    [ 10 ];
+      QLabel*        lb_sphere [ 10 ];
+      QLabel*        lb_prolate[ 10 ];
+      QLabel*        lb_oblate [ 10 ];
+      QLabel*        lb_rod    [ 10 ];
 
       US_Plot*       plotLayout;
       QwtPlot*       plot;
@@ -119,7 +120,7 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
       void debug          ( void                    );
       void source_changed ( bool                    );
       void get_solution   ( void                    );
-
+      void calc_column    ( const QString&, const QString&, int, double, double, double, double, double = 1.0 );
       void update_buffer  ( const US_Buffer         );
       void update_vbar    ( const US_Analyte        );
       void update_max_x   ( const QString&          );

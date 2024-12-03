@@ -55,6 +55,7 @@ jobs:
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.mpi local.pri
+          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           cd utils
           qmake
           make -j4
