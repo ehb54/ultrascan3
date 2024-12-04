@@ -5296,7 +5296,7 @@ void US_Edit::set_data_over_lamda() {
       trx_b = trx;
       int min_xval = -100000000;
       int max_xval =  100000000;
-      int dx       = -1000;
+      int dx       = 1;
       for ( int jwx = 0; jwx < nwaveln; jwx++ )
       {
          edata         = &allData[ trx ];               // Triple data
