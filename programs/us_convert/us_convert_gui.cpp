@@ -1444,7 +1444,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   qDebug() << "Exp_label: " << Exp_label;
   qDebug() << "ExpType: "   << expType;
-
+  qDebug() << "dataSource: " << dataSource;
+  
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
   
@@ -2206,7 +2207,7 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    runID         = QString( fname ).section( ".",  0, -6 );
 
    //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
-   if ( dataSource != "INSTRUMENT" && us_convert_auto_mode )
+   if ( dataSource.contains("Disk") && us_convert_auto_mode )
      runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
    
    if ( runType_combined_IP_RI )
