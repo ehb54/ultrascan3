@@ -401,7 +401,7 @@ class US_EXTERN US_Saxs_Util
       // build averages and wiki page for subdirectory 1d, create pngsplits # of zoom (none if 1 or less)
       bool project_1d(QString wikitag, unsigned int pngsplits);
 
-      // linear fit code, solves  y = a + bx, returing sigmas & chi2
+      // linear fit code, solves  y = a + bx, returning sigmas & chi2
       static void linear_fit( 
                              vector < double > x, 
                              vector < double > y, 
@@ -436,7 +436,7 @@ class US_EXTERN US_Saxs_Util
                               QString & error_msg
                               );
 
-      // linear fit code, solves  y = kx, returing chi2
+      // linear fit code, solves  y = kx, returning chi2
       bool scaling_fit( 
                        vector < double > x, 
                        vector < double > y, 
