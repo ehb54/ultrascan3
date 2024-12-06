@@ -64,6 +64,7 @@ QString US_Saxs_Util::run_json( QString & json )
 	 << "align"
 	 << "ssbond"
          << "interpolate"
+         << "nnls"
 	;
       
       int count = 0;
@@ -136,7 +137,16 @@ QString US_Saxs_Util::run_json( QString & json )
      {
        if ( !run_interpolate( parameters, results ) )
 	 {
-            results[ "errors" ] = " interpolate failed:" + results[ "errors" ];
+            results[ "errors" ] = " interpolate failed: " + results[ "errors" ];
+            //return US_Json::compose( results );
+	 }
+     }
+
+   if ( parameters.count( "nnls" ) )
+     {
+       if ( !run_nnls( parameters, results ) )
+	 {
+            results[ "errors" ] = " nnls failed: " + results[ "errors" ];
             //return US_Json::compose( results );
 	 }
      }
@@ -165,6 +175,209 @@ bool US_Saxs_Util::screen_pdb(QString, bool) { return false; };
 bool US_Saxs_Util::set_default(map < QString, QString > & , map < QString, QString > & ) { return false; };
 
 #endif
+
+bool US_Saxs_Util::run_nnls(
+                            map < QString, QString >           & parameters,
+                            map < QString, QString >           & results
+                            ) {
+   {
+      QStringList required;
+
+      required
+         << "file"
+         ;
+
+      for ( auto const & req : required ) {
+         if ( !parameters.count( req ) ) {
+            results[ "errors" ] = req + " not specified";
+            return false;
+         }
+      }
+   }
+
+   QString contents;
+   QString errors;
+   
+   if ( !US_File_Util::getcontents( parameters[ "file" ], contents, errors ) ) {
+      results[ "errors" ] = errors;
+      return false;
+   }      
+
+   map < QString, QString > payload = US_Json::split( contents );
+
+   // validate payload top level
+   {
+      QStringList required;
+
+      required
+         << "use_errors"
+         << "target"
+         << "data"
+         ;
+
+      for ( auto const & req : required ) {
+         if ( !payload.count( req ) ) {
+            results[ "errors" ] = req + " not specified in " + parameters[ "file" ];
+            return false;
+         }
+      }
+   }
+
+   map < QString, QString > payload_target = US_Json::split( QString( "{%1}" ).arg( payload[ "target" ] ) );
+
+   // TSO << "-- start payload\n";
+   // for ( auto it : payload ) {
+   //    TSO << QString( "%1 : %2\n" ).arg( it.first ).arg( it.second );
+   // }
+   // TSO << "-- end payload\n";
+
+   // TSO << "-- start payload_target\n";
+   // for ( auto it : payload_target ) {
+   //    TSO << QString( "target:%1 : %2\n" ).arg( it.first ).arg( it.second );
+   // }
+   // TSO << "-- end payload_target\n";
+
+   bool use_errors = payload[ "use_errors" ] == "1";
+
+   // validate payload_target
+   {
+      QStringList required;
+
+      required
+         // << "x" not needed
+         << "y"
+         ;
+
+      if ( use_errors ) {
+         required << "error_y";
+      }
+
+      for ( auto const & req : required ) {
+         if ( !payload_target.count( req ) ) {
+            results[ "errors" ] = "target:" + req + " not specified in " + parameters[ "file" ];
+            return false;
+         }
+      }
+   }
+   
+   vector < double > target_y;
+   vector < double > target_e;
+
+   vector < QString > names;
+   vector < vector < double > > data_ys;
+   vector < vector < double > > data_ys_orig; // for fit reconstruction
+
+   if ( !US_Json::decode_array_to_vector_double( payload_target[ "y" ], target_y, errors ) ) {
+      results[ "errors" ] = "target:y errors encountered json decoding array " + parameters[ "file" ];
+      return false;
+   }      
+
+   if ( use_errors &&
+        !US_Json::decode_array_to_vector_double( payload_target[ "error_y" ], target_e, errors ) ) {
+      results[ "errors" ] = "target:error_y errors encountered json decoding array " + parameters[ "file" ];
+      return false;
+   }      
+   
+   // US_Vector::printvector2( "target:y, :e", target_y, target_e );
+
+   map < QString, QString > payload_data = US_Json::split( QString( "{%1}" ).arg( payload[ "data" ] ) );
+
+   // TSO << "-- start payload_data\n";
+   // for ( auto it : payload_data ) {
+   //    TSO << QString( "data:%1 : %2\n" ).arg( it.first ).arg( it.second );
+   // }
+   // TSO << "-- end payload_data\n";
+
+   for ( auto it : payload_data ) {
+      vector < double > data_y;
+      
+      if ( !US_Json::decode_array_to_vector_double( it.second, data_y, errors ) ) {
+         results[ "errors" ] = QString( "data:'%1' errors encountered json decoding array file %2" ).arg( it.first ).arg( parameters[ "file" ] );
+         return false;
+      }      
+
+      names.push_back( it.first );
+      data_ys.push_back( data_y );
+   }
+
+   data_ys_orig = data_ys;
+
+   // validate vector lengths
+
+   size_t size = target_y.size();
+
+   if ( use_errors && size != target_e.size() ) {
+      results[ "errors" ] = QString( "target:y (%1) & :error_y (%2) are not the same length file %3" ).arg( size ).arg( target_e.size() ).arg( parameters[ "file" ] );
+      return false;
+   }      
+
+   if ( use_errors ) {
+      double min = DBL_MAX;
+      for ( auto const & v : target_e ) {
+         if ( min > v ) {
+            min = v;
+         }
+      }
+      if ( min <= 0 ) {
+         results[ "errors" ] = QString( "target:error_y not all SDs are positive, min value found %1 in file %2" ).arg( min ).arg( parameters[ "file" ] );
+         return false;
+      }
+   }      
+
+   for ( auto const & y : data_ys ) {
+      if ( size != y.size() ) {
+         results[ "errors" ] = QString( "target:y (%1) & data:y (%2) are not the same length file %3" ).arg( size ).arg( y.size() ).arg( parameters[ "file" ] );
+         return false;
+      }
+   }      
+
+   // run nnls
+
+   if ( use_errors ) {
+      for ( size_t i = 0; i < size; ++i ) {
+         double one_over_sd2 = 1e0 / ( target_e[ i ] * target_e[ i ] );
+         target_y[ i ] *= one_over_sd2;
+         for ( auto & v : data_ys ) {
+            v[ i ] *= one_over_sd2;
+         }
+      }
+   }
+
+   // nnls fit
+
+   vector < double > x;
+
+   double rmsd;
+   if ( !nnls_fit( data_ys, target_y, x, rmsd ) ) {
+      results[ "errors" ] = errormsg;
+      return false;
+   }
+
+   // assemble results
+
+   map < QString, QString > results_data;
+   vector < double > combined_fit_y( size, 0 );
+
+   size_t names_size = names.size();
+
+   for ( size_t i = 0; i < names_size; ++i ) {
+      if ( x[ i ] > 0 ) {
+         results_data[ names[ i ] ] = QString( "%1" ).arg( x[ i ] );
+         for ( size_t j = 0; j < size; ++j ) {
+            combined_fit_y[ j ] += data_ys_orig[ i ][ j ] * x[ i ];
+         }
+      }
+   }
+   
+   results[ "rmsd" ] = QString( "%1" ).arg( rmsd );
+   results[ "data" ] = US_Json::compose( results_data );
+   results[ "combined_fit_y" ] = US_Json::encode_vector_double( combined_fit_y );
+
+   if ( results.count( "errors" ) && !results[ "errors" ].length() ) {
+      results.erase( "errors" );
+   }
+   return true;
+}
 
 bool US_Saxs_Util::run_interpolate(
                                    map < QString, QString >           & parameters,

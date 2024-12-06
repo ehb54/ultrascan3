@@ -1067,6 +1067,11 @@ class US_EXTERN US_Saxs_Util
                         map < QString, QString >           & results
                        );
 
+      bool run_nnls (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
       //bool screen_pdb( QString, bool display_pdb = false, bool skip_clear_issue = false );
       void read_residue_file();
       bool screen_pdb(QString filename, bool  parameters_set_first_model); //, bool display_pdb, bool skipclearissue );
