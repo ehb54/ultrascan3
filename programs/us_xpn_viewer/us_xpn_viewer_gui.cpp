@@ -2660,8 +2660,30 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	  if ( !timer_data_reload->isActive() )
 	    {
 	      qDebug() << "TRY PROCEED INTO == 5/0 from check_for_sys_data()....";
-	      
-	      export_auc_auto();
+
+	      bool tmstampOK = true;
+	      export_auc_auto( tmstampOK );
+	      if ( !tmstampOK )
+		{
+		  in_reload_check_sysdata   = false;
+
+		  QMessageBox::critical( this,
+					 tr( "GMP Compliance Problem:" ),
+					 tr( "This run did not start at zero RPM because the w2t value "
+					     "was non-zero at the beginning of the experiment. \n\n"
+					     "Therefore, the boundary conditions are unknown and the experiment "
+					     "cannot be reliably analyzed. It fails GMP requirements and will "
+					     "therefore be aborted. The run will be deleted.\n\n"
+					     "The data can be retrieved with the \"View Raw Optima Data\" function "
+					     "in the UltraScan Utilities." ) );
+
+		  
+		  delete_autoflow_record();  /** Do we want to delete GMP run NOW? **/ 
+		  reset_auto();
+		  emit aborted_back_to_initAutoflow();
+		  
+		  return;
+		}
 	      
 	      // QString mtitle_complete  = tr( "Complete!" );
 	      // QString message_done     = tr( "Experiment was completed. Optima data saved..." );
@@ -2974,7 +2996,8 @@ void US_XpnDataViewer::end_processes( void )
 	  
 	  QString msg_sys_text = QString(tr("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1.\n\n "))
 	    .arg(xpndesc);
-	  QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" where you can re-attach to this run later "
+	  QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" "
+						 "where you can re-attach to this run later "
 						 "by clicking \"Select Optima Run to follow\" once the network "
 						 "issue is resolved. UltraScan will then resume data acquisition.\n\n"
 						 "NOTE: If the network connection cannot be re-established to the ongoing run, " 
@@ -3667,7 +3690,30 @@ DbgLv(1) << "RDa: allData size" << allData.size();
        
        if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	 {
-	   export_auc_auto();
+	   bool tmstampOK = true;
+	   export_auc_auto( tmstampOK );
+	   if ( !tmstampOK )
+	     {
+	       in_reload_all_data = false;
+
+	       QMessageBox::critical( this,
+				      tr( "GMP Compliance Problem:" ),
+				      tr( "This run did not start at zero RPM because the w2t value "
+					  "was non-zero at the beginning of the experiment. \n\n"
+					  "Therefore, the boundary conditions are unknown and the experiment "
+					  "cannot be reliably analyzed. It fails GMP requirements and will "
+					  "therefore be aborted. The run will be deleted.\n\n"
+					  "The data can be retrieved with the \"View Raw Optima Data\" function "
+					  "in the UltraScan Utilities." ) );
+	       
+	       
+	       delete_autoflow_record();  /** Do we want to delete GMP run NOW? **/ 
+	       reset_auto();
+	       emit aborted_back_to_initAutoflow();
+	       
+	       return;
+	     }
+
 	   updateautoflow_record_atLiveUpdate();
 
 	   reset_auto();
@@ -4775,7 +4821,7 @@ void US_XpnDataViewer::connect_ranges( bool conn )
 }
 
 // export_auc data in us_com_project -- CORRECTED
-void US_XpnDataViewer::export_auc_auto()
+void US_XpnDataViewer::export_auc_auto( bool& tmstampOK )
 {
    inExport = true;
 
@@ -4787,7 +4833,7 @@ void US_XpnDataViewer::export_auc_auto()
    if ( noptsy == 1 )
      {
        correct_radii();      // Perform chromatic aberration radius corrections
-       nfiles     = xpn_data->export_auc( allData );
+       nfiles     = xpn_data->export_auc_auto( allData, tmstampOK  );
      }
 
    //--- Combined optics type -----//
@@ -4810,7 +4856,7 @@ void US_XpnDataViewer::export_auc_auto()
 	 
          cb_optsys->setCurrentIndex( osx );   
          correct_radii();                  // Chromatic aberration correction if needed
-         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
+         int kfiles     = xpn_data->export_auc_auto( allData, tmstampOK ) - 2;  // Export data
          nfiles        += kfiles;          // Total files written
       }
 
@@ -5332,8 +5378,31 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	    {
 
 	      qDebug() << "Exporing/Writing to disk...";
-	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-	      export_auc_auto();
+	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below...
+	      bool tmstampOK = true;
+	      export_auc_auto( tmstampOK );
+	      qDebug() << "tmstampOK? " << tmstampOK;
+	      if ( !tmstampOK )
+		{
+		  in_reload_auto = false;
+		  
+		  QMessageBox::critical( this,
+					 tr( "GMP Compliance Problem:" ),
+					 tr( "This run did not start at zero RPM because the w2t value "
+					     "was non-zero at the beginning of the experiment. \n\n"
+					     "Therefore, the boundary conditions are unknown and the experiment "
+					     "cannot be reliably analyzed. It fails GMP requirements and will "
+					     "therefore be aborted. The run will be deleted.\n\n"
+					     "The data can be retrieved with the \"View Raw Optima Data\" function "
+					     "in the UltraScan Utilities." ) );
+		  
+		  
+		  delete_autoflow_record();  /** Do we want to delete GMP run NOW? **/ 
+		  reset_auto();
+		  emit aborted_back_to_initAutoflow();
+		  
+		  return;
+		}
 	  
 	      // QString mtitle_complete  = tr( "Complete!" );
 	      // QString message_done     = tr( "Experiment was completed. Optima data saved..." );

@@ -323,8 +323,9 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \brief Export to openAUC
       //! \param allData Input vector of rawDatas built from XPN data
       //! \returns       Number of files written
-      int     export_auc    ( QVector< US_DataIO::RawData >& );
-
+      int     export_auc      ( QVector< US_DataIO::RawData >& );
+      int     export_auc_auto ( QVector< US_DataIO::RawData >&, bool& );
+      
       //! \brief A count of specified type
       //! \param key     Key string for which to map a value ("file",...)
       //! \returns       Number of values for the array with given key
