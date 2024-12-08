@@ -16,6 +16,9 @@
 #include "us_crypto.h"
 #include "us_datafiles.h"
 #include "us_select_item.h"
+#include "us_gui_util.h"
+#include "us_run_details2.h"
+#include "../us_convert/us_convert.h"
 
 #include "../us_esigner_gmp/us_esigner_gmp.h"
 
@@ -89,8 +92,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->setCurrentIndex( curr_panx );
 
    //tabWidget->tabBar()->setEnabled(false);
-
-
+ 
    // Add bottom buttons
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
@@ -121,6 +123,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    connect( epanUpload, SIGNAL( expdef_submitted_dev( QMap < QString, QString > &) ),
             this,       SLOT  ( submitted_protDev( QMap < QString, QString > & ) ) );
+
+   connect( epanUpload, SIGNAL( expdef_submitted_dataDisk( QMap < QString, QString > &) ),
+            this,       SLOT  ( submitted_dataDisk( QMap < QString, QString > & ) ) );
 
    connect( epanAProfile->sdiag, SIGNAL( back_to_pcsa_signal() ),
             this,       SLOT  ( back_to_pcsa() ) );
@@ -168,7 +173,7 @@ void US_ExperimentMain::back_to_pcsa( void )
 void US_ExperimentMain::switch_to_run_manager( void )
 {
   reset();
-
+  
   emit back_to_initAutoflow();
 }
      
@@ -210,6 +215,8 @@ void US_ExperimentMain::reset( void )
 
   epanGeneral->resetPanel();
 
+  //Also, reset source of data at 2. Lab/Rotor to default (not from Disk!)
+  reset_dataDisk();
 
   /*
   // Reset General panel
@@ -242,6 +249,29 @@ void US_ExperimentMain::reset( void )
   */
 
 }
+
+void US_ExperimentMain::get_importDisk_data( QString d_type, QMap< QString, QStringList> & f_data )
+{
+  epanRotor->get_chann_ranges_public( d_type, f_data );
+}
+
+void US_ExperimentMain::reset_dataDisk()
+{
+  epanRotor->reset_dataSource_public();
+}
+
+void US_ExperimentMain::initCells()
+{
+  epanRotor->savePanel();
+  epanCells->initPanel();
+  epanCells->savePanel();
+}
+
+QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
+{
+  
+  return epanSolutions->get_solutions_public();
+}  
 
 US_AnaProfile* US_ExperimentMain::get_aprofile( )
 {
@@ -557,6 +587,13 @@ void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_d
 {
   tabWidget->setCurrentIndex( 0 );
   emit to_live_update( protocol_details );
+}
+
+// When run submitted for Data from Disk
+void US_ExperimentMain::submitted_dataDisk( QMap < QString, QString > &protocol_details )
+{
+  tabWidget->setCurrentIndex( 0 );
+  emit to_import( protocol_details );
 }
 
 // Panel for run and other general parameters
@@ -1190,6 +1227,16 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
+   rpSpeed             = &(mainw->currProto.rpSpeed);
+   rpCells             = &(mainw->currProto.rpCells);
+   rpSolut             = &(mainw->currProto.rpSolut);
+   rpOptic             = &(mainw->currProto.rpOptic);
+   rpRange             = &(mainw->currProto.rpRange);
+   rpAprof             = &(mainw->currProto.rpAprof);
+   // rpSubmt             = &(mainw->currProto.rpSubmt);
+   ra_data_type = false;
+   ra_data_sim  = false;
+
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1210,10 +1257,12 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
 
    QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
-   QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
+   //QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
+                lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
-   QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
+   //QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
+		lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
 
                 lb_operator   = us_label( tr( "Select Operator:" ) );
@@ -1221,6 +1270,20 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
+
+		//select data source from disk
+		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
+		ck_disksource ->setAutoFillBackground( true );
+		ck_disksource ->setChecked( false );
+
+		pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
+		le_dataDiskPath = us_lineedit( "", 0, true );
+
+		ck_absorbance_t = new QCheckBox( tr("Absorbance Data:"), this );
+		ck_absorbance_t ->setAutoFillBackground( true );
+		ck_absorbance_t ->setChecked( false );
+		
+		
 
    int row     = 0;
    genL->addWidget( lb_lab,          row,   0, 1, 1 );
@@ -1248,6 +1311,20 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
    genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
+
+   genL->addWidget( ck_disksource,     row++,   0, 1, 4 );
+   genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
+   genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
+   genL->addWidget( ck_absorbance_t,   row++,   1, 1, 1 );
+
+
+   //connect checkbox & import
+   connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
+	    this,           SLOT  ( importDiskChecked( bool ) ) );
+   connect( pb_importDisk,      SIGNAL( clicked()       ),
+	    this,           SLOT(   importDisk()        ) );
+   // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
+   // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1402,10 +1479,858 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    lb_operator -> hide();
    cb_operator -> hide();
 
+   //hide import Disk for now
+   pb_importDisk   -> hide();
+   le_dataDiskPath -> hide();
+   ck_absorbance_t -> hide();
+   ck_absorbance_t -> setEnabled( false );
+   importDataPath = "";
+   if ( mainw->us_prot_dev_mode )
+     ck_disksource->hide();
+     
    initPanel();
 
    first_time_init = false;
    //currentOperator_index = 0;
+}
+
+
+//
+void US_ExperGuiRotor::reset_dataSource_public( void )
+{
+  ck_disksource   ->setChecked( false );
+  ck_absorbance_t ->setChecked( false );
+  importDataPath = "";
+  ra_data_type = false;
+  ra_data_sim  = false;
+}
+
+void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, QStringList>& f_data )
+{
+  f_data. clear();
+  
+  if ( d_type == "ranges" )
+    f_data = channs_ranges;
+  else if ( d_type == "runTypes" )
+    f_data =  runTypes_map;
+  else
+    qDebug() << "Unsupported type of dataDisk!";
+}
+
+void US_ExperGuiRotor::dataDiskAbsChecked( bool checked )
+{
+  if ( !checked && ra_data_type )
+    {
+      //issue warning
+      QMessageBox::warning( this,
+			    tr( "NOTE:  RA data type!" ),
+			    tr( "It appears that upload from disk data is RA type. \n"
+				"This checkbox cannot be unchecked because this action \n"
+				"will cause improper operation."
+				));
+
+      ck_absorbance_t -> setChecked( true );
+    }
+}
+
+// Check import disk
+void US_ExperGuiRotor::importDiskChecked( bool checked )
+{
+  qDebug() << "In checking ck_importDisk; checked, !checked = "
+	   << checked << !checked;
+
+  //importDisk_cleanProto();
+    
+  pb_importDisk   -> setVisible( checked );
+  le_dataDiskPath -> setVisible( checked );
+  ck_absorbance_t -> setVisible( checked );
+
+  lb_instrument  -> setVisible( !checked );
+  cb_optima  -> setVisible( !checked );
+  lb_optima_connected -> setVisible( !checked );
+  le_optima_connected -> setVisible( !checked );
+  
+  if ( !checked )
+    {
+      importDataPath = "";
+      le_dataDiskPath -> setText("");
+      ck_absorbance_t -> setChecked( false );
+      ra_data_type = false;
+      ra_data_sim  = false;
+    }
+  else
+    {
+      QMessageBox msgBox;
+      msgBox.setIcon(QMessageBox::Critical);
+      msgBox.setWindowTitle(tr("Check Rotor Selected:"));
+      
+      QString msg_text      = QString("Currently selected rotor: \n\n %1").arg( cb_rotor ->currentText() );
+      QString msg_text_info = QString("Did you select the correct rotor? ");
+            
+      msgBox.setText( msg_text );
+      msgBox.setInformativeText( msg_text_info );
+      
+      QPushButton *Accept_r   = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+      QPushButton *Cancel_r   = msgBox.addButton(tr("No"),  QMessageBox::RejectRole);
+
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() == Accept_r)
+	{
+	  
+	}
+      else if (msgBox.clickedButton() == Cancel_r)
+	{
+	  ck_disksource   ->setChecked( false );
+	  return;
+	}
+    }
+}
+
+//Clean all internals for protocol
+void US_ExperGuiRotor::importDisk_cleanProto()
+{
+  mainw->currProto.runname       = "";
+  mainw->currProto.protoname     = "";
+  mainw->currProto.exp_label     = "";
+  mainw->currProto.protoGUID     = QString( "00000000-0000-0000-0000-000000000000" );
+  mainw->currProto.temperature   = 20.0;
+  mainw->currProto.temeq_delay   = 10.0;
+
+  // mainw->currProto = US_RunProtocol();
+  // mainw->loadProto = US_RunProtocol();
+
+  rpSpeed->ssteps.clear();
+  rpSpeed->ssteps << US_RunProtocol::RunProtoSpeed::SpeedStep();
+  rpSpeed->nstep  = rpSpeed->ssteps.size(); //only 1
+  
+  rpCells->nused     = 0;
+  rpCells->used. clear();
+  
+  rpSolut-> nschan   = 0;
+  rpSolut-> chsols.clear();
+  rpSolut->nuniqs    = 0;
+  rpSolut->solus.clear();
+  rpSolut->sids .clear();
+
+  rpOptic->nochan     = 0;
+  rpOptic-> chopts.clear();
+
+  rpRange-> nranges   = 0;
+  rpRange-> chrngs.clear();
+
+  //mainw->loadProto = mainw->currProto;
+  // mainw->currAProf = US_AnaProfile();
+  // mainw->loadAProf = US_AnaProfile();
+  //mainw->epanAProfile->reset_sdiag();
+
+}
+
+// Import from disk
+void US_ExperGuiRotor::importDisk( void )
+{
+  QString dir;
+  int jmpType  = 0;
+
+  dir = QFileDialog::getExistingDirectory( this,
+					   tr( "Raw Data Directory" ),
+					   US_Settings::importDir(),
+					   QFileDialog::DontResolveSymlinks );
+
+  dir.replace( "\\", "/" );
+  
+  if ( dir.isEmpty() )      // If no directory chosen, return now
+    return;
+  
+  QDir readDir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+  readDir.makeAbsolute();
+  if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing "/"
+
+  //Now, infer triples from the raw data being uploaded
+  QStringList nameFilters = QStringList( "*.auc" );
+  QStringList files =  readDir.entryList( nameFilters,
+					  QDir::Files | QDir::Readable, QDir::Name );
+  //check for .auc presence
+  if ( files. size() == 0 )
+    {
+      QMessageBox::warning( this,
+			    tr( "NO .AUC DATA DETECTED!" ),
+			    tr( "No .auc data detected in the selected directory... \n"
+				));
+      return;
+    }
+  
+  //set currentDir
+  importDataPath = dir;
+  
+  //clear all internals
+  isMwl        = false;
+  allData     .clear();
+  all_tripinfo. clear();
+  runTypes_map. clear();
+  channs_ranges.clear();
+  unique_runTypes. clear();
+  run_details  .clear();
+  ra_data_type = false;
+  ra_data_sim  = false;
+  ck_absorbance_t ->setChecked( false );
+    
+  for ( int trx = 0; trx < files.size(); trx++ )
+    {
+      QString fname  = files[ trx ];
+      QString fpath  = dir + fname;
+
+      US_DataIO::RawData     rdata;
+      US_Convert::TripleInfo tripinfo;
+
+      // Get a raw data from an auc file
+      US_DataIO::readRawData( fpath, rdata );
+
+      // Save the raw data for this triple
+      allData << rdata;
+      
+      // Save triple information
+      QString triple   = QString::number( rdata.cell ) + " / "
+	+ QString( rdata.channel ) + " / "
+	+ QString::number( qRound( rdata.scanData[ 0 ].wavelength ) );
+
+      qDebug() << "triple # trx -- " << triple;
+      if ( triple. contains("/ S /") )
+	{
+	  ra_data_sim = true;
+	  triple = triple.replace("/ S /","/ A /");
+	}
+      
+      tripinfo.tripleID    = trx + 1;
+      tripinfo.tripleDesc  = triple;
+      tripinfo.description = rdata.description;
+      tripinfo.channelID   = trx + 1;
+      tripinfo.tripleFilename = fname;
+	
+      all_tripinfo << tripinfo;
+
+      //Now runTypes
+      QString runType_t    = QString( fname ).section( ".", -5, -5 );
+      QString channumber = tripinfo.tripleDesc.split(" / ")[0].simplified();
+      runTypes_map[ channumber ] << runType_t;
+      unique_runTypes << runType_t;
+    }
+
+  QString fname_1 = files[ 0 ];
+  runType         = QString( fname_1 ).section( ".", -5, -5 );
+  runID           = QString( fname_1 ).section( ".",  0, -6 );
+  
+  //Remove duplicates in runTypes_map
+  unique_runTypes .removeDuplicates();
+  //first, uncheck "absorbance" type
+  if ( !ck_absorbance_t->isChecked() ) 
+    ck_absorbance_t ->setChecked( false );
+  //next, check if "RA" (and only) type, set checked
+  qDebug() << "unique_runTypes -- " << unique_runTypes;
+  if ( unique_runTypes.size() == 1 && unique_runTypes[0] == "RA")
+    {
+      ck_absorbance_t ->setChecked( true );
+      ra_data_type = true;
+    }
+  
+  for (int i=0; i<runTypes_map.keys().size(); ++i )
+    {
+      runTypes_map[ runTypes_map.keys()[i] ].removeDuplicates();
+      if ( ra_data_type )
+	{
+	  runTypes_map[ runTypes_map.keys()[i] ].clear();
+	  runTypes_map[ runTypes_map.keys()[i] ] << "RI";
+	}
+      qDebug() << "Channel: " << runTypes_map.keys()[i]
+	       << ", types: " << runTypes_map[ runTypes_map.keys()[i] ];
+    }
+  
+  //End triples inquiry
+
+  //Before building protocol, check for correct ROTOR
+  if ( !rotorForUploadedData() )
+    {
+      //msg
+      QMessageBox::critical( this,
+			     tr( "NOTE:  Rotor not Selected Correctly!" ),
+			     tr( "Rotor does not match, please select a different rotor!" ) );
+
+      //clean
+      importDataPath = "";
+      le_dataDiskPath -> setText("");
+      ck_absorbance_t -> setChecked( false );
+      ra_data_type = false;
+      ra_data_sim  = false;
+
+      isMwl        = false;
+      allData     .clear();
+      all_tripinfo. clear();
+      runTypes_map. clear();
+      channs_ranges.clear();
+      unique_runTypes. clear();
+      run_details  .clear();
+
+      importDisk_cleanProto();
+      
+      //return
+      return;
+    }
+  
+  
+  //Build protocol based on read-in channels, triples, ranges...
+  channs_ranges = build_protocol_for_data_import( runTypes_map );
+
+  //Maybe insert informing dialog (on channels, ranges)??
+  QString msg_wvls;
+  for( int i=0; i<channs_ranges.keys().size(); ++i ) 
+    {
+      QString ch_c    = channs_ranges.keys()[ i ];
+
+      if ( ra_data_type && ch_c. contains("B") )
+	continue;
+	
+      QString o_types = runTypes_map[ ch_c.left(1) ]
+	. join(",")
+	. replace("RI","UV/vis.")
+	. replace("IP","Interf.");
+      msg_wvls += ch_c;
+	
+      QStringList wvls = channs_ranges[ ch_c ];
+      QString wvl_min, wvl_max;
+      int wvl_count;
+      if ( !wvls.isEmpty() )
+	{
+	  wvl_min = wvls[0];
+	  wvl_max = wvls[wvls.size() - 1];
+	  wvl_count   = wvls.size();
+	  
+	  msg_wvls += "; #wvls: " + QString::number(wvl_count) + " (from " + wvl_min + " to " + wvl_max + ")";
+	}
+       msg_wvls += "; optics: " + o_types + "<br>";
+    }
+  
+  //Run Details
+  QString msg_run_details = run_details["RPM"] + " RPM; ";
+  int run_duration        = run_details["Time"].toInt();
+  int  rd_hours     = (int)qFloor( run_duration / 3600.0 );
+  int  rd_mins      = (int)qRound( ( run_duration - rd_hours * 3600.0 ) / 60.0 );
+  QString hh        = "h";
+  QString rd_str    = QString().sprintf( "%d %s %02d m", rd_hours, hh.toLatin1().data(), rd_mins );
+  msg_run_details  += rd_str + "; ";
+  QString scanCount = run_details["ScanCount"];
+  msg_run_details  += scanCount;
+
+  //Sim/Raw ?
+  QString data_sim_raw = ( ra_data_sim ) ? "Simulated" : "Raw";
+    
+  
+  //msg  box
+  QMessageBox * msg_dataRead = new QMessageBox(this);
+  msg_dataRead->setIcon(QMessageBox::Information);
+  msg_dataRead->setWindowTitle(tr("%1 Data from Disk Read").arg( data_sim_raw ));
+  msg_dataRead->setText(tr( "%1 data from disk uploaded!<br><br>"
+			    "The following information was identified and propagated into the current protocol:<br><br>"
+			    "<b>Rotor Speed / Run Length / {Data Type: #Scans}</b><br>"
+			    "<b>%2</b><br><br>"
+			    "<b>Channels / Ranges / Optics:</b><br>"
+			    "<b>%3</b><br>"
+			    "<font color='red'><b>NOTE:</b></font> "
+			    "This information will be cleared and regenerated upon new data-from-disk, or the protocol upload."
+			    )
+			.arg( data_sim_raw )
+			.arg( msg_run_details )
+			.arg( msg_wvls ) 
+			);
+  
+  msg_dataRead->exec();
+  
+  //set up dir path
+  le_dataDiskPath   ->setText( importDataPath );
+}
+
+//Check for rotor fpr uploaded data
+bool US_ExperGuiRotor::rotorForUploadedData()
+{
+  bool isRotor = true;
+
+  int nholes = sibIValue( "rotor", "nholes" );
+  QStringList chann_list;
+  for( int i=0; i< all_tripinfo.size(); ++i)
+    {
+      QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
+      chann_list << channumber;
+    }
+  chann_list. removeDuplicates();
+
+  for( int i=0; i< chann_list.size(); ++i)
+    {
+      int chann_number = chann_list[i].toInt();
+      if ( chann_number > nholes )
+	{
+	  isRotor = false;
+	  break;
+	}
+    }
+  
+  return isRotor;
+}
+
+
+// Initialize output data pointers and lists
+bool US_ExperGuiRotor::init_output_data()
+{
+   bool success   = true;
+   bool have_trip = ( all_tripinfo.size() == allData.size() );
+   qDebug() << "[in init_output_data()]:  have_trip" << have_trip;
+   if ( ! have_trip )
+      all_tripinfo.clear();
+   outData     .clear();
+   all_chaninfo.clear();
+   all_triples .clear();
+   all_channels.clear();
+   out_tripinfo.clear();
+   out_chaninfo.clear();
+   out_triples .clear();
+   out_channels.clear();
+   out_chandatx.clear();
+
+   // Set up initial export-data pointers list and all/out lists
+   for ( int trx = 0; trx < allData.size(); trx++ )
+   {
+      US_DataIO::RawData*    edata    = &allData[ trx ];
+      US_Convert::TripleInfo tripinfo;
+      US_Convert::TripleInfo chaninfo;
+
+      outData      << edata;
+
+      if ( have_trip )
+         tripinfo = all_tripinfo[ trx ];
+
+      char chtype[ 3 ] = { 'R', 'A', '\0' };
+      strncpy( chtype, allData[ trx ].type, 2 );
+      QString dataType = QString( chtype ).left( 2 );
+      qDebug() << "dataType -- " << dataType;
+      
+      QString triple   = QString::number( edata->cell ) + " / "
+         + QString( edata->channel ) + " / "
+         + ( ! runType.contains( "W" )
+             ? QString::number( qRound( edata->scanData[ 0 ].wavelength ) )
+             : tripinfo.tripleDesc.section( " / ", 2, 2 ) );
+      QString celchn   = triple.section( " / ", 0, 1 );
+      int     chanID   = all_channels.indexOf( celchn ) + 1;
+      chanID           = ( chanID < 1 ) ? ( all_channels.count() + 1 ) : chanID;
+      tripinfo.tripleID    = trx + 1;
+      tripinfo.tripleDesc  = triple;
+      tripinfo.description = edata->description;
+      tripinfo.channelID   = chanID;
+      tripinfo.tripleFilename = dataType;
+      tripinfo.excluded    = false;
+      chaninfo             = tripinfo;
+      chaninfo.tripleDesc  = celchn;
+DbgLv(1) << "CGui:IOD: trx" << trx << "triple" << triple;
+
+      if ( have_trip )
+         all_tripinfo[ trx ] = tripinfo;
+      else
+         all_tripinfo << tripinfo;
+      out_tripinfo << tripinfo;
+      all_triples  << triple;
+      out_triples  << triple;
+
+      if ( ! all_channels.contains( celchn )  ||  runType.contains( "W" ) )
+      {
+         all_channels << celchn;
+         all_chaninfo << chaninfo;
+         out_channels << celchn;
+         out_chaninfo << chaninfo;
+         out_chandatx << trx;
+DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
+      }
+   }
+
+   // Save a vector of speed steps read or computed from the data scans
+   char chtype[ 3 ] = { 'R', 'A', '\0' };
+   strncpy( chtype, allData[ 0 ].type, 2 );
+   QString dataType = QString( chtype ).left( 2 );
+   int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
+                                                               speedsteps );
+   int     nspeedc  = 0;
+   bool low_accel   = false;
+   double rate      = 400.0;
+DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
+
+   if ( nspeed == 0 )
+   {  // Compute speed steps from all raw auc data
+      US_SimulationParameters::computeSpeedSteps( allData, speedsteps );
+      nspeedc          = speedsteps.size();
+      nspeed           = nspeedc;
+DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
+
+      // Check to see if implied 1st acceleration is too low
+#define DSS_LO_ACC 250.0 // default SetSpeedLowAccel
+      // if ( impType != 2 )  // Check if not imported AUC
+      // {
+      //    QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
+      //    double ss_lo_acc = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
+      //    low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
+      // }
+   }
+
+   // Report problematic 1st speed step
+   if ( low_accel )
+   {
+      int tf_scan      = speedsteps[ 0 ].time_first;
+      int accel1       = (int)qRound( rate );
+      int rspeed       = speedsteps[ 0 ].rotorspeed;
+      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+
+      QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
+                         "The acceleration implied is %1 rpm/sec.<br/>"
+                         "The acceleration zone ends at %2 seconds,<br/>"
+                         "with a first scan time of %3 seconds.<br/><br/>"
+                         "<b>You should rerun the experiment without<br/>"
+                         "any interim constant speed, and then<br/>"
+                         "you should reimport the data.</b>" )
+                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( wmsg );
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+            QMessageBox::YesRole    );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+      if ( msgBox.clickedButton() == bAbort )
+      {  // Abort the import of this data
+         QApplication::restoreOverrideCursor();
+         qApp->processEvents();
+         //reset();
+         return false;
+      }
+      else
+      {  // Modify times and omegas of this data, then proceed to import
+         int status = US_Convert::adjustSpeedstep( allData, speedsteps );
+DbgLv(1) << "CGui:IOD: adjSS stat" << status;
+      }
+   }
+
+   // MultiWaveLength if channels and triples counts differ
+   isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
+   if ( isMwl  &&  ( all_tripinfo.count() / all_chaninfo.count() ) < 4 )
+   {  // If less than 4 wavelengths, treat as non-MWL
+      isMwl            = false;
+      all_chaninfo     = all_tripinfo;
+      out_chaninfo     = out_tripinfo;
+      out_chandatx.clear();
+
+      for ( int jj = 0; jj < out_tripinfo.count(); jj++ )
+         out_chandatx << jj;
+DbgLv(1) << "CGui:IOD:    isMwl" << isMwl << "ac.count at.count oc.count"
+ << all_chaninfo.count() << all_tripinfo.count() << out_chaninfo.count();
+   }
+
+   if ( isMwl )
+   {  // If MWL, update speed steps
+DbgLv(1) << "CGui:IOD:   updSS call";
+      QVector< SP_SPEEDPROFILE > testss = speedsteps;
+      int nstest    = mwl_data.update_speedsteps( testss );
+      if ( nstest > 0 )
+      {
+         nspeed        = nstest;
+         speedsteps    = testss;
+      }
+      else if ( nstest < 0 )
+      {
+         QMessageBox::critical( this,
+            tr( "Invalid MWL Speedsteps" ),
+            tr( "The \"set_speed\" values in MWRS files have"
+                " resulted in too many speed steps or steps"
+                " where speeds decrease.\n\nImport is ABORTED!!" ) );
+         success       = false;
+         //resetAll();
+      }
+DbgLv(1) << "CGui:IOD:    updSS nspeed nstest nspeedc"
+ << nspeed << nstest << nspeedc << "ss0  timf omgf"
+ << speedsteps[0].time_first << speedsteps[0].w2t_first;
+   }
+
+   else
+   {  // Else complete channel lists
+      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
+      {
+         QString triple = all_tripinfo[ trx ].tripleDesc;
+DbgLv(1) << "CGui:IOD:     trx" << trx << "triple" << triple;
+         all_chaninfo[ trx ].tripleDesc = triple;
+         out_chaninfo[ trx ].tripleDesc = triple;
+      }
+DbgLv(1) << "CGui:IOD:   nspeed" << nspeed << "sp0.rspeed sp0.avspeed"
+ << nspeed << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
+   }
+
+DbgLv(1) << "CGui:IOD: RETURN";
+   return success;
+}
+
+//get raw data details
+void US_ExperGuiRotor::runDetails( void )
+{
+   // Create data structures for US_RunDetails2
+   QStringList tripleDescriptions;
+   QVector< US_DataIO::RawData >  currentData;
+
+   if ( isMwl )
+   {  // For MWL, only pass the 1st data set of each cell/channel
+      for ( int ii = 0; ii < out_chaninfo.size(); ii++ )
+      {
+         currentData        << *outData[ out_chandatx[ ii ] ];
+         QString celchn      = out_chaninfo[ ii ].tripleDesc;
+         celchn              = celchn.section( " / ", 0, 1 );
+         tripleDescriptions << celchn;
+      }
+   }
+
+   else
+   {  // For most data, pass all (non-excluded) triples
+      for ( int ii = 0; ii < out_tripinfo.size(); ii++ )
+      {
+         currentData        << *outData[ ii ];
+         tripleDescriptions << out_tripinfo[ ii ].tripleDesc;
+      }
+   }
+
+   US_RunDetails2* dialog = new US_RunDetails2( currentData, runID, importDataPath,
+                                                tripleDescriptions );
+
+   //set everything for rpSpeed
+   run_details = dialog->get_params_public();
+   qDebug() << "[RUN DETAILS]: RPM = " << run_details["RPM"];
+   qDebug() << "[RUN DETAILS]: Run length = " << run_details["Time"];
+   qDebug() << "[RUN DETAILS]: Scan Count = " << run_details["ScanCount"];
+
+   QString scanCount_per_dataType = run_details["ScanCount"];
+   QStringList scanCount_per_dataTypeList;
+   if ( scanCount_per_dataType.contains(",") )
+     scanCount_per_dataTypeList = scanCount_per_dataType.split(",");
+   else
+     scanCount_per_dataTypeList << scanCount_per_dataType;
+
+
+   
+   int curssx = 0;
+   rpSpeed->ssteps[ curssx ].duration     = run_details["Time"].toDouble();
+   rpSpeed->ssteps[ curssx ].speed        = run_details["RPM"] .toDouble();
+   //rpSpeed->ssteps[ curssx ].accel;
+   //rpSpeed->ssteps[ curssx ].delay_stage;
+
+   //UV/vis.
+   //rpSpeed->ssteps[ curssx ].delay;
+   for ( int i=0; i< scanCount_per_dataTypeList.size(); ++i )
+     {
+       QString dt_scans = scanCount_per_dataTypeList[i];
+       if ( dt_scans. contains("RI:") || dt_scans. contains("RA:") )
+	 rpSpeed->ssteps[ curssx ].scanintv  = int(run_details["Time"].toDouble() / dt_scans.split(":")[1].toDouble());
+       else if ( dt_scans. contains("IP:") )
+	 rpSpeed->ssteps[ curssx ].scanintv_int  = int(run_details["Time"].toDouble() / dt_scans.split(":")[1].toDouble());
+     }
+   
+   //Interf.
+   //rpSpeed->ssteps[ curssx ].delay_int;
+   //rpSpeed->ssteps[ curssx ].scanintv_int;
+
+   /*** DEBUG ****/
+   for ( int ii = 0; ii < rpSpeed ->nstep; ii++ )
+     {
+       qDebug() << ii << rpSpeed->ssteps[ ii ].speed;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].accel;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].duration;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].delay_stage;
+
+       //UV/vis.
+       qDebug() << ii << "UV/vis.";
+       qDebug() << ii << rpSpeed->ssteps[ ii ].delay;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv_min;
+       
+       //interference
+       qDebug() << ii << "Interf.";
+       qDebug() << ii << rpSpeed->ssteps[ ii ].delay_int;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv_int;
+       qDebug() << ii << rpSpeed->ssteps[ ii ].scanintv_int_min;
+     }
+   /*************/
+
+   //Test
+   //dialog->exec();
+}
+
+
+// for dataImport
+QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QMap< QString, QStringList> runTypes )
+{
+  qDebug() << "Building protocol for dataImport:";
+
+  importDisk_cleanProto();
+
+  //Get centerpieces names
+  QStringList cpnames_t   = mainw->childLValue( "general", "centerpieces" );
+  qDebug() << "cpnames_t: " << cpnames_t;
+
+  //Get solutions names & IDs
+  QMap< QString, QString > solutions_t   = mainw->get_all_solution_names();
+  qDebug() << "solutions_t [names]: "         << solutions_t.keys();
+  qDebug() << "solutions_t [ID of the 1st]: " << solutions_t[solutions_t.keys()[0]];
+   
+  //[FROM  DATA IMPORTED:] Channels' list, channel-to-wavelength ranges 
+  QStringList chann_list;
+  QMap < QString, QStringList > chann_to_wvls;
+  for( int i=0; i< all_tripinfo.size(); ++i)
+    {
+      qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
+      QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
+      QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
+      QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified();
+      qDebug() << "Wvl, ra_data_sim: " << wvl << ra_data_sim;
+      if ( ra_data_sim && wvl.toInt() < 200 )
+	wvl = QString::number(280);
+      
+      chann_list << channumber;
+
+      QString runType_t    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
+      if ( runType_t == "RI" || runType_t == "RA" )
+	chann_to_wvls[ channame ] << wvl;
+    }
+  chann_list. removeDuplicates();
+  qDebug() << "List of unique channel numbers -- " << chann_list;
+  qDebug() << "List of unique channel names   -- " << chann_to_wvls.keys();
+  
+
+  //[CELLS:] Clear && Fill in
+  rpCells->nused         = 0;
+  rpCells->used. clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoCells::CellUse cu;
+      cu.cell        = chann_list[i].toInt();
+      cu.centerpiece = cpnames_t[0]; // <-- US_RunProtocol::RunProtoSolutions*  rpSolut; 
+      cu.windows     = "quartz";     // <-- hard code ?
+      cu.cbalance    = "";           // <-- put always empty for Cells initPanel not to treat as counterbalance!
+      rpCells-> used << cu;
+    }
+  rpCells->nused = chann_list.size();
+
+  //[SOLS:] Clear && Fill in the 1st in the list
+  rpSolut-> nschan   = 0;
+  rpSolut-> chsols.clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoSolutions::ChanSolu cs_a, cs_b;
+      cs_a.channel  = chann_list[i] + " / A, sample [right]";
+      cs_a.solution = solutions_t.keys()[0];
+      cs_a.sol_id   = solutions_t[solutions_t.keys()[0]];
+      //comment?
+      rpSolut->chsols << cs_a;
+
+      cs_b.channel  = chann_list[i] + " / B, reference [left]";
+      cs_b.solution = solutions_t.keys()[0];
+      cs_b.sol_id   = solutions_t[solutions_t.keys()[0]];
+      //comment?
+      rpSolut->chsols << cs_b;
+    }
+  rpSolut->nschan    = chann_list.size()*2;
+  rpSolut->nuniqs    = 0;
+  rpSolut->solus.clear();
+  rpSolut->sids .clear();
+  
+  for ( int ii = 0; ii < rpSolut->nschan; ii++ )
+    {
+      QString sdesc   = rpSolut->chsols[ ii ].solution;
+      
+      if ( ! rpSolut->solus.contains( sdesc ) )
+	{  // Update unique solutions list and correspond Id list
+	  rpSolut->solus << sdesc;
+	  rpSolut->sids  << rpSolut->chsols[ ii ].sol_id;
+	  rpSolut->nuniqs++;
+	}
+    }
+
+  //[OPTICS:] Clear && Fill in
+  rpOptic->nochan     = 0;
+  rpOptic-> chopts.clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      //decide on optics types
+      QString scan1_str, scan2_str, scan3_str;
+      QStringList ops_types = runTypes[ chann_list[i] ];
+      for (int j=0; j<ops_types.size(); ++j )
+	{
+	  if ( ops_types[j] == "RI" )
+	    scan1_str = "UV/visible";
+	  else if ( ops_types[j] == "IP" )
+	    scan2_str = "Rayleigh Interference";
+	}
+      
+      US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
+      os_a.channel   = chann_list[i] + " / A, sample [right]";
+      os_a.scan1     = scan1_str;
+      os_a.scan2     = scan2_str;
+      os_a.scan3     = scan3_str;
+
+      os_b.channel   = chann_list[i] + " / B, reference [left]";
+      os_b.scan1     = scan1_str;
+      os_b.scan2     = scan2_str;
+      os_b.scan3     = scan3_str;
+
+      rpOptic->chopts << os_a;
+      rpOptic->chopts << os_b;
+    }
+  rpOptic->nochan = chann_list.size()*2;
+  
+  //[RANGES:] Clear && Fill in
+  rpRange-> nranges       = 0;
+  rpRange-> chrngs.clear();
+  for ( int i=0; i<chann_list.size(); ++i)
+    {
+      US_RunProtocol::RunProtoRanges::Ranges rng_a, rng_b;
+
+      //A channel
+      rng_a.channel = chann_list[i] + " / A, sample [right]";
+      rng_a.lo_rad  = 5.75;
+      rng_a.hi_rad  = 7.25;
+      for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
+	{
+	  double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
+	  rng_a.wvlens << wvl_c;
+	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
+	}
+      rpRange->chrngs << rng_a;
+
+      //B channel
+      rng_b.channel = chann_list[i] + " / B, reference [left]";
+      rng_b.lo_rad  = 5.75;
+      rng_b.hi_rad  = 7.25;
+      for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
+	{
+	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
+	  rng_b.wvlens << wvl_c;
+	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+	}
+      rpRange->chrngs << rng_b;
+    }
+  rpRange-> nranges = chann_list.size()*2;
+
+  //run Details: Initiate data arrays for getting runInfo:
+  if ( ! init_output_data() )  
+    qDebug() << "[in build_protocol_for_data_import()]: could not init_output_data()!!!";
+
+  //Get Run Info
+  runDetails();
+  
+  //Now, we *CAN* initPanels(): make sure all above is properly set!!!
+  //mainw->initPanels();
+
+  return chann_to_wvls;
 }
 
 // Slot for change in Lab selection
@@ -1696,9 +2621,14 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
 
    if ( !first_time_init  && !mainw->global_reset  &&  changed  &&  ( curr_rotor != ndx ) )
    {
-      QMessageBox::information( this,
-         tr( "NOTE:  Rotor Changed" ),
-         tr( "Cells and all subsequent tabs will be reset upon initialization."));
+
+     QString str_m = tr( "Cells and all subsequent tabs will be reset upon initialization.");
+     if ( ck_disksource->isChecked() && !importDataPath.isEmpty() )
+       str_m += tr("\n\nNOTE: All protocol parameters associated with the uploaded-from-disk data will be reset; "
+		   "Data wil need to be re-uploaded.");
+     QMessageBox::information( this,
+			       tr( "NOTE:  Rotor Changed" ),
+			       str_m );
 
 
       //Do actual reset:
@@ -1717,6 +2647,20 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       mainw->currProto.rpSolut.chsols.clear();
       mainw->currProto.rpSolut.solus .clear();
       mainw->currProto.rpSolut.sids  .clear();
+
+      //uncheck if not unchecked
+      if (ck_disksource->isChecked())
+	{
+	  importDataPath = "";
+	  le_dataDiskPath -> setText("");
+	  ck_absorbance_t -> setChecked( false );
+	  ra_data_type = false;
+	  ra_data_sim  = false;
+
+	  importDisk_cleanProto();
+	}
+      //to remember chosen rotor
+      mainw->initCells();
    }
 
    curr_rotor          = ndx;
@@ -3579,6 +4523,7 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSolut             = &(mainw->currProto.rpSolut);
+   rpRotor             = &(mainw->currProto.rpRotor);
    mxrow               = 24;     // Maximum possible rows
    nchant              = 0;
    nchanf              = 0;
@@ -3685,6 +4630,11 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
 
 DbgLv(1) << "EGSo:main: call initPanel()";
    initPanel();
+}
+
+QMap< QString, QString> US_ExperGuiSolutions::get_solutions_public()
+{
+  return solu_ids;
 }
 
 //Function to clear solution's comment when colution changed
@@ -3819,10 +4769,11 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
 
                if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
                   srchans << channel + ", sample [right]";
-               else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) )
+               else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) && !rpRotor->importData_absorbance_t )
                   srchans << channel  + ", reference [left]";
                else
-                  srchans << channel;
+		 if ( !rpRotor->importData_absorbance_t )
+		   srchans << channel;
             }
          }
       }
@@ -6117,7 +7068,138 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 }
 
 
+//Confirm the Data Disk submission
+void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
+{
+  if ( mainw->automode && rps_differ )
+    {
+      if ( saveRunProtocol() )
+	return;
+    }
+  
+  QMessageBox msgBox;
+  QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  QString message_protocol = tr( "");
+  //if ( rps_differ && !proto_svd )
+  if ( rps_differ  )
+    message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+  
+  QString message_submission = message_protocol + tr("Data from Disk will be Submitted for GMP Processing:");
 
+  //Info on assigened oper/revs: ONLY for GMP!!!!
+  QString oper_list = rpRotor->operListAssign.split("\n").join(", ");
+  QString rev_list  = rpRotor->revListAssign.split("\n").join(", ");
+  QString appr_list = rpRotor->apprListAssign.split("\n").join(", ");
+  QString sme_list  = rpRotor->smeListAssign.split("\n").join(", ");
+
+  qDebug() << "oper,rev,appr,sme Lists -- "
+	   << "\n" << oper_list
+	   << "\n" << rev_list
+	   << "\n" << appr_list
+	   << "\n" << sme_list;
+ 
+  QString o_list = oper_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : oper_list;
+  QString r_list = rev_list.  isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : rev_list;
+  QString a_list = appr_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : appr_list;
+  QString s_list = sme_list. isEmpty() ? QString("<font color='red'><b>MISSING</b></font>") : sme_list;
+    
+  //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+  msgBox.setText( message_submission );
+  QString info_text;
+
+  qDebug() << "mainw->usmode: " << mainw->usmode;
+  if ( !mainw->usmode )
+    {
+      info_text  += QString( tr(  "<br><br>"
+				  "<b>Assigned Operator(s):</b> <br>"
+				  "&emsp; %1 <br><br>"
+				  "<b>Assigner Reviewer(s):</b> <br>"
+				  "&emsp; %2 <br><br>"
+				  "<b>Assigner Approver(s):</b> <br>"
+				  "&emsp; %3"))
+	.arg( o_list )
+	.arg( r_list )
+	.arg( a_list );
+    
+      
+      if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING") || a_list. contains( "MISSING") )
+	{
+	  info_text += QString( tr( "<br><br> <font color='red'><b> ATTENTION: </b></font>"
+				    "Experiment <b>can NOT</b> be submitted due to<br>"
+				    "missing assigned operator(s), reviewer(s) and/or approver(s).<br><br>"
+				    "Please return to 2. Labs/Rotor settings and provide missing information.")
+				);
+	}
+    }
+  
+  msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
+  msgBox.setInformativeText( info_text);  
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept)
+    {
+      if ( !mainw->usmode )
+	{
+	  if ( o_list.contains( "MISSING" ) || r_list. contains( "MISSING" ) || a_list. contains( "MISSING" ) ) 
+	    {
+	      return;
+	    }
+	  else
+	    {
+	      //get user info:
+	      //get info on logged in user [submitter]:
+	      US_Passwd   pw;
+	      QString     masterPW  = pw.getPasswd();
+	      US_DB2      db( masterPW );  // New constructor
+	      QStringList qry;
+	      qry <<  QString( "get_user_info" );
+	      db.  query( qry );
+	      db. next();
+	      int u_ID        = db. value( 0 ).toInt();
+	      QString u_fname = db. value( 1 ).toString();
+	      QString u_lname = db. value( 2 ).toString();
+	      int u_lev       = db. value( 5 ).toInt();
+	      
+	      QString user_submitter = u_lname + ", " + u_fname;
+	      
+	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+	      qDebug() << "Checking master password...";
+	      gmp_submitter_map.clear();
+	      US_Passwd   pw_at;
+	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+	      
+	      int submit_map_size = gmp_submitter_map.keys().size();
+	      qDebug() << "Submitter map: "
+		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
+		       << gmp_submitter_map.keys().isEmpty() 
+		       << gmp_submitter_map[ "User:" ]
+		       << gmp_submitter_map[ "Comment:" ]
+		       << gmp_submitter_map[ "Master Password:" ];
+	      
+	      //Enable GMP run submit ONLY if form was filled && password correct
+	      
+	      if ( submit_map_size > 0 ) 
+		{
+		  qDebug() << "Submitting GMP [Data Disk]...";
+		  submitExperiment_dataDisk();
+		}
+	    }
+	}
+      else
+	{
+	  qDebug() << "Will be no R&D submission...";
+	  // qDebug() << "Submitting R&D...";
+	  // submitExperiment_dataDisk();
+	}
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    {
+      return;
+    }
+}
 
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
@@ -7016,6 +8098,149 @@ void US_ExperGuiUpload::clearData_protDev()
   qApp->processEvents();
   progress_msg->close();
   /** End Iterate over fileNameList ****************************************************************/
+}
+
+// Slot to submit GMP run with Disk Data
+void US_ExperGuiUpload::submitExperiment_dataDisk()
+{
+  /* IMPORTANT!
+    Add filepath to the autoflow record:
+    Add stage 'EDITING'
+   */
+  QMap< QString, QString > protocol_details;
+
+  //dataPath
+  protocol_details[ "dataPath" ]       = rpRotor->importDataDisk;
+  //stage/status
+  protocol_details[ "status" ]         = "EDITING";   // <--- ADD explicitly!
+  //optimaName
+  protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
+  //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
+
+  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance"; 
+  protocol_details[ "dataSource" ]     = dataSourceType;  //<-- for now
+  
+  protocol_details[ "protocolName" ]   = currProto->protoname;
+  QString runname = mainw->currProto.runname;
+  protocol_details[ "experimentName" ] = runname;
+  protocol_details[ "label" ]          = currProto->exp_label;
+  //GMP type
+  QString gmpRun_str = (mainw->usmode)? "NO" : "YES";
+  protocol_details[ "gmpRun" ]         = gmpRun_str;
+  protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
+
+  //compute duration: Get # satges, cells
+  int nstages = sibIValue( "speeds",  "nspeeds" );
+  int tem_delay_sec = int((mainw->currProto.temeq_delay)*60);         // delay in sec (longevity) of the dummy equlibration stage
+  int nstages_size;
+  nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
+  //Total duration
+  bool is_dummy_dur = false;
+  int curr_stage_dur;
+  int Total_duration = tem_delay_sec;
+  for (int i=0; i<nstages_size; i++)
+    {
+      if (i==0 && tem_delay_sec)
+	{
+	  is_dummy_dur = true;
+	  continue;                // skip dummy stage for AbsScanParams
+	}
+      
+      if (is_dummy_dur)
+	curr_stage_dur = i - 1;
+      else
+	curr_stage_dur = i;
+      
+      qDebug() << "index i: " << i << ", curr_stage_DUR: " << curr_stage_dur;
+      
+      Total_duration += rpSpeed->ssteps[ curr_stage_dur ].duration;
+      Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay_stage;
+      Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay;
+      //ALEXEY: do we need also delays to first scans for abs/interference into total duration?
+    }
+  
+  protocol_details[ "duration" ]       = QString::number(Total_duration);
+
+  protocol_details[ "invID_passed" ]   = currProto->investigator.split(":")[0];
+  protocol_details[ "correctRadii" ]   = QString("YES");                           //<--- will it be "NO" ? (no Optima...)
+  protocol_details[ "expAborted" ]     = QString("NO");
+  protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
+  //define exp.Type
+  QString exp_t = ( mainw->us_abde_mode ) ? "ABDE" : "VELOCITY";
+  protocol_details[ "expType" ] = exp_t;
+  
+  //protocol_details[ "experimentId" ]   = QString::number(ExpDefId);    // NULL  
+  
+  //Now, ranges, cells, triples
+  int nwavl_tot = 0;
+  for ( int kk = 0; kk < rpRange->nranges; kk++ )
+    nwavl_tot  += rpRange->chrngs[ kk ].wvlens.count();
+
+  //Opt system check, what cells will be uvvis and/or interference
+  QStringList oprof   = sibLValue( "optical", "profiles" );
+  QString uvvis       = tr( "UV/visible" );
+  QString rayleigh    = tr( "Rayleigh Interference" );
+  
+  //get # cells with interference channels
+  int ncells_interference = 0;
+  int nchannels_uvvis = 0;
+  QStringList active_channels;
+  for ( int kk = 0; kk < oprof.count(); kk++ )
+    {
+      if ( oprof[ kk ].contains( rayleigh ) )
+	{
+	  if  ( oprof[ kk ].section( ":", 0, 0 ).contains("sample") )
+	    {
+	      qDebug() << "ITF channel name: " <<  oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	      active_channels << oprof[ kk ].section( ":", 0, 0 ).split(",")[0];
+	    }
+	  
+	  ++ncells_interference;
+	}
+      
+      if ( oprof[ kk ].contains( uvvis ) )
+	++nchannels_uvvis;
+    }
+  
+  //CELLS & TRIPLES: when interference ? (divide by 2!!! )
+  if ( ncells_interference !=0 && nwavl_tot == 0 )                          //Interference ONLY
+    {
+      protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 ));
+      qDebug() << "ITF: CellChNumber: " << protocol_details[ "CellChNumber" ];
+      protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 ));
+      qDebug() << "ITF: TripleNumber: " << protocol_details[ "TripleNumber" ];
+    }
+  else if ( ncells_interference == 0 && nwavl_tot != 0 )                    //Absorbance ONLY
+    {
+      protocol_details[ "CellChNumber" ]   = QString::number( nchannels_uvvis ); 
+      qDebug() << "UV: CellChNumber: " << protocol_details[ "CellChNumber" ];
+      protocol_details[ "TripleNumber" ]   = QString::number(nwavl_tot);
+      qDebug() << "UV: TripleNumber: " << protocol_details[ "TripleNumber" ];	     
+    }
+  else if ( ncells_interference !=0  && nwavl_tot !=0  )                     // BOTH
+    {
+      QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) +
+	QString(",RI:")  + QString::number( nchannels_uvvis );
+      
+      protocol_details[ "CellChNumber" ] = cellnumber;
+      
+      qDebug() << "UV & ITF: cellnumber: " << cellnumber;
+      qDebug() << "UV & ITF: CellChNumber: " << protocol_details[ "CellChNumber" ];
+
+      QString triplenumber = QString("IP:") + QString::number(1 * int(ncells_interference/2 )) +
+	QString(",RI:")  + QString::number(nwavl_tot);    
+
+      protocol_details[ "TripleNumber" ] = triplenumber;
+
+      qDebug() << "UV & ITF: triplenumber: " << triplenumber;
+      qDebug() << "UV & ITF: TripleNumber: " << protocol_details[ "TripleNumber" ];
+    }
+
+  //create parent autoflow record:
+  add_autoflow_record_dataDisk( protocol_details );
+
+  //emit proper signal -> switch to 3. IMPORT
+  emit expdef_submitted_dataDisk( protocol_details );
 }
 
 
@@ -8152,9 +9377,6 @@ void US_ExperGuiUpload::submitExperiment()
        /*** 
 	    Add audit trail who submitted - the owner himself OR an admin on his behalf
        ***/
-       
-       
- 
      }
       
    //Finish, emit, switch to 2. LIVE_UPDATE
@@ -8173,7 +9395,301 @@ void US_ExperGuiUpload::cancel_reviewers( QMap< QString, QString >& protocol_det
 }
 
 
-// Read Protocol details
+// autoflow record for Data from Disk
+void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & protocol_details )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+                                  tr( "Read protocol: Could not connect to database \n" )
+                                     + db->lastError() );
+      return;
+   }
+
+   QStringList qry;
+   int autoflowID_returned = 0;
+
+      if ( db != NULL )
+   {
+     qry. clear();
+     //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+     //greater of:
+     //- max(ID) autoflowHistory
+     //- current AUTO_INCREMENT
+     QString current_db = US_Settings::defaultDB().at(2);
+     qry << "set_autoflow_auto_increment" << current_db;
+     int auto_incr = db->statusQuery( qry );
+     qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+     
+     /* SET THE FOLLOWING:
+	1. dataPath   = protocol_details[ "dataPath" ]
+	2. status     = protocol_details[ "status" ]      (which is 'EDITING' i.e. 3. IMPORT )
+	3. optimaName = protocol_details[ "OptimaName" ]  (i chose 'dataDisk' but see how it affects... )
+
+	Question:
+	 -- What to do with
+	     protocol_details[ "correctRadii" ] ? SET to "NO" ?
+      */
+
+     
+     //Now add autoflow record
+     qry.clear();
+     qry << "add_autoflow_record_datadisk"
+	 << protocol_details[ "protocolName" ]
+	 << protocol_details[ "CellChNumber" ]
+	 << protocol_details[ "TripleNumber" ]
+	 << protocol_details[ "duration" ]
+	 << protocol_details[ "experimentName" ]
+       
+       // << protocol_details[ "experimentId" ]  NULL DEFAULT
+       
+	 << protocol_details[ "invID_passed" ]
+	 << protocol_details[ "label" ]
+	 << protocol_details[ "gmpRun" ]
+	 << protocol_details[ "aprofileguid" ]
+	 << protocol_details[ "operatorID" ]
+         << protocol_details[ "expType" ]
+
+	 << protocol_details[ "dataPath" ]
+	 << protocol_details[ "OptimaName" ]  // Optima 'name' will be set to 'dataDisk'
+	 << protocol_details[ "dataSource" ]; // will be set to 'dataDiskAUC' or other...
+
+         /***
+	     status    'EDITING' will be set in stored proc!
+	     corrRadii 'NO'      will be set in stored proc!
+	     //// <------- Should we add
+	     protocol_details[ "correctRadii" ] = "NO"; ???
+	  ***/
+
+     qDebug() << "[autoflow_record dataDisk, qry: ] "
+	      << qry;
+     
+     db->statusQuery( qry );
+     //db->query( qry );
+     
+     autoflowID_returned = db->lastInsertID();
+     //protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
+     protocol_details[ "autoflowID" ] = QString::number( autoflowID_returned );
+        
+     qDebug() << "[DataDisk]Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+     
+   }
+   
+   if ( autoflowID_returned == 0 )
+     {
+       QMessageBox::warning( this, tr( "[DataDisk]New Autoflow Record Problem" ),
+			     tr( "[DataDisk]autoflow: There was a problem with creating a new autoflow record! \n" ) );
+       return;
+     }
+   /*******************************************************************************/
+   
+   
+   /******************************************************************************/
+   //Also, create record in autoflowStages table:
+   qry. clear();
+   qry << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry );
+   /********************************************************************************/
+
+   
+   /*******************************************************************************/
+   //Also, create [NEW] eSign's record  -- only for GMP !!!////////////////////////////////////
+   if ( !mainw->usmode || protocol_details[ "gmpRun" ] == "YES") 
+     {
+       QStringList oper_listList = rpRotor->operListAssign.split("\n");
+       QStringList rev_listList  = rpRotor->revListAssign.split("\n");
+       QStringList appr_listList = rpRotor->apprListAssign.split("\n");
+       QStringList sme_listList  = rpRotor->smeListAssign.split("\n");
+       
+       QString operListJsonArray = "[";
+       QString revListJsonArray  = "[";
+       QString apprListJsonArray = "[";
+       QString smeListJsonArray  = "[";
+       QStringList oper_rev_joinedList;
+       
+       for (int i=0; i<oper_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << oper_listList[i]; 
+	   operListJsonArray += "\"" + oper_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<rev_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << rev_listList[i]; 
+	   revListJsonArray += "\"" + rev_listList[i] + "\",";
+	 }
+
+       for (int i=0; i<appr_listList.size(); ++i )
+	 {
+	   oper_rev_joinedList << appr_listList[i]; 
+	   apprListJsonArray += "\"" + appr_listList[i] + "\",";
+	 }
+       
+       for (int i=0; i<sme_listList.size(); ++i )
+	 {
+	   //oper_rev_joinedList << appr_listList[i];    // <----- do NOT include SME!
+	   smeListJsonArray += "\"" + sme_listList[i] + "\",";
+	 } 
+
+       operListJsonArray.chop(1);
+       revListJsonArray.chop(1);
+       apprListJsonArray.chop(1);
+       smeListJsonArray.chop(1);
+       operListJsonArray += "]";
+       revListJsonArray  += "]";
+       apprListJsonArray += "]";
+       smeListJsonArray  += "]";
+         
+       qDebug() << "operListJsonArray -- " << operListJsonArray;
+       qDebug() << "revListJsonArray -- "  << revListJsonArray;
+       qDebug() << "apprListJsonArray -- " << apprListJsonArray;
+       qDebug() << "smeListJsonArray -- " << smeListJsonArray;
+
+       /********** THIS WILL NOT BE USED HERE **********************/
+       //Minimum structure of eSignStatusJson field:
+       QString eSignStatusJson = "{\"to_sign\":[";
+       for (int i=0; i<oper_rev_joinedList.size(); ++i )
+	 {
+	   eSignStatusJson += "\"" + oper_rev_joinedList[i] + "\",";
+	 }
+       eSignStatusJson. chop(1);
+       eSignStatusJson += "]}";
+       
+       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
+       /***************************************************************/
+             
+       //Minimum structure of logJson when record created from scratch:
+       /** 
+	   { "Created by": [{ "Person": "12. Savelyev, Alexey", "timeDate": "timestamp", "Comment": "Created frist time" }],
+	   "Updated by": [{ ... }]  <=== later by admin, e.g. if oper(s), rev(s) are updated
+	   }
+       **/
+       QString logJsonFirstTime = "{\"Created by\":[{\"Person\":";
+       
+       qry.clear();
+       qry <<  QString( "get_user_info" );
+       db -> query( qry );
+       db -> next();
+       int     u_ID    = db->value( 0 ).toInt();
+       QString u_fname = db->value( 1 ).toString();
+       QString u_lname = db->value( 2 ).toString();
+       QString u_email = db->value( 4 ).toString();
+       int     u_level = db->value( 5 ).toInt();
+       
+       QDateTime date = QDateTime::currentDateTime();
+       QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
+       
+       logJsonFirstTime += "\"" + QString::number(u_ID) + ". " + u_lname + ", " + u_fname +  "\",";
+       logJsonFirstTime += "\"timeDate\":\"" + current_date +  "\",";
+       //logJsonFirstTime += "\"Comment\": \"Created first time\"";
+       logJsonFirstTime += "\"Comment\":\"";
+
+       //oper(s), rev(s), appr(s)
+       logJsonFirstTime += "Operator(s):" + oper_listList.join(",") + ";";
+       logJsonFirstTime += "Reviewer(s):" + rev_listList.join(",") + ";";
+       logJsonFirstTime += "Approver(s):" + appr_listList.join(","); // + ";";
+
+       logJsonFirstTime += "\"";
+       logJsonFirstTime += "}]}";
+       qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
+       
+       // Make a primary 'autoflowGMPReportEsign' record:
+       int eSignID_returned = 0;
+       qry. clear();
+       qry << "new_gmp_review_record"
+	   << protocol_details[ "autoflowID" ]
+	   << protocol_details[ "protocolName" ]
+	   << operListJsonArray
+	   << revListJsonArray
+	   << apprListJsonArray
+	   << smeListJsonArray
+	 // << eSignStatusJson       
+	   << logJsonFirstTime;     
+       
+       qDebug() << "new_gmp_review_record qry -- " << qry;
+       db->statusQuery( qry );
+       eSignID_returned = db->lastInsertID();
+       
+       if ( eSignID_returned == 0 )
+	 {
+	   QMessageBox::warning( this, tr( "New eSign Record Problem" ),
+				 tr( "autoflowGMPRecordEsign: There was a problem with creating a new record! \n" ) );
+	   return;
+	 }
+
+       protocol_details[ "gmpReviewID" ] = QString::number( eSignID_returned );
+       /*********************************************************************************/
+       
+       
+       /********************************************************************************/
+       //Update primary autolfow record with the new generated eSignID:
+       qry. clear();
+       qry <<  "update_autoflow_with_gmpReviewID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( eSignID_returned );
+       
+       qDebug() << "update_autoflow_with_gmpReviewID qry -- " << qry;
+       db->query( qry );
+       /********************************************************************************/
+       
+       /********************************************************************************/
+       //Create autoflowStatus record (gmp_submitter_map["User:"], ["Comment:"], ["Master Password:"])
+       /********************************************************************************/
+       QString createGMPRun_Json;
+       createGMPRun_Json. clear();
+       createGMPRun_Json += "{ \"Person\": ";
+
+       createGMPRun_Json += "[{";
+       createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+       createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+       createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+       createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+       createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+       createGMPRun_Json += "}],";
+       
+       createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+       
+       createGMPRun_Json += "}";
+
+       qry. clear();
+       qry << "new_autoflowStatusGMPCreate_record"
+	   << protocol_details[ "autoflowID" ]
+	   << createGMPRun_Json;
+       
+       qDebug() << "new_autoflowStatusGMPCreate_record qry -- " << qry;
+       
+       int autoflowStatusID = db->functionQuery( qry );
+
+       if ( !autoflowStatusID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+				 tr( "autoflowStatus (GMP run CREATE): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+	   
+	   return;
+	 }
+       qDebug() << "in record_GMPCreation_status: createGMPRun_Json -- " << createGMPRun_Json;
+
+       protocol_details[ "statusID" ] = QString::number( autoflowStatusID );
+
+       /************** finally, update autoflow record with StatusID: ****************/
+       qry. clear();
+       qry <<  "update_autoflow_with_statusID"
+	   <<  protocol_details[ "autoflowID" ]
+	   <<  QString::number( autoflowStatusID );
+       
+       qDebug() << "update_autoflow_with_statusID qry -- " << qry;
+       db->query( qry );
+     }
+
+   
+}
+
+// Standard autoflow record
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
 {
   qDebug() << "GMPRUN FIELD: " << protocol_details[ "gmpRun" ];

@@ -378,7 +378,7 @@ class US_XpnDataViewer : public US_Widgets
      void   runDetails     ( void );
      
      void   export_auc     ( void );
-     void   export_auc_auto( void );
+     void   export_auc_auto( bool& );
 
      void   changeRadius   ( void );
      void   changeCellCh   ( void );

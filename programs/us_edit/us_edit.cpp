@@ -9140,7 +9140,7 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   if ( autoflowStatusID )
     {
       //update
-      if ( dtype == "RI" )
+      if ( dtype == "RI" || dtype == "RA" )
 	{
 	  qry << "update_autoflowStatusEditRI_record"
 	      << QString::number( autoflowStatusID )
@@ -9163,7 +9163,8 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   else
     {
       QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
-			    tr( "autoflowStatus (EDIT {RI,IP}): There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+			    tr( "autoflowStatus (EDIT {RI|RA,IP}): There was a problem with identifying "
+				"a record in autoflowStatus table for a given run! \n" ) );
       
       return;
     }
@@ -9189,9 +9190,11 @@ void US_Edit::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << runID_numeric
-       <<  OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << runID_numeric
+   //     <<  OptimaName;
+   qry << "delete_autoflow_record_by_id"
+       << QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -9403,10 +9406,13 @@ void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisI
    //   }
 
    QStringList qry;
+   // qry << "update_autoflow_at_edit_data"
+   //     << runID_numeric
+   //     << AnalysisIDsString
+   //     << OptimaName;
    qry << "update_autoflow_at_edit_data"
-       << runID_numeric
        << AnalysisIDsString
-       << OptimaName;
+       << QString::number( autoflowID_passed );
 
    qDebug() << "Updating Autoflow tables with analysisIDs!!!";
    qDebug() << "query: " << qry;

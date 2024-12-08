@@ -177,6 +177,7 @@ class US_ExperGui : public US_WidgetsDialog
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
       void to_live_update( QMap < QString, QString > & protocol_details );
+      void to_import( QMap < QString, QString > & protocol_details );
       //void clear_experiment( QString & protocolName);
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
@@ -186,6 +187,7 @@ class US_ExperGui : public US_WidgetsDialog
       
    signals:
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
+      void switch_to_import( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
       void reset_experiment( QString & protocolName);
       void to_autoflow_records( void );

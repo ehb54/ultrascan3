@@ -25,6 +25,10 @@
 #include "us_hardware.h"
 #include "us_select_runs.h"
 #include "us_link_ssl.h"
+#include "../us_convert/us_convert.h"
+#include "us_dataIO.h"
+#include "us_simparms.h"
+#include "us_mwl_data.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -137,7 +141,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       void        setFirstLab( void );
-      
+      void        reset_dataSource_public( void );
+      void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
+   
            
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -152,10 +158,40 @@ class US_ExperGuiRotor : public US_WidgetsDialog
          { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
       bool message_instr_shown;
-
+      QString runID;
+      QString runType;
+      QMap <QString, QStringList> runTypes_map;
+      QMap <QString, QStringList> channs_ranges;
+      QStringList unique_runTypes;
+      bool ra_data_type;
+      bool ra_data_sim;
+      bool isMwl;
+      QMap<QString, QString> run_details;
+  
+      QVector< US_DataIO::RawData >      allData;      //!< All loaded data
+      QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
+      QList< US_Convert::TripleInfo >    all_tripinfo; //!< all triple info
+      QList< US_Convert::TripleInfo >    out_tripinfo; //!< output triple info
+      QList< US_Convert::TripleInfo >    all_chaninfo; //!< all channel info
+      QList< US_Convert::TripleInfo >    out_chaninfo; //!< output channel info
+      QStringList                        all_triples;  //!< all triple strings
+      QStringList                        all_channels; //!< all channel strings
+      QStringList                        out_triples;  //!< out triple strings
+      QStringList                        out_channels; //!< out channel strings
+      QList< int >                       out_chandatx; //!< chn.start data index
+      US_MwlData    mwl_data;                  //!< MWL data object
+      QVector< SP_SPEEDPROFILE >         speedsteps;   //!< Speed steps
+  
    private:
       US_ExperimentMain*   mainw;
-      US_RunProtocol::RunProtoRotor*  rpRotor;        // Rotor protocol
+      US_RunProtocol::RunProtoRotor*      rpRotor;        // Rotor protocol
+      US_RunProtocol::RunProtoSpeed*      rpSpeed;  
+      US_RunProtocol::RunProtoCells*      rpCells;
+      US_RunProtocol::RunProtoSolutions*  rpSolut;
+      US_RunProtocol::RunProtoOptics*     rpOptic;  
+      US_RunProtocol::RunProtoRanges*     rpRange;
+      US_RunProtocol::RunProtoAProfile*   rpAprof;
+  
       US_Help  showHelp;
       QComboBox* cb_lab;                              // Lab combo box
       QComboBox* cb_rotor;                            // Rotor combo box
@@ -165,12 +201,16 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox* cb_exptype;                          // Exp. Type combo box
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
+  QCheckBox* ck_disksource;
+  QCheckBox* ck_absorbance_t;
+  QPushButton* pb_importDisk;
+  QLineEdit *  le_dataDiskPath;
       
       QVector< US_Rotor::Lab >               labs;    // All labs
       QVector< US_Rotor::Rotor >             rotors;  // All rotors in lab
       QVector< US_Rotor::AbstractRotor >     arotors; // All abstract rotors
       QVector< US_Rotor::RotorCalibration >  calibs;  // Calibrations of rotor
-      QList  < US_Rotor::Instrument >       instruments; 
+      QList  < US_Rotor::Instrument >       instruments;
 
       US_Rotor::Instrument     currentInstrument; 
 	
@@ -181,7 +221,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
       QStringList sl_operators;    // Operator combo choices
       QStringList sl_operators_copy;    // Operator combo choices
-      QLineEdit *  le_instrument;
+  QLabel*      lb_instrument;
+  QLabel*      lb_optima_connected;
+  //QLineEdit *  le_instrument;
       QLineEdit*   le_optima_connected;
       
       int         dbg_level;
@@ -195,6 +237,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       //int          currentOperator_index;
       QString      currentOperator;
 
+  QString importDataPath;
+  
       QString expType_old;
 
       //Assigning oper(s) && rev(s)
@@ -235,6 +279,15 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void changeOperator( int );  // Slot for change in operator
       void changeExpType( int );   // Slot for change in exp. type
       void changeOptima ( int );   // Slot for change in exp. type
+
+  void importDisk( void );
+  void importDiskChecked( bool );
+  void dataDiskAbsChecked( bool );
+  QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
+  void importDisk_cleanProto( void );
+  bool init_output_data  ( void );
+  void runDetails        ( void );
+  bool rotorForUploadedData ( void );
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values
@@ -505,10 +558,12 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       QMap <int, bool> solution_comment_init;
       int      mxrow;                           // Max rows (24)
       //QVector< QComboBox* >    cc_solus;        // Solution choice pointers
+      QMap<QString,QString> get_solutions_public( void );
       
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoSolutions*  rpSolut;
+      US_RunProtocol::RunProtoRotor*      rpRotor; 
       US_Help  showHelp;
       int      dbg_level;
       //int      mxrow;                           // Max rows (24)
@@ -893,11 +948,13 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
+  void    submitExperiment_confirm_dataDisk( void );
       void    clearData_protDev( void );
  
       void    read_optima_machines( US_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
       void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
+      void    submitExperiment_dataDisk( void );  
       bool    saveRunProtocol ( void );  // Save the Run Protocol
       bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
@@ -908,6 +965,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
   
       bool    areReportMapsDifferent( US_AnaProfile, US_AnaProfile );
+      bool    protocolToDataDisk( QStringList& );
       bool    samplesReferencesWvlsMatch( QStringList& );
       bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
@@ -918,6 +976,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
       void    add_autoflow_record_protDev( QMap< QString, QString> &protocol_details );
+      void    add_autoflow_record_dataDisk( QMap< QString, QString> &protocol_details );
 
       void    do_accept_reviewers( QMap< QString, QString >& );
       void    cancel_reviewers( QMap< QString, QString >& );
@@ -925,6 +984,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
    signals:
       void expdef_submitted    ( QMap < QString, QString > &protocol_details );
       void expdef_submitted_dev( QMap < QString, QString > &protocol_details );
+      void expdef_submitted_dataDisk ( QMap < QString, QString > &protocol_details );
+      
 };
 
 //! \brief Experiment AnalysisProfile panel
@@ -1091,6 +1152,7 @@ class US_ExperimentMain : public US_Widgets
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
       void submitted_protDev( QMap < QString, QString > & );
+      void submitted_dataDisk( QMap < QString, QString > & );
 
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
@@ -1101,16 +1163,21 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile( void );
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
+      QMap< QString, QString> get_all_solution_names( void );
+      void initCells( void );
+      void reset_dataDisk( void );
+      void  get_importDisk_data( QString,  QMap< QString, QStringList>& );
   
       void back_to_pcsa( void );
 	
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
+      void to_import( QMap < QString, QString > &protocol_details );
       void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
       void close_expsetup_msg( void );
-  void back_to_initAutoflow( void );
+      void back_to_initAutoflow( void );
       
       
 };

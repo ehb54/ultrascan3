@@ -2770,6 +2770,393 @@ DbgLv(1) << "expA: TMST files written.";
    return nfiles;
 }
 
+// [AUTO, GMP] Export RawData to openAUC (.auc) and TMST (.tmst) files
+int US_XpnData::export_auc_auto( QVector< US_DataIO::RawData >& allData, bool& tmstampOK )
+{
+   int nfiles        = 0;
+#if 0
+   if ( ! is_raw )
+      return nfiles;
+#endif
+
+   int ss_reso        = 100;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+   }
+   int ntrips        = allData.count();
+   QString ftype     = QString( allData[ 0 ].type[ 0 ] ) +
+                       QString( allData[ 0 ].type[ 1 ] );
+   QString fbase     = runID + "." + ftype + ".";
+   QString cur_dir   = US_Settings::importDir() + "/" + runID + "/";
+DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
+ << "cur_dir" << cur_dir;
+   QDir dir;
+   if ( ! dir.exists( cur_dir ) )
+   {
+      if ( dir.mkpath( cur_dir ) )
+      {
+         qDebug() << "Create directory " << cur_dir;
+      }
+      else
+      {
+         qDebug() << "*ERROR* Unable to create directory " << cur_dir;
+      }
+   }
+
+   // Output AUC files and find first dataset with maximum scans
+   int mxscans       = 0;
+   int iiuse         = 0;
+DbgLv(1) << "expA: ktrips" << triples.count() << "ktnodes" << trnodes.count();
+   if ( trnodes.count() == 0  &&  ntrips > 0 )
+   {
+      for ( int ii = 0; ii < ntrips; ii++ )
+      {
+         QString tripl = triples[ ii ];
+         QString tnode = tripl.replace( " / ", "." );
+         trnodes << tnode;
+      }
+DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
+   }
+
+   for ( int ii = 0; ii < ntrips; ii++ )
+   {  // Create a file for each triple
+      US_DataIO::RawData* rdata = &allData[ ii ];
+#if 0
+      QString trnode    = QString::number( rdata->cell ) + "." +
+                          QString( rdata->channel ) + "." +
+                          QString().sprintf( "%03d",
+                                qRound( rdata->scanData[ 0 ].wavelength ) );
+#endif
+      QString trnode    = trnodes[ ii ];
+//DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
+// << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+      QString fname     = fbase + trnode + ".auc";
+      QString fpath     = cur_dir + fname;
+
+      US_DataIO::writeRawData( fpath, *rdata );
+
+      nfiles++;
+
+      // Find index to first dataset with maximum scans
+      int kscans        = rdata->scanCount();
+
+      if ( kscans > mxscans )
+      {
+         mxscans           = kscans;
+         iiuse             = ii;
+      }
+DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
+ << "kscans" << kscans << "mxscans" << mxscans << "iiuse" << iiuse;
+   }
+
+   // Create a speed step vector
+   QVector< US_SimulationParameters::SpeedProfile > speedsteps;
+   US_DataIO::RawData* udata = &allData[ iiuse ];
+
+   US_SimulationParameters::computeSpeedSteps( &udata->scanData, speedsteps );
+
+   // Output time state files
+
+   QStringList fkeys;
+   QStringList ffmts;
+   fkeys << "Time"        << "RawSpeed" << "SetSpeed" << "Omega2T"
+         << "Temperature" << "Step"     << "Scan";
+   ffmts << "I4"          << "F4"       << "I4"       << "F4"
+         << "F4"          << "I2"       << "I2";
+
+   US_TimeState tsobj;
+
+   QString tspath    = cur_dir + runID + ".time_state.tmst";
+   int ntimes        = udata->scanCount();
+   int ntssda        = tSydata.count();
+   double e_utime    = udata->scanData[ ntimes - 1 ].seconds;
+   double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
+DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
+ << "e_utime e_stime" << e_utime << e_stime;
+
+   // If last scan time beyond last sysstat time, reload System Status
+   if ( e_utime > e_stime )
+   {
+      int idRun         = tSydata[ 0 ].runId;
+      tSydata.clear();
+      scan_xpndata( idRun, 'S' );
+      ntssda            = tSydata.count();
+      e_stime           = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
+DbgLv(1) << "expA:    UPDATED ntssda" << ntssda << "e_stime" << e_stime << "idRun" << idRun;
+   }
+//*DEBUG*
+QVector< double > xv_scn;
+QVector< double > yv_scn;
+QVector< double > xv_tms;
+QVector< double > yv_tms;
+double utime1=udata->scanData[0].seconds;
+double uomgt1=udata->scanData[0].omega2t;
+double utime2=udata->scanData[ntimes-1].seconds;
+double uomgt2=udata->scanData[ntimes-1].omega2t;
+double avgrpm=0.0;
+for (int jj=0; jj<ntimes; jj++)
+{
+ avgrpm += udata->scanData[jj].rpm;
+ xv_scn << udata->scanData[jj].seconds;
+ yv_scn << udata->scanData[jj].omega2t;
+}
+avgrpm /= (double)ntimes;
+double delta_t = utime2 - utime1;
+double delta_o = uomgt2 - uomgt1;
+double cdelt_o = sq( avgrpm * M_PI / 30. ) * delta_t;
+DbgLv(1) << "expA:DLT:SCN: time1 time2" << utime1 << utime2;
+DbgLv(1) << "expA:DLT:SCN: omgt1 omgt2" << uomgt1 << uomgt2;
+DbgLv(1) << "expA:DLT:SCN: delta-t delta-o" << delta_t << delta_o;
+DbgLv(1) << "expA:DLT:SCN: avgrpm cdelt-o" << avgrpm << cdelt_o;
+int jutime1=(int)utime1;
+int jutime2=(int)utime2;
+int jt1=0;
+int jt2=0;
+for ( int jj = 0; jj<ntssda; jj++ )
+{
+ int jtime=tSydata[jj].exptime+etimoff;
+ if ( jtime < jutime1 ) continue;
+ if ( jtime >= jutime2 )
+ {
+  jt2 = jj;
+  break;
+ }
+ else if ( jt1 == 0 )
+ {
+  jt1 = jj;
+ }
+}
+double stime1=tSydata[jt1].exptime+etimoff;
+double stime2=tSydata[jt2].exptime+etimoff;
+double somgt1=tSydata[jt1].omgSqT;
+double somgt2=tSydata[jt2].omgSqT;
+avgrpm=0.0;
+for (int jj=jt1; jj<=jt2; jj++)
+{
+ avgrpm += tSydata[jj].speed;
+ xv_tms << tSydata[jj].exptime+etimoff;
+ yv_tms << tSydata[jj].omgSqT;
+}
+avgrpm /= (double)(jt2-jt1+1);
+delta_t = stime2 - stime1;
+delta_o = somgt2 - somgt1;
+cdelt_o = sq( avgrpm * M_PI / 30. ) * delta_t;
+DbgLv(1) << "expA:DLT:TMS: time1 time2" << stime1 << stime2;
+DbgLv(1) << "expA:DLT:TMS: omgt1 omgt2" << somgt1 << somgt2;
+DbgLv(1) << "expA:DLT:TMS: delta-t delta-o" << delta_t << delta_o;
+DbgLv(1) << "expA:DLT:TMS: avgrpm cdelt-o" << avgrpm << cdelt_o;
+double* xa_scn = xv_scn.data();
+double* ya_scn = yv_scn.data();
+double* xa_tms = xv_tms.data();
+double* ya_tms = yv_tms.data();
+double slope_s, slope_t, icept_s, icept_t;
+double sigma_s, sigma_t, corre_s, corre_t;
+int nscnp = xv_scn.count();
+int ntmsp = xv_tms.count();
+US_Math2::linefit( &xa_scn, &ya_scn, &slope_s, &icept_s, &sigma_s, &corre_s, nscnp );
+US_Math2::linefit( &xa_tms, &ya_tms, &slope_t, &icept_t, &sigma_t, &corre_t, ntmsp );
+DbgLv(1) << "expA:DLT:SCN: npoint" << nscnp << "x1,y1,x2,y2" << xa_scn[0] << ya_scn[0] << xa_scn[nscnp-1] << ya_scn[nscnp-1];
+DbgLv(1) << "expA:DLT:TMS: npoint" << ntmsp << "x1,y1,x2,y2" << xa_tms[0] << ya_tms[0] << xa_tms[ntmsp-1] << ya_tms[ntmsp-1];
+DbgLv(1) << "expA:DLT:SCN:  slope" << slope_s << "intercept" << icept_s;
+DbgLv(1) << "expA:DLT:TMS:  slope" << slope_t << "intercept" << icept_t;
+DbgLv(1) << "expA:DLT:SCN:   stddev" << sigma_s << "correlation" << corre_s;
+DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
+US_Math2::linefit( &ya_scn, &xa_scn, &slope_s, &icept_s, &sigma_s, &corre_s, nscnp );
+US_Math2::linefit( &ya_tms, &xa_tms, &slope_t, &icept_t, &sigma_t, &corre_t, ntmsp );
+DbgLv(1) << "expA:DLT:SCN: npoint" << nscnp << "x1,y1,x2,y2" << ya_scn[0] << xa_scn[0] << ya_scn[nscnp-1] << xa_scn[nscnp-1];
+DbgLv(1) << "expA:DLT:TMS: npoint" << ntmsp << "x1,y1,x2,y2" << ya_tms[0] << xa_tms[0] << ya_tms[ntmsp-1] << xa_tms[ntmsp-1];
+DbgLv(1) << "expA:DLT:SCN:  slope" << slope_s << "intercept" << icept_s;
+DbgLv(1) << "expA:DLT:TMS:  slope" << slope_t << "intercept" << icept_t;
+DbgLv(1) << "expA:DLT:SCN:   stddev" << sigma_s << "correlation" << corre_s;
+DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
+//*DEBUG*
+
+   tsobj.open_write_data( tspath );      // Initialize TMST creation
+
+   tsobj.set_keys( fkeys, ffmts );       // Define keys and formats
+
+   if ( ntssda < ntimes )
+   {
+DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
+      for ( int ii = 0;  ii < ntimes; ii++ )
+      {  // Create a record for each scan
+         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         int scannbr       = ii + 1;           // Scan number
+         double rawSpeed   = uscan->rpm;
+         double tempera    = uscan->temperature;
+         double omega2t    = uscan->omega2t;
+         double time       = uscan->seconds;
+         double setSpeed   = qRound( rawSpeed / (double)ss_reso ) * (double)ss_reso;
+
+         // Find the speed step (stage) to which this scan belongs
+         int jstage        = 0;
+         double ssDiff     = 1e+99;
+
+         for( int jj = 0; jj < speedsteps.count(); jj++ )
+         {
+            double ssSpeed    = speedsteps[ jj ].set_speed;
+            double jjDiff     = qAbs( ssSpeed - setSpeed );
+
+            if ( jjDiff < ssDiff )
+            {
+               ssDiff            = jjDiff;
+               jstage            = jj;
+            }
+         }
+
+         int istagen       = jstage + 1;
+         setSpeed          = speedsteps[ jstage ].set_speed;
+         int isSpeed       = (int)qRound( setSpeed );
+DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
+ << "speed" << rawSpeed << isSpeed << "time" << time;
+
+         // Set values for this scan
+         tsobj.set_value( fkeys[ 0 ], time     );      // Time in seconds
+         tsobj.set_value( fkeys[ 1 ], rawSpeed );      // Raw speed
+         tsobj.set_value( fkeys[ 2 ], isSpeed  );      // Set (stage) speed
+         tsobj.set_value( fkeys[ 3 ], omega2t  );      // Omega-Squared-T
+         tsobj.set_value( fkeys[ 4 ], tempera  );      // Temperature
+         tsobj.set_value( fkeys[ 5 ], istagen  );      // Stage (speed step)
+         tsobj.set_value( fkeys[ 6 ], scannbr  );      // Scan
+
+         // Write the scan record
+         tsobj.flush_record();
+      }
+   }
+   else
+   {  // Build TMST from System Status Data table values
+      int ftx           = 1;
+      int stgoff        = 0;
+
+      for ( int ii = 0; ii < ntssda; ii++ )
+      {  // Find the index to the first non-zero speed
+         int irSpeed       = (int)qRound( tSydata[ ii ].speed );
+         if ( irSpeed > 0 )
+         {
+            ftx               = ii;
+            stgoff            = 1 - tSydata[ ii ].stageNum;
+            int jj            = ntssda - 1;
+            while ( tSydata[ jj ].speed < irSpeed  &&  jj > 1 )
+            {
+               jj--;
+            }
+            ntssda            = jj + 1;
+            break;
+         }
+      }
+
+      ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
+      etimoff           = -tSydata[ ftx ].exptime;   // Experiment time offset
+DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff << "ntssda" << ntssda;
+      QList< int > sctimes;
+
+      for ( int ii = 0; ii < ntimes; ii++ )
+      {  // Build a list of scan times
+         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         int time          = (int)qRound( uscan->seconds );
+         sctimes << time;
+DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
+      }
+
+      ntimes            = ntssda;
+      int ietime        = (int)qRound( e_utime ) + 60;
+      int time_n        = -1;                       // Initial values
+      double speed_n    = 0.0;
+      double omg2t_n    = 0.0;
+      double tempe_n    = tSydata[ ftx ].tempera;
+      double omg2t_sm   = 0.0;
+  
+      for ( int ii = ftx; ii < ntimes; ii++ )
+      {  // Create a record for each system status row
+         int time_p        = time_n;                // Previous values
+         double speed_p    = speed_n;
+         double omg2t_p    = omg2t_n;
+         double tempe_p    = tempe_n;
+         int time_e        = tSydata[ ii ].exptime;
+         time_n            = time_e + etimoff;
+         speed_n           = tSydata[ ii ].speed;
+         omg2t_n           = tSydata[ ii ].omgSqT;
+         tempe_n           = tSydata[ ii ].tempera;
+         int stage         = tSydata[ ii ].stageNum + stgoff;
+         if ( time_e > ietime  ||
+              ( ( speed_n < 100 ) && ( ii > ( ftx + 10 ) ) ) )
+         {  // Time well beyond last scan or speed dropping back down to zero
+DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" << time_n
+ << "speed_n" << speed_n << "omg2t_n" << omg2t_n << "*BREAK*";
+
+            if ( ii == ftx )
+	      {
+		tmstampOK = false;
+		qDebug() << "tmstateOK ? " << tmstampOK;
+	      }
+            break;
+         }
+         int timeinc       = time_n - time_p;       // Increments
+         double trange     = timeinc > 0 ? ( 1.0 / (double)timeinc ) : 1.0;
+         double speed_i    = ( speed_n - speed_p ) * trange;
+         double omg2t_i    = ( omg2t_n - omg2t_p ) * trange;
+         double tempe_i    = ( tempe_n - tempe_p ) * trange;
+         int time_c        = time_p;                // Initial 1-sec values
+         double rawSpeed   = speed_p;
+         double omega2t    = omg2t_p;
+         double tempera    = tempe_p;
+DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
+ << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
+
+         for ( int jj = 0; jj < timeinc; jj++ )
+         {  // Expand values for each second in present range
+            time_c++;                                // Bump to next second
+            rawSpeed         += speed_i;
+            omega2t          += omg2t_i;
+            tempera          += tempe_i;
+
+            omg2t_sm         += sq( rawSpeed * M_PI / 30.0 );
+            int isSpeed       = (int)qRound( rawSpeed / (double)ss_reso ) * ss_reso;
+
+            // Set scan number to matching-time scan or 0
+            int scannbr       = sctimes.indexOf( time_c );
+//DbgLv(1) << "expA:                 scan" << scannbr;
+            scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
+ 
+DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
+ << "time_c" << time_c << "speed" << rawSpeed << isSpeed
+ << "omg2t(rec)" << omega2t << "omg2t(sum)" << omg2t_sm;
+            omega2t           = omg2t_sm;
+
+            // Set values for this time
+            tsobj.set_value( fkeys[ 0 ], time_c   );  // Time in seconds
+            tsobj.set_value( fkeys[ 1 ], rawSpeed );  // Raw speed
+            tsobj.set_value( fkeys[ 2 ], isSpeed  );  // Set (stage) speed
+            tsobj.set_value( fkeys[ 3 ], omega2t  );  // Omega-Squared-T
+            tsobj.set_value( fkeys[ 4 ], tempera  );  // Temperature
+            tsobj.set_value( fkeys[ 5 ], stage    );  // Stage (speed step)
+            tsobj.set_value( fkeys[ 6 ], scannbr  );  // Scan
+
+            // Write the scan record
+            tsobj.flush_record();
+         }  // END: loop thru seconds in status data interval
+      }  // END: table data loop
+   }  // END: have System Status Data
+
+   // Complete write of TMST file and defining XML
+   if ( tsobj.close_write_data() == 0 )
+   {
+      tsobj.write_defs( 0.0, "Optima" );
+      nfiles        += 2;
+DbgLv(1) << "expA: TMST files written.";
+   }
+
+   return nfiles;
+}
+
+
+
+
 // Return a count of a specified type
 int US_XpnData::countOf( QString key )
 {

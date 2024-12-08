@@ -28,12 +28,19 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
       //! \brief The destructor saves a report for each triple upon leaving
       ~US_RunDetails2();
 
+      QMap< QString, QString> get_params_public( void );
+      
    private:
       const QVector< US_DataIO::RawData >& dataList;
       const QStringList&                   triples;
       
       // key = rpm, value = triple + scan#
-      QMultiMap< int, QString >          map; 
+      QMultiMap< int, QString >          map;
+
+      double run_length;
+      int    rpm_av;
+      int    scan_count_av;
+      QMap<QString, QStringList> scanCount_per_dataType;
 
       class US_GUI_EXTERN graphValue
       {

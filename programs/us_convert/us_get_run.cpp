@@ -307,11 +307,11 @@ void US_GetRun::deleteRun( void )
    if ( isRequired )
      {
        QMessageBox::information( this, tr( "Data Cannot be Deleted" ),
-				 tr( "The Data for the Run:\n\n"
-				     "\"%1\"\n\n"
-				     "can NOT be deleted since it is required by the GMP framework!" )
-				 .arg( rFilename ) );
-       
+   				 tr( "The Data for the Run:\n\n"
+   				     "\"%1\"\n\n"
+   				     "can NOT be deleted since it is required by the GMP framework!" )
+   				 .arg( rFilename ) );
+    
        return;
      }
    // End check for GMP ///////////////////////////////////////////////

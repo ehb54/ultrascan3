@@ -591,6 +591,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ] ;
+  dataSource         = protocol_details[ "dataSource" ] ;
 
   QString full_runname = protocol_details[ "filename" ];
   FullRunName_auto = runName + "-run" + runID;
@@ -1588,6 +1589,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   analysisIDs        = protocol_details[ "analysisIDs" ];
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ];
+  dataSource         = protocol_details[ "dataSource" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -1926,7 +1928,8 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "devRecord" ]      = db->value( 24 ).toString();
 	   protocol_details[ "gmpReviewID" ]    = db->value( 25 ).toString();
 
-	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
 	 }
      }
 
@@ -3476,9 +3479,11 @@ void US_ReporterGMP::generate_report( void )
             
       //Update autoflow record with 'E-SIGNATURES'
       qry. clear();
+      // qry << "update_autoflow_at_report"
+      // 	  << runID
+      // 	  << optimaName;
       qry << "update_autoflow_at_report"
-	  << runID
-	  << optimaName;
+	  << AutoflowID_auto;
       //db->query( qry );
       
       int status = db->statusQuery( qry );
@@ -6579,6 +6584,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( status_map[ "Person" ][ "level" ] )                   //5
 	;
 
+      QString ref_scan_method = ( dataSource. contains( "Absorbance" ) ) ? "N/A" : status_map[ "RefScan" ][ "type"];
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
 			   "<caption align=left> <b><i>Reference Scan, Data Saving: </i></b> </caption>"
@@ -6591,7 +6597,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			   "</tr>"
 			   "</table>"
 			   )
-	.arg( status_map[ "RefScan" ][ "type"] )     //1
+	.arg( ref_scan_method )                      //1
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
       
@@ -7111,9 +7117,10 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	}
     }
 
-  qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson -- "
+  qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson, analysisJson -- "
 	   << stopOptimaJson
-	   << skipOptimaJson;
+	   << skipOptimaJson
+	   << analysisJson;
 }
 
 //Parse autoflowStatus Analysis Json
@@ -7122,22 +7129,37 @@ QMap < QString, QString > US_ReporterGMP::parse_autoflowStatus_analysis_json( QS
   QMap <QString, QString>  status_map;
 
   QJsonDocument jsonDoc = QJsonDocument::fromJson( statusJson.toUtf8() );
-  //QJsonObject json_obj  = jsonDoc.object();
-
-  QJsonArray json_array  = jsonDoc.array();
-  qDebug() << "IN ANALYSIS_JSON: " << json_array;
-
-  for (int i=0; i < json_array.size(); ++i )
+  
+  if ( jsonDoc. isArray() )
     {
-      foreach(const QString& key, json_array[ i ].toObject().keys())
+      QJsonArray json_array  = jsonDoc.array();
+      qDebug() << "IN ANALYSIS_JSON [ARRAY]: " << json_array;
+      
+      for (int i=0; i < json_array.size(); ++i )
 	{
-	  QJsonValue value = json_array[ i ].toObject().value(key);
-      	  qDebug() << "ANALYSIS_JSON: key, value: " << key << value.toString();
+	  foreach(const QString& key, json_array[ i ].toObject().keys())
+	    {
+	      QJsonValue value = json_array[ i ].toObject().value(key);
+	      qDebug() << "ANALYSIS_JSON [ARRAY]: key, value: " << key << value.toString();
+	      
+	      status_map[ key ] = value.toString();
+	    }
+	}
+    }
+  else if ( jsonDoc. isObject() )
+    {
+      QJsonObject json_obj  = jsonDoc.object();
+      qDebug() << "IN ANALYSIS_JSON [OBJECT]: " << json_obj;
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  qDebug() << "ANALYSIS_JSON [OBJECT]: key, value: " << key << value;
 
 	  status_map[ key ] = value.toString();
 	}
     }
-
+    
   return status_map;
 }
 
@@ -9743,6 +9765,9 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   QJsonDocument jsonDocApprList  = QJsonDocument::fromJson( eSign_details[ "approversListJson" ] .toUtf8() );
   QString apprs_a = get_assigned_oper_revs( jsonDocApprList );
 
+  QString run_id = ( dataSource == "INSTRUMENT" ) ? runID : "N/A";
+  QString instr_name = ( dataSource == "INSTRUMENT" ) ? currProto. rpRotor.instrname : "dataDisk";
+  
   html_operator = tr(     
     "<h3 align=left>Optima Machine/Operator </h3>"
       "<table>"
@@ -9755,8 +9780,8 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       "</table>"
     "<hr>"
 				  )
-    .arg( currProto. rpRotor.instrname )   //1
-    .arg( runID )                          //2
+    .arg( instr_name )                     //1
+    .arg( run_id )                         //2
     //.arg( currProto. rpRotor.opername  )   //3 <-- OLD, incorrect
     .arg( opers_a  )                       //3
     .arg( revs_a  )                        //4

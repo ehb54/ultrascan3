@@ -22,7 +22,7 @@ US_RunProtocol::US_RunProtocol()
    runname         = "";
 
    scanCount       = 0;
-   scanCount_int   =0;
+   scanCount_int   = 0;
 }
 
 // RunProtocol Equality operator

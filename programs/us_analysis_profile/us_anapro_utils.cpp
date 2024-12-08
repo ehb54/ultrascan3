@@ -453,6 +453,9 @@ DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protona
 DbgLv(1) << "APGe: inP: nchan" << nchan;
    sl_chnsel.clear();
 
+   //get Rotor's ra_data_type var.
+  
+   
    // Recompose the list of channel descriptions from protocol
    for ( int ii = 0; ii < nchan; ii++ )
    {

@@ -230,6 +230,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
@@ -479,6 +480,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
@@ -1709,6 +1711,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString failedID     = protocol_details[ "failedID" ];
 
   QString expType      = protocol_details[ "expType" ];
+  QString instName     = protocol_details[ "OptimaName" ];
+  QString dataSource   = protocol_details[ "dataSource" ];
     
   QDir directory( currDir );
   
@@ -1815,16 +1819,22 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       if ( stage == "EDITING" )
 	{
 	  //do something
-	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-	  
-	  if ( currDir.isEmpty() || !directory.exists() )
+	  if ( currDir.isEmpty() || !directory.exists()  )
 	    {
-	      //switch_to_live_update( protocol_details );
-	      emit switch_to_live_update_init( protocol_details );
+	      if ( instName. contains("Optima") && dataSource == "INSTRUMENT" )
+		emit switch_to_live_update_init( protocol_details );
+	      else // disk Data
+		{
+		  QMessageBox::warning( this, tr( "Data Absent on Disk!" ),
+					tr( "No data associated with this run is found on the disk! \n" ) );
+		  initAutoflowPanel();
+		  //emit to_initAutoflow();
+		  return;
+		}
 	    }
 	  else
 	    {
-	      //switch_to_post_processing( protocol_details );
+	      qDebug() << "DataDisk, proceeding...";
 	      emit switch_to_post_processing_init( protocol_details );
 	    }
 	  
@@ -2476,7 +2486,12 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       qDebug() << "1. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
 	
       if ( time_started.toString().isEmpty() )
-	autoflowentry << QString( tr( "NOT STARTED" ) );
+	{
+	  if ( optimaname. contains("Optima") ) 
+	    autoflowentry << QString( tr( "NOT STARTED" ) );
+	  else
+	    autoflowentry << QString( tr( "N/A" ) );
+	}
       else
 	{
 	  if ( status == "LIVE_UPDATE" )
@@ -2733,6 +2748,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
 	 }
      }
    else
@@ -2891,6 +2907,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
+   connect( sdiag, SIGNAL( to_import( QMap < QString, QString > & ) ),
+	    this,  SLOT( to_import( QMap < QString, QString > & ) ) );
+
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
@@ -2962,6 +2981,12 @@ void US_ExperGui::to_initAutoflow( void )
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
 {
   emit switch_to_live_update( protocol_details );
+}
+
+//When run is submitted with Data from Disk.. 
+void US_ExperGui::to_import( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_import( protocol_details );
 }
 
 //When US_Experiment is closed
