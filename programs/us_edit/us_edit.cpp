@@ -8921,13 +8921,13 @@ void US_Edit::write_auto( void )
      
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
-       qDebug() << "BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i];
+       qDebug() << "BEFORE AUTOFLOW_ANALYSIS: channel name --" << channels_all[i]; // RA:S:: "1.S"
        isSet_ref_wvl[ channels_all[i] ] = false;
      }
 
    //DEBUG
    for ( int j = 0; j < triples_all_optics.size(); ++j )
-     qDebug() << "BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j];
+     qDebug() << "BEFORE AUTOFLOW_ANALYSIS: triple name -- " << triples_all_optics[j]; //RA:S:: "1.S.280"
    
    
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
@@ -8982,11 +8982,12 @@ void US_Edit::write_auto( void )
 			   // If there is an infortmaiton on specific triple to edit (for a current channel) in the AProfile?
 			   if ( isSet_edit_info_for_channel( triples_all_optics[ j ],  QString("UV/vis") ) )
 			     {
+			       qDebug() << "isSet_edit_info_for_channel() TRUE: ";
 			       // If this particular  triple set for FM fit (and edit): defined by "wvl_edit" attr in Aprofile
 			       if ( isSet_to_edit_triple( triples_all_optics[ j ],  QString("UV/vis") ) )
 				 {
 				   json_status = compose_json( true );
-				   qDebug() << triples_all_optics[j] << json_status;
+				   qDebug() << "isSet_to_edit_triple() TRUE: " << triples_all_optics[j] << json_status;
 				   
 				   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 				   
@@ -8999,7 +9000,7 @@ void US_Edit::write_auto( void )
 			       else
 				 {
 				   json_status = compose_json( false );
-				   qDebug() << triples_all_optics[j] << json_status;
+				   qDebug() << "isSet_to_edit_triple() FALSE: " << triples_all_optics[j] << json_status;
 				   
 				   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 				 }
@@ -9008,7 +9009,7 @@ void US_Edit::write_auto( void )
 			   else
 			     {
 			       json_status = compose_json( true );
-			       qDebug() << triples_all_optics[j] << json_status;
+			       qDebug() << "isSet_edit_info_for_channel() FALSE: " << triples_all_optics[j] << json_status;
 			       
 			       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 
@@ -9253,6 +9254,11 @@ bool US_Edit::isSet_to_analyse( QString triple_name, QString opsys )
   QStringList triple_name_list = triple_name.split(".");
   QString channel = triple_name_list[0] + triple_name_list[1];
 
+  qDebug() << "[isSet_to_analyse()] channel1 -- " << channel;
+  if ( dataSource. contains("DiskAUC:Absorbance") && channel.contains("S")  )
+    channel = channel.replace("S","A");
+  qDebug() << "[isSet_to_analyse()] channel2 -- " << channel;
+  
   QMap<QString, bool>::iterator jj;
   for ( jj = channels_to_analyse.begin(); jj != channels_to_analyse.end(); ++jj )
     {
@@ -9285,6 +9291,12 @@ bool US_Edit::isSet_to_analyse_triple( QString triple_name, QString opsys )
   
   QStringList triple_name_list = triple_name.split(".");
   QString channel = triple_name_list[0] + triple_name_list[1];
+
+  qDebug() << "[isSet_to_analyse_triple()] channel1 -- " << channel;
+  if ( dataSource. contains("DiskAUC:Absorbance") && channel.contains("S")  )
+    channel = channel.replace("S","A");
+  qDebug() << "[isSet_to_analyse_triple()] channel2 -- " << channel;
+  
   QString wvl = triple_name_list[2];    
   
   QMap<QString, QString>::iterator jj;
@@ -9313,6 +9325,12 @@ bool US_Edit::isSet_edit_info_for_channel( QString triple_name, QString opsys )
     
   QStringList triple_name_list = triple_name.split(".");
   QString channel = triple_name_list[0] + triple_name_list[1];
+
+  qDebug() << "[isSet_edit_info_for_channel() channel1 -- " << channel;
+  if ( dataSource. contains("DiskAUC:Absorbance") && channel.contains("S")  )
+    channel = channel.replace("S","A");
+  qDebug() << "[isSet_edit_info_for_channel()] channel2 -- " << channel;
+  
   
   QMap<QString, QString>::iterator jj;
   for ( jj = triple_to_edit.begin(); jj != triple_to_edit.end(); ++jj )
@@ -9349,6 +9367,12 @@ bool US_Edit::isSet_to_edit_triple( QString triple_name, QString opsys )
   
   QStringList triple_name_list = triple_name.split(".");
   QString channel = triple_name_list[0] + triple_name_list[1];
+
+  qDebug() << "[isSet_to_edit_triple() channel1 -- " << channel;
+  if ( dataSource. contains("DiskAUC:Absorbance") && channel.contains("S")  )
+    channel = channel.replace("S","A");
+  qDebug() << "[isSet_to_edit_triple()] channel2 -- " << channel;
+  
   QString wvl = triple_name_list[2];    
   
   QMap<QString, QString>::iterator jj;
