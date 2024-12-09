@@ -24,8 +24,8 @@ public:
 
 signals:
     /*!
-             * \brief Signal emitted when a row or column is deleted.
-             */
+    * \brief Signal emitted when a row or column is deleted.
+    */
     void row_column_deleted();
 
 protected:
@@ -37,8 +37,8 @@ protected:
 
 private slots:
     /*!
-             * \brief Slot to handle deletion of rows.
-             */
+    * \brief Slot to handle deletion of rows.
+    */
     void delete_rows();
 
     /*!
@@ -131,9 +131,8 @@ public:
         bool readFile(const QString &filePath, const QString &delimiter);
 
         /*!
-        * \brief A public function to parse a csv file.
-        * \param filePath  CSV file path.
-        * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
+        * \brief A public function to write a csv file.
+        * \param delimiter A delimiter string.
         * \return Return true if parsing is successful.
         */
         bool writeFile(const QString &delimiter);
