@@ -117,6 +117,21 @@ public:
         QString filePath() const;
 
         /*!
+        * \brief Get the error message.
+        * \return The file path.
+        */
+        QString error() const;
+
+        /*!
+        * \brief A public function to parse a csv file.
+        * \param filePath  CSV file path.
+        * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
+        * \return Return true if parsing is successful.
+        */
+        bool readFile(const QString &filePath, const QString &delimiter);
+
+
+        /*!
         * \brief Clear the CSV data.
         */
         void clear();
@@ -125,6 +140,7 @@ public:
         QStringList m_header; /*!< Header labels. */
         QVector<QVector<double>> m_columns; /*!< Column data. */
         QString m_path; /*!< File path. */
+        QString m_error; /*!< Error string. */
     };
 
     /*!
@@ -147,25 +163,6 @@ public:
     * \return Return the error message.
     */
     QString error_message();
-
-    /*!
-    * \brief Static function to parse a csv file the error message if any.
-    * \param filePath  CSV file path.
-    * \param data      Reference to the csv data.
-    * \param error     Error message indicating parsing errors if unsuccessful
-    * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
-    * \return Return true if parsing is successful.
-    */
-    static bool ReadCSV(const QString &filePath, CSV_Data& data, QString& error, const QString &delimiter);
-
-    /*!
-    * \brief Static function to parse a csv file the error message if any.
-    * \param filePath  CSV file path.
-    * \param data      Reference to the csv data.
-    * \param error     Error message indicating parsing errors if unsuccessful
-    * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
-    * \return Return true if parsing is successful.
-    */
 
 private:
     enum DELIMITER { TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE }; /*!< Enum for delimiter types. */

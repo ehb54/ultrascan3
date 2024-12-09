@@ -133,6 +133,133 @@ QString US_CSV_Loader::CSV_Data::filePath() const {
    return m_path;
 }
 
+QString US_CSV_Loader::CSV_Data::error() const {
+    return m_error;
+}
+
+bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
+    QFile file(filePath);
+    m_error.clear();
+    clear();
+    if (! file.exists()) {
+        m_error = "File doesn't exist.";
+        return false;
+    }
+
+    // Read the text file into a QStringList
+    QStringList file_lines;
+    if(file.open(QIODevice::ReadOnly)) {
+        file_lines.clear();
+        QTextStream ts(&file);
+        bool isAscii = true;
+        while (true) {
+            if (ts.atEnd()) {
+                file.close();
+                break;
+            }
+            QString line = ts.readLine();
+            QByteArray byte_arr = line.toUtf8();
+            for (char ch : byte_arr) {
+                if (ch < 0 || ch > 127) {
+                    file.close();
+                    isAscii = false;
+                    break;
+                }
+            }
+            if (!isAscii) {
+                file.close();
+                file_lines.clear();
+                m_error = tr("File is not a text format!");
+                return false;
+            }
+            file_lines.append(line);
+        }
+        if (file_lines.size() == 0) {
+            m_error = tr("File is empty!");
+            return false;
+        } else if (file_lines.size() == 1) {
+            m_error = tr("File has only one line! It must have at least two lines, including a header line and a data line.");
+            return false;
+        }
+    } else {
+        m_error = tr("Couldn't open the file");
+        return false;
+    }
+
+    // Parse the QStringList of lines
+    QStringList delimiters;
+    if (delimiter.isEmpty()) {
+        delimiters << "\t" << " " << "," << ";";
+    } else {
+        delimiters << delimiter;
+    }
+
+    int n_columns = 0;
+    int n_rows = file_lines.size();
+    QVector<QStringList> data_list;
+    bool split_status = true;
+    int II = 0;
+    for (int dd = 0; dd < delimiters.size(); dd++) {
+        split_status = true;
+        data_list.clear();
+        for (int ii = 0; ii < n_rows; ii++ ) {
+            QString line = file_lines.at(ii);
+            QStringList lsp = line.split(delimiters.at(dd));
+            if (ii == 0) {
+                n_columns = lsp.size();
+            }
+            if (n_columns != lsp.size()) {
+                split_status = false;
+                II = ii + 1;
+                break;
+            }
+            data_list << lsp;
+        }
+    }
+
+    if (! split_status) {
+        m_error = tr("Cannot split the lines with the given separator. Error at the line: %1").arg(II);
+        return false;
+    }
+
+    // Check data if it include float numbers
+    QStringList header;
+    bool droplast = true;
+    for (int ii = 0; ii < n_columns; ii++ ) {
+        QString cell = data_list.at(0).at(ii).trimmed();
+        if (! cell.isEmpty()) {
+            droplast = false;
+        }
+        header << cell;
+    }
+    QVector<QVector<double>> columns;
+    for (int jj = 0; jj < n_columns; jj++) {
+        QVector<double> column;
+        for (int ii = 1; ii < n_rows; ii++) {
+            QString cell = data_list.at(ii).at(jj).trimmed();
+            if (jj == n_columns - 1 && !cell.isEmpty()) {
+                droplast = false;
+            }
+            bool ok;
+            double val = cell.toDouble(&ok);
+            if ( ok ) {
+                column << val;
+            } else {
+                m_error = tr("Cannot convert the line to the floating numbers. Error at the line: %1").arg(ii + 1);
+                return false;
+            }
+        }
+        columns << column;
+    }
+
+    if (droplast) {
+        header.removeLast();
+        columns.removeLast();
+    }
+    setData(filePath, header, columns);
+    return true;
+}
+
 US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
                              bool editable,QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
@@ -768,127 +895,4 @@ QStringList US_CSV_Loader::gen_alpha_list (int num) {
       outlist << str;
    }
    return outlist;
-}
-
-bool US_CSV_Loader::ReadCSV(const QString &filePath, CSV_Data& data, QString& error, const QString &delimiter) {
-    QFile file(filePath);
-    error.clear();
-    data.clear();
-    if (! file.exists()) {
-        error = "File doesn't exist.";
-        return false;
-    }
-
-    // Read the text file into a QStringList
-    QStringList file_lines;
-    if(file.open(QIODevice::ReadOnly)) {
-        file_lines.clear();
-        QTextStream ts(&file);
-        bool isAscii = true;
-        while (true) {
-            if (ts.atEnd()) {
-                file.close();
-                break;
-            }
-            QString line = ts.readLine();
-            QByteArray byte_arr = line.toUtf8();
-            for (char ch : byte_arr) {
-                if (ch < 0 || ch > 127) {
-                    file.close();
-                    isAscii = false;
-                    break;
-                }
-            }
-            if (!isAscii) {
-                file.close();
-                file_lines.clear();
-                error = tr("File is not a text format!");
-                return false;
-            }
-            file_lines.append(line);
-        }
-        if (file_lines.size() == 0) {
-            error = tr("File is empty!");
-            return false;
-        } else if (file_lines.size() == 1) {
-            error = tr("File has only one line! It must have at least two lines, including a header line and a data line.");
-            return false;
-        }
-    } else {
-        error = tr("Couldn't open the file");
-        return false;
-    }
-
-    // Parse the QStringList of lines
-    QStringList delimiters;
-    if (delimiter.isEmpty()) {
-        delimiters << "\t" << " " << "," << ";";
-    } else {
-        delimiters << delimiter;
-    }
-
-    int n_columns = 0;
-    int n_rows = file_lines.size();
-    QVector<QStringList> data_list;
-    bool split_status = true;
-    int II = 0;
-    for (int dd = 0; dd < delimiters.size(); dd++) {
-        split_status = true;
-        data_list.clear();
-        for (int ii = 0; ii < n_rows; ii++ ) {
-            QString line = file_lines.at(ii);
-            QStringList lsp = line.split(delimiters.at(dd));
-            if (ii == 0) {
-                n_columns = lsp.size();
-            }
-            if (n_columns != lsp.size()) {
-                split_status = false;
-                II = ii + 1;
-                break;
-            }
-            data_list << lsp;
-        }
-    }
-
-    if (! split_status) {
-        error = tr("Cannot split the lines with the given separator. Error at the line: %1").arg(II);
-        return false;
-    }
-
-    // Check data if it include float numbers
-    QStringList header;
-    bool droplast = true;
-    for (int ii = 0; ii < n_columns; ii++ ) {
-        QString cell = data_list.at(0).at(ii).trimmed();
-        if (! cell.isEmpty()) {
-            droplast = false;
-        }
-        header << cell;
-    }
-    QVector<QVector<double>> columns;
-    for (int jj = 0; jj < n_columns; jj++) {
-        QVector<double> column;
-        for (int ii = 1; ii < n_rows; ii++) {
-            QString cell = data_list.at(ii).at(jj).trimmed();
-            if (jj == n_columns - 1 && !cell.isEmpty()) {
-                droplast = false;
-            }
-            bool ok;
-            double val = cell.toDouble(&ok);
-            if ( ok ) {
-                column << val;
-            } else {
-                error = tr("Cannot convert the line to the floating numbers. Error at the line: %1").arg(ii + 1);
-                return false;
-            }
-        }
-        columns << column;
-    }
-
-    if (droplast) {
-        header.removeLast();
-        columns.removeLast();
-    }
-    data.setData(filePath, header, columns);
-    return true;
 }
