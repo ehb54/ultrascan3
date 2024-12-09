@@ -329,6 +329,7 @@ void US_CSV_Loader::set_UI() {
     setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
     setMinimumSize(QSize(550,600));
     showMaximized();
+    setWindowModality(Qt::ApplicationModal);
     // setMaximumSize(QSize(800,800));
 
     le_filename = us_lineedit("Filename:", 0, true);
