@@ -326,10 +326,13 @@ void US_CSV_Loader::set_UI() {
     setWindowTitle( tr( "Load CSV Files" ) );
     setPalette( US_GuiSettings::frameColor() );
     setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
-    setMinimumSize(QSize(550,600));
-    showMaximized();
-    setWindowModality(Qt::ApplicationModal);
-    // setMaximumSize(QSize(800,800));
+    QRect geometry = QApplication::primaryScreen()->geometry();
+    int w = geometry.width() * 0.6;
+    int h = geometry.height() * 0.6;
+    int x = (geometry.width() - w) / 2;
+    int y = (geometry.height() - h) / 2;
+    resize(w, h);
+    move(x, y);
 
     le_filename = us_lineedit("Filename:", 0, true);
     le_filename->setFrame(false);
