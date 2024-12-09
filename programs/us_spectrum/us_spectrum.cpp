@@ -218,7 +218,7 @@ void US_Spectrum::load_basis()
    //struct WavelengthProfile temp_wp;
    QFileDialog dialog (this);
 
-   dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
+   dialog.setNameFilter(tr("Text files (*.txt *.csv *.dat *.wa *.dsp);;All files (*)"));
    //dialog.setNameFilter(tr("Text files (*.[Rr][Ee][Ss]);;All files (*)"));
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
@@ -266,19 +266,21 @@ void US_Spectrum::load_basis()
 
       for (int ii = 0; ii < data_list.size(); ii++ ) {
          QFileInfo finfo(data_list[ii].filePath());
-         struct WavelengthProfile wp;
-         QVector<double> xvals = data_list[ii].columnAt(0);
-         wp.wvl << xvals;
-         const auto [min, max] = std::minmax_element(xvals.begin(), xvals.end());
-         wp.extinction << data_list[ii].columnAt(1);
-         wp.lambda_min = *min;
-         wp.lambda_max = *max;
-         wp.filenameBasis = finfo.baseName();
-         wp.filename = finfo.fileName();
-         v_basis.push_back(wp);
-         cb_angle_one->addItem(finfo.baseName());
-         cb_angle_two->addItem(finfo.baseName());
-         //basis_names.append(finfo.baseName());
+         QVector<double> xvals = data_list.at(ii).columnAt(0);
+         for (int jj = 1; jj < data_list.at(ii).columnCount(); jj++) {
+            struct WavelengthProfile wp;
+            wp.wvl << xvals;
+            const auto [min, max] = std::minmax_element(xvals.begin(), xvals.end());
+            wp.extinction << data_list.at(ii).columnAt(jj);
+            wp.lambda_min = *min;
+            wp.lambda_max = *max;
+            wp.filenameBasis = data_list.at(ii).header().at(jj);
+            wp.filename = finfo.fileName();
+            v_basis << wp;
+            cb_angle_one->addItem(finfo.baseName());
+            cb_angle_two->addItem(finfo.baseName());
+            //basis_names.append(finfo.baseName());
+         }
       }
    }
  
@@ -300,7 +302,9 @@ void US_Spectrum::plot_basis()
    for(int m = basisIndex; m < v_basis.size(); m++)
    {
      //names.append(v_basis.at(m).filenameBasis);   
-      lw_basis->insertItem(0, v_basis.at(m).filenameBasis);
+      QListWidgetItem* item = new QListWidgetItem(v_basis.at(m).filenameBasis);
+      item->setData(Qt::ToolTipRole, v_basis.at(m).filename);
+      lw_basis->addItem(item);
 
       double* xx = (double*)v_basis.at(m).wvl.data();
       double* yy = (double*)v_basis.at(m).extinction.data();
@@ -335,8 +339,7 @@ void US_Spectrum::plot_basis()
 //brings in the target spectrum according to user specification
 void US_Spectrum::load_target()
 {
-   QString filter = "csv files (*.csv);;dat files (*.dat);;"
-                    "text files (*.txt);;dsp files (*.dsp);; wa files (*.wa)";
+   QString filter = tr("Text files (*.txt *.csv *.dat *.wa *.dsp);;All files (*)");
    QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
                                                 US_Settings::dataDir(), filter);
    if (fpath.isEmpty()) {
@@ -375,12 +378,14 @@ void US_Spectrum::load_target()
    w_target.extinction << csv_data.columnAt(1);
    w_target.lambda_min = *min;
    w_target.lambda_max = *max;
-   w_target.filenameBasis = file_info.baseName();
+   w_target.filenameBasis = csv_data.header().at(1);
    w_target.filename = file_info.fileName();
-      //lw_target->insertItem(0, w_target.filenameBasis);
+   // QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
+   // item->setData(Qt::ToolTipRole, w_target.filename);
+   // lw_target->addItem(item);
    plot_target();
-   if ( lw_target->count() > 0 )
-     pb_load_basis->setEnabled(true);
+   // if ( lw_target->count() > 0 )
+   //   pb_load_basis->setEnabled(true);
 }
 
 void US_Spectrum:: plot_target()
@@ -412,9 +417,12 @@ void US_Spectrum:: plot_target()
    c->setSamples( xx, yy, nn );
    w_target.matchingCurve = c;
    data_plot->replot();
-   if( !w_target.filenameBasis.isEmpty() )
-     lw_target->insertItem(0, w_target.filenameBasis);
    //pb_load_basis->setEnabled(true);
+
+   QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
+   item->setData(Qt::ToolTipRole, w_target.filename);
+   lw_target->addItem(item);
+   pb_load_basis->setEnabled(true);
 }
 
 void US_Spectrum::new_value(const QwtDoublePoint& p)
@@ -554,11 +562,14 @@ void US_Spectrum::fit()
    {
       fval += nnls_x[i];
    }
+   str = tr ("%1 : %2\% (%3)");
    for (i=0; i< (unsigned int) v_basis.size(); i++)
    {
       results.push_back(100.0 * nnls_x[i]/fval);
-      str.sprintf((v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i]);
-      lw_basis->item((int)i)->setText(str);
+      // str.sprintf((v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i]);
+      // lw_basis->item((int)i)->setText(str);
+      lw_basis->item((int)i)->setText(str.arg(v_basis[i].filenameBasis).
+                                       arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
       v_basis[i].nnls_factor = nnls_x[i];
       v_basis[i].nnls_percentage = results[i];
    }
