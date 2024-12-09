@@ -105,7 +105,7 @@ public:
         * \brief Set the CSV data.
         * \param filePath The file path.
         * \param headers The header labels.
-        * \param columns The column data.
+        * \param columns The column data. The size of each column must be the same indicating the number of rows.
         * \return True if the data was set successfully, otherwise false.
         */
         bool setData(const QString &filePath, const QStringList &headers, const QVector<QVector<double>> &columns);
@@ -157,6 +157,15 @@ public:
     * \return Return true if parsing is successful.
     */
     static bool ReadCSV(const QString &filePath, CSV_Data& data, QString& error, const QString &delimiter);
+
+    /*!
+    * \brief Static function to parse a csv file the error message if any.
+    * \param filePath  CSV file path.
+    * \param data      Reference to the csv data.
+    * \param error     Error message indicating parsing errors if unsuccessful
+    * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
+    * \return Return true if parsing is successful.
+    */
 
 private:
     enum DELIMITER { TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE }; /*!< Enum for delimiter types. */

@@ -773,6 +773,7 @@ QStringList US_CSV_Loader::gen_alpha_list (int num) {
 bool US_CSV_Loader::ReadCSV(const QString &filePath, CSV_Data& data, QString& error, const QString &delimiter) {
     QFile file(filePath);
     error.clear();
+    data.clear();
     if (! file.exists()) {
         error = "File doesn't exist.";
         return false;
@@ -809,6 +810,9 @@ bool US_CSV_Loader::ReadCSV(const QString &filePath, CSV_Data& data, QString& er
         if (file_lines.size() == 0) {
             error = tr("File is empty!");
             return false;
+        } else if (file_lines.size() == 1) {
+            error = tr("File has only one line! It must have at least two lines, including a header line and a data line.");
+            return false;
         }
     } else {
         error = tr("Couldn't open the file");
@@ -823,11 +827,10 @@ bool US_CSV_Loader::ReadCSV(const QString &filePath, CSV_Data& data, QString& er
         delimiters << delimiter;
     }
 
-
-    int n_columns;
+    int n_columns = 0;
     int n_rows = file_lines.size();
     QVector<QStringList> data_list;
-    bool split_status;
+    bool split_status = true;
     int II = 0;
     for (int dd = 0; dd < delimiters.size(); dd++) {
         split_status = true;
@@ -848,48 +851,44 @@ bool US_CSV_Loader::ReadCSV(const QString &filePath, CSV_Data& data, QString& er
     }
 
     if (! split_status) {
-        error = tr("Cannot split lines with the given separator. Error at the line %1").arg(II);
+        error = tr("Cannot split the lines with the given separator. Error at the line: %1").arg(II);
         return false;
     }
 
     // Check data if it include float numbers
-    for (int ii = 0; ii < n_rows; ii++ ) {
-        for (int jj = 0; jj < n_columns; jj++) {
-            QVariant val("");
-            if (jj < nd) {
-                QString str = data_list.at(ii).at(jj).trimmed();
-                val = QVariant(str);
-                if (jj == n_columns - 1 && !str.isEmpty()) {
-                    droplast = false;
-                }
-            }
-            QStandardItem *it = new QStandardItem();
-            it->setData(val, Qt::DisplayRole);
-            it->setData(font, Qt::FontRole);
-            it->setEditable(m_editable);
-            if (ii == 0) {
-                if (val.toString().isEmpty()) {
-                    it->setBackground(Qt::red);
-                    it->setData(false, Qt::UserRole);
-                } else {
-                    it->setBackground(Qt::green);
-                    it->setData(true, Qt::UserRole);
-                }
-            } else {
-                bool ok;
-                val.toDouble(&ok);
-                if (ok) {
-                    it->setBackground(Qt::white);
-                    it->setData(true, Qt::UserRole);
-                }
-                else {
-                    it->setBackground(Qt::red);
-                    it->setData(false, Qt::UserRole);
-                }
-            }
-            model->setItem(ii, jj, it);
+    QStringList header;
+    bool droplast = true;
+    for (int ii = 0; ii < n_columns; ii++ ) {
+        QString cell = data_list.at(0).at(ii).trimmed();
+        if (! cell.isEmpty()) {
+            droplast = false;
         }
+        header << cell;
+    }
+    QVector<QVector<double>> columns;
+    for (int jj = 0; jj < n_columns; jj++) {
+        QVector<double> column;
+        for (int ii = 1; ii < n_rows; ii++) {
+            QString cell = data_list.at(ii).at(jj).trimmed();
+            if (jj == n_columns - 1 && !cell.isEmpty()) {
+                droplast = false;
+            }
+            bool ok;
+            double val = cell.toDouble(&ok);
+            if ( ok ) {
+                column << val;
+            } else {
+                error = tr("Cannot convert the line to the floating numbers. Error at the line: %1").arg(ii + 1);
+                return false;
+            }
+        }
+        columns << column;
     }
 
-
+    if (droplast) {
+        header.removeLast();
+        columns.removeLast();
+    }
+    data.setData(filePath, header, columns);
+    return true;
 }
