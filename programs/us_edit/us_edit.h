@@ -322,6 +322,7 @@ class US_Edit : public US_Widgets
       int     autoflowID_passed;
       int     autoflowStatusID;
       QString autoflow_expType;
+      QString dataSource;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {

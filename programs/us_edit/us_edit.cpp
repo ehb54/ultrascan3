@@ -2122,7 +2122,12 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
   autoflowStatusID    = details_at_editing[ "statusID" ].toInt();
   autoflow_expType    = details_at_editing[ "expType" ];
-      
+
+  dataSource          = details_at_editing[ "dataSource" ];
+  
+  qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto: "
+	   << autoflowID_passed << dataSource << ProtocolName_auto;
+  
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
   runType_combined_IP_RI = false;
@@ -2270,12 +2275,16 @@ DbgLv(1) << "Ld: runtype" << runtype;
    ncelchn         = 0;
    outData.clear();
 
+   qDebug() << "EDIT: triples -- " << triples;
+
    for ( int trx = 0; trx < triples.size(); trx++ )
    {  // Generate file names
       QString triple = QString( triples.at( trx ) ).replace( " / ", "." );
       QString file   = runtype + "." + triple + ".auc";
       files << file;
 
+      qDebug() << "EDIT: file -- " << file;
+      
       // Save pointers as initial output data vector
       outData << &allData[ trx ];
 
@@ -2836,7 +2845,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        QString channelname_        = triple_cell_number_ + triple_channel_;
        qDebug() << "channelname_: " << channelname_ ;
        
-
+       if ( dataSource. contains("DiskAUC:Absorbance") && channelname_.contains("S")  )
+	 channelname_ = channelname_.replace("S","A");
+       
        le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
        qApp->processEvents();
 
@@ -3198,7 +3209,12 @@ void US_Edit::read_aprofile_data_from_aprofile()
 
       QString channelname        = triple_cell_number + triple_channel;
 
-      qDebug() << "channelname: " << channelname ;
+      qDebug() << "channelname1: " << channelname ;
+
+      if ( dataSource. contains("DiskAUC:Absorbance") && channelname.contains("S")  )
+	channelname = channelname.replace("S","A");
+
+      qDebug() << "channelname2: " << channelname ;
       
       //iterate over aprofile_channel_to_parms QMap and check if channel name is a part of triple_name:
       QMap<QString, QStringList>::const_iterator i = aprof_channel_to_parms.constBegin();
@@ -8459,6 +8475,7 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
 	   	   
 	 }
      }
