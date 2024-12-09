@@ -231,7 +231,7 @@ void US_Spectrum::load_basis()
    if(dialog.exec())
    {
       files = dialog.selectedFiles();
-      QVector<US_CSV_Loader::CSV_Data> data_list;
+      QVector<CSV_Data> data_list;
       for ( int ii = 0; ii < files.size(); ii++ ) {
          QString filepath = files.at(ii);
          QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
@@ -245,7 +245,7 @@ void US_Spectrum::load_basis()
                return;
             }
          } else if (state == QDialog::Accepted) {
-            US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+            CSV_Data csv_data = csv_loader->data();
             if (csv_data.columnCount() < 2 ) {
                int check = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
                                                                    "\nDo you want to continue loading the rest of the file(s)?");
@@ -349,7 +349,7 @@ void US_Spectrum::load_target()
    US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
-   US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+   CSV_Data csv_data = csv_loader->data();
    if (csv_data.columnCount() < 2 ) {
       QMessageBox::warning(this, "Error!", "Data files must have two columns of wavelength and OD values!");
       return;

@@ -1,4 +1,3 @@
-#include <QtGlobal>
 #include <QTimer>
 #include "us_csv_loader.h"
 #include "us_gui_settings.h"
@@ -74,20 +73,20 @@ void CSVTableView::delete_columns() {
     emit column_deleted();
 }
 
-int US_CSV_Loader::CSV_Data::columnCount() const {
+int CSV_Data::columnCount() const {
     return m_header.size();
 }
 
-int US_CSV_Loader::CSV_Data::rowCount() const {
+int CSV_Data::rowCount() const {
     if (m_columns.size() == 0) return 0;
     return m_columns.at(0).size();
 }
 
-QStringList US_CSV_Loader::CSV_Data::header() const {
+QStringList CSV_Data::header() const {
     return m_header;
 }
 
-QVector<double> US_CSV_Loader::CSV_Data::columnAt(int id) const {
+QVector<double> CSV_Data::columnAt(int id) const {
     QVector<double> col;
     if (id >= 0 && id < m_columns.size()) {
         col = m_columns.at(id);
@@ -95,7 +94,7 @@ QVector<double> US_CSV_Loader::CSV_Data::columnAt(int id) const {
     return col;
 }
 
-bool US_CSV_Loader::CSV_Data::setData(const QString &file_path,
+bool CSV_Data::setData(const QString &file_path,
                                       const QStringList& header,
                                       const QVector<QVector<double>>& columns) {
     m_columns.clear();
@@ -117,7 +116,7 @@ bool US_CSV_Loader::CSV_Data::setData(const QString &file_path,
         if (nr == 0 || nr != nrows) {
             m_columns.clear();
             m_header.clear();
-            m_error = tr("The number of rows in column 2 does not match the loaded columns.");
+            m_error = QObject::tr("The number of rows in column 2 does not match the loaded columns.");
             return false;
         }
         m_columns << columns.at(ii);
@@ -126,22 +125,22 @@ bool US_CSV_Loader::CSV_Data::setData(const QString &file_path,
     return true;
 }
 
-void US_CSV_Loader::CSV_Data::clear() {
+void CSV_Data::clear() {
     m_header.clear();
     m_columns.clear();
     m_path.clear();
     m_error.clear();
 }
 
-QString US_CSV_Loader::CSV_Data::filePath() const {
+QString CSV_Data::filePath() const {
     return m_path;
 }
 
-QString US_CSV_Loader::CSV_Data::error() const {
+QString CSV_Data::error() const {
     return m_error;
 }
 
-bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
+bool CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
     QFile file(filePath);
     m_error.clear();
     clear();
@@ -173,20 +172,20 @@ bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &d
             if (!isAscii) {
                 file.close();
                 file_lines.clear();
-                m_error = tr("File is not a text format!");
+                m_error = QObject::tr("File is not a text format!");
                 return false;
             }
             file_lines.append(line);
         }
         if (file_lines.size() == 0) {
-            m_error = tr("File is empty!");
+            m_error = QObject::tr("File is empty!");
             return false;
         } else if (file_lines.size() == 1) {
-            m_error = tr("File has only one line! It must have at least two lines, including a header line and a data line.");
+            m_error = QObject::tr("File has only one line! It must have at least two lines, including a header line and a data line.");
             return false;
         }
     } else {
-        m_error = tr("Couldn't open the file");
+        m_error = QObject::tr("Couldn't open the file");
         return false;
     }
 
@@ -222,7 +221,7 @@ bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &d
     }
 
     if (! split_status) {
-        m_error = tr("Cannot split the lines with the given separator. Error at the line: %1").arg(II);
+        m_error = QObject::tr("Cannot split the lines with the given separator. Error at the line: %1").arg(II);
         return false;
     }
 
@@ -249,7 +248,7 @@ bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &d
             if ( ok ) {
                 column << val;
             } else {
-                m_error = tr("Cannot convert the line to the floating numbers. Error at the line: %1").arg(ii + 1);
+                m_error = QObject::tr("Cannot convert the line to the floating numbers. Error at the line: %1").arg(ii + 1);
                 return false;
             }
         }
@@ -264,7 +263,7 @@ bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &d
     return true;
 }
 
-bool US_CSV_Loader::CSV_Data::writeFile(const QString &delimiter) {
+bool CSV_Data::writeFile(const QString &delimiter) {
     if (filePath().isEmpty()) {
         m_error = "The file path is blank!";
         return false;
@@ -607,7 +606,7 @@ void US_CSV_Loader::add_header() {
     connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
 }
 
-US_CSV_Loader::CSV_Data US_CSV_Loader::data() {
+CSV_Data US_CSV_Loader::data() {
     csv_data.clear();
     if ( check_table()) {
         QVector<QVector<double>> columns;

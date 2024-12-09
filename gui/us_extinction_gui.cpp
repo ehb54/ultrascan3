@@ -452,7 +452,7 @@ US_Extinction::US_Extinction() : US_Widgets()
 
 void US_Extinction::add_wavelength(void)
 {
-   QString filter = "csv files (*.csv);;dat files (*.dat);;text files (*.txt);;dsp files (*.dsp);; wa files (*.wa)";
+   QString filter = "Text Files (*.csv *.dat *.txt *.dsp *.wa);; All Files (*)";
    QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
                                                 US_Settings::dataDir(), filter);
    if (fpath.isEmpty()) {
@@ -462,7 +462,7 @@ void US_Extinction::add_wavelength(void)
    US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
-   US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+   CSV_Data csv_data = csv_loader->data();
    if (csv_data.columnCount() < 2) return;
    loadScan(csv_data);
    update_data();
@@ -487,7 +487,7 @@ bool US_Extinction::isComment(const QString &str)
       return(true);
    }
 }
-bool US_Extinction::loadScan(US_CSV_Loader::CSV_Data& csv_data)
+bool US_Extinction::loadScan(CSV_Data& csv_data)
 {
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);

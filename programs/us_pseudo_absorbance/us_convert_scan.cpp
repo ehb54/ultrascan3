@@ -342,7 +342,7 @@ void US_ConvertScan::apply_nscans() {
 }
 
 void US_ConvertScan::load_ref_scan() {
-    QString filter = "text files (*);;csv files (*.csv);;dat files (*.dat)";
+    QString filter = "Text Files (*.csv *.dat);;All Files (*)";
     QString fpath = QFileDialog::getOpenFileName(this, "Load Reference Scans",
                                                  US_Settings::dataDir(), filter);
     if (fpath.isEmpty()) {
@@ -377,7 +377,7 @@ void US_ConvertScan::load_ref_scan() {
                       "5.801;1631.89;1713.16;1580.46;1733.07;1632.54\n"
                       "....\n"
                       "....\n").arg(min_r).arg(max_r);
-    US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+    CSV_Data csv_data = csv_loader->data();
     if (csv_data.columnCount() < 2 ) {
         QMessageBox::warning(this, "Error!", mesg + "\n\nError in the number of columns!");
         return;
