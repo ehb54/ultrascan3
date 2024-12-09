@@ -24,9 +24,14 @@ public:
 
 signals:
     /*!
-    * \brief Signal emitted when a row or column is deleted.
+    * \brief Signal emitted when a row is deleted.
     */
-    void row_column_deleted();
+    void row_deleted();
+
+    /*!
+    * \brief Signal emitted when a column is deleted.
+    */
+    void column_deleted();
 
 protected:
     /*!
@@ -224,6 +229,11 @@ private:
     bool check_table();
 
     /*!
+    * \brief Check the validity of the header.
+    */
+    void check_header();
+
+    /*!
      * \brief Get sorted data from the table.
      * \param sortedData The sorted data.
      * \param headers The headers of the sorted data.
@@ -290,9 +300,14 @@ private slots:
     void relabel();
 
     /*!
-     * \brief Slot to handle row or column deletion.
+     * \brief Slot to handle column deletion.
      */
-    void row_column_deleted();
+    void column_deleted();
+
+    /*!
+     * \brief Slot to handle row deletion.
+     */
+    void row_deleted();
 
     /*!
      * \brief Slot to show red colored items.

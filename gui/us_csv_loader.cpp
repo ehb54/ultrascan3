@@ -56,7 +56,7 @@ void CSVTableView::delete_rows() {
     foreach (int ii, rows) {
         this->model()->removeRow(ii);
     }
-    emit row_column_deleted();
+    emit row_deleted();
 }
 
 void CSVTableView::delete_columns() {
@@ -71,7 +71,7 @@ void CSVTableView::delete_columns() {
     foreach (int ii, cols) {
         this->model()->removeColumn(ii);
     }
-    emit row_column_deleted();
+    emit column_deleted();
 }
 
 int US_CSV_Loader::CSV_Data::columnCount() const {
@@ -492,7 +492,8 @@ void US_CSV_Loader::set_UI() {
     connect(le_other, &QLineEdit::textChanged, this, &US_CSV_Loader::new_delimiter);
     connect(pb_save_csv, &QPushButton::clicked, this, &US_CSV_Loader::save_csv_clicked);
     connect(pb_reset, &QPushButton::clicked, this, &US_CSV_Loader::reset);
-    connect(tv_data, &CSVTableView::row_column_deleted, this, &US_CSV_Loader::row_column_deleted);
+    connect(tv_data, &CSVTableView::column_deleted, this, &US_CSV_Loader::column_deleted);
+    connect(tv_data, &CSVTableView::row_deleted, this, &US_CSV_Loader::row_deleted);
     connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
     connect(pb_show_red, &QPushButton::clicked, this, &US_CSV_Loader::show_red);
 #if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
@@ -535,7 +536,12 @@ void US_CSV_Loader::show_red() {
     tv_data->scrollTo(index);
 }
 
-void US_CSV_Loader::row_column_deleted() {
+void US_CSV_Loader::row_deleted() {
+    check_header();
+    check_table();
+}
+
+void US_CSV_Loader::column_deleted() {
     check_table();
     relabel();
 }
@@ -802,6 +808,7 @@ void US_CSV_Loader::fill_table(int id) {
 
     model->disconnect(this);
     model->clear();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
 
     int n_columns = static_cast<int>(-1e99);
     int n_rows = file_lines.size();
@@ -824,6 +831,7 @@ void US_CSV_Loader::fill_table(int id) {
     }
     model = new QStandardItemModel (n_rows, n_columns);
     bool droplast = true;
+    bool is_header = false;
     for (int ii = 0; ii < n_rows; ii++ ) {
         int nd = data_list.at(ii).size();
         for (int jj = 0; jj < n_columns; jj++) {
@@ -846,6 +854,7 @@ void US_CSV_Loader::fill_table(int id) {
                 } else {
                     it->setBackground(Qt::green);
                     it->setData(true, Qt::UserRole);
+                    is_header = true;
                 }
             } else {
                 bool ok;
@@ -865,6 +874,18 @@ void US_CSV_Loader::fill_table(int id) {
     if (droplast) {
         model->removeColumn(n_columns - 1);
     }
+
+    if (! is_header) {
+        QStringList headers = gen_alpha_list(n_columns);
+        for (int ii = 0; ii < n_columns; ii++) {
+            model->item(0, ii)->setData(headers.at(ii), Qt::DisplayRole);
+            model->item(0, ii)->setData(true, Qt::UserRole);
+            model->item(0, ii)->setData(font, Qt::FontRole);
+            model->item(0, ii)->setBackground(Qt::green);
+            model->item(0, ii)->setEditable(m_editable);
+        }
+    }
+
     // model->sort(0, Qt::DescendingOrder);
     proxy->setSourceModel(model);
     tv_data->setModel(proxy);
@@ -874,6 +895,7 @@ void US_CSV_Loader::fill_table(int id) {
     tv_data->resizeColumnsToContents();
     // qDebug() << QDateTime::currentMSecsSinceEpoch() << " fill_table";
     connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
+    QApplication::restoreOverrideCursor();
 }
 
 bool US_CSV_Loader::check_table() {
@@ -895,6 +917,25 @@ bool US_CSV_Loader::check_table() {
     pb_ok->setEnabled(ready);
     return ready;
 }
+
+void US_CSV_Loader::check_header() {
+    if (file_lines.size() == 0) return;
+    model->disconnect(this);
+    int nc = model->columnCount();
+    for (int ii = 0; ii < nc; ii++) {
+        QString val = model->item(1, ii)->data(Qt::DisplayRole).toString();
+        if (! val.isEmpty()) {
+            model->item(0, ii)->setBackground(Qt::green);
+            model->item(0, ii)->setData(true, Qt::UserRole);
+        }
+        else {
+            model->item(0, ii)->setBackground(Qt::red);
+            model->item(0, ii)->setData(false, Qt::UserRole);
+        }
+    }
+    connect(model, &QStandardItemModel::itemChanged, this, &US_CSV_Loader::item_changed);
+}
+
 
 void US_CSV_Loader::get_sorted(QVector<QVector<double>>& data, QStringList& headers) {
     headers.clear();
