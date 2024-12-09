@@ -22,11 +22,11 @@ public:
      */
     CSVTableView(QWidget *parent = nullptr);
 
-    signals:
-            /*!
+signals:
+    /*!
              * \brief Signal emitted when a row or column is deleted.
              */
-            void row_column_deleted();
+    void row_column_deleted();
 
 protected:
     /*!
@@ -36,10 +36,10 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
 
 private slots:
-            /*!
+    /*!
              * \brief Slot to handle deletion of rows.
              */
-            void delete_rows();
+    void delete_rows();
 
     /*!
      * \brief Slot to handle deletion of columns.
@@ -71,82 +71,92 @@ public:
 class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
     Q_OBJECT
 
-    public:
+public:
     //! \class CSV_Data
     //! \brief A nested class to hold CSV data.
     class US_GUI_EXTERN CSV_Data {
-            public:
-                /*!
-                 * \brief Get the number of columns.
-                 * \return Number of columns.
-                 */
-                int columnCount();
+    public:
+        /*!
+        * \brief Get the number of columns.
+        * \return Number of columns.
+        */
+        int columnCount () const;
 
-                /*!
-                 * \brief Get the number of rows.
-                 * \return Number of rows.
-                 */
-                int rowCount();
+        /*!
+        * \brief Get the number of rows.
+        * \return Number of rows.
+        */
+        int rowCount() const;
 
-                /*!
-                 * \brief Get the header labels.
-                 * \return Header labels.
-                 */
-                QStringList header();
+        /*!
+        * \brief Get the header labels.
+        * \return Header labels.
+        */
+        QStringList header() const;
 
-                /*!
-                 * \brief Get data for a specific column.
-                 * \param column The column index.
-                 * \return Data for the specified column.
-                 */
-                QVector<double> columnAt(int column);
+        /*!
+        * \brief Get data for a specific column.
+        * \param column The column index.
+        * \return Data for the specified column.
+        */
+        QVector<double> columnAt(int column) const;
 
-                /*!
-                 * \brief Set the CSV data.
-                 * \param filePath The file path.
-                 * \param headers The header labels.
-                 * \param columns The column data.
-                 * \return True if the data was set successfully, otherwise false.
-                 */
-                bool setData(const QString &filePath, const QStringList &headers, const QVector<QVector<double>> &columns);
+        /*!
+        * \brief Set the CSV data.
+        * \param filePath The file path.
+        * \param headers The header labels.
+        * \param columns The column data.
+        * \return True if the data was set successfully, otherwise false.
+        */
+        bool setData(const QString &filePath, const QStringList &headers, const QVector<QVector<double>> &columns);
 
-                /*!
-                 * \brief Get the file path.
-                 * \return The file path.
-                 */
-                QString filePath();
+        /*!
+        * \brief Get the file path.
+        * \return The file path.
+        */
+        QString filePath() const;
 
-                /*!
-                 * \brief Clear the CSV data.
-                 */
-                void clear();
+        /*!
+        * \brief Clear the CSV data.
+        */
+        void clear();
 
-            private:
-                QStringList m_header; /*!< Header labels. */
-                QVector<QVector<double>> m_columns; /*!< Column data. */
-                QString m_path; /*!< File path. */
+    private:
+        QStringList m_header; /*!< Header labels. */
+        QVector<QVector<double>> m_columns; /*!< Column data. */
+        QString m_path; /*!< File path. */
     };
 
-/*!
- * \brief Constructor for US_CSV_Loader.
- * \param filePath The file path of the CSV file.
- * \param note An optional note.
- * \param editable Flag indicating if the data is editable.
- * \param parent The parent widget.
- */
-US_CSV_Loader(const QString &filePath, const QString &note = "", bool editable = false, QWidget *parent = 0);
+    /*!
+    * \brief Constructor for US_CSV_Loader.
+    * \param filePath CSV file path.
+    * \param note     An optional note.
+    * \param editable If it is true, all table items are editable.
+    * \param parent   Parent widget.
+    */
+    US_CSV_Loader(const QString &filePath, const QString &note = "", bool editable = false, QWidget *parent = 0);
 
-/*!
- * \brief Get the loaded CSV data.
- * \return The loaded CSV data.
- */
-CSV_Data data();
+    /*!
+    * \brief Get the loaded CSV data.
+    * \return Return CSV data.
+    */
+    CSV_Data data();
 
-/*!
- * \brief Get the error message if any.
- * \return The error message.
- */
-QString error_message();
+    /*!
+    * \brief Get the error message if any.
+    * \return Return the error message.
+    */
+    QString error_message();
+
+    /*!
+    * \brief Static function to parse a csv file the error message if any.
+    * \param filePath  CSV file path.
+    * \param data      Reference to the csv data.
+    * \param error     Error message indicating parsing errors if unsuccessful
+    * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
+    * \return Return true if parsing is successful.
+    */
+    static bool ReadCSV(const QString &filePath, CSV_Data& data, QString& error, const QString &delimiter);
 
 private:
     enum DELIMITER { TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE }; /*!< Enum for delimiter types. */

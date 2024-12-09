@@ -74,20 +74,20 @@ void CSVTableView::delete_columns() {
    emit row_column_deleted();
 }
 
-int US_CSV_Loader::CSV_Data::columnCount() {
+int US_CSV_Loader::CSV_Data::columnCount() const {
    return m_header.size();
 }
 
-int US_CSV_Loader::CSV_Data::rowCount() {
+int US_CSV_Loader::CSV_Data::rowCount() const {
    if (m_columns.size() == 0) return 0;
    return m_columns.at(0).size();
 }
 
-QStringList US_CSV_Loader::CSV_Data::header() {
+QStringList US_CSV_Loader::CSV_Data::header() const {
    return m_header;
 }
 
-QVector<double> US_CSV_Loader::CSV_Data::columnAt(int id) {
+QVector<double> US_CSV_Loader::CSV_Data::columnAt(int id) const {
    QVector<double> col;
    if (id >= 0 && id < m_columns.size()) {
       col = m_columns.at(id);
@@ -129,7 +129,7 @@ void US_CSV_Loader::CSV_Data::clear() {
    m_path.clear();
 }
 
-QString US_CSV_Loader::CSV_Data::filePath() {
+QString US_CSV_Loader::CSV_Data::filePath() const {
    return m_path;
 }
 
@@ -768,4 +768,128 @@ QStringList US_CSV_Loader::gen_alpha_list (int num) {
       outlist << str;
    }
    return outlist;
+}
+
+bool US_CSV_Loader::ReadCSV(const QString &filePath, CSV_Data& data, QString& error, const QString &delimiter) {
+    QFile file(filePath);
+    error.clear();
+    if (! file.exists()) {
+        error = "File doesn't exist.";
+        return false;
+    }
+
+    // Read the text file into a QStringList
+    QStringList file_lines;
+    if(file.open(QIODevice::ReadOnly)) {
+        file_lines.clear();
+        QTextStream ts(&file);
+        bool isAscii = true;
+        while (true) {
+            if (ts.atEnd()) {
+                file.close();
+                break;
+            }
+            QString line = ts.readLine();
+            QByteArray byte_arr = line.toUtf8();
+            for (char ch : byte_arr) {
+                if (ch < 0 || ch > 127) {
+                    file.close();
+                    isAscii = false;
+                    break;
+                }
+            }
+            if (!isAscii) {
+                file.close();
+                file_lines.clear();
+                error = tr("File is not a text format!");
+                return false;
+            }
+            file_lines.append(line);
+        }
+        if (file_lines.size() == 0) {
+            error = tr("File is empty!");
+            return false;
+        }
+    } else {
+        error = tr("Couldn't open the file");
+        return false;
+    }
+
+    // Parse the QStringList of lines
+    QStringList delimiters;
+    if (delimiter.isEmpty()) {
+        delimiters << "\t" << " " << "," << ";";
+    } else {
+        delimiters << delimiter;
+    }
+
+
+    int n_columns;
+    int n_rows = file_lines.size();
+    QVector<QStringList> data_list;
+    bool split_status;
+    int II = 0;
+    for (int dd = 0; dd < delimiters.size(); dd++) {
+        split_status = true;
+        data_list.clear();
+        for (int ii = 0; ii < n_rows; ii++ ) {
+            QString line = file_lines.at(ii);
+            QStringList lsp = line.split(delimiters.at(dd));
+            if (ii == 0) {
+                n_columns = lsp.size();
+            }
+            if (n_columns != lsp.size()) {
+                split_status = false;
+                II = ii + 1;
+                break;
+            }
+            data_list << lsp;
+        }
+    }
+
+    if (! split_status) {
+        error = tr("Cannot split lines with the given separator. Error at the line %1").arg(II);
+        return false;
+    }
+
+    // Check data if it include float numbers
+    for (int ii = 0; ii < n_rows; ii++ ) {
+        for (int jj = 0; jj < n_columns; jj++) {
+            QVariant val("");
+            if (jj < nd) {
+                QString str = data_list.at(ii).at(jj).trimmed();
+                val = QVariant(str);
+                if (jj == n_columns - 1 && !str.isEmpty()) {
+                    droplast = false;
+                }
+            }
+            QStandardItem *it = new QStandardItem();
+            it->setData(val, Qt::DisplayRole);
+            it->setData(font, Qt::FontRole);
+            it->setEditable(m_editable);
+            if (ii == 0) {
+                if (val.toString().isEmpty()) {
+                    it->setBackground(Qt::red);
+                    it->setData(false, Qt::UserRole);
+                } else {
+                    it->setBackground(Qt::green);
+                    it->setData(true, Qt::UserRole);
+                }
+            } else {
+                bool ok;
+                val.toDouble(&ok);
+                if (ok) {
+                    it->setBackground(Qt::white);
+                    it->setData(true, Qt::UserRole);
+                }
+                else {
+                    it->setBackground(Qt::red);
+                    it->setData(false, Qt::UserRole);
+                }
+            }
+            model->setItem(ii, jj, it);
+        }
+    }
+
+
 }
