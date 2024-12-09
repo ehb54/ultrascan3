@@ -101,8 +101,10 @@ bool US_CSV_Loader::CSV_Data::setData(const QString &file_path,
    m_columns.clear();
    m_header.clear();
    m_path.clear();
+   m_error.clear();
    int ncols = header.size();
    if (columns.size() != ncols) {
+       m_error = "The number of columns does not match the length of the header list.";
       return false;
    }
    m_header << header;
@@ -115,6 +117,7 @@ bool US_CSV_Loader::CSV_Data::setData(const QString &file_path,
       if (nr == 0 || nr != nrows) {
          m_columns.clear();
          m_header.clear();
+         m_error = tr("The number of rows in column 2 does not match the loaded columns.");
          return false;
       }
       m_columns << columns.at(ii);
@@ -127,6 +130,7 @@ void US_CSV_Loader::CSV_Data::clear() {
    m_header.clear();
    m_columns.clear();
    m_path.clear();
+   m_error.clear();
 }
 
 QString US_CSV_Loader::CSV_Data::filePath() const {
@@ -258,6 +262,47 @@ bool US_CSV_Loader::CSV_Data::readFile(const QString &filePath, const QString &d
     }
     setData(filePath, header, columns);
     return true;
+}
+
+bool US_CSV_Loader::CSV_Data::writeFile(const QString &delimiter) {
+    if (filePath().isEmpty()) {
+        m_error = "The file path is blank!";
+        return false;
+    }
+    if (delimiter.isEmpty()) {
+        m_error = "The separator is blank!";
+        return false;
+    }
+
+    if (rowCount() == 0 || columnCount() == 0) {
+        m_error = "Either the header or data is blank!";
+        return false;
+    }
+
+    QFile file(m_path);
+    int nrows = rowCount();
+    int ncols = columnCount();
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream ts(&file);
+        QString item;
+        for (int ii = -1 ; ii < nrows; ii++) {
+            for (int jj = 0; jj < ncols; jj++) {
+                if (ii == -1) {
+                    item = m_header.at(jj);
+                } else {
+                    item = QString::number(m_columns.at(jj).at(ii));
+                }
+                ts << item.trimmed();
+                if (jj < ncols - 1) ts << delimiter;
+                else ts << "\n";
+            }
+        }
+        file.close();
+        return true;
+    } else {
+        m_error = "Cannot open the file to write!";
+        return false;
+    }
 }
 
 US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,

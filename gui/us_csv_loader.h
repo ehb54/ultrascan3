@@ -130,6 +130,13 @@ public:
         */
         bool readFile(const QString &filePath, const QString &delimiter);
 
+        /*!
+        * \brief A public function to parse a csv file.
+        * \param filePath  CSV file path.
+        * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
+        * \return Return true if parsing is successful.
+        */
+        bool writeFile(const QString &delimiter);
 
         /*!
         * \brief Clear the CSV data.
