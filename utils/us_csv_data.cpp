@@ -89,7 +89,7 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
                 file.close();
                 break;
             }
-            QString line = ts.readLine();
+            QString line = ts.readLine().trimmed();
             QByteArray byte_arr = line.toUtf8();
             for (char ch : byte_arr) {
                 if (ch < 0 || ch > 127) {
@@ -104,7 +104,9 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
                 m_error = QObject::tr("File is not a text format!");
                 return false;
             }
-            file_lines.append(line);
+            if ( !line.isEmpty() ) {
+                file_lines.append(line);
+            }
         }
         if (file_lines.size() == 0) {
             m_error = QObject::tr("File is empty!");
@@ -130,15 +132,25 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
     int n_rows = file_lines.size();
     QVector<QStringList> data_list;
     bool split_status = true;
+    bool h_is_d = true;
     int II = 0;
     for (int dd = 0; dd < delimiters.size(); dd++) {
         split_status = true;
+        h_is_d = true;
         data_list.clear();
         for (int ii = 0; ii < n_rows; ii++ ) {
             QString line = file_lines.at(ii);
             QStringList lsp = line.split(delimiters.at(dd));
+            if ( lsp.last().trimmed().isEmpty() ) {
+                lsp.removeLast();
+            }
             if (ii == 0) {
                 n_columns = lsp.size();
+                bool ok;
+                foreach (QString val, lsp) {
+                    val.toDouble(&ok);
+                    h_is_d = h_is_d && ok;
+                }
             }
             if (n_columns != lsp.size()) {
                 split_status = false;
@@ -147,6 +159,7 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
             }
             data_list << lsp;
         }
+        if ( split_status ) break;
     }
 
     if (! split_status) {
@@ -154,24 +167,33 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
         return false;
     }
 
-    // Check data if it include float numbers
+    // Check the header
     QStringList header;
-    bool droplast = true;
-    for (int ii = 0; ii < n_columns; ii++ ) {
-        QString cell = data_list.at(0).at(ii).trimmed();
-        if (! cell.isEmpty()) {
-            droplast = false;
+    int init = 0;
+    if ( h_is_d ) {
+        QString alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        int sa = alpha.size();
+        for (int ii = 0; ii < n_columns; ii++) {
+            int mod = ii % sa;
+            int div = ii / sa;
+            if (div == 0) {
+                header << alpha.at(mod);
+            } else {
+                header << QObject::tr("%1%2").arg(alpha.at(mod)).arg(div);
+            }
         }
-        header << cell;
+    } else {
+        init = 1;
+        for (int ii = 0; ii < n_columns; ii++) {
+            header << data_list.first().at(ii).trimmed();
+        }
     }
+
     QVector<QVector<double>> columns;
     for (int jj = 0; jj < n_columns; jj++) {
         QVector<double> column;
-        for (int ii = 1; ii < n_rows; ii++) {
+        for (int ii = init; ii < n_rows; ii++) {
             QString cell = data_list.at(ii).at(jj).trimmed();
-            if (jj == n_columns - 1 && !cell.isEmpty()) {
-                droplast = false;
-            }
             bool ok;
             double val = cell.toDouble(&ok);
             if ( ok ) {
@@ -184,12 +206,8 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
         columns << column;
     }
 
-    if (droplast) {
-        header.removeLast();
-        columns.removeLast();
-    }
-    setData(filePath, header, columns);
-    return true;
+    if ( setData(filePath, header, columns) ) return true;
+    else return false;
 }
 
 bool US_CSV_Data::writeFile(const QString &delimiter) {
