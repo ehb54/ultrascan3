@@ -593,6 +593,8 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   optimaName         = protocol_details[ "OptimaName" ] ;
   dataSource         = protocol_details[ "dataSource" ] ;
 
+  simulatedData      = false;
+
   QString full_runname = protocol_details[ "filename" ];
   FullRunName_auto = runName + "-run" + runID;
   if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
@@ -830,6 +832,8 @@ void US_ReporterGMP::check_failed_triples( void )
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
     }
+
+  QStringList tripleNames;
   
   QStringList analysisIDs_list = analysisIDs.split(",");
   for( int i=0; i < analysisIDs_list.size(); ++i )
@@ -862,7 +866,8 @@ void US_ReporterGMP::check_failed_triples( void )
       QString nextWaitStatus = analysis_details[ "nextWaitStatus" ] ;
       QString nextWaitStatusMsg = analysis_details[ "nextWaitStatusMsg" ] ;
 
-      qDebug() << "Status -- " << status; 
+      qDebug() << "Triple_name, Status -- " << triple_name << status;
+      tripleNames << triple_name;
 
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
@@ -901,6 +906,18 @@ void US_ReporterGMP::check_failed_triples( void )
 	    }
 	}
     }
+
+  //Determine if 'S' data
+  for (int i=0; i< tripleNames.size(); ++i )
+    {
+      if ( tripleNames[i].contains(".S.") )
+	{
+	  simulatedData = true;
+	  break;
+	}
+    }
+
+  qDebug() << "[in check_failed().. ] : simulatedData? " << simulatedData;
 }
 
 // Read AutoflowAnalysisRecord
@@ -1164,8 +1181,12 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	    tripleName += ".Interference";
 	  else
 	    tripleName += "." + wvl;
+
+	  //'S' data
+	  if ( dataSource. contains("DiskAUC:Absorbance") && simulatedData )
+	    tripleName = tripleName.replace( ".A.", ".S." );
 	  
-	  qDebug() << "TripleName -- " << tripleName; 
+	  qDebug() << "[in check_models()]: TripleName -- " << tripleName; 
 	  Array_of_tripleNames.push_back( tripleName );
 	}
     }
@@ -1590,6 +1611,8 @@ void US_ReporterGMP::load_gmp_run ( void )
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ];
   dataSource         = protocol_details[ "dataSource" ];
+
+  simulatedData      = false;
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -2585,8 +2608,12 @@ void US_ReporterGMP::build_perChanTree ( void )
 		tripleName += ".Interference";
 	      else
 		tripleName += "." + wvl;
+
+	      //'S' data
+	      if ( dataSource. contains("DiskAUC:Absorbance") && simulatedData )
+		tripleName = tripleName.replace( ".A.", ".S." );
 	      	      
-	      qDebug() << "TripleName -- " << tripleName; 
+	      qDebug() << "[in build_perChanTree()]: TripleName -- " << tripleName; 
 	      Array_of_triples.push_back( tripleName );
 
 	      //Triple item: child-level 1 in a perChanTree
@@ -3375,6 +3402,10 @@ void US_ReporterGMP::generate_report( void )
 	    {
 	      QString triplename_alt = currentTripleName;
 	      triplename_alt.replace(".","");
+
+	      //'S' data
+	      if ( dataSource . contains("DiskAUC:Absorbance") &&  simulatedData )
+		triplename_alt = triplename_alt. replace( "S", "A");
 
 	      qDebug() << "Triple / Model " <<  triplename_alt << " / " <<  models_to_do[ j ] << "has items ? "
 		       << perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ]
@@ -5389,8 +5420,11 @@ bool US_ReporterGMP::modelGuidExistsForStage_ind( QString triple_n, QString mode
 void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, QString stage_model )
 {
   QString triplesname_passed = triplesname_p;
+  qDebug() << "[in process_combined_plots_individual()]: triplesname_passed -- " << triplesname_passed;
   QString filename_passed = get_filename( triplesname_p );
+  qDebug() << "[in process_combined_plots_individual()]: filename_passed -- " << filename_passed;
   QString triplesname = triplesname_p.replace(".","");
+  qDebug() << "[in process_combined_plots_individual()]: triplesname -- " << triplesname;
 
   sdiag_combplot = new US_DDistr_Combine( "REPORT" );
   QStringList runIDs_single;
@@ -5436,7 +5470,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	}
       else
 	triplesname_chann = triplesname_passed.split(".")[0] + triplesname_passed.split(".")[1] + ":UV/vis.";
-      
+
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
           
@@ -5447,6 +5481,13 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
 
+	  //'S' data
+	  if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
+	    {
+	      triplesname       = triplesname. replace( "S" , "A");
+	      triplesname_chann = triplesname_chann. replace( "S" , "A");
+	    }
+	  
 	  //compose map of [{"s_ranges","k_ranges"}, etc] from cAP2 & cAPp (for given channel & model!!!)
 	  QMap< QString, QStringList > sim_ranges = find_sim_ranges( triplesname_chann, stage_model );  
 
@@ -5459,6 +5500,8 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	  // {s,D,f/f0,MW,Radius} {2DSA-IT,2DSA-MC,PCSA,raw} {p_key: {s[3.2:3.7], D[11:15], etc.} }
 	  // MaskStr.ShowTripleTypeModelRangeIndividualCombo[ t_name ][ s_name ][ p_key ] = feature_indCombo_value; // 1/0
 	  QMap <QString, QStringList> ind_compoplots_type_ranges;
+
+	  qDebug() << "BEFORE INDCOMBO_4: triplesname, stage_model -- " <<  triplesname <<  stage_model;
 	  
 	  QMap < QString, QString > ind_comboplots = perChanMask_edited.ShowTripleTypeModelRangeIndividualCombo[ triplesname ][ stage_model ];
 	  QMap<QString, QString >::iterator i_cp;
@@ -5478,6 +5521,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		}
 	    }
 
+	  if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
+	    triplesname       = triplesname. replace( "A" , "S");
+	  
 	  //plot different types {s,D,MW...} types:  0: s20; 1: MW; 2: D; 3: f/f0
 	  QMap<QString, QStringList >::iterator i_cpt;
 	  for ( i_cpt = ind_compoplots_type_ranges.begin(); i_cpt != ind_compoplots_type_ranges.end(); ++i_cpt )
@@ -5856,12 +5902,24 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
   //Replace back for internals
   if ( triple_name.contains("Interference") )
     t_name. replace( "660", "Interference");
+
+  //'S' data
+  if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
+    t_name = t_name. replace( "S", "A" );
   
   //here identify what to show:
   bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
   bool show_s_d    = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-D Distribution" ].toInt()) ? true : false ;
   bool show_mw_ff0 = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d MW-vs-f/f0 Distribution" ].toInt()) ? true : false ;
   bool show_mw_d   = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d MW-vs-D Distribution" ].toInt()) ? true : false ;
+
+  qDebug() << "[in plot_pseudo3D()]: show_s_ff0 -- "  << show_s_ff0;
+  qDebug() << "[in plot_pseudo3D()]: show_s_d -- "    << show_s_d;
+  qDebug() << "[in plot_pseudo3D()]: show_mw_ff0 -- " << show_mw_ff0;
+  qDebug() << "[in plot_pseudo3D()]: show_mw_d -- "   << show_mw_d;
+
+  if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
+    t_name = t_name. replace( "A", "S" );
   
   //write plot: here default is [s-f/f0] coordinates (x,y)
   if( show_s_ff0 )
@@ -8258,8 +8316,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
        if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
 	 continue;
-	 
-       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  
+
+       //'S' data
+       QString channelNameProt = channel_desc_alt.split(":")[0];
+       if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
+	 channelNameProt = channelNameProt. replace( "A", "S" );
+       
+       if ( t_name. contains( channelNameProt ) )  
 	 {
 	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
 	     
@@ -8287,6 +8350,10 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString exp_dur_r_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
    //end of exp_dur_r transformation
 
+   //'S' data
+   if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
+     t_name = t_name. replace("S","A");
+   
    //autoflowIntensity (for specific wvl)
    double av_int_exp;
    QList< QString > intensity_keys = intensityRIMap.keys();
@@ -8326,6 +8393,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    //check what to show on the report
    if ( tripleInfo[ "triple_name" ].contains("Interference") )
      t_name.replace("660", "Interference");
+
+   qDebug() << "[XXXXXX] t_name, model_name: " << t_name <<  model_name;
    
    QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
    bool show_tot_conc = false;
@@ -8361,6 +8430,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int || show_loading_vol )
      show_comparison_section = true;
    //////////////////////////////////////
+
+   qDebug() << "XXXXX: show_comparison_section -- " << show_comparison_section;
    
    if ( show_comparison_section )
      {
@@ -8966,6 +9037,13 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
 
   QString t_name = tripleInfo[ "triple_name" ];
   t_name.replace(".", "");
+
+  //'S' data
+  if ( dataSource. contains("DiskAUC:Absorbance") && simulatedData )
+    t_name = t_name. replace( "S", "A" );
+
+  qDebug() << "[in plotres() ]: t_name -- " << t_name;
+  
   QString s_name = tripleInfo[ "stage_name" ] ;
 
   //bool show_3d   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "3D Model Plot" ].toInt() ) ? true : false ;
