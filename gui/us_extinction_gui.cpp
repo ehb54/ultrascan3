@@ -421,16 +421,16 @@ US_Extinction::US_Extinction() : US_Widgets()
 // {
 //   QStringList files;
 //   QFile f;
-  
+
 //   QFileDialog dialog (this);
 //   //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
 
 //   dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-    
+
 //   dialog.setFileMode(QFileDialog::ExistingFiles);
 //   dialog.setViewMode(QFileDialog::Detail);
 //   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
-  
+
 //   QString work_dir_data  = US_Settings::dataDir();
 //   //qDebug() << work_dir_data;
 //   //dialog.setDirectory(work_dir_data);
@@ -462,7 +462,7 @@ void US_Extinction::add_wavelength(void)
    US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
-   CSV_Data csv_data = csv_loader->data();
+   US_CSV_Data csv_data = csv_loader->data();
    if (csv_data.columnCount() < 2) return;
    loadScan(csv_data);
    update_data();
@@ -487,7 +487,8 @@ bool US_Extinction::isComment(const QString &str)
       return(true);
    }
 }
-bool US_Extinction::loadScan(CSV_Data& csv_data)
+
+bool US_Extinction::loadScan(US_CSV_Data& csv_data)
 {
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);

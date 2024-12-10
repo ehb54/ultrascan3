@@ -118,7 +118,7 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
         //! \brief Slot to load scan data.
         //! \param data Reference to CSV_Data.
         //! \return True if scan is loaded successfully.
-        bool loadScan(CSV_Data& data);
+        bool loadScan(US_CSV_Data& data);
 
         //! \brief Check if a line is a comment.
         //! \param line The line to check.

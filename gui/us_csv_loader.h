@@ -12,83 +12,6 @@
 #include <QStandardItem>
 #include <QStandardItemModel>
 
-//! \class CSV_Data
-//! \brief A nested class to hold CSV data.
-class US_GUI_EXTERN CSV_Data {
-
-public:
-    /*!
-        * \brief Get the number of columns.
-        * \return Number of columns.
-        */
-    int columnCount () const;
-
-    /*!
-        * \brief Get the number of rows.
-        * \return Number of rows.
-        */
-    int rowCount() const;
-
-    /*!
-        * \brief Get the header labels.
-        * \return Header labels.
-        */
-    QStringList header() const;
-
-    /*!
-        * \brief Get data for a specific column.
-        * \param column The column index.
-        * \return Data for the specified column.
-        */
-    QVector<double> columnAt(int column) const;
-
-    /*!
-        * \brief Set the CSV data.
-        * \param filePath The file path.
-        * \param headers The header labels.
-        * \param columns The column data. The size of each column must be the same indicating the number of rows.
-        * \return True if the data was set successfully, otherwise false.
-        */
-    bool setData(const QString &filePath, const QStringList &headers, const QVector<QVector<double>> &columns);
-
-    /*!
-        * \brief Get the file path.
-        * \return The file path.
-        */
-    QString filePath() const;
-
-    /*!
-        * \brief Get the error message.
-        * \return The file path.
-        */
-    QString error() const;
-
-    /*!
-        * \brief A public function to parse a csv file.
-        * \param filePath  CSV file path.
-        * \param delimiter A delimiter string. If left blank, all Tab, Comma, Semicolon, and Space separators are checked.
-        * \return Return true if parsing is successful.
-        */
-    bool readFile(const QString &filePath, const QString &delimiter);
-
-    /*!
-        * \brief A public function to write a csv file.
-        * \param delimiter A delimiter string.
-        * \return Return true if parsing is successful.
-        */
-    bool writeFile(const QString &delimiter);
-
-    /*!
-        * \brief Clear the CSV data.
-        */
-    void clear();
-
-private:
-    QStringList m_header; /*!< Header labels. */
-    QVector<QVector<double>> m_columns; /*!< Column data. */
-    QString m_path; /*!< File path. */
-    QString m_error; /*!< Error string. */
-};
 
 //! \class CSVTableView
 //! \brief A class to provide a custom QTableView for CSV data with context menu options for deleting rows and columns.
@@ -169,7 +92,7 @@ public:
     * \brief Get the loaded CSV data.
     * \return Return CSV data.
     */
-    CSV_Data data();
+    US_CSV_Data data();
 
     /*!
     * \brief Get the error message if any.
@@ -203,7 +126,7 @@ private:
     CSVTableView *tv_data; /*!< Table view for CSV data. */
     QStandardItemModel *model; /*!< Standard item model for CSV data. */
     CSVSortFilterProxyModel *proxy; /*!< Proxy model for sorting CSV data. */
-    CSV_Data csv_data; /*!< CSV data. */
+    US_CSV_Data csv_data; /*!< CSV data. */
 
     /*!
      * \brief Set up the user interface.
