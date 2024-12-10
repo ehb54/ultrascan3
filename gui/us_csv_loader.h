@@ -4,6 +4,7 @@
 
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
+#include "us_csv_data.h"
 #include <QTableWidget>
 #include <QSortFilterProxyModel>
 #include <QTableWidgetItem>

@@ -307,7 +307,7 @@ bool CSV_Data::writeFile(const QString &delimiter) {
 US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
                              bool editable,QWidget* parent) : US_WidgetsDialog(parent, 0)
 {
-
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     if (! parse_file(filePath)) {
         // QMessageBox::warning(this, "Error!", "Failed to load the file!\n\n" + error_msg);
         QTimer::singleShot(25, this, [=](){this->done(-2);});
@@ -320,6 +320,7 @@ US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
         infile = QFileInfo(filePath);
         le_filename->setText("Filename: " + infile.fileName());
     }
+    QApplication::restoreOverrideCursor();
 }
 
 void US_CSV_Loader::set_UI() {
