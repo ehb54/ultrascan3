@@ -22,7 +22,7 @@ struct WavelengthProfile
     float scale;                  //!< Scale factor
     float amplitude;              //!< Amplitude
     QString filename;             //!< Filename
-    QString filenameBasis;        //!< Basis filename
+    QString header;               //!< Column header
     float nnls_factor;            //!< NNLS factor
     float nnls_percentage;        //!< NNLS percentage
 };

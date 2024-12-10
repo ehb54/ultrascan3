@@ -275,11 +275,11 @@ void US_Spectrum::load_basis()
             wp.extinction << data_list.at(ii).columnAt(jj);
             wp.lambda_min = *minmax.first;
             wp.lambda_max = *minmax.second;
-            wp.filenameBasis = data_list.at(ii).header().at(jj);
+            wp.header = data_list.at(ii).header().at(jj);
             wp.filename = finfo.fileName();
             v_basis << wp;
-            cb_angle_one->addItem(wp.filenameBasis);
-            cb_angle_two->addItem(wp.filenameBasis);
+            cb_angle_one->addItem(wp.header);
+            cb_angle_two->addItem(wp.header);
             //basis_names.append(finfo.baseName());
          }
       }
@@ -304,7 +304,7 @@ void US_Spectrum::plot_basis()
    for(int m = basisIndex; m < v_basis.size(); m++)
    {
      //names.append(v_basis.at(m).filenameBasis);   
-      QListWidgetItem* item = new QListWidgetItem(v_basis.at(m).filenameBasis);
+      QListWidgetItem* item = new QListWidgetItem(v_basis.at(m).header);
       item->setData(Qt::ToolTipRole, v_basis.at(m).filename);
       lw_basis->addItem(item);
 
@@ -366,7 +366,7 @@ void US_Spectrum::load_target()
       lw_target->clear();
       w_target.extinction.clear();
       w_target.wvl.clear();
-      w_target.filenameBasis.clear();
+      w_target.header.clear();
       w_target.matchingCurve->detach();
       pb_load_basis->setEnabled(false);
       resetBasis();
@@ -380,7 +380,7 @@ void US_Spectrum::load_target()
    w_target.extinction << csv_data.columnAt(1);
    w_target.lambda_min = *min;
    w_target.lambda_max = *max;
-   w_target.filenameBasis = csv_data.header().at(1);
+   w_target.header = csv_data.header().at(1);
    w_target.filename = file_info.fileName();
    // QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
    // item->setData(Qt::ToolTipRole, w_target.filename);
@@ -421,7 +421,7 @@ void US_Spectrum:: plot_target()
    data_plot->replot();
    //pb_load_basis->setEnabled(true);
 
-   QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
+   QListWidgetItem* item = new QListWidgetItem(w_target.header);
    item->setData(Qt::ToolTipRole, w_target.filename);
    lw_target->addItem(item);
    pb_load_basis->setEnabled(true);
@@ -440,7 +440,7 @@ void US_Spectrum::new_value(const QwtDoublePoint& p)
       {
          if(lw_basis->currentItem() == NULL)
             return;
-         if(v_basis.at(m).filenameBasis.compare(lw_basis->currentItem()->text()) == 0)
+         if(v_basis.at(m).header.compare(lw_basis->currentItem()->text()) == 0)
          {
             basisIndex = m;
          }
@@ -469,7 +469,7 @@ void US_Spectrum::findExtinction()
       int basisIndex = 0;
       for(int m = 0; m < v_basis.size(); m++)
       {
-         if(v_basis.at(m).filenameBasis.compare(lw_basis->currentItem()->text()) == 0)
+         if(v_basis.at(m).header.compare(lw_basis->currentItem()->text()) == 0)
          {
             basisIndex = m;
          }
@@ -570,7 +570,7 @@ void US_Spectrum::fit()
       results.push_back(100.0 * nnls_x[i]/fval);
       // str.sprintf((v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i]);
       // lw_basis->item((int)i)->setText(str);
-      lw_basis->item((int)i)->setText(str.arg(v_basis[i].filenameBasis).
+      lw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
                                        arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
       v_basis[i].nnls_factor = nnls_x[i];
       v_basis[i].nnls_percentage = results[i];
@@ -661,7 +661,7 @@ void US_Spectrum::deleteCurrent()
 
    for(int m = 0; m < v_basis.size(); m++)
    {
-      if(v_basis.at(m).filenameBasis.compare(lw_basis->currentItem()->text()) == 0)
+      if(v_basis.at(m).header.compare(lw_basis->currentItem()->text()) == 0)
          deleteIndex = m;
    }
    v_basis[deleteIndex].matchingCurve->detach();
@@ -694,7 +694,7 @@ bool US_Spectrum::deleteBasisCurve(void)
   QString selectedName = lw_basis->currentItem()->text();
   for(int k = 0; k < v_basis.size(); k++)
     {
-      if(selectedName.contains(v_basis.at(k).filenameBasis))
+      if(selectedName.contains(v_basis.at(k).header))
 	{
 	  v_basis[k].matchingCurve->detach();
 	  v_basis.remove(k);
@@ -894,9 +894,9 @@ void US_Spectrum::findAngles()
    //Find the two basis vectors that the user selected
    for(int k = 0; k < v_basis.size(); k++)
    {
-      if(firstProf.compare(v_basis[k].filenameBasis) == 0)
+      if(firstProf.compare(v_basis[k].header) == 0)
          indexOne = k;
-      if(secondProf.compare(v_basis[k].filenameBasis) == 0)
+      if(secondProf.compare(v_basis[k].header) == 0)
          indexTwo = k;
    }
    
@@ -929,27 +929,55 @@ void US_Spectrum::findAngles()
 
 void US_Spectrum::save()
 {
-  //QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results", "*.spectrum_fit");
-  QString filename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "*");
-  if(filename.isEmpty())
+   QString basename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "*");
+   if(basename.isEmpty()) {
       return;
-
-   //Ensures that user did not add their own extension
-   if(!(filename.lastIndexOf(".", -1) == -1))
-   {
-      filename = filename.left(1 + filename.lastIndexOf(".", -1));
    }
-   
-   filename = filename + ".spectrum_fit.dat";
-   QFile f (filename);
+
+   QString csvfile = basename + ".spectrum_fit.csv";
+   QString datfile = basename + ".spectrum_fit.dat";
+
+   QVector<QVector<double>> columns;
+   QStringList header;
+   columns << w_solution.wvl;
+   columns << w_solution.extinction;
+   header << "wavelength (nm)" << "Fitted Extinction";
+   columns << w_target.extinction;
+   header << "Target: " + w_target.header;
+   for (int ii = 0; ii < v_basis.size(); ii++) {
+      columns << v_basis.at(ii).extinction;
+      header << "Base: " + v_basis.at(ii).header;
+   }
+
+   QString seprtr = ";";
+   bool flag = false;
+   for (int ii = 0; ii < header.size(); ii++) {
+      QString item = header.at(ii);
+      if (item.contains(seprtr)) {
+         header[ii] = item.replace(seprtr, "-");
+         flag = true;
+      }
+   }
+   US_CSV_Data csv_data;
+   if (! csv_data.setData(csvfile, header, columns) ){
+      QMessageBox::warning(this, "Error!", "Error in making the csv data:\n\n" + csv_data.error());
+   }
+   if (! csv_data.writeFile(seprtr)) {
+      QMessageBox::warning(this, "Error!", "Error in writing the csv file:\n\n" + csv_data.error());
+   }
+   if (flag) {
+      QMessageBox::warning(this, "Warning!", "Some headers contained characters identical to the separator (;). "
+                                             "All such characters have been replaced with (-).");
+   }
+
+   QFile f (datfile);
    if(f.open(QIODevice::WriteOnly | QIODevice::Text))
    {
       QTextStream ts(&f);
-      ts << tr("\"Wavelength\"\t\"Extinction\"\n");
-      for(int i = 0; i < w_solution.wvl.size(); i++)
-      {
-         ts << w_solution.wvl[i] << "\t";
-         ts << w_solution.extinction[i] << "\n";
+      ts << "Details of fitting for each base species\n\n";
+      for (int ii = 0; ii < lw_basis->count(); ii++) {
+         ts << lw_basis->item(ii)->data(Qt::ToolTipRole).toString() << ": ";
+         ts << lw_basis->item(ii)->text() << "\n";
       }
       f.close();
    }
@@ -1025,7 +1053,7 @@ void US_Spectrum::load()
       QDataStream ds(&f);
       ds >> w_target.amplitude;
       ds >> w_target.filename;
-      ds >> w_target.filenameBasis;
+      ds >> w_target.header;
       ds >> w_target.lambda_min;
       ds >> w_target.lambda_max;
       ds >> w_target.lambda_scale;
@@ -1047,7 +1075,7 @@ void US_Spectrum::load()
       {
          ds >> v_basis[j].amplitude;
          ds >> v_basis[j].filename;
-         ds >> v_basis[j].filenameBasis;
+         ds >> v_basis[j].header;
          ds >> v_basis[j].lambda_min;
          ds >> v_basis[j].lambda_max;
          ds >> v_basis[j].lambda_scale;
