@@ -496,7 +496,7 @@ void US_Spectrum::fit()
    unsigned int points, order, i, k, counter=0;
    double *nnls_a, *nnls_b, *nnls_x, nnls_rnorm, *nnls_wp, *nnls_zzp, *x, *y;
    float fval = 0.0;
-   QVector <float> residuals, solution, b;
+   QVector <float> solution, b;
    QPen pen;
    residuals.clear();
    solution.clear();
@@ -941,13 +941,15 @@ void US_Spectrum::save()
    QStringList header;
    columns << w_solution.wvl;
    columns << w_solution.extinction;
-   header << "wavelength (nm)" << "Fitted Extinction";
+   columns << residuals;
+   header << "wavelength (nm)" << "Fitted Extinction" << "Residuals";
    columns << w_target.extinction;
    header << "Target: " + w_target.header;
    for (int ii = 0; ii < v_basis.size(); ii++) {
       columns << v_basis.at(ii).extinction;
       header << "Base: " + v_basis.at(ii).header;
    }
+
 
    QString seprtr = ";";
    bool flag = false;
