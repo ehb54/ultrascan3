@@ -762,7 +762,7 @@ bool US_CSV_Loader::parse_file(const QString& filepath) {
                 file.close();
                 break;
             }
-            QString line = ts.readLine();
+            QString line = ts.readLine().trimmed();
             QByteArray byte_arr = line.toUtf8();
             for (char ch : byte_arr) {
                 if (ch < 0 || ch > 127) {
@@ -777,7 +777,9 @@ bool US_CSV_Loader::parse_file(const QString& filepath) {
                 error_msg = tr("The loaded file is not in text format!\n\n%1").arg(filepath);
                 return false;
             }
-            file_lines.append(line);
+            if (! line.isEmpty() ) {
+                file_lines.append(line);
+            }
         }
         if (file_lines.size() == 0) {
             error_msg = tr("The loaded file is empty!\n\n%1").arg(filepath);
