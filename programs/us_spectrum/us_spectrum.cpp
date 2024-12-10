@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "us_spectrum.h"
 #include "us_gui_util.h"
+#include "us_math2.h"
 #include "us_settings.h"
 #include "us_csv_loader.h"
 #include <math.h>
@@ -270,27 +271,28 @@ void US_Spectrum::load_basis()
          for (int jj = 1; jj < data_list.at(ii).columnCount(); jj++) {
             struct WavelengthProfile wp;
             wp.wvl << xvals;
-            const auto [min, max] = std::minmax_element(xvals.begin(), xvals.end());
+            std::pair<double*, double*> minmax = std::minmax_element(xvals.begin(), xvals.end());
             wp.extinction << data_list.at(ii).columnAt(jj);
-            wp.lambda_min = *min;
-            wp.lambda_max = *max;
+            wp.lambda_min = *minmax.first;
+            wp.lambda_max = *minmax.second;
             wp.filenameBasis = data_list.at(ii).header().at(jj);
             wp.filename = finfo.fileName();
             v_basis << wp;
-            cb_angle_one->addItem(finfo.baseName());
-            cb_angle_two->addItem(finfo.baseName());
+            cb_angle_one->addItem(wp.filenameBasis);
+            cb_angle_two->addItem(wp.filenameBasis);
             //basis_names.append(finfo.baseName());
          }
       }
    }
- 
+
    plot_basis();
    
    pb_reset_basis->setEnabled(true);
    pb_overlap->setEnabled(true);
    pb_fit->setEnabled(true);
    pb_find_angles->setEnabled(true);
-   
+   pb_save->setDisabled(true);
+   le_rmsd->clear();
    // overlap();
 }
 
@@ -630,7 +632,9 @@ void US_Spectrum::fit()
       fval += pow(residuals[i], (float) 2.0);
    }
    fval /= points;
-   le_rmsd->setText(str.sprintf(" %3.2e", pow(fval, (float) 0.5)));
+   str = tr (" %1");
+   le_rmsd->setText(str.arg(pow(fval, (float) 0.5), 0, 'e'));
+   // le_rmsd->setText(str.sprintf(" %3.2e", pow(fval, (float) 0.5)));
    resid_curve->setSamples(x, y, points);
    pen.setColor(Qt::yellow);
    pen.setWidth(2);
@@ -759,8 +763,8 @@ void US_Spectrum::overlap()
        lambdaMaxs.push_back(v_basis.at(m).lambda_max);
      }
 
-   qSort(lambdaMins);
-   qSort(lambdaMaxs);
+   std::sort(lambdaMins.begin(), lambdaMins.end());
+   std::sort(lambdaMaxs.begin(), lambdaMaxs.end());
    
    highest_lambda_min = lambdaMins.last();
    lowest_lambda_max  = lambdaMaxs[0];
@@ -926,7 +930,7 @@ void US_Spectrum::findAngles()
 void US_Spectrum::save()
 {
   //QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results", "*.spectrum_fit");
-  QString filename = QFileDialog::getSaveFileName(this, "Save File", US_Settings::resultDir(), "*.spectrum_fit.dat");
+  QString filename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "*");
   if(filename.isEmpty())
       return;
 
