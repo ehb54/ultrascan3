@@ -121,7 +121,7 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
     // Parse the QStringList of lines
     QStringList delimiters;
     if (delimiter.isEmpty()) {
-        delimiters << "\t" << " " << "," << ";";
+        delimiters << "\t" << "," << ";" << " ";
     } else {
         delimiters << delimiter;
     }
