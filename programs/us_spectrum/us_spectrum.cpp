@@ -219,7 +219,7 @@ void US_Spectrum::load_basis()
    //struct WavelengthProfile temp_wp;
    QFileDialog dialog (this);
 
-   dialog.setNameFilter(tr("Text files (*.txt *.csv *.dat *.wa *.dsp);;All files (*)"));
+   dialog.setNameFilter(tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*.*)"));
    //dialog.setNameFilter(tr("Text files (*.[Rr][Ee][Ss]);;All files (*)"));
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
@@ -235,7 +235,7 @@ void US_Spectrum::load_basis()
       QVector<US_CSV_Data> data_list;
       for ( int ii = 0; ii < files.size(); ii++ ) {
          QString filepath = files.at(ii);
-         QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
+         QString note = "1st Column -> WAVELENGTH ; Others -> OD";
          bool editing = true;
          US_CSV_Loader *csv_loader = new US_CSV_Loader(filepath, note, editing, this);
          int state = csv_loader->exec();
@@ -341,9 +341,11 @@ void US_Spectrum::plot_basis()
 //brings in the target spectrum according to user specification
 void US_Spectrum::load_target()
 {
-   QString filter = tr("Text files (*.txt *.csv *.dat *.wa *.dsp);;All files (*)");
+   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*.*)");
    QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
+
                                                 US_Settings::dataDir(), filter);
+
    if (fpath.isEmpty()) {
       return;
    }
@@ -376,10 +378,10 @@ void US_Spectrum::load_target()
    // struct WavelengthProfile wp;
    QVector<double> xvals = csv_data.columnAt(0);
    w_target.wvl << xvals;
-   const auto [min, max] = std::minmax_element(xvals.begin(), xvals.end());
+   std::pair<double*, double*> minmax = std::minmax_element(xvals.begin(), xvals.end());
    w_target.extinction << csv_data.columnAt(1);
-   w_target.lambda_min = *min;
-   w_target.lambda_max = *max;
+   w_target.lambda_min = *minmax.first;
+   w_target.lambda_max = *minmax.second;
    w_target.header = csv_data.header().at(1);
    w_target.filename = file_info.fileName();
    // QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
@@ -929,7 +931,7 @@ void US_Spectrum::findAngles()
 
 void US_Spectrum::save()
 {
-   QString basename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "*");
+   QString basename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "All Files (*.*)");
    if(basename.isEmpty()) {
       return;
    }
