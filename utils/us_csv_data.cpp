@@ -23,12 +23,21 @@ QVector<double> US_CSV_Data::columnAt(int id) const {
     return col;
 }
 
+void US_CSV_Data::setFilePath(const QString &file_path) {
+    m_path = file_path;
+}
+
 bool US_CSV_Data::setData(const QString &file_path,
                        const QStringList& header,
                        const QVector<QVector<double>>& columns) {
+    setFilePath(file_path);
+    return setData(header, columns);
+}
+
+bool US_CSV_Data::setData(const QStringList& header,
+                          const QVector<QVector<double>>& columns) {
     m_columns.clear();
     m_header.clear();
-    m_path.clear();
     m_error.clear();
     int ncols = header.size();
     if (columns.size() != ncols) {
@@ -50,7 +59,6 @@ bool US_CSV_Data::setData(const QString &file_path,
         }
         m_columns << columns.at(ii);
     }
-    m_path = file_path;
     return true;
 }
 

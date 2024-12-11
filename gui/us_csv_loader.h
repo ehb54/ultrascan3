@@ -159,20 +159,11 @@ private:
     void check_header();
 
     /*!
-     * \brief Get sorted data from the table.
-     * \param sortedData The sorted data.
-     * \param headers The headers of the sorted data.
-     */
-    void get_sorted(QVector<QVector<double>> &sortedData, QStringList &headers);
+    * \brief Make CSV Data for report
+    * \return True the CSV_Data is made.
+    */
+    bool make_csv_data(QString* = nullptr);
 
-    /*!
-     * \brief Write data to a CSV file.
-     * \param filePath The file path.
-     * \param delimiter The delimiter to use.
-     * \param error_msg The error message if any.
-     * \return True if the data was written successfully, otherwise false.
-     */
-    bool write_csv(const QString &filePath, const QString &delimiter, QString &error_msg);
 
 private slots:
 

@@ -36,16 +36,6 @@ public:
     QVector<double> columnAt(int column) const;
 
     /*!
-    * \brief Set the CSV data.
-    * \param filePath The file path.
-    * \param headers QStringList of the header labels.
-    * \param columns It is a nested array with the data type `QVector<QVector<double>>`, where each inner `QVector` stores the data of a separate column.
-    * Therefore, all inner vectors must have the same size, representing the number of rows.
-    * \return True if the data is set successfully, otherwise false.
-    */
-    bool setData(const QString &filePath, const QStringList &headers, const QVector<QVector<double>> &columns);
-
-    /*!
     * \brief Get the file path.
     * \return The file path.
     */
@@ -56,6 +46,39 @@ public:
     * \return The error message.
     */
     QString error() const;
+
+    /*!
+    * \brief Clear the CSV data.
+    */
+    void clear();
+
+    /*!
+    * \brief Set the CSV data.
+    * \param filePath The file path.
+    * \param headers QStringList of the header labels.
+    * \param columns It is a nested array with the data type `QVector<QVector<double>>`, where each inner `QVector` stores the data of a separate column.
+    * Therefore, all inner vectors must have the same size, representing the number of rows.
+    * \return True if the data is set successfully, otherwise false.
+    */
+    bool setData(const QString &filePath, const QStringList &headers, const QVector<QVector<double>> &columns);
+
+    /*!
+    * \brief Set the CSV data.
+    * \param headers QStringList of the header labels.
+    * \param columns It is a nested array with the data type `QVector<QVector<double>>`, where each inner `QVector` stores the data of a separate column.
+    * Therefore, all inner vectors must have the same size, representing the number of rows.
+    * \return True if the data is set successfully, otherwise false.
+    */
+    bool setData(const QStringList &headers, const QVector<QVector<double>> &columns);
+
+    /*!
+    * \brief Set the CSV data.
+    * \param headers QStringList of the header labels.
+    * \param columns It is a nested array with the data type `QVector<QVector<double>>`, where each inner `QVector` stores the data of a separate column.
+    * Therefore, all inner vectors must have the same size, representing the number of rows.
+    * \return True if the data is set successfully, otherwise false.
+    */
+    void setFilePath(const QString &filePath);
 
     /*!
     * \brief A public function to parse a csv file.
@@ -72,10 +95,6 @@ public:
     */
     bool writeFile(const QString &delimiter);
 
-    /*!
-    * \brief Clear the CSV data.
-    */
-    void clear();
 
 private:
     QStringList m_header; /*!< Header labels. */
