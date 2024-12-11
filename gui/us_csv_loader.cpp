@@ -409,7 +409,8 @@ void US_CSV_Loader::relabel() {
 void US_CSV_Loader::ok() {
     csv_data.clear();
     if (! check_table()) return;
-    make_csv_data();
+    QString error;
+    make_csv_data(error);
     accept();
 }
 
@@ -418,14 +419,14 @@ void US_CSV_Loader::save_csv_clicked() {
     if (file_lines.size() == 0) return;
     if(! check_table()) return;
     QString error;
-    if (! make_csv_data(&error) ) {
+    if (! make_csv_data(error)) {
         QMessageBox::warning(this, "Error!", "Error in making the CSV data!\n\n" + error);
         return;
     }
 
     QString delimiter_str;
     QString user_delimiter = le_other->text().trimmed();
-    int state = QMessageBox::question(this, "Set Delimiter", "Do you want to save as different delimiter?");
+    int state = QMessageBox::question(this, "Set Delimiter", "Do you want to save it with a different delimiter?");
     if (state == QMessageBox::Yes) {
         QComboBox* cb_delimiter = us_comboBox();
         cb_delimiter->addItem("Tab");
@@ -506,7 +507,7 @@ bool US_CSV_Loader::parse_file(const QString& filepath) {
             if (!isAscii) {
                 file.close();
                 file_lines.clear();
-                error_msg = tr("The loaded file is not in text format!\n\n%1").arg(filepath);
+                error_msg = tr("Cannot open non-text files!\n\n%1").arg(filepath);
                 return false;
             }
             if (! line.isEmpty() ) {
@@ -514,12 +515,12 @@ bool US_CSV_Loader::parse_file(const QString& filepath) {
             }
         }
         if (file_lines.size() == 0) {
-            error_msg = tr("The loaded file is empty!\n\n%1").arg(filepath);
+            error_msg = tr("File is empty!\n\n%1").arg(filepath);
             return false;
         }
         return true;
     } else {
-        error_msg = tr("Couldn't open the file\n\n%1!").arg(filepath);
+        error_msg = tr("Cannot open the file\n\n%1!").arg(filepath);
         return false;
     }
 }
@@ -676,11 +677,9 @@ void US_CSV_Loader::check_header() {
 }
 
 
-bool US_CSV_Loader::make_csv_data(QString* error) {
+bool US_CSV_Loader::make_csv_data(QString&error) {
     csv_data.clear();
-    if (! error->isNull()) {
-        error->clear();
-    }
+    error.clear();
     QStringList headers;
     QVector < QVector < double > > data;
     int nrows = tv_data->model()->rowCount();
@@ -698,10 +697,10 @@ bool US_CSV_Loader::make_csv_data(QString* error) {
         }
         data << column;
     }
-    if ( csv_data.setData(headers, data) ) {
+    if ( csv_data.setData(infile.fileName(), headers, data) ) {
         return true;
     } else {
-        error->append(csv_data.error());
+        error = csv_data.error();
         csv_data.clear();
         return false;
     }

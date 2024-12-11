@@ -138,14 +138,14 @@ private:
      * \param filePath The file path of the CSV file.
      * \return True if the file was parsed successfully, otherwise false.
      */
-    bool parse_file(const QString &filePath);
+    bool parse_file(const QString&);
 
     /*!
      * \brief Generate a list of alphabetic column headers.
      * \param count The number of headers to generate.
      * \return The list of alphabetic column headers.
      */
-    QStringList gen_alpha_list(int count);
+    QStringList gen_alpha_list(int);
 
     /*!
      * \brief Check the validity of the table.
@@ -162,7 +162,7 @@ private:
     * \brief Make CSV Data for report
     * \return True the CSV_Data is made.
     */
-    bool make_csv_data(QString* = nullptr);
+    bool make_csv_data(QString&);
 
 
 private slots:
@@ -191,13 +191,13 @@ private slots:
      * \brief Slot to fill the table with data.
      * \param columnCount The number of columns.
      */
-    void fill_table(int columnCount);
+    void fill_table(int );
 
     /*!
      * \brief Slot to handle change of delimiter.
      * \param delimiter The new delimiter.
      */
-    void new_delimiter(const QString &delimiter);
+    void new_delimiter(const QString&);
 
     /*!
      * \brief Slot to add a header row.
@@ -208,7 +208,7 @@ private slots:
      * \brief Slot to handle item change in the table.
      * \param item The changed item.
      */
-    void item_changed(QStandardItem *item);
+    void item_changed(QStandardItem*);
 
     /*!
      * \brief Slot to relabel the headers.
