@@ -679,7 +679,7 @@ void US_MwlSpeciesFit::loadSpecs()
    // Get the species (wavelength,extinction) file names
 
    QStringList flist = QFileDialog::getOpenFileNames( this, "Load Species Files", US_Settings::resultDir(),
-                                                      "Data Files (*.dat *.csv *.dsp );; All Files (*)");
+                                                      "Text Files (*.dat *.csv *.dsp );; All Files (*)");
    if (flist.size() < 2) {
       QMessageBox::critical( this, tr( "Multiple Species Needed" ),
                             tr( "At lease 2 species must be chosen!\n" ) );
@@ -687,7 +687,7 @@ void US_MwlSpeciesFit::loadSpecs()
    }
 
 
-   QVector<US_CSV_Loader::CSV_Data> data_list;
+   QVector<US_CSV_Data> data_list;
    for ( int ii = 0; ii < flist.size(); ii++ ) {
       QString filepath = flist.at(ii);
       QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
@@ -700,7 +700,7 @@ void US_MwlSpeciesFit::loadSpecs()
          QMessageBox::critical(this, "Error!", tr("The loaded file is not in text format!\n\n%1").arg(filepath));
          return;
       }
-      US_CSV_Loader::CSV_Data csv_data = csv_loader->data();
+      US_CSV_Data csv_data = csv_loader->data();
       if (csv_data.columnCount() < 2 ) {
          QMessageBox::critical(this, "Warning!", "At least two data columns are needed:\n" + filepath);
          return;

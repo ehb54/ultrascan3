@@ -32,6 +32,7 @@ HEADERS      = us_ana_profile.h   \
                us_cfa_data.h      \
                us_constants.h     \
                us_crc.h           \
+               us_csv_data.h      \
                us_dataIO.h        \
                us_datafiles.h     \
                us_db2.h           \
@@ -84,6 +85,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_cfa_data.cpp      \
                us_constants.cpp     \
                us_crc.cpp           \
+               us_csv_data.cpp      \
                us_dataIO.cpp        \
                us_datafiles.cpp     \
                us_db2.cpp           \
