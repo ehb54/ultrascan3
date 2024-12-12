@@ -8470,8 +8470,14 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 			      wks,
 			      exp_dur_passed ) ;
 	 }
-       
-       if ( show_min_int ) 
+
+       // Show only if not Absorbance || not Interference
+       qDebug() << "Show_INTENSITY: dataSource -- " << dataSource;
+       qDebug() << "Show_INTENSITY: tripleInfo[ \"triple_name\" ] -- " << tripleInfo[ "triple_name" ];
+       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) || tripleInfo[ "triple_name" ].contains("Interference") ) ?
+	 false : true;
+       qDebug() << "Show_INTENSITY: RIdata ? " << RIdata;
+       if ( show_min_int && RIdata )  
 	 {
 	   mstr += table_row( tr( "Minimum Intensity" ),
 			      QString::number( av_int_r ),
