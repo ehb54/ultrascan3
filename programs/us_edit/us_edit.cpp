@@ -2124,6 +2124,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   autoflow_expType    = details_at_editing[ "expType" ];
 
   dataSource          = details_at_editing[ "dataSource" ];
+  simulated_data      = false;
   
   qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto: "
 	   << autoflowID_passed << dataSource << ProtocolName_auto;
@@ -2846,7 +2847,10 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        qDebug() << "channelname_: " << channelname_ ;
        
        if ( dataSource. contains("DiskAUC:Absorbance") && channelname_.contains("S")  )
-	 channelname_ = channelname_.replace("S","A");
+	 {
+	   channelname_ = channelname_.replace("S","A");
+	   simulated_data = true;
+	 }
        
        le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
        qApp->processEvents();
@@ -3837,6 +3841,9 @@ double US_Edit::find_meniscus_auto()
 
   //HARD CODED [for now?]:
   meniscus_init = 5.87; //Edge of the cell -- NEEDS TESTING
+
+  if ( simulated_data )
+    meniscus_init = 5.79;
   
   double meniscus_av = 0;
 

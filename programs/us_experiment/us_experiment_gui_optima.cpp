@@ -1697,6 +1697,17 @@ void US_ExperGuiRotor::importDisk( void )
       qDebug() << "triple # trx -- " << triple;
       if ( triple. contains("/ S /") )
 	{
+	  if ( qRound( rdata.scanData[ 0 ].wavelength ) == 0 )
+	    {
+	      QMessageBox::critical( this,
+				    tr( "ERROR: SIMULATED DATA WAVELENGTH" ),
+				    tr( "Uploaded simulated data not generated correctly:\n\n"
+					"Wavelength: 0\n\n"
+					"Please upload correctly generated simulated data, or raw data in .auc format."
+					));
+	      return;
+	    }
+	  
 	  ra_data_sim = true;
 	  triple = triple.replace("/ S /","/ A /");
 	}
