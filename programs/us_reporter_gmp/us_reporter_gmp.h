@@ -262,7 +262,8 @@ class US_ReporterGMP : public US_Widgets
         QString autoflowStatusID;            //!< Autoflow status ID
         QString optimaName;                  //!< Optima name
         QString dataSource;
-
+        bool    simulatedData;
+  
         QString current_date;                //!< Current date
 
         QString duration_str;                //!< Duration string
