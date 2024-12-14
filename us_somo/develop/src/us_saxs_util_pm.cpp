@@ -176,6 +176,11 @@ bool US_Saxs_Util::set_default(map < QString, QString > & , map < QString, QStri
 
 #endif
 
+enum sd_factors : int {
+                       ONE_OVER_SD    = 0
+                       ,ONE_OVER_SD_SQ = 1
+};
+
 bool US_Saxs_Util::run_nnls(
                             map < QString, QString >           & parameters,
                             map < QString, QString >           & results
@@ -213,6 +218,7 @@ bool US_Saxs_Util::run_nnls(
          << "use_errors"
          << "target"
          << "data"
+         // << "sd_factor"
          ;
 
       for ( auto const & req : required ) {
@@ -238,6 +244,21 @@ bool US_Saxs_Util::run_nnls(
    // TSO << "-- end payload_target\n";
 
    bool use_errors = payload[ "use_errors" ] == "1";
+
+   sd_factors sd_factor = ONE_OVER_SD;
+                          
+   if ( use_errors ) {
+      if ( payload.count( "sd_factor" ) ) {
+         if ( payload[ "sd_factor" ] == "1\\/sd" ) {
+            sd_factor = ONE_OVER_SD;
+         } else if ( payload[ "sd_factor" ] == "1\\/sd^2" ) {
+            sd_factor = ONE_OVER_SD_SQ;
+         } else {
+            results[ "errors" ] = "unknown sd_factor specified : '" + payload[ "sd_factor" ] + "'";
+            return false;
+         }            
+      }
+   }
 
    // validate payload_target
    {
@@ -334,13 +355,23 @@ bool US_Saxs_Util::run_nnls(
    // run nnls
 
    if ( use_errors ) {
-      for ( size_t i = 0; i < size; ++i ) {
-         double one_over_sd2 = 1e0 / ( target_e[ i ] * target_e[ i ] );
-         target_y[ i ] *= one_over_sd2;
-         for ( auto & v : data_ys ) {
-            v[ i ] *= one_over_sd2;
+      if ( sd_factor == ONE_OVER_SD ) {
+         for ( size_t i = 0; i < size; ++i ) {
+            double one_over_sd = 1e0 / target_e[ i ];
+            target_y[ i ] *= one_over_sd;
+            for ( auto & v : data_ys ) {
+               v[ i ] *= one_over_sd;
+            }
          }
-      }
+      } else {
+         for ( size_t i = 0; i < size; ++i ) {
+            double one_over_sd2 = 1e0 / ( target_e[ i ] * target_e[ i ] );
+            target_y[ i ] *= one_over_sd2;
+            for ( auto & v : data_ys ) {
+               v[ i ] *= one_over_sd2;
+            }
+         }
+      }         
    }
 
    // nnls fit
