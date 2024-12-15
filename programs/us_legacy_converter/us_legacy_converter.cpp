@@ -261,12 +261,14 @@ void US_LegacyConverter::reload() {
    if (filelist.size() == 0) {
       QMessageBox::warning(this, "Warning!", tr("File is empty!\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
+      te_info->clear();
       qApp->restoreOverrideCursor();
       return;
    }
    if (! sort_files( filelist, tmp_dir_sorted.path() ) ) {
       QMessageBox::warning(this, "Warning!", tr("Incorrect filename pattern!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
+      te_info->clear();
       qApp->restoreOverrideCursor();
       return;
    }
@@ -314,11 +316,17 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    QRegularExpressionMatch match;
    // RunId1991-s0001-c2-s0009-w260-r_-n1.ri2
    // RunId1991-s0002-c1-s0001-n1.ip1
-   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})-(?:w(\\d{3})-)?(.+?)[.](?:RA|RI|IP|FI|WA|WI)\\d$";
+   // QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})-(?:w(\\d{3})-)?(.+?)[.](?:RA|RI|IP|FI|WA|WI)\\d$";
+   //group1                    (.+)  =  runID
+   //group2            -s(\\d{4,6})  =  ? maybe sample
+   //group3                 -c(\\d)  =  cell number
+   //group4            -s(\\d{4,6})  =  scan number
+   //group5      (?:-w(\\d{3})-r_)?  =  wavelength (optional: some files include it)
+   //group6  (ra|ri|ip|fi|wa|wi)\\d  =  run type
+   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})(?:-w(\\d{3})-r_)?-n\\d[.](ra|ri|ip|fi|wa|wi)\\d$";
    re.setPattern(pattern);
 
    QString runid;
-   QString runtype;
    QMap<QString, QString> file_map;
    QMap<QString, QVector<int>> tcws_map;
 
@@ -326,9 +334,9 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
       QFileInfo finfo = QFileInfo(fpath);
       QFile file(fpath);
       QString fname = finfo.fileName();
-      match = re.match(fname);
+      match = re.match(fname.toLower());
       if (match.hasMatch()) {
-         if (runid.size() == 0) {
+         if (runid.isEmpty()) {
             runid = match.captured(1);
          } else {
             if (QString::compare(runid, match.captured(1)) != 0) {
@@ -336,10 +344,13 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
                return false;
             }
          }
-         runtype = fname.right(3).left(2).toUpper();
          QString cell = match.captured(3);
          int scan = match.captured(4).toInt();
          QString wavl = match.captured(5);
+         if (wavl.isEmpty()) {
+             wavl = "000";
+         }
+         QString runtype = match.captured(6);
          QString tcw = runtype + "-" + cell + "-" + wavl;
          if (tcws_map.contains(tcw)) {
             tcws_map[tcw] << scan;
@@ -349,7 +360,7 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
          }
          QString tcws = tcw + "-" + QString::number(scan);
          if (file_map.contains(tcws)) {
-            QMessageBox::warning(this, "Error!", "Some of scans are redundant!");
+            QMessageBox::warning(this, "Error!", tr("Redundancy in scans!\%1").arg(fname));
             return false;
          } else {
             file_map.insert(tcws, fpath);
