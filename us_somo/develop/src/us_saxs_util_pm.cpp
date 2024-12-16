@@ -179,6 +179,7 @@ bool US_Saxs_Util::set_default(map < QString, QString > & , map < QString, QStri
 enum sd_factors : int {
                        ONE_OVER_SD    = 0
                        ,ONE_OVER_SD_SQ = 1
+                       ,ONE            = 2
 };
 
 bool US_Saxs_Util::run_nnls(
@@ -253,6 +254,9 @@ bool US_Saxs_Util::run_nnls(
             sd_factor = ONE_OVER_SD;
          } else if ( payload[ "sd_factor" ] == "1\\/sd^2" ) {
             sd_factor = ONE_OVER_SD_SQ;
+         } else if ( payload[ "sd_factor" ] == "1" ) {
+            sd_factor = ONE;
+            use_errors = false;
          } else {
             results[ "errors" ] = "unknown sd_factor specified : '" + payload[ "sd_factor" ] + "'";
             return false;
