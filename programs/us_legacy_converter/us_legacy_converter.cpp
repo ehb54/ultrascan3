@@ -48,24 +48,10 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    lb_runid->setAlignment(Qt::AlignRight);
    le_runid = new US_LineEdit_RE("", 0);
 
-   QLabel *lb_runtype = us_label("Run Type:");
-   lb_runtype->setAlignment(Qt::AlignRight);
-   cb_runtype = us_comboBox();
    pb_save = us_pushbutton("Save", true, 0);
-
-   QLabel* lb_tolerance = us_label("Separation Tolerance:");
-   lb_tolerance->hide();
-   lb_tolerance->setAlignment(Qt::AlignRight);
-   ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 );
-   ct_tolerance->setSingleStep( 1 );
-   ct_tolerance->hide();
-   pb_reload = us_pushbutton("Reload");
-   pb_reload->hide();
 
    te_info = us_textedit();
    te_info->setReadOnly(true);
-
-   pb_save->setMinimumWidth(lb_tolerance->sizeHint().width());
 
    QGridLayout *layout = new QGridLayout();
    layout->addWidget(pb_load,      0, 0, 1, 1);
@@ -74,12 +60,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    layout->addWidget(le_dir,       1, 1, 1, 2);
    layout->addWidget(lb_runid,     2, 0, 1, 1);
    layout->addWidget(le_runid,     2, 1, 1, 2);
-   layout->addWidget(lb_runtype,   3, 0, 1, 1);
-   layout->addWidget(cb_runtype,   3, 1, 1, 1);
-   layout->addWidget(pb_save,      3, 2, 1, 1);
-   layout->addWidget(lb_tolerance, 4, 0, 1, 1);
-   layout->addWidget(ct_tolerance, 4, 1, 1, 1);
-   layout->addWidget(pb_reload,    4, 2, 1, 1);
+   layout->addWidget(pb_save,      3, 1, 1, 1);
    layout->addWidget(te_info,      5, 0, 4, 3);
    layout->setMargin(2);
    layout->setSpacing(2);
@@ -89,11 +70,9 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    counter = 0;
 
    connect(pb_load, &QPushButton::clicked, this, &US_LegacyConverter::load);
-   connect(pb_reload, &QPushButton::clicked, this, &US_LegacyConverter::reload);
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
    connect(le_dir, &QLineEdit::textChanged, this, &US_LegacyConverter::runid_updated);
    connect(pb_save, &QPushButton::clicked, this, &US_LegacyConverter::save_auc);
-   connect(ct_tolerance, &QwtCounter::valueChanged, this, &US_LegacyConverter::new_tolerance);
    connect(archive, &US_Archive::itemExtracted, this, &US_LegacyConverter::itemExtracted);
 }
 
@@ -143,18 +122,19 @@ void US_LegacyConverter::save_auc() {
    dir.mkdir(dir.absolutePath());
    QMapIterator<QString, QString> it(data_types);
    QString rtype;
-   while (it.hasNext()) {
-      it.next();
-      if (QString::compare(it.value(), cb_runtype->currentText(), Qt::CaseInsensitive) == 0) {
-         rtype = it.key();
-         break;
-      }
-   }
+   // while (it.hasNext()) {
+   //    it.next();
+   //    if (QString::compare(it.value(), cb_runtype->currentText(), Qt::CaseInsensitive) == 0) {
+   //       rtype = it.key();
+   //       break;
+   //    }
+   // }
    QVector< US_DataIO::RawData* > data;
    QList< US_Convert::TripleInfo > triples;
    QVector< US_Convert::Excludes > excludes;
    QMapIterator< QString, US_Convert::TripleInfo > it_triple(all_triples);
-   QString msg = tr("Saving the %1 OpenAuc files:\n").arg(cb_runtype->currentText());
+   // QString msg = tr("Saving the %1 OpenAuc files:\n").arg(cb_runtype->currentText());
+   QString msg;
    msg += dir.absolutePath() + "\n";
    while (it_triple.hasNext()) {
       it_triple.next();
@@ -174,8 +154,8 @@ void US_LegacyConverter::save_auc() {
    if (state == US_Convert::OK) {
       te_info->insertPlainText(msg);
       te_info->moveCursor(QTextCursor::End);
-      QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
-                               " data saved in \n\n" + dir.absolutePath());
+      // QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
+      //                          " data saved in \n\n" + dir.absolutePath());
    } else {
       QMessageBox::warning(this, "Error!", "Data cannot be saved! Check the output directory!");
    }
@@ -187,7 +167,6 @@ void US_LegacyConverter::reset(void) {
    lb_runid->setText("Run ID:");
    le_runid->setStyleSheet("color: black;");
    te_info->clear();
-   cb_runtype->clear();
    all_data.clear();
    all_triples.clear();
 }
@@ -288,9 +267,9 @@ void US_LegacyConverter::reload() {
          loaded_types << dtype;
       }
    }
-   foreach (QString key, loaded_types) {
-      cb_runtype->addItem(data_types.value(key));
-   }
+   // foreach (QString key, loaded_types) {
+   //    cb_runtype->addItem(data_types.value(key));
+   // }
    te_info->setText(status);
    te_info->moveCursor(QTextCursor::End);
    runid_updated();
@@ -393,7 +372,8 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
    QDir tmpdir(path);
    QStringList subdirs = tmpdir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
    int counter = 1;
-   double tolerance = static_cast<double>(ct_tolerance->value());
+   // double tolerance = static_cast<double>(ct_tolerance->value());
+   double tolerance = 0.5;
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;

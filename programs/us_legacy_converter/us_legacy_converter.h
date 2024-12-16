@@ -29,10 +29,7 @@ class US_LegacyConverter : public US_Widgets
         QString tar_fpath;          //!< File path for the TAR archive
         QLineEdit *le_load;         //!< Line edit for load path
         QTextEdit *te_info;         //!< Text edit for information display
-        QComboBox *cb_runtype;      //!< Combo box for run type
-        QwtCounter *ct_tolerance;   //!< Counter for tolerance
         QPushButton *pb_load;       //!< Button to load data
-        QPushButton *pb_reload;     //!< Button to reload data
         QPushButton *pb_save;       //!< Button to save data
         US_LineEdit_RE *le_runid;   //!< Line edit for run ID with regular expression validation
         QLineEdit *le_dir;          //!< Line edit for directory
