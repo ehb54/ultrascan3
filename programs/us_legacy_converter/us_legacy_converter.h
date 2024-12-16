@@ -26,7 +26,6 @@ class US_LegacyConverter : public US_Widgets
         QMap< QString, US_Convert::TripleInfo > all_triples; //!< Map of all triples
 
         QLabel *lb_runid;           //!< Label for run ID
-        QString tar_fpath;          //!< File path for the TAR archive
         QLineEdit *le_load;         //!< Line edit for load path
         QTextEdit *te_info;         //!< Text edit for information display
         QPushButton *pb_load;       //!< Button to load data
@@ -64,18 +63,11 @@ class US_LegacyConverter : public US_Widgets
         //! \brief Slot to load data
         void load(void);
 
-        //! \brief Slot to reload data
-        void reload(void);
-
         //! \brief Slot to update the run ID
         void runid_updated(void);
 
         //! \brief Slot to save AUC data
         void save_auc(void);
-
-        //! \brief Slot to update tolerance
-        //! \param tolerance New tolerance value
-        void new_tolerance(double tolerance);
 
         //! \brief Slot to update text edit when a file extracted from the archive file
         //! \param relative path

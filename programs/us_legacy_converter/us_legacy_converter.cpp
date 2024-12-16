@@ -76,13 +76,6 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    connect(archive, &US_Archive::itemExtracted, this, &US_LegacyConverter::itemExtracted);
 }
 
-void US_LegacyConverter::new_tolerance(double){
-   reset();
-   if (! tar_fpath.isEmpty()){
-      te_info->setText("Reload the current file or load another file!");
-   }
-}
-
 void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(le_dir->text());
    dir.setPath(dir.absoluteFilePath(le_runid->text()));
@@ -173,15 +166,11 @@ void US_LegacyConverter::reset(void) {
 
 void US_LegacyConverter::load() {
    QString ext_str = "tar.gz Files ( *.tar.gz )";
-   QString fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima tar.gz File"), QDir::homePath(), ext_str);
-   if (fpath.size() == 0){
+   QString tar_fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima tar.gz File"), QDir::homePath(), ext_str);
+   if (tar_fpath.isEmpty()){
       return;
    }
-   tar_fpath = fpath;
-   reload();
-}
 
-void US_LegacyConverter::reload() {
    reset();
    le_load->clear();
    QRegularExpression re;
@@ -193,18 +182,8 @@ void US_LegacyConverter::reload() {
    te_info->moveCursor(QTextCursor::End);
    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
    qApp->processEvents();
-   if (tar_fpath.size() == 0) {
-      QMessageBox::warning(this, "Warning!", tr("No File Loaded!"));
-      qApp->restoreOverrideCursor();
-      return;
-   }
+
    QFileInfo tar_finfo = QFileInfo(tar_fpath);
-   if (! tar_finfo.exists()) {
-      QMessageBox::warning(this, "Error!", tr("TAR File Not Found!\n\n(%1)!").arg(tar_finfo.absoluteFilePath()));
-      tar_fpath.clear();
-      qApp->restoreOverrideCursor();
-      return;
-   }
    qDebug() << "file path: " << tar_fpath;
 
    QTemporaryDir tmp_dir;
@@ -237,7 +216,7 @@ void US_LegacyConverter::reload() {
    }
    QStringList filelist;
    list_files(tmp_dir.path(), filelist);
-   if (filelist.size() == 0) {
+   if (filelist.isEmpty()) {
       QMessageBox::warning(this, "Warning!", tr("File is empty!\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
       te_info->clear();
@@ -295,9 +274,8 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    QRegularExpressionMatch match;
    // RunId1991-s0001-c2-s0009-w260-r_-n1.ri2
    // RunId1991-s0002-c1-s0001-n1.ip1
-   // QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})-(?:w(\\d{3})-)?(.+?)[.](?:RA|RI|IP|FI|WA|WI)\\d$";
    //group1                    (.+)  =  runID
-   //group2            -s(\\d{4,6})  =  ? maybe sample
+   //group2            -s(\\d{4,6})  =  speed
    //group3                 -c(\\d)  =  cell number
    //group4            -s(\\d{4,6})  =  scan number
    //group5      (?:-w(\\d{3})-r_)?  =  wavelength (optional: some files include it)
@@ -308,6 +286,7 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    QString runid;
    QMap<QString, QString> file_map;
    QMap<QString, QVector<int>> tcws_map;
+   QStringList stcws;  // speed-type-cell-wavelength-scan
 
    foreach (QString fpath, flist) {
       QFileInfo finfo = QFileInfo(fpath);
@@ -323,6 +302,7 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
                return false;
             }
          }
+         QString speed = match.captured(2);
          QString cell = match.captured(3);
          int scan = match.captured(4).toInt();
          QString wavl = match.captured(5);
