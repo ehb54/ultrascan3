@@ -89,6 +89,12 @@ void US_LegacyConverter::runid_updated() {
 }
 
 void US_LegacyConverter::save_auc() {
+   // RI -> Intensity
+   // RA -> Absorbance
+   // WI -> Intensity
+   // WA -> Absorbance
+   // IP -> Interference
+   // FI -> Fluorensce
    te_info->moveCursor(QTextCursor::End);
    if (all_data.isEmpty()) {
       QMessageBox::warning(this, "Warning!", "No Data Loaded!");
@@ -96,7 +102,7 @@ void US_LegacyConverter::save_auc() {
    }
    QString runid = le_runid->text();
    if (runid.isEmpty()) {
-      QMessageBox::warning(this, "Error!", "No Run ID Set!");
+      QMessageBox::warning(this, "Error!", "No RunID Set!");
       return;
    }
    QDir dir = QDir(le_dir->text());
@@ -165,6 +171,7 @@ void US_LegacyConverter::reset(void) {
 }
 
 void US_LegacyConverter::load() {
+
    QString ext_str = "tar.gz Files ( *.tar.gz )";
    QString tar_fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima tar.gz File"), QDir::homePath(), ext_str);
    if (tar_fpath.isEmpty()){
@@ -178,7 +185,7 @@ void US_LegacyConverter::load() {
    QRegularExpressionMatch match;
 
    te_info->clear();
-   te_info->append("Extracting archive file. Please Wait!");
+   te_info->append("Extracting the Archive File. Please Wait!");
    te_info->moveCursor(QTextCursor::End);
    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
    qApp->processEvents();
@@ -193,11 +200,11 @@ void US_LegacyConverter::load() {
       QString fpath = tar_finfo.absoluteFilePath();
       QString opath = tmp_dir.path();
       bool ok = archive->extract(fpath, opath);
-      te_info->append("Process: Extracting file ...");
+      te_info->append("Process: Extracting File ...");
       qApp->processEvents();
       if (! ok) {
          te_info->clear();
-         te_info->append( tr("Failed to exctract the file: %1 \n").arg(tar_finfo.absoluteFilePath()) );
+         te_info->append( tr("Failed to Exctract the File: %1 \n").arg(tar_finfo.absoluteFilePath()) );
          te_info->append(archive->getError());
          tar_fpath.clear();
          qApp->restoreOverrideCursor();
@@ -209,7 +216,7 @@ void US_LegacyConverter::load() {
       qApp->processEvents();
       runid = tar_finfo.fileName().chopped(7);
    } else {
-      QMessageBox::warning(this, "Error!", tr("FAILED to create a /tmp directory!"));
+      QMessageBox::warning(this, "Error!", tr("FAILED to Create a Temporary Directory!"));
       tar_fpath.clear();
       qApp->restoreOverrideCursor();
       return;
@@ -217,14 +224,14 @@ void US_LegacyConverter::load() {
    QStringList filelist;
    list_files(tmp_dir.path(), filelist);
    if (filelist.isEmpty()) {
-      QMessageBox::warning(this, "Warning!", tr("File is empty!\n(%1)").arg(tar_finfo.absoluteFilePath()));
+      QMessageBox::warning(this, "Warning!", tr("Empty TGZ File!\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
       te_info->clear();
       qApp->restoreOverrideCursor();
       return;
    }
    if (! sort_files( filelist, tmp_dir_sorted.path() ) ) {
-      QMessageBox::warning(this, "Warning!", tr("Incorrect filename pattern!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
+      QMessageBox::warning(this, "Warning!", tr("Incorrect Filename Pattern!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
       te_info->clear();
       qApp->restoreOverrideCursor();
@@ -237,18 +244,6 @@ void US_LegacyConverter::load() {
    }
    le_load->setText(tar_finfo.absoluteFilePath());
    le_runid->setText(runid);
-   QStringList loaded_types;
-   QMapIterator< QString, US_Convert::TripleInfo > it(all_triples);
-   while (it.hasNext()) {
-      it.next();
-      QString dtype = it.key().split(':').at(0).trimmed();
-      if (! loaded_types.contains(dtype)){
-         loaded_types << dtype;
-      }
-   }
-   // foreach (QString key, loaded_types) {
-   //    cb_runtype->addItem(data_types.value(key));
-   // }
    te_info->setText(status);
    te_info->moveCursor(QTextCursor::End);
    runid_updated();
@@ -284,9 +279,9 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    re.setPattern(pattern);
 
    QString runid;
-   QMap<QString, QString> file_map;
-   QMap<QString, QVector<int>> tcws_map;
-   QStringList stcws;  // speed-type-cell-wavelength-scan
+   QMap<QString, QVector<int>> stcw_scans; // speed-type-cell-wavelength -> scans
+   QMap<QString, QString> file_map;  // speed-type-cell-wavelength-scan -> filepath
+   QVector<int> speed_list;
 
    foreach (QString fpath, flist) {
       QFileInfo finfo = QFileInfo(fpath);
@@ -298,11 +293,14 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
             runid = match.captured(1);
          } else {
             if (QString::compare(runid, match.captured(1)) != 0) {
-               QMessageBox::warning(this, "Error!", "Multiple run IDs found!");
+               QMessageBox::warning(this, "Error!", "Multiple Run IDs Found!");
                return false;
             }
          }
-         QString speed = match.captured(2);
+         int speed = match.captured(2).toInt();
+         if (! speed_list.contains(speed)) {
+            speed_list << speed;
+         }
          QString cell = match.captured(3);
          int scan = match.captured(4).toInt();
          QString wavl = match.captured(5);
@@ -310,39 +308,42 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
              wavl = "000";
          }
          QString runtype = match.captured(6);
-         QString tcw = runtype + "-" + cell + "-" + wavl;
-         if (tcws_map.contains(tcw)) {
-            tcws_map[tcw] << scan;
+         QString key1 = tr("%1-%2-%3-%4").arg(speed_list.indexOf(speed) + 1).arg(runtype, cell, wavl);
+         if (stcw_scans.contains(key1)) {
+            stcw_scans[key1] << scan;
          } else {
             QVector<int> ss(1, scan);
-            tcws_map.insert(tcw, ss);
+            stcw_scans.insert(key1, ss);
          }
-         QString tcws = tcw + "-" + QString::number(scan);
-         if (file_map.contains(tcws)) {
-            QMessageBox::warning(this, "Error!", tr("Redundancy in scans!\%1").arg(fname));
+         QString key2 = tr("%1-%2").arg(key1).arg(scan);
+         if (file_map.contains(key2)) {
+            QMessageBox::warning(this, "Error!", tr("Redundancy In Scans!\%1").arg(fname));
             return false;
          } else {
-            file_map.insert(tcws, fpath);
+            file_map.insert(key2, fpath);
          }
       }
    }
    QDir dir = QDir(tmpDir);
-   QMapIterator<QString, QVector<int>> it(tcws_map);
-   bool state = false;
+   QDir subdir = QDir();
+   QMapIterator<QString, QVector<int>> it(stcw_scans);
+   bool state = true;
    while (it.hasNext()) {
       it.next();
-      QString tcw = it.key();
-      dir.mkdir(tcw);
-      QDir subdir = QDir(dir.absoluteFilePath(tcw));
+      QString key1 = it.key();
+      dir.mkdir(key1);
+      subdir.setPath(dir.absoluteFilePath(key1));
       QVector<int> scans = it.value();
       std::sort(scans.begin(), scans.end());
-      QFileInfo finfo = QFileInfo();
+      // QFileInfo finfo = QFileInfo();
       for (int ii = 0; ii < scans.size(); ii++) {
-         QString ss = QString::number(scans.at(ii));
-         QString fpath1 = file_map.value(tcw + "-" + ss);
-         QString fname2 = ss.rightJustified(5, '0') + fpath1.right(4);
-         finfo.setFile(subdir, fname2);
-         if (QFile::copy(fpath1, finfo.absoluteFilePath())) state = true;
+         QString key2 = tr("%1-%2").arg(key1).arg(scans.at(ii));
+         QString fpath1 = file_map.value(key2);
+         QString fname2 = tr("%1.%2").arg(ii + 1).arg(fpath1.right(3));
+         // finfo.setFile(subdir, fname2.rightJustified(9, '0'));
+         if (! QFile::copy(fpath1, subdir.absoluteFilePath(fname2.rightJustified(9, '0'))) ) {
+            state = false;
+         }
       }
    }
    return state;
@@ -351,9 +352,6 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
 bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status){
    QDir tmpdir(path);
    QStringList subdirs = tmpdir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-   int counter = 1;
-   // double tolerance = static_cast<double>(ct_tolerance->value());
-   double tolerance = 0.5;
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
@@ -361,34 +359,36 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       if (rawscan.size() == 0) {
          continue;
       }
-
+      QString speed = path.split('-').at(0);
       QVector< US_DataIO::RawData  > rawdata;
       QList< US_Convert::TripleInfo > triples;
-      US_Convert::convertLegacyData(rawscan, rawdata, triples, runtype, tolerance);
+      US_Convert::convertLegacyData(rawscan, rawdata, triples, runtype, 0.5);
 
       QDir subd = QDir(tmpdir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
-      status += QString::number(counter) + ":\n";
-      counter ++;
-      status += tr("Run type: %1 (%2)\n").arg(data_types.value(runtype), runtype);
-      status += tr("Number of the parsed files: %1\n").arg(subd.count());
-      status += tr("Number of the beckman data objects: %1\n").arg(rawscan.count());
+      status += tr("RPM : %1\n").arg(speed);
+      status += tr("Run Type : %1 (%2)\n").arg(data_types.value(runtype), runtype);
+      status += tr("Number of Parsed Files : %1\n").arg(subd.count());
+      status += tr("Number of Beckman Data Objects : %1\n").arg(rawscan.count());
 
-      QString msg("Run type: %1 (%2), Number of the processed files: %3");
-      te_info->append(msg.arg(data_types.value(runtype), runtype).arg(subd.count()));
+      QString msg("RPM:%1, Run type: %2 (%3), Number of the processed files: %4");
+      te_info->append(msg.arg(speed, data_types.value(runtype), runtype).arg(subd.count()));
       te_info->moveCursor(QTextCursor::End);
       qApp->processEvents();
 
       for (int ii = 0; ii < triples.size(); ii ++) {
-         QString tdesc = triples.at(ii).tripleDesc.trimmed();
-         QString key = tr("%1:%2").arg(runtype, tdesc);
+         QStringList ccw = triples.at(ii).tripleDesc.split('/');
+         // speed-runtype-cell-channel-lambda
+         QString key = tr("%1-%2-%3-%4-%5").arg(speed, runtype, ccw.at(0).trimmed(),
+                                                ccw.at(1).trimmed(), ccw.at(2).trimmed());
          if (all_triples.contains(key)){
-            QMessageBox::warning(this, "Error!", "Triple redundancy!");
+            QMessageBox::warning(this, "Error!", "Triple Redundancy!");
             qDebug().noquote() << status;
             return false;
          }
          all_triples.insert(key, triples.at(ii));
          all_data.insert(key, rawdata.at(ii));
-         status += tr("Triple: %1   # Scans: %2\n").arg(tdesc).arg(rawdata.at(ii).scanData.count());
+         status += tr( "Triple: %1   # Scans: %2\n").arg(triples.at(ii).tripleDesc)
+                      .arg(rawdata.at(ii).scanData.count() );
       }
       status += "------------------------------\n";
       // qApp->processEvents();
