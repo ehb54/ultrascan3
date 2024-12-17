@@ -22,8 +22,10 @@ class US_LegacyConverter : public US_Widgets
 
     private:
         QMap< QString, QString > data_types;                //!< Map of data types
-        QMap< QString, US_DataIO::RawData > all_data;       //!< Map of all raw data
-        QMap< QString, US_Convert::TripleInfo > all_triples; //!< Map of all triples
+        QVector< US_DataIO::RawData > all_data;       //!< Map of all raw data
+        QVector< US_Convert::TripleInfo > all_triples; //!< Map of all triples
+        QHash< int, QHash< QString, QVector< int > > > output_index; // speed -> runType -> QVector(data index)
+        QHash< int, QHash< QString, QString > > output_types; // speed -> runType -> runType out
 
         QLabel *lb_runid;           //!< Label for run ID
         QLineEdit *le_load;         //!< Line edit for load path

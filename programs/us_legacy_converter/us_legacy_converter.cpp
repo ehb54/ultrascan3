@@ -25,8 +25,8 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 
    data_types.insert("RI", "Intensity");
    data_types.insert("RA", "Absorbance");
-   data_types.insert("WI", "Intensity");
-   data_types.insert("WA", "Absorbance");
+   data_types.insert("WI", "WI");
+   data_types.insert("WA", "WA");
    data_types.insert("IP", "Interference");
    data_types.insert("FI", "Fluorensce");
 
@@ -80,7 +80,7 @@ void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(le_dir->text());
    dir.setPath(dir.absoluteFilePath(le_runid->text()));
    if (dir.exists()) {
-      lb_runid->setText("( existing )    Run ID:");
+      lb_runid->setText("Already Exists!  Run ID:");
       le_runid->setStyleSheet("color: red;");
    } else {
       lb_runid->setText("Run ID:");
@@ -89,12 +89,6 @@ void US_LegacyConverter::runid_updated() {
 }
 
 void US_LegacyConverter::save_auc() {
-   // RI -> Intensity
-   // RA -> Absorbance
-   // WI -> Intensity
-   // WA -> Absorbance
-   // IP -> Interference
-   // FI -> Fluorensce
    te_info->moveCursor(QTextCursor::End);
    if (all_data.isEmpty()) {
       QMessageBox::warning(this, "Warning!", "No Data Loaded!");
@@ -128,36 +122,38 @@ void US_LegacyConverter::save_auc() {
    //       break;
    //    }
    // }
-   QVector< US_DataIO::RawData* > data;
-   QList< US_Convert::TripleInfo > triples;
-   QVector< US_Convert::Excludes > excludes;
-   QMapIterator< QString, US_Convert::TripleInfo > it_triple(all_triples);
-   // QString msg = tr("Saving the %1 OpenAuc files:\n").arg(cb_runtype->currentText());
-   QString msg;
-   msg += dir.absolutePath() + "\n";
-   while (it_triple.hasNext()) {
-      it_triple.next();
-      if (QString::compare(it_triple.key().split(':').at(0), rtype) == 0){
-         triples << it_triple.value();
-         US_DataIO::RawData *rdp;
-         US_DataIO::RawData rd = all_data[it_triple.key()];
-         rdp = &all_data[it_triple.key()];
-         data << rdp;
-         US_Convert::Excludes excl;
-         excludes << excl;
-         msg += it_triple.key().split(':').at(1).trimmed() + "\n";
-      }
-   }
-   msg += "------------------------------\n";
-   int state = US_Convert::saveToDisk(data, triples, excludes, rtype, runid, dir.absolutePath(), false);
-   if (state == US_Convert::OK) {
-      te_info->insertPlainText(msg);
-      te_info->moveCursor(QTextCursor::End);
-      // QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
-      //                          " data saved in \n\n" + dir.absolutePath());
-   } else {
-      QMessageBox::warning(this, "Error!", "Data cannot be saved! Check the output directory!");
-   }
+
+
+   // QVector< US_DataIO::RawData* > data;
+   // QList< US_Convert::TripleInfo > triples;
+   // QVector< US_Convert::Excludes > excludes;
+   // QMapIterator< QString, US_Convert::TripleInfo > it_triple(all_triples);
+   // // QString msg = tr("Saving the %1 OpenAuc files:\n").arg(cb_runtype->currentText());
+   // QString msg;
+   // msg += dir.absolutePath() + "\n";
+   // while (it_triple.hasNext()) {
+   //    it_triple.next();
+   //    if (QString::compare(it_triple.key().split(':').at(0), rtype) == 0){
+   //       triples << it_triple.value();
+   //       US_DataIO::RawData *rdp;
+   //       US_DataIO::RawData rd = all_data[it_triple.key()];
+   //       rdp = &all_data[it_triple.key()];
+   //       data << rdp;
+   //       US_Convert::Excludes excl;
+   //       excludes << excl;
+   //       msg += it_triple.key().split(':').at(1).trimmed() + "\n";
+   //    }
+   // }
+   // msg += "------------------------------\n";
+   // int state = US_Convert::saveToDisk(data, triples, excludes, rtype, runid, dir.absolutePath(), false);
+   // if (state == US_Convert::OK) {
+   //    te_info->insertPlainText(msg);
+   //    te_info->moveCursor(QTextCursor::End);
+   //    // QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
+   //    //                          " data saved in \n\n" + dir.absolutePath());
+   // } else {
+   //    QMessageBox::warning(this, "Error!", "Data cannot be saved! Check the output directory!");
+   // }
    runid_updated();
 }
 
@@ -168,6 +164,9 @@ void US_LegacyConverter::reset(void) {
    te_info->clear();
    all_data.clear();
    all_triples.clear();
+   output_index.clear();
+   output_types.clear();
+   counter = 0;
 }
 
 void US_LegacyConverter::load() {
@@ -212,7 +211,6 @@ void US_LegacyConverter::load() {
       }
       te_info->clear();
       te_info->append("Parsing Data. Please Wait!");
-      counter = 0;
       qApp->processEvents();
       runid = tar_finfo.fileName().chopped(7);
    } else {
@@ -242,6 +240,18 @@ void US_LegacyConverter::load() {
       qApp->restoreOverrideCursor();
       return;
    }
+   // multi speed run: rename output directories
+   QList<int> speed_list = output_types.keys();
+   if (speed_list.size() > 1) {
+      foreach (int speed, speed_list) {
+         foreach (QString rtype, output_types.value(speed).keys()) {
+            QString cval = output_types.value(speed).value(rtype);
+            QString nval = tr("%1-RPM%2").arg(cval).arg(speed);
+            output_types[speed][rtype] = nval;
+         }
+      }
+   }
+
    le_load->setText(tar_finfo.absoluteFilePath());
    le_runid->setText(runid);
    te_info->setText(status);
@@ -352,6 +362,8 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
 bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status){
    QDir tmpdir(path);
    QStringList subdirs = tmpdir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+   int NN = 0;
+   QStringList stccw;
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
@@ -359,7 +371,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       if (rawscan.size() == 0) {
          continue;
       }
-      QString speed = path.split('-').at(0);
+      int speed = path.split('-').at(0).toInt();
       QVector< US_DataIO::RawData  > rawdata;
       QList< US_Convert::TripleInfo > triples;
       US_Convert::convertLegacyData(rawscan, rawdata, triples, runtype, 0.5);
@@ -371,22 +383,44 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       status += tr("Number of Beckman Data Objects : %1\n").arg(rawscan.count());
 
       QString msg("RPM:%1, Run type: %2 (%3), Number of the processed files: %4");
-      te_info->append(msg.arg(speed, data_types.value(runtype), runtype).arg(subd.count()));
+      te_info->append(msg.arg(speed).arg(data_types.value(runtype), runtype).arg(subd.count()));
       te_info->moveCursor(QTextCursor::End);
       qApp->processEvents();
 
       for (int ii = 0; ii < triples.size(); ii ++) {
          QStringList ccw = triples.at(ii).tripleDesc.split('/');
          // speed-runtype-cell-channel-lambda
-         QString key = tr("%1-%2-%3-%4-%5").arg(speed, runtype, ccw.at(0).trimmed(),
+         QString key = tr("%1-%2-%3-%4-%5").arg(speed).arg(runtype, ccw.at(0).trimmed(),
                                                 ccw.at(1).trimmed(), ccw.at(2).trimmed());
-         if (all_triples.contains(key)){
+         if (stccw.contains(key)){
             QMessageBox::warning(this, "Error!", "Triple Redundancy!");
             qDebug().noquote() << status;
             return false;
          }
-         all_triples.insert(key, triples.at(ii));
-         all_data.insert(key, rawdata.at(ii));
+         all_triples << triples.at(ii);
+         all_data << rawdata.at(ii);
+         if (output_index.contains(speed)) {
+            if(output_index.value(speed).contains(runtype)) {
+               output_index[speed][runtype] << NN;
+            } else {
+               QVector<int> vec;
+               vec << NN;
+               output_index[speed].insert(runtype, vec);
+               output_types[speed].insert(runtype, data_types.value(runtype));
+            }
+
+         } else {
+            QVector<int> vec;
+            vec << NN;
+            QHash<QString, QVector<int>> rt_ndx;
+            rt_ndx.insert(runtype, vec);
+            output_index.insert(speed, rt_ndx);
+
+            QHash<QString, QString> rt;
+            rt.insert(runtype, data_types.value(runtype));
+            output_types.insert(speed, rt);
+         }
+         NN++;
          status += tr( "Triple: %1   # Scans: %2\n").arg(triples.at(ii).tripleDesc)
                       .arg(rawdata.at(ii).scanData.count() );
       }
