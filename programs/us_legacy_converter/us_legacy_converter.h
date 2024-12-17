@@ -36,6 +36,7 @@ class US_LegacyConverter : public US_Widgets
         QLineEdit *le_dir;          //!< Line edit for directory
         US_Archive* archive;        //!< Archive object
         int counter;                //!< counter to update test edit
+        bool exists;             //!< if it's true, runIDs are overwritten on disk
 
         //! \brief Resets the converter to its initial state
         void reset(void);

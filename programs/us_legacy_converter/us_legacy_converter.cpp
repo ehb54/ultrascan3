@@ -67,7 +67,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    this->setLayout(layout);
 
    archive = new US_Archive();
-   counter = 0;
+   reset();
 
    connect(pb_load, &QPushButton::clicked, this, &US_LegacyConverter::load);
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
@@ -80,7 +80,7 @@ void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(le_dir->text());
    QHashIterator<int, QHash<QString, QString>> it(output_types);
    QString runid = le_runid->text();
-   bool exists = false;
+   exists = false;
    while (it.hasNext()) {
       it.next();
       bool br = false;
@@ -95,7 +95,7 @@ void US_LegacyConverter::runid_updated() {
       if (br) break;
    }
    if (exists) {
-      lb_runid->setText("Already Exists!  Run ID:");
+      lb_runid->setText("( Already Exists! ) Run ID:");
       le_runid->setStyleSheet("color: red;");
    } else {
       lb_runid->setText("Run ID:");
@@ -114,62 +114,61 @@ void US_LegacyConverter::save_auc() {
       QMessageBox::warning(this, "Error!", "No RunID Set!");
       return;
    }
+
+   if (exists) {
+      // QMessageBox::StandardButton state;
+      int state = QMessageBox::question(this, "Warning!", "RunID already exists!\n"
+                                                          "Do you want to overwrite it?");
+      if (state == QMessageBox::No) return;
+   }
+   qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+   pb_save->setDisabled(true);
    QDir dir = QDir(le_dir->text());
-   dir.setPath(dir.absoluteFilePath(runid));
-   if (dir.exists()) {
-      QMessageBox::StandardButton state;
-      state = QMessageBox::question(this, "Warning!", "The output directory exists!\n\n"
-                            + dir.absolutePath() + "\n\nBy clicking on 'YES', all data will be overwritten! "
-                                                           + "Do you want to proceed?");
-      if (state == QMessageBox::No) {
-         return;
-      } else {
-         dir.removeRecursively();
+   QDir subdir = QDir();
+   QString basename = le_runid->text();
+
+   QString msg;
+   QList<int> speedL = output_index.keys();
+   std::sort(speedL.begin(), speedL.end());
+   foreach (int speed, speedL) {
+      QStringList rtypeL = output_index.value(speed).keys();
+      rtypeL.sort();
+
+      foreach (QString rtype, rtypeL) {
+         QString runid = basename + "-" + output_types.value(speed).value(rtype);
+         QString path = dir.absoluteFilePath(runid);
+         subdir.setPath(path);
+         if (subdir.exists()) {
+            subdir.removeRecursively();
+         }
+         subdir.mkpath(subdir.absolutePath());
+
+         QVector< US_DataIO::RawData* > data;
+         QList< US_Convert::TripleInfo > triples;
+         QVector< US_Convert::Excludes > excludes;
+         QVector<int> indexL = output_index.value(speed).value(rtype);
+         foreach (int index, indexL) {
+            triples << all_triples.at(index);
+            data << &all_data[index];
+            US_Convert::Excludes excl;
+            excludes << excl;
+         }
+
+         int state = US_Convert::saveToDisk(data, triples, excludes, rtype, runid, path, false);
+         if (state == US_Convert::OK) {
+            msg += runid + "\n";
+         } else {
+            QMessageBox::warning(this, "Error!", "Failed to Save this RunID!\n\n" + runid);
+            subdir.removeRecursively();
+         }
       }
    }
-   dir.mkdir(dir.absolutePath());
-   QMapIterator<QString, QString> it(data_types);
-   QString rtype;
-   // while (it.hasNext()) {
-   //    it.next();
-   //    if (QString::compare(it.value(), cb_runtype->currentText(), Qt::CaseInsensitive) == 0) {
-   //       rtype = it.key();
-   //       break;
-   //    }
-   // }
-
-
-   // QVector< US_DataIO::RawData* > data;
-   // QList< US_Convert::TripleInfo > triples;
-   // QVector< US_Convert::Excludes > excludes;
-   // QMapIterator< QString, US_Convert::TripleInfo > it_triple(all_triples);
-   // // QString msg = tr("Saving the %1 OpenAuc files:\n").arg(cb_runtype->currentText());
-   // QString msg;
-   // msg += dir.absolutePath() + "\n";
-   // while (it_triple.hasNext()) {
-   //    it_triple.next();
-   //    if (QString::compare(it_triple.key().split(':').at(0), rtype) == 0){
-   //       triples << it_triple.value();
-   //       US_DataIO::RawData *rdp;
-   //       US_DataIO::RawData rd = all_data[it_triple.key()];
-   //       rdp = &all_data[it_triple.key()];
-   //       data << rdp;
-   //       US_Convert::Excludes excl;
-   //       excludes << excl;
-   //       msg += it_triple.key().split(':').at(1).trimmed() + "\n";
-   //    }
-   // }
-   // msg += "------------------------------\n";
-   // int state = US_Convert::saveToDisk(data, triples, excludes, rtype, runid, dir.absolutePath(), false);
-   // if (state == US_Convert::OK) {
-   //    te_info->insertPlainText(msg);
-   //    te_info->moveCursor(QTextCursor::End);
-   //    // QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
-   //    //                          " data saved in \n\n" + dir.absolutePath());
-   // } else {
-   //    QMessageBox::warning(this, "Error!", "Data cannot be saved! Check the output directory!");
-   // }
    runid_updated();
+   qApp->restoreOverrideCursor();
+   if (! msg.isEmpty()) {
+      QMessageBox::information(this, "Data Stored!", "Run(s) Successfully Saved!\n\n" + msg);
+   }
+   pb_save->setEnabled(true);
 }
 
 void US_LegacyConverter::reset(void) {
@@ -182,6 +181,8 @@ void US_LegacyConverter::reset(void) {
    output_index.clear();
    output_types.clear();
    counter = 0;
+   exists = false;
+   pb_save->setDisabled(true);
 }
 
 void US_LegacyConverter::load() {
@@ -193,6 +194,7 @@ void US_LegacyConverter::load() {
    }
 
    reset();
+   pb_load->setDisabled(true);
    le_load->clear();
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
@@ -222,6 +224,7 @@ void US_LegacyConverter::load() {
          te_info->append(archive->getError());
          tar_fpath.clear();
          qApp->restoreOverrideCursor();
+         pb_load->setEnabled(true);
          return;
       }
       te_info->clear();
@@ -232,6 +235,7 @@ void US_LegacyConverter::load() {
       QMessageBox::warning(this, "Error!", tr("FAILED to Create a Temporary Directory!"));
       tar_fpath.clear();
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    QStringList filelist;
@@ -241,6 +245,7 @@ void US_LegacyConverter::load() {
       tar_fpath.clear();
       te_info->clear();
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    if (! sort_files( filelist, tmp_dir_sorted.path() ) ) {
@@ -248,11 +253,13 @@ void US_LegacyConverter::load() {
       tar_fpath.clear();
       te_info->clear();
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    QString status;
    if(! read_beckman_files(tmp_dir_sorted.path(), status)) {
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    // multi speed run: rename output directories
@@ -272,6 +279,8 @@ void US_LegacyConverter::load() {
    te_info->setText(status);
    te_info->moveCursor(QTextCursor::End);
    runid_updated();
+   pb_save->setEnabled(true);
+   pb_load->setEnabled(true);
    qApp->restoreOverrideCursor();
 }
 
