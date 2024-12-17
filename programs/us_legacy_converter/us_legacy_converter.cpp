@@ -78,8 +78,23 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 
 void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(le_dir->text());
-   dir.setPath(dir.absoluteFilePath(le_runid->text()));
-   if (dir.exists()) {
+   QHashIterator<int, QHash<QString, QString>> it(output_types);
+   QString runid = le_runid->text();
+   bool exists = false;
+   while (it.hasNext()) {
+      it.next();
+      bool br = false;
+      foreach (QString rt, it.value().values()) {
+         QString out_runid = runid + "-" + rt;
+         if (dir.exists(out_runid)) {
+            exists = true;
+            br = true;
+            break;
+         }
+      }
+      if (br) break;
+   }
+   if (exists) {
       lb_runid->setText("Already Exists!  Run ID:");
       le_runid->setStyleSheet("color: red;");
    } else {
