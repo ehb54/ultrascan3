@@ -219,7 +219,7 @@ void US_Spectrum::load_basis()
    //struct WavelengthProfile temp_wp;
    QFileDialog dialog (this);
 
-   dialog.setNameFilter(tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*.*)"));
+   dialog.setNameFilter(tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)"));
    //dialog.setNameFilter(tr("Text files (*.[Rr][Ee][Ss]);;All files (*)"));
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
@@ -341,7 +341,7 @@ void US_Spectrum::plot_basis()
 //brings in the target spectrum according to user specification
 void US_Spectrum::load_target()
 {
-   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*.*)");
+   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)");
    QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
 
                                                 US_Settings::dataDir(), filter);
@@ -931,7 +931,7 @@ void US_Spectrum::findAngles()
 
 void US_Spectrum::save()
 {
-   QString basename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "All Files (*.*)");
+   QString basename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "All Files (*)");
    if(basename.isEmpty()) {
       return;
    }
