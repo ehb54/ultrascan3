@@ -96,6 +96,9 @@ RUN wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$q
 ## BRANCH could be pulled to top
 ADD https://api.github.com/repos/ehb54/ultrascan3/git/refs/heads/$ultrascan_branch version.json
 RUN git clone https://github.com/ehb54/ultrascan3.git
+RUN cd $ULTRASCAN && git fetch --all
+RUN cd $ULTRASCAN && git checkout -B $ultrascan_branch
+RUN cd $ULTRASCAN && git reset --hard origin/$ultrascan_branch
 
 # setup initial local.pri's
 
