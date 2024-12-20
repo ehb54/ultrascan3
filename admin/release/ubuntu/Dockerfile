@@ -12,7 +12,7 @@ ARG ultrascan_branch=master
 
 ## qt defaults
 ARG qt_major_version=5.15
-ARG qt_version=5.15.12
+ARG qt_version=5.15.16
 ARG qwt_version=6.1.6
 ### N.B. qwt_version is hard coded in the local.pri.somo so we need to change this & in the codeql container & workflow/codeql-analysis.yml
 

@@ -16,7 +16,7 @@ my %supported =
      "ubuntu:18.04"  => "python"
      ,"ubuntu:20.04" => "python"
      ,"ubuntu:22.04" => "python3"
-     ,"redhat:8.7"   => "python3"
+     ,"redhat:8.10"   => "python3"
     );
 
 $snames = join( "\n", keys %supported );
