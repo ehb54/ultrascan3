@@ -4629,7 +4629,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                {
                   mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
                } else {
-                  // try alternale
+                  // try alternate
                   editor_msg( "dark red", QString( us_tr( "Warning: error loading %1 for computation of molecular weight" ) ).arg( file ) );
                   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_util->pdb_mw( file, mw ) )
                   {
@@ -4661,7 +4661,33 @@ bool US_Hydrodyn_Cluster::additional_processing(
                   }
                }
             } else {
-               editor_msg( "red", "Error: bead models are not supported for msroll" );
+               if ( file.contains(QRegExp(".(bead_model)$")) ) {
+                  if ( batch_window->screen_bead_model( file )
+                       && ((US_Hydrodyn *)us_hydrodyn)->model_vector.size() ) {
+                     mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
+                     editor_msg( "red", QString( us_tr( "Bead model %1 mw %2" ) ).arg(file).arg(mw) );
+                  }
+                  // PAT
+                  # warning might need PAT
+                  /*
+                  if ( !US_Saxs_Util::pat_model( ((US_Hydrodyn *)us_hydrodyn)->bead_models[ 0 ] ) )
+                  {
+                     editor_msg( "red", QString( us_tr( "Error: perform PAT on  %1" ) ).arg( file ) );
+                  } else {
+                     editor_msg( "blue", QString( us_tr( "PAT on %1 ok" ) ).arg( file ) );
+                     // QString dir = ( ( US_Hydrodyn * ) us_hydrodyn)->somo_dir + QDir::separator() + "tmp" + QDir::separator();
+                     // QString patfile =  dir + QFileInfo( file ).baseName() + "_pat" + "." + QFileInfo( file ).completeSuffix();
+                     // if ( !US_Saxs_Util::write_model( ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ] , patfile ) )
+                     // {
+                     //    editor_msg( "red", QString( us_tr( "Error: writing PAT'd pdb %1" ) ).arg( patfile ) );
+                     // } else {
+                     //    source_files << patfile;
+                     // }
+                  }
+                  */
+                  out += "bestmsrollxyz\n";
+               }
+               editor_msg( "red", "Error: bead models are experimental! (might needs PAT)" );
                // result = batch_window->screen_bead_model( file );
             }
             if (  (*cluster_additional_methods_options_selected).count( method ) &&

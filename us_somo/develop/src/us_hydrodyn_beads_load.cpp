@@ -516,6 +516,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          lb_model->setEnabled(false);
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
+         {
+            double tot_mw = 0;
+            for ( auto const & bead : bead_model ) {
+               tot_mw += bead.bead_mw;
+            }
+            model_vector[0].mw = tot_mw;
+         }
          somo_processed.resize(lb_model->count());
          bead_models.resize(lb_model->count());
          current_model = 0;
@@ -678,6 +685,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
          model_vector[0].Rg = results.rg;
+         {
+            double tot_mw = 0;
+            for ( auto const & bead : bead_model ) {
+               tot_mw += bead.bead_mw;
+            }
+            model_vector[0].mw = tot_mw;
+         }
+            
          somo_processed.resize(lb_model->count());
          bead_models.resize(lb_model->count());
          current_model = 0;
