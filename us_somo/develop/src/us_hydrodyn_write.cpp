@@ -650,6 +650,27 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
 }
 
+bool US_Hydrodyn::write_bead_xyzr( const QString & name, const vector < PDB_atom > & model ) {
+   QStringList out;
+
+   int pos = 0;
+
+   for ( auto const & bead : model ) {
+      out << QString( "%1 %2 %3 %4 UNK %5 UNKN" )
+         .arg( bead.bead_coordinate.axis[ 0 ] )
+         .arg( bead.bead_coordinate.axis[ 1 ] )
+         .arg( bead.bead_coordinate.axis[ 2 ] )
+         .arg( bead.bead_computed_radius )
+         .arg( ++pos )
+         ;
+   }
+
+   QString error;
+
+   QString qs_out = out.join( "\n" ) + "\n";
+   return US_File_Util::putcontents( name, qs_out, error );
+}
+
 void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model ) 
 {
    FILE *fcorr = (FILE *)0;
